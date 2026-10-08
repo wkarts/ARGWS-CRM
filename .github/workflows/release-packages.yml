@@ -89,7 +89,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch --tags origin
-          latest="$(git tag --list 'v*' | grep -E '^v[0-9]+\\.[0-9]+\\.[0-9]+$' | sort -V | tail -n 1 || true)"
+          latest="$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
           baseline="$(tr -d '[:space:]' < VERSION)"
           resume_args=()
           if git rev-parse --verify --quiet "refs/tags/v$baseline" >/dev/null; then
@@ -248,7 +248,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch --tags origin
-          mapfile -t tags < <(git tag --list 'v*' | grep -E '^v[0-9]+\\.[0-9]+\\.[0-9]+$' | sort -V)
+          mapfile -t tags < <(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V)
           previous_tag=""
           for tag in "${tags[@]}"; do
             if [[ "$tag" == "$RELEASE_TAG" ]]; then break; fi
