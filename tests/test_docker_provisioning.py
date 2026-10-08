@@ -14,7 +14,6 @@ class DockerProvisioningContractTest(unittest.TestCase):
         dockerfile = read("Dockerfile")
         ignore = read(".dockerignore")
         self.assertIn("rm -rf /out/app/install", dockerfile)
-        self.assertIn("COPY /source/install", dockerfile) if False else None
         self.assertIn("install/database.sql", dockerfile)
         self.assertIn("!install/database.sql", ignore)
         self.assertNotIn("find application modules install", dockerfile)

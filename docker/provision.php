@@ -86,13 +86,17 @@ function collect_input(array $arguments): array
         provision_error('Uso interativo: php provision.php');
     }
 
+    $baseUrl = prompt_value('URL pública da instalação');
+    $firstname = prompt_value('Nome');
+    $lastname = prompt_value('Sobrenome');
+    $email = prompt_value('E-mail do administrador');
     $password = prompt_secret('Senha do primeiro administrador');
     $confirmation = prompt_secret('Confirme a senha');
     return [
-        'base_url' => prompt_value('URL pública da instalação'),
-        'firstname' => prompt_value('Nome'),
-        'lastname' => prompt_value('Sobrenome'),
-        'admin_email' => prompt_value('E-mail do administrador'),
+        'base_url' => $baseUrl,
+        'firstname' => $firstname,
+        'lastname' => $lastname,
+        'admin_email' => $email,
         'admin_password' => $password,
         'admin_password_repeat' => $confirmation,
         'timezone' => prompt_value('Fuso horário', 'America/Sao_Paulo'),
