@@ -35,7 +35,7 @@ class DockerProvisioningContractTest(unittest.TestCase):
         self.assertIn("@setup path /setup /setup/", caddy)
         self.assertIn("@installer path /install /install/ /install/*", caddy)
         self.assertLess(caddy.index("@installer path"), caddy.rindex("\n        php_server\n"))
-        self.assertIn("redir /setup 302", pending)
+        self.assertIn("        handle {\n            redir /setup\n        }", pending)
         self.assertNotIn("503", pending)
         self.assertNotIn("ARGWS_SETUP_TOKEN", pending)
         self.assertNotIn("docker compose exec", pending)
@@ -220,7 +220,7 @@ esac
         migration_language = read("application/language/portuguese_br/migration_lang.php")
         smoke = read("tests/docker_provision_smoke.sh")
 
-        self.assertIn("redir /setup 302", caddy)
+        self.assertIn("redir /setup", caddy)
         self.assertIn('lang="pt-BR"', setup)
         self.assertIn("Seu ambiente começa aqui.", setup)
         self.assertIn("Administrador principal", setup)

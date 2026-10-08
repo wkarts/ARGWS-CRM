@@ -30,6 +30,8 @@
         }
 
         # Keep deployment details out of the customer-facing first-access response.
-        redir /setup 302
+        handle {
+            redir /setup
+        }
     }
 }
