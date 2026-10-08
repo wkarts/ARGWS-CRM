@@ -9,6 +9,7 @@ MAIN = (ROOT / "tools/argws-crm-deployer/src/main.rs").read_text(encoding="utf-8
 CORE = (ROOT / "tools/argws-crm-deployer/src/core.rs").read_text(encoding="utf-8")
 GUI = (ROOT / "tools/argws-crm-deployer-gui/deployer_gui.py").read_text(encoding="utf-8")
 WORKFLOW = (ROOT / ".github/workflows/deployer-release.yml").read_text(encoding="utf-8")
+REQUIREMENTS = (ROOT / "tools/argws-crm-deployer-gui/requirements-build.txt").read_text(encoding="utf-8")
 
 
 class DeployerBackendContractTest(unittest.TestCase):
@@ -47,9 +48,10 @@ class DeployerBackendContractTest(unittest.TestCase):
         self.assertNotIn("write_all(args", MAIN)
         self.assertNotIn('println!("{args', MAIN)
         self.assertIn("fn smoke_test(cli: Path)", GUI)
+        self.assertIn("def report_gui_failure(error: Exception)", GUI)
 
     def test_workflow_builds_and_smoke_tests_gui_and_cli(self):
-        self.assertIn("PyInstaller==6.22.3", WORKFLOW)
+        self.assertIn("PyInstaller==6.22.3", REQUIREMENTS)
         self.assertIn("cargo +1.90.0 test --locked", WORKFLOW)
         self.assertIn("--smoke-test", WORKFLOW)
         self.assertIn("--ui-smoke-test", WORKFLOW)
