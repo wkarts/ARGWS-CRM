@@ -60,6 +60,13 @@ def replace_production_env_example(source, version):
     return updated
 
 
+def replace_container_env_example(source, version):
+    pattern = re.compile(r"(?m)^ARGWS_VERSION=\d+\.\d+\.\d+$")
+    updated, count = pattern.subn("ARGWS_VERSION=" + version, source)
+    if count != 1:
+        raise ValueError("Esperava exatamente uma versão ARGWS_VERSION no container.env.example.")
+    return updated
+
 def migration_version_from_config(source):
     matches = list(MIGRATION_VERSION_PATTERN.finditer(source))
     if len(matches) != 1:
@@ -146,6 +153,7 @@ def apply_release_version(root, version):
     compose_path = root / "compose.yaml"
     production_compose_path = root / "deploy/production/compose.yaml"
     production_env_path = root / "deploy/production/.env.example"
+    container_env_path = root / "container.env.example"
     migrations_path = root / "application/migrations"
 
     previous_version = version_path.read_text(encoding="utf-8").strip()
@@ -167,6 +175,9 @@ def apply_release_version(root, version):
     production_env_content = replace_production_env_example(
         production_env_path.read_text(encoding="utf-8"), version
     )
+    container_env_content = replace_container_env_example(
+        container_env_path.read_text(encoding="utf-8"), version
+    )
 
     for marker_path, marker_content in markers:
         with marker_path.open("x", encoding="utf-8") as stream:
@@ -177,6 +188,7 @@ def apply_release_version(root, version):
     compose_path.write_text(compose_content, encoding="utf-8")
     production_compose_path.write_text(production_compose_content, encoding="utf-8")
     production_env_path.write_text(production_env_content, encoding="utf-8")
+    container_env_path.write_text(container_env_content, encoding="utf-8")
 
 
 def main():

@@ -1,256 +1,390 @@
-use std::{env, fs::{self, OpenOptions}, io::Write, path::{Path, PathBuf}};
-#[cfg(unix)]
-use std::{fs::File, io::Read};
+use std::{
+    env,
+    fs::OpenOptions,
+    io::{self, BufRead, Write},
+    path::{Path, PathBuf},
+    process::ExitCode,
+};
+#[cfg(any(unix, test))]
+use std::fs;
 
+mod core;
 #[cfg(feature = "gui")]
 mod gui;
-const DEV_COMPOSE: &str = include_str!("../../../deploy/develop/compose.yaml");
-const PROD_COMPOSE: &str = include_str!("../../../deploy/production/compose.yaml");
-const DEV_ENV: &str = include_str!("../../../deploy/develop/.env.example");
-const PROD_ENV: &str = include_str!("../../../deploy/production/.env.example");
-const VERSION: &str = include_str!("../../../VERSION");
-const MYSQL: &str = "ghcr.io/wkarts/argws-crm-mysql:8.0";
-const MARIADB: &str = "ghcr.io/wkarts/argws-crm-mariadb:11.4";
 
-#[cfg(windows)]
-#[link(name = "bcrypt")]
-extern "system" {
-    fn BCryptGenRandom(a: *mut std::ffi::c_void, b: *mut u8, n: u32, flags: u32) -> i32;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FailureKind {
+    Usage,
+    Operation,
 }
 
-fn random_hex() -> Result<String, String> {
-    let mut bytes = [0u8; 32];
-    #[cfg(unix)]
-    File::open("/dev/urandom").and_then(|mut f| f.read_exact(&mut bytes))
-        .map_err(|e| format!("aleatoriedade segura indisponível: {e}"))?;
-    #[cfg(windows)]
-    {
-        let status = unsafe { BCryptGenRandom(std::ptr::null_mut(), bytes.as_mut_ptr(), 32, 2) };
-        if status != 0 { return Err(format!("BCryptGenRandom falhou: {status}")); }
+#[derive(Debug)]
+struct CliFailure {
+    kind: FailureKind,
+    message: String,
+}
+
+impl CliFailure {
+    fn usage(message: impl Into<String>) -> Self {
+        Self { kind: FailureKind::Usage, message: message.into() }
     }
-    let mut out = String::with_capacity(64);
-    for byte in bytes { out.push_str(&format!("{byte:02x}")); }
-    Ok(out)
-}
 
-fn arg(args: &[String], name: &str) -> Option<String> {
-    args.windows(2).find(|pair| pair[0] == name).map(|pair| pair[1].clone())
-}
-fn semver(v: &str) -> bool {
-    let p: Vec<_> = v.split('.').collect();
-    p.len() == 3 && p.iter().all(|x| !x.is_empty() && x.bytes().all(|b| b.is_ascii_digit()))
-}
-fn set(contents: &str, key: &str, value: &str) -> String {
-    let prefix = format!("{key}=");
-    let mut found = false;
-    let mut lines = Vec::new();
-    for line in contents.lines() {
-        if line.starts_with(&prefix) { lines.push(format!("{key}={value}")); found = true; }
-        else { lines.push(line.to_string()); }
+    fn operation(message: impl Into<String>) -> Self {
+        Self { kind: FailureKind::Operation, message: message.into() }
     }
-    if !found { lines.push(format!("{key}={value}")); }
-    format!("{}\n", lines.join("\n"))
-}
-fn get(contents: &str, key: &str) -> Option<String> {
-    let prefix = format!("{key}=");
-    contents.lines().find_map(|line| line.strip_prefix(&prefix).map(str::to_string))
-}
-fn valid_setup_token(value: &str) -> bool {
-    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
-}
-fn ensure_setup_token<F>(contents: &str, generate_if_missing: bool, generate: F) -> Result<String, String>
-where
-    F: FnOnce() -> Result<String, String>,
-{
-    match get(contents, "ARGWS_SETUP_TOKEN") {
-        Some(value) if valid_setup_token(&value) => Ok(contents.to_string()),
-        Some(value) if value.is_empty() || value.starts_with("CHANGE_ME") => {
-            let token = generate()?;
-            if !valid_setup_token(&token) {
-                return Err("a chave de setup gerada deve conter 64 caracteres hexadecimais".into());
-            }
-            Ok(set(contents, "ARGWS_SETUP_TOKEN", &token))
+
+    fn exit_code(&self) -> u8 {
+        match self.kind {
+            FailureKind::Usage => 2,
+            FailureKind::Operation => 1,
         }
-        None if !generate_if_missing => Ok(contents.to_string()),
-        None => {
-            let token = generate()?;
-            if !valid_setup_token(&token) {
-                return Err("a chave de setup gerada deve conter 64 caracteres hexadecimais".into());
-            }
-            Ok(set(contents, "ARGWS_SETUP_TOKEN", &token))
-        }
-        Some(_) => Err("ARGWS_SETUP_TOKEN inválido; use 64 caracteres hexadecimais ou remova a variável para gerar outra chave".into()),
     }
 }
-fn secure_write(path: &Path, contents: &str) -> Result<(), String> {
+
+fn help() {
+    println!(
+        "ARGWS CRM Deployer\n\
+         Uso:\n\
+           argws-crm-deployer interactive\n\
+           argws-crm-deployer generate --environment develop|production --output DIR [--database mysql|mariadb] [--version X.Y.Z] [--force]\n\
+           argws-crm-deployer validate --directory DIR\n\
+           argws-crm-deployer list\n\
+         Opções globais: --log-file FILE\n\
+         O comando interactive guia a geração pelo terminal. Os comandos generate e validate funcionam sem interface gráfica."
+    );
+}
+
+fn option_value(args: &[String], name: &str) -> Result<String, CliFailure> {
+    let Some(index) = args.iter().position(|arg| arg == name) else {
+        return Err(CliFailure::usage(format!("{name} é obrigatório")));
+    };
+    let Some(value) = args.get(index + 1).filter(|value| !value.starts_with("--")) else {
+        return Err(CliFailure::usage(format!("informe um valor para {name}")));
+    };
+    Ok(value.clone())
+}
+
+fn validate_options(args: &[String], value_options: &[&str], flag_options: &[&str]) -> Result<(), CliFailure> {
+    let mut index = 1;
+    while index < args.len() {
+        let option = args[index].as_str();
+        if flag_options.contains(&option) {
+            index += 1;
+        } else if value_options.contains(&option) {
+            if args.get(index + 1).is_none_or(|value| value.starts_with("--")) {
+                return Err(CliFailure::usage(format!("informe um valor para {option}")));
+            }
+            index += 2;
+        } else {
+            return Err(CliFailure::usage("opção ou argumento não reconhecido"));
+        }
+    }
+    Ok(())
+}
+
+fn prompt<R: BufRead, W: Write>(
+    reader: &mut R,
+    writer: &mut W,
+    label: &str,
+    default: &str,
+) -> Result<String, CliFailure> {
+    write!(writer, "{label} [{default}]: ").map_err(|error| CliFailure::operation(error.to_string()))?;
+    writer.flush().map_err(|error| CliFailure::operation(error.to_string()))?;
+
+    let mut value = String::new();
+    let bytes = reader.read_line(&mut value).map_err(|error| CliFailure::operation(error.to_string()))?;
+    if bytes == 0 {
+        return Err(CliFailure::usage("entrada encerrada; modo interativo cancelado"));
+    }
+    let value = value.trim();
+    Ok(if value.is_empty() { default.to_string() } else { value.to_string() })
+}
+
+fn run_interactive<R: BufRead, W: Write>(reader: &mut R, writer: &mut W) -> Result<(), CliFailure> {
+    let environment = prompt(reader, writer, "Ambiente (develop/production)", "production")?;
+    let database = prompt(reader, writer, "Banco (mysql/mariadb)", "mysql")?;
+    let version = if environment == "production" {
+        Some(prompt(reader, writer, "Versão da imagem", core::VERSION.trim())?)
+    } else {
+        None
+    };
+    let output = prompt(reader, writer, "Pasta de destino", "argws-crm-deploy")?;
+    let force = prompt(reader, writer, "Substituir compose.yaml diferente? (s/N)", "n")?;
+    let force = matches!(force.to_ascii_lowercase().as_str(), "s" | "sim" | "y" | "yes");
+
+    core::generate_stack(&environment, version.as_deref(), &database, Path::new(&output), force)
+        .map_err(CliFailure::operation)?;
+    writeln!(writer, "Stack preparada e validada em {output}.")
+        .map_err(|error| CliFailure::operation(error.to_string()))
+}
+
+fn run_cli(args: &[String]) -> Result<(), CliFailure> {
+    let command = args.first().map(String::as_str).unwrap_or("help");
+    match command {
+        "help" | "--help" | "-h" => {
+            if args.len() > 1 {
+                return Err(CliFailure::usage("help não recebe argumentos"));
+            }
+            help();
+            Ok(())
+        }
+        "list" => {
+            if args.len() > 1 {
+                return Err(CliFailure::usage("list não recebe argumentos"));
+            }
+            println!("Ambientes: develop, production; bancos: mysql, mariadb");
+            Ok(())
+        }
+        "interactive" | "--interactive" => {
+            if args.len() > 1 {
+                return Err(CliFailure::usage("interactive não recebe argumentos"));
+            }
+            let stdin = io::stdin();
+            let stdout = io::stdout();
+            run_interactive(&mut stdin.lock(), &mut stdout.lock())
+        }
+        "validate" => {
+            validate_options(args, &["--directory"], &[])?;
+            let directory = option_value(args, "--directory")?;
+            core::validate(Path::new(&directory)).map_err(CliFailure::operation)?;
+            println!("Stack válida: {directory}");
+            Ok(())
+        }
+        "generate" => {
+            validate_options(
+                args,
+                &["--environment", "--output", "--database", "--version"],
+                &["--force"],
+            )?;
+            let environment = option_value(args, "--environment")?;
+            let output = PathBuf::from(option_value(args, "--output")?);
+            let database = args
+                .iter()
+                .position(|arg| arg == "--database")
+                .and_then(|index| args.get(index + 1))
+                .cloned()
+                .unwrap_or_else(|| "mysql".to_string());
+            let version = args
+                .iter()
+                .position(|arg| arg == "--version")
+                .and_then(|index| args.get(index + 1))
+                .map(String::as_str);
+            let force = args.iter().any(|arg| arg == "--force");
+            core::generate_stack(&environment, version, &database, &output, force)
+                .map_err(CliFailure::operation)?;
+            println!("Stack preparada e validada em {}", output.display());
+            Ok(())
+        }
+        _ => Err(CliFailure::usage("comando esperado: interactive, generate, validate, list ou help")),
+    }
+}
+
+fn remove_log_option(args: &[String]) -> Result<(Vec<String>, Option<PathBuf>), CliFailure> {
+    let mut filtered = Vec::with_capacity(args.len());
+    let mut log_path = None;
+    let mut index = 0;
+    while index < args.len() {
+        if args[index] == "--log-file" {
+            if log_path.is_some() {
+                return Err(CliFailure::usage("--log-file pode ser informado uma vez"));
+            }
+            let Some(path) = args.get(index + 1).filter(|value| !value.starts_with("--")) else {
+                return Err(CliFailure::usage("informe o caminho de --log-file"));
+            };
+            log_path = Some(PathBuf::from(path));
+            index += 2;
+        } else {
+            filtered.push(args[index].clone());
+            index += 1;
+        }
+    }
+    Ok((filtered, log_path))
+}
+
+fn log_command(args: &[String]) -> &'static str {
+    match args.first().map(String::as_str).unwrap_or("help") {
+        "generate" | "interactive" | "--interactive" => "generate",
+        "validate" => "validate",
+        "list" => "list",
+        _ => "help",
+    }
+}
+
+fn append_operation_log(path: &Path, command: &str, succeeded: bool) -> io::Result<()> {
     let mut options = OpenOptions::new();
-    options.write(true).create_new(true);
+    options.create(true).append(true);
     #[cfg(unix)]
-    { use std::os::unix::fs::OpenOptionsExt; options.mode(0o600); }
-    let mut file = options.open(path).map_err(|e| format!("não foi possível criar {}: {e}", path.display()))?;
-    file.write_all(contents.as_bytes()).map_err(|e| format!("não foi possível escrever .env: {e}"))
-}
-fn write_compose(path: &Path, contents: &str, force: bool) -> Result<(), String> {
-    if path.exists() {
-        let old = fs::read_to_string(path).map_err(|e| e.to_string())?;
-        if old == contents { return Ok(()); }
-        if !force { return Err("compose.yaml existente difere do modelo; use --force".into()); }
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
     }
-    fs::write(path, contents).map_err(|e| format!("não foi possível escrever compose.yaml: {e}"))
-}
-fn validate(dir: &Path) -> Result<(), String> {
-    let compose = fs::read_to_string(dir.join("compose.yaml")).map_err(|_| "compose.yaml ausente")?;
-    let env = fs::read_to_string(dir.join(".env")).map_err(|_| ".env ausente")?;
-    for key in ["ARGWS_CRM_IMAGE","ARGWS_CRM_DATABASE_IMAGE","ARGWS_HTTP_BIND","ARGWS_HTTP_PORT","MYSQL_DATABASE","MYSQL_USER","MYSQL_PASSWORD","MYSQL_ROOT_PASSWORD","TZ"] {
-        let value = get(&env, key).ok_or_else(|| format!("variável ausente: {key}"))?;
-        if value.is_empty() || value.starts_with("CHANGE_ME") { return Err(format!("valor de exemplo pendente: {key}")); }
-    }
-    if let Some(setup_token) = get(&env, "ARGWS_SETUP_TOKEN") {
-        if setup_token.starts_with("CHANGE_ME") {
-            return Err("valor de exemplo pendente: ARGWS_SETUP_TOKEN".into());
-        }
-        if !setup_token.is_empty() && !valid_setup_token(&setup_token) {
-            return Err("ARGWS_SETUP_TOKEN deve estar vazio ou conter 64 caracteres hexadecimais".into());
-        }
-    }
-    let image = get(&env, "ARGWS_CRM_IMAGE").unwrap();
-    let tag = image.rsplit(':').next().unwrap_or("");
-    if !image.starts_with("ghcr.io/wkarts/argws-crm:") || (tag != "develop" && !semver(tag)) {
-        return Err("use a imagem oficial com develop ou SemVer X.Y.Z".into());
-    }
-    let db = get(&env, "ARGWS_CRM_DATABASE_IMAGE").unwrap();
-    if db != MYSQL && db != MARIADB { return Err("banco deve usar a imagem MySQL ou MariaDB do GHCR".into()); }
-    if get(&env,"MYSQL_PASSWORD") == get(&env,"MYSQL_ROOT_PASSWORD") { return Err("as senhas MySQL devem ser diferentes".into()); }
-    for key in ["ARGWS_CRM_IMAGE","ARGWS_CRM_DATABASE_IMAGE","MYSQL_PASSWORD","ARGWS_SETUP_TOKEN"] {
-        if !compose.contains(&format!("{}{{{}", "$", key)) { return Err(format!("compose não usa {key}")); }
-    }
+    let mut file = options.open(path)?;
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        let mode = fs::metadata(dir.join(".env")).map_err(|e|e.to_string())?.permissions().mode() & 0o777;
-        if mode & 0o077 != 0 { return Err("permissão insegura no .env; use chmod 600".into()); }
+        fs::set_permissions(path, fs::Permissions::from_mode(0o600))?;
     }
-    Ok(())
+    append_operation_log_to(&mut file, command, succeeded)
 }
 
-fn generate_stack(environment: &str, version: Option<&str>, database: &str, output: &Path, force: bool) -> Result<(), String> {
-    let (compose, example, default_tag) = match environment {
-        "develop" => (DEV_COMPOSE, DEV_ENV, "develop"),
-        "production" => (PROD_COMPOSE, PROD_ENV, VERSION.trim()),
-        _ => return Err("environment deve ser develop ou production".into()),
-    };
-    let tag = version.unwrap_or(default_tag);
-    if environment == "production" && !semver(tag) { return Err("produção exige versão SemVer X.Y.Z".into()); }
-    let db_image = match database {
-        "mysql" => MYSQL,
-        "mariadb" => MARIADB,
-        _ => return Err("database deve ser mysql ou mariadb".into()),
-    };
-    fs::create_dir_all(output).map_err(|e| format!("não foi possível criar a pasta: {e}"))?;
-    let compose_path = output.join("compose.yaml");
-    let previous_compose_has_setup_token = if compose_path.exists() {
-        fs::read_to_string(&compose_path).map_err(|e| format!("não foi possível ler compose.yaml: {e}"))?
-            .contains("ARGWS_SETUP_TOKEN")
-    } else {
-        false
-    };
-    write_compose(&compose_path, compose, force)?;
-    let env_path = output.join(".env");
-    if !env_path.exists() {
-        let mut contents = set(example, "ARGWS_CRM_IMAGE", &format!("ghcr.io/wkarts/argws-crm:{tag}"));
-        contents = set(&contents, "ARGWS_CRM_DATABASE_IMAGE", db_image);
-        contents = set(&contents, "MYSQL_PASSWORD", &random_hex()?);
-        contents = set(&contents, "MYSQL_ROOT_PASSWORD", &random_hex()?);
-        contents = set(&contents, "ARGWS_SETUP_TOKEN", &random_hex()?);
-        secure_write(&env_path, &contents)?;
-    } else {
-        let old = fs::read_to_string(&env_path).map_err(|e| format!("não foi possível ler .env: {e}"))?;
-        let contents = ensure_setup_token(&old, !previous_compose_has_setup_token, random_hex)?;
-        if contents != old {
-            #[cfg(unix)]
-            {
-                use std::os::unix::fs::PermissionsExt;
-                fs::set_permissions(&env_path, fs::Permissions::from_mode(0o600))
-                    .map_err(|e| format!("não foi possível proteger as permissões do .env: {e}"))?;
-            }
-            fs::write(&env_path, contents).map_err(|e| format!("não foi possível atualizar .env: {e}"))?;
-        }
+#[cfg(any(feature = "gui", test))]
+fn gui_failure_message(error: &str, log_path: Option<&Path>) -> String {
+    #[cfg(windows)]
+    let cli = "argws-crm-deployer-win-x64.exe interactive";
+    #[cfg(not(windows))]
+    let cli = "argws-crm-deployer-linux-x64 interactive";
+
+    let mut message = format!(
+        "A interface gráfica não conseguiu iniciar o backend WGPU.\n\
+         Diagnóstico: {error}\n\n\
+         Nenhuma implantação foi executada. Use o deployer CLI no terminal:\n\
+         {cli}\n\
+         Ajuda: argws-crm-deployer --help"
+    );
+    if let Some(path) = log_path {
+        message.push_str(&format!("\n\nDiagnóstico salvo em: {}", path.display()));
     }
+    message
+}
+
+#[cfg(feature = "gui")]
+fn record_gui_failure(error: &str) -> Option<PathBuf> {
+    let path = env::temp_dir().join("argws-crm-deployer-gui.log");
+    let mut options = OpenOptions::new();
+    options.create(true).append(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options.open(&path).ok()?;
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(&env_path, fs::Permissions::from_mode(0o600))
-            .map_err(|e| format!("não foi possível proteger as permissões do .env: {e}"))?;
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).ok()?;
     }
-    validate(output)?;
-    Ok(())
+    let diagnostic = error.lines().next().unwrap_or("falha sem detalhes adicionais");
+    writeln!(file, "backend=WGPU startup=failure diagnostic={diagnostic}").ok()?;
+    Some(path)
 }
 
-fn main_result() -> Result<(), String> {
-    let args: Vec<String> = env::args().skip(1).collect();
-    let cmd = args.first().map(String::as_str).unwrap_or("help");
-    if cmd == "list" {
-        println!("Ambientes: develop, production; bancos: mysql, mariadb");
-        return Ok(());
+#[cfg(all(feature = "gui", windows))]
+fn show_gui_failure_dialog(message: &str) {
+    use std::ffi::c_void;
+
+    #[link(name = "user32")]
+    extern "system" {
+        fn MessageBoxW(hwnd: *mut c_void, text: *const u16, caption: *const u16, kind: u32) -> i32;
     }
-    if cmd == "help" || cmd == "--help" || cmd == "-h" {
-        println!("argws-crm-deployer generate --environment develop|production --output DIR [--database mysql|mariadb] [--version X.Y.Z] [--force]\nargws-crm-deployer validate --directory DIR\nargws-crm-deployer list");
-        return Ok(());
+
+    let text: Vec<u16> = message.encode_utf16().chain(std::iter::once(0)).collect();
+    let title: Vec<u16> = "ARGWS CRM Deployer".encode_utf16().chain(std::iter::once(0)).collect();
+    unsafe {
+        MessageBoxW(std::ptr::null_mut(), text.as_ptr(), title.as_ptr(), 0x10);
     }
-    if cmd == "validate" {
-        let dir = arg(&args,"--directory").ok_or("--directory é obrigatório")?;
-        validate(Path::new(&dir))?;
-        println!("Stack válida: {dir}");
-        return Ok(());
-    }
-    if cmd != "generate" { return Err("comando esperado: list, generate, validate ou help".into()); }
-    let environment = arg(&args, "--environment").ok_or("--environment é obrigatório")?;
-    let version = arg(&args, "--version");
-    let database = arg(&args, "--database").unwrap_or_else(|| "mysql".to_string());
-    let output = PathBuf::from(arg(&args, "--output").ok_or("--output é obrigatório")?);
-    generate_stack(&environment, version.as_deref(), &database, &output, args.iter().any(|x| x == "--force"))?;
-    println!("Stack preparada e validada em {}", output.display());
-    Ok(())
 }
-fn main() {
+
+#[cfg(feature = "gui")]
+fn report_gui_failure(error: &str) {
+    let path = record_gui_failure(error);
+    let message = gui_failure_message(error, path.as_deref());
+    eprintln!("{message}");
+    #[cfg(windows)]
+    show_gui_failure_dialog(&message);
+}
+
+fn main() -> ExitCode {
+    let raw_args: Vec<String> = env::args().skip(1).collect();
+
     #[cfg(feature = "gui")]
     {
-        let args: Vec<String> = env::args().skip(1).collect();
-        if args.is_empty() || matches!(args.first().map(String::as_str), Some("gui" | "--gui")) {
-            if let Err(error) = gui::run() { eprintln!("Erro: {error}"); std::process::exit(1); }
-            return;
+        let launch_gui = raw_args.is_empty()
+            || matches!(raw_args.first().map(String::as_str), Some("gui" | "--gui"));
+        if launch_gui {
+            return match gui::run() {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(error) => {
+                    report_gui_failure(&error);
+                    ExitCode::from(3)
+                }
+            };
         }
     }
-    if let Err(error) = main_result() { eprintln!("Erro: {error}"); std::process::exit(1); }
+
+    let (args, log_path) = match remove_log_option(&raw_args) {
+        Ok(result) => result,
+        Err(error) => {
+            eprintln!("Erro: {}", error.message);
+            return ExitCode::from(error.exit_code());
+        }
+    };
+    let command = log_command(&args);
+    let result = run_cli(&args);
+    if let Some(path) = log_path {
+        if let Err(error) = append_operation_log(&path, command, result.is_ok()) {
+            eprintln!("Não foi possível gravar o log operacional: {error}");
+            return ExitCode::FAILURE;
+        }
+    }
+    match result {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            eprintln!("Erro: {}", error.message);
+            ExitCode::from(error.exit_code())
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test] fn stable_version_is_semver() { assert!(semver("3.4.2")); assert!(!semver("latest")); }
-    #[test] fn environments_include_database_and_runtime() {
-        assert!(DEV_COMPOSE.contains("database:"));
-        assert!(PROD_COMPOSE.contains("database_data:"));
-        assert!(DEV_ENV.contains("argws-crm:develop"));
-        assert!(DEV_ENV.contains("ARGWS_SETUP_TOKEN=CHANGE_ME_SETUP_TOKEN"));
-    }
-    #[test] fn env_replacement_preserves_other_values() {
-        let value = set("A=1\nB=2\n","A","3");
-        assert_eq!(get(&value,"B").as_deref(),Some("2"));
-        assert_eq!(get(&value,"A").as_deref(),Some("3"));
-    }
-    #[test] fn setup_token_is_added_to_legacy_envs_and_removed_after_setup() {
-        let legacy = "A=1\nARGWS_SETUP_TOKEN=CHANGE_ME_SETUP_TOKEN\nB=2\n";
-        let generated = ensure_setup_token(legacy, true, || Ok("a".repeat(64))).unwrap();
-        assert_eq!(get(&generated, "A").as_deref(), Some("1"));
-        assert_eq!(get(&generated, "B").as_deref(), Some("2"));
-        assert_eq!(get(&generated, "ARGWS_SETUP_TOKEN").unwrap(), "a".repeat(64));
+    use std::{io::Cursor, time::{SystemTime, UNIX_EPOCH}};
 
-        let removed = generated.lines().filter(|line| !line.starts_with("ARGWS_SETUP_TOKEN=")).collect::<Vec<_>>().join("\n");
-        let unchanged = ensure_setup_token(&removed, false, || panic!("não deve gerar segredo para stack já provisionada")).unwrap();
-        assert_eq!(unchanged, removed);
+    #[test]
+    fn interactive_mode_uses_the_shared_core_and_creates_a_valid_stack() {
+        let suffix = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+        let output = env::temp_dir().join(format!("argws-deployer-interactive-{suffix}"));
+        let input = format!("develop\nmariadb\n{}\nn\n", output.display());
+        let mut reader = Cursor::new(input);
+        let mut transcript = Vec::new();
+
+        run_interactive(&mut reader, &mut transcript).unwrap();
+
+        core::validate(&output).unwrap();
+        assert!(String::from_utf8(transcript).unwrap().contains("Stack preparada e validada"));
+        fs::remove_dir_all(output).unwrap();
     }
-    #[test] fn setup_token_rejects_malformed_custom_values() {
-        assert!(ensure_setup_token("ARGWS_SETUP_TOKEN=abc\n", true, || Ok("a".repeat(64))).is_err());
+
+    #[test]
+    fn operation_log_contains_only_fixed_operation_metadata() {
+        let mut output = Vec::new();
+        append_operation_log_to(&mut output, "generate", false).unwrap();
+        let line = String::from_utf8(output).unwrap();
+        assert_eq!(line, "outcome=failure command=generate\n");
+        assert!(!line.contains("password"));
+        assert!(!line.contains("token"));
     }
+
+    #[test]
+    fn gui_failure_advises_cli_and_states_no_deployment_started() {
+        let message = gui_failure_message("no suitable adapter", None);
+        assert!(message.contains("Nenhuma implantação foi executada"));
+        assert!(message.contains("interactive"));
+        assert!(message.contains("no suitable adapter"));
+    }
+
+    #[test]
+    fn usage_errors_use_a_distinct_exit_code() {
+        assert_eq!(CliFailure::usage("uso").exit_code(), 2);
+        assert_eq!(CliFailure::operation("operação").exit_code(), 1);
+    }
+}
+
+fn append_operation_log_to(writer: &mut impl Write, command: &str, succeeded: bool) -> io::Result<()> {
+    writeln!(
+        writer,
+        "outcome={} command={}",
+        if succeeded { "success" } else { "failure" },
+        command
+    )
 }

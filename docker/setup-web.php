@@ -99,8 +99,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 exit;
             } catch (Throwable $exception) {
                 error_log('[ARGWS CRM setup] ' . $exception->getMessage());
-                $error = 'Não foi possível concluir a instalação. Verifique o endereço e as credenciais do banco nos logs do serviço e tente novamente.';
-                $httpStatus = 503;
+                $failure = $exception->getMessage();
+                if (str_contains($failure, 'não está vazio') || str_contains($failure, 'schema parcial')) {
+                    $error = 'O banco já contém tabelas e o provisionador parou sem alterá-las. Se uma tentativa anterior deixou schema parcial, faça backup e use um banco vazio para recomeçar; não remova tabelas que contenham dados a preservar.';
+                    $httpStatus = 409;
+                } else {
+                    $error = 'Não foi possível concluir a instalação. Verifique o endereço e as credenciais do banco nos logs do serviço e tente novamente.';
+                    $httpStatus = 503;
+                }
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             }
         }
@@ -164,12 +170,12 @@ $value = static function (string $key): string {
         </div>
         <div class="field">
             <label for="admin_password">Senha do administrador</label>
-            <input id="admin_password" name="admin_password" type="password" minlength="12" required autocomplete="new-password">
-            <small>Use pelo menos 12 caracteres. A senha não será exibida nem registrada nos logs.</small>
+            <input id="admin_password" name="admin_password" type="password" required autocomplete="new-password">
+            <small>Escolha sua senha. Ela não será exibida nem registrada nos logs.</small>
         </div>
         <div class="field">
             <label for="admin_password_repeat">Confirme a senha</label>
-            <input id="admin_password_repeat" name="admin_password_repeat" type="password" minlength="12" required autocomplete="new-password">
+            <input id="admin_password_repeat" name="admin_password_repeat" type="password" required autocomplete="new-password">
         </div>
         <div class="field">
             <label for="timezone">Fuso horário</label>

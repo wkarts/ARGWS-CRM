@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use eframe::egui;
 
-use super::{generate_stack, validate, VERSION};
+use super::core::{generate_stack, validate, VERSION};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Environment { Develop, Production }
@@ -170,6 +170,30 @@ impl eframe::App for DeployerApp {
 
 pub fn run() -> Result<(), String> {
     let mut options = eframe::NativeOptions::default();
+    options.renderer = eframe::Renderer::Wgpu;
+
+    // Use one explicitly selected native WGPU backend per release target.
+    // There is no renderer switch to OpenGL when device initialization fails;
+    // the shared CLI remains the operational path in that case.
+    let mut wgpu_setup = eframe::egui_wgpu::WgpuSetupCreateNew::default();
+    #[cfg(target_os = "windows")]
+    {
+        wgpu_setup.instance_descriptor.backends = eframe::wgpu::Backends::DX12;
+    }
+    #[cfg(target_os = "linux")]
+    {
+        wgpu_setup.instance_descriptor.backends = eframe::wgpu::Backends::VULKAN;
+    }
+    #[cfg(target_os = "macos")]
+    {
+        wgpu_setup.instance_descriptor.backends = eframe::wgpu::Backends::METAL;
+    }
+    #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
+    {
+        return Err("backend WGPU nativo não configurado para este sistema; use o modo CLI.".into());
+    }
+    options.wgpu_options.wgpu_setup =
+        eframe::egui_wgpu::WgpuSetup::CreateNew(wgpu_setup);
     options.viewport = egui::ViewportBuilder::default()
         .with_inner_size([760.0, 580.0])
         .with_min_inner_size([600.0, 460.0]);
@@ -178,5 +202,5 @@ pub fn run() -> Result<(), String> {
         options,
         Box::new(|_context| Ok(Box::new(DeployerApp::default()))),
     )
-    .map_err(|error| format!("não foi possível iniciar a interface gráfica: {error}"))
+    .map_err(|error| format!("falha ao iniciar o renderizador WGPU: {error}"))
 }

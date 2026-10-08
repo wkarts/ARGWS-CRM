@@ -1,5 +1,18 @@
 name: ${COMPOSE_PROJECT_NAME:-argws-crm-develop}
 services:
+  storage-init:
+    image: ${ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:develop}
+    restart: "no"
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        for directory in installation_config uploads temp application_cache application_logs module_accounting_uploads module_finance_uploads module_fleet_uploads module_hr_payroll_uploads module_hr_profile_uploads module_invoices_builder_uploads module_ma_uploads module_products_uploads module_purchase_uploads module_service_management_uploads module_si_custom_theme_uploads module_timesheets_uploads caddy_data caddy_config; do
+          mkdir -p "/storage/$$directory"
+          chown 33:33 "/storage/$$directory"
+        done
+    volumes:
+      - "${ARGWS_STORAGE_ROOT:-./storage}:/storage"
   web:
     image: ${ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:develop}
     container_name: ${COMPOSE_PROJECT_NAME:-argws-crm-develop}-web
@@ -17,26 +30,28 @@ services:
     depends_on:
       database:
         condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
     volumes:
-      - installation_config:/var/lib/argws-crm/config
-      - uploads:/app/uploads
-      - temp:/app/temp
-      - application_cache:/app/application/cache
-      - application_logs:/app/application/logs
-      - module_accounting_uploads:/app/modules/accounting/uploads
-      - module_finance_uploads:/app/modules/finance/uploads
-      - module_fleet_uploads:/app/modules/fleet/uploads
-      - module_hr_payroll_uploads:/app/modules/hr_payroll/uploads
-      - module_hr_profile_uploads:/app/modules/hr_profile/uploads
-      - module_invoices_builder_uploads:/app/modules/invoices_builder/uploads
-      - module_ma_uploads:/app/modules/ma/uploads
-      - module_products_uploads:/app/modules/products/uploads
-      - module_purchase_uploads:/app/modules/purchase/uploads
-      - module_service_management_uploads:/app/modules/service_management/uploads
-      - module_si_custom_theme_uploads:/app/modules/si_custom_theme/uploads
-      - module_timesheets_uploads:/app/modules/timesheets/uploads
-      - caddy_data:/data
-      - caddy_config:/config
+      - "${ARGWS_STORAGE_ROOT:-./storage}/installation_config:/var/lib/argws-crm/config"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/uploads:/app/uploads"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/temp:/app/temp"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/application_cache:/app/application/cache"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/application_logs:/app/application/logs"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/module_accounting_uploads:/app/modules/accounting/uploads"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/module_finance_uploads:/app/modules/finance/uploads"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/module_fleet_uploads:/app/modules/fleet/uploads"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/module_hr_payroll_uploads:/app/modules/hr_payroll/uploads"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/module_hr_profile_uploads:/app/modules/hr_profile/uploads"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/module_invoices_builder_uploads:/app/modules/invoices_builder/uploads"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/module_ma_uploads:/app/modules/ma/uploads"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/module_products_uploads:/app/modules/products/uploads"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/module_purchase_uploads:/app/modules/purchase/uploads"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/module_service_management_uploads:/app/modules/service_management/uploads"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/module_si_custom_theme_uploads:/app/modules/si_custom_theme/uploads"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/module_timesheets_uploads:/app/modules/timesheets/uploads"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/caddy_data:/data"
+      - "${ARGWS_STORAGE_ROOT:-./storage}/caddy_config:/config"
   database:
     image: ${ARGWS_CRM_DATABASE_IMAGE:-ghcr.io/wkarts/argws-crm-mysql:8.0}
     container_name: ${COMPOSE_PROJECT_NAME:-argws-crm-develop}-database
@@ -48,7 +63,7 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Gere MYSQL_PASSWORD com o deployer}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Gere MYSQL_ROOT_PASSWORD com o deployer}
     volumes:
-      - database_data:/var/lib/mysql
+      - "${ARGWS_STORAGE_ROOT:-./storage}/database_data:/var/lib/mysql"
     healthcheck:
       test:
         - CMD-SHELL
@@ -59,24 +74,3 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
-volumes:
-  installation_config:
-  uploads:
-  temp:
-  application_cache:
-  application_logs:
-  module_accounting_uploads:
-  module_finance_uploads:
-  module_fleet_uploads:
-  module_hr_payroll_uploads:
-  module_hr_profile_uploads:
-  module_invoices_builder_uploads:
-  module_ma_uploads:
-  module_products_uploads:
-  module_purchase_uploads:
-  module_service_management_uploads:
-  module_si_custom_theme_uploads:
-  module_timesheets_uploads:
-  caddy_data:
-  caddy_config:
-  database_data:

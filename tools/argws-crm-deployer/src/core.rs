@@ -1,0 +1,247 @@
+use std::{fs::{self, OpenOptions}, io::Write, path::Path};
+#[cfg(unix)]
+use std::{fs::File, io::Read};
+
+const DEV_COMPOSE: &str = include_str!("../../../deploy/develop/compose.yaml");
+const PROD_COMPOSE: &str = include_str!("../../../deploy/production/compose.yaml");
+const DEV_ENV: &str = include_str!("../../../deploy/develop/.env.example");
+const PROD_ENV: &str = include_str!("../../../deploy/production/.env.example");
+pub(crate) const VERSION: &str = include_str!("../../../VERSION");
+const STORAGE_MIGRATION: &str = include_str!("../../../deploy/migrate-storage.sh");
+const MYSQL: &str = "ghcr.io/wkarts/argws-crm-mysql:8.0";
+const MARIADB: &str = "ghcr.io/wkarts/argws-crm-mariadb:11.4";
+
+#[cfg(windows)]
+#[link(name = "bcrypt")]
+extern "system" {
+    fn BCryptGenRandom(a: *mut std::ffi::c_void, b: *mut u8, n: u32, flags: u32) -> i32;
+}
+
+fn random_hex() -> Result<String, String> {
+    let mut bytes = [0u8; 32];
+    #[cfg(unix)]
+    File::open("/dev/urandom").and_then(|mut f| f.read_exact(&mut bytes))
+        .map_err(|e| format!("aleatoriedade segura indisponível: {e}"))?;
+    #[cfg(windows)]
+    {
+        let status = unsafe { BCryptGenRandom(std::ptr::null_mut(), bytes.as_mut_ptr(), 32, 2) };
+        if status != 0 { return Err(format!("BCryptGenRandom falhou: {status}")); }
+    }
+    let mut out = String::with_capacity(64);
+    for byte in bytes { out.push_str(&format!("{byte:02x}")); }
+    Ok(out)
+}
+
+fn semver(v: &str) -> bool {
+    let p: Vec<_> = v.split('.').collect();
+    p.len() == 3 && p.iter().all(|x| !x.is_empty() && x.bytes().all(|b| b.is_ascii_digit()))
+}
+fn set(contents: &str, key: &str, value: &str) -> String {
+    let prefix = format!("{key}=");
+    let mut found = false;
+    let mut lines = Vec::new();
+    for line in contents.lines() {
+        if line.starts_with(&prefix) { lines.push(format!("{key}={value}")); found = true; }
+        else { lines.push(line.to_string()); }
+    }
+    if !found { lines.push(format!("{key}={value}")); }
+    format!("{}\n", lines.join("\n"))
+}
+fn get(contents: &str, key: &str) -> Option<String> {
+    let prefix = format!("{key}=");
+    contents.lines().find_map(|line| line.strip_prefix(&prefix).map(str::to_string))
+}
+fn valid_setup_token(value: &str) -> bool {
+    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+fn ensure_setup_token<F>(contents: &str, generate_if_missing: bool, generate: F) -> Result<String, String>
+where
+    F: FnOnce() -> Result<String, String>,
+{
+    match get(contents, "ARGWS_SETUP_TOKEN") {
+        Some(value) if valid_setup_token(&value) => Ok(contents.to_string()),
+        Some(value) if value.is_empty() || value.starts_with("CHANGE_ME") => {
+            let token = generate()?;
+            if !valid_setup_token(&token) {
+                return Err("a chave de setup gerada deve conter 64 caracteres hexadecimais".into());
+            }
+            Ok(set(contents, "ARGWS_SETUP_TOKEN", &token))
+        }
+        None if !generate_if_missing => Ok(contents.to_string()),
+        None => {
+            let token = generate()?;
+            if !valid_setup_token(&token) {
+                return Err("a chave de setup gerada deve conter 64 caracteres hexadecimais".into());
+            }
+            Ok(set(contents, "ARGWS_SETUP_TOKEN", &token))
+        }
+        Some(_) => Err("ARGWS_SETUP_TOKEN inválido; use 64 caracteres hexadecimais ou remova a variável para gerar outra chave".into()),
+    }
+}
+fn valid_storage_root(value: &str) -> bool {
+    if value == "./" { return true; }
+    let Some(path) = value.strip_prefix("./") else { return false; };
+    !path.is_empty()
+        && path.split('/').all(|part| !part.is_empty() && part != "." && part != "..")
+        && value.bytes().all(|byte| byte.is_ascii_alphanumeric() || b"/_-.".contains(&byte))
+}
+fn ensure_storage_root(contents: &str) -> Result<String, String> {
+    match get(contents, "ARGWS_STORAGE_ROOT") {
+        Some(value) if valid_storage_root(&value) => Ok(contents.to_string()),
+        Some(_) => Err("ARGWS_STORAGE_ROOT deve ser um caminho relativo dentro da stack, como ./storage".into()),
+        None => Ok(set(contents, "ARGWS_STORAGE_ROOT", "./storage")),
+    }
+}
+
+fn secure_write(path: &Path, contents: &str) -> Result<(), String> {
+    let mut options = OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    { use std::os::unix::fs::OpenOptionsExt; options.mode(0o600); }
+    let mut file = options.open(path).map_err(|e| format!("não foi possível criar {}: {e}", path.display()))?;
+    file.write_all(contents.as_bytes()).map_err(|e| format!("não foi possível escrever .env: {e}"))
+}
+fn write_compose(path: &Path, contents: &str, force: bool) -> Result<(), String> {
+    if path.exists() {
+        let old = fs::read_to_string(path).map_err(|e| e.to_string())?;
+        if old == contents { return Ok(()); }
+        if !force { return Err("compose.yaml existente difere do modelo; use --force".into()); }
+    }
+    fs::write(path, contents).map_err(|e| format!("não foi possível escrever compose.yaml: {e}"))
+}
+pub(crate) fn validate(dir: &Path) -> Result<(), String> {
+    let compose = fs::read_to_string(dir.join("compose.yaml")).map_err(|_| "compose.yaml ausente")?;
+    let env = fs::read_to_string(dir.join(".env")).map_err(|_| ".env ausente")?;
+    let migration = fs::read_to_string(dir.join("migrate-storage.sh")).map_err(|_| "migrate-storage.sh ausente")?;
+    if !migration.contains("cp -an /legacy/. /target/") { return Err("migrate-storage.sh inválido".into()); }
+    for key in ["ARGWS_CRM_IMAGE","ARGWS_CRM_DATABASE_IMAGE","ARGWS_HTTP_BIND","ARGWS_HTTP_PORT","MYSQL_DATABASE","MYSQL_USER","MYSQL_PASSWORD","MYSQL_ROOT_PASSWORD","TZ","ARGWS_STORAGE_ROOT"] {
+        let value = get(&env, key).ok_or_else(|| format!("variável ausente: {key}"))?;
+        if value.is_empty() || value.starts_with("CHANGE_ME") { return Err(format!("valor de exemplo pendente: {key}")); }
+    }
+    if let Some(setup_token) = get(&env, "ARGWS_SETUP_TOKEN") {
+        if setup_token.starts_with("CHANGE_ME") {
+            return Err("valor de exemplo pendente: ARGWS_SETUP_TOKEN".into());
+        }
+        if !setup_token.is_empty() && !valid_setup_token(&setup_token) {
+            return Err("ARGWS_SETUP_TOKEN deve estar vazio ou conter 64 caracteres hexadecimais".into());
+        }
+    }
+    let storage_root = get(&env, "ARGWS_STORAGE_ROOT").unwrap();
+    if !valid_storage_root(&storage_root) { return Err("ARGWS_STORAGE_ROOT deve ser relativo, começar com ./ e permanecer na pasta da stack".into()); }
+    let image = get(&env, "ARGWS_CRM_IMAGE").unwrap();
+    let tag = image.rsplit(':').next().unwrap_or("");
+    if !image.starts_with("ghcr.io/wkarts/argws-crm:") || (tag != "develop" && !semver(tag)) {
+        return Err("use a imagem oficial com develop ou SemVer X.Y.Z".into());
+    }
+    let db = get(&env, "ARGWS_CRM_DATABASE_IMAGE").unwrap();
+    if db != MYSQL && db != MARIADB { return Err("banco deve usar a imagem MySQL ou MariaDB do GHCR".into()); }
+    if get(&env,"MYSQL_PASSWORD") == get(&env,"MYSQL_ROOT_PASSWORD") { return Err("as senhas MySQL devem ser diferentes".into()); }
+    for key in ["ARGWS_CRM_IMAGE","ARGWS_CRM_DATABASE_IMAGE","MYSQL_PASSWORD","ARGWS_SETUP_TOKEN","ARGWS_STORAGE_ROOT"] {
+        if !compose.contains(&format!("{}{{{}", "$", key)) { return Err(format!("compose não usa {key}")); }
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = fs::metadata(dir.join(".env")).map_err(|e|e.to_string())?.permissions().mode() & 0o777;
+        if mode & 0o077 != 0 { return Err("permissão insegura no .env; use chmod 600".into()); }
+    }
+    Ok(())
+}
+
+pub(crate) fn generate_stack(environment: &str, version: Option<&str>, database: &str, output: &Path, force: bool) -> Result<(), String> {
+    let (compose, example, default_tag) = match environment {
+        "develop" => (DEV_COMPOSE, DEV_ENV, "develop"),
+        "production" => (PROD_COMPOSE, PROD_ENV, VERSION.trim()),
+        _ => return Err("environment deve ser develop ou production".into()),
+    };
+    let tag = version.unwrap_or(default_tag);
+    if environment == "production" && !semver(tag) { return Err("produção exige versão SemVer X.Y.Z".into()); }
+    let db_image = match database {
+        "mysql" => MYSQL,
+        "mariadb" => MARIADB,
+        _ => return Err("database deve ser mysql ou mariadb".into()),
+    };
+    fs::create_dir_all(output).map_err(|e| format!("não foi possível criar a pasta: {e}"))?;
+    let compose_path = output.join("compose.yaml");
+    let previous_compose_has_setup_token = if compose_path.exists() {
+        fs::read_to_string(&compose_path).map_err(|e| format!("não foi possível ler compose.yaml: {e}"))?
+            .contains("ARGWS_SETUP_TOKEN")
+    } else {
+        false
+    };
+    write_compose(&compose_path, compose, force)?;
+    fs::write(output.join("migrate-storage.sh"), STORAGE_MIGRATION)
+        .map_err(|e| format!("não foi possível gravar migrate-storage.sh: {e}"))?;
+    let env_path = output.join(".env");
+    if !env_path.exists() {
+        let mut contents = set(example, "ARGWS_CRM_IMAGE", &format!("ghcr.io/wkarts/argws-crm:{tag}"));
+        contents = set(&contents, "ARGWS_CRM_DATABASE_IMAGE", db_image);
+        contents = set(&contents, "MYSQL_PASSWORD", &random_hex()?);
+        contents = set(&contents, "MYSQL_ROOT_PASSWORD", &random_hex()?);
+        contents = set(&contents, "ARGWS_SETUP_TOKEN", &random_hex()?);
+        secure_write(&env_path, &contents)?;
+    } else {
+        let old = fs::read_to_string(&env_path).map_err(|e| format!("não foi possível ler .env: {e}"))?;
+        let contents = ensure_setup_token(&old, !previous_compose_has_setup_token, random_hex)?;
+        let contents = ensure_storage_root(&contents)?;
+        if contents != old {
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                fs::set_permissions(&env_path, fs::Permissions::from_mode(0o600))
+                    .map_err(|e| format!("não foi possível proteger as permissões do .env: {e}"))?;
+            }
+            fs::write(&env_path, contents).map_err(|e| format!("não foi possível atualizar .env: {e}"))?;
+        }
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&env_path, fs::Permissions::from_mode(0o600))
+            .map_err(|e| format!("não foi possível proteger as permissões do .env: {e}"))?;
+    }
+    validate(output)?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test] fn stable_version_is_semver() { assert!(semver("3.4.2")); assert!(!semver("latest")); }
+    #[test] fn environments_include_database_and_runtime() {
+        assert!(DEV_COMPOSE.contains("database:"));
+        assert!(PROD_COMPOSE.contains("database_data:"));
+        assert!(DEV_ENV.contains("argws-crm:develop"));
+        assert!(DEV_ENV.contains("ARGWS_SETUP_TOKEN=CHANGE_ME_SETUP_TOKEN"));
+    }
+    #[test] fn env_replacement_preserves_other_values() {
+        let value = set("A=1\nB=2\n","A","3");
+        assert_eq!(get(&value,"B").as_deref(),Some("2"));
+        assert_eq!(get(&value,"A").as_deref(),Some("3"));
+    }
+    #[test] fn setup_token_is_added_to_legacy_envs_and_removed_after_setup() {
+        let legacy = "A=1\nARGWS_SETUP_TOKEN=CHANGE_ME_SETUP_TOKEN\nB=2\n";
+        let generated = ensure_setup_token(legacy, true, || Ok("a".repeat(64))).unwrap();
+        assert_eq!(get(&generated, "A").as_deref(), Some("1"));
+        assert_eq!(get(&generated, "B").as_deref(), Some("2"));
+        assert_eq!(get(&generated, "ARGWS_SETUP_TOKEN").unwrap(), "a".repeat(64));
+
+        let removed = generated.lines().filter(|line| !line.starts_with("ARGWS_SETUP_TOKEN=")).collect::<Vec<_>>().join("\n");
+        let unchanged = ensure_setup_token(&removed, false, || panic!("não deve gerar segredo para stack já provisionada")).unwrap();
+        assert_eq!(unchanged, removed);
+    }
+    #[test] fn storage_root_stays_relative_and_migrates_legacy_env() {
+        assert!(valid_storage_root("./storage"));
+        assert!(valid_storage_root("./data/argws"));
+        assert!(!valid_storage_root("/srv/argws"));
+        assert!(!valid_storage_root("./../outside"));
+        assert!(!valid_storage_root("./storage:other"));
+        let migrated = ensure_storage_root("A=1\n").unwrap();
+        assert_eq!(get(&migrated, "A").as_deref(), Some("1"));
+        assert_eq!(get(&migrated, "ARGWS_STORAGE_ROOT").as_deref(), Some("./storage"));
+        assert!(ensure_storage_root("ARGWS_STORAGE_ROOT=/srv/data\n").is_err());
+    }
+    #[test] fn setup_token_rejects_malformed_custom_values() {
+        assert!(ensure_setup_token("ARGWS_SETUP_TOKEN=abc\n", true, || Ok("a".repeat(64))).is_err());
+    }
+}
