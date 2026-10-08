@@ -1,4 +1,5 @@
 import importlib.util
+import re
 import subprocess
 import tempfile
 import unittest
@@ -48,6 +49,19 @@ class SemanticReleasePlanTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             PLANNER.plan_release("v3.5.0", "3.4.2")
 
+
+class ReleaseWorkflowTagRegexTest(unittest.TestCase):
+    def test_semver_tag_filters_match_existing_release_tags(self):
+        workflow = (ROOT / ".github/workflows/release-packages.yml").read_text(encoding="utf-8")
+        patterns = re.findall(r"grep -E '([^']+)'", workflow)
+        semver_patterns = [pattern for pattern in patterns if pattern.startswith("^v")]
+        self.assertEqual(len(semver_patterns), 2)
+        for pattern in semver_patterns:
+            with self.subTest(pattern=pattern):
+                matcher = re.compile(pattern)
+                self.assertIsNotNone(matcher.fullmatch("v3.4.2"))
+                self.assertIsNotNone(matcher.fullmatch("v3.5.0"))
+                self.assertIsNone(matcher.fullmatch("v3.4"))
 
 class ReleaseVersionMetadataTest(unittest.TestCase):
     def setUp(self):
