@@ -4,17 +4,16 @@ on:
     branches: [main, develop]
     paths: [deploy/**, tools/argws-crm-deployer/**, .github/workflows/deployer-release.yml]
   push:
-    branches: [develop, main]
-    paths: [deploy/**, tools/argws-crm-deployer/**, .github/workflows/deployer-release.yml]
+    branches: [develop]
+    paths: [deploy/**, scripts/package-deploy.py, scripts/apply-release-version.py, tools/argws-crm-deployer/**, .github/workflows/deployer-release.yml]
   release:
     types: [published]
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Release SemVer que receberá o binário (vazio usa a última estável)
-        required: false
+        description: Tag SemVer de uma release publicada a reconstruir (ex.: v3.5.0)
+        required: true
         type: string
-        default: ""
 permissions:
   contents: read
 concurrency:
@@ -38,7 +37,7 @@ jobs:
       (github.event_name == 'pull_request' ||
        github.event_name == 'release' ||
        github.event_name == 'workflow_dispatch' ||
-       (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')))
+       (github.event_name == 'push' && github.ref == 'refs/heads/develop'))
     strategy:
       fail-fast: false
       matrix:
@@ -55,8 +54,20 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.sha }}
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.release_tag) || github.sha }}
           persist-credentials: false
+      - name: Materializar a versão SemVer no deployer
+        if: (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')) || github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag || '' }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || {
+            echo "Informe uma tag publicada no formato vX.Y.Z." >&2
+            exit 1
+          }
+          python3 scripts/apply-release-version.py "${RELEASE_TAG#v}"
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: 1.90.0
@@ -117,36 +128,65 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.sha }}
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.release_tag) || github.sha }}
           persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           pattern: argws-crm-deployer-*
           path: release-assets
           merge-multiple: true
-      - name: Criar checksum e manifesto
+      - name: Gerar ZIP separado do diretório deploy
         shell: bash
         env:
-          SOURCE_REVISION: ${{ github.sha }}
           RELEASE_TAG: ${{ github.event.release.tag_name || '' }}
-          PRODUCT_VERSION: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
+          REQUESTED_TAG: ${{ inputs.release_tag || '' }}
+          EVENT_REF: ${{ github.ref }}
         run: |
           set -euo pipefail
-          if [[ -n "$PRODUCT_VERSION" && "$PRODUCT_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then PRODUCT_VERSION="$(printf '%s' "$PRODUCT_VERSION" | sed 's/^v//')"; else PRODUCT_VERSION="$(tr -d '[:space:]' < VERSION)"; fi
+          release_tag="${RELEASE_TAG:-$REQUESTED_TAG}"
+          if [[ -z "$release_tag" && "$EVENT_REF" == "refs/heads/develop" ]]; then
+            release_tag="argws-crm-develop"
+          fi
+          if [[ "$release_tag" == "argws-crm-develop" ]]; then
+            python3 scripts/package-deploy.py --develop --output-dir release-assets
+            deploy_package="ARGWS-CRM-deploy-develop.zip"
+            product_version="$(tr -d '[:space:]' < VERSION)"
+          else
+            [[ "$release_tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || {
+              echo "Tag inválida; esperado vX.Y.Z ou argws-crm-develop." >&2
+              exit 1
+            }
+            product_version="${release_tag#v}"
+            python3 scripts/apply-release-version.py "$product_version"
+            python3 scripts/package-deploy.py --version "$product_version" --output-dir release-assets
+            deploy_package="ARGWS-CRM-deploy-$product_version.zip"
+          fi
+          {
+            echo "PUBLISH_TAG=$release_tag"
+            echo "DEPLOY_PACKAGE=$deploy_package"
+            echo "PRODUCT_VERSION=$product_version"
+            echo "SOURCE_REVISION=$(git rev-parse HEAD)"
+          } >> "$GITHUB_ENV"
+      - name: Criar checksums e manifesto
+        shell: bash
+        run: |
+          set -euo pipefail
           test -s release-assets/argws-crm-deployer-win-x64.exe
           test -s release-assets/argws-crm-deployer-linux-x64
+          test -s "release-assets/$DEPLOY_PACKAGE"
           chmod 0755 release-assets/argws-crm-deployer-linux-x64
           (
             cd release-assets
-            sha256sum argws-crm-deployer-win-x64.exe argws-crm-deployer-linux-x64 > SHA256SUMS-Deployer.txt
+            sha256sum argws-crm-deployer-win-x64.exe argws-crm-deployer-linux-x64 "$DEPLOY_PACKAGE" > SHA256SUMS-Deployment.txt
           )
           python3 - <<'PY'
           import json, os
           payload = {
               "sourceRevision": os.environ["SOURCE_REVISION"],
               "productVersion": os.environ["PRODUCT_VERSION"],
-              "releaseTag": os.environ["RELEASE_TAG"] or None,
+              "releaseTag": os.environ["PUBLISH_TAG"],
               "runtime": "rust-native",
+              "deploymentKit": {"file": os.environ["DEPLOY_PACKAGE"], "contents": "deploy/**"},
               "binaries": [
                   {"target": "x86_64-pc-windows-msvc", "file": "argws-crm-deployer-win-x64.exe"},
                   {"target": "x86_64-unknown-linux-musl", "file": "argws-crm-deployer-linux-x64"},
@@ -209,10 +249,10 @@ jobs:
           fi
           if [[ "$develop" == true ]]; then
             if gh release view "$tag" --repo "$REPOSITORY" >/dev/null 2>&1; then
-              gh release upload "$tag" release-assets/argws-crm-deployer-win-x64.exe release-assets/argws-crm-deployer-linux-x64 release-assets/SHA256SUMS-Deployer.txt release-assets/argws-crm-deployer-release.json --repo "$REPOSITORY" --clobber
+              gh release upload "$tag" release-assets/argws-crm-deployer-win-x64.exe release-assets/argws-crm-deployer-linux-x64 release-assets/ARGWS-CRM-deploy-*.zip release-assets/SHA256SUMS-Deployment.txt release-assets/argws-crm-deployer-release.json --repo "$REPOSITORY" --clobber
             else
-              gh release create "$tag" release-assets/argws-crm-deployer-win-x64.exe release-assets/argws-crm-deployer-linux-x64 release-assets/SHA256SUMS-Deployer.txt release-assets/argws-crm-deployer-release.json --repo "$REPOSITORY" --target "$GITHUB_SHA" --title "ARGWS CRM Deployer develop" --notes "Deployer portátil para Windows x64 e Linux x64; checksum e proveniência anexos." --prerelease
+              gh release create "$tag" release-assets/argws-crm-deployer-win-x64.exe release-assets/argws-crm-deployer-linux-x64 release-assets/ARGWS-CRM-deploy-*.zip release-assets/SHA256SUMS-Deployment.txt release-assets/argws-crm-deployer-release.json --repo "$REPOSITORY" --target "$GITHUB_SHA" --title "ARGWS CRM Deployer develop" --notes "ZIP de implantação, deployer para Windows x64 e Linux x64, checksums e manifesto anexos." --prerelease
             fi
           else
-            gh release upload "$tag" release-assets/argws-crm-deployer-win-x64.exe release-assets/argws-crm-deployer-linux-x64 release-assets/SHA256SUMS-Deployer.txt release-assets/argws-crm-deployer-release.json --repo "$REPOSITORY" --clobber
+            gh release upload "$tag" release-assets/argws-crm-deployer-win-x64.exe release-assets/argws-crm-deployer-linux-x64 release-assets/ARGWS-CRM-deploy-*.zip release-assets/SHA256SUMS-Deployment.txt release-assets/argws-crm-deployer-release.json --repo "$REPOSITORY" --clobber
           fi
