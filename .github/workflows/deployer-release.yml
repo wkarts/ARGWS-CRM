@@ -1,0 +1,119 @@
+name: ARGWS CRM Deployer - binário e releases
+on:
+  push:
+    branches: [develop, main]
+    paths: [deploy/**, tools/argws-crm-deployer/**]
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release SemVer que receberá o binário
+        required: false
+        type: string
+        default: v3.4.2
+permissions:
+  contents: write
+jobs:
+  validate:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: 1.90.0
+      - run: cargo test --manifest-path tools/argws-crm-deployer/Cargo.toml
+  publish:
+    if: github.event_name == 'release' || (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.sha }}
+          persist-credentials: false
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: 1.90.0
+          target: x86_64-pc-windows-msvc
+      - name: Testar, compilar e executar smoke test Windows x64
+        shell: pwsh
+        env:
+          RUSTFLAGS: -C target-feature=+crt-static
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifest = 'tools/argws-crm-deployer/Cargo.toml'
+          cargo +1.90.0 test --manifest-path $manifest
+          if ($LASTEXITCODE -ne 0) { throw 'Rust tests failed' }
+          cargo +1.90.0 build --release --target x86_64-pc-windows-msvc --manifest-path $manifest
+          if ($LASTEXITCODE -ne 0) { throw 'Windows x64 build failed' }
+          $exe = Resolve-Path 'tools/argws-crm-deployer/target/x86_64-pc-windows-msvc/release/argws-crm-deployer.exe'
+          $out = Join-Path $env:RUNNER_TEMP 'argws-crm-deployer-smoke'
+          & $exe generate --environment production --version (Get-Content VERSION -Raw).Trim() --database mariadb --output $out
+          if ($LASTEXITCODE -ne 0) { throw 'Generate smoke test failed' }
+          & $exe validate --directory $out
+          if ($LASTEXITCODE -ne 0) { throw 'Validate smoke test failed' }
+      - name: Preparar asset, checksum e proveniência
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_REF: ${{ github.ref }}
+          EVENT_TAG: ${{ github.event.release.tag_name || '' }}
+          REQUESTED_TAG: ${{ inputs.release_tag || '' }}
+          REPOSITORY: ${{ github.repository }}
+          SOURCE_REVISION: ${{ github.sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $dir = Join-Path $env:RUNNER_TEMP 'release'
+          New-Item -ItemType Directory -Force $dir | Out-Null
+          $binary = Join-Path $dir 'argws-crm-deployer-win-x64.exe'
+          Copy-Item 'tools/argws-crm-deployer/target/x86_64-pc-windows-msvc/release/argws-crm-deployer.exe' $binary
+          $hash = (Get-FileHash -Algorithm SHA256 $binary).Hash.ToLowerInvariant()
+          "$hash  argws-crm-deployer-win-x64.exe" | Set-Content (Join-Path $dir 'SHA256SUMS-Deployer.txt') -Encoding ascii
+          @{
+            sourceRevision = $env:SOURCE_REVISION
+            productVersion = (Get-Content VERSION -Raw).Trim()
+            runtime = 'rust-native'
+            target = 'x86_64-pc-windows-msvc'
+            binary = 'argws-crm-deployer-win-x64.exe'
+          } | ConvertTo-Json -Depth 3 | Set-Content (Join-Path $dir 'argws-crm-deployer-release.json') -Encoding ascii
+          "RELEASE_ASSET_DIR=$dir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Publicar no canal correspondente
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_REF: ${{ github.ref }}
+          EVENT_TAG: ${{ github.event.release.tag_name || '' }}
+          REQUESTED_TAG: ${{ inputs.release_tag || '' }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $develop = $env:EVENT_NAME -eq 'push' -and $env:EVENT_REF -eq 'refs/heads/develop'
+          if ($develop) {
+            $tag = 'argws-crm-develop'
+          } elseif ($env:EVENT_NAME -eq 'release') {
+            $tag = $env:EVENT_TAG
+          } elseif (![string]::IsNullOrWhiteSpace($env:REQUESTED_TAG)) {
+            $tag = $env:REQUESTED_TAG
+          } else {
+            $releases = gh release list --repo $env:REPOSITORY --limit 100 --json tagName,isPrerelease,isDraft | ConvertFrom-Json
+            $stable = $releases | Where-Object { !$_.isDraft -and !$_.isPrerelease -and $_.tagName -match '^v\d+\.\d+\.\d+$' } |
+              ForEach-Object { [pscustomobject]@{ Tag=$_.tagName; Version=[version]$_.tagName.Substring(1) } } |
+              Sort-Object -Property Version -Descending | Select-Object -First 1
+            if (!$stable) { throw 'No stable release found for the deployer binary.' }
+            $tag = $stable.Tag
+          }
+          $dir = $env:RELEASE_ASSET_DIR
+          $assets = @((Join-Path $dir 'argws-crm-deployer-win-x64.exe'), (Join-Path $dir 'SHA256SUMS-Deployer.txt'), (Join-Path $dir 'argws-crm-deployer-release.json'))
+          if ($develop) {
+            gh release view $tag --repo $env:REPOSITORY *> $null
+            if ($LASTEXITCODE -eq 0) {
+              gh release upload $tag @assets --repo $env:REPOSITORY --clobber
+            } else {
+              gh release create $tag @assets --repo $env:REPOSITORY --target $env:GITHUB_SHA --title 'ARGWS CRM Deployer develop' --notes 'Binário portátil do canal develop; proveniência no asset json.' --prerelease
+            }
+          } else {
+            gh release upload $tag @assets --repo $env:REPOSITORY --clobber
+          }
