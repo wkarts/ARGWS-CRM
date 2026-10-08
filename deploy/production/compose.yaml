@@ -1,7 +1,7 @@
 name: ${COMPOSE_PROJECT_NAME:-argws-crm-production}
 services:
   storage-init:
-    image: ${ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.6.1}
+    image: ${ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.6.2}
     restart: "no"
     user: "0:0"
     entrypoint: ["/bin/sh", "-ec"]
@@ -14,7 +14,7 @@ services:
     volumes:
       - "${ARGWS_STORAGE_ROOT:-./storage}:/storage"
   web:
-    image: ${ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.6.1}
+    image: ${ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.6.2}
     container_name: ${COMPOSE_PROJECT_NAME:-argws-crm-production}-web
     restart: unless-stopped
     environment:
