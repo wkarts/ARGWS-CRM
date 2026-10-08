@@ -112,6 +112,73 @@ class DockerProvisioningContractTest(unittest.TestCase):
         self.assertIn('include_str!("../../../deploy/migrate-storage.sh")', deployer)
         self.assertIn("ensure_storage_root(&contents)", deployer)
         self.assertIn("valid_storage_root(&storage_root)", deployer)
+    def test_named_volume_migration_copies_data_and_keeps_the_source(self):
+        import os
+        import subprocess
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            stack = root / "stack"
+            volumes = root / "volumes"
+            docker_bin = root / "bin"
+            stack.mkdir()
+            volumes.mkdir()
+            docker_bin.mkdir()
+            (stack / "compose.yaml").write_text("services: {}\n", encoding="utf-8")
+            (stack / ".env").write_text(
+                "COMPOSE_PROJECT_NAME=testcrm\nARGWS_STORAGE_ROOT=./storage\nARGWS_VERSION=3.6.0\n",
+                encoding="utf-8",
+            )
+            legacy = volumes / "testcrm_uploads"
+            (legacy / "nested").mkdir(parents=True)
+            (legacy / "nested" / "customer.txt").write_text("customer data", encoding="utf-8")
+            fake_docker = docker_bin / "docker"
+            fake_docker.write_text(
+                """#!/bin/sh
+set -eu
+case "$1" in
+  compose|image) exit 0 ;;
+  volume) [ -d "$FAKE_DOCKER_VOLUMES/$3" ] ;;
+  run)
+    shift
+    legacy=
+    target=
+    while [ "$#" -gt 0 ]; do
+      if [ "$1" = "--volume" ]; then
+        spec=$2
+        shift 2
+        case "$spec" in
+          *:/legacy:ro) legacy=$(printf '%s' "$spec" | sed 's|:/legacy:ro$||') ;;
+          *:/target) target=$(printf '%s' "$spec" | sed 's|:/target$||') ;;
+        esac
+      else
+        shift
+      fi
+    done
+    mkdir -p "$target"
+    cp -an "$FAKE_DOCKER_VOLUMES/$legacy/." "$target/"
+    ;;
+  *) exit 2 ;;
+esac
+""",
+                encoding="utf-8",
+            )
+            fake_docker.chmod(0o755)
+            env = os.environ.copy()
+            env["PATH"] = str(docker_bin) + os.pathsep + env["PATH"]
+            env["FAKE_DOCKER_VOLUMES"] = str(volumes)
+            result = subprocess.run(
+                ["sh", str(ROOT / "deploy/migrate-storage.sh"), str(stack)],
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            copied = stack / "storage/uploads/nested/customer.txt"
+            self.assertEqual(copied.read_text(encoding="utf-8"), "customer data")
+            self.assertEqual((legacy / "nested/customer.txt").read_text(encoding="utf-8"), "customer data")
+
     def test_smoke_covers_web_setup_protection_and_persistence(self):
         smoke = read("tests/docker_provision_smoke.sh")
         restart = smoke.index('docker restart "$web"')
