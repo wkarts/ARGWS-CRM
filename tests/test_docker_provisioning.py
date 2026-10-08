@@ -108,10 +108,10 @@ class DockerProvisioningContractTest(unittest.TestCase):
         self.assertNotIn('--rm-volume', migration)
         result = __import__("subprocess").run(["sh", "-n", "deploy/migrate-storage.sh"], cwd=ROOT, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        deployer = read("tools/argws-crm-deployer/src/main.rs")
-        self.assertIn('include_str!("../../../deploy/migrate-storage.sh")', deployer)
-        self.assertIn("ensure_storage_root(&contents)", deployer)
-        self.assertIn("valid_storage_root(&storage_root)", deployer)
+        core = read("tools/argws-crm-deployer/src/core.rs")
+        self.assertIn('include_str!("../../../deploy/migrate-storage.sh")', core)
+        self.assertIn("ensure_storage_root(&contents)", core)
+        self.assertIn("valid_storage_root(&storage_root)", core)
     def test_named_volume_migration_copies_data_and_keeps_the_source(self):
         import os
         import subprocess
@@ -198,11 +198,11 @@ esac
         for path in ("compose.yaml", "deploy/develop/compose.yaml", "deploy/production/compose.yaml"):
             with self.subTest(path=path):
                 self.assertIn("ARGWS_SETUP_TOKEN: ${ARGWS_SETUP_TOKEN:-}", read(path))
-        deployer = read("tools/argws-crm-deployer/src/main.rs")
-        self.assertIn("previous_compose_has_setup_token", deployer)
-        self.assertIn("ensure_setup_token(&old, !previous_compose_has_setup_token", deployer)
-        self.assertIn("None if !generate_if_missing => Ok(contents.to_string())", deployer)
-        self.assertIn("ARGWS_SETUP_TOKEN deve estar vazio ou conter 64", deployer)
+        core = read("tools/argws-crm-deployer/src/core.rs")
+        self.assertIn("previous_compose_has_setup_token", core)
+        self.assertIn("ensure_setup_token(&old, !previous_compose_has_setup_token", core)
+        self.assertIn("None if !generate_if_missing => Ok(contents.to_string())", core)
+        self.assertIn("ARGWS_SETUP_TOKEN deve estar vazio ou conter 64", core)
 
     def test_environment_examples_include_one_time_setup_key(self):
         for path in ("container.env.example", "deploy/develop/.env.example", "deploy/production/.env.example"):

@@ -145,7 +145,7 @@ jobs:
           "$exe" validate --directory "$out"
           if grep -Eiq 'password|token|[0-9a-f]{64}' "$log"; then echo "Operational log contains sensitive data." >&2; exit 1; fi
           interactive_out="$RUNNER_TEMP/argws-crm-deployer-interactive"
-          printf '%s\\n' develop mariadb "$interactive_out" n | "$exe" interactive
+          printf '%s\n' develop mariadb "$interactive_out" n | "$exe" interactive
           "$exe" validate --directory "$interactive_out"
           mkdir -p "$RUNNER_TEMP/argws-crm-deployer-assets"
           cp "$exe" "$RUNNER_TEMP/argws-crm-deployer-assets/argws-crm-deployer-linux-x64"
