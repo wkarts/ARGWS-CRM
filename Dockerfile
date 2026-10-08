@@ -46,7 +46,11 @@ RUN mkdir -p /app/uploads /app/temp /app/application/cache /app/application/logs
     && php -l /opt/argws-crm-provisioner/provisioner.php \
     && php -l /opt/argws-crm-provisioner/web/index.php \
     && php -l /opt/argws-crm-provisioner/sqlparser.php \
-    && php -l /opt/argws-crm-provisioner/phpass.php \\\n    && frankenphp validate --config /etc/caddy/Caddyfile --adapter caddyfile \\\n    && frankenphp validate --config /etc/caddy/Caddyfile.unprovisioned --adapter caddyfile
+    && php -l /opt/argws-crm-provisioner/phpass.php
+
+RUN frankenphp validate --config /etc/caddy/Caddyfile --adapter caddyfile \
+    && frankenphp validate --config /etc/caddy/Caddyfile.unprovisioned --adapter caddyfile
+
 
 # The entrypoint initializes bind-mounted paths as root, then drops FrankenPHP to www-data.
 USER root
