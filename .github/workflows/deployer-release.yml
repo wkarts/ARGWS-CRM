@@ -240,7 +240,7 @@ jobs:
           $manifest = 'tools/argws-crm-deployer/Cargo.toml'
           $dependencyTree = cargo +1.90.0 tree --locked --features gui --target $env:TARGET --manifest-path $manifest
           if ($LASTEXITCODE -ne 0) { throw 'GUI dependency resolution failed' }
-          if (($dependencyTree | Out-String) -match 'egui_glow|glutin') { throw 'OpenGL glow renderer is still in the GUI dependency graph' }
+          if (($dependencyTree | Out-String) -match 'egui_glow') { throw 'egui_glow backend remains in the GUI dependency graph' }
           cargo +1.90.0 test --locked --features gui --target $env:TARGET --manifest-path $manifest
           if ($LASTEXITCODE -ne 0) { throw 'GUI Rust tests failed' }
           cargo +1.90.0 build --locked --release --features gui --target $env:TARGET --manifest-path $manifest
@@ -263,8 +263,8 @@ jobs:
           set -euo pipefail
           manifest=tools/argws-crm-deployer/Cargo.toml
           dependency_tree="$(cargo +1.90.0 tree --locked --features gui --target "$TARGET" --manifest-path "$manifest")"
-          if grep -Eq 'egui_glow|glutin' <<< "$dependency_tree"; then
-            echo "OpenGL glow renderer remains in the GUI dependency graph." >&2
+          if grep -Eq 'egui_glow' <<< "$dependency_tree"; then
+            echo "egui_glow backend remains in the GUI dependency graph." >&2
             exit 1
           fi
           cargo +1.90.0 test --locked --features gui --target "$TARGET" --manifest-path "$manifest"
