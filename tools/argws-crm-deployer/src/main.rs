@@ -55,6 +55,33 @@ fn get(contents: &str, key: &str) -> Option<String> {
     let prefix = format!("{key}=");
     contents.lines().find_map(|line| line.strip_prefix(&prefix).map(str::to_string))
 }
+fn valid_setup_token(value: &str) -> bool {
+    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+fn ensure_setup_token<F>(contents: &str, generate_if_missing: bool, generate: F) -> Result<String, String>
+where
+    F: FnOnce() -> Result<String, String>,
+{
+    match get(contents, "ARGWS_SETUP_TOKEN") {
+        Some(value) if valid_setup_token(&value) => Ok(contents.to_string()),
+        Some(value) if value.is_empty() || value.starts_with("CHANGE_ME") => {
+            let token = generate()?;
+            if !valid_setup_token(&token) {
+                return Err("a chave de setup gerada deve conter 64 caracteres hexadecimais".into());
+            }
+            Ok(set(contents, "ARGWS_SETUP_TOKEN", &token))
+        }
+        None if !generate_if_missing => Ok(contents.to_string()),
+        None => {
+            let token = generate()?;
+            if !valid_setup_token(&token) {
+                return Err("a chave de setup gerada deve conter 64 caracteres hexadecimais".into());
+            }
+            Ok(set(contents, "ARGWS_SETUP_TOKEN", &token))
+        }
+        Some(_) => Err("ARGWS_SETUP_TOKEN inválido; use 64 caracteres hexadecimais ou remova a variável para gerar outra chave".into()),
+    }
+}
 fn secure_write(path: &Path, contents: &str) -> Result<(), String> {
     let mut options = OpenOptions::new();
     options.write(true).create_new(true);
@@ -78,6 +105,14 @@ fn validate(dir: &Path) -> Result<(), String> {
         let value = get(&env, key).ok_or_else(|| format!("variável ausente: {key}"))?;
         if value.is_empty() || value.starts_with("CHANGE_ME") { return Err(format!("valor de exemplo pendente: {key}")); }
     }
+    if let Some(setup_token) = get(&env, "ARGWS_SETUP_TOKEN") {
+        if setup_token.starts_with("CHANGE_ME") {
+            return Err("valor de exemplo pendente: ARGWS_SETUP_TOKEN".into());
+        }
+        if !setup_token.is_empty() && !valid_setup_token(&setup_token) {
+            return Err("ARGWS_SETUP_TOKEN deve estar vazio ou conter 64 caracteres hexadecimais".into());
+        }
+    }
     let image = get(&env, "ARGWS_CRM_IMAGE").unwrap();
     let tag = image.rsplit(':').next().unwrap_or("");
     if !image.starts_with("ghcr.io/wkarts/argws-crm:") || (tag != "develop" && !semver(tag)) {
@@ -86,7 +121,7 @@ fn validate(dir: &Path) -> Result<(), String> {
     let db = get(&env, "ARGWS_CRM_DATABASE_IMAGE").unwrap();
     if db != MYSQL && db != MARIADB { return Err("banco deve usar a imagem MySQL ou MariaDB do GHCR".into()); }
     if get(&env,"MYSQL_PASSWORD") == get(&env,"MYSQL_ROOT_PASSWORD") { return Err("as senhas MySQL devem ser diferentes".into()); }
-    for key in ["ARGWS_CRM_IMAGE","ARGWS_CRM_DATABASE_IMAGE","MYSQL_PASSWORD"] {
+    for key in ["ARGWS_CRM_IMAGE","ARGWS_CRM_DATABASE_IMAGE","MYSQL_PASSWORD","ARGWS_SETUP_TOKEN"] {
         if !compose.contains(&format!("{}{{{}", "$", key)) { return Err(format!("compose não usa {key}")); }
     }
     #[cfg(unix)]
@@ -112,14 +147,40 @@ fn generate_stack(environment: &str, version: Option<&str>, database: &str, outp
         _ => return Err("database deve ser mysql ou mariadb".into()),
     };
     fs::create_dir_all(output).map_err(|e| format!("não foi possível criar a pasta: {e}"))?;
-    write_compose(&output.join("compose.yaml"), compose, force)?;
+    let compose_path = output.join("compose.yaml");
+    let previous_compose_has_setup_token = if compose_path.exists() {
+        fs::read_to_string(&compose_path).map_err(|e| format!("não foi possível ler compose.yaml: {e}"))?
+            .contains("ARGWS_SETUP_TOKEN")
+    } else {
+        false
+    };
+    write_compose(&compose_path, compose, force)?;
     let env_path = output.join(".env");
     if !env_path.exists() {
         let mut contents = set(example, "ARGWS_CRM_IMAGE", &format!("ghcr.io/wkarts/argws-crm:{tag}"));
         contents = set(&contents, "ARGWS_CRM_DATABASE_IMAGE", db_image);
         contents = set(&contents, "MYSQL_PASSWORD", &random_hex()?);
         contents = set(&contents, "MYSQL_ROOT_PASSWORD", &random_hex()?);
+        contents = set(&contents, "ARGWS_SETUP_TOKEN", &random_hex()?);
         secure_write(&env_path, &contents)?;
+    } else {
+        let old = fs::read_to_string(&env_path).map_err(|e| format!("não foi possível ler .env: {e}"))?;
+        let contents = ensure_setup_token(&old, !previous_compose_has_setup_token, random_hex)?;
+        if contents != old {
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                fs::set_permissions(&env_path, fs::Permissions::from_mode(0o600))
+                    .map_err(|e| format!("não foi possível proteger as permissões do .env: {e}"))?;
+            }
+            fs::write(&env_path, contents).map_err(|e| format!("não foi possível atualizar .env: {e}"))?;
+        }
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&env_path, fs::Permissions::from_mode(0o600))
+            .map_err(|e| format!("não foi possível proteger as permissões do .env: {e}"))?;
     }
     validate(output)?;
     Ok(())
@@ -171,10 +232,25 @@ mod tests {
         assert!(DEV_COMPOSE.contains("database:"));
         assert!(PROD_COMPOSE.contains("database_data:"));
         assert!(DEV_ENV.contains("argws-crm:develop"));
+        assert!(DEV_ENV.contains("ARGWS_SETUP_TOKEN=CHANGE_ME_SETUP_TOKEN"));
     }
     #[test] fn env_replacement_preserves_other_values() {
         let value = set("A=1\nB=2\n","A","3");
         assert_eq!(get(&value,"B").as_deref(),Some("2"));
         assert_eq!(get(&value,"A").as_deref(),Some("3"));
+    }
+    #[test] fn setup_token_is_added_to_legacy_envs_and_removed_after_setup() {
+        let legacy = "A=1\nARGWS_SETUP_TOKEN=CHANGE_ME_SETUP_TOKEN\nB=2\n";
+        let generated = ensure_setup_token(legacy, true, || Ok("a".repeat(64))).unwrap();
+        assert_eq!(get(&generated, "A").as_deref(), Some("1"));
+        assert_eq!(get(&generated, "B").as_deref(), Some("2"));
+        assert_eq!(get(&generated, "ARGWS_SETUP_TOKEN").unwrap(), "a".repeat(64));
+
+        let removed = generated.lines().filter(|line| !line.starts_with("ARGWS_SETUP_TOKEN=")).collect::<Vec<_>>().join("\n");
+        let unchanged = ensure_setup_token(&removed, false, || panic!("não deve gerar segredo para stack já provisionada")).unwrap();
+        assert_eq!(unchanged, removed);
+    }
+    #[test] fn setup_token_rejects_malformed_custom_values() {
+        assert!(ensure_setup_token("ARGWS_SETUP_TOKEN=abc\n", true, || Ok("a".repeat(64))).is_err());
     }
 }

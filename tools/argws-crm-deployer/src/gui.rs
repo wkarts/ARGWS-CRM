@@ -160,6 +160,7 @@ impl eframe::App for DeployerApp {
             ui.add_space(8.0);
             ui.label(&self.status);
             ui.separator();
+            ui.label("O primeiro acesso usa /setup; copie a chave ARGWS_SETUP_TOKEN do .env para abrir o assistente.");
             ui.label("O .env contém senhas aleatórias e será preservado nas execuções seguintes.");
             ui.label("A interface usa os mesmos modelos e a mesma validação do deployer de terminal.");
         });

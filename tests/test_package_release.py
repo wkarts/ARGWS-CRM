@@ -19,6 +19,8 @@ class PackagePrivacyRulesTest(unittest.TestCase):
             "tools/argws-crm-deployer/src/main.rs",
             "scripts/package-deploy.py",
             "docker/provision.php",
+            "docker/provisioner.php",
+            "docker/setup-web.php",
             "docker/entrypoint.sh",
             "application/config/app-config.php",
             "modules/finance/uploads/ofx/statement.ofx",
