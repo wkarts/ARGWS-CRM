@@ -15,9 +15,9 @@ O instalador fica em `install/`. Configure o domínio para servir a raiz do proj
 
 A implantação recomendada usa os Compose por ambiente e o binário `argws-crm-deployer` documentados em [deploy/README.md](deploy/README.md). O deployer gráfico ou de terminal prepara `compose.yaml` e `.env`; a configuração, o banco, as senhas e os uploads ficam fora da imagem. O ativo GUI abre o assistente desktop quando iniciado sem argumentos.
 
-A imagem GHCR não inclui o diretório web `install/`. O primeiro provisionamento ocorre uma vez pelo terminal, com um comando CLI que importa o schema em banco vazio e solicita os dados do primeiro administrador sem exibir a senha. Antes da conclusão, o endpoint web responde 503; não há rota de instalação pública nem credenciais master padrão.
+A imagem GHCR não inclui o instalador herdado `install/`. No primeiro acesso, `/setup` abre um assistente web protegido pela chave aleatória `ARGWS_SETUP_TOKEN` gerada no `.env` pelo deployer. O formulário cria o schema somente em banco vazio, grava a configuração no volume persistente e cria o primeiro administrador; em seguida, o próprio serviço libera o CRM sem reinício manual. Após a conclusão, `/setup` e `/install` ficam inacessíveis. Não há usuário nem senha padrão.
 
-O Compose de raiz permanece disponível para um banco MySQL/MariaDB externo. Copie `container.env.example` para `.env`, configure as credenciais locais e siga [Operação PHP e containers](docs/operacao-php-e-containers.md). Para instalações PHP tradicionais, o instalador web continua em `install/`.
+O Compose de raiz permanece disponível para um banco MySQL/MariaDB externo. Copie `container.env.example` para `.env`, configure as credenciais locais e gere `ARGWS_SETUP_TOKEN` com `openssl rand -hex 32`. Siga [Operação PHP e containers](docs/operacao-php-e-containers.md). Para instalações PHP tradicionais, o instalador web continua em `install/`.
 
 ## Idioma, suporte e privacidade
 

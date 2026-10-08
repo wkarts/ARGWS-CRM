@@ -6,19 +6,19 @@ A aplicação preserva a instalação em PHP 8.1 ou superior com MySQL/MariaDB e
 
 ## FrankenPHP pelo GHCR
 
-A instalação PHP tradicional mantém o instalador web em `install/`. A imagem FrankenPHP é diferente: ela não contém esse diretório nem publica uma rota de setup. As stacks oficiais por ambiente usam um banco MySQL/MariaDB persistente e guardam a configuração da instalação no volume `installation_config`.
+A instalação PHP tradicional mantém o instalador web em `install/`. A imagem FrankenPHP não contém o instalador legado `install/`; ela oferece o assistente web `/setup` somente enquanto não há configuração persistente. As stacks oficiais por ambiente usam um banco MySQL/MariaDB persistente e guardam a configuração da instalação no volume `installation_config`.
 
-1. Gere os arquivos de produção com o binário `argws-crm-deployer`, autentique no GHCR se os packages estiverem privados, valide o Compose e faça pull conforme [deploy/README.md](../deploy/README.md).
-2. Execute `docker compose --env-file .env -f compose.yaml up -d`. O banco sobe primeiro; até o provisionamento, o serviço web responde 503 com instruções.
-3. No terminal do servidor, execute `docker compose --env-file .env -f compose.yaml exec web php /opt/argws-crm-provisioner/provision.php`. O comando recusa banco com tabelas e instalação já configurada. Em execução interativa, a senha do primeiro administrador é digitada sem eco; não há conta ou senha padrão.
-4. Reinicie com `docker compose --env-file .env -f compose.yaml restart web` e configure o CloudPanel para encaminhar HTTPS à porta local vinculada a `127.0.0.1`.
+1. Gere os arquivos de produção com o binário `argws-crm-deployer`, autentique no GHCR se os packages estiverem privados e valide o Compose conforme [deploy/README.md](../deploy/README.md). O deployer cria uma chave aleatória `ARGWS_SETUP_TOKEN` no `.env`.
+2. Execute `docker compose --env-file .env -f compose.yaml up -d` e configure o CloudPanel para encaminhar HTTPS à porta local vinculada a `127.0.0.1`.
+3. Abra `https://seu-dominio/setup`, copie a chave `ARGWS_SETUP_TOKEN` do `.env` e preencha URL pública, nome, e-mail e senha do primeiro administrador. O assistente importa o schema somente se o banco estiver vazio, grava a configuração persistente e cria a conta. Ao terminar, redireciona ao CRM; `/setup` e `/install` ficam bloqueados. Se a chave estiver ausente ou inválida, o serviço responde 503 e não abre o formulário.
+4. Depois de confirmar o acesso, remova `ARGWS_SETUP_TOKEN` do `.env` e recrie somente o serviço web para eliminá-lo também dos metadados do container: `docker compose --env-file .env -f compose.yaml up -d --force-recreate web`.
 5. Para atualizar, faça backup do banco e volumes, preserve `.env`, execute `pull` e `up -d` e aplique a migration pelo painel. Não use `docker compose down -v`.
 
-O processo web continua executando como `www-data`. Caddy bloqueia `/install`, `application/`, `system/`, `temp/`, arquivos `.env` e scripts PHP dentro de diretórios de recursos. O provisionador e o schema ficam fora da raiz web; somente o schema e os helpers de hash/parser compatíveis são levados à imagem, sem os formulários ou handlers do instalador. O provisionamento é exclusivo para uma base vazia e não sobrescreve dados de instalações existentes.
+O processo web continua executando como `www-data`. Caddy bloqueia `/install`, `application/`, `system/`, `temp/`, arquivos `.env` e scripts PHP dentro de diretórios de recursos. O provisionador, o schema e os helpers ficam fora da raiz da aplicação. A imagem inclui somente um handler próprio e mínimo para o primeiro acesso; os formulários e handlers do instalador legado não são distribuídos no container. O provisionamento é exclusivo para uma base vazia e não sobrescreve dados de instalações existentes.
 
 ### Compose com banco externo
 
-O `compose.yaml` da raiz permanece para uso avançado com MySQL/MariaDB externo; crie um `.env` local a partir de `container.env.example` e preencha `ARGWS_DB_HOST`, `ARGWS_DB_NAME`, `ARGWS_DB_USER` e `ARGWS_DB_PASSWORD`. Para a implantação recomendada com banco interno e deployer, use as stacks em `deploy/`.
+O `compose.yaml` da raiz permanece para uso avançado com MySQL/MariaDB externo; crie um `.env` local a partir de `container.env.example`, preencha `ARGWS_DB_HOST`, `ARGWS_DB_NAME`, `ARGWS_DB_USER` e `ARGWS_DB_PASSWORD`, e defina `ARGWS_SETUP_TOKEN` com `openssl rand -hex 32` antes do primeiro acesso. Para a implantação recomendada com banco interno e deployer, use as stacks em `deploy/`.
 
 ## Suporte e idioma
 

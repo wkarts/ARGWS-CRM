@@ -7,6 +7,9 @@
         @installer path /install /install/ /install/*
         respond @installer 404
 
+        @setup path /setup /setup/
+        respond @setup 404
+
         @private path /application/* /system/* /temp/* /data/* /.env /.env.*
         respond @private 404
 
