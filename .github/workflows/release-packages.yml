@@ -1,92 +1,387 @@
-name: Pacotes ARGWS CRM
+name: Release ARGWS CRM - SemVer, FrankenPHP e pacotes
 
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_bump:
+        description: Sobrescrever o incremento automático
+        required: false
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
 
 permissions:
+  actions: write
   contents: write
+  packages: write
+  pull-requests: read
 
 concurrency:
-  group: argws-crm-release-${{ github.ref }}
+  group: argws-crm-release-main
   cancel-in-progress: false
 
 jobs:
-  package:
+  validate:
+    name: Validar código promovido para main
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip release]')
     runs-on: ubuntu-latest
     steps:
-      - name: Obter histórico completo
-        uses: actions/checkout@v4
+      - name: Obter histórico e tags
+        uses: actions/checkout@v5
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
-
-      - name: Validar versão e tag
-        shell: bash
-        run: bash ./scripts/check-release-version.sh "${GITHUB_REF_NAME}"
-
-      - name: Ler versão SemVer
-        id: version
-        shell: bash
-        run: printf 'value=%s\n' "${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-
-      - name: Executar testes de regressão
-        run: |
-          node tests/custom_links_security.test.cjs
-          node tests/argws_platform_contract.test.cjs
-          python3 -m unittest tests/test_package_release.py
-
-      - name: Preparar diretório-base do pacote incremental
-        id: base
+      - name: Impedir release fora de main
         shell: bash
         run: |
           set -euo pipefail
-          current_tag="${GITHUB_REF_NAME}"
-          mapfile -t release_tags < <(git tag --list 'v[0-9]*' --sort=version:refname)
-          previous_tag=""
-          found_current="false"
-          for tag in "${release_tags[@]}"; do
-            if [[ "$tag" == "$current_tag" ]]; then
-              found_current="true"
-              break
+          [[ "${GITHUB_REF}" == "refs/heads/main" ]] || {
+            echo "Releases estáveis só podem ser planejadas a partir de main." >&2
+            exit 1
+          }
+      - name: Validar contrato de versão ARGWS
+        run: bash ./scripts/check-release-version.sh
+      - name: Executar testes funcionais, de versão e de distribuição
+        run: |
+          set -euo pipefail
+          node tests/custom_links_security.test.cjs
+          node tests/argws_platform_contract.test.cjs
+          python3 -m unittest tests/test_release_version.py tests/test_package_release.py
+
+  plan-version:
+    name: Planejar SemVer da promoção
+    needs: validate
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      tag: ${{ steps.plan.outputs.tag }}
+      bump: ${{ steps.plan.outputs.bump }}
+      previous: ${{ steps.plan.outputs.previous }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Obter título e rótulos da PR integrada
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          pr_json="$(gh api "/repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" 2>/dev/null || printf '[]')"
+          title="$(jq -r '.[0].title // empty' <<<"$pr_json")"
+          labels="$(jq -r '[.[0].labels[]?.name] | join(",")' <<<"$pr_json")"
+          if [[ -z "$title" ]]; then
+            title="$(gh api "/repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA" --jq '.commit.message | split("\n")[0]')"
+          fi
+          printf 'title=%s\n' "$title" >> "$GITHUB_OUTPUT"
+          printf 'labels=%s\n' "$labels" >> "$GITHUB_OUTPUT"
+      - name: Calcular versão inicial ou incremento SemVer
+        id: plan
+        env:
+          PR_TITLE: ${{ steps.pr.outputs.title }}
+          PR_LABELS: ${{ steps.pr.outputs.labels }}
+          FORCE_BUMP: ${{ inputs.force_bump || 'auto' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags origin
+          latest="$(git tag --list 'v*' | grep -E '^v[0-9]+\\.[0-9]+\\.[0-9]+$' | sort -V | tail -n 1 || true)"
+          baseline="$(tr -d '[:space:]' < VERSION)"
+          resume_args=()
+          if git rev-parse --verify --quiet "refs/tags/v$baseline" >/dev/null; then
+            tagged_sha="$(git rev-list -n 1 "v$baseline")"
+            if git merge-base --is-ancestor "$GITHUB_SHA" "$tagged_sha"; then
+              resume_args+=(--resume)
             fi
-            previous_tag="$tag"
-          done
-          if [[ "$found_current" != "true" ]]; then
-            echo "A tag atual não está disponível no histórico obtido pelo checkout." >&2
+          fi
+          plan="$(python3 scripts/plan-release-version.py \
+            --latest "$latest" --baseline "$baseline" --labels "$PR_LABELS" \
+            --title "$PR_TITLE" --force "$FORCE_BUMP" "${resume_args[@]}")"
+          version="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["version"])' "$plan")"
+          bump="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["bump"])' "$plan")"
+          previous="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1]).get("previous") or "")' "$plan")"
+          tag="v$version"
+          if [[ "${#resume_args[@]}" -eq 0 ]] && git rev-parse --verify --quiet "refs/tags/$tag" >/dev/null; then
+            echo "A tag $tag já existe fora de uma retomada válida." >&2
             exit 1
           fi
+          {
+            echo "version=$version"
+            echo "tag=$tag"
+            echo "bump=$bump"
+            echo "previous=$previous"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "### Release ARGWS CRM planejada: $tag"
+            echo
+            echo "Incremento: **$bump**. Base SemVer: ${latest:-nenhuma}."
+            echo "Commit promovido: $GITHUB_SHA."
+          } >> "$GITHUB_STEP_SUMMARY"
 
+  build-release:
+    name: Build ARGWS CRM ${{ matrix.arch }}
+    needs: plan-version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+            platform: linux/amd64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Obter commit promovido
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+      - name: Materializar SemVer no contexto do container
+        env:
+          RELEASE_VERSION: ${{ needs.plan-version.outputs.version }}
+          RELEASE_TAG: ${{ needs.plan-version.outputs.tag }}
+        run: |
+          python3 scripts/apply-release-version.py "$RELEASE_VERSION"
+          bash scripts/check-release-version.sh "$RELEASE_TAG"
+      - name: Configurar Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Acessar GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build e push por digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=ghcr.io/wkarts/argws-crm,push-by-digest=true,name-canonical=true,push=true
+          build-args: |
+            ARGWS_VERSION=${{ needs.plan-version.outputs.version }}
+          labels: |
+            org.opencontainers.image.title=ARGWS CRM
+            org.opencontainers.image.version=${{ needs.plan-version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=argws-crm-release-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=argws-crm-release-${{ matrix.arch }}
+      - name: Exportar digest da arquitetura
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+      - name: Guardar digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-release-${{ matrix.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish-release:
+    name: Montar imagem, gerar ZIPs e publicar release
+    needs: [plan-version, build-release]
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: ${{ needs.plan-version.outputs.version }}
+      RELEASE_TAG: ${{ needs.plan-version.outputs.tag }}
+    steps:
+      - name: Obter código e histórico de tags
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Reunir digests amd64 e arm64
+        uses: actions/download-artifact@v4
+        with:
+          pattern: digest-release-*
+          path: /tmp/digests
+          merge-multiple: true
+      - name: Aplicar versão ao pacote e validar SemVer
+        run: |
+          set -euo pipefail
+          python3 scripts/apply-release-version.py "$RELEASE_VERSION"
+          bash scripts/check-release-version.sh "$RELEASE_TAG"
+      - name: Preparar ZIP incremental
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags origin
+          mapfile -t tags < <(git tag --list 'v*' | grep -E '^v[0-9]+\\.[0-9]+\\.[0-9]+$' | sort -V)
+          previous_tag=""
+          for tag in "${tags[@]}"; do
+            if [[ "$tag" == "$RELEASE_TAG" ]]; then break; fi
+            previous_tag="$tag"
+          done
           mkdir -p "$RUNNER_TEMP/argws-crm-base"
           if [[ -n "$previous_tag" ]]; then
             base_ref="$previous_tag"
-            echo "tag=$previous_tag" >> "$GITHUB_OUTPUT"
-            echo "Base do pacote incremental: $previous_tag"
+            echo "Base incremental: $previous_tag"
           else
-            if ! base_ref="$(git rev-parse "${GITHUB_SHA}^" 2>/dev/null)"; then
-              echo "A primeira publicação precisa de um commit-pai para gerar o ZIP incremental." >&2
-              exit 1
-            fi
-            echo "tag=initial-parent-${GITHUB_SHA:0:12}" >> "$GITHUB_OUTPUT"
-            echo "Sem tag de release anterior; usando o primeiro pai da versão como base inicial."
+            base_ref="$(git rev-parse "$GITHUB_SHA^")"
             {
-              echo "### Base do ZIP incremental"
-              echo "Como esta é a primeira release ARGWS CRM, o ZIP incremental será comparado ao primeiro pai do commit marcado."
+              echo "### Base do primeiro ZIP incremental"
+              echo "Sem tag anterior; base usada: o primeiro pai do commit promovido."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
           git archive "$base_ref" | tar -x -C "$RUNNER_TEMP/argws-crm-base"
-
-      - name: Gerar pacote completo, incremental e checksums
+      - name: Empacotar e conferir os dois ZIPs
         run: |
+          set -euo pipefail
           python3 scripts/package-release.py \
             --base-dir "$RUNNER_TEMP/argws-crm-base" \
             --output-dir dist
-
-      - name: Publicar pacotes na versão ARGWS
-        uses: softprops/action-gh-release@v2
+          test -s "dist/ARGWS-CRM-$RELEASE_VERSION-full.zip"
+          test -s "dist/ARGWS-CRM-$RELEASE_VERSION-update.zip"
+          (
+            cd dist
+            sha256sum --check "ARGWS-CRM-$RELEASE_VERSION-SHA256SUMS.txt"
+          )
+      - name: Salvar pacotes temporários do release
+        uses: actions/upload-artifact@v4
         with:
-          generate_release_notes: true
-          fail_on_unmatched_files: true
-          files: |
-            dist/ARGWS-CRM-${{ steps.version.outputs.value }}-full.zip
-            dist/ARGWS-CRM-${{ steps.version.outputs.value }}-update.zip
-            dist/ARGWS-CRM-${{ steps.version.outputs.value }}-SHA256SUMS.txt
+          name: argws-crm-release-dist
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 3
+      - name: Persistir metadados de versão somente em main
+        id: version-source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          main_sha="$(git rev-parse refs/remotes/origin/main)"
+          [[ "$main_sha" == "$GITHUB_SHA" ]] || {
+            echo "main avançou durante o release; não vou gravar metadados sobre uma promoção mais nova." >&2
+            exit 1
+          }
+          python3 scripts/apply-release-version.py "$RELEASE_VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add VERSION application/config/constants.php compose.yaml
+          if ! git diff --cached --quiet; then
+            git -c core.hooksPath=/dev/null commit -m "chore(release): $RELEASE_TAG [skip release]"
+            git push origin HEAD:refs/heads/main
+          fi
+          echo "release_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Acessar GHCR para montar manifesto estável
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Configurar Buildx para o manifesto
+        uses: docker/setup-buildx-action@v3
+      - name: Montar e validar tags GHCR
+        env:
+          RELEASE_SHA: ${{ steps.version-source.outputs.release_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$RELEASE_VERSION"
+          major="$(cut -d. -f1 <<<"$version")"
+          minor="$(cut -d. -f2 <<<"$version")"
+          repo="ghcr.io/wkarts/argws-crm"
+          mapfile -t digests < <(find /tmp/digests -maxdepth 1 -type f | sort)
+          [[ "${#digests[@]}" -eq 2 ]]
+          sources=()
+          for file in "${digests[@]}"; do
+            sources+=("${repo}@sha256:$(basename "$file")")
+          done
+          docker buildx imagetools create \
+            -t "${repo}:${version}" \
+            -t "${repo}:${major}.${minor}" \
+            -t "${repo}:${major}" \
+            -t "${repo}:latest" \
+            -t "${repo}:sha-${RELEASE_SHA}" \
+            "${sources[@]}"
+          docker buildx imagetools inspect "${repo}:${version}" > IMAGE-DIGESTS.txt
+          {
+            echo "ARGWS CRM v${version}"
+            echo
+            echo "GHCR tags: ${version}, ${major}.${minor}, ${major}, latest, sha-${RELEASE_SHA}"
+            echo
+            cat IMAGE-DIGESTS.txt
+          } > IMAGE-DIGESTS.txt.tmp
+          mv IMAGE-DIGESTS.txt.tmp IMAGE-DIGESTS.txt
+      - name: Validar sumas e publicar tag anotada
+        env:
+          RELEASE_SHA: ${{ steps.version-source.outputs.release_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git rev-parse --verify --quiet "refs/tags/$RELEASE_TAG" >/dev/null; then
+            tagged_sha="$(git rev-parse "$RELEASE_TAG^{commit}")"
+            [[ "$tagged_sha" == "$RELEASE_SHA" ]] || {
+              echo "$RELEASE_TAG já aponta para outro commit; não será sobrescrita." >&2
+              exit 1
+            }
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$RELEASE_TAG" "$RELEASE_SHA" -m "ARGWS CRM $RELEASE_TAG"
+            git push origin "refs/tags/$RELEASE_TAG"
+          fi
+      - name: Criar ou completar release com título e notas
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_SHA: ${{ steps.version-source.outputs.release_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          assets=(
+            "dist/ARGWS-CRM-$RELEASE_VERSION-full.zip"
+            "dist/ARGWS-CRM-$RELEASE_VERSION-update.zip"
+            "dist/ARGWS-CRM-$RELEASE_VERSION-SHA256SUMS.txt"
+            "IMAGE-DIGESTS.txt"
+          )
+          notes="docs/releases/$RELEASE_VERSION.md"
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
+          elif [[ -f "$notes" ]]; then
+            gh release create "$RELEASE_TAG" "${assets[@]}" \
+              --target "$RELEASE_SHA" --title "ARGWS CRM $RELEASE_TAG" --notes-file "$notes"
+          else
+            gh release create "$RELEASE_TAG" "${assets[@]}" \
+              --target "$RELEASE_SHA" --title "ARGWS CRM $RELEASE_TAG" --generate-notes
+          fi
+      - name: Atualizar metadados de produto em develop sem sobrescrever código
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          synchronized=false
+          for attempt in 1 2 3; do
+            git fetch origin +refs/heads/develop:refs/remotes/origin/develop
+            git checkout -B release-sync refs/remotes/origin/develop
+            python3 scripts/apply-release-version.py "$RELEASE_VERSION"
+            git add VERSION application/config/constants.php compose.yaml
+            if git diff --cached --quiet; then
+              synchronized=true
+              break
+            fi
+            git -c core.hooksPath=/dev/null commit -m "chore(release): sync develop with $RELEASE_TAG [skip release]"
+            if git push origin HEAD:refs/heads/develop; then
+              synchronized=true
+              break
+            fi
+            echo "develop avançou em paralelo; tentando novamente sobre o HEAD atual."
+          done
+          [[ "$synchronized" == true ]] || {
+            echo "Não foi possível sincronizar os metadados sem sobrescrever develop." >&2
+            exit 1
+          }
+          gh workflow run container-publish.yml --ref develop
