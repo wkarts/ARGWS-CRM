@@ -27,7 +27,11 @@ O comando generate preserva os valores de um .env existente. Ao atualizar uma st
 5. Se a chave estiver ausente ou inválida antes do setup, `/setup` não mostra o formulário e a aplicação retorna 503. A rota `/install` sempre permanece inacessível.
 6. Após confirmar o acesso, remova `ARGWS_SETUP_TOKEN` do `.env` e recrie o serviço web com `docker compose --env-file .env -f compose.yaml up -d --force-recreate web`. Os dados ficam em `./storage/` (ou no caminho relativo definido em `ARGWS_STORAGE_ROOT`).
 7. Configure o CloudPanel para encaminhar o domínio HTTPS à porta local configurada, vinculada a `127.0.0.1`.
-8. Em stacks antigas que usam volumes nomeados, faça backup e execute uma vez `sh ./migrate-storage.sh .` (deployer) ou `sh ../migrate-storage.sh .` (ZIP `deploy/`) antes do primeiro `up` com o Compose atualizado. A rotina para a stack, copia os dados existentes para `./storage/`, não sobrescreve destinos ocupados e nunca remove os volumes Docker antigos. Depois, preserve `.env`, execute `docker compose pull` e `docker compose up -d --remove-orphans`. Não use `docker compose down -v`. O provisionador recusa bancos com tabelas existentes e instalações já configuradas.
+O provisionador recusa bancos com tabelas existentes e instalações já configuradas.
+
+### Atualizar uma stack antiga com volumes nomeados
+
+Antes de aplicar o Compose novo, faça backup do banco, dos volumes e do `.env`. Na pasta da stack, execute `docker compose --env-file .env -f compose.yaml pull` e depois uma vez `sh ./migrate-storage.sh .` (pasta gerada pelo deployer) ou `sh ../migrate-storage.sh .` (pasta `deploy/production` ou `deploy/develop` do ZIP). O script para os containers sem remover volumes, copia os dados para `./storage/` (ou para `ARGWS_STORAGE_ROOT`), recusa destinos já ocupados e mantém os volumes antigos. Depois inicie com `docker compose --env-file .env -f compose.yaml up -d --remove-orphans`. Não execute `docker compose down -v`.
 
 Toda persistência usa bind mounts relativos a `./storage`, controlados por `ARGWS_STORAGE_ROOT` no `.env`: configuração da instalação, banco, uploads, arquivos de módulos, temporários, cache, logs e dados/configuração do Caddy. Os diretórios dos arquivos da aplicação são preparados pelo serviço `storage-init`; o banco mantém seu diretório separado. A stack Docker fica separada da instalação PHP, PHP-FPM, Nginx e dos outros projetos do CloudPanel; escolha uma porta livre.
 
@@ -42,4 +46,4 @@ A aplicação atual declara MySQL/MariaDB. PostgreSQL e Redis não são dependê
 
 A imagem GHCR não contém o instalador web legado `install/`. O assistente `/setup` é um endpoint separado, protegido por `ARGWS_SETUP_TOKEN` aleatório; não cria usuário ou senha padrão e não é carregado nas instalações PHP tradicionais. Caddy detecta a configuração persistente e troca o roteamento para o CRM no pedido seguinte, ocultando `/setup` sem reiniciar o processo.
 
-O volume `installation_config` guarda a configuração criada. O provisionador só aceita banco vazio e recusa instalações já configuradas; para uma instalação existente, preserve banco e configuração e siga o fluxo normal de atualização. Se uma importação falhar parcialmente, pare e revise os logs antes de qualquer ação; nunca remova volumes de dados existentes para tentar novamente.
+A pasta `./storage/installation_config` (ou o caminho definido em `ARGWS_STORAGE_ROOT`) guarda a configuração criada. O provisionador só aceita banco vazio e recusa instalações já configuradas; para uma instalação existente, preserve banco e configuração e siga o fluxo normal de atualização. Se uma importação falhar parcialmente, pare e revise os logs antes de qualquer ação; nunca remova volumes de dados existentes para tentar novamente.
