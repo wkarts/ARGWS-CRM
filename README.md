@@ -13,7 +13,7 @@ O instalador fica em `install/`. Configure o domínio para servir a raiz do proj
 
 ## Container FrankenPHP
 
-A imagem genérica publicada no GHCR é `ghcr.io/wkarts/argws-crm`. O arquivo `compose.yaml` usa a versão `3.4.2` por padrão; ajuste `ARGWS_VERSION` ao escolher outra versão publicada. Configure a conectividade com um serviço MySQL/MariaDB externo e mantenha os volumes persistentes da instalação.
+A imagem genérica publicada no GHCR é `ghcr.io/wkarts/argws-crm`. O arquivo `compose.yaml` aponta para a release estável atual por padrão; defina `ARGWS_VERSION` para escolher outra tag. Configure a conectividade com um serviço MySQL/MariaDB externo e mantenha os volumes persistentes da instalação.
 
 ```sh
 docker compose pull
@@ -30,6 +30,6 @@ A telemetria de usuários e licenciamento e a validação remota de licença fic
 
 ## Releases e atualizações
 
-Cada release ARGWS publica um ZIP completo, um ZIP incremental e seus checksums SHA-256, além da imagem FrankenPHP versionada no GHCR. Faça backup do banco, da configuração local e dos uploads antes de atualizar. O pacote incremental lista os arquivos de código removidos e preserva os dados enviados pelos clientes.
+O canal `develop` publica uma imagem de desenvolvimento. As promoções para `main` usam SemVer automático e publicam no GHCR as tags de versão, major.minor, major e latest, além de ZIP completo, ZIP incremental e checksums SHA-256. A versão do produto e o nível de migration do banco evoluem independentemente.
 
-Consulte [Distribuição ARGWS](docs/distribuicao-argws.md) para o fluxo de versionamento, build, cache e publicação, e [Arquitetura e dados](docs/arquitetura-e-dados.md) para as migrations e os recursos nativos.
+Faça backup do banco, da configuração local e dos uploads antes de atualizar. O pacote incremental preserva os dados enviados pelos clientes e lista arquivos de código removidos. Consulte [Distribuição ARGWS](docs/distribuicao-argws.md) para os detalhes do versionamento, build, cache e publicação e [Arquitetura e dados](docs/arquitetura-e-dados.md) para as migrations e os recursos nativos.
