@@ -202,10 +202,11 @@ class StableReleaseDeployerAssetsTest(unittest.TestCase):
     def test_deployer_dispatch_runs_asset_jobs_after_skipped_validation(self):
         workflow = (ROOT / ".github/workflows/deployer-release.yml").read_text(encoding="utf-8")
         self.assertIn("pull_request:\n    branches: [main, develop]", workflow)
-        self.assertIn("push:\n    branches: [develop]", workflow)
+        self.assertIn("push:\n    branches: [develop, main]", workflow)
         self.assertIn("release:\n    types: [published]", workflow)
         self.assertIn("workflow_dispatch:", workflow)
-        self.assertNotIn("refs/heads/main", workflow)
+        self.assertIn("[rebuild deployer]", workflow)
+        self.assertIn("refs/heads/main", workflow)
         self.assertIn("always() &&", workflow)
         self.assertIn("needs.build.result == 'success'", workflow)
         self.assertIn("needs.build-gui.result == 'success'", workflow)
