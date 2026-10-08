@@ -55,6 +55,11 @@ class DockerProvisioningContractTest(unittest.TestCase):
         self.assertGreater(refreshed_port, restart)
         self.assertIn('[[ ! "$status" =~ ^[1-5][0-9][0-9]$ ]]', smoke)
 
+    def test_environment_examples_use_the_internal_database_service(self):
+        for path in ("deploy/develop/.env.example", "deploy/production/.env.example"):
+            with self.subTest(path=path):
+                self.assertIn("ARGWS_DB_HOST=database", read(path))
+
     def test_root_compose_keeps_external_database_variables_optional(self):
         compose = read("compose.yaml")
         self.assertIn("ARGWS_DB_HOST:", compose)
