@@ -164,12 +164,12 @@ $value = static function (string $key): string {
         </div>
         <div class="field">
             <label for="admin_password">Senha do administrador</label>
-            <input id="admin_password" name="admin_password" type="password" minlength="12" required autocomplete="new-password">
-            <small>Use pelo menos 12 caracteres. A senha não será exibida nem registrada nos logs.</small>
+            <input id="admin_password" name="admin_password" type="password" required autocomplete="new-password">
+            <small>Escolha sua senha. Ela não será exibida nem registrada nos logs.</small>
         </div>
         <div class="field">
             <label for="admin_password_repeat">Confirme a senha</label>
-            <input id="admin_password_repeat" name="admin_password_repeat" type="password" minlength="12" required autocomplete="new-password">
+            <input id="admin_password_repeat" name="admin_password_repeat" type="password" required autocomplete="new-password">
         </div>
         <div class="field">
             <label for="timezone">Fuso horário</label>

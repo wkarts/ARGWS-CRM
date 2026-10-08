@@ -12,7 +12,7 @@ database_user="argws_crm_ci"
 database_password="$(openssl rand -hex 24)"
 root_password="$(openssl rand -hex 24)"
 setup_token="$(openssl rand -hex 32)"
-admin_password="$(openssl rand -hex 24)"
+admin_password="abc123"
 host_port=""
 storage_compose_dir=""
 
@@ -141,7 +141,7 @@ if [ "$setup_code" != "200" ] || [ -z "$csrf_token" ]; then
     exit 1
 fi
 
-setup_code="$(curl --connect-timeout 2 --max-time 30 -sS -b /tmp/argws-crm-setup-cookie -c /tmp/argws-crm-setup-cookie \
+setup_code="$(curl --connect-timeout 2 --max-time 180 -sS -b /tmp/argws-crm-setup-cookie -c /tmp/argws-crm-setup-cookie \
     -o /tmp/argws-crm-setup-result -w '%{http_code}' \
     --data-urlencode "csrf_token=$csrf_token" \
     --data-urlencode "setup_token=$setup_token" \

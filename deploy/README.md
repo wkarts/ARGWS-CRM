@@ -23,11 +23,11 @@ O comando generate preserva os valores de um .env existente. Ao atualizar uma st
 1. Se os packages GHCR forem privados, autentique Docker no host com uma credencial local que tenha read:packages.
 2. Na pasta gerada, valide com `docker compose --env-file .env -f compose.yaml config` e faça pull com `docker compose --env-file .env -f compose.yaml pull`.
 3. Inicie com `docker compose --env-file .env -f compose.yaml up -d`. O deployer já terá criado no `.env` a chave aleatória `ARGWS_SETUP_TOKEN`.
-4. Abra `https://seu-dominio/setup`, copie essa chave do `.env` e informe URL pública, nome, e-mail, senha e fuso horário do primeiro administrador. O formulário cria schema apenas em banco vazio, configura a instalação e cria o usuário; ao final, redireciona ao CRM automaticamente. Não é necessário executar PHP no terminal nem reiniciar o serviço.
+4. Abra `https://seu-dominio/setup`, copie essa chave do `.env` e informe URL pública, nome, e-mail, a senha que você escolher (obrigatória, sem tamanho mínimo, com confirmação idêntica) e fuso horário do primeiro administrador. O formulário cria schema apenas em banco vazio, configura a instalação e cria o usuário; ao final, redireciona ao CRM automaticamente. Não é necessário executar PHP no terminal nem reiniciar o serviço.
 5. Se a chave estiver ausente ou inválida antes do setup, `/setup` não mostra o formulário e a aplicação retorna 503. A rota `/install` sempre permanece inacessível.
 6. Após confirmar o acesso, remova `ARGWS_SETUP_TOKEN` do `.env` e recrie o serviço web com `docker compose --env-file .env -f compose.yaml up -d --force-recreate web`. Os dados ficam em `./storage/` (ou no caminho relativo definido em `ARGWS_STORAGE_ROOT`).
 7. Configure o CloudPanel para encaminhar o domínio HTTPS à porta local configurada, vinculada a `127.0.0.1`.
-O provisionador recusa bancos com tabelas existentes e instalações já configuradas.
+O provisionador recusa bancos com tabelas existentes e instalações já configuradas. Se uma execução anterior na imagem antiga parou após 30 segundos, ela pode ter deixado schema parcial: por segurança, o sistema não apaga tabelas nem repete o importador sobre um banco não vazio. Faça backup e use um banco realmente vazio; só descarte o banco da tentativa anterior depois de confirmar que não contém dados que devam ser preservados.
 
 ### Atualizar uma stack antiga com volumes nomeados
 

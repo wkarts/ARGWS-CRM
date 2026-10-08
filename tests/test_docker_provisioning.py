@@ -194,6 +194,19 @@ esac
         self.assertNotIn("/opt/argws-crm-provisioner/provision.php", smoke)
 
 
+    def test_web_provisioning_has_no_short_password_policy_or_php_request_timeout(self):
+        source = read("docker/provisioner.php")
+        web = read("docker/setup-web.php")
+        smoke = read("tests/docker_provision_smoke.sh")
+        self.assertIn("set_time_limit(0)", source)
+        self.assertIn("$input['admin_password'] === ''", source)
+        self.assertNotIn("strlen($input['admin_password']) < 12", source)
+        self.assertNotIn('minlength="12"', web)
+        self.assertNotIn("Use pelo menos 12 caracteres.", web)
+        self.assertIn('admin_password="abc123"', smoke)
+        self.assertIn("--max-time 180", smoke)
+
+
     def test_setup_token_is_optional_after_setup_and_deployer_migrates_legacy_env(self):
         for path in ("compose.yaml", "deploy/develop/compose.yaml", "deploy/production/compose.yaml"):
             with self.subTest(path=path):
