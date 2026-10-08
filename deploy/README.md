@@ -50,6 +50,14 @@ A pasta `./storage/installation_config` (ou o caminho definido em `ARGWS_STORAGE
 
 ## Deployer gráfico e CLI
 
-As releases anexam os binários CLI e GUI para Windows x64 e Linux x64, junto com checksums SHA-256. A GUI usa WGPU com Direct3D 12 no Windows e Vulkan no Linux; não depende de `egui_glow`. Em Windows por RDP, a interface abre quando a sessão expõe um adaptador WGPU/D3D12 compatível. Se o backend não iniciar, nenhum deploy será executado automaticamente: a GUI registra o diagnóstico e orienta o uso do modo terminal.
+As releases distribuem os executáveis CLI e GUI para Windows x64 e Linux x64 com checksums SHA-256. A interface gráfica usa Python/Tkinter e controles tradicionais do sistema operacional; não inicia OpenGL, WGPU ou Vulkan e não exige GPU. A GUI delega as operações ao CLI Rust compartilhado, sem duplicar as regras de geração e validação.
 
-Use `argws-crm-deployer-win-x64.exe interactive` para preparar a stack com prompts ou `generate`/ `validate` para execução não interativa. A GUI usa exatamente as mesmas funções do núcleo do CLI. Os logs opcionais com `--log-file` registram apenas operação e status, nunca argumentos, senhas ou tokens.
+Baixe e extraia o ZIP gráfico completo, mantendo os dois executáveis juntos:
+
+- Windows x64: argws-crm-deployer-gui-win-x64.zip
+- Linux x64: argws-crm-deployer-gui-linux-x64.zip
+
+No Linux, a GUI precisa de sessão desktop com X11 ou XWayland. O CLI independente funciona em servidores sem desktop. Em Windows 11 via RDP, o frontend não requer adaptador gráfico com aceleração; uma sessão real de cliente ainda deve validar o ambiente específico.
+
+Use argws-crm-deployer-win-x64.exe interactive para preparar a stack com prompts, ou generate e validate para execução não interativa. Os logs opcionais com --log-file registram apenas a operação e o resultado, nunca argumentos, senhas ou tokens. O provisionamento do primeiro administrador ocorre no navegador em /setup.
+

@@ -426,7 +426,11 @@ jobs:
             argws-crm-deployer-win-x64.exe \
             argws-crm-deployer-linux-x64 \
             argws-crm-deployer-gui-win-x64.exe \
-            argws-crm-deployer-gui-linux-x64; do
+            argws-crm-deployer-gui-linux-x64 \
+            argws-crm-deployer-gui-win-x64.zip \
+            argws-crm-deployer-gui-linux-x64.zip \
+            SHA256SUMS-Deployment.txt \
+            argws-crm-deployer-release.json; do
             grep -Fxq "$asset" <<<"$assets" || {
               echo "Asset obrigatório ausente na release $RELEASE_TAG: $asset" >&2
               exit 1

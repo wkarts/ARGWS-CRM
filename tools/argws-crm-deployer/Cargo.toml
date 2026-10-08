@@ -3,10 +3,3 @@ name = "argws-crm-deployer"
 version = "0.1.0"
 edition = "2021"
 publish = false
-
-[features]
-gui = ["dep:eframe", "dep:wgpu"]
-
-[dependencies]
-eframe = { version = "=0.31.1", optional = true, default-features = false, features = ["default_fonts", "wgpu", "x11"] }
-wgpu = { version = "=24.0.0", optional = true, default-features = false, features = ["dx12", "vulkan-portability", "metal", "wgsl"] }

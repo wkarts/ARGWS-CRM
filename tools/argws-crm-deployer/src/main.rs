@@ -9,8 +9,6 @@ use std::{
 use std::fs;
 
 mod core;
-#[cfg(feature = "gui")]
-mod gui;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum FailureKind {
@@ -43,14 +41,15 @@ impl CliFailure {
 
 fn help() {
     println!(
-        "ARGWS CRM Deployer\n\
+        "ARGWS CRM Deployer CLI\n\
          Uso:\n\
            argws-crm-deployer interactive\n\
            argws-crm-deployer generate --environment develop|production --output DIR [--database mysql|mariadb] [--version X.Y.Z] [--force]\n\
            argws-crm-deployer validate --directory DIR\n\
+           argws-crm-deployer version\n\
            argws-crm-deployer list\n\
          Opções globais: --log-file FILE\n\
-         O comando interactive guia a geração pelo terminal. Os comandos generate e validate funcionam sem interface gráfica."
+         A interface gráfica é distribuída separadamente e usa este mesmo CLI como backend."
     );
 }
 
@@ -128,6 +127,13 @@ fn run_cli(args: &[String]) -> Result<(), CliFailure> {
             help();
             Ok(())
         }
+        "version" => {
+            if args.len() > 1 {
+                return Err(CliFailure::usage("version não recebe argumentos"));
+            }
+            println!("{}", core::VERSION.trim());
+            Ok(())
+        }
         "list" => {
             if args.len() > 1 {
                 return Err(CliFailure::usage("list não recebe argumentos"));
@@ -175,7 +181,7 @@ fn run_cli(args: &[String]) -> Result<(), CliFailure> {
             println!("Stack preparada e validada em {}", output.display());
             Ok(())
         }
-        _ => Err(CliFailure::usage("comando esperado: interactive, generate, validate, list ou help")),
+        _ => Err(CliFailure::usage("comando esperado: interactive, generate, validate, version, list ou help")),
     }
 }
 
@@ -205,6 +211,7 @@ fn log_command(args: &[String]) -> &'static str {
     match args.first().map(String::as_str).unwrap_or("help") {
         "generate" | "interactive" | "--interactive" => "generate",
         "validate" => "validate",
+        "version" => "version",
         "list" => "list",
         _ => "help",
     }
@@ -227,90 +234,8 @@ fn append_operation_log(path: &Path, command: &str, succeeded: bool) -> io::Resu
     append_operation_log_to(&mut file, command, succeeded)
 }
 
-#[cfg(any(feature = "gui", test))]
-fn gui_failure_message(error: &str, log_path: Option<&Path>) -> String {
-    #[cfg(windows)]
-    let cli = "argws-crm-deployer-win-x64.exe interactive";
-    #[cfg(not(windows))]
-    let cli = "argws-crm-deployer-linux-x64 interactive";
-
-    let mut message = format!(
-        "A interface gráfica não conseguiu iniciar o backend WGPU.\n\
-         Diagnóstico: {error}\n\n\
-         Nenhuma implantação foi executada. Use o deployer CLI no terminal:\n\
-         {cli}\n\
-         Ajuda: argws-crm-deployer --help"
-    );
-    if let Some(path) = log_path {
-        message.push_str(&format!("\n\nDiagnóstico salvo em: {}", path.display()));
-    }
-    message
-}
-
-#[cfg(feature = "gui")]
-fn record_gui_failure(error: &str) -> Option<PathBuf> {
-    let path = env::temp_dir().join("argws-crm-deployer-gui.log");
-    let mut options = OpenOptions::new();
-    options.create(true).append(true);
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::OpenOptionsExt;
-        options.mode(0o600);
-    }
-    let mut file = options.open(&path).ok()?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).ok()?;
-    }
-    let diagnostic = error.lines().next().unwrap_or("falha sem detalhes adicionais");
-    writeln!(file, "backend=WGPU startup=failure diagnostic={diagnostic}").ok()?;
-    Some(path)
-}
-
-#[cfg(all(feature = "gui", windows))]
-fn show_gui_failure_dialog(message: &str) {
-    use std::ffi::c_void;
-
-    #[link(name = "user32")]
-    extern "system" {
-        fn MessageBoxW(hwnd: *mut c_void, text: *const u16, caption: *const u16, kind: u32) -> i32;
-    }
-
-    let text: Vec<u16> = message.encode_utf16().chain(std::iter::once(0)).collect();
-    let title: Vec<u16> = "ARGWS CRM Deployer".encode_utf16().chain(std::iter::once(0)).collect();
-    unsafe {
-        MessageBoxW(std::ptr::null_mut(), text.as_ptr(), title.as_ptr(), 0x10);
-    }
-}
-
-#[cfg(feature = "gui")]
-fn report_gui_failure(error: &str) {
-    let path = record_gui_failure(error);
-    let message = gui_failure_message(error, path.as_deref());
-    eprintln!("{message}");
-    #[cfg(windows)]
-    show_gui_failure_dialog(&message);
-}
-
 fn main() -> ExitCode {
     let raw_args: Vec<String> = env::args().skip(1).collect();
-
-    #[cfg(feature = "gui")]
-    {
-        let launch_gui = raw_args.is_empty()
-            || matches!(raw_args.first().map(String::as_str), Some("gui" | "--gui"));
-        if launch_gui {
-            return match gui::run() {
-                Ok(()) => ExitCode::SUCCESS,
-                Err(error) => {
-                    report_gui_failure(&error);
-                    ExitCode::from(3)
-                }
-            };
-        }
-    }
-
     let (args, log_path) = match remove_log_option(&raw_args) {
         Ok(result) => result,
         Err(error) => {
@@ -366,11 +291,9 @@ mod tests {
     }
 
     #[test]
-    fn gui_failure_advises_cli_and_states_no_deployment_started() {
-        let message = gui_failure_message("no suitable adapter", None);
-        assert!(message.contains("Nenhuma implantação foi executada"));
-        assert!(message.contains("interactive"));
-        assert!(message.contains("no suitable adapter"));
+    fn version_command_reports_the_embedded_semver() {
+        assert_eq!(log_command(&["version".into()]), "version");
+        assert_eq!(core::VERSION.trim().split('.').count(), 3);
     }
 
     #[test]
