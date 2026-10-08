@@ -27,6 +27,7 @@ class DockerProvisioningContractTest(unittest.TestCase):
         pending = read("docker/Caddyfile.unprovisioned")
         self.assertNotIn("app-config-sample.php", entrypoint)
         self.assertIn("Caddyfile.unprovisioned", entrypoint)
+        self.assertIn("--adapter caddyfile", entrypoint)
         self.assertIn("@provisioned file", pending)
         self.assertIn("try_files provisioned", pending)
         self.assertIn("handle @provisioned", pending)
