@@ -1,0 +1,161 @@
+/*theme select style*/
+.setting-color {
+    padding: 0 5px;
+    width: 100px;
+    float: left;
+	border: 1px solid transparent;
+}
+.setting-color:hover {
+	border: 1px solid rgba(0, 0, 0, 0.1);
+	border-radius: 3px;
+}
+.setting-color:hover .si_ct_delete{
+	display:block;
+}
+.si_ct_delete{
+	display:none;
+}
+.setting-color > label {
+    display: block;
+    position: relative;
+    margin: 5px 10px;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+	border-radius:8px;
+}
+.setting-color > label > .split:before, .setting-color > label > .split:after {
+    content: " ";
+    display: table;
+}
+.setting-color > label > .split {
+    display: block;
+}
+.setting-color > label > .split:after {
+    clear: both;
+}
+.setting-color > label > .split:before, .setting-color > label > .split:after {
+    content: " ";
+    display: table;
+}
+.setting-color > label > input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    visibility: hidden;
+}
+.setting-color > label > .icon-check {
+    position: absolute;
+    display: block;
+    left: 50%;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    margin-top: -15px;
+    margin-left: -10px;
+    text-align: center;
+    font-size: 1.33333333em;
+    vertical-align: -15%;
+    color: #fff;
+    opacity: 0;
+}
+.setting-color > label > input[type="radio"]:checked + .icon-check {
+    opacity: 1 !important;
+}
+.setting-color > label > .color {
+    display: block;
+    height: 18px;
+}
+.setting-color > label > .split > .color {
+    display: block;
+    height: 50px;
+}
+.setting-color > label > .split > .color:first-child {
+    float: left;
+    width: 70%;
+}
+.setting-color > label > .split > .color:last-child {
+    float: right;
+    width: 30%;
+}
+.bg-default-theme-left{
+	background-color: #415165;
+    color: #ffffff !important;
+}
+.bg-default-theme-right{
+	background-color: #323a45;
+    color: #ffffff !important;
+}
+.bg-default-theme-bottom{
+	background-color: #626f80;
+    color: #ffffff !important;
+}
+.bg-gray-dark {
+    background-color: #1e1e2d;
+    color: #ffffff !important;
+}
+.bg-white {
+    background-color: #ffffff;
+    color: inherit !important;
+}
+.bg-info-light {
+    background-color: #18c2f7;
+    color: #ffffff !important;
+}
+.bg-info-dark {
+    background-color: #0991ce;
+    color: #ffffff !important;
+}
+.bg-green {
+    background-color: #37bc9b;
+    color: #ffffff !important;
+}
+.bg-green-light {
+    background-color: #58ceb1;
+    color: #ffffff !important;
+}
+.bg-green-dark {
+    background-color: #2b957a;
+    color: #ffffff !important;
+}
+.bg-purple {
+    background-color: #7266ba;
+    color: #ffffff !important;
+}
+.bg-purple-light {
+    background-color: #9289ca;
+    color: #ffffff !important;
+}
+.bg-purple-dark {
+    background-color: #564aa3;
+    color: #ffffff !important;
+}
+.bg-red {
+    background-color: #f66262;
+    color: #ffffff !important;
+}
+.bg-red-light {
+    background-color: #f47f7f;
+    color: #ffffff !important;
+}
+.bg-red-dark {
+    background-color: #f34a4a;
+    color: #ffffff !important;
+}
+.bg-orange {
+    background-color: #fd5c23;
+    color: #ffffff !important;
+}
+.bg-orange-light {
+    background-color: #fd8357;
+    color: #ffffff !important;
+}
+.bg-orange-dark {
+    background-color: #f34507;
+    color: #ffffff !important;
+}
+.bg-custom{
+	background-color: #CCCCCC;
+    color: #ffffff !important;
+}
+

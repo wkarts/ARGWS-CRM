@@ -1,0 +1,48 @@
+name: argws-crm
+services:
+  web:
+    image: ghcr.io/wkarts/argws-crm:${ARGWS_VERSION:-3.4.2}
+    restart: unless-stopped
+    ports:
+      - "${ARGWS_HTTP_PORT:-8080}:8080"
+    volumes:
+      - installation_config:/var/lib/argws-crm/config
+      - uploads:/app/uploads
+      - temp:/app/temp
+      - application_cache:/app/application/cache
+      - application_logs:/app/application/logs
+      - module_accounting_uploads:/app/modules/accounting/uploads
+      - module_finance_uploads:/app/modules/finance/uploads
+      - module_fleet_uploads:/app/modules/fleet/uploads
+      - module_hr_payroll_uploads:/app/modules/hr_payroll/uploads
+      - module_hr_profile_uploads:/app/modules/hr_profile/uploads
+      - module_invoices_builder_uploads:/app/modules/invoices_builder/uploads
+      - module_ma_uploads:/app/modules/ma/uploads
+      - module_products_uploads:/app/modules/products/uploads
+      - module_purchase_uploads:/app/modules/purchase/uploads
+      - module_service_management_uploads:/app/modules/service_management/uploads
+      - module_si_custom_theme_uploads:/app/modules/si_custom_theme/uploads
+      - module_timesheets_uploads:/app/modules/timesheets/uploads
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  installation_config:
+  uploads:
+  temp:
+  application_cache:
+  application_logs:
+  module_accounting_uploads:
+  module_finance_uploads:
+  module_fleet_uploads:
+  module_hr_payroll_uploads:
+  module_hr_profile_uploads:
+  module_invoices_builder_uploads:
+  module_ma_uploads:
+  module_products_uploads:
+  module_purchase_uploads:
+  module_service_management_uploads:
+  module_si_custom_theme_uploads:
+  module_timesheets_uploads:
+  caddy_data:
+  caddy_config:

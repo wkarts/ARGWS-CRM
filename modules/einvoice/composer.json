@@ -1,0 +1,13 @@
+{
+    "name": "argws/crm-einvoice",
+    "type": "library",
+    "require": {
+        "mustache/mustache": "^2.14"
+    },
+    "autoload": {
+        "psr-4": {
+            "Argws\\CRM\\EInvoice\\": "src/"
+        }
+    },
+    "minimum-stability": "stable"
+}

@@ -1,0 +1,91 @@
+name: Container ARGWS CRM
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: argws-crm-container-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obter código da versão
+        uses: actions/checkout@v4
+
+      - name: Ler versão da distribuição
+        id: release_version
+        shell: bash
+        run: echo "version=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Validar versionamento ARGWS
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            bash ./scripts/check-release-version.sh "${GITHUB_REF_NAME}"
+          else
+            bash ./scripts/check-release-version.sh
+          fi
+
+      - name: Executar validações de regressão
+        run: node tests/custom_links_security.test.cjs
+      - name: Validar contrato da plataforma ARGWS
+        run: node tests/argws_platform_contract.test.cjs
+      - name: Validar regras de privacidade dos pacotes
+        run: python3 -m unittest tests/test_package_release.py
+
+      - name: Configurar QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Configurar Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login no GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Gerar tags e metadados OCI
+        id: metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/wkarts/argws-crm
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+
+      - name: Build e publicar imagem multi arquitetura
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: ${{ github.event_name == 'pull_request' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: |
+            ${{ steps.metadata.outputs.labels }}
+            org.opencontainers.image.title=ARGWS CRM
+            org.opencontainers.image.version=${{ steps.release_version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          build-args: |
+            ARGWS_VERSION=${{ steps.release_version.outputs.version }}
+          cache-from: type=gha,scope=argws-crm-buildx
+          cache-to: type=gha,mode=max,scope=argws-crm-buildx

@@ -1,0 +1,92 @@
+name: Pacotes ARGWS CRM
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: argws-crm-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obter histórico completo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validar versão e tag
+        shell: bash
+        run: bash ./scripts/check-release-version.sh "${GITHUB_REF_NAME}"
+
+      - name: Ler versão SemVer
+        id: version
+        shell: bash
+        run: printf 'value=%s\n' "${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Executar testes de regressão
+        run: |
+          node tests/custom_links_security.test.cjs
+          node tests/argws_platform_contract.test.cjs
+          python3 -m unittest tests/test_package_release.py
+
+      - name: Preparar diretório-base do pacote incremental
+        id: base
+        shell: bash
+        run: |
+          set -euo pipefail
+          current_tag="${GITHUB_REF_NAME}"
+          mapfile -t release_tags < <(git tag --list 'v[0-9]*' --sort=version:refname)
+          previous_tag=""
+          found_current="false"
+          for tag in "${release_tags[@]}"; do
+            if [[ "$tag" == "$current_tag" ]]; then
+              found_current="true"
+              break
+            fi
+            previous_tag="$tag"
+          done
+          if [[ "$found_current" != "true" ]]; then
+            echo "A tag atual não está disponível no histórico obtido pelo checkout." >&2
+            exit 1
+          fi
+
+          mkdir -p "$RUNNER_TEMP/argws-crm-base"
+          if [[ -n "$previous_tag" ]]; then
+            base_ref="$previous_tag"
+            echo "tag=$previous_tag" >> "$GITHUB_OUTPUT"
+            echo "Base do pacote incremental: $previous_tag"
+          else
+            if ! base_ref="$(git rev-parse "${GITHUB_SHA}^" 2>/dev/null)"; then
+              echo "A primeira publicação precisa de um commit-pai para gerar o ZIP incremental." >&2
+              exit 1
+            fi
+            echo "tag=initial-parent-${GITHUB_SHA:0:12}" >> "$GITHUB_OUTPUT"
+            echo "Sem tag de release anterior; usando o primeiro pai da versão como base inicial."
+            {
+              echo "### Base do ZIP incremental"
+              echo "Como esta é a primeira release ARGWS CRM, o ZIP incremental será comparado ao primeiro pai do commit marcado."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          git archive "$base_ref" | tar -x -C "$RUNNER_TEMP/argws-crm-base"
+
+      - name: Gerar pacote completo, incremental e checksums
+        run: |
+          python3 scripts/package-release.py \
+            --base-dir "$RUNNER_TEMP/argws-crm-base" \
+            --output-dir dist
+
+      - name: Publicar pacotes na versão ARGWS
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            dist/ARGWS-CRM-${{ steps.version.outputs.value }}-full.zip
+            dist/ARGWS-CRM-${{ steps.version.outputs.value }}-update.zip
+            dist/ARGWS-CRM-${{ steps.version.outputs.value }}-SHA256SUMS.txt

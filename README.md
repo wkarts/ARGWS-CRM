@@ -1,45 +1,35 @@
-# ARGWS-CRM
+# ARGWS CRM
 
-Repositorio criado online e pre-configurado para:
+CRM da ARGWS para execução em hospedagem PHP tradicional ou em container FrankenPHP. A distribuição mantém configurações e dados de cada instalação fora da imagem.
 
-- Codigo-fonte
-- Releases GitHub
-- Docker Images
-- GitHub Packages / GHCR
+## Requisitos
 
-## Visibilidade configurada
+- PHP 8.1 ou superior para instalação tradicional.
+- MySQL ou MariaDB.
+- Extensões PHP: `mysqli`, `pdo_mysql`, `curl`, `openssl`, `mbstring`, `iconv`, `imap`, `gd` e `zip`.
+- Docker Engine e Docker Compose para a distribuição em container.
 
-Repository: private
+O instalador fica em `install/`. Configure o domínio para servir a raiz do projeto, prepare a base de dados e confirme que as extensões estão habilitadas na mesma versão do PHP usada pelo PHP-FPM ou pelo servidor web. Consulte [Operação PHP e containers](docs/operacao-php-e-containers.md).
 
-## Imagem Docker GHCR
+## Container FrankenPHP
 
-ghcr.io/wkarts/ARGWS-Connect-AI:latest
+A imagem genérica publicada no GHCR é `ghcr.io/wkarts/argws-crm`. O arquivo `compose.yaml` usa a versão `3.4.2` por padrão; ajuste `ARGWS_VERSION` ao escolher outra versão publicada. Configure a conectividade com um serviço MySQL/MariaDB externo e mantenha os volumes persistentes da instalação.
 
-## Pull da imagem
+```sh
+docker compose pull
+docker compose up -d
+```
 
-Se o package estiver publico:
+A aplicação escuta na porta interna `8080`. Configure HTTPS no proxy reverso. Não grave configuração de clientes ou uploads na imagem. Veja [a documentação de operação](docs/operacao-php-e-containers.md) para configurar e atualizar a instalação.
 
-docker pull ghcr.io/wkarts/ARGWS-Connect-AI:latest
+## Idioma, suporte e privacidade
 
-Se o package estiver privado:
+Português do Brasil é o idioma disponível nesta versão. A política de terminologia e as configurações do widget de suporte são administradas no painel em **Configurações → Plataforma ARGWS**. O endereço do suporte e o token público são definidos na própria aplicação.
 
-echo SEU_TOKEN_GITHUB | docker login ghcr.io -u SEU_USUARIO --password-stdin
-docker pull ghcr.io/wkarts/ARGWS-Connect-AI:latest
+A telemetria de usuários e licenciamento e a validação remota de licença ficam desativadas. Logs operacionais permanecem locais; integrações de negócio configuradas pelo administrador continuam disponíveis para os fluxos que elas atendem.
 
-## Observacoes
+## Releases e atualizações
 
-- Releases seguem a visibilidade do repositorio.
-- O package Docker/GHCR so existe depois da primeira publicacao da imagem.
-- A imagem e vinculada ao repositorio usando o label OCI:
+Cada release ARGWS publica um ZIP completo, um ZIP incremental e seus checksums SHA-256, além da imagem FrankenPHP versionada no GHCR. Faça backup do banco, da configuração local e dos uploads antes de atualizar. O pacote incremental lista os arquivos de código removidos e preserva os dados enviados pelos clientes.
 
-org.opencontainers.image.source=https://github.com/wkarts/ARGWS-CRM
-
-Apos a primeira publicacao, valide em:
-
-GitHub -> Profile/Organization -> Packages -> Package settings
-
-Confira:
-
-Repository conectado
-Manage Actions access / Inherit access from source repository
-Visibility: Public ou Private
+Consulte [Distribuição ARGWS](docs/distribuicao-argws.md) para o fluxo de versionamento, build, cache e publicação, e [Arquitetura e dados](docs/arquitetura-e-dados.md) para as migrations e os recursos nativos.
