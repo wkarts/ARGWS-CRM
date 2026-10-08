@@ -10,7 +10,7 @@
         @private path /application/* /system/* /temp/* /data/* /.env /.env.*
         respond @private 404
 
-        @module_php path_regexp module_php ^/modules/.*\\.php$
+        @module_php path_regexp module_php ^/modules/.*\.php$
         respond @module_php 404
 
         php_server
