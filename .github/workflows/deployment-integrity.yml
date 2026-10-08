@@ -37,16 +37,16 @@ jobs:
       - name: Testar contrato dos assets na mesma release
         run: python3 -m unittest tests/test_deployer_release_contract.py
       - name: Testar deployer Rust
-        run: cargo test --manifest-path tools/argws-crm-deployer/Cargo.toml
+        run: cargo +1.90.0 test --manifest-path tools/argws-crm-deployer/Cargo.toml
       - name: Gerar as stacks e validar Compose
         shell: bash
         run: |
           set -euo pipefail
           out="$RUNNER_TEMP/argws-crm-deployer"
-          cargo run --quiet --manifest-path tools/argws-crm-deployer/Cargo.toml -- generate --environment develop --output "$out/develop"
-          cargo run --quiet --manifest-path tools/argws-crm-deployer/Cargo.toml -- validate --directory "$out/develop"
-          cargo run --quiet --manifest-path tools/argws-crm-deployer/Cargo.toml -- generate --environment production --version "$(tr -d '[:space:]' < VERSION)" --database mariadb --output "$out/production"
-          cargo run --quiet --manifest-path tools/argws-crm-deployer/Cargo.toml -- validate --directory "$out/production"
+          cargo +1.90.0 run --quiet --manifest-path tools/argws-crm-deployer/Cargo.toml -- generate --environment develop --output "$out/develop"
+          cargo +1.90.0 run --quiet --manifest-path tools/argws-crm-deployer/Cargo.toml -- validate --directory "$out/develop"
+          cargo +1.90.0 run --quiet --manifest-path tools/argws-crm-deployer/Cargo.toml -- generate --environment production --version "$(tr -d '[:space:]' < VERSION)" --database mariadb --output "$out/production"
+          cargo +1.90.0 run --quiet --manifest-path tools/argws-crm-deployer/Cargo.toml -- validate --directory "$out/production"
           docker compose --env-file "$out/develop/.env" -f "$out/develop/compose.yaml" config --quiet
           docker compose --env-file "$out/production/.env" -f "$out/production/compose.yaml" config --quiet
           docker compose --env-file deploy/develop/.env.example -f deploy/develop/compose.yaml config --quiet

@@ -29,7 +29,7 @@ jobs:
         with:
           toolchain: 1.90.0
           rust-src-dir: tools/argws-crm-deployer
-      - run: cargo test --manifest-path tools/argws-crm-deployer/Cargo.toml
+      - run: cargo +1.90.0 test --manifest-path tools/argws-crm-deployer/Cargo.toml
   build:
     needs: validate
     if: >-
@@ -112,8 +112,8 @@ jobs:
         run: |
           set -euo pipefail
           manifest=tools/argws-crm-deployer/Cargo.toml
-          cargo test --target "$TARGET" --manifest-path "$manifest"
-          cargo build --release --target "$TARGET" --manifest-path "$manifest"
+          cargo +1.90.0 test --target "$TARGET" --manifest-path "$manifest"
+          cargo +1.90.0 build --release --target "$TARGET" --manifest-path "$manifest"
           exe="tools/argws-crm-deployer/target/$TARGET/release/argws-crm-deployer"
           out="$RUNNER_TEMP/argws-crm-deployer-smoke"
           "$exe" generate --environment production --version "$(tr -d '[:space:]' < VERSION)" --database mariadb --output "$out"
@@ -212,8 +212,8 @@ jobs:
         run: |
           set -euo pipefail
           manifest=tools/argws-crm-deployer/Cargo.toml
-          cargo test --features gui --target "$TARGET" --manifest-path "$manifest"
-          cargo build --release --features gui --target "$TARGET" --manifest-path "$manifest"
+          cargo +1.90.0 test --features gui --target "$TARGET" --manifest-path "$manifest"
+          cargo +1.90.0 build --release --features gui --target "$TARGET" --manifest-path "$manifest"
           exe="tools/argws-crm-deployer/target/$TARGET/release/argws-crm-deployer"
           out="$RUNNER_TEMP/argws-crm-deployer-gui-smoke"
           "$exe" generate --environment production --version "$(tr -d '[:space:]' < VERSION)" --database mariadb --output "$out"
