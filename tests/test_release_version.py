@@ -92,10 +92,20 @@ class ReleaseVersionMetadataTest(unittest.TestCase):
                 )
         image_default = "$" + "{ARGWS_VERSION:-" + version + "}"
         (self.root / "compose.yaml").write_text(
-            "image: ghcr.io/wkarts/argws-crm:" + image_default + "\n", encoding="utf-8"
+            "services:\n"
+            "  storage-init:\n"
+            "    image: ghcr.io/wkarts/argws-crm:" + image_default + "\n"
+            "  web:\n"
+            "    image: ghcr.io/wkarts/argws-crm:" + image_default + "\n",
+            encoding="utf-8",
         )
+        production_default = "$" + "{ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:" + version + "}"
         (self.root / "deploy/production/compose.yaml").write_text(
-            "image: " + "$" + "{ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:" + version + "}" + "\n",
+            "services:\n"
+            "  storage-init:\n"
+            "    image: " + production_default + "\n"
+            "  web:\n"
+            "    image: " + production_default + "\n",
             encoding="utf-8",
         )
         (self.root / "deploy/production/.env.example").write_text(
@@ -110,6 +120,10 @@ class ReleaseVersionMetadataTest(unittest.TestCase):
         self.assertIn("ARGWS_VERSION', '3.5.0'", (self.root / "application/config/constants.php").read_text())
         self.assertIn("migration_version'] = 350", (self.root / "application/config/migration.php").read_text())
         self.assertEqual((self.root / "container.env.example").read_text(encoding="utf-8"), "ARGWS_VERSION=3.5.0\n")
+        root_compose = (self.root / "compose.yaml").read_text(encoding="utf-8")
+        production_compose = (self.root / "deploy/production/compose.yaml").read_text(encoding="utf-8")
+        self.assertEqual(root_compose.count("${ARGWS_VERSION:-3.5.0}"), 2)
+        self.assertEqual(production_compose.count("ghcr.io/wkarts/argws-crm:3.5.0}"), 2)
         for migration in range(343, 351):
             marker = self.root / f"application/migrations/{migration}_version_{migration}.php"
             self.assertTrue(marker.exists(), f"migration intermediária ausente: {migration}")
@@ -187,12 +201,15 @@ class StableReleaseDeployerAssetsTest(unittest.TestCase):
 
     def test_deployer_dispatch_runs_asset_jobs_after_skipped_validation(self):
         workflow = (ROOT / ".github/workflows/deployer-release.yml").read_text(encoding="utf-8")
-        self.assertIn("branches: [develop, main]", workflow)
+        self.assertIn("pull_request:\n    branches: [main, develop]", workflow)
+        self.assertIn("push:\n    branches: [develop]", workflow)
+        self.assertIn("release:\n    types: [published]", workflow)
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("refs/heads/main", workflow)
         self.assertIn("always() &&", workflow)
         self.assertIn("needs.build.result == 'success'", workflow)
         self.assertIn("needs.build-gui.result == 'success'", workflow)
         self.assertIn("if: always() && needs.prepare-assets.result == 'success'", workflow)
-        self.assertIn("steps.stable-release.outputs.tag", workflow)
 
     def test_deployer_release_contains_cli_and_gui_for_windows_and_linux(self):
         workflow = (ROOT / ".github/workflows/deployer-release.yml").read_text(encoding="utf-8")

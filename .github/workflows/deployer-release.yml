@@ -4,7 +4,7 @@ on:
     branches: [main, develop]
     paths: [deploy/**, scripts/**, tests/**, tools/argws-crm-deployer/**, tools/argws-crm-deployer-gui/**, .github/workflows/deployer-release.yml]
   push:
-    branches: [develop, main]
+    branches: [develop]
     paths: [deploy/**, scripts/**, tests/**, tools/argws-crm-deployer/**, tools/argws-crm-deployer-gui/**, .github/workflows/deployer-release.yml]
   release:
     types: [published]
@@ -53,8 +53,7 @@ jobs:
       (github.event_name == 'pull_request' ||
        github.event_name == 'release' ||
        github.event_name == 'workflow_dispatch' ||
-       (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
-       (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+       (github.event_name == 'push' && github.ref == 'refs/heads/develop'))
     strategy:
       fail-fast: false
       matrix:
@@ -69,31 +68,15 @@ jobs:
             os: linux
     runs-on: ${{ matrix.runner }}
     steps:
-      - name: Selecionar a última release estável no push de main
-        id: stable-release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: ${{ github.repository }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          tag="$(gh release list --repo "$REPOSITORY" --limit 100 --json tagName,isPrerelease,isDraft |
-            jq -r '[.[] | select(.isDraft == false and .isPrerelease == false and (.tagName | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")))] | map(.tagName) | sort_by(ltrimstr("v") | split(".") | map(tonumber)) | last // empty')"
-          [[ "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || {
-            echo "Nenhuma release SemVer estável foi encontrada para o push em main." >&2
-            exit 1
-          }
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.release_tag) || (github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.stable-release.outputs.tag) || github.sha }}
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.release_tag) || github.sha }}
           persist-credentials: false
       - name: Materializar a versão SemVer no deployer
-        if: (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')) || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        if: (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')) || github.event_name == 'workflow_dispatch'
         shell: bash
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag || steps.stable-release.outputs.tag || '' }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag || '' }}
         run: |
           set -euo pipefail
           [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || {
@@ -180,8 +163,7 @@ jobs:
       (github.event_name == 'pull_request' ||
        github.event_name == 'release' ||
        github.event_name == 'workflow_dispatch' ||
-       (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
-       (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+       (github.event_name == 'push' && github.ref == 'refs/heads/develop'))
     strategy:
       fail-fast: false
       matrix:
@@ -196,31 +178,15 @@ jobs:
             os: linux
     runs-on: ${{ matrix.runner }}
     steps:
-      - name: Selecionar a última release estável no push de main
-        id: stable-release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: ${{ github.repository }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          tag="$(gh release list --repo "$REPOSITORY" --limit 100 --json tagName,isPrerelease,isDraft |
-            jq -r '[.[] | select(.isDraft == false and .isPrerelease == false and (.tagName | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")))] | map(.tagName) | sort_by(ltrimstr("v") | split(".") | map(tonumber)) | last // empty')"
-          [[ "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || {
-            echo "Nenhuma release estável foi encontrada." >&2
-            exit 1
-          }
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.release_tag) || (github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.stable-release.outputs.tag) || github.sha }}
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.release_tag) || github.sha }}
           persist-credentials: false
       - name: Materializar versão da release no CLI
-        if: (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')) || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        if: (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')) || github.event_name == 'workflow_dispatch'
         shell: bash
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag || steps.stable-release.outputs.tag || '' }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag || '' }}
         run: |
           set -euo pipefail
           [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || {
@@ -317,25 +283,9 @@ jobs:
     needs: [build, build-gui]
     runs-on: ubuntu-24.04
     steps:
-      - name: Selecionar a última release estável no push de main
-        id: stable-release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: ${{ github.repository }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          tag="$(gh release list --repo "$REPOSITORY" --limit 100 --json tagName,isPrerelease,isDraft |
-            jq -r '[.[] | select(.isDraft == false and .isPrerelease == false and (.tagName | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")))] | map(.tagName) | sort_by(ltrimstr("v") | split(".") | map(tonumber)) | last // empty')"
-          [[ "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || {
-            echo "Nenhuma release SemVer estável foi encontrada para o push em main." >&2
-            exit 1
-          }
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.release_tag) || (github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.stable-release.outputs.tag) || github.sha }}
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.release_tag) || github.sha }}
           persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
@@ -345,7 +295,7 @@ jobs:
       - name: Gerar ZIP separado do diretório deploy
         shell: bash
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name || steps.stable-release.outputs.tag || '' }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || '' }}
           REQUESTED_TAG: ${{ inputs.release_tag || '' }}
           EVENT_REF: ${{ github.ref }}
         run: |

@@ -26,6 +26,12 @@ class DeployerReleaseContractTest(unittest.TestCase):
         self.assertIn("--clobber", WORKFLOW)
         self.assertNotIn('gh release create "v', WORKFLOW)
 
+    def test_main_push_does_not_rebuild_assets_from_the_previous_release(self):
+        self.assertIn("push:\n    branches: [develop]", WORKFLOW)
+        self.assertNotIn("refs/heads/main", WORKFLOW)
+        self.assertIn("release:\n    types: [published]", WORKFLOW)
+        self.assertIn("workflow_dispatch:", WORKFLOW)
+
     def test_develop_keeps_one_fixed_continuous_prerelease(self):
         self.assertIn('tag="argws-crm-develop"', WORKFLOW)
         self.assertIn('gh release create "$tag"', WORKFLOW)
