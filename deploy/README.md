@@ -4,7 +4,7 @@ Este diretório contém as stacks oficiais por ambiente e fica fora dos ZIPs da 
 
 ## Deployer portátil
 
-Baixe argws-crm-deployer-linux-x64 para CloudPanel/Linux x64 ou argws-crm-deployer-win-x64.exe para Windows na release estável ou na pré-release argws-crm-develop. O executável Linux usa musl; ambos são binários nativos e não exigem Rust, Node.js ou Python no servidor.
+Baixe argws-crm-deployer-linux-x64 para CloudPanel/Linux x64 ou argws-crm-deployer-win-x64.exe para Windows na release estável ou na pré-release argws-crm-develop. O executável Linux usa musl; ambos são binários nativos e não exigem Rust, Node.js ou Python no servidor. O comando `generate` também entrega `migrate-storage.sh` na pasta da stack.
 
     ./argws-crm-deployer-linux-x64 generate --environment develop --database mysql --output ./argws-crm-develop
     .\argws-crm-deployer-win-x64.exe generate --environment develop --database mysql --output .\argws-crm-develop
@@ -16,7 +16,7 @@ Baixe argws-crm-deployer-linux-x64 para CloudPanel/Linux x64 ou argws-crm-deploy
     ./argws-crm-deployer-linux-x64 validate --directory ./argws-crm-production
     .\argws-crm-deployer-win-x64.exe validate --directory .\argws-crm-production
 
-O comando generate preserva os valores de um .env existente. Ao atualizar uma stack antiga cujo Compose ainda não conhecia o assistente web, acrescenta uma chave aleatória `ARGWS_SETUP_TOKEN`; em stacks novas, gera a chave junto com as senhas. Após o primeiro provisionamento, remova a chave: o Compose aceita que esteja ausente, e novas execuções do deployer preservam essa remoção quando o modelo atual já contém o campo. `--force` pode substituir `compose.yaml`, nunca as demais configurações do `.env`. O arquivo `.env` novo usa senhas de banco e chave de setup aleatórias, com permissão 0600 em sistemas Unix; mantenha-o fora do Git, da imagem e dos ZIPs.
+O comando generate preserva os valores de um .env existente. Ao atualizar uma stack antiga cujo Compose ainda não conhecia o assistente web, acrescenta uma chave aleatória `ARGWS_SETUP_TOKEN`; em stacks novas, gera a chave junto com as senhas. Após o primeiro provisionamento, remova a chave: o Compose aceita que esteja ausente, e novas execuções do deployer preservam essa remoção quando o modelo atual já contém o campo. `--force` pode substituir `compose.yaml`, nunca as demais configurações do `.env`. O arquivo `.env` novo define `ARGWS_STORAGE_ROOT=./storage`, usa senhas de banco e chave de setup aleatórias, com permissão 0600 em sistemas Unix; mantenha-o fora do Git, da imagem e dos ZIPs. Todos os dados persistentes ficam em subpastas desse caminho relativo à stack.
 
 ## Instalar e atualizar
 
@@ -25,11 +25,11 @@ O comando generate preserva os valores de um .env existente. Ao atualizar uma st
 3. Inicie com `docker compose --env-file .env -f compose.yaml up -d`. O deployer já terá criado no `.env` a chave aleatória `ARGWS_SETUP_TOKEN`.
 4. Abra `https://seu-dominio/setup`, copie essa chave do `.env` e informe URL pública, nome, e-mail, senha e fuso horário do primeiro administrador. O formulário cria schema apenas em banco vazio, configura a instalação e cria o usuário; ao final, redireciona ao CRM automaticamente. Não é necessário executar PHP no terminal nem reiniciar o serviço.
 5. Se a chave estiver ausente ou inválida antes do setup, `/setup` não mostra o formulário e a aplicação retorna 503. A rota `/install` sempre permanece inacessível.
-6. Após confirmar o acesso, remova `ARGWS_SETUP_TOKEN` do `.env` e recrie o serviço web com `docker compose --env-file .env -f compose.yaml up -d --force-recreate web`. Os dados de instalação ficam no volume `installation_config`.
+6. Após confirmar o acesso, remova `ARGWS_SETUP_TOKEN` do `.env` e recrie o serviço web com `docker compose --env-file .env -f compose.yaml up -d --force-recreate web`. Os dados ficam em `./storage/` (ou no caminho relativo definido em `ARGWS_STORAGE_ROOT`).
 7. Configure o CloudPanel para encaminhar o domínio HTTPS à porta local configurada, vinculada a `127.0.0.1`.
-8. Em atualizações, faça backup do banco e dos volumes, preserve `.env` e execute pull e up -d --remove-orphans. Não use docker compose down -v. O provisionador recusa bancos com tabelas existentes e instalações já configuradas.
+8. Em stacks antigas que usam volumes nomeados, faça backup e execute uma vez `sh ./migrate-storage.sh .` (deployer) ou `sh ../migrate-storage.sh .` (ZIP `deploy/`) antes do primeiro `up` com o Compose atualizado. A rotina para a stack, copia os dados existentes para `./storage/`, não sobrescreve destinos ocupados e nunca remove os volumes Docker antigos. Depois, preserve `.env`, execute `docker compose pull` e `docker compose up -d --remove-orphans`. Não use `docker compose down -v`. O provisionador recusa bancos com tabelas existentes e instalações já configuradas.
 
-A configuração da instalação fica no volume installation_config. Banco, uploads, cache e logs têm volumes persistentes separados. A stack Docker fica separada da instalação PHP, PHP-FPM, Nginx e dos outros projetos do CloudPanel; escolha uma porta livre.
+Toda persistência usa bind mounts relativos a `./storage`, controlados por `ARGWS_STORAGE_ROOT` no `.env`: configuração da instalação, banco, uploads, arquivos de módulos, temporários, cache, logs e dados/configuração do Caddy. Os diretórios dos arquivos da aplicação são preparados pelo serviço `storage-init`; o banco mantém seu diretório separado. A stack Docker fica separada da instalação PHP, PHP-FPM, Nginx e dos outros projetos do CloudPanel; escolha uma porta livre.
 
 ## GHCR e dependências
 

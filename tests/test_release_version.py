@@ -69,6 +69,7 @@ class ReleaseVersionMetadataTest(unittest.TestCase):
         self.root = Path(self.temp.name)
         (self.root / "application/config").mkdir(parents=True)
         (self.root / "deploy/production").mkdir(parents=True)
+        (self.root / "container.env.example").write_text("ARGWS_VERSION=3.4.2\n", encoding="utf-8")
         (self.root / "application/migrations").mkdir(parents=True)
         self._write_fixture_version("3.4.2", 342)
 
@@ -108,6 +109,7 @@ class ReleaseVersionMetadataTest(unittest.TestCase):
         self.assertEqual((self.root / "VERSION").read_text(encoding="utf-8"), "3.5.0\n")
         self.assertIn("ARGWS_VERSION', '3.5.0'", (self.root / "application/config/constants.php").read_text())
         self.assertIn("migration_version'] = 350", (self.root / "application/config/migration.php").read_text())
+        self.assertEqual((self.root / "container.env.example").read_text(encoding="utf-8"), "ARGWS_VERSION=3.5.0\n")
         for migration in range(343, 351):
             marker = self.root / f"application/migrations/{migration}_version_{migration}.php"
             self.assertTrue(marker.exists(), f"migration intermediária ausente: {migration}")

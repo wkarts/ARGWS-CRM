@@ -62,6 +62,56 @@ class DockerProvisioningContractTest(unittest.TestCase):
                 self.assertIn("ARGWS_CONFIG_DIR", compose)
                 self.assertIn("ARGWS_SETUP_TOKEN", compose)
 
+    def test_persistent_storage_uses_relative_env_root_in_all_compose_stacks(self):
+        targets = {
+            "/var/lib/argws-crm/config", "/app/uploads", "/app/temp",
+            "/app/application/cache", "/app/application/logs",
+            "/app/modules/accounting/uploads", "/app/modules/finance/uploads",
+            "/app/modules/fleet/uploads", "/app/modules/hr_payroll/uploads",
+            "/app/modules/hr_profile/uploads", "/app/modules/invoices_builder/uploads",
+            "/app/modules/ma/uploads", "/app/modules/products/uploads",
+            "/app/modules/purchase/uploads", "/app/modules/service_management/uploads",
+            "/app/modules/si_custom_theme/uploads", "/app/modules/timesheets/uploads",
+            "/data", "/config",
+        }
+        for path in ("compose.yaml", "deploy/develop/compose.yaml", "deploy/production/compose.yaml"):
+            with self.subTest(path=path):
+                compose = read(path)
+                self.assertNotIn("\nvolumes:\n", compose)
+                self.assertIn('"${ARGWS_STORAGE_ROOT:-./storage}', compose)
+                self.assertIn("service_completed_successfully", compose)
+                mounts = [
+                    line.strip().split('"')[1]
+                    for line in compose.splitlines()
+                    if line.strip().startswith('- "') and "${ARGWS_STORAGE_ROOT:-./storage}" in line
+                ]
+                self.assertTrue(mounts)
+                for mount in mounts:
+                    source, target = mount.rsplit(":", 1)
+                    self.assertTrue(source == "${ARGWS_STORAGE_ROOT:-./storage}" or source.startswith("${ARGWS_STORAGE_ROOT:-./storage}/"))
+                    self.assertTrue(target.startswith("/"))
+                mounted_targets = {mount.rsplit(":", 1)[1] for mount in mounts}
+                self.assertTrue(targets.issubset(mounted_targets))
+                if path != "compose.yaml":
+                    self.assertIn("/var/lib/mysql", mounted_targets)
+
+        for path in ("container.env.example", "deploy/develop/.env.example", "deploy/production/.env.example"):
+            self.assertIn("ARGWS_STORAGE_ROOT=./storage", read(path))
+
+    def test_named_volume_migration_is_non_destructive_and_shell_valid(self):
+        migration = read("deploy/migrate-storage.sh")
+        self.assertIn('down --remove-orphans', migration)
+        self.assertIn('cp -an /legacy/. /target/', migration)
+        self.assertIn('COMPOSE_PROJECT_NAME', migration)
+        self.assertNotIn('down -v', migration)
+        self.assertNotIn('docker volume rm', migration)
+        self.assertNotIn('--rm-volume', migration)
+        result = __import__("subprocess").run(["sh", "-n", "deploy/migrate-storage.sh"], cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        deployer = read("tools/argws-crm-deployer/src/main.rs")
+        self.assertIn('include_str!("../../../deploy/migrate-storage.sh")', deployer)
+        self.assertIn("ensure_storage_root(&contents)", deployer)
+        self.assertIn("valid_storage_root(&storage_root)", deployer)
     def test_smoke_covers_web_setup_protection_and_persistence(self):
         smoke = read("tests/docker_provision_smoke.sh")
         restart = smoke.index('docker restart "$web"')

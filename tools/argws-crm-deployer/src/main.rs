@@ -9,6 +9,7 @@ const PROD_COMPOSE: &str = include_str!("../../../deploy/production/compose.yaml
 const DEV_ENV: &str = include_str!("../../../deploy/develop/.env.example");
 const PROD_ENV: &str = include_str!("../../../deploy/production/.env.example");
 const VERSION: &str = include_str!("../../../VERSION");
+const STORAGE_MIGRATION: &str = include_str!("../../../deploy/migrate-storage.sh");
 const MYSQL: &str = "ghcr.io/wkarts/argws-crm-mysql:8.0";
 const MARIADB: &str = "ghcr.io/wkarts/argws-crm-mariadb:11.4";
 
@@ -82,6 +83,21 @@ where
         Some(_) => Err("ARGWS_SETUP_TOKEN inválido; use 64 caracteres hexadecimais ou remova a variável para gerar outra chave".into()),
     }
 }
+fn valid_storage_root(value: &str) -> bool {
+    if value == "./" { return true; }
+    let Some(path) = value.strip_prefix("./") else { return false; };
+    !path.is_empty()
+        && path.split('/').all(|part| !part.is_empty() && part != "." && part != "..")
+        && value.bytes().all(|byte| byte.is_ascii_alphanumeric() || b"/_-.".contains(&byte))
+}
+fn ensure_storage_root(contents: &str) -> Result<String, String> {
+    match get(contents, "ARGWS_STORAGE_ROOT") {
+        Some(value) if valid_storage_root(&value) => Ok(contents.to_string()),
+        Some(_) => Err("ARGWS_STORAGE_ROOT deve ser um caminho relativo dentro da stack, como ./storage".into()),
+        None => Ok(set(contents, "ARGWS_STORAGE_ROOT", "./storage")),
+    }
+}
+
 fn secure_write(path: &Path, contents: &str) -> Result<(), String> {
     let mut options = OpenOptions::new();
     options.write(true).create_new(true);
@@ -101,7 +117,9 @@ fn write_compose(path: &Path, contents: &str, force: bool) -> Result<(), String>
 fn validate(dir: &Path) -> Result<(), String> {
     let compose = fs::read_to_string(dir.join("compose.yaml")).map_err(|_| "compose.yaml ausente")?;
     let env = fs::read_to_string(dir.join(".env")).map_err(|_| ".env ausente")?;
-    for key in ["ARGWS_CRM_IMAGE","ARGWS_CRM_DATABASE_IMAGE","ARGWS_HTTP_BIND","ARGWS_HTTP_PORT","MYSQL_DATABASE","MYSQL_USER","MYSQL_PASSWORD","MYSQL_ROOT_PASSWORD","TZ"] {
+    let migration = fs::read_to_string(dir.join("migrate-storage.sh")).map_err(|_| "migrate-storage.sh ausente")?;
+    if !migration.contains("cp -an /legacy/. /target/") { return Err("migrate-storage.sh inválido".into()); }
+    for key in ["ARGWS_CRM_IMAGE","ARGWS_CRM_DATABASE_IMAGE","ARGWS_HTTP_BIND","ARGWS_HTTP_PORT","MYSQL_DATABASE","MYSQL_USER","MYSQL_PASSWORD","MYSQL_ROOT_PASSWORD","TZ","ARGWS_STORAGE_ROOT"] {
         let value = get(&env, key).ok_or_else(|| format!("variável ausente: {key}"))?;
         if value.is_empty() || value.starts_with("CHANGE_ME") { return Err(format!("valor de exemplo pendente: {key}")); }
     }
@@ -113,6 +131,8 @@ fn validate(dir: &Path) -> Result<(), String> {
             return Err("ARGWS_SETUP_TOKEN deve estar vazio ou conter 64 caracteres hexadecimais".into());
         }
     }
+    let storage_root = get(&env, "ARGWS_STORAGE_ROOT").unwrap();
+    if !valid_storage_root(&storage_root) { return Err("ARGWS_STORAGE_ROOT deve ser relativo, começar com ./ e permanecer na pasta da stack".into()); }
     let image = get(&env, "ARGWS_CRM_IMAGE").unwrap();
     let tag = image.rsplit(':').next().unwrap_or("");
     if !image.starts_with("ghcr.io/wkarts/argws-crm:") || (tag != "develop" && !semver(tag)) {
@@ -121,7 +141,7 @@ fn validate(dir: &Path) -> Result<(), String> {
     let db = get(&env, "ARGWS_CRM_DATABASE_IMAGE").unwrap();
     if db != MYSQL && db != MARIADB { return Err("banco deve usar a imagem MySQL ou MariaDB do GHCR".into()); }
     if get(&env,"MYSQL_PASSWORD") == get(&env,"MYSQL_ROOT_PASSWORD") { return Err("as senhas MySQL devem ser diferentes".into()); }
-    for key in ["ARGWS_CRM_IMAGE","ARGWS_CRM_DATABASE_IMAGE","MYSQL_PASSWORD","ARGWS_SETUP_TOKEN"] {
+    for key in ["ARGWS_CRM_IMAGE","ARGWS_CRM_DATABASE_IMAGE","MYSQL_PASSWORD","ARGWS_SETUP_TOKEN","ARGWS_STORAGE_ROOT"] {
         if !compose.contains(&format!("{}{{{}", "$", key)) { return Err(format!("compose não usa {key}")); }
     }
     #[cfg(unix)]
@@ -155,6 +175,8 @@ fn generate_stack(environment: &str, version: Option<&str>, database: &str, outp
         false
     };
     write_compose(&compose_path, compose, force)?;
+    fs::write(output.join("migrate-storage.sh"), STORAGE_MIGRATION)
+        .map_err(|e| format!("não foi possível gravar migrate-storage.sh: {e}"))?;
     let env_path = output.join(".env");
     if !env_path.exists() {
         let mut contents = set(example, "ARGWS_CRM_IMAGE", &format!("ghcr.io/wkarts/argws-crm:{tag}"));
@@ -166,6 +188,7 @@ fn generate_stack(environment: &str, version: Option<&str>, database: &str, outp
     } else {
         let old = fs::read_to_string(&env_path).map_err(|e| format!("não foi possível ler .env: {e}"))?;
         let contents = ensure_setup_token(&old, !previous_compose_has_setup_token, random_hex)?;
+        let contents = ensure_storage_root(&contents)?;
         if contents != old {
             #[cfg(unix)]
             {
@@ -249,6 +272,17 @@ mod tests {
         let removed = generated.lines().filter(|line| !line.starts_with("ARGWS_SETUP_TOKEN=")).collect::<Vec<_>>().join("\n");
         let unchanged = ensure_setup_token(&removed, false, || panic!("não deve gerar segredo para stack já provisionada")).unwrap();
         assert_eq!(unchanged, removed);
+    }
+    #[test] fn storage_root_stays_relative_and_migrates_legacy_env() {
+        assert!(valid_storage_root("./storage"));
+        assert!(valid_storage_root("./data/argws"));
+        assert!(!valid_storage_root("/srv/argws"));
+        assert!(!valid_storage_root("./../outside"));
+        assert!(!valid_storage_root("./storage:other"));
+        let migrated = ensure_storage_root("A=1\n").unwrap();
+        assert_eq!(get(&migrated, "A").as_deref(), Some("1"));
+        assert_eq!(get(&migrated, "ARGWS_STORAGE_ROOT").as_deref(), Some("./storage"));
+        assert!(ensure_storage_root("ARGWS_STORAGE_ROOT=/srv/data\n").is_err());
     }
     #[test] fn setup_token_rejects_malformed_custom_values() {
         assert!(ensure_setup_token("ARGWS_SETUP_TOKEN=abc\n", true, || Ok("a".repeat(64))).is_err());
