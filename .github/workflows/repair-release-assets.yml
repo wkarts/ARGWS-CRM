@@ -1,0 +1,128 @@
+name: Repair ARGWS release packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Tag SemVer existente cujos pacotes serão reconstruídos
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: argws-crm-repair-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    name: Recriar pacotes de uma release existente
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obter histórico, tags e configuração de base
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Escolher fonte da release e base de comparação
+        id: source
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF" == "refs/heads/main" ]]
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "Informe uma tag SemVer estável como v3.4.2." >&2
+            exit 1
+          }
+
+          git fetch --tags origin
+          gh release view "$RELEASE_TAG" >/dev/null
+          source_sha="$(git rev-parse --verify "refs/tags/$RELEASE_TAG^{commit}")"
+          version="${RELEASE_TAG#v}"
+          source_version="$(git show "$source_sha:VERSION" | tr -d '[:space:]')"
+          [[ "$source_version" == "$version" ]] || {
+            echo "A versão gravada no commit da tag não corresponde à tag." >&2
+            exit 1
+          }
+
+          previous_tag=""
+          while IFS= read -r tag; do
+            [[ "$tag" == "$RELEASE_TAG" ]] && break
+            previous_tag="$tag"
+          done < <(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V)
+
+          if [[ -n "$previous_tag" ]]; then
+            base_ref="$previous_tag"
+          else
+            base_ref="$(tr -d '[:space:]' < .github/first-release-base.txt)"
+          fi
+          git cat-file -e "${base_ref}^{commit}"
+          git merge-base --is-ancestor "$base_ref" "$source_sha"
+
+          {
+            echo "tag=$RELEASE_TAG"
+            echo "version=$version"
+            echo "source_sha=$source_sha"
+            echo "base_ref=$base_ref"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "### Reconstruindo pacotes de $RELEASE_TAG"
+            echo
+            echo "Fonte: $source_sha"
+            echo "Base incremental: $base_ref"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Arquivar fonte marcada e base
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+          BASE_REF: ${{ steps.source.outputs.base_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/argws-release-source" "$RUNNER_TEMP/argws-release-base"
+          git archive "$SOURCE_SHA" | tar -x -C "$RUNNER_TEMP/argws-release-source"
+          git archive "$BASE_REF" | tar -x -C "$RUNNER_TEMP/argws-release-base"
+
+      - name: Recriar e validar ZIPs e checksums
+        env:
+          RELEASE_VERSION: ${{ steps.source.outputs.version }}
+        working-directory: ${{ runner.temp }}/argws-release-source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/package-release.py \
+            --base-dir "$RUNNER_TEMP/argws-release-base" \
+            --output-dir "$GITHUB_WORKSPACE/dist"
+          test -s "$GITHUB_WORKSPACE/dist/ARGWS-CRM-$RELEASE_VERSION-full.zip"
+          test -s "$GITHUB_WORKSPACE/dist/ARGWS-CRM-$RELEASE_VERSION-update.zip"
+          (
+            cd "$GITHUB_WORKSPACE/dist"
+            sha256sum --check "ARGWS-CRM-$RELEASE_VERSION-SHA256SUMS.txt"
+          )
+
+      - name: Atualizar anexos e notas da release existente
+        env:
+          RELEASE_TAG: ${{ steps.source.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.source.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload "$RELEASE_TAG" \
+            "dist/ARGWS-CRM-$RELEASE_VERSION-full.zip" \
+            "dist/ARGWS-CRM-$RELEASE_VERSION-update.zip" \
+            "dist/ARGWS-CRM-$RELEASE_VERSION-SHA256SUMS.txt" \
+            --clobber
+          notes="docs/releases/$RELEASE_VERSION.md"
+          if [[ -f "$notes" ]]; then
+            gh release edit "$RELEASE_TAG" \
+              --title "ARGWS CRM $RELEASE_TAG" \
+              --notes-file "$notes"
+          fi
+          echo "Anexos atualizados sem criar tag ou versão nova." >> "$GITHUB_STEP_SUMMARY"
