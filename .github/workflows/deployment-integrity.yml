@@ -5,7 +5,7 @@ on:
     paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_actions_cache_cleanup.py, Dockerfile, .github/workflows/actions-cache-retention.yml]
   push:
     branches: [develop, main]
-    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, tests/test_package_release.py, Dockerfile]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_actions_cache_cleanup.py, Dockerfile, .github/workflows/actions-cache-retention.yml]
   workflow_dispatch:
 permissions:
   contents: read
