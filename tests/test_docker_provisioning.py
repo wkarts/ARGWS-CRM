@@ -26,7 +26,7 @@ class DockerProvisioningContractTest(unittest.TestCase):
         self.assertIn("Caddyfile.unprovisioned", entrypoint)
         self.assertIn("route {", caddy)
         self.assertIn("@installer path /install /install/ /install/*", caddy)
-        self.assertLess(caddy.index("@installer path"), caddy.index("php_server"))
+        self.assertLess(caddy.index("@installer path"), caddy.rindex("\n        php_server\n"))
         self.assertIn("503", pending)
         self.assertIn("provision.php", pending)
         self.assertIn("@installer path /install /install/ /install/*", pending)
