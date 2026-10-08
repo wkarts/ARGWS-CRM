@@ -301,7 +301,7 @@ jobs:
           python3 scripts/apply-release-version.py "$RELEASE_VERSION"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add VERSION application/config/constants.php compose.yaml deploy/production/compose.yaml deploy/production/.env.example
+          git add VERSION application/config/constants.php application/config/migration.php application/migrations compose.yaml deploy/production/compose.yaml deploy/production/.env.example
           if ! git diff --cached --quiet; then
             git -c core.hooksPath=/dev/null commit -m "chore(release): $RELEASE_TAG [skip release]"
             git push origin HEAD:refs/heads/main
@@ -401,7 +401,7 @@ jobs:
             git fetch origin +refs/heads/develop:refs/remotes/origin/develop
             git checkout -B release-sync refs/remotes/origin/develop
             python3 scripts/apply-release-version.py "$RELEASE_VERSION"
-            git add VERSION application/config/constants.php compose.yaml deploy/production/compose.yaml deploy/production/.env.example
+            git add VERSION application/config/constants.php application/config/migration.php application/migrations compose.yaml deploy/production/compose.yaml deploy/production/.env.example
             if git diff --cached --quiet; then
               synchronized=true
               break

@@ -9,7 +9,7 @@ O fluxo usa os branches `develop` e `main`:
 - A promoção de `develop` para `main` calcula a próxima SemVer automaticamente e publica a imagem estável no GHCR, os ZIPs e a release do GitHub.
 - A primeira versão é o SemVer já configurado em `VERSION`; para esta primeira publicação, ela é `3.4.2` e a tag é `v3.4.2`.
 - Depois da primeira tag, títulos de PR convencionais determinam o incremento automático: `feat:` gera minor, correções e os demais tipos geram patch, e `!:` ou `BREAKING CHANGE` gera major. Os rótulos `version:patch`, `version:minor` e `version:major` podem definir o incremento. Uma execução manual também aceita `auto`, `patch`, `minor` ou `major`.
-- A migration do banco é versionada de forma independente. Uma release patch/minor/major não altera `migration_version` sem uma migration de schema correspondente.
+- Cada release SemVer avança `migration_version` em sincronia com o produto. Sem mudança de schema, o pipeline adiciona uma migration marcador sem DDL; migrations históricas não são reescritas. A versão `3.5.0` usa o identificador `350`. Como o migrador do CodeIgniter percorre cada nível sequencial, a release também inclui os marcadores `343` a `349`; assim, o caminho `342 → 350` não deixa lacunas. Marcadores sem mudança de schema têm `up()` e `down()` vazios. Migrations históricas e migrations reais existentes nunca são reescritas. O validador de release confere todos os arquivos de `101` ao nível configurado e falha se encontrar um nível ausente ou uma classe divergente. Componentes SemVer com múltiplos dígitos mantêm IDs crescentes sem criar saltos enormes.
 
 Após cada release, o fluxo sincroniza os campos de versão de produto em `develop` sem substituir outras alterações e solicita uma nova publicação da imagem `:develop`.
 
@@ -46,7 +46,7 @@ ghcr.io/wkarts/argws-crm-base:1-php8.3-bookworm espelha a base FrankenPHP do bui
 
 O CRM declara MySQL/MariaDB. PostgreSQL e Redis não são dependências ativas configuradas ou testadas e não são adicionadas à stack.
 
-O binário Rust argws-crm-deployer gera compose.yaml e .env localmente e preserva um .env existente. deploy/ e tools/argws-crm-deployer/ ficam fora dos ZIPs de aplicação. O binário é anexado como asset separado às releases.
+O deployer Rust oferece CLI e GUI desktop para Windows x64 e Linux x64. Ambos usam o mesmo gerador e validador; a GUI permite escolher ambiente, banco e pasta e gera senhas aleatórias. No Linux, a GUI requer uma sessão gráfica com X11 ou XWayland, OpenGL e as bibliotecas de sistema do backend gráfico. Em distribuições Debian/Ubuntu, instale também o runtime `libxkbcommon-x11-0`; o pacote CLI Linux continua adequado a servidores sem desktop. Um `.env` existente é preservado. Binários, manifesto, checksums e ZIP `deploy/` são anexados à mesma release estável; em `develop`, um único prerelease `argws-crm-develop` é atualizado no lugar com `--clobber`. `deploy/` e `tools/argws-crm-deployer/` ficam fora dos ZIPs PHP.
 
 
 ## Retenção e limpeza de cache

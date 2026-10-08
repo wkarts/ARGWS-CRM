@@ -1,4 +1,9 @@
-use std::{env, fs::{self, File, OpenOptions}, io::{Read, Write}, path::{Path, PathBuf}};
+use std::{env, fs::{self, OpenOptions}, io::Write, path::{Path, PathBuf}};
+#[cfg(unix)]
+use std::{fs::File, io::Read};
+
+#[cfg(feature = "gui")]
+mod gui;
 const DEV_COMPOSE: &str = include_str!("../../../deploy/develop/compose.yaml");
 const PROD_COMPOSE: &str = include_str!("../../../deploy/production/compose.yaml");
 const DEV_ENV: &str = include_str!("../../../deploy/develop/.env.example");
@@ -92,6 +97,34 @@ fn validate(dir: &Path) -> Result<(), String> {
     }
     Ok(())
 }
+
+fn generate_stack(environment: &str, version: Option<&str>, database: &str, output: &Path, force: bool) -> Result<(), String> {
+    let (compose, example, default_tag) = match environment {
+        "develop" => (DEV_COMPOSE, DEV_ENV, "develop"),
+        "production" => (PROD_COMPOSE, PROD_ENV, VERSION.trim()),
+        _ => return Err("environment deve ser develop ou production".into()),
+    };
+    let tag = version.unwrap_or(default_tag);
+    if environment == "production" && !semver(tag) { return Err("produção exige versão SemVer X.Y.Z".into()); }
+    let db_image = match database {
+        "mysql" => MYSQL,
+        "mariadb" => MARIADB,
+        _ => return Err("database deve ser mysql ou mariadb".into()),
+    };
+    fs::create_dir_all(output).map_err(|e| format!("não foi possível criar a pasta: {e}"))?;
+    write_compose(&output.join("compose.yaml"), compose, force)?;
+    let env_path = output.join(".env");
+    if !env_path.exists() {
+        let mut contents = set(example, "ARGWS_CRM_IMAGE", &format!("ghcr.io/wkarts/argws-crm:{tag}"));
+        contents = set(&contents, "ARGWS_CRM_DATABASE_IMAGE", db_image);
+        contents = set(&contents, "MYSQL_PASSWORD", &random_hex()?);
+        contents = set(&contents, "MYSQL_ROOT_PASSWORD", &random_hex()?);
+        secure_write(&env_path, &contents)?;
+    }
+    validate(output)?;
+    Ok(())
+}
+
 fn main_result() -> Result<(), String> {
     let args: Vec<String> = env::args().skip(1).collect();
     let cmd = args.first().map(String::as_str).unwrap_or("help");
@@ -110,35 +143,23 @@ fn main_result() -> Result<(), String> {
         return Ok(());
     }
     if cmd != "generate" { return Err("comando esperado: list, generate, validate ou help".into()); }
-    let environment = arg(&args,"--environment").ok_or("--environment é obrigatório")?;
-    let (compose, example, default_tag) = match environment.as_str() {
-        "develop" => (DEV_COMPOSE, DEV_ENV, "develop".to_string()),
-        "production" => (PROD_COMPOSE, PROD_ENV, VERSION.trim().to_string()),
-        _ => return Err("environment deve ser develop ou production".into()),
-    };
-    let tag = arg(&args,"--version").unwrap_or(default_tag);
-    if environment == "production" && !semver(&tag) { return Err("produção exige versão SemVer X.Y.Z".into()); }
-    let db_image = match arg(&args,"--database").as_deref().unwrap_or("mysql") {
-        "mysql" => MYSQL,
-        "mariadb" => MARIADB,
-        _ => return Err("database deve ser mysql ou mariadb".into()),
-    };
-    let output = PathBuf::from(arg(&args,"--output").ok_or("--output é obrigatório")?);
-    fs::create_dir_all(&output).map_err(|e|format!("não foi possível criar a pasta: {e}"))?;
-    write_compose(&output.join("compose.yaml"), compose, args.iter().any(|x|x=="--force"))?;
-    let env_path = output.join(".env");
-    if !env_path.exists() {
-        let mut contents = set(example,"ARGWS_CRM_IMAGE",&format!("ghcr.io/wkarts/argws-crm:{tag}"));
-        contents = set(&contents,"ARGWS_CRM_DATABASE_IMAGE",db_image);
-        contents = set(&contents,"MYSQL_PASSWORD",&random_hex()?);
-        contents = set(&contents,"MYSQL_ROOT_PASSWORD",&random_hex()?);
-        secure_write(&env_path,&contents)?;
-    }
-    validate(&output)?;
-    println!("Stack preparada em {}",output.display());
+    let environment = arg(&args, "--environment").ok_or("--environment é obrigatório")?;
+    let version = arg(&args, "--version");
+    let database = arg(&args, "--database").unwrap_or_else(|| "mysql".to_string());
+    let output = PathBuf::from(arg(&args, "--output").ok_or("--output é obrigatório")?);
+    generate_stack(&environment, version.as_deref(), &database, &output, args.iter().any(|x| x == "--force"))?;
+    println!("Stack preparada e validada em {}", output.display());
     Ok(())
 }
 fn main() {
+    #[cfg(feature = "gui")]
+    {
+        let args: Vec<String> = env::args().skip(1).collect();
+        if args.is_empty() || matches!(args.first().map(String::as_str), Some("gui" | "--gui")) {
+            if let Err(error) = gui::run() { eprintln!("Erro: {error}"); std::process::exit(1); }
+            return;
+        }
+    }
     if let Err(error) = main_result() { eprintln!("Erro: {error}"); std::process::exit(1); }
 }
 

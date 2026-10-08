@@ -13,7 +13,7 @@ O instalador fica em `install/`. Configure o domínio para servir a raiz do proj
 
 ## Container FrankenPHP
 
-A implantação recomendada usa os Compose por ambiente e o binário `argws-crm-deployer` documentados em [deploy/README.md](deploy/README.md). O deployer prepara `compose.yaml` e `.env`; a configuração, o banco, as senhas e os uploads ficam fora da imagem.
+A implantação recomendada usa os Compose por ambiente e o binário `argws-crm-deployer` documentados em [deploy/README.md](deploy/README.md). O deployer gráfico ou de terminal prepara `compose.yaml` e `.env`; a configuração, o banco, as senhas e os uploads ficam fora da imagem. O ativo GUI abre o assistente desktop quando iniciado sem argumentos.
 
 A imagem GHCR não inclui o diretório web `install/`. O primeiro provisionamento ocorre uma vez pelo terminal, com um comando CLI que importa o schema em banco vazio e solicita os dados do primeiro administrador sem exibir a senha. Antes da conclusão, o endpoint web responde 503; não há rota de instalação pública nem credenciais master padrão.
 
@@ -27,6 +27,6 @@ A telemetria de usuários e licenciamento e a validação remota de licença fic
 
 ## Releases e atualizações
 
-O canal `develop` publica uma imagem de desenvolvimento. As promoções para `main` usam SemVer automático e publicam no GHCR as tags de versão, major.minor, major e latest, além dos ZIPs completo e incremental. A release também anexa um ZIP separado `ARGWS-CRM-deploy-<versão>.zip` com as stacks e exemplos de ambiente; esse diretório não é misturado ao pacote da aplicação PHP. Checksums SHA-256 acompanham os artefatos. A versão do produto e o nível de migration do banco evoluem independentemente.
+O canal `develop` publica uma imagem de desenvolvimento e atualiza um único prerelease contínuo pela tag fixa `argws-crm-develop`. As promoções para `main` usam SemVer automático e publicam no GHCR as tags de versão, major.minor, major e latest, além dos ZIPs completo e incremental. A mesma release estável anexa o ZIP `ARGWS-CRM-deploy-<versão>.zip`, os binários de terminal e GUI do deployer, checksums e manifesto; eles não criam releases separadas. Cada aumento de versão também avança `migration_version`. O caminho até o novo nível inclui todos os arquivos intermediários; por exemplo, 3.5.0 leva os marcadores 343–349 e a migration 350, evitando lacunas a partir do nível 342. Marcadores sem alteração de schema não executam DDL, e migrations históricas permanecem intactas.
 
 Faça backup do banco, da configuração local e dos uploads antes de atualizar. O pacote incremental preserva os dados enviados pelos clientes e lista arquivos de código removidos. Consulte [Distribuição ARGWS](docs/distribuicao-argws.md) para os detalhes do versionamento, build, cache e publicação e [Arquitetura e dados](docs/arquitetura-e-dados.md) para as migrations e os recursos nativos.
