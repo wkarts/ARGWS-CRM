@@ -56,7 +56,7 @@ host_port="$(docker port "$web" 8080/tcp | awk -F: 'END { print $NF }')"
 url="http://127.0.0.1:$host_port"
 ready=0
 for _ in $(seq 1 45); do
-    code="$(curl -sS -o /tmp/argws-crm-unprovisioned-body -w '%{http_code}' "$url/" || true)"
+    code="$(curl --connect-timeout 2 --max-time 5 -sS -o /tmp/argws-crm-unprovisioned-body -w '%{http_code}' "$url/" 2>/dev/null || true)"
     if [ "$code" = "503" ] && grep -q "provision.php" /tmp/argws-crm-unprovisioned-body; then
         ready=1
         break
@@ -95,8 +95,8 @@ fi
 docker restart "$web" >/dev/null
 status=""
 for _ in $(seq 1 45); do
-    status="$(curl -sS -o /tmp/argws-crm-after-provision-body -w '%{http_code}' "$url/" || true)"
-    if [ -n "$status" ] && [ "$status" != "503" ]; then
+    status="$(curl --connect-timeout 2 --max-time 5 -sS -o /tmp/argws-crm-after-provision-body -w '%{http_code}' "$url/" 2>/dev/null || true)"
+    if [[ "$status" =~ ^[1-5][0-9][0-9]$ ]] && [ "$status" != "503" ]; then
         break
     fi
     sleep 1
@@ -105,7 +105,7 @@ if [ -z "$status" ] || [ "$status" = "503" ] || [ "$status" = "500" ]; then
     echo "A aplicação não iniciou após o provisionamento (HTTP ${status:-sem resposta})." >&2
     exit 1
 fi
-if [ "$(curl -sS -o /dev/null -w '%{http_code}' "$url/install/")" != "404" ]; then
+if [ "$(curl --connect-timeout 2 --max-time 5 -sS -o /dev/null -w '%{http_code}' "$url/install/" 2>/dev/null || true)" != "404" ]; then
     echo "A rota /install ainda está acessível após o provisionamento." >&2
     exit 1
 fi
