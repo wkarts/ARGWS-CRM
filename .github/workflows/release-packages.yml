@@ -21,7 +21,8 @@ jobs:
           fetch-depth: 0
 
       - name: Validar versão e tag
-        run: ./scripts/check-release-version.sh "${GITHUB_REF_NAME}"
+        shell: bash
+        run: bash ./scripts/check-release-version.sh "${GITHUB_REF_NAME}"
 
       - name: Ler versão SemVer
         id: version
@@ -34,19 +35,45 @@ jobs:
           node tests/argws_platform_contract.test.cjs
           python3 -m unittest tests/test_package_release.py
 
-      - name: Preparar diretório-base da versão anterior
+      - name: Preparar diretório-base do pacote incremental
         id: base
         shell: bash
         run: |
           set -euo pipefail
-          previous_tag="$(git tag --list 'v[0-9]*' --sort=-version:refname | awk -v current="${GITHUB_REF_NAME}" '$0 != current { print; exit }')"
-          if [[ -z "$previous_tag" ]]; then
-            echo "Não foi encontrada uma tag anterior para gerar o pacote incremental." >&2
+          current_tag="${GITHUB_REF_NAME}"
+          mapfile -t release_tags < <(git tag --list 'v[0-9]*' --sort=version:refname)
+          previous_tag=""
+          found_current="false"
+          for tag in "${release_tags[@]}"; do
+            if [[ "$tag" == "$current_tag" ]]; then
+              found_current="true"
+              break
+            fi
+            previous_tag="$tag"
+          done
+          if [[ "$found_current" != "true" ]]; then
+            echo "A tag atual não está disponível no histórico obtido pelo checkout." >&2
             exit 1
           fi
-          printf 'tag=%s\n' "$previous_tag" >> "$GITHUB_OUTPUT"
+
           mkdir -p "$RUNNER_TEMP/argws-crm-base"
-          git archive "$previous_tag" | tar -x -C "$RUNNER_TEMP/argws-crm-base"
+          if [[ -n "$previous_tag" ]]; then
+            base_ref="$previous_tag"
+            printf 'tag=%s\\n' "$previous_tag" >> "$GITHUB_OUTPUT"
+            echo "Base do pacote incremental: $previous_tag"
+          else
+            if ! base_ref="$(git rev-parse "${GITHUB_SHA}^" 2>/dev/null)"; then
+              echo "A primeira publicação precisa de um commit-pai para gerar o ZIP incremental." >&2
+              exit 1
+            fi
+            printf 'tag=initial-parent-%s\\n' "${GITHUB_SHA:0:12}" >> "$GITHUB_OUTPUT"
+            echo "Sem tag de release anterior; usando o primeiro pai da versão como base inicial."
+            {
+              echo "### Base do ZIP incremental"
+              echo "Como esta é a primeira release ARGWS CRM, o ZIP incremental será comparado ao primeiro pai do commit marcado."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          git archive "$base_ref" | tar -x -C "$RUNNER_TEMP/argws-crm-base"
 
       - name: Gerar pacote completo, incremental e checksums
         run: |
