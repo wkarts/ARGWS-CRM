@@ -20,11 +20,11 @@ class DeploymentArchiveTest(unittest.TestCase):
             "deploy/develop/compose.yaml": "image: ghcr.io/wkarts/argws-crm:develop\n",
             "deploy/develop/.env.example": "ARGWS_CRM_IMAGE=ghcr.io/wkarts/argws-crm:develop\n",
             "deploy/production/compose.yaml": (
-                "services:\\n"
-                "  storage-init:\\n"
-                "    image: " + "$" + "{ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.4.2}\\n"
-                "  web:\\n"
-                "    image: " + "$" + "{ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.4.2}\\n"
+                "services:\n"
+                "  storage-init:\n"
+                "    image: " + "$" + "{ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.4.2}\n"
+                "  web:\n"
+                "    image: " + "$" + "{ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.4.2}\n"
             ),
             "deploy/production/.env.example": "ARGWS_CRM_IMAGE=ghcr.io/wkarts/argws-crm:3.4.2\n",
             "deploy/production/.env": "MYSQL_PASSWORD=secret\n",
