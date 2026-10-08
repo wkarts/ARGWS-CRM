@@ -282,13 +282,6 @@ dependencies = [
  "eframe",
  "wgpu",
 ]
-[[package]]
-name = "argws-crm-deployer"
-version = "0.1.0"
-dependencies = [
- "eframe",
- "wgpu",
-]
 
 [[package]]
 name = "arrayref"
@@ -6022,4 +6015,3 @@ dependencies = [
  "syn",
  "winnow",
 ]
-
