@@ -55,7 +55,7 @@ fi
 
 if [ "$1" = "frankenphp" ]; then
     # Until setup finishes its database migrations, serve only the one-time setup route.
-    run_as_web_user frankenphp run --config /etc/caddy/Caddyfile.unprovisioned
+    run_as_web_user frankenphp run --config /etc/caddy/Caddyfile.unprovisioned --adapter caddyfile
 fi
 
 # Preserve CLI commands for diagnostics and the optional interactive provisioner.
