@@ -1,7 +1,7 @@
 name: ${COMPOSE_PROJECT_NAME:-argws-crm-production}
 services:
   web:
-    image: ${ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.5.0}
+    image: ${ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.6.0}
     container_name: ${COMPOSE_PROJECT_NAME:-argws-crm-production}-web
     restart: unless-stopped
     environment:
