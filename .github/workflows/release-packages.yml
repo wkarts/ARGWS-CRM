@@ -395,11 +395,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           previous_run="$(gh run list --repo "$GH_REPOSITORY" \
             --workflow .github/workflows/deployer-release.yml \
             --event workflow_dispatch --branch main --limit 1 \
             --json databaseId --jq '.[0].databaseId // 0')"
+          [[ "$previous_run" =~ ^[0-9]+$ ]] || {
+            echo "Não foi possível identificar a execução anterior do deployer." >&2
+            exit 1
+          }
           gh workflow run .github/workflows/deployer-release.yml \
             --repo "$GH_REPOSITORY" --ref main \
             -f release_tag="$RELEASE_TAG"
@@ -408,9 +411,8 @@ jobs:
             run_id="$(gh run list --repo "$GH_REPOSITORY" \
               --workflow .github/workflows/deployer-release.yml \
               --event workflow_dispatch --branch main --limit 10 \
-              --json databaseId,createdAt \
-              --jq --arg started "$started_at" --argjson previous "${previous_run:-0}" \
-              '[.[] | select(.databaseId != $previous and .createdAt >= $started)] | sort_by(.databaseId) | last.databaseId // empty')"
+              --json databaseId \
+              --jq "[.[] | select(.databaseId > $previous_run)] | sort_by(.databaseId) | last.databaseId // empty")"
             if [[ -n "$run_id" ]]; then break; fi
             sleep 5
           done
