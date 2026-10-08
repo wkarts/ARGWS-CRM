@@ -47,3 +47,4 @@ jobs:
           docker compose --env-file deploy/develop/.env.example -f deploy/develop/compose.yaml config --quiet
           docker compose --env-file deploy/production/.env.example -f deploy/production/compose.yaml config --quiet
           ARGWS_DB_HOST=database.example.invalid ARGWS_DB_NAME=argws_crm ARGWS_DB_USER=argws_crm ARGWS_DB_PASSWORD=ci-test-password docker compose --env-file "$out/production/.env" -f compose.yaml config --quiet
+          docker compose --env-file "$out/production/.env" -f compose.yaml config --quiet

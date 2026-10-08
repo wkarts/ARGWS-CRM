@@ -46,6 +46,13 @@ class DockerProvisioningContractTest(unittest.TestCase):
                 self.assertIn("ARGWS_DB_PASSWORD", compose)
                 self.assertIn("ARGWS_CONFIG_DIR", compose)
 
+    def test_root_compose_keeps_external_database_variables_optional(self):
+        compose = read("compose.yaml")
+        self.assertIn("ARGWS_DB_HOST:", compose)
+        self.assertNotIn("Defina ARGWS_DB_HOST", compose)
+        self.assertIn("container.env.example", read("README.md"))
+
+
 
 if __name__ == "__main__":
     unittest.main()
