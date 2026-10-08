@@ -108,6 +108,8 @@ fi
 install_after_code="$(curl --connect-timeout 2 --max-time 5 -sS -o /dev/null -w '%{http_code}' "$url/install/" 2>/dev/null || true)"
 if [ "$install_after_code" != "404" ]; then
     echo "A rota /install respondeu HTTP ${install_after_code:-sem resposta} após o provisionamento; esperado 404." >&2
+    docker inspect --format 'container={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' "$web" >&2 || true
+    docker logs --tail 100 "$web" >&2 || true
     exit 1
 fi
 
