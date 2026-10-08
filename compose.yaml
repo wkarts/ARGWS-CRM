@@ -1,7 +1,7 @@
 name: argws-crm
 services:
   storage-init:
-    image: ghcr.io/wkarts/argws-crm:${ARGWS_VERSION:-3.6.0}
+    image: ghcr.io/wkarts/argws-crm:${ARGWS_VERSION:-3.6.2}
     restart: "no"
     user: "0:0"
     entrypoint: ["/bin/sh", "-ec"]
@@ -14,7 +14,7 @@ services:
     volumes:
       - "${ARGWS_STORAGE_ROOT:-./storage}:/storage"
   web:
-    image: ghcr.io/wkarts/argws-crm:${ARGWS_VERSION:-3.6.0}
+    image: ghcr.io/wkarts/argws-crm:${ARGWS_VERSION:-3.6.2}
     restart: unless-stopped
     depends_on:
       storage-init:
