@@ -46,8 +46,18 @@ ghcr.io/wkarts/argws-crm-base:1-php8.3-bookworm espelha a base FrankenPHP do bui
 
 O CRM declara MySQL/MariaDB. PostgreSQL e Redis não são dependências ativas configuradas ou testadas e não são adicionadas à stack.
 
-O deployer Rust oferece CLI e GUI desktop para Windows x64 e Linux x64. Ambos usam o mesmo gerador e validador; a GUI permite escolher ambiente, banco e pasta e gera senhas aleatórias. No Linux, a GUI requer uma sessão gráfica com X11 ou XWayland, OpenGL e as bibliotecas de sistema do backend gráfico. Em distribuições Debian/Ubuntu, instale também o runtime `libxkbcommon-x11-0`; o pacote CLI Linux continua adequado a servidores sem desktop. Um `.env` existente é preservado. Binários, manifesto, checksums e ZIP `deploy/` são anexados à mesma release estável; em `develop`, um único prerelease `argws-crm-develop` é atualizado no lugar com `--clobber`. `deploy/` e `tools/argws-crm-deployer/` ficam fora dos ZIPs PHP.
+## Deployer gráfico e CLI
 
+A interface gráfica usa Python e Tkinter, com controles tradicionais do sistema operacional. Ela não inicia OpenGL, WGPU, Vulkan ou outro backend de aceleração gráfica. O CLI continua compilado em Rust e é o único lugar onde ficam as regras de geração, validação e migração das stacks; a GUI encaminha as ações para esse mesmo executável.
+
+Baixe o pacote gráfico completo da release e extraia os arquivos juntos:
+
+- Windows x64: argws-crm-deployer-gui-win-x64.zip
+- Linux x64: argws-crm-deployer-gui-linux-x64.zip
+
+Cada ZIP contém a interface gráfica e o executável CLI correspondente. Não separe os dois arquivos ao iniciar a GUI. O CLI avulso continua disponível para automação e servidores sem desktop. A interface Linux requer uma sessão com X11 ou XWayland; ela não requer GPU nem OpenGL. A UI smoke test roda em Xvfb no pipeline, e o build da GUI Windows é validado no runner Windows. Uma sessão Windows 11 via RDP ainda precisa ser confirmada em uma máquina real para validar o ambiente específico do cliente.
+
+O provisionamento do CRM continua no navegador em /setup. O Deployer só cria compose.yaml, .env e migrate-storage.sh; não configura senha de administrador nem importa o banco. O .env é preservado nas execuções seguintes, e logs opcionais registram somente a operação e o resultado, nunca senhas ou tokens.
 
 ## Retenção e limpeza de cache
 
