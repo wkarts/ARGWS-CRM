@@ -1,12 +1,18 @@
 name: Repair ARGWS release packages
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/first-release-base.txt
+      - .github/workflows/repair-release-assets.yml
   workflow_dispatch:
     inputs:
       release_tag:
         description: Tag SemVer existente cujos pacotes serão reconstruídos
-        required: true
+        required: false
         type: string
+        default: v3.4.2
 
 permissions:
   contents: write
@@ -30,7 +36,7 @@ jobs:
       - name: Escolher fonte da release e base de comparação
         id: source
         env:
-          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_TAG: ${{ inputs.release_tag || 'v3.4.2' }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
