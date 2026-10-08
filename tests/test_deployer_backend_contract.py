@@ -43,7 +43,7 @@ class DeployerBackendContractTest(unittest.TestCase):
         self.assertIn("pub(crate) fn generate_stack", CORE)
 
     def test_graphical_failure_is_logged_and_directs_user_to_cli(self):
-        self.assertIn("record_gui_failure(&error)", MAIN)
+        self.assertIn("record_gui_failure(error)", MAIN)
         self.assertIn("show_gui_failure_dialog(&message)", MAIN)
         self.assertIn("Nenhuma implantação foi executada", MAIN)
         self.assertIn("argws-crm-deployer-win-x64.exe interactive", MAIN)
