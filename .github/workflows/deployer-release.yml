@@ -1,8 +1,11 @@
 name: ARGWS CRM Deployer - binários e releases
 on:
+  pull_request:
+    branches: [main, develop]
+    paths: [deploy/**, tools/argws-crm-deployer/**, .github/workflows/deployer-release.yml]
   push:
     branches: [develop, main]
-    paths: [deploy/**, tools/argws-crm-deployer/**]
+    paths: [deploy/**, tools/argws-crm-deployer/**, .github/workflows/deployer-release.yml]
   release:
     types: [published]
   workflow_dispatch:
@@ -13,7 +16,7 @@ on:
         type: string
         default: ""
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: argws-crm-deployer-assets
   cancel-in-progress: false
@@ -32,7 +35,8 @@ jobs:
     if: >-
       always() &&
       (needs.validate.result == 'success' || needs.validate.result == 'skipped') &&
-      (github.event_name == 'release' ||
+      (github.event_name == 'pull_request' ||
+       github.event_name == 'release' ||
        github.event_name == 'workflow_dispatch' ||
        (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')))
     strategy:
@@ -107,6 +111,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
   prepare-assets:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-24.04
     steps:
@@ -159,6 +164,8 @@ jobs:
           retention-days: 1
   publish:
     needs: prepare-assets
+    permissions:
+      contents: write
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v4
