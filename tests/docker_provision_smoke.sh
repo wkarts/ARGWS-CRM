@@ -14,15 +14,50 @@ root_password="$(openssl rand -hex 24)"
 setup_token="$(openssl rand -hex 32)"
 admin_password="$(openssl rand -hex 24)"
 host_port=""
+storage_compose_dir=""
 
 cleanup() {
+    if [ -n "$storage_compose_dir" ]; then
+        docker compose --project-directory "$storage_compose_dir" --env-file "$storage_compose_dir/.env" -f "$storage_compose_dir/compose.yaml" down --remove-orphans >/dev/null 2>&1 || true
+        rm -rf "$storage_compose_dir"
+    fi
     docker rm -f "$web" "$database" >/dev/null 2>&1 || true
     docker volume rm "$config_volume" >/dev/null 2>&1 || true
     docker network rm "$network" >/dev/null 2>&1 || true
+    docker image rm ghcr.io/wkarts/argws-crm:ci >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
 docker build --tag "$image" --build-arg ARGWS_VERSION=ci .
+docker tag "$image" ghcr.io/wkarts/argws-crm:ci
+storage_compose_dir="$(mktemp -d)"
+cp compose.yaml "$storage_compose_dir/compose.yaml"
+cat > "$storage_compose_dir/.env" <<EOF
+COMPOSE_PROJECT_NAME=argws-crm-storage-smoke-$suffix
+ARGWS_VERSION=ci
+ARGWS_STORAGE_ROOT=./storage
+ARGWS_HTTP_BIND=127.0.0.1
+ARGWS_HTTP_PORT=8080
+EOF
+docker compose --project-directory "$storage_compose_dir" --env-file "$storage_compose_dir/.env" \
+    -f "$storage_compose_dir/compose.yaml" run --rm storage-init
+for directory in installation_config uploads temp application_cache application_logs \
+    module_accounting_uploads module_finance_uploads module_fleet_uploads \
+    module_hr_payroll_uploads module_hr_profile_uploads module_invoices_builder_uploads \
+    module_ma_uploads module_products_uploads module_purchase_uploads \
+    module_service_management_uploads module_si_custom_theme_uploads \
+    module_timesheets_uploads caddy_data caddy_config
+do
+    owner="$(docker run --rm --user 0:0 \
+        --volume "$storage_compose_dir/storage/$directory:/data:ro" \
+        --entrypoint /bin/sh "$image" -ec 'stat -c "%u:%g" /data')"
+    if [ "$owner" != "33:33" ]; then
+        echo "storage-init não preparou $directory para www-data (proprietário $owner)." >&2
+        exit 1
+    fi
+done
+echo "Compose storage-init OK: diretórios relativos e graváveis por www-data."
+
 docker network create "$network" >/dev/null
 docker volume create "$config_volume" >/dev/null
 docker run -d --name "$database" --network "$network" \
