@@ -61,6 +61,7 @@ impl DeployerApp {
     fn browse_output(&mut self, ctx: &egui::Context) {
         if !self.show_browser { return; }
         let mut open = self.show_browser;
+        let mut close_requested = false;
         egui::Window::new("Escolher pasta de destino")
             .open(&mut open)
             .resizable(true)
@@ -74,7 +75,7 @@ impl DeployerApp {
                     }
                     if ui.button("Usar esta pasta").clicked() {
                         self.output = self.browser_path.to_string_lossy().into_owned();
-                        open = false;
+                        close_requested = true;
                     }
                 });
                 ui.label(self.browser_path.display().to_string());
@@ -94,7 +95,7 @@ impl DeployerApp {
                     }
                 });
             });
-        self.show_browser = open;
+        self.show_browser = open && !close_requested;
     }
 }
 

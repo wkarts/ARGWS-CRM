@@ -1,4 +1,6 @@
-use std::{env, fs::{self, File, OpenOptions}, io::{Read, Write}, path::{Path, PathBuf}};
+use std::{env, fs::{self, OpenOptions}, io::Write, path::{Path, PathBuf}};
+#[cfg(unix)]
+use std::{fs::File, io::Read};
 
 #[cfg(feature = "gui")]
 mod gui;
