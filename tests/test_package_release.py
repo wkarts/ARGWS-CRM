@@ -14,6 +14,12 @@ class PackagePrivacyRulesTest(unittest.TestCase):
         excluded = [
             ".env",
             ".env.production",
+            "deploy/develop/compose.yaml",
+            "deploy/production/.env.example",
+            "tools/argws-crm-deployer/src/main.rs",
+            "scripts/package-deploy.py",
+            "docker/provision.php",
+            "docker/entrypoint.sh",
             "application/config/app-config.php",
             "modules/finance/uploads/ofx/statement.ofx",
             "modules/si_custom_theme/uploads/bg_img_admin_login.png",
@@ -29,6 +35,8 @@ class PackagePrivacyRulesTest(unittest.TestCase):
         included = [
             "uploads/contracts/.htaccess",
             "uploads/contracts/index.html",
+            "compose.yaml",
+            "container.env.example",
             "modules/accounting/uploads/file_sample/Sample_import_account_file_en.xlsx",
             "modules/hr_profile/uploads/sample_file/Sample_import_hrm_staff_file_en.xlsx",
             "modules/purchase/uploads/approval/approved.png",

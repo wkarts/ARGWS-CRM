@@ -1,2 +1,5 @@
 /data/
 cache-retention-report.json
+.env
+deploy/**/.env
+tools/argws-crm-deployer/target/

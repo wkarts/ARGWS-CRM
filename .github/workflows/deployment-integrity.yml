@@ -1,0 +1,55 @@
+name: Integridade das stacks ARGWS CRM
+on:
+  pull_request:
+    branches: [main, develop]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/docker_provision_smoke.sh, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
+  push:
+    branches: [develop, main]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/docker_provision_smoke.sh, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validar sintaxe YAML dos workflows
+        run: |
+          ruby -e 'require "yaml"; ARGV.each { |path| YAML.load_file(path, aliases: true); puts path }' .github/workflows/*.yml
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: 1.90.0
+          rust-src-dir: tools/argws-crm-deployer
+      - name: Testar exclusão dos artefatos operacionais dos ZIPs
+        run: python3 -m unittest tests/test_package_release.py
+      - name: Testar o ZIP separado do diretório deploy
+        run: python3 -m unittest tests/test_package_deploy.py
+      - name: Testar contrato do provisionamento Docker
+        run: python3 -m unittest tests/test_docker_provisioning.py
+      - name: Provisionar schema e primeiro administrador em MySQL limpo
+        run: bash tests/docker_provision_smoke.sh
+      - name: Testar política segura de cache Actions
+        run: python3 -m unittest tests/test_actions_cache_cleanup.py
+      - name: Testar contrato dos assets na mesma release
+        run: python3 -m unittest tests/test_deployer_release_contract.py
+      - name: Testar deployer Rust
+        run: cargo +1.90.0 test --manifest-path tools/argws-crm-deployer/Cargo.toml
+      - name: Gerar as stacks e validar Compose
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/argws-crm-deployer"
+          cargo +1.90.0 run --quiet --manifest-path tools/argws-crm-deployer/Cargo.toml -- generate --environment develop --output "$out/develop"
+          cargo +1.90.0 run --quiet --manifest-path tools/argws-crm-deployer/Cargo.toml -- validate --directory "$out/develop"
+          cargo +1.90.0 run --quiet --manifest-path tools/argws-crm-deployer/Cargo.toml -- generate --environment production --version "$(tr -d '[:space:]' < VERSION)" --database mariadb --output "$out/production"
+          cargo +1.90.0 run --quiet --manifest-path tools/argws-crm-deployer/Cargo.toml -- validate --directory "$out/production"
+          docker compose --env-file "$out/develop/.env" -f "$out/develop/compose.yaml" config --quiet
+          docker compose --env-file "$out/production/.env" -f "$out/production/compose.yaml" config --quiet
+          docker compose --env-file deploy/develop/.env.example -f deploy/develop/compose.yaml config --quiet
+          docker compose --env-file deploy/production/.env.example -f deploy/production/compose.yaml config --quiet
+          ARGWS_DB_HOST=database.example.invalid ARGWS_DB_NAME=argws_crm ARGWS_DB_USER=argws_crm ARGWS_DB_PASSWORD=ci-test-password docker compose --env-file "$out/production/.env" -f compose.yaml config --quiet
+          docker compose --env-file "$out/production/.env" -f compose.yaml config --quiet

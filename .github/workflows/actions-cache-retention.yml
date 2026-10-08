@@ -1,0 +1,74 @@
+name: Retenção segura do cache de Actions ARGWS CRM
+on:
+  workflow_run:
+    workflows:
+      - Containers ARGWS CRM
+      - Release ARGWS CRM - SemVer, FrankenPHP e pacotes
+    types: [completed]
+    branches: [develop, main]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch publicada cujos caches serão inspecionados
+        type: choice
+        options: [develop, main]
+        required: true
+      publication_sha:
+        description: SHA de uma publicação concluída com sucesso
+        type: string
+        required: true
+      apply:
+        description: Excluir caches elegíveis (padrão é somente relatório)
+        type: boolean
+        default: false
+permissions:
+  actions: write
+  contents: read
+concurrency:
+  group: argws-crm-cache-retention-${{ github.event.workflow_run.head_branch || inputs.branch || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  cleanup:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
+       contains(fromJSON('["main","develop"]'), github.event.workflow_run.head_branch) &&
+       contains(fromJSON('[".github/workflows/container-publish.yml",".github/workflows/release-packages.yml"]'), github.event.workflow_run.path))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - name: Validar publicação e limpar somente caches Actions antigos do branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_BRANCH: ${{ inputs.branch || github.event.workflow_run.head_branch || github.ref_name }}
+          VERIFIED_SHA: ${{ inputs.publication_sha || github.event.workflow_run.head_sha || '' }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id || '' }}
+          AUTO_APPLY: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+          APPLY_REQUESTED: ${{ inputs.apply || false }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          common=(--repository "$GITHUB_REPOSITORY" --branch "$TARGET_BRANCH" --verified-sha "$VERIFIED_SHA" --output "$RUNNER_TEMP/cache-retention-report.json")
+          if [[ -n "$SOURCE_RUN_ID" ]]; then
+            if [[ "$AUTO_APPLY" == "true" || "$APPLY_REQUESTED" == "true" ]]; then
+              python3 scripts/cleanup_actions_cache.py --repository "$GITHUB_REPOSITORY" --branch "$TARGET_BRANCH" --verified-sha "$VERIFIED_SHA" --source-run-id "$SOURCE_RUN_ID" --apply --output "$RUNNER_TEMP/cache-retention-report.json"
+            else
+              python3 scripts/cleanup_actions_cache.py --repository "$GITHUB_REPOSITORY" --branch "$TARGET_BRANCH" --verified-sha "$VERIFIED_SHA" --source-run-id "$SOURCE_RUN_ID" --output "$RUNNER_TEMP/cache-retention-report.json"
+            fi
+          elif [[ "$APPLY_REQUESTED" == "true" ]]; then
+            python3 scripts/cleanup_actions_cache.py --repository "$GITHUB_REPOSITORY" --branch "$TARGET_BRANCH" --verified-sha "$VERIFIED_SHA" --apply --output "$RUNNER_TEMP/cache-retention-report.json"
+          else
+            python3 scripts/cleanup_actions_cache.py --repository "$GITHUB_REPOSITORY" --branch "$TARGET_BRANCH" --verified-sha "$VERIFIED_SHA" --output "$RUNNER_TEMP/cache-retention-report.json"
+          fi
+      - name: Guardar relatório da retenção
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: argws-crm-cache-retention-${{ github.run_id }}
+          path: ${{ runner.temp }}/cache-retention-report.json
+          if-no-files-found: ignore
+          retention-days: 30

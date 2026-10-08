@@ -6,15 +6,19 @@ A aplicação preserva a instalação em PHP 8.1 ou superior com MySQL/MariaDB e
 
 ## FrankenPHP pelo GHCR
 
-O Compose usa uma imagem ARGWS CRM genérica, o banco externo e volumes persistentes para configurações e dados de cada instalação. O volume `installation_config` guarda `application/config/app-config.php` fora da imagem; o entrypoint cria o modelo inicial e o instalador grava nele os dados locais. Volumes separados persistem uploads, arquivos temporários, logs, cache e os diretórios de upload dos recursos distribuídos.
+A instalação PHP tradicional mantém o instalador web em `install/`. A imagem FrankenPHP é diferente: ela não contém esse diretório nem publica uma rota de setup. As stacks oficiais por ambiente usam um banco MySQL/MariaDB persistente e guardam a configuração da instalação no volume `installation_config`.
 
-1. Configure a rede para que o container alcance o servidor MySQL/MariaDB.
-2. Ajuste `ARGWS_VERSION` e, se necessário, `ARGWS_HTTP_PORT` em `compose.yaml`.
-3. Execute `docker compose pull` e `docker compose up -d`.
-4. Acesse `http://localhost:8080` (ou a URL publicada pelo proxy HTTPS) e conclua a instalação pelo instalador.
-5. Para atualizar, escolha uma tag ARGWS publicada, faça backup do banco e dos volumes, execute `docker compose pull` e `docker compose up -d` e aplique a migration no painel.
+1. Gere os arquivos de produção com o binário `argws-crm-deployer`, autentique no GHCR se os packages estiverem privados, valide o Compose e faça pull conforme [deploy/README.md](../deploy/README.md).
+2. Execute `docker compose --env-file .env -f compose.yaml up -d`. O banco sobe primeiro; até o provisionamento, o serviço web responde 503 com instruções.
+3. No terminal do servidor, execute `docker compose --env-file .env -f compose.yaml exec web php /opt/argws-crm-provisioner/provision.php`. O comando recusa banco com tabelas e instalação já configurada. Em execução interativa, a senha do primeiro administrador é digitada sem eco; não há conta ou senha padrão.
+4. Reinicie com `docker compose --env-file .env -f compose.yaml restart web` e configure o CloudPanel para encaminhar HTTPS à porta local vinculada a `127.0.0.1`.
+5. Para atualizar, faça backup do banco e volumes, preserve `.env`, execute `pull` e `up -d` e aplique a migration pelo painel. Não use `docker compose down -v`.
 
-A porta interna é `8080`; configure TLS no proxy reverso. O Caddy bloqueia acesso HTTP direto a `application/`, `system/`, `temp/`, ao dump `install/database.sql`, a arquivos `.env` e a scripts PHP dentro dos diretórios de recursos. O processo web é executado como `www-data`.
+O processo web continua executando como `www-data`. Caddy bloqueia `/install`, `application/`, `system/`, `temp/`, arquivos `.env` e scripts PHP dentro de diretórios de recursos. O provisionador e o schema ficam fora da raiz web; somente o schema e os helpers de hash/parser compatíveis são levados à imagem, sem os formulários ou handlers do instalador. O provisionamento é exclusivo para uma base vazia e não sobrescreve dados de instalações existentes.
+
+### Compose com banco externo
+
+O `compose.yaml` da raiz permanece para uso avançado com MySQL/MariaDB externo; crie um `.env` local a partir de `container.env.example` e preencha `ARGWS_DB_HOST`, `ARGWS_DB_NAME`, `ARGWS_DB_USER` e `ARGWS_DB_PASSWORD`. Para a implantação recomendada com banco interno e deployer, use as stacks em `deploy/`.
 
 ## Suporte e idioma
 

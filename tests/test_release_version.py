@@ -50,47 +50,108 @@ class SemanticReleasePlanTest(unittest.TestCase):
 
 
 class ReleaseVersionMetadataTest(unittest.TestCase):
-    def test_version_update_does_not_change_schema_migration_level(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            newline = chr(10)
-            (root / "VERSION").write_text("3.4.2" + newline, encoding="utf-8")
-            (root / "application/config").mkdir(parents=True)
-            (root / "application/config/constants.php").write_text(
-                "define('ARGWS_VERSION', '3.4.2');" + newline, encoding="utf-8"
-            )
-            (root / "application/config/migration.php").write_text(
-                "$config['migration_version'] = 342;" + newline, encoding="utf-8"
-            )
-            image_default = "$" + "{ARGWS_VERSION:-3.4.2}"
-            (root / "compose.yaml").write_text(
-                "image: ghcr.io/wkarts/argws-crm:" + image_default + newline, encoding="utf-8"
-            )
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name)
+        (self.root / "application/config").mkdir(parents=True)
+        (self.root / "deploy/production").mkdir(parents=True)
+        (self.root / "application/migrations").mkdir(parents=True)
+        self._write_fixture_version("3.4.2", 342)
 
-            APPLIER.apply_release_version(root, "3.4.3")
+    def tearDown(self):
+        self.temp.cleanup()
 
-            self.assertEqual((root / "VERSION").read_text(encoding="utf-8"), "3.4.3" + newline)
-            self.assertIn("ARGWS_VERSION', '3.4.3'", (root / "application/config/constants.php").read_text())
-            self.assertIn("ARGWS_VERSION:-3.4.3", (root / "compose.yaml").read_text())
-            self.assertIn("migration_version'] = 342", (root / "application/config/migration.php").read_text())
+    def _write_fixture_version(self, version, migration, fill_history=True):
+        (self.root / "VERSION").write_text(version + "\n", encoding="utf-8")
+        (self.root / "application/config/constants.php").write_text(
+            "define('ARGWS_VERSION', '" + version + "');\n", encoding="utf-8"
+        )
+        (self.root / "application/config/migration.php").write_text(
+            "$config['migration_version'] = " + str(migration) + ";\n", encoding="utf-8"
+        )
+        if fill_history:
+            for level in range(101, migration + 1):
+                (self.root / "application/migrations" / f"{level}_version_{level}.php").write_text(
+                    "<?php\nclass Migration_Version_" + str(level) + " extends CI_Migration {}\n",
+                    encoding="utf-8",
+                )
+        image_default = "$" + "{ARGWS_VERSION:-" + version + "}"
+        (self.root / "compose.yaml").write_text(
+            "image: ghcr.io/wkarts/argws-crm:" + image_default + "\n", encoding="utf-8"
+        )
+        (self.root / "deploy/production/compose.yaml").write_text(
+            "image: " + "$" + "{ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:" + version + "}" + "\n",
+            encoding="utf-8",
+        )
+        (self.root / "deploy/production/.env.example").write_text(
+            "ARGWS_CRM_IMAGE=ghcr.io/wkarts/argws-crm:" + version + "\n", encoding="utf-8"
+        )
 
-    def test_migration_version_is_independent_from_semver_product_release(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            newline = chr(10)
-            (root / "VERSION").write_text("3.5.0" + newline, encoding="utf-8")
-            (root / "application/config").mkdir(parents=True)
-            (root / "application/config/constants.php").write_text(
-                "define('ARGWS_VERSION', '3.5.0');" + newline, encoding="utf-8"
-            )
-            (root / "application/config/migration.php").write_text(
-                "$config['migration_version'] = 342;" + newline, encoding="utf-8"
-            )
-            result = subprocess.run(
-                ["bash", str(ROOT / "scripts/check-release-version.sh"), "v3.5.0"],
-                cwd=root, text=True, capture_output=True, check=False,
-            )
-            self.assertEqual(result.returncode, 0, result.stderr)
+    def test_each_new_release_advances_semver_migration_and_keeps_history(self):
+        old_migration = self.root / "application/migrations/342_version_342.php"
+        old_source = old_migration.read_text(encoding="utf-8")
+        APPLIER.apply_release_version(self.root, "3.5.0")
+        self.assertEqual((self.root / "VERSION").read_text(encoding="utf-8"), "3.5.0\n")
+        self.assertIn("ARGWS_VERSION', '3.5.0'", (self.root / "application/config/constants.php").read_text())
+        self.assertIn("migration_version'] = 350", (self.root / "application/config/migration.php").read_text())
+        for migration in range(343, 351):
+            marker = self.root / f"application/migrations/{migration}_version_{migration}.php"
+            self.assertTrue(marker.exists(), f"migration intermediária ausente: {migration}")
+            self.assertIn(f"class Migration_Version_{migration} extends CI_Migration", marker.read_text(encoding="utf-8"))
+        marker_source = (self.root / "application/migrations/350_version_350.php").read_text(encoding="utf-8")
+        self.assertIn("function up(): void", marker_source)
+        self.assertIn("function down(): void", marker_source)
+        self.assertEqual(old_migration.read_text(encoding="utf-8"), old_source)
+
+    def test_existing_real_migration_is_preserved(self):
+        real_migration = self.root / "application/migrations/345_version_345.php"
+        real_source = (
+            "<?php\\nclass Migration_Version_345 extends CI_Migration { "
+            "public function up() { $this->db->query('SELECT 1'); } "
+            "public function down() {} }\\n"
+        )
+        real_migration.write_text(real_source, encoding="utf-8")
+        APPLIER.apply_release_version(self.root, "3.5.0")
+        self.assertEqual(real_migration.read_text(encoding="utf-8"), real_source)
+
+    def test_release_application_is_idempotent_and_does_not_increment_twice(self):
+        APPLIER.apply_release_version(self.root, "3.5.0")
+        APPLIER.apply_release_version(self.root, "3.5.0")
+        self.assertIn("migration_version'] = 350", (self.root / "application/config/migration.php").read_text())
+        self.assertTrue((self.root / "application/migrations/350_version_350.php").exists())
+        self.assertFalse((self.root / "application/migrations/351_version_351.php").exists())
+
+    def test_next_patch_advances_to_its_semver_migration(self):
+        APPLIER.apply_release_version(self.root, "3.5.0")
+        APPLIER.apply_release_version(self.root, "3.5.1")
+        self.assertIn("migration_version'] = 351", (self.root / "application/config/migration.php").read_text())
+        self.assertTrue((self.root / "application/migrations/351_version_351.php").exists())
+
+    def test_multi_digit_semver_keeps_migration_levels_monotonic(self):
+        self._write_fixture_version("3.9.10", 3910, fill_history=False)
+        (self.root / "application/migrations/342_version_342.php").unlink()
+        (self.root / "application/migrations/3910_version_3910.php").write_text(
+            "<?php\nclass Migration_Version_3910 extends CI_Migration {}\n", encoding="utf-8"
+        )
+        APPLIER.apply_release_version(self.root, "3.10.0")
+        self.assertIn("migration_version'] = 3911", (self.root / "application/config/migration.php").read_text())
+        self.assertTrue((self.root / "application/migrations/3911_version_3911.php").exists())
+
+    def test_release_checker_requires_the_configured_migration_file(self):
+        APPLIER.apply_release_version(self.root, "3.5.0")
+        result = subprocess.run(
+            ["bash", str(ROOT / "scripts/check-release-version.sh"), "v3.5.0"],
+            cwd=self.root, text=True, capture_output=True, check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        (self.root / "application/migrations/347_version_347.php").unlink()
+        result = subprocess.run(
+            ["bash", str(ROOT / "scripts/check-release-version.sh"), "v3.5.0"],
+            cwd=self.root, text=True, capture_output=True, check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("lacuna", result.stderr.lower())
+        self.assertIn("350", result.stderr)
 
 
 if __name__ == "__main__":
