@@ -92,10 +92,20 @@ class ReleaseVersionMetadataTest(unittest.TestCase):
                 )
         image_default = "$" + "{ARGWS_VERSION:-" + version + "}"
         (self.root / "compose.yaml").write_text(
-            "image: ghcr.io/wkarts/argws-crm:" + image_default + "\n", encoding="utf-8"
+            "services:\n"
+            "  storage-init:\n"
+            "    image: ghcr.io/wkarts/argws-crm:" + image_default + "\n"
+            "  web:\n"
+            "    image: ghcr.io/wkarts/argws-crm:" + image_default + "\n",
+            encoding="utf-8",
         )
+        production_default = "$" + "{ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:" + version + "}"
         (self.root / "deploy/production/compose.yaml").write_text(
-            "image: " + "$" + "{ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:" + version + "}" + "\n",
+            "services:\n"
+            "  storage-init:\n"
+            "    image: " + production_default + "\n"
+            "  web:\n"
+            "    image: " + production_default + "\n",
             encoding="utf-8",
         )
         (self.root / "deploy/production/.env.example").write_text(
@@ -110,6 +120,10 @@ class ReleaseVersionMetadataTest(unittest.TestCase):
         self.assertIn("ARGWS_VERSION', '3.5.0'", (self.root / "application/config/constants.php").read_text())
         self.assertIn("migration_version'] = 350", (self.root / "application/config/migration.php").read_text())
         self.assertEqual((self.root / "container.env.example").read_text(encoding="utf-8"), "ARGWS_VERSION=3.5.0\n")
+        root_compose = (self.root / "compose.yaml").read_text(encoding="utf-8")
+        production_compose = (self.root / "deploy/production/compose.yaml").read_text(encoding="utf-8")
+        self.assertEqual(root_compose.count("${ARGWS_VERSION:-3.5.0}"), 2)
+        self.assertEqual(production_compose.count("ghcr.io/wkarts/argws-crm:3.5.0}"), 2)
         for migration in range(343, 351):
             marker = self.root / f"application/migrations/{migration}_version_{migration}.php"
             self.assertTrue(marker.exists(), f"migration intermediária ausente: {migration}")
