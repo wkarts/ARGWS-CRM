@@ -108,7 +108,7 @@ if [ "$status" != "302" ] || [ "$root_location" != "/setup" ]; then
     echo "O primeiro acesso não redirecionou automaticamente para /setup (HTTP $status, Location $root_location)." >&2
     echo "URL=$url mapeamento=$(docker port "$web" 8080/tcp 2>&1 || true)" >&2
     docker inspect --format 'estado={{.State.Status}} saída={{.State.ExitCode}} erro={{.State.Error}} portas={{json .NetworkSettings.Ports}} IP={{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$web" >&2 || true
-    docker exec "$web" php -r '$stream = @fsockopen("127.0.0.1", 8080, $errno, $errstr, 3); if (!$stream) { fwrite(STDERR, "socket interno indisponível: $errno $errstr\\n"); exit(1); } fwrite($stream, "GET / HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n"); echo stream_get_contents($stream);' >&2 || true
+    docker exec "$web" php -r '$stream = @fsockopen("127.0.0.1", 8080, $errno, $errstr, 3); if (!$stream) { fwrite(STDERR, "socket interno indisponível: $errno $errstr" . PHP_EOL); exit(1); } fwrite(STDERR, "socket interno conectado" . PHP_EOL); fclose($stream);' >&2 || true
     curl -v --connect-timeout 3 --max-time 5 "$url/" -o /dev/null >&2 || true
     docker logs --tail 100 "$web" >&2 || true
     exit 1
