@@ -27,8 +27,10 @@ class DeployerReleaseContractTest(unittest.TestCase):
         self.assertNotIn('gh release create "v', WORKFLOW)
 
     def test_main_push_does_not_rebuild_assets_from_the_previous_release(self):
-        self.assertIn("push:\n    branches: [develop]", WORKFLOW)
-        self.assertNotIn("refs/heads/main", WORKFLOW)
+        self.assertIn("push:\n    branches: [develop, main]", WORKFLOW)
+        self.assertIn("[rebuild deployer]", WORKFLOW)
+        self.assertIn("refs/heads/main", WORKFLOW)
+        self.assertIn("release_tag=", WORKFLOW)
         self.assertIn("release:\n    types: [published]", WORKFLOW)
         self.assertIn("workflow_dispatch:", WORKFLOW)
 
