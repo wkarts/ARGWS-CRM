@@ -34,23 +34,23 @@ def replace_constant(source, version):
 
 
 def replace_compose_default(source, version):
-    marker = "image: ghcr.io/wkarts/argws-crm:" + "$" + "{ARGWS_VERSION:-"
-    if source.count(marker) != 1:
-        raise ValueError("Esperava exatamente uma imagem ARGWS CRM com versão padrão no compose.yaml.")
-    start = source.index(marker) + len(marker)
-    end = source.find("}", start)
-    if end < 0 or parse_semver(source[start:end]) is None:
+    pattern = re.compile(
+        r"(?m)^([ \t]*image:[ \t]*ghcr\.io/wkarts/argws-crm:\$\{ARGWS_VERSION:-)([^}\r\n]+)(\})"
+    )
+    matches = list(pattern.finditer(source))
+    if not matches:
+        raise ValueError("Esperava pelo menos uma imagem ARGWS CRM com versão padrão no compose.yaml.")
+    if any(parse_semver(match.group(2)) is None for match in matches):
         raise ValueError("A versão padrão do compose.yaml está inválida.")
-    return source[:start] + version + source[end:]
+    return pattern.sub(lambda match: match.group(1) + version + match.group(3), source)
 
 
 def replace_production_compose(source, version):
-    pattern = re.compile(r"(ghcr\.io/wkarts/argws-crm:)\d+\.\d+\.\d+")
-    updated, count = pattern.subn(r"\g<1>" + version, source)
-    if count != 1:
-        raise ValueError("Esperava exatamente uma tag SemVer padrão da imagem no compose de produção.")
-    return updated
-
+    pattern = re.compile(r"(ghcr\.io/wkarts/argws-crm:)(\d+\.\d+\.\d+)")
+    matches = list(pattern.finditer(source))
+    if not matches:
+        raise ValueError("Esperava pelo menos uma tag SemVer padrão da imagem no compose de produção.")
+    return pattern.sub(lambda match: match.group(1) + version, source)
 
 def replace_production_env_example(source, version):
     pattern = re.compile(r"(?m)^ARGWS_CRM_IMAGE=ghcr\.io/wkarts/argws-crm:\d+\.\d+\.\d+$")
