@@ -20,6 +20,8 @@ class DockerProvisioningContractTest(unittest.TestCase):
         self.assertIn("docker/setup-web.php", dockerfile)
         self.assertIn("docker/provisioner.php", dockerfile)
         self.assertIn("php -l /opt/argws-crm-provisioner/web/index.php", dockerfile)
+        self.assertIn("frankenphp validate --config /etc/caddy/Caddyfile --adapter caddyfile", dockerfile)
+        self.assertIn("frankenphp validate --config /etc/caddy/Caddyfile.unprovisioned --adapter caddyfile", dockerfile)
 
     def test_web_entrypoint_exposes_only_the_one_time_setup_route_before_install(self):
         entrypoint = read("docker/entrypoint.sh")
