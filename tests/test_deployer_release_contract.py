@@ -34,8 +34,9 @@ class DeployerReleaseContractTest(unittest.TestCase):
 
     def test_dispatch_uses_current_packager_and_release_tag_for_binaries(self):
         prepare = WORKFLOW.split("  prepare-assets:", 1)[1].split("  publish:", 1)[0]
-        self.assertIn("ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.sha }}", prepare)
-        self.assertNotIn("inputs.release_tag", prepare)
+        checkout = prepare.split("      - uses: actions/checkout@v5", 1)[1].split("      - uses: actions/download-artifact", 1)[0]
+        self.assertIn("github.sha }}", checkout)
+        self.assertNotIn("inputs.release_tag", checkout)
         build = WORKFLOW.split("  build:", 1)[1].split("  build-gui:", 1)[0]
         gui = WORKFLOW.split("  build-gui:", 1)[1].split("  prepare-assets:", 1)[0]
         for job in (build, gui):
