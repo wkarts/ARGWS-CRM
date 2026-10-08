@@ -183,6 +183,15 @@ class StableReleaseDeployerAssetsTest(unittest.TestCase):
             with self.subTest(required=required):
                 self.assertIn(required, workflow)
 
+    def test_deployer_dispatch_runs_asset_jobs_after_skipped_validation(self):
+        workflow = (ROOT / ".github/workflows/deployer-release.yml").read_text(encoding="utf-8")
+        self.assertIn("branches: [develop, main]", workflow)
+        self.assertIn("always() &&", workflow)
+        self.assertIn("needs.build.result == 'success'", workflow)
+        self.assertIn("needs.build-gui.result == 'success'", workflow)
+        self.assertIn("if: always() && needs.prepare-assets.result == 'success'", workflow)
+        self.assertIn("steps.stable-release.outputs.tag", workflow)
+
     def test_deployer_release_contains_cli_and_gui_for_windows_and_linux(self):
         workflow = (ROOT / ".github/workflows/deployer-release.yml").read_text(encoding="utf-8")
         for asset in (
