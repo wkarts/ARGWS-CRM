@@ -70,6 +70,35 @@ def smoke_test(cli: Path) -> int:
     return 0
 
 
+def report_gui_failure(error: Exception) -> int:
+    diagnostic = str(error).splitlines()[0][:400] or type(error).__name__
+    path = Path(tempfile.gettempdir()) / "argws-crm-deployer-gui.log"
+    try:
+        with path.open("a", encoding="utf-8") as stream:
+            stream.write(f"startup=failure diagnostic={diagnostic}\\n")
+        if os.name != "nt":
+            path.chmod(0o600)
+    except OSError:
+        path = Path("(não foi possível gravar o diagnóstico)")
+
+    executable = WINDOWS_CLI if os.name == "nt" else LINUX_CLI
+    message = (
+        "A interface gráfica não conseguiu iniciar. Nenhuma implantação foi executada.\\n\\n"
+        f"Diagnóstico: {diagnostic}\\n\\n"
+        f"Use o CLI no terminal: {executable} interactive\\n"
+        f"Diagnóstico: {path}"
+    )
+    if os.name == "nt":
+        try:
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(0, message, "ARGWS CRM Deployer", 0x10)
+        except Exception:
+            print(message, file=sys.stderr)
+    else:
+        print(message, file=sys.stderr)
+    return 3
+
+
 def ui_smoke_test() -> int:
     try:
         root = tk.Tk()
@@ -102,9 +131,12 @@ class DeployerWindow:
         if self.cli is None:
             self.status.set("CLI não encontrado. Extraia o ZIP gráfico inteiro para manter o executável ao lado.")
         else:
-            code, detected = run_backend(self.cli, ["version"])
-            self.version.set(detected if code == 0 else "")
-            self.status.set("Pronto para gerar ou validar a stack." if code == 0 else detected)
+            try:
+                code, detected = run_backend(self.cli, ["version"])
+                self.version.set(detected if code == 0 else "")
+                self.status.set("Pronto para gerar ou validar a stack." if code == 0 else detected)
+            except Exception as error:
+                self.status.set(f"Não foi possível iniciar o CLI: {error}")
         self._refresh_version_state()
 
     def _build(self) -> None:
@@ -229,10 +261,13 @@ def main() -> int:
         return smoke_test(cli)
     if arguments.ui_smoke_test:
         return ui_smoke_test()
-    root = tk.Tk()
-    DeployerWindow(root, cli)
-    root.mainloop()
-    return 0
+    try:
+        root = tk.Tk()
+        DeployerWindow(root, cli)
+        root.mainloop()
+        return 0
+    except Exception as error:
+        return report_gui_failure(error)
 
 
 if __name__ == "__main__":
