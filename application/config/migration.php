@@ -69,7 +69,7 @@ $config['migration_auto_latest'] = false;
 | be upgraded / downgraded to.
 |
 */
-$config['migration_version'] = 342; // 3.4.2
+$config['migration_version'] = 342; // Schema migration level, independent of ARGWS_VERSION.
 
 /*
 |--------------------------------------------------------------------------

@@ -1,13 +1,14 @@
-name: Container ARGWS CRM
+name: Containers ARGWS CRM
 
 on:
   pull_request:
+    branches: [main, develop]
   push:
-    branches: [main]
-    tags: ['v*']
+    branches: [develop]
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: read
   packages: write
 
@@ -16,76 +17,177 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  validate:
+    name: Validar código, contrato e versão
     runs-on: ubuntu-latest
     steps:
-      - name: Obter código da versão
-        uses: actions/checkout@v4
+      - name: Obter código e tags SemVer
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-      - name: Ler versão da distribuição
-        id: release_version
-        shell: bash
-        run: echo "version=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
-
-      - name: Validar versionamento ARGWS
+      - name: Guardar o canal de publicação
+        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            bash ./scripts/check-release-version.sh "${GITHUB_REF_NAME}"
-          else
-            bash ./scripts/check-release-version.sh
-          fi
+          [[ "${GITHUB_REF}" == "refs/heads/develop" ]] || {
+            echo "Este workflow só publica o canal develop." >&2
+            exit 1
+          }
 
-      - name: Executar validações de regressão
-        run: node tests/custom_links_security.test.cjs
-      - name: Validar contrato da plataforma ARGWS
-        run: node tests/argws_platform_contract.test.cjs
-      - name: Validar regras de privacidade dos pacotes
-        run: python3 -m unittest tests/test_package_release.py
+      - name: Validar versão do produto e migration de schema
+        run: bash ./scripts/check-release-version.sh
 
-      - name: Configurar QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: Executar regressões, política de versão e privacidade
+        run: |
+          node tests/custom_links_security.test.cjs
+          node tests/argws_platform_contract.test.cjs
+          python3 -m unittest tests/test_release_version.py tests/test_package_release.py
 
+      - name: Sugerir SemVer para promoção develop → main
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.base.ref == 'main' &&
+          github.event.pull_request.head.ref == 'develop' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags origin
+          latest="$(git tag --list 'v*' | grep -E '^v[0-9]+\\.[0-9]+\\.[0-9]+$' | sort -V | tail -n 1 || true)"
+          baseline="$(tr -d '[:space:]' < VERSION)"
+          plan="$(python3 scripts/plan-release-version.py --latest "$latest" --baseline "$baseline" --labels "$PR_LABELS" --title "$PR_TITLE")"
+          version="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["version"])' "$plan")"
+          bump="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["bump"])' "$plan")"
+          {
+            echo "### Versão ARGWS CRM sugerida: v$version"
+            echo
+            echo "Incremento SemVer: **$bump**."
+            echo "O merge em main cria a imagem estável, a release e os pacotes; develop permanece no canal :develop."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  validate-frankenphp:
+    name: Compilar FrankenPHP sem publicar (pull request)
+    if: github.event_name == 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Ler versão SemVer para o container
+        id: version
+        run: echo "value=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - name: Validar imagem para linux/amd64
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          push: false
+          build-args: |
+            ARGWS_VERSION=${{ steps.version.outputs.value }}
+          cache-from: type=gha,scope=argws-crm-pr
+          labels: |
+            org.opencontainers.image.title=ARGWS CRM
+            org.opencontainers.image.revision=${{ github.event.pull_request.head.sha }}
+
+  build-develop:
+    name: Gerar develop ${{ matrix.arch }}
+    if: github.event_name != 'pull_request'
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+            platform: linux/amd64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Obter commit exato de develop
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Ler versão SemVer para o container
+        id: version
+        run: echo "value=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
       - name: Configurar Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Login no GHCR
-        if: github.event_name != 'pull_request'
+      - name: Acessar GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Gerar tags e metadados OCI
-        id: metadata
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/wkarts/argws-crm
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha,prefix=sha-
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-
-      - name: Build e publicar imagem multi arquitetura
+      - name: Build da imagem de desenvolvimento por digest
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile
-          platforms: ${{ github.event_name == 'pull_request' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.metadata.outputs.tags }}
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=ghcr.io/wkarts/argws-crm,push-by-digest=true,name-canonical=true,push=true
+          build-args: |
+            ARGWS_VERSION=${{ steps.version.outputs.value }}
           labels: |
-            ${{ steps.metadata.outputs.labels }}
             org.opencontainers.image.title=ARGWS CRM
-            org.opencontainers.image.version=${{ steps.release_version.outputs.version }}
+            org.opencontainers.image.version=develop
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-          build-args: |
-            ARGWS_VERSION=${{ steps.release_version.outputs.version }}
-          cache-from: type=gha,scope=argws-crm-buildx
-          cache-to: type=gha,mode=max,scope=argws-crm-buildx
+          cache-from: type=gha,scope=argws-crm-develop-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=argws-crm-develop-${{ matrix.arch }}
+      - name: Exportar digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+      - name: Guardar digest da arquitetura
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-development-${{ matrix.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish-develop:
+    name: Publicar manifesto multi arquitetura :develop
+    if: github.event_name != 'pull_request'
+    needs: build-develop
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reunir digests amd64 e arm64
+        uses: actions/download-artifact@v4
+        with:
+          pattern: digest-development-*
+          path: /tmp/digests
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@v3
+      - name: Acessar GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Criar e verificar somente a tag develop
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${GITHUB_REF}" == "refs/heads/develop" ]]
+          repo="ghcr.io/wkarts/argws-crm"
+          sources=()
+          for digest_file in /tmp/digests/*; do
+            sources+=("${repo}@sha256:$(basename "$digest_file")")
+          done
+          test "${#sources[@]}" -eq 2
+          docker buildx imagetools create -t "${repo}:develop" "${sources[@]}"
+          docker buildx imagetools inspect "${repo}:develop"

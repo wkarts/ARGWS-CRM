@@ -48,7 +48,12 @@ jobs:
             const candidates = caches.filter(cache => {
               const key = String(cache.key || '').toLowerCase();
               const ref = String(cache.ref || '');
-              return key.includes('argws-crm-buildx')
+              const crmBuildCache = [
+                'argws-crm-buildx',
+                'argws-crm-develop-',
+                'argws-crm-release-',
+              ].some(scope => key.includes(scope));
+              return crmBuildCache
                 && !ref.startsWith('refs/tags/')
                 && !activeRefs.has(ref)
                 && new Date(cache.last_accessed_at).getTime() < cutoff;
