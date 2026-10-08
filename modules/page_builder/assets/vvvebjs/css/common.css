@@ -1,0 +1,425 @@
+html,
+body {
+    width: 100%;
+    height: 100%;
+}
+
+.carousel-inner,
+.carousel-item {
+    height: 100%;
+}
+
+
+.subscribe-form input::placeholder {
+    color: var(--bs-body-color);
+}
+
+/** bootstrap 4 sign split **/
+[data-name="sigin-split"] .login,
+[data-name="sigin-split"] .image {
+    min-height: 100vh;
+}
+
+[data-name="sigin-split"] .bg-image {
+    background-image: url('https://source.unsplash.com/WEQbe2jBg40/600x1200');
+    background-size: cover;
+    background-position: center;
+}
+
+[data-name="sigin-split"] .login-heading {
+    font-weight: 300;
+}
+
+[data-name="sigin-split"] .btn-login {
+    font-size: 0.9rem;
+    letter-spacing: 0.05rem;
+    padding: 0.75rem 1rem;
+    border-radius: 2rem;
+}
+
+[data-name="sigin-split"] .form-label-group {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+[data-name="sigin-split"] .form-label-group>input,
+[data-name="sigin-split"] .form-label-group>label {
+    padding: 1rem 1rem;
+    height: auto;
+    border-radius: 2rem;
+}
+
+[data-name="sigin-split"] .form-label-group>label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    margin-bottom: 0;
+    line-height: 1.5;
+    color: #495057;
+    cursor: text;
+    /* Match the input under the label */
+    border: 1px solid transparent;
+    border-radius: .25rem;
+    transition: all .1s ease-in-out;
+}
+
+[data-name="sigin-split"] .form-label-group input::-webkit-input-placeholder {
+    color: transparent;
+}
+
+[data-name="sigin-split"] .form-label-group input:-ms-input-placeholder {
+    color: transparent;
+}
+
+[data-name="sigin-split"] .form-label-group input::-ms-input-placeholder {
+    color: transparent;
+}
+
+[data-name="sigin-split"] .form-label-group input::-moz-placeholder {
+    color: transparent;
+}
+
+[data-name="sigin-split"] .form-label-group input::placeholder {
+    color: transparent;
+}
+
+[data-name="sigin-split"] .form-label-group input:not(:placeholder-shown) {
+    padding-top: calc(var(--input-padding-y) + var(--input-padding-y) * (2 / 3));
+    padding-bottom: calc(var(--input-padding-y) / 3);
+}
+
+[data-name="sigin-split"] .form-label-group input:not(:placeholder-shown)~label {
+    padding-top: 0.5;
+    padding-bottom: 0.5;
+    font-size: 12px;
+    color: #777;
+}
+
+/** slider **/
+[data-name="slider"] .carousel-item {
+    height: 100vh;
+    min-height: 350px;
+    background: no-repeat center center scroll;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+/** hero video **/
+header.video {
+    position: relative;
+    background-color: black;
+    height: 75vh;
+    min-height: 25rem;
+    width: 100%;
+    overflow: hidden;
+}
+
+header.video video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: 0;
+    -ms-transform: translateX(-50%) translateY(-50%);
+    -moz-transform: translateX(-50%) translateY(-50%);
+    -webkit-transform: translateX(-50%) translateY(-50%);
+    transform: translateX(-50%) translateY(-50%);
+}
+
+header.video .container {
+    position: relative;
+    z-index: 2;
+}
+
+header.video .overlay {
+    /*position: absolute;*/
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-color: black;
+    opacity: 0.5;
+    z-index: 1;
+}
+
+@media (pointer: coarse) and (hover: none) {
+    header {
+        background: url('https://source.unsplash.com/XT5OInaElMw/1600x900') black no-repeat center center scroll;
+    }
+
+    header video {
+        display: none;
+    }
+}
+
+
+/*** bs 4 **/
+.subscribe-area {
+    background-image: linear-gradient(to top, #00c6fb 0%, #005bea 100%);
+}
+
+.pb-50 {
+    padding-bottom: 50px;
+}
+
+.pt-70 {
+    padding-top: 70px;
+}
+
+.mb-15 {
+    margin-bottom: 15px;
+}
+
+.subscribe-text span {
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 5px;
+}
+
+.subscribe-text h2 {
+    color: #fff;
+    font-size: 36px;
+    font-weight: 300;
+    margin-bottom: 0;
+    margin-top: 6px;
+}
+
+.subscribe-wrapper {
+    overflow: hidden;
+}
+
+.mb-15 {
+    margin-bottom: 15px;
+}
+
+.subscribe-form {}
+
+.subscribe2-wrapper .subscribe-form input {
+    background: none;
+    border: 1px solid #fff;
+    border-radius: 30px;
+    color: #fff;
+    display: inline-block;
+    font-size: 15px;
+    font-weight: 300;
+    height: 57px;
+    margin-right: 17px;
+    padding-left: 35px;
+    width: 70%;
+    cursor: pointer;
+}
+
+.subscribe2-wrapper .subscribe-form button {
+    background: #ffff;
+    border: none;
+    border-radius: 30px;
+    color: #4b5d73;
+    display: inline-block;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1;
+    padding: 18px 46px;
+    transition: all 0.3s ease 0s;
+}
+
+.subscribe2-wrapper .subscribe-form button i {
+    font-size: 18px;
+    padding-left: 5px;
+}
+
+
+.bs4 blockquote {
+    border-left: none
+}
+
+.bs4 .quote-badge {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.bs4 .quote-box {
+
+    overflow: hidden;
+    margin-top: -50px;
+    padding-top: -100px;
+    border-radius: 17px;
+    background-color: #4ADFCC;
+    margin-top: 25px;
+    color: white;
+    width: 325px;
+    box-shadow: 2px 2px 2px 2px #E0E0E0;
+
+}
+
+.bs4 .quotation-mark {
+
+    margin-top: -10px;
+    font-weight: bold;
+    font-size: 100px;
+    color: white;
+    font-family: "Times New Roman", Georgia, Serif;
+
+}
+
+.bs4 .quote-text {
+
+    font-size: 19px;
+    margin-top: -65px;
+}
+
+.bs4.loading-circle {
+    width: 150px;
+    height: 150px;
+}
+
+.bs4 .loader {
+    width: calc(100% - 0px);
+    height: calc(100% - 0px);
+    border: 8px solid #162534;
+    border-top: 8px solid #09f;
+    border-radius: 50%;
+    animation: rotate 5s linear infinite;
+}
+
+@keyframes rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+
+/*** ADS **/
+.ads {
+    margin: 30px 0 30px 0;
+
+}
+
+.ads .card-notify-badge {
+    position: absolute;
+    left: -10px;
+    top: -20px;
+    background: #f2d900;
+    text-align: center;
+    border-radius: 30px 30px 30px 30px;
+    color: #000;
+    padding: 5px 10px;
+    font-size: 14px;
+
+}
+
+.ads .card-notify-year {
+    position: absolute;
+    right: -10px;
+    top: -20px;
+    background: #ff4444;
+    border-radius: 50%;
+    text-align: center;
+    color: #fff;
+    font-size: 14px;
+    width: 50px;
+    height: 50px;
+    padding: 15px 0 0 0;
+}
+
+
+.ads .card-detail-badge {
+    background: #f2d900;
+    text-align: center;
+    border-radius: 30px 30px 30px 30px;
+    color: #000;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+
+
+.ads .card:hover {
+    background: #fff;
+    box-shadow: 12px 15px 20px 0px rgba(46, 61, 73, 0.15);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.ads .card-image-overlay {
+    font-size: 20px;
+
+}
+
+
+.ads .card-image-overlay span {
+    display: inline-block;
+}
+
+
+.ads .ad-btn {
+    text-transform: uppercase;
+    width: 150px;
+    height: 40px;
+    border-radius: 80px;
+    font-size: 16px;
+    line-height: 35px;
+    text-align: center;
+    border: 3px solid #e6de08;
+    display: block;
+    text-decoration: none;
+    margin: 20px auto 1px auto;
+    color: #000;
+    overflow: hidden;
+    position: relative;
+    background-color: #e6de08;
+}
+
+.ads .ad-btn:hover {
+    background-color: #e6de08;
+    color: #1e1717;
+    border: 2px solid #e6de08;
+    background: transparent;
+    transition: all 0.3s ease;
+    box-shadow: 12px 15px 20px 0px rgba(46, 61, 73, 0.15);
+}
+
+.ads .ad-title h5 {
+    text-transform: uppercase;
+    font-size: 18px;
+}
+
+video {
+    width: 100%;
+    height: 100%;
+}
+
+/** subscribe form widget **/
+.subscribe-area .subscribe-form>form {
+    display: flex;
+}
+
+.subscribe-area .subscribe-form>form>button {
+    display: flex;
+}
+
+.subscribe-area .subscribe-form>form>button>svg {
+    margin-left: 5px;
+}
+
+@media screen and (max-width: 768px) {
+    .subscribe-area .subscribe-form>form>button {
+        display: block;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .subscribe-area .subscribe-form>form {
+        display: block;
+    }
+
+    .subscribe-area .subscribe-form>form>input {
+        width: 100%;
+    }
+}

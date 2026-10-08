@@ -1,0 +1,28 @@
+/*for task kanban view*/
+.tasks-phases ._task_wrapper{color:#666666}
+/*panel shadow*/
+.panel_s:not(.no-shadow) {
+	-o-box-shadow: 3px -1px 10px 1px rgb(19 17 17 / 20%);
+    -webkit-box-shadow: 3px -1px 10px 1px rgb(19 17 17 / 20%);
+    box-shadow: 3px -1px 10px 1px rgb(19 17 17 / 20%);
+}
+.fn-gantt .rightPanel .month,.fn-gantt .rightPanel .year,.fn-gantt .sa, .fn-gantt .sn,.fn-gantt .day, .fn-gantt .date{
+	text-shadow:none;
+}
+.list-status a {
+    border: 1px solid #c5c5c5;
+}	
+/*for Perfex V3.0*/
+.customers .navbar-default .navbar-nav>li>a:focus,.customers .navbar-default .navbar-nav>li>a:hover {
+    color: #fff;
+    background: transparent;
+    opacity:0.8;
+}
+.customers .navbar-default .navbar-nav>.active>a{
+    color: #fff;
+    background: transparent;
+    font-weight: bold;
+}
+.navbar-default .navbar-nav>li>a {
+    color: #fff;
+}	

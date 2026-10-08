@@ -1,0 +1,11 @@
+:8080 {
+    root * /app
+    encode zstd gzip
+
+    @private path /application/* /system/* /temp/* /install/database.sql /data/* /.env /.env.*
+    @module_php path_regexp module_php ^/modules/.*\.php$
+    respond @private 404
+    respond @module_php 404
+
+    php_server
+}

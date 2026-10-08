@@ -1,0 +1,77 @@
+.logo-text {
+	margin-top: 10px;
+}
+
+/** icon list colors **/
+ul.svg-list {
+	list-style: none;
+	padding: 0;
+	margin: 10px 0 0;
+}
+
+ul.svg-list li {
+	display: inline-block;
+	position: relative;
+	width: 32px;
+	height: 32px;
+	padding: 3px;
+	margin-right: 5px;
+	margin-bottom: 5px;
+	box-shadow: 0px 3px 6px 0px rgba(0, 0, 0, 0.1),
+		0px 1px 3px 0px rgba(0, 0, 0, 0.08);
+}
+
+ul.svg-list li:hover {
+	box-shadow: none;
+}
+
+ul.svg-list li svg {
+	max-width: 100%;
+	max-height: 100%;
+	fill: var(--bs-body-color);
+	color: #777;
+}
+
+ul.svg-list li.heading {
+	width: 100%;
+	box-shadow: none;
+	text-transform: capitalize;
+	font-size: 12px;
+	line-height: 32px;
+}
+
+ul.svg-list li span {
+	visibility: hidden;
+	min-width: 120px;
+	background-color: var(--bs-bg-color);
+	color: var(--bs-body-color);
+	text-align: center;
+	border-radius: 6px;
+	padding: 5px 0;
+
+	/* Position the tooltip */
+	position: absolute;
+	z-index: 1;
+	left: 0;
+	top: 105%;
+	font-size: 12px;
+}
+
+ul.svg-list li:hover span {
+	visibility: visible;
+}
+
+ul.svg-list li:hover svg {
+	transform: scale(2);
+	fill: var(--bs-primary-text-emphasis);
+	color: green;
+}
+
+#css-tab {
+	padding-bottom: var(--builder-bottom-panel-height);
+}
+
+#top-panel > .logo {
+	display: flex;
+	height: 100%;
+}
