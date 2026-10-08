@@ -1,6 +1,6 @@
 # Implantação do ARGWS CRM
 
-Este diretório contém as stacks oficiais por ambiente e fica fora dos ZIPs da aplicação. O binário argws-crm-deployer incorpora os Compose e os exemplos de ambiente para gerar, na máquina do operador, apenas compose.yaml e .env.
+Este diretório contém as stacks oficiais por ambiente e fica fora dos ZIPs da aplicação PHP. Ele é distribuído em um asset separado da release: `ARGWS-CRM-deploy-X.Y.Z.zip` para releases estáveis e `ARGWS-CRM-deploy-develop.zip` para o canal develop. O ZIP inclui a pasta `deploy/`, os Compose e os `.env.example`, sem `.env` com segredos. O binário argws-crm-deployer também incorpora os modelos e gera, na máquina do operador, `compose.yaml` e `.env`.
 
 ## Deployer portátil
 
@@ -11,8 +11,8 @@ Baixe argws-crm-deployer-linux-x64 para CloudPanel/Linux x64 ou argws-crm-deploy
     ./argws-crm-deployer-linux-x64 validate --directory ./argws-crm-develop
     .\argws-crm-deployer-win-x64.exe validate --directory .\argws-crm-develop
 
-    ./argws-crm-deployer-linux-x64 generate --environment production --version 3.4.2 --database mysql --output ./argws-crm-production
-    .\argws-crm-deployer-win-x64.exe generate --environment production --version 3.4.2 --database mysql --output .\argws-crm-production
+    ./argws-crm-deployer-linux-x64 generate --environment production --database mysql --output ./argws-crm-production
+    .\argws-crm-deployer-win-x64.exe generate --environment production --database mysql --output .\argws-crm-production
     ./argws-crm-deployer-linux-x64 validate --directory ./argws-crm-production
     .\argws-crm-deployer-win-x64.exe validate --directory .\argws-crm-production
 

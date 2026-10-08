@@ -17,6 +17,7 @@ class PackagePrivacyRulesTest(unittest.TestCase):
             "deploy/develop/compose.yaml",
             "deploy/production/.env.example",
             "tools/argws-crm-deployer/src/main.rs",
+            "scripts/package-deploy.py",
             "docker/provision.php",
             "docker/entrypoint.sh",
             "application/config/app-config.php",

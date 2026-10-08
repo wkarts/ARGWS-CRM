@@ -2,7 +2,7 @@
     root * /app
     encode zstd gzip
 
-    @installer path /install /install/*
+    @installer path /install /install/ /install/*
     @private path /application/* /system/* /temp/* /data/* /.env /.env.*
     @module_php path_regexp module_php ^/modules/.*\.php$
     respond @installer 404

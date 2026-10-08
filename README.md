@@ -27,6 +27,6 @@ A telemetria de usuários e licenciamento e a validação remota de licença fic
 
 ## Releases e atualizações
 
-O canal `develop` publica uma imagem de desenvolvimento. As promoções para `main` usam SemVer automático e publicam no GHCR as tags de versão, major.minor, major e latest, além de ZIP completo, ZIP incremental e checksums SHA-256. A versão do produto e o nível de migration do banco evoluem independentemente.
+O canal `develop` publica uma imagem de desenvolvimento. As promoções para `main` usam SemVer automático e publicam no GHCR as tags de versão, major.minor, major e latest, além dos ZIPs completo e incremental. A release também anexa um ZIP separado `ARGWS-CRM-deploy-<versão>.zip` com as stacks e exemplos de ambiente; esse diretório não é misturado ao pacote da aplicação PHP. Checksums SHA-256 acompanham os artefatos. A versão do produto e o nível de migration do banco evoluem independentemente.
 
 Faça backup do banco, da configuração local e dos uploads antes de atualizar. O pacote incremental preserva os dados enviados pelos clientes e lista arquivos de código removidos. Consulte [Distribuição ARGWS](docs/distribuicao-argws.md) para os detalhes do versionamento, build, cache e publicação e [Arquitetura e dados](docs/arquitetura-e-dados.md) para as migrations e os recursos nativos.
