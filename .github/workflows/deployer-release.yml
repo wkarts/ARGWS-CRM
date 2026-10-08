@@ -121,9 +121,112 @@ jobs:
           path: ${{ runner.temp }}/argws-crm-deployer-assets/*
           if-no-files-found: error
           retention-days: 1
+  build-gui:
+    needs: validate
+    if: >-
+      always() &&
+      (needs.validate.result == 'success' || needs.validate.result == 'skipped') &&
+      (github.event_name == 'pull_request' ||
+       github.event_name == 'release' ||
+       github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'push' && github.ref == 'refs/heads/develop'))
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - asset: gui-win-x64
+            runner: windows-2022
+            target: x86_64-pc-windows-msvc
+            os: windows
+          - asset: gui-linux-x64
+            runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            os: linux
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.release_tag) || github.sha }}
+          persist-credentials: false
+      - name: Materializar a versão SemVer no deployer
+        if: (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')) || github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag || '' }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || {
+            echo "Informe uma tag publicada no formato vX.Y.Z." >&2
+            exit 1
+          }
+          python3 scripts/apply-release-version.py "${RELEASE_TAG#v}"
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: 1.90.0
+          target: ${{ matrix.target }}
+      - name: Instalar dependências gráficas Linux
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev libgl1-mesa-dev xvfb
+      - name: Testar e compilar GUI para Windows x64
+        if: matrix.os == 'windows'
+        shell: pwsh
+        env:
+          TARGET: ${{ matrix.target }}
+          RUSTFLAGS: -C target-feature=+crt-static
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifest = 'tools/argws-crm-deployer/Cargo.toml'
+          cargo +1.90.0 test --features gui --target $env:TARGET --manifest-path $manifest
+          if ($LASTEXITCODE -ne 0) { throw 'GUI Rust tests failed' }
+          cargo +1.90.0 build --release --features gui --target $env:TARGET --manifest-path $manifest
+          if ($LASTEXITCODE -ne 0) { throw 'Windows GUI x64 build failed' }
+          $exe = Resolve-Path 'tools/argws-crm-deployer/target/x86_64-pc-windows-msvc/release/argws-crm-deployer.exe'
+          $out = Join-Path $env:RUNNER_TEMP 'argws-crm-deployer-gui-smoke'
+          & $exe generate --environment production --version (Get-Content VERSION -Raw).Trim() --database mariadb --output $out
+          if ($LASTEXITCODE -ne 0) { throw 'GUI deployer generation smoke test failed' }
+          & $exe validate --directory $out
+          if ($LASTEXITCODE -ne 0) { throw 'GUI deployer validation smoke test failed' }
+          $stage = Join-Path $env:RUNNER_TEMP 'argws-crm-deployer-assets'
+          New-Item -ItemType Directory -Force $stage | Out-Null
+          Copy-Item $exe (Join-Path $stage 'argws-crm-deployer-gui-win-x64.exe')
+      - name: Testar e compilar GUI para Linux x64
+        if: matrix.os == 'linux'
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          manifest=tools/argws-crm-deployer/Cargo.toml
+          cargo test --features gui --target "$TARGET" --manifest-path "$manifest"
+          cargo build --release --features gui --target "$TARGET" --manifest-path "$manifest"
+          exe="tools/argws-crm-deployer/target/$TARGET/release/argws-crm-deployer"
+          out="$RUNNER_TEMP/argws-crm-deployer-gui-smoke"
+          "$exe" generate --environment production --version "$(tr -d '[:space:]' < VERSION)" --database mariadb --output "$out"
+          "$exe" validate --directory "$out"
+          set +e
+          LIBGL_ALWAYS_SOFTWARE=1 timeout 8s xvfb-run -a "$exe" --gui >"$RUNNER_TEMP/deployer-gui.log" 2>&1
+          gui_status=$?
+          set -e
+          if [[ "$gui_status" -ne 124 ]]; then
+            cat "$RUNNER_TEMP/deployer-gui.log"
+            echo "A GUI não permaneceu aberta no teste virtual (status $gui_status)." >&2
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/argws-crm-deployer-assets"
+          cp "$exe" "$RUNNER_TEMP/argws-crm-deployer-assets/argws-crm-deployer-gui-linux-x64"
+          chmod 0755 "$RUNNER_TEMP/argws-crm-deployer-assets/argws-crm-deployer-gui-linux-x64"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: argws-crm-deployer-${{ matrix.asset }}
+          path: ${{ runner.temp }}/argws-crm-deployer-assets/*
+          if-no-files-found: error
+          retention-days: 1
+
   prepare-assets:
     if: github.event_name != 'pull_request'
-    needs: build
+    needs: [build, build-gui]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -173,11 +276,13 @@ jobs:
           set -euo pipefail
           test -s release-assets/argws-crm-deployer-win-x64.exe
           test -s release-assets/argws-crm-deployer-linux-x64
+          test -s release-assets/argws-crm-deployer-gui-win-x64.exe
+          test -s release-assets/argws-crm-deployer-gui-linux-x64
           test -s "release-assets/$DEPLOY_PACKAGE"
-          chmod 0755 release-assets/argws-crm-deployer-linux-x64
+          chmod 0755 release-assets/argws-crm-deployer-linux-x64 release-assets/argws-crm-deployer-gui-linux-x64
           (
             cd release-assets
-            sha256sum argws-crm-deployer-win-x64.exe argws-crm-deployer-linux-x64 "$DEPLOY_PACKAGE" > SHA256SUMS-Deployment.txt
+            sha256sum argws-crm-deployer-win-x64.exe argws-crm-deployer-linux-x64 argws-crm-deployer-gui-win-x64.exe argws-crm-deployer-gui-linux-x64 "$DEPLOY_PACKAGE" > SHA256SUMS-Deployment.txt
           )
           python3 - <<'PY'
           import json, os
@@ -188,8 +293,10 @@ jobs:
               "runtime": "rust-native",
               "deploymentKit": {"file": os.environ["DEPLOY_PACKAGE"], "contents": "deploy/**"},
               "binaries": [
-                  {"target": "x86_64-pc-windows-msvc", "file": "argws-crm-deployer-win-x64.exe"},
-                  {"target": "x86_64-unknown-linux-musl", "file": "argws-crm-deployer-linux-x64"},
+                  {"target": "x86_64-pc-windows-msvc", "interface": "cli", "file": "argws-crm-deployer-win-x64.exe"},
+                  {"target": "x86_64-unknown-linux-musl", "interface": "cli", "file": "argws-crm-deployer-linux-x64"},
+                  {"target": "x86_64-pc-windows-msvc", "interface": "gui", "file": "argws-crm-deployer-gui-win-x64.exe"},
+                  {"target": "x86_64-unknown-linux-gnu", "interface": "gui-x11", "file": "argws-crm-deployer-gui-linux-x64"},
               ],
           }
           with open("release-assets/argws-crm-deployer-release.json", "w", encoding="utf-8") as stream:
@@ -249,10 +356,10 @@ jobs:
           fi
           if [[ "$develop" == true ]]; then
             if gh release view "$tag" --repo "$REPOSITORY" >/dev/null 2>&1; then
-              gh release upload "$tag" release-assets/argws-crm-deployer-win-x64.exe release-assets/argws-crm-deployer-linux-x64 release-assets/ARGWS-CRM-deploy-*.zip release-assets/SHA256SUMS-Deployment.txt release-assets/argws-crm-deployer-release.json --repo "$REPOSITORY" --clobber
+              gh release upload "$tag" release-assets/argws-crm-deployer-win-x64.exe release-assets/argws-crm-deployer-linux-x64 release-assets/argws-crm-deployer-gui-win-x64.exe release-assets/argws-crm-deployer-gui-linux-x64 release-assets/ARGWS-CRM-deploy-*.zip release-assets/SHA256SUMS-Deployment.txt release-assets/argws-crm-deployer-release.json --repo "$REPOSITORY" --clobber
             else
-              gh release create "$tag" release-assets/argws-crm-deployer-win-x64.exe release-assets/argws-crm-deployer-linux-x64 release-assets/ARGWS-CRM-deploy-*.zip release-assets/SHA256SUMS-Deployment.txt release-assets/argws-crm-deployer-release.json --repo "$REPOSITORY" --target "$GITHUB_SHA" --title "ARGWS CRM Deployer develop" --notes "ZIP de implantação, deployer para Windows x64 e Linux x64, checksums e manifesto anexos." --prerelease
+              gh release create "$tag" release-assets/argws-crm-deployer-win-x64.exe release-assets/argws-crm-deployer-linux-x64 release-assets/argws-crm-deployer-gui-win-x64.exe release-assets/argws-crm-deployer-gui-linux-x64 release-assets/ARGWS-CRM-deploy-*.zip release-assets/SHA256SUMS-Deployment.txt release-assets/argws-crm-deployer-release.json --repo "$REPOSITORY" --target "$GITHUB_SHA" --title "ARGWS CRM Deployer develop" --notes "ZIP de implantação, deployer para Windows x64 e Linux x64, checksums e manifesto anexos." --prerelease
             fi
           else
-            gh release upload "$tag" release-assets/argws-crm-deployer-win-x64.exe release-assets/argws-crm-deployer-linux-x64 release-assets/ARGWS-CRM-deploy-*.zip release-assets/SHA256SUMS-Deployment.txt release-assets/argws-crm-deployer-release.json --repo "$REPOSITORY" --clobber
+            gh release upload "$tag" release-assets/argws-crm-deployer-win-x64.exe release-assets/argws-crm-deployer-linux-x64 release-assets/argws-crm-deployer-gui-win-x64.exe release-assets/argws-crm-deployer-gui-linux-x64 release-assets/ARGWS-CRM-deploy-*.zip release-assets/SHA256SUMS-Deployment.txt release-assets/argws-crm-deployer-release.json --repo "$REPOSITORY" --clobber
           fi
