@@ -21,7 +21,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   validate:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -29,7 +31,13 @@ jobs:
         with:
           toolchain: 1.90.0
           rust-src-dir: tools/argws-crm-deployer
-      - run: cargo +1.90.0 test --locked --manifest-path tools/argws-crm-deployer/Cargo.toml
+      - run: cargo +1.90.0 generate-lockfile --manifest-path tools/argws-crm-deployer/Cargo.toml
+      - run: cargo +1.90.0 test --manifest-path tools/argws-crm-deployer/Cargo.toml
+      - name: Emitir lockfile resolvido para revisão
+        run: |
+          printf '%s\\n' 'BEGIN_ARGWS_CARGO_LOCK'
+          base64 -w0 tools/argws-crm-deployer/Cargo.lock | fold -w 3000
+          printf '%s\\n' 'END_ARGWS_CARGO_LOCK'
   build:
     needs: validate
     if: >-
