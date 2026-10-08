@@ -207,6 +207,15 @@ esac
         self.assertIn("--max-time 180", smoke)
 
 
+    def test_setup_reports_partial_schema_without_deleting_or_overwriting_database(self):
+        web = read("docker/setup-web.php")
+        source = read("docker/provisioner.php")
+        self.assertIn("schema parcial", web)
+        self.assertIn("O banco já contém tabelas", web)
+        self.assertIn("O banco não está vazio", source)
+        self.assertIn("nenhum", source.lower())
+
+
     def test_setup_token_is_optional_after_setup_and_deployer_migrates_legacy_env(self):
         for path in ("compose.yaml", "deploy/develop/compose.yaml", "deploy/production/compose.yaml"):
             with self.subTest(path=path):

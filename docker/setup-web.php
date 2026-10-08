@@ -99,8 +99,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 exit;
             } catch (Throwable $exception) {
                 error_log('[ARGWS CRM setup] ' . $exception->getMessage());
-                $error = 'Não foi possível concluir a instalação. Verifique o endereço e as credenciais do banco nos logs do serviço e tente novamente.';
-                $httpStatus = 503;
+                $failure = $exception->getMessage();
+                if (str_contains($failure, 'não está vazio') || str_contains($failure, 'schema parcial')) {
+                    $error = 'O banco já contém tabelas e o provisionador parou sem alterá-las. Se uma tentativa anterior deixou schema parcial, faça backup e use um banco vazio para recomeçar; não remova tabelas que contenham dados a preservar.';
+                    $httpStatus = 409;
+                } else {
+                    $error = 'Não foi possível concluir a instalação. Verifique o endereço e as credenciais do banco nos logs do serviço e tente novamente.';
+                    $httpStatus = 503;
+                }
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             }
         }
