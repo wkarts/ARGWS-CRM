@@ -1,7 +1,34 @@
 :8080 {
+    root * /app
+    encode zstd gzip
+
+    @provisioned file {
+        root /var/lib/argws-crm/config
+        try_files app-config.php
+    }
+
     route {
         @installer path /install /install/ /install/*
         respond @installer 404
-        respond "ARGWS CRM ainda não foi provisionado. No terminal do servidor, execute: docker compose exec web php /opt/argws-crm-provisioner/provision.php" 503
+
+        @setup path /setup /setup/
+        handle @setup {
+            respond @provisioned 404
+            root * /opt/argws-crm-provisioner/web
+            rewrite * /index.php
+            php_server
+        }
+
+        handle @provisioned {
+            @private path /application/* /system/* /temp/* /data/* /.env /.env.*
+            respond @private 404
+
+            @module_php path_regexp module_php ^/modules/.*\.php$
+            respond @module_php 404
+
+            php_server
+        }
+
+        respond "ARGWS CRM aguarda o primeiro acesso. Acesse /setup para criar o administrador inicial. Consulte ARGWS_SETUP_TOKEN no arquivo .env. O instalador legado /install permanece desabilitado." 503
     }
 }

@@ -8,6 +8,7 @@ services:
       ARGWS_DB_NAME: ${ARGWS_DB_NAME:-}
       ARGWS_DB_USER: ${ARGWS_DB_USER:-}
       ARGWS_DB_PASSWORD: ${ARGWS_DB_PASSWORD:-}
+      ARGWS_SETUP_TOKEN: ${ARGWS_SETUP_TOKEN:-}
       ARGWS_CONFIG_DIR: /var/lib/argws-crm/config
     ports:
       - "${ARGWS_HTTP_BIND:-127.0.0.1}:${ARGWS_HTTP_PORT:-8080}:8080"

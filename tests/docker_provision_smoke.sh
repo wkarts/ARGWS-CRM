@@ -3,15 +3,16 @@ set -euo pipefail
 
 image="argws-crm-provision-smoke:ci"
 suffix="$$"
-network="argws-crm-provision-network-${suffix}"
-database="argws-crm-provision-db-${suffix}"
-web="argws-crm-provision-web-${suffix}"
-config_volume="argws-crm-provision-config-${suffix}"
+network="argws-crm-provision-network-$suffix"
+database="argws-crm-provision-db-$suffix"
+web="argws-crm-provision-web-$suffix"
+config_volume="argws-crm-provision-config-$suffix"
 database_name="argws_crm_ci"
 database_user="argws_crm_ci"
 database_password="$(openssl rand -hex 24)"
 root_password="$(openssl rand -hex 24)"
-bootstrap_password="$(openssl rand -hex 24)"
+setup_token="$(openssl rand -hex 32)"
+admin_password="$(openssl rand -hex 24)"
 host_port=""
 
 cleanup() {
@@ -49,46 +50,115 @@ docker run -d --name "$web" --network "$network" \
     -e ARGWS_DB_NAME="$database_name" \
     -e ARGWS_DB_USER="$database_user" \
     -e ARGWS_DB_PASSWORD="$database_password" \
+    -e ARGWS_SETUP_TOKEN="$setup_token" \
     -e ARGWS_CONFIG_DIR=/var/lib/argws-crm/config \
     -v "$config_volume:/var/lib/argws-crm/config" \
     -p 127.0.0.1::8080 "$image" >/dev/null
 host_port="$(docker port "$web" 8080/tcp | awk -F: 'END { print $NF }')"
 url="http://127.0.0.1:$host_port"
-ready=0
+status=""
 for _ in $(seq 1 45); do
-    code="$(curl --connect-timeout 2 --max-time 5 -sS -o /tmp/argws-crm-unprovisioned-body -w '%{http_code}' "$url/" 2>/dev/null || true)"
-    if [ "$code" = "503" ] && grep -q "provision.php" /tmp/argws-crm-unprovisioned-body; then
-        ready=1
-        break
-    fi
+    status="$(curl --connect-timeout 2 --max-time 5 -sS -o /tmp/argws-crm-unprovisioned-body -w '%{http_code}' "$url/" 2>/dev/null || true)"
+    if [ "$status" = "503" ]; then break; fi
     sleep 1
 done
-if [ "$ready" -ne 1 ]; then
-    echo "O container não manteve o CRM bloqueado antes do provisionamento." >&2
+if [ "$status" != "503" ] || ! grep -q "/setup" /tmp/argws-crm-unprovisioned-body; then
+    echo "O container não bloqueou o CRM até o primeiro acesso ao assistente." >&2
+    docker logs --tail 100 "$web" >&2 || true
     exit 1
 fi
 docker exec "$web" test ! -e /app/install
-install_code="$(curl -sS -o /dev/null -w '%{http_code}' "$url/install/index.php")"
-if [ "$install_code" != "404" ]; then
-    echo "O instalador web respondeu com HTTP $install_code; esperado 404." >&2
+docker exec "$web" test ! -e /var/lib/argws-crm/config/provisioned
+
+setup_code="$(curl --connect-timeout 2 --max-time 5 -sS -c /tmp/argws-crm-setup-cookie -o /tmp/argws-crm-setup-page -w '%{http_code}' "$url/setup")"
+if [ "$setup_code" != "200" ] || ! grep -q "Configurar ARGWS CRM" /tmp/argws-crm-setup-page; then
+    echo "O assistente web não foi servido (HTTP $setup_code)." >&2
+    docker logs --tail 100 "$web" >&2 || true
+    exit 1
+fi
+csrf_token="$(sed -n 's/.*name="csrf_token" value="\([a-f0-9]*\)".*/\1/p' /tmp/argws-crm-setup-page | head -n 1)"
+if [ -z "$csrf_token" ]; then
+    echo "O formulário web não forneceu token CSRF." >&2
     exit 1
 fi
 
-export ARGWS_CI_BOOTSTRAP_PASSWORD="$bootstrap_password"
-python3 -c 'import json,os; print(json.dumps({"base_url":"https://crm.example.invalid/","firstname":"Admin","lastname":"ARGWS","admin_email":"admin-ci@example.invalid","admin_password":os.environ["ARGWS_CI_BOOTSTRAP_PASSWORD"],"timezone":"America/Sao_Paulo"}))' \
-    | docker exec -i "$web" php /opt/argws-crm-provisioner/provision.php --input-json
+bad_key_status="$(curl --connect-timeout 2 --max-time 5 -sS -b /tmp/argws-crm-setup-cookie -c /tmp/argws-crm-setup-cookie \
+    -o /tmp/argws-crm-setup-denied -w '%{http_code}' \
+    --data-urlencode "csrf_token=$csrf_token" \
+    --data-urlencode "setup_token=incorrect" \
+    --data-urlencode "base_url=https://crm.example.invalid/" \
+    --data-urlencode "firstname=Admin" \
+    --data-urlencode "lastname=ARGWS" \
+    --data-urlencode "admin_email=admin-ci@example.invalid" \
+    --data-urlencode "admin_password=$admin_password" \
+    --data-urlencode "admin_password_repeat=$admin_password" \
+    --data-urlencode "timezone=America/Sao_Paulo" "$url/setup")"
+if [ "$bad_key_status" != "403" ]; then
+    echo "O assistente aceitou uma chave inválida (HTTP $bad_key_status)." >&2
+    exit 1
+fi
 
-staff_count="$(docker exec -e MYSQL_PWD="$database_password" "$database" mysql \
+setup_code="$(curl --connect-timeout 2 --max-time 5 -sS -b /tmp/argws-crm-setup-cookie -c /tmp/argws-crm-setup-cookie \
+    -o /tmp/argws-crm-setup-page -w '%{http_code}' "$url/setup")"
+csrf_token="$(sed -n 's/.*name="csrf_token" value="\([a-f0-9]*\)".*/\1/p' /tmp/argws-crm-setup-page | head -n 1)"
+if [ "$setup_code" != "200" ] || [ -z "$csrf_token" ]; then
+    echo "O formulário não foi restaurado após a tentativa recusada." >&2
+    exit 1
+fi
+
+setup_code="$(curl --connect-timeout 2 --max-time 30 -sS -b /tmp/argws-crm-setup-cookie -c /tmp/argws-crm-setup-cookie \
+    -o /tmp/argws-crm-setup-result -w '%{http_code}' \
+    --data-urlencode "csrf_token=$csrf_token" \
+    --data-urlencode "setup_token=$setup_token" \
+    --data-urlencode "base_url=https://crm.example.invalid/" \
+    --data-urlencode "firstname=Admin" \
+    --data-urlencode "lastname=ARGWS" \
+    --data-urlencode "admin_email=admin-ci@example.invalid" \
+    --data-urlencode "admin_password=$admin_password" \
+    --data-urlencode "admin_password_repeat=$admin_password" \
+    --data-urlencode "timezone=America/Sao_Paulo" "$url/setup")"
+if [ "$setup_code" != "303" ]; then
+    echo "O assistente web não concluiu o setup (HTTP $setup_code)." >&2
+    cat /tmp/argws-crm-setup-result >&2 || true
+    docker logs --tail 100 "$web" >&2 || true
+    exit 1
+fi
+
+status=""
+for _ in $(seq 1 45); do
+    status="$(curl --connect-timeout 2 --max-time 5 -sS -o /tmp/argws-crm-after-provision-body -w '%{http_code}' "$url/" 2>/dev/null || true)"
+    if [[ "$status" =~ ^[1-5][0-9][0-9]$ ]] && [ "$status" != "503" ]; then break; fi
+    sleep 1
+done
+if [[ ! "$status" =~ ^[1-5][0-9][0-9]$ ]] || [ "$status" = "503" ] || [ "$status" = "500" ]; then
+    echo "O CRM não abriu automaticamente após o assistente (HTTP $status)." >&2
+    docker inspect --format 'container={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}} ports={{json .NetworkSettings.Ports}}' "$web" >&2 || true
+    docker logs --tail 100 "$web" >&2 || true
+    exit 1
+fi
+
+admin_count="$(docker exec -e MYSQL_PWD="$database_password" "$database" mysql \
     --protocol=tcp --host=127.0.0.1 --user="$database_user" "$database_name" \
     --batch --skip-column-names \
     -e "SELECT COUNT(*) FROM tblstaff WHERE email='admin-ci@example.invalid' AND admin=1 AND active=1")"
-if [ "$staff_count" != "1" ]; then
-    echo "O provisionamento não criou exatamente um administrador ativo." >&2
+if [ "$admin_count" != "1" ]; then
+    echo "O formulário não criou exatamente um administrador ativo." >&2
     exit 1
 fi
+docker exec "$web" test -s /var/lib/argws-crm/config/provisioned
 
-if printf '{}' | docker exec -i "$web" php /opt/argws-crm-provisioner/provision.php --input-json >/dev/null 2>&1; then
-    echo "O provisionador aceitou uma segunda execução." >&2
+setup_after_code="$(curl --connect-timeout 2 --max-time 5 -sS -o /dev/null -w '%{http_code}' "$url/setup")"
+install_code="$(curl --connect-timeout 2 --max-time 5 -sS -o /dev/null -w '%{http_code}' "$url/install/")"
+if [ "$setup_after_code" != "404" ] || [ "$install_code" != "404" ]; then
+    echo "As rotas de instalação não foram fechadas: /setup=$setup_after_code /install=$install_code" >&2
+    exit 1
+fi
+if docker logs "$web" 2>&1 | grep -Fq "$setup_token"; then
+    echo "A chave temporária apareceu nos logs do container." >&2
+    exit 1
+fi
+if docker logs "$web" 2>&1 | grep -Fq "$admin_password"; then
+    echo "A senha do administrador apareceu nos logs do container." >&2
     exit 1
 fi
 
@@ -103,24 +173,23 @@ fi
 url="http://127.0.0.1:$host_port"
 status=""
 for _ in $(seq 1 45); do
-    status="$(curl --connect-timeout 2 --max-time 5 -sS -o /tmp/argws-crm-after-provision-body -w '%{http_code}' "$url/" 2>/dev/null || true)"
-    if [[ "$status" =~ ^[1-5][0-9][0-9]$ ]] && [ "$status" != "503" ]; then
-        break
-    fi
+    status="$(curl --connect-timeout 2 --max-time 5 -sS -o /tmp/argws-crm-after-restart-body -w '%{http_code}' "$url/" 2>/dev/null || true)"
+    if [[ "$status" =~ ^[1-5][0-9][0-9]$ ]] && [ "$status" != "503" ]; then break; fi
     sleep 1
 done
 if [[ ! "$status" =~ ^[1-5][0-9][0-9]$ ]] || [ "$status" = "503" ] || [ "$status" = "500" ]; then
-    echo "A aplicação não iniciou após o provisionamento (HTTP ${status:-sem resposta})." >&2
+    echo "A aplicação não iniciou após reiniciar (HTTP $status)." >&2
     docker inspect --format 'container={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}} ports={{json .NetworkSettings.Ports}}' "$web" >&2 || true
     docker logs --tail 100 "$web" >&2 || true
     exit 1
 fi
-install_after_code="$(curl --connect-timeout 2 --max-time 5 -sS -o /dev/null -w '%{http_code}' "$url/install/" 2>/dev/null || true)"
-if [ "$install_after_code" != "404" ]; then
-    echo "A rota /install respondeu HTTP ${install_after_code:-sem resposta} após o provisionamento; esperado 404." >&2
-    docker inspect --format 'container={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' "$web" >&2 || true
-    docker logs --tail 100 "$web" >&2 || true
+admin_count_after_restart="$(docker exec -e MYSQL_PWD="$database_password" "$database" mysql \
+    --protocol=tcp --host=127.0.0.1 --user="$database_user" "$database_name" \
+    --batch --skip-column-names \
+    -e "SELECT COUNT(*) FROM tblstaff WHERE email='admin-ci@example.invalid' AND admin=1 AND active=1")"
+if [ "$admin_count_after_restart" != "1" ]; then
+    echo "O restart repetiu a criação do administrador." >&2
     exit 1
 fi
 
-echo "Smoke test OK: schema MySQL importado, primeiro administrador criado, /install inacessível."
+echo "Smoke test OK: assistente web protegido, primeiro administrador criado uma vez, /setup e /install bloqueados após setup."

@@ -16,18 +16,18 @@ Baixe argws-crm-deployer-linux-x64 para CloudPanel/Linux x64 ou argws-crm-deploy
     ./argws-crm-deployer-linux-x64 validate --directory ./argws-crm-production
     .\argws-crm-deployer-win-x64.exe validate --directory .\argws-crm-production
 
-O comando generate preserva um .env existente. --force pode substituir compose.yaml, nunca o .env. O arquivo .env novo usa segredos aleatórios e permissão 0600 em sistemas Unix; mantenha-o fora do Git, da imagem e dos ZIPs.
+O comando generate preserva os valores de um .env existente. Ao atualizar uma stack antiga cujo Compose ainda não conhecia o assistente web, acrescenta uma chave aleatória `ARGWS_SETUP_TOKEN`; em stacks novas, gera a chave junto com as senhas. Após o primeiro provisionamento, remova a chave: o Compose aceita que esteja ausente, e novas execuções do deployer preservam essa remoção quando o modelo atual já contém o campo. `--force` pode substituir `compose.yaml`, nunca as demais configurações do `.env`. O arquivo `.env` novo usa senhas de banco e chave de setup aleatórias, com permissão 0600 em sistemas Unix; mantenha-o fora do Git, da imagem e dos ZIPs.
 
 ## Instalar e atualizar
 
 1. Se os packages GHCR forem privados, autentique Docker no host com uma credencial local que tenha read:packages.
-2. Na pasta gerada, valide com docker compose --env-file .env -f compose.yaml config.
-3. Faça pull com docker compose --env-file .env -f compose.yaml pull.
-4. Inicie com docker compose --env-file .env -f compose.yaml up -d.
-5. Acesse o terminal do servidor e execute `docker compose --env-file .env -f compose.yaml exec web php /opt/argws-crm-provisioner/provision.php`. O comando importa o schema somente em um banco vazio e solicita URL, nome, e-mail e senha do primeiro administrador; a senha não aparece na tela.
-6. Reinicie o serviço web: `docker compose --env-file .env -f compose.yaml restart web`. Antes disso, o endereço HTTP responde 503 com instruções e não mostra um instalador web.
-7. Configure o CloudPanel para encaminhar o domínio HTTPS à porta local configurada, vinculada a 127.0.0.1.
-8. Em atualizações, faça backup do banco e dos volumes, preserve .env e execute pull e up -d --remove-orphans. Não use docker compose down -v. O provisionador recusa bancos com tabelas existentes e instalações já configuradas.
+2. Na pasta gerada, valide com `docker compose --env-file .env -f compose.yaml config` e faça pull com `docker compose --env-file .env -f compose.yaml pull`.
+3. Inicie com `docker compose --env-file .env -f compose.yaml up -d`. O deployer já terá criado no `.env` a chave aleatória `ARGWS_SETUP_TOKEN`.
+4. Abra `https://seu-dominio/setup`, copie essa chave do `.env` e informe URL pública, nome, e-mail, senha e fuso horário do primeiro administrador. O formulário cria schema apenas em banco vazio, configura a instalação e cria o usuário; ao final, redireciona ao CRM automaticamente. Não é necessário executar PHP no terminal nem reiniciar o serviço.
+5. Se a chave estiver ausente ou inválida antes do setup, `/setup` não mostra o formulário e a aplicação retorna 503. A rota `/install` sempre permanece inacessível.
+6. Após confirmar o acesso, remova `ARGWS_SETUP_TOKEN` do `.env` e recrie o serviço web com `docker compose --env-file .env -f compose.yaml up -d --force-recreate web`. Os dados de instalação ficam no volume `installation_config`.
+7. Configure o CloudPanel para encaminhar o domínio HTTPS à porta local configurada, vinculada a `127.0.0.1`.
+8. Em atualizações, faça backup do banco e dos volumes, preserve `.env` e execute pull e up -d --remove-orphans. Não use docker compose down -v. O provisionador recusa bancos com tabelas existentes e instalações já configuradas.
 
 A configuração da instalação fica no volume installation_config. Banco, uploads, cache e logs têm volumes persistentes separados. A stack Docker fica separada da instalação PHP, PHP-FPM, Nginx e dos outros projetos do CloudPanel; escolha uma porta livre.
 
@@ -40,6 +40,6 @@ A aplicação atual declara MySQL/MariaDB. PostgreSQL e Redis não são dependê
 
 ## Primeiro provisionamento Docker
 
-A imagem GHCR não contém o diretório web `install/`. O primeiro provisionamento usa o schema da mesma versão e o hash de senha compatível com a aplicação, mas roda somente como PHP CLI dentro do container. Não existe credencial master padrão nem formulário de instalação exposto na internet. Mantenha o proxy CloudPanel apontado para o serviço durante o procedimento; a resposta 503 some após reiniciar o serviço web.
+A imagem GHCR não contém o instalador web legado `install/`. O assistente `/setup` é um endpoint separado, protegido por `ARGWS_SETUP_TOKEN` aleatório; não cria usuário ou senha padrão e não é carregado nas instalações PHP tradicionais. Caddy detecta a configuração persistente e troca o roteamento para o CRM no pedido seguinte, ocultando `/setup` sem reiniciar o processo.
 
-O volume `installation_config` guarda a configuração criada. Não execute o comando contra bancos que já tenham tabelas; para uma instalação existente, preserve seu banco/configuração e siga o fluxo de atualização. Se a importação de um banco novo falhar parcialmente, pare e revise os logs antes de qualquer ação; nunca remova volumes de dados existentes para tentar novamente.
+O volume `installation_config` guarda a configuração criada. O provisionador só aceita banco vazio e recusa instalações já configuradas; para uma instalação existente, preserve banco e configuração e siga o fluxo normal de atualização. Se uma importação falhar parcialmente, pare e revise os logs antes de qualquer ação; nunca remova volumes de dados existentes para tentar novamente.

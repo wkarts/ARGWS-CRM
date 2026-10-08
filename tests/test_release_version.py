@@ -168,5 +168,31 @@ class ReleaseVersionMetadataTest(unittest.TestCase):
         self.assertIn("350", result.stderr)
 
 
+class StableReleaseDeployerAssetsTest(unittest.TestCase):
+    def test_stable_release_dispatches_and_waits_for_deployer_build(self):
+        workflow = (ROOT / ".github/workflows/release-packages.yml").read_text(encoding="utf-8")
+        for required in (
+            "gh workflow run .github/workflows/deployer-release.yml",
+            "--event workflow_dispatch --branch main",
+            '-f release_tag="$RELEASE_TAG"',
+            'gh run watch "$run_id" --repo "$GH_REPOSITORY" --exit-status',
+            "argws-crm-deployer-gui-linux-x64",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, workflow)
+
+    def test_deployer_release_contains_cli_and_gui_for_windows_and_linux(self):
+        workflow = (ROOT / ".github/workflows/deployer-release.yml").read_text(encoding="utf-8")
+        for asset in (
+            "argws-crm-deployer-win-x64.exe",
+            "argws-crm-deployer-linux-x64",
+            "argws-crm-deployer-gui-win-x64.exe",
+            "argws-crm-deployer-gui-linux-x64",
+        ):
+            with self.subTest(asset=asset):
+                self.assertIn(asset, workflow)
+        self.assertIn('gh release upload "$tag"', workflow)
+
+
 if __name__ == "__main__":
     unittest.main()
