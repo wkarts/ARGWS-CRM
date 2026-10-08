@@ -227,6 +227,7 @@ fn append_operation_log(path: &Path, command: &str, succeeded: bool) -> io::Resu
     append_operation_log_to(&mut file, command, succeeded)
 }
 
+#[cfg(any(feature = "gui", test))]
 fn gui_failure_message(error: &str, log_path: Option<&Path>) -> String {
     #[cfg(windows)]
     let cli = "argws-crm-deployer-win-x64.exe interactive";
