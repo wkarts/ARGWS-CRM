@@ -132,25 +132,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y skopeo
       - name: Entrar no GHCR
-        run: echo "@@{{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u "@@{{ github.actor }}" --password-stdin
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u "${{ github.actor }}" --password-stdin
       - name: Criar somente as imagens que ainda não existem
         env:
-          OWNER: @@{{ github.repository_owner }}
+          OWNER: ${{ github.repository_owner }}
         shell: bash
         run: |
           set -euo pipefail
           sync() {
             local source="$1"
             local target="$2"
-            if skopeo inspect "docker://@@{target}" >/dev/null 2>&1; then
+            if skopeo inspect "docker://${target}" >/dev/null 2>&1; then
               echo "Preserving existing image: $target"
               return 0
             fi
             skopeo copy --all "docker://$source" "docker://$target"
           }
-          sync docker.io/dunglas/frankenphp:1-php8.3-bookworm ghcr.io/@@{OWNER}/argws-crm-base:1-php8.3-bookworm
-          sync docker.io/library/mysql:8.0 ghcr.io/@@{OWNER}/argws-crm-mysql:8.0
-          sync docker.io/library/mariadb:11.4 ghcr.io/@@{OWNER}/argws-crm-mariadb:11.4
+          sync docker.io/dunglas/frankenphp:1-php8.3-bookworm ghcr.io/${OWNER}/argws-crm-base:1-php8.3-bookworm
+          sync docker.io/library/mysql:8.0 ghcr.io/${OWNER}/argws-crm-mysql:8.0
+          sync docker.io/library/mariadb:11.4 ghcr.io/${OWNER}/argws-crm-mariadb:11.4
 
   build-release:
     name: Build ARGWS CRM ${{ matrix.arch }}

@@ -87,26 +87,26 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y skopeo
       - name: Entrar no GHCR
-        run: echo "@@{{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u "@@{{ github.actor }}" --password-stdin
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u "${{ github.actor }}" --password-stdin
       - name: Criar imagens ausentes e atualizar somente por solicitação explícita
         env:
-          OWNER: @@{{ github.repository_owner }}
-          REFRESH_EXISTING: @@{{ inputs.refresh_dependencies || false }}
+          OWNER: ${{ github.repository_owner }}
+          REFRESH_EXISTING: ${{ inputs.refresh_dependencies || false }}
         shell: bash
         run: |
           set -euo pipefail
           sync() {
             local source="$1"
             local target="$2"
-            if [[ "$REFRESH_EXISTING" != "true" ]] && skopeo inspect "docker://@@{target}" >/dev/null 2>&1; then
+            if [[ "$REFRESH_EXISTING" != "true" ]] && skopeo inspect "docker://${target}" >/dev/null 2>&1; then
               echo "Preserving existing image: $target"
               return 0
             fi
             skopeo copy --all "docker://$source" "docker://$target"
           }
-          sync docker.io/dunglas/frankenphp:1-php8.3-bookworm ghcr.io/@@{OWNER}/argws-crm-base:1-php8.3-bookworm
-          sync docker.io/library/mysql:8.0 ghcr.io/@@{OWNER}/argws-crm-mysql:8.0
-          sync docker.io/library/mariadb:11.4 ghcr.io/@@{OWNER}/argws-crm-mariadb:11.4
+          sync docker.io/dunglas/frankenphp:1-php8.3-bookworm ghcr.io/${OWNER}/argws-crm-base:1-php8.3-bookworm
+          sync docker.io/library/mysql:8.0 ghcr.io/${OWNER}/argws-crm-mysql:8.0
+          sync docker.io/library/mariadb:11.4 ghcr.io/${OWNER}/argws-crm-mariadb:11.4
 
   validate-frankenphp:
     name: Compilar FrankenPHP sem publicar (pull request)
