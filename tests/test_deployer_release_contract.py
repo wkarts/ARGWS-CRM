@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = (ROOT / ".github/workflows/deployer-release.yml").read_text(encoding="utf-8")
 RELEASE_WORKFLOW = (ROOT / ".github/workflows/release-packages.yml").read_text(encoding="utf-8")
+REQUIREMENTS = (ROOT / "tools/argws-crm-deployer-gui/requirements-build.txt").read_text(encoding="utf-8")
 
 
 class DeployerReleaseContractTest(unittest.TestCase):
@@ -42,7 +43,7 @@ class DeployerReleaseContractTest(unittest.TestCase):
     def test_no_graphics_backend_is_built_or_published(self):
         self.assertNotIn("--features gui", WORKFLOW)
         self.assertNotIn("egui_glow", WORKFLOW)
-        self.assertIn("PyInstaller==6.22.3", WORKFLOW)
+        self.assertIn("PyInstaller==6.22.3", REQUIREMENTS)
 
 
 if __name__ == "__main__":
