@@ -116,3 +116,18 @@ test('FrankenPHP é versionado, genérico e mantém a configuração fora da ima
   assert.match(releaseWorkflow, /-t "\$\{repo\}:\$\{version\}"/);
   assert.match(releaseWorkflow, /-t "\$\{repo\}:latest"/);
 });
+
+
+test('ZIP da primeira release usa a base legado e permite reparar os anexos existentes', () => {
+  assert.equal(
+    read('.github/first-release-base.txt').trim(),
+    '6a8803b6f4f18f3462f738a3ca1e78c24c12e5f8'
+  );
+  const releaseWorkflow = read('.github/workflows/release-packages.yml');
+  const repairWorkflow = read('.github/workflows/repair-release-assets.yml');
+  assert.ok(releaseWorkflow.includes('first-release-base.txt'));
+  assert.ok(!releaseWorkflow.includes('git rev-parse "$GITHUB_SHA^"'));
+  assert.ok(repairWorkflow.includes('git archive "$SOURCE_SHA"'));
+  assert.ok(repairWorkflow.includes('gh release upload "$RELEASE_TAG"'));
+  assert.ok(repairWorkflow.includes('--clobber'));
+});

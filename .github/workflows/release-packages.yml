@@ -228,12 +228,14 @@ jobs:
             base_ref="$previous_tag"
             echo "Base incremental: $previous_tag"
           else
-            base_ref="$(git rev-parse "$GITHUB_SHA^")"
+            base_ref="$(tr -d '[:space:]' < .github/first-release-base.txt)"
+            git cat-file -e "${base_ref}^{commit}"
             {
               echo "### Base do primeiro ZIP incremental"
-              echo "Sem tag anterior; base usada: o primeiro pai do commit promovido."
+              echo "Sem tag anterior; base legado registrada: $base_ref."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
+          git merge-base --is-ancestor "$base_ref" "$GITHUB_SHA"
           git archive "$base_ref" | tar -x -C "$RUNNER_TEMP/argws-crm-base"
       - name: Empacotar e conferir os dois ZIPs
         run: |
