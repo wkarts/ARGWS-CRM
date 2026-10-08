@@ -23,8 +23,8 @@ O comando generate preserva os valores de um .env existente. Ao atualizar uma st
 1. Se os packages GHCR forem privados, autentique Docker no host com uma credencial local que tenha read:packages.
 2. Na pasta gerada, valide com `docker compose --env-file .env -f compose.yaml config` e faça pull com `docker compose --env-file .env -f compose.yaml pull`.
 3. Inicie com `docker compose --env-file .env -f compose.yaml up -d`. O deployer já terá criado no `.env` a chave aleatória `ARGWS_SETUP_TOKEN`.
-4. Abra `https://seu-dominio/setup`, copie essa chave do `.env` e informe URL pública, nome, e-mail, a senha que você escolher (obrigatória, sem tamanho mínimo, com confirmação idêntica) e fuso horário do primeiro administrador. O formulário cria schema apenas em banco vazio, configura a instalação e cria o usuário; ao final, redireciona ao CRM automaticamente. Não é necessário executar PHP no terminal nem reiniciar o serviço.
-5. Se a chave estiver ausente ou inválida antes do setup, `/setup` não mostra o formulário e a aplicação retorna 503. A rota `/install` sempre permanece inacessível.
+4. Abra o domínio da instalação; a raiz redireciona automaticamente para `/setup`. Informe a chave de ativação do `.env`, a URL pública, nome, e-mail, a senha que você escolher (sem tamanho mínimo, com confirmação idêntica) e o fuso horário do primeiro administrador. O assistente cria o schema somente em banco vazio, conclui as migrations e libera a tela de acesso. Não é necessário executar PHP no terminal nem reiniciar o serviço.
+5. Se a chave estiver ausente ou inválida, o assistente não permite criar o primeiro administrador. A rota `/install` permanece inacessível.
 6. Após confirmar o acesso, remova `ARGWS_SETUP_TOKEN` do `.env` e recrie o serviço web com `docker compose --env-file .env -f compose.yaml up -d --force-recreate web`. Os dados ficam em `./storage/` (ou no caminho relativo definido em `ARGWS_STORAGE_ROOT`).
 7. Configure o CloudPanel para encaminhar o domínio HTTPS à porta local configurada, vinculada a `127.0.0.1`.
 O provisionador recusa bancos com tabelas existentes e instalações já configuradas. Se uma execução anterior na imagem antiga parou após 30 segundos, ela pode ter deixado schema parcial: por segurança, o sistema não apaga tabelas nem repete o importador sobre um banco não vazio. Faça backup e use um banco realmente vazio; só descarte o banco da tentativa anterior depois de confirmar que não contém dados que devam ser preservados.
@@ -33,7 +33,7 @@ O provisionador recusa bancos com tabelas existentes e instalações já configu
 
 Antes de aplicar o Compose novo, faça backup do banco, dos volumes e do `.env`. Na pasta da stack, execute `docker compose --env-file .env -f compose.yaml pull` e depois uma vez `sh ./migrate-storage.sh .` (pasta gerada pelo deployer) ou `sh ../migrate-storage.sh .` (pasta `deploy/production` ou `deploy/develop` do ZIP). O script para os containers sem remover volumes, copia os dados para `./storage/` (ou para `ARGWS_STORAGE_ROOT`), recusa destinos já ocupados e mantém os volumes antigos. Depois inicie com `docker compose --env-file .env -f compose.yaml up -d --remove-orphans`. Não execute `docker compose down -v`.
 
-Toda persistência usa bind mounts relativos a `./storage`, controlados por `ARGWS_STORAGE_ROOT` no `.env`: configuração da instalação, banco, uploads, arquivos de módulos, temporários, cache, logs e dados/configuração do Caddy. Os diretórios dos arquivos da aplicação são preparados pelo serviço `storage-init`; o banco mantém seu diretório separado. A stack Docker fica separada da instalação PHP, PHP-FPM, Nginx e dos outros projetos do CloudPanel; escolha uma porta livre.
+Toda persistência usa bind mounts relativos a `./storage`, controlados por `ARGWS_STORAGE_ROOT` no `.env`: configuração da instalação, banco, uploads, arquivos de módulos, temporários, cache, logs e dados/configuração do Caddy. O entrypoint do serviço web prepara seus bind mounts antes de iniciar o processo como `www-data`; o banco mantém seu diretório separado. A stack Docker fica separada da instalação PHP, PHP-FPM, Nginx e dos outros projetos do CloudPanel; escolha uma porta livre.
 
 ## GHCR e dependências
 
@@ -44,7 +44,7 @@ A aplicação atual declara MySQL/MariaDB. PostgreSQL e Redis não são dependê
 
 ## Primeiro provisionamento Docker
 
-A imagem GHCR não contém o instalador web legado `install/`. O assistente `/setup` é um endpoint separado, protegido por `ARGWS_SETUP_TOKEN` aleatório; não cria usuário ou senha padrão e não é carregado nas instalações PHP tradicionais. Caddy detecta a configuração persistente e troca o roteamento para o CRM no pedido seguinte, ocultando `/setup` sem reiniciar o processo.
+A imagem GHCR não contém o instalador web legado `install/`. Enquanto o setup não termina, a raiz redireciona para o assistente `/setup`, protegido por `ARGWS_SETUP_TOKEN`; não cria usuário ou senha padrão e não é carregado nas instalações PHP tradicionais. O assistente aplica as migrations antes de gravar o marcador final. Caddy libera o CRM no pedido seguinte e bloqueia `/setup` sem reiniciar o processo.
 
 A pasta `./storage/installation_config` (ou o caminho definido em `ARGWS_STORAGE_ROOT`) guarda a configuração criada. O provisionador só aceita banco vazio e recusa instalações já configuradas; para uma instalação existente, preserve banco e configuração e siga o fluxo normal de atualização. Se uma importação falhar parcialmente, pare e revise os logs antes de qualquer ação; nunca remova volumes de dados existentes para tentar novamente.
 

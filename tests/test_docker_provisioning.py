@@ -28,13 +28,16 @@ class DockerProvisioningContractTest(unittest.TestCase):
         self.assertNotIn("app-config-sample.php", entrypoint)
         self.assertIn("Caddyfile.unprovisioned", entrypoint)
         self.assertIn("@provisioned file", pending)
+        self.assertIn("try_files provisioned", pending)
         self.assertIn("handle @provisioned", pending)
         self.assertIn("@setup path /setup /setup/", pending)
         self.assertIn("/opt/argws-crm-provisioner/web", pending)
         self.assertIn("@setup path /setup /setup/", caddy)
         self.assertIn("@installer path /install /install/ /install/*", caddy)
         self.assertLess(caddy.index("@installer path"), caddy.rindex("\n        php_server\n"))
-        self.assertIn("503", pending)
+        self.assertIn("redir /setup 302", pending)
+        self.assertNotIn("503", pending)
+        self.assertNotIn("ARGWS_SETUP_TOKEN", pending)
         self.assertNotIn("docker compose exec", pending)
         self.assertIn("@installer path /install /install/ /install/*", pending)
 
@@ -79,10 +82,8 @@ class DockerProvisioningContractTest(unittest.TestCase):
                 compose = read(path)
                 self.assertNotIn("\nvolumes:\n", compose)
                 self.assertIn('"${ARGWS_STORAGE_ROOT:-./storage}', compose)
-                self.assertIn("service_completed_successfully", compose)
-                self.assertIn('mkdir -p "/storage/$$directory"', compose)
-                self.assertIn('chown 33:33 "/storage/$$directory"', compose)
-                self.assertNotIn('"/storage/$directory"', compose)
+                self.assertNotIn("storage-init:", compose)
+                self.assertNotIn("service_completed_successfully", compose)
                 mounts = [
                     line.strip().split('"')[1]
                     for line in compose.splitlines()
@@ -97,6 +98,13 @@ class DockerProvisioningContractTest(unittest.TestCase):
                 self.assertTrue(targets.issubset(mounted_targets))
                 if path != "compose.yaml":
                     self.assertIn("/var/lib/mysql", mounted_targets)
+
+        entrypoint = read("docker/entrypoint.sh")
+        self.assertIn("prepare_storage_directories", entrypoint)
+        self.assertIn('mkdir -p "$directory"', entrypoint)
+        self.assertIn('chown 33:33 "$directory"', entrypoint)
+        self.assertIn("run_as_web_user", entrypoint)
+        self.assertNotIn("storage-init", entrypoint)
 
         for path in ("container.env.example", "deploy/develop/.env.example", "deploy/production/.env.example"):
             self.assertIn("ARGWS_STORAGE_ROOT=./storage", read(path))
@@ -193,11 +201,39 @@ esac
         self.assertIn('admin_password_repeat=$admin_password', smoke)
         self.assertIn("admin_count_after_restart", smoke)
         self.assertIn('docker compose --project-directory "$storage_compose_dir"', smoke)
-        self.assertIn("storage-init OK", smoke)
+        self.assertIn("Compose entrypoint storage OK", smoke)
+        self.assertIn('root_location" != "/setup"', smoke)
+        self.assertIn("migration_version", smoke)
+        self.assertIn("tblmigrations", smoke)
+        self.assertNotIn("storage-init", smoke)
         self.assertIn('chown -R "$HOST_UID:$HOST_GID" /storage', smoke)
         self.assertIn('HOST_UID="$(id -u)"', smoke)
         self.assertNotIn("/opt/argws-crm-provisioner/provision.php", smoke)
 
+
+    def test_setup_redirects_to_a_polished_ptbr_wizard_and_migrates_before_unlocking(self):
+        caddy = read("docker/Caddyfile.unprovisioned")
+        setup = read("docker/setup-web.php")
+        source = read("docker/provisioner.php")
+        app = read("application/libraries/App.php")
+        controller = read("application/controllers/Argws_provisioning.php")
+        migration_language = read("application/language/portuguese_br/migration_lang.php")
+        smoke = read("tests/docker_provision_smoke.sh")
+
+        self.assertIn("redir /setup 302", caddy)
+        self.assertIn('lang="pt-BR"', setup)
+        self.assertIn("Seu ambiente começa aqui.", setup)
+        self.assertIn("Administrador principal", setup)
+        self.assertIn('aria-live="polite"', setup)
+        self.assertIn("data-password-toggle", setup)
+        self.assertNotIn("Consulte ARGWS_SETUP_TOKEN no arquivo .env", setup)
+        self.assertIn("run_application_migrations();", source)
+        self.assertIn("apply_pending_migrations_for_provisioning", app)
+        self.assertIn("ARGWS_SETUP_MIGRATION_TOKEN", controller)
+        self.assertIn("Nenhuma migration foi encontrada.", migration_language)
+        self.assertIn("migration_version", smoke)
+        self.assertIn("tblmigrations", smoke)
+        self.assertIn("migration_lang.php", smoke)
 
     def test_web_provisioning_has_no_short_password_policy_or_php_request_timeout(self):
         source = read("docker/provisioner.php")

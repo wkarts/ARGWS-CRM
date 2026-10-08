@@ -200,6 +200,38 @@ class App
         }
     }
 
+    /**
+     * Apply pending database migrations during the first container setup.
+     * The same migration path is used by the administrative update screen.
+     */
+    public function apply_pending_migrations_for_provisioning()
+    {
+        $this->ci->load->config('migration');
+        $beforeUpdateVersion = (int) $this->get_current_db_version();
+        $targetVersion = (int) $this->ci->config->item('migration_version');
+
+        $result = $this->upgrade_database_silent();
+        if (empty($result['success'])) {
+            return $result;
+        }
+
+        $currentVersion = (int) $this->get_current_db_version();
+        if ($currentVersion !== $targetVersion) {
+            return [
+                'success' => false,
+                'message' => 'A versão gravada no banco não corresponde à migration mais recente.',
+            ];
+        }
+
+        update_option('last_updated_date', time());
+
+        return [
+            'success' => true,
+            'from_version' => $beforeUpdateVersion,
+            'to_version' => $currentVersion,
+        ];
+    }
+
     /** Return update-channel information without sending installation data. */
     public function get_update_info()
     {

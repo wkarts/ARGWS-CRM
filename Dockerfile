@@ -23,7 +23,10 @@ LABEL org.opencontainers.image.title="ARGWS CRM" \
 
 WORKDIR /app
 
-RUN install-php-extensions mysqli pdo_mysql curl mbstring imap gd zip intl bcmath soap exif opcache
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gosu \
+    && rm -rf /var/lib/apt/lists/* \
+    && install-php-extensions mysqli pdo_mysql curl mbstring imap gd zip intl bcmath soap exif opcache
 
 COPY --from=crm-source --chown=www-data:www-data /out/app/ /app/
 COPY --from=crm-source --chown=root:root /out/provisioner/ /opt/argws-crm-provisioner/
@@ -45,7 +48,8 @@ RUN mkdir -p /app/uploads /app/temp /app/application/cache /app/application/logs
     && php -l /opt/argws-crm-provisioner/sqlparser.php \
     && php -l /opt/argws-crm-provisioner/phpass.php
 
-USER www-data
+# The entrypoint initializes bind-mounted paths as root, then drops FrankenPHP to www-data.
+USER root
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/argws-entrypoint"]
