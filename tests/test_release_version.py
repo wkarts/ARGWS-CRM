@@ -174,6 +174,8 @@ class StableReleaseDeployerAssetsTest(unittest.TestCase):
         for required in (
             "gh workflow run .github/workflows/deployer-release.yml",
             "--event workflow_dispatch --branch main",
+            '[[ "$previous_run" =~ ^[0-9]+$ ]]',
+            '--jq "[.[] | select(.databaseId > $previous_run)]',
             '-f release_tag="$RELEASE_TAG"',
             'gh run watch "$run_id" --repo "$GH_REPOSITORY" --exit-status',
             "argws-crm-deployer-gui-linux-x64",
@@ -192,6 +194,7 @@ class StableReleaseDeployerAssetsTest(unittest.TestCase):
             with self.subTest(asset=asset):
                 self.assertIn(asset, workflow)
         self.assertIn('gh release upload "$tag"', workflow)
+        self.assertNotIn("--argjson", workflow)
 
 
 if __name__ == "__main__":
