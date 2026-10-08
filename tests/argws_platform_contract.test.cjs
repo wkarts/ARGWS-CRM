@@ -106,6 +106,13 @@ test('FrankenPHP é versionado, genérico e mantém a configuração fora da ima
   assert.match(compose, /installation_config:\/var\/lib\/argws-crm\/config/);
   assert.doesNotMatch(compose, /HUB_BASE_URL|HUB_TOKEN/);
   assert.match(caddy, /path_regexp module_php \^\/modules\/.*\\\.php\$/);
-  assert.match(workflow, /linux\/amd64,linux\/arm64/);
-  assert.match(workflow, /type=semver,pattern=\{\{version\}\}/);
+  assert.match(workflow, /platform: linux\/amd64/);
+  assert.match(workflow, /platform: linux\/arm64/);
+  assert.match(workflow, /docker buildx imagetools create -t "\$\{repo\}:develop"/);
+  const releaseWorkflow = read('.github/workflows/release-packages.yml');
+  assert.match(releaseWorkflow, /platform: linux\/amd64/);
+  assert.match(releaseWorkflow, /platform: linux\/arm64/);
+  assert.match(releaseWorkflow, /docker buildx imagetools create/);
+  assert.match(releaseWorkflow, /-t "\$\{repo\}:\$\{version\}"/);
+  assert.match(releaseWorkflow, /-t "\$\{repo\}:latest"/);
 });
