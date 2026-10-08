@@ -31,7 +31,7 @@ Os builds usam caches separados por canal e arquitetura. `.github/workflows/buil
 
 A release publica `ARGWS-CRM-X.Y.Z-full.zip`, `ARGWS-CRM-X.Y.Z-update.zip`, checksums SHA-256 e um relatório dos manifestos GHCR. O pacote completo serve para instalação nova; o incremental inclui arquivos novos/alterados desde a última tag SemVer e lista caminhos de código removidos em `REMOVED-FILES.txt`.
 
-Na primeira release, sem tag-base anterior, o incremental usa o primeiro pai do commit de release como base. Para releases seguintes, ele compara com a tag estável imediatamente anterior.
+Na primeira release, sem tag-base anterior, o incremental compara com o commit legado registrado em `.github/first-release-base.txt`, que é a base do PR inicial de migração para ARGWS. Nas releases seguintes, compara com a tag estável imediatamente anterior. `.github/workflows/repair-release-assets.yml` permite reconstruir os pacotes de uma tag já publicada e substituir os anexos validados sem criar outra versão.
 
 Antes de atualizar, faça backup do banco, da configuração local e dos uploads. Preserve `application/config/app-config.php` e os dados enviados pelos clientes. Aplique o incremental sobre os arquivos existentes e execute a migration informada no painel; instale a imagem FrankenPHP com ARGWS_VERSION=X.Y.Z e Compose quando usar container.
 
