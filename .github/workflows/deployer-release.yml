@@ -29,7 +29,7 @@ jobs:
         with:
           toolchain: 1.90.0
           rust-src-dir: tools/argws-crm-deployer
-      - run: cargo +1.90.0 test --manifest-path tools/argws-crm-deployer/Cargo.toml
+      - run: cargo +1.90.0 test --locked --manifest-path tools/argws-crm-deployer/Cargo.toml
   build:
     needs: validate
     if: >-
@@ -108,16 +108,23 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $manifest = 'tools/argws-crm-deployer/Cargo.toml'
-          cargo +1.90.0 test --target $env:TARGET --manifest-path $manifest
+          cargo +1.90.0 test --locked --target $env:TARGET --manifest-path $manifest
           if ($LASTEXITCODE -ne 0) { throw 'Rust tests failed' }
-          cargo +1.90.0 build --release --target $env:TARGET --manifest-path $manifest
+          cargo +1.90.0 build --locked --release --target $env:TARGET --manifest-path $manifest
           if ($LASTEXITCODE -ne 0) { throw 'Windows x64 build failed' }
           $exe = Resolve-Path 'tools/argws-crm-deployer/target/x86_64-pc-windows-msvc/release/argws-crm-deployer.exe'
           $out = Join-Path $env:RUNNER_TEMP 'argws-crm-deployer-smoke'
-          & $exe generate --environment production --version (Get-Content VERSION -Raw).Trim() --database mariadb --output $out
+          $log = Join-Path $env:RUNNER_TEMP 'argws-deployer.log'
+          & $exe generate --environment production --version (Get-Content VERSION -Raw).Trim() --database mariadb --output $out --log-file $log
           if ($LASTEXITCODE -ne 0) { throw 'Generate smoke test failed' }
           & $exe validate --directory $out
           if ($LASTEXITCODE -ne 0) { throw 'Validate smoke test failed' }
+          if ((Get-Content -Raw $log) -match '(?i)password|token|[0-9a-f]{64}') { throw 'Operational log contains sensitive data' }
+          $interactiveOut = Join-Path $env:RUNNER_TEMP 'argws-crm-deployer-interactive'
+          @('develop', 'mariadb', $interactiveOut, 'n') | & $exe interactive
+          if ($LASTEXITCODE -ne 0) { throw 'Interactive CLI smoke test failed' }
+          & $exe validate --directory $interactiveOut
+          if ($LASTEXITCODE -ne 0) { throw 'Interactive stack validation failed' }
           $stage = Join-Path $env:RUNNER_TEMP 'argws-crm-deployer-assets'
           New-Item -ItemType Directory -Force $stage | Out-Null
           Copy-Item 'tools/argws-crm-deployer/target/x86_64-pc-windows-msvc/release/argws-crm-deployer.exe' (Join-Path $stage 'argws-crm-deployer-win-x64.exe')
@@ -129,12 +136,17 @@ jobs:
         run: |
           set -euo pipefail
           manifest=tools/argws-crm-deployer/Cargo.toml
-          cargo +1.90.0 test --target "$TARGET" --manifest-path "$manifest"
-          cargo +1.90.0 build --release --target "$TARGET" --manifest-path "$manifest"
+          cargo +1.90.0 test --locked --target "$TARGET" --manifest-path "$manifest"
+          cargo +1.90.0 build --locked --release --target "$TARGET" --manifest-path "$manifest"
           exe="tools/argws-crm-deployer/target/$TARGET/release/argws-crm-deployer"
           out="$RUNNER_TEMP/argws-crm-deployer-smoke"
-          "$exe" generate --environment production --version "$(tr -d '[:space:]' < VERSION)" --database mariadb --output "$out"
+          log="$RUNNER_TEMP/argws-deployer.log"
+          "$exe" generate --environment production --version "$(tr -d '[:space:]' < VERSION)" --database mariadb --output "$out" --log-file "$log"
           "$exe" validate --directory "$out"
+          if grep -Eiq 'password|token|[0-9a-f]{64}' "$log"; then echo "Operational log contains sensitive data." >&2; exit 1; fi
+          interactive_out="$RUNNER_TEMP/argws-crm-deployer-interactive"
+          printf '%s\\n' develop mariadb "$interactive_out" n | "$exe" interactive
+          "$exe" validate --directory "$interactive_out"
           mkdir -p "$RUNNER_TEMP/argws-crm-deployer-assets"
           cp "$exe" "$RUNNER_TEMP/argws-crm-deployer-assets/argws-crm-deployer-linux-x64"
           chmod 0755 "$RUNNER_TEMP/argws-crm-deployer-assets/argws-crm-deployer-linux-x64"
@@ -215,7 +227,8 @@ jobs:
         if: matrix.os == 'linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libxkbcommon-x11-dev libssl-dev libgl1-mesa-dev xvfb
+          sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libxkbcommon-x11-dev libssl-dev libvulkan1 mesa-vulkan-drivers vulkan-tools xvfb
+          vulkaninfo --summary
       - name: Testar e compilar GUI para Windows x64
         if: matrix.os == 'windows'
         shell: pwsh
@@ -225,9 +238,12 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $manifest = 'tools/argws-crm-deployer/Cargo.toml'
-          cargo +1.90.0 test --features gui --target $env:TARGET --manifest-path $manifest
+          $dependencyTree = cargo +1.90.0 tree --locked --features gui --target $env:TARGET --manifest-path $manifest
+          if ($LASTEXITCODE -ne 0) { throw 'GUI dependency resolution failed' }
+          if (($dependencyTree | Out-String) -match 'egui_glow|glutin') { throw 'OpenGL glow renderer is still in the GUI dependency graph' }
+          cargo +1.90.0 test --locked --features gui --target $env:TARGET --manifest-path $manifest
           if ($LASTEXITCODE -ne 0) { throw 'GUI Rust tests failed' }
-          cargo +1.90.0 build --release --features gui --target $env:TARGET --manifest-path $manifest
+          cargo +1.90.0 build --locked --release --features gui --target $env:TARGET --manifest-path $manifest
           if ($LASTEXITCODE -ne 0) { throw 'Windows GUI x64 build failed' }
           $exe = Resolve-Path 'tools/argws-crm-deployer/target/x86_64-pc-windows-msvc/release/argws-crm-deployer.exe'
           $out = Join-Path $env:RUNNER_TEMP 'argws-crm-deployer-gui-smoke'
@@ -246,14 +262,19 @@ jobs:
         run: |
           set -euo pipefail
           manifest=tools/argws-crm-deployer/Cargo.toml
-          cargo +1.90.0 test --features gui --target "$TARGET" --manifest-path "$manifest"
-          cargo +1.90.0 build --release --features gui --target "$TARGET" --manifest-path "$manifest"
+          dependency_tree="$(cargo +1.90.0 tree --locked --features gui --target "$TARGET" --manifest-path "$manifest")"
+          if grep -Eq 'egui_glow|glutin' <<< "$dependency_tree"; then
+            echo "OpenGL glow renderer remains in the GUI dependency graph." >&2
+            exit 1
+          fi
+          cargo +1.90.0 test --locked --features gui --target "$TARGET" --manifest-path "$manifest"
+          cargo +1.90.0 build --locked --release --features gui --target "$TARGET" --manifest-path "$manifest"
           exe="tools/argws-crm-deployer/target/$TARGET/release/argws-crm-deployer"
           out="$RUNNER_TEMP/argws-crm-deployer-gui-smoke"
           "$exe" generate --environment production --version "$(tr -d '[:space:]' < VERSION)" --database mariadb --output "$out"
           "$exe" validate --directory "$out"
           set +e
-          LIBGL_ALWAYS_SOFTWARE=1 timeout 8s xvfb-run -a "$exe" --gui >"$RUNNER_TEMP/deployer-gui.log" 2>&1
+          timeout 8s xvfb-run -a "$exe" --gui >"$RUNNER_TEMP/deployer-gui.log" 2>&1
           gui_status=$?
           set -e
           if [[ "$gui_status" -ne 124 ]]; then

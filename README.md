@@ -30,3 +30,15 @@ A telemetria de usuários e licenciamento e a validação remota de licença fic
 O canal `develop` publica uma imagem de desenvolvimento e atualiza um único prerelease contínuo pela tag fixa `argws-crm-develop`. As promoções para `main` usam SemVer automático e publicam no GHCR as tags de versão, major.minor, major e latest, além dos ZIPs completo e incremental. A mesma release estável anexa o ZIP `ARGWS-CRM-deploy-<versão>.zip`, os binários de terminal e GUI do deployer, checksums e manifesto; eles não criam releases separadas. Cada aumento de versão também avança `migration_version`. O caminho até o novo nível inclui todos os arquivos intermediários; por exemplo, 3.5.0 leva os marcadores 343–349 e a migration 350, evitando lacunas a partir do nível 342. Marcadores sem alteração de schema não executam DDL, e migrations históricas permanecem intactas.
 
 Faça backup do banco, da configuração local e dos uploads antes de atualizar. O pacote incremental preserva os dados enviados pelos clientes e lista arquivos de código removidos. Consulte [Distribuição ARGWS](docs/distribuicao-argws.md) para os detalhes do versionamento, build, cache e publicação e [Arquitetura e dados](docs/arquitetura-e-dados.md) para as migrations e os recursos nativos.
+
+## Deployer gráfico e terminal
+
+A GUI e o CLI usam o mesmo núcleo de provisionamento em `tools/argws-crm-deployer/src/core.rs`. A interface foi compilada com `eframe 0.31.1` e `wgpu 24.0.0`: Direct3D 12 no Windows, Vulkan no Linux e Metal no macOS. O backend Glow/OpenGL não é inicializado. Se o WGPU não encontrar um adaptador compatível, o Deployer registra o diagnóstico em `argws-crm-deployer-gui.log`, mostra a orientação no Windows e encerra sem iniciar operações. Nesse caso, use o binário CLI da mesma release:
+
+```text
+argws-crm-deployer-win-x64.exe interactive
+argws-crm-deployer-win-x64.exe generate --environment production --version 3.6.0 --database mysql --output ./argws-crm-deploy
+argws-crm-deployer-win-x64.exe validate --directory ./argws-crm-deploy
+```
+
+O modo interativo coleta somente as opções da stack; automações podem usar `generate` e `validate` sem terminal gráfico. `--log-file caminho` grava apenas o nome da operação e o resultado. Senhas e tokens gerados permanecem no `.env` protegido e não entram nos logs. Os binários CLI e GUI, seus checksums SHA-256 e o ZIP de deploy ficam juntos na mesma release.

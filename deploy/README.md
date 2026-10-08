@@ -47,3 +47,9 @@ A aplicação atual declara MySQL/MariaDB. PostgreSQL e Redis não são dependê
 A imagem GHCR não contém o instalador web legado `install/`. O assistente `/setup` é um endpoint separado, protegido por `ARGWS_SETUP_TOKEN` aleatório; não cria usuário ou senha padrão e não é carregado nas instalações PHP tradicionais. Caddy detecta a configuração persistente e troca o roteamento para o CRM no pedido seguinte, ocultando `/setup` sem reiniciar o processo.
 
 A pasta `./storage/installation_config` (ou o caminho definido em `ARGWS_STORAGE_ROOT`) guarda a configuração criada. O provisionador só aceita banco vazio e recusa instalações já configuradas; para uma instalação existente, preserve banco e configuração e siga o fluxo normal de atualização. Se uma importação falhar parcialmente, pare e revise os logs antes de qualquer ação; nunca remova volumes de dados existentes para tentar novamente.
+
+## Deployer gráfico e CLI
+
+As releases anexam os binários CLI e GUI para Windows x64 e Linux x64, junto com checksums SHA-256. A GUI usa WGPU com Direct3D 12 no Windows e Vulkan no Linux; não depende de `egui_glow`. Em Windows por RDP, a interface abre quando a sessão expõe um adaptador WGPU/D3D12 compatível. Se o backend não iniciar, nenhum deploy será executado automaticamente: a GUI registra o diagnóstico e orienta o uso do modo terminal.
+
+Use `argws-crm-deployer-win-x64.exe interactive` para preparar a stack com prompts ou `generate`/ `validate` para execução não interativa. A GUI usa exatamente as mesmas funções do núcleo do CLI. Os logs opcionais com `--log-file` registram apenas operação e status, nunca argumentos, senhas ou tokens.
