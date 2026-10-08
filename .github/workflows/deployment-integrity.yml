@@ -15,7 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Validar sintaxe YAML dos workflows
-        run: ruby -e 'require "yaml"; ARGV.each { |path| YAML.load_file(path, aliases: true); puts path }' .github/workflows/*.yml
+        run: |
+          ruby -e 'require "yaml"; ARGV.each { |path| YAML.load_file(path, aliases: true); puts path }' .github/workflows/*.yml
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
