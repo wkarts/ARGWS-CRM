@@ -17,7 +17,7 @@ RUN mkdir -p /app/uploads /app/temp /app/application/cache /app/application/logs
     && chown -R www-data:www-data /app /data /config /var/lib/argws-crm \
     && find application modules install -type f -name '*.php' \
        -not -path '*/vendor/*' -not -path '*/third_party/*' -print0 \
-       | xargs -0 -r -n1 php -l >/dev/null
+       | xargs -0 -r -n1 -P8 sh -c 'php -l "$1" >/dev/null || { echo "Falha na validação PHP: $1" >&2; exit 255; }' argws-lint
 
 COPY --chown=root:root docker/entrypoint.sh /usr/local/bin/argws-entrypoint
 RUN chmod 0755 /usr/local/bin/argws-entrypoint
