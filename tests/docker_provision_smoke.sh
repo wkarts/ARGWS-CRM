@@ -93,6 +93,14 @@ if printf '{}' | docker exec -i "$web" php /opt/argws-crm-provisioner/provision.
 fi
 
 docker restart "$web" >/dev/null
+host_port="$(docker port "$web" 8080/tcp | awk -F: 'END { print $NF }')"
+if [ -z "$host_port" ]; then
+    echo "A porta publicada pelo container não foi encontrada após o restart." >&2
+    docker inspect --format 'container={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}} ports={{json .NetworkSettings.Ports}}' "$web" >&2 || true
+    docker logs --tail 100 "$web" >&2 || true
+    exit 1
+fi
+url="http://127.0.0.1:$host_port"
 status=""
 for _ in $(seq 1 45); do
     status="$(curl --connect-timeout 2 --max-time 5 -sS -o /tmp/argws-crm-after-provision-body -w '%{http_code}' "$url/" 2>/dev/null || true)"
@@ -101,8 +109,10 @@ for _ in $(seq 1 45); do
     fi
     sleep 1
 done
-if [ -z "$status" ] || [ "$status" = "503" ] || [ "$status" = "500" ]; then
+if [[ ! "$status" =~ ^[1-5][0-9][0-9]$ ]] || [ "$status" = "503" ] || [ "$status" = "500" ]; then
     echo "A aplicação não iniciou após o provisionamento (HTTP ${status:-sem resposta})." >&2
+    docker inspect --format 'container={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}} ports={{json .NetworkSettings.Ports}}' "$web" >&2 || true
+    docker logs --tail 100 "$web" >&2 || true
     exit 1
 fi
 install_after_code="$(curl --connect-timeout 2 --max-time 5 -sS -o /dev/null -w '%{http_code}' "$url/install/" 2>/dev/null || true)"

@@ -48,6 +48,13 @@ class DockerProvisioningContractTest(unittest.TestCase):
                 self.assertIn("ARGWS_DB_PASSWORD", compose)
                 self.assertIn("ARGWS_CONFIG_DIR", compose)
 
+    def test_smoke_refreshes_ephemeral_port_and_rejects_missing_http_status(self):
+        smoke = read("tests/docker_provision_smoke.sh")
+        restart = smoke.index('docker restart "$web"')
+        refreshed_port = smoke.index('docker port "$web" 8080/tcp', restart)
+        self.assertGreater(refreshed_port, restart)
+        self.assertIn('[[ ! "$status" =~ ^[1-5][0-9][0-9]$ ]]', smoke)
+
     def test_root_compose_keeps_external_database_variables_optional(self):
         compose = read("compose.yaml")
         self.assertIn("ARGWS_DB_HOST:", compose)
