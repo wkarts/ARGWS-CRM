@@ -23,13 +23,15 @@ def replace_production_tag(path: str, contents: bytes, version: str) -> bytes:
     text = contents.decode("utf-8")
     if path.endswith("compose.yaml"):
         pattern = re.compile(r"(ghcr\.io/wkarts/argws-crm:)\d+\.\d+\.\d+")
-        replacement = r"\g<1>" + version
+        matches = list(pattern.finditer(text))
+        if not matches:
+            raise ValueError(f"{path}: nenhuma tag SemVer de produção encontrada.")
+        updated = pattern.sub(lambda match: match.group(1) + version, text)
     else:
         pattern = re.compile(r"(?m)^ARGWS_CRM_IMAGE=ghcr\.io/wkarts/argws-crm:\d+\.\d+\.\d+$")
-        replacement = "ARGWS_CRM_IMAGE=ghcr.io/wkarts/argws-crm:" + version
-    updated, count = pattern.subn(replacement, text)
-    if count != 1:
-        raise ValueError(f"{path}: esperada exatamente uma tag SemVer de produção, encontradas {count}.")
+        updated, count = pattern.subn("ARGWS_CRM_IMAGE=ghcr.io/wkarts/argws-crm:" + version, text)
+        if count != 1:
+            raise ValueError(f"{path}: esperada exatamente uma tag SemVer de produção, encontradas {count}.")
     return updated.encode("utf-8")
 
 
