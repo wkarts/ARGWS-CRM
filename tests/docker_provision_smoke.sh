@@ -105,8 +105,9 @@ if [ -z "$status" ] || [ "$status" = "503" ] || [ "$status" = "500" ]; then
     echo "A aplicação não iniciou após o provisionamento (HTTP ${status:-sem resposta})." >&2
     exit 1
 fi
-if [ "$(curl --connect-timeout 2 --max-time 5 -sS -o /dev/null -w '%{http_code}' "$url/install/" 2>/dev/null || true)" != "404" ]; then
-    echo "A rota /install ainda está acessível após o provisionamento." >&2
+install_after_code="$(curl --connect-timeout 2 --max-time 5 -sS -o /dev/null -w '%{http_code}' "$url/install/" 2>/dev/null || true)"
+if [ "$install_after_code" != "404" ]; then
+    echo "A rota /install respondeu HTTP ${install_after_code:-sem resposta} após o provisionamento; esperado 404." >&2
     exit 1
 fi
 
