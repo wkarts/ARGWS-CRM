@@ -47,3 +47,8 @@ ghcr.io/wkarts/argws-crm-base:1-php8.3-bookworm espelha a base FrankenPHP do bui
 O CRM declara MySQL/MariaDB. PostgreSQL e Redis não são dependências ativas configuradas ou testadas e não são adicionadas à stack.
 
 O binário Rust argws-crm-deployer gera compose.yaml e .env localmente e preserva um .env existente. deploy/ e tools/argws-crm-deployer/ ficam fora dos ZIPs de aplicação. O binário é anexado como asset separado às releases.
+
+
+## Retenção e limpeza de cache
+
+Após uma publicação bem-sucedida em `develop` ou `main`, `actions-cache-retention.yml` verifica o SHA publicado, a branch e a ausência de workflows ativos. Remove somente caches do GitHub Actions ligados exatamente a essa branch que estejam sem uso há mais de 30 dias. Caches recentes, refs de PR, tags, releases e imagens GHCR são preservados. A execução manual gera relatório sem excluir por padrão; `apply=true` é explícito. Os builds usam Buildx com cache do Actions; os runners hospedados são descartados ao fim do job e não exigem `buildx prune`.

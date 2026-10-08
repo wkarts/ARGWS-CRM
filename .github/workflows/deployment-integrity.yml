@@ -2,7 +2,7 @@ name: Integridade das stacks ARGWS CRM
 on:
   pull_request:
     branches: [main, develop]
-    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, tests/test_package_release.py, Dockerfile]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_actions_cache_cleanup.py, Dockerfile, .github/workflows/actions-cache-retention.yml]
   push:
     branches: [develop, main]
     paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, tests/test_package_release.py, Dockerfile]
@@ -22,6 +22,8 @@ jobs:
           toolchain: 1.90.0
       - name: Testar exclusão dos artefatos operacionais dos ZIPs
         run: python3 -m unittest tests/test_package_release.py
+      - name: Testar política segura de cache Actions
+        run: python3 -m unittest tests/test_actions_cache_cleanup.py
       - name: Testar deployer Rust
         run: cargo test --manifest-path tools/argws-crm-deployer/Cargo.toml
       - name: Gerar as stacks e validar Compose

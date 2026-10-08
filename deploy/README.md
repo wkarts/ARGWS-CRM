@@ -4,12 +4,16 @@ Este diretório contém as stacks oficiais por ambiente e fica fora dos ZIPs da 
 
 ## Deployer portátil
 
-Baixe argws-crm-deployer-win-x64.exe na release estável ou na pré-release argws-crm-develop. O binário Rust não exige Rust, Node.js ou Python no servidor.
+Baixe argws-crm-deployer-linux-x64 para CloudPanel/Linux x64 ou argws-crm-deployer-win-x64.exe para Windows na release estável ou na pré-release argws-crm-develop. O executável Linux usa musl; ambos são binários nativos e não exigem Rust, Node.js ou Python no servidor.
 
+    ./argws-crm-deployer-linux-x64 generate --environment develop --database mysql --output ./argws-crm-develop
     .\argws-crm-deployer-win-x64.exe generate --environment develop --database mysql --output .\argws-crm-develop
+    ./argws-crm-deployer-linux-x64 validate --directory ./argws-crm-develop
     .\argws-crm-deployer-win-x64.exe validate --directory .\argws-crm-develop
 
+    ./argws-crm-deployer-linux-x64 generate --environment production --version 3.4.2 --database mysql --output ./argws-crm-production
     .\argws-crm-deployer-win-x64.exe generate --environment production --version 3.4.2 --database mysql --output .\argws-crm-production
+    ./argws-crm-deployer-linux-x64 validate --directory ./argws-crm-production
     .\argws-crm-deployer-win-x64.exe validate --directory .\argws-crm-production
 
 O comando generate preserva um .env existente. --force pode substituir compose.yaml, nunca o .env. O arquivo .env novo usa segredos aleatórios e permissão 0600 em sistemas Unix; mantenha-o fora do Git, da imagem e dos ZIPs.
