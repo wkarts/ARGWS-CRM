@@ -3,8 +3,14 @@ services:
   web:
     image: ghcr.io/wkarts/argws-crm:${ARGWS_VERSION:-3.4.2}
     restart: unless-stopped
+    environment:
+      ARGWS_DB_HOST: ${ARGWS_DB_HOST:?Defina ARGWS_DB_HOST no arquivo .env}
+      ARGWS_DB_NAME: ${ARGWS_DB_NAME:?Defina ARGWS_DB_NAME no arquivo .env}
+      ARGWS_DB_USER: ${ARGWS_DB_USER:?Defina ARGWS_DB_USER no arquivo .env}
+      ARGWS_DB_PASSWORD: ${ARGWS_DB_PASSWORD:?Defina ARGWS_DB_PASSWORD no arquivo .env}
+      ARGWS_CONFIG_DIR: /var/lib/argws-crm/config
     ports:
-      - "${ARGWS_HTTP_PORT:-8080}:8080"
+      - "${ARGWS_HTTP_BIND:-127.0.0.1}:${ARGWS_HTTP_PORT:-8080}:8080"
     volumes:
       - installation_config:/var/lib/argws-crm/config
       - uploads:/app/uploads

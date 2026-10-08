@@ -41,7 +41,7 @@ def should_include(relative: str) -> bool:
     parts = path.parts
     if not parts or relative.startswith((".git/", "source/", "work/", "deliverables/", "data/")):
         return False
-    if parts[0] == "deploy" or relative.startswith("tools/argws-crm-deployer/"):
+    if parts[0] in {"deploy", "docker"} or relative.startswith("tools/argws-crm-deployer/"):
         return False
     if (
         path.name == ".DS_Store"

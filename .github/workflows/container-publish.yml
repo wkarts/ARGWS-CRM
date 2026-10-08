@@ -48,7 +48,7 @@ jobs:
         run: |
           node tests/custom_links_security.test.cjs
           node tests/argws_platform_contract.test.cjs
-          python3 -m unittest tests/test_release_version.py tests/test_package_release.py
+          python3 -m unittest tests/test_release_version.py tests/test_package_release.py tests/test_docker_provisioning.py
 
       - name: Sugerir SemVer para promoção develop → main
         if: >-

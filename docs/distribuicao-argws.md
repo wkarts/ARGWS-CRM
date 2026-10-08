@@ -40,7 +40,7 @@ Os pacotes não incluem credenciais, .env, configuração local, logs, cache ou 
 
 ## Deploy por ambiente e dependências GHCR
 
-O repositório contém stacks em deploy/develop e deploy/production. Elas combinam a aplicação FrankenPHP com MySQL/MariaDB persistente e mantêm o .env específico de cada instalação fora da imagem. O instalador do CRM usa database como host da base.
+O repositório contém stacks em deploy/develop e deploy/production. Elas combinam a aplicação FrankenPHP com MySQL/MariaDB persistente e mantêm o .env específico de cada instalação fora da imagem. As stacks passam as credenciais de banco do .env ao container. A imagem de produção não contém o diretório web install; o primeiro schema e o usuário administrador são criados uma única vez pelo provisionador PHP CLI, sem formulário público.
 
 ghcr.io/wkarts/argws-crm-base:1-php8.3-bookworm espelha a base FrankenPHP do build. ghcr.io/wkarts/argws-crm-mysql:8.0 e ghcr.io/wkarts/argws-crm-mariadb:11.4 fornecem os bancos das stacks. Os workflows preservam tags existentes; sincronização semanal não substitui imagens. Atualizações deliberadas usam a execução manual refresh_existing=true.
 

@@ -2,7 +2,7 @@ name: Integridade das stacks ARGWS CRM
 on:
   pull_request:
     branches: [main, develop]
-    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_actions_cache_cleanup.py, Dockerfile, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/docker_provision_smoke.sh, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml]
   push:
     branches: [develop, main]
     paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_actions_cache_cleanup.py, Dockerfile, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml]
@@ -25,6 +25,10 @@ jobs:
           toolchain: 1.90.0
       - name: Testar exclusão dos artefatos operacionais dos ZIPs
         run: python3 -m unittest tests/test_package_release.py
+      - name: Testar contrato do provisionamento Docker
+        run: python3 -m unittest tests/test_docker_provisioning.py
+      - name: Provisionar schema e primeiro administrador em MySQL limpo
+        run: bash tests/docker_provision_smoke.sh
       - name: Testar política segura de cache Actions
         run: python3 -m unittest tests/test_actions_cache_cleanup.py
       - name: Testar deployer Rust
