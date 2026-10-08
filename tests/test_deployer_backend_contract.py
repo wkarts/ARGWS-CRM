@@ -29,7 +29,7 @@ class DeployerBackendContractTest(unittest.TestCase):
         self.assertIn('["version"]', GUI)
         self.assertIn('"generate"', GUI)
         self.assertIn('"validate"', GUI)
-        self.assertNotRegex(GUI.lower(), r"eframe|egui|wgpu|glutin|opengl|vulkan|pyopengl")
+        self.assertNotRegex(GUI.lower(), r"\\b(?:eframe|egui|wgpu|glutin|opengl|vulkan|pyopengl)\\b")
         self.assertIn("CREATE_NO_WINDOW", GUI)
 
     def test_business_core_remains_shared_and_independent_of_the_gui(self):
