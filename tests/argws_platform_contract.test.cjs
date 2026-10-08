@@ -130,4 +130,6 @@ test('ZIP da primeira release usa a base legado e permite reparar os anexos exis
   assert.ok(repairWorkflow.includes('git archive "$SOURCE_SHA"'));
   assert.ok(repairWorkflow.includes('gh release upload "$RELEASE_TAG"'));
   assert.ok(repairWorkflow.includes('--clobber'));
+  assert.ok(repairWorkflow.includes('branches: [main]'));
+  assert.ok(repairWorkflow.includes('.github/workflows/repair-release-assets.yml'));
 });
