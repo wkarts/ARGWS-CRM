@@ -19,6 +19,11 @@ storage_compose_dir=""
 cleanup() {
     if [ -n "$storage_compose_dir" ]; then
         docker compose --project-directory "$storage_compose_dir" --env-file "$storage_compose_dir/.env" -f "$storage_compose_dir/compose.yaml" down --remove-orphans >/dev/null 2>&1 || true
+        if [ -d "$storage_compose_dir/storage" ]; then
+            docker run --rm --user 0:0 -e HOST_UID="$(id -u)" -e HOST_GID="$(id -g)" \
+                --volume "$storage_compose_dir/storage:/storage" --entrypoint /bin/sh "$image" \
+                -ec 'chown -R "$HOST_UID:$HOST_GID" /storage' >/dev/null 2>&1 || true
+        fi
         rm -rf "$storage_compose_dir"
     fi
     docker rm -f "$web" "$database" >/dev/null 2>&1 || true

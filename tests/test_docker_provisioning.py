@@ -194,6 +194,8 @@ esac
         self.assertIn("admin_count_after_restart", smoke)
         self.assertIn('docker compose --project-directory "$storage_compose_dir"', smoke)
         self.assertIn("storage-init OK", smoke)
+        self.assertIn('chown -R "$HOST_UID:$HOST_GID" /storage', smoke)
+        self.assertIn('HOST_UID="$(id -u)"', smoke)
         self.assertNotIn("/opt/argws-crm-provisioner/provision.php", smoke)
 
 
