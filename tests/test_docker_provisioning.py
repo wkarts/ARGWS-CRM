@@ -80,8 +80,8 @@ class DockerProvisioningContractTest(unittest.TestCase):
                 self.assertNotIn("\nvolumes:\n", compose)
                 self.assertIn('"${ARGWS_STORAGE_ROOT:-./storage}', compose)
                 self.assertIn("service_completed_successfully", compose)
-                self.assertIn('mkdir -p "/storage/$directory"', compose)
-                self.assertIn('chown 33:33 "/storage/$directory"', compose)
+                self.assertIn('mkdir -p "/storage/$$directory"', compose)
+                self.assertIn('chown 33:33 "/storage/$$directory"', compose)
                 self.assertNotIn('"/storage/$directory"', compose)
                 mounts = [
                     line.strip().split('"')[1]
