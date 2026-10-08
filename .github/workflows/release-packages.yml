@@ -122,9 +122,39 @@ jobs:
             echo "Commit promovido: $GITHUB_SHA."
           } >> "$GITHUB_STEP_SUMMARY"
 
+  prepare-ghcr-dependencies:
+    name: Garantir base FrankenPHP e dependências GHCR
+    needs: plan-version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar skopeo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+      - name: Entrar no GHCR
+        run: echo "@@{{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u "@@{{ github.actor }}" --password-stdin
+      - name: Criar somente as imagens que ainda não existem
+        env:
+          OWNER: @@{{ github.repository_owner }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sync() {
+            local source="$1"
+            local target="$2"
+            if skopeo inspect "docker://@@{target}" >/dev/null 2>&1; then
+              echo "Preserving existing image: $target"
+              return 0
+            fi
+            skopeo copy --all "docker://$source" "docker://$target"
+          }
+          sync docker.io/dunglas/frankenphp:1-php8.3-bookworm ghcr.io/@@{OWNER}/argws-crm-base:1-php8.3-bookworm
+          sync docker.io/library/mysql:8.0 ghcr.io/@@{OWNER}/argws-crm-mysql:8.0
+          sync docker.io/library/mariadb:11.4 ghcr.io/@@{OWNER}/argws-crm-mariadb:11.4
+
   build-release:
     name: Build ARGWS CRM ${{ matrix.arch }}
-    needs: plan-version
+    needs: [plan-version, prepare-ghcr-dependencies]
     strategy:
       fail-fast: false
       matrix:
@@ -166,6 +196,7 @@ jobs:
           outputs: type=image,name=ghcr.io/wkarts/argws-crm,push-by-digest=true,name-canonical=true,push=true
           build-args: |
             ARGWS_VERSION=${{ needs.plan-version.outputs.version }}
+            ARGWS_FRANKENPHP_IMAGE=ghcr.io/wkarts/argws-crm-base:1-php8.3-bookworm
           labels: |
             org.opencontainers.image.title=ARGWS CRM
             org.opencontainers.image.version=${{ needs.plan-version.outputs.version }}

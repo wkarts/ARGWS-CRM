@@ -22,6 +22,8 @@ docker compose up -d
 
 A aplicação escuta na porta interna `8080`. Configure HTTPS no proxy reverso. Não grave configuração de clientes ou uploads na imagem. Veja [a documentação de operação](docs/operacao-php-e-containers.md) para configurar e atualizar a instalação.
 
+O kit completo de implantação por ambiente fica em [deploy/README.md](deploy/README.md). Ele permanece no repositório, fora dos ZIPs da aplicação.
+
 ## Idioma, suporte e privacidade
 
 Português do Brasil é o idioma disponível nesta versão. A política de terminologia e as configurações do widget de suporte são administradas no painel em **Configurações → Plataforma ARGWS**. O endereço do suporte e o token público são definidos na própria aplicação.

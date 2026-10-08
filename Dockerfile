@@ -1,4 +1,5 @@
-FROM dunglas/frankenphp:1-php8.3-bookworm
+ARG ARGWS_FRANKENPHP_IMAGE=dunglas/frankenphp:1-php8.3-bookworm
+FROM ${ARGWS_FRANKENPHP_IMAGE}
 
 ARG ARGWS_VERSION=3.4.2
 LABEL org.opencontainers.image.title="ARGWS CRM" \

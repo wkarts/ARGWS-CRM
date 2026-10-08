@@ -6,6 +6,11 @@ on:
   push:
     branches: [develop]
   workflow_dispatch:
+    inputs:
+      refresh_dependencies:
+        description: Atualizar tags base/dependência existentes no GHCR
+        type: boolean
+        default: false
 
 permissions:
   actions: write
@@ -70,6 +75,39 @@ jobs:
             echo "O merge em main cria a imagem estável, a release e os pacotes; develop permanece no canal :develop."
           } >> "$GITHUB_STEP_SUMMARY"
 
+  prepare-ghcr-dependencies:
+    name: Garantir base FrankenPHP e dependências GHCR
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Instalar skopeo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+      - name: Entrar no GHCR
+        run: echo "@@{{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u "@@{{ github.actor }}" --password-stdin
+      - name: Criar imagens ausentes e atualizar somente por solicitação explícita
+        env:
+          OWNER: @@{{ github.repository_owner }}
+          REFRESH_EXISTING: @@{{ inputs.refresh_dependencies || false }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sync() {
+            local source="$1"
+            local target="$2"
+            if [[ "$REFRESH_EXISTING" != "true" ]] && skopeo inspect "docker://@@{target}" >/dev/null 2>&1; then
+              echo "Preserving existing image: $target"
+              return 0
+            fi
+            skopeo copy --all "docker://$source" "docker://$target"
+          }
+          sync docker.io/dunglas/frankenphp:1-php8.3-bookworm ghcr.io/@@{OWNER}/argws-crm-base:1-php8.3-bookworm
+          sync docker.io/library/mysql:8.0 ghcr.io/@@{OWNER}/argws-crm-mysql:8.0
+          sync docker.io/library/mariadb:11.4 ghcr.io/@@{OWNER}/argws-crm-mariadb:11.4
+
   validate-frankenphp:
     name: Compilar FrankenPHP sem publicar (pull request)
     if: github.event_name == 'pull_request'
@@ -98,7 +136,7 @@ jobs:
   build-develop:
     name: Gerar develop ${{ matrix.arch }}
     if: github.event_name != 'pull_request'
-    needs: validate
+    needs: [validate, prepare-ghcr-dependencies]
     strategy:
       fail-fast: false
       matrix:
@@ -137,6 +175,7 @@ jobs:
           outputs: type=image,name=ghcr.io/wkarts/argws-crm,push-by-digest=true,name-canonical=true,push=true
           build-args: |
             ARGWS_VERSION=${{ steps.version.outputs.value }}
+            ARGWS_FRANKENPHP_IMAGE=ghcr.io/wkarts/argws-crm-base:1-php8.3-bookworm
           labels: |
             org.opencontainers.image.title=ARGWS CRM
             org.opencontainers.image.version=develop
