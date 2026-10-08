@@ -124,10 +124,13 @@ function validate_input(array $input): array
     if (strlen($email) > 100 || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
         provision_error('Informe um e-mail válido com até 100 caracteres.');
     }
-    if (strlen($input['admin_password']) < 12) {
-        provision_error('A senha deve ter pelo menos 12 caracteres.');
+    if ($input['admin_password'] === '') {
+        provision_error('A senha do administrador é obrigatória.');
     }
-    if (isset($input['admin_password_repeat']) && $input['admin_password'] !== $input['admin_password_repeat']) {
+    if (!isset($input['admin_password_repeat']) || !is_string($input['admin_password_repeat'])) {
+        provision_error('Confirme a senha do administrador.');
+    }
+    if ($input['admin_password'] !== $input['admin_password_repeat']) {
         provision_error('As senhas informadas não coincidem.');
     }
 
@@ -188,6 +191,13 @@ function save_application_config(string $configDirectory, array $input, array $d
 
 function provision_with_input(array $rawInput): void
 {
+    // Importar o schema completo pode ultrapassar o limite padrão de 30 segundos do PHP web.
+    // Esta rota só existe antes do provisionamento e exige o token temporário de instalação.
+    $timeLimitRemoved = function_exists('set_time_limit') && set_time_limit(0);
+    if (!$timeLimitRemoved && (int) ini_get('max_execution_time') > 0) {
+        provision_error('O PHP está limitando a duração do provisionamento. Habilite set_time_limit ou defina max_execution_time=0 e tente novamente.');
+    }
+
     $configDirectory = required_environment('ARGWS_CONFIG_DIR');
     if (!is_dir($configDirectory) && !mkdir($configDirectory, 0700, true) && !is_dir($configDirectory)) {
         provision_error('Não foi possível acessar o volume persistente de configuração.');

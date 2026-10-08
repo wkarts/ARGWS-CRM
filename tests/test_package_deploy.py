@@ -16,6 +16,7 @@ class DeploymentArchiveTest(unittest.TestCase):
         self.root = Path(self.temp.name)
         files = {
             "deploy/README.md": "Instruções",
+            "deploy/migrate-storage.sh": "#!/bin/sh\n",
             "deploy/develop/compose.yaml": "image: ghcr.io/wkarts/argws-crm:develop\n",
             "deploy/develop/.env.example": "ARGWS_CRM_IMAGE=ghcr.io/wkarts/argws-crm:develop\n",
             "deploy/production/compose.yaml": "image: " + "$" + "{ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.4.2}\n",
@@ -36,6 +37,7 @@ class DeploymentArchiveTest(unittest.TestCase):
         with zipfile.ZipFile(archive_path) as archive:
             self.assertEqual(set(archive.namelist()), {
                 "deploy/README.md",
+                "deploy/migrate-storage.sh",
                 "deploy/develop/compose.yaml",
                 "deploy/develop/.env.example",
                 "deploy/production/compose.yaml",
