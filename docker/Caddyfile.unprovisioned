@@ -1,0 +1,7 @@
+:8080 {
+    route {
+        @installer path /install /install/ /install/*
+        respond @installer 404
+        respond "ARGWS CRM ainda não foi provisionado. No terminal do servidor, execute: docker compose exec web php /opt/argws-crm-provisioner/provision.php" 503
+    }
+}

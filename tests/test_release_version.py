@@ -66,12 +66,26 @@ class ReleaseVersionMetadataTest(unittest.TestCase):
             (root / "compose.yaml").write_text(
                 "image: ghcr.io/wkarts/argws-crm:" + image_default + newline, encoding="utf-8"
             )
+            (root / "deploy/production").mkdir(parents=True)
+            (root / "deploy/production/compose.yaml").write_text(
+                "image: " + "$" + "{ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.4.2}" + newline,
+                encoding="utf-8",
+            )
+            (root / "deploy/production/.env.example").write_text(
+                "ARGWS_CRM_IMAGE=ghcr.io/wkarts/argws-crm:3.4.2" + newline,
+                encoding="utf-8",
+            )
 
             APPLIER.apply_release_version(root, "3.4.3")
 
             self.assertEqual((root / "VERSION").read_text(encoding="utf-8"), "3.4.3" + newline)
             self.assertIn("ARGWS_VERSION', '3.4.3'", (root / "application/config/constants.php").read_text())
             self.assertIn("ARGWS_VERSION:-3.4.3", (root / "compose.yaml").read_text())
+            self.assertIn("argws-crm:3.4.3", (root / "deploy/production/compose.yaml").read_text())
+            self.assertIn(
+                "ARGWS_CRM_IMAGE=ghcr.io/wkarts/argws-crm:3.4.3",
+                (root / "deploy/production/.env.example").read_text(),
+            )
             self.assertIn("migration_version'] = 342", (root / "application/config/migration.php").read_text())
 
     def test_migration_version_is_independent_from_semver_product_release(self):

@@ -36,3 +36,19 @@ Na primeira release, sem tag-base anterior, o incremental compara com o commit l
 Antes de atualizar, faça backup do banco, da configuração local e dos uploads. Preserve `application/config/app-config.php` e os dados enviados pelos clientes. Aplique o incremental sobre os arquivos existentes e execute a migration informada no painel; instale a imagem FrankenPHP com ARGWS_VERSION=X.Y.Z e Compose quando usar container.
 
 Os pacotes não incluem credenciais, .env, configuração local, logs, cache ou uploads de clientes. Amostras genéricas e imagens de placeholder necessárias ao produto permanecem na distribuição.
+
+
+## Deploy por ambiente e dependências GHCR
+
+O repositório contém stacks em deploy/develop e deploy/production. Elas combinam a aplicação FrankenPHP com MySQL/MariaDB persistente e mantêm o .env específico de cada instalação fora da imagem. As stacks passam as credenciais de banco do .env ao container. A imagem de produção não contém o diretório web install; o primeiro schema e o usuário administrador são criados uma única vez pelo provisionador PHP CLI, sem formulário público.
+
+ghcr.io/wkarts/argws-crm-base:1-php8.3-bookworm espelha a base FrankenPHP do build. ghcr.io/wkarts/argws-crm-mysql:8.0 e ghcr.io/wkarts/argws-crm-mariadb:11.4 fornecem os bancos das stacks. Os workflows preservam tags existentes; sincronização semanal não substitui imagens. Atualizações deliberadas usam a execução manual refresh_existing=true.
+
+O CRM declara MySQL/MariaDB. PostgreSQL e Redis não são dependências ativas configuradas ou testadas e não são adicionadas à stack.
+
+O binário Rust argws-crm-deployer gera compose.yaml e .env localmente e preserva um .env existente. deploy/ e tools/argws-crm-deployer/ ficam fora dos ZIPs de aplicação. O binário é anexado como asset separado às releases.
+
+
+## Retenção e limpeza de cache
+
+Após uma publicação bem-sucedida em `develop` ou `main`, `actions-cache-retention.yml` verifica o SHA publicado, a branch e a ausência de workflows ativos. Remove somente caches do GitHub Actions ligados exatamente a essa branch que estejam sem uso há mais de 30 dias. Caches recentes, refs de PR, tags, releases e imagens GHCR são preservados. A execução manual gera relatório sem excluir por padrão; `apply=true` é explícito. Os builds usam Buildx com cache do Actions; os runners hospedados são descartados ao fim do job e não exigem `buildx prune`.

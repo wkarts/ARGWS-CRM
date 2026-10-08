@@ -1,16 +1,21 @@
-name: argws-crm
+name: ${COMPOSE_PROJECT_NAME:-argws-crm-production}
 services:
   web:
-    image: ghcr.io/wkarts/argws-crm:${ARGWS_VERSION:-3.4.2}
+    image: ${ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.4.2}
+    container_name: ${COMPOSE_PROJECT_NAME:-argws-crm-production}-web
     restart: unless-stopped
     environment:
-      ARGWS_DB_HOST: ${ARGWS_DB_HOST:-}
-      ARGWS_DB_NAME: ${ARGWS_DB_NAME:-}
-      ARGWS_DB_USER: ${ARGWS_DB_USER:-}
-      ARGWS_DB_PASSWORD: ${ARGWS_DB_PASSWORD:-}
+      TZ: ${TZ:-UTC}
+      ARGWS_DB_HOST: ${ARGWS_DB_HOST:?Defina ARGWS_DB_HOST no arquivo .env}
+      ARGWS_DB_NAME: ${MYSQL_DATABASE:?Defina MYSQL_DATABASE no arquivo .env}
+      ARGWS_DB_USER: ${MYSQL_USER:?Defina MYSQL_USER no arquivo .env}
+      ARGWS_DB_PASSWORD: ${MYSQL_PASSWORD:?Defina MYSQL_PASSWORD no arquivo .env}
       ARGWS_CONFIG_DIR: /var/lib/argws-crm/config
     ports:
-      - "${ARGWS_HTTP_BIND:-127.0.0.1}:${ARGWS_HTTP_PORT:-8080}:8080"
+      - "${ARGWS_HTTP_BIND:-127.0.0.1}:${ARGWS_HTTP_PORT:-8089}:8080"
+    depends_on:
+      database:
+        condition: service_healthy
     volumes:
       - installation_config:/var/lib/argws-crm/config
       - uploads:/app/uploads
@@ -31,7 +36,28 @@ services:
       - module_timesheets_uploads:/app/modules/timesheets/uploads
       - caddy_data:/data
       - caddy_config:/config
-
+  database:
+    image: ${ARGWS_CRM_DATABASE_IMAGE:-ghcr.io/wkarts/argws-crm-mysql:8.0}
+    container_name: ${COMPOSE_PROJECT_NAME:-argws-crm-production}-database
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-UTC}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?Defina MYSQL_DATABASE no arquivo .env}
+      MYSQL_USER: ${MYSQL_USER:?Defina MYSQL_USER no arquivo .env}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Gere MYSQL_PASSWORD com o deployer}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Gere MYSQL_ROOT_PASSWORD com o deployer}
+    volumes:
+      - database_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mysqladmin ping --protocol=tcp --host=127.0.0.1 --user=root
+          --password="$$${MYSQL_ROOT_PASSWORD}" --silent
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 volumes:
   installation_config:
   uploads:
@@ -52,3 +78,4 @@ volumes:
   module_timesheets_uploads:
   caddy_data:
   caddy_config:
+  database_data:

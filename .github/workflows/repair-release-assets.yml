@@ -6,6 +6,10 @@ on:
     paths:
       - .github/first-release-base.txt
       - .github/workflows/repair-release-assets.yml
+      - .github/workflows/deployer-release.yml
+      - deploy/**
+      - tools/argws-crm-deployer/**
+      - scripts/package-release.py
   workflow_dispatch:
     inputs:
       release_tag:
@@ -18,7 +22,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: argws-crm-repair-${{ inputs.release_tag }}
+  group: argws-crm-repair-${{ inputs.release_tag || 'v3.4.2' }}
   cancel-in-progress: false
 
 jobs:
@@ -94,6 +98,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/argws-release-source" "$RUNNER_TEMP/argws-release-base"
           git archive "$SOURCE_SHA" | tar -x -C "$RUNNER_TEMP/argws-release-source"
           git archive "$BASE_REF" | tar -x -C "$RUNNER_TEMP/argws-release-base"
+          install -D scripts/package-release.py "$RUNNER_TEMP/argws-release-source/scripts/package-release.py"
 
       - name: Recriar e validar ZIPs e checksums
         env:

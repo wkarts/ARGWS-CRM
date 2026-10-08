@@ -2,10 +2,17 @@
     root * /app
     encode zstd gzip
 
-    @private path /application/* /system/* /temp/* /install/database.sql /data/* /.env /.env.*
-    @module_php path_regexp module_php ^/modules/.*\.php$
-    respond @private 404
-    respond @module_php 404
+    # Keep security denials ahead of php_server rewrites and front-controller routing.
+    route {
+        @installer path /install /install/ /install/*
+        respond @installer 404
 
-    php_server
+        @private path /application/* /system/* /temp/* /data/* /.env /.env.*
+        respond @private 404
+
+        @module_php path_regexp module_php ^/modules/.*\.php$
+        respond @module_php 404
+
+        php_server
+    }
 }

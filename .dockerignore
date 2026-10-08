@@ -44,3 +44,10 @@ scripts
 !/modules/service_management/uploads/null_image.jpg
 !/modules/timesheets/uploads/approval/approved.png
 !/modules/timesheets/uploads/approval/rejected.png
+
+# The runtime image stages only the database schema and legacy-compatible helpers.
+install/*
+!install/database.sql
+!install/sqlparser.php
+!install/phpass.php
+container.env.example
