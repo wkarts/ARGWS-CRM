@@ -388,6 +388,48 @@ jobs:
             gh release create "$RELEASE_TAG" "${assets[@]}" \
               --target "$RELEASE_SHA" --title "ARGWS CRM $RELEASE_TAG" --generate-notes
           fi
+      - name: Construir e anexar deployer à mesma release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          previous_run="$(gh run list --repo "$GH_REPOSITORY" \
+            --workflow .github/workflows/deployer-release.yml \
+            --event workflow_dispatch --branch main --limit 1 \
+            --json databaseId --jq '.[0].databaseId // 0')"
+          gh workflow run .github/workflows/deployer-release.yml \
+            --repo "$GH_REPOSITORY" --ref main \
+            -f release_tag="$RELEASE_TAG"
+          run_id=""
+          for attempt in $(seq 1 60); do
+            run_id="$(gh run list --repo "$GH_REPOSITORY" \
+              --workflow .github/workflows/deployer-release.yml \
+              --event workflow_dispatch --branch main --limit 10 \
+              --json databaseId,createdAt \
+              --jq --arg started "$started_at" --argjson previous "${previous_run:-0}" \
+              '[.[] | select(.databaseId != $previous and .createdAt >= $started)] | sort_by(.databaseId) | last.databaseId // empty')"
+            if [[ -n "$run_id" ]]; then break; fi
+            sleep 5
+          done
+          if [[ -z "$run_id" ]]; then
+            echo "O workflow do deployer não iniciou após o dispatch." >&2
+            exit 1
+          fi
+          gh run watch "$run_id" --repo "$GH_REPOSITORY" --exit-status
+          assets="$(gh release view "$RELEASE_TAG" --repo "$GH_REPOSITORY" --json assets --jq '.assets[].name')"
+          for asset in \
+            argws-crm-deployer-win-x64.exe \
+            argws-crm-deployer-linux-x64 \
+            argws-crm-deployer-gui-win-x64.exe \
+            argws-crm-deployer-gui-linux-x64; do
+            grep -Fxq "$asset" <<<"$assets" || {
+              echo "Asset obrigatório ausente na release $RELEASE_TAG: $asset" >&2
+              exit 1
+            }
+          done
       - name: Atualizar metadados de produto em develop sem sobrescrever código
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
