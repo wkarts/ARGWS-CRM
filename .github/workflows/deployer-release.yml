@@ -74,6 +74,11 @@ jobs:
           toolchain: 1.90.0
           rust-src-dir: tools/argws-crm-deployer
           target: ${{ matrix.target }}
+      - name: Instalar explicitamente a target Rust Linux
+        if: matrix.os == 'linux'
+        env:
+          TARGET: ${{ matrix.target }}
+        run: rustup target add --toolchain 1.90.0 "$TARGET"
       - name: Instalar linker musl
         if: matrix.os == 'linux'
         run: sudo apt-get update && sudo apt-get install -y musl-tools
@@ -167,6 +172,11 @@ jobs:
           toolchain: 1.90.0
           rust-src-dir: tools/argws-crm-deployer
           target: ${{ matrix.target }}
+      - name: Instalar explicitamente a target Rust Linux
+        if: matrix.os == 'linux'
+        env:
+          TARGET: ${{ matrix.target }}
+        run: rustup target add --toolchain 1.90.0 "$TARGET"
       - name: Instalar dependências gráficas Linux
         if: matrix.os == 'linux'
         run: |
