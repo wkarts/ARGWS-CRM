@@ -75,7 +75,7 @@ def report_gui_failure(error: Exception) -> int:
     path = Path(tempfile.gettempdir()) / "argws-crm-deployer-gui.log"
     try:
         with path.open("a", encoding="utf-8") as stream:
-            stream.write(f"startup=failure diagnostic={diagnostic}\\n")
+            stream.write(f"startup=failure diagnostic={diagnostic}\n")
         if os.name != "nt":
             path.chmod(0o600)
     except OSError:
@@ -83,9 +83,9 @@ def report_gui_failure(error: Exception) -> int:
 
     executable = WINDOWS_CLI if os.name == "nt" else LINUX_CLI
     message = (
-        "A interface gráfica não conseguiu iniciar. Nenhuma implantação foi executada.\\n\\n"
-        f"Diagnóstico: {diagnostic}\\n\\n"
-        f"Use o CLI no terminal: {executable} interactive\\n"
+        "A interface gráfica não conseguiu iniciar. Nenhuma implantação foi executada.\n\n"
+        f"Diagnóstico: {diagnostic}\n\n"
+        f"Use o CLI no terminal: {executable} interactive\n"
         f"Diagnóstico: {path}"
     )
     if os.name == "nt":
