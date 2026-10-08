@@ -59,14 +59,14 @@ jobs:
           mkdir -p "$RUNNER_TEMP/argws-crm-base"
           if [[ -n "$previous_tag" ]]; then
             base_ref="$previous_tag"
-            printf 'tag=%s\\n' "$previous_tag" >> "$GITHUB_OUTPUT"
+            echo "tag=$previous_tag" >> "$GITHUB_OUTPUT"
             echo "Base do pacote incremental: $previous_tag"
           else
             if ! base_ref="$(git rev-parse "${GITHUB_SHA}^" 2>/dev/null)"; then
               echo "A primeira publicação precisa de um commit-pai para gerar o ZIP incremental." >&2
               exit 1
             fi
-            printf 'tag=initial-parent-%s\\n' "${GITHUB_SHA:0:12}" >> "$GITHUB_OUTPUT"
+            echo "tag=initial-parent-${GITHUB_SHA:0:12}" >> "$GITHUB_OUTPUT"
             echo "Sem tag de release anterior; usando o primeiro pai da versão como base inicial."
             {
               echo "### Base do ZIP incremental"
