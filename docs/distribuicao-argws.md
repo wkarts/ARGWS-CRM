@@ -46,7 +46,7 @@ ghcr.io/wkarts/argws-crm-base:1-php8.3-bookworm espelha a base FrankenPHP do bui
 
 O CRM declara MySQL/MariaDB. PostgreSQL e Redis não são dependências ativas configuradas ou testadas e não são adicionadas à stack.
 
-O deployer Rust oferece CLI e GUI desktop para Windows x64 e Linux x64. Ambos usam o mesmo gerador e validador; a GUI permite escolher ambiente, banco e pasta e gera senhas aleatórias. No Linux, a GUI requer uma sessão gráfica com X11 ou XWayland e as bibliotecas de sistema usadas pelo backend gráfico; a CLI continua adequada a servidores sem desktop. Um `.env` existente é preservado. Binários, manifesto, checksums e ZIP `deploy/` são anexados à mesma release estável; em `develop`, um único prerelease `argws-crm-develop` é atualizado no lugar com `--clobber`. `deploy/` e `tools/argws-crm-deployer/` ficam fora dos ZIPs PHP.
+O deployer Rust oferece CLI e GUI desktop para Windows x64 e Linux x64. Ambos usam o mesmo gerador e validador; a GUI permite escolher ambiente, banco e pasta e gera senhas aleatórias. No Linux, a GUI requer uma sessão gráfica com X11 ou XWayland, OpenGL e as bibliotecas de sistema do backend gráfico. Em distribuições Debian/Ubuntu, instale também o runtime `libxkbcommon-x11-0`; o pacote CLI Linux continua adequado a servidores sem desktop. Um `.env` existente é preservado. Binários, manifesto, checksums e ZIP `deploy/` são anexados à mesma release estável; em `develop`, um único prerelease `argws-crm-develop` é atualizado no lugar com `--clobber`. `deploy/` e `tools/argws-crm-deployer/` ficam fora dos ZIPs PHP.
 
 
 ## Retenção e limpeza de cache
