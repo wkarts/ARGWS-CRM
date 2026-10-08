@@ -27,6 +27,7 @@ class DockerProvisioningContractTest(unittest.TestCase):
         self.assertIn("@installer path /install /install/*", caddy)
         self.assertIn("503", pending)
         self.assertIn("provision.php", pending)
+        self.assertIn("@installer path /install /install/*", pending)
 
     def test_cli_provisioner_guards_existing_databases_and_hashes_admin(self):
         source = read("docker/provision.php")
