@@ -253,7 +253,7 @@ esac
         source = read("docker/provisioner.php")
         self.assertIn("schema parcial", web)
         self.assertIn("O banco de dados já contém tabelas", web)
-        self.assertIn("O banco não está vazio", source)
+        self.assertIn("O banco já contém tabelas", source)
         self.assertIn("nenhum", source.lower())
 
 
