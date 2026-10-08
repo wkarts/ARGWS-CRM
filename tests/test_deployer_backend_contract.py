@@ -47,7 +47,7 @@ class DeployerBackendContractTest(unittest.TestCase):
         self.assertIn("fn append_operation_log_to(writer: &mut impl Write, command: &str, succeeded: bool)", MAIN)
         self.assertNotIn("write_all(args", MAIN)
         self.assertNotIn('println!("{args', MAIN)
-        self.assertIn("fn smoke_test(cli: Path)", GUI)
+        self.assertIn("def smoke_test(cli: Path)", GUI)
         self.assertIn("def report_gui_failure(error: Exception)", GUI)
 
     def test_workflow_builds_and_smoke_tests_gui_and_cli(self):
