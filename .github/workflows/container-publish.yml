@@ -32,9 +32,9 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            ./scripts/check-release-version.sh "${GITHUB_REF_NAME}"
+            bash ./scripts/check-release-version.sh "${GITHUB_REF_NAME}"
           else
-            ./scripts/check-release-version.sh
+            bash ./scripts/check-release-version.sh
           fi
 
       - name: Executar validações de regressão
