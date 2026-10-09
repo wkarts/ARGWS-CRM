@@ -2,6 +2,10 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+if (PHP_SAPI === 'cli' && getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false) {
+    fwrite(STDERR, '[ARGWS CRM setup] Arquivo do controller de migrations carregado.' . PHP_EOL);
+}
+
 class Argws_provisioning extends CI_Controller
 {
     public function apply_migrations()
