@@ -9,6 +9,11 @@ class App_Autoloader
      */
     public static function register()
     {
+        $trace = PHP_SAPI === 'cli' && getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false;
+        if ($trace) {
+            fwrite(STDERR, '[ARGWS CRM setup] Hook App_Autoloader iniciado.' . PHP_EOL);
+        }
+
         spl_autoload_register(function ($classname) {
             // file_exists(APPPATH . 'core/' . $classname . '.php') will include the deprecated too CRM_Controller and CRM_Model
             // strpos($classname, 'App_') !== 0 is for AdminController and ClientsController
@@ -34,5 +39,9 @@ class App_Autoloader
                 }
             }
         });
+
+        if ($trace) {
+            fwrite(STDERR, '[ARGWS CRM setup] Hook App_Autoloader concluído.' . PHP_EOL);
+        }
     }
 }
