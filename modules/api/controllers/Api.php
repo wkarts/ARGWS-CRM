@@ -26,8 +26,13 @@ class Api extends AdminController
     }
 
     public function api_guide()
-    { 
-        fopen(APP_MODULES_PATH . 'api/views/apidoc/index.html', 'r');
+    {
+        if (!is_admin()) {
+            access_denied('API');
+        }
+
+        $data['title'] = 'Documentação da API';
+        $this->load->view('apidoc', $data);
     }
 
     /* Add new user or update existing*/
