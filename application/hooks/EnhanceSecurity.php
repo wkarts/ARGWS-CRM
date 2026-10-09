@@ -67,7 +67,15 @@ class EnhanceSecurity
 
     public function protect()
     {
+        $trace = PHP_SAPI === 'cli' && getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false;
+        if ($trace) {
+            fwrite(STDERR, '[ARGWS CRM setup] Hook EnhanceSecurity iniciado.' . PHP_EOL);
+        }
+
         if (! defined('APP_ENHANCE_SECURITY') || (defined('APP_ENHANCE_SECURITY') && !APP_ENHANCE_SECURITY)) {
+            if ($trace) {
+                fwrite(STDERR, '[ARGWS CRM setup] Hook EnhanceSecurity ignorado pela configuração.' . PHP_EOL);
+            }
             return;
         }
 
@@ -83,6 +91,10 @@ class EnhanceSecurity
 
         if (in_array($this->getRealIpAddr(), $this->getBadIps())) {
             $this->forbidden();
+        }
+
+        if ($trace) {
+            fwrite(STDERR, '[ARGWS CRM setup] Hook EnhanceSecurity concluído.' . PHP_EOL);
         }
     }
 
