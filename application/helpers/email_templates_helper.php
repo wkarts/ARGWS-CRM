@@ -193,6 +193,19 @@ function create_email_template($subject, $message, $type, $name, $slug, $active 
         return false;
     }
 
+    // Somente os textos originais dos módulos recebem tradução automática.
+    // Conteúdo customizado (inclusive HTML, links e merge fields) não é reescrito.
+    require_once APPPATH . 'services/EmailTemplatesPtBr.php';
+    $localized = EmailTemplatesPtBr::get((string) $slug);
+    if ($localized && isset($localized['source_subject'], $localized['source_name'], $localized['source_message'])
+        && $subject === $localized['source_subject']
+        && $name === $localized['source_name']
+        && $message === $localized['source_message']) {
+        $subject = $localized['subject'];
+        $name = $localized['name'];
+        $message = EmailTemplatesPtBr::translateMessage($message);
+    }
+
     $data['subject']   = $subject;
     $data['message']   = $message;
     $data['type']      = $type;
