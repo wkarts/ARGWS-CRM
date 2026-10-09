@@ -296,4 +296,67 @@ if [ "$admin_count_after_restart" != "1" ]; then
     exit 1
 fi
 
+
+# Simular atualização de instalação existente 364 -> 365 sem apagar volumes,
+# usando o executor de migrations que já faz parte da imagem.
+# Um modelo alterado pelo cliente deve manter assunto e HTML personalizados.
+mysql_web() {
+    docker exec -e MYSQL_PWD="$database_password" "$database" mysql \
+        --protocol=tcp --host=127.0.0.1 --user="$database_user" "$database_name" \
+        --batch --skip-column-names "$@"
+}
+mysql_web -e "
+INSERT INTO tblemailtemplates
+(type, slug, language, name, subject, message, fromname, fromemail, plaintext, active, \`order\`)
+SELECT type, slug, 'portuguese_br', name,
+       'Assunto personalizado', '<p>Conteúdo personalizado {invoice_number}</p>',
+       fromname, fromemail, plaintext, active, \`order\`
+FROM tblemailtemplates AS legacy
+WHERE legacy.slug = 'invoice-send-to-client' AND legacy.language = 'english'
+AND NOT EXISTS (
+    SELECT 1 FROM tblemailtemplates AS existing
+    WHERE existing.slug = legacy.slug AND existing.language = 'portuguese_br'
+);
+UPDATE tblemailtemplates
+SET subject='Assunto personalizado',
+    message='<p>Conteúdo personalizado {invoice_number}</p>'
+WHERE slug='invoice-send-to-client' AND language='portuguese_br';
+"
+docker exec --user root "$web" sed -i \
+    's/migration_version.*= 364; /migration_version'\''\] = 365; /' \
+    /app/application/config/migration.php
+upgrade_token="$(openssl rand -hex 32)"
+migration_output="$(docker exec -e ARGWS_SETUP_MIGRATION_TOKEN="$upgrade_token" "$web" \
+    php /opt/argws-crm-provisioner/migration-cli.php)"
+if ! grep -q '"success":true' <<< "$migration_output"; then
+    echo "Atualização 364->365 falhou: $migration_output" >&2
+    exit 1
+fi
+version_after_upgrade="$(mysql_web -e 'SELECT version FROM tblmigrations LIMIT 1')"
+localized_count="$(mysql_web -e "SELECT COUNT(DISTINCT slug) FROM tblemailtemplates WHERE language='portuguese_br'")"
+customized="$(mysql_web -e "SELECT CONCAT(subject,'|',message) FROM tblemailtemplates WHERE slug='invoice-send-to-client' AND language='portuguese_br' LIMIT 1")"
+if [ "$version_after_upgrade" != "365" ] || [ "$localized_count" -lt 82 ] || \
+    [ "$customized" != 'Assunto personalizado|<p>Conteúdo personalizado {invoice_number}</p>' ]; then
+    echo "O upgrade não preservou HTML personalizado ou não criou 82 modelos (versão=$version_after_upgrade, modelos=$localized_count)." >&2
+    exit 1
+fi
+migration_output="$(docker exec -e ARGWS_SETUP_MIGRATION_TOKEN="$upgrade_token" "$web" \
+    php /opt/argws-crm-provisioner/migration-cli.php)"
+if ! grep -q '"success":true' <<< "$migration_output"; then
+    echo "A segunda execução da migration não foi idempotente." >&2
+    exit 1
+fi
+count_after_second_run="$(mysql_web -e "SELECT COUNT(DISTINCT slug) FROM tblemailtemplates WHERE language='portuguese_br'")"
+if [ "$count_after_second_run" -ne "$localized_count" ]; then
+    echo "O segundo upgrade alterou indevidamente o total de modelos." >&2
+    exit 1
+fi
+post_upgrade_status="$(curl --connect-timeout 2 --max-time 15 -sS -L -b /tmp/argws-crm-admin-cookie \
+    -o /tmp/argws-crm-post-upgrade -w '%{http_code}' "$url/admin" 2>/dev/null || true)"
+if [ "$post_upgrade_status" != "200" ]; then
+    echo "O painel não respondeu após a atualização do banco (HTTP $post_upgrade_status)." >&2
+    exit 1
+fi
+echo "Smoke upgrade OK: migrations 364->365, 82 modelos PT-BR, HTML personalizado, idempotência e painel."
+
 echo "Smoke test OK: assistente protegido, administrador autenticado e painel aberto; /setup e /install bloqueados após setup."
