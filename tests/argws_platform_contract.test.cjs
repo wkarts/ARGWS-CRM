@@ -99,7 +99,9 @@ test('FrankenPHP é versionado, genérico e mantém a configuração fora da ima
   const compose = read('compose.yaml');
   const caddy = read('docker/Caddyfile');
   const workflow = read('.github/workflows/container-publish.yml');
-  assert.match(dockerfile, /dunglas\/frankenphp/);
+  assert.match(dockerfile, /ARG ARGWS_FRANKENPHP_IMAGE=ghcr\.io\/wkarts\/argws-crm-base:1-php8\.3-bookworm/);
+  assert.match(dockerfile, /ARG ARGWS_COMPOSER_IMAGE=ghcr\.io\/composer\/docker:2/);
+  assert.match(dockerfile, /FROM \$\{ARGWS_COMPOSER_IMAGE\} AS einvoice-deps/);
   assert.match(dockerfile, /php -l/);
   assert.match(dockerfile, /www-data/);
   assert.match(compose, /ghcr\.io\/wkarts\/argws-crm/);
