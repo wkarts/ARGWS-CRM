@@ -172,6 +172,7 @@ if [ "$setup_code" != "303" ] || [ "$setup_location" != "/admin/authentication" 
     echo "O assistente web não concluiu o setup nem encaminhou para o acesso (HTTP $setup_code, Location $setup_location)." >&2
     cat /tmp/argws-crm-setup-result >&2 || true
     docker logs --tail 100 "$web" >&2 || true
+    docker exec "$web" /bin/sh -c 'for file in /app/application/logs/log-*.php; do [ -f "$file" ] && tail -n 80 "$file"; done' >&2 || true
     exit 1
 fi
 
