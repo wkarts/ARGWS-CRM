@@ -34,7 +34,7 @@ if ($total_gateways > 1) { ?>
 
        if (isset($gateway['deprecated'])) { ?>
             <div class="alert alert-warning">
-                This SMS gateway is deprecated and may be removed in future updates.
+                Este provedor de mensagens está obsoleto e poderá ser descontinuado.
             </div>
         <?php }
 
@@ -81,7 +81,7 @@ if ($total_gateways > 1) { ?>
         }
         echo '<div class="sms_gateway_active">';
 
-        echo render_yes_no_option($this->app_sms->option_name($gateway['id'], 'active'), 'Active');
+        echo render_yes_no_option($this->app_sms->option_name($gateway['id'], 'active'), 'Ativo');
 
         echo '</div>';
             if (get_option($this->app_sms->option_name($gateway['id'], 'active')) == '1') {
@@ -98,7 +98,7 @@ if ($total_gateways > 1) { ?>
     </div>
     <?php } ?>
     <hr />
-    <?php echo render_input('settings[bitly_access_token]', 'Bitly Access Token', get_option('bitly_access_token')); ?>
+    <?php echo render_input('settings[bitly_access_token]', 'Token de acesso Bitly', get_option('bitly_access_token')); ?>
     <hr />
     <h4 class="mbot15">
         <i class="fa-regular fa-circle-question pull-left tw-mt-0.5 tw-mr-1" data-toggle="tooltip"

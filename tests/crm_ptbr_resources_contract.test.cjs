@@ -36,7 +36,10 @@ test('A migration é aditiva e conserva HTML e personalizações', () => {
   assert.match(migration, /class Migration_Version_365 extends CI_Migration/);
   assert.match(migration, /function restore_mail_templates/);
   assert.match(migration, /if \(!\$existing\)/);
-  assert.match(migration, /'subject', 'message', 'fromname'/);
+  assert.match(migration, /\['name', 'subject', 'message'\]/);
+  assert.match(migration, /EmailTemplatesPtBr::translateMessage/);
+  assert.match(migration, /\$current === \$original/);
+  assert.match(migration, /\['fromname'\]/);
   assert.doesNotMatch(migration, /\bTRUNCATE\b|\bDROP TABLE\b|->delete\(/);
   assert.match(migration, /if \(\$this->db->table_exists\(\$transactions\) && \$this->db->count_all_results\(\$transactions\) > 0\)/);
   assert.match(migration, /#32c977/);

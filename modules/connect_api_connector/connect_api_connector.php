@@ -104,7 +104,10 @@ function connect_api_connector_can($capability)
 
 function connect_api_connector_sms_gateways($gateways)
 {
-    $gateways[] = CONNECT_API_CONNECTOR_MODULE . '/sms_connect_api_connector';
+    $gateway = CONNECT_API_CONNECTOR_MODULE . '/sms_connect_api_connector';
+    if (!in_array($gateway, $gateways, true)) {
+        $gateways[] = $gateway;
+    }
     return $gateways;
 }
 

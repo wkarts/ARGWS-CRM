@@ -9,7 +9,7 @@ class Sms_connect_api_connector extends App_sms
         parent::__construct();
         $this->add_gateway('connect_api_connector', [
             'name' => 'Connect|API',
-            'info' => '<p><strong>Connect|API</strong> transforma os gatilhos SMS do ARGWS CRM em mensagens WhatsApp usando a instância vinculada no Conector. URL, instância e token são administrados no próprio módulo.</p>',
+            'info' => '<p><strong>Connect|API</strong> encaminha notificações do CRM por WhatsApp, por meio da instância configurada no Conector. URL, instância e token são administrados no próprio módulo.</p>',
             'options' => [],
         ]);
     }

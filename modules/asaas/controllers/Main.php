@@ -12,16 +12,13 @@ class Main extends ClientsController
 
     public function index()
     {
-        // Mantém comportamento simples de teste, mas sem CURL e sem URL base manual.
-        $post_data = json_encode(["type" => "EVP"]);
-        $minhas_chaves = $this->create_key(null, null, $post_data);
-
-        // saída compatível com o que já existia
-        var_dump(json_decode($minhas_chaves, true));
+        // Esta rota antiga criava chaves Pix durante um simples GET.
+        show_404();
     }
 
     public function create_key($api_url, $api_key, $post_data)
     {
+        $this->requireAdministrativeRequest(true);
         $payload = json_decode((string) $post_data, true);
         if (!is_array($payload)) {
             $payload = [];
@@ -35,6 +32,7 @@ class Main extends ClientsController
 
     public function list_keys($api_url, $api_key)
     {
+        $this->requireAdministrativeRequest();
         $client = $this->asaas_gateway->getProvider()->client();
         $response = $client->request('GET', 'pix/addressKeys', [], [], null);
 
@@ -43,6 +41,7 @@ class Main extends ClientsController
 
     public function get_key($api_url, $api_key, $id)
     {
+        $this->requireAdministrativeRequest();
         $client = $this->asaas_gateway->getProvider()->client();
         $response = $client->request('GET', 'pix/addressKeys/' . $id, [], [], null);
 
@@ -51,6 +50,7 @@ class Main extends ClientsController
 
     public function delete_key($api_url, $api_key, $id)
     {
+        $this->requireAdministrativeRequest(true);
         $client = $this->asaas_gateway->getProvider()->client();
         $response = $client->request('DELETE', 'pix/addressKeys/' . $id, [], [], null);
 
@@ -59,6 +59,7 @@ class Main extends ClientsController
 
     public function retorna_cobranca($id = 178458832)
     {
+        $this->requireAdministrativeRequest();
         $client = $this->asaas_gateway->getProvider()->client();
         $response = $client->request('GET', 'payments/' . $id, [], [], null);
 
@@ -67,9 +68,21 @@ class Main extends ClientsController
 
     public function retorna_cobrancas($hash = '')
     {
+        $this->requireAdministrativeRequest();
         $client = $this->asaas_gateway->getProvider()->client();
         $response = $client->request('GET', 'payments', ['externalReference' => $hash], [], null);
 
         echo json_encode(is_array($response) ? $response : []);
     }
+    private function requireAdministrativeRequest(bool $write = false): void
+    {
+        if (!is_staff_logged_in() || !is_admin()) {
+            show_404();
+        }
+        if ($write && $this->input->method(true) !== 'POST') {
+            show_404();
+        }
+    }
+
+
 }

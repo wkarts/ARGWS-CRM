@@ -1,0 +1,330 @@
+{
+  "new-client-created": {
+    "name": "Boas-vindas ao novo contato",
+    "subject": "Boas-vindas à nossa plataforma"
+  },
+  "invoice-send-to-client": {
+    "name": "Envio de fatura ao cliente",
+    "subject": "Fatura {invoice_number} emitida"
+  },
+  "new-ticket-opened-admin": {
+    "name": "Novo chamado aberto pela equipe — aviso ao cliente",
+    "subject": "Novo chamado de suporte aberto"
+  },
+  "ticket-reply": {
+    "name": "Resposta ao chamado — aviso ao cliente",
+    "subject": "Nova resposta ao chamado"
+  },
+  "ticket-autoresponse": {
+    "name": "Abertura de chamado — resposta automática",
+    "subject": "Recebemos seu chamado de suporte"
+  },
+  "invoice-payment-recorded": {
+    "name": "Pagamento de fatura registrado — cliente",
+    "subject": "Pagamento da fatura registrado"
+  },
+  "invoice-overdue-notice": {
+    "name": "Aviso de fatura vencida",
+    "subject": "Aviso de atraso — fatura {invoice_number}"
+  },
+  "invoice-already-send": {
+    "name": "Reenvio de fatura ao cliente",
+    "subject": "Fatura nº {invoice_number}"
+  },
+  "new-ticket-created-staff": {
+    "name": "Novo chamado aberto pelo cliente — equipe",
+    "subject": "Novo chamado de suporte"
+  },
+  "estimate-send-to-client": {
+    "name": "Envio de orçamento ao cliente",
+    "subject": "Orçamento nº {estimate_number} disponível"
+  },
+  "ticket-reply-to-admin": {
+    "name": "Resposta ao chamado — equipe",
+    "subject": "Nova resposta ao chamado de suporte"
+  },
+  "estimate-already-send": {
+    "name": "Reenvio de orçamento ao cliente",
+    "subject": "Orçamento nº {estimate_number}"
+  },
+  "contract-expiration": {
+    "name": "Lembrete de vencimento de contrato — cliente",
+    "subject": "Lembrete de vencimento do contrato"
+  },
+  "task-assigned": {
+    "name": "Nova tarefa atribuída à equipe",
+    "subject": "Nova tarefa atribuída a você — {task_name}"
+  },
+  "task-added-as-follower": {
+    "name": "Novo acompanhamento de tarefa — equipe",
+    "subject": "Você acompanha a tarefa — {task_name}"
+  },
+  "task-commented": {
+    "name": "Comentário em tarefa — equipe",
+    "subject": "Novo comentário na tarefa — {task_name}"
+  },
+  "task-added-attachment": {
+    "name": "Anexo incluído na tarefa — equipe",
+    "subject": "Novo anexo na tarefa — {task_name}"
+  },
+  "estimate-declined-to-staff": {
+    "name": "Orçamento recusado — equipe",
+    "subject": "Cliente recusou o orçamento"
+  },
+  "estimate-accepted-to-staff": {
+    "name": "Orçamento aprovado — equipe",
+    "subject": "Cliente aprovou o orçamento"
+  },
+  "proposal-client-accepted": {
+    "name": "Proposta aprovada — equipe",
+    "subject": "Cliente aprovou a proposta"
+  },
+  "proposal-send-to-customer": {
+    "name": "Envio de proposta ao cliente",
+    "subject": "Proposta nº {proposal_number} disponível"
+  },
+  "proposal-client-declined": {
+    "name": "Proposta recusada — equipe",
+    "subject": "Cliente recusou a proposta"
+  },
+  "proposal-client-thank-you": {
+    "name": "Agradecimento por aprovação de proposta",
+    "subject": "Agradecemos por aprovar nossa proposta"
+  },
+  "proposal-comment-to-client": {
+    "name": "Comentário em proposta — cliente",
+    "subject": "Novo comentário na proposta"
+  },
+  "proposal-comment-to-admin": {
+    "name": "Comentário em proposta — equipe",
+    "subject": "Novo comentário na proposta"
+  },
+  "estimate-thank-you-to-customer": {
+    "name": "Agradecimento por aprovação de orçamento",
+    "subject": "Agradecemos por aprovar nosso orçamento"
+  },
+  "task-deadline-notification": {
+    "name": "Lembrete de prazo de tarefa",
+    "subject": "Lembrete de prazo da tarefa"
+  },
+  "send-contract": {
+    "name": "Envio de contrato ao cliente",
+    "subject": "Contrato — {contract_subject}"
+  },
+  "invoice-payment-recorded-to-staff": {
+    "name": "Pagamento de fatura registrado — equipe",
+    "subject": "Novo pagamento de fatura"
+  },
+  "auto-close-ticket": {
+    "name": "Encerramento automático de chamado",
+    "subject": "Chamado encerrado automaticamente"
+  },
+  "new-project-discussion-created-to-staff": {
+    "name": "Nova discussão de projeto — equipe",
+    "subject": "Nova discussão no projeto — {project_name}"
+  },
+  "new-project-discussion-created-to-customer": {
+    "name": "Nova discussão de projeto — cliente",
+    "subject": "Nova discussão no projeto — {project_name}"
+  },
+  "new-project-file-uploaded-to-customer": {
+    "name": "Novo arquivo no projeto — cliente",
+    "subject": "Novo arquivo no projeto — {project_name}"
+  },
+  "new-project-file-uploaded-to-staff": {
+    "name": "Novo arquivo no projeto — equipe",
+    "subject": "Novo arquivo no projeto — {project_name}"
+  },
+  "new-project-discussion-comment-to-customer": {
+    "name": "Comentário em discussão — cliente",
+    "subject": "Novo comentário na discussão"
+  },
+  "new-project-discussion-comment-to-staff": {
+    "name": "Comentário em discussão — equipe",
+    "subject": "Novo comentário na discussão"
+  },
+  "staff-added-as-project-member": {
+    "name": "Novo participante na equipe do projeto",
+    "subject": "Um projeto foi atribuído a você"
+  },
+  "estimate-expiry-reminder": {
+    "name": "Lembrete de vencimento de orçamento",
+    "subject": "Lembrete de vencimento do orçamento"
+  },
+  "proposal-expiry-reminder": {
+    "name": "Lembrete de vencimento de proposta",
+    "subject": "Lembrete de vencimento da proposta"
+  },
+  "new-staff-created": {
+    "name": "Boas-vindas ao novo colaborador",
+    "subject": "Seu acesso como colaborador foi criado"
+  },
+  "contact-forgot-password": {
+    "name": "Recuperação de senha — contato",
+    "subject": "Crie uma nova senha"
+  },
+  "contact-password-reseted": {
+    "name": "Confirmação de redefinição de senha — contato",
+    "subject": "Sua senha foi alterada"
+  },
+  "contact-set-password": {
+    "name": "Definição de senha — contato",
+    "subject": "Defina sua senha em {companyname}"
+  },
+  "staff-forgot-password": {
+    "name": "Recuperação de senha — colaborador",
+    "subject": "Crie uma nova senha"
+  },
+  "staff-password-reseted": {
+    "name": "Confirmação de redefinição de senha — colaborador",
+    "subject": "Sua senha foi alterada"
+  },
+  "assigned-to-project": {
+    "name": "Novo projeto criado — cliente",
+    "subject": "Novo projeto criado"
+  },
+  "task-added-attachment-to-contacts": {
+    "name": "Anexo incluído na tarefa — cliente",
+    "subject": "Novo anexo na tarefa — {task_name}"
+  },
+  "task-commented-to-contacts": {
+    "name": "Comentário em tarefa — cliente",
+    "subject": "Novo comentário na tarefa — {task_name}"
+  },
+  "new-lead-assigned": {
+    "name": "Nova oportunidade atribuída — equipe",
+    "subject": "Uma nova oportunidade foi atribuída a você"
+  },
+  "client-statement": {
+    "name": "Extrato de conta do cliente",
+    "subject": "Extrato de conta de {statement_from} a {statement_to}"
+  },
+  "ticket-assigned-to-admin": {
+    "name": "Novo chamado atribuído — equipe",
+    "subject": "Um chamado de suporte foi atribuído a você"
+  },
+  "new-client-registered-to-admin": {
+    "name": "Novo cliente cadastrado — administração",
+    "subject": "Novo cadastro de cliente"
+  },
+  "new-web-to-lead-form-submitted": {
+    "name": "Solicitação pelo formulário de contato",
+    "subject": "{lead_name} — recebemos sua solicitação"
+  },
+  "two-factor-authentication": {
+    "name": "Confirmação de autenticação em dois fatores",
+    "subject": "Confirme seu acesso"
+  },
+  "project-finished-to-customer": {
+    "name": "Projeto concluído — cliente",
+    "subject": "Projeto concluído"
+  },
+  "credit-note-send-to-client": {
+    "name": "Envio de nota de crédito",
+    "subject": "Nota de crédito nº {credit_note_number} emitida"
+  },
+  "task-status-change-to-staff": {
+    "name": "Alteração de situação da tarefa — equipe",
+    "subject": "Situação da tarefa alterada"
+  },
+  "task-status-change-to-contacts": {
+    "name": "Alteração de situação da tarefa — cliente",
+    "subject": "Situação da tarefa alterada"
+  },
+  "reminder-email-staff": {
+    "name": "Lembrete para colaborador",
+    "subject": "Você tem um novo lembrete"
+  },
+  "contract-comment-to-client": {
+    "name": "Comentário em contrato — cliente",
+    "subject": "Novo comentário no contrato"
+  },
+  "contract-comment-to-admin": {
+    "name": "Comentário em contrato — equipe",
+    "subject": "Novo comentário no contrato"
+  },
+  "send-subscription": {
+    "name": "Envio de assinatura ao cliente",
+    "subject": "Assinatura disponível"
+  },
+  "subscription-payment-failed": {
+    "name": "Falha no pagamento da assinatura",
+    "subject": "Não foi possível processar o último pagamento"
+  },
+  "subscription-canceled": {
+    "name": "Cancelamento de assinatura — cliente",
+    "subject": "Sua assinatura foi cancelada"
+  },
+  "subscription-payment-succeeded": {
+    "name": "Pagamento de assinatura confirmado",
+    "subject": "Comprovante de pagamento — {subscription_name}"
+  },
+  "contract-expiration-to-staff": {
+    "name": "Lembrete de vencimento de contrato — equipe",
+    "subject": "Lembrete de vencimento do contrato"
+  },
+  "gdpr-removal-request": {
+    "name": "Solicitação de exclusão de dados — contato",
+    "subject": "Solicitação de exclusão de dados recebida"
+  },
+  "gdpr-removal-request-lead": {
+    "name": "Solicitação de exclusão de dados — oportunidade",
+    "subject": "Solicitação de exclusão de dados recebida"
+  },
+  "client-registration-confirmed": {
+    "name": "Confirmação do cadastro do cliente",
+    "subject": "Seu cadastro foi confirmado"
+  },
+  "contract-signed-to-staff": {
+    "name": "Contrato assinado — equipe",
+    "subject": "O cliente assinou o contrato"
+  },
+  "customer-subscribed-to-staff": {
+    "name": "Nova assinatura contratada — equipe",
+    "subject": "O cliente contratou uma assinatura"
+  },
+  "contact-verification-email": {
+    "name": "Verificação de e-mail do contato",
+    "subject": "Confirme seu endereço de e-mail"
+  },
+  "new-customer-profile-file-uploaded-to-staff": {
+    "name": "Novo arquivo enviado ao perfil — equipe",
+    "subject": "Cliente enviou novos arquivos ao perfil"
+  },
+  "event-notification-to-staff": {
+    "name": "Lembrete de evento — equipe",
+    "subject": "Próximo evento — {event_title}"
+  },
+  "subscription-payment-requires-action": {
+    "name": "Confirmação adicional de pagamento — assinatura",
+    "subject": "Importante: confirme o pagamento da assinatura {subscription_name}"
+  },
+  "invoice-due-notice": {
+    "name": "Aviso de vencimento de fatura",
+    "subject": "A fatura {invoice_number} está próxima do vencimento"
+  },
+  "estimate-request-submitted-to-staff": {
+    "name": "Solicitação de orçamento recebida — equipe",
+    "subject": "Nova solicitação de orçamento"
+  },
+  "estimate-request-assigned": {
+    "name": "Solicitação de orçamento atribuída — equipe",
+    "subject": "Nova solicitação de orçamento atribuída"
+  },
+  "estimate-request-received-to-user": {
+    "name": "Confirmação da solicitação de orçamento — cliente",
+    "subject": "Recebemos sua solicitação de orçamento"
+  },
+  "non-billed-tasks-reminder": {
+    "name": "Tarefas concluídas sem faturamento — equipe",
+    "subject": "Ação necessária: tarefas concluídas sem faturamento"
+  },
+  "invoices-batch-payments": {
+    "name": "Pagamentos de faturas em lote — cliente",
+    "subject": "Recebemos seus pagamentos"
+  },
+  "contract-sign-reminder": {
+    "name": "Lembrete de assinatura de contrato — cliente",
+    "subject": "Lembrete de assinatura do contrato"
+  }
+}

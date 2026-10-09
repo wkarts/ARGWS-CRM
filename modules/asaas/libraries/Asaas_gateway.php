@@ -1279,37 +1279,58 @@ class Asaas_gateway extends App_gateway
         return $this->adapter->request('POST', '/customers', [], [], is_array($payload) ? $payload : []);
     }
 
+    // Assinaturas legadas preservadas; os paths de API agora são oficiais.
+    // Todas as categorias são administradas pelo endpoint /v3/webhooks.
     public function get_webhook($api_key, $api_url)
     {
-        return $this->adapter->request('GET', '/webhook');
+        return $this->adapter->request('GET', '/webhooks', ['limit' => 100]);
     }
 
     public function create_webhook($api_key, $api_url, $post_data)
     {
         $payload = $this->safe_json_decode_array($post_data);
-        return $this->adapter->request('POST', '/webhook', [], [], is_array($payload) ? $payload : []);
+        if (!is_array($payload)) {
+            return ['error' => 'invalid_payload'];
+        }
+        $token = (string) ($payload['authToken'] ?? $this->getSetting('webhook_secret'));
+        $url = (string) ($payload['url'] ?? '');
+        $email = (string) ($payload['email'] ?? '');
+        $events = $payload['events'] ?? [];
+        if (strlen($token) < 32 || strlen($token) > 255 || preg_match('/\\s/', $token)
+            || !filter_var($url, FILTER_VALIDATE_URL)
+            || strtolower((string) parse_url($url, PHP_URL_SCHEME)) !== 'https'
+            || !filter_var($email, FILTER_VALIDATE_EMAIL)
+            || !is_array($events) || $events === []) {
+            return ['error' => 'invalid_webhook_configuration'];
+        }
+
+        $payload['authToken'] = $token;
+        $payload['sendType'] = $payload['sendType'] ?? 'SEQUENTIALLY';
+        $payload['apiVersion'] = 3;
+        $payload['enabled'] = $payload['enabled'] ?? true;
+        $payload['name'] = $payload['name'] ?? 'Eventos CRM';
+        // Sem exposição de token em URL ou na saída dos logs locais.
+        return $this->adapter->request('POST', '/webhooks', [], [], $payload);
     }
 
     public function get_webhook_invoice($api_key, $api_url)
     {
-        return $this->adapter->request('GET', '/webhook/invoice');
+        return $this->get_webhook($api_key, $api_url);
     }
 
     public function create_webhook_invoice($api_key, $api_url, $post_data)
     {
-        $payload = $this->safe_json_decode_array($post_data);
-        return $this->adapter->request('POST', '/webhook/invoice', [], [], is_array($payload) ? $payload : []);
+        return $this->create_webhook($api_key, $api_url, $post_data);
     }
 
     public function get_webhook_transfer($api_key, $api_url)
     {
-        return $this->adapter->request('GET', '/webhook/transfer');
+        return $this->get_webhook($api_key, $api_url);
     }
 
     public function create_webhook_transfer($api_key, $api_url, $post_data)
     {
-        $payload = $this->safe_json_decode_array($post_data);
-        return $this->adapter->request('POST', '/webhook/transfer', [], [], is_array($payload) ? $payload : []);
+        return $this->create_webhook($api_key, $api_url, $post_data);
     }
 
     public function get_customers($api_key, $api_url)
