@@ -322,6 +322,14 @@ function run_application_migrations(array $sensitiveValues = []): array
         $diagnostic = $output === false ? '' : sanitize_provisioning_diagnostic($output, array_merge($sensitiveValues, [$bridgeToken]));
         if ($diagnostic !== '') {
             error_log('[ARGWS CRM setup] Diagnóstico do executor de migrations: ' . mb_substr($diagnostic, -1800, null, 'UTF-8'));
+        } else {
+            $phpCliAvailable = is_executable($phpBinary) || (strpos($phpBinary, DIRECTORY_SEPARATOR) === false && getenv('PATH') !== false);
+            $applicationConfigAvailable = is_file('/app/application/config/app-config.php');
+            error_log('[ARGWS CRM setup] Executor de migrations sem saída (código ' . (int) $exitCode
+                . '; CLI disponível=' . ($phpCliAvailable ? 'sim' : 'não')
+                . '; SAPI=' . PHP_SAPI
+                . '; configuração disponível=' . ($applicationConfigAvailable ? 'sim' : 'não')
+                . '; token temporário enviado=sim).');
         }
         error_log('[ARGWS CRM setup] O executor interno não concluiu as migrations (código ' . (int) $exitCode . ').');
         provision_error('MIGRATIONS_PENDING: Não foi possível concluir a atualização necessária do banco. A instalação não foi liberada; tente novamente após verificar os logs do serviço.');
