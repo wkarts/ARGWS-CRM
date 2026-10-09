@@ -284,22 +284,19 @@ function run_application_migrations(array $sensitiveValues = []): array
         1 => ['file', $logPath, 'w'],
         2 => ['file', $logPath, 'a'],
     ];
-    $previousToken = getenv('ARGWS_SETUP_MIGRATION_TOKEN');
-    putenv('ARGWS_SETUP_MIGRATION_TOKEN=' . $bridgeToken);
     $phpBinary = defined('PHP_BINARY') && is_string(PHP_BINARY) && trim(PHP_BINARY) !== ''
         ? PHP_BINARY
         : 'php';
+    $environment = getenv();
+    $environment = is_array($environment) ? $environment : [];
+    $environment['ARGWS_SETUP_MIGRATION_TOKEN'] = $bridgeToken;
     $process = proc_open(
         [$phpBinary, '/app/index.php', 'argws_provisioning', 'apply_migrations'],
         $descriptors,
         $pipes,
-        '/app'
+        '/app',
+        $environment
     );
-    if ($previousToken === false) {
-        putenv('ARGWS_SETUP_MIGRATION_TOKEN');
-    } else {
-        putenv('ARGWS_SETUP_MIGRATION_TOKEN=' . $previousToken);
-    }
     if (!is_resource($process)) {
         @unlink($logPath);
         provision_error('Não foi possível iniciar a aplicação das migrations pendentes.');
