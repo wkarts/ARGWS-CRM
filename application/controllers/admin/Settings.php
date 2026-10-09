@@ -44,11 +44,12 @@ class Settings extends AdminController
             if (in_array($group, ['general', 'localization', 'argws_platform'], true)) {
                 $post_data['settings']['active_language'] = 'portuguese_br';
                 $post_data['settings']['enabled_languages'] = ['portuguese_br'];
+                $post_data['settings']['disable_language'] = '1';
             }
 
             $hasArgwsPlatformSettings = array_intersect(
                 array_keys($post_data['settings']),
-                ['argws_support_enabled', 'argws_support_base_url', 'argws_support_public_token', 'argws_support_position', 'argws_support_type', 'argws_support_launcher_title', 'argws_terminology_policy']
+                ['argws_support_enabled', 'argws_support_base_url', 'argws_support_public_token', 'argws_support_position', 'argws_support_type', 'argws_support_launcher_title', 'argws_terminology_policy', 'support_contact_channel', 'support_whatsapp', 'support_email', 'support_site_url']
             ) !== [];
             if ($hasArgwsPlatformSettings && !is_admin()) {
                 access_denied('settings');
@@ -141,7 +142,7 @@ class Settings extends AdminController
             $data['group']['view']     = 'admin/settings/includes/' . $group;
             $data['group']['name']     = $group === 'info'
                 ? 'Informações do servidor'
-                : ($group === 'argws_platform' ? 'Plataforma ARGWS' : _l('settings_update'));
+                : ($group === 'argws_platform' ? 'Configurações internas' : _l('settings_update'));
             $data['group']['children'] = [];
             if ($group === 'info') {
                 $data['group']['without_submit_button'] = true;
@@ -167,6 +168,57 @@ class Settings extends AdminController
 
     private function normalize_argws_platform_settings(array &$settings)
     {
+        // Contatos públicos de suporte: a configuração da instalação prevalece;
+        // variáveis de ambiente são usadas quando não houver valores no banco.
+        $contactChannel = (string) ($settings['support_contact_channel'] ?? 'none');
+        if (!in_array($contactChannel, ['none', 'widget', 'whatsapp', 'email', 'website'], true)) {
+            set_alert('danger', 'Selecione um canal de atendimento válido.');
+            return false;
+        }
+        $settings['support_contact_channel'] = $contactChannel;
+
+        $phone = preg_replace('/\\D+/', '', (string) ($settings['support_whatsapp'] ?? ''));
+        if ($phone !== '' && strlen($phone) >= 10 && strlen($phone) <= 11) {
+            $phone = '55' . $phone;
+        }
+        if ($phone !== '' && !preg_match('/^[1-9][0-9]{10,14}$/', $phone)) {
+            set_alert('danger', 'Número do WhatsApp inválido. Informe país, DDD e número.');
+            return false;
+        }
+        $settings['support_whatsapp'] = $phone;
+
+        $email = trim((string) ($settings['support_email'] ?? ''));
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            set_alert('danger', 'E-mail de suporte inválido.');
+            return false;
+        }
+        $settings['support_email'] = $email;
+
+        $site = trim((string) ($settings['support_site_url'] ?? ''));
+        if ($site !== '') {
+            $parts = parse_url($site);
+            if (!filter_var($site, FILTER_VALIDATE_URL) || !$parts
+                || strtolower($parts['scheme'] ?? '') !== 'https' || empty($parts['host'])
+                || isset($parts['user']) || isset($parts['pass'])) {
+                set_alert('danger', 'Informe um endereço HTTPS válido para o site de atendimento.');
+                return false;
+            }
+            $site = rtrim($site, '/');
+        }
+        $settings['support_site_url'] = $site;
+
+        $fallback = [
+            'whatsapp' => trim((string) getenv('CRM_SUPPORT_WHATSAPP')),
+            'email' => trim((string) getenv('CRM_SUPPORT_EMAIL')),
+            'website' => trim((string) getenv('CRM_SUPPORT_SITE_URL')),
+        ];
+        $selection = ['whatsapp' => $phone, 'email' => $email, 'website' => $site];
+        if (isset($selection[$contactChannel]) && $selection[$contactChannel] === ''
+            && $fallback[$contactChannel] === '') {
+            set_alert('danger', 'Informe os dados do canal selecionado ou configure a variável de ambiente correspondente.');
+            return false;
+        }
+
         $url = trim((string) ($settings['argws_support_base_url'] ?? ''));
         if ($url !== '') {
             $parts = parse_url($url);

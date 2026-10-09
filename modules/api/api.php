@@ -64,7 +64,7 @@ function api_init_menu_items()
         $CI->app_menu->add_sidebar_children_item('api-options', [
             'slug'     => 'api-guide-options',
             'name'     => _l('api_guide'),
-            'href'     => module_dir_url('api', 'views/apidoc/index.html'),
+            'href'     => admin_url('api/api_guide'),
             'position' => 10,
         ]);
     }

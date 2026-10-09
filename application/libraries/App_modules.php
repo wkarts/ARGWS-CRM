@@ -69,13 +69,23 @@ class App_modules
             return false;
         }
 
+        if ((int) $module['activated'] === 1) {
+            return true;
+        }
+
         /**
          * Check if module is already added to database
          */
 
         if (!$this->module_exists_in_database($name)) {
-            $this->ci->db->where('module_name', $name);
-            $this->ci->db->insert(db_prefix() . 'modules', ['module_name' => $name, 'installed_version' => $module['headers']['version']]);
+            // MySQL em modo estrito exige o estado inicial explícito.
+            if (!$this->ci->db->insert(db_prefix() . 'modules', [
+                'module_name'       => $name,
+                'installed_version' => $module['headers']['version'],
+                'active'            => 0,
+            ])) {
+                return false;
+            }
         }
 
         include_once($module['init_file']);
@@ -94,7 +104,12 @@ class App_modules
          * Activate the module in database
          */
         $this->ci->db->where('module_name', $name);
-        $this->ci->db->update(db_prefix() . 'modules', ['active' => 1]);
+        if (!$this->ci->db->update(db_prefix() . 'modules', ['active' => 1])) {
+            return false;
+        }
+
+        $this->modules[$name]['activated'] = 1;
+        $this->active_modules[$name] = $this->modules[$name];
 
         /**
          * After module is activated action
