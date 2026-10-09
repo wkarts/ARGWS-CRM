@@ -38,6 +38,22 @@ hooks()->add_action('payment_recorded', 'asaas_after_payment_added');
 hooks()->add_action('invoice_payment_added', 'asaas_after_payment_added');
 hooks()->add_action('invoice_status_changed', 'asaas_invoice_status_changed');
 hooks()->add_action('after_invoice_status_changed', 'asaas_invoice_status_changed');
+hooks()->add_action('after_cron_run', 'asaas_process_pending_webhooks');
+
+function asaas_process_pending_webhooks()
+{
+    $CI = &get_instance();
+    try {
+        $CI->load->library('asaas/asaas_gateway');
+        $result = $CI->asaas_gateway->getAdapter()->processPendingWebhookEvents(20);
+        if (!empty($result['failed'])) {
+            log_message('error', '[Asaas] Existem eventos pendentes para nova tentativa no próximo CRON.');
+        }
+    } catch (Throwable $error) {
+        log_message('error', '[Asaas] Falha temporária na rotina de reconciliação: ' . get_class($error));
+    }
+}
+
 
 $CI = &get_instance();
 
