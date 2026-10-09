@@ -6,7 +6,7 @@
             <div class="col-md-12">
                 <div class="panel_s">
                     <div class="panel-body">
-                        <h4 class="no-margin">Recursos ARGWS</h4>
+                        <h4 class="no-margin">Recursos</h4>
                         <p class="text-muted mtop10">Ative ou desative os recursos desta instalação. Desativar um recurso não exclui tabelas nem dados salvos.</p>
                         <hr />
                         <div class="table-responsive">
@@ -45,7 +45,6 @@
                                         <tr class="<?= $needsDb ? 'warning' : ''; ?>">
                                             <td>
                                                 <strong><?= html_escape($resource['name']); ?></strong>
-                                                <div class="text-muted small"><?= html_escape($systemName); ?></div>
                                             </td>
                                             <td><?= html_escape($resource['description']); ?></td>
                                             <td><?= ($dependencies || $optionalDependencies) ? html_escape(implode(', ', array_merge($dependencies, $optionalDependencies))) : 'Nenhuma'; ?></td>

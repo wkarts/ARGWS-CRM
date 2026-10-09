@@ -26,7 +26,14 @@ function prepare_mail_preview_data($template, $customer_id_or_email, $mailClassP
 
     $data['template_name'] = $slug;
 
-    $template_result = $CI->emails_model->get(['slug' => $slug, 'language' => 'english'], 'row');
+    $template_result = $CI->emails_model->get(['slug' => $slug, 'language' => 'portuguese_br'], 'row');
+    if (!$template_result) {
+        // Compatibilidade com instalações ainda não migradas.
+        $template_result = $CI->emails_model->get(['slug' => $slug, 'language' => 'english'], 'row');
+    }
+    if (!$template_result) {
+        show_error('Modelo de e-mail não encontrado: ' . html_escape($slug));
+    }
 
     $data['template_system_name'] = $template_result->name;
     $data['template_id']          = $template_result->emailtemplateid;
@@ -182,7 +189,7 @@ function get_mail_template_path($class, &$params)
  */
 function create_email_template($subject, $message, $type, $name, $slug, $active = 1)
 {
-    if (total_rows('emailtemplates', ['slug' => $slug]) > 0) {
+    if (total_rows(db_prefix() . 'emailtemplates', ['slug' => $slug, 'language' => 'portuguese_br']) > 0) {
         return false;
     }
 
@@ -191,7 +198,7 @@ function create_email_template($subject, $message, $type, $name, $slug, $active 
     $data['type']      = $type;
     $data['name']      = $name;
     $data['slug']      = $slug;
-    $data['language']  = 'english';
+    $data['language']  = 'portuguese_br';
     $data['active']    = $active;
     $data['plaintext'] = 0;
     $data['fromname'] = '{companyname} | CRM';

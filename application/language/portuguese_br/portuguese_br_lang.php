@@ -3590,7 +3590,7 @@ $lang['sales_item']                  = 'Item';
 
 # Version 2.3.0
 
-$lang['modules']                                 = 'Recursos ARGWS';
+$lang['modules']                                 = 'Recursos';
 $lang['module']                                  = 'Módulo';
 $lang['module_description']                      = 'Descrição';
 $lang['module_activate']                         = 'Ativar';

@@ -1,6 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
 $date_formats      = get_available_date_formats();
-$enabled_languages = json_decode(get_option('enabled_languages') ?: '[]');
 echo form_hidden('settings[localization_settings]', 'true');
 ?>
 <div class="form-group">
@@ -52,38 +51,7 @@ echo form_hidden('settings[localization_settings]', 'true');
     </select>
 </div>
 <hr />
-<div class="form-group">
-    <label for="active_language"
-        class="control-label"><?= _l('settings_localization_default_language'); ?></label>
-    <select name="settings[active_language]" data-live-search="true" id="active_language"
-        class="form-control selectpicker"
-        data-none-selected-text="<?= _l('dropdown_non_selected_tex'); ?>">
-        <?php foreach ($this->app->get_all_languages() as $availableLanguage) { ?>
-        <?php $subtext = hooks()->apply_filters('settings_language_subtext', '', $availableLanguage); ?>
-        <option value="<?= e($availableLanguage); ?>"
-            data-subtext="<?= e($subtext); ?>" <?= $availableLanguage == get_option('active_language') ? 'selected' : ''; ?>>
-            <?= e(ucfirst($availableLanguage)); ?>
-        </option>
-        <?php } ?>
-    </select>
-</div>
-<hr />
-<div class="form-group">
-    <label for="enabled_languages"
-        class="control-label"><?= _l('enabled_languages'); ?></label>
-    <select name="settings[enabled_languages][]" multiple data-live-search="true" id="enabled_languages"
-        class="form-control selectpicker"
-        data-none-selected-text="<?= _l('all'); ?>">
-        <?php foreach ($this->app->get_all_languages() as $availableLanguage) { ?>
-        <?php $subtext = hooks()->apply_filters('settings_language_subtext', '', $availableLanguage); ?>
-        <option value="<?= e($availableLanguage); ?>"
-            data-subtext="<?= e($subtext); ?>" <?= in_array($availableLanguage, $enabled_languages) ? 'selected' : ''; ?>>
-            <?= e(ucfirst($availableLanguage)); ?>
-        </option>
-        <?php } ?>
-    </select>
-</div>
-<hr />
-<?php render_yes_no_option('disable_language', 'disable_languages'); ?>
-<hr />
-<?php render_yes_no_option('output_client_pdfs_from_admin_area_in_client_language', 'settings_output_client_pdfs_from_admin_area_in_client_language', 'settings_output_client_pdfs_from_admin_area_in_client_language_help'); ?>
+<p class="text-muted">Idioma do sistema: <strong>Português (Brasil)</strong>. A aplicação não permite seleção de outros idiomas.</p>
+<?= form_hidden('settings[active_language]', 'portuguese_br'); ?>
+<?= form_hidden('settings[enabled_languages][]', 'portuguese_br'); ?>
+<?= form_hidden('settings[disable_language]', '1'); ?>

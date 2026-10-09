@@ -21,6 +21,7 @@ class Mods extends AdminController
         $this->config->load('argws_resources');
         $definitions = $this->config->item('argws_resources');
         $installed   = [];
+        $hidden      = $this->hidden_resources();
 
         foreach ($this->app_modules->get() as $module) {
             $installed[$module['system_name']] = $module;
@@ -28,12 +29,12 @@ class Mods extends AdminController
 
         $data['resources'] = [];
         foreach ($definitions as $name => $definition) {
-            if (isset($installed[$name])) {
-                // Preserve ARGWS catalog wording over legacy module headers.
+            if (isset($installed[$name]) && !isset($hidden[$name])) {
+                // Os nomes funcionais do catálogo prevalecem sobre os cabeçalhos legados.
                 $data['resources'][] = array_merge($installed[$name], $definition);
             }
         }
-        $data['title'] = 'Recursos ARGWS';
+        $data['title'] = 'Recursos';
         $this->load->view('admin/modules/list', $data);
     }
 
@@ -57,8 +58,16 @@ class Mods extends AdminController
             }
         }
 
-        $this->app_modules->activate($name);
-        set_alert('success', 'Recurso ARGWS ativado. Os dados existentes foram preservados.');
+        try {
+            if ($this->app_modules->activate($name)) {
+                set_alert('success', 'Recurso ativado. Os dados existentes foram preservados.');
+            } else {
+                set_alert('danger', 'Não foi possível ativar o recurso. Verifique os logs da aplicação.');
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Falha ao ativar ' . $name . ': ' . get_class($e) . ' em ' . basename($e->getFile()) . ':' . $e->getLine());
+            set_alert('danger', 'A ativação falhou. Verifique as dependências do recurso e os logs.');
+        }
         $this->to_modules();
     }
 
@@ -85,8 +94,16 @@ class Mods extends AdminController
             }
         }
 
-        $this->app_modules->deactivate($name);
-        set_alert('success', 'Recurso ARGWS desativado. Os dados existentes foram preservados.');
+        try {
+            if ($this->app_modules->deactivate($name)) {
+                set_alert('success', 'Recurso desativado. Os dados existentes foram preservados.');
+            } else {
+                set_alert('danger', 'Não foi possível desativar o recurso.');
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Falha ao desativar ' . $name . ': ' . get_class($e) . ' em ' . basename($e->getFile()) . ':' . $e->getLine());
+            set_alert('danger', 'Não foi possível desativar o recurso. Consulte os logs.');
+        }
         $this->to_modules();
     }
 
@@ -123,6 +140,24 @@ class Mods extends AdminController
     public function update_version($name)
     {
         show_404();
+    }
+
+    /**
+     * CRM_HIDDEN_RESOURCES oculta entradas do painel sem desinstalar ou
+     * desativar funcionalidades. Não é uma restrição de autorização.
+     * Exemplo: CRM_HIDDEN_RESOURCES=wiki,zillapage,products
+     */
+    private function hidden_resources()
+    {
+        $value = strtolower((string) (getenv('CRM_HIDDEN_RESOURCES') ?: ''));
+        $hidden = [];
+        foreach (explode(',', $value) as $name) {
+            $name = trim($name);
+            if ($name !== '' && preg_match('/^[a-z0-9_]+$/', $name)) {
+                $hidden[$name] = true;
+            }
+        }
+        return $hidden;
     }
 
     private function get_resource_definition($name)

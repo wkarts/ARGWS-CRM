@@ -44,6 +44,7 @@ class Settings extends AdminController
             if (in_array($group, ['general', 'localization', 'argws_platform'], true)) {
                 $post_data['settings']['active_language'] = 'portuguese_br';
                 $post_data['settings']['enabled_languages'] = ['portuguese_br'];
+                $post_data['settings']['disable_language'] = '1';
             }
 
             $hasArgwsPlatformSettings = array_intersect(
