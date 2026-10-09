@@ -35,6 +35,7 @@ trap cleanup EXIT
 
 docker build --tag "$image" --build-arg ARGWS_VERSION=ci .
 docker run --rm --volume "$PWD:/source:ro" --entrypoint php "$image" /source/tests/brand_assets_smoke.php
+docker run --rm --volume "$PWD:/source:ro" --entrypoint php "$image" /source/tests/email_templates_php_smoke.php
 docker tag "$image" ghcr.io/wkarts/argws-crm:ci
 storage_compose_dir="$(mktemp -d)"
 cp compose.yaml "$storage_compose_dir/compose.yaml"
