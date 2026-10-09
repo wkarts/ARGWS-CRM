@@ -9,6 +9,25 @@ define('PHPASS_HASH_PORTABLE', false);
 require_once __DIR__ . '/sqlparser.php';
 require_once __DIR__ . '/phpass.php';
 
+function sanitize_provisioning_diagnostic(string $message, array $additionalSecrets = []): string
+{
+    $secrets = array_merge([
+        getenv('ARGWS_SETUP_TOKEN') ?: '',
+        getenv('ARGWS_DB_PASSWORD') ?: '',
+        getenv('ARGWS_SETUP_MIGRATION_TOKEN') ?: '',
+    ], $additionalSecrets);
+    foreach ($secrets as $secret) {
+        if (is_string($secret) && $secret !== '') {
+            $message = str_replace($secret, '[redigido]', $message);
+        }
+    }
+
+    $message = preg_replace('/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/', '[e-mail]', $message) ?? $message;
+    $message = preg_replace('/[\\r\\n\\t]+/', ' ', $message) ?? $message;
+
+    return mb_substr(trim($message), 0, 3000, 'UTF-8');
+}
+
 function provision_error(string $message): void
 {
     throw new RuntimeException($message);
@@ -247,7 +266,7 @@ function verify_recovery_config(string $configPath, array $input, array $databas
     }
 }
 
-function run_application_migrations(): array
+function run_application_migrations(array $sensitiveValues = []): array
 {
     if (!function_exists('proc_open')) {
         provision_error('O ambiente não permite iniciar o executor interno de migrations.');
@@ -300,6 +319,10 @@ function run_application_migrations(): array
     }
     if ($exitCode !== 0 || !is_array($result) || empty($result['success'])
         || !isset($result['to_version']) || !is_numeric($result['to_version'])) {
+        $diagnostic = $output === false ? '' : sanitize_provisioning_diagnostic($output, array_merge($sensitiveValues, [$bridgeToken]));
+        if ($diagnostic !== '') {
+            error_log('[ARGWS CRM setup] Diagnóstico do executor de migrations: ' . mb_substr($diagnostic, -1800, null, 'UTF-8'));
+        }
         error_log('[ARGWS CRM setup] O executor interno não concluiu as migrations (código ' . (int) $exitCode . ').');
         provision_error('MIGRATIONS_PENDING: Não foi possível concluir a atualização necessária do banco. A instalação não foi liberada; tente novamente após verificar os logs do serviço.');
     }
@@ -452,7 +475,7 @@ function provision_with_input(array $rawInput): void
             $db = null;
         }
 
-        run_application_migrations();
+        run_application_migrations([$input['admin_password'], $input['admin_email']]);
 
         $markerContents = gmdate(DATE_ATOM) . PHP_EOL;
         if (file_put_contents($markerPath, $markerContents, LOCK_EX) !== strlen($markerContents)) {
