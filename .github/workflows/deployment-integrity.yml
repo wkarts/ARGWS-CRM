@@ -24,6 +24,8 @@ jobs:
         with:
           toolchain: 1.90.0
           rust-src-dir: tools/argws-crm-deployer
+      - name: Validar tradução dos modelos HTML
+        run: node --test tests/email_templates_ptbr.test.cjs
       - name: Testar exclusão dos artefatos operacionais dos ZIPs
         run: python3 -m unittest tests/test_package_release.py
       - name: Testar o ZIP separado do diretório deploy
