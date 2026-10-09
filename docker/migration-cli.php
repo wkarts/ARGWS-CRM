@@ -10,7 +10,16 @@ if (PHP_SAPI !== 'cli') {
 
 error_reporting(E_ALL);
 ini_set('display_errors', 'stderr');
-fwrite(STDERR, '[ARGWS CRM setup] Adaptador de migrations iniciado (SAPI=' . PHP_SAPI . ').' . PHP_EOL);
+fwrite(STDERR, '[ARGWS CRM setup] Adaptador de migrations iniciado (SAPI=' . PHP_SAPI
+    . '; token interno=' . (getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false ? 'presente' : 'ausente')
+    . '; config=' . (is_file('/app/application/config/app-config.php') ? 'presente' : 'ausente') . ').' . PHP_EOL);
+register_shutdown_function(static function () {
+    $error = error_get_last();
+    if (is_array($error) && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        fwrite(STDERR, '[ARGWS CRM setup] Encerramento após erro fatal no bootstrap (tipo=' . (int) $error['type']
+            . '; arquivo=' . basename((string) ($error['file'] ?? 'desconhecido')) . ').' . PHP_EOL);
+    }
+});
 
 $_SERVER['argv'] = ['/app/index.php', 'argws_provisioning', 'apply_migrations'];
 $_SERVER['argc'] = count($_SERVER['argv']);
