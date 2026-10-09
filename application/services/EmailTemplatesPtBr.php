@@ -48,7 +48,8 @@ final class EmailTemplatesPtBr
             $key = preg_replace('/&nbsp;|&#160;/iu', ' ', (string) $key);
             $key = trim((string) preg_replace('/\s+/u', ' ', (string) $key));
 
-            if ($key === '') {
+            if ($key === '' || !preg_match('/\p{L}/u', str_replace('%s', '', $key))) {
+                // Pontuação, separadores e marcadores isolados não são traduzíveis.
                 continue;
             }
             if (!array_key_exists($key, $phrases)) {

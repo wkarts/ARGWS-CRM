@@ -74,7 +74,7 @@ function renderPreservingHtml(html, phrases) {
   const result = pieces.map((segment) => {
     if (!segment || segment.startsWith('<')) return segment;
     const key = normalize(segment);
-    if (!key) return segment;
+    if (!key || !/[\p{L}]/u.test(key.replaceAll('%s', ''))) return segment;
     assert.ok(Object.hasOwn(phrases, key), 'Tradução ausente: ' + key);
     const vars = segment.match(/\{[^{}]+\}/g) || [];
     const target = phrases[key];
