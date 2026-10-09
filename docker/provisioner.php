@@ -272,20 +272,6 @@ function run_application_migrations(array $sensitiveValues = []): array
         provision_error('O ambiente não permite iniciar o executor interno de migrations.');
     }
 
-    $bridgeToken = bin2hex(random_bytes(32));
-    $logPath = tempnam(sys_get_temp_dir(), 'argws-crm-migration-');
-    if ($logPath === false) {
-        provision_error('Não foi possível iniciar a validação final do banco de dados.');
-    }
-    chmod($logPath, 0600);
-
-    $descriptors = [
-        0 => ['pipe', 'r'],
-        1 => ['file', $logPath, 'w'],
-        2 => ['file', $logPath, 'a'],
-    ];
-    // Use the PHP CLI binary for CodeIgniter's CLI router and is_cli() guard.
-    // FrankenPHP's server worker must not be reused as the migration executor.
     $phpBinary = null;
     $pathDirectories = explode(PATH_SEPARATOR, (string) (getenv('PATH') ?: ''));
     foreach (array_merge(['/usr/local/bin', '/usr/bin'], $pathDirectories) as $directory) {
@@ -299,31 +285,60 @@ function run_application_migrations(array $sensitiveValues = []): array
         }
     }
     if (!is_string($phpBinary)) {
-        @unlink($logPath);
         provision_error('O ambiente não disponibiliza um executável PHP CLI para aplicar as migrations.');
     }
+
+    $bridgeToken = bin2hex(random_bytes(32));
+    $stdoutPath = tempnam(sys_get_temp_dir(), 'argws-crm-migration-out-');
+    $stderrPath = tempnam(sys_get_temp_dir(), 'argws-crm-migration-err-');
+    if ($stdoutPath === false || $stderrPath === false) {
+        if (is_string($stdoutPath)) {
+            @unlink($stdoutPath);
+        }
+        if (is_string($stderrPath)) {
+            @unlink($stderrPath);
+        }
+        provision_error('Não foi possível iniciar a validação final do banco de dados.');
+    }
+    chmod($stdoutPath, 0600);
+    chmod($stderrPath, 0600);
+
+    $descriptors = [
+        0 => ['pipe', 'r'],
+        1 => ['file', $stdoutPath, 'w'],
+        2 => ['file', $stderrPath, 'w'],
+    ];
     $environment = getenv();
     $environment = is_array($environment) ? $environment : [];
     $environment['ARGWS_SETUP_MIGRATION_TOKEN'] = $bridgeToken;
     $process = proc_open(
-        [$phpBinary, '/app/index.php', 'argws_provisioning', 'apply_migrations'],
+        [$phpBinary, '/opt/argws-crm-provisioner/migration-cli.php'],
         $descriptors,
         $pipes,
         '/app',
         $environment
     );
     if (!is_resource($process)) {
-        @unlink($logPath);
+        @unlink($stdoutPath);
+        @unlink($stderrPath);
         provision_error('Não foi possível iniciar a aplicação das migrations pendentes.');
     }
+
     fclose($pipes[0]);
     $exitCode = proc_close($process);
-    $output = file_get_contents($logPath);
-    @unlink($logPath);
+    $stdout = file_get_contents($stdoutPath);
+    $stderr = file_get_contents($stderrPath);
+    @unlink($stdoutPath);
+    @unlink($stderrPath);
+
+    $output = is_string($stdout) ? $stdout : '';
+    if (is_string($stderr) && $stderr !== '') {
+        $output .= ($output !== '' ? PHP_EOL : '') . $stderr;
+    }
 
     $result = null;
-    if ($output !== false) {
-        $lines = preg_split('/\\R/', trim($output)) ?: [];
+    if (is_string($stdout)) {
+        $lines = preg_split('/\\r\\n|\\r|\\n/', trim($stdout)) ?: [];
         foreach (array_reverse($lines) as $line) {
             $candidate = json_decode(trim($line), true);
             if (is_array($candidate) && array_key_exists('success', $candidate)) {
@@ -334,15 +349,14 @@ function run_application_migrations(array $sensitiveValues = []): array
     }
     if ($exitCode !== 0 || !is_array($result) || empty($result['success'])
         || !isset($result['to_version']) || !is_numeric($result['to_version'])) {
-        $diagnostic = $output === false ? '' : sanitize_provisioning_diagnostic($output, array_merge($sensitiveValues, [$bridgeToken]));
+        $diagnostic = sanitize_provisioning_diagnostic($output, array_merge($sensitiveValues, [$bridgeToken]));
         if ($diagnostic !== '') {
             error_log('[ARGWS CRM setup] Diagnóstico do executor de migrations: ' . mb_substr($diagnostic, -1800, null, 'UTF-8'));
         } else {
-            $phpCliAvailable = is_string($phpBinary) && is_executable($phpBinary);
             $applicationConfigAvailable = is_file('/app/application/config/app-config.php');
             error_log('[ARGWS CRM setup] Executor de migrations sem saída (código ' . (int) $exitCode
-                . '; PHP CLI disponível=' . ($phpCliAvailable ? 'sim' : 'não')
-                . '; executor=php-cli'
+                . '; PHP CLI disponível=' . (is_executable($phpBinary) ? 'sim' : 'não')
+                . '; executor=migration-cli.php'
                 . '; SAPI=' . PHP_SAPI
                 . '; configuração disponível=' . ($applicationConfigAvailable ? 'sim' : 'não')
                 . '; token temporário enviado=sim).');
