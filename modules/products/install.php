@@ -205,5 +205,18 @@ $email_template[1]['active']   = '1';
 $CI->db->where('type', 'order');
 $result = $CI->db->get(db_prefix() . 'emailtemplates')->row();
 if (empty($result)) {
+    require_once APPPATH . 'services/EmailTemplatesPtBr.php';
+    foreach ($email_template as &$template) {
+        $localized = EmailTemplatesPtBr::get((string) $template['slug']);
+        if ($localized && ($template['subject'] ?? '') === ($localized['source_subject'] ?? null)
+            && ($template['name'] ?? '') === ($localized['source_name'] ?? null)
+            && ($template['message'] ?? '') === ($localized['source_message'] ?? null)) {
+            $template['subject'] = $localized['subject'];
+            $template['name'] = $localized['name'];
+            $template['message'] = EmailTemplatesPtBr::translateMessage($template['message']);
+            $template['language'] = 'portuguese_br';
+        }
+    }
+    unset($template);
     $CI->db->insert_batch(db_prefix() . 'emailtemplates', $email_template);
 }
