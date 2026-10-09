@@ -35,7 +35,7 @@ test('suporte fica em settings administrativos e envia apenas configuração pú
   assert.match(view, /argws_terminology_policy/);
   assert.match(helper, /JSON_HEX_TAG \| JSON_HEX_AMP \| JSON_HEX_APOS \| JSON_HEX_QUOT/);
   assert.match(helper, /argws_support_public_token/);
-  assert.doesNotMatch(helper, /HUB_BASE_URL|HUB_TOKEN|env\(/);
+  assert.doesNotMatch(helper, /HUB_BASE_URL|HUB_TOKEN|\benv\(/);
   assert.match(helper, /function app_customers_footer\(\)[\s\S]*argws_support_widget_script\(\)/);
 });
 

@@ -1,5 +1,15 @@
 ARG ARGWS_FRANKENPHP_IMAGE=dunglas/frankenphp:1-php8.3-bookworm
 
+# Instalar dependências do módulo de nota fiscal na construção da imagem.
+# O runtime permanece sem Composer e não realiza downloads durante a ativação.
+FROM composer:2 AS einvoice-deps
+WORKDIR /build/einvoice
+COPY modules/einvoice/composer.json modules/einvoice/composer.lock ./
+COPY modules/einvoice/src/ ./src/
+RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts --optimize-autoloader \
+    && php -r 'require "vendor/autoload.php"; exit(class_exists("Mustache_Engine") && class_exists("Argws\\CRM\\EInvoice\\EinvoiceHandler") ? 0 : 1);'
+
+
 # Keep installer implementation out of the runtime image. Only the existing
 # database schema/helpers and the minimal web first-run handler are staged outside the app root.
 FROM ${ARGWS_FRANKENPHP_IMAGE} AS crm-source
@@ -16,7 +26,7 @@ RUN mkdir -p /out/app /out/provisioner/web \
 
 FROM ${ARGWS_FRANKENPHP_IMAGE}
 
-ARG ARGWS_VERSION=3.5.0
+ARG ARGWS_VERSION=3.6.4
 LABEL org.opencontainers.image.title="ARGWS CRM" \
       org.opencontainers.image.version="${ARGWS_VERSION}" \
       org.opencontainers.image.vendor="ARGWS" \
@@ -30,6 +40,7 @@ RUN apt-get update \
     && install-php-extensions mysqli pdo_mysql curl mbstring imap gd zip intl bcmath soap exif opcache
 
 COPY --from=crm-source --chown=www-data:www-data /out/app/ /app/
+COPY --from=einvoice-deps --chown=www-data:www-data /build/einvoice/vendor/ /app/modules/einvoice/vendor/
 COPY --from=crm-source --chown=root:root /out/provisioner/ /opt/argws-crm-provisioner/
 COPY --chown=root:root docker/Caddyfile /etc/caddy/Caddyfile
 COPY --chown=root:root docker/Caddyfile.unprovisioned /etc/caddy/Caddyfile.unprovisioned
@@ -49,6 +60,8 @@ RUN mkdir -p /app/uploads /app/temp /app/application/cache /app/application/logs
     && php -l /opt/argws-crm-provisioner/web/index.php \
     && php -l /opt/argws-crm-provisioner/sqlparser.php \
     && php -l /opt/argws-crm-provisioner/phpass.php \
+    && php /app/modules/asaas/scripts/assert-webhook-security.php \
+    && php -r 'require "/app/modules/einvoice/vendor/autoload.php"; exit(class_exists("Mustache_Engine") && class_exists("Argws\\CRM\\EInvoice\\EinvoiceHandler") ? 0 : 1);' \
     && php -r 'if (PHP_SAPI !== "cli") { fwrite(STDERR, "O executável php não está em modo CLI.\\n"); exit(1); }'
 
 RUN frankenphp validate --config /etc/caddy/Caddyfile --adapter caddyfile \

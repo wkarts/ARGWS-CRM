@@ -48,6 +48,9 @@ jobs:
           set -euo pipefail
           node tests/custom_links_security.test.cjs
           node tests/argws_platform_contract.test.cjs
+          node --test tests/email_templates_ptbr.test.cjs
+          node --test tests/crm_integrations_contract.test.cjs
+          node tests/crm_ptbr_resources_contract.test.cjs
           python3 -m unittest tests/test_release_version.py tests/test_package_release.py tests/test_package_deploy.py tests/test_docker_provisioning.py
 
   plan-version:
@@ -268,6 +271,18 @@ jobs:
           fi
           git merge-base --is-ancestor "$base_ref" "$GITHUB_SHA"
           git archive "$base_ref" | tar -x -C "$RUNNER_TEMP/argws-crm-base"
+      - name: Incorporar dependências da Nota fiscal eletrônica aos pacotes
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v composer >/dev/null || {
+            echo "Composer indisponível no runner; não publicar ZIP incompleto." >&2
+            exit 1
+          }
+          composer install --working-dir=modules/einvoice \
+            --no-dev --prefer-dist --no-interaction --no-progress --no-scripts --optimize-autoloader
+          php -r 'require "modules/einvoice/vendor/autoload.php"; exit(class_exists("Mustache_Engine") && class_exists("Argws\\CRM\\EInvoice\\EinvoiceHandler") ? 0 : 1);'
+          test -s modules/einvoice/vendor/autoload.php
       - name: Empacotar e conferir os dois ZIPs
         run: |
           set -euo pipefail

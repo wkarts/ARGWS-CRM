@@ -121,7 +121,8 @@ function theme_template_view()
 
 function argws_support_widget_script()
 {
-    if (get_option('argws_support_enabled') !== '1') {
+    $channel = get_option('support_contact_channel');
+    if (($channel !== '' && $channel !== 'widget') || get_option('argws_support_enabled') !== '1') {
         return '';
     }
 
@@ -152,8 +153,64 @@ function argws_support_widget_script()
         . '})(window,document);</script>';
 }
 
+/**
+ * Atalho de suporte sem carregamento de SDKs externos.
+ * As configurações locais prevalecem sobre o fallback de ambiente.
+ */
+function support_contact_link()
+{
+    $channel = (string) get_option('support_contact_channel');
+    if (!in_array($channel, ['whatsapp', 'email', 'website'], true)) {
+        return '';
+    }
+
+    $defaults = [
+        'whatsapp' => ['support_whatsapp', 'CRM_SUPPORT_WHATSAPP'],
+        'email' => ['support_email', 'CRM_SUPPORT_EMAIL'],
+        'website' => ['support_site_url', 'CRM_SUPPORT_SITE_URL'],
+    ];
+    $setting = $defaults[$channel];
+    $value = trim((string) get_option($setting[0]));
+    if ($value === '') {
+        $value = trim((string) getenv($setting[1]));
+    }
+
+    if ($channel === 'whatsapp') {
+        $number = preg_replace('/\\D+/', '', $value);
+        if (strlen($number) >= 10 && strlen($number) <= 11) {
+            $number = '55' . $number;
+        }
+        if (!preg_match('/^[1-9][0-9]{10,14}$/', $number)) {
+            return '';
+        }
+        $href = 'https://wa.me/' . $number;
+        $label = 'Fale pelo WhatsApp';
+    } elseif ($channel === 'email') {
+        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            return '';
+        }
+        $href = 'mailto:' . $value;
+        $label = 'Fale por e-mail';
+    } else {
+        $parts = parse_url($value);
+        if (!filter_var($value, FILTER_VALIDATE_URL) || !$parts
+            || strtolower($parts['scheme'] ?? '') !== 'https' || empty($parts['host'])
+            || isset($parts['user']) || isset($parts['pass'])) {
+            return '';
+        }
+        $href = $value;
+        $label = 'Abrir suporte';
+    }
+
+    return '<a class="btn btn-primary" href="' . html_escape($href) . '"'
+        . ' target="_blank" rel="noopener noreferrer nofollow"'
+        . ' style="position:fixed;bottom:22px;right:22px;z-index:1500;"'
+        . ' aria-label="' . html_escape($label) . '">' . html_escape($label) . '</a>';
+}
+
 function app_customers_footer()
 {
+    echo support_contact_link();
     echo argws_support_widget_script();
     /**
      * Registered scripts
