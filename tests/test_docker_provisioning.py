@@ -20,7 +20,7 @@ class DockerProvisioningContractTest(unittest.TestCase):
         self.assertIn("docker/setup-web.php", dockerfile)
         self.assertIn("docker/provisioner.php", dockerfile)
         self.assertIn("php -l /opt/argws-crm-provisioner/web/index.php", dockerfile)
-        self.assertIn("PHP_SAPI !== 'cli'", dockerfile)
+        self.assertIn('PHP_SAPI !== "cli"', dockerfile)
         self.assertIn("frankenphp validate --config /etc/caddy/Caddyfile --adapter caddyfile", dockerfile)
         self.assertIn("frankenphp validate --config /etc/caddy/Caddyfile.unprovisioned --adapter caddyfile", dockerfile)
 
