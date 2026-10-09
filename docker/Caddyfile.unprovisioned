@@ -11,6 +11,13 @@
         @installer path /install /install/ /install/*
         respond @installer 404
 
+        # Only public ARGWS brand assets are readable before first access.
+        @branding path /assets/images/argws/favicon.png /assets/images/argws/logo-light.png /assets/images/argws/logo-dark.png /assets/images/argws/logo-mark-light.png
+        handle @branding {
+            root * /app
+            file_server
+        }
+
         @setup path /setup /setup/
         handle @setup {
             respond @provisioned 404

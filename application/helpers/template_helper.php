@@ -323,15 +323,13 @@ function get_company_logo($uri = '', $href_class = '', $type = '')
 
     $logoURL = hooks()->apply_filters('logo_href', $logoURL);
 
-    if ($company_logo != '') {
-        $logo = '<a href="' . $logoURL . '" class="logo img-responsive' . ($href_class != '' ? ' ' . $href_class : '') . '">
-        <img src="' . base_url('uploads/company/' . $company_logo) . '" class="img-responsive" alt="' . e($company_name) . '">
+    // Customer uploads always take precedence; removing an upload restores the ARGWS default.
+    $logoImage = $company_logo != ''
+        ? base_url('uploads/company/' . $company_logo)
+        : base_url('assets/images/argws/logo-dark.png');
+    $logo = '<a href="' . e($logoURL) . '" class="logo img-responsive' . ($href_class != '' ? ' ' . e($href_class) : '') . '">
+        <img src="' . e($logoImage) . '" class="img-responsive" alt="' . e($company_name ?: 'ARGWS CRM') . '">
         </a>';
-    } elseif ($company_name != '') {
-        $logo = '<a href="' . $logoURL . '" class="' . $href_class . ' logo logo-text">' . e($company_name) . '</a>';
-    } else {
-        $logo = '';
-    }
 
     $logo = hooks()->apply_filters('company_logo', $logo);
 
@@ -408,11 +406,9 @@ function get_admin_header_logo_url()
         $logo = get_option('company_logo');
     }
 
-    $url = '';
-
-    if (! empty($logo)) {
-        $url = base_url('uploads/company/' . $logo);
-    }
+    $url = ! empty($logo)
+        ? base_url('uploads/company/' . $logo)
+        : base_url('assets/images/argws/logo-dark.png');
 
     return hooks()->apply_filters('admin_header_logo_url', $url);
 }
