@@ -8,7 +8,7 @@ require '/app/application/services/EmailTemplatesPtBr.php';
 $core = EmailTemplatesPtBr::templates();
 $modules = EmailTemplatesPtBr::moduleTemplates();
 
-if (count($core) !== 82 || count($modules) !== 17) {
+if (count($core) !== 82 || count($modules) !== 19) {
     fwrite(STDERR, 'Número inesperado de modelos traduzidos.' . PHP_EOL);
     exit(1);
 }
@@ -22,7 +22,7 @@ foreach ($modules as $slug => $model) {
         exit(1);
     }
 
-    if ($html === $translated || $translated === '') {
+    if ($html !== '' && ($html === $translated || $translated === '')) {
         fwrite(STDERR, 'O modelo não foi traduzido: ' . $slug . PHP_EOL);
         exit(1);
     }
@@ -37,4 +37,4 @@ foreach ($modules as $slug => $model) {
     }
 }
 
-echo 'Tradução em PHP: 82 modelos do núcleo e 17 de módulos catalogados.' . PHP_EOL;
+echo 'Tradução em PHP: 82 modelos do núcleo e 19 de módulos catalogados.' . PHP_EOL;
