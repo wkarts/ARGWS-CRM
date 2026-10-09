@@ -254,6 +254,7 @@ esac
         self.assertNotIn("$phpBinary = defined('PHP_BINARY')", source)
         self.assertIn("$environment['ARGWS_SETUP_MIGRATION_TOKEN'] = $bridgeToken;", source)
         self.assertIn("Executor de migrations sem saída", source)
+        self.assertIn("Arquivo do controller de migrations carregado", controller)
         self.assertIn("Token interno de migrations ausente ou inválido.", controller)
         self.assertIn("Executor CLI alcançado", controller)
         self.assertIn("getenv('ARGWS_SETUP_MIGRATION_TOKEN')", source)
