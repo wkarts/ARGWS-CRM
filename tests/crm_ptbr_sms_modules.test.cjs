@@ -67,7 +67,7 @@ test('módulos antigos e novos usam PT-BR e reconciliação sem apagar personali
   assert.match(service, /function synchronizeModuleTemplates\(/);
   assert.match(service, /function defaultOnlyChanges\(/);
   assert.match(service, /if \(\$current !== \$source\)/);
-  assert.match(service, /'language' = 'portuguese_br'|\\$copy\['language'\] = 'portuguese_br'/);
+  assert.match(service, /\$copy\['language'\] = 'portuguese_br'/);
   assert.match(service, /unset\(\$copy\['emailtemplateid'\]\)/);
   assert.doesNotMatch(service, /->delete\(|TRUNCATE|DROP TABLE/);
   assert.match(controller, /EmailTemplatesPtBr::synchronizeModuleTemplates\(\$this->db\)/);
