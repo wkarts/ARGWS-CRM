@@ -126,24 +126,23 @@ function add_moment_js_assets($group = 'admin')
 function add_favicon_link_asset($group = 'admin')
 {
     $favIcon = get_option('favicon');
-    if ($favIcon != '') {
-        get_instance()->app_css->add('favicon', [
-        'path'       => 'uploads/company/' . $favIcon,
+    $faviconPath = $favIcon != '' ? 'uploads/company/' . $favIcon : 'assets/images/argws/favicon.png';
+    get_instance()->app_css->add('favicon', [
+        'path'       => $faviconPath,
         'version'    => false,
         'attributes' => [
-            'rel'  => 'shortcut icon',
+            'rel'  => 'icon',
             'type' => false,
         ],
-        ], $group);
-        get_instance()->app_css->add('favicon-apple-touch-icon', [
-        'path'       => 'uploads/company/' . $favIcon,
+    ], $group);
+    get_instance()->app_css->add('favicon-apple-touch-icon', [
+        'path'       => $faviconPath,
         'version'    => false,
         'attributes' => [
-            'rel'  => 'apple-touch-icon”',
+            'rel'  => 'apple-touch-icon',
             'type' => false,
         ],
-        ], $group);
-    }
+    ], $group);
 }
 
 function add_jquery_validation_js_assets($group = 'admin')

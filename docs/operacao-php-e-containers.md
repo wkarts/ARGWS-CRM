@@ -6,7 +6,7 @@ A aplicação preserva a instalação em PHP 8.1 ou superior com MySQL/MariaDB e
 
 ## FrankenPHP pelo GHCR
 
-A instalação PHP tradicional mantém o instalador web em `install/`. A imagem FrankenPHP não contém o instalador legado `install/`; ela oferece o assistente web `/setup` somente enquanto não há configuração persistente. As stacks oficiais por ambiente usam um banco MySQL/MariaDB persistente e guardam a configuração da instalação no volume `installation_config`.
+A instalação PHP tradicional mantém o instalador web em `install/`. A imagem FrankenPHP não contém o instalador legado `install/`; ela oferece o assistente web `/setup` somente enquanto não há configuração persistente. As stacks oficiais por ambiente usam um banco MySQL/MariaDB persistente e guardam a configuração da instalação em `./storage/installation_config`, caminho do host relativo à pasta da stack. O valor `ARGWS_CONFIG_DIR=/var/lib/argws-crm/config` indica o mesmo diretório **dentro do container web**; o Compose liga os dois por um bind mount. O banco usa `./storage/database_data` no host.
 
 1. Gere os arquivos de produção com o binário `argws-crm-deployer`, autentique no GHCR se os packages estiverem privados e valide o Compose conforme [deploy/README.md](../deploy/README.md). O deployer cria uma chave aleatória `ARGWS_SETUP_TOKEN` no `.env`.
 2. Execute `docker compose --env-file .env -f compose.yaml up -d` e configure o CloudPanel para encaminhar HTTPS à porta local vinculada a `127.0.0.1`.
@@ -23,6 +23,10 @@ O `compose.yaml` da raiz permanece para uso avançado com MySQL/MariaDB externo;
 ## Suporte e idioma
 
 Configure o widget na seção **Configurações → Plataforma ARGWS**. O endereço HTTPS, o token público e as opções de exibição são guardados em `tbloptions`, com alteração restrita a administradores. O script é renderizado somente na área de clientes e recebe apenas endereço, token público e opções necessárias. Não são usadas variáveis `HUB_BASE_URL` ou `HUB_TOKEN` no `.env`. O único idioma habilitado é Português do Brasil; a política de terminologia define termos traduzidos, termos mantidos, traduções aprovadas e contexto.
+
+## Marca da instalação
+
+Os arquivos em `assets/images/argws/` são a marca padrão da aplicação. Após entrar como administrador, acesse **Configurações → Geral** e envie o logo para superfícies claras, a variante adicional e o favicon. Arquivos enviados são armazenados em `uploads/company/` e têm prioridade sobre os arquivos padrão. Ao remover um arquivo personalizado, o padrão volta a aparecer. Em Docker, preserve o volume `${ARGWS_STORAGE_ROOT:-./storage}/uploads` entre atualizações; ele contém a marca e os demais arquivos da instalação. A tela `/setup` exibe a marca ARGWS antes de existir uma instalação configurada.
 
 ## Privacidade
 

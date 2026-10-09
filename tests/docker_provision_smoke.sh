@@ -34,6 +34,7 @@ cleanup() {
 trap cleanup EXIT
 
 docker build --tag "$image" --build-arg ARGWS_VERSION=ci .
+docker run --rm --volume "$PWD:/source:ro" --entrypoint php "$image" /source/tests/brand_assets_smoke.php
 docker tag "$image" ghcr.io/wkarts/argws-crm:ci
 storage_compose_dir="$(mktemp -d)"
 cp compose.yaml "$storage_compose_dir/compose.yaml"
@@ -136,7 +137,7 @@ bad_key_status="$(curl --connect-timeout 2 --max-time 5 -sS -b /tmp/argws-crm-se
     -o /tmp/argws-crm-setup-denied -w '%{http_code}' \
     --data-urlencode "csrf_token=$csrf_token" \
     --data-urlencode "setup_token=incorrect" \
-    --data-urlencode "base_url=https://crm.example.invalid/" \
+    --data-urlencode "base_url=$url/" \
     --data-urlencode "firstname=Admin" \
     --data-urlencode "lastname=ARGWS" \
     --data-urlencode "admin_email=admin-ci@example.invalid" \
@@ -160,7 +161,7 @@ setup_code="$(curl --connect-timeout 2 --max-time 180 -sS -D /tmp/argws-crm-setu
     -o /tmp/argws-crm-setup-result -w '%{http_code}' \
     --data-urlencode "csrf_token=$csrf_token" \
     --data-urlencode "setup_token=$setup_token" \
-    --data-urlencode "base_url=https://crm.example.invalid/" \
+    --data-urlencode "base_url=$url/" \
     --data-urlencode "firstname=Admin" \
     --data-urlencode "lastname=ARGWS" \
     --data-urlencode "admin_email=admin-ci@example.invalid" \
@@ -212,6 +213,39 @@ if [ "$admin_status" = "500" ] || grep -Eiq 'Unable to load requested language f
     exit 1
 fi
 
+# O primeiro POST de autenticação executa App_Form_validation e precisa carregar
+# form_validation_lang.php. Acesse o painel com o administrador recém-criado.
+login_status="$(curl --connect-timeout 2 --max-time 10 -sS -b /tmp/argws-crm-setup-cookie -c /tmp/argws-crm-admin-cookie \
+    -o /tmp/argws-crm-login-page -w '%{http_code}' "$url/admin/authentication" 2>/dev/null || true)"
+login_csrf="$(sed -n 's/.*name="csrf_token_name" value="\([a-f0-9]*\)".*/\1/p' /tmp/argws-crm-login-page 2>/dev/null | head -n 1 || true)"
+if [ "$login_status" != "200" ] || [ -z "$login_csrf" ] || ! grep -q 'name="email"' /tmp/argws-crm-login-page; then
+    echo "A página de login não carregou com o formulário e CSRF (HTTP $login_status)." >&2
+    docker logs --tail 100 "$web" >&2 || true
+    exit 1
+fi
+login_status="$(curl --connect-timeout 2 --max-time 15 -sS -D /tmp/argws-crm-login-result-headers \
+    -b /tmp/argws-crm-admin-cookie -c /tmp/argws-crm-admin-cookie \
+    -o /tmp/argws-crm-login-result -w '%{http_code}' \
+    --data-urlencode "csrf_token_name=$login_csrf" \
+    --data-urlencode "email=admin-ci@example.invalid" \
+    --data-urlencode "password=$admin_password" "$url/admin/authentication" 2>/dev/null || true)"
+if [ "$login_status" != "302" ] && [ "$login_status" != "303" ] || \
+    grep -Eiq 'Unable to load the requested language file|An Error Was Encountered' /tmp/argws-crm-login-result; then
+    echo "O primeiro login do administrador falhou (HTTP $login_status)." >&2
+    docker logs --tail 100 "$web" >&2 || true
+    exit 1
+fi
+dashboard_result="$(curl --connect-timeout 2 --max-time 15 -sS -L -b /tmp/argws-crm-admin-cookie \
+    -o /tmp/argws-crm-dashboard -w '%{http_code}|%{url_effective}' "$url/admin" 2>/dev/null || true)"
+dashboard_status="${dashboard_result%%|*}"
+dashboard_url="${dashboard_result#*|}"
+if [ "$dashboard_status" != "200" ] || [[ "$dashboard_url" == *"/authentication"* ]] || \
+    grep -Eiq 'Unable to load the requested language file|An Error Was Encountered|<body[^>]*login_admin' /tmp/argws-crm-dashboard; then
+    echo "A sessão do administrador não abriu o painel (HTTP $dashboard_status, URL $dashboard_url)." >&2
+    docker logs --tail 100 "$web" >&2 || true
+    exit 1
+fi
+
 setup_after_code="$(curl --connect-timeout 2 --max-time 5 -sS -o /dev/null -w '%{http_code}' "$url/setup")"
 install_code="$(curl --connect-timeout 2 --max-time 5 -sS -o /dev/null -w '%{http_code}' "$url/install/")"
 if [ "$setup_after_code" != "404" ] || [ "$install_code" != "404" ]; then
@@ -257,4 +291,4 @@ if [ "$admin_count_after_restart" != "1" ]; then
     exit 1
 fi
 
-echo "Smoke test OK: assistente web protegido, primeiro administrador criado uma vez, /setup e /install bloqueados após setup."
+echo "Smoke test OK: assistente protegido, administrador autenticado e painel aberto; /setup e /install bloqueados após setup."
