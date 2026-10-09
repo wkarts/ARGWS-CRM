@@ -78,6 +78,8 @@ test('módulos antigos e novos usam PT-BR e reconciliação sem apagar personali
 
   assert.match(read('modules/products/products.php'), /'language' => 'portuguese_br'/);
   assert.match(read('modules/purchase/helpers/purchase_helper.php'), /'language' => 'portuguese_br'/);
+  assert.match(read('modules/timesheets/helpers/timesheets_helper.php'), /'language' => 'portuguese_br'/);
+  assert.match(read('modules/invoices_builder/helpers/invoices_builder_helper.php'), /'language' => 'portuguese_br'/);
   assert.match(read('modules/purchase/purchase.php'), /function update_email_lang_for_vendor[\s\S]*return 'portuguese_br'/);
   assert.match(read('modules/webhooks/webhooks.php'), /'language' => 'portuguese_br'/);
   assert.match(read('application/helpers/email_templates_helper.php'), /EmailTemplatesPtBr::get/);
