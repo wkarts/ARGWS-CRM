@@ -1,24 +1,8 @@
 name: argws-crm
 services:
-  storage-init:
-    image: ghcr.io/wkarts/argws-crm:${ARGWS_VERSION:-3.6.2}
-    restart: "no"
-    user: "0:0"
-    entrypoint: ["/bin/sh", "-ec"]
-    command:
-      - |
-        for directory in installation_config uploads temp application_cache application_logs module_accounting_uploads module_finance_uploads module_fleet_uploads module_hr_payroll_uploads module_hr_profile_uploads module_invoices_builder_uploads module_ma_uploads module_products_uploads module_purchase_uploads module_service_management_uploads module_si_custom_theme_uploads module_timesheets_uploads caddy_data caddy_config; do
-          mkdir -p "/storage/$$directory"
-          chown 33:33 "/storage/$$directory"
-        done
-    volumes:
-      - "${ARGWS_STORAGE_ROOT:-./storage}:/storage"
   web:
     image: ghcr.io/wkarts/argws-crm:${ARGWS_VERSION:-3.6.2}
     restart: unless-stopped
-    depends_on:
-      storage-init:
-        condition: service_completed_successfully
     environment:
       ARGWS_DB_HOST: ${ARGWS_DB_HOST:-}
       ARGWS_DB_NAME: ${ARGWS_DB_NAME:-}

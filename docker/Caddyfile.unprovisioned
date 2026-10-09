@@ -4,7 +4,7 @@
 
     @provisioned file {
         root /var/lib/argws-crm/config
-        try_files app-config.php
+        try_files provisioned
     }
 
     route {
@@ -29,6 +29,11 @@
             php_server
         }
 
-        respond "ARGWS CRM aguarda o primeiro acesso. Acesse /setup para criar o administrador inicial. Consulte ARGWS_SETUP_TOKEN no arquivo .env. O instalador legado /install permanece desabilitado." 503
+        # Keep deployment details out of the customer-facing first-access response.
+        handle {
+            @root path /
+            redir @root /setup 302
+            respond 404
+        }
     }
 }

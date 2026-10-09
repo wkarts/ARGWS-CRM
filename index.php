@@ -93,6 +93,13 @@ switch (ENVIRONMENT)
 		exit(1); // EXIT_ERROR
 }
 
+// The first-run migration worker needs fatal bootstrap errors on its captured
+// stderr stream; normal web requests retain production error handling.
+if (PHP_SAPI === 'cli' && getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false) {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 'stderr');
+}
+
 /*
  *---------------------------------------------------------------
  * SYSTEM DIRECTORY NAME

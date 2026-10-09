@@ -21,8 +21,6 @@ class DeploymentArchiveTest(unittest.TestCase):
             "deploy/develop/.env.example": "ARGWS_CRM_IMAGE=ghcr.io/wkarts/argws-crm:develop\n",
             "deploy/production/compose.yaml": (
                 "services:\n"
-                "  storage-init:\n"
-                "    image: " + "$" + "{ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.4.2}\n"
                 "  web:\n"
                 "    image: " + "$" + "{ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.4.2}\n"
             ),
@@ -51,7 +49,7 @@ class DeploymentArchiveTest(unittest.TestCase):
             })
             self.assertIsNone(archive.testzip())
             production_compose = archive.read("deploy/production/compose.yaml").decode()
-            self.assertEqual(production_compose.count("argws-crm:3.5.0"), 2)
+            self.assertEqual(production_compose.count("argws-crm:3.5.0"), 1)
             self.assertNotIn("argws-crm:3.4.2", production_compose)
             self.assertIn(
                 "ARGWS_CRM_IMAGE=ghcr.io/wkarts/argws-crm:3.5.0",
