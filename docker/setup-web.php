@@ -89,7 +89,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && $setupAvailable) {
                 header('Location: /admin/authentication', true, 303);
                 exit;
             } catch (Throwable $exception) {
-                error_log('[ARGWS CRM setup] Provisionamento não concluído: ' . get_class($exception));
+                $diagnostic = sanitize_provisioning_diagnostic($exception->getMessage(), [
+                    is_string($_POST['setup_token'] ?? null) ? $_POST['setup_token'] : '',
+                    is_string($_POST['admin_password'] ?? null) ? $_POST['admin_password'] : '',
+                    is_string($_POST['admin_password_repeat'] ?? null) ? $_POST['admin_password_repeat'] : '',
+                    is_string($_POST['admin_email'] ?? null) ? $_POST['admin_email'] : '',
+                ]);
+                error_log('[ARGWS CRM setup] Provisionamento não concluído: ' . get_class($exception) . ($diagnostic !== '' ? ': ' . $diagnostic : ''));
                 $failure = $exception->getMessage();
                 if (str_contains($failure, 'não contém tabelas') || str_contains($failure, 'já contém tabelas')) {
                     $error = 'O banco de dados já contém tabelas. Nenhum dado foi alterado. Para proteger os registros existentes, o assistente não pode reutilizá-lo como uma instalação nova.';
