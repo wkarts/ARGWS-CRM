@@ -1,6 +1,6 @@
 <?php
 
-defined('BASEPATH') or exit('Acesso direto ao script n„o permitido.');
+defined('BASEPATH') or exit('Acesso direto ao script n√£o permitido.');
 
 /**
  * @property-read Emails_model $emails_model
@@ -20,52 +20,16 @@ class Emails extends AdminController
         if (staff_cant('view', 'email_templates')) {
             access_denied('email_templates');
         }
-        $langCheckings = get_option('email_templates_language_checks');
-        if ($langCheckings == '') {
-            $langCheckings = [];
-        } else {
-            $langCheckings = unserialize($langCheckings);
+        // PT-BR √© o idioma √∫nico do CRM. N√£o criar modelos para outros idiomas.
+        // Recupera modelos de m√≥dulos previamente ativados, sem tocar em
+        // personaliza√ß√µes ou nos estados habilitado/desabilitado existentes.
+        require_once APPPATH . 'services/EmailTemplatesPtBr.php';
+        try {
+            EmailTemplatesPtBr::synchronizeModuleTemplates($this->db);
+        } catch (\Throwable $exception) {
+            log_message('error', 'N√£o foi poss√≠vel conciliar os modelos PT-BR: '
+                . $exception->getMessage());
         }
-
-
-        $this->db->where('language', 'portuguese_br');
-        $email_templates_portuguese_br = $this->db->get(db_prefix() . 'emailtemplates')->result_array();
-        foreach ($this->app->get_available_languages() as $avLanguage) {
-            if ($avLanguage != 'portuguese_br') {
-                foreach ($email_templates_portuguese_br as $template) {
-
-                    // Result is cached and stored in database
-                    // This page may perform 1000 queries per request
-                    if (isset($langCheckings[$template['slug'] . '-' . $avLanguage])) {
-                        continue;
-                    }
-
-                    $notExists = total_rows(db_prefix() . 'emailtemplates', [
-                        'slug'     => $template['slug'],
-                        'language' => $avLanguage,
-                    ]) == 0;
-
-                    $langCheckings[$template['slug'] . '-' . $avLanguage] = 1;
-
-                    if ($notExists) {
-                        $data              = [];
-                        $data['slug']      = $template['slug'];
-                        $data['type']      = $template['type'];
-                        $data['language']  = $avLanguage;
-                        $data['name']      = $template['name'] . ' [' . $avLanguage . ']';
-                        $data['subject']   = $template['subject'];
-                        $data['message']   = '';
-                        $data['fromname']  = $template['fromname'];
-                        $data['plaintext'] = $template['plaintext'];
-                        $data['active']    = $template['active'];
-                        $data['order']     = $template['order'];
-                        $this->db->insert(db_prefix() . 'emailtemplates', $data);
-                    }
-                }
-            }
-        }
-
-        update_option('email_templates_language_checks', serialize($langCheckings));
 
         $data['staff'] = $this->emails_model->get([
             'type'     => 'staff',
@@ -235,9 +199,9 @@ class Emails extends AdminController
             $this->load->config('email');
             // Simulate fake template to be parsed
             $template           = new StdClass();
-            $template->message  = get_option('email_header') . 'Este È um e-mail de teste do SMTP.<br />Se vocÍ recebeu esta mensagem, significa que suas configuraÁıes de SMTP est„o corretas.' . get_option('email_footer');
+            $template->message  = get_option('email_header') . 'Este √© um e-mail de teste do SMTP.<br />Se voc√™ recebeu esta mensagem, significa que suas configura√ß√µes de SMTP est√£o corretas.' . get_option('email_footer');
             $template->fromname = get_option('companyname') != '' ? get_option('companyname') : 'TESTE';
-            $template->subject  = 'Teste de ConfiguraÁ„o do SMTP';
+            $template->subject  = 'Teste de Configura√ß√£o do SMTP';
 
             $template = parse_email_template($template);
 
@@ -272,10 +236,10 @@ class Emails extends AdminController
             $this->email->message($template->message);
 
             if ($this->email->send(true)) {
-                set_alert('success', 'Parece que suas configuraÁıes de SMTP est„o corretas. Verifique seu e-mail agora.');
+                set_alert('success', 'Parece que suas configura√ß√µes de SMTP est√£o corretas. Verifique seu e-mail agora.');
                 hooks()->do_action('smtp_test_email_success');
             } else {
-                set_debug_alert('<h1>Suas configuraÁıes de SMTP n„o est„o corretas. Veja o log de depuraÁ„o abaixo.</h1><br />' . $this->email->print_debugger() . (isset($GLOBALS['debug']) ? $GLOBALS['debug'] : ''));
+                set_debug_alert('<h1>Suas configura√ß√µes de SMTP n√£o est√£o corretas. Veja o log de depura√ß√£o abaixo.</h1><br />' . $this->email->print_debugger() . (isset($GLOBALS['debug']) ? $GLOBALS['debug'] : ''));
 
                 hooks()->do_action('smtp_test_email_failed');
             }
