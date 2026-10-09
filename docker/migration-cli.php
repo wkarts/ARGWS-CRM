@@ -8,6 +8,10 @@ if (PHP_SAPI !== 'cli') {
     exit(70);
 }
 
+error_reporting(E_ALL);
+ini_set('display_errors', 'stderr');
+fwrite(STDERR, '[ARGWS CRM setup] Adaptador de migrations iniciado (SAPI=' . PHP_SAPI . ').' . PHP_EOL);
+
 $_SERVER['argv'] = ['/app/index.php', 'argws_provisioning', 'apply_migrations'];
 $_SERVER['argc'] = count($_SERVER['argv']);
 $_SERVER['SCRIPT_FILENAME'] = '/app/index.php';
