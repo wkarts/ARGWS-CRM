@@ -104,7 +104,7 @@ define('ADMIN_URL', 'admin');
 define('ADMIN_URI', DEFINED('CUSTOM_ADMIN_URL') ? CUSTOM_ADMIN_URL : ADMIN_URL);
 
 /** Public ARGWS release channel; no installation data is sent to this URL. */
-define('ARGWS_VERSION', '3.7.0');
+define('ARGWS_VERSION', '3.8.0');
 define('ARGWS_RELEASES_URL', 'https://github.com/wkarts/argws-crm/releases');
 
 /**
