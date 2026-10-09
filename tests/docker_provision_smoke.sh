@@ -323,7 +323,7 @@ SET subject='Assunto personalizado',
 WHERE slug='invoice-send-to-client' AND language='portuguese_br';
 "
 docker exec --user root "$web" sed -i \
-    's/migration_version.*= 364; /migration_version'\''\] = 365; /' \
+    "s/migration_version.*= 364;/migration_version'] = 365;/" \
     /app/application/config/migration.php
 upgrade_token="$(openssl rand -hex 32)"
 migration_output="$(docker exec -e ARGWS_SETUP_MIGRATION_TOKEN="$upgrade_token" "$web" \
