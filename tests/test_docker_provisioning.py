@@ -246,6 +246,8 @@ esac
         self.assertIn("Adaptador de migrations iniciado", migration_cli)
         self.assertIn("ini_set('display_errors', 'stderr')", migration_cli)
         self.assertIn("$_SERVER['argv'] = ['/app/index.php', 'argws_provisioning', 'apply_migrations'];", migration_cli)
+        self.assertIn("'controller' => 'Argws_provisioning'", migration_cli)
+        self.assertIn("'function' => 'apply_migrations'", migration_cli)
         self.assertIn("require '/app/index.php';", migration_cli)
         self.assertNotIn("'php-cli', '/app/index.php'", source)
         self.assertIn("'; SAPI=' . PHP_SAPI", source)
