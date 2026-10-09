@@ -60,6 +60,7 @@ RUN mkdir -p /app/uploads /app/temp /app/application/cache /app/application/logs
     && php -l /opt/argws-crm-provisioner/web/index.php \
     && php -l /opt/argws-crm-provisioner/sqlparser.php \
     && php -l /opt/argws-crm-provisioner/phpass.php \
+    && php /app/modules/asaas/scripts/assert-webhook-security.php \
     && php -r 'require "/app/modules/einvoice/vendor/autoload.php"; exit(class_exists("Mustache_Engine") && class_exists("Argws\\CRM\\EInvoice\\EinvoiceHandler") ? 0 : 1);' \
     && php -r 'if (PHP_SAPI !== "cli") { fwrite(STDERR, "O executável php não está em modo CLI.\\n"); exit(1); }'
 
