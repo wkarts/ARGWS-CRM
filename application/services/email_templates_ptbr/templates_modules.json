@@ -1,0 +1,138 @@
+{
+  "purchase-order-to-contact": {
+    "name": "Pedido de compra (enviado ao contato)",
+    "subject": "Pedido de compra",
+    "source_name": "Purchase Order (Sent to contact)",
+    "source_subject": "Purchase Order",
+    "source_message": "<span style=\\\"font-size: 12pt;\\\"> Hello !. </span><br /><br /><span style=\\\"font-size: 12pt;\\\"> We would like to share with you a link of Purchase Order information with the number {po_number} </span><br /><br /><span style=\\\"font-size: 12pt;\\\"><br />Please click on the link to view information: {public_link}\n  </span><br /><br />",
+    "module": "purchase"
+  },
+  "purchase-request-to-contact": {
+    "name": "Requisição de compra (enviada ao contato)",
+    "subject": "Requisição de compra",
+    "source_name": "Purchase Request (Sent to contact)",
+    "source_subject": "Purchase Request",
+    "source_message": "<span style=\\\"font-size: 12pt;\\\"> Hello !. </span><br /><br /><span style=\\\"font-size: 12pt;\\\"> We would like to share with you a link of Purchase Request information with the number {pr_number} </span><br /><br /><span style=\\\"font-size: 12pt;\\\"><br />Please click on the link to view information: {public_link}<br/ >{additional_content}\n  </span><br /><br />",
+    "module": "purchase"
+  },
+  "purchase-quotation-to-contact": {
+    "name": "Cotação de compra (enviada ao contato)",
+    "subject": "Cotação de compra",
+    "source_name": "Purchase Quotation (Sent to contact)",
+    "source_subject": "Purchase Quotation",
+    "source_message": "<span style=\\\"font-size: 12pt;\\\"> Hello !. </span><br /><br /><span style=\\\"font-size: 12pt;\\\"> We would like to share with you a link of Purchase Quotation information with the number {pq_number} </span><br /><br /><span style=\\\"font-size: 12pt;\\\"><br />Please click on the link to view information: {quotation_link}<br/ >{additional_content}\n  </span><br /><br />",
+    "module": "purchase"
+  },
+  "debit-note-to-contact": {
+    "name": "Nota de débito (enviada ao contato)",
+    "subject": "Nota de débito",
+    "source_name": "Debit Note (Sent to contact)",
+    "source_subject": "Debit Note",
+    "source_message": "<span style=\\\"font-size: 12pt;\\\"> Hello !. </span><br /><br /><span style=\\\"font-size: 12pt;\\\"> We would like to share with you a link of Debit Note information with the number {dn_number} </span><br /><br /><span style=\\\"font-size: 12pt;\\\"><br />{additional_content}\n  </span><br /><br />",
+    "module": "purchase"
+  },
+  "purchase-statement-to-contact": {
+    "name": "Extrato de compras (enviado ao contato)",
+    "subject": "Extrato de compras",
+    "source_name": "Purchase Statement (Sent to contact)",
+    "source_subject": "Purchase Statement",
+    "source_message": "<span style=\\\"font-size: 12pt;\\\"> Dear {contact_firstname} {contact_lastname} !. </span><br /><br /><span style=\\\"font-size: 12pt;\\\">Its been a great experience working with you. </span><br /><br /><span style=\\\"font-size: 12pt;\\\"><br />Attached with this email is a list of all transactions for the period between {statement_from} to {statement_to}<br/ ><br/ >For your information your account balance due is total: {statement_balance_due}<br /><br/ > Please contact us if you need more information.<br/ > <br />{additional_content}\n  </span><br /><br />",
+    "module": "purchase"
+  },
+  "vendor-registration-confirmed": {
+    "name": "Confirmação de cadastro do fornecedor",
+    "subject": "Seu cadastro foi confirmado",
+    "source_name": "Vendor Registration Confirmed",
+    "source_subject": "Your registration is confirmed",
+    "source_message": "<p>Dear {contact_firstname} {contact_lastname}<br /><br />We just wanted to let you know that your registration at&nbsp;{companyname} is successfully confirmed and your account is now active.<br /><br />You can login at&nbsp;<a href=\"{vendor_portal_url}\">{vendor_portal_url}</a> with the email and password you provided during registration.<br /><br />Please contact us if you need any help.<br /><br />Kind Regards, <br />{email_signature}</p>\n <p><br />(This is an automated email, so please dont reply to this email address)</p>",
+    "module": "purchase"
+  },
+  "purchase-contract-to-contact": {
+    "name": "Contrato de compra (enviado ao contato)",
+    "subject": "Contrato de compra",
+    "source_name": "Purchase Contract (Sent to contact)",
+    "source_subject": "Purchase Contract",
+    "source_message": "<span style=\\\"font-size: 12pt;\\\"> Hello !. </span><br /><br /><span style=\\\"font-size: 12pt;\\\"> We would like to share with you a link of Purchase Contract information with the number {contract_number} </span><br /><br /><span style=\\\"font-size: 12pt;\\\"><br />Please click on the link to view information: {contract_link}\n  </span><br /><br />",
+    "module": "purchase"
+  },
+  "new-contact-created": {
+    "name": "Boas-vindas ao novo contato",
+    "subject": "Bem-vindo(a) à nossa plataforma",
+    "source_name": "New Contact Added/Registered (Welcome Email)",
+    "source_subject": "New Contact Added/Registered (Welcome Email)",
+    "source_message": "<span style=\\\"font-size: 12pt;\\\"> Dear {contact_firstname} {contact_lastname}! </span><br /><br /><span style=\\\"font-size: 12pt;\\\"> Welcome to our system </span><br /><br /><span style=\\\"font-size: 12pt;\\\"><br />Click here to login: {vendor_portal_link}</span><br /></span><br />",
+    "module": "purchase"
+  },
+  "purchase-request-approval": {
+    "name": "Solicitação de aprovação",
+    "subject": "Nova solicitação de aprovação",
+    "source_name": "Request approval",
+    "source_subject": "Request approval",
+    "source_message": "<span style=\\\"font-size: 12pt;\\\"> Hello {staff_name}! </span><br /><br /><span style=\\\"font-size: 12pt;\\\"> You receive an approval request: {link} from {from_staff_name}</span>",
+    "module": "purchase"
+  },
+  "purchase-send-approved": {
+    "name": "Solicitação aprovada",
+    "subject": "Sua solicitação foi aprovada",
+    "source_name": "Email send approved",
+    "source_subject": "Email send approved",
+    "source_message": "<span style=\\\"font-size: 12pt;\\\"> Hello {staff_name}! </span><br /><br /><span style=\\\"font-size: 12pt;\\\">{type} has been approved by {by_staff_name} </span><br /><span style=\\\"font-size: 12pt;\\\"><br />Click here to view detail: {link} </span><br /></span><br />",
+    "module": "purchase"
+  },
+  "purchase-send-rejected": {
+    "name": "Solicitação recusada",
+    "subject": "Sua solicitação foi recusada",
+    "source_name": "Email send rejected",
+    "source_subject": "Email send rejected",
+    "source_message": "<span style=\\\"font-size: 12pt;\\\"> Hello {staff_name}! </span><br /><br /><span style=\\\"font-size: 12pt;\\\"> {type} has been declined by {by_staff_name} </span><br /><span style=\\\"font-size: 12pt;\\\"><br />Click here to view detail: {link}  </span><br /></span><br />",
+    "module": "purchase"
+  },
+  "attendance_notice": {
+    "name": "Notificação de registro de ponto",
+    "subject": "Apontamento de horas — registro de ponto",
+    "source_name": "Attendance notice",
+    "source_subject": "Timesheets - Attendance notice",
+    "source_message": "{staff_name} {type_check} at {date_time}",
+    "module": "timesheets"
+  },
+  "send_request_approval": {
+    "name": "Solicitação de aprovação de ausência",
+    "subject": "Apontamento de horas — aprovação necessária",
+    "source_name": "Send request approval",
+    "source_subject": "Timesheets - Send request approval to approver",
+    "source_message": "Hi {approver}! <br>-{staff_name} has created an apply for leave and requires your approval. Please go to this link for details and approval: {link}",
+    "module": "timesheets"
+  },
+  "remind_user_check_in": {
+    "name": "Lembrete de registro de ponto",
+    "subject": "Apontamento de horas — registre sua entrada",
+    "source_name": "Remind user check in",
+    "source_subject": "Timesheets - Remind user check in",
+    "source_message": "Remind you to check in today to record the start time of the shift {date_time}",
+    "module": "timesheets"
+  },
+  "new_leave_application_send_to_notification_recipient": {
+    "name": "Nova solicitação de ausência",
+    "subject": "Apontamento de horas — nova solicitação",
+    "source_name": "New application (Send to notification recipient)",
+    "source_subject": "Timesheets - New application - Send to notification recipient",
+    "source_message": "{staff_name} created a new application {link} at {date_time}",
+    "module": "timesheets"
+  },
+  "order-to-admin": {
+    "name": "Pagamento de pedido (equipe)",
+    "subject": "Pagamento de pedido confirmado",
+    "source_name": "Success Order For Admin",
+    "source_subject": "Order Paid Successfully",
+    "source_message": "<em>You received a new order {order_id} with a total amount of {total} {currency}  {invoice_number}{invoice_link}</em>",
+    "module": "products"
+  },
+  "order-to-client": {
+    "name": "Pagamento de pedido (cliente)",
+    "subject": "Seu pedido foi pago com sucesso",
+    "source_name": "Success Order For Customer",
+    "source_subject": "Order Placed Successfully",
+    "source_message": "<em>Your payment for order {order_id} is paid through {invoice_number}{invoice_link} with a total amount of {total} {currency}</em>",
+    "module": "products"
+  }
+}
