@@ -2,6 +2,9 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+// Gatilhos complementares opcionais da aplicação (sem workers adicionais).
+require_once APPPATH . 'helpers/sms_events_helper.php';
+
 hooks()->add_action('admin_init', 'maybe_test_sms_gateway');
 
 function maybe_test_sms_gateway()

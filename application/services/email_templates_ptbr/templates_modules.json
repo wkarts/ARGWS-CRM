@@ -134,5 +134,21 @@
     "source_subject": "Order Placed Successfully",
     "source_message": "<em>Your payment for order {order_id} is paid through {invoice_number}{invoice_link} with a total amount of {total} {currency}</em>",
     "module": "products"
+  },
+  "invoice-to-contact": {
+    "name": "Fatura emitida (enviada ao contato)",
+    "subject": "Fatura disponível para consulta",
+    "source_name": "Invoice (Sent to contact)",
+    "source_subject": "Invoice Builder",
+    "source_message": "<span style=\\\"font-size: 12pt;\\\"> Hello !. </span><br /><br /><span style=\\\"font-size: 12pt;\\\"> We would like to share with you a link of Invoice information with the number {invoice_number} </span><br /><br /><span style=\\\"font-size: 12pt;\\\"><br />Please click on the link to view information: {public_link}\n  </span><br /><br />{additional_content}",
+    "module": "invoices_builder"
+  },
+  "webhook-failed": {
+    "name": "Falha na entrega do webhook",
+    "subject": "Falha na entrega de um webhook",
+    "source_name": "Webhook failed",
+    "source_subject": "Webhook failed",
+    "source_message": "",
+    "module": "webhooks"
   }
 }

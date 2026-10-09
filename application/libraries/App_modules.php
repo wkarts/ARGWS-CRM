@@ -116,6 +116,16 @@ class App_modules
          */
         hooks()->do_action('module_activated', $module);
 
+        // Alguns módulos registram os e-mails somente no momento da ativação.
+        // Traduzir padrões conhecidos sem remover HTML ou edições de clientes.
+        try {
+            require_once APPPATH . 'services/EmailTemplatesPtBr.php';
+            EmailTemplatesPtBr::synchronizeModuleTemplates($this->ci->db, $name);
+        } catch (Throwable $exception) {
+            log_message('error', 'Não foi possível conciliar os modelos de e-mail do módulo '
+                . $name . ': ' . $exception->getMessage());
+        }
+
         return true;
     }
 

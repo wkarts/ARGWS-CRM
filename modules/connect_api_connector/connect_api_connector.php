@@ -126,6 +126,8 @@ function connect_api_connector_sms_triggers($triggers)
         'merge_fields' => $invoiceFields,
         'label' => _l('connect_api_connector_trigger_invoice_sent'),
         'info' => _l('connect_api_connector_trigger_invoice_sent_info'),
+        'group' => 'Financeiro',
+        'default_message' => 'Olá {contact_firstname}, sua fatura {invoice_number} está disponível: {invoice_link}',
     ];
 
     // O invoice_payment_recorded já é um gatilho nativo do ARGWS CRM. Só criamos a definição

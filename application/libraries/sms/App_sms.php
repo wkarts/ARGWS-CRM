@@ -116,11 +116,14 @@ class App_sms
     {
         $triggers = hooks()->apply_filters('sms_gateway_available_triggers', $this->triggers);
 
-        foreach ($triggers as $trigger_id => $triger) {
+        foreach ($triggers as $trigger_id => $definition) {
             if ($this->is_options_page()) {
-                add_option($this->trigger_option_name($trigger_id), '', 0);
+                // add_option não substitui textos vazios nem modelos editados.
+                add_option($this->trigger_option_name($trigger_id),
+                    (string) ($definition['default_message'] ?? ''), 0);
             }
             $triggers[$trigger_id]['value'] = $this->get_trigger_value($trigger_id);
+            $triggers[$trigger_id]['enabled'] = $this->is_trigger_enabled($trigger_id, $definition);
         }
 
         return $triggers;
@@ -186,19 +189,46 @@ class App_sms
         return 'sms_trigger_' . $trigger;
     }
 
+    public function trigger_enabled_option_name($trigger)
+    {
+        return $this->trigger_option_name($trigger) . '_enabled';
+    }
+
+    /**
+     * Compatibilidade: gatilhos antigos com mensagem configurada continuam
+     * ativos até que o administrador escolha expressamente Sim ou Não.
+     * Novos eventos são instalados desativados para não produzir disparos
+     * inesperados durante atualizações.
+     */
+    public function is_trigger_enabled($trigger, $definition = null)
+    {
+        $stored = (string) get_option($this->trigger_enabled_option_name($trigger));
+        if ($stored === '1') {
+            return true;
+        }
+        if ($stored === '0') {
+            return false;
+        }
+
+        if ($definition === null) {
+            $definition = $this->triggers[$trigger] ?? [];
+        }
+        if (array_key_exists('default_enabled', (array) $definition)) {
+            return (bool) $definition['default_enabled'];
+        }
+
+        return trim((string) $this->get_trigger_value($trigger)) !== '';
+    }
+
     public function is_any_trigger_active()
     {
-        $triggers = $this->get_available_triggers();
-        $active   = false;
-        foreach ($triggers as $trigger_id => $trigger_opts) {
-            if ($this->_is_trigger_message_empty($this->get_trigger_value($trigger_id))) {
-                $active = true;
-
-                break;
+        foreach ($this->get_available_triggers() as $trigger_id => $definition) {
+            if ($definition['enabled'] && trim((string) $definition['value']) !== '') {
+                return true;
             }
         }
 
-        return $active;
+        return false;
     }
 
     protected function set_error($error, $log_message = true)
@@ -223,15 +253,12 @@ class App_sms
 
     public function is_trigger_active($trigger)
     {
-        if ($trigger != '') {
-            if (!$this->_is_trigger_message_empty($this->get_trigger_value($trigger))) {
-                return false;
-            }
-        } else {
+        if ($trigger === '') {
             return $this->is_any_trigger_active();
         }
 
-        return true;
+        return $this->is_trigger_enabled($trigger)
+            && trim((string) $this->get_trigger_value($trigger)) !== '';
     }
 
     public function get_active_gateway()
@@ -330,19 +357,19 @@ class App_sms
             SMS_TRIGGER_INVOICE_OVERDUE => [
                 'merge_fields' => array_merge($customer_merge_fields, $invoice_merge_fields, ['{total_days_overdue}']),
                 'label'        => 'Aviso de fatura vencida',
-                'info'         => 'Trigger when invoice overdue notice is sent to customer contacts.',
+                'info'         => 'Enviado aos contatos do cliente quando a fatura estiver vencida.',
             ],
 
             SMS_TRIGGER_INVOICE_DUE => [
                 'merge_fields' => array_merge($customer_merge_fields, $invoice_merge_fields),
                 'label'        => 'Aviso de vencimento da fatura',
-                'info'         => 'Trigger when invoice due notice is sent to customer contacts.',
+                'info'         => 'Enviado aos contatos do cliente no aviso de vencimento da fatura.',
             ],
 
             SMS_TRIGGER_PAYMENT_RECORDED => [
                 'merge_fields' => array_merge($customer_merge_fields, $invoice_merge_fields, ['{payment_total}', '{payment_date}']),
                 'label'        => 'Pagamento de fatura registrado',
-                'info'         => 'Trigger when invoice payment is recorded.',
+                'info'         => 'Enviado quando um pagamento da fatura for registrado.',
             ],
 
             SMS_TRIGGER_ESTIMATE_EXP_REMINDER => [
@@ -359,49 +386,49 @@ class App_sms
                     ]
                 ),
                 'label' => 'Lembrete de vencimento do orçamento',
-                'info'  => 'Trigger when expiration reminder should be send to customer contacts.',
+                'info'  => 'Enviado aos contatos do cliente no lembrete de vencimento do orçamento.',
             ],
 
             SMS_TRIGGER_PROPOSAL_EXP_REMINDER => [
                 'merge_fields' => $proposal_merge_fields,
                 'label'        => 'Lembrete de vencimento da proposta',
-                'info'         => 'Trigger when expiration reminder should be send to proposal.',
+                'info'         => 'Enviado ao destinatário da proposta quando estiver próxima do vencimento.',
             ],
 
             SMS_TRIGGER_PROPOSAL_NEW_COMMENT_TO_CUSTOMER => [
                 'merge_fields' => $proposal_merge_fields,
                 'label'        => 'Novo comentário em proposta (cliente)',
-                'info'         => 'Trigger when staff member comments on proposal, SMS will be sent to proposal number (customer/lead).',
+                'info'         => 'Enviado ao telefone da proposta quando a equipe registrar um comentário.',
             ],
 
             SMS_TRIGGER_PROPOSAL_NEW_COMMENT_TO_STAFF => [
                 'merge_fields' => $proposal_merge_fields,
                 'label'        => 'Novo comentário em proposta (equipe)',
-                'info'         => 'Trigger when customer/lead comments on proposal, SMS will be sent to proposal creator and assigned staff member.',
+                'info'         => 'Enviado ao responsável pela proposta quando o cliente registrar um comentário.',
             ],
 
             SMS_TRIGGER_CONTRACT_NEW_COMMENT_TO_CUSTOMER => [
                 'merge_fields' => array_merge($customer_merge_fields, $contract_merge_fields),
                 'label'        => 'Novo comentário em contrato (cliente)',
-                'info'         => 'Trigger when staff member add comment to contract, SMS will be sent customer contacts.',
+                'info'         => 'Enviado aos contatos do cliente quando a equipe comentar no contrato.',
             ],
 
             SMS_TRIGGER_CONTRACT_NEW_COMMENT_TO_STAFF => [
                 'merge_fields' => $contract_merge_fields,
                 'label'        => 'Novo comentário em contrato (equipe)',
-                'info'         => 'Trigger when customer add comment to contract, SMS will be sent to contract creator.',
+                'info'         => 'Enviado ao responsável quando o cliente comentar no contrato.',
             ],
 
             SMS_TRIGGER_CONTRACT_EXP_REMINDER => [
                 'merge_fields' => array_merge($customer_merge_fields, $contract_merge_fields),
                 'label'        => 'Lembrete de vencimento do contrato',
-                'info'         => 'Trigger when expiration reminder should be send via Cron Job to customer contacts.',
+                'info'         => 'Enviado aos contatos do cliente pelo agendamento automático de vencimento de contratos.',
             ],
 
             SMS_TRIGGER_CONTRACT_SIGN_REMINDER => [
                 'merge_fields' => array_merge($customer_merge_fields, $contract_merge_fields),
                 'label'        => 'Lembrete para assinatura de contrato',
-                'info'         => 'Trigger when the contract is first time sent to the customer and automatically stopped when the contract is signed.',
+                'info'         => 'Enviado quando o contrato for apresentado para assinatura; cessam os lembretes após a assinatura.',
             ],
 
             SMS_TRIGGER_STAFF_REMINDER => [
@@ -414,9 +441,110 @@ class App_sms
                     '{staff_reminder_relation_link}',
                 ],
                 'label' => 'Lembrete para colaborador',
-                'info'  => 'Trigger when staff is notified for a specific custom <a href="' . admin_url('misc/reminders') . '">reminder</a>.',
+                'info'  => 'Enviado ao colaborador quando receber um <a href="' . admin_url('misc/reminders') . '">lembrete</a> individual.',
             ],
         ];
+
+
+        // Novos gatilhos ligados a eventos reais do CRM; instalação desativada.
+        // O envio usa exclusivamente o gateway Connect|API já configurado.
+        $additional = [
+            'contact_created_notice' => [
+                'label' => 'Boas-vindas ao novo contato',
+                'info' => 'Enviado ao contato após o cadastro.',
+                'merge_fields' => array_merge($customer_merge_fields, ['{contact_email}']),
+                'group' => 'Relacionamento',
+                'default_message' => 'Olá {contact_firstname}, seu cadastro foi realizado. Seja bem-vindo(a)!',
+            ],
+            'lead_created_notice' => [
+                'label' => 'Nova oportunidade recebida',
+                'info' => 'Confirma ao interessado o recebimento de uma nova solicitação.',
+                'merge_fields' => ['{lead_name}', '{lead_id}'],
+                'group' => 'Relacionamento',
+                'default_message' => 'Olá {lead_name}, recebemos sua solicitação. Nossa equipe entrará em contato.',
+            ],
+            'ticket_created_notice' => [
+                'label' => 'Novo chamado de suporte',
+                'info' => 'Enviado ao contato vinculado ao chamado quando ele é aberto.',
+                'merge_fields' => ['{ticket_id}', '{ticket_subject}', '{contact_firstname}'],
+                'group' => 'Suporte',
+                'default_message' => 'Olá {contact_firstname}, recebemos o chamado #{ticket_id}: {ticket_subject}.',
+            ],
+            'estimate_sent_notice' => [
+                'label' => 'Orçamento enviado',
+                'info' => 'Enviado aos contatos ativos do cliente quando o orçamento é encaminhado.',
+                'merge_fields' => ['{estimate_id}', '{estimate_number}', '{contact_firstname}'],
+                'group' => 'Vendas',
+                'default_message' => 'Olá {contact_firstname}, seu orçamento nº {estimate_number} está disponível.',
+            ],
+            'proposal_sent_notice' => [
+                'label' => 'Proposta enviada',
+                'info' => 'Enviado ao telefone cadastrado na proposta após o envio.',
+                'merge_fields' => $proposal_merge_fields,
+                'group' => 'Vendas',
+                'default_message' => 'Sua proposta nº {proposal_number} foi enviada. Assunto: {proposal_subject}.',
+            ],
+            'proposal_accepted_notice' => [
+                'label' => 'Proposta aprovada',
+                'info' => 'Informa ao colaborador responsável quando a proposta é aprovada.',
+                'merge_fields' => ['{proposal_id}', '{proposal_subject}'],
+                'group' => 'Vendas',
+                'default_message' => 'Proposta aprovada! Referência #{proposal_id}: {proposal_subject}.',
+            ],
+            'task_assignee_added_notice' => [
+                'label' => 'Tarefa atribuída',
+                'info' => 'Enviado ao colaborador que foi atribuído à tarefa.',
+                'merge_fields' => ['{task_id}', '{task_name}'],
+                'group' => 'Equipe',
+                'default_message' => 'Uma tarefa foi atribuída a você: {task_name} (#{task_id}).',
+            ],
+            'task_completed_notice' => [
+                'label' => 'Tarefa concluída',
+                'info' => 'Enviado ao criador da tarefa quando ela for concluída.',
+                'merge_fields' => ['{task_id}', '{task_name}'],
+                'group' => 'Equipe',
+                'default_message' => 'A tarefa {task_name} (#{task_id}) foi concluída.',
+            ],
+            'project_finished_notice' => [
+                'label' => 'Projeto concluído',
+                'info' => 'Enviado aos contatos ativos do cliente após a conclusão do projeto.',
+                'merge_fields' => ['{project_id}', '{project_name}', '{contact_firstname}'],
+                'group' => 'Projetos',
+                'default_message' => 'Olá {contact_firstname}, o projeto {project_name} foi concluído.',
+            ],
+            'invoice_cancelled_notice' => [
+                'label' => 'Fatura cancelada',
+                'info' => 'Enviado aos contatos ativos do cliente quando a fatura é cancelada.',
+                'merge_fields' => ['{invoice_id}', '{invoice_number}', '{contact_firstname}'],
+                'group' => 'Financeiro',
+                'default_message' => 'Olá {contact_firstname}, a fatura {invoice_number} foi cancelada.',
+            ],
+        ];
+        foreach ($additional as $id => $definition) {
+            $definition['default_enabled'] = false;
+            $triggers[$id] = $definition;
+        }
+
+        $defaults = [
+            SMS_TRIGGER_INVOICE_OVERDUE => ['Financeiro', 'Olá {contact_firstname}, sua fatura {invoice_number} está vencida. Consulte: {invoice_link}'],
+            SMS_TRIGGER_INVOICE_DUE => ['Financeiro', 'Olá {contact_firstname}, a fatura {invoice_number} vence em {invoice_duedate}. Consulte: {invoice_link}'],
+            SMS_TRIGGER_PAYMENT_RECORDED => ['Financeiro', 'Olá {contact_firstname}, recebemos o pagamento da fatura {invoice_number}. Obrigado!'],
+            SMS_TRIGGER_ESTIMATE_EXP_REMINDER => ['Vendas', 'Olá {contact_firstname}, seu orçamento {estimate_number} está próximo do vencimento.'],
+            SMS_TRIGGER_PROPOSAL_EXP_REMINDER => ['Vendas', 'A proposta {proposal_number} está próxima do vencimento. Consulte: {proposal_link}'],
+            SMS_TRIGGER_PROPOSAL_NEW_COMMENT_TO_CUSTOMER => ['Vendas', 'Há um novo comentário na proposta {proposal_number}. Acesse: {proposal_link}'],
+            SMS_TRIGGER_PROPOSAL_NEW_COMMENT_TO_STAFF => ['Vendas', 'O cliente comentou na proposta {proposal_number}.'],
+            SMS_TRIGGER_CONTRACT_NEW_COMMENT_TO_CUSTOMER => ['Contratos', 'Há um novo comentário no contrato {contract_subject}.'],
+            SMS_TRIGGER_CONTRACT_NEW_COMMENT_TO_STAFF => ['Contratos', 'O cliente comentou no contrato {contract_subject}.'],
+            SMS_TRIGGER_CONTRACT_EXP_REMINDER => ['Contratos', 'O contrato {contract_subject} está próximo do vencimento ({contract_dateend}).'],
+            SMS_TRIGGER_CONTRACT_SIGN_REMINDER => ['Contratos', 'O contrato {contract_subject} está aguardando sua assinatura.'],
+            SMS_TRIGGER_STAFF_REMINDER => ['Equipe', 'Olá {staff_firstname}, lembrete: {staff_reminder_description}.'],
+        ];
+        foreach ($defaults as $id => $default) {
+            if (isset($triggers[$id])) {
+                $triggers[$id]['group'] = $default[0];
+                $triggers[$id]['default_message'] = $default[1];
+            }
+        }
 
         $this->triggers = hooks()->apply_filters('sms_triggers', $triggers);
     }

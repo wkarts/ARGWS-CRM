@@ -234,7 +234,7 @@ if (!function_exists('add_timesheets_email_templates')) {
 	function add_timesheets_email_templates() {
 		$CI = &get_instance();
 
-		$data['timesheets_attendance_mgt_templates'] = $CI->emails_model->get(['type' => 'timesheets_attendance_mgt', 'language' => 'english']);
+		$data['timesheets_attendance_mgt_templates'] = $CI->emails_model->get(['type' => 'timesheets_attendance_mgt', 'language' => 'portuguese_br']);
 
 		$CI->load->view('timesheets/email_templates', $data);
 	}

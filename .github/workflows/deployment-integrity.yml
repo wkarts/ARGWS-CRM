@@ -28,6 +28,8 @@ jobs:
         run: node --test tests/email_templates_ptbr.test.cjs
       - name: Validar contratos das integrações financeiras e SMS
         run: node --test tests/crm_integrations_contract.test.cjs
+      - name: Validar modelos PT-BR e gatilhos individuais
+        run: node --test tests/crm_ptbr_sms_modules.test.cjs
       - name: Testar exclusão dos artefatos operacionais dos ZIPs
         run: python3 -m unittest tests/test_package_release.py
       - name: Testar o ZIP separado do diretório deploy

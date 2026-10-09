@@ -3351,7 +3351,7 @@ $lang['help_leads_create_permission']              = 'Toda a equipe pode criar l
 $lang['help_leads_edit_permission']                = 'Todos que têm acesso a um lead específico podem editar a maior parte das informações do lead';
 $lang['triggers']                                  = 'Gatilhos';
 $lang['notice_only_one_active_sms_gateway']        = 'Apenas 1 gateway SMS ativo é permitido';
-$lang['sms_trigger_disable_tip']                   = 'Deixe o conteúdo em branco para desativar o acionador específico.';
+$lang['sms_trigger_disable_tip']                   = 'Ative ou desative cada gatilho de forma independente, sem apagar o texto da mensagem.';
 $lang['tables']                                    = 'Tabelas';
 $lang['only_project_tasks']                        = 'Apenas tarefas relacionadas ao projeto';
 $lang['download_all']                              = 'Baixar tudo';
@@ -3470,7 +3470,7 @@ $lang['settings_require_client_logged_in_to_view_contract']     = 'Requerer que 
 $lang['privacy_policy']                                         = 'Política de Privacidade';
 $lang['gdpr_terms_agree']                                       = 'Concordo com os <a href="%s" target="_blank"> Termos e Condições </a>';
 $lang['terms_and_conditions_validation']                        = 'Você deve aceitar os Termos e Condições para continuar.';
-$lang['gdpr']                                                   = 'Regulamento Geral de Proteção de Dados (GDPR)';
+$lang['gdpr']                                                   = 'Lei Geral de Proteção de Dados (LGPD)';
 $lang['data_removal_request_sent']                              = 'Pedido de remoção de dados enviado com sucesso';
 $lang['gdpr_consents']                                          = 'Consentimentos';
 $lang['gdpr_consent']                                           = 'Consentimento';
@@ -3515,13 +3515,13 @@ $lang['subscription_option_send_invoice']                       = 'Enviar fatura
 $lang['subscription_option_send_payment_receipt']               = 'Enviar recibo de pagamento';
 $lang['subscription_option_send_payment_receipt_and_invoice']   = 'Enviar fatura e recibo de pagamento';
 $lang['subscription_option_do_nothing']                         = 'Fazer nada';
-$lang['gdpr_not_enabled']                                       = 'GDPR não ativado';
-$lang['enable_gdpr']                                            = 'Ativar GDPR';
+$lang['gdpr_not_enabled']                                       = 'LGPD não ativada';
+$lang['enable_gdpr']                                            = 'Ativar recursos de LGPD';
 $lang['gdpr_right_to_rectification']                            = 'Direito de retificação';
 $lang['test_sms_config']                                        = 'Testar configuração de SMS';
 $lang['test_sms_message']                                       = 'Mensagem de teste';
 $lang['send_test_sms']                                          = 'Enviar SMS de teste';
-$lang['gdpr_short']                                             = 'GDPR';
+$lang['gdpr_short']                                             = 'LGPD';
 $lang['allow_non_admin_staff_to_delete_ticket_attachments']     = 'Permitir que membros da equipe que não são administradores excluam anexos de solicitações';
 
 # Version 2.1.0

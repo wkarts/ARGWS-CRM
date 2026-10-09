@@ -1656,7 +1656,7 @@ if (!function_exists('add_purchase_email_templates')) {
     function add_purchase_email_templates() {
         $CI = &get_instance();
 
-        $data['purchase_templates'] = $CI->emails_model->get(['type' => 'purchase_order', 'language' => 'english']);
+        $data['purchase_templates'] = $CI->emails_model->get(['type' => 'purchase_order', 'language' => 'portuguese_br']);
 
         $CI->load->view('purchase/email_templates', $data);
     }

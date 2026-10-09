@@ -373,7 +373,7 @@ if (!function_exists('add_invoice_builder_email_templates')) {
     function add_invoice_builder_email_templates() {
         $CI = &get_instance();
 
-        $data['invoice_builder_templates'] = $CI->emails_model->get(['type' => 'invoice_builder', 'language' => 'english']);
+        $data['invoice_builder_templates'] = $CI->emails_model->get(['type' => 'invoice_builder', 'language' => 'portuguese_br']);
 
         $CI->load->view('invoices_builder/email_templates', $data);
     }
