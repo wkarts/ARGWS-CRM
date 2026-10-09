@@ -9,10 +9,10 @@ class InitModules
      */
     public function handle()
     {
-        $trace = PHP_SAPI === 'cli' && getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false;
-        if ($trace) {
-            fwrite(STDERR, '[ARGWS CRM setup] Hook InitModules iniciado.' . PHP_EOL);
-            fwrite(STDERR, '[ARGWS CRM setup] Hook InitModules ignorado: exclusões CSRF não se aplicam ao executor CLI.' . PHP_EOL);
+        // Migration CLI runs with a short-lived internal token. Module CSRF
+        // exclusions apply only to web requests, and scanning every module
+        // prevents the isolated migration worker from bootstrapping.
+        if (PHP_SAPI === 'cli' && getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false) {
             return;
         }
 
@@ -20,12 +20,7 @@ class InitModules
         // Load the directory helper so the directory_map function can be used
         include_once(BASEPATH . 'helpers/directory_helper.php');
 
-        $validModules = \App_modules::get_valid_modules();
-        if ($trace) {
-            fwrite(STDERR, '[ARGWS CRM setup] Hook InitModules encontrou ' . count($validModules) . ' módulos válidos.' . PHP_EOL);
-        }
-
-        foreach ($validModules as $module) {
+        foreach (\App_modules::get_valid_modules() as $module) {
             $excludeUrisPath = $module['path'] . 'config' . DIRECTORY_SEPARATOR . 'csrf_exclude_uris.php';
 
             if (file_exists($excludeUrisPath)) {
@@ -37,10 +32,6 @@ class InitModules
                     });
                 }
             }
-        }
-
-        if ($trace) {
-            fwrite(STDERR, '[ARGWS CRM setup] Hook InitModules concluído.' . PHP_EOL);
         }
     }
 }
