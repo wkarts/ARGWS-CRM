@@ -100,37 +100,126 @@ if ($total_gateways > 1) { ?>
     <hr />
     <?php echo render_input('settings[bitly_access_token]', 'Token de acesso Bitly', get_option('bitly_access_token')); ?>
     <hr />
-    <h4 class="mbot15">
-        <i class="fa-regular fa-circle-question pull-left tw-mt-0.5 tw-mr-1" data-toggle="tooltip"
-            data-title="<?php echo _l('sms_trigger_disable_tip'); ?>"></i>
-        <?php echo _l('triggers'); ?>
+    <h4 class="mbot10">
+        <i class="fa-regular fa-message tw-mr-1"></i> Modelos e gatilhos de mensagens
     </h4>
+    <p class="text-muted">
+        Ative ou desative cada gatilho separadamente. Desativar um gatilho não
+        apaga a mensagem que você escreveu. Os novos gatilhos vêm desativados
+        para não gerar envios inesperados.
+    </p>
     <?php
-foreach ($triggers as $trigger_name => $trigger_opts) {
-            echo '<a href="#" onclick="slideToggle(\'#sms_merge_fields_' . $trigger_name . '\'); return false;" class="pull-right"><small>' . _l('available_merge_fields') . '</small></a>';
+    uasort($triggers, static function ($a, $b) {
+        return strcmp((string) ($a['group'] ?? 'Outras integrações'),
+            (string) ($b['group'] ?? 'Outras integrações'))
+            ?: strcasecmp((string) ($a['label'] ?? ''), (string) ($b['label'] ?? ''));
+    });
+    $lastGroup = null;
+    foreach ($triggers as $trigger_name => $trigger_opts) {
+        $safeId = preg_replace('/[^a-z0-9_-]/i', '-', (string) $trigger_name);
+        $group = (string) ($trigger_opts['group'] ?? 'Outras integrações');
+        $active = !empty($trigger_opts['enabled']);
+        $optionKey = $this->app_sms->trigger_enabled_option_name($trigger_name);
+        $messageKey = $this->app_sms->trigger_option_name($trigger_name);
+        $default = (string) ($trigger_opts['default_message'] ?? '');
 
-            $label = '<b>' . $trigger_opts['label'] . '</b>';
-            if (isset($trigger_opts['info']) && $trigger_opts['info'] != '') {
-                $label .= '<p>' . $trigger_opts['info'] . '</p>';
-            }
-
-            echo render_textarea('settings[' . $this->app_sms->trigger_option_name($trigger_name) . ']', $label, $trigger_opts['value']);
-
-            hooks()->do_action('after_sms_trigger_textarea_content', ['name' => $trigger_name, 'options' => $trigger_opts]);
-
-            $merge_fields = '';
-
-            foreach ($trigger_opts['merge_fields'] as $merge_field) {
-                $merge_fields .= $merge_field . ', ';
-            }
-
-            if ($merge_fields != '') {
-                echo '<div id="sms_merge_fields_' . $trigger_name . '" style="display:none;" class="mbot10">';
-                echo substr($merge_fields, 0, -2);
-                echo '<hr class="hr-10" />';
+        if ($lastGroup !== $group) {
+            if ($lastGroup !== null) {
                 echo '</div>';
             }
-            echo '<hr class="hr-10" />';
+            echo '<h4 class="tw-mt-6 tw-mb-3">' . html_escape($group) . '</h4>';
+            echo '<div class="row">';
+            $lastGroup = $group;
         }
-?>
+    ?>
+        <div class="col-xs-12">
+            <section class="panel panel-default sms-trigger-card" id="sms-trigger-<?= html_escape($safeId); ?>">
+                <div class="panel-heading clearfix">
+                    <div class="row">
+                        <div class="col-sm-8">
+                            <strong><?= html_escape((string) ($trigger_opts['label'] ?? $trigger_name)); ?></strong>
+                            <?php if (!empty($trigger_opts['info'])) { ?>
+                                <p class="text-muted mbot0 mtop5">
+                                    <?= $trigger_opts['info']; ?>
+                                </p>
+                            <?php } ?>
+                        </div>
+                        <div class="col-sm-4 text-right">
+                            <div class="checkbox checkbox-primary" style="margin-top:0">
+                                <input type="hidden" name="settings[<?= html_escape($optionKey); ?>]" value="0">
+                                <input type="checkbox"
+                                    id="sms-enabled-<?= html_escape($safeId); ?>"
+                                    name="settings[<?= html_escape($optionKey); ?>]"
+                                    value="1" <?= $active ? 'checked' : ''; ?>>
+                                <label for="sms-enabled-<?= html_escape($safeId); ?>">Gatilho ativo</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <label for="sms-message-<?= html_escape($safeId); ?>" class="control-label">
+                        Mensagem do gatilho
+                    </label>
+                    <textarea class="form-control" rows="3"
+                        name="settings[<?= html_escape($messageKey); ?>]"
+                        id="sms-message-<?= html_escape($safeId); ?>"
+                        aria-label="Mensagem de <?= html_escape((string) $trigger_opts['label']); ?>"><?= html_escape((string) ($trigger_opts['value'] ?? '')); ?></textarea>
+                    <?php hooks()->do_action('after_sms_trigger_textarea_content', [
+                        'name' => $trigger_name, 'options' => $trigger_opts,
+                    ]); ?>
+                    <div class="mtop10 clearfix">
+                        <?php if ($default !== '') { ?>
+                            <button type="button" class="btn btn-default btn-xs sms-use-default"
+                                data-target="sms-message-<?= html_escape($safeId); ?>"
+                                data-default="<?= html_escape(base64_encode($default)); ?>">
+                                Usar modelo padrão
+                            </button>
+                        <?php } ?>
+                        <?php if (!empty($trigger_opts['merge_fields'])) { ?>
+                            <button type="button" class="btn btn-link btn-xs pull-right sms-toggle-fields"
+                                data-target="sms-fields-<?= html_escape($safeId); ?>"
+                                aria-expanded="false">
+                                Ver variáveis disponíveis
+                            </button>
+                        <?php } ?>
+                    </div>
+                    <?php if (!empty($trigger_opts['merge_fields'])) { ?>
+                        <div id="sms-fields-<?= html_escape($safeId); ?>" class="well well-sm mtop10"
+                            style="display:none;overflow-wrap:anywhere">
+                            <small><?= html_escape(implode(', ', $trigger_opts['merge_fields'])); ?></small>
+                        </div>
+                    <?php } ?>
+                </div>
+            </section>
+        </div>
+    <?php
+    }
+    if ($lastGroup !== null) {
+        echo '</div>';
+    }
+    ?>
+    <script>
+    (function () {
+        if (window.smsTemplatesPtBrInitialized) return;
+        window.smsTemplatesPtBrInitialized = true;
+        document.addEventListener('click', function (event) {
+            const restore = event.target.closest('.sms-use-default');
+            if (restore) {
+                const target = document.getElementById(restore.dataset.target);
+                if (!target) return;
+                const bytes = Uint8Array.from(atob(restore.dataset.default), c => c.charCodeAt(0));
+                target.value = new TextDecoder('utf-8').decode(bytes);
+                target.dispatchEvent(new Event('input', {bubbles: true}));
+            }
+            const toggle = event.target.closest('.sms-toggle-fields');
+            if (toggle) {
+                const target = document.getElementById(toggle.dataset.target);
+                if (!target) return;
+                const show = target.style.display === 'none';
+                target.style.display = show ? 'block' : 'none';
+                toggle.setAttribute('aria-expanded', show ? 'true' : 'false');
+            }
+        });
+    }());
+    </script>
 </div>

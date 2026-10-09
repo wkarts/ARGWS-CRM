@@ -42,6 +42,101 @@ final class EmailTemplatesPtBr
         return self::moduleTemplates()[$slug] ?? null;
     }
 
+
+    /**
+     * Reconcilia os modelos dos módulos após a instalação, no upgrade e na
+     * página administrativa. NÃO remove registros, alterna status nem altera
+     * conteúdo personalizado. As edições são feitas campo a campo somente
+     * quando ainda correspondem exatamente ao original conhecido.
+     *
+     * Para instaladores antigos que inseriram registros em inglês, preserva
+     * a origem e cria uma cópia PT-BR, sem alterar o idioma do registro antigo.
+     */
+    public static function synchronizeModuleTemplates($db, ?string $module = null): int
+    {
+        $definitions = self::moduleTemplates();
+        if ($module !== null) {
+            $definitions = array_filter(
+                $definitions,
+                static function ($definition) use ($module) {
+                    return ($definition['module'] ?? '') === $module;
+                }
+            );
+        }
+        if (!$definitions) {
+            return 0;
+        }
+
+        $table = db_prefix() . 'emailtemplates';
+        if (!$db->table_exists($table)) {
+            return 0;
+        }
+
+        $rows = $db->where_in('slug', array_keys($definitions))
+            ->get($table)->result_array();
+        $bySlug = [];
+        foreach ($rows as $row) {
+            $slug = (string) ($row['slug'] ?? '');
+            $language = (string) ($row['language'] ?? '');
+            if ($slug !== '' && in_array($language, ['portuguese_br', 'english'], true)) {
+                $bySlug[$slug][$language] = $row;
+            }
+        }
+
+        $count = 0;
+        foreach ($definitions as $slug => $definition) {
+            $localized = $bySlug[$slug]['portuguese_br'] ?? null;
+            $english = $bySlug[$slug]['english'] ?? null;
+
+            if (!$localized && $english) {
+                $copy = $english;
+                unset($copy['emailtemplateid']);
+                $copy['language'] = 'portuguese_br';
+                $copy = array_replace($copy, self::defaultOnlyChanges($copy, $definition));
+                if ($db->insert($table, $copy)) {
+                    ++$count;
+                }
+                continue;
+            }
+
+            if (!$localized) {
+                // Modelos de módulos não instalados não são criados de modo antecipado.
+                continue;
+            }
+
+            $updates = self::defaultOnlyChanges($localized, $definition);
+            if ($updates) {
+                $db->where('emailtemplateid', (int) $localized['emailtemplateid'])
+                    ->update($table, $updates);
+                ++$count;
+            }
+        }
+
+        return $count;
+    }
+
+    private static function defaultOnlyChanges(array $row, array $definition): array
+    {
+        $updates = [];
+        foreach (['name', 'subject', 'message'] as $field) {
+            $source = (string) ($definition['source_' . $field] ?? '');
+            $current = (string) ($row[$field] ?? '');
+            if ($current !== $source) {
+                // Inclusive conteúdos vazios ou personalizados são preservados.
+                continue;
+            }
+
+            $translated = $field === 'message'
+                ? self::translateMessage($source)
+                : (string) ($definition[$field] ?? $source);
+            if ($translated !== $current) {
+                $updates[$field] = $translated;
+            }
+        }
+
+        return $updates;
+    }
+
     public static function translateMessage(string $html): string
     {
         $parts = preg_split('/(<[^>]*>)/u', $html, -1, PREG_SPLIT_DELIM_CAPTURE);

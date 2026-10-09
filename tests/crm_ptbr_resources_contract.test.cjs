@@ -66,7 +66,8 @@ test('Guia da API é local, autenticado e descreve os controladores existentes',
 test('Nota fiscal inclui dependências em Docker e nos ZIPs sem Composer em runtime', () => {
   const docker = read('Dockerfile');
   const workflow = read('.github/workflows/release-packages.yml');
-  assert.match(docker, /FROM composer:2 AS einvoice-deps/);
+  assert.match(docker, /ARG ARGWS_COMPOSER_IMAGE=ghcr\.io\/composer\/docker:2/);
+  assert.match(docker, /FROM \$\{ARGWS_COMPOSER_IMAGE\} AS einvoice-deps/);
   assert.match(docker, /COPY --from=einvoice-deps[\s\S]*einvoice\/vendor/);
   assert.match(docker, /class_exists\("Mustache_Engine"\)/);
   assert.match(workflow, /composer install --working-dir=modules\/einvoice/);

@@ -76,7 +76,7 @@ function add_email_template_webhook()
     $data['hasPermissionEdit'] = has_permission('email_templates', '', 'edit');
     $data['webhooks']          = get_instance()->emails_model->get([
         'type'     => 'webhooks',
-        'language' => 'english',
+        'language' => 'portuguese_br',
     ]);
     get_instance()->load->view('webhooks/mail_lists/email_templates_list', $data, false);
 }

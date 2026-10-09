@@ -201,7 +201,7 @@ function add_email_template_products()
     $data['hasPermissionEdit'] = has_permission('email_templates', '', 'edit');
     $data['orders']            = $CI->emails_model->get([
         'type'     => 'order',
-        'language' => 'english',
+        'language' => 'portuguese_br',
     ]);
     $CI->load->view('products/mail_lists/email_templates_list', $data, false);
 }

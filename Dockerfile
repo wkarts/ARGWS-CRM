@@ -1,8 +1,9 @@
-ARG ARGWS_FRANKENPHP_IMAGE=dunglas/frankenphp:1-php8.3-bookworm
+ARG ARGWS_FRANKENPHP_IMAGE=ghcr.io/wkarts/argws-crm-base:1-php8.3-bookworm
+ARG ARGWS_COMPOSER_IMAGE=ghcr.io/composer/docker:2
 
 # Instalar dependências do módulo de nota fiscal na construção da imagem.
 # O runtime permanece sem Composer e não realiza downloads durante a ativação.
-FROM composer:2 AS einvoice-deps
+FROM ${ARGWS_COMPOSER_IMAGE} AS einvoice-deps
 WORKDIR /build/einvoice
 COPY modules/einvoice/composer.json modules/einvoice/composer.lock ./
 COPY modules/einvoice/src/ ./src/

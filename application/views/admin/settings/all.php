@@ -59,7 +59,7 @@
                                                 <a href="<?= admin_url('settings?group=argws_platform'); ?>"
                                                     class="tw-group tw-flex tw-items-center tw-text-sm hover:tw-text-neutral-800 focus:tw-text-neutral-800 tw-font-medium tw-gap-2.5 <?= ($group['id'] === 'argws_platform') ? ' tw-text-neutral-800' : 'tw-text-neutral-600' ?>">
                                                     <i class="fa-solid fa-sliders fa-fw fa-lg tw-mr-0.5 <?= $group['id'] === 'argws_platform' ? 'tw-text-neutral-800' : 'tw-text-neutral-500'; ?>"></i>
-                                                    <span>Plataforma ARGWS</span>
+                                                    <span>Plataforma</span>
                                                 </a>
                                             </li>
                                             <?php } ?>
