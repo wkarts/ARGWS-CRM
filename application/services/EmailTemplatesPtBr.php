@@ -12,6 +12,7 @@ final class EmailTemplatesPtBr
 {
     private static ?array $phrases = null;
     private static ?array $templates = null;
+    private static ?array $moduleTemplates = null;
 
     public static function templates(): array
     {
@@ -22,9 +23,23 @@ final class EmailTemplatesPtBr
         return self::$templates;
     }
 
+    public static function moduleTemplates(): array
+    {
+        if (self::$moduleTemplates === null) {
+            self::$moduleTemplates = self::loadJson('templates_modules.json');
+        }
+
+        return self::$moduleTemplates;
+    }
+
     public static function get(string $slug): ?array
     {
-        return self::templates()[$slug] ?? null;
+        $core = self::templates();
+        if (isset($core[$slug])) {
+            return $core[$slug];
+        }
+
+        return self::moduleTemplates()[$slug] ?? null;
     }
 
     public static function translateMessage(string $html): string
@@ -92,7 +107,7 @@ final class EmailTemplatesPtBr
     {
         if (self::$phrases === null) {
             $phrases = [];
-            foreach (['phrases_01.json', 'phrases_02.json', 'phrases_03.json'] as $name) {
+            foreach (['phrases_01.json', 'phrases_02.json', 'phrases_03.json', 'phrases_modules.json'] as $name) {
                 $next = self::loadJson($name);
                 foreach ($next as $key => $value) {
                     if (array_key_exists($key, $phrases)) {
