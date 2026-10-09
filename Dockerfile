@@ -46,7 +46,8 @@ RUN mkdir -p /app/uploads /app/temp /app/application/cache /app/application/logs
     && php -l /opt/argws-crm-provisioner/provisioner.php \
     && php -l /opt/argws-crm-provisioner/web/index.php \
     && php -l /opt/argws-crm-provisioner/sqlparser.php \
-    && php -l /opt/argws-crm-provisioner/phpass.php
+    && php -l /opt/argws-crm-provisioner/phpass.php \
+    && php -r 'if (PHP_SAPI !== "cli") { fwrite(STDERR, "O executável php não está em modo CLI.\\n"); exit(1); }'
 
 RUN frankenphp validate --config /etc/caddy/Caddyfile --adapter caddyfile \
     && frankenphp validate --config /etc/caddy/Caddyfile.unprovisioned --adapter caddyfile
