@@ -45,7 +45,7 @@ ARGWS_HTTP_BIND=127.0.0.1
 ARGWS_HTTP_PORT=8080
 EOF
 docker compose --project-directory "$storage_compose_dir" --env-file "$storage_compose_dir/.env" \
-    -f "$storage_compose_dir/compose.yaml" run --rm storage-init
+    -f "$storage_compose_dir/compose.yaml" run --rm web true
 for directory in installation_config uploads temp application_cache application_logs \
     module_accounting_uploads module_finance_uploads module_fleet_uploads \
     module_hr_payroll_uploads module_hr_profile_uploads module_invoices_builder_uploads \
@@ -57,11 +57,11 @@ do
         --volume "$storage_compose_dir/storage/$directory:/data:ro" \
         --entrypoint /bin/sh "$image" -ec 'stat -c "%u:%g" /data')"
     if [ "$owner" != "33:33" ]; then
-        echo "storage-init não preparou $directory para www-data (proprietário $owner)." >&2
+        echo "O entrypoint web não preparou $directory para www-data (proprietário $owner)." >&2
         exit 1
     fi
 done
-echo "Compose storage-init OK: diretórios relativos e graváveis por www-data."
+echo "Compose entrypoint storage OK: diretórios relativos e graváveis por www-data."
 
 docker network create "$network" >/dev/null
 docker volume create "$config_volume" >/dev/null
@@ -96,22 +96,32 @@ docker run -d --name "$web" --network "$network" \
     -p 127.0.0.1::8080 "$image" >/dev/null
 host_port="$(docker port "$web" 8080/tcp | awk -F: 'END { print $NF }')"
 url="http://127.0.0.1:$host_port"
+# A raiz deve responder com "Location: /setup" sem expor instruções do deploy.
 status=""
 for _ in $(seq 1 45); do
-    status="$(curl --connect-timeout 2 --max-time 5 -sS -o /tmp/argws-crm-unprovisioned-body -w '%{http_code}' "$url/" 2>/dev/null || true)"
-    if [ "$status" = "503" ]; then break; fi
+    status="$(curl --connect-timeout 2 --max-time 5 -sS -D /tmp/argws-crm-unprovisioned-headers -o /tmp/argws-crm-unprovisioned-body -w '%{http_code}' "$url/" 2>/dev/null || true)"
+    if [ "$status" = "302" ]; then break; fi
     sleep 1
 done
-if [ "$status" != "503" ] || ! grep -q "/setup" /tmp/argws-crm-unprovisioned-body; then
-    echo "O container não bloqueou o CRM até o primeiro acesso ao assistente." >&2
+root_location="$(sed -n 's/^[Ll]ocation: //p' /tmp/argws-crm-unprovisioned-headers | tr -d '\r' | tail -n 1)"
+if [ "$status" != "302" ] || [ "$root_location" != "/setup" ]; then
+    echo "O primeiro acesso não redirecionou automaticamente para /setup (HTTP $status, Location $root_location)." >&2
+    echo "URL=$url mapeamento=$(docker port "$web" 8080/tcp 2>&1 || true)" >&2
+    docker inspect --format 'estado={{.State.Status}} saída={{.State.ExitCode}} erro={{.State.Error}} portas={{json .NetworkSettings.Ports}} IP={{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$web" >&2 || true
+    docker exec "$web" php -r '$stream = @fsockopen("127.0.0.1", 8080, $errno, $errstr, 3); if (!$stream) { fwrite(STDERR, "socket interno indisponível: $errno $errstr" . PHP_EOL); exit(1); } fwrite(STDERR, "socket interno conectado" . PHP_EOL); fclose($stream);' >&2 || true
+    curl -v --connect-timeout 3 --max-time 5 "$url/" -o /dev/null >&2 || true
     docker logs --tail 100 "$web" >&2 || true
+    exit 1
+fi
+if grep -Eiq 'ARGWS_SETUP_TOKEN|aguarda o primeiro acesso|docker compose exec' /tmp/argws-crm-unprovisioned-body; then
+    echo "A resposta inicial expôs instruções internas de implantação." >&2
     exit 1
 fi
 docker exec "$web" test ! -e /app/install
 docker exec "$web" test ! -e /var/lib/argws-crm/config/provisioned
 
 setup_code="$(curl --connect-timeout 2 --max-time 5 -sS -c /tmp/argws-crm-setup-cookie -o /tmp/argws-crm-setup-page -w '%{http_code}' "$url/setup")"
-if [ "$setup_code" != "200" ] || ! grep -q "Configurar ARGWS CRM" /tmp/argws-crm-setup-page; then
+if [ "$setup_code" != "200" ] || ! grep -q "Seu ambiente começa aqui." /tmp/argws-crm-setup-page; then
     echo "O assistente web não foi servido (HTTP $setup_code)." >&2
     docker logs --tail 100 "$web" >&2 || true
     exit 1
@@ -146,7 +156,7 @@ if [ "$setup_code" != "200" ] || [ -z "$csrf_token" ]; then
     exit 1
 fi
 
-setup_code="$(curl --connect-timeout 2 --max-time 180 -sS -b /tmp/argws-crm-setup-cookie -c /tmp/argws-crm-setup-cookie \
+setup_code="$(curl --connect-timeout 2 --max-time 180 -sS -D /tmp/argws-crm-setup-result-headers -b /tmp/argws-crm-setup-cookie -c /tmp/argws-crm-setup-cookie \
     -o /tmp/argws-crm-setup-result -w '%{http_code}' \
     --data-urlencode "csrf_token=$csrf_token" \
     --data-urlencode "setup_token=$setup_token" \
@@ -157,10 +167,12 @@ setup_code="$(curl --connect-timeout 2 --max-time 180 -sS -b /tmp/argws-crm-setu
     --data-urlencode "admin_password=$admin_password" \
     --data-urlencode "admin_password_repeat=$admin_password" \
     --data-urlencode "timezone=America/Sao_Paulo" "$url/setup")"
-if [ "$setup_code" != "303" ]; then
-    echo "O assistente web não concluiu o setup (HTTP $setup_code)." >&2
+setup_location="$(sed -n 's/^[Ll]ocation: //p' /tmp/argws-crm-setup-result-headers | tr -d '\r' | tail -n 1)"
+if [ "$setup_code" != "303" ] || [ "$setup_location" != "/admin/authentication" ]; then
+    echo "O assistente web não concluiu o setup nem encaminhou para o acesso (HTTP $setup_code, Location $setup_location)." >&2
     cat /tmp/argws-crm-setup-result >&2 || true
     docker logs --tail 100 "$web" >&2 || true
+    docker exec "$web" /bin/sh -c 'for file in /app/application/logs/log-*.php; do [ -f "$file" ] && tail -n 80 "$file"; done' >&2 || true
     exit 1
 fi
 
@@ -186,6 +198,19 @@ if [ "$admin_count" != "1" ]; then
     exit 1
 fi
 docker exec "$web" test -s /var/lib/argws-crm/config/provisioned
+expected_migration="$(sed -n "s/.*migration_version.*= *\\([0-9][0-9]*\\).*/\\1/p" application/config/migration.php | head -n 1)"
+current_migration="$(docker exec -e MYSQL_PWD="$database_password" "$database" mysql \
+    --protocol=tcp --host=127.0.0.1 --user="$database_user" "$database_name" \
+    --batch --skip-column-names -e 'SELECT version FROM tblmigrations LIMIT 1')"
+if [ -z "$expected_migration" ] || [ "$current_migration" != "$expected_migration" ]; then
+    echo "As migrations não foram aplicadas antes de liberar o CRM (esperada=$expected_migration, aplicada=$current_migration)." >&2
+    exit 1
+fi
+admin_status="$(curl --connect-timeout 2 --max-time 10 -sS -o /tmp/argws-crm-admin-page -w '%{http_code}' "$url/admin" 2>/dev/null || true)"
+if [ "$admin_status" = "500" ] || grep -Eiq 'Unable to load requested language file: language/portuguese_br/migration_lang.php|migration included in files is' /tmp/argws-crm-admin-page; then
+    echo "A área administrativa ainda acusa migration pendente ou arquivo de idioma ausente." >&2
+    exit 1
+fi
 
 setup_after_code="$(curl --connect-timeout 2 --max-time 5 -sS -o /dev/null -w '%{http_code}' "$url/setup")"
 install_code="$(curl --connect-timeout 2 --max-time 5 -sS -o /dev/null -w '%{http_code}' "$url/install/")"
