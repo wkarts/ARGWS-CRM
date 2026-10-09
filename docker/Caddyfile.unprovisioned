@@ -31,7 +31,9 @@
 
         # Keep deployment details out of the customer-facing first-access response.
         handle {
-            redir /setup
+            @root path /
+            redir @root /setup 302
+            respond 404
         }
     }
 }
