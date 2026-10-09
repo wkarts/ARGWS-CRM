@@ -240,6 +240,7 @@ esac
         self.assertIn("$environment['ARGWS_SETUP_MIGRATION_TOKEN'] = $bridgeToken;", source)
         self.assertIn("Executor de migrations sem saída", source)
         self.assertIn("Token interno de migrations ausente ou inválido.", controller)
+        self.assertIn("Executor CLI alcançado", controller)
         self.assertIn("getenv('ARGWS_SETUP_MIGRATION_TOKEN')", source)
         self.assertIn("run_application_migrations([$input['admin_password'], $input['admin_email']]);", source)
         self.assertIn("apply_pending_migrations_for_provisioning", app)
