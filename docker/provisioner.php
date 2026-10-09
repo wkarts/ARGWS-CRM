@@ -286,8 +286,11 @@ function run_application_migrations(array $sensitiveValues = []): array
     ];
     $previousToken = getenv('ARGWS_SETUP_MIGRATION_TOKEN');
     putenv('ARGWS_SETUP_MIGRATION_TOKEN=' . $bridgeToken);
+    $phpBinary = defined('PHP_BINARY') && is_string(PHP_BINARY) && trim(PHP_BINARY) !== ''
+        ? PHP_BINARY
+        : 'php';
     $process = proc_open(
-        [PHP_BINARY, '/app/index.php', 'argws_provisioning', 'apply_migrations'],
+        [$phpBinary, '/app/index.php', 'argws_provisioning', 'apply_migrations'],
         $descriptors,
         $pipes,
         '/app'
