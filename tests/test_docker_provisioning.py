@@ -235,6 +235,7 @@ esac
         self.assertIn("function sanitize_provisioning_diagnostic", source)
         self.assertIn("$phpBinary = defined('PHP_BINARY')", source)
         self.assertIn(": 'php';", source)
+        self.assertIn("$environment['ARGWS_SETUP_MIGRATION_TOKEN'] = $bridgeToken;", source)
         self.assertIn("getenv('ARGWS_SETUP_MIGRATION_TOKEN')", source)
         self.assertIn("run_application_migrations([$input['admin_password'], $input['admin_email']]);", source)
         self.assertIn("apply_pending_migrations_for_provisioning", app)
