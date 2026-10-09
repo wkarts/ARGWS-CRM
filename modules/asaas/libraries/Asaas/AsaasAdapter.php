@@ -484,7 +484,42 @@ public function refundPayment(string $paymentId, array $payload = []): array
             return $this->webhookResult(false, false, 'Não foi possível armazenar o evento.', 503);
         }
 
-        return $this->processStoredWebhook($eventId);
+        // Apenas confirmamos recebimento após persistir de modo durável.
+        // A conciliação financeira é executada pelo CRON, sem bloquear a
+        // conexão do Asaas ou acionar reentregas por operações demoradas.
+        return $this->webhookResult(true, $this->ci->db->affected_rows() === 0,
+            'Evento armazenado.', 200);
+    }
+
+    /**
+     * Executa conciliação em pequenos lotes, sem workers adicionais.
+     * O CRON pode retomar registros recebidos/falhos após reinicializações.
+     * @return array{processed: int, failed: int, pending: int}
+     */
+    public function processPendingWebhookEvents(int $limit = 20): array
+    {
+        $table = db_prefix() . 'asaas_webhook_events';
+        if (!$this->ci->db->table_exists($table)) {
+            return ['processed' => 0, 'failed' => 0, 'pending' => 0];
+        }
+        $limit = max(1, min($limit, 50));
+        $pending = $this->ci->db->select('event_id')
+            ->from($table)
+            ->where_in('process_status', ['received', 'failed'])
+            ->order_by('id', 'ASC')
+            ->limit($limit)
+            ->get()->result_array();
+        $processed = 0;
+        $failed = 0;
+        foreach ($pending as $event) {
+            $result = $this->processStoredWebhook((string) $event['event_id']);
+            if ($result['processed']) {
+                $processed++;
+            } else {
+                $failed++;
+            }
+        }
+        return ['processed' => $processed, 'failed' => $failed, 'pending' => count($pending)];
     }
 
     /**
