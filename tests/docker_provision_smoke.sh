@@ -127,6 +127,11 @@ if [ "$setup_code" != "200" ] || ! grep -q "Seu ambiente começa aqui." /tmp/arg
     docker logs --tail 100 "$web" >&2 || true
     exit 1
 fi
+brand_code="$(curl --connect-timeout 2 --max-time 5 -sS -o /tmp/argws-crm-brand-image -w '%{http_code}' "$url/assets/images/argws/logo-light.png")"
+if [ "$brand_code" != "200" ] || ! cmp -s /tmp/argws-crm-brand-image assets/images/argws/logo-light.png; then
+    echo "O logo do assistente não foi servido como arquivo público antes do provisionamento (HTTP $brand_code)." >&2
+    exit 1
+fi
 csrf_token="$(sed -n 's/.*name="csrf_token" value="\([a-f0-9]*\)".*/\1/p' /tmp/argws-crm-setup-page | head -n 1)"
 if [ -z "$csrf_token" ]; then
     echo "O formulário web não forneceu token CSRF." >&2
