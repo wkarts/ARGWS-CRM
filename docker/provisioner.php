@@ -284,20 +284,17 @@ function run_application_migrations(array $sensitiveValues = []): array
         1 => ['file', $logPath, 'w'],
         2 => ['file', $logPath, 'a'],
     ];
-    // FrankenPHP may report its server executable as PHP_BINARY. Start the actual PHP CLI
-    // binary so CodeIgniter runs once and returns the migration result instead of starting another server.
-    $phpBinary = 'php';
-    if (defined('PHP_BINDIR') && is_string(PHP_BINDIR) && trim(PHP_BINDIR) !== '') {
-        $phpCliCandidate = rtrim(PHP_BINDIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'php';
-        if (is_executable($phpCliCandidate)) {
-            $phpBinary = $phpCliCandidate;
-        }
+    // The web worker uses FrankenPHP's server SAPI. Use its explicit CLI mode so
+    // CodeIgniter's is_cli() guard passes and the migration result is written to stdout.
+    $frankenphpBinary = '/usr/local/bin/frankenphp';
+    if (!is_executable($frankenphpBinary)) {
+        $frankenphpBinary = 'frankenphp';
     }
     $environment = getenv();
     $environment = is_array($environment) ? $environment : [];
     $environment['ARGWS_SETUP_MIGRATION_TOKEN'] = $bridgeToken;
     $process = proc_open(
-        [$phpBinary, '/app/index.php', 'argws_provisioning', 'apply_migrations'],
+        [$frankenphpBinary, 'php-cli', '/app/index.php', 'argws_provisioning', 'apply_migrations'],
         $descriptors,
         $pipes,
         '/app',
@@ -329,11 +326,11 @@ function run_application_migrations(array $sensitiveValues = []): array
         if ($diagnostic !== '') {
             error_log('[ARGWS CRM setup] Diagnóstico do executor de migrations: ' . mb_substr($diagnostic, -1800, null, 'UTF-8'));
         } else {
-            $phpCliAvailable = is_executable($phpBinary) || (strpos($phpBinary, DIRECTORY_SEPARATOR) === false && getenv('PATH') !== false);
+            $frankenphpAvailable = is_executable($frankenphpBinary) || (strpos($frankenphpBinary, DIRECTORY_SEPARATOR) === false && getenv('PATH') !== false);
             $applicationConfigAvailable = is_file('/app/application/config/app-config.php');
             error_log('[ARGWS CRM setup] Executor de migrations sem saída (código ' . (int) $exitCode
-                . '; CLI disponível=' . ($phpCliAvailable ? 'sim' : 'não')
-                . '; executor=' . basename($phpBinary)
+                . '; CLI disponível=' . ($frankenphpAvailable ? 'sim' : 'não')
+                . '; executor=frankenphp/php-cli'
                 . '; SAPI=' . PHP_SAPI
                 . '; configuração disponível=' . ($applicationConfigAvailable ? 'sim' : 'não')
                 . '; token temporário enviado=sim).');
