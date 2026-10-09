@@ -9,6 +9,13 @@ class InitModules
      */
     public function handle()
     {
+        // Migration CLI runs with a short-lived internal token. Module CSRF
+        // exclusions apply only to web requests, and scanning every module
+        // prevents the isolated migration worker from bootstrapping.
+        if (PHP_SAPI === 'cli' && getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false) {
+            return;
+        }
+
         include_once(LIBSPATH.'App_modules.php');
         // Load the directory helper so the directory_map function can be used
         include_once(BASEPATH . 'helpers/directory_helper.php');

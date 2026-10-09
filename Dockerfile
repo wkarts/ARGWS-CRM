@@ -11,6 +11,7 @@ RUN mkdir -p /out/app /out/provisioner/web \
     && cp /source/install/database.sql /source/install/sqlparser.php /source/install/phpass.php /out/provisioner/ \
     && cp /source/docker/provision.php /out/provisioner/provision.php \
     && cp /source/docker/provisioner.php /out/provisioner/provisioner.php \
+    && cp /source/docker/migration-cli.php /out/provisioner/migration-cli.php \
     && cp /source/docker/setup-web.php /out/provisioner/web/index.php
 
 FROM ${ARGWS_FRANKENPHP_IMAGE}
@@ -23,7 +24,10 @@ LABEL org.opencontainers.image.title="ARGWS CRM" \
 
 WORKDIR /app
 
-RUN install-php-extensions mysqli pdo_mysql curl mbstring imap gd zip intl bcmath soap exif opcache
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gosu \
+    && rm -rf /var/lib/apt/lists/* \
+    && install-php-extensions mysqli pdo_mysql curl mbstring imap gd zip intl bcmath soap exif opcache
 
 COPY --from=crm-source --chown=www-data:www-data /out/app/ /app/
 COPY --from=crm-source --chown=root:root /out/provisioner/ /opt/argws-crm-provisioner/
@@ -33,7 +37,7 @@ COPY --chown=root:root docker/entrypoint.sh /usr/local/bin/argws-entrypoint
 
 RUN mkdir -p /app/uploads /app/temp /app/application/cache /app/application/logs /data /config /var/lib/argws-crm/config \
     && chown -R www-data:www-data /app /data /config /var/lib/argws-crm \
-    && chmod 0444 /opt/argws-crm-provisioner/provision.php /opt/argws-crm-provisioner/provisioner.php /opt/argws-crm-provisioner/web/index.php \
+    && chmod 0444 /opt/argws-crm-provisioner/provision.php /opt/argws-crm-provisioner/provisioner.php /opt/argws-crm-provisioner/migration-cli.php /opt/argws-crm-provisioner/web/index.php \
     && chmod 0444 /opt/argws-crm-provisioner/database.sql /opt/argws-crm-provisioner/sqlparser.php /opt/argws-crm-provisioner/phpass.php \
     && chmod 0755 /usr/local/bin/argws-entrypoint \
     && find application modules -type f -name '*.php' \
@@ -41,11 +45,18 @@ RUN mkdir -p /app/uploads /app/temp /app/application/cache /app/application/logs
        | xargs -0 -r -n1 -P8 sh -c 'output="$(php -l "$1" 2>&1)" || { echo "$output" >&2; echo "Falha na validação PHP: $1" >&2; exit 255; }' argws-lint \
     && php -l /opt/argws-crm-provisioner/provision.php \
     && php -l /opt/argws-crm-provisioner/provisioner.php \
+    && php -l /opt/argws-crm-provisioner/migration-cli.php \
     && php -l /opt/argws-crm-provisioner/web/index.php \
     && php -l /opt/argws-crm-provisioner/sqlparser.php \
-    && php -l /opt/argws-crm-provisioner/phpass.php
+    && php -l /opt/argws-crm-provisioner/phpass.php \
+    && php -r 'if (PHP_SAPI !== "cli") { fwrite(STDERR, "O executável php não está em modo CLI.\\n"); exit(1); }'
 
-USER www-data
+RUN frankenphp validate --config /etc/caddy/Caddyfile --adapter caddyfile \
+    && frankenphp validate --config /etc/caddy/Caddyfile.unprovisioned --adapter caddyfile
+
+
+# The entrypoint initializes bind-mounted paths as root, then drops FrankenPHP to www-data.
+USER root
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/argws-entrypoint"]

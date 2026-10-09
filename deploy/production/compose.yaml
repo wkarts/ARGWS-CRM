@@ -1,18 +1,5 @@
 name: ${COMPOSE_PROJECT_NAME:-argws-crm-production}
 services:
-  storage-init:
-    image: ${ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.6.2}
-    restart: "no"
-    user: "0:0"
-    entrypoint: ["/bin/sh", "-ec"]
-    command:
-      - |
-        for directory in installation_config uploads temp application_cache application_logs module_accounting_uploads module_finance_uploads module_fleet_uploads module_hr_payroll_uploads module_hr_profile_uploads module_invoices_builder_uploads module_ma_uploads module_products_uploads module_purchase_uploads module_service_management_uploads module_si_custom_theme_uploads module_timesheets_uploads caddy_data caddy_config; do
-          mkdir -p "/storage/$$directory"
-          chown 33:33 "/storage/$$directory"
-        done
-    volumes:
-      - "${ARGWS_STORAGE_ROOT:-./storage}:/storage"
   web:
     image: ${ARGWS_CRM_IMAGE:-ghcr.io/wkarts/argws-crm:3.6.2}
     container_name: ${COMPOSE_PROJECT_NAME:-argws-crm-production}-web
@@ -30,8 +17,6 @@ services:
     depends_on:
       database:
         condition: service_healthy
-      storage-init:
-        condition: service_completed_successfully
     volumes:
       - "${ARGWS_STORAGE_ROOT:-./storage}/installation_config:/var/lib/argws-crm/config"
       - "${ARGWS_STORAGE_ROOT:-./storage}/uploads:/app/uploads"
