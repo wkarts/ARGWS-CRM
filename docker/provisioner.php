@@ -284,9 +284,15 @@ function run_application_migrations(array $sensitiveValues = []): array
         1 => ['file', $logPath, 'w'],
         2 => ['file', $logPath, 'a'],
     ];
-    $phpBinary = defined('PHP_BINARY') && is_string(PHP_BINARY) && trim(PHP_BINARY) !== ''
-        ? PHP_BINARY
-        : 'php';
+    // FrankenPHP may report its server executable as PHP_BINARY. Start the actual PHP CLI
+    // binary so CodeIgniter runs once and returns the migration result instead of starting another server.
+    $phpBinary = 'php';
+    if (defined('PHP_BINDIR') && is_string(PHP_BINDIR) && trim(PHP_BINDIR) !== '') {
+        $phpCliCandidate = rtrim(PHP_BINDIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'php';
+        if (is_executable($phpCliCandidate)) {
+            $phpBinary = $phpCliCandidate;
+        }
+    }
     $environment = getenv();
     $environment = is_array($environment) ? $environment : [];
     $environment['ARGWS_SETUP_MIGRATION_TOKEN'] = $bridgeToken;
@@ -327,6 +333,7 @@ function run_application_migrations(array $sensitiveValues = []): array
             $applicationConfigAvailable = is_file('/app/application/config/app-config.php');
             error_log('[ARGWS CRM setup] Executor de migrations sem saída (código ' . (int) $exitCode
                 . '; CLI disponível=' . ($phpCliAvailable ? 'sim' : 'não')
+                . '; executor=' . basename($phpBinary)
                 . '; SAPI=' . PHP_SAPI
                 . '; configuração disponível=' . ($applicationConfigAvailable ? 'sim' : 'não')
                 . '; token temporário enviado=sim).');
