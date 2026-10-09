@@ -10,7 +10,7 @@ header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 header('Referrer-Policy: no-referrer');
 header('X-Content-Type-Options: nosniff');
-header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+header("Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
 
 function escape_html(string $value): string
 {
@@ -130,6 +130,7 @@ $timezoneValue = $value('timezone') !== '' ? $value('timezone') : 'America/Sao_P
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
+    <link rel="icon" type="image/png" href="/assets/images/argws/favicon.png">
     <title>Configuração inicial | ARGWS CRM</title>
     <style>
         :root {
@@ -146,21 +147,22 @@ $timezoneValue = $value('timezone') !== '' ? $value('timezone') : 'America/Sao_P
             --muted: #64748b;
         }
         * { box-sizing: border-box; }
+        [hidden] { display: none !important; }
         body {
             min-height: 100vh;
             margin: 0;
-            padding: 32px;
+            padding: clamp(12px, 2vw, 28px);
             display: grid;
             place-items: center;
+            align-items: safe center;
             background:
                 radial-gradient(circle at 85% 12%, rgba(44, 111, 218, .10), transparent 26rem),
                 linear-gradient(135deg, #f7f9fc 0%, #edf2f8 100%);
         }
         .layout {
-            width: min(1120px, 100%);
-            min-height: 720px;
+            width: min(1360px, 100%);
             display: grid;
-            grid-template-columns: minmax(300px, .78fr) minmax(0, 1.22fr);
+            grid-template-columns: minmax(290px, .68fr) minmax(0, 1.32fr);
             overflow: hidden;
             border: 1px solid rgba(214, 223, 236, .9);
             border-radius: 24px;
@@ -169,7 +171,7 @@ $timezoneValue = $value('timezone') !== '' ? $value('timezone') : 'America/Sao_P
         }
         .brand-panel {
             position: relative;
-            padding: 48px 42px;
+            padding: clamp(26px, 3vw, 42px);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -193,33 +195,23 @@ $timezoneValue = $value('timezone') !== '' ? $value('timezone') : 'America/Sao_P
         .brand {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
             font-weight: 800;
             letter-spacing: .03em;
         }
-        .brand-mark {
-            width: 42px;
-            height: 42px;
-            display: grid;
-            place-items: center;
-            border: 1px solid rgba(255,255,255,.25);
-            border-radius: 12px;
-            background: rgba(255,255,255,.10);
-            font-size: 15px;
-        }
-        .brand-name { font-size: 19px; line-height: 1.1; }
-        .brand-name small {
-            display: block;
-            margin-top: 4px;
-            color: rgba(228,237,250,.67);
+        .brand-logo { display: block; width: min(180px, 65%); height: auto; }
+        .brand-product {
+            border-left: 1px solid rgba(255,255,255,.26);
+            padding-left: 16px;
+            color: rgba(228,237,250,.84);
             font-size: 11px;
             font-weight: 650;
             letter-spacing: .16em;
             text-transform: uppercase;
         }
-        .brand-copy { position: relative; z-index: 1; margin-top: 90px; }
+        .brand-copy { position: relative; z-index: 1; margin-top: clamp(26px, 5vh, 64px); }
         .eyebrow {
-            margin: 0 0 16px;
+            margin: 0 0 10px;
             color: #a9c9ff;
             font-size: 12px;
             font-weight: 750;
@@ -235,7 +227,7 @@ $timezoneValue = $value('timezone') !== '' ? $value('timezone') : 'America/Sao_P
         }
         .brand-copy > p {
             max-width: 360px;
-            margin: 18px 0 0;
+            margin: 14px 0 0;
             color: rgba(237,244,255,.76);
             font-size: 15px;
             line-height: 1.7;
@@ -244,8 +236,8 @@ $timezoneValue = $value('timezone') !== '' ? $value('timezone') : 'America/Sao_P
             position: relative;
             z-index: 1;
             display: grid;
-            gap: 22px;
-            margin: 42px 0 0;
+            gap: 17px;
+            margin: 30px 0 0;
             padding: 0;
             list-style: none;
         }
@@ -264,9 +256,9 @@ $timezoneValue = $value('timezone') !== '' ? $value('timezone') : 'America/Sao_P
         .steps .active .step-number { border-color: #83b1ff; background: #2468dc; box-shadow: 0 0 0 5px rgba(66,132,231,.18); }
         .steps .done .step-number { border-color: #60d3a2; color: #8cf0c4; }
         .step-label { font-size: 13px; font-weight: 650; }
-        .brand-footer { position: relative; z-index: 1; margin-top: auto; padding-top: 34px; color: rgba(222,232,247,.58); font-size: 12px; }
-        .content { padding: 48px clamp(30px, 5vw, 64px); align-self: center; }
-        .content-header { margin-bottom: 28px; }
+        .brand-footer { position: relative; z-index: 1; margin-top: auto; padding-top: 24px; color: rgba(222,232,247,.58); font-size: 12px; }
+        .content { min-width: 0; padding: clamp(24px, 3vw, 42px) clamp(26px, 4vw, 56px); align-self: center; }
+        .content-header { margin-bottom: 20px; }
         .content-header .eyebrow { margin-bottom: 10px; color: var(--blue); }
         .content-header h2 { margin: 0; font-size: clamp(25px, 2.5vw, 32px); letter-spacing: -.035em; }
         .content-header p { max-width: 540px; margin: 10px 0 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
@@ -285,18 +277,18 @@ $timezoneValue = $value('timezone') !== '' ? $value('timezone') : 'America/Sao_P
         }
         .alert-icon { flex: 0 0 auto; font-weight: 800; }
         .resume-alert { border-color: #bfdbfe; color: #1d4d89; background: #eff6ff; }
-        form { display: grid; gap: 18px; }
-        .section-heading { display: flex; align-items: center; gap: 12px; margin: 4px 0 0; color: #1e2d43; font-size: 13px; font-weight: 750; }
+        form { display: grid; gap: 13px; }
+        .section-heading { display: flex; align-items: center; gap: 12px; margin: 2px 0 0; color: #1e2d43; font-size: 13px; font-weight: 750; }
         .section-heading::after { content: ""; height: 1px; flex: 1; background: var(--line); }
-        .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+        .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
         .field { min-width: 0; }
         .field.full { grid-column: 1 / -1; }
         label { display: block; margin-bottom: 7px; color: #28364a; font-size: 12px; font-weight: 700; }
         .input-wrap { position: relative; }
         input {
             width: 100%;
-            min-height: 46px;
-            padding: 11px 13px;
+            min-height: 44px;
+            padding: 10px 13px;
             border: 1px solid #cbd5e1;
             border-radius: 9px;
             outline: none;
@@ -394,6 +386,7 @@ $timezoneValue = $value('timezone') !== '' ? $value('timezone') : 'America/Sao_P
             body { padding: 0; background: #fff; }
             .layout { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
             .brand-panel { padding: 22px 22px 25px; }
+            .brand-logo { width: min(152px, 60%); }
             .brand-copy { margin-top: 26px; }
             .brand-copy h1 { font-size: 27px; }
             .brand-copy > p { margin-top: 10px; font-size: 13px; }
@@ -413,8 +406,8 @@ $timezoneValue = $value('timezone') !== '' ? $value('timezone') : 'America/Sao_P
 <div class="layout">
     <aside class="brand-panel" aria-label="Etapas da configuração">
         <div class="brand">
-            <div class="brand-mark" aria-hidden="true">A</div>
-            <div class="brand-name">ARGWS<small>CRM</small></div>
+            <img class="brand-logo" src="/assets/images/argws/logo-light.png" alt="ARGWS Sistemas">
+            <span class="brand-product">CRM</span>
         </div>
         <div class="brand-copy">
             <p class="eyebrow">Configuração inicial</p>

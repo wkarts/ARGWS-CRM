@@ -215,10 +215,31 @@ esac
         self.assertIn('root_location" != "/setup"', smoke)
         self.assertIn("migration_version", smoke)
         self.assertIn("tblmigrations", smoke)
+        self.assertIn('"$url/admin/authentication"', smoke)
+        self.assertIn('csrf_token_name=$login_csrf', smoke)
+        self.assertIn('password=$admin_password', smoke)
+        self.assertIn('"$url/admin"', smoke)
+        self.assertIn('dashboard_status', smoke)
         self.assertNotIn("storage-init", smoke)
         self.assertIn('chown -R "$HOST_UID:$HOST_GID" /storage', smoke)
         self.assertIn('HOST_UID="$(id -u)"', smoke)
         self.assertNotIn("/opt/argws-crm-provisioner/provision.php", smoke)
+
+    def test_portuguese_br_covers_codeigniter_runtime_messages(self):
+        import re
+
+        english = ROOT / "system/language/english"
+        portuguese_br = ROOT / "application/language/portuguese_br"
+        for source in english.glob("*_lang.php"):
+            with self.subTest(file=source.name):
+                translation = portuguese_br / source.name
+                self.assertTrue(translation.is_file(), f"Mensagem PT-BR ausente: {source.name}")
+                english_keys = set(re.findall(r"\$lang\['([^']+)'\]", source.read_text(encoding="utf-8")))
+                translated = translation.read_text(encoding="utf-8")
+                ptbr_keys = set(re.findall(r"\$lang\['([^']+)'\]", translated))
+                self.assertFalse(english_keys - ptbr_keys, f"Chaves PT-BR ausentes: {english_keys - ptbr_keys}")
+                self.assertIn("MIT License", translated)
+        self.assertIn("e-mail válido", (portuguese_br / "form_validation_lang.php").read_text(encoding="utf-8"))
 
 
     def test_setup_redirects_to_a_polished_ptbr_wizard_and_migrates_before_unlocking(self):

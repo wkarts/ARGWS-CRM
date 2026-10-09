@@ -35,6 +35,8 @@ Antes de aplicar o Compose novo, faça backup do banco, dos volumes e do `.env`.
 
 Toda persistência usa bind mounts relativos a `./storage`, controlados por `ARGWS_STORAGE_ROOT` no `.env`: configuração da instalação, banco, uploads, arquivos de módulos, temporários, cache, logs e dados/configuração do Caddy. O entrypoint do serviço web prepara seus bind mounts antes de iniciar o processo como `www-data`; o banco mantém seu diretório separado. A stack Docker fica separada da instalação PHP, PHP-FPM, Nginx e dos outros projetos do CloudPanel; escolha uma porta livre.
 
+`ARGWS_CONFIG_DIR: /var/lib/argws-crm/config` no Compose é o **destino dentro do container web**, não uma pasta criada na raiz do host. A origem correspondente é `${ARGWS_STORAGE_ROOT:-./storage}/installation_config`: com o valor padrão, os arquivos ficam em `./storage/installation_config` ao lado do `compose.yaml` da stack. Da mesma forma, o MySQL grava em `./storage/database_data` no host e lê `/var/lib/mysql` dentro do container. O Docker resolve os caminhos relativos ao diretório do arquivo Compose; no Dockge, mantenha `compose.yaml`, `.env` e `storage/` juntos na pasta da stack. Ao mover uma stack já usada, transfira a pasta `storage/` junto para manter o banco e a configuração.
+
 ## GHCR e dependências
 
 As imagens são ghcr.io/wkarts/argws-crm (aplicação), ghcr.io/wkarts/argws-crm-base:1-php8.3-bookworm (FrankenPHP), ghcr.io/wkarts/argws-crm-mysql:8.0 e ghcr.io/wkarts/argws-crm-mariadb:11.4. O sincronizador copia multiarch e preserva tags existentes; somente uma execução manual com refresh_existing=true atualiza tags já espelhadas. A agenda semanal verifica imagens sem substituí-las.

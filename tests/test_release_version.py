@@ -63,6 +63,24 @@ class ReleaseWorkflowTagRegexTest(unittest.TestCase):
                 self.assertIsNotNone(matcher.fullmatch("v3.5.0"))
                 self.assertIsNone(matcher.fullmatch("v3.4"))
 
+    def test_release_commits_include_container_example_on_both_branches(self):
+        workflow = (ROOT / ".github/workflows/release-packages.yml").read_text(encoding="utf-8")
+        staged_commands = re.findall(r"(?m)^\s*git add (.+)$", workflow)
+        self.assertEqual(len(staged_commands), 2, "main e develop devem persistir os mesmos metadados")
+        for command in staged_commands:
+            with self.subTest(command=command):
+                staged = set(command.split())
+                self.assertTrue(
+                    {"VERSION", "container.env.example", "application/config/migration.php", "application/migrations"}
+                    <= staged
+                )
+
+    def test_container_example_matches_committed_product_version(self):
+        product_version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+        example = (ROOT / "container.env.example").read_text(encoding="utf-8")
+        self.assertEqual(re.findall(r"(?m)^ARGWS_VERSION=(\d+\.\d+\.\d+)$", example), [product_version])
+
+
 class ReleaseVersionMetadataTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
