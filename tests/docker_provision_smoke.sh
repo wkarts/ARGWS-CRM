@@ -71,7 +71,7 @@ docker run -d --name "$database" --network "$network" \
     -e MYSQL_ROOT_PASSWORD="$root_password" \
     -e MYSQL_DATABASE="$database_name" \
     -e MYSQL_USER="$database_user" \
-    -e MYSQL_PASSWORD="$database_password" mysql:8.0 >/dev/null
+    -e MYSQL_PASSWORD="$database_password" ghcr.io/wkarts/argws-crm-mysql:8.0 >/dev/null
 
 healthy=0
 for _ in $(seq 1 90); do
