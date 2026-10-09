@@ -235,7 +235,7 @@ esac
         self.assertIn("function sanitize_provisioning_diagnostic", source)
         self.assertIn("$frankenphpBinary = '/usr/local/bin/frankenphp';", source)
         self.assertIn("[$frankenphpBinary, 'php-cli', '/app/index.php'", source)
-        self.assertIn("SAPI=frankenphp", source)
+        self.assertIn("'; SAPI=' . PHP_SAPI", source)
         self.assertNotIn("$phpBinary = defined('PHP_BINARY')", source)
         self.assertIn("$environment['ARGWS_SETUP_MIGRATION_TOKEN'] = $bridgeToken;", source)
         self.assertIn("Executor de migrations sem saída", source)
