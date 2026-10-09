@@ -243,6 +243,8 @@ esac
         self.assertIn("$stderrPath = tempnam", source)
         migration_cli = read("docker/migration-cli.php")
         self.assertIn("PHP_SAPI !== 'cli'", migration_cli)
+        self.assertIn("Adaptador de migrations iniciado", migration_cli)
+        self.assertIn("ini_set('display_errors', 'stderr')", migration_cli)
         self.assertIn("$_SERVER['argv'] = ['/app/index.php', 'argws_provisioning', 'apply_migrations'];", migration_cli)
         self.assertIn("require '/app/index.php';", migration_cli)
         self.assertNotIn("'php-cli', '/app/index.php'", source)
