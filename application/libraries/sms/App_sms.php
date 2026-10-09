@@ -20,7 +20,7 @@ define('SMS_TRIGGER_CONTRACT_NEW_COMMENT_TO_CUSTOMER', 'contract_new_comment_to_
 
 class App_sms
 {
-    private static $gateways;
+    private static $gateways = [];
 
     protected $client;
 
@@ -41,7 +41,7 @@ class App_sms
                     'Content-Type' => 'application/json',
                     'Accept'       => 'application/json',
                 ],
-                'verify'               => false,
+                'verify'               => true,
                 CURLOPT_RETURNTRANSFER => true,
             ]
         );
@@ -50,6 +50,10 @@ class App_sms
 
     public function add_gateway($id, $data = [])
     {
+        // IDs antigos não são excluídos do banco, mas não podem enviar mensagens.
+        if ($id !== 'connect_api_connector') {
+            return;
+        }
         if (!$this->is_initialized($id) || $this->is_options_page()) {
             foreach ($data['options'] as $option) {
                 add_option($this->option_name($id, $option['name']), (isset($option['default_value']) ? $option['default_value'] : ''));
@@ -85,7 +89,10 @@ class App_sms
 
     public function get_gateways()
     {
-        return hooks()->apply_filters('get_sms_gateways', self::$gateways);
+        $gateways = hooks()->apply_filters('get_sms_gateways', self::$gateways);
+        return array_filter(is_array($gateways) ? $gateways : [], static function ($gateway) {
+            return is_array($gateway) && ($gateway['id'] ?? '') === 'connect_api_connector';
+        });
     }
 
     public function get_trigger_value($trigger)
@@ -231,7 +238,7 @@ class App_sms
     {
         $active = false;
 
-        foreach (self::$gateways as $gateway) {
+        foreach ($this->get_gateways() as $gateway) {
             if ($this->get_option($gateway['id'], 'active') == '1') {
                 $active = $gateway;
 

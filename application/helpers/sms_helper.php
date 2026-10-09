@@ -7,30 +7,49 @@ hooks()->add_action('admin_init', 'maybe_test_sms_gateway');
 function maybe_test_sms_gateway()
 {
     $CI = &get_instance();
-    if (is_staff_logged_in() && $CI->input->post('sms_gateway_test')) {
-        $gateway = $CI->{'sms_' . $CI->input->post('id')};
+    if (!$CI->input->post('sms_gateway_test')) {
+        return;
+    }
 
-        $gateway->set_test_mode(true);
-
-        $retval = $gateway->send(
-            $CI->input->post('number'),
-            clear_textarea_breaks(nl2br($CI->input->post('message')))
-        );
-
-        $response = ['success' => false];
-
-        if (isset($GLOBALS['sms_error'])) {
-            $response['error'] = $GLOBALS['sms_error'];
-        } else {
-            $response['success'] = true;
-        }
-
-        $gateway->set_test_mode(false);
-
-        echo json_encode($response);
-
+    if (!is_admin() || $CI->input->method(true) !== 'POST') {
+        $CI->output->set_status_header(403)->set_content_type('application/json')
+            ->set_output(json_encode(['success' => false, 'error' => 'Acesso não autorizado.']))->_display();
         exit;
     }
+
+    $id = (string) $CI->input->post('id');
+    if ($id !== 'connect_api_connector'
+        || !isset($CI->sms_connect_api_connector)
+        || (string) get_option('sms_connect_api_connector_active') !== '1') {
+        $CI->output->set_status_header(400)->set_content_type('application/json')
+            ->set_output(json_encode(['success' => false, 'error' => 'Somente Connect|API está disponível para envios.']))->_display();
+        exit;
+    }
+
+    $number = trim((string) $CI->input->post('number'));
+    $message = trim((string) $CI->input->post('message'));
+    if ($number === '' || $message === '' || mb_strlen($message) > 4000) {
+        $CI->output->set_status_header(422)->set_content_type('application/json')
+            ->set_output(json_encode(['success' => false, 'error' => 'Informe destinatário e mensagem de até 4.000 caracteres.']))->_display();
+        exit;
+    }
+
+    $gateway = $CI->sms_connect_api_connector;
+    unset($GLOBALS['sms_error']);
+    $gateway->set_test_mode(true);
+    try {
+        $success = $gateway->send($number, clear_textarea_breaks(nl2br($message))) === true;
+    } finally {
+        $gateway->set_test_mode(false);
+    }
+
+    $response = ['success' => $success];
+    if (!$success) {
+        $response['error'] = 'Não foi possível enviar. Verifique a configuração do Conector e os logs.';
+    }
+
+    $CI->output->set_content_type('application/json')->set_output(json_encode($response))->_display();
+    exit;
 }
 
 hooks()->add_action('admin_init', '_maybe_sms_gateways_settings_group');
@@ -57,16 +76,13 @@ function app_init_sms_gateways()
 {
     $CI = &get_instance();
 
-    $gateways = [
-        'sms/sms_clickatell',
-        'sms/sms_msg91',
-        'sms/sms_twilio',
-    ];
-
-    $gateways = hooks()->apply_filters('sms_gateways', $gateways);
-
-    foreach ($gateways as $gateway) {
-        $CI->load->library($gateway);
+    // Preserva as classes históricas em disco, mas não as inicializa nem
+    // permite seu uso como prestadores de envio. Um único transporte: Connect|API.
+    $gateways = hooks()->apply_filters('sms_gateways', []);
+    foreach (array_unique(is_array($gateways) ? $gateways : []) as $gateway) {
+        if ($gateway === 'connect_api_connector/sms_connect_api_connector') {
+            $CI->load->library($gateway);
+        }
     }
 }
 
