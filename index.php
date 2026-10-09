@@ -323,4 +323,9 @@ if (PHP_SAPI === 'cli' && getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false) {
  *
  * And away we go...
  */
+if (PHP_SAPI === 'cli' && getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false) {
+    fwrite(STDERR, '[ARGWS CRM setup] Front controller alcançado; app-config='
+        . (is_file(APPPATH . 'config/app-config.php') ? 'presente' : 'ausente') . '.' . PHP_EOL);
+}
+
 require_once BASEPATH.'core/CodeIgniter.php';
