@@ -48,6 +48,7 @@ jobs:
           set -euo pipefail
           node tests/custom_links_security.test.cjs
           node tests/argws_platform_contract.test.cjs
+          node tests/crm_ptbr_resources_contract.test.cjs
           python3 -m unittest tests/test_release_version.py tests/test_package_release.py tests/test_package_deploy.py tests/test_docker_provisioning.py
 
   plan-version:
