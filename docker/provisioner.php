@@ -284,17 +284,29 @@ function run_application_migrations(array $sensitiveValues = []): array
         1 => ['file', $logPath, 'w'],
         2 => ['file', $logPath, 'a'],
     ];
-    // The web worker uses FrankenPHP's server SAPI. Use its explicit CLI mode so
-    // CodeIgniter's is_cli() guard passes and the migration result is written to stdout.
-    $frankenphpBinary = '/usr/local/bin/frankenphp';
-    if (!is_executable($frankenphpBinary)) {
-        $frankenphpBinary = 'frankenphp';
+    // Use the PHP CLI binary for CodeIgniter's CLI router and is_cli() guard.
+    // FrankenPHP's server worker must not be reused as the migration executor.
+    $phpBinary = null;
+    $pathDirectories = explode(PATH_SEPARATOR, (string) (getenv('PATH') ?: ''));
+    foreach (array_merge(['/usr/local/bin', '/usr/bin'], $pathDirectories) as $directory) {
+        if (!is_string($directory) || $directory === '') {
+            continue;
+        }
+        $candidate = rtrim($directory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'php';
+        if (is_file($candidate) && is_executable($candidate)) {
+            $phpBinary = $candidate;
+            break;
+        }
+    }
+    if (!is_string($phpBinary)) {
+        @unlink($logPath);
+        provision_error('O ambiente não disponibiliza um executável PHP CLI para aplicar as migrations.');
     }
     $environment = getenv();
     $environment = is_array($environment) ? $environment : [];
     $environment['ARGWS_SETUP_MIGRATION_TOKEN'] = $bridgeToken;
     $process = proc_open(
-        [$frankenphpBinary, 'php-cli', '/app/index.php', 'argws_provisioning', 'apply_migrations'],
+        [$phpBinary, '/app/index.php', 'argws_provisioning', 'apply_migrations'],
         $descriptors,
         $pipes,
         '/app',
@@ -326,11 +338,11 @@ function run_application_migrations(array $sensitiveValues = []): array
         if ($diagnostic !== '') {
             error_log('[ARGWS CRM setup] Diagnóstico do executor de migrations: ' . mb_substr($diagnostic, -1800, null, 'UTF-8'));
         } else {
-            $frankenphpAvailable = is_executable($frankenphpBinary) || (strpos($frankenphpBinary, DIRECTORY_SEPARATOR) === false && getenv('PATH') !== false);
+            $phpCliAvailable = is_string($phpBinary) && is_executable($phpBinary);
             $applicationConfigAvailable = is_file('/app/application/config/app-config.php');
             error_log('[ARGWS CRM setup] Executor de migrations sem saída (código ' . (int) $exitCode
-                . '; CLI disponível=' . ($frankenphpAvailable ? 'sim' : 'não')
-                . '; executor=frankenphp/php-cli'
+                . '; PHP CLI disponível=' . ($phpCliAvailable ? 'sim' : 'não')
+                . '; executor=php-cli'
                 . '; SAPI=' . PHP_SAPI
                 . '; configuração disponível=' . ($applicationConfigAvailable ? 'sim' : 'não')
                 . '; token temporário enviado=sim).');
