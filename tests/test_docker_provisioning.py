@@ -50,6 +50,9 @@ class DockerProvisioningContractTest(unittest.TestCase):
 
     def test_cli_and_web_provisioners_share_safe_database_guards(self):
         cli = read("docker/provision.php")
+        index = read("index.php")
+        self.assertIn("ARGWS_SETUP_MIGRATION_TOKEN", index)
+        self.assertIn("ini_set('display_errors', 'stderr')", index)
         source = read("docker/provisioner.php")
         web = read("docker/setup-web.php")
         self.assertIn("PHP_SAPI !== 'cli'", cli)
