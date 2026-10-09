@@ -218,5 +218,9 @@ if (empty($result)) {
         }
     }
     unset($template);
+    foreach ($email_template as &$template) {
+        $template['order'] = 0; // Campo obrigatório no MySQL estrito.
+    }
+    unset($template);
     $CI->db->insert_batch(db_prefix() . 'emailtemplates', $email_template);
 }

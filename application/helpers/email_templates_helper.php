@@ -214,6 +214,7 @@ function create_email_template($subject, $message, $type, $name, $slug, $active 
     $data['language']  = 'portuguese_br';
     $data['active']    = $active;
     $data['plaintext'] = 0;
+    $data['order']     = 0; // Campo obrigatório no MySQL estrito.
     $data['fromname'] = '{companyname} | CRM';
 
     $CI                = &get_instance();
