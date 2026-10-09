@@ -1679,30 +1679,9 @@ function init_po_project_tabs($tabs){
  * { update email language for vendor }
  */
 function update_email_lang_for_vendor($language, $data){
-
-    $purchase_slug_arr = [
-        'purchase-request-to-contact',
-        'debit-note-to-contact',
-        'purchase-quotation-to-contact',
-        'purchase-request-to-contact',
-        'purchase-statement-to-contact',
-        'vendor-registration-confirmed',
-        'purchase-order-to-contact',
-        'purchase-contract-to-contact',
-    ];
-
-    if( in_array($data['template']->slug, $purchase_slug_arr)){
-        if($data['template']->slug == 'vendor-registration-confirmed'){
-            return $language;
-        }else{
-            $vendor_lang = get_vendor_language_by_email($data['email']);
-            if($vendor_lang != ''){
-                $language = $vendor_lang;
-            }
-        }
-    }
-
-    return $language;
+    // O CRM opera somente em PT-BR. Preserva os identificadores de modelos e
+    // as preferências históricas dos fornecedores sem oferecer outros idiomas.
+    return 'portuguese_br';
 }
 
 /**
