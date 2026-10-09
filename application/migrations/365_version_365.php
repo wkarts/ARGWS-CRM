@@ -4,8 +4,8 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 /**
  * Atualizações aditivas: não excluem modelos, HTML, anexos, faturas ou configurações personalizadas.
- * A tradução textual dos modelos legados exige catálogo próprio; esta migração recupera o
- * conteúdo original para não deixar disparos e telas com modelos vazios.
+ * As traduções dos 82 modelos originais são carregadas de catálogos locais validados.
+ * Modelos personalizados e identificadores técnicos são preservados.
  */
 class Migration_Version_365 extends CI_Migration
 {

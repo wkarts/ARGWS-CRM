@@ -654,6 +654,30 @@ public function refundPayment(string $paymentId, array $payload = []): array
             return 'review_required';
         }
 
+        // Serializa TODOS os pagamentos relativos à mesma fatura, mesmo
+        // quando chegam em eventos diferentes com IDs de cobrança distintos.
+        $invoiceTable = db_prefix() . 'invoices';
+        $lockedInvoice = $this->ci->db->query(
+            'SELECT * FROM ' . $this->ci->db->protect_identifiers($invoiceTable, true)
+                . ' WHERE id = ? FOR UPDATE', [(int) $invoice->id]
+        );
+        if (!$lockedInvoice || !$lockedInvoice->row()) {
+            return 'review_required';
+        }
+        $invoice = $lockedInvoice->row();
+
+        if ($mapped && (int) $mapped['invoice_id'] !== (int) $invoice->id) {
+            return 'review_required';
+        }
+        if ($this->ci->db->table_exists($mapTable)) {
+            $invoiceMap = $this->ci->db
+                ->get_where($mapTable, ['invoice_id' => (int) $invoice->id])
+                ->row_array();
+            if ($invoiceMap && (string) $invoiceMap['asaas_payment_id'] !== $paymentId) {
+                return 'review_required';
+            }
+        }
+
         if (in_array($event, $reviewEvents, true)) {
             return 'review_required';
         }
