@@ -12,6 +12,8 @@ class InitModules
         $trace = PHP_SAPI === 'cli' && getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false;
         if ($trace) {
             fwrite(STDERR, '[ARGWS CRM setup] Hook InitModules iniciado.' . PHP_EOL);
+            fwrite(STDERR, '[ARGWS CRM setup] Hook InitModules ignorado: exclusões CSRF não se aplicam ao executor CLI.' . PHP_EOL);
+            return;
         }
 
         include_once(LIBSPATH.'App_modules.php');
