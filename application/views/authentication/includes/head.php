@@ -1,11 +1,11 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <!DOCTYPE html>
-<html lang="en" dir="<?php echo is_rtl() ? 'rtl' : 'ltr'; ?>">
+<html lang="pt-BR" dir="<?php echo is_rtl() ? 'rtl' : 'ltr'; ?>">
 
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>
         <?php echo e(get_option('companyname')); ?> - <?php echo _l('admin_auth_login_heading'); ?>
     </title>
@@ -25,16 +25,28 @@
         color: #475569;
         margin: 0;
         padding: 0;
+        min-height: 100vh;
+    }
+
+    .authentication-form-wrapper {
+        width: min(100%, 460px);
+        padding-top: clamp(24px, 6vh, 72px) !important;
+        padding-bottom: 24px;
     }
 
     .company-logo {
-        padding: 25px 10px;
+        padding: 12px 10px 22px;
         display: block;
     }
 
     .company-logo img {
         margin: 0 auto;
         display: block;
+        max-width: min(100%, 240px);
+        max-height: 80px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
     }
 
     @media screen and (max-height: 575px),
