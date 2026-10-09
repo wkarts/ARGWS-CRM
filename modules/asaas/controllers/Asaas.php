@@ -15,33 +15,17 @@ class Asaas extends AdminController
 
     public function index()
     {
-
-        $this->db->where('active', 1);
-
-        $clients = $this->db->get(db_prefix() . 'clients')->result();
-
-        $i = 1;
-
-        foreach ($clients as $client) {
-
-            $get_customer = $this->asaas_gateway->get_customer($client->vat);
-
-            echo $i;
-            echo "<hr>";
-            var_dump($client->userid);
-            echo "<hr>";
-            var_dump($client->company);
-            echo "<hr>";
-            var_dump($client->vat);
-            echo "<hr>";
-            var_dump(str_replace('/', '', str_replace('-', '', str_replace('.', '', $client->vat))));
-
-            echo "<hr>";
-            var_dump($get_customer);
-            echo "<hr>";
-
-            $i++;
+        if (!is_admin()) {
+            access_denied('Asaas');
         }
+
+        $data = [
+            'title' => 'Webhooks Asaas',
+            'webhook_url' => site_url('asaas/gateways/callback'),
+            'email' => (string) get_option('smtp_email'),
+            'has_webhook_token' => strlen((string) $this->asaas_gateway->getSetting('webhook_secret')) >= 32,
+        ];
+        $this->load->view('asaas/webhooks', $data);
     }
 
     public function get_invoice_data($invoice_hash)
@@ -94,53 +78,9 @@ class Asaas extends AdminController
 
     public function merge()
     {
-
-        $charges = $this->asaas_gateway->charges($this->apiKey, null);
-
-        $charges = json_decode($charges, TRUE);
-
-        natsort($charges["data"]);
-
-        $response = $this->asaas_gateway->get_customers($this->apiKey, null);
-
-        natsort($response["data"]);
-
-        $i = 0;
-
-        $new_array = [];
-
-        foreach ($charges["data"] as $row) {
-            foreach ($response["data"] as $customer) {
-                if ($row["customer"] = $customer["id"]) {
-                    $new_array[$i]["name"] = $customer["name"];
-                    $new_array[$i]["cpfCnpj"] = $customer["cpfCnpj"];
-                    $new_array[$i]["id"] = $row["id"];
-                    $new_array[$i]["dateCreated"] = $row["dateCreated"];
-                    $new_array[$i]["customer"] = $row["customer"];
-                    $new_array[$i]["value"] = $row["value"];
-                    $new_array[$i]["description"] = $row["description"];
-                    $new_array[$i]["billingType"] = $row["billingType"];
-                    $new_array[$i]["status"] = $row["status"];
-                    $new_array[$i]["dueDate"] = $row["dueDate"];
-                    $new_array[$i]["paymentDate"] = $row["paymentDate"];
-                    $new_array[$i]["installmentNumber"] = $row["installmentNumber"];
-                    $new_array[$i]["invoiceUrl"] = $row["invoiceUrl"];
-                    $new_array[$i]["invoiceNumber"] = $row["invoiceNumber"];
-                    $new_array[$i]["externalReference"] = $row["externalReference"];
-                }
-                $i++;
-            }
-
-            var_dump($new_array);
-
-            die();
-        }
-        $data = [
-            "new_array" => $new_array ? $new_array : NULL,
-        ];
-
-
-        $this->load->view('asaas/customers', $data);
+        // Rota antiga de diagnóstico sem contrato funcional: não deve exibir
+        // CPF/CNPJ, dados bancários ou pagamentos em saída de depuração.
+        show_404();
     }
 
     public function services()
@@ -150,25 +90,77 @@ class Asaas extends AdminController
 
     public function setup_webhook()
     {
+        if (!is_admin()) {
+            access_denied('Asaas');
+        }
+        if ($this->input->method(true) !== 'POST') {
+            show_404();
+        }
 
-        $email = "suporte@wwsoftwares.com.br";
+        $token = trim((string) $this->asaas_gateway->getSetting('webhook_secret'));
+        $email = trim((string) $this->input->post('notification_email'));
+        $url = site_url('asaas/gateways/callback');
 
-        $webhook = $this->asaas_gateway->get_webhook($this->apiKey, null);
+        if (strlen($token) < 32 || strlen($token) > 255 || preg_match('/\\s/', $token)) {
+            set_alert('danger', 'Configure primeiro um token exclusivo para o webhook, com 32 a 255 caracteres, sem espaços.');
+            redirect(admin_url('asaas'));
+            return;
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !filter_var($url, FILTER_VALIDATE_URL)
+            || strtolower((string) parse_url($url, PHP_URL_SCHEME)) !== 'https') {
+            set_alert('danger', 'Informe um e-mail válido e disponibilize o webhook por HTTPS.');
+            redirect(admin_url('asaas'));
+            return;
+        }
 
-        var_dump($webhook);
-        echo "<hr>";
-        $set_webhook = $this->set_webhook($this->apiKey, null, $email);
+        $adapter = $this->asaas_gateway->getAdapter();
+        $list = $adapter->requestStructured('GET', '/webhooks', ['limit' => 100]);
+        if (empty($list['success'])) {
+            set_alert('danger', 'Não foi possível consultar os webhooks da conta Asaas.');
+            redirect(admin_url('asaas'));
+            return;
+        }
+        $webhooks = $list['data']['data'] ?? [];
+        if (!is_array($webhooks)) {
+            set_alert('danger', 'A listagem de webhooks retornou dados incompatíveis.');
+            redirect(admin_url('asaas'));
+            return;
+        }
+        foreach ($webhooks as $webhook) {
+            if (is_array($webhook) && (string) ($webhook['url'] ?? '') === $url) {
+                set_alert('warning', 'Este endereço já consta na conta Asaas. Confirme o token configurado antes de ativar o envio.');
+                redirect(admin_url('asaas'));
+                return;
+            }
+        }
+        if (!empty($list['data']['hasMore'])) {
+            set_alert('warning', 'A conta possui mais webhooks. Consulte as demais páginas antes de criar outro.');
+            redirect(admin_url('asaas'));
+            return;
+        }
 
-        var_dump($set_webhook);
-        echo "<hr>";
+        $result = $adapter->requestStructured('POST', '/webhooks', [], [], [
+            'name' => 'CRM — eventos de pagamento',
+            'url' => $url,
+            'email' => $email,
+            'enabled' => true,
+            'interrupted' => false,
+            'apiVersion' => 3,
+            'authToken' => $token,
+            'sendType' => 'SEQUENTIALLY',
+            'events' => [
+                'PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED', 'PAYMENT_OVERDUE',
+                'PAYMENT_REFUNDED', 'PAYMENT_PARTIALLY_REFUNDED',
+                'PAYMENT_CHARGEBACK_REQUESTED',
+            ],
+        ]);
 
-        $set_webhook_invoice = $this->set_webhook_invoice($this->apiKey, null, $email);
-
-        var_dump($set_webhook_invoice);
-
-        echo "<hr>";
-        // $set_webhook_transfer = $this->set_webhook_transfer($this->apiKey, $this->apiUrl, $email);
-        // var_dump($set_webhook_transfer);
+        if (!empty($result['success']) && !empty($result['data']['id'])) {
+            set_alert('success', 'Webhook cadastrado. Consulte a fila de eventos no painel Asaas.');
+        } else {
+            set_alert('danger', 'Falha ao cadastrar o webhook. Confira as permissões da chave da API.');
+        }
+        redirect(admin_url('asaas'));
     }
 
     public function set_webhook($api_key, $api_url, $email)
