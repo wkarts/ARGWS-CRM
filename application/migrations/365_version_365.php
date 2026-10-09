@@ -109,6 +109,42 @@ class Migration_Version_365 extends CI_Migration
                     ->update($table, $changes);
             }
         }
+        // Tradução de modelos já criados pelo instalador antigo.
+        $this->localizeExistingModuleTemplates();
+    }
+
+    private function localizeExistingModuleTemplates(): void
+    {
+        $table = db_prefix() . 'emailtemplates';
+        foreach (EmailTemplatesPtBr::moduleTemplates() as $slug => $localized) {
+            $existing = $this->db->where('slug', $slug)
+                ->where('language', 'portuguese_br')->get($table)->row_array();
+            if (!$existing) {
+                // Não instalar modelos de módulos que ainda não foram ativados.
+                continue;
+            }
+
+            $updates = [];
+            foreach (['name', 'subject', 'message'] as $field) {
+                $current = (string) ($existing[$field] ?? '');
+                $original = (string) ($localized['source_' . $field] ?? '');
+                if ($current !== '' && $current !== $original) {
+                    continue;
+                }
+
+                $translated = $field === 'message'
+                    ? EmailTemplatesPtBr::translateMessage($original)
+                    : $localized[$field];
+                if ($translated !== $current) {
+                    $updates[$field] = $translated;
+                }
+            }
+
+            if ($updates) {
+                $this->db->where('emailtemplateid', (int) $existing['emailtemplateid'])
+                    ->update($table, $updates);
+            }
+        }
     }
 
     private function enable_default_theme(): void
