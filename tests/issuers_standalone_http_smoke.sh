@@ -17,8 +17,23 @@ mysql_root -e "CREATE DATABASE argws_legacy_ci; CREATE DATABASE argws_upgrade_ci
 cp -a install "$work/install"
 printf '\nALTER TABLE tblstaff AUTO_INCREMENT=17;\n' >> "$work/install/database.sql"
 docker create --name "$legacy" --network "$ISSUER_SMOKE_NETWORK" -p 127.0.0.1::8080 \
-    "$ISSUER_SMOKE_IMAGE" php -d disable_functions=exec,proc_open,shell_exec,system,passthru -S 0.0.0.0:8080 -t /app >/dev/null
+    "$ISSUER_SMOKE_IMAGE" php -d disable_functions=exec,proc_open,shell_exec,system,passthru -S 0.0.0.0:8080 -t /app /tmp/issuer-router.php >/dev/null
 docker cp "$work/install" "$legacy:/app/install"
+cat > "$work/router.php" <<'PHP'
+<?php
+$root = '/app';
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+$requestPath = is_string($requestPath) && $requestPath !== '' ? $requestPath : '/';
+$file = $root . $requestPath;
+if ($requestPath !== '/' && is_file($file)) {
+    return false;
+}
+$_SERVER['SCRIPT_NAME'] = '/index.php';
+$_SERVER['SCRIPT_FILENAME'] = $root . '/index.php';
+$_SERVER['PHP_SELF'] = '/index.php' . $requestPath;
+require $root . '/index.php';
+PHP
+docker cp "$work/router.php" "$legacy:/tmp/issuer-router.php"
 cat > "$work/my_hooks.php" <<'PHP'
 <?php
 $hook['pre_controller'][] = function () {
@@ -74,7 +89,7 @@ docker exec "$legacy" test ! -e /tmp/issuer-custom-helper-ran
 for action in complete_installation apply_migrations; do
     response="$work/route-$action"
     headers="$work/headers-$action"
-    code="$(curl -sS --max-time 10 -D "$headers" -o "$response" -w '%{http_code}' "$url/index.php?/argws_provisioning/$action")"
+    code="$(curl -sS --max-time 10 -D "$headers" -o "$response" -w '%{http_code}' "$url/argws_provisioning/$action")"
     if [ "$code" != 404 ]; then
         printf 'Unexpected HTTP status %s for %s; headers and response follow:\n' "$code" "$action" >&2
         cat "$headers" >&2 || true
@@ -94,10 +109,11 @@ node tests/issuers_browser_smoke.cjs
 mysql_root argws_upgrade_ci < install/database.sql
 mysql_root -e "INSERT INTO argws_upgrade_ci.tblstaff (staffid,firstname,lastname,email,password,admin,active,datecreated) SELECT staffid,firstname,lastname,email,password,admin,active,datecreated FROM argws_legacy_ci.tblstaff WHERE staffid=17;"
 docker create --name "$upgrade" --network "$ISSUER_SMOKE_NETWORK" -p 127.0.0.1::8080 \
-    "$ISSUER_SMOKE_IMAGE" php -S 0.0.0.0:8080 -t /app >/dev/null
+    "$ISSUER_SMOKE_IMAGE" php -S 0.0.0.0:8080 -t /app /tmp/issuer-router.php >/dev/null
 docker cp "$legacy:/var/lib/argws-crm/config/app-config.php" "$work/app-config.php"
 sed -i 's/argws_legacy_ci/argws_upgrade_ci/g' "$work/app-config.php"
 docker cp "$work/app-config.php" "$upgrade:/var/lib/argws-crm/config/app-config.php"
+docker cp "$work/router.php" "$upgrade:/tmp/issuer-router.php"
 docker start "$upgrade" >/dev/null
 upgrade_port="$(docker port "$upgrade" 8080/tcp | awk -F: 'END {print $NF}')"
 upgrade_url="http://127.0.0.1:$upgrade_port"
