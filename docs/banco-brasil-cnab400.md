@@ -16,6 +16,14 @@ Catálogo oficial: <https://www.bb.com.br/site/pro-seu-negocio/aplicativos-leiau
 
 Os PDFs completos não são incluídos no repositório. As fixtures foram construídas para os testes e não constituem arquivos homologados fornecidos pelo banco. O repositório Financial Platform foi referência de investigação, não fonte de homologação nem de implementação copiada.
 
+## Rechecagem das fontes oficiais em 18/10/2026
+
+O catálogo oficial continua listando CBR641 e CBR643 para convênio de sete posições. A busca oficial desta revisão também retornou o PDF [CBR641 de sete posições](https://www.bb.com.br/docs/pub/emp/empl/dwn/Doc2627CBR641Pos7.pdf), cuja folha de rosto informa versão junho/2024. O endereço e SHA-256 de julho/2026 registrados acima não puderam ser abertos ou recalculados nesta verificação. São referências oficiais diferentes; a revisão canônica precisa ser comparada por download binário e SHA-256 antes de liberar a remessa.
+
+No PDF de junho/2024, o trailer de remessa está definido sem ambiguidade: registro `9`, posições 2–394 em branco e sequência nas posições 395–400. O campo de moeda nas posições 85–86 enumera 02 (dólar) e 14 (euro), sem documentar código BRL neste leiaute. O candidato CBR641 continua bloqueado para cobrança BRL até o BB confirmar o campo e a revisão aplicável ao convênio.
+
+A referência oficial atual da API de Cobrança continua pública, mas a OpenAPI não ficou acessível nesta consulta. Nenhum endpoint, escopo ou requisito de certificado foi inferido; o executor API segue indisponível até que o arquivo oficial vigente possa ser inspecionado.
+
 ## Configuração visual e autorização
 
 Menu **Banco do Brasil → Conta**:

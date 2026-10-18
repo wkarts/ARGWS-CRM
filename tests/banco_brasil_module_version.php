@@ -39,7 +39,7 @@ check((new App_module_migration('banco_brasil'))->to_latest()===true,'repeat cur
 $CI->db->version='1.0.0';check((string)(new App_module_migration('banco_brasil'))->to_latest()==='101','native upgrade');check($CI->db->version==='1.0.1','upgrade tracked');
 $CI->db->failDdl=true;try{require APP_MODULES_PATH.'banco_brasil/install.php';throw new LogicException('must fail');}catch(RuntimeException $e){check($CI->db->version==='1.0.0','DDL failure leaves baseline');}
 $CI->db->failDdl=false;require APP_MODULES_PATH.'banco_brasil/install.php';check($CI->db->version==='1.0.1','safe retry');
-$CI->db->failTracking=true;try{require APP_MODULES_PATH.'banco_brasil/install.php';throw new LogicException('must fail');}catch(RuntimeException $e){check($e->getMessage()==='bb_migration_version_unconfirmed','tracking failure detected');}
+$CI->db->failTracking=true;try{require APP_MODULES_PATH.'banco_brasil/install.php';throw new LogicException('must fail');}catch(RuntimeException $e){check($e->getMessage()==='bb_migration_failed','activation reports native tracking failure');check($CI->db->version==='1.0.0','failed native tracking preserves baseline');}
 $CI->db->failTracking=false;$CI->db->version='1.0.2';try{require APP_MODULES_PATH.'banco_brasil/install.php';throw new LogicException('must fail');}catch(RuntimeException $e){check($CI->db->version==='1.0.2','no downgrade');}
 $ddl=implode("\n",\BancoBrasil\ModuleSchema::statements('test_'));
 check(substr_count($ddl,'ENGINE=InnoDB')===7,'all transactional tables');
