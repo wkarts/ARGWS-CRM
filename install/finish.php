@@ -1,4 +1,14 @@
+<?php if (!empty($installation_migrations_ready)) { ?>
 <h4 class="bold text-success">Instalação concluída!</h4>
+<p>O CRM e o cadastro de Empresas estão prontos para uso.</p>
+<?php } else { ?>
+<div class="alert alert-danger" role="alert">
+    A instalação não foi concluída. Os dados criados foram preservados.
+    Verifique os logs da hospedagem antes de repetir a atualização.
+    Não execute novamente a importação do banco. Após remover o diretório install,
+    entre como administrador para recuperar a atualização com segurança.
+</div>
+<?php } ?>
 
 <?php if (isset($config_copy_failed)) { ?>
 <p class="text-danger">

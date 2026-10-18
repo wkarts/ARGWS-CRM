@@ -83,6 +83,7 @@ class Invoices extends AdminController
 
     public function client_change_data($customer_id, $current_invoice = '')
     {
+        if ($current_invoice !== '' && !\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $current_invoice)) { show_404(); }
         if ($this->input->is_ajax_request()) {
             $this->load->model('projects_model');
             $data                     = [];
@@ -113,6 +114,7 @@ class Invoices extends AdminController
 
     public function update_number_settings($id)
     {
+        if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) { show_404(); }
         $response = [
             'success' => false,
             'message' => '',
@@ -152,11 +154,9 @@ class Invoices extends AdminController
             }
         }
 
-        if (total_rows('invoices', [
-            'YEAR(date)' => date('Y', strtotime(to_sql_date($date))),
-            'number' => $number,
-            'status !=' => Invoices_model::STATUS_DRAFT,
-        ]) > 0) {
+        \app\services\InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
+        $this->db->where('YEAR(date)', date('Y', strtotime(to_sql_date($date))))->where('number', $number)->where('status !=', Invoices_model::STATUS_DRAFT);
+        if ($this->db->count_all_results(db_prefix() . 'invoices') > 0) {
             echo 'false';
         } else {
             echo 'true';
@@ -181,6 +181,7 @@ class Invoices extends AdminController
 
     public function pause_overdue_reminders($id)
     {
+        if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) { show_404(); }
         if (staff_can('edit',  'invoices')) {
             $this->db->where('id', $id);
             $this->db->update(db_prefix() . 'invoices', ['cancel_overdue_reminders' => 1]);
@@ -190,6 +191,7 @@ class Invoices extends AdminController
 
     public function resume_overdue_reminders($id)
     {
+        if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) { show_404(); }
         if (staff_can('edit',  'invoices')) {
             $this->db->where('id', $id);
             $this->db->update(db_prefix() . 'invoices', ['cancel_overdue_reminders' => 0]);
@@ -244,6 +246,7 @@ class Invoices extends AdminController
 
     public function get_merge_data($id)
     {
+        if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) { show_404(); }
         $invoice = $this->invoices_model->get($id);
         $cf      = get_custom_fields('items');
 
@@ -487,6 +490,7 @@ class Invoices extends AdminController
 
     public function apply_credits($invoice_id)
     {
+        if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $invoice_id)) { show_404(); }
         $total_credits_applied = 0;
         foreach ($this->input->post('amount') as $credit_id => $amount) {
             $success = $this->credit_notes_model->apply_credits($credit_id, [
@@ -515,6 +519,7 @@ class Invoices extends AdminController
     /* Record new inoice payment view */
     public function record_invoice_payment_ajax($id)
     {
+        if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) { show_404(); }
         $this->load->model('payment_modes_model');
         $this->load->model('payments_model');
         $data['payment_modes'] = $this->payment_modes_model->get('', [

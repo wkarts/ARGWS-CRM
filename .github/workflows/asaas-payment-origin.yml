@@ -1,18 +1,26 @@
 name: Origem e remocao segura Asaas
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, fix/asaas-immutable-payment-origin, fix/asaas-callback-hmvc-route, feat/banco-brasil-billing-cnab240]
     paths:
       - modules/asaas/**
       - application/models/Invoices_model.php
+      - application/models/Payments_model.php
+      - application/models/Credit_notes_model.php
+      - application/services/InvoicePaymentWriter.php
       - tests/asaas_*.php
+      - tests/asaas_*.test.js
       - .github/workflows/asaas-payment-origin.yml
   push:
-    branches: [main, develop]
+    branches: [main, develop, fix/asaas-webhook-scope-auth]
     paths:
       - modules/asaas/**
       - application/models/Invoices_model.php
+      - application/models/Payments_model.php
+      - application/models/Credit_notes_model.php
+      - application/services/InvoicePaymentWriter.php
       - tests/asaas_*.php
+      - tests/asaas_*.test.js
       - .github/workflows/asaas-payment-origin.yml
 permissions:
   contents: read
@@ -30,11 +38,24 @@ jobs:
           php -v
           find modules/asaas -path '*/vendor' -prune -o -name '*.php' -print0 | xargs -0 -n1 php -l
           php -l application/models/Invoices_model.php
+          php -l application/models/Payments_model.php
+          php -l application/models/Credit_notes_model.php
+          php -l application/services/InvoicePaymentWriter.php
           find tests -name 'asaas_*.php' -print0 | xargs -0 -n1 php -l
       - name: Testar fluxo sem rede e sem credenciais
         run: |
           php tests/asaas_invoice_payment_removal.php
           php tests/asaas_payment_origin_integration.php
+          php tests/asaas_webhook_security.php
+          php tests/asaas_webhook_route.php
+          php tests/asaas_callback_route.php
+          php tests/asaas_callback_version.php
+          php tests/asaas_webhook_admin.php
+          php tests/asaas_hosted_card.php
+          php tests/asaas_hosted_card_gateway.php
+          php tests/asaas_settings_policy.php
+          php tests/asaas_payment_writer.php
+          php tests/asaas_payment_writer_entrypoints.php
   mysql:
     runs-on: ubuntu-latest
     container: php:8.3-cli
@@ -56,4 +77,25 @@ jobs:
           ASAAS_TEST_MYSQL_DSN: mysql:host=mysql;dbname=asaas_test;charset=utf8mb4
           ASAAS_TEST_MYSQL_USER: root
           ASAAS_TEST_MYSQL_PASSWORD: test-only-password
-        run: php tests/asaas_payment_origin_schema.php
+        run: |
+          php tests/asaas_payment_origin_schema.php
+          php tests/asaas_webhook_schema.php
+          php tests/asaas_module_migrations.php
+          php tests/asaas_callback_migration.php
+          php tests/asaas_payment_writer_mysql.php
+
+  settings-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validar abas em JavaScript e DOM Chromium local
+        run: |
+          node --check modules/asaas/assets/js/settings-tabs.js
+          chrome="$(command -v google-chrome)"
+          test -n "$chrome"
+          CHROMIUM_BIN="$chrome" ASAAS_UI_SCREENSHOT=artifacts/asaas-settings.png node tests/asaas_settings_tabs.test.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: asaas-settings-synthetic
+          path: artifacts/asaas-settings.png
+          if-no-files-found: error

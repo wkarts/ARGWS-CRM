@@ -1,5 +1,7 @@
 <?php
 
+use app\services\InvoiceIssuerScope;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Dashboard_model extends App_Model
@@ -56,6 +58,7 @@ class Dashboard_model extends App_Model
         $this->db->select(db_prefix() . 'invoicepaymentrecords.id, amount,' . db_prefix() . 'invoicepaymentrecords.date');
         $this->db->from(db_prefix() . 'invoicepaymentrecords');
         $this->db->join(db_prefix() . 'invoices', '' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $this->db->where('YEARWEEK(' . db_prefix() . 'invoicepaymentrecords.date) = YEARWEEK(CURRENT_DATE)');
         $this->db->where('' . db_prefix() . 'invoices.status !=', 5);
         if ($currency != 'undefined') {
@@ -71,6 +74,7 @@ class Dashboard_model extends App_Model
         $this->db->select(db_prefix() . 'invoicepaymentrecords.id, amount,' . db_prefix() . 'invoicepaymentrecords.date');
         $this->db->from(db_prefix() . 'invoicepaymentrecords');
         $this->db->join(db_prefix() . 'invoices', '' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $this->db->where('YEARWEEK(' . db_prefix() . 'invoicepaymentrecords.date) = YEARWEEK(CURRENT_DATE - INTERVAL 7 DAY) ');
 
         $this->db->where('' . db_prefix() . 'invoices.status !=', 5);
@@ -154,6 +158,7 @@ class Dashboard_model extends App_Model
         $this->db->select('SUM(amount) as total, MONTH(' . db_prefix() . 'invoicepaymentrecords.date) as month');
         $this->db->from(db_prefix() . 'invoicepaymentrecords');
         $this->db->join(db_prefix() . 'invoices', '' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $this->db->where('YEAR(' . db_prefix() . 'invoicepaymentrecords.date) = YEAR(CURRENT_DATE)');
         $this->db->where('' . db_prefix() . 'invoices.status !=', 5);
         $this->db->group_by('month');

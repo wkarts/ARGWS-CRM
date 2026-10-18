@@ -87,6 +87,8 @@ class App
     public function __construct()
     {
         $this->ci = &get_instance();
+        require_once APPPATH . 'services/CompanyRequestScope.php';
+        CompanyRequestScope::beforeHydration($this->ci);
         // @deprecated
         $this->_instance = $this->ci;
 
@@ -99,6 +101,14 @@ class App
         $this->init();
 
         hooks()->do_action('app_base_after_construct_action');
+    }
+
+    /** Drop request-local option, permission-bearing UI and quick-action caches on company selection. */
+    public function clearCompanyCaches(): void
+    {
+        $this->options = [];
+        $this->quick_actions = [];
+        $this->settingsSections = [];
     }
 
     public function get_settings_sections()
@@ -185,14 +195,19 @@ class App
      */
     public function upgrade_database()
     {
-        // The legacy upgrade form can run with global CSRF disabled. Its web
-        // follow-up is the authenticated essential setup with a mandatory token.
+        require_once APPPATH . 'services/AdminDatabaseUpgrade.php';
+        if (!AdminDatabaseUpgrade::authorize($this->ci)) {
+            show_error('Atualização restrita ao administrador ativo, por POST autenticado.', 403);
+            return;
+        }
+        // Core migrations and company schema complete in this same authorized
+        // action. A failed attempt returns to the native update form for retry.
         $update = $this->upgrade_database_silent();
-
-        if ($update['success'] == false) {
-            show_error($update['message']);
+        if (empty($update['success'])) {
+            return $update;
         } else {
-            set_alert('success', 'O banco de dados está atualizado.');
+            $this->ci->session->unset_userdata('admin_database_upgrade_csrf');
+            set_alert('success', 'O CRM foi atualizado com sucesso.');
             update_option('last_updated_date', time());
             if (is_staff_logged_in()) {
                 redirect(admin_url('settings?group=update'), 'refresh');
@@ -211,11 +226,25 @@ class App
         if (!is_cli()) {
             return ['success' => false, 'message' => 'Provisionamento de migrations restrito ao processo CLI.'];
         }
+        return $this->apply_installation_migrations();
+    }
+
+    public function apply_pending_migrations_for_installation()
+    {
+        if (!class_exists('InstallationMigrationBootstrap', false)
+            || !InstallationMigrationBootstrap::isRunning()) {
+            return ['success' => false, 'message' => 'Contexto de instalação inválido.'];
+        }
+        return $this->apply_installation_migrations();
+    }
+
+    private function apply_installation_migrations()
+    {
         $this->ci->load->config('migration');
         $beforeUpdateVersion = (int) $this->get_current_db_version();
         $targetVersion = (int) $this->ci->config->item('migration_version');
 
-        $result = $this->upgrade_database_silent(true);
+        $result = $this->upgrade_database_silent();
         if (empty($result['success'])) {
             return $result;
         }
@@ -331,7 +360,17 @@ class App
     /** Return options with the runtime language policy applied. */
     public function get_options()
     {
-        return array_replace($this->options, $this->ui_language_options());
+        if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()) {
+            return array_replace(CompanySettingsRuntime::all(), $this->ui_language_options());
+        }
+        $options = $this->options;
+        if (class_exists('IssuerCore', false) && IssuerCore::ready($this->ci->db, db_prefix())) {
+            require_once APPPATH . 'services/CompanySettingsIdentity.php';
+            foreach (array_merge(array_keys(CompanySettingsIdentity::ALIASES), CompanySettingsIdentity::PROFILE_OPTIONS) as $key) {
+                $options[$key] = CompanySettingsIdentity::legacyPrincipalOption($this->ci->db, db_prefix(), $key);
+            }
+        }
+        return array_replace($options, $this->ui_language_options());
     }
 
     /**
@@ -343,8 +382,17 @@ class App
      */
     public function get_option($name)
     {
-        $val  = '';
+        if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()) {
+            return CompanySettingsRuntime::get($name);
+        }
         $name = trim($name);
+        if (class_exists('IssuerCore', false) && IssuerCore::ready($this->ci->db, db_prefix())) {
+            require_once APPPATH . 'services/CompanySettingsIdentity.php';
+            if (CompanySettingsIdentity::handles($name)) {
+                return CompanySettingsIdentity::legacyPrincipalOption($this->ci->db, db_prefix(), $name);
+            }
+        }
+        $val  = '';
 
         $languageOptions = $this->ui_language_options();
         if (array_key_exists($name, $languageOptions)) {
@@ -435,58 +483,77 @@ class App
      *
      * @return mixed
      */
-    private function upgrade_database_silent($reconcileEssential = false)
+    private function upgrade_database_silent()
     {
         $this->ci->load->config('migration');
-
         $beforeUpdateVersion = $this->get_current_db_version();
-        $updateToVersion     = $this->ci->config->item('migration_version');
+        $updateToVersion = $this->ci->config->item('migration_version');
         if ((int) $beforeUpdateVersion > (int) $updateToVersion) {
             return ['success' => false, 'message' => 'O banco de dados pertence a uma versão mais recente do CRM. Use os arquivos compatíveis; nenhuma redução de versão foi executada.'];
         }
-
-        $this->ci->load->library('migration', [
-            'migration_enabled'     => true,
-            'migration_type'        => $this->ci->config->item('migration_type'),
-            'migration_table'       => $this->ci->config->item('migration_table'),
-            'migration_auto_latest' => $this->ci->config->item('migration_auto_latest'),
-            'migration_version'     => $updateToVersion,
-            'migration_path'        => $this->ci->config->item('migration_path'),
-        ]);
-
-        hooks()->do_action('before_update_database', $updateToVersion);
-        if (!defined('DOING_DATABASE_UPGRADE')) { define('DOING_DATABASE_UPGRADE', true); }
-        if ($this->ci->migration->current() === false) {
-            return [
-                'success' => false,
-                'message' => $this->ci->migration->error_string(),
-            ];
-        }
-
-        // CI3 does not propagate a failed version-marker UPDATE. Confirm storage.
-        if ((int) $this->get_current_db_version() !== (int) $updateToVersion) {
-            return ['success' => false, 'message' => 'Não foi possível confirmar a migration aplicada no banco. Verifique os logs antes de tentar novamente.'];
-        }
-
-        delete_option('upgraded_from_version');
-        add_option('upgraded_from_version', $beforeUpdateVersion);
-
-        if ($reconcileEssential) {
-            try {
-                // Provisioning uses CI_Controller, not the normal admin bootstrap.
-                $this->ci->load->library(['app_modules', 'app_module_migration']);
-                if (!$this->ci->app_modules->ensure_essential_modules()) {
-                    throw new RuntimeException('issuer_essential_setup_unconfirmed');
-                }
-            } catch (Throwable $error) {
-                log_message('error', 'Falha no recurso essencial após migration core: ' . get_class($error));
-                return ['success' => false, 'message' => 'A migration core terminou, mas a configuração de Emitentes está pendente. Repita a configuração controlada antes de usar o painel.'];
+        $databaseFlags = [];
+        foreach (['db_debug', 'save_queries'] as $flag) {
+            if (property_exists($this->ci->db, $flag)) {
+                $databaseFlags[$flag] = $this->ci->db->$flag;
+                $this->ci->db->$flag = false;
             }
         }
+        try {
+            $this->ci->load->library('migration', [
+                'migration_enabled'     => true,
+                'migration_type'        => $this->ci->config->item('migration_type'),
+                'migration_table'       => $this->ci->config->item('migration_table'),
+                'migration_auto_latest' => $this->ci->config->item('migration_auto_latest'),
+                'migration_version'     => $updateToVersion,
+                'migration_path'        => $this->ci->config->item('migration_path'),
+            ]);
+            hooks()->do_action('before_update_database', $updateToVersion);
+            if (!defined('DOING_DATABASE_UPGRADE')) { define('DOING_DATABASE_UPGRADE', true); }
+            if ($this->ci->migration->current() === false) {
+                throw new RuntimeException('core_migration_unconfirmed');
+            }
+            // CI3's runner does not propagate a failed version-marker write.
+            if ((int) $this->get_current_db_version() !== (int) $updateToVersion) {
+                throw new RuntimeException('core_migration_tracking_unconfirmed');
+            }
+            // Native forward migration calls this too. Reconciliation is
+            // idempotent and covers retry after a partially completed update.
+            $this->load_issuer_core();
+            IssuerCore::reconcile($this->ci->db, db_prefix());
+            if (!IssuerCore::ready($this->ci->db, db_prefix())) {
+                throw new RuntimeException('company_core_unconfirmed');
+            }
+            delete_option('upgraded_from_version');
+            add_option('upgraded_from_version', $beforeUpdateVersion);
+            hooks()->do_action('database_updated', $updateToVersion);
+            return ['success' => true];
+        } catch (Throwable $error) {
+            log_message('error', 'Falha na atualização nativa: ' . get_class($error));
+            return ['success' => false, 'message' => 'Não foi possível concluir a atualização do CRM. Os dados foram preservados. Verifique os logs e tente novamente.'];
+        } finally {
+            foreach ($databaseFlags as $flag => $value) {
+                $this->ci->db->$flag = $value;
+            }
+        }
+    }
 
-        hooks()->do_action('database_updated', $updateToVersion);
+    /** Read-only readiness; never installs or repairs schema during GET/login. */
+    public function is_core_upgrade_required(): bool
+    {
+        try {
+            $this->load_issuer_core();
+            return !IssuerCore::ready($this->ci->db, db_prefix());
+        } catch (Throwable $error) {
+            log_message('error', 'Falha na verificação do núcleo de empresas: ' . get_class($error));
+            return true;
+        }
+    }
 
-        return ['success' => true];
+    private function load_issuer_core(): void
+    {
+        if (!class_exists('IssuerCore', false)) {
+            require_once APPPATH . 'services/issuers/IssuerCore.php';
+        }
     }
 
     /**

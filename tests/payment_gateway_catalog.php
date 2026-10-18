@@ -83,8 +83,14 @@ require APPPATH . 'models/Payments_model.php';
 function is_staff_logged_in() { return $GLOBALS['catalogStaff'] ?? false; }
 function staff_can($capability, $resource) { return $GLOBALS['catalogCanEdit'] ?? false; }
 $payments = (new ReflectionClass(Payments_model::class))->newInstanceWithoutConstructor();
+$payments->db = new class {
+    public function field_exists($field, $table) { return false; }
+    public function query($sql, $bind = []) {
+        return new class { public function row() { return (object) ['id' => 5]; } };
+    }
+};
 $payments->invoices_model = new class {
-    public function get($id) { return (object) ['allowed_payment_modes' => serialize(['asaas'])]; }
+    public function get($id) { return (object) ['id' => 5, 'issuer_id' => null, 'allowed_payment_modes' => serialize(['asaas'])]; }
 };
 same(false, $payments->process_payment(['paymentmode' => 'stripe'], 5), 'Direct POST cannot start hidden checkout for new invoice');
 

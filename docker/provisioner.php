@@ -208,11 +208,12 @@ function save_application_config(string $configDirectory, array $input, array $d
     }
 }
 
-function write_provisioning_state(string $configDirectory, array $input): void
+function write_provisioning_state(string $configDirectory, array $input, int $createdStaffId): void
 {
     $state = [
         'format' => 1,
         'stage' => 'base_ready',
+        'created_staff_id' => $createdStaffId,
         'base_url' => $input['base_url'],
         'admin_email_sha256' => hash('sha256', strtolower($input['admin_email'])),
     ];
@@ -266,7 +267,7 @@ function verify_recovery_config(string $configPath, array $input, array $databas
     }
 }
 
-function run_application_migrations(array $sensitiveValues = []): array
+function run_application_migrations(array $sensitiveValues = [], int $createdStaffId = 0): array
 {
     if (!function_exists('proc_open')) {
         provision_error('O ambiente não permite iniciar o executor interno de migrations.');
@@ -311,6 +312,7 @@ function run_application_migrations(array $sensitiveValues = []): array
     $environment = getenv();
     $environment = is_array($environment) ? $environment : [];
     $environment['ARGWS_SETUP_MIGRATION_TOKEN'] = $bridgeToken;
+    $environment['ARGWS_INSTALLER_CREATED_STAFF_ID'] = (string) $createdStaffId;
     $process = proc_open(
         [$phpBinary, '/opt/argws-crm-provisioner/migration-cli.php'],
         $descriptors,
@@ -407,20 +409,23 @@ function provision_with_input(array $rawInput): void
         $db = new mysqli($database['host'], $database['user'], $database['password'], $database['name']);
         $db->set_charset('utf8mb4');
 
+        $createdStaffId = 0;
         if (is_file($statePath)) {
             $state = read_provisioning_state($statePath);
+            $createdStaffId = isset($state['created_staff_id']) && is_int($state['created_staff_id'])
+                ? $state['created_staff_id'] : 0;
             if (($state['base_url'] ?? '') !== $input['base_url']
                 || !hash_equals((string) ($state['admin_email_sha256'] ?? ''), hash('sha256', strtolower($input['admin_email'])))) {
                 provision_error('Uma tentativa anterior já criou o administrador. Para retomá-la, use o mesmo endereço e o mesmo e-mail; a senha inicial permanece inalterada.');
             }
             verify_recovery_config($configPath, $input, $database);
 
-            $admin = $db->prepare('SELECT COUNT(*) AS admin_count FROM tblstaff WHERE email = ? AND admin = 1 AND active = 1');
+            $admin = $db->prepare('SELECT staffid FROM tblstaff WHERE email = ? AND admin = 1 AND active = 1');
             $admin->bind_param('s', $input['admin_email']);
             $admin->execute();
-            $adminCount = (int) $admin->get_result()->fetch_assoc()['admin_count'];
+            $administrators = $admin->get_result()->fetch_all(MYSQLI_ASSOC);
             $admin->close();
-            if ($adminCount !== 1) {
+            if (count($administrators) !== 1 || ($createdStaffId > 0 && (int) $administrators[0]['staffid'] !== $createdStaffId)) {
                 provision_error('Não foi possível confirmar o administrador criado na tentativa anterior. Nenhuma conta foi duplicada.');
             }
         } else {
@@ -477,7 +482,11 @@ function provision_with_input(array $rawInput): void
                     $createdAt
                 );
                 $insert->execute();
+                $createdStaffId = (int) $db->insert_id;
                 $insert->close();
+                if ($createdStaffId < 1) {
+                    provision_error('Não foi possível confirmar o administrador criado.');
+                }
 
                 $update = $db->prepare("UPDATE tbloptions SET value = ? WHERE name = 'default_timezone'");
                 $update->bind_param('s', $input['timezone']);
@@ -491,7 +500,7 @@ function provision_with_input(array $rawInput): void
                 $update->close();
 
                 save_application_config($configDirectory, $input, $database);
-                write_provisioning_state($configDirectory, $input);
+                write_provisioning_state($configDirectory, $input, $createdStaffId);
             } catch (Throwable $exception) {
                 if ($db instanceof mysqli) {
                     $db->close();
@@ -513,7 +522,7 @@ function provision_with_input(array $rawInput): void
             $db = null;
         }
 
-        run_application_migrations([$input['admin_password'], $input['admin_email']]);
+        run_application_migrations([$input['admin_password'], $input['admin_email']], $createdStaffId);
 
         $markerContents = gmdate(DATE_ATOM) . PHP_EOL;
         if (file_put_contents($markerPath, $markerContents, LOCK_EX) !== strlen($markerContents)) {

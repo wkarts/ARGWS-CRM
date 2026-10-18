@@ -17,6 +17,22 @@ class Tasks_model extends App_Model
 
     const STATUS_COMPLETE = 5;
 
+    /** Scoped cleanup proof is instance-private and established before the parent is removed. */
+    private array $authorizedTaskDeletion = [];
+
+    private function permitsLegacyTask($id, array $changes = []): bool
+    {
+        if ((!is_string($id) && !is_int($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        if (!$changes && isset($this->authorizedTaskDeletion[(string)$id])) return true;
+        return \app\services\TaskClientBoundary::permitsTask($this->db, db_prefix(), $id, $changes);
+    }
+
+    private function permitsLegacyTaskChild(string $kind, $id): bool
+    {
+        $task = \app\services\TaskClientBoundary::childTaskId($this->db, db_prefix(), $kind, $id);
+        return $task !== null && ($kind==='timer' && $task===0 || $this->permitsLegacyTask($task));
+    }
+
     public function __construct()
     {
         parent::__construct();
@@ -27,6 +43,7 @@ class Tasks_model extends App_Model
     // Not used?
     public function get_user_tasks_assigned()
     {
+        $this->db->where(\app\services\TaskClientBoundary::legacySql($this->db, db_prefix(), db_prefix().'tasks'), null, false);
         $this->db->where('id IN (SELECT taskid FROM ' . db_prefix() . 'task_assigned WHERE staffid = ' . get_staff_user_id() . ')');
         $this->db->where('status !=', 5);
         $this->db->order_by('duedate', 'asc');
@@ -88,6 +105,7 @@ class Tasks_model extends App_Model
      */
     public function get($id, $where = [])
     {
+        if (!$this->permitsLegacyTask($id)) return false;
         $is_admin = is_admin();
         $this->db->where('id', $id);
         $this->db->where($where);
@@ -161,6 +179,7 @@ class Tasks_model extends App_Model
     public function copy($data, $overwrites = [])
     {
         $task           = $this->get($data['copy_from']);
+        if (!$task) return false;
         $fields_tasks   = $this->db->list_fields(db_prefix() . 'tasks');
         $_new_task_data = [];
 
@@ -208,6 +227,7 @@ class Tasks_model extends App_Model
         unset($_new_task_data['datefinished']);
 
         $_new_task_data = hooks()->apply_filters('before_add_task', $_new_task_data);
+        if (!\app\services\TaskClientBoundary::permitsRelation($this->db, db_prefix(), $_new_task_data)) return false;
 
         $this->db->insert(db_prefix() . 'tasks', $_new_task_data);
         $insert_id = $this->db->insert_id();
@@ -317,6 +337,8 @@ class Tasks_model extends App_Model
 
     public function get_billable_tasks($customer_id = false, $project_id = '')
     {
+        if ($customer_id && !\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) return [];
+        $this->db->where(\app\services\TaskClientBoundary::legacySql($this->db, db_prefix(), db_prefix().'tasks'), null, false);
         $has_permission_view = staff_can('view',  'tasks');
         $noPermissionsQuery  = get_tasks_where_string(false);
 
@@ -408,6 +430,7 @@ class Tasks_model extends App_Model
 
     public function get_tasks_by_staff_id($id, $where = [])
     {
+        $this->db->where(\app\services\TaskClientBoundary::legacySql($this->db, db_prefix(), db_prefix().'tasks'), null, false);
         $this->db->where($where);
         $this->db->where('(id IN (SELECT taskid FROM ' . db_prefix() . 'task_assigned WHERE staffid=' . $this->db->escape_str($id) . '))');
 
@@ -421,6 +444,7 @@ class Tasks_model extends App_Model
      */
     public function add($data, $clientRequest = false)
     {
+        if (!\app\services\TaskClientBoundary::permitsRelation($this->db, db_prefix(), $data)) return false;
         $fromTicketId = null;
 
         if (isset($data['ticket_to_task'])) {
@@ -530,6 +554,7 @@ class Tasks_model extends App_Model
         }
 
         $data = hooks()->apply_filters('before_add_task', $data);
+        if (!\app\services\TaskClientBoundary::permitsRelation($this->db, db_prefix(), $data)) return false;
 
         $tags = '';
         if (isset($data['tags'])) {
@@ -672,6 +697,7 @@ class Tasks_model extends App_Model
      */
     public function update($data, $id, $clientRequest = false)
     {
+        if (!$this->permitsLegacyTask($id, $data)) return false;
         $affectedRows      = 0;
         $data['startdate'] = to_sql_date($data['startdate']);
         $data['duedate']   = to_sql_date($data['duedate']);
@@ -757,6 +783,7 @@ class Tasks_model extends App_Model
         }
 
         $data = hooks()->apply_filters('before_update_task', $data, $id);
+        if (!$this->permitsLegacyTask($id, $data)) return false;
 
         if (isset($data['custom_fields'])) {
             $custom_fields = $data['custom_fields'];
@@ -803,6 +830,7 @@ class Tasks_model extends App_Model
 
     public function get_checklist_item($id)
     {
+        if (!$this->permitsLegacyTaskChild('checklist', $id)) return false;
         $this->db->where('id', $id);
 
         return $this->db->get(db_prefix() . 'task_checklist_items')->row();
@@ -810,6 +838,7 @@ class Tasks_model extends App_Model
 
     public function get_checklist_items($taskid)
     {
+        if (!$this->permitsLegacyTask($taskid)) return [];
         $this->db->where('taskid', $taskid);
         $this->db->order_by('list_order', 'asc');
 
@@ -856,6 +885,7 @@ class Tasks_model extends App_Model
      */
     public function add_checklist_item($data)
     {
+        if (!$this->permitsLegacyTask($data['taskid'] ?? null)) return false;
         $this->db->insert(db_prefix() . 'task_checklist_items', [
             'taskid'      => $data['taskid'],
             'description' => $data['description'],
@@ -875,6 +905,7 @@ class Tasks_model extends App_Model
 
     public function delete_checklist_item($id)
     {
+        if (!$this->permitsLegacyTaskChild('checklist', $id)) return false;
         $this->db->where('id', $id);
         $this->db->delete(db_prefix() . 'task_checklist_items');
         if ($this->db->affected_rows() > 0) {
@@ -886,6 +917,7 @@ class Tasks_model extends App_Model
 
     public function update_checklist_order($data)
     {
+        foreach ($data['order'] as $order) if (!$this->permitsLegacyTaskChild('checklist', $order[0] ?? null)) return false;
         foreach ($data['order'] as $order) {
             $this->db->where('id', $order[0]);
             $this->db->update(db_prefix() . 'task_checklist_items', [
@@ -902,6 +934,7 @@ class Tasks_model extends App_Model
      */
     public function update_checklist_item($id, $description)
     {
+        if (!$this->permitsLegacyTaskChild('checklist', $id)) return false;
         $description = strip_tags($description, '<br>,<br/>');
         if ($description === '') {
             $this->db->where('id', $id);
@@ -921,6 +954,7 @@ class Tasks_model extends App_Model
      */
     public function make_public($task_id)
     {
+        if (!$this->permitsLegacyTask($task_id)) return false;
         $this->db->where('id', $task_id);
         $this->db->update(db_prefix() . 'tasks', [
             'is_public' => 1,
@@ -939,6 +973,7 @@ class Tasks_model extends App_Model
      */
     public function get_task_creator_id($taskid)
     {
+        if (!$this->permitsLegacyTask($taskid)) return false;
         $this->db->select('addedfrom');
         $this->db->where('id', $taskid);
 
@@ -952,6 +987,7 @@ class Tasks_model extends App_Model
      */
     public function add_task_comment($data)
     {
+        if (!$this->permitsLegacyTask($data['taskid'] ?? null)) return false;
         if (is_client_logged_in()) {
             $data['staffid']    = 0;
             $data['contact_id'] = get_contact_user_id();
@@ -1028,6 +1064,7 @@ class Tasks_model extends App_Model
      */
     public function add_task_followers($data)
     {
+        if (!$this->permitsLegacyTask($data['taskid'] ?? null)) return false;
         $this->db->insert(db_prefix() . 'task_followers', [
             'taskid'  => $data['taskid'],
             'staffid' => $data['follower'],
@@ -1088,6 +1125,7 @@ class Tasks_model extends App_Model
      */
     public function add_task_assignees($data, $cronOrIntegration = false, $clientRequest = false)
     {
+        if (!$this->permitsLegacyTask($data['taskid'] ?? null)) return false;
         $assignData = [
             'taskid'  => $data['taskid'],
             'staffid' => $data['assignee'],
@@ -1173,6 +1211,7 @@ class Tasks_model extends App_Model
      */
     public function get_task_attachments($taskid, $where = [])
     {
+        if (!$this->permitsLegacyTask($taskid)) return [];
         $this->db->select(implode(', ', prefixed_table_fields_array(db_prefix() . 'files')) . ', ' . db_prefix() . 'task_comments.id as comment_file_id');
         $this->db->where(db_prefix() . 'files.rel_id', $taskid);
         $this->db->where(db_prefix() . 'files.rel_type', 'task');
@@ -1195,6 +1234,7 @@ class Tasks_model extends App_Model
      */
     public function remove_task_attachment($id)
     {
+        if (!$this->permitsLegacyTaskChild('attachment', $id)) return false;
         $comment_removed = false;
         $deleted         = false;
         // Get the attachment
@@ -1275,6 +1315,7 @@ class Tasks_model extends App_Model
      */
     public function add_attachment_to_database($rel_id, $attachment, $external = false, $notification = true)
     {
+        if (!$this->permitsLegacyTask($rel_id)) return false;
         $file_id = $this->misc_model->add_attachment_to_database($rel_id, 'task', $attachment, $external);
         if ($file_id) {
             $this->db->select('rel_type,rel_id,name,visible_to_client');
@@ -1318,6 +1359,7 @@ class Tasks_model extends App_Model
      */
     public function get_task_followers($id)
     {
+        if (!$this->permitsLegacyTask($id)) return [];
         $this->db->select('id,' . db_prefix() . 'task_followers.staffid as followerid, CONCAT(firstname, " ", lastname) as full_name');
         $this->db->from(db_prefix() . 'task_followers');
         $this->db->join(db_prefix() . 'staff', db_prefix() . 'staff.staffid = ' . db_prefix() . 'task_followers.staffid');
@@ -1333,6 +1375,7 @@ class Tasks_model extends App_Model
      */
     public function get_task_assignees($id)
     {
+        if (!$this->permitsLegacyTask($id)) return [];
         $this->db->select('id,' . db_prefix() . 'task_assigned.staffid as assigneeid,assigned_from,firstname,lastname,CONCAT(firstname, " ", lastname) as full_name,is_assigned_from_contact');
         $this->db->from(db_prefix() . 'task_assigned');
         $this->db->join(db_prefix() . 'staff', db_prefix() . 'staff.staffid = ' . db_prefix() . 'task_assigned.staffid');
@@ -1349,6 +1392,7 @@ class Tasks_model extends App_Model
      */
     public function get_task_comments($id)
     {
+        if (!$this->permitsLegacyTask($id)) return [];
         $task_comments_order = hooks()->apply_filters('task_comments_order', 'DESC');
 
         $this->db->select('id,dateadded,content,' . db_prefix() . 'staff.firstname,' . db_prefix() . 'staff.lastname,' . db_prefix() . 'task_comments.staffid,' . db_prefix() . 'task_comments.contact_id as contact_id,file_id,CONCAT(firstname, " ", lastname) as staff_full_name');
@@ -1381,6 +1425,7 @@ class Tasks_model extends App_Model
 
     public function edit_comment($data)
     {
+        if (!$this->permitsLegacyTaskChild('comment', $data['id'] ?? null)) return false;
         // Check if user really creator
         $this->db->where('id', $data['id']);
         $comment = $this->db->get(db_prefix() . 'task_comments')->row();
@@ -1419,6 +1464,7 @@ class Tasks_model extends App_Model
      */
     public function remove_comment($id, $force = false)
     {
+        if (!$this->permitsLegacyTaskChild('comment', $id)) return false;
         // Check if user really creator
         $this->db->where('id', $id);
         $comment = $this->db->get(db_prefix() . 'task_comments')->row();
@@ -1466,6 +1512,7 @@ class Tasks_model extends App_Model
      */
     public function remove_assignee($id, $taskid)
     {
+        if (!$this->permitsLegacyTask($taskid)) return false;
         $this->db->select('rel_type,rel_id,name,visible_to_client');
         $this->db->where('id', $taskid);
         $task = $this->db->get(db_prefix() . 'tasks')->row();
@@ -1505,6 +1552,7 @@ class Tasks_model extends App_Model
      */
     public function remove_follower($id, $taskid)
     {
+        if (!$this->permitsLegacyTask($taskid)) return false;
         $this->db->where('id', $id);
         $this->db->delete(db_prefix() . 'task_followers');
         if ($this->db->affected_rows() > 0) {
@@ -1522,6 +1570,7 @@ class Tasks_model extends App_Model
      */
     public function mark_as($status, $task_id)
     {
+        if (!$this->permitsLegacyTask($task_id)) return false;
         $this->db->select('rel_type,rel_id,name,visible_to_client,status');
         $this->db->where('id', $task_id);
         $task = $this->db->get(db_prefix() . 'tasks')->row();
@@ -1587,6 +1636,7 @@ class Tasks_model extends App_Model
      */
     public function unmark_complete($id, $force_to_status = false)
     {
+        if (!$this->permitsLegacyTask($id)) return false;
         if ($force_to_status != false) {
             $status = $force_to_status;
         } else {
@@ -1635,6 +1685,9 @@ class Tasks_model extends App_Model
      */
     public function delete_task($id, $log_activity = true)
     {
+        if (!$this->permitsLegacyTask($id)) return false;
+        $this->authorizedTaskDeletion[(string)$id] = true;
+        try {
         $this->db->select('rel_type,rel_id,name,visible_to_client');
         $this->db->where('id', $id);
         $task = $this->db->get(db_prefix() . 'tasks')->row();
@@ -1703,6 +1756,7 @@ class Tasks_model extends App_Model
         }
 
         return false;
+        } finally { unset($this->authorizedTaskDeletion[(string)$id]); }
     }
 
     /**
@@ -1792,6 +1846,7 @@ class Tasks_model extends App_Model
      */
     public function staff_has_commented_on_task($userid, $taskid)
     {
+        if (!$this->permitsLegacyTask($taskid)) return false;
         return total_rows(db_prefix() . 'task_comments', [
             'staffid' => $userid,
             'taskid'  => $taskid,
@@ -1806,6 +1861,7 @@ class Tasks_model extends App_Model
      */
     public function is_task_follower($userid, $taskid)
     {
+        if (!$this->permitsLegacyTask($taskid)) return false;
         return total_rows(db_prefix() . 'task_followers', [
             'staffid' => $userid,
             'taskid'  => $taskid,
@@ -1820,6 +1876,7 @@ class Tasks_model extends App_Model
      */
     public function is_task_assignee($userid, $taskid)
     {
+        if (!$this->permitsLegacyTask($taskid)) return false;
         return total_rows(db_prefix() . 'task_assigned', [
             'staffid' => $userid,
             'taskid'  => $taskid,
@@ -1834,6 +1891,7 @@ class Tasks_model extends App_Model
      */
     public function is_task_creator($userid, $taskid)
     {
+        if (!$this->permitsLegacyTask($taskid)) return false;
         return total_rows(db_prefix() . 'tasks', [
             'addedfrom'             => $userid,
             'id'                    => $taskid,
@@ -1851,6 +1909,8 @@ class Tasks_model extends App_Model
      */
     public function timer_tracking($task_id = '', $timer_id = '', $note = '', $adminStop = false)
     {
+        if (!in_array($task_id, ['', 0, '0'], true) && !$this->permitsLegacyTask($task_id)) return false;
+        if ($timer_id !== '' && !$this->permitsLegacyTaskChild('timer', $timer_id)) return false;
         if ($task_id == '' && $timer_id == '') {
             return false;
         }
@@ -1890,6 +1950,7 @@ class Tasks_model extends App_Model
             $_new_timer_id = $this->db->insert_id();
 
             if (get_option('auto_stop_tasks_timers_on_new_timer') == 1) {
+                $this->db->where(\app\services\TaskClientBoundary::legacyTimerSql($this->db, db_prefix(), db_prefix().'taskstimers'), null, false);
                 $this->db->where('id !=', $_new_timer_id);
                 $this->db->where('end_time IS NULL');
                 $this->db->where('task_id !=', '0');
@@ -1938,6 +1999,8 @@ class Tasks_model extends App_Model
 
     public function timesheet($data)
     {
+        if (!$this->permitsLegacyTask($data['timesheet_task_id'] ?? null)) return false;
+        if (!empty($data['timer_id']) && !$this->permitsLegacyTaskChild('timer', $data['timer_id'])) return false;
         if (isset($data['timesheet_duration']) && $data['timesheet_duration'] != '') {
             $duration_array = explode(':', $data['timesheet_duration']);
             $hour           = $duration_array[0];
@@ -2038,6 +2101,7 @@ class Tasks_model extends App_Model
 
     public function get_timers($task_id, $where = [])
     {
+        if (!$this->permitsLegacyTask($task_id)) return [];
         $this->db->where($where);
         $this->db->where('task_id', $task_id);
         $this->db->order_by('start_time', 'DESC');
@@ -2047,6 +2111,7 @@ class Tasks_model extends App_Model
 
     public function get_task_timer($where)
     {
+        $this->db->where(\app\services\TaskClientBoundary::legacyTimerSql($this->db, db_prefix(), db_prefix().'taskstimers'), null, false);
         $this->db->where($where);
 
         return $this->db->get(db_prefix() . 'taskstimers')->row();
@@ -2120,6 +2185,7 @@ class Tasks_model extends App_Model
 
     public function get_timesheeets($task_id)
     {
+        if (!$this->permitsLegacyTask($task_id)) return [];
         $task_id = $this->db->escape_str($task_id);
 
         return $this->db->query("SELECT id," . db_prefix() . "taskstimers.note as note, start_time,end_time,task_id,staff_id, CONCAT(firstname, ' ', lastname) as full_name,
@@ -2181,6 +2247,7 @@ class Tasks_model extends App_Model
 
     public function delete_timesheet($id)
     {
+        if (!$this->permitsLegacyTaskChild('timer', $id)) return false;
         $this->db->where('id', $id);
         $timesheet = $this->db->get(db_prefix() . 'taskstimers')->row();
         $this->db->where('id', $id);
@@ -2213,6 +2280,7 @@ class Tasks_model extends App_Model
 
     public function get_reminders($task_id)
     {
+        if (!$this->permitsLegacyTask($task_id)) return [];
         $this->db->where('rel_id', $task_id);
         $this->db->where('rel_type', 'task');
         $this->db->order_by('isnotified,date', 'ASC');
@@ -2230,6 +2298,7 @@ class Tasks_model extends App_Model
      */
     public function can_staff_access_task($staff_id, $task_id)
     {
+        if (!$this->permitsLegacyTask($task_id)) return false;
         $retVal              = false;
         $staffCanAccessTasks = $this->get_staff_members_that_can_access_task($task_id);
 
@@ -2341,6 +2410,7 @@ class Tasks_model extends App_Model
 
     public function update_checklist_assigned_staff($data)
     {
+        if (!$this->permitsLegacyTaskChild('checklist', $data['checklistId'] ?? null)) return false;
         $assigned = $this->db->escape_str($data['assigned']);
         if (!is_numeric($assigned) || $assigned == 0) {
             $assigned = null;

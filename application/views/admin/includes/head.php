@@ -14,6 +14,7 @@
         <?= e(crm_app_page_title($title ?? null)); ?>
     </title>
 
+    <?php $this->load->view('admin/includes/company_context_script'); ?>
     <?= app_compile_css(); ?>
     <?php render_admin_js_variables(); ?>
 

@@ -357,7 +357,10 @@ class StableReleaseDeployerAssetsTest(unittest.TestCase):
 
     def test_deployer_dispatch_runs_asset_jobs_after_skipped_validation(self):
         workflow = (ROOT / ".github/workflows/deployer-release.yml").read_text(encoding="utf-8")
-        self.assertIn("pull_request:\n    branches: [main, develop]", workflow)
+        pr_branches = re.search(r"pull_request:\n    branches: \[([^\]]+)\]", workflow)
+        self.assertIsNotNone(pr_branches)
+        self.assertEqual({"main", "develop", "feat/banco-brasil-billing-cnab240"},
+                         {branch.strip() for branch in pr_branches.group(1).split(",")})
         self.assertIn("push:\n    branches: [develop, main]", workflow)
         self.assertIn("release:\n    types: [published]", workflow)
         self.assertIn("workflow_dispatch:", workflow)

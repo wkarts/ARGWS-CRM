@@ -1,5 +1,7 @@
 <?php
 
+use app\services\InvoiceIssuerScope;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Reports_model extends App_Model
@@ -125,6 +127,7 @@ class Reports_model extends App_Model
             $this->db->select('amount');
             $this->db->from(db_prefix() . 'invoicepaymentrecords');
             $this->db->join(db_prefix() . 'invoices', '' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
+            InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
             $this->db->where('MONTH(' . db_prefix() . 'invoicepaymentrecords.date)', $m);
             $this->db->where('YEAR(' . db_prefix() . 'invoicepaymentrecords.date)', $year);
             $payments = $this->db->get()->result_array();
@@ -380,6 +383,7 @@ class Reports_model extends App_Model
         $this->db->select('amount,' . db_prefix() . 'invoicepaymentrecords.date,' . db_prefix() . 'invoices.clientid,(SELECT GROUP_CONCAT(name) FROM ' . db_prefix() . 'customers_groups LEFT JOIN ' . db_prefix() . 'customer_groups ON ' . db_prefix() . 'customer_groups.groupid = ' . db_prefix() . 'customers_groups.id WHERE customer_id = ' . db_prefix() . 'invoices.clientid) as customerGroups');
         $this->db->from(db_prefix() . 'invoicepaymentrecords');
         $this->db->join(db_prefix() . 'invoices', db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $this->db->where(db_prefix() . 'invoices.clientid IN (select customer_id FROM ' . db_prefix() . 'customer_groups)');
         $this->db->where(db_prefix() . 'invoices.status !=', 5);
         $by_currency = $this->input->post('report_currency');
@@ -444,6 +448,7 @@ class Reports_model extends App_Model
         $this->db->from(db_prefix() . 'invoicepaymentrecords');
         $this->db->where('YEAR(' . db_prefix() . 'invoicepaymentrecords.date)', $year);
         $this->db->join(db_prefix() . 'invoices', '' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $by_currency = $this->input->post('report_currency');
         if ($by_currency) {
             $this->db->where('currency', $by_currency);
@@ -475,9 +480,9 @@ class Reports_model extends App_Model
         }
         $i = 0;
         foreach ($modes as $mode) {
-            if (total_rows(db_prefix() . 'invoicepaymentrecords', [
-                'paymentmode' => $mode['id'],
-            ]) == 0) {
+            $this->db->join(db_prefix() . 'invoices', db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
+            InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
+            if ($this->db->where('paymentmode', $mode['id'])->count_all_results(db_prefix() . 'invoicepaymentrecords') == 0) {
                 continue;
             }
             $color = '#4B5158';
@@ -489,6 +494,7 @@ class Reports_model extends App_Model
             $this->db->where('YEAR(' . db_prefix() . 'invoicepaymentrecords.date)', $year);
             $this->db->where(db_prefix() . 'invoicepaymentrecords.paymentmode', $mode['id']);
             $this->db->join(db_prefix() . 'invoices', '' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
+            InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
             $by_currency = $this->input->post('report_currency');
             if ($by_currency) {
                 $this->db->where('currency', $by_currency);
@@ -537,6 +543,7 @@ class Reports_model extends App_Model
         $this->db->from(db_prefix() . 'invoicepaymentrecords');
         $this->db->where('YEAR(' . db_prefix() . 'invoicepaymentrecords.date)', $year);
         $this->db->join(db_prefix() . 'invoices', '' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $by_currency = $this->input->post('report_currency');
 
         if ($by_currency) {
@@ -600,12 +607,12 @@ class Reports_model extends App_Model
 
     public function get_distinct_payments_years()
     {
-        return $this->db->query('SELECT DISTINCT(YEAR(date)) as year FROM ' . db_prefix() . 'invoicepaymentrecords')->result_array();
+        return $this->db->query('SELECT DISTINCT(YEAR(' . db_prefix() . 'invoicepaymentrecords.date)) as year FROM ' . db_prefix() . 'invoicepaymentrecords JOIN ' . db_prefix() . 'invoices ON ' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid WHERE ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices'))->result_array();
     }
 
     public function get_distinct_customer_invoices_years()
     {
-        return $this->db->query('SELECT DISTINCT(YEAR(date)) as year FROM ' . db_prefix() . 'invoices WHERE clientid=' . get_client_user_id())->result_array();
+        return $this->db->query('SELECT DISTINCT(YEAR(date)) as year FROM ' . db_prefix() . 'invoices WHERE clientid=' . (int) get_client_user_id() . ' AND ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices'))->result_array();
     }
 
     protected function calculate_refunded_amount($year, $month, $currency)
