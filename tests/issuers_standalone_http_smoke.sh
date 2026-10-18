@@ -73,7 +73,7 @@ docker exec "$legacy" test ! -e /tmp/issuer-custom-helper-ran
 # PHP's built-in server ignores .htaccess; preserve CodeIgniter's query-string URI rewrite.
 for action in complete_installation apply_migrations; do
     response="$work/route-$action"
-    code="$(curl -sS --max-time 10 -o "$response" -w '%{http_code}' "$url/index.php?/$action")"
+    code="$(curl -sS --max-time 10 -o "$response" -w '%{http_code}' "$url/index.php?/argws_provisioning/$action")"
     if [ "$code" != 404 ]; then
         printf 'Unexpected HTTP status %s for %s; response follows:\n' "$code" "$action" >&2
         head -c 2048 "$response" >&2 || true
