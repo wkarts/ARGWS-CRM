@@ -151,6 +151,9 @@ class Mods extends AdminController
     {
         $value = strtolower((string) (getenv('CRM_HIDDEN_RESOURCES') ?: ''));
         $hidden = [];
+        if (!\app\services\PaymentGatewayCatalog::idealEnabled()) {
+            $hidden['ideal'] = true;
+        }
         foreach (explode(',', $value) as $name) {
             $name = trim($name);
             if ($name !== '' && preg_match('/^[a-z0-9_]+$/', $name)) {
@@ -162,6 +165,9 @@ class Mods extends AdminController
 
     private function get_resource_definition($name)
     {
+        if ($name === 'ideal' && !\app\services\PaymentGatewayCatalog::idealEnabled()) {
+            return false;
+        }
         $this->config->load('argws_resources');
         $definitions = $this->config->item('argws_resources');
         return $definitions[$name] ?? false;

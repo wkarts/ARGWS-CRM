@@ -158,6 +158,7 @@ class Staff extends AdminController
 
     public function change_language($lang = '')
     {
+        $lang = crm_ui_language();
         hooks()->do_action('before_staff_change_language', $lang);
 
         $this->db->where('staffid', get_staff_user_id());

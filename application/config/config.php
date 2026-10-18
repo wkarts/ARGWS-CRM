@@ -16,8 +16,8 @@ if (file_exists(APPPATH . 'config/app-config.php')) {
     $install_url .= '://' . $_SERVER['HTTP_HOST'];
     $install_url .= str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
     $install_url .= 'install';
-    echo '<h1>ARGWS CRM ainda não foi instalado</h1>';
-    echo '<p>1. Para iniciar a instalação do ARGWS CRM, acesse <a href="' . $install_url . '">' . $install_url . '</a>.</p>';
+    echo '<h1>CRM ainda não foi instalado</h1>';
+    echo '<p>1. Para iniciar a instalação do CRM, acesse <a href="' . $install_url . '">' . $install_url . '</a>.</p>';
     echo '<p>2. Na instalação manual, renomeie application/config/app-config-sample.php para app-config.php e preencha os campos necessários.</p>';
 
     exit();

@@ -313,14 +313,20 @@ class App
         return $this->available_reminders;
     }
 
-    /**
-     * Get all db options
-     *
-     * @return array
-     */
+    /** Runtime language policy; persisted customer options remain untouched. */
+    private function ui_language_options()
+    {
+        return [
+            'active_language' => 'portuguese_br',
+            'enabled_languages' => '["portuguese_br"]',
+            'disable_language' => '1',
+        ];
+    }
+
+    /** Return options with the runtime language policy applied. */
     public function get_options()
     {
-        return $this->options;
+        return array_replace($this->options, $this->ui_language_options());
     }
 
     /**
@@ -334,6 +340,11 @@ class App
     {
         $val  = '';
         $name = trim($name);
+
+        $languageOptions = $this->ui_language_options();
+        if (array_key_exists($name, $languageOptions)) {
+            return $languageOptions[$name];
+        }
 
         if (! isset($this->options[$name])) {
             // is not auto loaded

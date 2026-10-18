@@ -99,7 +99,7 @@
             </div>
             <br />
             <p style="text-align:center;">
-                <small class="note">Esta tela aparece quando os arquivos ARGWS incluem uma migration mais recente que a aplicada no banco. Faça a atualização manual usando o pacote da mesma versão.</small>
+                <small class="note">Esta tela aparece quando os arquivos do CRM incluem uma migration mais recente que a aplicada no banco. Faça a atualização manual usando o pacote da mesma versão.</small>
             </p>
             <?php
      if ($copyData = get_last_upgrade_copy_data()) {

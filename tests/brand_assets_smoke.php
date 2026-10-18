@@ -77,6 +77,7 @@ function rendered_logo(bool $dark = false): string
 require __DIR__ . '/../application/helpers/template_helper.php';
 require __DIR__ . '/../application/helpers/assets_helper.php';
 
+expect_brand(str_contains(rendered_logo(), 'alt="CRM"'), 'Produto padrão deve se chamar CRM.');
 $brandOptions['companyname'] = 'Cliente Exemplo';
 expect_brand(str_contains(rendered_logo(), '/assets/images/argws/logo-dark.png'), 'Logo padrão deve ser legível em fundo claro.');
 expect_brand(str_contains(rendered_logo(true), '/assets/images/argws/logo-dark.png'), 'Login deve usar logo azul em fundo claro.');

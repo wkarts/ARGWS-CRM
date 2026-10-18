@@ -116,6 +116,7 @@ include_once(APPPATH . 'third_party/action_hooks.php');
 $autoload['helper'] = [
     'emails_tracking',
         'language',
+        'ui_language',
         'url',
         'file',
         'form',

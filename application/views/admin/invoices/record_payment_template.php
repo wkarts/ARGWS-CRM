@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php $payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes, $invoice->allowed_payment_modes); ?>
 <?= form_open(admin_url('invoices/record_payment'), ['id' => 'record_payment_form']); ?>
 <div class="col-md-12 no-padding animated fadeIn">
     <div class="panel_s">

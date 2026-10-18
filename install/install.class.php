@@ -124,8 +124,8 @@ class Install
 
                 $installMsg = '<div class="col-md-12">';
                 $installMsg .= '<div class="alert alert-success">';
-                $installMsg .= '<h4 class="bold">ARGWS CRM instalado com sucesso!</h4>';
-                $installMsg .= '<p>Agora você pode configurar os recursos incluídos em <b>Configurações &gt; Recursos ARGWS</b>.</p>';
+                $installMsg .= '<h4 class="bold">CRM instalado com sucesso!</h4>';
+                $installMsg .= '<p>Agora você pode configurar os recursos incluídos em <b>Configurações &gt; Recursos</b>.</p>';
                 $installMsg .= '</div>';
                 $installMsg .= '</div>';
 

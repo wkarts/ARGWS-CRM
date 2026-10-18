@@ -63,6 +63,10 @@ class App_modules
      */
     public function activate($name)
     {
+        if ($name === 'ideal' && !\app\services\PaymentGatewayCatalog::idealEnabled()) {
+            return false;
+        }
+
         $module = $this->get($name);
 
         if (!$module) {

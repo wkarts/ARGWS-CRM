@@ -34,7 +34,7 @@ class Forms extends ClientsController
 
         // Change the locale so the validation loader function can load
         // the proper localization file
-        $GLOBALS['locale'] = get_locale_key($form->language);
+        $form->language = crm_load_ui_language();
 
         $data['form_fields'] = $form->form_data ? json_decode($form->form_data) : [];
         if (! $data['form_fields']) {
@@ -288,7 +288,7 @@ class Forms extends ClientsController
 
         // Change the locale so the validation loader function can load
         // the proper localization file
-        $GLOBALS['locale'] = get_locale_key($form->language);
+        $form->language = crm_load_ui_language();
 
         $data['form_fields'] = $form->form_data ? json_decode($form->form_data) : [];
 
@@ -734,13 +734,9 @@ class Forms extends ClientsController
 
     public function ticket()
     {
-        $provided_language = $this->input->get('language');
         $form              = new stdClass();
-        $form->language    = $provided_language ? $provided_language : get_option('active_language');
+        $form->language    = crm_load_ui_language();
         $form->recaptcha   = 1;
-
-        $this->lang->load($form->language . '_lang', $form->language);
-        load_custom_lang_file($form->language);
 
         $form->success_submit_msg = _l('success_submit_msg');
 

@@ -328,7 +328,7 @@ function get_company_logo($uri = '', $href_class = '', $type = '')
         ? base_url('uploads/company/' . $company_logo)
         : base_url('assets/images/argws/logo-dark.png');
     $logo = '<a href="' . e($logoURL) . '" class="logo img-responsive' . ($href_class != '' ? ' ' . e($href_class) : '') . '">
-        <img src="' . e($logoImage) . '" class="img-responsive" alt="' . e($company_name ?: 'ARGWS CRM') . '">
+        <img src="' . e($logoImage) . '" class="img-responsive" alt="' . e($company_name ?: 'CRM') . '">
         </a>';
 
     $logo = hooks()->apply_filters('company_logo', $logo);

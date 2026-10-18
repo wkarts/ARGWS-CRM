@@ -1,0 +1,47 @@
+name: Interface CRM e catálogo de pagamentos
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - application/**
+      - modules/ideal/**
+      - install/**
+      - docker/setup-web.php
+      - tests/crm_ui_*
+      - tests/payment_gateway_catalog.php
+      - tests/ideal_management_forms.php
+      - tests/brand_assets_smoke.php
+      - .github/workflows/crm-ui-policy.yml
+  push:
+    branches: [main, develop]
+    paths:
+      - application/**
+      - modules/ideal/**
+      - tests/crm_ui_*
+      - tests/payment_gateway_catalog.php
+      - tests/ideal_management_forms.php
+      - .github/workflows/crm-ui-policy.yml
+permissions:
+  contents: read
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.3', '8.5']
+    container: php:${{ matrix.php }}-cli
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validar política sem banco ou chamadas aos provedores
+        run: |
+          php -v
+          php tests/crm_ui_language.php
+          php tests/payment_gateway_catalog.php
+          php tests/ideal_management_forms.php
+          php tests/brand_assets_smoke.php
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validar contratos e propagação do ambiente
+        run: node --test tests/crm_ui_policy.test.cjs tests/argws_platform_contract.test.cjs tests/crm_ptbr_resources_contract.test.cjs

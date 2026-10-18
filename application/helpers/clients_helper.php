@@ -724,41 +724,7 @@ function has_contact_permission($permission, $contact_id = '')
  */
 function load_client_language($customer_id = '')
 {
-    $CI = &get_instance();
-    if (! $CI->load->is_loaded('cookie')) {
-        $CI->load->helper('cookie');
-    }
-
-    if (defined('CLIENTS_AREA') && get_contact_language() != '' && ! is_language_disabled()) {
-        $language = get_contact_language();
-    } else {
-        $language = get_option('active_language');
-
-        if ((is_client_logged_in() || $customer_id != '') && ! is_language_disabled()) {
-            $client_language = get_client_default_language($customer_id);
-
-            if (
-                ! empty($client_language)
-                && file_exists(APPPATH . 'language/' . $client_language)
-            ) {
-                $language = $client_language;
-            }
-        }
-
-        // set_contact_language($language);
-    }
-
-    $CI->lang->is_loaded = [];
-    $CI->lang->language  = [];
-
-    $CI->lang->load($language . '_lang', $language);
-    load_custom_lang_file($language);
-
-    $GLOBALS['language'] = $language;
-
-    $GLOBALS['locale'] = get_locale_key($language);
-
-    $CI->lang->set_last_loaded_language($language);
+    $language = crm_load_ui_language(true);
 
     hooks()->do_action('after_load_client_language', $language);
 
@@ -1311,7 +1277,7 @@ function is_individual_client()
  */
 function set_contact_language($lang, $duration = 60 * 60 * 24 * 31 * 3)
 {
-    set_cookie('contact_language', $lang, $duration);
+    set_cookie('contact_language', crm_ui_language(), $duration);
 }
 
 /**

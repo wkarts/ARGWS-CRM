@@ -21,7 +21,7 @@ test('PT-BR é o único idioma selecionável e o padrão da instalação', () =>
   assert.match(dump, /'active_language'.*'portuguese_br'/s);
   assert.match(dump, /'enabled_languages'.*portuguese_br/s);
   const installer = read('install/index.php');
-  assert.match(installer, /A instalação do ARGWS CRM já foi concluída/);
+  assert.match(installer, /A instalação do CRM já foi concluída/);
   assert.doesNotMatch(installer, /The installation is already finished|delete all tables/i);
 });
 
