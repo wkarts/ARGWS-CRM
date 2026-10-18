@@ -47,7 +47,22 @@ async function shell(page) {
   try {
     await login(page);
     if (process.env.ISSUERS_BROWSER_MODE === 'upgrade') {
-      await page.locator('#upgrade_db_form').waitFor();
+      try {
+        await page.locator('#upgrade_db_form').waitFor({ state: 'visible' });
+      } catch (error) {
+        const currentUrl = new URL(page.url());
+        currentUrl.search = '';
+        currentUrl.hash = '';
+        const diagnostic = {
+          url: currentUrl.toString(),
+          title: await page.title(),
+          body: (await page.locator('body').innerText()).replace(/\\s+/g, ' ').slice(0, 400),
+          migrationVersion: sql('SELECT version FROM tblmigrations LIMIT 1'),
+          adminState: sql("SELECT CONCAT(admin, ':', active) FROM tblstaff WHERE email='admin-ci@example.invalid' LIMIT 1"),
+        };
+        console.error('Upgrade browser diagnostic: ' + JSON.stringify(diagnostic));
+        throw error;
+      }
       assert(await page.locator('input[name=admin_database_upgrade_csrf]').getAttribute('value'));
       const before = sql('SELECT version FROM tblmigrations LIMIT 1');
       const denied = await context.request.post(url + '/admin', { form: { upgrade_database: 'true' } });
