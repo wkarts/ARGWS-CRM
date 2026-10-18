@@ -2,10 +2,10 @@ name: Ponte opcional PIGE
 on:
   pull_request:
     branches: [main, develop]
-    paths: ['modules/pige_bridge/**', 'tests/pige_bridge_*.php', 'tests/fixtures/pige-crm-v1.json', '.github/workflows/pige-bridge.yml']
+    paths: ['modules/pige_bridge/**', 'application/config/argws_resources.php', 'tests/pige_bridge_*.php', 'tests/fixtures/pige-crm-v1.json', '.github/workflows/pige-bridge.yml']
   push:
     branches: [main, develop]
-    paths: ['modules/pige_bridge/**', 'tests/pige_bridge_*.php', 'tests/fixtures/pige-crm-v1.json', '.github/workflows/pige-bridge.yml']
+    paths: ['modules/pige_bridge/**', 'application/config/argws_resources.php', 'tests/pige_bridge_*.php', 'tests/fixtures/pige-crm-v1.json', '.github/workflows/pige-bridge.yml']
 permissions:
   contents: read
 jobs:
