@@ -4105,3 +4105,9 @@ $lang['csv_export_button'] = 'Exportar';
 $lang['clear_queue'] = 'Limpar fila';
 $lang['email_queue_cleared'] = 'Fila de e-mails limpa com sucesso';
 $lang['proposal_auto_convert_leads_to_client_on_client_accept'] = 'Converter leads automaticamente em clientes quando a proposta for aceita';
+
+# Recurring invoice calendar rules
+$lang['invoice_recurring_due_mode'] = 'Regra de vencimento recorrente';
+$lang['invoice_recurring_due_days'] = 'Manter prazo original em dias';
+$lang['invoice_recurring_due_fixed_day'] = 'Manter dia fixo do vencimento';
+$lang['invoice_recurring_due_mode_help'] = 'Na recorrência mensal/anual, o dia fixo preserva o dia do vencimento e a diferença de meses da fatura original (emitir dia 26, vencer dia 5 do mês seguinte). Dias inexistentes usam o último dia do mês, sem perder o dia original. Recorrências diárias/semanais mantêm o prazo em dias. A alteração vale apenas para novas faturas.';

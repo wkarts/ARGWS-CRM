@@ -1235,6 +1235,7 @@ CREATE TABLE `tblinvoices` (
   `discount_total` decimal(15,2) DEFAULT '0.00',
   `discount_type` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `recurring` int NOT NULL DEFAULT '0',
+  `recurring_due_mode` varchar(16) NOT NULL DEFAULT 'days',
   `recurring_type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `custom_recurring` tinyint(1) NOT NULL DEFAULT '0',
   `cycles` int NOT NULL DEFAULT '0',
@@ -4498,3 +4499,4 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
