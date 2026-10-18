@@ -318,7 +318,6 @@ function app_external_form_header($form)
 function get_company_logo($uri = '', $href_class = '', $type = '')
 {
     $company_logo = get_option('company_logo' . ($type == 'dark' ? '_dark' : ''));
-    $company_name = get_option('companyname');
     $logoURL      = site_url($uri);
 
     $logoURL = hooks()->apply_filters('logo_href', $logoURL);
@@ -328,7 +327,7 @@ function get_company_logo($uri = '', $href_class = '', $type = '')
         ? base_url('uploads/company/' . $company_logo)
         : base_url('assets/images/argws/logo-dark.png');
     $logo = '<a href="' . e($logoURL) . '" class="logo img-responsive' . ($href_class != '' ? ' ' . e($href_class) : '') . '">
-        <img src="' . e($logoImage) . '" class="img-responsive" alt="' . e($company_name ?: 'CRM') . '">
+        <img src="' . e($logoImage) . '" class="img-responsive" alt="' . e(crm_app_display_name()) . '">
         </a>';
 
     $logo = hooks()->apply_filters('company_logo', $logo);

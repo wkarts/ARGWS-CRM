@@ -5,6 +5,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', '0');
 
 require_once '/opt/argws-crm-provisioner/provisioner.php';
+require_once '/app/application/helpers/installer_branding_helper.php';
 
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
@@ -131,7 +132,7 @@ $timezoneValue = $value('timezone') !== '' ? $value('timezone') : 'America/Sao_P
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
     <link rel="icon" type="image/png" href="/assets/images/argws/favicon.png">
-    <title>Configuração inicial | CRM</title>
+    <title>Configuração inicial | <?= crm_installer_display_name_html() ?></title>
     <style>
         :root {
             color-scheme: light;
@@ -407,7 +408,7 @@ $timezoneValue = $value('timezone') !== '' ? $value('timezone') : 'America/Sao_P
     <aside class="brand-panel" aria-label="Etapas da configuração">
         <div class="brand">
             <img class="brand-logo" src="/assets/images/argws/logo-light.png" alt="ARGWS Sistemas">
-            <span class="brand-product">CRM</span>
+            <span class="brand-product"><?= crm_installer_display_name_html() ?></span>
         </div>
         <div class="brand-copy">
             <p class="eyebrow">Configuração inicial</p>
@@ -419,7 +420,7 @@ $timezoneValue = $value('timezone') !== '' ? $value('timezone') : 'America/Sao_P
             <li class="active" aria-current="step"><span class="step-number">1</span><span class="step-label">Administrador principal</span></li>
             <li><span class="step-number">2</span><span class="step-label">Acesso ao CRM</span></li>
         </ol>
-        <div class="brand-footer">CRM pelo grupo ARGWS <span aria-hidden="true">·</span> Instalação segura</div>
+        <div class="brand-footer"><?= crm_installer_display_name_html() ?> pelo grupo ARGWS <span aria-hidden="true">·</span> Instalação segura</div>
     </aside>
     <main class="content">
         <header class="content-header">

@@ -5,16 +5,32 @@ const test = require('node:test');
 const root = path.resolve(__dirname, '..');
 const read = f => fs.readFileSync(path.join(root, f), 'utf8');
 
-test('produto CRM e fornecedor ARGWS mantêm seus papéis sem renomear contratos', () => {
-  for (const file of ['application/config/config.php', 'application/helpers/template_helper.php',
-    'application/views/admin/settings/includes/update.php', 'install/index.php', 'install/html.php',
-    'install/install.class.php', 'install/finish.php']) {
+test('nome central do produto e instalador mantêm papéis independentes do fiscal', () => {
+  for (const file of ['application/helpers/template_helper.php',
+    'application/views/admin/settings/includes/update.php']) {
     assert.doesNotMatch(read(file), /ARGWS CRM/, file);
   }
-  assert.match(read('application/views/admin/settings/includes/argws_platform.php'), /CRM · Grupo fornecedor: ARGWS/);
-  assert.match(read('application/helpers/template_helper.php'), /get_option\('companyname'\)/);
+  assert.match(read('application/views/admin/settings/includes/argws_platform.php'), /crm_app_display_name_html\(\).*Grupo fornecedor: ARGWS/);
+  assert.match(read('application/helpers/template_helper.php'), /crm_app_display_name\(\)/);
+  assert.doesNotMatch(read('application/helpers/app_branding_helper.php'), /get_option|companyname|issuer|app-config\.php/);
+  assert.match(read('application/helpers/installer_branding_helper.php'), /'ARGWS CRM'/);
+  assert.match(read('application/helpers/installer_branding_helper.php'), /getenv\('INSTALLER_DISPLAY_NAME'\)/);
+  assert.match(read('application/helpers/app_branding_helper.php'), /getenv\('APP_DISPLAY_NAME'\)/);
   assert.match(read('application/config/constants.php'), /ARGWS_RELEASES_URL/);
   assert.match(read('application/config/constants.php'), /https:\/\/github.com\/wkarts\/argws-crm\/releases/);
+});
+
+test('nomes de produto e instalador chegam ao container sem alterar ambiente real', () => {
+  for (const file of ['compose.yaml', 'deploy/develop/compose.yaml', 'deploy/production/compose.yaml']) {
+    assert.match(read(file), /INSTALLER_DISPLAY_NAME: \$\{INSTALLER_DISPLAY_NAME:-ARGWS CRM\}/);
+    assert.match(read(file), /APP_DISPLAY_NAME: \$\{APP_DISPLAY_NAME:-\}/);
+  }
+  for (const file of ['container.env.example', 'deploy/develop/.env.example', 'deploy/production/.env.example']) {
+    assert.match(read(file), /^INSTALLER_DISPLAY_NAME=ARGWS CRM$/m);
+    assert.match(read(file), /^APP_DISPLAY_NAME=$/m);
+  }
+  assert.match(read('docker/setup-web.php'), /require_once '\/app\/application\/helpers\/installer_branding_helper.php'/);
+  assert.match(read('application/config/autoload.php'), /'app_branding'/);
 });
 
 test('normalização de idioma cobre carregadores, cookies, rota e formulários', () => {

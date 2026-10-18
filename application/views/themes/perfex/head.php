@@ -6,7 +6,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title><?= $title ?? ''; ?></title>
+	<title><?= e(crm_app_page_title($title ?? null)); ?></title>
 	<?= compile_theme_css(); ?>
 	<script
 		src="<?= base_url('assets/plugins/jquery/jquery.min.js'); ?>">

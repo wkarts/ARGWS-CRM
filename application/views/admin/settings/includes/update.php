@@ -9,7 +9,7 @@
     <div class="col-md-6">
         <div class="alert <?= $latest_version > $current_version ? 'alert-warning' : 'alert-success'; ?>">
             <h4 class="tw-font-bold">Migration incluída no código</h4>
-            <p class="tw-font-semibold tw-mb-0"><?= html_escape(wordwrap((string) $latest_version, 1, '.', true)); ?><br><small>CRM <?= html_escape(ARGWS_VERSION); ?></small></p>
+            <p class="tw-font-semibold tw-mb-0"><?= html_escape(wordwrap((string) $latest_version, 1, '.', true)); ?><br><small><?= crm_app_display_name_html(); ?> <?= html_escape(ARGWS_VERSION); ?></small></p>
         </div>
     </div>
 </div>

@@ -2,7 +2,53 @@
 
 ## Identidade e idioma
 
-O produto aparece como **CRM**. **ARGWS** identifica o grupo fornecedor e seu canal de distribuição. Logotipos enviados pela instalação, nomes de empresas/clientes, dados legais, caminhos de arquivos, variáveis de ambiente e identificadores das integrações não são renomeados.
+O nome público padrão do produto é **CRM**. `APP_DISPLAY_NAME` permite identificar
+o produto da instalação/parceiro; sem valor não vazio no ambiente, o helper usa
+`$config['app_display_name']` em `application/config/branding.php`, com fallback
+**CRM**. Essa configuração é pública, sem segredos, e pode ser lida antes do
+framework, banco ou sessão. Não coloque credenciais nesse arquivo.
+
+O helper único `crm_app_display_name()` atende login, títulos administrativos e
+do portal, texto alternativo/cabeçalho e identificação do produto nas configurações.
+A integração PWA pode consumir exatamente o mesmo helper no bootstrap. Não há
+segunda fonte baseada em `companyname`, emitente ou nome do instalador. O nome é
+texto, escapado em HTML; consumidores JSON devem codificá-lo com segurança.
+O contrato é de configuração read-only por arquivo/ambiente, sem nova UI de edição.
+
+**ARGWS** continua identificando o grupo fornecedor e seu canal de distribuição.
+Nomes fiscais de empresas/clientes, dados legais, caminhos de arquivos e IDs de
+integrações não são renomeados.
+
+O instalador e o aviso pré-instalação usam `INSTALLER_DISPLAY_NAME`, com padrão
+**ARGWS CRM** quando a variável estiver ausente, vazia ou só com espaços. A leitura
+é feita diretamente por `getenv`, antes de existir configuração ou banco, sem
+carregar `.env`. O nome é escapado na saída HTML, inclusive em título e mensagens.
+Os exemplos Compose propagam essa variável ao PHP; após alterá-la, recrie o serviço
+para expor o novo valor. Nenhum ambiente real é modificado por esta entrega.
+
+Esse nome se restringe ao instalador. O nome público da instalação em execução
+e do PWA não recebe esse valor. Autoria, distribuição e licenças
+ARGWS permanecem identificadas como tais. Links GitHub de suporte/distribuição
+visíveis ao usuário continuam removidos.
+
+### Limite desta fatia e mapa da identidade visual
+
+Esta alteração separa o **nome** do produto e do instalador. Logo e cores do produto
+ainda exigem uma separação própria; não são declarados concluídos por este trabalho.
+
+| Ponto | Fonte atual / tratamento |
+| --- | --- |
+| Login e títulos admin/portal | `app_branding_helper.php`, escapado por saída |
+| Cabeçalho e texto alternativo de logo da interface | nome central do produto |
+| Instalador manual/Docker e aviso pré-instalação | `installer_branding_helper.php` |
+| Imagens legadas de login/cabeçalho | `company_logo`, `company_logo_dark`, caminhos preservados |
+| Logo de PDF | `pdf_helper.php` também usa as opções legadas; não foi alterado |
+| Copyright/consentimento e identificação fiscal | opções fiscais existentes preservadas |
+| Cores e assets públicos próprios do produto | desenho/validação separados pendentes |
+
+Como as opções legadas de logo são compartilhadas com PDF, não as reutilize como
+se fossem uma nova configuração independente de produto. A próxima separação deve
+definir assets públicos seguros e cores validadas sem sobrescrever documento fiscal.
 
 Português do Brasil é o único idioma selecionável. O runtime normaliza configurações legadas, os carregadores administrativo/cliente/PDF/formulário e a rota/cookie de idioma. A normalização em leitura não reescreve dados legados. Inglês continua no repositório e é carregado primeiro como fallback para chaves ainda sem tradução; PT-BR e customizações locais têm precedência. Essa política não traduz textos escritos por usuários ou modelos personalizados.
 

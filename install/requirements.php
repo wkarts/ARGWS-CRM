@@ -140,7 +140,7 @@ if ($url_f_open != '1'
 </table>
 <hr class="-tw-mx-4" />
 <?php if ($error == true) {
-    echo '<div class="text-center alert alert-danger tw-mb-0">Corrija os requisitos para continuar a instalação do CRM.</div>';
+    echo '<div class="text-center alert alert-danger tw-mb-0">Corrija os requisitos para continuar a instalação do ' . crm_installer_display_name_html() . '.</div>';
 } else {
     echo '<div class="text-center">';
     echo '<form action="" method="post" accept-charset="utf-8">';

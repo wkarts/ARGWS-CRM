@@ -12,12 +12,14 @@ if (file_exists(APPPATH . 'config/app-config.php')) {
     }
     include_once APPPATH . 'config/app-config.php';
 } else {
+    require_once APPPATH . 'helpers/installer_branding_helper.php';
     $install_url = isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on' ? 'https' : 'http';
     $install_url .= '://' . $_SERVER['HTTP_HOST'];
     $install_url .= str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
     $install_url .= 'install';
-    echo '<h1>CRM ainda não foi instalado</h1>';
-    echo '<p>1. Para iniciar a instalação do CRM, acesse <a href="' . $install_url . '">' . $install_url . '</a>.</p>';
+    $install_url_html = htmlspecialchars($install_url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    echo '<h1>' . crm_installer_display_name_html() . ' ainda não foi instalado</h1>';
+    echo '<p>1. Para iniciar a instalação do ' . crm_installer_display_name_html() . ', acesse <a href="' . $install_url_html . '">' . $install_url_html . '</a>.</p>';
     echo '<p>2. Na instalação manual, renomeie application/config/app-config-sample.php para app-config.php e preencha os campos necessários.</p>';
 
     exit();

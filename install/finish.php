@@ -22,5 +22,5 @@
         target="_blank" rel="noopener noreferrer">a área do cliente</a>.</li>
 </ul>
 <hr />
-<p>Utilize os pacotes oficiais do CRM fornecidos pelo administrador responsável pela instalação.</p>
+<p>Consulte as versões e os pacotes oficiais do <?php echo crm_installer_display_name_html(); ?> no canal de distribuição ARGWS.</p>
 <p>O atendimento aos clientes da instalação pode ser configurado em <b>Configurações &gt; Plataforma</b>.</p>
