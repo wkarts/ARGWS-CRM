@@ -72,6 +72,7 @@ jobs:
           php tests/recurring_invoice_schema.php
           php tests/recurring_rules.php
           php tests/recurring_rules_controller.php
+          php tests/recurring_rules_views.php
           php tests/recurring_rule_draft_writer.php
           php tests/recurring_rule_schema.php
       - name: Testar transações em MariaDB isolado
