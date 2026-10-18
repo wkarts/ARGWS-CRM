@@ -78,7 +78,7 @@ $gateways = [['id' => 'stripe', 'instance' => new class {
 same(['paymentmethod_stripe_connect_active' => '1', 'companyname' => 'Cliente'], Catalog::filterSettings($settings, $gateways), 'Only exact registered options filtered');
 
 // Exercise the real checkout boundary with in-memory collaborators, before network/payment effects.
-class App_Model { public $invoices_model; public $load; public $session; }
+class App_Model { public $db; public $invoices_model; public $load; public $session; }
 require APPPATH . 'models/Payments_model.php';
 function is_staff_logged_in() { return $GLOBALS['catalogStaff'] ?? false; }
 function staff_can($capability, $resource) { return $GLOBALS['catalogCanEdit'] ?? false; }

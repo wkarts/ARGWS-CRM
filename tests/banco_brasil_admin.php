@@ -67,7 +67,7 @@ $ci->input->gets=['issuer_id'=>'2'];rejects(fn()=>$controller->index(),'cross is
 $ci->input->gets=['issuer_id'=>['1']];rejects(fn()=>$controller->index(),'array issuer refused');
 $ci->app_modules->active=false;$ci->input->gets=[];$controller->index();check($ci->load->viewData['selected']['id']===1,'BB company access uses the native core without the legacy issuers module');$ci->app_modules->active=true;
 $GLOBALS['issuerCoreReady']=false;$controller->index();check($ci->load->viewData['issuers']===[],'unready native company core fails closed');$GLOBALS['issuerCoreReady']=true;
-$ci->input->gets=['issuer_id'=>'1'];$ci->issuers_model->row['legal_name']='<script>evil</script>';$controller->index();
+$ci->input->gets=['issuer_id'=>'1'];$GLOBALS['issuerRows'][1]['legal_name']='<script>evil</script>';$controller->index();
 extract($ci->load->viewData);ob_start();include __DIR__.'/../modules/banco_brasil/views/index.php';$html=ob_get_clean();
 check(!str_contains($html,'<script>evil</script>')&&str_contains($html,'&lt;script&gt;evil&lt;/script&gt;'),'escaped issuer label');
 foreach(['Autenticação','Ambiente','Convênio','Conta','Cobrança','Remessa','Retorno','Webhook'] as $label)check(str_contains($html,$label),'PTBR tab '.$label);

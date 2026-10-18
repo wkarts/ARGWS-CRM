@@ -23,6 +23,7 @@ function get_staff_user_id(){return 7;}
 function set_alert($kind,$message){global $alerts;$alerts[]=[$kind,$message];}
 function log_message($kind,$message){global $logs;$logs[]=[$kind,$message];}
 require __DIR__.'/../application/services/InvoiceIssuerScope.php';
+require __DIR__.'/../application/services/ClientIssuerScope.php';
 require __DIR__.'/../application/models/Payments_model.php';
 require __DIR__.'/../application/models/Credit_notes_model.php';
 class EntryPayments extends Payments_model {
