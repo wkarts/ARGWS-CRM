@@ -283,7 +283,7 @@ if [ "${ARGWS_ISSUER_BROWSER_SMOKE:-0}" = "1" ]; then
         ISSUERS_BROWSER_DB_PASSWORD="$database_password" node tests/issuers_browser_smoke.cjs; then
         # Print only the fixed-format migration category written by App::upgrade_database_silent.
         docker exec "$web" /bin/sh -c 'for file in /app/application/logs/log-*.php; do
-            [ -f "$file" ] && grep -h "Falha na atualização nativa [" "$file"
+            [ -f "$file" ] && grep -F -h "Falha na atualização nativa [" "$file"
         done' 2>/dev/null | tail -n 8 >&2 || true
         exit 1
     fi
