@@ -41,7 +41,7 @@ return App_table::find('invoices')
             array_push($join, 'LEFT JOIN ' . db_prefix() . 'customfieldsvalues as ctable_' . $key . ' ON ' . db_prefix() . 'invoices.id = ctable_' . $key . '.relid AND ctable_' . $key . '.fieldto="' . $field['fieldto'] . '" AND ctable_' . $key . '.fieldid=' . $field['id']);
         }
 
-        $where = [];
+        $where = ['AND ' . \app\services\InvoiceIssuerScope::legacySql($this->ci->db, db_prefix() . 'invoices')];
 
         if ($filtersWhere = $this->getWhereFromRules()) {
             $where[] = $filtersWhere;

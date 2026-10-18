@@ -48,7 +48,7 @@ function get_available_staff_permissions($data = [])
         ],
         'customers' => [
             'name'         => _l('clients'),
-            'capabilities' => $withNotApplicableViewOwn,
+            'capabilities' => array_merge($withNotApplicableViewOwn, ['share' => _l('permission_share_customer_companies')]),
             'help'         => [
                 'view_own' => _l('permission_customers_based_on_admins'),
             ],

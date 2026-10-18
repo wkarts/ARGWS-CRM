@@ -22,6 +22,7 @@ class Multiple_companies_model extends CI_Model
         if ( !empty( $customer_id ) )
             $this->db->where('contact.userid !=',$customer_id);
 
+        \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), 'contact');
         return $this->db->select(" client.company , contact.userid , contact.id , contact.firstname , contact.lastname , contact.is_primary ")
                         ->from(db_prefix() . 'contacts contact')
                         ->join(db_prefix()."clients client"," contact.userid = client.userid ")
@@ -36,6 +37,9 @@ class Multiple_companies_model extends CI_Model
 
     public function contact_copy( $customer_id , $contact_id  )
     {
+        if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)
+            || !\app\services\ClientIssuerScope::isLegacyContact($this->db, db_prefix(), $contact_id)) { return false; }
+
 
         $contact = $this->db->select('*')->from(db_prefix().'contacts')->where('id',$contact_id)->get()->row();
 

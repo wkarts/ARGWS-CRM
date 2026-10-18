@@ -36,7 +36,7 @@ $c->input=new class{public function method($x){return 'POST';}public function re
 $c->output=new RouteOutput();$c->index();
 check($c->output->status===200&&$c->output->body==='OK','successful POST keeps existing processed/HTTP semantics without echoing gateway details');
 check($c->load->names===['asaas/asaas_gateway'],'explicit HMVC library resolution');
-check(count($c->asaas_gateway->calls)===1&&$c->asaas_gateway->calls[0][0]===['asaas-access-token'=>'synthetic-test-value'],'headers passed unchanged except existing lowercase normalization');
+check(count($c->asaas_gateway->calls)===1&&$c->asaas_gateway->calls[0][0]===['Asaas-Access-Token'=>'synthetic-test-value'],'headers preserve case until strict duplicate detection in WebhookSecurity');
 foreach([400,401,403,409,413,503] as $status){$c->asaas_gateway->result=['processed'=>false,'http_status'=>$status,'message'=>'sensitive synthetic data'];$c->output=new RouteOutput();$c->index();check($c->output->status===$status&&strpos($c->output->body,'sensitive')===false,'gateway failure status preserved and body sanitized');}
 $c->asaas_gateway->result=['processed'=>false,'http_status'=>200];$c->output=new RouteOutput();$c->index();check($c->output->status===503,'no false success introduced');
 check(!str_contains(file_get_contents(FCPATH.'modules/asaas/controllers/gateways/Callback.php'),'PAYMENT_CONFIRMED'),'no financial event policy in controller');

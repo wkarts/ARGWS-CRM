@@ -185,6 +185,8 @@ function handle_newsfeed_post_attachments($postid)
  */
 function handle_project_file_uploads($project_id)
 {
+    $scopeCI = &get_instance();
+    if (!\app\services\CustomerRelationBoundary::permitsRecord($scopeCI->db, db_prefix(), 'projects', $project_id)) return false;
     $hookData = hooks()->apply_filters('before_handle_project_file_uploads', [
         'project_id' => $project_id,
         'index_name' => 'file',
@@ -308,6 +310,8 @@ function handle_project_file_uploads($project_id)
  */
 function handle_contract_attachment($id)
 {
+    $CI = &get_instance();
+    if (!\app\services\ClientIssuerScope::isLegacyDocumentClient($CI->db, db_prefix(), 'contracts', $id)) return false;
     $hookData = hooks()->apply_filters('before_handle_contract_attachment', [
         'contract_id' => $id,
         'index_name' => 'file',
@@ -427,6 +431,8 @@ function handle_lead_attachments($leadid, $index_name = 'file', $form_activity =
  */
 function handle_task_attachments_array($taskid, $index_name = 'attachments')
 {
+    $scopeCI = &get_instance();
+    if (!\app\services\TaskClientBoundary::permitsTask($scopeCI->db, db_prefix(), $taskid)) return false;
     $hookData = hooks()->apply_filters('before_handle_task_attachments_array', [
         'task_id' => $taskid,
         'index_name' => $index_name,
@@ -497,6 +503,10 @@ function handle_task_attachments_array($taskid, $index_name = 'attachments')
  */
 function handle_sales_attachments($rel_id, $rel_type)
 {
+    $scopeCI = &get_instance();
+    if ($rel_type === 'invoice' && !\app\services\InvoiceIssuerScope::isLegacyInvoice($scopeCI->db, db_prefix() . 'invoices', $rel_id)) { show_404(); }
+    $privateDocumentTypes = ['estimate'=>'estimates', 'proposal'=>'proposals', 'credit_note'=>'creditnotes'];
+    if (isset($privateDocumentTypes[$rel_type]) && !\app\services\ClientIssuerScope::isLegacyDocumentClient($scopeCI->db, db_prefix(), $privateDocumentTypes[$rel_type], $rel_id)) { show_404(); }
     $hookData = hooks()->apply_filters('before_handle_sales_attachments', [
         'rel_id' => $rel_id,
         'rel_type' => $rel_type,
@@ -581,6 +591,8 @@ function handle_sales_attachments($rel_id, $rel_type)
  */
 function handle_client_attachments_upload($id, $customer_upload = false)
 {
+    $CI = &get_instance();
+    if (!\app\services\ClientIssuerScope::isLegacyClient($CI->db, db_prefix(), $id)) { return 0; }
     $hookData = hooks()->apply_filters('before_handle_client_attachment', [
         'customer_id' => $id,
         'index_name' => 'file',
@@ -658,6 +670,8 @@ function handle_client_attachments_upload($id, $customer_upload = false)
  */
 function handle_expense_attachments($id)
 {
+    $scopeCI = &get_instance();
+    if (!\app\services\CustomerRelationBoundary::permitsRecord($scopeCI->db, db_prefix(), 'expenses', $id)) return false;
     if (isset($_FILES['file']) && _perfex_upload_error($_FILES['file']['error'])) {
         header('HTTP/1.0 400 Bad error');
         echo _perfex_upload_error($_FILES['file']['error']);
@@ -709,6 +723,8 @@ function handle_expense_attachments($id)
  */
 function handle_ticket_attachments($ticketid, $index_name = 'attachments')
 {
+    $scopeCI = &get_instance();
+    if (!\app\services\CustomerRelationBoundary::permitsRecord($scopeCI->db, db_prefix(), 'tickets', $ticketid)) return false;
 
     $hookData = hooks()->apply_filters('before_handle_ticket_attachment', [
         'ticket_id' => $ticketid,
@@ -1034,6 +1050,9 @@ function handle_staff_profile_image_upload($staff_id = '')
  */
 function handle_contact_profile_image_upload($contact_id = '')
 {
+    $CI = &get_instance();
+    $contact_id = $contact_id === '' ? get_contact_user_id() : $contact_id;
+    if (!\app\services\ClientIssuerScope::isLegacyContact($CI->db, db_prefix(), $contact_id)) { return false; }
     $hookData = hooks()->apply_filters('before_handle_contact_profile_image_upload', [
         'contact_id' => $contact_id,
         'index_name' => 'profile_image',

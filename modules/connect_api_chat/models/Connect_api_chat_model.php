@@ -1093,6 +1093,7 @@ class Connect_api_chat_model extends App_Model
         $clients = db_prefix() . 'clients';
         if ($this->db->table_exists($contacts)) {
             $this->db->select('ct.id,ct.firstname,ct.lastname,ct.userid,cl.company')->from($contacts . ' ct')->join($clients . ' cl', 'cl.userid=ct.userid', 'left');
+            \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), 'ct');
             $this->appendPhoneWhere(sprintf($normalizedExpression, 'ct.phonenumber'), $candidates);
             $this->db->limit(1);
             $c = $this->db->get()->row_array();

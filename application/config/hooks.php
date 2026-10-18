@@ -79,6 +79,10 @@ $hook['pre_controller_constructor'][] = [
 ];
 
 $hook['post_controller'] = function () {
+    if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::isolated()) {
+        CompanyRequestScope::finish();
+        return;
+    }
     $ci = get_instance();
 
     if (! $ci->input->is_ajax_request()) {
@@ -106,6 +110,14 @@ $hook['post_controller'] = function () {
     }
 };
 
-if (file_exists(APPPATH . 'config/my_hooks.php')) {
+$hook['post_controller'] = [$hook['post_controller'], static function () {
+    if (class_exists('CompanyRequestScope', false)) { CompanyRequestScope::finish(); }
+}];
+
+// The fixed installer bootstrap must never dispatch custom hooks with the
+// original HTTP body (which contains the new administrator/DB credentials).
+$internalInstallation = class_exists('InstallationMigrationBootstrap', false)
+    && InstallationMigrationBootstrap::isRunning();
+if (!$internalInstallation && file_exists(APPPATH . 'config/my_hooks.php')) {
     include_once APPPATH . 'config/my_hooks.php';
 }

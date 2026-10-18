@@ -7,6 +7,26 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Proposals_model extends App_Model
 {
+    private array $authorizedDocumentDeletion = [];
+    private function permitsLegacyDocument($id): bool
+    {
+        if ((!is_string($id) && !is_int($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        return isset($this->authorizedDocumentDeletion[(string)$id])
+            || \app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'proposals', $id);
+    }
+    private function permitsLegacyDocumentFile($id, $expected = null): bool
+    {
+        if ((!is_string($id) && !is_int($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        $file = $this->db->query("SELECT rel_id FROM ".db_prefix()."files WHERE id=? AND rel_type='proposal'", [$id])->row();
+        return $file && ($expected === null || (string)$file->rel_id === (string)$expected) && $this->permitsLegacyDocument($file->rel_id);
+    }
+
+    private function permitsLegacyComment($id): bool
+    {
+        if ((!is_string($id) && !is_int($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        $row = $this->db->query('SELECT proposalid FROM '.db_prefix().'proposal_comments WHERE id=?', [$id])->row();
+        return $row && $this->permitsLegacyDocument($row->proposalid);
+    }
     private $statuses;
     private $copy = false;
 
@@ -30,12 +50,12 @@ class Proposals_model extends App_Model
 
     public function get_sale_agents()
     {
-        return $this->db->query('SELECT DISTINCT(assigned) as sale_agent FROM ' . db_prefix() . 'proposals WHERE assigned != 0')->result_array();
+        return $this->db->query('SELECT DISTINCT(assigned) as sale_agent FROM ' . db_prefix() . 'proposals WHERE assigned != 0 AND ' . \app\services\ClientIssuerScope::legacyDocumentSql($this->db, db_prefix(), 'proposals', db_prefix().'proposals'))->result_array();
     }
 
     public function get_proposals_years()
     {
-        return $this->db->query('SELECT DISTINCT(YEAR(date)) as year FROM ' . db_prefix() . 'proposals')->result_array();
+        return $this->db->query('SELECT DISTINCT(YEAR(date)) as year FROM ' . db_prefix() . 'proposals WHERE ' . \app\services\ClientIssuerScope::legacyDocumentSql($this->db, db_prefix(), 'proposals', db_prefix().'proposals'))->result_array();
     }
 
     /**
@@ -45,6 +65,7 @@ class Proposals_model extends App_Model
      */
     public function add($data)
     {
+        if (!\app\services\ClientIssuerScope::allowsLegacyProposalWrite($this->db, db_prefix(), $data)) { return false; }
         $data['allow_comments'] = isset($data['allow_comments']) ? 1 : 0;
 
         $save_and_send = isset($data['save_and_send']);
@@ -99,6 +120,7 @@ class Proposals_model extends App_Model
         $data  = $hook['data'];
         $items = $hook['items'];
 
+        if (!\app\services\ClientIssuerScope::allowsLegacyProposalWrite($this->db, db_prefix(), $data)) { return false; }
         $this->db->insert(db_prefix() . 'proposals', $data);
         $insert_id = $this->db->insert_id();
 
@@ -175,6 +197,7 @@ class Proposals_model extends App_Model
      */
     public function update($data, $id)
     {
+        if (!\app\services\ClientIssuerScope::allowsLegacyProposalWrite($this->db, db_prefix(), $data) || !\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'proposals', $id)) { return false; }
         $affectedRows = 0;
 
         $data['allow_comments'] = isset($data['allow_comments']) ? 1 : 0;
@@ -230,6 +253,7 @@ class Proposals_model extends App_Model
         ], $id);
 
         $data                  = $hook['data'];
+        if (!\app\services\ClientIssuerScope::allowsLegacyProposalUpdate($this->db, db_prefix(), $data, $id)) { return false; }
         $data['removed_items'] = $hook['removed_items'];
         $newitems              = $hook['newitems'];
         $items                 = $hook['items'];
@@ -342,7 +366,8 @@ class Proposals_model extends App_Model
      */
     public function get($id = '', $where = [], $for_editor = false)
     {
-        $this->db->where($where);
+        $this->db->where(\app\services\ClientIssuerScope::legacyDocumentSql($this->db, db_prefix(), 'proposals', db_prefix().'proposals'), null, false);
+        if ($where) $this->db->group_start()->where($where)->group_end();
 
         if (is_client_logged_in()) {
             $this->db->where('status !=', 0);
@@ -386,6 +411,7 @@ class Proposals_model extends App_Model
 
     public function clear_signature($id)
     {
+        if (!$this->permitsLegacyDocument($id)) return false;
         $this->db->select('signature');
         $this->db->where('id', $id);
         $proposal = $this->db->get(db_prefix() . 'proposals')->row();
@@ -406,12 +432,14 @@ class Proposals_model extends App_Model
 
     public function update_pipeline($data)
     {
+        if (!isset($data['order']) || !AbstractKanban::permitsOrder($data['order'], 'proposals')) return false;
         $this->mark_action_status($data['status'], $data['proposalid']);
         AbstractKanban::updateOrder($data['order'], 'pipeline_order', 'proposals', $data['status']);
     }
 
     public function get_attachments($proposal_id, $id = '')
     {
+        if (is_numeric($id) ? !$this->permitsLegacyDocumentFile($id, $proposal_id === '' ? null : $proposal_id) : !$this->permitsLegacyDocument($proposal_id)) return is_numeric($id) ? null : [];
         // If is passed id get return only 1 attachment
         if (is_numeric($id)) {
             $this->db->where('id', $id);
@@ -469,6 +497,7 @@ class Proposals_model extends App_Model
      */
     public function add_comment($data, $client = false)
     {
+        if (!$this->permitsLegacyDocument($data['proposalid'] ?? null)) return false;
         if (is_staff_logged_in()) {
             $client = false;
         }
@@ -540,6 +569,7 @@ class Proposals_model extends App_Model
 
     public function edit_comment($data, $id)
     {
+        if (!$this->permitsLegacyComment($id)) return false;
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'proposal_comments', [
             'content' => nl2br($data['content']),
@@ -557,6 +587,7 @@ class Proposals_model extends App_Model
      */
     public function get_comments($id)
     {
+        if (!$this->permitsLegacyDocument($id)) return [];
         $this->db->where('proposalid', $id);
         $this->db->order_by('dateadded', 'ASC');
 
@@ -572,6 +603,7 @@ class Proposals_model extends App_Model
      */
     public function get_comment($id)
     {
+        if (!$this->permitsLegacyComment($id)) return null;
         $this->db->where('id', $id);
 
         return $this->db->get(db_prefix() . 'proposal_comments')->row();
@@ -586,6 +618,7 @@ class Proposals_model extends App_Model
      */
     public function remove_comment($id)
     {
+        if (!$this->permitsLegacyComment($id)) return false;
         $comment = $this->get_comment($id);
         $this->db->where('id', $id);
         $this->db->delete(db_prefix() . 'proposal_comments');
@@ -607,6 +640,7 @@ class Proposals_model extends App_Model
      */
     public function copy($id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'proposals', $id)) { return false; }
         $this->copy      = true;
         $proposal        = $this->get($id, [], true);
         $not_copy_fields = [
@@ -720,6 +754,7 @@ class Proposals_model extends App_Model
      */
     public function mark_action_status($status, $id, $client = false)
     {
+        if (!$this->permitsLegacyDocument($id)) return false;
         $original_proposal = $this->get($id);
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'proposals', [
@@ -847,6 +882,9 @@ class Proposals_model extends App_Model
      */
     public function delete($id)
     {
+        if (!$this->permitsLegacyDocument($id)) return false;
+        $this->authorizedDocumentDeletion[(string)$id] = true;
+        try {
         hooks()->do_action('before_proposal_deleted', $id);
 
         $this->clear_signature($id);
@@ -920,6 +958,7 @@ class Proposals_model extends App_Model
         }
 
         return false;
+        } finally { unset($this->authorizedDocumentDeletion[(string)$id]); }
     }
 
     /**
@@ -1076,6 +1115,7 @@ class Proposals_model extends App_Model
      */
     public function convert_to_invoice($id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'proposals', $id)) { return false; }
         // Recurring invoice date is okey lets convert it to new invoice
         $proposal = $this->get($id);
 

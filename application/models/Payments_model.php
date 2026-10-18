@@ -1,5 +1,8 @@
 <?php
 
+use app\services\InvoiceIssuerScope;
+use app\services\InvoicePaymentWriter;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Payments_model extends App_Model
@@ -17,6 +20,7 @@ class Payments_model extends App_Model
      */
     public function get($id)
     {
+        $this->apply_legacy_invoice_scope();
         $this->db->select('*,' . db_prefix() . 'invoicepaymentrecords.id as paymentid');
         $this->db->join(db_prefix() . 'payment_modes', db_prefix() . 'payment_modes.id = ' . db_prefix() . 'invoicepaymentrecords.paymentmode', 'left');
         $this->db->order_by(db_prefix() . 'invoicepaymentrecords.id', 'asc');
@@ -46,6 +50,7 @@ class Payments_model extends App_Model
      */
     public function get_invoice_payments($invoiceid)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $invoiceid)) { return []; }
         $this->db->select('*,' . db_prefix() . 'invoicepaymentrecords.id as paymentid');
         $this->db->join(db_prefix() . 'payment_modes', db_prefix() . 'payment_modes.id = ' . db_prefix() . 'invoicepaymentrecords.paymentmode', 'left');
         $this->db->order_by(db_prefix() . 'invoicepaymentrecords.id', 'asc');
@@ -78,6 +83,9 @@ class Payments_model extends App_Model
      */
     public function process_payment($data, $invoiceid = '')
     {
+        $targetInvoiceId = is_numeric($invoiceid) ? $invoiceid : ($data['invoiceid'] ?? null);
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $targetInvoiceId)) { return false; }
+        if (isset($data['invoiceid']) && (string) $data['invoiceid'] !== (string) $targetInvoiceId) { return false; }
         // Offline payment mode from the admin side
         if (is_numeric($data['paymentmode'])) {
             if (is_staff_logged_in()) {
@@ -120,6 +128,7 @@ class Payments_model extends App_Model
             )) {
                 return false;
             }
+
             // Check if request coming from admin area and the user added note so we can insert the note also when the payment is recorded
             if (isset($data['note']) && $data['note'] != '') {
                 $this->session->set_userdata([
@@ -134,6 +143,10 @@ class Payments_model extends App_Model
             $data['invoiceid'] = $invoiceid;
             $data['invoice']   = $invoice;
             $data              = hooks()->apply_filters('before_process_gateway_func', $data);
+            if ((string) ($data['invoiceid'] ?? '') !== (string) $targetInvoiceId
+                || !isset($data['invoice']) || !is_object($data['invoice']) || (string) ($data['invoice']->id ?? '') !== (string) $targetInvoiceId
+                || !InvoiceIssuerScope::legacy()->contains((array) $data['invoice'])
+                || !InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $targetInvoiceId)) { return false; }
 
             $this->load->model('payment_modes_model');
             $gateway = $this->payment_modes_model->get($data['paymentmode']);
@@ -166,10 +179,11 @@ class Payments_model extends App_Model
      */
     public function transaction_exists($transactionId, $invoiceId = null)
     {
-        return total_rows('invoicepaymentrecords', array_filter([
-            'transactionid' => $transactionId,
-            'invoiceid'     => $invoiceId,
-        ])) > 0;
+        if ($invoiceId !== null && !InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $invoiceId)) { return false; }
+        $this->apply_legacy_invoice_scope();
+        $this->db->where('transactionid', $transactionId);
+        if ($invoiceId !== null) { $this->db->where('invoiceid', $invoiceId); }
+        return $this->db->count_all_results(db_prefix() . 'invoicepaymentrecords') > 0;
     }
 
     /**
@@ -179,6 +193,9 @@ class Payments_model extends App_Model
      */
     public function add($data, $subscription = false)
     {
+        try { $targetInvoiceId = InvoicePaymentWriter::invoiceId($data['invoiceid'] ?? null); }
+        catch (\Throwable $error) { return false; }
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $data['invoiceid'] ?? null)) { return false; }
         // Check if field do not redirect to payment processor is set so we can unset from the database
         if (isset($data['do_not_redirect'])) {
             unset($data['do_not_redirect']);
@@ -219,9 +236,10 @@ class Payments_model extends App_Model
         $data['daterecorded'] = date('Y-m-d H:i:s');
         $data                 = hooks()->apply_filters('before_payment_recorded', $data);
 
+        if (!is_array($data) || (string) ($data['invoiceid'] ?? '') !== (string) $targetInvoiceId
+            || !InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $targetInvoiceId)) { return false; }
         unset($data['amount_with_fee']);
-        $this->db->insert(db_prefix() . 'invoicepaymentrecords', $data);
-        $insert_id = $this->db->insert_id();
+        $insert_id = $this->insert_payment_atomically($targetInvoiceId, $data);
         if ($insert_id) {
             $invoice      = $this->invoices_model->get($data['invoiceid']);
             $force_update = false;
@@ -396,11 +414,16 @@ class Payments_model extends App_Model
     public function update($data, $id)
     {
         $payment      = $this->get($id);
+        if (!$payment || (isset($data['invoiceid']) && (string) $data['invoiceid'] !== (string) $payment->invoiceid)) { return false; }
+        if (!$this->allow_payment_mutation($id, $payment->invoiceid, 'update')) { return false; }
         $updated      = false;
         $data['date'] = to_sql_date($data['date']);
         $data['note'] = nl2br($data['note']);
 
         $data = hooks()->apply_filters('before_payment_updated', $data, $id);
+        if (isset($data['invoiceid']) && (string) $data['invoiceid'] !== (string) $payment->invoiceid) { return false; }
+        unset($data['invoiceid']);
+        if (!$this->allow_payment_mutation($id, $payment->invoiceid, 'update')) { return false; }
 
         $this->db->where('id', $id);
         $this->db->update('invoicepaymentrecords', $data);
@@ -435,12 +458,15 @@ class Payments_model extends App_Model
     public function delete($id)
     {
         $current         = $this->get($id);
+        if (!$current) { return false; }
+        if (!$this->allow_payment_mutation($id, $current->invoiceid, 'delete')) { return false; }
         $current_invoice = $this->invoices_model->get($current->invoiceid);
         $invoiceid       = $current->invoiceid;
         hooks()->do_action('before_payment_deleted', [
             'paymentid' => $id,
             'invoiceid' => $invoiceid,
         ]);
+        if (!$this->allow_payment_mutation($id, $invoiceid, 'delete')) { return false; }
         $this->db->where('id', $id);
         $this->db->delete(db_prefix() . 'invoicepaymentrecords');
         if ($this->db->affected_rows() > 0) {
@@ -464,24 +490,29 @@ class Payments_model extends App_Model
 
     public function add_batch_payment($paymentsData)
     {
+        if (!is_array($paymentsData['invoice'] ?? null)) { return 0; }
         $sendBatchPaymentEmail = true;
         if (isset($paymentsData['do_not_send_invoice_payment_recorded'])) {
             $sendBatchPaymentEmail = false;
         }
 
         $paymentIds = [];
+        // Validate every submitted target before recording the first payment.
+        $prepared = [];
         foreach ($paymentsData['invoice'] as $data) {
-            if (empty($data['invoiceid']) || empty($data['amount']) || empty($data['date']) || empty('paymentmode')) {
-                continue;
-            }
-
-            $data['date']         = to_sql_date($data['date']);
+            try { $targetInvoiceId = InvoicePaymentWriter::invoiceId($data['invoiceid'] ?? null); }
+            catch (\Throwable $error) { return 0; }
+            if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $targetInvoiceId)) { return 0; }
+            if (empty($data['amount']) || empty($data['date']) || empty($data['paymentmode'])) { return 0; }
+            $data['date'] = to_sql_date($data['date']);
             $data['daterecorded'] = date('Y-m-d H:i:s');
-            $data                 = hooks()->apply_filters('before_payment_recorded', $data);
-
-            $this->db->insert(db_prefix() . 'invoicepaymentrecords', $data);
-            $insert_id = $this->db->insert_id();
-
+            $data = hooks()->apply_filters('before_payment_recorded', $data);
+            if (!is_array($data) || (string) ($data['invoiceid'] ?? '') !== (string) $targetInvoiceId
+                || !InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $targetInvoiceId)) { return 0; }
+            $prepared[] = [$targetInvoiceId, $data];
+        }
+        foreach ($prepared as [$targetInvoiceId, $data]) {
+            $insert_id = $this->insert_payment_atomically($targetInvoiceId, $data);
             if ($insert_id) {
                 $paymentIds[] = $insert_id;
                 $invoice      = $this->invoices_model->get($data['invoiceid']);
@@ -514,7 +545,7 @@ class Payments_model extends App_Model
                     $invoice->currency_name
                 ) . ']');
             }
-            hooks()->do_action('after_payment_added', $insert_id);
+            if ($insert_id) { hooks()->do_action('after_payment_added', $insert_id); }
         }
 
         if (count($paymentIds) > 0 && $sendBatchPaymentEmail) {
@@ -524,8 +555,32 @@ class Payments_model extends App_Model
         return count($paymentIds);
     }
 
+    private function allow_payment_mutation($paymentId, $invoiceId, string $operation): bool
+    {
+        if (hooks()->apply_filters('before_invoice_payment_mutation_allowed', true, (int) $paymentId, (int) $invoiceId, $operation) === true) {
+            return true;
+        }
+        set_alert('warning', 'Este recebimento possui conciliação canônica. Solicite revisão ou reversão pelo fluxo financeiro próprio.');
+        return false;
+    }
+
+    private function insert_payment_atomically(int $targetInvoiceId, array $data)
+    {
+        try {
+            return (new InvoicePaymentWriter($this->db))->record($targetInvoiceId, $data,
+                static fn(array $invoice, array $record) => hooks()->apply_filters('before_invoice_payment_insert_allowed', true, $invoice, $record)
+            );
+        } catch (\Throwable $error) {
+            // No exception payload, card data or provider details in financial logs.
+            set_alert('warning', 'Pagamento não registrado. Confira o saldo, a origem e o estado da fatura.');
+            log_message('error', '[CRM] Registro de pagamento não confirmado; revisão de saldo/origem necessária.');
+            return false;
+        }
+    }
+
     private function send_batch_payment_notification_to_customers($paymentIds)
     {
+        $this->apply_legacy_invoice_scope();
         $paymentData = $this->db
             ->select(db_prefix() . 'invoicepaymentrecords.*,' . db_prefix() . 'invoices.currency,' . db_prefix() . 'invoices.clientId,' . db_prefix() . 'invoices.hash')
             ->join(db_prefix() . 'invoices', 'invoicepaymentrecords.invoiceid=invoices.id')
@@ -562,6 +617,7 @@ class Payments_model extends App_Model
 
         // to get structure matching payment_pdf()
         $payment               = $this->get($id);
+        if (!$payment) { return false; }
         $payment->invoice_data = $this->invoices_model->get($payment->invoiceid);
         $template              = mail_template('invoice_payment_recorded_to_customer', (array) $contact, $payment->invoice_data, false, $id);
         $template              = $this->_add_payment_mail_attachments_to_template($template, $payment);
@@ -607,5 +663,15 @@ class Payments_model extends App_Model
         return $this->clients_model->get_contacts($client_id, [
             'active' => 1, 'invoice_emails' => 1,
         ]);
+    }
+
+    private function apply_legacy_invoice_scope(): void
+    {
+        $invoices = db_prefix() . 'invoices';
+        if (InvoiceIssuerScope::schemaReady($this->db, $invoices)) {
+            $this->db->where('EXISTS (SELECT 1 FROM ' . $invoices . ' AS payment_invoice_scope'
+                . ' WHERE payment_invoice_scope.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid'
+                . ' AND ' . InvoiceIssuerScope::legacySql($this->db, $invoices, 'payment_invoice_scope') . ')', null, false);
+        }
     }
 }

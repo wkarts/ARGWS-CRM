@@ -16,7 +16,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 Module Name: Asaas - Módulo de Pagamento
 Description: Integração com Sistema Financeiro Asaas com a função de recebimento via catão de crédito, Boleto e Pix.
 Author: WWSoft -> Wallace Kleiton - argws/asaas-sdk-php v0.2.61
-Version: 1.4.7
+Version: 1.4.8
 Requires at least: 2.9.*
 Author URI: https://t.me/wkartspro
 */
@@ -25,6 +25,7 @@ define('ASAAS_MODULE_NAME', 'asaas');
 
 hooks()->add_action('before_render_payment_gateway_settings', 'asaas_before_render_payment_gateway_settings');
 hooks()->add_action('app_admin_footer', 'asaas_settings_tab_footer');
+hooks()->add_filter('before_settings_updated', 'asaas_validate_admin_settings');
 hooks()->add_action('after_invoice_added', 'asaas_after_invoice_added');
 if (function_exists('do_action_deprecated')) {
     hooks()->add_action('invoice_updated', 'asaas_after_invoice_updated');
@@ -34,6 +35,9 @@ if (function_exists('do_action_deprecated')) {
 }
 hooks()->add_filter('before_invoice_delete_allowed', 'asaas_before_invoice_delete_allowed', 10, 2);
 hooks()->add_filter('before_invoice_cancel_allowed', 'asaas_before_invoice_cancel_allowed', 10, 2);
+hooks()->add_filter('before_invoice_payment_insert_allowed', 'asaas_before_invoice_payment_insert_allowed', 10, 3);
+hooks()->add_filter('before_invoice_credit_insert_allowed', 'asaas_before_invoice_payment_insert_allowed', 10, 3);
+hooks()->add_filter('before_invoice_payment_mutation_allowed', 'asaas_before_invoice_payment_mutation_allowed', 10, 4);
 hooks()->add_action('before_invoice_deleted', 'asaas_before_invoice_deleted');
 hooks()->add_action('invoice_marked_as_cancelled', 'asaas_invoice_marked_as_cancelled');
 hooks()->add_action('admin_init', 'asaas_origin_admin_menu');
@@ -43,6 +47,30 @@ hooks()->add_action('invoice_payment_added', 'asaas_after_payment_added');
 hooks()->add_action('invoice_status_changed', 'asaas_invoice_status_changed');
 hooks()->add_action('after_invoice_status_changed', 'asaas_invoice_status_changed');
 hooks()->add_action('after_cron_run', 'asaas_process_pending_webhooks');
+
+/** Runs only under the core invoice write lock; no provider calls or side effects. */
+function asaas_before_invoice_payment_insert_allowed($allowed, array $invoice, array $data): bool
+{
+    if ($allowed !== true) return false;
+    $CI = &get_instance();
+    require_once __DIR__.'/libraries/Asaas/PaymentOriginStore.php';
+    // Preserve manual/other-gateway behavior for legacy invoices with no known
+    // origin. Known Asaas charges need canonical reconciliation, not an ID match.
+    return (new \Asaas\PaymentOriginStore($CI->db))->byInvoice((int)($invoice['id']??0)) === null;
+}
+
+/** Canonical receipt evidence is immutable through generic admin operations. */
+function asaas_before_invoice_payment_mutation_allowed($allowed, int $paymentId, int $invoiceId, string $operation): bool
+{
+    if ($allowed !== true) return false;
+    $CI = &get_instance();
+    $outbox=db_prefix().'asaas_settlement_outbox';
+    if (!$CI->db->table_exists($outbox)) return true;
+    // The canonical writer inserts receipt/outbox atomically. Any existing
+    // reference, including damaged evidence, needs assisted reversal/review.
+    // Never permit deletion merely because part of that proof became inconsistent.
+    return $CI->db->get_where($outbox,['receipt_id'=>$paymentId])->num_rows()===0;
+}
 
 function asaas_process_pending_webhooks()
 {
@@ -94,81 +122,30 @@ if (function_exists('app_payment_gateways')) {
 
 function asaas_before_render_payment_gateway_settings($gateway)
 {
+    if (is_array($gateway) && ($gateway['id'] ?? '') === 'asaas') {
+        $environment = get_option('paymentmethod_asaas_sandbox');
+        $valid = in_array($environment, ['0', '1'], true);
+        echo '<a data-asaas-webhook-admin-url="' . html_escape(admin_url('asaas'))
+            . '" data-asaas-environment-valid="' . ($valid ? '1' : '0')
+            . '" data-asaas-environment-value="' . ($valid ? $environment : '')
+            . '" href="' . html_escape(admin_url('asaas')) . '">Gerenciar recebedores e segurança dos webhooks Asaas</a>';
+    }
     return $gateway;
+}
+
+function asaas_validate_admin_settings($data)
+{
+    require_once __DIR__ . '/libraries/Asaas/AdminSettingsPolicy.php';
+    try { return \Asaas\AdminSettingsPolicy::validate($data); }
+    catch (InvalidArgumentException $error) {
+        show_error('Selecione um único ambiente válido. Tokens exigem a tela de webhooks.', 400);
+        return [];
+    }
 }
 
 function asaas_settings_tab_footer()
 {
-?>
-    <script>
-        $(document).ready(function() {
-
-            $(".form-control datepicker").attr("required", "true");
-
-            function validate_invoice_form(e) {
-                e = void 0 === e ? "#invoice-form" : e,
-                    appValidateForm($(e), {
-                        clientid: {
-                            required: {
-                                depends: function() {
-                                    return !$("select#clientid").hasClass("customer-removed")
-                                }
-                            }
-                        },
-                        date: "required",
-                        currency: "required",
-                        repeat_every_custom: {
-                            min: 1
-                        },
-                        number: {
-                            required: !0
-                        }
-                    }), $("body").find('input[name="number"]').rules("add", {
-                        remote: {
-                            url: admin_url + "invoices/validate_invoice_number",
-                            type: "post",
-                            data: {
-                                number: function() {
-                                    return $('input[name="number"]').val()
-                                },
-                                isedit: function() {
-                                    return $('input[name="number"]').data("isedit")
-                                },
-                                original_number: function() {
-                                    return $('input[name="number"]').data("original-number")
-                                },
-                                date: function() {
-                                    return $('input[name="date"]').val()
-                                }
-                            }
-                        },
-                        messages: {
-                            remote: app.lang.invoice_number_exists
-                        }
-                    })
-            }
-        });
-
-        $("#online_payments_asaas_tab > div:nth-child(13) > div:nth-child(2) > label").html("Valor fixo");
-
-        $("#online_payments_asaas_tab > div:nth-child(13) > div:nth-child(3) > label").html("Porcentagem");
-
-        $("#y_opt_1_Tipo\\ de\\ desconto").change(function() {
-
-            $("#online_payments_asaas_tab > div:nth-child(13) > label").empty();
-            $("#online_payments_asaas_tab > div:nth-child(13) > label").html("Valor desconto ");
-
-        });
-
-        $("#y_opt_2_Tipo\\ de\\ desconto").change(function() {
-
-            // console.log( asaas);
-            $("#online_payments_asaas_tab > div:nth-child(13) > label").empty();
-            $("#online_payments_asaas_tab > div:nth-child(13) > label").html("Valor desconto (Informar porcentagem)");
-
-        });
-    </script>
-<?php
+    echo '<script src="' . html_escape(module_dir_url('asaas', 'assets/js/settings-tabs.js')) . '"></script>';
 }
 
 function asaas_after_invoice_added($invoice_id)
@@ -350,14 +327,14 @@ function asaas_update_invoice_payment($hookData = null)
                 $payloadArray = $chargePayloadArray;
                 $payloadArray['billingType'] = $billingType;
 
-                log_message('info', '[Asaas] invoice_updated: update_charge payload=' . json_encode($payloadArray, JSON_UNESCAPED_UNICODE));
+                log_message('info', '[Asaas] Operação de cobrança solicitada; payload e resposta omitidos.');
                 $updateResponse = $CI->asaas_gateway->update_charge($charge->id, json_encode($payloadArray));
-                log_message('info', '[Asaas] invoice_updated: update_charge response=' . json_encode($updateResponse, JSON_UNESCAPED_UNICODE));
+                log_message('info', '[Asaas] Operação de cobrança solicitada; payload e resposta omitidos.');
 
                 if (is_array($updateResponse) && !isset($updateResponse['errors']) && !isset($updateResponse['error'])) {
                     $CI->asaas_gateway->upsert_payment_map((int) $id, $updateResponse, $cliente_id);
                 } else {
-                    log_message('error', '[Asaas] invoice_updated: erro ao atualizar cobrança charge_id=' . $charge->id . ' response=' . json_encode($updateResponse, JSON_UNESCAPED_UNICODE));
+                    log_message('error', '[Asaas] Operação de cobrança não confirmada; confira a fila de conciliação.');
                     // mesmo com erro, mantém map com o que já existe
                     $CI->asaas_gateway->upsert_payment_map((int) $id, $charge, $cliente_id);
                 }
@@ -371,7 +348,7 @@ function asaas_update_invoice_payment($hookData = null)
     }
 
     // 2) Não existe cobrança: criar SEM depender do update_charge
-    log_message('info', '[Asaas] invoice_updated: create_charge payload=' . json_encode($chargePayloadArray, JSON_UNESCAPED_UNICODE));
+    log_message('info', '[Asaas] Operação de cobrança solicitada; payload e resposta omitidos.');
 
     $createResponseRaw = $CI->asaas_gateway->create_charge(null, null, json_encode($chargePayloadArray));
     $createResponse = is_string($createResponseRaw) ? json_decode($createResponseRaw, true) : $createResponseRaw;
@@ -379,10 +356,10 @@ function asaas_update_invoice_payment($hookData = null)
         $createResponse = [];
     }
 
-    log_message('info', '[Asaas] invoice_updated: create_charge response=' . json_encode($createResponse, JSON_UNESCAPED_UNICODE));
+    log_message('info', '[Asaas] Operação de cobrança solicitada; payload e resposta omitidos.');
 
     if (isset($createResponse['errors']) || isset($createResponse['error']) || empty($createResponse['id'])) {
-        log_message('error', '[Asaas] invoice_updated: erro ao criar cobrança para invoice_id=' . $id . ' response=' . json_encode($createResponse, JSON_UNESCAPED_UNICODE));
+        log_message('error', '[Asaas] Operação de cobrança não confirmada; confira a fila de conciliação.');
         return $id;
     }
 
@@ -595,7 +572,7 @@ function asaas_after_payment_added($data = null)
 
         log_message('info', '[Asaas] Pagamento em dinheiro espelhado no Asaas para invoice_id=' . (int) $invoiceId . ' payment_id=' . $asaasPaymentId . '.');
     } catch (Throwable $e) {
-        log_message('error', '[Asaas] after_payment_added erro: ' . $e->getMessage());
+        log_message('error', '[Asaas] Falha ao espelhar recebimento; confira a conciliação.');
     }
 }
 

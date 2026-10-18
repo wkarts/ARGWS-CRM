@@ -28406,6 +28406,7 @@ class Accounting_model extends App_Model
         }
 
         $this->db->where('active', 1);
+        \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix().'clients');
         $customers = $this->db->get(db_prefix() . 'clients')->result_array();
 
         foreach($customers as $customer){
@@ -28533,6 +28534,7 @@ class Accounting_model extends App_Model
     {
         $this->db->select('userid as id, company as label');
         $this->db->where('active', 1);
+        \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix().'clients');
         return $this->db->get(db_prefix() . 'clients')->result_array();
 
     }

@@ -1,4 +1,5 @@
 <?php echo '<form action="" method="post" accept-charset="utf-8">'; ?>
+<input type="hidden" name="installer_csrf" value="<?= htmlspecialchars($this->csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
 <?php echo '<input type="hidden" name="step" value="' . $current_step . '">'; ?>
 <div class="form-group">
     <label for="hostname" class="control-label">Servidor do banco</label>

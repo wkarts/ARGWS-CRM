@@ -5,6 +5,19 @@ defined('BASEPATH') or exit('No direct script access allowed');
 class Emails_model extends App_Model
 {
     private $attachment = [];
+    private function companyTemplateScope(): string
+    {
+        require_once APPPATH.'services/CompanyEmailTemplates.php';
+        return CompanyEmailTemplates::scopeSql($this->db,db_prefix(),db_prefix().'emailtemplates',CompanyEmailTemplates::currentIssuer());
+    }
+    private function scopeTemplates(): void { $this->db->where($this->companyTemplateScope(),null,false); }
+    private function sealedCompanyEditor(): bool
+    {
+        return class_exists('CompanyRequestScope',false) && CompanyRequestScope::sealedFor(get_instance())
+            && CompanySettingsRuntime::active() && !CompanySettingsRuntime::isPrimary();
+    }
+
+
 
     /**
      * @deprecated 2.3.0
@@ -33,6 +46,11 @@ class Emails_model extends App_Model
 
     public function __construct()
     {
+        if (class_exists('CompanyRequestScope',false) && CompanyRequestScope::sealedFor(get_instance())
+            && CompanySettingsRuntime::active() && !CompanySettingsRuntime::isPrimary()) {
+            CI_Model::__construct();
+            return; // No global model-init hooks or legacy deprecated send helpers in this editor.
+        }
         parent::__construct();
         $this->client_email_templates = get_client_email_templates_slugs();
         $this->staff_email_templates  = get_staff_email_templates_slugs();
@@ -45,8 +63,8 @@ class Emails_model extends App_Model
      */
     public function get($where = [], $result_type = 'result_array')
     {
-        $this->db->where($where);
-
+        if ($where) { $this->db->group_start();$this->db->where($where);$this->db->group_end(); }
+        $this->scopeTemplates();
         return $this->db->get(db_prefix() . 'emailtemplates')->{$result_type}();
     }
 
@@ -58,7 +76,7 @@ class Emails_model extends App_Model
     public function get_email_template_by_id($id)
     {
         $this->db->where('emailtemplateid', $id);
-
+        $this->scopeTemplates();
         return $this->db->get(db_prefix() . 'emailtemplates')->row();
     }
 
@@ -68,6 +86,9 @@ class Emails_model extends App_Model
      */
     public function add_template($data)
     {
+        $this->companyTemplateScope();
+        unset($data['issuer_id']);
+        if ($this->db->field_exists('issuer_id',db_prefix().'emailtemplates')) $data['issuer_id']=CompanyEmailTemplates::currentIssuer();
         $this->db->insert(db_prefix() . 'emailtemplates', $data);
         $insert_id = $this->db->insert_id();
         if ($insert_id) {
@@ -85,6 +106,37 @@ class Emails_model extends App_Model
      */
     public function update($data)
     {
+        require_once APPPATH.'services/CompanyEmailTemplates.php';
+        if ($this->db->table_exists(db_prefix().'issuers_lock')) {
+            return IssuerTransaction::run($this->db,db_prefix(),$this->sealedCompanyEditor()?['issuers_lock','emailtemplates','issuers_audit']:['issuers_lock','emailtemplates'],fn()=>$this->updateScopedRows($data));
+        }
+        return $this->updateScopedRows($data);
+    }
+    /** Narrow native editor: lock before reading other language variants, preventing stale overwrites. */
+    public function update_company_template($id,array $input): bool
+    {
+        require_once APPPATH.'services/CompanyEmailTemplates.php';
+        if (!$this->sealedCompanyEditor()) throw new DomainException('company_settings_access_denied');
+        return IssuerTransaction::run($this->db,db_prefix(),['issuers_lock','emailtemplates','issuers_audit'],function()use($id,$input){
+            if(!CompanySettingsRuntime::canResource('email_templates','edit'))throw new DomainException('company_settings_access_denied');
+            $selected=$this->get_email_template_by_id($id);
+            if(!$selected || $selected->language!=='portuguese_br')throw new DomainException('company_settings_access_denied');
+            $payload=['subject'=>[],'message'=>[],'fromname'=>$input['fromname'],'fromemail'=>$input['fromemail']];
+            foreach($this->get(['slug'=>$selected->slug]) as $variant) {
+                $variantId=(int)$variant['emailtemplateid'];
+                $payload['subject'][$variantId]=$variantId===(int)$selected->emailtemplateid?$input['subject']:$variant['subject'];
+                $payload['message'][$variantId]=$variantId===(int)$selected->emailtemplateid?$input['message']:$variant['message'];
+            }
+            if(!isset($input['active']))$payload['disabled']=1;
+            if(isset($input['plaintext']))$payload['plaintext']=1;
+            return $this->updateScopedRows($payload);
+        });
+    }
+
+    private function updateScopedRows($data)
+    {
+        if ($this->sealedCompanyEditor() && !CompanySettingsRuntime::canResource('email_templates','edit')) throw new DomainException('company_settings_access_denied');
+        foreach (array_keys($data['subject'] ?? []) as $id) { if (!$this->get_email_template_by_id($id)) return false; }
         $data['plaintext'] = isset($data['plaintext']) ? 1 : 0;
 
         if (isset($data['disabled'])) {
@@ -113,7 +165,8 @@ class Emails_model extends App_Model
             $_data['active']    = $data['active'];
 
             $this->db->where('emailtemplateid', $id);
-            $this->db->update(db_prefix() . 'emailtemplates', $_data);
+            $this->scopeTemplates();
+            if ($this->db->update(db_prefix() . 'emailtemplates', $_data)===false) throw new RuntimeException('issuer_storage_failed');
             if ($this->db->affected_rows() > 0) {
                 $affectedRows++;
             }
@@ -123,7 +176,10 @@ class Emails_model extends App_Model
         $main_template = $this->get_email_template_by_id($main_id);
 
         if ($affectedRows > 0 && $main_template) {
-            log_activity('Email Template Updated [' . $main_template->name . ']');
+            if ($this->sealedCompanyEditor()) {
+                IssuerStorage::query($this->db,'INSERT INTO '.db_prefix().'issuers_audit (actor_id,event,issuer_id,subject_id,created_at) VALUES (?,?,?,?,?)',
+                    [CompanySettingsRuntime::staffId(),'email_template_updated',CompanySettingsRuntime::issuerId(),(int)$main_id,date('Y-m-d H:i:s')]);
+            } else { log_activity('Email Template Updated [' . $main_template->name . ']'); }
 
             return true;
         }
@@ -140,6 +196,7 @@ class Emails_model extends App_Model
     public function mark_as($slug, $enabled)
     {
         $this->db->where('slug', $slug);
+        $this->scopeTemplates();
         $this->db->update(db_prefix() . 'emailtemplates', ['active' => $enabled]);
 
         return $this->db->affected_rows() > 0 ? true : false;
@@ -155,6 +212,7 @@ class Emails_model extends App_Model
     {
         $this->db->where('type', $type);
         $this->db->where('slug !=', 'two-factor-authentication');
+        $this->scopeTemplates();
         $this->db->update(db_prefix() . 'emailtemplates', ['active' => $enabled]);
 
         return $this->db->affected_rows() > 0 ? true : false;
@@ -330,9 +388,10 @@ class Emails_model extends App_Model
 
             $this->db->where('language', 'english');
             $this->db->where('slug', $template->slug);
+            $this->scopeTemplates();
             $tmpTemplate = $this->db->get(db_prefix() . 'emailtemplates')->row();
 
-            if (!$tmpTemplate) {
+            if ($tmpTemplate) {
                 log_activity('Failed to send email template [<a href="' . admin_url('emails/email_template/' . $tmpTemplate->emailtemplateid) . '">' . $template->name . '</a>] [Reason: Email template is disabled.]');
             }
 

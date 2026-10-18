@@ -2,6 +2,15 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+// A selected company must never execute the installation-wide my_email.php override.
+if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active() && !CompanySettingsRuntime::isPrimary()) {
+    require_once APPPATH . 'services/CompanyMailConfig.php';
+    $ci = get_instance();
+    $config = CompanyMailConfig::build($ci->db, db_prefix(), CompanySettingsRuntime::issuerId(),
+        static fn($value) => $ci->encryption->decrypt($value));
+    return;
+}
+
 $config['useragent'] = get_option('mail_engine'); // phpmailer or codeigniter
 
 $microsoftClientId     = get_option('microsoft_mail_client_id');

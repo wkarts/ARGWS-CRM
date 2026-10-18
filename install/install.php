@@ -1,4 +1,5 @@
 <?php echo '<form action="" method="post" accept-charset="utf-8" id="installForm">'; ?>
+<input type="hidden" name="installer_csrf" value="<?= htmlspecialchars($this->csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
 <?php echo '<input type="hidden" name="step" value="' . (int) $current_step . '">'; ?>
 <?php foreach (['hostname', 'username', 'password', 'database'] as $field) { ?>
     <input type="hidden" name="<?= htmlspecialchars($field, ENT_QUOTES, 'UTF-8'); ?>" value="<?= htmlspecialchars((string) ($_POST[$field] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
