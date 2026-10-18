@@ -5,12 +5,17 @@ final class Transaction
 {
     public static function run($db, string $prefix, array $tables, callable $work)
     {
+        return self::quiet($db,fn()=>self::owned($db,$prefix,$tables,$work));
+    }
+    /** Covers reads as well as writes; always restore caller diagnostics, including failures. */
+    public static function quiet($db,callable $work)
+    {
         // CI must return query failures to this boundary, not render SQL/payload in the response.
         $restore=[];
         foreach(['db_debug','save_queries'] as $property){
             if(property_exists($db,$property)){$restore[$property]=$db->$property;$db->$property=false;}
         }
-        try{return self::owned($db,$prefix,$tables,$work);}
+        try{return $work();}
         finally{foreach($restore as $property=>$value)$db->$property=$value;}
     }
     private static function owned($db, string $prefix, array $tables, callable $work)

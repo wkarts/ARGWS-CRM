@@ -157,11 +157,11 @@ function argws_support_widget_script()
  * Atalho de suporte sem carregamento de SDKs externos.
  * As configurações locais prevalecem sobre o fallback de ambiente.
  */
-function support_contact_link()
+function support_contact_destination(): array
 {
     $channel = (string) get_option('support_contact_channel');
     if (!in_array($channel, ['whatsapp', 'email', 'website'], true)) {
-        return '';
+        return [];
     }
 
     $defaults = [
@@ -181,13 +181,13 @@ function support_contact_link()
             $number = '55' . $number;
         }
         if (!preg_match('/^[1-9][0-9]{10,14}$/', $number)) {
-            return '';
+            return [];
         }
         $href = 'https://wa.me/' . $number;
         $label = 'Fale pelo WhatsApp';
     } elseif ($channel === 'email') {
         if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-            return '';
+            return [];
         }
         $href = 'mailto:' . $value;
         $label = 'Fale por e-mail';
@@ -196,12 +196,21 @@ function support_contact_link()
         if (!filter_var($value, FILTER_VALIDATE_URL) || !$parts
             || strtolower($parts['scheme'] ?? '') !== 'https' || empty($parts['host'])
             || isset($parts['user']) || isset($parts['pass'])) {
-            return '';
+            return [];
         }
         $href = $value;
         $label = 'Abrir suporte';
     }
 
+    return ['href' => $href, 'label' => $label];
+}
+
+function support_contact_link()
+{
+    $destination = support_contact_destination();
+    if (!$destination) { return ''; }
+    $href = $destination['href'];
+    $label = $destination['label'];
     return '<a class="btn btn-primary" href="' . html_escape($href) . '"'
         . ' target="_blank" rel="noopener noreferrer nofollow"'
         . ' style="position:fixed;bottom:22px;right:22px;z-index:1500;"'

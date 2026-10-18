@@ -3,9 +3,10 @@ declare(strict_types=1);
 require __DIR__.'/banco_brasil_store.php';
 define('BASEPATH',__DIR__);
 class BbDenied extends RuntimeException{} class BbHttp extends RuntimeException{} class BbRedirect extends RuntimeException{}
-$GLOBALS['permissions']=['view'=>true,'manage'=>true,'import'=>true];$GLOBALS['issuerGrant']=true;$GLOBALS['issuerView']=true;
+$GLOBALS['permissions']=['view'=>true,'manage'=>true,'import'=>true];$GLOBALS['issuerGrant']=true;$GLOBALS['issuerView']=true;$GLOBALS['resourceGrants']=['view'=>true,'manage'=>true,'import'=>true,'download'=>false];$GLOBALS['explicitMaster']=false;
 function staff_can($cap,$module){return $GLOBALS['permissions'][$cap]??false;}
-function get_staff_user_id(){return 9;}function issuers_can_access($id,$actor,$cap){return $id===1&&$actor===9&&($cap==='view'?$GLOBALS['issuerView']:$GLOBALS['issuerGrant']);}
+function get_staff_user_id(){return 9;}function issuers_can_access($id,$actor,$cap){throw new LogicException('generic permission must not be used');}
+function issuer_resource_can($id,$actor,$feature,$cap){return $id===1&&$actor===9&&$feature==='banco_brasil'&&($GLOBALS['explicitMaster']||(($cap==='view'?$GLOBALS['issuerView']:$GLOBALS['issuerGrant'])&&($GLOBALS['resourceGrants'][$cap]??false)));}
 function access_denied($v){throw new BbDenied('denied');}function show_error($m,$s){throw new BbHttp((string)$s);}
 function admin_url($p){return 'https://crm.example.test/admin/'.$p;}function set_alert($kind,$text){$GLOBALS['alerts'][]=[$kind,$text];}
 function redirect($url){throw new BbRedirect($url);}function db_prefix(){return 't_';}
@@ -16,7 +17,7 @@ class BbInput{public $verb='GET';public $posts=[];public $gets=[];function metho
 class BbSession{public $data=[];function userdata($k){return $this->data[$k]??null;}function set_userdata($k,$v){$this->data[$k]=$v;}}
 class BbLoad{public $viewData;function helper($v){}function model($v){}function view($v,$data){$this->viewData=$data;}}
 class AdminController{
- public $db,$input,$session,$security,$output,$load,$app_modules,$issuers_model;
+ public $db,$input,$session,$security,$output,$load,$app_modules,$issuers_model,$app_menu;
  function __construct(){foreach((array)$GLOBALS['adminCI'] as $k=>$v)$this->$k=$v;}
 }
 $GLOBALS['adminCI']=(object)['db'=>new BbDb(),'input'=>new BbInput(),'session'=>new BbSession(),'security'=>new class{function get_csrf_token_name(){return 'core_csrf';}},
@@ -30,7 +31,7 @@ $csrf=$ci->session->data['bb_admin_csrf'];$ci->input->gets=['issuer_id'=>'1'];$c
 check($ci->load->viewData['can_manage']===true,'AND permissions allowed');
 $GLOBALS['issuerGrant']=false;$controller->index();check($ci->load->viewData['can_manage']===false,'view does not imply manage');
 $ci->input->verb='POST';$ci->input->posts=$data+['issuer_id'=>'1','csrf_bb'=>$csrf];rejects(fn()=>$controller->register_connection(),'admin without issuer grant blocked');check(!$ci->db->tables,'no write without grant');
-$GLOBALS['issuerGrant']=true;$GLOBALS['permissions']['manage']=false;rejects(fn()=>$controller->register_connection(),'issuer grant lacks module manage');check(!$ci->db->tables,'no write without module permission');$GLOBALS['permissions']['manage']=true;
+$GLOBALS['issuerGrant']=true;$GLOBALS['permissions']['manage']=false;$controller->index();check($ci->load->viewData['can_manage']===true,'contextual grant not vetoed by global deny');check(!$ci->db->tables,'GET remains read only');$GLOBALS['permissions']['manage']=true;
 $ci->input->verb='GET';try{$controller->register_connection();throw new LogicException('expected405');}catch(BbHttp $e){check($e->getMessage()==='405','POST only');}
 $ci->input->verb='POST';$ci->input->posts['csrf_bb']='wrong';try{$controller->register_connection();throw new LogicException('expected403');}catch(BbHttp $e){check($e->getMessage()==='403','constant time own CSRF enforced');}
 $ci->input->posts['csrf_bb']=[$csrf];rejects(fn()=>$controller->register_connection(),'array token refused');
@@ -49,5 +50,50 @@ check(!str_contains($html,'<script>evil</script>')&&str_contains($html,'&lt;scri
 foreach(['Autenticação','Ambiente','Convênio','Conta','Cobrança','Remessa','Retorno','Webhook'] as $label)check(str_contains($html,$label),'PTBR tab '.$label);
 check(!str_contains($html,'name="client_secret"')&&!str_contains($html,'name="tax_id"'),'no secret or substitute identity field');
 check(str_contains($html,'Nenhum pagamento será criado'),'financial impact visible');
-$GLOBALS['permissions']['view']=false;rejects(fn()=>new Banco_brasil(),'constructor permission');
+$ci->input->verb='POST';$ci->input->posts=['issuer_id'=>'1','connection_id'=>'1','layout_id'=>\BancoBrasil\LayoutCatalog::CNAB400,'csrf_bb'=>$csrf];
+$GLOBALS['issuerGrant']=false;rejects(fn()=>$controller->register_layout(),'profile needs issuer manage grant');$GLOBALS['issuerGrant']=true;
+$GLOBALS['permissions']['manage']=false;$controller->index();check($ci->load->viewData['can_manage']===true,'profile contextual grant overrides global deny');$GLOBALS['permissions']['manage']=true;
+$ci->input->verb='GET';try{$controller->register_layout();throw new LogicException('expected405');}catch(BbHttp $e){check($e->getMessage()==='405','profile POST only');}$ci->input->verb='POST';
+$ci->input->posts['csrf_bb']='bad';try{$controller->register_layout();throw new LogicException('expected403');}catch(BbHttp $e){check($e->getMessage()==='403','profile own CSRF');}$ci->input->posts['csrf_bb']=$csrf;
+$ci->input->posts['environment']='production';try{$controller->register_layout();}catch(BbRedirect $e){}check(!isset($ci->db->tables['t_bb_layout_bindings']),'profile cannot alter connection environment');unset($ci->input->posts['environment']);
+try{$controller->register_layout();}catch(BbRedirect $e){}check(count($ci->db->tables['t_bb_layout_bindings'])===1,'actual profile action inserts');
+check($ci->db->tables['t_bb_layout_bindings'][0]['verification_state']==='declared_unverified','UI no homologation claim');
+try{$controller->register_layout();}catch(BbRedirect $e){}check(count($ci->db->tables['t_bb_layout_bindings'])===1,'same profile idempotent');
+$ci->input->posts['layout_id']=\BancoBrasil\Agreement::LAYOUT_ID;try{$controller->register_layout();}catch(BbRedirect $e){}
+check(count($ci->db->tables['t_bb_layout_bindings'])===2,'second layout distinct new ID');
+$controller->index();extract($ci->load->viewData);ob_start();include __DIR__.'/../modules/banco_brasil/views/index.php';$html=ob_get_clean();
+check(str_contains($html,'name="layout_binding_id"')&&str_contains($html,'Selecione explicitamente'),'explicit import profile selector');
+check(str_contains($html,'name="layout_id"')&&str_contains($html,'CNAB 400')&&str_contains($html,'CNAB 240'),'GUI profile registration both formats');
+check(str_contains($html,'não contém evidência inequívoca')&&str_contains($html,'2000–2099'),'provenance and dates limitations visible');
+check(!str_contains($html,'getenv(')&&!str_contains($html,'app-config'),'functional parameters in native GUI');
+$GLOBALS['resourceGrants']['view']=false;$ci->input->gets=[];$controller->index();check($ci->load->viewData['issuers']===[],'no company list leakage without resource view');
+$ci->input->gets=['issuer_id'=>'1'];rejects(fn()=>$controller->index(),'resource view required on direct URL');$GLOBALS['resourceGrants']['view']=true;
+$GLOBALS['resourceGrants']['manage']=false;$ci->input->posts['layout_id']=\BancoBrasil\LayoutCatalog::CNAB400;
+rejects(fn()=>$controller->register_layout(),'module/global role does not inherit company resource manage');
+$GLOBALS['resourceGrants']['import']=true;$controller->index();check($ci->load->viewData['can_manage']===false&&$ci->load->viewData['can_import']===true,'capabilities checked independently per resource');
+$GLOBALS['resourceGrants']['import']=false;rejects(fn()=>$controller->import_return(),'resource import required before processing upload');
+$GLOBALS['explicitMaster']=true;$controller->index();check($ci->load->viewData['can_manage']&&$ci->load->viewData['can_import'],'explicit master decision comes from issuer helper');$GLOBALS['explicitMaster']=false;
+check(!str_contains(file_get_contents(__DIR__.'/../modules/banco_brasil/controllers/Banco_brasil.php'),"issuers_can_access("),'no generic permission fallback');
+$GLOBALS['resourceGrants']['manage']=true;$GLOBALS['resourceGrants']['import']=true;
+$GLOBALS['permissions']['view']=false;$controller2=new Banco_brasil();$controller2->index();check($ci->load->viewData['selected']['id']===1,'global view deny cannot veto contextual view');
+$GLOBALS['resourceGrants']['view']=false;rejects(fn()=>$controller2->index(),'contextual view deny wins even when global role changes');$GLOBALS['resourceGrants']['view']=true;
+$GLOBALS['permissions']['manage']=false;$ci->input->posts=['issuer_id'=>'1','connection_id'=>'1','layout_id'=>\BancoBrasil\LayoutCatalog::CNAB400,'csrf_bb'=>$csrf];
+try{$controller2->register_layout();}catch(BbRedirect $e){}check(end($GLOBALS['alerts'])[0]==='success','actual contextual write succeeds despite global deny');
+function &get_instance(){return $GLOBALS['adminCI'];}
+function register_activation_hook(...$args){}function register_staff_capabilities(...$args){$GLOBALS['native_caps']=$args;}
+function hooks(){return new class{function add_action(...$args){}};}
+$ci->app_menu=new class{public $items=[];function add_sidebar_menu_item($key,$item){$this->items[$key]=$item;}};
+require __DIR__.'/../modules/banco_brasil/banco_brasil.php';
+banco_brasil_admin_init();check(isset($ci->app_menu->items['banco_brasil']),'contextual menu visible despite global deny');
+check(isset($GLOBALS['native_caps'][1]['capabilities']['view'],$GLOBALS['native_caps'][1]['capabilities']['manage'],$GLOBALS['native_caps'][1]['capabilities']['import']),'native capability catalog retained');
+$ci->app_menu->items=[];$GLOBALS['permissions']['view']=true;$GLOBALS['resourceGrants']['view']=false;banco_brasil_admin_init();check($ci->app_menu->items===[],'global allow cannot expose contextual menu');
+$GLOBALS['explicitMaster']=true;banco_brasil_admin_init();check(isset($ci->app_menu->items['banco_brasil']),'explicit master from helper can see menu');$GLOBALS['explicitMaster']=false;
+
+$GLOBALS['resourceGrants']['view']=true;$ci->input->gets=['issuer_id'=>'1'];
+$ci->db=new class extends BbDb {public $protectedReads=0;function get($table){if($this->db_debug||$this->save_queries)throw new LogicException('diagnostics exposed');$this->protectedReads++;return false;}};
+$failureController=new Banco_brasil();$failureController->index();check($ci->load->viewData['storage_error']===true,'query failure separate from no data or denied');
+check($ci->db->protectedReads===1&&$ci->db->db_debug===true&&$ci->db->save_queries===true,'controller query guarded and diagnostics restored');
+check($ci->load->viewData['connections']===[]&&$ci->load->viewData['can_manage']===false&&$ci->load->viewData['can_import']===false,'failed reads disable actions');
+extract($ci->load->viewData);ob_start();include __DIR__.'/../modules/banco_brasil/views/index.php';$failedHtml=ob_get_clean();
+check(str_contains($failedHtml,'Armazenamento indisponível')&&!str_contains($failedHtml,'SELECT '),'generic storage alert without SQL');
 echo "OK {$n} Banco do Brasil admin checks\n";

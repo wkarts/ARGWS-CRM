@@ -1,0 +1,59 @@
+# Banco do Brasil 1.0.2: perfis explícitos CNAB 240 e 400
+
+## Escopo e estado real
+
+A versão 102 acrescenta o retorno observacional CBR643 e um **codificador de candidato** CBR641. Também exige seleção explícita de perfil para novas importações 240/400. Não representa homologação do BB nem uma integração bancária completa. A API Cobranças ainda aguarda especificação primária acessível; não há executor API, download operacional, transmissão, email de remessa, emissão de fatura ou baixa financeira automática.
+
+A remessa 400 não fica disponível na interface. O método de teste `Cnab400Generator::candidate` retorna `operational=false` e as pendências, além do conteúdo sintético. Não existe código monetário BRL presumido: o chamador de testes precisa informar os dois caracteres candidatos. O manual atual só enumera 02/dólar e 14/euro; ambos são recusados no recorte BRL. **Esse candidato não deve ser enviado ao banco.** A confirmação escrita do banco sobre o campo, os juros da carteira e a homologação por conta/convênio continuam obrigatórias antes da entrega operacional.
+
+## Fontes primárias verificadas
+
+Catálogo oficial: <https://www.bb.com.br/site/pro-seu-negocio/aplicativos-leiautes-de-arquivos/>.
+
+- CBR641, convênio de sete posições, julho/2026: <https://www.bb.com.br/docs/portal/dimep/CBR641_Pos7.pdf>. SHA-256 `ef77ecbf067ef1eb3d29da52a2d2cc8501a181cdfa141ccca62fb4c6290252a8`. Download público e inspeção em 18/10/2026, 24 páginas. Este é o PDF ligado pelo catálogo atual; não se adotou silenciosamente a revisão mais antiga indexada em outro endereço do BB.
+- CBR643, convênio de sete posições, julho/2023: <https://www.bb.com.br/docs/pub/emp/empl/dwn/Doc2628CBR643Pos7.pdf>. SHA-256 `da3a81b60df9ddfaaad22d3fa1889c45133a9d849fc950c8a78ce08d542303a1`. Download público e inspeção em 18/10/2026, 29 páginas.
+- Particularidades 240 permanecem na revisão junho/2026 documentada em [banco-brasil-cnab240.md](banco-brasil-cnab240.md). Não se transpõem códigos ou alinhamentos de um formato para outro.
+
+Os PDFs completos não são incluídos no repositório. As fixtures foram construídas para os testes e não constituem arquivos homologados fornecidos pelo banco. O repositório Financial Platform foi referência de investigação, não fonte de homologação nem de implementação copiada.
+
+## Configuração visual e autorização
+
+Menu **Banco do Brasil → Conta**:
+
+1. Escolher um emitente autorizado e cadastrar a conexão (conta, ambiente, convênio, carteira e variação). A identidade legal vem do cadastro autorizado do emitente; não pode ser substituída neste formulário.
+2. Registrar um perfil 240 ou 400 na conexão. A escolha deve vir do contrato do convênio, nunca da região. Um vínculo novo recebe um ID e a revisão/hashes dos manuais. Não há atualização de vínculo existente para reinterpretar arquivos.
+3. Em **Retorno**, escolher explicitamente conexão e perfil. O backend verifica que pertencem ao mesmo emitente/conta/ambiente/convênio. Não há reconhecimento automático com fallback quando o formato selecionado falha.
+4. Rever as observações registradas. Nenhuma delas cria pagamento ou altera fatura.
+
+Cada ação usa `issuer_resource_can(empresa, staff, 'banco_brasil', capability) === true` como autorização contextual completa, com capabilities nativas `view`, `manage` e `import`. A lista de empresas e a visibilidade do menu também são filtradas por `view` do recurso. O papel global não concede nem veta esse grant contextual. O catálogo nativo de capabilities continua registrado. Não existe fallback para `manage_integrations`. Administrador comum não herda grants por empresa. O administrador principal só é reconhecido pelo helper de Empresas emitentes através de registro explícito persistido, com staff ainda ativo/admin; BB não presume ID1 nem resolve esse papel por conta própria. O helper pertence à fase103 de Empresas emitentes. Até que esteja instalado e as concessões existam, a interface permanece consultativa e explica o bloqueio.
+
+POST, CSRF próprio, escapamento, auditoria e escopo são preservados. Consultas e transações desabilitam `db_debug/save_queries` durante o acesso e restauram o estado do chamador. Falha de consulta mostra aviso genérico de armazenamento e desabilita ações, sem se passar por ausência de dados ou falta de autorização. Esse boundary não substitui a política de logs do driver CI3 nem afirma redigir logs internos do framework; não há coleta de credenciais nesta versão. Parâmetros funcionais ficam na interface nativa, não em ENV/app-config. Nenhuma credencial é solicitada nesta fase. A API futura deverá ter configuração visual própria, protegida, mascarada e auditada, sem presumir requisitos ainda não validados.
+
+## Proveniência e limites do retorno
+
+A seleção do ambiente é uma **declaração local**, não prova do ambiente remoto. O CBR643 não contém marcador inequívoco de sandbox/produção, nem documento fiscal do emitente ou campo de moeda. O registro conserva separadamente ambiente/moeda declarados e evidência ausente no arquivo; não inventa validação de CNPJ, BRL, titularidade, autenticidade ou homologação.
+
+O parser valida conta/agência/DVs, convênio, carteira 17 simples, variação, Nosso Número 7+10, controle, largura de 400 bytes, sequência integral, cabeçalho/trailer, campos numéricos e datas válidas. Aceita ASCII com CRLF, no máximo 16 MiB, registros 0/7/9. Auxiliares 2/3/5 (partilha, vendor, Pix, cheque detalhado, descontos e outros) são recusados integralmente até haver decoder específico; não são ignorados.
+
+- Campos alfanuméricos 400 são alinhados à esquerda; identificadores fiscais preservam letras. Agência e conta usam quatro/oito dígitos e não sofrem truncamento.
+- Datas DDMMAA usam política explícita **2000–2099**, registrada no perfil. Não há pivot baseado na data do processamento. Arquivos históricos cuja interpretação exige outro século não pertencem a este perfil.
+- Pago, nominal, tarifas, juros, abatimento, desconto, IOF, outras despesas e recebimentos são separados. Zero pago continua zero. O valor do lançamento é preservado com seu indicador débito/crédito, sem ser chamado de líquido.
+- Códigos 93 e cheque pendente não são liquidação. No 400, 46 é cheque pendente; não se reutiliza a interpretação do código 50 do 240. Naturezas 04/10/11 de recebimento mantêm a pendência de compensação. Comando 20 é instrução de débito, não comprovação automática de pagamento.
+- Comandos 39/85/86 são recusados porque sobrecarregam um campo monetário com prazo/agente.
+- O trailer CBR643 página 16 descreve posições 26–39 (14 caracteres), mas indica picture 9(013)v99 (15). A implementação conserva os 14 caracteres **brutos**, quantidade e aviso, assinalando a divergência; não fabrica um total financeiro ou uma igualdade entre esse total e a soma dos pagamentos. A sequência final e os limites dos campos são validados; a interpretação contábil do total permanece pendente de confirmação do BB.
+
+A deduplicação distingue canal/leiaute; reapresentação do mesmo evento 400 em outro arquivo mantém um evento com todas as proveniências. Conteúdo financeiro divergente para a mesma identidade de evento aborta toda a transação. Ter uma observação em 240 e outra em 400 não autoriza contabilizá-las duas vezes: esta etapa não possui executor financeiro.
+
+## Migração e compatibilidade
+
+`101_version_101.php` permanece byte a byte igual ao publicado na PR45. A nova `102_version_102.php` usa `App_module_migration`, cria `bb_layout_bindings` e acrescenta colunas de vínculo/proveniência **nullable** a tabelas existentes. O executor nativo realiza 101→102 tanto na ativação inicial quanto no upgrade. A validação estrutural exige InnoDB, tipos, nullability, PK e UNIQUE completos, sem reparar silenciosamente tabelas incompatíveis.
+
+Não há backfill de perfis: registros 101 conservam vínculo NULL e continuam visíveis. Reimportar exatamente o arquivo antigo não o reatribui ao perfil recém-selecionado. Novas importações exigem seleção, inclusive no 240. Isso é uma mudança de fluxo visível; o operador precisa registrar o perfil antes de importar novos arquivos. Nenhum recibo financeiro antigo é reclassificado.
+
+Falha de DDL/validação impede avançar o tracking. DDL parcialmente concluído é aditivo e pode ser retomado depois da correção administrativa do schema. Não existe downgrade destrutivo. Para suspender a importação, retirar a permissão apropriada ou desativar o módulo; manter as tabelas para preservar histórico. Não voltar ao código 101 para contornar a seleção explícita.
+
+## Testes
+
+PHP 8.1 e 8.5, local: 412 verificações distintas (240 118; store 48; admin 63; 400 82; vínculos 38; migration101 36; migration102 27). Lint de 33 arquivos PHP e `git diff --check` passaram.
+
+Workflow atualizado executa também MySQL 8.4 com driver PDO/CI3 mysqli, upgrade real com histórico 101, constraints e dois processos concorrentes para ambos os formatos. A espera no lock da conexão é comprovada pelo Performance Schema. **A execução CI da versão 102 ainda está pendente; o verde da versão 101 não comprova a 102.** Nenhum teste contata endpoints bancários nem usa dados de clientes.

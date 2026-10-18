@@ -6,9 +6,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import os
+import json
+import sys
 import stat
 import zipfile
 from pathlib import Path, PurePosixPath
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from release_policy import file_reader, validate_tree, validate_archive, migration_path, METADATA_PATHS
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,7 +43,7 @@ STATIC_UPLOAD_FILES = {
 def should_include(relative: str) -> bool:
     path = PurePosixPath(relative)
     parts = path.parts
-    if not parts or relative.startswith((".git/", "source/", "work/", "deliverables/", "data/")):
+    if not parts or parts[0] in {".git", "dist"} or relative.startswith(("source/", "work/", "deliverables/", "data/")):
         return False
     if parts[0] in {"deploy", "docker"} or relative.startswith("tools/argws-crm-deployer/") or relative == "scripts/package-deploy.py":
         return False
@@ -149,9 +153,18 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
 
-    version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    if not version:
-        raise SystemExit("VERSION está vazio.")
+    release = validate_tree(file_reader(ROOT))
+    version = release['version']
+    base_read = None
+    base_archive = None
+    if args.base_dir:
+        base_read = file_reader(args.base_dir)
+    elif args.base_zip:
+        base_archive = zipfile.ZipFile(args.base_zip)
+        base_read = base_archive.read
+    baseline = validate_tree(base_read, allow_legacy=True) if base_read else None
+    if baseline and baseline['migration'] >= release['migration']:
+        raise SystemExit("A base incremental deve ter migration anterior à release alvo.")
 
     current = current_files()
     base = base_hashes(args.base_dir, args.base_zip)
@@ -160,6 +173,9 @@ def main() -> None:
         for relative, path in current.items()
         if base.get(relative) != sha256_file(path)
     ]
+    # Each overlay carries its own release identity, even if an input was unchanged.
+    required = set(METADATA_PATHS) | {migration_path(release['migration'])}
+    changed = sorted(dict(changed + [(path, current[path]) for path in required]).items())
     removed = sorted(set(base) - set(current))
 
     output_dir = args.output_dir.resolve()
@@ -200,6 +216,11 @@ def main() -> None:
     with zipfile.ZipFile(update_path) as archive:
         if archive.testzip() is not None:
             raise SystemExit("ZIP de atualização inválido.")
+
+    validate_archive(full_path, expected_version=version)
+    validate_archive(update_path, base_read=base_read, expected_version=version)
+    if base_archive:
+        base_archive.close()
 
     sums_path = output_dir / f"ARGWS-CRM-{version}-SHA256SUMS.txt"
     sums_path.write_text(

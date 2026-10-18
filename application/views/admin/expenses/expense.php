@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php $payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes, [$expense->paymentmode ?? '']); ?>
 <?php init_head(); ?>
 
 <?php $hideTaxFields   = ! isset($expense) || ($expense->tax == 0 && $expense->tax2 == 0); ?>

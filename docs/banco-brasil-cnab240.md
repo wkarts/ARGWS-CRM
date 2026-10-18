@@ -1,3 +1,5 @@
+> Evolução 1.0.2: leia também [perfis CNAB 240/400 e migração 102](banco-brasil-cnab400.md). Novas importações agora exigem um perfil explicitamente registrado; históricos 101 não são reatribuídos.
+
 # Banco do Brasil: cobrança e conciliação
 
 ## Estado desta entrega
@@ -41,9 +43,9 @@ O projeto `wkarts/argws-financial-platform`, consultado somente para aprendizado
 - `account_id`: referência canônica `001:AGENCIA-DV:CONTA-DV`, cinco/doze dígitos, com DV numérico ou X. Não é prova remota de titularidade. Agência/conta zero são recusadas.
 - `environment`: `sandbox` ou `production`, explicitamente selecionado; não há produção por ausência/conversão frouxa.
 - `agreement_number`, carteira e variação pertencem à identidade imutável. Alterar a identidade exige outra conexão; alterar documento/nome do emitente não reatribui a conexão já existente.
-- Cadastro exige `staff_can('manage','banco_brasil')` **e** `issuers_can_access(id, staff, 'manage_integrations') === true`.
-- Importação exige `staff_can('import','banco_brasil')` **e** a mesma permissão do emitente. Consulta exige view no módulo e vínculo view explícito no emitente. Administrador não substitui o vínculo de emitente.
-- A capability `manage_integrations` depende da evolução local 103 do módulo de emitentes, com default negado/concessão explícita. A fundação essencial 102 não a concede. Até essa dependência existir e ser concedida, cadastro/importação permanecem bloqueados e a UI explica o motivo.
+- A partir da versão102 BB, cadastro usa `issuer_resource_can(id, staff, 'banco_brasil', 'manage') === true` como autorização contextual completa.
+- Importação e consulta usam, respectivamente, capabilities nativas `import` e `view` no mesmo recurso Banco do Brasil/Empresa emitente, sem veto ou herança de papéis globais. Lista e menu são filtrados por `view`. Não existe fallback à permissão genérica anterior.
+- O helper por recurso pertence à fase103 de Empresas emitentes, com grants explícitos. Administrador comum não herda acesso; master só vale quando explicitamente registrado pelo módulo de Empresas emitentes. Até essa dependência existir e ser concedida, a interface explica o bloqueio.
 - Escritas exigem POST e token CSRF próprio de sessão, comparação constante, além do mecanismo global quando habilitado.
 
 Não foram implementadas permissões implícitas para desativar o gate operacional dos emitentes. Nenhuma migração concede acesso financeiro.

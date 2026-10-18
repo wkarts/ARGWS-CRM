@@ -55,10 +55,10 @@ final class SchemaValidator
             ],
         ];
     }
-    public static function assertCompatible($db,string $prefix):void
+    public static function assertCompatible($db,string $prefix,?array $requirements=null):void
     {
         if(!preg_match('/^[A-Za-z0-9_]*$/D',$prefix))throw new \InvalidArgumentException('bb_table_prefix_invalid');
-        foreach(self::requirements() as $name=>$required){
+        foreach($requirements ?? self::requirements() as $name=>$required){
             $table=$prefix.$name;
             $r=$db->query('SELECT ENGINE,TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$table]);
             $meta=$r?$r->row_array():[];

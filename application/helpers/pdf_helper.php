@@ -11,28 +11,8 @@ defined('BASEPATH') or exit('No direct script access allowed');
  */
 function load_pdf_language($clientLanguage)
 {
-    $CI = & get_instance();
-
-    $language = get_option('active_language');
-
-    // When cron or email sending pdf document the pdfs need to be on the client language
-    if (is_data_for_customer() || DEFINED('CRON')) {
-        if (!empty($clientLanguage)) {
-            $language = $clientLanguage;
-        }
-    } else {
-        if (!empty($clientLanguage) && get_option('output_client_pdfs_from_admin_area_in_client_language') == 1) {
-            $language = $clientLanguage;
-        }
-    }
-
-    if (file_exists(APPPATH . 'language/' . $language)) {
-        $CI->lang->load($language . '_lang', $language);
-        load_custom_lang_file($language);
-
-        $CI->lang->set_last_loaded_language($language);
-        hooks()->do_action('load_pdf_language', ['language' => $language]);
-    }
+    $language = crm_load_ui_language();
+    hooks()->do_action('load_pdf_language', ['language' => $language]);
 }
 
 /**

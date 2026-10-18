@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Tag SemVer de uma release publicada a reconstruir (ex.: v3.5.0)"
+        description: "Tag de uma release publicada a reconstruir (ex.: v3.5.0)"
         required: true
         type: string
 permissions:
@@ -73,7 +73,7 @@ jobs:
         with:
           ref: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.release_tag) || github.sha }}
           persist-credentials: false
-      - name: Materializar a versão SemVer no deployer
+      - name: Validar a versão nativa no deployer
         if: (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')) || github.event_name == 'workflow_dispatch' ||
             (github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[rebuild deployer]'))
         shell: bash
@@ -422,12 +422,12 @@ jobs:
             tag="argws-crm-develop"
             develop=true
           else
-            tag="$(gh release list --repo "$REPOSITORY" --limit 100 --json tagName,isPrerelease,isDraft |
-              jq -r '[.[] | select(.isDraft == false and .isPrerelease == false and (.tagName | test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")))] | map(.tagName) | sort_by(ltrimstr("v") | split(".") | map(tonumber)) | last // empty')"
-            if [[ -z "$tag" ]]; then
-              echo "Nenhuma release SemVer estável foi encontrada." >&2
+            # The artifact manifest fixes the target; never sort historical aliases as SemVer.
+            tag="$(python3 -c 'import json; print(json.load(open("release-assets/argws-crm-deployer-release.json"))["releaseTag"])')"
+            [[ "$tag" =~ ^v[1-9]\.[0-9]\.[0-9]$ ]] || {
+              echo "Manifesto sem versão nativa canônica; não publicar assets." >&2
               exit 1
-            fi
+            }
             develop=false
           fi
           if [[ "$develop" == true ]]; then

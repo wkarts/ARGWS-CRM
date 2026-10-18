@@ -18,6 +18,8 @@ class Invoices_model extends App_Model
 
     public const STATUS_DRAFT_NUMBER = 1000000000;
 
+    private $creatingRecurringRuleDraft = false;
+
     private $statuses = [
         self::STATUS_UNPAID,
         self::STATUS_PAID,
@@ -145,6 +147,10 @@ class Invoices_model extends App_Model
 
     public function mark_as_cancelled($id)
     {
+        if (hooks()->apply_filters('before_invoice_cancel_allowed', true, (int) $id) !== true) {
+            return false;
+        }
+
         $isDraft = $this->is_draft($id);
 
         $this->db->where('id', $id);
@@ -302,6 +308,82 @@ class Invoices_model extends App_Model
     }
 
     /**
+     * Internal scheduler path: local draft only, no provider hooks or email.
+     * The caller owns the transaction and unique rule/cycle record.
+     */
+    public function add_recurring_rule_draft(array $template)
+    {
+        if (array_key_exists('issuer_id', $template) && $template['issuer_id'] !== null) {
+            throw new DomainException('Rascunhos recorrentes com emitente explícito ainda estão bloqueados.');
+        }
+        $allowed = ['clientid', 'project_id', 'show_quantity_as', 'currency', 'subtotal', 'total', 'total_tax', 'adjustment',
+            'discount_percent', 'discount_total', 'discount_type', 'terms', 'sale_agent', 'billing_street', 'billing_city',
+            'billing_state', 'billing_zip', 'billing_country', 'shipping_street', 'shipping_city', 'shipping_state',
+            'shipping_zip', 'shipping_country', 'include_shipping', 'show_shipping_on_invoice', 'clientnote',
+            'newitems', 'date', 'duedate'];
+        $data = array_intersect_key($template, array_flip($allowed));
+        \app\services\RecurringRulePolicy::date($data['date']);
+        if (!empty($data['duedate'])) {
+            \app\services\RecurringRulePolicy::date($data['duedate']);
+        }
+        $data['save_as_draft'] = true;
+        $data['allowed_payment_modes'] = [];
+        $data['cancel_overdue_reminders'] = 1;
+        $data['adminnote'] = '';
+        $data['recurring'] = 0;
+        $data['custom_recurring'] = 0;
+        $data['number'] = self::STATUS_DRAFT_NUMBER;
+        $this->creatingRecurringRuleDraft = true;
+        try {
+            $id = $this->add($data);
+            if ($id) {
+                $this->copy_recurring_stored_fields($id, 'invoice', $template['rule_custom_fields'] ?? []);
+                $needsItemFields = array_filter($template['newitems'] ?? [], static fn($item) => !empty($item['stored_custom_fields']));
+                if ($needsItemFields) {
+                    $createdItems = $this->db->select('id')->where('rel_id', $id)->where('rel_type', 'invoice')
+                        ->order_by('id', 'asc')->get(db_prefix() . 'itemable')->result_array();
+                    if (count($createdItems) !== count($template['newitems'])) {
+                        throw new RuntimeException('Não foi possível copiar os campos dos itens recorrentes.');
+                    }
+                    foreach (array_values($template['newitems']) as $index => $item) {
+                        $this->copy_recurring_stored_fields((int) $createdItems[$index]['id'], 'items', $item['stored_custom_fields'] ?? []);
+                    }
+                }
+            }
+            return $id;
+        } finally {
+            $this->creatingRecurringRuleDraft = false;
+        }
+    }
+
+    private function add_recurring_rule_item(array $item, int $invoiceId): int
+    {
+        // add_new_sales_item_post() calls the app_decimal_places plugin filter.
+        // Canonical snapshot values must not reach any plugin during draft generation.
+        $optional = !empty($item['is_optional']);
+        if (!$this->db->insert(db_prefix() . 'itemable', [
+            'description' => $item['description'], 'long_description' => nl2br($item['long_description']),
+            'qty' => $item['qty'], 'rate' => $item['rate'], 'rel_id' => $invoiceId, 'rel_type' => 'invoice',
+            'item_order' => $item['order'], 'unit' => $item['unit'], 'is_optional' => $optional ? 1 : 0,
+            'is_selected' => $optional ? (int) ($item['is_selected'] ?? 0) : 1,
+        ])) {
+            throw new RuntimeException('Não foi possível copiar um item da recorrência.');
+        }
+        return (int) $this->db->insert_id();
+    }
+
+    private function copy_recurring_stored_fields(int $id, string $type, array $fields): void
+    {
+        // Values are an internal snapshot of already stored fields, not form input.
+        foreach ($fields as $field) {
+            if (!$this->db->insert(db_prefix() . 'customfieldsvalues', ['relid' => $id, 'fieldid' => (int) $field['fieldid'],
+                'fieldto' => $type, 'value' => $field['value']])) {
+                throw new RuntimeException('Não foi possível copiar um campo da recorrência.');
+            }
+        }
+    }
+
+    /**
      * Insert new invoice to database
      * @param array $data invoice data
      * @return mixed - false if not insert, invoice ID if succes
@@ -382,25 +464,34 @@ class Invoices_model extends App_Model
 
         $data['duedate'] = isset($data['duedate']) && empty($data['duedate']) ? null : $data['duedate'];
 
-        $hook = hooks()->apply_filters('before_invoice_added', [
-            'data'  => $data,
-            'items' => $items,
-        ]);
+        if (!$this->creatingRecurringRuleDraft) {
+            $hook = hooks()->apply_filters('before_invoice_added', [
+                'data'  => $data,
+                'items' => $items,
+            ]);
+            $data  = $hook['data'];
+            $items = $hook['items'];
+        }
+        // Quiet scheduler data already uses SQL dates and canonical decimals.
 
-        $data  = $hook['data'];
-        $items = $hook['items'];
 
         $this->db->insert(db_prefix() . 'invoices', $data);
         $insert_id = $this->db->insert_id();
 
         if ($insert_id) {
-            $this->save_formatted_number($insert_id);
+            if ($this->creatingRecurringRuleDraft) {
+                $this->db->where('id', $insert_id)->update(db_prefix() . 'invoices', ['formatted_number' => $data['prefix'] . 'DRAFT']);
+            } else {
+                $this->save_formatted_number($insert_id);
+            }
 
             if (isset($custom_fields)) {
                 handle_custom_fields_post($insert_id, $custom_fields);
             }
 
-            handle_tags_save($tags, $insert_id, 'invoice');
+            if (!$this->creatingRecurringRuleDraft) {
+                handle_tags_save($tags, $insert_id, 'invoice');
+            }
 
             foreach ($invoices_to_merge as $m) {
                 $merged   = false;
@@ -492,15 +583,20 @@ class Invoices_model extends App_Model
                 }
             }
 
-            update_invoice_status($insert_id);
+            if (!$this->creatingRecurringRuleDraft) {
+                update_invoice_status($insert_id);
+            }
 
             // Update next invoice number in settings if status is not draft
-            if (!$this->is_draft($insert_id)) {
+            if (!$this->creatingRecurringRuleDraft && !$this->is_draft($insert_id)) {
                 $this->increment_next_number();
             }
 
             foreach ($items as $key => $item) {
-                if ($itemid = add_new_sales_item_post($item, $insert_id, 'invoice')) {
+                $itemid = $this->creatingRecurringRuleDraft
+                    ? $this->add_recurring_rule_item($item, $insert_id)
+                    : add_new_sales_item_post($item, $insert_id, 'invoice');
+                if ($itemid) {
                     if (isset($billed_tasks[$key])) {
                         foreach ($billed_tasks[$key] as $_task_id) {
                             $this->db->insert(db_prefix() . 'related_items', [
@@ -522,7 +618,9 @@ class Invoices_model extends App_Model
                 }
             }
 
-            update_sales_total_tax_column($insert_id, 'invoice', db_prefix() . 'invoices');
+            if (!$this->creatingRecurringRuleDraft || !isset($data['total_tax'])) {
+                update_sales_total_tax_column($insert_id, 'invoice', db_prefix() . 'invoices');
+            }
 
             if (!DEFINED('CRON') && $expense == false) {
                 $lang_key = 'invoice_activity_created';
@@ -535,7 +633,9 @@ class Invoices_model extends App_Model
             }
             $this->log_invoice_activity($insert_id, $lang_key);
             
-            hooks()->do_action('after_invoice_added', $insert_id);
+            if (!$this->creatingRecurringRuleDraft) {
+                hooks()->do_action('after_invoice_added', $insert_id);
+            }
 
             if ($save_and_send === true) {
                 $this->send_invoice_to_client($insert_id, '', true, '', true);
@@ -1200,6 +1300,10 @@ class Invoices_model extends App_Model
         if (get_option('delete_only_on_last_invoice') == 1 &&
             $simpleDelete == false &&
             !is_last_invoice($id)) {
+            return false;
+        }
+
+        if (hooks()->apply_filters('before_invoice_delete_allowed', true, (int) $id) !== true) {
             return false;
         }
 
@@ -1912,4 +2016,5 @@ class Invoices_model extends App_Model
         ]);
     }
 }
+
 

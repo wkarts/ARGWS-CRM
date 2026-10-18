@@ -64,7 +64,9 @@ class Invoice extends ClientsController
         $this->load->model('payment_modes_model');
         $this->load->model('payments_model');
         $data['payments']      = $this->payments_model->get_invoice_payments($id);
-        $data['payment_modes'] = $this->payment_modes_model->get();
+        $data['payment_modes'] = \app\services\PaymentGatewayCatalog::forSelection(
+            $this->payment_modes_model->get(), $invoice->allowed_payment_modes
+        );
         $data['title']         = format_invoice_number($invoice->id);
         $this->disableNavigation();
         $this->disableSubMenu();

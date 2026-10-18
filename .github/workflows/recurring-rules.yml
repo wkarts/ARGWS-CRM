@@ -1,0 +1,83 @@
+name: Regras recorrentes independentes
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'application/models/Cron_model.php'
+      - 'application/models/Invoices_model.php'
+      - 'application/models/Recurring_rules_model.php'
+      - 'application/services/Recurring*.php'
+      - 'application/controllers/admin/Recurring_rules.php'
+      - 'application/views/admin/recurring_rules/**'
+      - 'application/migrations/395_version_395.php'
+      - 'install/database.sql'
+      - 'tests/recurring*.php'
+      - '.github/workflows/recurring-rules.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'application/models/Cron_model.php'
+      - 'application/models/Invoices_model.php'
+      - 'application/models/Recurring_rules_model.php'
+      - 'application/services/Recurring*.php'
+      - 'application/controllers/admin/Recurring_rules.php'
+      - 'application/views/admin/recurring_rules/**'
+      - 'application/migrations/395_version_395.php'
+      - 'install/database.sql'
+      - 'tests/recurring*.php'
+      - '.github/workflows/recurring-rules.yml'
+permissions:
+  contents: read
+jobs:
+  recurrence:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.5']
+    container: php:${{ matrix.php }}-cli
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: crm_recurrence_test
+          MARIADB_USER: recurrence_test
+          MARIADB_PASSWORD: ephemeral-test-only
+          MARIADB_ROOT_PASSWORD: ephemeral-root-test-only
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Preparar extensões PHP usadas pela aplicação
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends libonig-dev
+          docker-php-ext-install mysqli mbstring
+          rm -rf /var/lib/apt/lists/*
+      - name: Validar sintaxe
+        run: |
+          php -v
+          find application/services -maxdepth 1 -name 'Recurring*.php' -print0 | xargs -0 -n 1 php -l
+          php -l application/models/Recurring_rules_model.php
+          php -l application/models/Invoices_model.php
+          php -l application/models/Cron_model.php
+          php -l application/controllers/admin/Recurring_rules.php
+          php -l application/migrations/395_version_395.php
+          find tests -maxdepth 1 -name 'recurring*.php' -print0 | xargs -0 -n 1 php -l
+          find application/views/admin/recurring_rules -name '*.php' -print0 | xargs -0 -n 1 php -l
+      - name: Testar políticas, calendário e fluxos isolados
+        run: |
+          php tests/recurring_invoice_dates.php
+          php tests/recurring_invoice_cron.php
+          php tests/recurring_invoice_schema.php
+          php tests/recurring_rules.php
+          php tests/recurring_rules_controller.php
+          php tests/recurring_rules_views.php
+          php tests/recurring_rule_draft_writer.php
+          php tests/recurring_rule_schema.php
+      - name: Testar transações em MariaDB isolado
+        env:
+          RECURRING_TEST_DB: crm_recurrence_test
+          RECURRING_TEST_HOST: mariadb
+          RECURRING_TEST_PASSWORD: ephemeral-test-only
+        run: php tests/recurring_rules_mysql.php
