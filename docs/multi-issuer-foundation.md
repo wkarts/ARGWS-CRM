@@ -32,6 +32,8 @@ O recurso aparece em Configurações → Recursos pelo catálogo `application/co
 
 ## Banco de dados
 
+O módulo 1.0.1 possui `migrations/101_version_101.php`, derivada de `App_module_migration`. Todo DDL base é aplicado pela migration; `install.php` somente encaminha ao executor nativo e confirma `installed_version`. A instalação e reativação partem da baseline 1.0.0; upgrades existentes usam o mesmo runner. Ver [convenção e recuperação de falhas](module-migrations.md).
+
 Todas as tabelas usam o prefixo configurado mais `issuers_` e InnoDB:
 
 | Tabela | Papel / integridade |

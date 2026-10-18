@@ -5,18 +5,29 @@ on:
     paths:
       - application/config/argws_resources.php
       - modules/issuers/**
+      - modules/pige_bridge/**
       - tests/issuers*.php
+      - tests/test_module_migration_convention.py
+      - docs/module-migrations.md
       - .github/workflows/issuer-foundation.yml
   push:
     branches: [main, develop]
     paths:
       - application/config/argws_resources.php
       - modules/issuers/**
+      - modules/pige_bridge/**
       - tests/issuers*.php
+      - tests/test_module_migration_convention.py
+      - docs/module-migrations.md
       - .github/workflows/issuer-foundation.yml
 permissions:
   contents: read
 jobs:
+  migration-convention:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: python3 -m unittest tests/test_module_migration_convention.py
   registry:
     runs-on: ubuntu-latest
     strategy:
@@ -48,5 +59,6 @@ jobs:
           ISSUERS_TEST_USER: root
           ISSUERS_TEST_PASSWORD: synthetic-test-password
         run: |
+          php tests/issuers_migration.php
           php tests/issuers_registry.php
           php tests/issuers_concurrency.php
