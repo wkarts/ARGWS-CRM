@@ -9,6 +9,9 @@ use Asaas\Sdk\Exception\ApiException;
 use Asaas\Sdk\Exception\TransportException;
 use AsaasSdkProvider;
 
+require_once __DIR__ . '/PaymentOriginStore.php';
+require_once __DIR__ . '/InvoicePaymentRemoval.php';
+
 final class AsaasAdapter
 {
     private const PREFACES_RESOURCE_PATH = '/prefaces';
@@ -70,7 +73,7 @@ private function normalizePath(string $path): string
         bool $expectsBinary = false,
         ?int $companyId = null
     ): array {
-        $client = $this->provider->client($companyId);
+        $client = $this->resolveRequestClient($method, $path, $query, $companyId);
         // A SDK usa base_uri com /v3. Quando o path começa com '/', o Guzzle zera o path do base_uri.
         // Portanto, no módulo, sempre enviamos path relativo (sem '/').
         $originalPath = $path;
@@ -88,7 +91,10 @@ private function normalizePath(string $path): string
                 'correlation_id' => $headers['X-Correlation-Id'] ?? null,
             ]);
 
-            return is_array($response) ? $response : [];
+            if (!is_array($response)) {
+                throw new \RuntimeException('invalid_asaas_response');
+            }
+            return $response;
         } catch (ApiException $exception) {
             $this->log('error', 'Erro na API Asaas.', [
                 'method' => $method,
@@ -100,7 +106,7 @@ private function normalizePath(string $path): string
                 'correlation_id' => $headers['X-Correlation-Id'] ?? null,
             ]);
 
-            return [];
+            throw $exception;
         } catch (TransportException $exception) {
             $this->log('error', 'Erro de transporte na API Asaas.', [
                 'method' => $method,
@@ -111,7 +117,7 @@ private function normalizePath(string $path): string
                 'correlation_id' => $headers['X-Correlation-Id'] ?? null,
             ]);
 
-            return [];
+            throw $exception;
         }
     }
 
@@ -389,7 +395,7 @@ public function getCustomer(string $asaasCustomerId): array
 
     public function createPayment(array $payload): array
     {
-        return $this->request('POST', '/payments', [], [], $payload);
+        return $this->createInvoicePayment($payload);
     }
 
     public function getPayment(string $paymentId): array
@@ -409,7 +415,7 @@ public function getCustomer(string $asaasCustomerId): array
 
     public function cancelPayment(string $paymentId): array
     {
-        return $this->request('POST', '/payments/' . $paymentId . '/cancel');
+        return $this->deletePayment($paymentId);
     }
 
     
@@ -654,6 +660,28 @@ public function refundPayment(string $paymentId, array $payload = []): array
             return 'review_required';
         }
 
+        if (!empty($invoice->issuer_id)) {
+            // Multi-issuer webhook authentication/mapping is not enabled yet.
+            return 'review_required';
+        }
+        $origin = $this->originStore()->byInvoice((int) $invoice->id);
+        if ($origin && in_array($event, $settledEvents, true)) {
+            if (($origin['remote_id'] ?? '') !== $paymentId) {
+                return 'review_required';
+            }
+            try {
+                $client = $this->provider->clientForOrigin($origin);
+                $verified = $this->requestWithClient($client, 'GET', '/payments/' . $paymentId);
+            } catch (\Throwable $error) {
+                return 'review_required';
+            }
+            if (!$verified['success'] || ($verified['data']['id'] ?? '') !== $paymentId
+                || ($verified['data']['externalReference'] ?? '') !== $origin['invoice_hash']) {
+                return 'review_required';
+            }
+            $payment = $verified['data'];
+        }
+
         // Serializa TODOS os pagamentos relativos à mesma fatura, mesmo
         // quando chegam em eventos diferentes com IDs de cobrança distintos.
         $invoiceTable = db_prefix() . 'invoices';
@@ -736,6 +764,206 @@ public function refundPayment(string $paymentId, array $payload = []): array
         ];
     }
 
+    public function originStore(): PaymentOriginStore
+    {
+        return new PaymentOriginStore($this->ci->db);
+    }
+
+    private function resolveRequestClient(string $method, string $path, array $query, ?int $companyId)
+    {
+        $path = '/' . preg_replace('#^/?v3/#', '', ltrim($path, '/'));
+        $origin = null;
+        if (preg_match('#^/payments/([a-zA-Z0-9_-]+)(?:/|$)#', $path, $match)) {
+            $origin = $this->originStore()->byRemoteId($match[1]);
+            if (!$origin && strtoupper($method) !== 'GET') {
+                throw new \RuntimeException('legacy_origin_review_required');
+            }
+        } elseif ($path === '/payments' && !empty($query['externalReference'])) {
+            $invoice = $this->ci->db->get_where(db_prefix() . 'invoices', ['hash' => $query['externalReference']])->row_array();
+            if ($invoice) {
+                $this->assertInvoiceScope($invoice);
+                $origin = $this->originStore()->byInvoice((int) $invoice['id']);
+                if ($origin && empty($origin['remote_id'])) {
+                    throw new \RuntimeException('issuance_requires_reconciliation');
+                }
+            }
+        }
+        return $origin ? $this->provider->clientForOrigin($origin) : $this->provider->client($companyId);
+    }
+
+    public function assertInvoiceScope(array $invoice): void
+    {
+        if (!empty($invoice['issuer_id'])) {
+            if (!function_exists('issuers_assert_operational_scope')) {
+                throw new \RuntimeException('issuer_rollout_blocked');
+            }
+            issuers_assert_operational_scope((int) $invoice['issuer_id']);
+            // Remove only once customer mapping, webhook authentication, checkout,
+            // reconciliation and every invoice entry point are issuer-scoped.
+            throw new \RuntimeException('issuer_asaas_isolation_pending');
+        }
+    }
+
+    private function createInvoicePayment(array $payload): array
+    {
+        $reference = (string) ($payload['externalReference'] ?? '');
+        $invoice = $this->ci->db->get_where(db_prefix() . 'invoices', ['hash' => $reference])->row_array();
+        if ($reference === '' || !$invoice) {
+            throw new \RuntimeException('invoice_reference_required');
+        }
+        $this->assertInvoiceScope($invoice);
+        if (!in_array((int) ($invoice['status'] ?? 0), [1, 4], true)
+            || $this->ci->db->get_where(db_prefix() . 'invoicepaymentrecords', ['invoiceid' => (int) $invoice['id']])->num_rows() > 0) {
+            throw new \RuntimeException('invoice_not_eligible_for_issuance');
+        }
+        $store = $this->originStore();
+        $existing = $store->byInvoice((int) $invoice['id']);
+        if ($existing) {
+            if (empty($existing['remote_id']) || $existing['state'] !== 'issued') {
+                throw new \RuntimeException('issuance_requires_reconciliation');
+            }
+            return $this->getPayment($existing['remote_id']);
+        }
+        $map = $this->ci->db->get_where(db_prefix() . 'asaas_payments_map', ['invoice_id' => (int) $invoice['id']])->row_array();
+        if ($map) {
+            throw new \RuntimeException('legacy_origin_review_required');
+        }
+        $environment = $this->provider->env();
+        $client = $this->provider->clientForEnvironment($environment);
+        $context = $this->provider->contextForClient($client, $environment);
+        // A legacy customer map is not account-scoped. Verify the candidate in
+        // this exact authenticated account before using it to issue a charge.
+        $customerId = (string) ($payload['customer'] ?? '');
+        if (!preg_match('/^[a-zA-Z0-9_-]{1,64}$/', $customerId)) {
+            throw new \RuntimeException('customer_origin_unverified');
+        }
+        $localClient = $this->ci->db->get_where(db_prefix() . 'clients', ['userid' => (int) ($invoice['clientid'] ?? 0)])->row_array();
+        $document = $this->normalizeIdentityDocument((string) ($localClient['vat'] ?? ''));
+        $customer = $client->request('GET', 'v3/customers/' . $customerId, [], [], null, false, false);
+        if ($document === null || !is_array($customer)
+            || ($customer['id'] ?? '') !== $customerId
+            || $this->normalizeIdentityDocument((string) ($customer['cpfCnpj'] ?? '')) !== $document
+            || !empty($customer['deleted'])) {
+            throw new \RuntimeException('customer_origin_unverified');
+        }
+        $store->reserve($invoice, $context);
+        try {
+            $response = $client->request('POST', 'v3/payments', [], [], $payload, false, false);
+            if (!is_array($response) || empty($response['id']) || !empty($response['errors'])) {
+                throw new \RuntimeException('issuance_unconfirmed');
+            }
+            $store->attachRemote((int) $invoice['id'], (string) $response['id']);
+            if (!$this->gateway || !$this->gateway->upsert_payment_map((int) $invoice['id'], $response, $payload['customer'] ?? null)) {
+                $store->state((int) $invoice['id'], 'review_required', 'payment_map_write_failed');
+                throw new \RuntimeException('payment_map_write_failed');
+            }
+            return $response;
+        } catch (\Throwable $error) {
+            $store->state((int) $invoice['id'], 'review_required', 'issuance_unconfirmed');
+            throw $error;
+        }
+    }
+
+    public function removeInvoicePayment(int $invoiceId): array
+    {
+        $store = $this->originStore();
+        $origin = $store->byInvoice($invoiceId);
+        if (!$origin || empty($origin['remote_id'])) {
+            return ['success' => false, 'code' => 'legacy_origin_review_required'];
+        }
+        $receipts = $this->ci->db->get_where(db_prefix() . 'invoicepaymentrecords', ['invoiceid' => $invoiceId])->num_rows() > 0;
+        if ($receipts) {
+            $store->state($invoiceId, 'review_required', 'local_receipts_require_review');
+            return ['success' => false, 'code' => 'local_receipts_require_review'];
+        }
+        if ($origin['state'] === 'removed') {
+            if (!$this->gateway || !$this->gateway->upsert_payment_map($invoiceId, ['id' => $origin['remote_id'], 'status' => 'DELETED'])) {
+                $store->event($invoiceId, 'payment_map_write_failed');
+                return ['success' => false, 'code' => 'payment_map_write_failed'];
+            }
+            return ['success' => true, 'code' => 'already_removed'];
+        }
+        try {
+            // One verified client instance binds GET and DELETE to the same key/account.
+            $client = $this->provider->clientForOrigin($origin);
+            $service = new InvoicePaymentRemoval(function ($method, $path) use ($client) {
+                return $this->requestWithClient($client, $method, $path);
+            });
+            $store->state($invoiceId, 'removal_requested', 'removal_requested');
+            $result = $service->remove($origin['remote_id'], $origin['invoice_hash'], false, $origin, $origin);
+            $store->state($invoiceId, $result['success'] ? 'removed' : 'review_required', $result['code']);
+            if ($result['success'] && $this->gateway) {
+                if (!$this->gateway->upsert_payment_map($invoiceId, ['id' => $origin['remote_id'], 'status' => 'DELETED'])) {
+                    $store->event($invoiceId, 'payment_map_write_failed');
+                    return ['success' => false, 'code' => 'payment_map_write_failed'];
+                }
+            }
+            return $result;
+        } catch (\Throwable $error) {
+            $store->state($invoiceId, 'review_required', 'origin_or_removal_unconfirmed');
+            return ['success' => false, 'code' => 'origin_or_removal_unconfirmed'];
+        }
+    }
+
+    private function requestWithClient($client, string $method, string $path): array
+    {
+        try {
+            $response = $client->request($method, $this->normalizePath($path), [], [], null, false, false);
+            return ['success' => is_array($response), 'data' => is_array($response) ? $response : null];
+        } catch (\Throwable $error) {
+            return ['success' => false, 'data' => null];
+        }
+    }
+
+    /** Admin-reviewed legacy/uncertain link; never invoked by an automatic backfill. */
+    public function reconcileOrigin(int $invoiceId, string $remoteId, string $environment, string $expectedAccount): array
+    {
+        if (!preg_match('/^[a-zA-Z0-9_-]{1,64}$/', $remoteId) || trim($expectedAccount) === '') {
+            throw new \InvalidArgumentException('invalid_reconciliation_input');
+        }
+        $invoice = $this->ci->db->get_where(db_prefix() . 'invoices', ['id' => $invoiceId])->row_array();
+        if (!$invoice) {
+            throw new \RuntimeException('invoice_not_found');
+        }
+        $this->assertInvoiceScope($invoice);
+        $store = $this->originStore();
+        $existing = $store->byInvoice($invoiceId);
+        $map = $this->ci->db->get_where(db_prefix() . 'asaas_payments_map', ['invoice_id' => $invoiceId])->row_array();
+        if ($map && ($map['asaas_payment_id'] ?? '') !== $remoteId) {
+            throw new \RuntimeException('existing_payment_link_mismatch');
+        }
+        if ($existing && ($existing['account_id'] !== $expectedAccount || $existing['environment'] !== $environment
+            || (!empty($existing['remote_id']) && $existing['remote_id'] !== $remoteId))) {
+            throw new \RuntimeException('payment_origin_is_immutable');
+        }
+        $client = $this->provider->clientForEnvironment($environment);
+        $context = $this->provider->contextForClient($client, $environment);
+        if (!hash_equals($expectedAccount, $context['account_id'])) {
+            throw new \RuntimeException('origin_account_mismatch');
+        }
+        $response = $this->requestWithClient($client, 'GET', '/payments/' . $remoteId);
+        $payment = $response['data'] ?? [];
+        if (!$response['success'] || ($payment['id'] ?? '') !== $remoteId
+            || ($payment['externalReference'] ?? '') !== $invoice['hash']
+            || !isset($payment['value']) || abs((float) $payment['value'] - (float) $invoice['total']) > 0.009
+            || ($payment['dueDate'] ?? '') !== $invoice['duedate']) {
+            throw new \RuntimeException('reconciliation_evidence_mismatch');
+        }
+        if (!$existing) {
+            $store->reserve($invoice, $context, 'review_required', $remoteId);
+        }
+        $store->attachRemote($invoiceId, $remoteId);
+        if (!$this->gateway->upsert_payment_map($invoiceId, $payment)) {
+            $store->state($invoiceId, 'review_required', 'payment_map_write_failed');
+            throw new \RuntimeException('payment_map_write_failed');
+        }
+        $store->event($invoiceId, 'origin_manually_reconciled', hash('sha256', json_encode([
+            'id' => $remoteId, 'account_id' => $expectedAccount, 'environment' => $environment,
+            'externalReference' => $payment['externalReference'], 'value' => $payment['value'], 'dueDate' => $payment['dueDate'],
+        ])));
+        return ['success' => true, 'code' => 'origin_manually_reconciled'];
+    }
+
     public function healthStatus(): array
     {
         return $this->provider->healthCheck();
@@ -757,6 +985,16 @@ public function refundPayment(string $paymentId, array $payload = []): array
     private function normalizeDocument(string $document): string
     {
         return preg_replace('/[^0-9]/', '', $document);
+    }
+
+    /** Preserve the legal identity of alphanumeric CNPJ; never collapse it to digits. */
+    private function normalizeIdentityDocument(string $document): ?string
+    {
+        $normalized = preg_replace('/[.\/\-\s]+/u', '', strtoupper(trim($document)));
+        if (!is_string($normalized) || !preg_match('/^(?:[0-9]{11}|[A-Z0-9]{12}[0-9]{2})$/D', $normalized)) {
+            return null;
+        }
+        return $normalized;
     }
 
     private function normalizePostalCode(string $postalCode): string
@@ -859,6 +1097,11 @@ public function refundPayment(string $paymentId, array $payload = []): array
     }
     public function deletePayment(string $paymentId): array
     {
-        return $this->request('DELETE', '/payments/' . $paymentId);
+        $origin = $this->originStore()->byRemoteId($paymentId);
+        if (!$origin) {
+            throw new \RuntimeException('legacy_origin_review_required');
+        }
+        return $this->removeInvoicePayment((int) $origin['invoice_id']);
     }
 }
+

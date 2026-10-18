@@ -65,3 +65,6 @@ if (!$CI->db->table_exists($logsTable)) {
         PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 }
+
+require_once __DIR__ . '/libraries/Asaas/PaymentOriginSchema.php';
+\Asaas\PaymentOriginSchema::install($CI->db);
