@@ -14,9 +14,11 @@ class WriterDB {
     public array $note=['id'=>1,'issuer_id'=>null,'status'=>1,'total'=>'80.00','clientid'=>10,'currency'=>1],$refunds=[];
     public $beforeLock=null,$conn_id=null;private int $lastId=0;private ?array $snapshot=null;
     function field_exists($field,$table){return $field==='issuer_id';}
+    function table_exists($table){return false;} // This fixture models the pre-Companies legacy schema.
     function query($sql,$args=[]){
         // Read-only tenant preflight is separate from the financial transaction trace.
         if($sql==='SELECT id FROM tblinvoices WHERE id = ? AND tblinvoices.issuer_id IS NULL')return new Result($this->invoice && (string)$this->invoice['id']===(string)$args[0] && $this->invoice['issuer_id']===null ? [$this->invoice] : []);
+        if($sql==='SELECT clientid FROM tblcreditnotes WHERE id=?')return new Result($this->note && (string)$this->note['id']===(string)$args[0] ? [['clientid'=>$this->note['clientid']]] : []);
 
         $this->trace[]=$sql;
         if(str_starts_with($sql,'SELECT @@'))return new Result([['autocommit'=>$this->autocommit,'completion_type'=>0]]);
