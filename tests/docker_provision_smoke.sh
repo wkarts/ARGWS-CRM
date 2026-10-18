@@ -205,6 +205,24 @@ if [ "$admin_count" != "1" ]; then
     exit 1
 fi
 docker exec "$web" test -s /var/lib/argws-crm/config/provisioned
+# A completed controlled installation must include the native essential module.
+expected_issuer_version="$(sed -n 's/^Version: *//p' modules/issuers/issuers.php | head -n 1 | tr -d '\r')"
+issuer_state="$(docker exec -e MYSQL_PWD="$database_password" "$database" mysql \
+    --protocol=tcp --host=127.0.0.1 --user="$database_user" "$database_name" \
+    --batch --skip-column-names \
+    -e "SELECT CONCAT(installed_version, ':', active) FROM tblmodules WHERE module_name='issuers'")"
+if [ "$issuer_state" != "$expected_issuer_version:1" ]; then
+    echo "O provisionamento não confirmou Emitentes ativo na versão nativa esperada." >&2
+    exit 1
+fi
+issuer_lock="$(docker exec -e MYSQL_PWD="$database_password" "$database" mysql \
+    --protocol=tcp --host=127.0.0.1 --user="$database_user" "$database_name" \
+    --batch --skip-column-names -e 'SELECT COUNT(*) FROM tblissuers_lock WHERE id=1')"
+if [ "$issuer_lock" != "1" ]; then
+    echo "O schema essencial de Emitentes não foi confirmado." >&2
+    exit 1
+fi
+
 expected_migration="$(sed -n "s/.*migration_version.*= *\\([0-9][0-9]*\\).*/\\1/p" application/config/migration.php | head -n 1)"
 current_migration="$(docker exec -e MYSQL_PWD="$database_password" "$database" mysql \
     --protocol=tcp --host=127.0.0.1 --user="$database_user" "$database_name" \

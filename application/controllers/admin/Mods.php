@@ -29,7 +29,7 @@ class Mods extends AdminController
 
         $data['resources'] = [];
         foreach ($definitions as $name => $definition) {
-            if (isset($installed[$name]) && !isset($hidden[$name])) {
+            if (isset($installed[$name]) && (!isset($hidden[$name]) || $this->app_modules->is_essential($name))) {
                 // Os nomes funcionais do catálogo prevalecem sobre os cabeçalhos legados.
                 $data['resources'][] = array_merge($installed[$name], $definition);
             }
@@ -80,6 +80,11 @@ class Mods extends AdminController
         $definition = $this->get_resource_definition($name);
         if (!$definition || !$this->app_modules->get($name)) {
             show_404();
+        }
+
+        if ($this->app_modules->is_essential($name)) {
+            show_error('Emitentes é um recurso essencial e não pode ser desativado.', 409);
+            return;
         }
 
         $this->config->load('argws_resources');
