@@ -26,7 +26,7 @@ register_shutdown_function(static function () {
     $redirectHeaders = array_values(array_filter(headers_list(), static function ($header) {
         return stripos($header, 'Refresh:') === 0 || stripos($header, 'Location:') === 0;
     }));
-    $relevant = ['hooks.php', 'my_hooks.php', 'App_Router.php', 'Argws_provisioning.php', 'InstallationMigrationBootstrap.php', 'config.php'];
+    $relevant = ['hooks.php', 'my_hooks.php', 'App_Router.php', 'Argws_provisioning.php', 'InstallationMigrationBootstrap.php', 'EnhanceSecurity.php', 'App_Autoloader.php', 'InitModules.php', 'CodeIgniter.php', 'Hooks.php', 'Config.php', 'Output.php', 'URI.php', 'Router.php', 'config.php'];
     $loaded = array_values(array_unique(array_filter(array_map('basename', get_included_files()), static function ($name) use ($relevant) {
         return in_array($name, $relevant, true);
     })));
@@ -67,6 +67,9 @@ docker cp "$work/router.php" "$legacy:/tmp/issuer-router.php"
 cat > "$work/my_hooks.php" <<'PHP'
 <?php
 error_log('[issuer smoke fixture] my_hooks included');
+array_unshift($hook['pre_system'], static function () {
+    error_log('[issuer smoke hook] first_pre_system uri=' . ($_SERVER['REQUEST_URI'] ?? ''));
+});
 $hook['pre_system'][] = static function () {
     error_log('[issuer smoke hook] pre_system uri=' . ($_SERVER['REQUEST_URI'] ?? '')
         . ' path_info=' . ($_SERVER['PATH_INFO'] ?? '')
