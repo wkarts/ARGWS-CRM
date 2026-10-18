@@ -1,0 +1,35 @@
+name: Versão e migrations dos módulos
+on:
+  pull_request:
+    # edited also covers retargeting: use this event's current base SHA.
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+permissions:
+  contents: read
+concurrency:
+  group: module-migration-policy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  module-migration-delta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Testar contratos e históricos Git sintéticos
+        run: python3 -m unittest discover -s tests -p 'test_module_migration_diff.py' -v
+      - name: Validar o delta da PR contra sua base atual
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 scripts/check-module-migration-diff.py --base "$PR_BASE_SHA" --head "$PR_HEAD_SHA"
+      - name: Compatibilidade com o contrato estrutural quando presente
+        run: |
+          if [ -f tests/test_module_migration_convention.py ]; then
+            python3 -m unittest discover -s tests -p 'test_module_migration_convention.py' -v
+          fi
