@@ -42,5 +42,6 @@ $config['argws_resources'] = [
     'translations' => ['name' => 'Traduções', 'description' => 'Gerenciamento interno dos textos traduzíveis.', 'requires' => []],
     'webhooks' => ['name' => 'Webhooks', 'description' => 'Recebimento e envio de eventos configurados.', 'requires' => []],
     'wiki' => ['name' => 'Base de conhecimento', 'description' => 'Artigos e documentação interna.', 'requires' => []],
+    'pige_bridge' => ['name' => 'Integração opcional PIGE', 'description' => 'Recepção autenticada de solicitações PIGE; emissão financeira indisponível nesta etapa.', 'requires' => []],
     'zillapage' => ['name' => 'Páginas públicas', 'description' => 'Páginas e formulários publicados pela instalação.', 'requires' => []],
 ];
