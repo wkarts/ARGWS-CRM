@@ -1,0 +1,52 @@
+name: Fundação cadastral de emitentes
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - application/config/argws_resources.php
+      - modules/issuers/**
+      - tests/issuers*.php
+      - .github/workflows/issuer-foundation.yml
+  push:
+    branches: [main, develop]
+    paths:
+      - application/config/argws_resources.php
+      - modules/issuers/**
+      - tests/issuers*.php
+      - .github/workflows/issuer-foundation.yml
+permissions:
+  contents: read
+jobs:
+  registry:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.5']
+    container: php:${{ matrix.php }}-cli
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: synthetic-test-password
+          MYSQL_DATABASE: issuer_tests
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -psynthetic-test-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Preparar driver MySQL de teste
+        run: docker-php-ext-install pdo_mysql
+      - name: Validar sintaxe e controles HTTP
+        run: |
+          find tests -name 'issuers*.php' -exec php -l '{}' \;
+          php -l application/config/argws_resources.php
+          find modules/issuers -name '*.php' -exec php -l '{}' \;
+          php tests/issuers_controller.php
+      - name: Testar schema, transações, ACL e concorrência em MySQL isolado
+        env:
+          ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_tests;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: synthetic-test-password
+        run: |
+          php tests/issuers_registry.php
+          php tests/issuers_concurrency.php
