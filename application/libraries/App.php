@@ -528,7 +528,11 @@ class App
             hooks()->do_action('database_updated', $updateToVersion);
             return ['success' => true];
         } catch (Throwable $error) {
-            log_message('error', 'Falha na atualização nativa: ' . get_class($error));
+            $errorCode = (string) $error->getMessage();
+            $safeCode = preg_match('/^(?:core|company|issuer)_[a-z_]{1,64}$/D', $errorCode)
+                ? $errorCode
+                : 'unclassified';
+            log_message('error', 'Falha na atualização nativa [' . $safeCode . ']: ' . get_class($error));
             return ['success' => false, 'message' => 'Não foi possível concluir a atualização do CRM. Os dados foram preservados. Verifique os logs e tente novamente.'];
         } finally {
             foreach ($databaseFlags as $flag => $value) {
