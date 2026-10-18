@@ -1,0 +1,43 @@
+name: Ponte opcional PIGE
+on:
+  pull_request:
+    branches: [main, develop]
+    paths: ['modules/pige_bridge/**', 'tests/pige_bridge_*.php', 'tests/fixtures/pige-crm-v1.json', '.github/workflows/pige-bridge.yml']
+  push:
+    branches: [main, develop]
+    paths: ['modules/pige_bridge/**', 'tests/pige_bridge_*.php', 'tests/fixtures/pige-crm-v1.json', '.github/workflows/pige-bridge.yml']
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.5']
+    container: php:${{ matrix.php }}-cli
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: isolated-test-password
+          MYSQL_DATABASE: bridge_test
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pisolated-test-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Preparar driver MySQL no ambiente descartável
+        run: docker-php-ext-install pdo_mysql
+      - name: Sintaxe e contratos sem chamadas financeiras
+        run: |
+          find modules/pige_bridge tests -name '*.php' \( -path 'modules/pige_bridge/*' -o -name 'pige_bridge_*.php' \) -print0 | xargs -0 -n1 php -l
+          php tests/pige_bridge_protocol.php
+          php tests/pige_bridge_storage.php
+          php tests/pige_bridge_controller.php
+          php tests/pige_bridge_disabled.php
+      - name: Schema e idempotência em MySQL real isolado
+        env:
+          PIGE_BRIDGE_TEST_DSN: mysql:host=mysql;dbname=bridge_test;charset=utf8mb4
+          PIGE_BRIDGE_TEST_USER: root
+          PIGE_BRIDGE_TEST_PASSWORD: isolated-test-password
+        run: php tests/pige_bridge_mysql.php
