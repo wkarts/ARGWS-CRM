@@ -53,6 +53,14 @@ foreach (['confirmed','received','pending','cancelled'] as $state) {
  $receipt=PigeBridgeProtocol::receipt(['event_id'=>$event['event_id'],'request_id'=>'req_test','status'=>$state]);
  check($receipt['status']==='blocked' && $receipt['capabilities']['issue_charge']===false,'no accidental financial execution');
 }
+foreach (['你好', str_repeat('😀', 500), "line\u{2028}separator"] as $description) {
+ $changed=$event;$changed['data']['description']=$description;
+ check(PigeBridgeProtocol::decode(json_encode($changed, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_LINE_TERMINATORS))['data']['description']===$description,'Unicode cross-language accepted');
+}
+foreach (["\u{00a0}", "\u{2003}", "\u{0085}"] as $description) {
+ $changed=$event;$changed['data']['description']=$description;
+ rejects(fn()=>PigeBridgeProtocol::decode(json_encode($changed, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_LINE_TERMINATORS)),'Unicode whitespace rejected like Python');
+}
 $fixturePath=__DIR__.'/fixtures/pige-crm-v1.json';
 if (is_file($fixturePath)) {
  $fixture=json_decode(file_get_contents($fixturePath),true,512,JSON_THROW_ON_ERROR);

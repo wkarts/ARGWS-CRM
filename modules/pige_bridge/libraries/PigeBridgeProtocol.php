@@ -71,7 +71,7 @@ final class PigeBridgeProtocol
         if (!is_string($date) || !preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date) || !checkdate((int) substr($date, 5, 2), (int) substr($date, 8, 2), (int) substr($date, 0, 4))) {
             throw new InvalidArgumentException('invalid_due_date');
         }
-        if (!is_string($data['description'] ?? null) || trim($data['description']) === '' || strlen($data['description']) > 2000 || preg_match_all('/./us', $data['description']) > 500 || preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', $data['description'])) {
+        if (!is_string($data['description'] ?? null) || preg_match('/^[\s\p{Z}\x{0085}]*$/u', $data['description']) || strlen($data['description']) > 2000 || preg_match_all('/./us', $data['description']) > 500 || preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', $data['description'])) {
             throw new InvalidArgumentException('invalid_description');
         }
         return $value;
