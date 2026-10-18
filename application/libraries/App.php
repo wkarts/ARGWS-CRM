@@ -532,7 +532,12 @@ class App
             $safeCode = preg_match('/^(?:core|company|issuer)_[a-z_]{1,64}$/D', $errorCode)
                 ? $errorCode
                 : 'unclassified';
-            $safeMessage = 'Falha na atualização nativa [' . $safeCode . ']: ' . get_class($error);
+            $sourceFile = basename((string) $error->getFile());
+            if (!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D', $sourceFile)) {
+                $sourceFile = 'unknown';
+            }
+            $safeMessage = 'Falha na atualização nativa [' . $safeCode . ']: ' . get_class($error)
+                . ' @ ' . $sourceFile . ':' . (int) $error->getLine();
             error_log($safeMessage);
             log_message('error', $safeMessage);
             return ['success' => false, 'message' => 'Não foi possível concluir a atualização do CRM. Os dados foram preservados. Verifique os logs e tente novamente.'];
