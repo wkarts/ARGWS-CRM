@@ -9,7 +9,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * not publish it.
  */
 global $CFG;
-if (!is_object($CFG) && function_exists('load_class')) {
+if ((!is_object($CFG) || !method_exists($CFG, 'item')) && function_exists('load_class')) {
     $CFG =& load_class('Config', 'core');
 }
 
