@@ -9,7 +9,7 @@ on:
       - 'application/services/Recurring*.php'
       - 'application/controllers/admin/Recurring_rules.php'
       - 'application/views/admin/recurring_rules/**'
-      - 'application/migrations/383_version_383.php'
+      - 'application/migrations/395_version_395.php'
       - 'install/database.sql'
       - 'tests/recurring*.php'
       - '.github/workflows/recurring-rules.yml'
@@ -22,7 +22,7 @@ on:
       - 'application/services/Recurring*.php'
       - 'application/controllers/admin/Recurring_rules.php'
       - 'application/views/admin/recurring_rules/**'
-      - 'application/migrations/383_version_383.php'
+      - 'application/migrations/395_version_395.php'
       - 'install/database.sql'
       - 'tests/recurring*.php'
       - '.github/workflows/recurring-rules.yml'
@@ -62,7 +62,7 @@ jobs:
           php -l application/models/Invoices_model.php
           php -l application/models/Cron_model.php
           php -l application/controllers/admin/Recurring_rules.php
-          php -l application/migrations/383_version_383.php
+          php -l application/migrations/395_version_395.php
           find tests -maxdepth 1 -name 'recurring*.php' -print0 | xargs -0 -n 1 php -l
           find application/views/admin/recurring_rules -name '*.php' -print0 | xargs -0 -n 1 php -l
       - name: Testar políticas, calendário e fluxos isolados

@@ -37,8 +37,8 @@ check($db->conn_id->multi_query($schema), 'Install schema accepted');
 do { if ($result = $db->conn_id->store_result()) $result->free(); } while ($db->conn_id->more_results() && $db->conn_id->next_result());
 check($db->conn_id->errno === 0, 'Fresh installer schema imported');
 class CI_Migration { public $db; }
-require APPPATH . 'migrations/383_version_383.php';
-$migration = new Migration_Version_383(); $migration->db = $db; $migration->up(); $migration->up(); $migration->down();
+require APPPATH . 'migrations/395_version_395.php';
+$migration = new Migration_Version_395(); $migration->db = $db; $migration->up(); $migration->up(); $migration->down();
 check($db->table_exists('test_recurring_rules'), 'Migration repeat and rollback preserve tables');
 class App_Model { public $db; public $load; public $invoices_model; }
 require APPPATH . 'models/Invoices_model.php';

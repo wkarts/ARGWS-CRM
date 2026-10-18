@@ -147,6 +147,10 @@ class Invoices_model extends App_Model
 
     public function mark_as_cancelled($id)
     {
+        if (hooks()->apply_filters('before_invoice_cancel_allowed', true, (int) $id) !== true) {
+            return false;
+        }
+
         $isDraft = $this->is_draft($id);
 
         $this->db->where('id', $id);
@@ -1299,6 +1303,10 @@ class Invoices_model extends App_Model
             return false;
         }
 
+        if (hooks()->apply_filters('before_invoice_delete_allowed', true, (int) $id) !== true) {
+            return false;
+        }
+
         $number  = format_invoice_number($id);
         $isDraft = $this->is_draft($id);
 
@@ -2008,4 +2016,5 @@ class Invoices_model extends App_Model
         ]);
     }
 }
+
 

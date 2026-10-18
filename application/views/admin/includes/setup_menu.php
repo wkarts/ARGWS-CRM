@@ -75,11 +75,12 @@ foreach ($setup_menu as $key => $item) {
         </li>
         <?php hooks()->do_action('after_render_single_setup_menu', $item); ?>
         <?php } ?>
-        <?php if (get_option('show_help_on_setup_menu') == 1 && is_admin()) {
+        <?php $supportDestination = support_contact_destination();
+        if (get_option('show_help_on_setup_menu') == 1 && is_admin() && $supportDestination) {
             $totalSetupMenuItems++; ?>
         <li>
-            <a href="<?= hooks()->apply_filters('help_menu_item_link', ARGWS_RELEASES_URL); ?>"
-                target="_blank">
+            <a href="<?= html_escape($supportDestination['href']); ?>"
+                target="_blank" rel="noopener noreferrer nofollow">
                 <?= hooks()->apply_filters('help_menu_item_text', _l('setup_help')); ?>
             </a>
         </li>

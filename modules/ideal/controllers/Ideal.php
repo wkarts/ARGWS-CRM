@@ -156,6 +156,8 @@ class Ideal extends App_Controller
 
     public function create_webhook()
     {
+        $this->require_gateway_management();
+
         try {
             foreach ($this->ideal_gateway->getAllWebhookObjects() as $webhook) {
                 if ($webhook->url == $this->ideal_gateway->getWebhookEndPoint()) {
@@ -163,7 +165,7 @@ class Ideal extends App_Controller
                 }
             }
 
-            if ($this->input->get('recreate')) {
+            if ($this->input->post('recreate')) {
                 update_option('ideal_module_stripe_webhook_id', '');
                 update_option('ideal_module_stripe_webhook_signing_secret', '');
             }
@@ -185,10 +187,31 @@ class Ideal extends App_Controller
      */
     public function enable_webhook(): void
     {
+        $this->require_gateway_management();
+
         if (staff_can('edit', 'settings')) {
             $this->ideal_gateway->enableCurrentWebhookEndpoint();
         }
         redirect(admin_url('settings/?group=payment_gateways&tab=online_payments_Ideal_gateway_tab'));
+    }
+
+    private function require_gateway_management(): void
+    {
+        if (!\app\services\PaymentGatewayCatalog::idealEnabled()) {
+            show_404();
+        }
+        if (!is_staff_logged_in() || !staff_can('edit', 'settings')) {
+            access_denied('settings');
+        }
+        if ($this->input->method(true) !== 'POST') {
+            show_404();
+        }
+        $expected = $this->session->userdata('ideal_management_csrf');
+        $provided = $this->input->post('ideal_management_csrf');
+        if (!is_string($expected) || $expected === '' || !is_string($provided)
+            || !hash_equals($expected, $provided)) {
+            show_error('Solicitação inválida. Atualize a página e tente novamente.', 403);
+        }
     }
 
     public function webhook(): void

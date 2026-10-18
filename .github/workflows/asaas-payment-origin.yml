@@ -1,0 +1,59 @@
+name: Origem e remocao segura Asaas
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - modules/asaas/**
+      - application/models/Invoices_model.php
+      - tests/asaas_*.php
+      - .github/workflows/asaas-payment-origin.yml
+  push:
+    branches: [main, develop]
+    paths:
+      - modules/asaas/**
+      - application/models/Invoices_model.php
+      - tests/asaas_*.php
+      - .github/workflows/asaas-payment-origin.yml
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.5']
+    container: php:${{ matrix.php }}-cli
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validar sintaxe
+        run: |
+          php -v
+          find modules/asaas -path '*/vendor' -prune -o -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -l application/models/Invoices_model.php
+          find tests -name 'asaas_*.php' -print0 | xargs -0 -n1 php -l
+      - name: Testar fluxo sem rede e sem credenciais
+        run: |
+          php tests/asaas_invoice_payment_removal.php
+          php tests/asaas_payment_origin_integration.php
+  mysql:
+    runs-on: ubuntu-latest
+    container: php:8.3-cli
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: test-only-password
+          MYSQL_DATABASE: asaas_test
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -ptest-only-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Habilitar driver de teste
+        run: docker-php-ext-install pdo_mysql
+      - name: Validar persistencia e constraints no MySQL descartavel
+        env:
+          ASAAS_TEST_MYSQL_DSN: mysql:host=mysql;dbname=asaas_test;charset=utf8mb4
+          ASAAS_TEST_MYSQL_USER: root
+          ASAAS_TEST_MYSQL_PASSWORD: test-only-password
+        run: php tests/asaas_payment_origin_schema.php

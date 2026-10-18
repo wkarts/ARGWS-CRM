@@ -30,7 +30,10 @@ function _app_init()
      * In case of failures, users can skip the modules to be loaded
      */
     if ($ci->input->get('skip_modules_load') && $ci->input->get('skip_modules_load') && is_admin()) {
-        $modules = [];
+        // Recovery may skip optional modules, never the essential issuer registry.
+        $modules = array_filter($ci->app_modules->get_activated(), function ($module) use ($ci) {
+            return $ci->app_modules->is_essential($module['system_name']);
+        });
     } else {
         /**
          * Get all registered and active modules

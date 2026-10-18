@@ -51,7 +51,7 @@ O editor legado pode alterar itens em etapas próprias. A evolução do controle
 
 ## Banco e instalação
 
-Migration **383**, posterior ao marcador **382** da release 3.8.1. Quatro tabelas novas InnoDB:
+Migration **395**, posterior ao marcador **394** da release 3.11.1. Quatro tabelas novas InnoDB:
 
 - `recurring_rules`: modelo, calendário, estado, versão, origem opcional, contexto explícito e chave idempotente de criação.
 - `recurring_rule_batches`: prévia, autor, prazo e resultado idempotente. Armazena hashes e metadados de seleção, sem copiar endereços/itens nos snapshots do lote.
@@ -84,6 +84,6 @@ Homologar concorrência entre editor legado, CRON e migração antes de liberar 
 
 ## Deploy e rollback
 
-Deploy não executado. Fazer backup verificado do banco/configuração/uploads, aplicar em homologação, revisar dependências e interromper o CRON durante atualização de código/schema. Aplicar migration 383 pelo fluxo normal antes de liberar as rotas e executar os testes de fumaça. A geração depende de ativação posterior de cada regra; não há ativação automática de contratos existentes.
+Deploy não executado. Fazer backup verificado do banco/configuração/uploads, aplicar em homologação, revisar dependências e interromper o CRON durante atualização de código/schema. Aplicar migration 395 pelo fluxo normal antes de liberar as rotas e executar os testes de fumaça. A geração depende de ativação posterior de cada regra; não há ativação automática de contratos existentes.
 
 Rollback preserva as tabelas, regras, vínculos e auditoria. Antes de reverter o código, pause as regras novas e interrompa o CRON. Não reative matrizes migradas automaticamente: isso pode duplicar cobranças se rascunhos já tiverem sido emitidos manualmente. Restaurar um contrato legado exige revisão explícita de última emissão, ciclos e documentos existentes. `down()` não apaga nenhum dado e não reativa matrizes. O schema aditivo é compatível com código anterior, mas regras novas deixam de executar quando esse código não existe.

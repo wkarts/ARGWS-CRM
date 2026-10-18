@@ -3,12 +3,12 @@ declare(strict_types=1);
 define('BASEPATH', dirname(__DIR__) . '/system/');
 function db_prefix(): string { return 'probe_'; }
 class CI_Migration { public $db; }
-require dirname(__DIR__) . '/application/migrations/383_version_383.php';
+require dirname(__DIR__) . '/application/migrations/395_version_395.php';
 $probe = new class {
     public array $queries = [];
     public function query($sql): bool { $this->queries[] = trim($sql); return true; }
 };
-$migration = new Migration_Version_383(); $migration->db = $probe; $migration->up(); $first = $probe->queries; $migration->up(); $migration->down();
+$migration = new Migration_Version_395(); $migration->db = $probe; $migration->up(); $first = $probe->queries; $migration->up(); $migration->down();
 if (count($probe->queries) !== 8 || array_slice($probe->queries, 4) !== $first) throw new RuntimeException('Repeat-safe additive migration expected.');
 $installer = file_get_contents(dirname(__DIR__) . '/install/database.sql');
 foreach ($first as $sql) {

@@ -16,7 +16,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 Module Name: Asaas - Módulo de Pagamento
 Description: Integração com Sistema Financeiro Asaas com a função de recebimento via catão de crédito, Boleto e Pix.
 Author: WWSoft -> Wallace Kleiton - argws/asaas-sdk-php v0.2.61
-Version: 1.4.5
+Version: 1.4.6
 Requires at least: 2.9.*
 Author URI: https://t.me/wkartspro
 */
@@ -32,7 +32,11 @@ if (function_exists('do_action_deprecated')) {
     // Compatibilidade com versões anteriores do fluxo de atualização de faturas.
     hooks()->add_action('after_invoice_updated', 'asaas_after_invoice_updated');
 }
+hooks()->add_filter('before_invoice_delete_allowed', 'asaas_before_invoice_delete_allowed', 10, 2);
+hooks()->add_filter('before_invoice_cancel_allowed', 'asaas_before_invoice_cancel_allowed', 10, 2);
 hooks()->add_action('before_invoice_deleted', 'asaas_before_invoice_deleted');
+hooks()->add_action('invoice_marked_as_cancelled', 'asaas_invoice_marked_as_cancelled');
+hooks()->add_action('admin_init', 'asaas_origin_admin_menu');
 hooks()->add_action('after_payment_added', 'asaas_after_payment_added');
 hooks()->add_action('payment_recorded', 'asaas_after_payment_added');
 hooks()->add_action('invoice_payment_added', 'asaas_after_payment_added');
@@ -191,6 +195,19 @@ function asaas_after_invoice_added($invoice_id)
 
 function asaas_after_invoice_updated($hookData = null)
 {
+    try {
+        return asaas_update_invoice_payment($hookData);
+    } catch (Throwable $error) {
+        log_message('error', '[Asaas] Sincronização não confirmada; revisar origem da cobrança.');
+        if (function_exists('set_alert')) {
+            set_alert('warning', 'Fatura salva, mas a cobrança Asaas exige revisão em Asaas: origem e pendências.');
+        }
+        return $hookData;
+    }
+}
+
+function asaas_update_invoice_payment($hookData = null)
+{
     $CI = &get_instance();
 
     // Descobre o invoice_id vindo do hook (compatível com múltiplas assinaturas)
@@ -228,6 +245,12 @@ function asaas_after_invoice_updated($hookData = null)
     $invoice = $CI->invoices_model->get($id);
     if (!$invoice) {
         log_message('error', '[Asaas] invoice_updated: invoice não encontrada para invoice_id=' . $id);
+        return $id;
+    }
+
+    $CI->asaas_gateway->getAdapter()->assertInvoiceScope((array) $invoice);
+
+    if (in_array((int) $invoice->status, [5, 6], true)) {
         return $id;
     }
 
@@ -284,14 +307,20 @@ function asaas_after_invoice_updated($hookData = null)
         return $id;
     }
 
-    // Garante cliente no Asaas (MAP local tblasaas_customers_map -> busca estrita -> cria)
-    $clientId = (int) $invoice->clientid;
-    $customerEns = $CI->asaas_gateway->ensure_customer_for_client($clientId, $client);
-    log_message('info', '[Asaas] invoice_updated: ensure_customer_for_client response=' . json_encode($customerEns, JSON_UNESCAPED_UNICODE));
-
-    $cliente_id = isset($customerEns['asaas_customer_id']) ? (string) $customerEns['asaas_customer_id'] : '';
+    $origin = $CI->asaas_gateway->getAdapter()->originStore()->byInvoice((int) $id);
+    if ($origin) {
+        if (empty($origin['remote_id']) || $origin['state'] !== 'issued') {
+            log_message('error', '[Asaas] Emissão exige conciliação. invoice_id=' . (int) $id);
+            return $id;
+        }
+        $remote = $CI->asaas_gateway->getAdapter()->getPayment($origin['remote_id']);
+        $cliente_id = (string) ($remote['customer'] ?? '');
+    } else {
+        $customerEns = $CI->asaas_gateway->ensure_customer_for_client((int) $invoice->clientid, $client);
+        $cliente_id = (string) ($customerEns['asaas_customer_id'] ?? '');
+    }
     if ($cliente_id === '') {
-        log_message('error', '[Asaas] invoice_updated: Asaas customer_id vazio. invoice_id=' . $id . ' details=' . json_encode($customerEns, JSON_UNESCAPED_UNICODE));
+        log_message('error', '[Asaas] Cliente Asaas não confirmado. invoice_id=' . (int) $id);
         return $id;
     }
 
@@ -362,85 +391,84 @@ function asaas_after_invoice_updated($hookData = null)
     return $id;
 }
 
+function asaas_origin_admin_menu()
+{
+    if (is_admin()) {
+        $CI = &get_instance();
+        $CI->app_menu->add_sidebar_children_item('sales', [
+            'slug' => 'asaas-origins', 'name' => 'Asaas: origem e pendências',
+            'href' => admin_url('asaas/payment_origins'), 'position' => 99,
+        ]);
+    }
+}
+
+function asaas_before_invoice_delete_allowed($allowed, $id)
+{
+    return asaas_guard_invoice_mutation($allowed, (int) $id, 'delete');
+}
+
+function asaas_before_invoice_cancel_allowed($allowed, $id)
+{
+    return asaas_guard_invoice_mutation($allowed, (int) $id, 'cancel');
+}
+
+function asaas_guard_invoice_mutation($allowed, int $invoiceId, string $action): bool
+{
+    if ($allowed !== true) {
+        return false;
+    }
+    $CI = &get_instance();
+    $CI->load->library('asaas/asaas_gateway');
+    $adapter = $CI->asaas_gateway->getAdapter();
+    $store = $adapter->originStore();
+    $origin = $store->byInvoice($invoiceId);
+    if (!$origin) {
+        // Historical IDs alone do not prove an account. Keep the pre-existing
+        // local policy, expose the unresolved mapping, and NEVER guess a DELETE.
+        if ($store->ready() && $CI->asaas_gateway->get_payment_id_by_invoice($invoiceId)) {
+            $store->event($invoiceId, 'legacy_' . $action . '_requires_review');
+            if (function_exists('set_alert')) {
+                set_alert('warning', 'Origem Asaas não conciliada. A cobrança remota não foi removida; revise Asaas: origem e pendências.');
+            }
+        }
+        return true;
+    }
+    try {
+        if ($action === 'delete' && (int) $CI->asaas_gateway->getSetting('delete_charge') !== 1) {
+            $store->state($invoiceId, 'review_required', 'automatic_removal_disabled');
+            $result = ['success' => false, 'code' => 'automatic_removal_disabled'];
+        } else {
+            $result = $adapter->removeInvoicePayment($invoiceId);
+        }
+    } catch (Throwable $error) {
+        $result = ['success' => false, 'code' => 'removal_unconfirmed'];
+        log_message('error', '[Asaas] Remoção não confirmada para invoice_id=' . $invoiceId);
+    }
+    if (!$result['success'] && function_exists('set_alert')) {
+        set_alert('warning', 'Fatura preservada: a remoção Asaas não foi confirmada ou há recebimentos. Revise Asaas: origem e pendências.');
+    }
+    return $result['success'] === true;
+}
+
 function asaas_before_invoice_deleted($id)
 {
-    $CI = &get_instance();
-    $CI->load->library('asaas_gateway');
-
-    $delete_charge = (int) $CI->asaas_gateway->getSetting('delete_charge');
-    if ($delete_charge !== 1) {
-        log_message('info', '[Asaas] before_invoice_deleted: delete_charge desativado. invoice_id=' . (int) $id);
-        return $id;
-    }
-
-    $invoiceId = (int) $id;
-    $paymentId = $CI->asaas_gateway->get_payment_id_by_invoice($invoiceId);
-
-    if (!$paymentId) {
-        log_message('info', '[Asaas] before_invoice_deleted: sem payment map. invoice_id=' . $invoiceId);
-        return $id;
-    }
-
-    // Preferência: cancelamento (mantém histórico no Asaas). Se falhar, tenta DELETE.
-    try {
-        $resp = $CI->asaas_gateway->adapter->cancelPayment($paymentId);
-        log_message('info', '[Asaas] before_invoice_deleted: cancelPayment ok. invoice_id=' . $invoiceId . ' payment_id=' . $paymentId . ' resp=' . json_encode($resp, JSON_UNESCAPED_UNICODE));
-        $CI->asaas_gateway->upsert_payment_map($invoiceId, ['id' => $paymentId, 'status' => 'CANCELLED']);
-        return $id;
-    } catch (Throwable $e) {
-        log_message('error', '[Asaas] before_invoice_deleted: cancelPayment falhou. invoice_id=' . $invoiceId . ' payment_id=' . $paymentId . ' err=' . $e->getMessage());
-    }
-
-    try {
-        $resp = $CI->asaas_gateway->adapter->deletePayment($paymentId);
-        log_message('info', '[Asaas] before_invoice_deleted: deletePayment ok. invoice_id=' . $invoiceId . ' payment_id=' . $paymentId . ' resp=' . json_encode($resp, JSON_UNESCAPED_UNICODE));
-        $CI->asaas_gateway->upsert_payment_map($invoiceId, ['id' => $paymentId, 'status' => 'DELETED']);
-    } catch (Throwable $e) {
-        log_message('error', '[Asaas] before_invoice_deleted: deletePayment falhou. invoice_id=' . $invoiceId . ' payment_id=' . $paymentId . ' err=' . $e->getMessage());
-    }
-
+    // Removal is performed in the returnable pre-delete filter. This legacy
+    // action cannot veto deletion and must not repeat remote side effects.
     return $id;
 }
 
+function asaas_invoice_marked_as_cancelled($id)
+{
+    // The actual core hook is registered for compatibility/observability.
+    // The returnable pre-cancel filter owns the remote operation.
+    log_message('info', '[Asaas] invoice_marked_as_cancelled invoice_id=' . (int) $id);
+}
 
 function asaas_invoice_status_changed($data = null)
 {
-    $CI = &get_instance();
-    $CI->load->library('asaas_gateway');
-
-    $invoiceId = 0;
-    $status = null;
-
-    if (is_array($data)) {
-        $invoiceId = (int) ($data['invoice_id'] ?? $data['id'] ?? 0);
-        $status = $data['status'] ?? $data['new_status'] ?? null;
-    } elseif (is_numeric($data)) {
-        $invoiceId = (int) $data;
-    }
-
-    if ($invoiceId <= 0) {
-        return;
-    }
-
-    $statusStr = is_string($status) ? strtolower(trim($status)) : '';
-    $isCancelled = in_array($statusStr, ['cancelled', 'canceled', 'cancelado'], true) || in_array((string) $status, ['4', '5'], true);
-
-    if (!$isCancelled) {
-        return;
-    }
-
-    $paymentId = $CI->asaas_gateway->get_payment_id_by_invoice($invoiceId);
-    if (!$paymentId) {
-        log_message('info', '[Asaas] invoice_status_changed: sem payment map. invoice_id=' . $invoiceId);
-        return;
-    }
-
-    try {
-        $resp = $CI->asaas_gateway->adapter->cancelPayment($paymentId);
-        log_message('info', '[Asaas] invoice_status_changed: cancelPayment ok. invoice_id=' . $invoiceId . ' payment_id=' . $paymentId . ' resp=' . json_encode($resp, JSON_UNESCAPED_UNICODE));
-        $CI->asaas_gateway->upsert_payment_map($invoiceId, ['id' => $paymentId, 'status' => 'CANCELLED']);
-    } catch (Throwable $e) {
-        log_message('error', '[Asaas] invoice_status_changed: cancelPayment falhou. invoice_id=' . $invoiceId . ' payment_id=' . $paymentId . ' err=' . $e->getMessage());
+    // Status 4 is OVERDUE. Only explicit CANCELLED (5) is cancellation.
+    if (is_array($data) && (string) ($data['status'] ?? $data['new_status'] ?? '') === '5') {
+        asaas_invoice_marked_as_cancelled((int) ($data['invoice_id'] ?? $data['id'] ?? 0));
     }
 }
 
@@ -570,3 +598,4 @@ function asaas_after_payment_added($data = null)
         log_message('error', '[Asaas] after_payment_added erro: ' . $e->getMessage());
     }
 }
+

@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php $payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes, [$refund->payment_mode ?? '']); ?>
 <div class="col-md-12 no-padding animated fadeIn">
     <div class="panel_s">
         <?php echo form_open(admin_url('credit_notes/' . (isset($refund) ? 'edit_refund' : 'create_refund') . '/' . (isset($refund) ? $refund->id . '/' . $refund->credit_note_id : $credit_note->id)), ['id' => 'credit_note_refund_form']); ?>

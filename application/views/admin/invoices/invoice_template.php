@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php $payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes); ?>
 <div class="<?= (! isset($invoice) || (isset($invoice) && count($invoices_to_merge) == 0 && (! isset($invoice_from_project) && count($expenses_to_bill) == 0 || $invoice->status == Invoices_model::STATUS_CANCELLED))) ? 'hide' : ''; ?>"
     id="invoice_top_info">
     <div class="panel_s">

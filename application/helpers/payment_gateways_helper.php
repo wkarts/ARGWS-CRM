@@ -117,3 +117,27 @@ function payment_gateway_footer()
 
     return $html;
 }
+/** Keep catalog policy out of gateway lookup, callbacks, receipts and reconciliation. */
+hooks()->add_filter('before_invoice_added', 'crm_filter_new_invoice_payment_modes');
+hooks()->add_filter('before_update_invoice', 'crm_preserve_invoice_payment_modes');
+
+function crm_filter_new_invoice_payment_modes($hook)
+{
+    $hook['data']['allowed_payment_modes'] = serialize(
+        \app\services\PaymentGatewayCatalog::normalizeModes($hook['data']['allowed_payment_modes'] ?? [])
+    );
+    return $hook;
+}
+
+function crm_preserve_invoice_payment_modes($hook)
+{
+    $CI = &get_instance();
+    $original = $CI->db->select('allowed_payment_modes')
+        ->where('id', $hook['id'])->get(db_prefix() . 'invoices')->row();
+    $hook['data']['allowed_payment_modes'] = serialize(
+        \app\services\PaymentGatewayCatalog::normalizeModes(
+            $hook['data']['allowed_payment_modes'] ?? [], $original->allowed_payment_modes ?? []
+        )
+    );
+    return $hook;
+}
