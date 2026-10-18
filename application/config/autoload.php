@@ -12,12 +12,15 @@ if (CompanyRequestScope::isolated()) {
     return;
 }
 if (CompanyRequestScope::nativeUpgradeOnly()) {
+    // Native settings helpers use total_rows(), whose company predicate resolver
+    // is deliberately kept out of the normal recovery autoload set.
+    require_once APPPATH . 'services/ClientIssuerScope.php';
     // A damaged company core admits only the authenticated native upgrade gate.
     // Do not hydrate modules, gateways, email transports, or application models.
     $autoload = [
         'packages' => [],
         'config' => [],
-        'helper' => ['url', 'form', 'settings', 'admin', 'staff', 'general', 'files'],
+        'helper' => ['url', 'form', 'settings', 'admin', 'staff', 'general', 'files', 'database'],
         'language' => [],
         'drivers' => [],
         'libraries' => ['database', 'app_object_cache', 'app'],
