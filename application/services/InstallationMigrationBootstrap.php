@@ -64,8 +64,19 @@ final class InstallationMigrationBootstrap
         } catch (Throwable $error) {
             $sourceFile = basename((string) $error->getFile());
             if (!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D', $sourceFile)) { $sourceFile = 'unknown'; }
+            $safeTrace = [];
+            foreach (array_slice($error->getTrace(), 0, 8) as $frame) {
+                $frameFile = isset($frame['file']) ? basename((string) $frame['file']) : 'internal';
+                if (!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D', $frameFile)) { $frameFile = 'unknown'; }
+                $frameLine = isset($frame['line']) ? (int) $frame['line'] : 0;
+                $frameClass = isset($frame['class']) ? (string) $frame['class'] : '';
+                $frameFunction = isset($frame['function']) ? (string) $frame['function'] : '';
+                $symbol = preg_replace('/[^A-Za-z0-9_\\\\:>-]/', '', $frameClass . $frameFunction);
+                $safeTrace[] = $frameFile . ':' . $frameLine . ($symbol === '' ? '' : ' ' . $symbol);
+            }
             error_log('[ARGWS CRM install] Falha na atualização nativa: ' . get_class($error)
-                . ' @ ' . $sourceFile . ':' . (int) $error->getLine());
+                . ' @ ' . $sourceFile . ':' . (int) $error->getLine()
+                . ' trace=' . implode(' <- ', $safeTrace));
             return false;
         } finally {
             while (ob_get_level() > $bufferLevel) { ob_end_clean(); }
