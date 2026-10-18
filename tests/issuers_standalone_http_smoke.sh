@@ -31,7 +31,18 @@ if ($requestPath !== '/' && is_file($file)) {
 $_SERVER['SCRIPT_NAME'] = '/index.php';
 $_SERVER['SCRIPT_FILENAME'] = $root . '/index.php';
 $_SERVER['PHP_SELF'] = '/index.php' . $requestPath;
+if (strpos($requestPath, '/argws_provisioning/') === 0) {
+    error_log('[issuer smoke router] begin uri=' . ($_SERVER['REQUEST_URI'] ?? '')
+        . ' script=' . ($_SERVER['SCRIPT_NAME'] ?? '')
+        . ' path=' . $requestPath);
+}
 require $root . '/index.php';
+if (strpos($requestPath, '/argws_provisioning/') === 0) {
+    $class = isset($RTR) && method_exists($RTR, 'fetch_class') ? $RTR->fetch_class() : 'unknown';
+    $method = isset($RTR) && method_exists($RTR, 'fetch_method') ? $RTR->fetch_method() : 'unknown';
+    error_log('[issuer smoke router] dispatched=' . $class . '/' . $method
+        . ' status=' . (string) http_response_code());
+}
 PHP
 docker cp "$work/router.php" "$legacy:/tmp/issuer-router.php"
 cat > "$work/my_hooks.php" <<'PHP'
