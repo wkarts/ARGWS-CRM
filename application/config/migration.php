@@ -69,7 +69,7 @@ $config['migration_auto_latest'] = false;
 | be upgraded / downgraded to.
 |
 */
-$config['migration_version'] = 381; // Release-compatible level advanced with each published SemVer.
+$config['migration_version'] = 382; // Release-compatible level advanced with each published SemVer.
 
 /*
 |--------------------------------------------------------------------------
