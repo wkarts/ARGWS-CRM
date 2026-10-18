@@ -89,7 +89,7 @@ check(str_contains($html,'name="layout_binding_id"')&&str_contains($html,'Seleci
 check(str_contains($html,'name="layout_id"')&&str_contains($html,'CNAB 400')&&str_contains($html,'CNAB 240'),'GUI profile registration both formats');
 check(str_contains($html,'não contém evidência inequívoca')&&str_contains($html,'2000–2099'),'provenance and dates limitations visible');
 check(!str_contains($html,'getenv(')&&!str_contains($html,'app-config'),'functional parameters in native GUI');
-$GLOBALS['resourceGrants']['view']=false;$ci->input->gets=[];$controller->index();check($ci->load->viewData['issuers']===[],'no company list leakage without resource view');
+$GLOBALS['resourceGrants']['view']=false;$ci->input->gets=[];rejects(fn()=>$controller->index(),'selected company access requires resource view');
 $ci->input->gets=['issuer_id'=>'1'];rejects(fn()=>$controller->index(),'resource view required on direct URL');$GLOBALS['resourceGrants']['view']=true;
 $GLOBALS['resourceGrants']['manage']=false;$ci->input->posts['layout_id']=\BancoBrasil\LayoutCatalog::CNAB400;
 rejects(fn()=>$controller->register_layout(),'module/global role does not inherit company resource manage');
