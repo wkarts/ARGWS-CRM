@@ -24,6 +24,7 @@ class Gdpr_invoices
             $valAllowed = unserialize($valAllowed);
         }
 
+        \app\services\InvoiceIssuerScope::applyLegacy($this->ci->db, db_prefix() . 'invoices');
         $this->ci->db->where('clientid', $customer_id);
         $invoices = $this->ci->db->get(db_prefix().'invoices')->result_array();
 

@@ -7,7 +7,7 @@ Module Name: Múltiplas Empresas
 Description: Cria múltiplas empresas com o mesmo e-mail de contato principal
 Author: WKARTS
 Author URI: https://t.me/wkartspro
-Version: 1.0.5
+Version: 1.0.6
 */
 
 
@@ -40,61 +40,13 @@ hooks()->add_filter('contact_email_unique',function ( $status ){
  * Customers registered to the logged in contact are checked
  */
 hooks()->add_action('after_clients_area_init',function (){
-
-    $CI = get_instance();
-
-    $_SESSION["all_clients"] = null;
-
-    $contact_user_id = get_contact_user_id();
-
-    if ( !empty( $contact_user_id ) )
-    {
-
-
-        $table = db_prefix() . 'contacts contact';
-
-
-        $info = $CI->db->select('email')
-                    ->where('id',$contact_user_id)
-                    ->get($table)
-                    ->row();
-
-        if( !empty( $info->email ) )
-        {
-
-            $tableClient = db_prefix()."clients client";
-
-            $clients = $CI->db->select("client.company , contact.userid , contact.id ")
-                                ->from($table)
-                                ->join($tableClient," contact.userid = client.userid ")
-                                ->where('contact.email',$info->email)
-                                ->order_by('client.company')
-                                ->get()
-                                ->result();
-
-            foreach ( $clients as $client)
-            {
-
-                if( $client->id == $contact_user_id )
-                {
-
-                    $_SESSION["client_user_id"] = $client->userid;
-
-                }
-
-            }
-
-            $_SESSION["all_clients"] = $clients;
-
-        }
-
-
-    }
-
-
+    $_SESSION['all_clients'] = [];
+    if (!is_client_logged_in()) return;
+    require_once __DIR__.'/services/LegacyContactIdentity.php';
+    $ci=get_instance();
+    $targets=MultipleCompaniesLegacyContactIdentity::switchTargets($ci->db,db_prefix(),get_contact_user_id(),get_client_user_id());
+    $_SESSION['all_clients']=array_map(static fn($row)=>(object)$row,$targets);
 });
-
-
 
 /**
  * Customer navication menu button
@@ -113,7 +65,7 @@ hooks()->add_action('customers_navigation_start',function (){
             <li class="dropdown ">
 
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                    <?php echo get_company_name( $get_client_user_id )?>
+                    <?php echo htmlspecialchars(get_company_name($get_client_user_id), ENT_QUOTES, 'UTF-8')?>
                     <i class="fa fa-caret-down fa-lg" aria-hidden="true"></i>
                 </a>
 
@@ -130,7 +82,14 @@ hooks()->add_action('customers_navigation_start',function (){
 
                         echo "<li class='customers-nav-item-edit-profile $hll_class'>";
 
-                            echo "<a href='$hll_link'> $all_client->company </a>";
+                            $label=htmlspecialchars($all_client->company,ENT_QUOTES,'UTF-8');
+                            if ($hll_link === '') {
+                                echo '<span class="tw-block tw-px-3 tw-py-2">'.$label.'</span>';
+                            } else {
+                                echo form_open($hll_link);
+                                echo '<button type="submit" class="btn btn-link">'.$label.'</button>';
+                                echo form_close();
+                            }
 
                         echo '</li>';
 
@@ -168,50 +127,14 @@ hooks()->add_action('after_custom_profile_tab_content',function (){
 });
 
 
-hooks()->add_action('contact_updated', function ( $contact_id ){
-
-
-    if ( !empty( $contact_id ) )
-    {
-
-        $contact = get_instance()->db->select('password,email')->from(db_prefix().'contacts')->where('id',$contact_id)->get()->row();
-
-        if ( !empty( $contact->password ) )
-        {
-
-            get_instance()->db->set('password',$contact->password)
-                            ->set('last_password_change',date('Y-m-d H:i:s'))
-                            ->where('email',$contact->email)
-                            ->update(db_prefix().'contacts');
-
-        }
-
-    }
-
+hooks()->add_action('contact_updated', function ($contact_id) {
+    require_once __DIR__.'/services/LegacyContactIdentity.php';
+    MultipleCompaniesLegacyContactIdentity::syncPassword(get_instance()->db, db_prefix(), $contact_id);
 });
 
-
-hooks()->add_action('contact_created', function ( $contact_id ){
-
-
-    if ( !empty( $contact_id ) )
-    {
-
-        $contact = get_instance()->db->select('password,email')->from(db_prefix().'contacts')->where('id',$contact_id)->get()->row();
-
-        if ( !empty( $contact->password ) )
-        {
-
-            get_instance()->db->set('password',$contact->password)
-                        ->set('last_password_change',date('Y-m-d H:i:s'))
-                        ->where('email',$contact->email)
-                        ->update(db_prefix().'contacts');
-
-        }
-
-
-    }
-
+hooks()->add_action('contact_created', function ($contact_id) {
+    require_once __DIR__.'/services/LegacyContactIdentity.php';
+    MultipleCompaniesLegacyContactIdentity::syncPassword(get_instance()->db, db_prefix(), $contact_id);
 });
 
 
@@ -813,6 +736,7 @@ hooks()->add_filter('get_relation_data',function ( $data , $filter ){
 
             $company_emails = '';
 
+            if (!\app\services\ClientIssuerScope::isLegacyClient($CI->db, db_prefix(), $company_id)) { return []; }
             $company_contacts =  $CI->db->select('email')->from(db_prefix().'contacts')->where('userid',$company_id)->get()->result();
 
             if ( !empty( $company_contacts ) )
@@ -850,6 +774,7 @@ hooks()->add_filter('get_relation_data',function ( $data , $filter ){
             $CI->db->select(implode(',', prefixed_table_fields_array(db_prefix() . 'contacts')) . ',company');
 
             $CI->db->from(db_prefix() . 'contacts');
+            \app\services\ClientIssuerScope::applyLegacy($CI->db, db_prefix(), db_prefix().'contacts');
 
 
 

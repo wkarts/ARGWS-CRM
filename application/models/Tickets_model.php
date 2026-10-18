@@ -8,6 +8,17 @@ class Tickets_model extends App_Model
 {
     private $piping = false;
 
+    private function permitsLegacyTicketChild(string $table, $id, $expectedTicket = null): bool
+    {
+        if (!in_array($table, ['ticket_attachments','ticket_replies'], true)
+            || (!is_int($id) && !is_string($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        $query = $this->db->query('SELECT * FROM '.db_prefix().$table.' WHERE id=?', [$id]);
+        if ($query===false || !($row=$query->row())) return false;
+        if ($expectedTicket!==null && (string)$row->ticketid!==(string)$expectedTicket) return false;
+        return \app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'tickets', $row->ticketid)
+            && ($table!=='ticket_replies' || \app\services\CustomerRelationBoundary::permitsWrite($this->db, db_prefix(), 'tickets', (array)$row));
+    }
+
     public function __construct()
     {
         parent::__construct();
@@ -302,6 +313,7 @@ class Tickets_model extends App_Model
 
     public function get($id = '', $where = [])
     {
+        $this->db->where(\app\services\CustomerRelationBoundary::sql($this->db, db_prefix(), 'tickets', db_prefix().'tickets'), null, false);
         $this->db->select('*,' . db_prefix() . 'tickets.userid,' . db_prefix() . 'tickets.name as from_name,' . db_prefix() . 'tickets.email as ticket_email, ' . db_prefix() . 'departments.name as department_name, ' . db_prefix() . 'tickets_priorities.name as priority_name, statuscolor, ' . db_prefix() . 'tickets.admin, ' . db_prefix() . 'services.name as service_name, service, ' . db_prefix() . 'tickets_status.name as status_name,' . db_prefix() . 'tickets.ticketid, ' . db_prefix() . 'contacts.firstname as user_firstname, ' . db_prefix() . 'contacts.lastname as user_lastname,' . db_prefix() . 'staff.firstname as staff_firstname, ' . db_prefix() . 'staff.lastname as staff_lastname,lastreply,message,' . db_prefix() . 'tickets.status,subject,department,priority,' . db_prefix() . 'contacts.email,adminread,clientread,date');
         $this->db->join(db_prefix() . 'departments', db_prefix() . 'departments.departmentid = ' . db_prefix() . 'tickets.department', 'left');
         $this->db->join(db_prefix() . 'tickets_status', db_prefix() . 'tickets_status.ticketstatusid = ' . db_prefix() . 'tickets.status', 'left');
@@ -333,6 +345,7 @@ class Tickets_model extends App_Model
      */
     public function get_ticket_by_id($id, $userid = '')
     {
+        $this->db->where(\app\services\CustomerRelationBoundary::sql($this->db, db_prefix(), 'tickets', db_prefix().'tickets'), null, false);
         $this->db->select('*, ' . db_prefix() . 'tickets.userid, ' . db_prefix() . 'tickets.name as from_name, ' . db_prefix() . 'tickets.email as ticket_email, ' . db_prefix() . 'departments.name as department_name, ' . db_prefix() . 'tickets_priorities.name as priority_name, statuscolor, ' . db_prefix() . 'tickets.admin, ' . db_prefix() . 'services.name as service_name, service, ' . db_prefix() . 'tickets_status.name as status_name, ' . db_prefix() . 'tickets.ticketid, ' . db_prefix() . 'contacts.firstname as user_firstname, ' . db_prefix() . 'contacts.lastname as user_lastname, ' . db_prefix() . 'staff.firstname as staff_firstname, ' . db_prefix() . 'staff.lastname as staff_lastname, lastreply, message, ' . db_prefix() . 'tickets.status, subject, department, priority, ' . db_prefix() . 'contacts.email, adminread, clientread, date');
         $this->db->from(db_prefix() . 'tickets');
         $this->db->join(db_prefix() . 'departments', db_prefix() . 'departments.departmentid = ' . db_prefix() . 'tickets.department', 'left');
@@ -378,6 +391,8 @@ class Tickets_model extends App_Model
      */
     public function insert_ticket_attachments_to_database($attachments, $ticketid, $replyid = false)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'tickets', $ticketid)) return false;
+        if ($replyid !== false && !$this->permitsLegacyTicketChild('ticket_replies', $replyid, $ticketid)) return false;
         foreach ($attachments as $attachment) {
             $attachment['ticketid']  = $ticketid;
             $attachment['dateadded'] = date('Y-m-d H:i:s');
@@ -396,6 +411,7 @@ class Tickets_model extends App_Model
      */
     public function get_ticket_attachments($id, $replyid = '')
     {
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'tickets', $id)) return [];
         $this->db->where('ticketid', $id);
         $this->db->where('replyid', is_numeric($replyid) ? $replyid : null);
 
@@ -410,6 +426,8 @@ class Tickets_model extends App_Model
      */
     public function add_reply($data, $id, $admin = null, $pipe_attachments = false)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsWrite($this->db, db_prefix(), 'tickets', $data)) return false;
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'tickets', $id)) return false;
         if (isset($data['assign_to_current_user'])) {
             $assigned = get_staff_user_id();
             unset($data['assign_to_current_user']);
@@ -480,6 +498,7 @@ class Tickets_model extends App_Model
 
         // $data['message'] = remove_emojis($data['message']);
         $data            = hooks()->apply_filters('before_ticket_reply_add', $data, $id, $admin);
+        if ((string)($data['ticketid'] ?? $id) !== (string)$id || !\app\services\CustomerRelationBoundary::permitsWrite($this->db, db_prefix(), 'tickets', $data)) return false;
 
         $this->db->insert(db_prefix() . 'ticket_replies', $data);
 
@@ -626,6 +645,8 @@ class Tickets_model extends App_Model
      */
     public function delete_ticket_reply($ticket_id, $reply_id)
     {
+        if (!$this->permitsLegacyTicketChild('ticket_replies', $reply_id, $ticket_id)) return false;
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'tickets', $ticket_id)) return false;
         hooks()->do_action('before_delete_ticket_reply', ['ticket_id' => $ticket_id, 'reply_id' => $reply_id]);
 
         $this->db->where('id', $reply_id);
@@ -653,6 +674,7 @@ class Tickets_model extends App_Model
      */
     public function delete_ticket_attachment($id)
     {
+        if (!$this->permitsLegacyTicketChild('ticket_attachments', $id)) return false;
         $deleted = false;
         $this->db->where('id', $id);
         $attachment = $this->db->get(db_prefix() . 'ticket_attachments')->row();
@@ -679,6 +701,7 @@ class Tickets_model extends App_Model
      */
     public function get_ticket_attachment($id)
     {
+        if (!$this->permitsLegacyTicketChild('ticket_attachments', $id)) return false;
         $this->db->where('id', $id);
 
         return $this->db->get(db_prefix() . 'ticket_attachments')->row();
@@ -721,12 +744,14 @@ class Tickets_model extends App_Model
      */
     public function get_ticket_replies($id)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'tickets', $id)) return [];
         $ticket_replies_order = get_option('ticket_replies_order');
         // backward compatibility for the action hook
         $ticket_replies_order = hooks()->apply_filters('ticket_replies_order', $ticket_replies_order);
 
         $this->db->select(db_prefix() . 'ticket_replies.id,' . db_prefix() . 'ticket_replies.name as from_name,' . db_prefix() . 'ticket_replies.email as reply_email, ' . db_prefix() . 'ticket_replies.admin, ' . db_prefix() . 'ticket_replies.userid,' . db_prefix() . 'staff.firstname as staff_firstname, ' . db_prefix() . 'staff.lastname as staff_lastname,' . db_prefix() . 'contacts.firstname as user_firstname,' . db_prefix() . 'contacts.lastname as user_lastname,message,date,contactid');
         $this->db->from(db_prefix() . 'ticket_replies');
+        $this->db->where(\app\services\CustomerRelationBoundary::sql($this->db, db_prefix(), 'tickets', db_prefix().'ticket_replies'), null, false);
         $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'ticket_replies.userid', 'left');
         $this->db->join(db_prefix() . 'staff', db_prefix() . 'staff.staffid = ' . db_prefix() . 'ticket_replies.admin', 'left');
         $this->db->join(db_prefix() . 'contacts', db_prefix() . 'contacts.id = ' . db_prefix() . 'ticket_replies.contactid', 'left');
@@ -763,6 +788,7 @@ class Tickets_model extends App_Model
      */
     public function add($data, $admin = null, $pipe_attachments = false)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsWrite($this->db, db_prefix(), 'tickets', $data)) return false;
         if ($admin !== null) {
             $data['admin'] = $admin;
             unset($data['ticket_client_search']);
@@ -839,6 +865,7 @@ class Tickets_model extends App_Model
 
         // $data['message'] = remove_emojis($data['message']);
         $data            = hooks()->apply_filters('before_ticket_created', $data, $admin);
+        if (!\app\services\CustomerRelationBoundary::permitsWrite($this->db, db_prefix(), 'tickets', $data)) return false;
 
         $this->db->insert(db_prefix() . 'tickets', $data);
         $ticketid = $this->db->insert_id();
@@ -970,6 +997,7 @@ class Tickets_model extends App_Model
      */
     public function delete($ticketid)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'tickets', $ticketid)) return false;
         $affectedRows = 0;
         hooks()->do_action('before_ticket_deleted', $ticketid);
         // final delete ticket
@@ -1047,8 +1075,10 @@ class Tickets_model extends App_Model
      */
     public function update_single_ticket_settings($data)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'tickets', $data['ticketid'] ?? null, $data)) return false;
         $affectedRows = 0;
         $data         = hooks()->apply_filters('before_ticket_settings_updated', $data);
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'tickets', $data['ticketid'] ?? null, $data)) return false;
 
         $ticketBeforeUpdate = $this->get_ticket_by_id($data['ticketid']);
 
@@ -1172,6 +1202,7 @@ class Tickets_model extends App_Model
      */
     public function change_ticket_status($id, $status)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'tickets', $id)) return false;
         $this->db->where('ticketid', $id);
         $this->db->update(db_prefix() . 'tickets', [
             'status' => $status,
@@ -1565,6 +1596,7 @@ class Tickets_model extends App_Model
      */
     public function transfer_email_tickets_to_contact($email, $contact_id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyContact($this->db, db_prefix(), $contact_id)) return false;
         // Some users don't want to fill the email
         if (empty($email)) {
             return false;
@@ -1589,6 +1621,7 @@ class Tickets_model extends App_Model
             ->where('admin IS NULL')
             ->where('email', $email);
 
+        $this->db->where('EXISTS (SELECT 1 FROM '.db_prefix().'tickets AS transfer_ticket_boundary WHERE transfer_ticket_boundary.ticketid='.db_prefix().'ticket_replies.ticketid AND '.\app\services\CustomerRelationBoundary::sql($this->db, db_prefix(), 'tickets', 'transfer_ticket_boundary').')', null, false);
         $this->db->update(db_prefix() . 'ticket_replies', [
             'email'     => null,
             'name'      => null,
@@ -1620,6 +1653,9 @@ class Tickets_model extends App_Model
      */
     public function merge($primary_ticket_id, $status, array $ids)
     {
+        foreach (array_merge([$primary_ticket_id], $ids) as $scopeId) {
+            if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'tickets', $scopeId)) return false;
+        }
         if ($this->is_merged($primary_ticket_id)) {
             return false;
         }

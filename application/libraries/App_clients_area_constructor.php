@@ -31,16 +31,23 @@ class App_clients_area_constructor
 
         $vars = [];
         if (is_client_logged_in()) {
-            $contact            = $this->ci->clients_model->get_contact(get_contact_user_id());
+            $identity = \app\services\PortalClientIdentity::fromAuthenticatedSession($this->ci->db, db_prefix(), $this->ci->session);
+            $contact = $identity['contact'] ?? null;
             $GLOBALS['contact'] = $contact;
 
             if (!$contact || $contact->active == 0) {
                 $this->ci->authentication_model->logout(true);
                 redirect(site_url());
+                return;
             }
 
             $vars['total_undismissed_announcements'] = $this->ci->announcements_model->get_total_undismissed_announcements();
-            $vars['client']                          = $this->ci->clients_model->get($contact->userid);
+            // Preserve the legacy display projection without opening private directory reads.
+            $vars['client'] = \app\services\ClientIssuerScope::isLegacyClient($this->ci->db, db_prefix(), $contact->userid)
+                ? $this->ci->clients_model->get($contact->userid) : $identity['client'];
+            if ($vars['client'] && get_option('company_requires_vat_number_field') == 0) {
+                $vars['client']->vat = null;
+            }
             $vars['contact']                         = $contact;
         }
 

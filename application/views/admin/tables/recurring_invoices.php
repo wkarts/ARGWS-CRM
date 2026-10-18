@@ -9,7 +9,7 @@ $aColumns = [
     get_sql_select_client_company(),
     'recurring', // Frequncy
     'CASE WHEN cycles != 0 THEN cycles - total_cycles ELSE null end as cycles_remaining', // Cycles Passed
-    '(SELECT date FROM ' . db_prefix() . 'invoices t WHERE is_recurring_from=' . db_prefix() . 'invoices.id ORDER BY id DESC LIMIT 1) as last_date', // Last Date
+    '(SELECT date FROM ' . db_prefix() . 'invoices t WHERE ' . \app\services\InvoiceIssuerScope::legacySql($this->ci->db, db_prefix() . 'invoices', 't') . ' AND is_recurring_from=' . db_prefix() . 'invoices.id ORDER BY id DESC LIMIT 1) as last_date', // Last Date
     // Used only for filtering, in most case php and mysql timezone won't be the same and this may lead to incorect showing dates
     // However, the correct date will be calculated with php when the row is added into the table, see below
     'CASE WHEN (cycles > 0 AND cycles = total_cycles) THEN NULL
@@ -28,7 +28,7 @@ $join = [
     'LEFT JOIN ' . db_prefix() . 'currencies ON ' . db_prefix() . 'currencies.id = ' . db_prefix() . 'invoices.currency',
 ];
 
-$where  = ['AND recurring != 0'];
+$where  = ['AND recurring != 0', 'AND ' . \app\services\InvoiceIssuerScope::legacySql($this->ci->db, db_prefix() . 'invoices')];
 $filter = [];
 
 $agents    = $this->ci->invoices_model->get_sale_agents();

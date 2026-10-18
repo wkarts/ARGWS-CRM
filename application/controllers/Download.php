@@ -14,6 +14,7 @@ class Download extends App_Controller
     {
         $path      = FCPATH . $this->input->get('path');
         $file_type = $this->input->get('type');
+        $this->assert_legacy_preview_path($path);
 
         $allowed_extensions = get_html5_video_extensions();
 
@@ -51,6 +52,7 @@ class Download extends App_Controller
     {
         $path      = FCPATH . $this->input->get('path');
         $file_type = $this->input->get('type');
+        $this->assert_legacy_preview_path($path);
 
         $allowed_extensions = [
             'jpg',
@@ -106,7 +108,9 @@ class Download extends App_Controller
                 show_404();
             }
 
+            if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'tickets', $attachment->ticketid)) { show_404(); }
             $ticket   = $this->tickets_model->get_ticket_by_id($attachment->ticketid);
+            if (!$ticket) { show_404(); }
             $ticketid = $attachment->ticketid;
 
             if ($ticket->ticketkey == $ticket_key || $ticket->userid == get_client_user_id() || is_staff_logged_in()) {
@@ -131,7 +135,7 @@ class Download extends App_Controller
 
             $this->db->where('attachment_key', $attachmentid);
             $attachment = $this->db->get(db_prefix() . 'files')->row();
-            if (! $attachment) {
+            if (! $attachment || $attachment->rel_type !== 'contract' || !\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'contracts', $attachment->rel_id)) {
                 show_404();
             }
 
@@ -139,7 +143,7 @@ class Download extends App_Controller
                 $this->db->select('not_visible_to_client');
                 $this->db->where('id', $attachment->rel_id);
                 $contract = $this->db->get(db_prefix() . 'contracts')->row();
-                if ($contract->not_visible_to_client == 1) {
+                if (!$contract || $contract->not_visible_to_client == 1) {
                     show_404();
                 }
             }
@@ -156,6 +160,7 @@ class Download extends App_Controller
             if (! $attachment) {
                 show_404();
             }
+            if ($attachment->rel_type !== 'task' || !\app\services\TaskClientBoundary::permitsTask($this->db, db_prefix(), $attachment->rel_id)) { show_404(); }
             $path = get_upload_path_by_type('task') . $attachment->rel_id . '/' . $attachment->file_name;
         } elseif ($folder_indicator == 'sales_attachment') {
             if (! is_staff_logged_in()) {
@@ -164,10 +169,13 @@ class Download extends App_Controller
 
             $this->db->where('attachment_key', $attachmentid);
             $attachment = $this->db->get(db_prefix() . 'files')->row();
-            if (! $attachment) {
+            // This endpoint only serves sales documents. Customer/profile/task keys
+            // must use their own authorization path, even when marked visible.
+            if (!$attachment || !in_array($attachment->rel_type, ['invoice', 'estimate', 'proposal', 'credit_note', 'debit_note'], true)) {
                 show_404();
             }
 
+            if ($attachment->rel_type === 'invoice' && !\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $attachment->rel_id)) { show_404(); }
             $path = get_upload_path_by_type($attachment->rel_type) . $attachment->rel_id . '/' . $attachment->file_name;
         } elseif ($folder_indicator == 'expense') {
             if (! is_staff_logged_in()) {
@@ -176,6 +184,7 @@ class Download extends App_Controller
             $this->db->where('rel_id', $attachmentid);
             $this->db->where('rel_type', 'expense');
             $file = $this->db->get(db_prefix() . 'files')->row();
+            if (!$file || !\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'expenses', $file->rel_id)) { show_404(); }
             $path = get_upload_path_by_type('expense') . $file->rel_id . '/' . $file->file_name;
             // l_attachment_key is if request is coming from public form
         } elseif ($folder_indicator == 'lead_attachment' || $folder_indicator == 'l_attachment_key') {
@@ -199,13 +208,22 @@ class Download extends App_Controller
 
             $path = get_upload_path_by_type('lead') . $attachment->rel_id . '/' . $attachment->file_name;
         } elseif ($folder_indicator == 'client') {
+            \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix() . 'files', 'rel_id');
+            $this->db->where('rel_type', 'customer');
             $this->db->where('attachment_key', $attachmentid);
             $attachment = $this->db->get(db_prefix() . 'files')->row();
             if (! $attachment) {
                 show_404();
             }
-            if (staff_can('view', 'customers') || is_customer_admin($attachment->rel_id) || is_client_logged_in()) {
+            $contactCanDownload = is_client_logged_in()
+                && (int) $attachment->rel_id === (int) get_client_user_id()
+                && (int) $attachment->visible_to_customer === 1
+                && total_rows(db_prefix() . 'shared_customer_files', ['file_id' => $attachment->id, 'contact_id' => get_contact_user_id()]) > 0;
+            if (staff_can('view', 'customers') || is_customer_admin($attachment->rel_id) || $contactCanDownload) {
                 $path = get_upload_path_by_type('customer') . $attachment->rel_id . '/' . $attachment->file_name;
+            } else {
+                show_404();
+                return;
             }
         } elseif ($folder_indicator == 'estimate_request_attachment') {
             if (! is_staff_logged_in() && strpos($_SERVER['HTTP_REFERER'], 'forms/l/') === false) {
@@ -237,5 +255,47 @@ class Download extends App_Controller
         ]);
 
         force_download($path, null);
+    }
+    private function assert_legacy_preview_path(string $path): void
+    {
+        $resolved = realpath($path);
+        if ($resolved === false) { return; } // Existing missing-file placeholder behavior.
+        $root = realpath(FCPATH);
+        if (!$root || !str_starts_with($resolved, rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) { show_404(); }
+        $invoiceRoot = realpath(get_upload_path_by_type('invoice'));
+        if ($invoiceRoot && str_starts_with($resolved, rtrim($invoiceRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
+            $relative = substr($resolved, strlen(rtrim($invoiceRoot, DIRECTORY_SEPARATOR)) + 1);
+            $invoiceId = explode(DIRECTORY_SEPARATOR, $relative)[0];
+            if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $invoiceId)) { show_404(); }
+        }
+        foreach (['project'=>'projects', 'expense'=>'expenses', 'ticket'=>'tickets', 'task'=>'tasks', 'contract'=>'contracts'] as $kind=>$table) {
+            $uploadRoot = realpath(get_upload_path_by_type($kind));
+            if (!$uploadRoot || !str_starts_with($resolved, rtrim($uploadRoot, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR)) continue;
+            $relative = substr($resolved, strlen(rtrim($uploadRoot, DIRECTORY_SEPARATOR))+1);
+            $recordId = explode(DIRECTORY_SEPARATOR, $relative)[0];
+            $allowed = $kind === 'task'
+                ? \app\services\TaskClientBoundary::permitsTask($this->db, db_prefix(), $recordId)
+                : \app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), $table, $recordId);
+            if (!$allowed) { show_404(); }
+        }
+        $customerRoot = realpath(get_upload_path_by_type('customer'));
+        if ($customerRoot && str_starts_with($resolved, rtrim($customerRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
+            $relative = substr($resolved, strlen(rtrim($customerRoot, DIRECTORY_SEPARATOR)) + 1);
+            $parts = explode(DIRECTORY_SEPARATOR, $relative);
+            if (count($parts) !== 2 || !\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $parts[0])) { show_404(); }
+            $files = $this->db->query("SELECT id,file_name,visible_to_customer FROM " . db_prefix() . "files WHERE rel_type='customer' AND rel_id=?", [$parts[0]]);
+            if ($files === false) { show_404(); }
+            $attachment = null;
+            foreach ($files->result_array() as $file) {
+                $thumbnail = pathinfo($file['file_name'], PATHINFO_FILENAME) . '_thumb.' . pathinfo($file['file_name'], PATHINFO_EXTENSION);
+                if ($parts[1] === $file['file_name'] || $parts[1] === $thumbnail) { $attachment = (object) $file; break; }
+            }
+            if (!$attachment) { show_404(); }
+            $staffAllowed = is_staff_logged_in() && (staff_can('view', 'customers') || is_customer_admin($parts[0]));
+            $contactAllowed = is_client_logged_in() && (int) $parts[0] === (int) get_client_user_id()
+                && (int) $attachment->visible_to_customer === 1
+                && total_rows(db_prefix() . 'shared_customer_files', ['file_id'=>$attachment->id, 'contact_id'=>get_contact_user_id()]) > 0;
+            if (!$staffAllowed && !$contactAllowed) { show_404(); }
+        }
     }
 }

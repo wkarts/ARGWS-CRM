@@ -242,7 +242,7 @@ class Goals_model extends App_Model
                 $sql .= ' AND (sale_agent=' . $goal->staff_id . ')';
             }
         } elseif ($type == 2) {
-            $sql = 'SELECT COUNT(' . db_prefix() . 'leads.id) as total FROM ' . db_prefix() . "leads WHERE DATE(date_converted) BETWEEN '" . $start_date . "' AND '" . $end_date . "' AND status = 1 AND " . db_prefix() . 'leads.id IN (SELECT leadid FROM ' . db_prefix() . 'clients WHERE leadid=' . db_prefix() . 'leads.id)';
+            $sql = 'SELECT COUNT(' . db_prefix() . 'leads.id) as total FROM ' . db_prefix() . "leads WHERE DATE(date_converted) BETWEEN '" . $start_date . "' AND '" . $end_date . "' AND status = 1 AND " . db_prefix() . 'leads.id IN (SELECT leadid FROM ' . db_prefix() . 'clients WHERE leadid=' . db_prefix() . 'leads.id AND ' . \app\services\ClientIssuerScope::legacySql($this->db, db_prefix(), db_prefix().'clients') . ')';
             if ($goal->staff_id != 0) {
                 $sql .= ' AND CASE WHEN assigned=0 THEN addedfrom=' . $goal->staff_id . ' ELSE assigned=' . $goal->staff_id . ' END';
             }
@@ -276,6 +276,10 @@ class Goals_model extends App_Model
             if ($sql === '') {
                 return;
             }
+        }
+
+        if (in_array((int)$type, [3,4], true)) {
+            $sql .= ' AND ' . \app\services\ClientIssuerScope::legacySql($this->db, db_prefix(), db_prefix().'clients');
         }
 
         $total = floatval($this->db->query($sql)->row()->total);

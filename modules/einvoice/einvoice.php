@@ -8,7 +8,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: e-Invoice
 Description: Default module for e-Invoice
-Version: 1.0.0
+Version: 1.0.1
 Requires at least: 3.3.*
 */
 
@@ -65,6 +65,7 @@ function einvoice_module_activation_hook(): void
     add_option('einvoice_default_credit_note_email_template', '0');
     add_option('einvoice_default_invoice_template');
     add_option('einvoice_default_credit_note_template');
+    require __DIR__ . '/install.php';
 }
 
 hooks()->add_action('before_invoice_preview_more_menu_button', 'einvoice_module_invoice_button');

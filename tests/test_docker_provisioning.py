@@ -285,7 +285,7 @@ esac
         self.assertLess(init_modules.index("return;"), init_modules.index("include_once(LIBSPATH.'App_modules.php')"))
         self.assertNotIn("Hook InitModules ignorado", init_modules)
         self.assertIn("getenv('ARGWS_SETUP_MIGRATION_TOKEN')", source)
-        self.assertIn("run_application_migrations([$input['admin_password'], $input['admin_email']]);", source)
+        self.assertIn("run_application_migrations([$input['admin_password'], $input['admin_email']], $createdStaffId);", source)
         self.assertIn("apply_pending_migrations_for_provisioning", app)
         self.assertIn("ARGWS_SETUP_MIGRATION_TOKEN", controller)
         self.assertIn("Nenhuma migration foi encontrada.", migration_language)

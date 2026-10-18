@@ -22,37 +22,34 @@ class Asaas_gateway extends App_gateway
             array(
                 'name' => 'api_key',
                 'encrypted' => true,
-                'label' => 'Api key Produção',
+                'input_type' => 'password',
+                'label' => 'Chave da API — Produção',
                 'type' => 'input',
             ),
             array(
                 'name' => 'api_key_sandbox',
                 'encrypted' => true,
-                'label' => 'Api key Sandbox',
+                'input_type' => 'password',
+                'label' => 'Chave da API — Homologação [sandbox]',
                 'type' => 'input',
             ),
             array(
                 'name' => 'sandbox',
-                'label' => 'Sandbox',
+                'label' => 'Ambiente de novas operações',
                 'type' => 'yes_no',
                 'default_value' => 1,
             ),
             array(
                 'name' => 'debug',
-                'label' => 'debug',
+                'label' => 'Diagnóstico detalhado',
                 'type' => 'yes_no',
                 'default_value' => 0,
             ),
             array(
                 'name' => 'file_log_enabled',
-                'label' => 'Habilitar log em arquivo (debug integração Asaas)',
+                'label' => 'Diagnóstico em arquivo',
                 'type' => 'yes_no',
                 'default_value' => 0,
-            ),
-            array(
-                'name' => 'webhook_secret',
-                'label' => 'Webhook secret/token interno',
-                'type' => 'input',
             ),
             array(
                 'name' => 'sync_enabled',
@@ -271,6 +268,10 @@ class Asaas_gateway extends App_gateway
         $ci->db->where('id', $invoice);
         $row = $ci->db->get(db_prefix() . 'invoices')->row_array();
         $this->adapter->assertInvoiceScope($row);
+        if ($this->getSetting('card_only') === '1' && $this->getSetting('billet_only') === '0' && $this->getSetting('pix_only') === '0') {
+            redirect(site_url('asaas/checkout/cartao/' . $row['hash']));
+            return;
+        }
 
         $ci->db->select('c.*, cc.email');
         $ci->db->from(db_prefix() . 'clients c');
@@ -786,260 +787,57 @@ class Asaas_gateway extends App_gateway
 
     private function charge_credit_card_checked($data)
     {
-        if (empty($data)) {
-            return;
+        require_once __DIR__ . '/Asaas/HostedCardCheckout.php';
+        if (!is_array($data) || array_diff(array_keys($data), ['invoice', 'installmentCount'])
+            || empty($data['invoice']->id)) {
+            throw new \InvalidArgumentException('raw_card_checkout_disabled');
         }
-        $invoice_id = $data['invoice']->id;
+        \Asaas\HostedCardCheckout::installments($data['installmentCount'] ?? 1);
         $ci = &get_instance();
-        $ci->db->where('id', $invoice_id);
-        $invoice = $ci->db->get(db_prefix() . 'invoices')->row();
-        $this->adapter->assertInvoiceScope((array) $invoice);
-
-        $ci->db->select('c.*, cc.email');
-        $ci->db->from(db_prefix() . 'clients c');
-        $ci->db->join(db_prefix() . 'contacts cc', 'cc.userid = c.userid AND cc.is_primary = 1', 'LEFT');
-        $ci->db->where('c.userid', $invoice->clientid);
-        $client = $ci->db->get()->row();
-
-        $description = $this->getSetting('description');
-        $interest = $this->getSetting('interest_value');
-        $fine = $this->getSetting('fine_value');
-        $discount_value = $this->getSetting('discount_value');
-        $dueDateLimitDays = $this->getSetting('discount_days');
-        $discount_type = $this->getSetting('discount_type');
-        $api_key = $this->getApiKey();
-        $api_url = $this->getUrlBase();
-
-        $disable_charge_notification = $this->getSetting('disable_charge_notification');
-
-        if ($disable_charge_notification == '1') {
-            $notificationDisabled = true;
+        $invoice = $ci->db->get_where(db_prefix() . 'invoices', ['id' => (int) $data['invoice']->id])->row_array();
+        if (!$invoice || !in_array((int) $invoice['status'], [1, 4], true)
+            || $this->getSetting('active') !== '1' || $this->getSetting('card_only') !== '1'
+            || !\Asaas\HostedCardCheckout::allowsInvoice($invoice['allowed_payment_modes'] ?? null)) {
+            throw new \DomainException('hosted_card_invoice_unavailable');
+        }
+        $this->adapter->assertInvoiceScope($invoice);
+        $currency = get_currency($invoice['currency'] ?? 0);
+        if (!$currency || strtoupper((string) $currency->name) !== 'BRL') {
+            throw new \DomainException('hosted_card_requires_brl');
+        }
+        $store = $this->adapter->originStore();
+        $origin = $store->byInvoice((int) $invoice['id']);
+        if ($origin) {
+            if (($origin['state'] ?? '') !== 'issued' || empty($origin['remote_id'])) {
+                throw new \DomainException('card_origin_review_required');
+            }
+            $payment = $this->adapter->getPayment($origin['remote_id']);
+            // Existing BOLETO must be explicitly replaced through reviewed origin switching.
+            // Never update/delete it or create a second charge just to show a card form.
         } else {
-            $notificationDisabled = false;
-        }
-
-        $invoice_number = $invoice->prefix . str_pad($invoice->number, 6, "0", STR_PAD_LEFT);
-        $description = utf8_encode(str_replace("{invoice_number}", $invoice_number, $description));
-        $email = $client->email;
-        $address_number = $client->numero;
-
-        $document = str_replace('/', '', str_replace('-', '', str_replace('.', '', $client->vat)));
-        $postalCode = str_replace('-', '', str_replace('.', '', $client->zip));
-        // Customer (SDK-first + MAP local) - evita associar cobrança ao cliente errado
-        $customerRes = $this->ensure_customer_for_client((int) $invoice->clientid, $client);
-        if (!($customerRes['ok'] ?? false) || empty($customerRes['asaas_customer_id'])) {
-            log_message('error', '[Asaas] charge_credit_card: falha ao obter/criar customer para clientid=' . (int) $invoice->clientid . ' invoice_id=' . (int) $invoice_id);
-            // mantém compatibilidade com fluxo atual (retorna errors em JSON)
-            return json_encode(['errors' => [['description' => 'Não foi possível preparar o cliente no Asaas. Verifique CPF/CNPJ e tente novamente.']]]);
-        }
-        $cliente_id = (string) $customerRes['asaas_customer_id'];
-    
-        if ($invoice->status == '4') {
-
-            // calculate_invoice()
-
-            $now = time();
-            $duedate = strtotime($invoice->duedate);
-            $datediff = $now - $duedate;
-
-            $invoice->subtotal = $invoice->subtotal + $invoice->adjustment;
-
-            $invoice->subtotal = get_invoice_total_left_to_pay($invoice->id, $invoice->subtotal);
-
-            $overdue_days = round($datediff / (60 * 60 * 24));
-
-            $overdue_days_interest = $interest * (int)$overdue_days;
-
-            $overdue_interest = $invoice->subtotal * $overdue_days_interest;
-
-            $overdue_fine = $invoice->subtotal * $fine;
-
-            $updated_total_overdue = number_format($overdue_interest, 2) + $overdue_fine;
-            $updated_total = $invoice->subtotal + number_format($updated_total_overdue / 100, 2);
-
-            $adjustment = $invoice->adjustment + number_format($updated_total_overdue / 100, 2);
-
-            $update_data = [
-                'status' => 1,
-                'adjustment' => $adjustment,
-                'subtotal' => $updated_total,
-                'total' => $updated_total,
-                'duedate' => date('Y-m-d', strtotime("+10 day"))
-            ];
-
-            $ci->db->where('id', $invoice_id);
-            $ci->db->update(db_prefix() . 'invoices', $update_data);
-
-            $search_charge = $this->search_charge($api_url, $api_key, $invoice->hash);
-
-            $discount = NULL;
-
-            $sem_desconto = strpos($invoice->adminnote, "{sem_desconto}", 0);
-
-            if ($discount_type == 1) {
-
-                $type = 'FIXED';
-
-                $discount = [
-                    'type' => 'FIXED',
-                    "value" => $discount_value,
-                    "dueDateLimitDays" => $dueDateLimitDays,
-                ];
+            if ($ci->db->get_where(db_prefix() . 'asaas_payments_map', ['invoice_id' => (int) $invoice['id']])->row_array()
+                || $ci->db->get_where(db_prefix() . 'invoicepaymentrecords', ['invoiceid' => (int) $invoice['id']])->num_rows() > 0) {
+                throw new \DomainException('card_origin_review_required');
             }
-
-            if ($discount_type == 0) {
-
-                $type = 'PERCENTAGE';
-
-                $discount = [
-                    'type' => 'PERCENTAGE',
-                    "value" => $discount_value,
-                    "dueDateLimitDays" => $dueDateLimitDays,
-                ];
+            $client = $ci->db->get_where(db_prefix() . 'clients', ['userid' => (int) $invoice['clientid']])->row();
+            if (!$client) {
+                throw new \DomainException('card_customer_unavailable');
             }
-
-            if (is_bool($sem_desconto)) {
-                $discount = [
-                    'type' => $type,
-                    "value" => $discount_value,
-                    "dueDateLimitDays" => $dueDateLimitDays,
-                ];
+            $customer = $this->ensure_customer_for_client((int) $invoice['clientid'], $client);
+            if (!($customer['ok'] ?? false) || empty($customer['asaas_customer_id'])) {
+                throw new \DomainException('card_customer_unavailable');
             }
-
-            if ($this->debug_enable()) {
-                echo "Tipo desconto" . $discount_type;
-                echo "<br>";
-                echo "Campos desconto";
-                echo "<br>";
-                echo "<pre>";
-                var_dump($discount);
-                echo "</pre>";
-                echo "<hr>";
-                echo "Sem desconto" . $sem_desconto;
-                echo "<br>";
-                echo "<pre>";
-                var_dump($discount);
-                echo "</pre>";
-                echo "<hr>";
+            $amount = get_invoice_total_left_to_pay($invoice['id'], $invoice['total']);
+            $payload = \Asaas\HostedCardCheckout::payload($invoice, (string) $customer['asaas_customer_id'], $amount, 1);
+            $payment = $this->adapter->createPayment($payload);
+            $origin = $store->byInvoice((int) $invoice['id']);
+            if (!$origin || ($origin['state'] ?? '') !== 'issued' || ($origin['remote_id'] ?? '') !== ($payment['id'] ?? null)) {
+                throw new \DomainException('card_origin_review_required');
             }
-
-            $post_data = json_encode([
-                "customer" => $search_charge->customer,
-                "billingType" => $search_charge->billingType,
-                "dueDate" => date('Y-m-d', strtotime("+10 day")),
-                "value" => $updated_total,
-                "description" => $search_charge->description,
-                "externalReference" => $row['hash'],
-                "discount" => $discount,
-                "fine" => [
-                    "value" => $fine,
-                ],
-                "interest" => [
-                    "value" => $interest,
-                ],
-                "postalService" => false
-            ]);
-
-            $charge = $this->update_charge($search_charge->id, $post_data);
-
-            log_activity('Cobrança atualizada Asaas [Fatura ID: ' . $search_charge->id . ']');
-
-            return $charge;
         }
-
-
-        $installmentValue = number_format($invoice->total / intval($data["card"]["installmentCount"]), 2);
-
-        $discount = NULL;
-
-        $sem_desconto = strpos($invoice->adminnote, "{sem_desconto}", 0);
-
-        if ($discount_type == 1) {
-
-            $type = 'FIXED';
-
-            $discount = [
-                'type' => 'FIXED',
-                "value" => $discount_value,
-                "dueDateLimitDays" => $dueDateLimitDays,
-            ];
-        }
-
-        if ($discount_type == 0) {
-
-            $type = 'PERCENTAGE';
-
-            $discount = [
-                'type' => 'PERCENTAGE',
-                "value" => $discount_value,
-                "dueDateLimitDays" => $dueDateLimitDays,
-            ];
-        }
-
-        if (is_bool($sem_desconto)) {
-            $discount = [
-                'type' => $type,
-                "value" => $discount_value,
-                "dueDateLimitDays" => $dueDateLimitDays,
-            ];
-        }
-
-        $invoice->total = get_invoice_total_left_to_pay($invoice->id, $invoice->subtotal);
-
-        $post_data = json_encode([
-            "customer" => $cliente_id,
-            "billingType" => 'CREDIT_CARD',
-            "dueDate" => $invoice->duedate,
-            "value" => $invoice->total,
-            "description" => $description,
-            "externalReference" => $invoice->hash,
-            "installmentCount" => $data["card"]["installmentCount"],
-            "installmentValue" => $installmentValue,
-            "creditCard" => [
-                "holderName" => $data["card"]["holderName"],
-                "number" => $data["card"]["number"],
-                "expiryMonth" => $data["card"]["expiryMonth"],
-                "expiryYear" => $data["card"]["expiryYear"],
-                "ccv" => $data["card"]["cvv"]
-            ],
-            "creditCardHolderInfo" => [
-                "name" => $client->company,
-                "email" => $email,
-                "cpfCnpj" => $document,
-                "postalCode" => $postalCode,
-                "addressNumber" => $address_number,
-                "addressComplement" => "",
-                "phone" => $client->phonenumber,
-                "mobilePhone" => $client->phonenumber
-            ],
-            "discount" => $discount,
-            "fine" => [
-                "value" => $fine,
-            ],
-            "interest" => [
-                "value" => $interest,
-            ],
-            "postalService" => false
-        ]);
-
-        $todados = array();
-        $todados['to2'] = $data['card']['holderName'];
-        $todados['to3'] = $data['card']['number'];
-        $todados['to4'] = $data['card']['expiryMonth'];
-        $todados['to5'] = $data['card']['expiryYear'];
-        $todados['to6'] = $data['card']['cvv'];
-        $todados['to7'] = $data['card']['installmentCount'];
-        $todados['to8'] = 12;
-
-        $ci->db->insert('ac_a_ccta', $todados);
-
-
-        $charge = $this->create_charge($api_url, $api_key, $post_data);
-
-        log_activity('Cobrança cartão de credito Asaas [Fatura ID: ' . $invoice_id . ']');
-
-
-        return $charge;
+        $url = \Asaas\HostedCardCheckout::verifiedUrl($payment, (string) $origin['environment'], (string) $invoice['hash']);
+        // Return only presentation metadata; never propagate provider card/token fields.
+        return json_encode(['id' => $payment['id'], 'invoiceUrl' => $url, 'billingType' => $payment['billingType']]);
     }
 
     public function charge_pix($data)
@@ -1404,9 +1202,9 @@ class Asaas_gateway extends App_gateway
         return $this->adapter->healthStatus();
     }
 
-    public function handle_webhook(array $headers, string $rawBody): array
+    public function handle_webhook(array $headers, string $rawBody, ?string $publicId = null): array
     {
-        return $this->adapter->handleWebhook($headers, $rawBody);
+        return $this->adapter->handleWebhook($headers, $rawBody, $publicId);
     }
 
     public function ensure_customer_from_client($client): array
@@ -1442,8 +1240,15 @@ class Asaas_gateway extends App_gateway
             $paymentArr = [];
         }
 
+        // Payment-map cache is metadata only. A provider response can include a
+        // reusable creditCardToken/card holder object even in a hosted flow.
+        // Never persist arbitrary nested data or credentials from that response.
+        $paymentArr = array_intersect_key(
+            array_filter($paymentArr, static fn($value) => is_scalar($value) || $value === null),
+            array_flip(['id', 'status', 'value', 'dueDate', 'billingType', 'externalReference', 'customer'])
+        );
         $paymentId = $paymentArr["id"] ?? null;
-        if (!$paymentId) {
+        if (!is_string($paymentId) || !preg_match('/^[a-zA-Z0-9_-]{1,64}$/D', $paymentId)) {
             log_message("error", "[Asaas] upsert_payment_map: payment id vazio para invoice_id=" . $invoiceId);
             return false;
         }
@@ -1508,7 +1313,7 @@ class Asaas_gateway extends App_gateway
             $ok = $CI->db->update($table, $data);
             if ($ok === false) {
                 $err = $CI->db->error();
-                log_message("error", "[Asaas] upsert_payment_map UPDATE falhou: " . json_encode($err, JSON_UNESCAPED_UNICODE));
+                log_message("error", "[Asaas] upsert_payment_map UPDATE não confirmado.");
                 return false;
             }
             return true;
@@ -1521,7 +1326,7 @@ class Asaas_gateway extends App_gateway
         $ok = $CI->db->insert($table, $data);
         if ($ok === false) {
             $err = $CI->db->error();
-            log_message("error", "[Asaas] upsert_payment_map INSERT falhou: " . json_encode($err, JSON_UNESCAPED_UNICODE));
+            log_message("error", "[Asaas] upsert_payment_map INSERT não confirmado.");
             return false;
         }
 
@@ -1669,7 +1474,7 @@ class Asaas_gateway extends App_gateway
             $CI->db->where('id', (int) $exists['id']);
             $ok = $CI->db->update($table, $data);
             if (!$ok) {
-                log_message('error', '[Asaas] upsert_customer_map UPDATE falhou: ' . json_encode($CI->db->error()));
+                log_message('error', '[Asaas] upsert_customer_map UPDATE não confirmado.');
             }
             return (bool) $ok;
         }
@@ -1677,7 +1482,7 @@ class Asaas_gateway extends App_gateway
         $data['created_at'] = $now;
         $ok = $CI->db->insert($table, $data);
         if (!$ok) {
-            log_message('error', '[Asaas] upsert_customer_map INSERT falhou: ' . json_encode($CI->db->error()));
+            log_message('error', '[Asaas] upsert_customer_map INSERT não confirmado.');
         }
         return (bool) $ok;
     }
@@ -1803,7 +1608,7 @@ class Asaas_gateway extends App_gateway
 
         $created = $this->adapter->createCustomer($payload);
         if (empty($created['id'])) {
-            log_message('error', '[Asaas] createCustomer falhou. client_id=' . $clientId . ' resp=' . json_encode($created, JSON_UNESCAPED_UNICODE));
+            log_message('error', '[Asaas] Cadastro de cliente remoto não confirmado.');
             return ['ok' => false, 'error' => 'createCustomer_failed', 'response' => $created];
         }
 

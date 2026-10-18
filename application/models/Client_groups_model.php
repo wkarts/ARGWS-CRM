@@ -1,5 +1,7 @@
 <?php
 
+use app\services\ClientIssuerScope;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Client_groups_model extends App_Model
@@ -35,6 +37,7 @@ class Client_groups_model extends App_Model
     */
     public function get_customer_groups($id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return []; }
         $this->db->where('customer_id', $id);
 
         return $this->db->get(db_prefix().'customer_groups')->result_array();
@@ -108,6 +111,7 @@ class Client_groups_model extends App_Model
     */
     public function sync_customer_groups($id, $groups_in)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return false; }
         if ($groups_in == false) {
             unset($groups_in);
         }

@@ -219,15 +219,18 @@ class Custom_links_model extends App_Model
     public function get_clients_to_filter($link){
         $data['client_ajax'] = false;
         $data['clients'] = [];
-        if(total_rows(db_prefix().'clients', ['active' => "1"]) > 10){
+        \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix().'clients');
+        if($this->db->where('active', 1)->count_all_results(db_prefix().'clients') > 10){
             $data['client_ajax'] = true;
             if(isset($link) && !empty($link['clients'])){
                 $clients = explode(",", $link['clients']);
+                \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix().'clients');
                 $data['clients'] = $this->db->select(['userid', get_sql_select_client_company()])->where_in("userid", $clients)->get(db_prefix()."clients")->result_array();
             }
         }
         else{
-            $data['clients'] = $this->db->select(['userid', get_sql_select_client_company()])->get(db_prefix()."clients")->result_array();
+            \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix().'clients');
+                $data['clients'] = $this->db->select(['userid', get_sql_select_client_company()])->get(db_prefix()."clients")->result_array();
         }
         return $data;
     }

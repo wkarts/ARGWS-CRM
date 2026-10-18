@@ -3,6 +3,7 @@
 namespace Argws\CRM\EInvoice;
 
 use app\services\utilities\Str;
+use app\services\InvoiceIssuerScope;
 use CI_Controller;
 use RuntimeException;
 
@@ -110,6 +111,7 @@ class BulkExporter
     {
         $this->ci->db->select('id, date');
         $this->ci->db->from(db_prefix() . 'invoices');
+        InvoiceIssuerScope::applyLegacy($this->ci->db, db_prefix() . 'invoices');
         
         $this->applyStatusFilters();
         $this->applyPermissionFilters();
@@ -190,6 +192,7 @@ class BulkExporter
     {
         foreach ($exportData as $itemData) {
             $saleItem = $this->ci->invoices_model->get($itemData['id']);
+            if (!$saleItem) { continue; }
 
 
             $einvoiceData = match ($this->config->exportType) {

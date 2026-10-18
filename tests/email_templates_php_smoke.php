@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-define('BASEPATH', '/app/system/');
-require '/app/application/services/EmailTemplatesPtBr.php';
+define('BASEPATH', dirname(__DIR__) . '/system/');
+require dirname(__DIR__) . '/application/services/EmailTemplatesPtBr.php';
 
 $core = EmailTemplatesPtBr::templates();
 $modules = EmailTemplatesPtBr::moduleTemplates();
