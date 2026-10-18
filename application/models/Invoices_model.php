@@ -308,6 +308,7 @@ class Invoices_model extends App_Model
      */
     public function add($data, $expense = false)
     {
+        $data['recurring_due_mode'] = \app\services\RecurringInvoiceDates::normalizeDueMode($data['recurring_due_mode'] ?? 'days');
         $data['prefix'] = get_option('invoice_prefix');
 
         $data['number_format'] = get_option('invoice_number_format');
@@ -631,6 +632,7 @@ class Invoices_model extends App_Model
         $new_invoice_data['discount_percent'] = $_invoice->discount_percent;
         $new_invoice_data['discount_total']   = $_invoice->discount_total;
         $new_invoice_data['recurring']        = $_invoice->recurring;
+        $new_invoice_data['recurring_due_mode'] = $_invoice->recurring_due_mode ?? 'days';
         $new_invoice_data['discount_type']    = $_invoice->discount_type;
         $new_invoice_data['terms']            = $_invoice->terms;
         $new_invoice_data['sale_agent']       = $_invoice->sale_agent;
@@ -733,6 +735,10 @@ class Invoices_model extends App_Model
         if (isset($data['nubmer'])) {
             $data['number'] = trim($data['number']);
         }
+
+        $data['recurring_due_mode'] = \app\services\RecurringInvoiceDates::normalizeDueMode(
+            $data['recurring_due_mode'] ?? ($original_invoice->recurring_due_mode ?? 'days')
+        );
 
         $original_number_formatted = format_invoice_number($id);
         $original_number           = $original_invoice->number;
@@ -1906,3 +1912,4 @@ class Invoices_model extends App_Model
         ]);
     }
 }
+

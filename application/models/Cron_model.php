@@ -3,6 +3,7 @@
 use app\services\imap\ConnectionErrorException;
 use app\services\imap\Imap;
 use Carbon\Carbon;
+use app\services\RecurringInvoiceDates;
 use Ddeboer\Imap\Exception\MessageDoesNotExistException;
 use Ddeboer\Imap\Exception\UnexpectedEncodingException;
 use Ddeboer\Imap\Exception\UnsupportedCharsetException;
@@ -748,19 +749,22 @@ class Cron_model extends App_Model
         $total_renewed      = 0;
 
         foreach ($invoices as $invoice) {
-            // Current date
-            $date = new DateTime(date('Y-m-d'));
-            // Check if is first recurring
-            if (! $invoice['last_recurring_date']) {
-                $last_recurring_date = date('Y-m-d', strtotime($invoice['date']));
-            } else {
-                $last_recurring_date = date('Y-m-d', strtotime($invoice['last_recurring_date']));
-            }
+            $last_recurring_date = $invoice['last_recurring_date'] ?: $invoice['date'];
             if ($invoice['custom_recurring'] == 0) {
                 $invoice['recurring_type'] = 'MONTH';
             }
 
-            $re_create_at = date('Y-m-d', strtotime('+' . $invoice['recurring'] . ' ' . strtoupper($invoice['recurring_type']), strtotime($last_recurring_date)));
+            try {
+                $re_create_at = RecurringInvoiceDates::nextIssueDate(
+                    (string) $invoice['date'],
+                    (string) $last_recurring_date,
+                    (int) $invoice['recurring'],
+                    (string) $invoice['recurring_type']
+                );
+            } catch (InvalidArgumentException $exception) {
+                log_message('error', 'Invalid recurrence dates or interval for invoice ID ' . (int) $invoice['id']);
+                continue;
+            }
 
             if (date('Y-m-d') >= $re_create_at) {
                 // Recurring invoice date is okey lets convert it to new invoice
@@ -772,12 +776,18 @@ class Cron_model extends App_Model
                 $new_invoice_data['duedate']  = null;
 
                 if ($_invoice->duedate) {
-                    // Now we need to get duedate from the old invoice and calculate the time difference and set new duedate
-                    // Ex. if the first invoice had duedate 20 days from now we will add the same duedate date but starting from now
-                    $dStart                      = new DateTime($invoice['date']);
-                    $dEnd                        = new DateTime($invoice['duedate']);
-                    $dDiff                       = $dStart->diff($dEnd);
-                    $new_invoice_data['duedate'] = _d(date('Y-m-d', strtotime('+' . $dDiff->days . ' DAY', strtotime($re_create_at))));
+                    try {
+                        $new_invoice_data['duedate'] = _d(RecurringInvoiceDates::dueDate(
+                            (string) $invoice['date'],
+                            (string) $invoice['duedate'],
+                            $re_create_at,
+                            $_invoice->recurring_due_mode ?? 'days',
+                            (string) $invoice['recurring_type']
+                        ));
+                    } catch (InvalidArgumentException $exception) {
+                        log_message('error', 'Invalid recurring due date for invoice ID ' . (int) $invoice['id']);
+                        continue;
+                    }
                 } else {
                     if (get_option('invoice_due_after') != 0) {
                         $new_invoice_data['duedate'] = _d(date('Y-m-d', strtotime('+' . get_option('invoice_due_after') . ' DAY', strtotime($re_create_at))));
@@ -1985,3 +1995,4 @@ class Cron_model extends App_Model
         return startsWith($lastError['message'], 'Maximum execution time');
     }
 }
+

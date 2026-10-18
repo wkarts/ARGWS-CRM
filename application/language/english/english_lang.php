@@ -4083,3 +4083,9 @@ $lang['csv_export_button'] = 'Export';
 $lang['clear_queue'] = 'Clear Queue';
 $lang['email_queue_cleared'] = 'Email queue cleared successfully';
 $lang['proposal_auto_convert_leads_to_client_on_client_accept'] = 'Auto convert leads to clients when proposal is accepted';
+
+# Recurring invoice calendar rules
+$lang['invoice_recurring_due_mode'] = 'Recurring due-date rule';
+$lang['invoice_recurring_due_days'] = 'Keep original number of days';
+$lang['invoice_recurring_due_fixed_day'] = 'Keep original calendar day';
+$lang['invoice_recurring_due_mode_help'] = 'For monthly/yearly recurrence, calendar day keeps the original due day and month offset (issue 26, due 5 next month). Missing days use the last day of the month without changing the original day. Daily/weekly recurrence keeps the number of days. Changes affect future invoices only.';

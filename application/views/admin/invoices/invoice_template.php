@@ -433,6 +433,15 @@ echo render_select('sale_agent', $staff, ['staffid', ['firstname', 'lastname']],
                         </div>
                         <div id="cycles_wrapper"
                             class="<?= ! isset($invoice) || (isset($invoice) && $invoice->recurring == 0) ? 'hide' : ''; ?>">
+                            <div class="form-group">
+                                <label for="recurring_due_mode" class="control-label"><?= _l('invoice_recurring_due_mode'); ?></label>
+                                <?php $dueMode = $invoice->recurring_due_mode ?? 'days'; ?>
+                                <select class="selectpicker" data-width="100%" name="recurring_due_mode" id="recurring_due_mode">
+                                    <option value="days" <?= $dueMode === 'days' ? 'selected' : ''; ?>><?= _l('invoice_recurring_due_days'); ?></option>
+                                    <option value="fixed_day" <?= $dueMode === 'fixed_day' ? 'selected' : ''; ?>><?= _l('invoice_recurring_due_fixed_day'); ?></option>
+                                </select>
+                                <p class="help-block"><?= _l('invoice_recurring_due_mode_help'); ?></p>
+                            </div>
                             <div class="col-md-12">
                                 <?php $value = (isset($invoice) ? $invoice->cycles : 0); ?>
                                 <div class="form-group recurring-cycles">
