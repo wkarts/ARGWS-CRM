@@ -62,6 +62,22 @@ final class InstallationMigrationBootstrap
             return isset($ci->installationMigrationResult)
                 && $ci->installationMigrationResult['success'] === true;
         } catch (Throwable $error) {
+            $safeReason = 'other';
+            $safeMessages = [
+                'Using $this when not in object context' => 'this_without_object_context',
+                'Class "Modules" not found' => 'mx_modules_class_missing',
+                'Call to a member function item() on null' => 'mx_config_null',
+                'Call to a member function item() on bool' => 'mx_config_bool',
+                'Call to a member function item() on string' => 'mx_config_string',
+                'Call to a member function item() on array' => 'mx_config_array',
+                'Call to a member function item() on int' => 'mx_config_int',
+                'Call to a member function item() on float' => 'mx_config_float',
+            ];
+            if (isset($safeMessages[$error->getMessage()])) {
+                $safeReason = $safeMessages[$error->getMessage()];
+            } elseif (preg_match('/^Call to undefined method [A-Za-z_\\\\][A-Za-z0-9_\\\\]*::item\\(\\)$/D', $error->getMessage())) {
+                $safeReason = 'mx_config_item_method_missing';
+            }
             $sourceFile = basename((string) $error->getFile());
             if (!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D', $sourceFile)) { $sourceFile = 'unknown'; }
             $safeTrace = [];
