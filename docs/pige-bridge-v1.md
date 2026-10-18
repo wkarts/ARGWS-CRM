@@ -46,3 +46,9 @@ Testes puros e de controller usam stubs; o teste de storage em memória não com
 O módulo `modules/api` continua disponível para integrações gerais. Seu controller de faturas oferece CRUD e encaminha gravações ao `Invoices_model`; a busca passa por `Api_model`. A autorização dessa API é por token e permissões de recursos. Não equivale ao contrato da ponte PIGE: assinatura do corpo com timestamp/evento, escopo escola/emitente/conta/ambiente, recibo durável e chave de idempotência.
 
 A ponte específica não exige disponibilizar o CRUD geral ao PIGE nem o substitui. O futuro executor deve reutilizar serviços internos de emissão já isolados e autorizados, e não simular chamadas HTTP ao CRUD legado ou duplicar regras financeiras. Ambas as entradas precisam respeitar o mesmo isolamento de dados. Nesta versão a ponte apenas recebe solicitações bloqueadas; nenhum desses caminhos já representa emissão multiempresa pronta.
+
+## Migração padrão do módulo 0.1.1
+
+O DDL está em `modules/pige_bridge/migrations/011_version_011.php`, classe `Migration_Version_011 extends App_module_migration`. `install.php` chama o executor nativo `to_latest()`; não contém DDL nem usa um executor paralelo. Como o framework grava a versão do cabeçalho antes do hook de ativação, o instalador define a baseline 0.1.0 somente para este módulo e executa 011, confirmando a versão persistida 0.1.1 ao final. Reativação revalida o schema de forma não destrutiva.
+
+Instalações existentes 0.1.0 usam a ação padrão de atualização de banco do módulo (`App_modules::upgrade_database`). A migration valida tabela existente, collation, nulabilidade, índices únicos e InnoDB antes de concluir; schema incompatível exige correção assistida e permanece pendente, sem apagar recibos. O contador do módulo é independente das migrations/release do core. Fazer merge não ativa nem migra automaticamente o módulo. Downgrade destrutivo é recusado; rollback operacional consiste em desativar e preservar recibos.

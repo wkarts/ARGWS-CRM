@@ -31,6 +31,7 @@ jobs:
       - name: Sintaxe e contratos sem chamadas financeiras
         run: |
           find modules/pige_bridge tests -name '*.php' \( -path 'modules/pige_bridge/*' -o -name 'pige_bridge_*.php' \) -print0 | xargs -0 -n1 php -l
+          php tests/pige_bridge_migration.php
           php tests/pige_bridge_protocol.php
           php tests/pige_bridge_storage.php
           php tests/pige_bridge_controller.php
