@@ -11,7 +11,8 @@ class Argws_provisioning extends CI_Controller
     {
         if (!class_exists('InstallationMigrationBootstrap', false)
             || !InstallationMigrationBootstrap::isRunning()
-            || !defined('ARGWS_INSTALLER_CREATED_STAFF_ID')) {
+            || !defined('ARGWS_INSTALLER_CREATED_STAFF_ID')
+            || !InstallationMigrationBootstrap::consumeCompletionDispatchAuthorization()) {
             show_404();
             return;
         }

@@ -4,10 +4,21 @@
 final class InstallationMigrationBootstrap
 {
     private static bool $running = false;
+    private static bool $completionDispatchAuthorized = false;
 
     public static function isRunning(): bool
     {
         return self::$running;
+    }
+
+    /** Allows exactly the guarded in-process installer dispatch to run. */
+    public static function consumeCompletionDispatchAuthorization(): bool
+    {
+        if (!self::$running || !self::$completionDispatchAuthorized) {
+            return false;
+        }
+        self::$completionDispatchAuthorized = false;
+        return true;
     }
 
     public static function run(string $root, int $createdStaffId): bool
@@ -21,6 +32,7 @@ final class InstallationMigrationBootstrap
         }
         if (session_status() === PHP_SESSION_ACTIVE) { session_write_close(); }
         self::$running = true;
+        self::$completionDispatchAuthorized = true;
         define('ARGWS_INSTALLER_CREATED_STAFF_ID', $createdStaffId);
         $directory = getcwd();
         $post = $_POST;
@@ -103,6 +115,7 @@ final class InstallationMigrationBootstrap
             $_REQUEST = $request;
             chdir($directory);
             self::$running = false;
+            self::$completionDispatchAuthorized = false;
         }
     }
 }
