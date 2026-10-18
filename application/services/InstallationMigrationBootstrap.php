@@ -91,6 +91,7 @@ final class InstallationMigrationBootstrap
                 $safeTrace[] = $frameFile . ':' . $frameLine . ($symbol === '' ? '' : ' ' . $symbol);
             }
             error_log('[ARGWS CRM install] Falha na atualização nativa: ' . get_class($error)
+                . ' reason=' . $safeReason
                 . ' @ ' . $sourceFile . ':' . (int) $error->getLine()
                 . ' trace=' . implode(' <- ', $safeTrace));
             return false;
