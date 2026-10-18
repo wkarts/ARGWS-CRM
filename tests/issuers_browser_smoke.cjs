@@ -34,7 +34,7 @@ async function shell(page) {
   const order = await page.locator('#setup-menu > li').evaluateAll(items => items.map(item => item.className));
   assert.equal(order.findIndex(x => x.includes('menu-item-issuers')) + 1, order.findIndex(x => x.includes('menu-item-staff')));
   assert(await page.locator('link[rel=stylesheet]').count() > 3, 'native stylesheet bundle is loaded');
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#header')).position), 'fixed');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#header')).position), 'relative', 'native header stays in document flow');
 }
 (async () => {
   const browser = await chromium.launch({ headless: true });
