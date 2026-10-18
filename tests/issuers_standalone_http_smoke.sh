@@ -5,6 +5,7 @@ set -euo pipefail
 : "${ISSUER_SMOKE_IMAGE:?}" "${ISSUER_SMOKE_NETWORK:?}" "${ISSUER_SMOKE_DATABASE:?}"
 : "${ISSUER_SMOKE_DB_USER:?}" "${ISSUER_SMOKE_DB_PASSWORD:?}" "${ISSUER_SMOKE_ROOT_PASSWORD:?}"
 [[ "$ISSUER_SMOKE_DATABASE" =~ ^argws-crm-provision-db-[0-9]+$ ]]
+trap 'status=$?; echo "Standalone HTTP smoke failed at line $LINENO (exit $status)." >&2' ERR
 suffix="$$"
 legacy="argws-crm-legacy-$suffix"
 upgrade="argws-crm-upgrade-$suffix"
