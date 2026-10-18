@@ -16,14 +16,14 @@
                     <?php if (! $logo) { ?>
                     <a class="logo logo-text tw-text-2xl tw-font-semibold"
                         href="<?= hooks()->apply_filters('admin_header_logo_href', admin_url()); ?>">
-                        <?= e(get_option('companyname')); ?>
+                        <?= crm_app_display_name_html(); ?>
                     </a>
                     <?php } else { ?>
                     <a class="logo"
                         href="<?= hooks()->apply_filters('admin_header_logo_href', admin_url()); ?>">
                         <img src="<?= e($logo); ?>"
                             class="img-responsive"
-                            alt="<?= e(get_option('companyname')); ?>" />
+                            alt="<?= crm_app_display_name_html(); ?>" />
                     </a>
                     <?php } ?>
                 </div>

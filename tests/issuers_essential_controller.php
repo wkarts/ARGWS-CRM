@@ -7,6 +7,7 @@
 declare(strict_types=1);
 define('ISSUERS_ESSENTIAL_SUPPORT_ONLY', true);
 require __DIR__ . '/issuers_essential.php';
+require APPPATH . 'services/PaymentGatewayCatalog.php';
 define('ENVIRONMENT', 'testing');
 
 final class EssentialHttpStop extends RuntimeException {}
@@ -32,6 +33,7 @@ function form_close(): string { return '</form>'; }
 
 class App_Controller
 {
+    public $config;
     public $input;
     public $session;
     public $output;
@@ -263,6 +265,7 @@ try {
     // action, whose catch(Throwable) intentionally surrounds migration failures.
     foreach ([['1.0.2', 0], ['1.0.1', 0], ['1.0.1', 1]] as [$version, $active]) {
         foreach (['activate', 'upgrade_database'] as $action) {
+          foreach (['issuers', 'ideal'] as $moduleName) {
             foreach (['GET', 'POST'] as $method) {
                 $bypass = essentialFixture($version, $active);
                 essentialRequest($bypass, $method);
@@ -271,18 +274,19 @@ try {
                 try {
                     $mods = new Mods();
                     $dispatched = true;
-                    $mods->$action('issuers');
+                    $mods->$action($moduleName);
                 } catch (EssentialRedirectStop $stop) {
                     essentialCheck($stop->getMessage() === '/admin/essential_modules', 'legacy Mods route redirects to authenticated setup');
                 } finally {
                     $GLOBALS['essentialStopOnRedirect'] = false;
                 }
-                essentialCheck(!$dispatched, 'Mods ' . $action . '/' . $method . ' cannot bypass setup guard for ' . $version . '/active=' . $active);
+                essentialCheck(!$dispatched, 'Mods ' . $moduleName . '/' . $action . '/' . $method . ' cannot bypass setup guard for ' . $version . '/active=' . $active);
                 essentialNoInstallation($bypass, 'legacy Mods route ' . $action . '/' . $method);
                 $row = essentialRow($bypass);
                 essentialCheck($row->installed_version === $version && (int) $row->active === $active, 'legacy route does not mutate module marker or activation');
                 essentialCheck(essentialLegacy($bypass) === $bypass->legacy, 'legacy route preserves business rows');
             }
+          }
         }
     }
     foreach ([['1.0.2', 0, true], ['1.0.1', 1, true], ['1.0.2', 1, false]] as [$version, $active, $needsSetup]) {
@@ -310,6 +314,43 @@ try {
             essentialCheck($catalog->db->writes() === [], 'rendering resources never installs or mutates module state');
         }
     }
+
+    $combined = essentialFixture(essentialHeaderVersion(), 1);
+    essentialSeedSchema($combined);
+    $combined->db->insert($combined->prefix . 'modules', ['module_name'=>'ideal','installed_version'=>'1.0.0','active'=>0]);
+    $property = (new ReflectionClass(App_modules::class))->getProperty('modules');
+    $catalog = $property->getValue($combined->app_modules);
+    $catalog['issuers']['headers']['module_name'] = 'Emitentes';
+    $catalog['ideal'] = ['system_name'=>'ideal','headers'=>['version'=>'1.0.1','module_name'=>'iDEAL'],'installed_version'=>'1.0.0','activated'=>0];
+    $property->setValue($combined->app_modules, $catalog);
+    essentialRequest($combined, 'GET');
+    $combined->ci->config = new class {
+        public function load($name) {}
+        public function item($name) { return [
+            'issuers'=>['name'=>'Emitentes','description'=>'Essential synthetic','requires'=>[]],
+            'ideal'=>['name'=>'iDEAL','description'=>'Optional synthetic','requires'=>[]],
+        ]; }
+    };
+    putenv('CRM_ENABLE_IDEAL=false'); putenv('CRM_HIDDEN_RESOURCES=issuers,ideal');
+    $mods = new Mods(); $mods->index();
+    $data = $combined->ci->load->views[0][1];
+    essentialCheck(array_column($data['resources'],'system_name') === ['issuers'], 'hidden optional iDEAL never hides essential issuer catalog');
+    essentialCheck($data['ideal_maintenance']['system_name'] === 'ideal', 'installed hidden iDEAL keeps maintenance prompt');
+    essentialCheck(preg_match('/^[a-f0-9]{64}$/D', $data['ideal_migration_csrf']) === 1, 'maintenance prompt has its own session CSRF');
+    $view = new class($combined->app_modules) {
+        public function __construct(public App_modules $app_modules) {}
+        public function render(array $data): string {
+            extract($data); ob_start();
+            try { require APPPATH . 'views/admin/modules/list.php'; return ob_get_contents(); }
+            finally { ob_end_clean(); }
+        }
+    };
+    $html = $view->render($data);
+    essentialCheck(str_contains($html, '/modules/upgrade_database/ideal') && str_contains($html, 'ideal_module_migration_csrf'), 'combined view preserves POST maintenance and token');
+    essentialCheck(str_contains($html, 'Essencial — obrigatório') && !str_contains($html, '/modules/deactivate/issuers') && !str_contains($html, '/modules/activate/issuers'), 'combined view preserves essential issuer restrictions');
+    essentialCheck(!str_contains($html, '/modules/activate/ideal'), 'hidden iDEAL maintenance does not expose activation');
+    essentialNoInstallation($combined, 'combined resources GET');
+    putenv('CRM_ENABLE_IDEAL'); putenv('CRM_HIDDEN_RESOURCES');
 
     echo 'Essential issuers setup/controller gate: ' . $GLOBALS['essentialChecks'] . ' checks passed (real controllers, App_modules + native migrations, '
         . $fresh->db->driver() . ($fresh->db->driver() === 'sqlite' ? '; translated DDL, not MySQL proof' : '') . ").\n";

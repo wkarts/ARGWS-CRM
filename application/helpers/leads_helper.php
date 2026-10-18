@@ -217,18 +217,7 @@ function load_lead_language($lead_id)
         return false;
     }
 
-    $language = $lead->default_language;
-
-    if (!file_exists(APPPATH . 'language/' . $language)) {
-        return false;
-    }
-
-    $CI->lang->is_loaded = [];
-    $CI->lang->language  = [];
-
-    $CI->lang->load($language . '_lang', $language);
-    load_custom_lang_file($language);
-    $CI->lang->set_last_loaded_language($language);
+    crm_load_ui_language(true);
 
     return true;
 }

@@ -34,6 +34,20 @@ class Mods extends AdminController
                 $data['resources'][] = array_merge($installed[$name], $definition);
             }
         }
+        $data['ideal_maintenance'] = null;
+        $data['ideal_migration_csrf'] = '';
+        if (isset($installed['ideal']) && $installed['ideal']['installed_version'] !== false) {
+            $token = $this->session->userdata('ideal_module_migration_csrf');
+            if (!is_string($token) || !preg_match('/^[a-f0-9]{64}$/D', $token)) {
+                $token = bin2hex(random_bytes(32));
+                $this->session->set_userdata('ideal_module_migration_csrf', $token);
+            }
+            $data['ideal_migration_csrf'] = $token;
+            if (isset($hidden['ideal']) && version_compare($installed['ideal']['installed_version'], $installed['ideal']['headers']['version'], '<')) {
+                // Maintenance is separate from activation, settings and checkout availability.
+                $data['ideal_maintenance'] = $installed['ideal'];
+            }
+        }
         $data['title'] = 'Recursos';
         $this->load->view('admin/modules/list', $data);
     }
@@ -124,21 +138,49 @@ class Mods extends AdminController
 
     public function upgrade_database($name)
     {
-        $module = $this->app_modules->get($name);
-        if ($this->input->method(true) !== 'POST' || !$this->get_resource_definition($name)
-            || !$module || (int) $module['activated'] !== 1) {
-            show_404();
+        if (!is_admin()) {
+            access_denied('modules');
+            return;
         }
-
-        $result = $this->app_modules->upgrade_database($name);
-
-        // Possible error
+        $module = $this->app_modules->get($name);
+        $idealMaintenance = $name === 'ideal' && $module && $module['installed_version'] !== false;
+        if ($this->input->method(true) !== 'POST'
+            || (!$idealMaintenance && (!$this->get_resource_definition($name) || !$module || (int) $module['activated'] !== 1))) {
+            show_404();
+            return;
+        }
+        if ($idealMaintenance) {
+            $expected = $this->session->userdata('ideal_module_migration_csrf');
+            $provided = $this->input->post('ideal_module_migration_csrf');
+            if (!is_string($expected) || !preg_match('/^[a-f0-9]{64}$/D', $expected)
+                || !is_string($provided) || !hash_equals($expected, $provided)) {
+                show_error('Solicitação inválida. Atualize a página e tente novamente.', 403);
+                return;
+            }
+            $current = $this->db->where('module_name', 'ideal')->get(db_prefix() . 'modules')->row();
+            if (!$current || version_compare((string) $current->installed_version, $module['headers']['version'], '>')) {
+                show_error('A versão instalada exige revisão; downgrade não é permitido nesta manutenção.', 409);
+                return;
+            }
+        }
+        try {
+            $result = $this->app_modules->upgrade_database($name);
+            if ($idealMaintenance) {
+                // Native migration versions must be confirmed in storage, not inferred from its return value.
+                $row = $this->db->where('module_name', 'ideal')->get(db_prefix() . 'modules')->row();
+                if ($result !== true || !$row || $row->installed_version !== $module['headers']['version']) {
+                    throw new RuntimeException('ideal_migration_version_unconfirmed');
+                }
+            }
+        } catch (Throwable $error) {
+            if (!$idealMaintenance) { throw $error; }
+            $result = 'Atualização de versão do iDEAL não confirmada. Confira o histórico antes de tentar novamente.';
+        }
         if (is_string($result)) {
             set_alert('danger', $result);
         } else {
             set_alert('success', 'Banco de dados do recurso atualizado.');
         }
-
         $this->to_modules();
     }
 
@@ -156,6 +198,9 @@ class Mods extends AdminController
     {
         $value = strtolower((string) (getenv('CRM_HIDDEN_RESOURCES') ?: ''));
         $hidden = [];
+        if (!\app\services\PaymentGatewayCatalog::idealEnabled()) {
+            $hidden['ideal'] = true;
+        }
         foreach (explode(',', $value) as $name) {
             $name = trim($name);
             if ($name !== '' && preg_match('/^[a-z0-9_]+$/', $name)) {
@@ -167,6 +212,9 @@ class Mods extends AdminController
 
     private function get_resource_definition($name)
     {
+        if ($name === 'ideal' && !\app\services\PaymentGatewayCatalog::idealEnabled()) {
+            return false;
+        }
         $this->config->load('argws_resources');
         $definitions = $this->config->item('argws_resources');
         return $definitions[$name] ?? false;

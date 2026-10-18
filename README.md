@@ -1,6 +1,6 @@
-# ARGWS CRM
+# CRM
 
-CRM da ARGWS para execução em hospedagem PHP tradicional ou em container FrankenPHP. A distribuição mantém configurações e dados de cada instalação fora da imagem.
+CRM do grupo ARGWS para execução em hospedagem PHP tradicional ou em container FrankenPHP. A distribuição mantém configurações e dados de cada instalação fora da imagem.
 
 ## Requisitos
 
@@ -21,7 +21,7 @@ O Compose de raiz permanece disponível para um banco MySQL/MariaDB externo. Cop
 
 ## Idioma, suporte e privacidade
 
-Português do Brasil é o idioma disponível nesta versão. A política de terminologia e as configurações do widget de suporte são administradas no painel em **Configurações → Plataforma ARGWS**. O endereço do suporte e o token público são definidos na própria aplicação.
+Português do Brasil é o único idioma selecionável nesta versão; os arquivos de inglês são mantidos como fallback interno. Consulte a [política de interface e pagamentos](docs/interface-e-catalogo-pagamentos.md) para o catálogo de gateways e a opção de disponibilizar iDEAL por ambiente. A política de terminologia e as configurações do widget de suporte são administradas no painel em **Configurações → Plataforma**. O endereço do suporte e o token público são definidos na própria aplicação.
 
 A telemetria de usuários e licenciamento e a validação remota de licença ficam desativadas. Logs operacionais permanecem locais; integrações de negócio configuradas pelo administrador continuam disponíveis para os fluxos que elas atendem.
 

@@ -82,6 +82,10 @@ class App_modules
      */
     public function activate($name)
     {
+        if ($name === 'ideal' && !\app\services\PaymentGatewayCatalog::idealEnabled()) {
+            return false;
+        }
+
         $hasDebug = $this->is_essential($name) && property_exists($this->ci->db, 'db_debug');
         $debug = $hasDebug ? $this->ci->db->db_debug : null;
         if ($hasDebug) { $this->ci->db->db_debug = false; }

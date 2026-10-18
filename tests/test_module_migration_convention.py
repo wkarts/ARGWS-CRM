@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MODULES = ("issuers", "pige_bridge")
+MODULES = ("issuers", "pige_bridge", "ideal")
 
 
 def validate_module(root, name):

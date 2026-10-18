@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<p class="text-muted"><?= crm_app_display_name_html(); ?> · Grupo fornecedor: ARGWS</p>
 <div class="alert alert-info">As opções abaixo são guardadas no banco desta instalação. O idioma disponível é Português do Brasil (PT-BR).</div>
 
 <h4>Contato de suporte</h4>
