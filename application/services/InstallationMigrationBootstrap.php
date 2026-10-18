@@ -62,7 +62,10 @@ final class InstallationMigrationBootstrap
             return isset($ci->installationMigrationResult)
                 && $ci->installationMigrationResult['success'] === true;
         } catch (Throwable $error) {
-            error_log('[ARGWS CRM install] Falha na atualização nativa: ' . get_class($error));
+            $sourceFile = basename((string) $error->getFile());
+            if (!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D', $sourceFile)) { $sourceFile = 'unknown'; }
+            error_log('[ARGWS CRM install] Falha na atualização nativa: ' . get_class($error)
+                . ' @ ' . $sourceFile . ':' . (int) $error->getLine());
             return false;
         } finally {
             while (ob_get_level() > $bufferLevel) { ob_end_clean(); }
