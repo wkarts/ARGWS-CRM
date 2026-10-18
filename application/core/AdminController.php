@@ -44,6 +44,9 @@ class AdminController extends App_Controller
 
         // Deleted or inactive but have session
         if (!$currentUser || $currentUser->active == 0) {
+            if (!isset($this->authentication_model)) {
+                $this->load->model('authentication_model');
+            }
             $this->authentication_model->logout();
             redirect(admin_url('authentication'));
             return;
