@@ -14,13 +14,17 @@ function app_generate_hash(): string { return str_repeat('a', 32); }
 function hooks() { throw new RuntimeException('Unexpected external hook'); }
 function update_invoice_status($id): void { throw new RuntimeException('Unexpected status side-effect'); }
 function handle_tags_save(...$args): void { throw new RuntimeException('Unexpected tag side-effect'); }
-function add_new_sales_item_post($item, $id, $type): int { global $items, $throwItem; if ($throwItem) throw new RuntimeException('Injected item failure'); $items[] = $item; return count($items); }
+function add_new_sales_item_post($item, $id, $type): int { throw new RuntimeException('Unexpected item formatting hook path'); }
 function _maybe_insert_post_item_tax($id, $item, $invoice, $type): void { global $taxCalls; $taxCalls[] = $item['taxname']; }
 function update_sales_total_tax_column($id, $type, $table): void {}
 final class DraftDb
 {
     public array $rows = []; private int $id = 0;
-    public function insert($table, $data): bool { if ($table !== 'test_invoices') throw new RuntimeException('Unexpected table'); $this->id++; $this->rows[$this->id] = $data; return true; }
+    public function insert($table, $data): bool {
+        global $items, $throwItem;
+        if ($table === 'test_itemable') { if ($throwItem) throw new RuntimeException('Injected item failure'); $this->id++; $items[] = $data; return true; }
+        if ($table !== 'test_invoices') throw new RuntimeException('Unexpected table'); $this->id++; $this->rows[$this->id] = $data; return true;
+    }
     public function insert_id(): int { return $this->id; }
     public function where($field, $value): self { return $this; }
     public function update($table, $data): bool { if ($table !== 'test_invoices') throw new RuntimeException('Unexpected update'); $this->rows[$this->id] = array_replace($this->rows[$this->id], $data); return true; }
@@ -50,7 +54,7 @@ check($saved['recurring'] === 0 && $saved['custom_recurring'] === 0, 'child cann
 check($saved['cancel_overdue_reminders'] === 1, 'reminders blocked');
 check(!isset($saved['save_and_send'], $saved['billed_tasks'], $saved['invoices_to_merge'], $saved['is_recurring_from']), 'whitelist drops unsafe side effects');
 check($saved['date'] === '2024-02-29' && $saved['duedate'] === '2024-03-05', 'ISO dates preserved without formatter hook');
-check(count($items) === 1 && count($taxCalls) === 1 && count($writer->activities) === 1, 'local standard item/tax/activity paths retained');
+check(count($items) === 1 && count($taxCalls) === 1 && count($writer->activities) === 1, 'local canonical item/tax/activity paths retained');
 $throwItem = true;
 try { $writer->add_recurring_rule_draft($template); throw new LogicException('failure expected'); } catch (RuntimeException $e) { check($e->getMessage() === 'Injected item failure', 'failure propagated for rollback'); }
 $throwItem = false;

@@ -21,7 +21,6 @@ function log_message($level, $message): void { global $logs; $logs[] = $message;
 function show_error($message): void { throw new RuntimeException($message); }
 function is_php($version): bool { return version_compare(PHP_VERSION, $version, '>='); }
 function &get_instance() { global $context; return $context; }
-function get_decimal_places(): int { return 2; }
 function app_generate_hash(): string { return bin2hex(random_bytes(16)); }
 function clear_textarea_breaks($text): string { return str_replace('<br />', '', (string) $text); }
 function hooks() { throw new RuntimeException('No invoice hook is allowed during these tests.'); }
@@ -96,4 +95,4 @@ app\services\RecurringInvoiceLock::run($db, function () use ($other) {
 });
 check(app\services\RecurringInvoiceLock::run($other, fn() => true) === true, 'Named lock released after work');
 $other->close(); $db->close();
-echo "Independent recurring MariaDB integration: $checks checks passed with real installer schema, CI3 driver, migration, model and invoice writer. No network/provider/mail hooks.\n";
+echo "Independent recurring MariaDB integration: $checks checks passed with real installer schema, CI3 driver, migration, model and invoice writer. No provider/mail hooks.\n";

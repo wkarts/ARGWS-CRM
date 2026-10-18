@@ -352,6 +352,22 @@ class Invoices_model extends App_Model
         }
     }
 
+    private function add_recurring_rule_item(array $item, int $invoiceId): int
+    {
+        // add_new_sales_item_post() calls the app_decimal_places plugin filter.
+        // Canonical snapshot values must not reach any plugin during draft generation.
+        $optional = !empty($item['is_optional']);
+        if (!$this->db->insert(db_prefix() . 'itemable', [
+            'description' => $item['description'], 'long_description' => nl2br($item['long_description']),
+            'qty' => $item['qty'], 'rate' => $item['rate'], 'rel_id' => $invoiceId, 'rel_type' => 'invoice',
+            'item_order' => $item['order'], 'unit' => $item['unit'], 'is_optional' => $optional ? 1 : 0,
+            'is_selected' => $optional ? (int) ($item['is_selected'] ?? 0) : 1,
+        ])) {
+            throw new RuntimeException('Não foi possível copiar um item da recorrência.');
+        }
+        return (int) $this->db->insert_id();
+    }
+
     private function copy_recurring_stored_fields(int $id, string $type, array $fields): void
     {
         // Values are an internal snapshot of already stored fields, not form input.
@@ -573,7 +589,10 @@ class Invoices_model extends App_Model
             }
 
             foreach ($items as $key => $item) {
-                if ($itemid = add_new_sales_item_post($item, $insert_id, 'invoice')) {
+                $itemid = $this->creatingRecurringRuleDraft
+                    ? $this->add_recurring_rule_item($item, $insert_id)
+                    : add_new_sales_item_post($item, $insert_id, 'invoice');
+                if ($itemid) {
                     if (isset($billed_tasks[$key])) {
                         foreach ($billed_tasks[$key] as $_task_id) {
                             $this->db->insert(db_prefix() . 'related_items', [

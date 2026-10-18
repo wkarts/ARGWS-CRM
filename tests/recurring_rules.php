@@ -67,6 +67,8 @@ final class MemoryDb
     private function matches(array $row): bool
     {
         foreach ($this->filters as [$field, $value]) {
+            if ($field === '1=1') continue;
+            if (preg_match('/(?:[A-Za-z0-9_]+\.)?issuer_id IS NULL$/', $field)) { if (($row['issuer_id'] ?? null) !== null) return false; continue; }
             if (str_ends_with($field, ' <=')) { if ($row[substr($field, 0, -3)] > $value) return false; }
             elseif (str_ends_with($field, ' >')) { if ($row[substr($field, 0, -2)] <= $value) return false; }
             elseif (($row[$field] ?? null) != $value) return false;
