@@ -36,6 +36,7 @@ jobs:
         run: |
           php -v
           php tests/crm_ui_language.php
+          php tests/crm_support_contact.php
           php tests/payment_gateway_catalog.php
           php tests/ideal_management_forms.php
           php tests/brand_assets_smoke.php

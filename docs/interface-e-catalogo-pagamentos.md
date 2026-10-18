@@ -68,3 +68,7 @@ Em homologação, conferir login/painel/cliente/formulários com preferências a
 ## Publicação e rollback
 
 Não há migration, alteração de schema ou nova dependência. Publique os arquivos revisados e os templates de Compose, preservando configurações/volumes locais. A flag é desabilitada por padrão. Para rollback, reverta o commit e recrie o serviço com a imagem/código anterior. As opções, históricos e IDs legados foram preservados; não é necessário desfazer alterações no banco.
+
+## Destino do menu Suporte
+
+Configurações > Suporte reutiliza o mesmo destino já configurável do atalho de suporte: `support_contact_channel` e campos locais WhatsApp/e-mail/site, com fallback nas variáveis `CRM_SUPPORT_WHATSAPP`, `CRM_SUPPORT_EMAIL` e `CRM_SUPPORT_SITE_URL`. Sem destino válido, o link não é exibido. Não há fallback para o GitHub pessoal/repositório. URLs de versões/atualização, metadados técnicos de SDK e licenças permanecem inalterados. Nenhum endereço real foi configurado ou contato enviado.
