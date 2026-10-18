@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php $payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes, [$payment->paymentmode]); ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content">

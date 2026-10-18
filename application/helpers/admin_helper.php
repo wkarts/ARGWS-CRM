@@ -216,24 +216,7 @@ function has_permission($permission, $staffid = '', $can = '')
  */
 function load_admin_language($staff_id = '')
 {
-    $CI = &get_instance();
-
-    $CI->lang->is_loaded = [];
-    $CI->lang->language  = [];
-
-    $language = get_option('active_language');
-    if ((is_staff_logged_in() || $staff_id != '') && ! is_language_disabled()) {
-        $staff_language = get_staff_default_language($staff_id);
-        if (! empty($staff_language)
-            && file_exists(APPPATH . 'language/' . $staff_language)) {
-            $language = $staff_language;
-        }
-    }
-
-    $CI->lang->load($language . '_lang', $language);
-    load_custom_lang_file($language);
-    $GLOBALS['language'] = $language;
-    $GLOBALS['locale']   = get_locale_key($language);
+    $language = crm_load_ui_language(true);
 
     hooks()->do_action('after_load_admin_language', $language);
 

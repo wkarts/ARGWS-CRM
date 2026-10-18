@@ -2,6 +2,7 @@
 <div class="col-md-12">
     <div class="tw-mb-2">
         <div class="_buttons">
+            <a href="<?= admin_url('recurring_rules'); ?>" class="btn btn-default pull-left mright5">Gerenciar recorrências</a>
             <?php if (staff_can('create', 'invoices')) { ?>
             <a href="<?= admin_url('invoices/invoice'); ?>"
                 class="btn btn-primary pull-left new new-invoice-list">

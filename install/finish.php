@@ -22,7 +22,5 @@
         target="_blank" rel="noopener noreferrer">a área do cliente</a>.</li>
 </ul>
 <hr />
-<p>Consulte as versões e os pacotes oficiais do ARGWS CRM no
-    <a href="https://github.com/wkarts/argws-crm/releases" target="_blank" rel="noopener noreferrer">canal de distribuição ARGWS</a>.
-</p>
-<p>O atendimento aos clientes da instalação pode ser configurado em <b>Configurações &gt; Plataforma ARGWS</b>.</p>
+<p>Consulte as versões e os pacotes oficiais do <?php echo crm_installer_display_name_html(); ?> no canal de distribuição ARGWS.</p>
+<p>O atendimento aos clientes da instalação pode ser configurado em <b>Configurações &gt; Plataforma</b>.</p>

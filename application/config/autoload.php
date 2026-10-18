@@ -114,8 +114,10 @@ $autoload['drivers'] = ['session'];
 include_once(APPPATH . 'third_party/action_hooks.php');
 
 $autoload['helper'] = [
+    'app_branding',
     'emails_tracking',
         'language',
+        'ui_language',
         'url',
         'file',
         'form',

@@ -85,4 +85,3 @@ $version = $CI->db->where('module_name', 'asaas')->get(db_prefix() . 'modules')-
 if (!$version || (string) $version->installed_version !== $target) {
     throw new RuntimeException('asaas_migration_version_unconfirmed');
 }
-

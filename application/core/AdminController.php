@@ -66,6 +66,17 @@ class AdminController extends App_Controller
             redirect(admin_url('authentication'));
         }
 
+        // Read-only gate, after authentication and live staff validation. The
+        // separate setup controller owns POST + CSRF and never runs from GET.
+        if (!$this->app_modules->essential_modules_ready()) {
+            if (is_admin()) {
+                redirect(admin_url('essential_modules'));
+            } else {
+                show_error('O administrador precisa concluir a configuração obrigatória de Emitentes antes de liberar o painel.', 503);
+            }
+            return;
+        }
+
         $GLOBALS['current_user'] = $currentUser;
 
         init_admin_assets();

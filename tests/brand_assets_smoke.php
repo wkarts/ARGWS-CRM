@@ -74,10 +74,16 @@ function rendered_logo(bool $dark = false): string
     return (string) ob_get_clean();
 }
 
+require __DIR__ . '/../application/helpers/app_branding_helper.php';
 require __DIR__ . '/../application/helpers/template_helper.php';
 require __DIR__ . '/../application/helpers/assets_helper.php';
 
+expect_brand(str_contains(rendered_logo(), 'alt="CRM"'), 'Produto padrão deve se chamar CRM.');
 $brandOptions['companyname'] = 'Cliente Exemplo';
+expect_brand(str_contains(rendered_logo(), 'alt="CRM"'), 'Nome fiscal não deve renomear o produto.');
+putenv('APP_DISPLAY_NAME=Parceiro Exemplo');
+expect_brand(str_contains(rendered_logo(), 'alt="Parceiro Exemplo"'), 'Logo da interface deve usar nome central do produto.');
+putenv('APP_DISPLAY_NAME');
 expect_brand(str_contains(rendered_logo(), '/assets/images/argws/logo-dark.png'), 'Logo padrão deve ser legível em fundo claro.');
 expect_brand(str_contains(rendered_logo(true), '/assets/images/argws/logo-dark.png'), 'Login deve usar logo azul em fundo claro.');
 expect_brand(str_contains(get_admin_header_logo_url(), '/assets/images/argws/logo-dark.png'), 'Cabeçalho branco deve usar logo azul.');

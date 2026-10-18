@@ -115,6 +115,11 @@ class Payments_model extends App_Model
             }
 
             $invoice = $this->invoices_model->get($invoiceid);
+            if (!$invoice || !\app\services\PaymentGatewayCatalog::allowsCheckout(
+                $data['paymentmode'], $invoice->allowed_payment_modes
+            )) {
+                return false;
+            }
             // Check if request coming from admin area and the user added note so we can insert the note also when the payment is recorded
             if (isset($data['note']) && $data['note'] != '') {
                 $this->session->set_userdata([

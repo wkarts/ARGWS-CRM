@@ -56,6 +56,25 @@ class App_modules
         $this->initialize();
     }
 
+    /** These checks never install, migrate or activate during request bootstrap. */
+    public function essential_modules_ready()
+    {
+        require_once APPPATH . 'services/EssentialIssuerModule.php';
+        return EssentialIssuerModule::ready($this->ci);
+    }
+
+    /** Called only by authenticated setup or the controlled provisioning path. */
+    public function ensure_essential_modules()
+    {
+        return $this->activate('issuers') && $this->essential_modules_ready();
+    }
+
+    public function is_essential($name)
+    {
+        require_once APPPATH . 'services/EssentialIssuerModule.php';
+        return EssentialIssuerModule::isEssential($name);
+    }
+
     /**
      * Activate Module
      * @param  string $name Module Name [system_name]
@@ -63,21 +82,47 @@ class App_modules
      */
     public function activate($name)
     {
+        if ($name === 'ideal' && !\app\services\PaymentGatewayCatalog::idealEnabled()) {
+            return false;
+        }
+
+        $hasDebug = $this->is_essential($name) && property_exists($this->ci->db, 'db_debug');
+        $debug = $hasDebug ? $this->ci->db->db_debug : null;
+        if ($hasDebug) { $this->ci->db->db_debug = false; }
+        try {
+            return $this->activate_with_migrations($name);
+        } finally {
+            if ($hasDebug) { $this->ci->db->db_debug = $debug; }
+        }
+    }
+
+    private function activate_with_migrations($name)
+    {
         $module = $this->get($name);
 
         if (!$module) {
             return false;
         }
 
-        if ((int) $module['activated'] === 1) {
+        $essential = $this->is_essential($name);
+        if ($essential && $this->essential_modules_ready()) {
             return true;
+        }
+        if (!$essential && (int) $module['activated'] === 1) {
+            return true;
+        }
+        if ($essential) {
+            $stored = $this->ci->db->where('module_name', $name)->get(db_prefix() . 'modules')->row();
+            if ($stored && version_compare((string) $stored->installed_version, $module['headers']['version'], '>')) {
+                throw new RuntimeException('issuer_activation_version_invalid');
+            }
         }
 
         /**
          * Check if module is already added to database
          */
 
-        if (!$this->module_exists_in_database($name)) {
+        if ($essential ? !$stored : !$this->module_exists_in_database($name)) {
             // MySQL em modo estrito exige o estado inicial explícito.
             if (!$this->ci->db->insert(db_prefix() . 'modules', [
                 'module_name'       => $name,
@@ -86,6 +131,21 @@ class App_modules
             ])) {
                 return false;
             }
+        }
+
+        if ($essential) {
+            EssentialIssuerModule::invalidateSchemaCache($this->ci->db);
+            // An incomplete schema must never be advertised as active, including
+            // an upgrade from an earlier active release or a failed prior setup.
+            if (!$this->ci->db->where('module_name', $name)->update(db_prefix() . 'modules', ['active' => 0])) {
+                throw new RuntimeException('issuer_activation_state_write_failed');
+            }
+            $inactive = $this->ci->db->where('module_name', $name)->get(db_prefix() . 'modules')->row();
+            if (!$inactive || (int) $inactive->active !== 0) {
+                throw new RuntimeException('issuer_activation_state_unconfirmed');
+            }
+            $this->modules[$name]['activated'] = 0;
+            unset($this->active_modules[$name]);
         }
 
         include_once($module['init_file']);
@@ -100,6 +160,14 @@ class App_modules
          */
         hooks()->do_action("activate_{$name}_module");
 
+        if ($essential) {
+            EssentialIssuerModule::assertSchema($this->ci->db, db_prefix());
+            $stored = $this->ci->db->where('module_name', $name)->get(db_prefix() . 'modules')->row();
+            if (!$stored || (string) $stored->installed_version !== (string) $module['headers']['version']) {
+                throw new RuntimeException('issuer_migration_version_unconfirmed');
+            }
+        }
+
         /**
          * Activate the module in database
          */
@@ -108,6 +176,13 @@ class App_modules
             return false;
         }
 
+        if ($essential) {
+            $stored = $this->ci->db->where('module_name', $name)->get(db_prefix() . 'modules')->row();
+            if (!$stored || (int) $stored->active !== 1) {
+                throw new RuntimeException('issuer_activation_state_unconfirmed');
+            }
+            $this->modules[$name]['installed_version'] = $stored->installed_version;
+        }
         $this->modules[$name]['activated'] = 1;
         $this->active_modules[$name] = $this->modules[$name];
 
@@ -136,6 +211,10 @@ class App_modules
      */
     public function deactivate($name)
     {
+        if ($this->is_essential($name)) {
+            return false;
+        }
+
         $module = $this->get($name);
 
         if (!$module) {
@@ -174,6 +253,10 @@ class App_modules
      */
     public function uninstall($name)
     {
+        if ($this->is_essential($name)) {
+            return false;
+        }
+
         $module = $this->get($name);
 
         if (!$module) {
@@ -298,6 +381,9 @@ class App_modules
      */
     public function upgrade_database($name)
     {
+        if ($this->is_essential($name)) {
+            return $this->ensure_essential_modules() ? true : 'Configuração obrigatória de Emitentes não confirmada.';
+        }
         $migration = new App_module_migration($name);
 
         if ($migration->to_latest() === false) {

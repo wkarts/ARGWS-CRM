@@ -4,7 +4,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: Stripe Ideal V2
 Description: Stripe Ideal Payment module
-Version: 1.0.0
+Version: 1.0.1
 Requires at least: 3.1.6
 */
 
@@ -17,6 +17,7 @@ register_activation_hook(IDEAL_MODULE_NAME, 'idealModuleActivation');
 
 function idealModuleActivation()
 {
+    require __DIR__ . '/install.php';
     add_option('ideal_module_stripe_webhook_id');
     add_option('ideal_module_stripe_webhook_signing_secret');
 }
@@ -67,16 +68,16 @@ function idealModuleWebhookCheck(array $gateway): void
             if (! $webhook || ! startsWith($webhook->url, site_url())) {
                 echo '<div class="alert alert-warning">';
                 echo 'Webhook endpoint (' . $endpoint . ') not found for ' . $environment . ' environment.';
-                echo '<br />Click <a href="' . site_url('ideal/create_webhook') . '">here</a> to create the webhook directly in Stripe.';
+                echo '<br />' . idealModuleManagementButton('create_webhook', 'Criar webhook no Stripe');
                 echo '</div>';
             } elseif ($webhook->id != get_option('ideal_module_stripe_webhook_id')) {
                 echo '<div class="alert alert-warning">';
                 echo 'The application stored Stripe webhook id does not match the configured webhook.';
-                echo '<br />Click <a href="' . site_url('ideal/create_webhook?recreate=true') . '">here</a> to re-create the webhook directly in Stripe and delete the old webhook.';
+                echo '<br />' . idealModuleManagementButton('create_webhook', 'Recriar webhook e excluir o anterior', true);
                 echo '</div>';
             } elseif ($webhook->status != 'enabled') {
                 echo '<div class="alert alert-warning">';
-                echo 'Your Stripe configured webhook is disabled, you should consider enabling your webhook via Stripe dashboard or by clicking <a href="' . site_url('ideal/enable_webhook') . '">here</a>.';
+                echo 'O webhook configurado está desabilitado. ' . idealModuleManagementButton('enable_webhook', 'Habilitar webhook');
                 echo '</div>';
             }
         }
@@ -107,5 +108,44 @@ function prevent_activate_ideal_gateway($systemOptions): void
         $ci->ideal_gateway->markAsInactive();
         set_alert('danger', _l('ideal_gateway_cannot_be_activated_keys_not_configured'));
         redirect(admin_url('settings?group=payment_gateways&tab=online_payments_Ideal_gateway_tab'));
+    }
+}
+
+
+/** Buttons target separate POST forms, never a nested form inside Settings. */
+function idealModuleManagementButton(string $action, string $label, bool $recreate = false): string
+{
+    if (!\app\services\PaymentGatewayCatalog::idealEnabled()
+        || !is_staff_logged_in() || !staff_can('edit', 'settings')
+        || !in_array($action, ['create_webhook', 'enable_webhook'], true)) {
+        return '';
+    }
+    $id = 'ideal-management-' . $action . ($recreate ? '-recreate' : '');
+    $GLOBALS['ideal_management_forms'][$id] = ['action' => $action, 'recreate' => $recreate];
+    return '<button type="submit" class="btn btn-default btn-sm" form="' . e($id) . '">'
+        . e($label) . '</button>';
+}
+
+hooks()->add_action('app_admin_footer', 'idealModuleManagementForms');
+function idealModuleManagementForms(): void
+{
+    if (empty($GLOBALS['ideal_management_forms']) || !\app\services\PaymentGatewayCatalog::idealEnabled()
+        || !is_staff_logged_in() || !staff_can('edit', 'settings')) {
+        return;
+    }
+    $CI = &get_instance();
+    $token = $CI->session->userdata('ideal_management_csrf');
+    if (!is_string($token) || strlen($token) !== 64) {
+        $token = bin2hex(random_bytes(32));
+        $CI->session->set_userdata('ideal_management_csrf', $token);
+    }
+    foreach ($GLOBALS['ideal_management_forms'] as $id => $form) {
+        // form_open also includes CodeIgniter's token when global CSRF is enabled.
+        echo form_open(site_url('ideal/' . $form['action']), ['id' => $id, 'method' => 'post']);
+        echo form_hidden('ideal_management_csrf', $token);
+        if ($form['recreate']) {
+            echo form_hidden('recreate', '1');
+        }
+        echo form_close();
     }
 }

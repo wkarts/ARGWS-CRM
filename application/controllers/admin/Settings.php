@@ -41,7 +41,9 @@ class Settings extends AdminController
                 $post_data['settings'] = [];
             }
 
-            if (in_array($group, ['general', 'localization', 'argws_platform'], true)) {
+            // Normalize language keys even when posted through another settings tab.
+            if (in_array($group, ['general', 'localization', 'argws_platform'], true)
+                || array_intersect(['active_language', 'enabled_languages', 'disable_language'], array_keys($post_data['settings']))) {
                 $post_data['settings']['active_language'] = 'portuguese_br';
                 $post_data['settings']['enabled_languages'] = ['portuguese_br'];
                 $post_data['settings']['disable_language'] = '1';
@@ -59,6 +61,10 @@ class Settings extends AdminController
                 redirect(admin_url('settings?group=argws_platform'));
                 return;
             }
+
+            $post_data['settings'] = \app\services\PaymentGatewayCatalog::filterSettings(
+                $post_data['settings'], $this->payment_modes_model->get_payment_gateways(true)
+            );
 
             hooks()->do_action('before_update_system_options', $post_data);
 
@@ -161,7 +167,9 @@ class Settings extends AdminController
         }
 
         $data['contacts_permissions'] = get_contact_permissions();
-        $data['payment_gateways']     = $this->payment_modes_model->get_payment_gateways(true);
+        $data['payment_gateways']     = \app\services\PaymentGatewayCatalog::forSelection(
+            $this->payment_modes_model->get_payment_gateways(true)
+        );
 
         $this->load->view('admin/settings/all', $data);
     }

@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>
-        <?= $title ?? get_option('companyname'); ?>
+        <?= e(crm_app_page_title($title ?? null)); ?>
     </title>
 
     <?= app_compile_css(); ?>
