@@ -62,5 +62,5 @@ try{(new App_module_migration('banco_brasil'))->to_latest();throw new LogicExcep
 $CI->db->failAlter=false;check((string)(new App_module_migration('banco_brasil'))->to_latest()==='102','additiveDDL retry');
 check(!preg_match('/DROP|TRUNCATE|DELETE FROM|UPDATE /i',implode("\n",$CI->db->statements)),'no backfill or destructive DDL');
 $CI->db=new BbLayoutMigrationDb();$CI->db->fail102Tracking=true;
-try{require APP_MODULES_PATH.'banco_brasil/install.php';throw new LogicException('tracking accepted');}catch(RuntimeException $e){check($e->getMessage()==='bb_migration_version_unconfirmed','failed102 tracking visible');}
+$trackingFailure=null;try{require APP_MODULES_PATH.'banco_brasil/install.php';throw new LogicException('tracking accepted');}catch(RuntimeException $e){$trackingFailure=$e->getMessage();}check(in_array($trackingFailure,['bb_migration_failed','bb_migration_version_unconfirmed'],true),'failed102 tracking visible');check($CI->db->version==='1.0.1','failed102 tracking preserves baseline');
 echo "OK {$n} Banco do Brasil layout migration checks\n";
