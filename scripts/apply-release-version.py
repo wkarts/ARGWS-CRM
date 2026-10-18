@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Apply SemVer metadata and advance a sequential DB migration for every release."""
+"""Official writer of canonical CRM release metadata and one native marker."""
 from __future__ import annotations
 
 import argparse
 import re
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from release_policy import (id_for_version, version_for_id, metadata, file_reader,
+                            git_metadata, is_ancestor, commit_id, validate_marker, target_levels)
 
 
 MIGRATION_VERSION_PATTERN = re.compile(
@@ -83,30 +87,12 @@ def replace_migration_version(source, version):
     return updated
 
 
-def semver_migration_candidate(version):
-    parsed = parse_semver(version)
-    if parsed is None:
-        raise ValueError("A versão deve usar SemVer X.Y.Z sem zeros à esquerda.")
-    return int("".join(str(part) for part in parsed))
-
-
-def migration_id_for_release(version, previous_version, current_level):
-    current = parse_semver(previous_version)
-    target = parse_semver(version)
-    if current is None:
-        raise ValueError("A versão SemVer atual em VERSION é inválida.")
-    if target is None:
-        raise ValueError("A versão deve usar SemVer X.Y.Z sem zeros à esquerda.")
-    if target < current:
-        raise ValueError("Não é permitido reduzir a versão do produto.")
-    if target == current:
-        return current_level
-    candidate = semver_migration_candidate(version)
-    # Keep 342 -> 350 for 3.4.2 -> 3.5.0. Large jumps caused by
-    # multi-digit components advance one ID at a time to avoid thousands of files.
-    if current_level < candidate <= current_level + 10:
-        return candidate
-    return current_level + 1
+def migration_id_for_release(version, previous_version, current_level, legacy_alias=None):
+    target = id_for_version(version)
+    if target == current_level and version == previous_version and not legacy_alias:
+        return target
+    target_levels({'version': previous_version, 'migration': current_level, 'alias': legacy_alias}, target)
+    return target
 
 
 def migration_marker_source(version):
@@ -132,11 +118,10 @@ def ensure_migration_markers(migrations_path, current_level, target_level, allow
     first = current_level + 1 if target_level > current_level else target_level
     for migration_version in range(first, target_level + 1):
         path = migrations_path / f"{migration_version}_version_{migration_version}.php"
-        expected_class = f"class Migration_Version_{migration_version} "
         if path.exists():
-            source = path.read_text(encoding="utf-8")
-            if expected_class not in source or "extends CI_Migration" not in source:
-                raise ValueError(f"A migration {path.name} existe, mas não corresponde ao identificador calculado.")
+            if path.is_symlink():
+                raise ValueError(f"Migration não pode ser link: {path.name}.")
+            validate_marker(path.read_bytes(), migration_version)
             continue
         if not allow_create:
             raise ValueError(f"A migration atual {path.name} não existe; o histórico não será recriado.")
@@ -145,8 +130,7 @@ def ensure_migration_markers(migrations_path, current_level, target_level, allow
 
 
 def apply_release_version(root, version):
-    if parse_semver(version) is None:
-        raise ValueError("A versão deve usar SemVer X.Y.Z sem zeros à esquerda.")
+    id_for_version(version)
     version_path = root / "VERSION"
     constants_path = root / "application/config/constants.php"
     migration_config_path = root / "application/config/migration.php"
@@ -156,12 +140,16 @@ def apply_release_version(root, version):
     container_env_path = root / "container.env.example"
     migrations_path = root / "application/migrations"
 
-    previous_version = version_path.read_text(encoding="utf-8").strip()
-    if parse_semver(previous_version) is None:
-        raise ValueError("VERSION atual não usa SemVer X.Y.Z.")
+    source = metadata(file_reader(root), allow_legacy=True)
+    if source['alias']:
+        # Exact archived metadata alone does not authorize a different Git lineage.
+        proof = git_metadata(root, source['alias']['commit'])
+        if not is_ancestor(root, proof['commit'], commit_id(root, 'HEAD')):
+            raise ValueError("Alias legado não é ancestral deste checkout.")
+    previous_version = source['version']
+    previous_migration = source['migration']
     migration_config = migration_config_path.read_text(encoding="utf-8")
-    previous_migration = migration_version_from_config(migration_config)
-    migration_version = migration_id_for_release(version, previous_version, previous_migration)
+    migration_version = migration_id_for_release(version, previous_version, previous_migration, source['alias'])
     markers = ensure_migration_markers(
         migrations_path, previous_migration, migration_version, allow_create=version != previous_version
     )
@@ -193,11 +181,14 @@ def apply_release_version(root, version):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("version")
+    parser.add_argument("version", nargs="?", help="Próxima versão canônica; omita para incrementar um ID.")
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     args = parser.parse_args()
     try:
-        apply_release_version(args.root.resolve(), args.version)
+        root = args.root.resolve()
+        current = metadata(file_reader(root), allow_legacy=True)
+        target = args.version or ('4.0.1' if current['alias'] and current['migration'] == 394 else version_for_id(current['migration'] + 1))
+        apply_release_version(root, target)
     except ValueError as error:
         raise SystemExit(str(error)) from error
 

@@ -24,6 +24,7 @@ class App_Model
     public $db;
     public $load;
     public $invoices_model;
+    public $recurring_rules_model;
 }
 
 require APPPATH . 'models/Cron_model.php';
@@ -77,6 +78,15 @@ function hooks(): RecurrenceTestHooks
 
 final class RecurrenceTestDatabase
 {
+    public function query($sql, $params): object
+    {
+        if (!str_contains($sql, 'GET_LOCK') && !str_contains($sql, 'RELEASE_LOCK')) {
+            throw new RuntimeException('Unexpected lock query');
+        }
+        return new class {
+            public function row(): object { return (object) ['acquired' => 1, 'released' => 1]; }
+        };
+    }
     public array $rows = [];
     public array $writes = [];
     private array $conditions = [];
@@ -172,10 +182,11 @@ final class RecurrenceTestCron extends Cron_model
     {
         $this->db = new RecurrenceTestDatabase($rows);
         $this->invoices_model = new RecurrenceTestInvoices($this->db);
+        $this->recurring_rules_model = new class { public function process_due_locked($today): int { return 0; } };
         $this->load = new class {
             public function model($name): void
             {
-                if ($name !== 'invoices_model') {
+                if (!in_array($name, ['invoices_model', 'recurring_rules_model'], true)) {
                     throw new RuntimeException('Unexpected model: ' . $name);
                 }
             }

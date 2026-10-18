@@ -441,6 +441,9 @@ class App
 
         $beforeUpdateVersion = $this->get_current_db_version();
         $updateToVersion     = $this->ci->config->item('migration_version');
+        if ((int) $beforeUpdateVersion > (int) $updateToVersion) {
+            return ['success' => false, 'message' => 'O banco de dados pertence a uma versão mais recente do CRM. Use os arquivos compatíveis; nenhuma redução de versão foi executada.'];
+        }
 
         $this->ci->load->library('migration', [
             'migration_enabled'     => true,
@@ -458,6 +461,11 @@ class App
                 'success' => false,
                 'message' => $this->ci->migration->error_string(),
             ];
+        }
+
+        // CI3 does not propagate a failed version-marker UPDATE. Confirm storage.
+        if ((int) $this->get_current_db_version() !== (int) $updateToVersion) {
+            return ['success' => false, 'message' => 'Não foi possível confirmar a migration aplicada no banco. Verifique os logs antes de tentar novamente.'];
         }
 
         delete_option('upgraded_from_version');
