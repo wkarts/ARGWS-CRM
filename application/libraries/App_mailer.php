@@ -151,6 +151,17 @@ class App_mailer extends CI_Email
         return $this;
     }
 
+    /** Close the previous account before a queue worker configures another origin. */
+    protected function reset_account_transport(): void
+    {
+        if (is_object($this->phpmailer)) { $this->phpmailer->smtpClose(); }
+        $this->phpmailer = null;
+        if (property_exists($this, '_smtp_connect') && is_resource($this->_smtp_connect)) { fclose($this->_smtp_connect); }
+        if (property_exists($this, '_smtp_connect')) { $this->_smtp_connect = ''; }
+        $this->mailer_engine = 'codeigniter';
+        $this->properties = self::$default_properties;
+    }
+
     // Initialization & Clearing -----------------------------------------------
     public function initialize(array $config = [])
     {

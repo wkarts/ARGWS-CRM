@@ -2,6 +2,10 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+// Direct consumers of the legacy template must not fall back to global company identity.
+require_once APPPATH . 'helpers/invoice_issuer_helper.php';
+invoice_issuer_assert_legacy_pdf_scope(invoice_issuer_snapshot($invoice));
+
 $dimensions = $pdf->getPageDimensions();
 
 $info_right_column = '';

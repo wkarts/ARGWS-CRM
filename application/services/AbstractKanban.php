@@ -157,28 +157,39 @@ abstract class AbstractKanban
         return db_prefix() . $this->table() . '.' . $column;
     }
 
+    /** Validate the complete batch before a caller changes its lead record. */
+    public static function permitsOrder($data, $table, $primaryKey = 'id'): bool
+    {
+        if (!is_array($data) || !$data || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $table) || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $primaryKey)) return false;
+        $ids = [];
+        foreach ($data as $order) {
+            if (!is_array($order) || count($order) !== 2 || !isset($order[0], $order[1])) return false;
+            $id = filter_var($order[0], FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]);
+            $position = filter_var($order[1], FILTER_VALIDATE_INT, ['options'=>['min_range'=>0]]);
+            if ($id === false || $position === false || isset($ids[$id])) return false;
+            $ids[$id] = true;
+        }
+        $ci = &get_instance();
+        $scope = ClientIssuerScope::legacyTableSql($ci->db, db_prefix(), db_prefix().$table);
+        if ($scope === null) return true; // Other adapters retain their own authorization boundary.
+        $query = $ci->db->query('SELECT '.$primaryKey.' FROM '.db_prefix().$table.' WHERE '.$primaryKey.' IN ('.implode(',',array_fill(0,count($ids),'?')).') AND '.$scope, array_keys($ids));
+        return $query !== false && count($query->result_array()) === count($ids);
+    }
+
     public static function updateOrder($data, $column, $table, $status, $statusColumnName = 'status', $primaryKey = 'id')
     {
+        if (!self::permitsOrder($data, $table, $primaryKey) || !is_scalar($status)
+            || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $column) || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $statusColumnName)) return false;
         $ci = &get_instance();
-
-        $batch    = [];
-        $allOrder = [];
-        $allIds   = [];
-
-        foreach ($data as $order) {
-            $allIds[]   = $order[0];
-            $allOrder[] = $order[1];
-            $batch[]    = [
-                $primaryKey => $order[0],
-                $column     => $order[1],
-            ];
-        }
-
-        $max = max($allOrder);
-
-        $ci->db->query('UPDATE ' . db_prefix() . $table . ' SET ' . $column . '=' . $max . '+' . $column . ' WHERE ' . $primaryKey . ' NOT IN (' . implode(',', $allIds) . ') AND ' . $statusColumnName . '=' . $status);
-
-        $ci->db->update_batch($table, $batch, $primaryKey);
+        $ids = array_map(static fn($row)=>(int)$row[0], $data);
+        $positions = array_map(static fn($row)=>(int)$row[1], $data);
+        $slots = implode(',', array_fill(0,count($ids),'?'));
+        $scope = ClientIssuerScope::legacyTableSql($ci->db, db_prefix(), db_prefix().$table) ?? '1=1';
+        $result = $ci->db->query('UPDATE '.db_prefix().$table.' SET '.$column.'=?+'.$column.' WHERE '.$primaryKey.' NOT IN ('.$slots.') AND '.$statusColumnName.'=? AND '.$scope, array_merge([max($positions)],$ids,[$status]));
+        if ($result === false) return false;
+        $cases = []; $values = [];
+        foreach ($data as $row) { $cases[] = 'WHEN ? THEN ?'; $values[] = (int)$row[0]; $values[] = (int)$row[1]; }
+        return $ci->db->query('UPDATE '.db_prefix().$table.' SET '.$column.'=CASE '.$primaryKey.' '.implode(' ',$cases).' ELSE '.$column.' END WHERE '.$primaryKey.' IN ('.$slots.') AND '.$scope, array_merge($values,$ids)) !== false;
     }
 
     abstract protected function table();

@@ -2,7 +2,8 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-$total_client_contacts = total_rows(db_prefix() . 'contacts', ['userid' => $client_id]);
+$total_client_contacts = \app\services\ClientIssuerScope::isLegacyClient($this->ci->db, db_prefix(), $client_id)
+    ? total_rows(db_prefix() . 'contacts', ['userid' => $client_id]) : 0;
 $this->ci->load->model('gdpr_model');
 
 $consentContacts = get_option('gdpr_enable_consent_for_contacts');
@@ -31,7 +32,7 @@ foreach ($custom_fields as $key => $field) {
     array_push($join, 'LEFT JOIN ' . db_prefix() . 'customfieldsvalues as ctable_' . $key . ' ON ' . db_prefix() . 'contacts.id = ctable_' . $key . '.relid AND ctable_' . $key . '.fieldto="' . $field['fieldto'] . '" AND ctable_' . $key . '.fieldid=' . $field['id']);
 }
 
-$where = ['AND userid=' . $this->ci->db->escape_str($client_id)];
+$where = ['AND userid=' . $this->ci->db->escape_str($client_id), 'AND ' . \app\services\ClientIssuerScope::legacySql($this->ci->db, db_prefix(), db_prefix() . 'contacts')];
 
 // Fix for big queries. Some hosting have max_join_limit
 if (count($custom_fields) > 4) {

@@ -1,5 +1,15 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); init_head(); ?>
-<div id="wrapper"><div class="content"><div class="panel_s"><div class="panel-body">
+<?php
+defined('BASEPATH') or exit('No direct script access allowed');
+$bbIsolated = ($isolated ?? false) === true;
+if ($bbIsolated) {
+    $company_page_title = 'Banco do Brasil';
+    require APPPATH . 'views/admin/companies/layout_head.php';
+} else {
+    init_head();
+    echo '<div id="wrapper"><div class="content">';
+}
+?>
+<div class="panel_s"><div class="panel-body">
 <h1 class="tw-text-xl">Banco do Brasil</h1>
 <?php if($storage_error): ?><p class="alert alert-warning">Armazenamento indisponível. Verifique a instalação e tente novamente. Nenhuma conclusão sobre ausência de dados ou autorização pode ser obtida dessa falha.</p><?php endif; ?>
 <p class="alert alert-warning">Integração em desenvolvimento. Os codecs CNAB 240 e 400 possuem testes sintéticos; não há homologação bancária. Emissão por API, transmissão e baixa financeira automática ainda não estão disponíveis.</p>
@@ -18,7 +28,7 @@
 <div role="tabpanel" class="tab-pane" id="bb-account"><h2 class="tw-text-lg">Conta e vínculo</h2>
 <?php if($selected): ?><p>Emitente: <?php echo html_escape($selected['legal_name']); ?>. Documento: <?php echo html_escape($selected['tax_id']); ?>.</p>
 <?php if(!$can_manage): ?><p class="alert alert-info">Cadastro bloqueado: é necessária a permissão Gerenciar do recurso Banco do Brasil na Empresa emitente. O papel global não concede nem veta essa autorização contextual. A fundação cadastral isolada não habilita operações financeiras.</p><?php else: ?>
-<?php echo form_open(admin_url('banco_brasil/register_connection')); ?><input type="hidden" name="csrf_bb" value="<?php echo html_escape($csrf); ?>"><input type="hidden" name="issuer_id" value="<?php echo (int)$selected['id']; ?>">
+<?php echo form_open(admin_url('banco_brasil/register_connection')); ?><input type="hidden" name="csrf_bb" value="<?php echo html_escape($csrf); ?>"><?php if(is_string($company_context_token??null)): ?><input type="hidden" name="_company_context" value="<?php echo html_escape($company_context_token); ?>"><?php endif; ?><?php if(is_string($company_context_token??null)): ?><input type="hidden" name="_company_context" value="<?php echo html_escape($company_context_token); ?>"><?php endif; ?><?php if(is_string($company_context_token??null)): ?><input type="hidden" name="_company_context" value="<?php echo html_escape($company_context_token); ?>"><?php endif; ?><input type="hidden" name="issuer_id" value="<?php echo (int)$selected['id']; ?>">
 <label for="bb_account_id">Agência e conta canônicas (001:00000-X:000000000000-X)</label><input id="bb_account_id" name="account_id" class="form-control" required maxlength="80" pattern="001:[0-9]{5}-[0-9X]:[0-9]{12}-[0-9X]">
 <label for="bb_env">Ambiente</label><select id="bb_env" name="environment" class="form-control" required><option value="">Selecione</option><option value="sandbox">Homologação [sandbox]</option><option value="production">Produção</option></select>
 <label for="bb_agreement">Convênio (7 posições)</label><input id="bb_agreement" name="agreement_number" class="form-control" pattern="[1-9][0-9]{6}" required>
@@ -43,5 +53,5 @@
 <?php foreach($events as $e): ?><tr><td><?php echo html_escape($e['remote_id']); ?></td><td><?php echo html_escape((string)($e['channel']??'Histórico')); ?></td><td><?php echo html_escape($e['occurrence']); ?></td><td><?php echo html_escape((string)$e['paid_amount']); ?></td><td><?php echo html_escape((string)$e['net_amount']); ?></td><td><?php echo html_escape((string)($e['posting_amount']??'')); ?></td><td><?php echo html_escape((string)$e['other_expenses']); ?></td><td><?php echo html_escape((string)$e['other_credits']); ?></td><td><?php echo html_escape((string)$e['occurrence_date']); ?></td><td><?php echo html_escape((string)$e['credit_date']); ?></td><td>Sem baixa; revisar origem e evidência</td></tr><?php endforeach; ?></tbody></table><?php endif; ?>
 </div>
 <div role="tabpanel" class="tab-pane" id="bb-webhook"><h2 class="tw-text-lg">Webhook</h2><p>Indisponível. Não há URL pública de recebimento criada ou registro remoto configurado. A autenticação do transporte será implementada somente após validar o contrato oficial aplicável ao BB.</p></div>
-</div></div></div></div></div>
-<?php init_tail(); ?>
+</div></div></div><?php if(!$bbIsolated): ?></div></div><?php endif; ?>
+<?php if($bbIsolated){require APPPATH . 'views/admin/companies/layout_tail.php';}else{init_tail();} ?>

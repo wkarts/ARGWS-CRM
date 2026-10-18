@@ -10,6 +10,9 @@ defined('BASEPATH') or exit('No direct script access allowed');
  */
 function get_invoice_shortlink($invoice)
 {
+    $scopeCI = &get_instance();
+    if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($scopeCI->db, db_prefix() . 'invoices', $invoice->id)) { throw new \DomainException('invoice_issuer_rollout_blocked'); }
+
     $long_url = site_url("invoice/{$invoice->id}/{$invoice->hash}");
     if (!get_option('bitly_access_token')) {
         return $long_url;
@@ -48,6 +51,9 @@ function get_invoice_shortlink($invoice)
  */
 function get_invoice_total_left_to_pay($id, $invoice_total = null)
 {
+    $scopeCI = &get_instance();
+    if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($scopeCI->db, db_prefix() . 'invoices', $id)) { throw new \DomainException('invoice_issuer_rollout_blocked'); }
+
     $CI = &get_instance();
 
     if ($invoice_total === null) {
@@ -301,11 +307,15 @@ function invoice_status_color_pdf($status_id)
  */
 function update_invoice_status($id, $force_update = false, $prevent_logging = false)
 {
+    $scopeCI = &get_instance();
+    if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($scopeCI->db, db_prefix() . 'invoices', $id)) { return false; }
+
     $CI = &get_instance();
 
     $CI->load->model('invoices_model');
     $invoice = $CI->invoices_model->get($id);
 
+    if (!$invoice) { return false; }
     $original_status = $invoice->status;
 
     if (($original_status == Invoices_model::STATUS_DRAFT && $force_update == false)
@@ -419,9 +429,10 @@ function update_invoice_status($id, $force_update = false, $prevent_logging = fa
 function is_last_invoice($id)
 {
     $CI = &get_instance();
+    \app\services\InvoiceIssuerScope::applyLegacy($CI->db, db_prefix() . 'invoices');
     $CI->db->select('id')->from(db_prefix() . 'invoices')->order_by('id', 'desc')->limit(1);
     $query           = $CI->db->get();
-    $last_invoice_id = $query->row()->id;
+    $last_invoice_id = $query->row()->id ?? null;
     if ($last_invoice_id == $id) {
         return true;
     }
@@ -437,9 +448,10 @@ function is_last_invoice($id)
 function format_invoice_number($id)
 {
     $CI = &get_instance();
+    require_once __DIR__ . '/invoice_issuer_helper.php';
 
     if (!is_object($id)) {
-        $CI->db->select('date,number,prefix,number_format,status')
+        $CI->db->select('*')
             ->from(db_prefix() . 'invoices')
             ->where('id', $id);
 
@@ -452,6 +464,17 @@ function format_invoice_number($id)
 
     if (!$invoice) {
         return '';
+    }
+
+    // Expense exports can have an empty joined invoice. Return no number, not global defaults.
+    if (!isset($invoice->id) || $invoice->id === '' || $invoice->id === 0 || $invoice->id === '0') {
+        return '';
+    }
+
+    $snapshot = invoice_issuer_snapshot($invoice);
+    if ($snapshot !== null) {
+        // A legal number is frozen; global number-format hooks must not rewrite it.
+        return $snapshot['formatted_number'];
     }
 
     if (!class_exists('Invoices_model', false)) {
@@ -478,6 +501,8 @@ function format_invoice_number($id)
 function get_invoice_item_taxes($itemid)
 {
     $CI = &get_instance();
+    $item = $CI->db->where('id', $itemid)->where('rel_type', 'invoice')->get(db_prefix() . 'itemable')->row();
+    if (!$item || !\app\services\InvoiceIssuerScope::isLegacyInvoice($CI->db, db_prefix() . 'invoices', $item->rel_id)) { return []; }
     $CI->db->where('itemid', $itemid);
     $CI->db->where('rel_type', 'invoice');
     $taxes = $CI->db->get(db_prefix() . 'item_tax')->result_array();
@@ -498,6 +523,9 @@ function get_invoice_item_taxes($itemid)
  */
 function is_payment_mode_allowed_for_invoice($id, $invoiceid)
 {
+    $scopeCI = &get_instance();
+    if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($scopeCI->db, db_prefix() . 'invoices', $invoiceid)) { return false; }
+
     $CI = &get_instance();
     $CI->db->select('' . db_prefix() . 'currencies.name as currency_name,allowed_payment_modes')->from(db_prefix() . 'invoices')->join(db_prefix() . 'currencies', '' . db_prefix() . 'currencies.id = ' . db_prefix() . 'invoices.currency', 'left')->where(db_prefix() . 'invoices.id', $invoiceid);
     $invoice       = $CI->db->get()->row();
@@ -541,6 +569,9 @@ function is_payment_mode_allowed_for_invoice($id, $invoiceid)
  */
 function found_invoice_mode($modes, $invoiceid, $offline = true, $show_on_pdf = false)
 {
+    $scopeCI = &get_instance();
+    if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($scopeCI->db, db_prefix() . 'invoices', $invoiceid)) { return false; }
+
     $CI = &get_instance();
     $CI->db->select('' . db_prefix() . 'currencies.name as currency_name,allowed_payment_modes')->from(db_prefix() . 'invoices')->join(db_prefix() . 'currencies', '' . db_prefix() . 'currencies.id = ' . db_prefix() . 'invoices.currency', 'left')->where(db_prefix() . 'invoices.id', $invoiceid);
     $invoice = $CI->db->get()->row();
@@ -596,17 +627,19 @@ function found_invoice_mode($modes, $invoiceid, $offline = true, $show_on_pdf = 
  */
 function get_invoices_percent_by_status($status)
 {
+    $CI = &get_instance();
+    $scopeSql = ' AND ' . \app\services\InvoiceIssuerScope::legacySql($CI->db, db_prefix() . 'invoices');
     $has_permission_view = staff_can('view',  'invoices');
-    $total_invoices      = total_rows(db_prefix() . 'invoices', 'status NOT IN(5)' . (!$has_permission_view ? ' AND (' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')' : ''));
+    $total_invoices      = total_rows(db_prefix() . 'invoices', 'status NOT IN(5)' . $scopeSql . (!$has_permission_view ? ' AND (' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')' : ''));
 
     $data            = [];
     $total_by_status = 0;
     if (!is_numeric($status)) {
         if ($status == 'not_sent') {
-            $total_by_status = total_rows(db_prefix() . 'invoices', 'sent=0 AND status NOT IN(2,5)' . (!$has_permission_view ? ' AND (' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')' : ''));
+            $total_by_status = total_rows(db_prefix() . 'invoices', 'sent=0 AND status NOT IN(2,5)' . $scopeSql . (!$has_permission_view ? ' AND (' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')' : ''));
         }
     } else {
-        $total_by_status = total_rows(db_prefix() . 'invoices', 'status = ' . $status . ' AND status NOT IN(5)' . (!$has_permission_view ? ' AND (' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')' : ''));
+        $total_by_status = total_rows(db_prefix() . 'invoices', 'status = ' . $status . ' AND status NOT IN(5)' . $scopeSql . (!$has_permission_view ? ' AND (' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')' : ''));
     }
     $percent                 = ($total_invoices > 0 ? number_format(($total_by_status * 100) / $total_invoices, 2) : 0);
     $data['total_by_status'] = $total_by_status;
@@ -624,13 +657,14 @@ function staff_has_assigned_invoices($staff_id = '')
 {
     $CI       = &get_instance();
     $staff_id = is_numeric($staff_id) ? $staff_id : get_staff_user_id();
-    $cache    = $CI->app_object_cache->get('staff-total-assigned-invoices-' . $staff_id);
+    $cache    = $CI->app_object_cache->get('staff-total-assigned-legacy-invoices-' . $staff_id);
 
     if (is_numeric($cache)) {
         $result = $cache;
     } else {
-        $result = total_rows(db_prefix() . 'invoices', ['sale_agent' => $staff_id]);
-        $CI->app_object_cache->add('staff-total-assigned-invoices-' . $staff_id, $result);
+        \app\services\InvoiceIssuerScope::applyLegacy($CI->db, db_prefix() . 'invoices');
+        $result = $CI->db->where('sale_agent', $staff_id)->count_all_results(db_prefix() . 'invoices');
+        $CI->app_object_cache->add('staff-total-assigned-legacy-invoices-' . $staff_id, $result);
     }
 
     return $result > 0 ? true : false;
@@ -708,6 +742,10 @@ function user_can_view_invoice($id, $staff_id = false)
 
     $staff_id = $staff_id ? $staff_id : get_staff_user_id();
 
+    if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($CI->db, db_prefix() . 'invoices', $id)) {
+        return false;
+    }
+
     if (has_permission('invoices', $staff_id, 'view')) {
         return true;
     }
@@ -716,6 +754,10 @@ function user_can_view_invoice($id, $staff_id = false)
     $CI->db->from(db_prefix() . 'invoices');
     $CI->db->where('id', $id);
     $invoice = $CI->db->get()->row();
+
+    if (!$invoice) {
+        return false;
+    }
 
     if ((has_permission('invoices', $staff_id, 'view_own') && $invoice->addedfrom == $staff_id)
         || ($invoice->sale_agent == $staff_id && get_option('allow_staff_view_invoices_assigned') == '1')

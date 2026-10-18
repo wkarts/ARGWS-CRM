@@ -227,6 +227,14 @@ function data_tables_init($aColumns, $sIndexColumn, $sTable, $join = [], $where 
         $additionalColumns = ',' . implode(',', $additionalSelect);
     }
 
+    $clientScope = \app\services\ClientIssuerScope::legacyTableSql($CI->db, db_prefix(), $sTable);
+    if ($clientScope !== null) {
+        $legacyConditions = trim(implode(' ', $where));
+        $legacyConditions = preg_replace('/^(?:AND|OR|WHERE)\\s+/i', '', $legacyConditions);
+        $where = ($legacyConditions === '' ? [] : ['AND (' . $legacyConditions . ')']);
+        $where[] = 'AND (' . $clientScope . ')';
+    }
+
     $where = implode(' ', $where);
 
     if ($sWhere == '') {

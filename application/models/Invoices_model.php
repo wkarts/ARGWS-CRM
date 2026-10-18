@@ -2,6 +2,8 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+use app\services\InvoiceIssuerScope;
+
 class Invoices_model extends App_Model
 {
     public const STATUS_UNPAID = 1;
@@ -50,11 +52,12 @@ class Invoices_model extends App_Model
 
     public function get_sale_agents()
     {
-        return $this->db->query('SELECT DISTINCT(sale_agent) as sale_agent, CONCAT(firstname, \' \', lastname) as full_name FROM ' . db_prefix() . 'invoices JOIN ' . db_prefix() . 'staff ON ' . db_prefix() . 'staff.staffid=' . db_prefix() . 'invoices.sale_agent WHERE sale_agent != 0')->result_array();
+        return $this->db->query('SELECT DISTINCT(sale_agent) as sale_agent, CONCAT(firstname, \' \', lastname) as full_name FROM ' . db_prefix() . 'invoices JOIN ' . db_prefix() . 'staff ON ' . db_prefix() . 'staff.staffid=' . db_prefix() . 'invoices.sale_agent WHERE sale_agent != 0 AND ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices'))->result_array();
     }
 
     public function get_unpaid_invoices()
     {
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         if (staff_cant('view', 'invoices')) {
             $where = get_invoices_where_sql_for_staff(get_staff_user_id());
             $this->db->where($where);
@@ -89,10 +92,15 @@ class Invoices_model extends App_Model
      */
     public function get($id = '', $where = [])
     {
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $this->db->select('*, ' . db_prefix() . 'currencies.id as currencyid, ' . db_prefix() . 'invoices.id as id, ' . db_prefix() . 'currencies.name as currency_name');
         $this->db->from(db_prefix() . 'invoices');
         $this->db->join(db_prefix() . 'currencies', '' . db_prefix() . 'currencies.id = ' . db_prefix() . 'invoices.currency', 'left');
-        $this->db->where($where);
+        if ((is_array($where) && count($where) > 0) || (is_string($where) && $where !== '')) {
+            $this->db->group_start();
+            $this->db->where($where);
+            $this->db->group_end();
+        }
         if (is_numeric($id)) {
             $this->db->where(db_prefix() . 'invoices' . '.id', $id);
             $invoice = $this->db->get()->row();
@@ -117,6 +125,9 @@ class Invoices_model extends App_Model
                 }
 
                 $client          = $this->clients_model->get($invoice->clientid);
+                if (!$client && !\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $invoice->clientid)) {
+                    $client = \app\services\ClientIssuerScope::legacyInvoiceIdentity($this->db, db_prefix(), (int) $invoice->id);
+                }
                 $invoice->client = $client;
                 if (!$invoice->client) {
                     $invoice->client          = new stdClass();
@@ -130,7 +141,10 @@ class Invoices_model extends App_Model
                 $invoice->scheduled_email = $this->email_schedule_model->get($id, 'invoice');
             }
 
-            return hooks()->apply_filters('get_invoice', $invoice);
+            $invoice = hooks()->apply_filters('get_invoice', $invoice);
+            if ($invoice && (!is_object($invoice) || (string) ($invoice->id ?? '') !== (string) $id
+                || !InvoiceIssuerScope::legacy()->contains((array) $invoice))) { return null; }
+            return $invoice;
         }
 
         $this->db->order_by('number,YEAR(date)', 'desc');
@@ -142,11 +156,16 @@ class Invoices_model extends App_Model
     {
         $this->db->where('id', $id);
 
-        return $this->db->get(db_prefix() . 'itemable')->row();
+        $this->db->where('rel_type', 'invoice');
+        $item = $this->db->get(db_prefix() . 'itemable')->row();
+        return $item && InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $item->rel_id) ? $item : null;
     }
 
     public function mark_as_cancelled($id)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return false;
+        }
         if (hooks()->apply_filters('before_invoice_cancel_allowed', true, (int) $id) !== true) {
             return false;
         }
@@ -177,6 +196,9 @@ class Invoices_model extends App_Model
 
     public function unmark_as_cancelled($id)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return false;
+        }
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'invoices', [
             'status' => self::STATUS_UNPAID,
@@ -201,7 +223,11 @@ class Invoices_model extends App_Model
      */
     public function get_invoice_recurring_invoices($id)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return [];
+        }
         $this->db->select('id');
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $this->db->where('is_recurring_from', $id);
         $invoices           = $this->db->get(db_prefix() . 'invoices')->result_array();
         $recurring_invoices = [];
@@ -256,6 +282,7 @@ class Invoices_model extends App_Model
             }
             $this->db->select($select);
             $this->db->from(db_prefix() . 'invoices');
+            InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
             $this->db->where('currency', $currencyid);
             // Exclude cancelled invoices
             $this->db->where('status !=', self::STATUS_CANCELLED);
@@ -390,6 +417,9 @@ class Invoices_model extends App_Model
      */
     public function add($data, $expense = false)
     {
+        $data = InvoiceIssuerScope::legacyWriteData($data);
+        InvoiceIssuerScope::assertLegacyReferences($this->db, db_prefix() . 'invoices', $data);
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'clientid', true)) { return false; }
         $data['recurring_due_mode'] = \app\services\RecurringInvoiceDates::normalizeDueMode($data['recurring_due_mode'] ?? 'days');
         $data['prefix'] = get_option('invoice_prefix');
 
@@ -475,6 +505,10 @@ class Invoices_model extends App_Model
         // Quiet scheduler data already uses SQL dates and canonical decimals.
 
 
+        // Revalidate after extension hooks; a hook cannot inject ownership into the legacy writer.
+        $data = InvoiceIssuerScope::legacyWriteData($data);
+        InvoiceIssuerScope::assertLegacyReferences($this->db, db_prefix() . 'invoices', $data);
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'clientid', true)) { return false; }
         $this->db->insert(db_prefix() . 'invoices', $data);
         $insert_id = $this->db->insert_id();
 
@@ -661,6 +695,7 @@ class Invoices_model extends App_Model
     public function check_for_merge_invoice($client_id, $current_invoice = '')
     {
         if ($current_invoice != '') {
+            if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $current_invoice)) { return []; }
             $this->db->select('status');
             $this->db->where('id', $current_invoice);
             $row = $this->db->get(db_prefix() . 'invoices')->row();
@@ -680,6 +715,7 @@ class Invoices_model extends App_Model
         $this->db->select('id');
         $this->db->where('clientid', $client_id);
         $this->db->where('STATUS IN (' . implode(', ', $statuses) . ')');
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         if (!$has_permission_view) {
             $whereUser = $noPermissionsQuery;
             $this->db->where('(' . $whereUser . ')');
@@ -710,6 +746,10 @@ class Invoices_model extends App_Model
      */
     public function copy($id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'invoices', $id)) { return false; }
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return false;
+        }
         $_invoice                     = $this->get($id);
         $new_invoice_data             = [];
         $new_invoice_data['clientid'] = $_invoice->clientid;
@@ -828,7 +868,28 @@ class Invoices_model extends App_Model
      */
     public function update($data, $id)
     {
+        $data = InvoiceIssuerScope::legacyWriteData($data);
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) { return false; }
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'clientid', false) || !\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'invoices', $id)) { return false; }
+        if (class_exists(\app\services\RecurringInvoiceLock::class)) {
+            $current = $this->db->query('SELECT recurring FROM ' . db_prefix() . 'invoices WHERE id = ?', [$id])->row();
+            if (($current && (int) $current->recurring > 0) || !empty($data['recurring'])) {
+                // Snapshot/import and schedule edits share the same lock, including items and hooks.
+                return \app\services\RecurringInvoiceLock::run($this->db, fn () => $this->update_legacy_invoice($data, $id));
+            }
+        }
+        return $this->update_legacy_invoice($data, $id);
+    }
+
+    private function update_legacy_invoice($data, $id)
+    {
+        $data = InvoiceIssuerScope::legacyWriteData($data);
+        InvoiceIssuerScope::assertLegacyReferences($this->db, db_prefix() . 'invoices', $data);
         $original_invoice = $this->get($id);
+        if (!$original_invoice) {
+            return false;
+        }
+        $this->assert_invoice_item_ownership($data['items'] ?? [], $data['removed_items'] ?? [], $id);
         $updated          = false;
 
         // Perhaps draft?
@@ -935,7 +996,8 @@ class Invoices_model extends App_Model
 
         $hook = hooks()->apply_filters('before_update_invoice', $hookData, $id);
 
-        $data              = $hook['data'];
+        $data              = InvoiceIssuerScope::legacyWriteData($hook['data']);
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'clientid', false)) { return false; }
         $items             = $hook['items'];
 	    $newitems         = $hook['new_items'];
         $removed_items     = $hook['removed_items'];
@@ -946,6 +1008,8 @@ class Invoices_model extends App_Model
         $billed_expenses   = $hook['billed_expenses'];
         $billed_tasks      = $hook['billed_tasks'];
 
+        InvoiceIssuerScope::assertLegacyReferences($this->db, db_prefix() . 'invoices', array_merge($data, ['invoices_to_merge' => $invoices_to_merge]));
+        $this->assert_invoice_item_ownership($items, $removed_items, $id);
 
         foreach ($billed_tasks as $tasks) {
             foreach ($tasks as $taskId) {
@@ -1025,8 +1089,19 @@ class Invoices_model extends App_Model
         return $updated;
     }
 
+    private function assert_invoice_item_ownership(array $items, array $removedItems, $invoiceId): void
+    {
+        foreach (array_merge(array_column($items, 'itemid'), $removedItems) as $itemId) {
+            $item = $this->get_invoice_item($itemId);
+            if (!$item || (string) $item->rel_id !== (string) $invoiceId) {
+                throw new \DomainException('invoice_item_scope_invalid');
+            }
+        }
+    }
+
     protected function remove_items($items, $id)
     {
+        $this->assert_invoice_item_ownership([], $items, $id);
         $updated = false;
         foreach ($items as $itemId) {
             $original_item = $this->get_invoice_item($itemId);
@@ -1062,6 +1137,7 @@ class Invoices_model extends App_Model
 
     protected function merge_invoices($invoices, $id, $cancel)
     {
+        InvoiceIssuerScope::assertLegacyReferences($this->db, db_prefix() . 'invoices', ['invoices_to_merge' => array_merge([$id], $invoices)]);
         foreach ($invoices as $mergeId) {
             $merged          = false;
             $originalInvoice = $this->get($mergeId);
@@ -1156,6 +1232,7 @@ class Invoices_model extends App_Model
 
     protected function save_items($items, $id)
     {
+        $this->assert_invoice_item_ownership($items, [], $id);
         $updated = false;
         foreach ($items as $item) {
             $original_item = $this->get_invoice_item($item['itemid']);
@@ -1250,10 +1327,11 @@ class Invoices_model extends App_Model
         $this->db->where('rel_type', 'invoice');
         $result = $this->db->get(db_prefix() . 'files');
         if (is_numeric($id)) {
-            return $result->row();
+            $attachment = $result->row();
+            return $attachment && InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $attachment->rel_id) ? $attachment : null;
         }
 
-        return $result->result_array();
+        return InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $invoiceid) ? $result->result_array() : [];
     }
 
     /**
@@ -1297,6 +1375,9 @@ class Invoices_model extends App_Model
      */
     public function delete($id, $simpleDelete = false)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return false;
+        }
         if (get_option('delete_only_on_last_invoice') == 1 &&
             $simpleDelete == false &&
             !is_last_invoice($id)) {
@@ -1421,6 +1502,7 @@ class Invoices_model extends App_Model
             $this->db->delete(db_prefix() . 'sales_activity');
 
             $this->db->where('is_recurring_from', $id);
+            InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
             $this->db->update(db_prefix() . 'invoices', [
         'is_recurring_from' => null,
     ]);
@@ -1476,6 +1558,9 @@ class Invoices_model extends App_Model
      */
     public function set_invoice_sent($id, $manually = false, $emails_sent = [], $is_status_updated = false)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return false;
+        }
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'invoices', [
             'sent'     => 1,
@@ -1527,6 +1612,9 @@ class Invoices_model extends App_Model
      */
     public function send_invoice_overdue_notice($id)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return false;
+        }
         $invoice        = $this->get($id);
         $invoice_number = format_invoice_number($invoice->id);
         set_mailing_constant();
@@ -1611,6 +1699,9 @@ class Invoices_model extends App_Model
      */
     public function send_invoice_due_notice($id)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return false;
+        }
         $invoice        = $this->get($id);
         $invoice_number = format_invoice_number($invoice->id);
 
@@ -1695,6 +1786,9 @@ class Invoices_model extends App_Model
      */
     public function send_invoice_to_client($id, $template_name = '', $attachpdf = true, $cc = '', $manually = false, $attachStatement = [])
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return false;
+        }
         $originalNumber = null;
 
         if ($isDraft = $this->is_draft($id)) {
@@ -1848,6 +1942,9 @@ class Invoices_model extends App_Model
      */
     public function is_draft($id)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return false;
+        }
         return total_rows('invoices', ['id' => $id, 'status' => self::STATUS_DRAFT]) === 1;
     }
 
@@ -1858,6 +1955,9 @@ class Invoices_model extends App_Model
      */
     public function get_invoice_activity($id)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return [];
+        }
         $this->db->where('rel_id', $id);
         $this->db->where('rel_type', 'invoice');
         $this->db->order_by('date', 'asc');
@@ -1872,6 +1972,9 @@ class Invoices_model extends App_Model
      */
     public function log_invoice_activity($id, $description = '', $client = false, $additional_data = '')
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return false;
+        }
         if (DEFINED('CRON')) {
             $staffid   = '[CRON]';
             $full_name = '[CRON]';
@@ -1903,7 +2006,7 @@ class Invoices_model extends App_Model
      */
     public function get_invoices_years()
     {
-        return $this->db->query('SELECT DISTINCT(YEAR(date)) as year FROM ' . db_prefix() . 'invoices ORDER BY year DESC')->result_array();
+        return $this->db->query('SELECT DISTINCT(YEAR(date)) as year FROM ' . db_prefix() . 'invoices WHERE ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices') . ' ORDER BY year DESC')->result_array();
     }
 
     /**
@@ -1952,6 +2055,9 @@ class Invoices_model extends App_Model
      */
     public function change_invoice_number_when_status_draft($id)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return false;
+        }
         $this->db->select('number')->where('id', $id);
         $invoice = $this->db->get('invoices')->row();
 
@@ -1967,6 +2073,9 @@ class Invoices_model extends App_Model
 
     public function save_formatted_number($id) 
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) {
+            return false;
+        }
         $formattedNumber = format_invoice_number($id);
 
         $this->db->where('id', $id);

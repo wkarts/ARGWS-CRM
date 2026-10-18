@@ -25,7 +25,7 @@ return App_table::find('clients')
 
         $sIndexColumn = 'userid';
         $sTable       = db_prefix() . 'clients';
-        $where        = [];
+        $where        = ['AND ' . \app\services\ClientIssuerScope::legacySql($this->ci->db, db_prefix(), db_prefix() . 'clients')];
 
         if ($filtersWhere = $this->getWhereFromRules()) {
             $where[] = $filtersWhere;

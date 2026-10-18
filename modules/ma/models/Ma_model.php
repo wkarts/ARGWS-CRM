@@ -5751,6 +5751,8 @@ class Ma_model extends App_Model
             $where .= ' AND '.db_prefix().'clients.userid not in ('.$client_exception_where.')';
         }
 
+        $where = '(' . $where . ') AND (' . \app\services\ClientIssuerScope::legacySql($this->db, db_prefix(), db_prefix().'clients') . ')';
+
         if($return_type == 'clients'){
             $this->db->select('*, '.db_prefix() . 'clients.userid as id');
             $this->db->where($where);
@@ -5796,6 +5798,8 @@ class Ma_model extends App_Model
         }else{
           $where = '1=0';
         }
+
+        $where = '(' . $where . ') AND (' . \app\services\ClientIssuerScope::legacySql($this->db, db_prefix(), db_prefix().'clients') . ')';
 
         if($return_type == 'clients'){
             $this->db->where($where);
@@ -7299,6 +7303,8 @@ class Ma_model extends App_Model
         }else{
           $where = '('.db_prefix().'clients.userid in ('.$where_lead_segment.'))';
         }
+
+        $where = '(' . $where . ') AND (' . \app\services\ClientIssuerScope::legacySql($this->db, db_prefix(), db_prefix().'clients') . ')';
 
         if($return_type == 'clients'){
             $this->db->select('*, '.db_prefix().'clients.userid as id');

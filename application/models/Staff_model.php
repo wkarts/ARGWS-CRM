@@ -1,11 +1,29 @@
 <?php
 
+use app\services\InvoiceIssuerScope;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Staff_model extends App_Model
 {
+    private function issuer_installation_master($id): bool
+    {
+        require_once APPPATH . 'services/issuers/IssuerResourceAccess.php';
+        return (new IssuerResourceAccess($this->db, db_prefix()))->isInstallationMaster($id);
+    }
+
+    /** Staff deletion cannot transfer financial attribution across ownership scopes. */
+    private function has_named_invoice_reference($staffId): bool
+    {
+        if (!InvoiceIssuerScope::schemaReady($this->db, db_prefix() . 'invoices')) { return false; }
+        $result = $this->db->query('SELECT id FROM ' . db_prefix() . 'invoices WHERE issuer_id IS NOT NULL AND (addedfrom=? OR sale_agent=? OR id IN (SELECT invoice_id FROM ' . db_prefix() . 'credits WHERE staff_id=?)) LIMIT 1', [$staffId, $staffId, $staffId]);
+        return $result === false || $result->row() !== null;
+
+    }
+
     public function delete($id, $transfer_data_to)
     {
+        if ($this->issuer_installation_master($id)) { throw new DomainException('issuer_master_protected'); }
         if (!is_numeric($transfer_data_to)) {
             return false;
         }
@@ -14,10 +32,12 @@ class Staff_model extends App_Model
             return false;
         }
 
+        if ($this->has_named_invoice_reference($id)) { return false; }
         hooks()->do_action('before_delete_staff_member', [
             'id'               => $id,
             'transfer_data_to' => $transfer_data_to,
         ]);
+        if ($this->has_named_invoice_reference($id)) { return false; }
 
         $name           = get_staff_full_name($id);
         $transferred_to = get_staff_full_name($transfer_data_to);
@@ -32,11 +52,13 @@ class Staff_model extends App_Model
             'sale_agent' => $transfer_data_to,
         ]);
 
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $this->db->where('addedfrom', $id);
         $this->db->update(db_prefix() . 'invoices', [
             'addedfrom' => $transfer_data_to,
         ]);
 
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $this->db->where('sale_agent', $id);
         $this->db->update(db_prefix() . 'invoices', [
             'sale_agent' => $transfer_data_to,
@@ -77,6 +99,9 @@ class Staff_model extends App_Model
             'addedfrom' => $transfer_data_to,
         ]);
 
+        if (InvoiceIssuerScope::schemaReady($this->db, db_prefix() . 'invoices')) {
+            $this->db->where('invoice_id IN (SELECT id FROM ' . db_prefix() . 'invoices WHERE ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices') . ')', null, false);
+        }
         $this->db->where('staff_id', $id);
         $this->db->update(db_prefix() . 'credits', [
             'staff_id' => $transfer_data_to,
@@ -542,6 +567,12 @@ class Staff_model extends App_Model
             }
         }
 
+        if ($this->issuer_installation_master($id)
+            && ((array_key_exists('admin', $data) && (string) $data['admin'] !== '1')
+                || (array_key_exists('active', $data) && (string) $data['active'] !== '1'))) {
+            return ['cant_remove_installation_master' => true];
+        }
+
         $affectedRows = 0;
         if (isset($data['departments'])) {
             $departments = $data['departments'];
@@ -681,7 +712,14 @@ class Staff_model extends App_Model
 
     public function update_profile($data, $id)
     {
+        // The self-profile form is not a staff administration writer.
+        $profileFields = ['firstname','lastname','email','phonenumber','default_language','direction','facebook','linkedin','skype','email_signature'];
+        foreach (['admin','administrator','active','staffid','role','is_not_staff','permissions'] as $protected) {
+            if (array_key_exists($protected, $data)) { throw new DomainException('issuer_staff_profile_field_denied'); }
+        }
+        $data = array_intersect_key($data, array_flip($profileFields));
         $data = hooks()->apply_filters('before_staff_update_profile', $data, $id);
+        $data = array_intersect_key($data, array_flip($profileFields));
 
         if (empty($data['password'])) {
             unset($data['password']);
@@ -758,7 +796,9 @@ class Staff_model extends App_Model
      */
     public function change_staff_status($id, $status)
     {
+        if ((string) $status !== '1' && $this->issuer_installation_master($id)) { throw new DomainException('issuer_master_protected'); }
         $status = hooks()->apply_filters('before_staff_status_change', $status, $id);
+        if ((string) $status !== '1' && $this->issuer_installation_master($id)) { throw new DomainException('issuer_master_protected'); }
 
         $this->db->where('staffid', $id);
         $this->db->update(db_prefix() . 'staff', [

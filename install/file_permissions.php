@@ -208,6 +208,7 @@ if (!is_writable('../temp')) {
 } else {
     echo '<div class="text-center">';
     echo '<form action="" method="post" accept-charset="utf-8">';
+    echo '<input type="hidden" name="installer_csrf" value="' . htmlspecialchars($this->csrfToken, ENT_QUOTES, 'UTF-8') . '">';
     echo '<input type="hidden" name="permissions_success" value="true">';
     echo '<div class="text-right">';
     echo '<button type="submit" class="btn btn-primary">Configurar banco de dados</button>';

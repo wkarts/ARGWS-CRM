@@ -12,8 +12,8 @@ function show_error($message,$status) { throw new HttpStop($message,$status); }
 function set_alert($type,$message) { $GLOBALS['alert'] = [$type,$message]; }
 function redirect($path) { throw new RedirectStop($path); }
 function log_message($level,$message) { $GLOBALS['log'] = $message; }
-require_once __DIR__ . '/../modules/issuers/services/IssuerPolicy.php';
-require_once __DIR__ . '/../modules/issuers/controllers/Issuers.php';
+require_once __DIR__ . '/../application/services/issuers/IssuerPolicy.php';
+require_once __DIR__ . '/../application/controllers/admin/Issuers.php';
 
 class ControllerInput
 {
@@ -58,25 +58,16 @@ foreach ([['GET',[],$token,405],['POST',[],null,403],['POST',['issuers_csrf'=>'b
     check([], $registry->calls, 'no mutation before method/token validation');
 }
 $base = ['issuers_csrf'=>$token,'issuer_id'=>'11'];
-foreach ([
-    ['default',[],'setDefault',[11,7]],
-    ['member',['staff_id'=>'9','permissions'=>['view']],'assignMember',[11,'9',['view'],7]],
-    ['remove_member',['staff_id'=>'9'],'removeMember',[11,'9',7]],
-    ['register_client',['client_id'=>'101'],'registerClient',[11,'101',7]],
-    ['share_client',['client_id'=>'101','targets'=>['12']],'shareClient',[11,'101',['12'],7]],
-    ['share_client',['client_id'=>'101'],'shareClient',[11,'101',[],7]],
-] as [$action,$extra,$expectedMethod,$expectedArguments]) {
-    [$controller,$registry] = controller(array_merge($base,['action'=>$action],$extra),'POST',$token);
-    try { $controller->save(); } catch (RedirectStop $stop) { check('/admin/issuers/index/11',$stop->getMessage(),'redirect existing issuer'); }
-    check([[$expectedMethod,$expectedArguments]],$registry->calls,'actor always from session');
-}
-foreach ([['action'=>'unknown'],['action'=>'share_client','targets'=>'12'],['action'=>'member','permissions'=>'admin'],['action'=>'default','issuer_id'=>'0']] as $bad) {
+[$controller,$registry] = controller(array_merge($base,['action'=>'issuer','actor_id'=>'999','legal_name'=>'Synthetic','tax_id'=>'12345678000195','active'=>'1']),'POST',$token);
+try {$controller->save();} catch (RedirectStop $stop) {check('/admin/issuers/index/11',$stop->getMessage(),'redirect saved company');}
+check([['saveIssuer',[7,['legal_name'=>'Synthetic','tax_id'=>'12345678000195','active'=>'1','profile'=>[]],'11']]],$registry->calls,'company actor always from authenticated session');
+foreach ([['action'=>'register_client','client_id'=>'101'],['action'=>'share_client','client_id'=>'101','targets'=>['12']],['action'=>'member'],['action'=>'remove_member'],['action'=>'default'],['action'=>'unknown'],['action'=>'share_client','targets'=>'12'],['action'=>'member','permissions'=>'admin'],['action'=>'default','issuer_id'=>'0']] as $bad) {
     [$controller,$registry] = controller(array_merge($base,$bad),'POST',$token);
     try { $controller->save(); } catch (RedirectStop $stop) {}
     check([],$registry->calls,'malformed action never dispatches');
     check('danger',$GLOBALS['alert'][0],'malformed action reported');
 }
-[$controller,$registry] = controller(array_merge($base,['action'=>'default','actor_id'=>'1']),'POST',$token);
+[$controller,$registry] = controller(array_merge($base,['action'=>'issuer','actor_id'=>'1']),'POST',$token);
 $registry->failure = 'issuer_access_denied';
 try { $controller->save(); } catch (RedirectStop $stop) {}
 check(['danger','issuer_access_denied'],$GLOBALS['alert'],'service authorization honored');

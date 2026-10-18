@@ -1,6 +1,8 @@
 <?php
 
 use app\services\utilities\Arr;
+use app\services\InvoiceIssuerScope;
+use app\services\ClientIssuerScope;
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
@@ -25,13 +27,16 @@ class Clients_model extends App_Model
      */
     public function get($id = '', $where = [])
     {
+        ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix() . 'clients');
         $this->db->select(implode(',', prefixed_table_fields_array(db_prefix() . 'clients')) . ',' . get_sql_select_client_company());
 
         $this->db->join(db_prefix() . 'countries', '' . db_prefix() . 'countries.country_id = ' . db_prefix() . 'clients.country', 'left');
         $this->db->join(db_prefix() . 'contacts', '' . db_prefix() . 'contacts.userid = ' . db_prefix() . 'clients.userid AND is_primary = 1', 'left');
 
         if ((is_array($where) && count($where) > 0) || (is_string($where) && $where != '')) {
+            $this->db->group_start();
             $this->db->where($where);
+            $this->db->group_end();
         }
 
         if (is_numeric($id)) {
@@ -61,7 +66,12 @@ class Clients_model extends App_Model
      */
     public function get_contacts($customer_id = '', $where = ['active' => 1], $whereIn = [])
     {
-        $this->db->where($where);
+        ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix() . 'contacts');
+        if (!empty($where)) {
+            $this->db->group_start();
+            $this->db->where($where);
+            $this->db->group_end();
+        }
         if ($customer_id != '') {
             $this->db->where('userid', $customer_id);
         }
@@ -84,6 +94,7 @@ class Clients_model extends App_Model
      */
     public function get_contact($id)
     {
+        ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix() . 'contacts');
         $this->db->where('id', $id);
 
         return $this->db->get(db_prefix() . 'contacts')->row();
@@ -100,10 +111,11 @@ class Clients_model extends App_Model
      */
     public function get_contact_by_email($email)
     {
+        ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix() . 'contacts');
         $this->db->where('email', $email);
         $this->db->limit(1);
 
-        return $this->db->get('contacts')->row();
+        return $this->db->get(db_prefix() . 'contacts')->row();
     }
 
     /**
@@ -229,10 +241,13 @@ class Clients_model extends App_Model
      */
     public function update($data, $id, $client_request = false)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return false; }
         $updated = false;
         $data    = $this->check_zero_columns($data);
 
         $data = hooks()->apply_filters('before_client_updated', $data, $id);
+        // Identity and ownership are never changed by the legacy profile endpoint.
+        unset($data['userid'], $data['issuer_id'], $data['owner_issuer_id']);
 
         $update_all_other_transactions = (bool) Arr::pull($data, 'update_all_other_transactions');
         $update_credit_notes           = (bool) Arr::pull($data, 'update_credit_notes');
@@ -265,6 +280,8 @@ class Clients_model extends App_Model
             ];
 
             if ($update_all_other_transactions) {
+                // Legacy customer maintenance must not rewrite another issuer's document.
+                InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
                 // Update all invoices except paid ones.
                 $this->db->where('clientid', $id)
                 ->where('status !=', 2)
@@ -327,6 +344,7 @@ class Clients_model extends App_Model
     {
         $affectedRows = 0;
         $contact      = $this->get_contact($id);
+        if (!$contact) { return false; }
         if (empty($data['password'])) {
             unset($data['password']);
         } else {
@@ -364,6 +382,7 @@ class Clients_model extends App_Model
         }
 
         $data = hooks()->apply_filters('before_update_contact', $data, $id);
+        unset($data['id'], $data['userid']);
 
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'contacts', $data);
@@ -455,6 +474,7 @@ class Clients_model extends App_Model
      */
     public function add_contact($data, $customer_id, $not_manual_request = false)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { return false; }
         $send_set_password_email = isset($data['send_set_password_email']) ? true : false;
 
         if (isset($data['custom_fields'])) {
@@ -525,6 +545,8 @@ class Clients_model extends App_Model
         $data['email'] = trim($data['email']);
 
         $data = hooks()->apply_filters('before_create_contact', $data);
+        unset($data['id']);
+        $data['userid'] = $customer_id;
 
         $this->db->insert(db_prefix() . 'contacts', $data);
         $contact_id = $this->db->insert_id();
@@ -629,6 +651,7 @@ class Clients_model extends App_Model
      */
     public function add_contact_via_customers_area($data, $customer_id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { return false; }
         $send_welcome_email      = isset($data['donotsendwelcomeemail']) && $data['donotsendwelcomeemail'] ? false : true;
         $send_set_password_email = isset($data['send_set_password_email']) && $data['send_set_password_email'] ? true : false;
         $custom_fields           = $data['custom_fields'];
@@ -651,6 +674,8 @@ class Clients_model extends App_Model
         ]);
 
         $data = hooks()->apply_filters('before_create_contact', $data);
+        unset($data['id']);
+        $data['userid'] = $customer_id;
         $this->db->insert(db_prefix() . 'contacts', $data);
 
         $contact_id = $this->db->insert_id();
@@ -703,6 +728,7 @@ class Clients_model extends App_Model
      */
     public function update_company_details($data, $id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return false; }
         $affectedRows = 0;
         if (isset($data['custom_fields'])) {
             $custom_fields = $data['custom_fields'];
@@ -734,6 +760,7 @@ class Clients_model extends App_Model
         }
 
         $data = hooks()->apply_filters('customer_update_company_info', $data, $id);
+        unset($data['userid'], $data['issuer_id'], $data['owner_issuer_id']);
 
         $this->db->where('userid', $id);
         $this->db->update(db_prefix() . 'clients', $data);
@@ -757,6 +784,7 @@ class Clients_model extends App_Model
      */
     public function get_admins($id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return []; }
         $this->db->where('customer_id', $id);
 
         return $this->db->get(db_prefix() . 'customer_admins')->result_array();
@@ -768,7 +796,8 @@ class Clients_model extends App_Model
      */
     public function get_customers_admin_unique_ids()
     {
-        return $this->db->query('SELECT DISTINCT(staff_id) FROM ' . db_prefix() . 'customer_admins')->result_array();
+        return $this->db->query('SELECT DISTINCT(staff_id) FROM ' . db_prefix() . 'customer_admins WHERE '
+            . ClientIssuerScope::legacySql($this->db, db_prefix(), db_prefix() . 'customer_admins', 'customer_id'))->result_array();
     }
 
     /**
@@ -779,6 +808,7 @@ class Clients_model extends App_Model
      */
     public function assign_admins($data, $id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return false; }
         $affectedRows = 0;
 
         if (count($data) == 0) {
@@ -833,6 +863,11 @@ class Clients_model extends App_Model
      */
     public function delete($id)
     {
+        // GDPR/deletion is a global customer action here; do not detach another issuer's records.
+        if (InvoiceIssuerScope::schemaReady($this->db, db_prefix() . 'invoices')
+            && $this->db->query('SELECT id FROM ' . db_prefix() . 'invoices WHERE clientid = ? AND issuer_id IS NOT NULL LIMIT 1', [$id])->row()) {
+            return ['referenced' => true];
+        }
         $affectedRows = 0;
 
         if (!is_gdpr() && is_reference_in_table('clientid', db_prefix() . 'invoices', $id)) {
@@ -884,6 +919,7 @@ class Clients_model extends App_Model
             if (is_gdpr() && get_option('gdpr_on_forgotten_remove_invoices_credit_notes') == '1') {
                 $this->load->model('invoices_model');
                 $this->db->where('clientid', $id);
+                InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
                 $invoices = $this->db->get(db_prefix() . 'invoices')->result_array();
                 foreach ($invoices as $invoice) {
                     $this->invoices_model->delete($invoice['id'], true);
@@ -897,6 +933,7 @@ class Clients_model extends App_Model
                 }
             } elseif (is_gdpr()) {
                 $this->db->where('clientid', $id);
+                InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
                 $this->db->update(db_prefix() . 'invoices', ['deleted_customer_name' => $company]);
 
                 $this->db->where('clientid', $id);
@@ -910,6 +947,7 @@ class Clients_model extends App_Model
             ]);
 
             $this->db->where('clientid', $id);
+            InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
             $this->db->update(db_prefix() . 'invoices', [
                 'clientid'                 => 0,
                 'recurring'                => 0,
@@ -1043,10 +1081,9 @@ class Clients_model extends App_Model
      */
     public function delete_contact($id)
     {
+        $result = $this->get_contact($id);
+        if (!$result) { return false; }
         hooks()->do_action('before_delete_contact', $id);
-
-        $this->db->where('id', $id);
-        $result      = $this->db->get(db_prefix() . 'contacts')->row();
         $customer_id = $result->userid;
 
         $last_activity = get_last_system_activity_id();
@@ -1224,6 +1261,7 @@ class Clients_model extends App_Model
      */
     public function get_customer_default_currency($id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return false; }
         $this->db->select('default_currency');
         $this->db->where('userid', $id);
         $result = $this->db->get(db_prefix() . 'clients')->row();
@@ -1241,6 +1279,7 @@ class Clients_model extends App_Model
      */
     public function get_customer_billing_and_shipping_details($id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return []; }
         $this->db->select('billing_street,billing_city,billing_state,billing_zip,billing_country,shipping_street,shipping_city,shipping_state,shipping_zip,shipping_country');
         $this->db->from(db_prefix() . 'clients');
         $this->db->where('userid', $id);
@@ -1262,7 +1301,12 @@ class Clients_model extends App_Model
      */
     public function get_customer_files($id, $where = [])
     {
-        $this->db->where($where);
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return []; }
+        if (!empty($where)) {
+            $this->db->group_start();
+            $this->db->where($where);
+            $this->db->group_end();
+        }
         $this->db->where('rel_id', $id);
         $this->db->where('rel_type', 'customer');
         $this->db->order_by('dateadded', 'desc');
@@ -1277,6 +1321,8 @@ class Clients_model extends App_Model
      */
     public function delete_attachment($id)
     {
+        ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix() . 'files', 'rel_id');
+        $this->db->where('rel_type', 'customer');
         $this->db->where('id', $id);
         $attachment = $this->db->get(db_prefix() . 'files')->row();
         $deleted    = false;
@@ -1322,6 +1368,7 @@ class Clients_model extends App_Model
      */
     public function change_contact_status($id, $status)
     {
+        if (!$this->get_contact($id)) { return false; }
         $status = hooks()->apply_filters('change_contact_status', $status, $id);
 
         $this->db->where('id', $id);
@@ -1350,6 +1397,7 @@ class Clients_model extends App_Model
      */
     public function change_client_status($id, $status)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return false; }
         $this->db->where('userid', $id);
         $this->db->update('clients', [
             'active' => $status,
@@ -1378,9 +1426,9 @@ class Clients_model extends App_Model
      */
     public function change_contact_password($id, $oldPassword, $newPassword)
     {
-        // Get current password
-        $this->db->where('id', $id);
-        $client = $this->db->get(db_prefix() . 'contacts')->row();
+        // Never hash or inspect credentials for a customer outside this boundary.
+        $client = $this->get_contact($id);
+        if (!$client) { return false; }
 
         if (!app_hasher()->CheckPassword($oldPassword, $client->password)) {
             return [
@@ -1410,6 +1458,7 @@ class Clients_model extends App_Model
      */
     public function get_customer_groups($id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return []; }
         return $this->client_groups_model->get_customer_groups($id);
     }
 
@@ -1460,6 +1509,7 @@ class Clients_model extends App_Model
     */
     public function vault_entry_create($data, $customer_id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { return false; }
         return $this->client_vault_entries_model->create($data, $customer_id);
     }
 
@@ -1471,6 +1521,7 @@ class Clients_model extends App_Model
      */
     public function vault_entry_update($id, $data)
     {
+        if (!$this->get_vault_entry($id)) { return false; }
         return $this->client_vault_entries_model->update($id, $data);
     }
 
@@ -1481,6 +1532,7 @@ class Clients_model extends App_Model
      */
     public function vault_entry_delete($id)
     {
+        if (!$this->get_vault_entry($id)) { return false; }
         return $this->client_vault_entries_model->delete($id);
     }
 
@@ -1492,6 +1544,7 @@ class Clients_model extends App_Model
      */
     public function get_vault_entries($customer_id, $where = [])
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { return []; }
         return $this->client_vault_entries_model->get_by_customer_id($customer_id, $where);
     }
 
@@ -1502,7 +1555,8 @@ class Clients_model extends App_Model
      */
     public function get_vault_entry($id)
     {
-        return $this->client_vault_entries_model->get($id);
+        $entry = $this->client_vault_entries_model->get($id);
+        return $entry && ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $entry->customer_id) ? $entry : null;
     }
 
     /**
@@ -1514,6 +1568,7 @@ class Clients_model extends App_Model
     */
     public function get_statement($customer_id, $from, $to)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { return []; }
         return $this->statement_model->get_statement($customer_id, $from, $to);
     }
 
@@ -1528,6 +1583,7 @@ class Clients_model extends App_Model
     */
     public function send_statement_to_email($customer_id, $send_to, $from, $to, $cc = '')
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { return false; }
         return $this->statement_model->send_statement_to_email($customer_id, $send_to, $from, $to, $cc);
     }
 
@@ -1538,6 +1594,7 @@ class Clients_model extends App_Model
      */
     public function require_confirmation($client_id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $client_id)) { return false; }
         $contact_id = get_primary_contact_user_id($client_id);
         $this->db->where('userid', $client_id);
         $this->db->update(db_prefix() . 'clients', ['active' => 0, 'registration_confirmed' => 0]);
@@ -1550,6 +1607,7 @@ class Clients_model extends App_Model
 
     public function confirm_registration($client_id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $client_id)) { return false; }
         $contact_id = get_primary_contact_user_id($client_id);
         $this->db->where('userid', $client_id);
         $this->db->update(db_prefix() . 'clients', ['active' => 1, 'registration_confirmed' => 1]);
@@ -1589,6 +1647,7 @@ class Clients_model extends App_Model
     public function mark_email_as_verified($id)
     {
         $contact = $this->get_contact($id);
+        if (!$contact) { return false; }
 
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'contacts', [
@@ -1611,11 +1670,13 @@ class Clients_model extends App_Model
 
     public function get_clients_distinct_countries()
     {
-        return $this->db->query('SELECT DISTINCT(country_id), short_name FROM ' . db_prefix() . 'clients JOIN ' . db_prefix() . 'countries ON ' . db_prefix() . 'countries.country_id=' . db_prefix() . 'clients.country')->result_array();
+        return $this->db->query('SELECT DISTINCT(country_id), short_name FROM ' . db_prefix() . 'clients JOIN ' . db_prefix() . 'countries ON ' . db_prefix() . 'countries.country_id=' . db_prefix() . 'clients.country WHERE '
+            . ClientIssuerScope::legacySql($this->db, db_prefix(), db_prefix() . 'clients'))->result_array();
     }
 
     public function send_notification_customer_profile_file_uploaded_to_responsible_staff($contact_id, $customer_id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { return false; }
         $staff         = $this->get_staff_members_that_can_access_customer($customer_id);
         $merge_fields  = $this->app_merge_fields->format_feature('client_merge_fields', $customer_id, $contact_id);
         $notifiedUsers = [];
@@ -1639,6 +1700,7 @@ class Clients_model extends App_Model
 
     public function get_staff_members_that_can_access_customer($id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return []; }
         $id = $this->db->escape_str($id);
 
         return $this->db->query('SELECT * FROM ' . db_prefix() . 'staff
@@ -1677,6 +1739,7 @@ class Clients_model extends App_Model
 
     public function delete_contact_profile_image($id)
     {
+        if (!$this->get_contact($id)) { return false; }
         hooks()->do_action('before_remove_contact_profile_image');
         if (file_exists(get_upload_path_by_type('contact_profile_images') . $id)) {
             delete_dir(get_upload_path_by_type('contact_profile_images') . $id);
@@ -1700,7 +1763,8 @@ class Clients_model extends App_Model
         $this->db->where('id', $projectId);
         $project = $this->db->get()->row();
 
-        if (!in_array($project->contact_notification, [1, 2])) {
+        if (!$project || !ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $project->clientid)
+            || !in_array($project->contact_notification, [1, 2])) {
             return [];
         }
 

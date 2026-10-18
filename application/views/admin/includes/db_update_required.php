@@ -3,6 +3,7 @@
 <html lang="pt-BR">
 
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" id="roboto-css"
         href="<?= site_url('assets/plugins/roboto/roboto.css'); ?>">
     <style>
@@ -27,7 +28,8 @@
             margin: 0 auto;
             display: block;
             background: #f0f0f0;
-            width: 700px;
+            width: min(700px, calc(100% - 40px));
+            box-sizing: border-box;
             border: 1px solid #e4e4e4;
             padding: 20px;
             border-radius: 4px;
@@ -84,6 +86,9 @@
 <body>
     <div class="wrapper">
         <h1>A atualização do banco de dados é necessária</h1>
+        <?php if (!empty($databaseUpgradeError)) { ?>
+        <p role="alert" style="color:#b91c1c"><?= html_escape($databaseUpgradeError); ?></p>
+        <?php } ?>
         <p>Atualize o banco de dados antes de continuar. A <b>versão incluída nos arquivos é
                 <?= wordwrap($this->config->item('migration_version'), 1, '.', true); ?></b>
             e a <b>versão aplicada no banco é
@@ -94,12 +99,13 @@
             <div style="text-align:center">
                 <?= form_open($this->config->site_url($this->uri->uri_string()), ['id' => 'upgrade_db_form']); ?>
                 <input type="hidden" name="upgrade_database" value="true">
+                <input type="hidden" name="admin_database_upgrade_csrf" value="<?= html_escape($databaseUpgradeToken); ?>">
                 <button type="submit" id="submit_btn" onclick="upgradeDB(); return false;" class="upgrade_now">Atualizar agora</button>
                 <?= form_close(); ?>
             </div>
             <br />
             <p style="text-align:center;">
-                <small class="note">Esta tela aparece quando os arquivos do CRM incluem uma migration mais recente que a aplicada no banco. Faça a atualização manual usando o pacote da mesma versão.</small>
+                <small class="note">Esta tela aparece quando há uma atualização pendente ou incompleta no banco de dados do CRM. Faça a atualização manual usando o pacote da mesma versão.</small>
             </p>
             <?php
      if ($copyData = get_last_upgrade_copy_data()) {
@@ -130,6 +136,10 @@
         </div>
     </div>
     <script>
+        window.addEventListener('pageshow', function () {
+            document.getElementById('submit_btn').disabled = false;
+            document.getElementById('submit_btn').textContent = 'Atualizar agora';
+        });
         function upgradeDB() {
             document.getElementById('submit_btn').disabled = true;
             document.getElementById('submit_btn').innerHTML = "Aguarde...";

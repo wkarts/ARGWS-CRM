@@ -120,6 +120,9 @@ function add_notification($values)
 function total_rows($table, $where = [])
 {
     $CI = & get_instance();
+    $clientScope = \app\services\ClientIssuerScope::legacyTableSql($CI->db, db_prefix(), $table);
+    $grouped = $clientScope !== null && !empty($where);
+    if ($grouped) { $CI->db->group_start(); }
     if (is_array($where)) {
         if (sizeof($where) > 0) {
             $CI->db->where($where);
@@ -128,6 +131,8 @@ function total_rows($table, $where = [])
         $CI->db->where($where);
     }
 
+    if ($grouped) { $CI->db->group_end(); }
+    if ($clientScope !== null) { $CI->db->where($clientScope, null, false); }
     return $CI->db->count_all_results($table);
 }
 /**
@@ -143,6 +148,9 @@ function sum_from_table($table, $attr = [])
     }
 
     $CI = & get_instance();
+    $clientScope = \app\services\ClientIssuerScope::legacyTableSql($CI->db, db_prefix(), $table);
+    $grouped = $clientScope !== null && !empty($attr['where']) && is_array($attr['where']);
+    if ($grouped) { $CI->db->group_start(); }
     if (isset($attr['where']) && is_array($attr['where'])) {
         $i = 0;
         foreach ($attr['where'] as $key => $val) {
@@ -154,6 +162,8 @@ function sum_from_table($table, $attr = [])
         }
         $CI->db->where($attr['where']);
     }
+    if ($grouped) { $CI->db->group_end(); }
+    if ($clientScope !== null) { $CI->db->where($clientScope, null, false); }
     $CI->db->select_sum($attr['field']);
     $CI->db->from($table);
     $result = $CI->db->get()->row();

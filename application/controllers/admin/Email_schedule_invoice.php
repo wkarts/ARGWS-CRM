@@ -1,5 +1,7 @@
 <?php
 
+use app\services\InvoiceIssuerScope;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Email_schedule_invoice extends AdminController
@@ -13,6 +15,7 @@ class Email_schedule_invoice extends AdminController
 
     public function create($id)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) { show_404(); }
         if (staff_cant('create', 'invoices')) {
             ajax_access_denied();
         }
@@ -43,6 +46,7 @@ class Email_schedule_invoice extends AdminController
     public function edit($id)
     {
         $schedule = $this->email_schedule_model->getById($id);
+        if (!$schedule || $schedule->rel_type !== 'invoice') { show_404(); }
         $this->load->model('invoices_model');
         $data = $this->scheduleData($schedule->rel_id);
         if (staff_can('edit', 'invoices') || $data['invoice']->addedfrom == get_staff_user_id()) {
@@ -73,6 +77,7 @@ class Email_schedule_invoice extends AdminController
     protected function scheduleData($id)
     {
         $invoice = $this->invoices_model->get($id);
+        if (!$invoice) { show_404(); }
 
         $data['invoice'] = $invoice;
 

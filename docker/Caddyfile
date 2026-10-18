@@ -13,6 +13,12 @@
         @private path /application/* /system/* /temp/* /data/* /.env /.env.*
         respond @private 404
 
+        # Apache denies this folder via .htaccess; Caddy must enforce it explicitly.
+        @private_invoice_uploads path /uploads/invoices /uploads/invoices/ /uploads/invoices/*
+        respond @private_invoice_uploads 404
+        @private_customer_uploads path /uploads/clients /uploads/clients/ /uploads/clients/*
+        respond @private_customer_uploads 404
+
         @module_php path_regexp module_php ^/modules/.*\.php$
         respond @module_php 404
 
