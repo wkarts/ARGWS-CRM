@@ -11,6 +11,7 @@ final class CompanyRequestScope
     private static $owner = null;
     private static $release = null;
     private static bool $isolated = false;
+    private static bool $nativeUpgradeOnly = false;
     private static bool $prepared = false;
     private static ?string $submittedToken = null;
 
@@ -53,8 +54,14 @@ final class CompanyRequestScope
         self::$isolated = ($native && $class === 'company_context' && in_array($method, ['index', 'select'], true))
             || $companyScopedBbRoute;
         if (!IssuerCore::ready($ci->db, db_prefix())) {
-            if (self::$isolated || $ci->session->userdata(CompanyContext::SELECTION) !== null) { self::deny($ci, 'company_context_core_unavailable', 503); }
-            return; // Preserve the native, authenticated installation/upgrade route.
+            // Only native, non-module admin routes may enter the recovery gate.
+            // Company selection and every module route remain unavailable until
+            // the native migration repairs the company core.
+            if (self::$isolated || !$native) {
+                self::deny($ci, 'company_context_core_unavailable', 503);
+            }
+            self::$nativeUpgradeOnly = true;
+            return;
         }
         // Autologin stays on Authentication. Never hydrate a requested company page before identity exists.
         if (!$ci->session->userdata('staff_logged_in')) {
@@ -98,6 +105,15 @@ final class CompanyRequestScope
     }
 
     public static function isolated(): bool { return self::$isolated; }
+    public static function nativeUpgradeOnly(): bool
+    {
+        return self::$prepared && self::$nativeUpgradeOnly;
+    }
+    /** Server-owned attestation; never derive this from a request flag. */
+    public static function nativeUpgradeOnlyFor($ci): bool
+    {
+        return self::$prepared && self::$owner === $ci && self::$nativeUpgradeOnly;
+    }
     /** Server-owned attestation; never derive this from a request flag. */
     public static function sealedFor($ci): bool
     {
@@ -124,6 +140,7 @@ final class CompanyRequestScope
         self::$context = null;
         self::$owner = null;
         self::$isolated = false;
+        self::$nativeUpgradeOnly = false;
         self::$prepared = false;
         self::$submittedToken = null;
     }

@@ -13,6 +13,8 @@ class AdminController extends App_Controller
         if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::sealedFor($this)) {
             return;
         }
+        $nativeUpgradeOnly = class_exists('CompanyRequestScope', false)
+            && CompanyRequestScope::nativeUpgradeOnlyFor($this);
 
         if (!is_staff_logged_in()) {
             if (strpos(current_full_url(), get_admin_uri() . '/authentication') === false) {
@@ -58,7 +60,9 @@ class AdminController extends App_Controller
                     show_error('Solicitação inválida. Atualize a página e tente novamente.', 403);
                     return;
                 }
-                hooks()->do_action('pre_upgrade_database');
+                if (!$nativeUpgradeOnly) {
+                    hooks()->do_action('pre_upgrade_database');
+                }
                 $result = $this->app->upgrade_database();
                 if (!is_array($result) || !empty($result['success'])) {
                     return;
@@ -69,6 +73,11 @@ class AdminController extends App_Controller
             }
             $databaseUpgradeToken = AdminDatabaseUpgrade::token($this->session);
             $this->renderDatabaseUpgrade($databaseUpgradeToken, $databaseUpgradeError ?? null);
+            return;
+        }
+
+        if ($nativeUpgradeOnly) {
+            show_error('O núcleo de empresas continua indisponível. A área administrativa permanece bloqueada até a validação da migration.', 503);
             return;
         }
 

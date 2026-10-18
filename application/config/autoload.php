@@ -11,6 +11,20 @@ if (CompanyRequestScope::isolated()) {
         'language' => [], 'drivers' => [], 'libraries' => [], 'model' => []];
     return;
 }
+if (CompanyRequestScope::nativeUpgradeOnly()) {
+    // A damaged company core admits only the authenticated native upgrade gate.
+    // Do not hydrate modules, gateways, email transports, or application models.
+    $autoload = [
+        'packages' => [],
+        'config' => [],
+        'helper' => ['url', 'form', 'settings', 'admin', 'staff', 'general', 'files'],
+        'language' => [],
+        'drivers' => [],
+        'libraries' => ['database', 'app_object_cache', 'app'],
+        'model' => [],
+    ];
+    return;
+}
 
 /*
 | -------------------------------------------------------------------

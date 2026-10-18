@@ -36,6 +36,27 @@ async function shell(page) {
   assert(await page.locator('link[rel=stylesheet]').count() > 3, 'native stylesheet bundle is loaded');
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#header')).position), 'relative', 'native header stays in document flow');
 }
+
+async function waitForUpgradeForm(page) {
+  try {
+    await page.locator('#upgrade_db_form').waitFor({ state: 'visible' });
+  } catch (error) {
+    const currentUrl = new URL(page.url());
+    currentUrl.search = '';
+    currentUrl.hash = '';
+    const body = await page.locator('body').innerText().catch(() => '');
+    const diagnostic = {
+      url: currentUrl.toString(),
+      title: await page.title().catch(() => ''),
+      body: body.replace(/\s+/g, ' ').slice(0, 400),
+      migrationVersion: sql('SELECT version FROM tblmigrations LIMIT 1'),
+      adminState: sql("SELECT CONCAT(admin, ':', active) FROM tblstaff WHERE email='admin-ci@example.invalid' LIMIT 1"),
+    };
+    console.error('Upgrade browser diagnostic: ' + JSON.stringify(diagnostic));
+    throw error;
+  }
+}
+
 (async () => {
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
@@ -47,22 +68,7 @@ async function shell(page) {
   try {
     await login(page);
     if (process.env.ISSUERS_BROWSER_MODE === 'upgrade') {
-      try {
-        await page.locator('#upgrade_db_form').waitFor({ state: 'visible' });
-      } catch (error) {
-        const currentUrl = new URL(page.url());
-        currentUrl.search = '';
-        currentUrl.hash = '';
-        const diagnostic = {
-          url: currentUrl.toString(),
-          title: await page.title(),
-          body: (await page.locator('body').innerText()).replace(/\\s+/g, ' ').slice(0, 400),
-          migrationVersion: sql('SELECT version FROM tblmigrations LIMIT 1'),
-          adminState: sql("SELECT CONCAT(admin, ':', active) FROM tblstaff WHERE email='admin-ci@example.invalid' LIMIT 1"),
-        };
-        console.error('Upgrade browser diagnostic: ' + JSON.stringify(diagnostic));
-        throw error;
-      }
+      await waitForUpgradeForm(page);
       assert(await page.locator('input[name=admin_database_upgrade_csrf]').getAttribute('value'));
       const before = sql('SELECT version FROM tblmigrations LIMIT 1');
       const denied = await context.request.post(url + '/admin', { form: { upgrade_database: 'true' } });
@@ -93,7 +99,12 @@ async function shell(page) {
       let restored = false;
       try {
         let response = await page.goto(url + '/admin');
-        await page.locator('#upgrade_db_form').waitFor();
+        assert.equal(response.status(), 200, 'native recovery screen is available for an authenticated administrator');
+        await waitForUpgradeForm(page);
+        const companyResponse = await context.request.get(url + '/admin/company_context');
+        assert.equal(companyResponse.status(), 503, 'company selection remains blocked while the native core is invalid');
+        const bancoBrasilResponse = await context.request.get(url + '/admin/banco_brasil');
+        assert(bancoBrasilResponse.status() >= 400, 'Banco do Brasil module stays unavailable during native recovery');
         assert.equal(sql("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_resource_permissions' AND COLUMN_NAME='invalid_schema'"), '1', 'GET never repairs schema');
         await page.screenshot({ path: output + '/native-upgrade-desktop.png', fullPage: true });
         await page.setViewportSize({ width: 390, height: 844 });
