@@ -532,7 +532,9 @@ class App
             $safeCode = preg_match('/^(?:core|company|issuer)_[a-z_]{1,64}$/D', $errorCode)
                 ? $errorCode
                 : 'unclassified';
-            log_message('error', 'Falha na atualização nativa [' . $safeCode . ']: ' . get_class($error));
+            $safeMessage = 'Falha na atualização nativa [' . $safeCode . ']: ' . get_class($error);
+            error_log($safeMessage);
+            log_message('error', $safeMessage);
             return ['success' => false, 'message' => 'Não foi possível concluir a atualização do CRM. Os dados foram preservados. Verifique os logs e tente novamente.'];
         } finally {
             foreach ($databaseFlags as $flag => $value) {
