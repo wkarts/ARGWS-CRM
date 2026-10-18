@@ -4,7 +4,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: Stripe Ideal V2
 Description: Stripe Ideal Payment module
-Version: 1.0.0
+Version: 1.0.1
 Requires at least: 3.1.6
 */
 
@@ -17,6 +17,7 @@ register_activation_hook(IDEAL_MODULE_NAME, 'idealModuleActivation');
 
 function idealModuleActivation()
 {
+    require __DIR__ . '/install.php';
     add_option('ideal_module_stripe_webhook_id');
     add_option('ideal_module_stripe_webhook_signing_secret');
 }

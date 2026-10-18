@@ -9,6 +9,16 @@
                         <h4 class="no-margin">Recursos</h4>
                         <p class="text-muted mtop10">Ative ou desative os recursos desta instalação. Desativar um recurso não exclui tabelas nem dados salvos.</p>
                         <hr />
+                        <?php if (!empty($ideal_maintenance)) { ?>
+                        <div class="alert alert-warning">
+                            <strong>Manutenção de versão do iDEAL instalado</strong>
+                            <p>Este recurso continua oculto. A atualização local registra a versão do código, sem ativar o módulo, alterar o ambiente ou modificar webhooks e cobranças.</p>
+                            <?= form_open(admin_url('modules/upgrade_database/ideal')); ?>
+                                <input type="hidden" name="ideal_module_migration_csrf" value="<?= html_escape($ideal_migration_csrf); ?>">
+                                <button type="submit" class="btn btn-warning btn-sm">Atualizar versão local do iDEAL</button>
+                            <?= form_close(); ?>
+                        </div>
+                        <?php } ?>
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -61,6 +71,9 @@
                                             <td class="text-right">
                                                 <?php if ($needsDb) { ?>
                                                     <?= form_open(admin_url('modules/upgrade_database/' . rawurlencode($systemName)), ['class' => 'tw-inline-block']); ?>
+                                                        <?php if ($systemName === 'ideal') { ?>
+                                                        <input type="hidden" name="ideal_module_migration_csrf" value="<?= html_escape($ideal_migration_csrf); ?>">
+                                                        <?php } ?>
                                                         <button type="submit" class="btn btn-warning btn-sm">Atualizar banco</button>
                                                     <?= form_close(); ?>
                                                 <?php } elseif ($isActive) { ?>

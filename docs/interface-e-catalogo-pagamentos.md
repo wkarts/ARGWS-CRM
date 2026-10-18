@@ -49,7 +49,7 @@ Não edite configuração real durante revisão de código. Faça backup e teste
 
 O módulo `modules/ideal`, com gateway `Ideal_gateway`, é separado do gateway nativo `stripe_ideal`. Sua implementação também usa Stripe internamente, mas tem catálogo e identificadores próprios.
 
-`CRM_ENABLE_IDEAL=false` é o padrão. Nesse estado, o recurso e sua configuração ficam ocultos, sua ativação/gestão administrativa é bloqueada e novas faturas não o selecionam. Módulos anteriormente ativos continuam carregados para atender pagamentos legados, sem alteração de estado no banco ou exclusão de webhooks.
+`CRM_ENABLE_IDEAL=false` é o padrão. Nesse estado, o recurso e sua configuração ficam ocultos, sua ativação e gestão de pagamentos/webhooks são bloqueadas e novas faturas não o selecionam. Módulos anteriormente ativos continuam carregados para atender pagamentos legados, sem alteração de estado no banco ou exclusão de webhooks.
 
 Para disponibilizá-lo, configure `CRM_ENABLE_IDEAL=true` no ambiente do processo PHP. Os exemplos de Compose de raiz, desenvolvimento e produção já repassam a variável. Recrie o serviço web após alterar o `.env` do Compose. Em PHP-FPM/hospedagem tradicional, exponha a variável ao processo PHP conforme o mecanismo do provedor.
 
@@ -67,8 +67,18 @@ Em homologação, conferir login/painel/cliente/formulários com preferências a
 
 ## Publicação e rollback
 
-Não há migration, alteração de schema ou nova dependência. Publique os arquivos revisados e os templates de Compose, preservando configurações/volumes locais. A flag é desabilitada por padrão. Para rollback, reverta o commit e recrie o serviço com a imagem/código anterior. As opções, históricos e IDs legados foram preservados; não é necessário desfazer alterações no banco.
+Há uma migration NOOP de versão do módulo iDEAL, sem alteração de schema ou nova dependência. Publique os arquivos revisados e os templates de Compose, preservando configurações/volumes locais, e execute a manutenção nativa do módulo quando indicada. A flag é desabilitada por padrão. Para rollback, reverta o commit e recrie o serviço com a imagem/código anterior. As opções, históricos e IDs legados foram preservados; não há schema a desfazer. O marcador de versão do módulo deve ser revisado pelo fluxo nativo antes de qualquer rollback; esta manutenção não executa downgrade automático.
 
 ## Destino do menu Suporte
 
 Configurações > Suporte reutiliza o mesmo destino já configurável do atalho de suporte: `support_contact_channel` e campos locais WhatsApp/e-mail/site, com fallback nas variáveis `CRM_SUPPORT_WHATSAPP`, `CRM_SUPPORT_EMAIL` e `CRM_SUPPORT_SITE_URL`. Sem destino válido, o link não é exibido. Não há fallback para o GitHub pessoal/repositório. O botão de versões do painel e o link de distribuição na conclusão do instalador também não são exibidos. URLs internas de versões/atualização, metadados técnicos de SDK e licenças permanecem inalterados. Nenhum endereço real foi configurado ou contato enviado.
+
+## Versão do módulo iDEAL e manutenção local
+
+A correção do módulo `ideal` sobe sua versão de **1.0.0 para 1.0.1**, com `modules/ideal/migrations/101_version_101.php`, classe `Migration_Version_101 extends App_module_migration` e `up()` explicitamente NOOP. Não há migration 100 artificial nem mudança de schema, cobrança, segredo ou cadastro remoto. Os gateways nativos filtrados são core; `modules/api` e outros módulos não foram alterados nesta PR.
+
+A ativação chama `install.php`, que executa o migrador nativo e confirma `tblmodules.installed_version`. Como o core registra o header antes do hook, a ativação reaplica a etapa aditiva a partir da versão histórica 1.0.0 somente quando o marcador já coincide com o header. Uma versão anterior conserva seu caminho nativo de upgrade; versões incompatíveis ou superiores são recusadas. Falha do marcador interrompe a ativação. Atualizações existentes usam `App_module_migration::to_latest()` e verificam o marcador persistido antes de informar sucesso.
+
+Com `CRM_ENABLE_IDEAL=false`, a configuração, ativação e novas seleções continuam ocultas. Um administrador pode fazer somente a manutenção versionada de um iDEAL já instalado, inclusive desativado, sem habilitar o recurso: Recursos mostra uma ação de manutenção enquanto houver versão anterior. Ela exige POST e token CSRF próprio, também quando o CSRF global estiver desligado. Não permite downgrade; não altera o estado ativo nem a variável de ambiente. Os callbacks e registros legados continuam preservados.
+
+Publicar os arquivos não executa a migration: a atualização local precisa ser solicitada pelo administrador. `tests/ideal_module_migrations.php` executa o migrador nativo real com armazenamento determinístico para instalação, upgrade, replay, erro de tracking, manutenção oculta, POST/CSRF e negação a não administradores.
