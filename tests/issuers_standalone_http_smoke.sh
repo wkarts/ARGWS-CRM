@@ -22,6 +22,13 @@ docker cp "$work/install" "$legacy:/app/install"
 cat > "$work/router.php" <<'PHP'
 <?php
 $root = '/app';
+register_shutdown_function(static function () {
+    $redirectHeaders = array_values(array_filter(headers_list(), static function ($header) {
+        return stripos($header, 'Refresh:') === 0 || stripos($header, 'Location:') === 0;
+    }));
+    error_log('[issuer smoke router] shutdown status=' . (string) http_response_code()
+        . ' headers=' . implode('|', $redirectHeaders));
+});
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $requestPath = is_string($requestPath) && $requestPath !== '' ? $requestPath : '/';
 $file = $root . $requestPath;
@@ -47,6 +54,11 @@ PHP
 docker cp "$work/router.php" "$legacy:/tmp/issuer-router.php"
 cat > "$work/my_hooks.php" <<'PHP'
 <?php
+$hook['pre_system'][] = static function () {
+    error_log('[issuer smoke hook] pre_system uri=' . ($_SERVER['REQUEST_URI'] ?? '')
+        . ' path_info=' . ($_SERVER['PATH_INFO'] ?? '')
+        . ' script=' . ($_SERVER['SCRIPT_NAME'] ?? ''));
+};
 $hook['pre_controller'][] = function () {
     if (strpos((string) ($_SERVER['REQUEST_URI'] ?? ''), '/argws_provisioning/') === 0) {
         $ci = &get_instance();
