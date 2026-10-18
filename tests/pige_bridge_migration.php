@@ -4,7 +4,7 @@ define('APP_MODULES_PATH',dirname(__DIR__).'/modules/');
 function db_prefix(){return 'custom_';}
 class MigrationResult {public $rows;function __construct($rows){$this->rows=$rows;}function row(){return isset($this->rows[0])?(object)$this->rows[0]:null;}function result_array(){return $this->rows;}}
 class MigrationDb {
- public $version='0.1.1';public $exists=false;public $broken=false;public $failCreate=false;public $creates=0;public $badType=false;
+ public $version='1.0.1';public $exists=false;public $broken=false;public $failCreate=false;public $creates=0;public $badType=false;
  function where($a,$b){return $this;}function select($a){return $this;}
  function get($t){if($t!=='custom_modules')throw new Exception('prefix');return new MigrationResult([['installed_version'=>$this->version]]);}
  function update($t,$row){$this->version=$row['installed_version'];return true;}
@@ -16,16 +16,17 @@ class MigrationDb {
   return new MigrationResult([['ENGINE'=>'InnoDB']]);
  }
 }
-$CI=(object)['db'=>new MigrationDb(),'load'=>new class{function dbforge(){}},'lang'=>new class{function load($a){}function line($a){return $a;}},'app_modules'=>new class{function get($a){return ['headers'=>['version'=>'0.1.1']];}}];
+$CI=(object)['db'=>new MigrationDb(),'load'=>new class{function dbforge(){}},'lang'=>new class{function load($a){}function line($a){return $a;}},'app_modules'=>new class{function get($a){return ['headers'=>['version'=>'1.0.1']];}}];
 function &get_instance(){global $CI;return $CI;}
 require dirname(__DIR__).'/application/libraries/App_module_migration.php';
 $checks=0;function check($v){global $checks;$checks++;if(!$v)throw new Exception('migration check '.$checks);}
-require dirname(__DIR__).'/modules/pige_bridge/install.php';check($CI->db->exists&&$CI->db->version==='0.1.1');
-require dirname(__DIR__).'/modules/pige_bridge/install.php';check($CI->db->creates===1&&$CI->db->version==='0.1.1');
-$CI->db->version='0.1.0';check((new App_module_migration('pige_bridge'))->to_latest()==='011');check($CI->db->version==='0.1.1');
+require dirname(__DIR__).'/modules/pige_bridge/install.php';check($CI->db->exists&&$CI->db->version==='1.0.1');
+require dirname(__DIR__).'/modules/pige_bridge/install.php';check($CI->db->creates===1&&$CI->db->version==='1.0.1');
+foreach (['0.1.0','0.1.1','1.0.0'] as $old) {$CI->db->version=$old;check((string)(new App_module_migration('pige_bridge'))->to_latest()==='101');check($CI->db->version==='1.0.1');}
+$CI->db->version='0.1.0';check((string)(new App_module_migration('pige_bridge'))->to_latest()==='101');check($CI->db->version==='1.0.1');
 check((new App_module_migration('pige_bridge'))->to_latest()===true);
 $CI->db->broken=true;$CI->db->version='0.1.0';$failed=false;try{(new App_module_migration('pige_bridge'))->to_latest();}catch(RuntimeException $e){$failed=true;}check($failed&&$CI->db->version==='0.1.0');
 $CI->db->broken=false;$CI->db->badType=true;$failed=false;try{(new App_module_migration('pige_bridge'))->to_latest();}catch(RuntimeException $e){$failed=true;}check($failed&&$CI->db->version==='0.1.0');
-$CI->db=new MigrationDb();$CI->db->failCreate=true;$failed=false;try{require dirname(__DIR__).'/modules/pige_bridge/install.php';}catch(RuntimeException $e){$failed=true;}check($failed&&$CI->db->version==='0.1.0');
+$CI->db=new MigrationDb();$CI->db->failCreate=true;$failed=false;try{require dirname(__DIR__).'/modules/pige_bridge/install.php';}catch(RuntimeException $e){$failed=true;}check($failed&&$CI->db->version==='1.0.0');
 check(!str_contains(file_get_contents(dirname(__DIR__).'/modules/pige_bridge/install.php'),'CREATE TABLE'));
 echo "PIGE bridge native migration: {$checks} checks passed (DB metadata adapter; real framework runner)\n";

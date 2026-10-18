@@ -25,13 +25,17 @@ function &get_instance(){global $CI;return $CI;}
 if($CI->db->table_exists('pige_test_pige_bridge_requests'))throw new RuntimeException('Test table exists; use a fresh disposable database.');
 $CI->load=new class {public function dbforge(){}};
 $CI->lang=new class {public function load($v){} public function line($v){return $v;}};
-$CI->app_modules=new class {public function get($v){return ['headers'=>['version'=>'0.1.1']];}};
+$CI->app_modules=new class {public function get($v){return ['headers'=>['version'=>'1.0.1']];}};
 $CI->db->query('CREATE TABLE pige_test_modules (module_name VARCHAR(64) PRIMARY KEY, installed_version VARCHAR(20), active INT NOT NULL DEFAULT 0) ENGINE=InnoDB');
-$CI->db->query("INSERT INTO pige_test_modules VALUES ('pige_bridge','0.1.1',0)");
+$CI->db->query("INSERT INTO pige_test_modules VALUES ('pige_bridge','1.0.1',0)");
 require __DIR__.'/../modules/pige_bridge/install.php';
 require __DIR__.'/../modules/pige_bridge/install.php'; // repeatable install
-if($CI->db->where('module_name','pige_bridge')->get('pige_test_modules')->row()->installed_version!=='0.1.1')throw new RuntimeException('Native version tracking required');
+if($CI->db->where('module_name','pige_bridge')->get('pige_test_modules')->row()->installed_version!=='1.0.1')throw new RuntimeException('Native version tracking required');
 $CI->db->where('module_name','pige_bridge')->update('pige_test_modules',['installed_version'=>'0.1.0']);
+foreach (['0.1.0','0.1.1','1.0.0'] as $old) {
+$CI->db->where('module_name','pige_bridge')->update('pige_test_modules',['installed_version'=>$old]);
+if ((new App_module_migration('pige_bridge'))->to_latest()===false || $CI->db->where('module_name','pige_bridge')->get('pige_test_modules')->row()->installed_version!=='1.0.1') throw new RuntimeException('Earlier draft upgrade failed');
+}
 $migration=new App_module_migration('pige_bridge');
 if($migration->to_latest()===false)throw new RuntimeException('Native upgrade failed');
 if($migration->to_latest()!==true)throw new RuntimeException('Upgrade must be idempotent');
