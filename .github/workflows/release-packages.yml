@@ -1,16 +1,9 @@
-name: Release ARGWS CRM - SemVer, FrankenPHP e pacotes
+name: Release ARGWS CRM - versão nativa, FrankenPHP e pacotes
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      force_bump:
-        description: Sobrescrever o incremento automático
-        required: false
-        type: choice
-        options: [auto, patch, minor, major]
-        default: auto
 
 permissions:
   actions: write
@@ -55,7 +48,7 @@ jobs:
           python3 -m unittest tests/test_release_version.py tests/test_package_release.py tests/test_package_deploy.py tests/test_docker_provisioning.py
 
   plan-version:
-    name: Planejar SemVer da promoção
+    name: Planejar versão nativa da promoção
     needs: validate
     runs-on: ubuntu-latest
     outputs:
@@ -68,51 +61,17 @@ jobs:
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
-      - name: Obter título e rótulos da PR integrada
-        id: pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          pr_json="$(gh api "/repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" 2>/dev/null || printf '[]')"
-          title="$(jq -r '.[0].title // empty' <<<"$pr_json")"
-          labels="$(jq -r '[.[0].labels[]?.name] | join(",")' <<<"$pr_json")"
-          if [[ -z "$title" ]]; then
-            title="$(gh api "/repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA" --jq '.commit.message | split("\n")[0]')"
-          fi
-          printf 'title=%s\n' "$title" >> "$GITHUB_OUTPUT"
-          printf 'labels=%s\n' "$labels" >> "$GITHUB_OUTPUT"
-      - name: Calcular versão inicial ou incremento SemVer
+      - name: Validar versão aprovada e selecionar base por migration
         id: plan
-        env:
-          PR_TITLE: ${{ steps.pr.outputs.title }}
-          PR_LABELS: ${{ steps.pr.outputs.labels }}
-          FORCE_BUMP: ${{ inputs.force_bump || 'auto' }}
         shell: bash
         run: |
           set -euo pipefail
           git fetch --tags origin
-          latest="$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
-          baseline="$(tr -d '[:space:]' < VERSION)"
-          resume_args=()
-          if git rev-parse --verify --quiet "refs/tags/v$baseline" >/dev/null; then
-            tagged_sha="$(git rev-list -n 1 "v$baseline")"
-            if git merge-base --is-ancestor "$GITHUB_SHA" "$tagged_sha"; then
-              resume_args+=(--resume)
-            fi
-          fi
-          plan="$(python3 scripts/plan-release-version.py \
-            --latest "$latest" --baseline "$baseline" --labels "$PR_LABELS" \
-            --title "$PR_TITLE" --force "$FORCE_BUMP" "${resume_args[@]}")"
+          plan="$(python3 scripts/plan-release-version.py --head "$GITHUB_SHA")"
           version="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["version"])' "$plan")"
           bump="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["bump"])' "$plan")"
           previous="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1]).get("previous") or "")' "$plan")"
           tag="v$version"
-          if [[ "${#resume_args[@]}" -eq 0 ]] && git rev-parse --verify --quiet "refs/tags/$tag" >/dev/null; then
-            echo "A tag $tag já existe fora de uma retomada válida." >&2
-            exit 1
-          fi
           {
             echo "version=$version"
             echo "tag=$tag"
@@ -122,7 +81,7 @@ jobs:
           {
             echo "### Release ARGWS CRM planejada: $tag"
             echo
-            echo "Incremento: **$bump**. Base SemVer: ${latest:-nenhuma}."
+            echo "Modo: **$bump**. Base nativa verificada: ${previous:-nenhuma}."
             echo "Commit promovido: $GITHUB_SHA."
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -175,7 +134,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           ref: ${{ github.sha }}
-      - name: Materializar SemVer no contexto do container
+      - name: Materializar versão nativa no contexto do container
         env:
           RELEASE_VERSION: ${{ needs.plan-version.outputs.version }}
           RELEASE_TAG: ${{ needs.plan-version.outputs.tag }}
@@ -242,7 +201,7 @@ jobs:
           pattern: digest-release-*
           path: /tmp/digests
           merge-multiple: true
-      - name: Aplicar versão ao pacote e validar SemVer
+      - name: Aplicar versão ao pacote e validar migration
         run: |
           set -euo pipefail
           python3 scripts/apply-release-version.py "$RELEASE_VERSION"
@@ -252,12 +211,9 @@ jobs:
         run: |
           set -euo pipefail
           git fetch --tags origin
-          mapfile -t tags < <(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V)
-          previous_tag=""
-          for tag in "${tags[@]}"; do
-            if [[ "$tag" == "$RELEASE_TAG" ]]; then break; fi
-            previous_tag="$tag"
-          done
+          # Reuse the exact base selected and verified by the planner, including legacy aliases.
+          previous_tag="${{ needs.plan-version.outputs.previous }}"
+          if [[ -n "$previous_tag" ]]; then previous_tag="v$previous_tag"; fi
           mkdir -p "$RUNNER_TEMP/argws-crm-base"
           if [[ -n "$previous_tag" ]]; then
             base_ref="$previous_tag"
@@ -396,13 +352,14 @@ jobs:
           )
           notes="docs/releases/$RELEASE_VERSION.md"
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --latest
             gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
           elif [[ -f "$notes" ]]; then
             gh release create "$RELEASE_TAG" "${assets[@]}" \
-              --target "$RELEASE_SHA" --title "ARGWS CRM $RELEASE_TAG" --notes-file "$notes"
+              --target "$RELEASE_SHA" --title "ARGWS CRM $RELEASE_TAG" --latest --notes-file "$notes"
           else
             gh release create "$RELEASE_TAG" "${assets[@]}" \
-              --target "$RELEASE_SHA" --title "ARGWS CRM $RELEASE_TAG" --generate-notes
+              --target "$RELEASE_SHA" --title "ARGWS CRM $RELEASE_TAG" --latest --generate-notes
           fi
       - name: Construir e anexar deployer à mesma release
         env:
@@ -452,33 +409,3 @@ jobs:
               exit 1
             }
           done
-      - name: Atualizar metadados de produto em develop sem sobrescrever código
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          synchronized=false
-          for attempt in 1 2 3; do
-            git fetch origin +refs/heads/develop:refs/remotes/origin/develop
-            git checkout -B release-sync refs/remotes/origin/develop
-            python3 scripts/apply-release-version.py "$RELEASE_VERSION"
-            git add VERSION application/config/constants.php application/config/migration.php application/migrations compose.yaml deploy/production/compose.yaml deploy/production/.env.example container.env.example
-            if git diff --cached --quiet; then
-              synchronized=true
-              break
-            fi
-            git -c core.hooksPath=/dev/null commit -m "chore(release): sync develop with $RELEASE_TAG [skip release]"
-            if git push origin HEAD:refs/heads/develop; then
-              synchronized=true
-              break
-            fi
-            echo "develop avançou em paralelo; tentando novamente sobre o HEAD atual."
-          done
-          [[ "$synchronized" == true ]] || {
-            echo "Não foi possível sincronizar os metadados sem sobrescrever develop." >&2
-            exit 1
-          }
-          gh workflow run container-publish.yml --ref develop

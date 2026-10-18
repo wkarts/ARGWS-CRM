@@ -12,6 +12,9 @@ SPEC.loader.exec_module(PACKAGE)
 class PackagePrivacyRulesTest(unittest.TestCase):
     def test_secrets_and_per_installation_uploads_are_excluded(self):
         excluded = [
+            ".git",
+            ".git/config",
+            "dist/old-release.zip",
             ".env",
             ".env.production",
             "deploy/develop/compose.yaml",

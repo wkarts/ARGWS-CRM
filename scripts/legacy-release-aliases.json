@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "aliases": [
+    {
+      "version": "3.8.1",
+      "migration": 382,
+      "tag": "v3.8.1",
+      "tag_object": "8c0600d2b93c0a048b5177c156e04f834cc636cd",
+      "commit": "f3d5af4ce3be2854dab9ef186aaa5eabbed0fe97",
+      "tree": "16abe96b680ba5103156db4b4e661e6d9a3dca43",
+      "sha256": {
+        "VERSION": "8366b0a6a2bd18fbaf821765e4908b8408fbafe3ba962e7d6b32b8b9e0486254",
+        "application/config/constants.php": "d21caeb7879965c7c7043743956d34db3b0a9333664765602f8a68391f0def50",
+        "application/config/migration.php": "c13575f3d3a60805b965abaec9ed3e58aa07e0147ad8ef76eb432a4748c348f3",
+        "application/migrations/382_version_382.php": "ebf1939c1723be5c439b96f0d18f11cf767c6b21a6318b810c6d4a835c6ea989"
+      }
+    },
+    {
+      "version": "3.8.2",
+      "migration": 383,
+      "tag": "v3.8.2",
+      "tag_object": "39f98d62bff8c50f73fb9245ec5c652039669fb6",
+      "commit": "67a21e3483e2ca6b6e761049846b711a89f1743e",
+      "tree": "2e9bd12375a2ecb8150948fb413acfaad119e1eb",
+      "sha256": {
+        "VERSION": "3b9bed4047695cc0287c12edc030717a78f663bc4eb8a337ede86792d380d7d7",
+        "application/config/constants.php": "69db817afe9aa2007058a67a77e413be5e597744326f8fcf3c2244585f5a17b0",
+        "application/config/migration.php": "16d947df5d7810c4da466f266304a52641941e0336f52bc5ffd99fa535dcebb6",
+        "application/migrations/383_version_383.php": "831fab205cd268b57f2be4326938bea8d1897b79fcb3a7f837d89134aae71c18"
+      }
+    },
+    {
+      "version": "3.10.0",
+      "migration": 391,
+      "tag": "v3.10.0",
+      "tag_object": "155d13915cd98b6118aad8355e0bd181f7fe8196",
+      "commit": "8ec3e416e080093e9bc9d821786977ea494ff48c",
+      "tree": "325cbb17634a2458868a7aa7e5ad2082940b25eb",
+      "sha256": {
+        "VERSION": "ac67a8a961ce1353733aeef7762757f3f3b28d1f4ef1bf97369f3b5a329b3b4b",
+        "application/config/constants.php": "d416d084b707449aaf3a88a628a323d1d1b9bdef8f744276ccdefc5da6e0bb66",
+        "application/config/migration.php": "4c2832e759f50cdf17f43c60f967c874e9c3e4cef398d0c6027095e72edd754a",
+        "application/migrations/391_version_391.php": "446bf218db056b5f4b605edb31c28f9d76aba48746efc7ea52e4381ab4534ea6"
+      }
+    },
+    {
+      "version": "3.10.1",
+      "migration": 392,
+      "tag": "v3.10.1",
+      "tag_object": "40262c74a681173d8e74a9384f2dbea17f1193d8",
+      "commit": "b7fbedb11d720fa1787b4f1c1f2c94fe4128cfb1",
+      "tree": "ec01ccb97a84f3a4e0593e447dbf5f1a3ebb78c0",
+      "sha256": {
+        "VERSION": "881b245dd96946e769e50a6fa3ada219902b2b673a31a1b83969f23dd0c8505d",
+        "application/config/constants.php": "11e26c588bf94e0050e19be328dbe7b256170932be8fa26af67918936b60224e",
+        "application/config/migration.php": "368aee02f6a84d3aab7212ea3e9327830ef6cbbc00f9ac41acf58875650b4b01",
+        "application/migrations/392_version_392.php": "ce925e3d5ae1508ab7f4186e6f5f6ae72f40ed4bdc089dab96743988ce760e50"
+      }
+    },
+    {
+      "version": "3.11.0",
+      "migration": 393,
+      "tag": "v3.11.0",
+      "tag_object": "2bce83545127f0f36efb9b79aa2eecd772c31ae3",
+      "commit": "98267be19d85893f7995281d3a42e70f7f6e59ec",
+      "tree": "3c35d00bebca1a8ce95a87d9d9ed1ff9dfa5c2fe",
+      "sha256": {
+        "VERSION": "d30f1520c6b70aa635e37a22df030c16723c65eb74814c5e751fe40eeed95b7a",
+        "application/config/constants.php": "cd774241cbc966a39d476dbc3415b095971e034b672c6208241c0de581acbe0a",
+        "application/config/migration.php": "d0ff198cb672f87029c2c0ea6a12973a2711e0e1f9b24b383d702c42d64ac8be",
+        "application/migrations/393_version_393.php": "d58863aaf5818aa54fd543b2ba0a6fd3664a137d31b174ccd90ac20cf03505d4"
+      }
+    },
+    {
+      "version": "3.11.1",
+      "migration": 394,
+      "tag": "v3.11.1",
+      "tag_object": "1bf00e779194c9bb6471497e0533e319e81c23c0",
+      "commit": "5183711c1e1c51eef68267be7f74d91804309ccf",
+      "tree": "f8e678db160a7079d65f38bd88c043f26eb8177d",
+      "sha256": {
+        "VERSION": "8cf0cfc21e584bc76ce0d7716517eeb0dc0498ba57c05d028543748d51155c09",
+        "application/config/constants.php": "506220d2b48813a30cb271016823d1e3b5e37f31e109b6f139340c369f108982",
+        "application/config/migration.php": "cd707fab74feb37c1073a0cc7958b58f211b8e098dc25cc1d36aa9ceda119ab5",
+        "application/migrations/394_version_394.php": "0f3f867888c951d3ebffacf47aafc40457a5593361f97638bf982d74f6f89bd4"
+      }
+    }
+  ]
+}

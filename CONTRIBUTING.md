@@ -120,8 +120,8 @@ Exceções não funcionais são estreitas:
 
 Não há exclusão genérica para `vendor`, `SDK`, `dist`, `build`, arquivos minificados
 ou arquivos executáveis dentro de `docs`. JS/PHP/HTML, views, traduções e configs
-não são mascarados como documentação. Uma PR só de documentos ou artefatos
-comprovados não exige bump. Outros artefatos ambíguos falham conservadoramente.
+não são mascarados como documentação. Para o header de módulo, uma PR só de documentos ou artefatos
+comprovados não exige bump. O incremento do núcleo continua obrigatório para toda release. Outros artefatos ambíguos falham conservadoramente.
 Edições apenas de comentários em arquivos de código também são conservadoramente
 tratadas como funcionais; mova documentação independente para os caminhos próprios.
 
@@ -157,5 +157,73 @@ O gate é uma verificação estática de convenção, não um parser completo de
 prova de segurança ou correção financeira. Continue com lint, testes reais do
 executor, banco descartável e homologação apropriados à mudança. O arquivo de
 workflow não ativa branch protection sozinho; tornar o check obrigatório é uma
-decisão de configuração do repositório. Esta convenção não muda a versão global do
-CRM, não executa migrations automaticamente e não autoriza merge ou implantação.
+decisão de configuração do repositório. A convenção de módulos não substitui a política de release do núcleo abaixo,
+não executa migrations automaticamente e não autoriza merge ou implantação.
+
+
+## Versão canônica do núcleo em toda release
+
+A versão do CRM é derivada do identificador nativo, com um ponto entre cada
+algarismo: `393 = 3.9.3`, `399 = 3.9.9`, `400 = 4.0.0`, `401 = 4.0.1`.
+Não há incremento separado por SemVer, título `feat/fix` ou rótulos da PR.
+O limite atual é 999; excedê-lo exige revisão explícita do executor.
+
+Toda PR destinada a uma release deve conter, no próprio diff:
+
+1. exatamente o próximo ID core, mesmo para mudanças só de módulos, docs ou CI;
+2. `VERSION`, `ARGWS_VERSION`, config de migration e imagens de distribuição iguais;
+3. um novo arquivo nativo com a classe correspondente e `public up()`; sem schema,
+   mantenha o NOOP documentado gerado pela ferramenta oficial;
+4. preservação byte a byte e de modo de todas as migrations históricas.
+
+O único gerador é `python3 scripts/apply-release-version.py`. Sem argumento,
+prepara o próximo ID; também aceita o alvo explícito para reexecução idempotente.
+O pipeline reaplica o alvo já revisado e testa coerência; nunca decide uma nova
+versão pelo título e nunca corrige uma PR silenciosamente.
+
+### Transição revisada na PR41
+
+Os nomes antigos publicados são preservados: 3.8.1/382, 3.8.2/383,
+3.10.0/391, 3.10.1/392, 3.11.0/393 e 3.11.1/394. A lista de evidências em
+`scripts/legacy-release-aliases.json` fixa commit, árvore, objeto de tag e SHA-256
+exatos de VERSION, constantes, configuração e migration alvo. Um texto de versão
+parecido ou um ref substituído não serve como evidência.
+
+A única exceção de sequência autorizada é **394 → 401 / 4.0.1**, preservando a DDL
+395 de recorrências e acrescentando 396–401 NOOP. Não há release intermediária
+3.9.5 nem downgrade genérico autorizado. Depois da publicação efetiva: PR42 usa
+402 / 4.0.2; PR45 usa 403 / 4.0.3. Outras PRs devem integrar a base publicada e
+recalcular seu próximo ID antes de publicar.
+
+O planner ordena tags verificadas pelo ID de migration e ancestralidade, usando
+v3.11.1/394 como base incremental de v4.0.1/401. Colisões de ID, tags divergentes,
+histórico incompleto e aliases desconhecidos falham. Reexecução só reutiliza a
+mesma tag quando aponta para o mesmo commit. GitHub recebe `--latest` explícito;
+a tag GHCR versionada e `latest` são criadas do mesmo conjunto de digests.
+
+A sincronização antiga que copiava somente metadados para develop foi retirada:
+um teste reproduz a perda de ancestralidade. O canal develop continua existindo;
+integre a main por merge/rebase normal para transportar código e histórico juntos.
+
+### Análise e validação
+
+O workflow `core-release-policy.yml` usa ferramentas da árvore composta, mas
+compara os SHAs originais base/head do evento e seu merge-base. Se a base atual
+já avançou o núcleo depois desse merge-base, exige sincronização e o próximo ID,
+mesmo que o merge fosse limpo e os NOOPs fossem idênticos. Preserva também as
+migrations da base atual. Todas as PRs são
+analisadas, sem filtros de paths. O gate é somente leitura e não cria migrations.
+
+```sh
+python3 -m unittest tests/test_release_version.py tests/test_package_release.py
+bash scripts/check-release-version.sh --base "$BASE_SHA" --head "$HEAD_SHA"
+bash scripts/check-release-version.sh v4.0.1
+php tests/native_migration_tracking.php
+```
+
+Os testes cobrem aliases adulterados, ancestralidade, colisão, replay, sequência,
+399→400, marcador ausente, falha de escrita no tracking real e ZIP completo/overlay.
+O empacotador valida os bytes de VERSION/config/classe dentro de ambos os ZIPs,
+inclusive a árvore reconstruída do incremental. Esses checks não substituem os
+testes funcionais e de banco do recurso. Branch protection requer configuração
+separada; este workflow não muda permissões do repositório.

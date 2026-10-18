@@ -2,13 +2,13 @@
 <div class="row">
     <div class="col-md-6">
         <div class="alert alert-info">
-            <h4 class="tw-font-bold">Migration aplicada no banco</h4>
+            <h4 class="tw-font-bold">Versão aplicada no banco</h4>
             <p class="tw-font-semibold tw-mb-0"><?= html_escape(wordwrap((string) $current_version, 1, '.', true)); ?></p>
         </div>
     </div>
     <div class="col-md-6">
-        <div class="alert <?= $latest_version > $current_version ? 'alert-warning' : 'alert-success'; ?>">
-            <h4 class="tw-font-bold">Migration incluída no código</h4>
+        <div class="alert <?= $latest_version == $current_version ? 'alert-success' : 'alert-warning'; ?>">
+            <h4 class="tw-font-bold">Versão incluída no código</h4>
             <p class="tw-font-semibold tw-mb-0"><?= html_escape(wordwrap((string) $latest_version, 1, '.', true)); ?><br><small><?= crm_app_display_name_html(); ?> <?= html_escape(ARGWS_VERSION); ?></small></p>
         </div>
     </div>
@@ -20,7 +20,9 @@
     <div class="alert alert-warning">
         Antes de atualizar, faça backup dos arquivos, do banco de dados e dos uploads. Aplique o pacote correspondente à versão instalada e depois confirme a atualização do banco na tela administrativa.
     </div>
+<?php } elseif ($current_version > $latest_version) { ?>
+    <div class="alert alert-danger">O banco pertence a uma versão mais recente. Instale os arquivos compatíveis; nenhuma redução de versão será executada.</div>
 <?php } else { ?>
-    <div class="alert alert-success">O banco desta instalação já está atualizado para a migration incluída no código atual.</div>
+    <div class="alert alert-success">O banco desta instalação já está atualizado para a versão incluída no código atual.</div>
 <?php } ?>
 <p class="text-muted mtop15">Para instalações PHP tradicionais, copie os arquivos do pacote incremental. Para FrankenPHP, use uma tag de imagem versionada publicada no GHCR. Preserve `application/config/app-config.php` e `uploads/`.</p>

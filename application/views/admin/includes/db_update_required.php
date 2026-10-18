@@ -84,9 +84,9 @@
 <body>
     <div class="wrapper">
         <h1>A atualização do banco de dados é necessária</h1>
-        <p>Atualize o banco de dados antes de continuar. A <b>migration incluída nos arquivos é
+        <p>Atualize o banco de dados antes de continuar. A <b>versão incluída nos arquivos é
                 <?= wordwrap($this->config->item('migration_version'), 1, '.', true); ?></b>
-            e a <b>migration aplicada no banco é
+            e a <b>versão aplicada no banco é
                 <?= wordwrap($this->current_db_version, 1, '.', true); ?>.</b>
         </p>
         <p class="bold">Faça um backup do banco de dados antes de iniciar a atualização.</p>
