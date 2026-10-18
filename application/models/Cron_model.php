@@ -723,11 +723,25 @@ class Cron_model extends App_Model
 
     public function recurring_invoices()
     {
+        try {
+            return \app\services\RecurringInvoiceLock::run($this->db, function () {
+                return $this->process_recurring_invoices_locked();
+            });
+        } catch (\app\services\RecurringInvoiceLockUnavailable $exception) {
+            log_message('error', 'Invoice recurrence lock unavailable; scheduler deferred.');
+        }
+    }
+
+    private function process_recurring_invoices_locked()
+    {
         $invoice_hour_auto_operations = get_option('invoice_auto_operations_hour');
 
         if (! $this->shouldRunAutomations($invoice_hour_auto_operations)) {
             return;
         }
+
+        $this->load->model('recurring_rules_model');
+        $this->recurring_rules_model->process_due_locked(date('Y-m-d'));
 
         $new_recurring_invoice_action = get_option('new_recurring_invoice_action');
 
@@ -736,6 +750,8 @@ class Cron_model extends App_Model
         $this->db->select('id,recurring,date,last_recurring_date,number,duedate,recurring_type,custom_recurring,addedfrom,sale_agent,clientid');
         $this->db->from(db_prefix() . 'invoices');
         $this->db->where('recurring !=', 0);
+        // A migrated source can never re-enter the legacy scheduler, even if an old form is resubmitted.
+        $this->db->where('NOT EXISTS (SELECT 1 FROM `' . db_prefix() . 'recurring_rules` rr WHERE rr.source_invoice_id = `' . db_prefix() . 'invoices`.id)', null, false);
         $this->db->where('(cycles != total_cycles OR cycles=0)');
 
         if ($invoices_create_invoice_from_recurring_only_on_paid_invoices == 1) {
