@@ -70,6 +70,60 @@ class AsaasSdkProvider
         );
     }
 
+    /** Explicit environment is independent from the gateway's current sandbox toggle. */
+    public function clientForEnvironment(string $environment, ?int $issuerId = null): Client
+    {
+        if (!in_array($environment, ['sandbox', 'production'], true)) {
+            throw new \InvalidArgumentException('invalid_origin_environment');
+        }
+        if ($issuerId !== null) {
+            // The issuer foundation is intentionally opt-in until end-to-end isolation.
+            if (!function_exists('issuers_assert_operational_scope')) {
+                throw new \RuntimeException('issuer_rollout_blocked');
+            }
+            issuers_assert_operational_scope($issuerId);
+            $name = $environment === 'sandbox' ? 'api_key_sandbox' : 'api_key';
+            $stored = get_option('paymentmethod_asaas_' . $name . '_issuer_' . $issuerId);
+            if (!is_string($stored) || trim($stored) === '' || !function_exists('decrypt')) {
+                throw new \RuntimeException('issuer_credentials_missing');
+            }
+            $key = decrypt($stored);
+        } else {
+            $key = $this->gateway->decryptSetting($environment === 'sandbox' ? 'api_key_sandbox' : 'api_key');
+        }
+        if (!is_string($key) || trim($key) === '') {
+            throw new \RuntimeException('origin_credentials_missing');
+        }
+        return new Client($key, $environment === 'sandbox' ? Environment::Sandbox : Environment::Production,
+            $this->getUserAgent(), $this->getTimeout(), $this->getConnectTimeout());
+    }
+
+    public function contextForClient(Client $client, string $environment, ?int $issuerId = null): array
+    {
+        $wallets = $client->request('GET', 'v3/wallets/', [], [], null, false, false);
+        $rows = is_array($wallets) ? ($wallets['data'] ?? null) : null;
+        if (!is_array($rows) || count($rows) !== 1 || !is_string($rows[0]['id'] ?? null)
+            || trim($rows[0]['id']) === '' || ($wallets['hasMore'] ?? false)) {
+            throw new \RuntimeException('origin_account_unverified');
+        }
+        return ['issuer_id' => $issuerId, 'provider' => 'asaas', 'channel' => 'api',
+            'account_id' => $rows[0]['id'], 'environment' => $environment];
+    }
+
+    public function clientForOrigin(array $origin): Client
+    {
+        if (($origin['provider'] ?? '') !== 'asaas' || ($origin['channel'] ?? '') !== 'api') {
+            throw new \RuntimeException('unsupported_origin');
+        }
+        $issuer = isset($origin['issuer_id']) ? (int) $origin['issuer_id'] : null;
+        $client = $this->clientForEnvironment((string) ($origin['environment'] ?? ''), $issuer);
+        $context = $this->contextForClient($client, $origin['environment'], $issuer);
+        if (!hash_equals((string) ($origin['account_id'] ?? ''), $context['account_id'])) {
+            throw new \RuntimeException('origin_account_mismatch');
+        }
+        return $client;
+    }
+
     public function env(?int $companyId = null): string
     {
         return $this->getSandboxSetting($companyId) ? 'sandbox' : 'production';
@@ -182,6 +236,9 @@ class AsaasSdkProvider
             return $override;
         }
 
+        if ($companyId !== null) {
+            throw new \RuntimeException('asaas_explicit_company_credentials_missing');
+        }
         return (string) $this->gateway->decryptSetting($settingName);
     }
 
@@ -212,12 +269,18 @@ class AsaasSdkProvider
             return $override;
         }
 
+        if ($companyId !== null) {
+            throw new \RuntimeException('asaas_explicit_company_setting_missing');
+        }
         return $this->gateway->getSetting($name);
     }
 
     private function getSettingOverride(string $name, ?int $companyId = null): mixed
     {
-        if (!$companyId || !function_exists('get_option')) {
+        if ($companyId !== null && $companyId <= 0) {
+            throw new \InvalidArgumentException('asaas_invalid_company');
+        }
+        if ($companyId === null || !function_exists('get_option')) {
             return null;
         }
 
@@ -235,3 +298,4 @@ class AsaasSdkProvider
         return $value;
     }
 }
+

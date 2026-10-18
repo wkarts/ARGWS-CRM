@@ -249,6 +249,19 @@ class Asaas_gateway extends App_gateway
 
     public function process_payment($data)
     {
+        try {
+            return $this->process_payment_checked($data);
+        } catch (\Throwable $error) {
+            log_message('error', '[Asaas] Operação de cobrança não confirmada: process_payment.');
+            if (function_exists('set_alert')) {
+                set_alert('warning', 'Cobrança Asaas não confirmada. Solicite a revisão da origem da cobrança.');
+            }
+            return json_encode(['errors' => [['code' => 'payment_requires_review', 'description' => 'Cobrança não confirmada; revisão necessária.']]]);
+        }
+    }
+
+    private function process_payment_checked($data)
+    {
         if (empty($data)) {
             return;
         }
@@ -257,6 +270,7 @@ class Asaas_gateway extends App_gateway
         $ci = &get_instance();
         $ci->db->where('id', $invoice);
         $row = $ci->db->get(db_prefix() . 'invoices')->row_array();
+        $this->adapter->assertInvoiceScope($row);
 
         $ci->db->select('c.*, cc.email');
         $ci->db->from(db_prefix() . 'clients c');
@@ -590,9 +604,23 @@ class Asaas_gateway extends App_gateway
 
     public function charge_billet($invoice)
     {
+        try {
+            return $this->charge_billet_checked($invoice);
+        } catch (\Throwable $error) {
+            log_message('error', '[Asaas] Operação de cobrança não confirmada: charge_billet.');
+            if (function_exists('set_alert')) {
+                set_alert('warning', 'Cobrança Asaas não confirmada. Solicite a revisão da origem da cobrança.');
+            }
+            return json_encode(['errors' => [['code' => 'payment_requires_review', 'description' => 'Cobrança não confirmada; revisão necessária.']]]);
+        }
+    }
+
+    private function charge_billet_checked($invoice)
+    {
         if (empty($invoice)) {
             return;
         }
+        $this->adapter->assertInvoiceScope((array) $invoice);
         $client = $invoice->client;
 
         $description                 = $this->getSetting('description');
@@ -745,6 +773,19 @@ class Asaas_gateway extends App_gateway
 
     public function charge_credit_card($data)
     {
+        try {
+            return $this->charge_credit_card_checked($data);
+        } catch (\Throwable $error) {
+            log_message('error', '[Asaas] Operação de cobrança não confirmada: charge_credit_card.');
+            if (function_exists('set_alert')) {
+                set_alert('warning', 'Cobrança Asaas não confirmada. Solicite a revisão da origem da cobrança.');
+            }
+            return json_encode(['errors' => [['code' => 'payment_requires_review', 'description' => 'Cobrança não confirmada; revisão necessária.']]]);
+        }
+    }
+
+    private function charge_credit_card_checked($data)
+    {
         if (empty($data)) {
             return;
         }
@@ -752,6 +793,7 @@ class Asaas_gateway extends App_gateway
         $ci = &get_instance();
         $ci->db->where('id', $invoice_id);
         $invoice = $ci->db->get(db_prefix() . 'invoices')->row();
+        $this->adapter->assertInvoiceScope((array) $invoice);
 
         $ci->db->select('c.*, cc.email');
         $ci->db->from(db_prefix() . 'clients c');
@@ -1002,6 +1044,19 @@ class Asaas_gateway extends App_gateway
 
     public function charge_pix($data)
     {
+        try {
+            return $this->charge_pix_checked($data);
+        } catch (\Throwable $error) {
+            log_message('error', '[Asaas] Operação de cobrança não confirmada: charge_pix.');
+            if (function_exists('set_alert')) {
+                set_alert('warning', 'Cobrança Asaas não confirmada. Solicite a revisão da origem da cobrança.');
+            }
+            return json_encode(['errors' => [['code' => 'payment_requires_review', 'description' => 'Cobrança não confirmada; revisão necessária.']]]);
+        }
+    }
+
+    private function charge_pix_checked($data)
+    {
         if (empty($data)) {
             return;
         }
@@ -1009,6 +1064,7 @@ class Asaas_gateway extends App_gateway
         $ci = &get_instance();
         $ci->db->where('id', $invoice);
         $row = $ci->db->get(db_prefix() . "invoices")->row_array();
+        $this->adapter->assertInvoiceScope($row);
 
         $ci->db->select('c.*, cc.email');
         $ci->db->from(db_prefix() . 'clients c');
@@ -1270,7 +1326,7 @@ class Asaas_gateway extends App_gateway
     // https://api.asaas.com/v3/payments/id
     public function delete_charge($charge_id)
     {
-        return $this->adapter->request('DELETE', '/payments/' . $charge_id);
+        return $this->adapter->deletePayment((string) $charge_id);
     }
 
     public function create_customer($api_url, $api_key, $post_data)
@@ -1392,6 +1448,11 @@ class Asaas_gateway extends App_gateway
             return false;
         }
 
+        $origin = $this->getAdapter()->originStore()->byInvoice($invoiceId);
+        if ($origin && !empty($origin['remote_id']) && $origin['remote_id'] !== (string) $paymentId) {
+            return false;
+        }
+
         $now = date("Y-m-d H:i:s");
         $data = [
             "invoice_id" => $invoiceId,
@@ -1431,7 +1492,7 @@ class Asaas_gateway extends App_gateway
             $data["updated_at"] = $now;
         }
 
-        $exists = $CI->db->select("id")
+        $exists = $CI->db->select("id, asaas_payment_id")
             ->from($table)
             ->where("invoice_id", $invoiceId)
             ->limit(1)
@@ -1439,6 +1500,10 @@ class Asaas_gateway extends App_gateway
             ->row_array();
 
         if ($exists && isset($exists["id"])) {
+            if ((string) $exists['asaas_payment_id'] !== (string) $paymentId) {
+                log_message('error', '[Asaas] Vínculo imutável: tentativa de substituir cobrança de invoice_id=' . $invoiceId);
+                return false;
+            }
             $CI->db->where("id", (int) $exists["id"]);
             $ok = $CI->db->update($table, $data);
             if ($ok === false) {
@@ -1777,6 +1842,15 @@ class Asaas_gateway extends App_gateway
         return $id ? (string) $id : null;
     }
 
+    public function get_payment_map_by_invoice_id(int $invoiceId): ?array
+    {
+        $CI = &get_instance();
+        if (!$CI->db->table_exists(db_prefix() . 'asaas_payments_map')) {
+            return null;
+        }
+        return $CI->db->get_where(db_prefix() . 'asaas_payments_map', ['invoice_id' => $invoiceId])->row_array() ?: null;
+    }
+
     private function safe_json_decode_array($json): array
     {
         if (!is_string($json) || trim($json) === '') {
@@ -1789,3 +1863,4 @@ class Asaas_gateway extends App_gateway
     }
 
 }
+
