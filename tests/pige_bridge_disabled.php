@@ -15,8 +15,20 @@ echo "PIGE bridge resource catalog: passed\n";
 define('APPPATH', dirname(__DIR__) . '/application/');
 $CFG = new class { public function item($name) { return $name === 'modules_locations' ? [dirname(__DIR__) . '/modules/' => '../../modules/'] : null; } };
 function log_message($level, $message) {}
-require __DIR__ . '/../application/third_party/MX/Modules.php';
+define('FCPATH', dirname(__DIR__) . '/');
+define('APP_MODULES_PATH', FCPATH . 'modules/');
+define('ADMIN_URI', 'admin');
+class CI_Router { public $config; public $directory = ''; }
+require APPPATH . 'third_party/MX/Router.php';
 $route = Modules::parse_routes('pige_bridge', 'pige_bridge/api/v1/requests');
 if ($route !== ['pige_bridge', 'bridge', 'requests']) { throw new RuntimeException('Canonical endpoint must resolve without a duplicate module prefix'); }
 if (!is_file(dirname(__DIR__) . '/modules/' . $route[0] . '/controllers/' . ucfirst($route[1]) . '.php') || !method_exists('Bridge', $route[2])) { throw new RuntimeException('Resolved controller/action must exist'); }
 echo "PIGE bridge actual HMVC route: passed\n";
+
+$router = new MX_Router();
+$router->config = $CFG;
+$located = $router->locate(explode('/', 'pige_bridge/api/v1/requests'));
+if ($located !== ['bridge', 'requests'] || !str_ends_with($router->directory, '/pige_bridge/controllers/')) {
+    throw new RuntimeException('Actual HMVC router must locate the bridge action');
+}
+echo "PIGE bridge actual HMVC controller location: passed\n";
