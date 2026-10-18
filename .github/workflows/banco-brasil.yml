@@ -1,7 +1,7 @@
 name: Banco do Brasil module
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, feat/banco-brasil-billing-cnab240]
     paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/support/BbPdoDatabase.php', 'docs/banco-brasil*', '.github/workflows/banco-brasil.yml']
   workflow_dispatch:
 permissions:
@@ -20,8 +20,12 @@ jobs:
           coverage: none
       - run: find modules/banco_brasil -name '*.php' -print0 | xargs -0 -n1 php -l
       - run: php tests/banco_brasil_admin.php
+      - run: php tests/banco_brasil_cnab240.php
+      - run: php tests/banco_brasil_cnab400.php
+      - run: php tests/banco_brasil_store.php
       - run: php tests/banco_brasil_layouts.php
       - run: php tests/banco_brasil_layout_migration.php
+      - run: php tests/banco_brasil_module_version.php
   mysql:
     runs-on: ubuntu-latest
     services:
