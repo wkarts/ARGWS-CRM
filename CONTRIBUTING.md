@@ -90,9 +90,12 @@ de descontinuação revisado, sem apagar dados de instalações existentes.
 
 O workflow [Versão e migrations dos módulos](.github/workflows/module-migration-policy.yml)
 executa os fixtures e `scripts/check-module-migration-diff.py` em cada PR, inclusive
-ao trocar sua branch base. Ele usa os SHAs completos do evento, checkout do **head
-da PR** e histórico completo. O baseline é `git merge-base BASE_SHA HEAD_SHA`, não
-o tip da base nem o commit de merge sintético gerado pelo GitHub.
+ao trocar sua branch base. O checkout usa a **árvore composta da PR** (`github.sha`
+no evento `pull_request`) e histórico completo. Assim, o verificador e seus testes
+também existem para branches abertas antes da adoção do gate. A comparação recebe
+separadamente os SHAs completos e originais de base/head do evento: o baseline é
+`git merge-base BASE_SHA HEAD_SHA`, e o alvo é o head original, nunca o tip da base
+nem o commit de merge sintético gerado pelo GitHub.
 
 Assim, alterações independentes que só chegaram à base não são atribuídas à PR.
 Ao rebasear ou retargetar, confira o novo baseline: uma versão já incluída na nova
