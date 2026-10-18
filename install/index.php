@@ -10,4 +10,17 @@ if (file_exists($install->config_path) &&
     exit(0);
 }
 
+session_name('argws_install');
+session_start(['cookie_httponly' => true, 'cookie_samesite' => 'Lax',
+    'cookie_secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off']);
+if (!isset($_SESSION['installer_csrf']) || !is_string($_SESSION['installer_csrf'])) {
+    $_SESSION['installer_csrf'] = bin2hex(random_bytes(32));
+}
+$install->csrfToken = $_SESSION['installer_csrf'];
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST'
+    && (!is_string($_POST['installer_csrf'] ?? null)
+        || !hash_equals($install->csrfToken, $_POST['installer_csrf']))) {
+    http_response_code(403);
+    exit('Solicitação inválida. Atualize a página de instalação e tente novamente.');
+}
 $install->go();

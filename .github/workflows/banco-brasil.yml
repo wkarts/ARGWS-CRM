@@ -1,7 +1,7 @@
 name: Banco do Brasil module
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, feat/banco-brasil-billing-cnab240]
     paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/support/BbPdoDatabase.php', 'docs/banco-brasil*', '.github/workflows/banco-brasil.yml']
   workflow_dispatch:
 permissions:

@@ -4089,3 +4089,86 @@ $lang['invoice_recurring_due_mode'] = 'Recurring due-date rule';
 $lang['invoice_recurring_due_days'] = 'Keep original number of days';
 $lang['invoice_recurring_due_fixed_day'] = 'Keep original calendar day';
 $lang['invoice_recurring_due_mode_help'] = 'For monthly/yearly recurrence, calendar day keeps the original due day and month offset (issue 26, due 5 next month). Missing days use the last day of the month without changing the original day. Daily/weekly recurrence keeps the number of days. Changes affect future invoices only.';
+
+// Empresas: native core catalog and access controls.
+
+$lang['issuers_title'] = 'Companies';
+$lang['issuer_foundation_warning'] = 'Recurso cadastral essencial, em fase de preparação. Estes vínculos e permissões valem somente neste módulo. O CRM legado continua com uma única empresa operacional e ainda não isola faturas, pagamentos, projetos, arquivos, relatórios ou portal por emitente. Não cadastre operações de outra empresa no core. A criação de cobranças multiemitente está bloqueada.';
+$lang['issuer_catalog'] = 'Empresas cadastradas';
+$lang['issuer_active'] = 'Cadastro ativo';
+$lang['issuer_inactive'] = 'Cadastro inativo';
+$lang['issuer_default'] = 'Padrão cadastral';
+$lang['issuer_new'] = 'Nova empresa';
+$lang['issuer_edit'] = 'Editar empresa';
+$lang['issuer_legal_name'] = 'Razão social';
+$lang['issuer_tax_id'] = 'CPF/CNPJ';
+$lang['issuer_status'] = 'Situação cadastral';
+$lang['issuer_save'] = 'Salvar empresa';
+$lang['issuer_default_explanation'] = 'A preferência é exclusiva deste cadastro. Ela não muda o emitente de documentos, cobranças nem configurações globais.';
+$lang['issuer_choose_default'] = 'Usar como meu padrão cadastral';
+$lang['issuer_members'] = 'Equipe e permissões nesta empresa';
+$lang['issuer_permissions_explanation'] = 'Permissões explícitas por empresa. Administradores também precisam de vínculo para acessar clientes. Compartilhar exige visualizar e gerenciar clientes; os destinos exigem gerenciar clientes.';
+$lang['issuer_remove_member'] = 'Remover vínculo';
+$lang['issuer_staff'] = 'Profissional';
+$lang['issuer_permission_view'] = 'Visualizar cadastro';
+$lang['issuer_permission_manage_clients'] = 'Gerenciar vínculos de clientes';
+$lang['issuer_permission_share_clients'] = 'Compartilhar cadastro de clientes';
+$lang['issuer_save_member'] = 'Salvar/substituir permissões';
+$lang['issuer_clients'] = 'Vínculos cadastrais de clientes';
+$lang['issuer_clients_explanation'] = 'Use o registro único já existente no CRM. O vínculo inicial é somente com a empresa proprietária; nada financeiro é compartilhado ou copiado. A privacidade desta lista não altera as telas legadas do CRM.';
+$lang['issuer_existing_client_id'] = 'ID do cliente existente no CRM';
+$lang['issuer_register_private'] = 'Registrar vínculo privado';
+$lang['issuer_share_targets'] = 'Compartilhar cadastro com estas empresas';
+$lang['issuer_share_explanation'] = 'Seleção múltipla. Sem destinos adicionais, fica privado. A empresa proprietária é mantida. A empresa proprietária pode revogar qualquer destino, inclusive inativo. Manter ou adicionar destinos exige acesso. Conflitos CPF/CNPJ bloqueiam o compartilhamento sem mesclar registros.';
+$lang['issuer_save_sharing'] = 'Salvar compartilhamento';
+$lang['issuer_readonly_client'] = 'Cadastro vinculado. Somente a empresa proprietária pode alterar o compartilhamento.';
+$lang['issuer_saved'] = 'Cadastro atualizado.';
+$lang['issuer_invalid_id'] = 'Identificador inválido.';
+$lang['issuer_invalid_tax_id'] = 'Informe um CPF/CNPJ válido. Para compartilhar, o documento é obrigatório.';
+$lang['issuer_invalid_permission'] = 'Permissão inválida.';
+$lang['issuer_view_required'] = 'Inclua a permissão de visualização.';
+$lang['issuer_manage_required'] = 'Compartilhar também exige gerenciar clientes.';
+$lang['issuer_rollout_blocked'] = 'Operação multiemitente bloqueada até a implementação do isolamento completo do CRM.';
+$lang['issuer_access_denied'] = 'Você não tem acesso a esta operação ou a um dos vínculos envolvidos.';
+$lang['issuer_unavailable'] = 'Empresa inexistente ou inativa.';
+$lang['issuer_invalid_name'] = 'Informe uma razão social válida, com até 191 bytes.';
+$lang['issuer_invalid_status'] = 'Situação cadastral inválida.';
+$lang['issuer_tax_conflict'] = 'Já existe uma empresa com este CPF/CNPJ. Revise o cadastro existente.';
+$lang['issuer_client_unavailable'] = 'Cliente inexistente ou inativo.';
+$lang['issuer_client_tax_conflict'] = 'Há conflito de CPF/CNPJ entre registros de clientes. Revise os cadastros antes de vincular ou compartilhar; nenhum registro foi mesclado.';
+$lang['issuer_client_already_registered'] = 'Este cliente já tem uma empresa proprietária. Use o compartilhamento do registro existente.';
+$lang['issuer_client_identity_changed'] = 'O CPF/CNPJ do cliente mudou após o vínculo. A operação foi bloqueada para revisão de identidade; não crie uma cópia.';
+$lang['issuer_post_required'] = 'Esta operação exige envio do formulário.';
+$lang['issuer_invalid_csrf'] = 'Sessão do formulário inválida. Recarregue a página e tente novamente.';
+$lang['issuer_invalid_action'] = 'Operação desconhecida.';
+$lang['issuer_storage_failed'] = 'Não foi possível concluir a operação. Nenhuma alteração parcial deve ser utilizada; verifique o registro técnico.';
+
+$lang['issuer_current_target_ids'] = 'IDs dos vínculos atuais (inclusive empresas não disponíveis na seleção):';
+
+$lang['issuer_permission_manage_integrations'] = 'Manage issuer integrations';
+$lang['issuer_integration_permission_explanation'] = 'This permission only allows configuring this issuer’s integrations. It requires the integration module’s own permission and does not enable multi-issuer billing.';
+
+$lang['issuer_staff_access_admin_only'] = 'Only the identified installation owner can assign company access and permissions to staff.';
+$lang['issuer_staff_own_default_explanation'] = 'Choose your default company from authorized memberships. This does not enable operations still under rollout.';
+$lang['issuer_staff_access_explanation'] = 'Assign this staff member to companies and configure each company’s resources. New staff receive no access automatically.';
+$lang['issuer_staff_default'] = 'Default issuing company';
+$lang['issuer_staff_no_default'] = 'No default company';
+$lang['issuer_staff_default_validation'] = 'The default company must be active and assigned to the staff member. It never determines payment, job or webhook origin.';
+$lang['issuer_staff_access_saved'] = 'Company access and default company saved.';
+$lang['issuer_staff_access_not_saved'] = 'The profile was processed, but company access changes were not confirmed. Review memberships and retry.';
+$lang['issuer_invalid_default'] = 'Choose an active authorized default company.';
+$lang['issuer_master_access_automatic'] = 'The installation’s identified master user automatically accesses all current and future companies and resources.';
+$lang['issuer_staff_resource_permissions'] = 'Resource permissions in this company';
+$lang['issuer_staff_resource_explanation'] = 'These permissions belong only to this company. Resources not yet adapted remain blocked for multi-company operation.';
+$lang['issuer_staff_access_location'] = 'Company access is configured in the staff member’s profile.';
+
+$lang['issuer_master_protected'] = 'The installation master user cannot be deleted, deactivated or demoted from administrator.';
+
+$lang['issuer_staff_profile_field_denied'] = 'Your personal profile cannot change administrative access, status or permissions.';
+
+$lang['issuer_primary_identity_pending'] = 'The primary company preserves legacy records and operations. Complete its legal identity before using new company-scoped operations.';
+$lang['issuer_primary_deactivation_denied'] = 'The installation primary company cannot be deactivated.';
+
+$lang['issuer_client_adoption_blocked'] = 'Private client creation and sharing await integration of the core access controls.';
+
+$lang['permission_share_customer_companies'] = 'Share customer identity with other companies';

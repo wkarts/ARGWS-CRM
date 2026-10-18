@@ -109,6 +109,15 @@ function staff_can($capability, $feature = null, $staff_id = '')
 {
     $staff_id = empty($staff_id) ? get_staff_user_id() : $staff_id;
 
+    // An authenticated company scope is authoritative; global admin/cache/hooks cannot grant across it.
+    if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()) {
+        if (!is_string($feature) || $feature === '' || !is_string($capability)) { return false; }
+        $CI = &get_instance();
+        return (new IssuerResourceAccess($CI->db, db_prefix()))->can(
+            CompanySettingsRuntime::issuerId(), $staff_id, $feature, $capability
+        );
+    }
+
     /**
      * Maybe permission is function?
      * Example is_admin or is_staff_member
@@ -244,6 +253,12 @@ function get_admin_uri()
  */
 function is_admin($staffid = '')
 {
+    if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()) {
+        $actor = $staffid === '' ? CompanySettingsRuntime::staffId() : $staffid;
+        $CI = &get_instance();
+        return (new IssuerResourceAccess($CI->db, db_prefix()))->administrative(CompanySettingsRuntime::issuerId(), $actor);
+    }
+
     /**
      * Checking for current user?
      */

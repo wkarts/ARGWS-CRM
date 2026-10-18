@@ -144,6 +144,7 @@ if ($url_f_open != '1'
 } else {
     echo '<div class="text-center">';
     echo '<form action="" method="post" accept-charset="utf-8">';
+    echo '<input type="hidden" name="installer_csrf" value="' . htmlspecialchars($this->csrfToken, ENT_QUOTES, 'UTF-8') . '">';
     echo '<input type="hidden" value="true" name="requirements_success">';
     echo '<div class="text-right">';
     echo '<button type="submit" class="btn btn-primary">Verificar permissões de arquivos e pastas</button>';

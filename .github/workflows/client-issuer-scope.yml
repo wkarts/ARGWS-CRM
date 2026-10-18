@@ -1,0 +1,100 @@
+name: Barreiras de privacidade de clientes
+on:
+  pull_request:
+    branches: [main, develop, feat/multi-issuer-foundation, feat/banco-brasil-billing-cnab240]
+    paths:
+      - application/**
+      - modules/api/**
+      - modules/issuers/**
+      - tests/client_issuer*.php
+      - tests/portal_client*.php
+      - tests/module_scope_migration*.php
+      - modules/exports/**
+      - modules/einvoice/**
+      - modules/custom_links/**
+      - modules/accounting/**
+      - modules/goals/**
+      - modules/ma/**
+      - modules/multiple_companies/**
+      - modules/connect_api_chat/**
+      - tests/companies/legacy_module_readers.php
+      - tests/companies/legacy_shared_helpers.php
+      - tests/companies/task_relations.php
+      - tests/companies/customer_relations.php
+      - tests/companies/task_children.php
+      - tests/companies/related_file_previews.php
+      - tests/companies/project_cleanup.php
+      - tests/companies/expense_cleanup.php
+      - tests/companies/api_related_records.php
+      - tests/companies/api_sales_search.php
+      - tests/companies/contract_relations.php
+      - tests/companies/sales_document_readers.php
+      - tests/companies/sales_document_aggregates.php
+      - tests/companies/sales_document_files.php
+      - tests/companies/kanban_scope.php
+      - tests/companies/legacy_portal_switch.php
+      - tests/companies/portal_autologin.php
+      - tests/companies/portal_recovery.php
+      - tests/companies/portal_mail_origin.php
+      - tests/companies/related_uploads.php
+      - tests/support/client_issuer_test_support.php
+      - .github/workflows/client-issuer-scope.yml
+permissions:
+  contents: read
+jobs:
+  sqlite-boundaries:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.5']
+    container: php:${{ matrix.php }}-cli
+    steps:
+      - uses: actions/checkout@v5
+      - name: Preparar SQLite sintético
+        run: apt-get update && apt-get install -y --no-install-recommends libsqlite3-dev && docker-php-ext-install pdo_sqlite
+      - name: Sintaxe das fronteiras alteradas
+        run: |
+          php -l application/services/ClientIssuerScope.php
+          php -l application/models/Clients_model.php
+          php -l application/models/Contracts_model.php
+          php -l application/models/Proposals_model.php
+          php -l application/models/Estimates_model.php
+          php -l application/libraries/App_modules.php
+          php -l application/models/Client_groups_model.php
+          php -l application/models/Client_vault_entries_model.php
+          php -l application/models/Misc_model.php
+          php -l application/controllers/admin/Clients.php
+          php -l application/controllers/Download.php
+          php -l application/helpers/clients_helper.php
+          php -l application/helpers/upload_helper.php
+          php -l modules/api/models/Api_model.php
+          php -l modules/api/controllers/Contacts.php
+          php -l modules/issuers/services/IssuerRegistry.php
+          php -l modules/issuers/views/manage.php
+      - name: Modelos, ações e SQL reais com dados sintéticos
+        run: |
+          for test in tests/client_issuer*.php tests/portal_client*.php; do php "$test"; done
+          php tests/companies/legacy_module_readers.php
+          php tests/companies/legacy_shared_helpers.php
+          php tests/companies/customer_relations.php
+          php tests/companies/task_children.php
+          php tests/companies/related_file_previews.php
+          php tests/companies/project_cleanup.php
+          php tests/companies/expense_cleanup.php
+          php tests/companies/api_related_records.php
+          php tests/companies/api_sales_search.php
+          php tests/companies/contract_relations.php
+          php tests/companies/sales_document_readers.php
+          php tests/companies/sales_document_aggregates.php
+          php tests/companies/sales_document_files.php
+          php tests/companies/kanban_scope.php
+          php tests/companies/legacy_portal_switch.php
+          php tests/companies/portal_autologin.php
+          php tests/companies/portal_recovery.php
+          php tests/companies/portal_mail_origin.php
+          php tests/companies/related_uploads.php
+      - name: Instalação nativa e confirmação do tracking dos módulos consumidores
+        run: |
+          for module in api exports einvoice; do
+            php tests/module_scope_migrations.php "$module"
+          done

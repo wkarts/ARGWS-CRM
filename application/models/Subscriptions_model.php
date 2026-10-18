@@ -1,5 +1,7 @@
 <?php
 
+use app\services\InvoiceIssuerScope;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Subscriptions_model extends App_Model
@@ -42,6 +44,7 @@ class Subscriptions_model extends App_Model
     {
         $this->db->select('id');
         $this->db->where('subscription_id', $id);
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $invoices = $this->db->get(db_prefix() . 'invoices')->result_array();
         $child    = [];
 

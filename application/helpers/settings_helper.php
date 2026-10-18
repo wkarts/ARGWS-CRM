@@ -13,6 +13,10 @@ defined('BASEPATH') or exit('No direct script access allowed');
  */
 function add_option($name, $value = '', $autoload = 1)
 {
+    if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()) {
+        if (CompanySettingsRuntime::exists($name)) { return false; }
+        return CompanySettingsRuntime::add($name, $value, $autoload);
+    }
     if (! option_exists($name)) {
         $CI = &get_instance();
 
@@ -44,6 +48,7 @@ function add_option($name, $value = '', $autoload = 1)
  */
 function get_option($name)
 {
+    if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()) { return CompanySettingsRuntime::get($name); }
     $CI = &get_instance();
 
     if (! class_exists('app', false)) {
@@ -64,6 +69,7 @@ function get_option($name)
  */
 function update_option($name, $value, $autoload = null)
 {
+    if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()) { return CompanySettingsRuntime::update($name, $value, $autoload); }
     /**
      * Create the option if not exists
      *
@@ -98,6 +104,7 @@ function update_option($name, $value, $autoload = null)
  */
 function delete_option($name)
 {
+    if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()) { return CompanySettingsRuntime::delete($name); }
     $CI = &get_instance();
     $CI->db->where('name', $name);
     $CI->db->delete(db_prefix() . 'options');
@@ -115,6 +122,7 @@ function delete_option($name)
  */
 function option_exists($name)
 {
+    if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()) { return CompanySettingsRuntime::exists($name); }
     return total_rows(db_prefix() . 'options', [
         'name' => $name,
     ]) > 0;

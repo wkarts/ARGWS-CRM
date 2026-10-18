@@ -11,12 +11,14 @@ class Emails extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if ($this->isolated_company() && (!class_exists('CompanyRequestScope',false) || !CompanyRequestScope::sealedFor($this))) { show_error('Acesso negado.',403); return; }
         $this->load->model('emails_model');
     }
 
     /* List all email templates */
     public function index()
     {
+        if ($this->isolated_company()) { return $this->isolated_templates(); }
         if (staff_cant('view', 'email_templates')) {
             access_denied('email_templates');
         }
@@ -108,12 +110,16 @@ class Emails extends AdminController
     /* Edit email template */
     public function email_template($id)
     {
+        if ($this->isolated_company()) { return $this->isolated_templates($id); }
         if (staff_cant('view', 'email_templates')) {
             access_denied('email_templates');
         }
         if (!$id) {
             redirect(admin_url('emails'));
         }
+
+        $selectedTemplate = $this->emails_model->get_email_template_by_id($id);
+        if (!$selectedTemplate) { show_404(); return; }
 
         if ($this->input->post()) {
             if (staff_cant('edit', 'email_templates')) {
@@ -151,7 +157,7 @@ class Emails extends AdminController
 
         $data['available_merge_fields'] = $this->app_merge_fields->all();
 
-        $data['template'] = $this->emails_model->get_email_template_by_id($id);
+        $data['template'] = $selectedTemplate;
         $title            = $data['template']->name;
         $data['title']    = $title;
         $this->load->view('admin/emails/template', $data);
@@ -177,6 +183,7 @@ class Emails extends AdminController
     {
         if (staff_can('edit',  'email_templates')) {
             $template = $this->emails_model->get_email_template_by_id($id);
+            if (!$template) { show_404(); return; }
             $this->emails_model->mark_as($template->slug, 1);
         }
         redirect(admin_url('emails'));
@@ -186,10 +193,51 @@ class Emails extends AdminController
     {
         if (staff_can('edit',  'email_templates')) {
             $template = $this->emails_model->get_email_template_by_id($id);
+            if (!$template) { show_404(); return; }
             $this->emails_model->mark_as($template->slug, 0);
         }
 
         redirect(admin_url('emails'));
+    }
+
+    private function isolated_company(): bool
+    {
+        return class_exists('CompanySettingsRuntime',false) && CompanySettingsRuntime::active() && !CompanySettingsRuntime::isPrimary();
+    }
+
+    private function isolated_templates($id=null)
+    {
+        if (!CompanyRequestScope::sealedFor($this) || !CompanySettingsRuntime::canResource('email_templates','view')) { show_error('Acesso negado.',403); return; }
+        $selected=$id===null?null:$this->emails_model->get_email_template_by_id($id);
+        if ($id!==null && (!$selected || $selected->language!=='portuguese_br')) { show_404(); return; }
+        $saved=false;$error=null;
+        if ($this->input->post()) {
+            if (!$selected || !CompanySettingsRuntime::canResource('email_templates','edit')) { show_error('Acesso negado.',403); return; }
+            $post=$this->input->post(null,false);
+            try {
+                if (!is_array($post) || array_diff(array_keys($post),['subject','message','fromname','fromemail','active','plaintext']) || !empty($_FILES)) throw new DomainException('invalid_template');
+                foreach(['subject','message','fromname','fromemail'] as $key) if (!isset($post[$key]) || !is_string($post[$key])) throw new DomainException('invalid_template');
+                if (strlen($post['subject'])>998 || strlen($post['fromname'])>191 || strlen($post['fromemail'])>191 || strlen($post['message'])>1048576
+                    || preg_match('/[\r\n]/',$post['subject'].$post['fromname'].$post['fromemail'])
+                    || ($post['fromemail']!=='' && !filter_var($post['fromemail'],FILTER_VALIDATE_EMAIL))) throw new DomainException('invalid_template');
+                foreach(['active','plaintext'] as $key) if(isset($post[$key]) && $post[$key]!=='1')throw new DomainException('invalid_template');
+                $this->emails_model->update_company_template($id,$post);
+                $selected=$this->emails_model->get_email_template_by_id($id);
+                $saved=true;
+            } catch (DomainException $exception) {
+                $this->output->set_status_header(422);$error='Não foi possível salvar. Confira os campos e sua permissão nesta empresa.';
+            } catch (RuntimeException $exception) {
+                $this->output->set_status_header(503);$error='Não foi possível confirmar a gravação. Recarregue antes de tentar novamente.';
+            }
+        }
+        require_once APPPATH.'services/CompanySettingsIdentity.php';
+        $identity=(new CompanySettingsIdentity($this->db,db_prefix()))->read(CompanySettingsRuntime::issuerId());
+        $this->load->view('admin/emails/company_scoped',[
+            'company_identity'=>$identity,'selected'=>$selected,'templates'=>$selected?[]:$this->emails_model->get(['language'=>'portuguese_br']),
+            'can_edit'=>CompanySettingsRuntime::canResource('email_templates','edit'),'saved'=>$saved,'error'=>$error,
+            'context_token'=>CompanyRequestScope::token(),'list_url'=>CompanyRequestScope::adminUrl($this,'emails'),
+            'edit_url'=>CompanyRequestScope::adminUrl($this,'emails/email_template/'),
+        ]);
     }
 
     /* Since version 1.0.1 - test your smtp settings */

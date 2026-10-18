@@ -46,9 +46,15 @@ namespace {
         public array $tables = ['tblasaas_payment_origins'=>[], 'tblasaas_payment_origin_events'=>[], 'tblasaas_payments_map'=>[], 'tblinvoicepaymentrecords'=>[], 'tblinvoices'=>[], 'tblclients'=>[]];
         public ?string $failInsert = null;
         public ?string $failUpdate = null;
-        private array $where = [];
-        private string $from = '';
-        private int $affected = 0;
+        protected array $where = [];
+        protected string $from = '';
+        protected int $affected = 0;
+        public function query($sql, $args = []) {
+            if ($sql === 'SELECT id FROM tblinvoices WHERE id = ? AND tblinvoices.issuer_id IS NULL') {
+                return new FakeResult(array_values(array_filter($this->tables['tblinvoices'], static fn($r) => (string)$r['id'] === (string)$args[0] && ($r['issuer_id'] ?? null) === null)));
+            }
+            throw new \RuntimeException('Unexpected scope query: '.$sql);
+        }
         public function table_exists($t) { return isset($this->tables[$t]); }
         public function field_exists($c, $t) { return true; }
         public function select($s) { return $this; }
@@ -56,7 +62,7 @@ namespace {
         public function limit($n) { return $this; }
         public function where($k, $v = null, $escape = true) { $this->where[$k]=$v; return $this; }
         public function get_where($t, $where) { foreach ($where as $k=>$v) { $this->where($k,$v); } return $this->get($t); }
-        private function match(array $r): bool { foreach ($this->where as $k=>$v) { if ($k === 'remote_id IS NULL') { if (($r['remote_id']??null)!==null) return false; } elseif (($r[$k]??null) != $v) { return false; } } return true; }
+        protected function match(array $r): bool { foreach ($this->where as $k=>$v) { if ($k === 'remote_id IS NULL') { if (($r['remote_id']??null)!==null) return false; } elseif (($r[$k]??null) != $v) { return false; } } return true; }
         public function get($t = null) { $t=$t??$this->from; $r=array_values(array_filter($this->tables[$t]??[],fn($r)=>$this->match($r))); $this->where=[]; return new FakeResult($r); }
         public function insert($t,$data) {
             if ($this->failInsert === $t) return false;
@@ -84,11 +90,12 @@ namespace {
     function decrypt($v){return $v;}
     function db_prefix(){return 'tbl';}
     function get_staff_user_id(){return 7;}
-    function log_message(...$v){}
+    function log_message(...$v){$GLOBALS['asaas_test_logs'][]=$v;}
     function set_alert(...$v){global $alerts;$alerts[]=$v;}
     function register_activation_hook(...$v){}
     function register_payment_gateway(...$v){}
     require_once FCPATH . 'modules/asaas/libraries/Asaas_gateway.php';
+    require_once FCPATH . 'application/services/InvoiceIssuerScope.php';
     require_once FCPATH . 'application/models/Invoices_model.php';
     require_once FCPATH . 'modules/asaas/asaas.php';
     class TestInvoices extends Invoices_model {
@@ -117,6 +124,8 @@ namespace {
     function wallet($id='wallet_original'){return ['data'=>[['id'=>$id]],'hasMore'=>false];}
     function payment($status='PENDING'){return ['id'=>'pay_original','status'=>$status,'externalReference'=>'invoice_hash','value'=>100,'dueDate'=>'2026-11-01','customer'=>'cus_original'];}
     use Asaas\Sdk\Http\Client;
+
+    if (defined('ASAAS_FIXTURES_ONLY')) return;
 
     [$gw,$adapter,$db]=fixture(); known($adapter,$db);
     $gw->settings['sandbox']='0'; // Global environment changed after issue.
@@ -228,12 +237,17 @@ namespace {
     [$gw,$adapter,$db]=fixture();known($adapter,$db);
     Client::$responses=[wallet('wallet_other')];
     $webhook=new \ReflectionMethod($adapter,'reconcileWebhookEvent');
-    check($webhook->invoke($adapter,['event'=>'PAYMENT_RECEIVED','payment'=>payment('RECEIVED')])==='review_required','known-origin webhook cannot settle through another account');
-    check(count(Client::$calls)===1&&$db->tables['tblinvoicepaymentrecords']===[],'wrong-account webhook preserves receipts and requests review');
+    check($webhook->invoke($adapter,['event'=>'PAYMENT_RECEIVED','payment'=>payment('RECEIVED')])['state']==='review_required','known-origin webhook cannot settle through another account');
+    check(count(Client::$calls)===0&&$db->tables['tblinvoicepaymentrecords']===[],'unscoped webhook preserves receipts without remote calls');
     [$gw,$adapter,$db]=fixture();$db->tables['tblinvoices'][0]['issuer_id']=2;
     $webhook=new \ReflectionMethod($adapter,'reconcileWebhookEvent');
-    check($webhook->invoke($adapter,['event'=>'PAYMENT_RECEIVED','payment'=>payment('RECEIVED')])==='review_required'&&Client::$calls===[],'issuer webhook remains fail-closed');
+    check($webhook->invoke($adapter,['event'=>'PAYMENT_RECEIVED','payment'=>payment('RECEIVED')])['state']==='review_required'&&Client::$calls===[],'issuer webhook remains fail-closed');
 
+    foreach(['', 'sandbox', 'true', 'false', '2', 0, 1, true, false] as $ambiguous){
+        [$gw,$adapter,$db]=fixture();$gw->settings['sandbox']=$ambiguous;
+        throws(fn()=>$adapter->createPayment(['externalReference'=>'invoice_hash','customer'=>'cus_original']),'ambiguous environment fails closed');
+        check(Client::$calls===[],'invalid environment cannot default to production');
+    }
     foreach([2,3,5,6] as $status){
         [$gw,$adapter,$db]=fixture();$db->tables['tblinvoices'][0]['status']=$status;
         throws(fn()=>$adapter->createPayment(['externalReference'=>'invoice_hash','customer'=>'cus_original']),'paid/partial/cancelled/draft invoice cannot issue');

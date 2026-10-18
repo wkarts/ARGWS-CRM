@@ -12,6 +12,9 @@ class InitModules
         // Migration CLI runs with a short-lived internal token. Module CSRF
         // exclusions apply only to web requests, and scanning every module
         // prevents the isolated migration worker from bootstrapping.
+        if (class_exists('InstallationMigrationBootstrap', false) && InstallationMigrationBootstrap::isRunning()) {
+            return;
+        }
         if (PHP_SAPI === 'cli' && getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false) {
             return;
         }

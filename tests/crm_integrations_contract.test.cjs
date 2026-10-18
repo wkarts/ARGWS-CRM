@@ -9,9 +9,10 @@ const file = (pathname) => fs.readFileSync(path.join(root, pathname), 'utf8');
 test('Asaas exige token no cabeçalho oficial e nunca aceita token por URL', () => {
   const security = file('modules/asaas/libraries/Asaas/WebhookSecurity.php');
   assert.match(security, /asaas-access-token/);
-  assert.match(security, /hash_equals\(\$secret,\s*\$provided\)/);
-  assert.match(security, /'status' => 401/);
-  assert.match(security, /'status' => 503/);
+  assert.match(security, /hash\('sha256',\s*\$secret\)/);
+  assert.match(security, /hash_equals\(\$digest,\s*hash\('sha256',\s*\$token\)\)/);
+  assert.match(security, /error\(401,/);
+  assert.match(security, /error\(503,/);
   assert.doesNotMatch(security, /\$_GET|x-webhook-token/);
 });
 
@@ -24,16 +25,19 @@ test('Asaas persiste antes de responder HTTP 200 e reprocessa eventos em CRON', 
   assert.match(adapter, /processPendingWebhookEvents/);
   assert.match(adapter, /FOR UPDATE/);
   assert.match(adapter, /RELEASE_LOCK/);
-  assert.match(adapter, /'processed', 'ignored', 'review_required'/);
-  assert.match(adapter, /'Evento armazenado\.', 200/);
+  assert.match(adapter, /\$terminal=\['processed','ignored','review_required','observed'\]/);
+  assert.match(adapter, /\['state'=>'processed'\]/);
+  assert.match(adapter, /\['state'=>'ignored'\]/);
+  assert.match(adapter, /\$review=\['state'=>'review_required'\]/);
+  assert.match(adapter, /webhookResult\(true,\$duplicate,'Evento armazenado\.',200\)/);
   assert.match(entry, /set_status_header\(\$status\)/);
-  assert.match(entry, /method\(true\) !== 'POST'/);
+  assert.match(entry, /method\(true\)\s*!==\s*'POST'/);
   assert.match(module, /after_cron_run.*asaas_process_pending_webhooks/);
   assert.match(module, /processPendingWebhookEvents\(20\)/);
   assert.doesNotMatch(entry, /echo \$result\['message'\]/);
 });
 
-test('Conciliação não dá baixa dupla e mantém estornos para conferência', () => {
+test('Conciliação usa igualdade decimal exata, sem baixa dupla e com estorno em revisão', () => {
   const adapter = file('modules/asaas/libraries/Asaas/AsaasAdapter.php');
   assert.match(adapter, /invoicepaymentrecords/);
   assert.match(adapter, /transactionid.*paymentId/);
@@ -42,20 +46,25 @@ test('Conciliação não dá baixa dupla e mantém estornos para conferência', 
   assert.match(adapter, /PAYMENT_REFUNDED/);
   assert.match(adapter, /PAYMENT_CHARGEBACK_REQUESTED/);
   assert.match(adapter, /review_required/);
-  assert.match(adapter, /abs\(\$amount - \(float\) \$invoice->total\) > 0\.01/);
+  assert.match(adapter, /private function equalMoney\(\$a, \$b\): bool/);
+  assert.ok(adapter.includes("!$this->equalMoney($p['value'],$origin['invoice_total'])"));
+  assert.ok(adapter.includes("!$this->equalMoney($p['value'],$invoice['total'])"));
 });
 
-test('Setup Asaas usa v3/webhooks e não expõe chaves', () => {
+test('Configuração Asaas separa recebedor local do webhook remoto', () => {
   const controller = file('modules/asaas/controllers/Asaas.php');
   const view = file('modules/asaas/views/webhooks.php');
-  assert.match(controller, /requestStructured\('POST', '\/webhooks'/);
-  assert.match(controller, /requestStructured\('GET', '\/webhooks'/);
-  assert.match(controller, /authToken/);
-  assert.match(controller, /'sendType' => 'SEQUENTIALLY'/);
-  assert.match(controller, /method\(true\) !== 'POST'/);
+  assert.match(controller, /public function index\(\)[\s\S]*\$this->render_webhooks\(\)/);
+  assert.match(controller, /public function register_integration\(\)/);
+  assert.match(controller, /function require_webhook_management\(\): bool/);
+  assert.match(controller, /setup_webhook\(\) \{ show_404\(\); \}/);
+  assert.match(controller, /set_webhook_invoice\([^)]*\) \{ show_404\(\); \}/);
+  assert.match(view, /form_open\(admin_url\('asaas\/register_integration'\)/);
+  assert.match(view, /webhook_admin_csrf/);
+  assert.ok(view.includes('Cadastro remoto:'));
+  assert.ok(view.includes('não pode ser recuperado'));
+  assert.doesNotMatch(view, /name=["'](?:api_key|webhook_token|token)["']/);
   assert.doesNotMatch(controller, /var_dump|suporte@wwsoftwares\.com\.br/);
-  assert.match(view, /form_open\(admin_url\('asaas\/setup_webhook'\)\)/);
-  assert.doesNotMatch(view, /value="<\?= html_escape\(\$token\)/);
 });
 
 test('Rotas de diagnóstico de Pix são protegidas contra GET e acesso anônimo', () => {

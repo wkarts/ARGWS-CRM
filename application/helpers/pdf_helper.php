@@ -128,6 +128,14 @@ function get_pdf_format($option_name)
  */
 function invoice_pdf($invoice, $tag = '')
 {
+    require_once __DIR__ . '/invoice_issuer_helper.php';
+    $snapshot = invoice_issuer_snapshot($invoice);
+    if ($snapshot !== null) {
+        // Identifiers only: the dedicated renderer never trusts invoice DTOs supplied by a caller.
+        $document = issuers_invoice_documents()->forPdf($snapshot['invoice_id'], $snapshot['issuer_id']);
+        require_once LIBSPATH . 'pdf/Issuer_invoice_pdf.php';
+        return (new Issuer_invoice_pdf($document))->prepare();
+    }
     return app_pdf('invoice', LIBSPATH . 'pdf/Invoice_pdf', $invoice, $tag);
 }
 /**

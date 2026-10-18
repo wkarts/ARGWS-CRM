@@ -12,13 +12,13 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: Custom Links | Links Personalizados
 Description: Adicione links personalizados aos menus da aplicação ARGWS
-Version: 1.1.9
+Version: 1.2.0
 Requires at least: 2.3.*
 Author: WWSoft -> Wallace Kleiton
 Author URI: https://t.me/wkartspro
 */
 
-define('CUSTOM_LINKS_MODULE_VERSION', '1.1.9');
+define('CUSTOM_LINKS_MODULE_VERSION', '1.2.0');
 define('CUSTOM_LINKS_MODULE_NAME', 'custom_links');
 define('CUSTOM_LINKS_TABLE_NAME', db_prefix().'custom_links');
 

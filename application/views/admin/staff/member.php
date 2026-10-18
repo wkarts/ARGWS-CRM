@@ -296,6 +296,7 @@
                                 <div role="tabpanel" class="tab-pane" id="staff_permissions">
                                     <?php
                         hooks()->do_action('staff_render_permissions');
+                        if (function_exists('issuers_render_staff_access')) { issuers_render_staff_access(isset($member) ? $member->staffid : null); }
 $selected = '';
 
 foreach ($roles as $role) {

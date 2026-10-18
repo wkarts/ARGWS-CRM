@@ -20,6 +20,7 @@ function update_sales_total_tax_column($id, $type, $table): void {}
 final class DraftDb
 {
     public array $rows = []; private int $id = 0;
+    public function table_exists($table): bool { return false; }
     public function insert($table, $data): bool {
         global $items, $throwItem;
         if ($table === 'test_itemable') { if ($throwItem) throw new RuntimeException('Injected item failure'); $this->id++; $items[] = $data; return true; }
@@ -58,5 +59,6 @@ check(count($items) === 1 && count($taxCalls) === 1 && count($writer->activities
 $throwItem = true;
 try { $writer->add_recurring_rule_draft($template); throw new LogicException('failure expected'); } catch (RuntimeException $e) { check($e->getMessage() === 'Injected item failure', 'failure propagated for rollback'); }
 $throwItem = false;
-try { $writer->add($template); throw new LogicException('normal hook expected'); } catch (RuntimeException $e) { check($e->getMessage() === 'Unexpected external hook', 'quiet flag restored; standard add still uses hooks'); }
+$normalTemplate = $template; unset($normalTemplate['invoices_to_merge'], $normalTemplate['is_recurring_from']);
+try { $writer->add($normalTemplate); throw new LogicException('normal hook expected'); } catch (RuntimeException $e) { check($e->getMessage() === 'Unexpected external hook', 'quiet flag restored; standard add still uses hooks'); }
 echo "Independent recurring draft writer: $checks checks passed (real Invoices_model::add with local collaborators; no hooks/network/mail).\n";

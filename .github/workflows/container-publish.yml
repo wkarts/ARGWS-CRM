@@ -2,7 +2,7 @@ name: Containers ARGWS CRM
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, feat/banco-brasil-billing-cnab240]
   push:
     branches: [develop]
   workflow_dispatch:

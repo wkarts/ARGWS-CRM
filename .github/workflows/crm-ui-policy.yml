@@ -1,7 +1,7 @@
 name: Interface CRM e catálogo de pagamentos
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, feat/banco-brasil-billing-cnab240]
     paths:
       - application/**
       - modules/ideal/**

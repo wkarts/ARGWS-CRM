@@ -4,6 +4,23 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Contracts_model extends App_Model
 {
+    private array $authorizedContractDeletion = [];
+    private function permitsLegacyContract($id): bool
+    {
+        if ((!is_string($id) && !is_int($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        return isset($this->authorizedContractDeletion[(string)$id])
+            || \app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'contracts', $id);
+    }
+    private function permitsLegacyContractChild(string $kind, $id, $expected = null): bool
+    {
+        if ((!is_int($id) && !is_string($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        $map = ['comment'=>['contract_comments','contract_id'], 'renewal'=>['contract_renewals','contractid'], 'attachment'=>['files','rel_id']];
+        if (!isset($map[$kind])) return false;
+        [$table,$column] = $map[$kind];
+        $row = $this->db->query('SELECT '.$column.' FROM '.db_prefix().$table.' WHERE id=?'.($kind === 'attachment' ? " AND rel_type='contract'" : ''), [$id])->row();
+        return $row && ($expected === null || (string)$row->$column === (string)$expected) && $this->permitsLegacyContract($row->$column);
+    }
+
     public function __construct()
     {
         parent::__construct();
@@ -20,7 +37,8 @@ class Contracts_model extends App_Model
     public function get($id = '', $where = [], $for_editor = false)
     {
         $this->db->select('*,' . db_prefix() . 'contracts_types.name as type_name,' . db_prefix() . 'contracts.id as id, ' . db_prefix() . 'contracts.addedfrom');
-        $this->db->where($where);
+        $this->db->where(\app\services\ClientIssuerScope::legacySql($this->db, db_prefix(), db_prefix().'contracts', 'client'), null, false);
+        if ($where) $this->db->group_start()->where($where)->group_end();
         $this->db->join(db_prefix() . 'contracts_types', '' . db_prefix() . 'contracts_types.id = ' . db_prefix() . 'contracts.contract_type', 'left');
         $this->db->join(db_prefix() . 'clients', '' . db_prefix() . 'clients.userid = ' . db_prefix() . 'contracts.client');
         if (is_numeric($id)) {
@@ -58,7 +76,7 @@ class Contracts_model extends App_Model
      */
     public function get_contracts_years()
     {
-        return $this->db->query('SELECT DISTINCT(YEAR(datestart)) as year FROM ' . db_prefix() . 'contracts')->result_array();
+        return $this->db->query('SELECT DISTINCT(YEAR(datestart)) as year FROM ' . db_prefix() . 'contracts WHERE '.\app\services\ClientIssuerScope::legacySql($this->db, db_prefix(), db_prefix().'contracts', 'client'))->result_array();
     }
 
     /**
@@ -68,6 +86,7 @@ class Contracts_model extends App_Model
      */
     public function get_contract_attachments($attachment_id = '', $id = '')
     {
+        if (is_numeric($attachment_id) ? !$this->permitsLegacyContractChild('attachment', $attachment_id) : !$this->permitsLegacyContract($id)) return is_numeric($attachment_id) ? null : [];
         if (is_numeric($attachment_id)) {
             $this->db->where('id', $attachment_id);
 
@@ -87,6 +106,7 @@ class Contracts_model extends App_Model
      */
     public function add($data)
     {
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'client', true)) { return false; }
         $data['dateadded'] = date('Y-m-d H:i:s');
         $data['addedfrom'] = get_staff_user_id();
 
@@ -118,6 +138,7 @@ class Contracts_model extends App_Model
 
         $data = hooks()->apply_filters('before_contract_added', $data);
 
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'client', true)) { return false; }
         $this->db->insert(db_prefix() . 'contracts', $data);
         $insert_id = $this->db->insert_id();
 
@@ -141,6 +162,7 @@ class Contracts_model extends App_Model
      */
     public function update($data, $id)
     {
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'client', false) || !\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'contracts', $id)) { return false; }
         $affectedRows = 0;
 
         $contract = $this->db->where('id', $id)->get('contracts')->row();
@@ -172,6 +194,7 @@ class Contracts_model extends App_Model
         }
 
         $data = hooks()->apply_filters('before_contract_updated', $data, $id);
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'client', false)) { return false; }
 
         if (isset($data['custom_fields'])) {
             $custom_fields = $data['custom_fields'];
@@ -196,6 +219,7 @@ class Contracts_model extends App_Model
 
     public function add_signature($id): bool
     {
+        if (!$this->permitsLegacyContract($id)) return false;
         $contract = $this->get($id, [], true);
         if ($contract) {
             $content = override_merge_fields($this->get_merge_fields($contract), $contract->content);
@@ -217,6 +241,7 @@ class Contracts_model extends App_Model
 
     public function clear_signature($id): bool
     {
+        if (!$this->permitsLegacyContract($id)) return false;
         $this->db->select('signature');
         $this->db->where('id', $id);
         $contract = $this->db->get(db_prefix() . 'contracts')->row();
@@ -248,6 +273,7 @@ class Contracts_model extends App_Model
     */
     public function add_comment($data, $client = false)
     {
+        if (!$this->permitsLegacyContract($data['contract_id'] ?? null)) return false;
         if (is_staff_logged_in()) {
             $client = false;
         }
@@ -326,6 +352,7 @@ class Contracts_model extends App_Model
 
     public function edit_comment($data, $id)
     {
+        if (!$this->permitsLegacyContractChild('comment', $id)) return false;
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'contract_comments', [
             'content' => nl2br($data['content']),
@@ -345,6 +372,7 @@ class Contracts_model extends App_Model
      */
     public function get_comments($id)
     {
+        if (!$this->permitsLegacyContract($id)) return [];
         $this->db->where('contract_id', $id);
         $this->db->order_by('dateadded', 'ASC');
 
@@ -358,6 +386,7 @@ class Contracts_model extends App_Model
      */
     public function get_comment($id)
     {
+        if (!$this->permitsLegacyContractChild('comment', $id)) return null;
         $this->db->where('id', $id);
 
         return $this->db->get(db_prefix() . 'contract_comments')->row();
@@ -370,6 +399,7 @@ class Contracts_model extends App_Model
      */
     public function remove_comment($id)
     {
+        if (!$this->permitsLegacyContractChild('comment', $id)) return false;
         $comment = $this->get_comment($id);
 
         $this->db->where('id', $id);
@@ -385,6 +415,7 @@ class Contracts_model extends App_Model
 
     public function copy($id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'contracts', $id)) { return false; }
         $contract       = $this->get($id, [], true);
         $fields         = $this->db->list_fields(db_prefix() . 'contracts');
         $newContactData = [];
@@ -442,6 +473,9 @@ class Contracts_model extends App_Model
      */
     public function delete($id)
     {
+        if (!$this->permitsLegacyContract($id)) return false;
+        $this->authorizedContractDeletion[(string)$id] = true;
+        try {
         hooks()->do_action('before_contract_deleted', $id);
         $this->clear_signature($id);
         $contract = $this->get($id);
@@ -488,6 +522,7 @@ class Contracts_model extends App_Model
         }
 
         return false;
+        } finally { unset($this->authorizedContractDeletion[(string)$id]); }
     }
 
     /**
@@ -499,6 +534,7 @@ class Contracts_model extends App_Model
      */
     public function mark_as_signed($id)
     {
+        if (!$this->permitsLegacyContract($id)) return false;
         $contract = $this->get($id, [], true);
         if (!is_object($contract)) {
             return  false;
@@ -523,6 +559,7 @@ class Contracts_model extends App_Model
      */
     public function unmark_as_signed($id)
     {
+        if (!$this->permitsLegacyContract($id)) return false;
         $contract = $this->get($id, [], true);
         if (!is_object($contract)) {
             return  false;
@@ -653,6 +690,7 @@ class Contracts_model extends App_Model
      */
     public function renew($data)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'contracts', $data['contractid'] ?? null)) { return false; }
         $keepSignature = isset($data['renew_keep_signature']);
         if ($keepSignature) {
             unset($data['renew_keep_signature']);
@@ -721,6 +759,7 @@ class Contracts_model extends App_Model
      */
     public function delete_renewal($id, $contractid)
     {
+        if (!$this->permitsLegacyContractChild('renewal', $id, $contractid)) return false;
         // check if this renewal is last so we can revert back the old values, if is not last we wont do anything
         $this->db->select('id')->from(db_prefix() . 'contract_renewals')->where('contractid', $contractid)->order_by('id', 'desc')->limit(1);
         $query                 = $this->db->get();
@@ -732,7 +771,7 @@ class Contracts_model extends App_Model
             $original_renewal = $this->db->get(db_prefix() . 'contract_renewals')->row();
         }
 
-        $contract = $this->get($id);
+        $contract = $this->get($contractid);
         $this->db->where('id', $id);
         $this->db->delete(db_prefix() . 'contract_renewals');
         if ($this->db->affected_rows() > 0) {
@@ -770,6 +809,7 @@ class Contracts_model extends App_Model
      */
     public function get_contracts_about_to_expire($staffId = null, $days = 7)
     {
+        $this->db->where(\app\services\ClientIssuerScope::legacySql($this->db, db_prefix(), db_prefix().'contracts', 'client'), null, false);
         $diff1 = date('Y-m-d', strtotime('-' . $days . ' days'));
         $diff2 = date('Y-m-d', strtotime('+' . $days . ' days'));
 
@@ -794,6 +834,7 @@ class Contracts_model extends App_Model
      */
     public function get_contract_renewal_history($id)
     {
+        if (!$this->permitsLegacyContract($id)) return [];
         $this->db->where('contractid', $id);
         $this->db->order_by('date_renewed', 'asc');
 
@@ -863,6 +904,7 @@ class Contracts_model extends App_Model
      */
     public function get_merge_fields(object $contract): array
     {
+        if (!$this->permitsLegacyContract($contract->id ?? null) || !\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $contract->client ?? null)) return [];
         $this->load->library('merge_fields/client_merge_fields');
         $this->load->library('merge_fields/contract_merge_fields');
         $this->load->library('merge_fields/other_merge_fields');

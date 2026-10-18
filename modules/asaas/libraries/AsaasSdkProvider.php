@@ -185,7 +185,7 @@ class AsaasSdkProvider
                 'status' => $this->mapApiStatus($status),
                 'httpStatus' => $status,
                 'latencyMs' => (int) ((microtime(true) - $startedAt) * 1000),
-                'message' => $exception->getMessage(),
+                'message' => 'Falha de comunicação com o Asaas. Confira a configuração e tente novamente.',
             ];
         } catch (TransportException $exception) {
             return [
@@ -193,7 +193,7 @@ class AsaasSdkProvider
                 'status' => 'TRANSPORT_ERROR',
                 'httpStatus' => null,
                 'latencyMs' => (int) ((microtime(true) - $startedAt) * 1000),
-                'message' => $exception->getMessage(),
+                'message' => 'Falha de comunicação com o Asaas. Confira a configuração e tente novamente.',
             ];
         }
     }
@@ -224,7 +224,10 @@ class AsaasSdkProvider
     {
         $value = $this->getSettingValue('sandbox', $companyId);
 
-        return $value === '1' || $value === 1 || $value === true;
+        if ($value !== '1' && $value !== '0') {
+            throw new \RuntimeException('asaas_environment_selection_required');
+        }
+        return $value === '1';
     }
 
     private function getApiKey(?int $companyId = null): string
