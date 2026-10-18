@@ -16,7 +16,8 @@ class LoadFake {public $calls=0; public function model($name){$this->calls++;} }
 class ModelFake {public $calls=0;public $fail=null; public function accept_request($key,$event,$raw){$this->calls++;if($this->fail)throw $this->fail;return ['event_id'=>$event['event_id'],'request_id'=>'req_test'];} }
 $event=['schema_version'=>1,'event_id'=>'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','event_type'=>'charge.requested','scope'=>$scope,'data'=>['charge_id'=>'22222222-2222-4222-8222-222222222222','amount_cents'=>100,'currency'=>'BRL','due_date'=>'2028-02-29','description'=>'Synthetic']];
 $body=json_encode($event);
-$c=new Bridge();$c->app_modules=new ModulesFake();$c->input=new InputFake();$c->output=new OutputFake();$c->uri=new UriFake();$c->load=new LoadFake();$c->pige_bridge_model=new ModelFake();$c->input->raw_input_stream=$body;
+class TestBridge extends Bridge { protected function openRequestStream(){ $stream=fopen('php://temp','w+b');fwrite($stream,$this->input->raw_input_stream);rewind($stream);return $stream; } }
+$c=new TestBridge();$c->app_modules=new ModulesFake();$c->input=new InputFake();$c->output=new OutputFake();$c->uri=new UriFake();$c->load=new LoadFake();$c->pige_bridge_model=new ModelFake();$c->input->raw_input_stream=$body;
 $timestamp=(string)time();
 $headers=['X-Pige-Timestamp'=>$timestamp,'X-Pige-Event-Id'=>$event['event_id'],'X-Pige-Signature'=>PigeBridgeProtocol::signature($secret,$timestamp,$event['event_id'],'POST',PigeBridgeProtocol::REQUEST_PATH,$body)];
 $checks=0;function check($yes,$msg){global $checks;$checks++;if(!$yes)throw new RuntimeException($msg);}
@@ -25,6 +26,7 @@ $c->requests();check($c->output->status===401 && $c->load->calls===0,'auth requi
 $c->input->verb='GET';$c->requests();check($c->output->status===405,'method protected');
 $c->input->verb='POST';$c->uri->path='pige_bridge/bridge/requests';$c->requests();check($c->output->status===404,'route alias blocked');
 $c->uri->path='pige_bridge/api/v1/requests';$c->input->raw_input_stream=str_repeat('x',16385);$c->requests();check($c->output->status===413,'body limit');
+$c->input->raw_input_stream=str_repeat('x', 1024*1024);$c->requests();check($c->output->status===413 && $c->load->calls===0,'large stream rejected before persistence');
 $c->input->raw_input_stream=$body;$c->input->headers=$headers;$c->requests();
 check($c->output->status===202,'receipt accepted');check($c->output->body['status']==='blocked' && $c->output->body['capabilities']['issue_charge']===false,'accepted is never issued');
 check($c->pige_bridge_model->calls===1,'single persistence call');

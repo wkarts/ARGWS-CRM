@@ -20,7 +20,19 @@ class Bridge extends App_Controller
         if ('/' . trim($this->uri->uri_string(), '/') !== PigeBridgeProtocol::REQUEST_PATH) {
             return $this->respond(404, ['error' => 'not_found']);
         }
-        $body = $this->input->raw_input_stream;
+        // Bound the read itself, not only JSON validation after allocating an arbitrary body.
+        $stream = $this->openRequestStream();
+        if (!is_resource($stream)) {
+            return $this->respond(400, ['error' => 'invalid_request']);
+        }
+        try {
+            $body = stream_get_contents($stream, PigeBridgeProtocol::MAX_BODY_BYTES + 1);
+        } finally {
+            fclose($stream);
+        }
+        if (!is_string($body)) {
+            return $this->respond(400, ['error' => 'invalid_request']);
+        }
         try {
             $event = PigeBridgeProtocol::decode($body);
         } catch (Throwable $e) {
@@ -47,6 +59,11 @@ class Bridge extends App_Controller
             return $this->respond(503, ['error' => 'receipt_storage_unavailable']);
         }
         return $this->respond(202, PigeBridgeProtocol::receipt($receipt));
+    }
+
+    protected function openRequestStream()
+    {
+        return fopen('php://input', 'rb');
     }
 
     private function respond(int $status, array $payload)
