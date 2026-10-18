@@ -1,7 +1,7 @@
 name: Calendario das faturas recorrentes
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, feat/banco-brasil-billing-cnab240]
     paths:
       - application/models/Cron_model.php
       - application/services/RecurringInvoiceDates.php

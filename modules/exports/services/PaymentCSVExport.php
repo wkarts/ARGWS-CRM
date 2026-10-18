@@ -3,6 +3,7 @@
 namespace app\modules\exports\services;
 
 use CI_DB_mysqli_driver;
+use app\services\InvoiceIssuerScope;
 
 class PaymentCSVExport extends CSVExport
 {
@@ -34,6 +35,7 @@ class PaymentCSVExport extends CSVExport
             . '(CASE WHEN ' . db_prefix() . 'payment_modes.name IS NULL THEN ' . db_prefix() . 'invoicepaymentrecords.paymentmode ELSE ' . db_prefix() . 'payment_modes.name END) as payment_mode,';
         $this->ci->db->select(prefixed_table_fields_array(db_prefix() . 'invoicepaymentrecords', true, $this->excludedFields) . ',' . $select);
         $this->ci->db->join(db_prefix() . 'invoices', db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
+        InvoiceIssuerScope::applyLegacy($this->ci->db, db_prefix() . 'invoices');
         $this->ci->db->join(db_prefix() . 'payment_modes', db_prefix() . 'payment_modes.id = ' . db_prefix() . 'invoicepaymentrecords.paymentmode', 'left');
         $this->ci->db->join(db_prefix() . 'currencies', db_prefix() . 'currencies.id = ' . db_prefix() . 'invoices.currency');
         $this->applyDateFilter(db_prefix() . 'invoicepaymentrecords.daterecorded');

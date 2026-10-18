@@ -4,6 +4,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 use app\services\projects\Gantt;
 use app\services\ValidatesContact;
+use app\services\InvoiceIssuerScope;
 
 class Clients extends ClientsController
 {
@@ -1468,6 +1469,7 @@ class Clients extends ClientsController
         foreach ($statuses as $status) {
             $this->db->select('total as amount, date');
             $this->db->from(db_prefix() . 'invoices');
+            InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
             $this->db->where('clientid', get_client_user_id());
             $this->db->where('status', $status);
             $by_currency = $this->input->post('report_currency');

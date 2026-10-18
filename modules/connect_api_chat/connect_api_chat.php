@@ -6,12 +6,12 @@ defined('BASEPATH') or exit('No direct script access allowed');
 Module Name: Connect|API Chat
 Description: Caixa de atendimento colaborativa vinculada à instância ativa do Connect|API Conector.
 Author: ARGWS
-Version: 1.1.2
+Version: 1.1.3
 Requires at least: 2.9.4
 */
 
 define('CONNECT_API_CHAT_MODULE', 'connect_api_chat');
-define('CONNECT_API_CHAT_VERSION', '1.1.2');
+define('CONNECT_API_CHAT_VERSION', '1.1.3');
 define('CONNECT_API_CHAT_PERMISSION', 'connect-api-chat');
 
 register_activation_hook(CONNECT_API_CHAT_MODULE, 'connect_api_chat_activate');

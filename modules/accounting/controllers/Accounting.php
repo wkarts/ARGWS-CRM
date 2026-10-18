@@ -6641,6 +6641,7 @@ class Accounting extends AdminController
                 $_data = '';
                 if($aRow['customer_code']){
                     $this->db->where(db_prefix() . 'clients.userid', $aRow['customer_code']);
+                    \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix().'clients');
                     $client = $this->db->get(db_prefix() . 'clients')->row();
                     if($client){
                         $_data = $client->company;

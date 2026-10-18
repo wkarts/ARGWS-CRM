@@ -13,9 +13,8 @@ class Authentication extends App_Controller
     {
         parent::__construct();
 
-        if ($this->app->is_db_upgrade_required()) {
-            redirect(admin_url());
-        }
+        // Authentication/logout must stay reachable while a native upgrade is
+        // pending. AdminController checks the live administrator before DDL.
 
         load_admin_language();
         $this->load->model('Authentication_model');

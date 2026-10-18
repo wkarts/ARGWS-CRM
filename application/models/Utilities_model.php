@@ -1,5 +1,7 @@
 <?php
 
+use app\services\InvoiceIssuerScope;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Utilities_model extends App_Model
@@ -152,6 +154,7 @@ class Utilities_model extends App_Model
 
             $this->db->select('duedate as date,number,id,clientid,hash,' . get_sql_select_client_company());
             $this->db->from(db_prefix() . 'invoices');
+            InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
             $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid=' . db_prefix() . 'invoices.clientid', 'left');
             $this->db->where_not_in('status', [
                 2,

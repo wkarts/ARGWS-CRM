@@ -98,6 +98,7 @@ class Payments extends AdminController
         }
 
         $payment = $this->payments_model->get($id);
+        if (!$payment) { show_404(); }
 
         if (!$payment) {
             show_404();
@@ -139,6 +140,7 @@ class Payments extends AdminController
         }
 
         $payment = $this->payments_model->get($id);
+        if (!$payment) { show_404(); }
 
         if (staff_cant('view', 'payments')
             && staff_cant('view_own', 'invoices')
@@ -188,6 +190,7 @@ class Payments extends AdminController
         }
 
         $payment = $this->payments_model->get($id);
+        if (!$payment) { show_404(); }
 
         if (staff_cant('view', 'payments')
             && staff_cant('view_own', 'invoices')

@@ -1,9 +1,37 @@
 <?php
 
+use app\services\InvoiceIssuerScope;
+use app\services\InvoicePaymentWriter;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Credit_notes_model extends App_Model
 {
+    private array $authorizedDocumentDeletion = [];
+    private function permitsLegacyDocument($id): bool
+    {
+        if ((!is_string($id) && !is_int($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        return isset($this->authorizedDocumentDeletion[(string)$id])
+            || \app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'creditnotes', $id);
+    }
+    private function permitsLegacyDocumentFile($id, $expected = null): bool
+    {
+        if ((!is_string($id) && !is_int($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        $file = $this->db->query("SELECT rel_id FROM ".db_prefix()."files WHERE id=? AND rel_type='credit_note'", [$id])->row();
+        return $file && ($expected === null || (string)$file->rel_id === (string)$expected) && $this->permitsLegacyDocument($file->rel_id);
+    }
+
+    private function permitsLegacyCredit($id): bool
+    {
+        return \app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'creditnotes', $id);
+    }
+    private function permitsLegacyRefund($id, $expected = null): bool
+    {
+        if ((!is_string($id) && !is_int($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        $refund = $this->db->query('SELECT credit_note_id FROM '.db_prefix().'creditnote_refunds WHERE id=?', [$id])->row();
+        return $refund && ($expected === null || (string)$refund->credit_note_id === (string)$expected) && $this->permitsLegacyCredit($refund->credit_note_id);
+    }
+
     private $shipping_fields = ['shipping_street', 'shipping_city', 'shipping_city', 'shipping_state', 'shipping_zip', 'shipping_country'];
 
     public function __construct()
@@ -41,6 +69,7 @@ class Credit_notes_model extends App_Model
 
     public function get_available_creditable_invoices($credit_note_id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'creditnotes', $credit_note_id)) return [];
         $has_permission_view = staff_can('view',  'invoices');
 
         $invoices_statuses_available_for_credits = invoices_statuses_available_for_credits();
@@ -55,6 +84,7 @@ class Credit_notes_model extends App_Model
             $this->db->where('addedfrom', get_staff_user_id());
         }
         $this->db->join(db_prefix() . 'currencies', '' . db_prefix() . 'currencies.id = ' . db_prefix() . 'invoices.currency');
+        InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $invoices = $this->db->get(db_prefix() . 'invoices')->result_array();
 
         foreach ($invoices as $key => $invoice) {
@@ -147,7 +177,8 @@ class Credit_notes_model extends App_Model
         $this->db->select('*,' . db_prefix() . 'currencies.id as currencyid, ' . db_prefix() . 'creditnotes.id as id, ' . db_prefix() . 'currencies.name as currency_name');
         $this->db->from(db_prefix() . 'creditnotes');
         $this->db->join(db_prefix() . 'currencies', '' . db_prefix() . 'currencies.id = ' . db_prefix() . 'creditnotes.currency', 'left');
-        $this->db->where($where);
+        $this->db->where(\app\services\ClientIssuerScope::legacyDocumentSql($this->db, db_prefix(), 'creditnotes', db_prefix().'creditnotes'), null, false);
+        if ($where) $this->db->group_start()->where($where)->group_end();
 
         if (is_numeric($id)) {
             $this->db->where(db_prefix() . 'creditnotes.id', $id);
@@ -180,6 +211,7 @@ class Credit_notes_model extends App_Model
 
     public function add($data)
     {
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'clientid', true)) { return false; }
         $save_and_send = isset($data['save_and_send']);
 
         $data['prefix']        = get_option('credit_note_prefix');
@@ -205,6 +237,7 @@ class Credit_notes_model extends App_Model
         $data  = $hook['data'];
         $items = $hook['items'];
 
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'clientid', true)) { return false; }
         $this->db->insert(db_prefix() . 'creditnotes', $data);
         $insert_id = $this->db->insert_id();
         if ($insert_id) {
@@ -249,6 +282,7 @@ class Credit_notes_model extends App_Model
      */
     public function update($data, $id)
     {
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'clientid', false) || !\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'creditnotes', $id)) { return false; }
         $affectedRows  = 0;
         $save_and_send = isset($data['save_and_send']);
 
@@ -282,6 +316,7 @@ class Credit_notes_model extends App_Model
         ], $id);
 
         $data                  = $hook['data'];
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'clientid', false)) { return false; }
         $items                 = $hook['items'];
         $newitems              = $hook['newitems'];
         $data['removed_items'] = $hook['removed_items'];
@@ -374,6 +409,7 @@ class Credit_notes_model extends App_Model
     */
     public function delete_attachment($id)
     {
+        if (!$this->permitsLegacyDocumentFile($id)) return false;
         $attachment = $this->misc_model->get_file($id);
 
         $deleted = false;
@@ -402,6 +438,7 @@ class Credit_notes_model extends App_Model
 
     public function get_attachments($credit_note_id)
     {
+        if (!$this->permitsLegacyDocument($credit_note_id)) return [];
         $this->db->where('rel_id', $credit_note_id);
         $this->db->where('rel_type', 'credit_note');
 
@@ -415,6 +452,10 @@ class Credit_notes_model extends App_Model
     */
     public function delete($id, $simpleDelete = false)
     {
+        if (!$this->permitsLegacyDocument($id)) return false;
+        $this->authorizedDocumentDeletion[(string)$id] = true;
+        try {
+        if (!$this->permitsLegacyCredit($id)) return false;
         hooks()->do_action('before_credit_note_deleted', $id);
         $this->db->where('id', $id);
         $this->db->delete(db_prefix() . 'creditnotes');
@@ -468,10 +509,12 @@ class Credit_notes_model extends App_Model
         }
 
         return false;
+        } finally { unset($this->authorizedDocumentDeletion[(string)$id]); }
     }
 
     public function mark($id, $status)
     {
+        if (!$this->permitsLegacyCredit($id)) return false;
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'creditnotes', ['status' => $status]);
 
@@ -486,6 +529,7 @@ class Credit_notes_model extends App_Model
 
     public function total_remaining_credits_by_customer($customer_id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) return 0;
         $has_permission_view = staff_can('view',  'credit_notes');
         $this->db->select('total,id');
         $this->db->where('clientid', $customer_id);
@@ -502,6 +546,7 @@ class Credit_notes_model extends App_Model
 
     public function total_remaining_credits_by_credit_note($credit_note_id)
     {
+        if (!$this->permitsLegacyCredit($credit_note_id)) return 0;
         $this->db->select('total,id');
         $this->db->where('id', $credit_note_id);
         $credits = $this->db->get(db_prefix() . 'creditnotes')->result_array();
@@ -553,6 +598,10 @@ class Credit_notes_model extends App_Model
 
     public function delete_applied_credit($id, $credit_id, $invoice_id)
     {
+        if (!$this->permitsLegacyCredit($credit_id)) return false;
+        $credit = $this->db->where('id', $id)->get(db_prefix() . 'credits')->row();
+        if (!$credit || (string) $credit->credit_id !== (string) $credit_id || (string) $credit->invoice_id !== (string) $invoice_id
+            || !InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $credit->invoice_id)) { return false; }
         $this->db->where('id', $id);
         $this->db->delete(db_prefix() . 'credits');
         if ($this->db->affected_rows() > 0) {
@@ -563,6 +612,7 @@ class Credit_notes_model extends App_Model
 
     public function credit_note_from_invoice($invoice_id)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $invoice_id)) { return false; }
         $_invoice = $this->invoices_model->get($invoice_id);
 
         $new_credit_note_data             = [];
@@ -657,6 +707,7 @@ class Credit_notes_model extends App_Model
 
     public function create_refund($id, $data)
     {
+        if (!$this->permitsLegacyCredit($id)) return false;
         if ($data['amount'] == 0) {
             return false;
         }
@@ -686,6 +737,7 @@ class Credit_notes_model extends App_Model
 
     public function edit_refund($id, $data)
     {
+        if (!$this->permitsLegacyRefund($id)) return false;
         if ($data['amount'] == 0) {
             return false;
         }
@@ -715,6 +767,7 @@ class Credit_notes_model extends App_Model
 
     public function get_refund($id)
     {
+        if (!$this->permitsLegacyRefund($id)) return null;
         $this->db->where('id', $id);
 
         return $this->db->get(db_prefix() . 'creditnote_refunds')->row();
@@ -722,6 +775,7 @@ class Credit_notes_model extends App_Model
 
     public function get_refunds($credit_note_id)
     {
+        if (!$this->permitsLegacyCredit($credit_note_id)) return [];
         $this->db->select(prefixed_table_fields_array(db_prefix() . 'creditnote_refunds', true) . ',' . db_prefix() . 'payment_modes.id as payment_mode_id, ' . db_prefix() . 'payment_modes.name as payment_mode_name');
         $this->db->where('credit_note_id', $credit_note_id);
 
@@ -752,6 +806,7 @@ class Credit_notes_model extends App_Model
 
     public function delete_refund($refund_id, $credit_note_id)
     {
+        if (!$this->permitsLegacyRefund($refund_id, $credit_note_id)) return false;
         $this->db->where('id', $refund_id);
         $this->db->delete(db_prefix() . 'creditnote_refunds');
         if ($this->db->affected_rows() > 0) {
@@ -774,20 +829,25 @@ class Credit_notes_model extends App_Model
 
     public function apply_credits($id, $data)
     {
+        if (!$this->permitsLegacyCredit($id)) return false;
+        if (!is_array($data) || !isset($data['amount'])) { return false; }
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $data['invoice_id'] ?? null)) { return false; }
         if ($data['amount'] == 0) {
             return false;
         }
 
-        $this->db->insert(db_prefix() . 'credits', [
-            'invoice_id'   => $data['invoice_id'],
-            'credit_id'    => $id,
-            'staff_id'     => get_staff_user_id(),
-            'date'         => date('Y-m-d'),
-            'date_applied' => date('Y-m-d H:i:s'),
-            'amount'       => $data['amount'],
-        ]);
-
-        $insert_id = $this->db->insert_id();
+        try {
+            $targetInvoiceId = InvoicePaymentWriter::invoiceId($data['invoice_id'] ?? null);
+            $creditNoteId = InvoicePaymentWriter::invoiceId($id);
+            $insert_id = (new InvoicePaymentWriter($this->db))->applyCredit($targetInvoiceId, $creditNoteId, [
+                'invoice_id' => $targetInvoiceId, 'amount' => $data['amount'],
+                'staff_id' => get_staff_user_id(), 'date' => date('Y-m-d'),
+            ], static fn(array $invoice, array $record) => hooks()->apply_filters('before_invoice_credit_insert_allowed', true, $invoice, $record));
+        } catch (\Throwable $error) {
+            set_alert('warning', 'Crédito não aplicado. Confira o saldo, a origem e o estado da fatura e da nota de crédito.');
+            log_message('error', '[CRM] Aplicação de crédito não confirmada; revisão de saldo/origem necessária.');
+            return false;
+        }
 
         if ($insert_id) {
             $this->update_credit_note_status($id);
@@ -832,6 +892,7 @@ class Credit_notes_model extends App_Model
 
     public function update_credit_note_status($id)
     {
+        if (!$this->permitsLegacyDocument($id)) { return false; }
         $total_refunds_by_credit_note = $this->total_refunds_by_credit_note($id);
         $total_credits_used           = $this->total_credits_used_by_credit_note($id);
 
@@ -866,6 +927,7 @@ class Credit_notes_model extends App_Model
 
     public function get_open_credits($customer_id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) return [];
         $has_permission_view = staff_can('view',  'credit_notes');
         $this->db->where('status', 1);
         $this->db->where('clientid', $customer_id);
@@ -883,6 +945,8 @@ class Credit_notes_model extends App_Model
 
     public function get_applied_invoice_credits($invoice_id)
     {
+        if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $invoice_id)) { return []; }
+        $this->db->where('EXISTS (SELECT 1 FROM '.db_prefix().'creditnotes AS credit_parent WHERE credit_parent.id='.db_prefix().'credits.credit_id AND '.\app\services\ClientIssuerScope::legacyDocumentSql($this->db, db_prefix(), 'creditnotes', 'credit_parent').')', null, false);
         $this->db->order_by('date', 'desc');
         $this->db->where('invoice_id', $invoice_id);
 
@@ -891,6 +955,10 @@ class Credit_notes_model extends App_Model
 
     public function get_applied_credits($credit_id)
     {
+        if (!$this->permitsLegacyCredit($credit_id)) return [];
+        if (InvoiceIssuerScope::schemaReady($this->db, db_prefix() . 'invoices')) {
+            $this->db->where('EXISTS (SELECT 1 FROM ' . db_prefix() . 'invoices WHERE ' . db_prefix() . 'invoices.id = ' . db_prefix() . 'credits.invoice_id AND ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices') . ')', null, false);
+        }
         $this->db->where('credit_id', $credit_id);
         $this->db->order_by('date', 'desc');
 
@@ -937,6 +1005,7 @@ class Credit_notes_model extends App_Model
     
     public function save_formatted_number($id) 
     {
+        if (!$this->permitsLegacyDocument($id)) { return false; }
         $formattedNumber = format_credit_note_number($id);
 
         $this->db->where('id', $id);
@@ -945,7 +1014,7 @@ class Credit_notes_model extends App_Model
 
     public function get_credits_years()
     {
-        return $this->db->query('SELECT DISTINCT(YEAR(date)) as year FROM ' . db_prefix() . 'creditnotes ORDER BY year DESC')->result_array();
+        return $this->db->query('SELECT DISTINCT(YEAR(date)) as year FROM ' . db_prefix() . 'creditnotes WHERE ' . \app\services\ClientIssuerScope::legacyDocumentSql($this->db, db_prefix(), 'creditnotes', db_prefix().'creditnotes') . ' ORDER BY year DESC')->result_array();
     }
 
     private function map_shipping_columns($data)

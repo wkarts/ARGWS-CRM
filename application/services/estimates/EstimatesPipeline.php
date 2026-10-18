@@ -69,6 +69,7 @@ class EstimatesPipeline extends AbstractKanban
 
         $this->ci->db->select(db_prefix() . 'estimates.id,status,invoiceid,' . get_sql_select_client_company() . ',total,currency,symbol,' . db_prefix() . 'currencies.name as currency_name,date,expirydate,clientid');
         $this->ci->db->from('estimates');
+        \app\services\ClientIssuerScope::applyLegacy($this->ci->db, db_prefix(), db_prefix().'estimates', 'clientid');
         $this->ci->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'estimates.clientid', 'left');
         $this->ci->db->join(db_prefix() . 'currencies', db_prefix() . 'estimates.currency = ' . db_prefix() . 'currencies.id');
         $this->ci->db->where('status', $this->status);

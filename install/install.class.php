@@ -17,6 +17,8 @@ class Install
 
     public $current_step = 1;
 
+    public $csrfToken = '';
+
     public $config_path = '../application/config/app-config.php';
 
     public static $last_step = 4;
@@ -135,7 +137,8 @@ class Install
                 $link->query($sql);
 
                 $sql = "INSERT INTO tblstaff (`firstname`, `lastname`, `password`, `email`, `datecreated`, `admin`, `active`) VALUES('$firstname', '$lastname', '$password', '$email', '$datecreated', 1, 1)";
-                $link->query($sql);
+                $administratorCreated = $link->query($sql);
+                $createdStaffId = $administratorCreated ? (int) $link->insert_id : 0;
 
                 if (!file_exists('../.htaccess') && is_writable('../')) {
                     fopen('../.htaccess', 'w');
@@ -144,6 +147,12 @@ class Install
                         fwrite($fp, 'RewriteEngine on' . PHP_EOL . 'RewriteCond $1 !^(index\.php|resources|robots\.txt)' . PHP_EOL . 'RewriteCond %{REQUEST_FILENAME} !-f' . PHP_EOL . 'RewriteCond %{REQUEST_FILENAME} !-d' . PHP_EOL . 'RewriteRule ^(.*)$ index.php?/$1 [L,QSA]' . PHP_EOL . 'AddDefaultCharset utf-8');
                         fclose($fp);
                     }
+                }
+                require_once dirname(__DIR__) . '/application/services/InstallationMigrationBootstrap.php';
+                $installation_migrations_ready = InstallationMigrationBootstrap::run(dirname(__DIR__), $createdStaffId);
+                if (!$installation_migrations_ready) {
+                    http_response_code(503);
+                    error_log('[ARGWS CRM install] Falha ao concluir a atualização nativa ou a identidade da instalação.');
                 }
                 $this->current_step = 5;
             } else {

@@ -1,5 +1,7 @@
 <?php
 
+use app\services\InvoiceIssuerScope;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Reports extends AdminController
@@ -102,9 +104,9 @@ class Reports extends AdminController
             $this->load->model('currencies_model');
             $select = [
                 get_sql_select_client_company(),
-                '(SELECT COUNT(clientid) FROM ' . db_prefix() . 'invoices WHERE ' . db_prefix() . 'invoices.clientid = ' . db_prefix() . 'clients.userid AND status != 5)',
-                '(SELECT SUM(subtotal) - SUM(discount_total) FROM ' . db_prefix() . 'invoices WHERE ' . db_prefix() . 'invoices.clientid = ' . db_prefix() . 'clients.userid AND status != 5)',
-                '(SELECT SUM(total) FROM ' . db_prefix() . 'invoices WHERE ' . db_prefix() . 'invoices.clientid = ' . db_prefix() . 'clients.userid AND status != 5)',
+                '(SELECT COUNT(clientid) FROM ' . db_prefix() . 'invoices WHERE ' . db_prefix() . 'invoices.clientid = ' . db_prefix() . 'clients.userid AND status != 5 AND ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices') . ')',
+                '(SELECT SUM(subtotal) - SUM(discount_total) FROM ' . db_prefix() . 'invoices WHERE ' . db_prefix() . 'invoices.clientid = ' . db_prefix() . 'clients.userid AND status != 5 AND ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices') . ')',
+                '(SELECT SUM(total) FROM ' . db_prefix() . 'invoices WHERE ' . db_prefix() . 'invoices.clientid = ' . db_prefix() . 'clients.userid AND status != 5 AND ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices') . ')',
             ];
 
             $custom_date_select = $this->get_where_report_period();
@@ -699,7 +701,7 @@ class Reports extends AdminController
             $sTable       = db_prefix() . 'itemable';
             $join         = ['JOIN ' . db_prefix() . 'invoices ON ' . db_prefix() . 'invoices.id = ' . db_prefix() . 'itemable.rel_id'];
 
-            $where = ['AND rel_type="invoice"', 'AND status != 5', 'AND status=2', 'AND is_selected=1'];
+            $where = ['AND rel_type="invoice"', 'AND status != 5', 'AND status=2', 'AND is_selected=1', 'AND ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices')];
 
             $custom_date_select = $this->get_where_report_period();
             if ($custom_date_select != '') {
@@ -954,6 +956,7 @@ class Reports extends AdminController
 
             $where = [
                 'AND status != 5',
+                'AND ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices'),
             ];
 
             $invoiceTaxesSelect = array_reverse($invoice_taxes);
@@ -1238,6 +1241,9 @@ class Reports extends AdminController
 
     private function distinct_taxes($rel_type)
     {
-        return $this->db->query('SELECT DISTINCT taxname,taxrate FROM ' . db_prefix() . "item_tax WHERE rel_type='" . $rel_type . "' ORDER BY taxname ASC")->result_array();
+        $invoiceScope = $rel_type === 'invoice'
+            ? ' AND rel_id IN (SELECT id FROM ' . db_prefix() . 'invoices WHERE ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices') . ')'
+            : '';
+        return $this->db->query('SELECT DISTINCT taxname,taxrate FROM ' . db_prefix() . "item_tax WHERE rel_type='" . $rel_type . "'" . $invoiceScope . ' ORDER BY taxname ASC')->result_array();
     }
 }

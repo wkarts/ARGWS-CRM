@@ -263,6 +263,7 @@ class Clients extends AdminController
 
     public function export($contact_id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyContact($this->db, db_prefix(), $contact_id)) { show_404(); return; }
         if (is_admin()) {
             $this->load->library('gdpr/gdpr_contact');
             $this->gdpr_contact->export($contact_id);
@@ -275,7 +276,7 @@ class Clients extends AdminController
         if (staff_can('create',  'customers')) {
             $companyName = trim($this->input->post('company'));
             $response    = [
-                'exists'  => (bool) total_rows(db_prefix() . 'clients', ['company' => $companyName]) > 0,
+                'exists'  => count($this->clients_model->get('', [db_prefix() . 'clients.company' => $companyName])) > 0,
                 'message' => _l('company_exists_info', '<b>' . $companyName . '</b>'),
             ];
             echo json_encode($response);
@@ -284,6 +285,7 @@ class Clients extends AdminController
 
     public function save_longitude_and_latitude($client_id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $client_id)) { show_404(); return; }
         if (staff_cant('edit', 'customers')) {
             if (!is_customer_admin($client_id)) {
                 ajax_access_denied();
@@ -304,6 +306,11 @@ class Clients extends AdminController
 
     public function form_contact($customer_id, $contact_id = '')
     {
+        if ($contact_id !== '') {
+            $contact = $this->clients_model->get_contact($contact_id);
+            if (!$contact || (int) $contact->userid !== (int) $customer_id) { show_404(); return; }
+        }
+        if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { show_404(); return; }
         if (staff_cant('view', 'customers')) {
             if (!is_customer_admin($customer_id)) {
                 echo _l('access_denied');
@@ -462,6 +469,16 @@ class Clients extends AdminController
                 $share_contacts_id = $this->input->post('share_contacts_id');
             }
 
+            \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix() . 'files', 'rel_id');
+            $file = $this->db->where('id', $file_id)->where('rel_type', 'customer')->get(db_prefix() . 'files')->row();
+            if (!$file || !is_array($share_contacts_id)
+                || (staff_cant('edit', 'customers') && !is_customer_admin($file->rel_id))) { show_404(); return; }
+            // Validate every recipient before removing existing sharing links.
+            foreach ($share_contacts_id as $share_contact_id) {
+                $contact = $this->clients_model->get_contact($share_contact_id);
+                if (!$contact || (int) $contact->userid !== (int) $file->rel_id) { show_404(); return; }
+            }
+
             $this->db->where('file_id', $file_id);
             $this->db->delete(db_prefix() . 'shared_customer_files');
 
@@ -481,6 +498,7 @@ class Clients extends AdminController
 
     public function mark_as_active($id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { show_404(); return; }
         $this->db->where('userid', $id);
         $this->db->update(db_prefix() . 'clients', [
             'active' => 1,
@@ -490,6 +508,7 @@ class Clients extends AdminController
 
     public function consents($id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyContact($this->db, db_prefix(), $id)) { show_404(); return; }
         if (staff_cant('view', 'customers')) {
             if (!is_customer_admin(get_user_id_by_contact_id($id))) {
                 echo _l('access_denied');
@@ -506,6 +525,7 @@ class Clients extends AdminController
 
     public function update_all_proposal_emails_linked_to_customer($contact_id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyContact($this->db, db_prefix(), $contact_id)) { show_404(); return; }
         $success = false;
         $email   = '';
         if ($this->input->post('update')) {
@@ -560,6 +580,7 @@ class Clients extends AdminController
 
     public function delete_customer_admin($customer_id, $staff_id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { show_404(); return; }
         if (staff_cant('create', 'customers') && staff_cant('edit', 'customers')) {
             access_denied('customers');
         }
@@ -906,6 +927,7 @@ class Clients extends AdminController
 
     public function vault_entry_create($customer_id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { show_404(); return; }
         $data = $this->input->post();
 
         if (isset($data['fakeusernameremembered'])) {
@@ -934,6 +956,7 @@ class Clients extends AdminController
     public function vault_entry_update($entry_id)
     {
         $entry = $this->clients_model->get_vault_entry($entry_id);
+        if (!$entry) { show_404(); return; }
 
         if ($entry->creator == get_staff_user_id() || is_admin()) {
             $data = $this->input->post();
@@ -967,6 +990,7 @@ class Clients extends AdminController
     public function vault_entry_delete($id)
     {
         $entry = $this->clients_model->get_vault_entry($id);
+        if (!$entry) { show_404(); return; }
         if ($entry->creator == get_staff_user_id() || is_admin()) {
             $this->clients_model->vault_entry_delete($id);
         }
@@ -986,6 +1010,7 @@ class Clients extends AdminController
         }
 
         $vault    = $this->clients_model->get_vault_entry($id);
+        if (!$vault) { show_404(); return; }
         $password = $this->encryption->decrypt($vault->password);
 
         $password = html_escape($password);
@@ -1003,6 +1028,7 @@ class Clients extends AdminController
     public function get_vault_entry($id)
     {
         $entry = $this->clients_model->get_vault_entry($id);
+        if (!$entry) { show_404(); return; }
         unset($entry->password);
         $entry->description = clear_textarea_breaks($entry->description);
         echo json_encode($entry);
@@ -1011,6 +1037,7 @@ class Clients extends AdminController
     public function statement_pdf()
     {
         $customer_id = $this->input->get('customer_id');
+        if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { show_404(); return; }
 
         if (staff_cant('view', 'invoices') && staff_cant('view', 'payments')) {
             set_alert('danger', _l('access_denied'));
@@ -1044,6 +1071,7 @@ class Clients extends AdminController
     public function send_statement()
     {
         $customer_id = $this->input->get('customer_id');
+        if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { show_404(); return; }
 
         if (staff_cant('view', 'invoices') && staff_cant('view', 'payments')) {
             set_alert('danger', _l('access_denied'));
@@ -1077,6 +1105,7 @@ class Clients extends AdminController
         }
 
         $customer_id = $this->input->get('customer_id');
+        if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { show_404(); return; }
         $from        = $this->input->get('from');
         $to          = $this->input->get('to');
 

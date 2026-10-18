@@ -1,6 +1,7 @@
 <?php
 
 use app\services\utilities\Arr;
+use app\services\InvoiceIssuerScope;
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
@@ -134,6 +135,8 @@ class Misc_model extends App_Model
 
     public function add_attachment_to_database($rel_id, $rel_type, $attachment, $external = false)
     {
+        if ($rel_type === 'invoice' && !\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $rel_id)) { return false; }
+        if ($rel_type === 'customer' && !\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $rel_id)) { return false; }
         $data['dateadded'] = date('Y-m-d H:i:s');
         $data['rel_id']    = $rel_id;
         if (!isset($attachment[0]['staffid'])) {
@@ -555,6 +558,7 @@ class Misc_model extends App_Model
         if ($have_assigned_customers || $have_permission_customers_view) {
 
             // Clients
+            \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix() . 'clients');
             $this->db->select(implode(',', prefixed_table_fields_array(db_prefix() . 'clients')) . ',' . get_sql_select_client_company());
 
             $this->db->join(db_prefix() . 'countries', db_prefix() . 'countries.country_id = ' . db_prefix() . 'clients.country', 'left');
@@ -701,77 +705,19 @@ class Misc_model extends App_Model
         ];
 
 
-        // Payments search
-        $has_permission_view_payments     = staff_can('view',  'payments');
-        $has_permission_view_invoices_own = staff_can('view_own',  'invoices');
-
-        if (staff_can('view',  'payments') || $has_permission_view_invoices_own || get_option('allow_staff_view_invoices_assigned') == '1') {
-            if (is_numeric($q)) {
-                $q = trim($q);
-                $q = ltrim($q, '0');
-            } elseif (startsWith($q, get_option('invoice_prefix'))) {
-                $q = strafter($q, get_option('invoice_prefix'));
-                $q = trim($q);
-                $q = ltrim($q, '0');
-            }
-            $noPermissionQuery = get_invoices_where_sql_for_staff(get_staff_user_id());
-            // Invoice payment records
-            $this->db->select('*,' . db_prefix() . 'invoicepaymentrecords.id as paymentid');
-            $this->db->from(db_prefix() . 'invoicepaymentrecords');
-            $this->db->join(db_prefix() . 'payment_modes', '' . db_prefix() . 'invoicepaymentrecords.paymentmode = ' . db_prefix() . 'payment_modes.id', 'LEFT');
-            $this->db->join(db_prefix() . 'invoices', '' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
-
-            if (!$has_permission_view_payments) {
-                $this->db->where('invoiceid IN (select id from ' . db_prefix() . 'invoices where ' . $noPermissionQuery . ')');
-            }
-
-            $this->db->where('(' . db_prefix() . 'invoicepaymentrecords.id LIKE "' . $this->db->escape_like_str($q) . '"
-                OR paymentmode LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR ' . db_prefix() . 'payment_modes.name LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR ' . db_prefix() . 'invoicepaymentrecords.note LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR number LIKE "' . $this->db->escape_like_str($q) . ' ESCAPE \'!\'"
-                )');
-
-            $this->db->order_by(db_prefix() . 'invoicepaymentrecords.date', 'ASC');
-
-            $result[] = [
-                'result'         => $this->db->get()->result_array(),
-                'type'           => 'invoice_payment_records',
-                'search_heading' => _l('payments'),
-            ];
+        $payments = $this->_search_invoice_payments($q);
+        if ($payments !== null) {
+            $result[] = $payments;
         }
 
         // Custom fields only admins
         if ($is_admin) {
-            $this->db->select()->from(db_prefix() . 'customfieldsvalues')->like('value', $q)->limit($limit);
-            $result[] = [
-                'result'         => $this->db->get()->result_array(),
-                'type'           => 'custom_fields',
-                'search_heading' => _l('custom_fields'),
-            ];
+            $result[] = $this->_search_custom_fields($q, $limit);
         }
 
-        // Invoice Items Search
-        $has_permission_view_invoices       = staff_can('view',  'invoices');
-        $has_permission_view_invoices_own   = staff_can('view_own',  'invoices');
-        $allow_staff_view_invoices_assigned = get_option('allow_staff_view_invoices_assigned');
-
-        if ($has_permission_view_invoices || $has_permission_view_invoices_own || $allow_staff_view_invoices_assigned == '1') {
-            $noPermissionQuery = get_invoices_where_sql_for_staff(get_staff_user_id());
-            $this->db->select()->from(db_prefix() . 'itemable');
-            $this->db->where('rel_type', 'invoice');
-            $this->db->where('(description LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\' OR long_description LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\')');
-
-            if (!$has_permission_view_invoices) {
-                $this->db->where('rel_id IN (select id from ' . db_prefix() . 'invoices where ' . $noPermissionQuery . ')');
-            }
-
-            $this->db->order_by('description', 'ASC');
-            $result[] = [
-                'result'         => $this->db->get()->result_array(),
-                'type'           => 'invoice_items',
-                'search_heading' => _l('invoice_items'),
-            ];
+        $items = $this->_search_invoice_items($q);
+        if ($items !== null) {
+            $result[] = $items;
         }
 
         // Estimate Items Search
@@ -996,6 +942,7 @@ class Misc_model extends App_Model
 
         if ($have_assigned_customers || $have_permission_customers_view || $tickets_contacts) {
             // Contacts
+            \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix() . 'contacts');
             $this->db->select(implode(',', prefixed_table_fields_array(db_prefix() . 'contacts')) . ',company');
             $this->db->from(db_prefix() . 'contacts');
 
@@ -1011,7 +958,9 @@ class Misc_model extends App_Model
                 )');
 
             if ($where != '') {
+                $this->db->group_start();
                 $this->db->where($where);
+                $this->db->group_end();
             }
 
             if ($limit != 0) {
@@ -1135,6 +1084,91 @@ class Misc_model extends App_Model
         return $result;
     }
 
+    public function _search_custom_fields($q, $limit = 0)
+    {
+        $result = ['result' => [], 'type' => 'custom_fields', 'search_heading' => _l('custom_fields')];
+        if (!is_admin()) {
+            return $result;
+        }
+        $this->db->select()->from(db_prefix() . 'customfieldsvalues')->like('value', $q)->limit($limit);
+        $this->db->where("(fieldto != 'invoice' OR relid IN (SELECT id FROM " . db_prefix() . 'invoices WHERE ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices') . '))', null, false);
+        $result['result'] = $this->db->get()->result_array();
+        return $result;
+    }
+
+    public function _search_invoice_payments($q)
+    {
+        $has_permission_view_payments     = staff_can('view',  'payments');
+        $has_permission_view_invoices_own = staff_can('view_own',  'invoices');
+
+        if (staff_can('view',  'payments') || $has_permission_view_invoices_own || get_option('allow_staff_view_invoices_assigned') == '1') {
+            if (is_numeric($q)) {
+                $q = trim($q);
+                $q = ltrim($q, '0');
+            } elseif (startsWith($q, get_option('invoice_prefix'))) {
+                $q = strafter($q, get_option('invoice_prefix'));
+                $q = trim($q);
+                $q = ltrim($q, '0');
+            }
+            $noPermissionQuery = get_invoices_where_sql_for_staff(get_staff_user_id());
+            // Invoice payment records
+            $this->db->select('*,' . db_prefix() . 'invoicepaymentrecords.id as paymentid');
+            $this->db->from(db_prefix() . 'invoicepaymentrecords');
+            $this->db->join(db_prefix() . 'payment_modes', '' . db_prefix() . 'invoicepaymentrecords.paymentmode = ' . db_prefix() . 'payment_modes.id', 'LEFT');
+            $this->db->join(db_prefix() . 'invoices', '' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
+            InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
+
+            if (!$has_permission_view_payments) {
+                $this->db->where('invoiceid IN (select id from ' . db_prefix() . 'invoices where ' . $noPermissionQuery . ')');
+            }
+
+            $this->db->where('(' . db_prefix() . 'invoicepaymentrecords.id LIKE "' . $this->db->escape_like_str($q) . '"
+                OR paymentmode LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
+                OR ' . db_prefix() . 'payment_modes.name LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
+                OR ' . db_prefix() . 'invoicepaymentrecords.note LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
+                OR number LIKE "' . $this->db->escape_like_str($q) . ' ESCAPE \'!\'"
+                )');
+
+            $this->db->order_by(db_prefix() . 'invoicepaymentrecords.date', 'ASC');
+
+            return [
+                'result'         => $this->db->get()->result_array(),
+                'type'           => 'invoice_payment_records',
+                'search_heading' => _l('payments'),
+            ];
+        }
+
+        return null;
+    }
+
+    public function _search_invoice_items($q)
+    {
+        $has_permission_view_invoices       = staff_can('view',  'invoices');
+        $has_permission_view_invoices_own   = staff_can('view_own',  'invoices');
+        $allow_staff_view_invoices_assigned = get_option('allow_staff_view_invoices_assigned');
+
+        if ($has_permission_view_invoices || $has_permission_view_invoices_own || $allow_staff_view_invoices_assigned == '1') {
+            $noPermissionQuery = get_invoices_where_sql_for_staff(get_staff_user_id());
+            $this->db->select()->from(db_prefix() . 'itemable');
+            $this->db->where('rel_type', 'invoice');
+            $this->db->where('rel_id IN (SELECT id FROM ' . db_prefix() . 'invoices WHERE ' . InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices') . ')', null, false);
+            $this->db->where('(description LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\' OR long_description LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\')');
+
+            if (!$has_permission_view_invoices) {
+                $this->db->where('rel_id IN (select id from ' . db_prefix() . 'invoices where ' . $noPermissionQuery . ')');
+            }
+
+            $this->db->order_by('description', 'ASC');
+            return [
+                'result'         => $this->db->get()->result_array(),
+                'type'           => 'invoice_items',
+                'search_heading' => _l('invoice_items'),
+            ];
+        }
+
+        return null;
+    }
+
     public function _search_invoices($q, $limit = 0)
     {
         $result = [
@@ -1152,11 +1186,12 @@ class Misc_model extends App_Model
             } 
 
             $invoice_fields    = prefixed_table_fields_array(db_prefix() . 'invoices');
-            $clients_fields    = prefixed_table_fields_array(db_prefix() . 'clients');
+            $clients_fields    = [db_prefix() . 'clients.userid', db_prefix() . 'clients.vat'];
             $noPermissionQuery = get_invoices_where_sql_for_staff(get_staff_user_id());
             // Invoices
             $this->db->select(implode(',', $invoice_fields) . ',' . implode(',', $clients_fields) . ',' . db_prefix() . 'invoices.id as invoiceid,' . get_sql_select_client_company());
             $this->db->from(db_prefix() . 'invoices');
+            InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
             $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'invoices.clientid', 'left');
             $this->db->join(db_prefix() . 'currencies', db_prefix() . 'currencies.id = ' . db_prefix() . 'invoices.currency');
             $this->db->join(db_prefix() . 'contacts', db_prefix() . 'contacts.userid = ' . db_prefix() . 'clients.userid AND is_primary = 1', 'left');
@@ -1176,21 +1211,7 @@ class Misc_model extends App_Model
                 OR
                 ' . db_prefix() . 'clients.vat LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR
-                ' . db_prefix() . 'clients.phonenumber LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                ' . db_prefix() . 'clients.city LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                ' . db_prefix() . 'clients.state LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                ' . db_prefix() . 'clients.zip LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                ' . db_prefix() . 'clients.address LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
                 ' . db_prefix() . 'invoices.adminnote LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                CONCAT(firstname,\' \',lastname) LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                CONCAT(lastname,\' \',firstname) LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR
                 ' . db_prefix() . 'invoices.billing_street LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR
@@ -1207,22 +1228,6 @@ class Misc_model extends App_Model
                 ' . db_prefix() . 'invoices.shipping_state LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR
                 ' . db_prefix() . 'invoices.shipping_zip LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                ' . db_prefix() . 'clients.billing_street LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                ' . db_prefix() . 'clients.billing_city LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                ' . db_prefix() . 'clients.billing_state LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                ' . db_prefix() . 'clients.billing_zip LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                ' . db_prefix() . 'clients.shipping_street LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                ' . db_prefix() . 'clients.shipping_city LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                ' . db_prefix() . 'clients.shipping_state LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
-                OR
-                ' . db_prefix() . 'clients.shipping_zip LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 )');
             } else {
                 $this->db->where(db_prefix() . 'invoices.id IN

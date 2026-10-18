@@ -6,6 +6,15 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Expenses_model extends App_Model
 {
+    private array $authorizedExpenseDeletion = [];
+
+    private function permitsLegacyExpense($id): bool
+    {
+        if ((!is_int($id) && !is_string($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        return isset($this->authorizedExpenseDeletion[(string)$id])
+            || \app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'expenses', $id);
+    }
+
     public function __construct()
     {
         parent::__construct();
@@ -18,6 +27,7 @@ class Expenses_model extends App_Model
      */
     public function get($id = '', $where = [])
     {
+        $this->db->where(\app\services\CustomerRelationBoundary::sql($this->db, db_prefix(), 'expenses', db_prefix().'expenses'), null, false);
         $this->db->select('*,' . db_prefix() . 'expenses.id as id,' . db_prefix() . 'expenses_categories.name as category_name,' . db_prefix() . 'payment_modes.name as payment_mode_name,' . db_prefix() . 'taxes.name as tax_name, ' . db_prefix() . 'taxes.taxrate as taxrate,' . db_prefix() . 'taxes_2.name as tax_name2, ' . db_prefix() . 'taxes_2.taxrate as taxrate2, ' . db_prefix() . 'expenses.id as expenseid,' . db_prefix() . 'expenses.addedfrom as addedfrom, recurring_from');
         $this->db->from(db_prefix() . 'expenses');
         $this->db->join(db_prefix() . 'clients', '' . db_prefix() . 'clients.userid = ' . db_prefix() . 'expenses.clientid', 'left');
@@ -77,6 +87,7 @@ class Expenses_model extends App_Model
      */
     public function add($data)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsWrite($this->db, db_prefix(), 'expenses', $data)) return false;
         $data['date'] = to_sql_date($data['date']);
         $data['note'] = nl2br($data['note']);
         if (isset($data['billable'])) {
@@ -124,6 +135,7 @@ class Expenses_model extends App_Model
         $data['dateadded'] = date('Y-m-d H:i:s');
 
         $data = hooks()->apply_filters('before_expense_added', $data);
+        if (!\app\services\CustomerRelationBoundary::permitsWrite($this->db, db_prefix(), 'expenses', $data)) return false;
 
         $this->db->insert(db_prefix() . 'expenses', $data);
         $insert_id = $this->db->insert_id();
@@ -161,6 +173,8 @@ class Expenses_model extends App_Model
 
     public function get_child_expenses($id)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'expenses', $id)) return [];
+        $this->db->where(\app\services\CustomerRelationBoundary::sql($this->db, db_prefix(), 'expenses', db_prefix().'expenses'), null, false);
         $this->db->select('id');
         $this->db->where('recurring_from', $id);
         $expenses = $this->db->get(db_prefix() . 'expenses')->result_array();
@@ -213,6 +227,7 @@ class Expenses_model extends App_Model
 
         for ($i = 1; $i <= 5; $i++) {
             $this->db->select('amount,tax,tax2,invoiceid');
+            $this->db->where(\app\services\CustomerRelationBoundary::sql($this->db, db_prefix(), 'expenses', db_prefix().'expenses'), null, false);
             $this->db->where('currency', $currencyid);
 
             if (isset($data['years']) && count($data['years']) > 0) {
@@ -348,6 +363,7 @@ class Expenses_model extends App_Model
      */
     public function update($data, $id)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'expenses', $id, $data)) return false;
         $original_expense = $this->get($id);
 
         $data['date'] = to_sql_date($data['date']);
@@ -391,6 +407,7 @@ class Expenses_model extends App_Model
 
         $updated       = false;
         $data          = hooks()->apply_filters('before_expense_updated', $data, $id);
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'expenses', $id, $data)) return false;
         $custom_fields = Arr::pull($data, 'custom_fields') ?? [];
 
         if (handle_custom_fields_post($id, $custom_fields)) {
@@ -427,6 +444,7 @@ class Expenses_model extends App_Model
      */
     public function delete($id, $simpleDelete = false)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'expenses', $id)) return false;
         $_expense = $this->get($id);
 
         if ($_expense->invoiceid !== null && $simpleDelete == false) {
@@ -435,6 +453,8 @@ class Expenses_model extends App_Model
             ];
         }
 
+        $this->authorizedExpenseDeletion[(string)$id] = true;
+        try {
         $this->db->where('id', $id);
         $this->db->delete(db_prefix() . 'expenses');
 
@@ -454,6 +474,7 @@ class Expenses_model extends App_Model
             $this->delete_expense_attachment($id);
 
             $this->db->where('recurring_from', $id);
+            $this->db->where(\app\services\CustomerRelationBoundary::sql($this->db, db_prefix(), 'expenses', db_prefix().'expenses'), null, false);
             $this->db->update(db_prefix() . 'expenses', ['recurring_from' => null]);
 
             $this->db->where('rel_type', 'expense');
@@ -472,6 +493,7 @@ class Expenses_model extends App_Model
         }
 
         return false;
+        } finally { unset($this->authorizedExpenseDeletion[(string)$id]); }
     }
 
     /**
@@ -481,6 +503,7 @@ class Expenses_model extends App_Model
      */
     public function convert_to_invoice($id, $draft_invoice = false, $params = [])
     {
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'expenses', $id)) return false;
         $expense          = $this->get($id);
         $new_invoice_data = [];
         $client           = $this->clients_model->get($expense->clientid);
@@ -640,6 +663,7 @@ class Expenses_model extends App_Model
      */
     public function copy($id)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'expenses', $id)) return false;
         $expense_fields   = $this->db->list_fields(db_prefix() . 'expenses');
         $expense          = $this->get($id);
         $new_expense_data = [];
@@ -688,6 +712,7 @@ class Expenses_model extends App_Model
      */
     public function delete_expense_attachment($id)
     {
+        if (!$this->permitsLegacyExpense($id)) return false;
         if (is_dir(get_upload_path_by_type('expense') . $id)) {
             if (delete_dir(get_upload_path_by_type('expense') . $id)) {
                 $this->db->where('rel_id', $id);

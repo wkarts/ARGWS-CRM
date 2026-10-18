@@ -18,10 +18,15 @@ class Statement_model extends App_Model
      */
     public function get_statement($customer_id, $from, $to)
     {
+        // An invoice identity exception never grants access to a complete customer statement.
+        if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) {
+            throw new DomainException('client_scope_denied');
+        }
         if (!class_exists('Invoices_model', false)) {
             $this->load->model('invoices_model');
         }
 
+        $invoiceScope = \app\services\InvoiceIssuerScope::legacySql($this->db, db_prefix() . 'invoices');
         $sql = 'SELECT
         ' . db_prefix() . 'invoices.id as invoice_id,
         hash,
@@ -30,7 +35,7 @@ class Statement_model extends App_Model
         concat(' . db_prefix() . 'invoices.date, \' \', RIGHT(' . db_prefix() . 'invoices.datecreated,LOCATE(\' \',' . db_prefix() . 'invoices.datecreated) - 3)) as tmp_date,
         ' . db_prefix() . 'invoices.duedate as duedate,
         ' . db_prefix() . 'invoices.total as invoice_amount
-        FROM ' . db_prefix() . 'invoices WHERE clientid =' . $this->db->escape_str($customer_id);
+        FROM ' . db_prefix() . 'invoices WHERE ' . $invoiceScope . ' AND clientid =' . $this->db->escape_str($customer_id);
 
         if ($from == $to) {
             $sqlDate = 'date="' . $this->db->escape_str($from) . '"';
@@ -75,6 +80,9 @@ class Statement_model extends App_Model
         $sqlDateCreditsAplied = str_replace('date', db_prefix() . 'credits.date', $sqlDate);
 
         $sql_credits_applied .= ' AND ' . $sqlDateCreditsAplied;
+        if (\app\services\InvoiceIssuerScope::schemaReady($this->db, db_prefix() . 'invoices')) {
+            $sql_credits_applied .= ' AND EXISTS (SELECT 1 FROM ' . db_prefix() . 'invoices WHERE ' . db_prefix() . 'invoices.id = ' . db_prefix() . 'credits.invoice_id AND ' . $invoiceScope . ')';
+        }
         $credits_applied = $this->db->query($sql_credits_applied)->result_array();
 
         // Replace error ambigious column in where clause
@@ -88,7 +96,7 @@ class Statement_model extends App_Model
         ' . db_prefix() . 'invoicepaymentrecords.amount as payment_total
         FROM ' . db_prefix() . 'invoicepaymentrecords
         JOIN ' . db_prefix() . 'invoices ON ' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid
-        WHERE ' . $sqlDatePayments . ' AND ' . db_prefix() . 'invoices.clientid = ' . $this->db->escape_str($customer_id) . '
+        WHERE ' . $invoiceScope . ' AND ' . $sqlDatePayments . ' AND ' . db_prefix() . 'invoices.clientid = ' . $this->db->escape_str($customer_id) . '
         ORDER by ' . db_prefix() . 'invoicepaymentrecords.date DESC';
 
         $payments = $this->db->query($sql_payments)->result_array();
@@ -123,7 +131,7 @@ class Statement_model extends App_Model
         $result['invoiced_amount'] = $this->db->query('SELECT
         SUM(' . db_prefix() . 'invoices.total) as invoiced_amount
         FROM ' . db_prefix() . 'invoices
-        WHERE clientid = ' . $this->db->escape_str($customer_id) . '
+        WHERE ' . $invoiceScope . ' AND clientid = ' . $this->db->escape_str($customer_id) . '
         AND ' . $sqlDate . ' AND status != ' . Invoices_model::STATUS_DRAFT . ' AND status != ' . Invoices_model::STATUS_CANCELLED . '')
             ->row()->invoiced_amount;
 
@@ -159,7 +167,7 @@ class Statement_model extends App_Model
         SUM(' . db_prefix() . 'invoicepaymentrecords.amount) as amount_paid
         FROM ' . db_prefix() . 'invoicepaymentrecords
         JOIN ' . db_prefix() . 'invoices ON ' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid
-        WHERE ' . $sqlDatePayments . ' AND ' . db_prefix() . 'invoices.clientid = ' . $this->db->escape_str($customer_id))
+        WHERE ' . $invoiceScope . ' AND ' . $sqlDatePayments . ' AND ' . db_prefix() . 'invoices.clientid = ' . $this->db->escape_str($customer_id))
             ->row()->amount_paid;
 
         if ($result['amount_paid'] === null) {
@@ -174,7 +182,7 @@ class Statement_model extends App_Model
             SELECT COALESCE(SUM(' . db_prefix() . 'invoicepaymentrecords.amount),0)
             FROM ' . db_prefix() . 'invoicepaymentrecords
             JOIN ' . db_prefix() . 'invoices ON ' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid
-            WHERE ' . db_prefix() . 'invoicepaymentrecords.date < "' . $this->db->escape_str($from) . '"
+            WHERE ' . $invoiceScope . ' AND ' . db_prefix() . 'invoicepaymentrecords.date < "' . $this->db->escape_str($from) . '"
             AND ' . db_prefix() . 'invoices.clientid=' . $this->db->escape_str($customer_id) . '
             ) + (
                 SELECT COALESCE(SUM(' . db_prefix() . 'creditnotes.total),0)
@@ -190,7 +198,7 @@ class Statement_model extends App_Model
         )
             )
             as beginning_balance FROM ' . db_prefix() . 'invoices
-            WHERE date < "' . $this->db->escape_str($from) . '"
+            WHERE ' . $invoiceScope . ' AND date < "' . $this->db->escape_str($from) . '"
             AND clientid = ' . $this->db->escape_str($customer_id) . '
             AND status != ' . Invoices_model::STATUS_DRAFT . '
             AND status != ' . Invoices_model::STATUS_CANCELLED)
