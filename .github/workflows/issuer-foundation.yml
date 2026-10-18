@@ -3,22 +3,24 @@ on:
   pull_request:
     branches: [main, develop]
     paths:
-      - application/config/argws_resources.php
+      - application/**
       - modules/issuers/**
       - modules/pige_bridge/**
       - tests/issuers*.php
       - tests/test_module_migration_convention.py
       - docs/module-migrations.md
+      - docs/issuer-essential-module.md
       - .github/workflows/issuer-foundation.yml
   push:
     branches: [main, develop]
     paths:
-      - application/config/argws_resources.php
+      - application/**
       - modules/issuers/**
       - modules/pige_bridge/**
       - tests/issuers*.php
       - tests/test_module_migration_convention.py
       - docs/module-migrations.md
+      - docs/issuer-essential-module.md
       - .github/workflows/issuer-foundation.yml
 permissions:
   contents: read
@@ -51,8 +53,18 @@ jobs:
         run: |
           find tests -name 'issuers*.php' -exec php -l '{}' \;
           php -l application/config/argws_resources.php
+          php -l application/services/EssentialIssuerModule.php
+          php -l application/libraries/App_modules.php
+          php -l application/libraries/App.php
+          php -l application/core/AdminController.php
+          php -l application/controllers/admin/Essential_modules.php
+          php -l application/controllers/admin/Mods.php
+          php -l application/hooks/InitHook.php
+          php -l application/views/admin/modules/essential_setup.php
+          php -l application/views/admin/modules/list.php
           find modules/issuers -name '*.php' -exec php -l '{}' \;
           php tests/issuers_controller.php
+          php tests/issuers_essential_upgrade.php
       - name: Testar schema, transações, ACL e concorrência em MySQL isolado
         env:
           ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_tests;charset=utf8mb4
@@ -60,5 +72,7 @@ jobs:
           ISSUERS_TEST_PASSWORD: synthetic-test-password
         run: |
           php tests/issuers_migration.php
+          php tests/issuers_essential.php
+          php tests/issuers_essential_controller.php
           php tests/issuers_registry.php
           php tests/issuers_concurrency.php

@@ -185,6 +185,8 @@ class App
      */
     public function upgrade_database()
     {
+        // The legacy upgrade form can run with global CSRF disabled. Its web
+        // follow-up is the authenticated essential setup with a mandatory token.
         $update = $this->upgrade_database_silent();
 
         if ($update['success'] == false) {
@@ -206,11 +208,14 @@ class App
      */
     public function apply_pending_migrations_for_provisioning()
     {
+        if (!is_cli()) {
+            return ['success' => false, 'message' => 'Provisionamento de migrations restrito ao processo CLI.'];
+        }
         $this->ci->load->config('migration');
         $beforeUpdateVersion = (int) $this->get_current_db_version();
         $targetVersion = (int) $this->ci->config->item('migration_version');
 
-        $result = $this->upgrade_database_silent();
+        $result = $this->upgrade_database_silent(true);
         if (empty($result['success'])) {
             return $result;
         }
@@ -419,7 +424,7 @@ class App
      *
      * @return mixed
      */
-    private function upgrade_database_silent()
+    private function upgrade_database_silent($reconcileEssential = false)
     {
         $this->ci->load->config('migration');
 
@@ -436,7 +441,7 @@ class App
         ]);
 
         hooks()->do_action('before_update_database', $updateToVersion);
-        define('DOING_DATABASE_UPGRADE', true);
+        if (!defined('DOING_DATABASE_UPGRADE')) { define('DOING_DATABASE_UPGRADE', true); }
         if ($this->ci->migration->current() === false) {
             return [
                 'success' => false,
@@ -446,6 +451,19 @@ class App
 
         delete_option('upgraded_from_version');
         add_option('upgraded_from_version', $beforeUpdateVersion);
+
+        if ($reconcileEssential) {
+            try {
+                // Provisioning uses CI_Controller, not the normal admin bootstrap.
+                $this->ci->load->library(['app_modules', 'app_module_migration']);
+                if (!$this->ci->app_modules->ensure_essential_modules()) {
+                    throw new RuntimeException('issuer_essential_setup_unconfirmed');
+                }
+            } catch (Throwable $error) {
+                log_message('error', 'Falha no recurso essencial após migration core: ' . get_class($error));
+                return ['success' => false, 'message' => 'A migration core terminou, mas a configuração de Emitentes está pendente. Repita a configuração controlada antes de usar o painel.'];
+            }
+        }
 
         hooks()->do_action('database_updated', $updateToVersion);
 

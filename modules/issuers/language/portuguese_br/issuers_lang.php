@@ -2,7 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 $lang['issuers_title'] = 'Emitentes (fundação cadastral)';
-$lang['issuer_foundation_warning'] = 'Fase opt-in de preparação. Estes vínculos e permissões valem somente neste módulo. O CRM legado continua com uma única empresa operacional e ainda não isola faturas, pagamentos, projetos, arquivos, relatórios ou portal por emitente. Não cadastre operações de outra empresa no core. A criação de cobranças multiemitente está bloqueada.';
+$lang['issuer_foundation_warning'] = 'Recurso cadastral essencial, em fase de preparação. Estes vínculos e permissões valem somente neste módulo. O CRM legado continua com uma única empresa operacional e ainda não isola faturas, pagamentos, projetos, arquivos, relatórios ou portal por emitente. Não cadastre operações de outra empresa no core. A criação de cobranças multiemitente está bloqueada.';
 $lang['issuer_catalog'] = 'Empresas cadastradas';
 $lang['issuer_active'] = 'Cadastro ativo';
 $lang['issuer_inactive'] = 'Cadastro inativo';

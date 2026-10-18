@@ -3,8 +3,8 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: Emitentes — fundação cadastral
-Description: Cadastro opt-in de empresas, vínculos e permissões. Não habilita operação financeira multiemitente.
-Version: 1.0.1
+Description: Cadastro essencial de empresas, vínculos e permissões. Não habilita operação financeira multiemitente.
+Version: 1.0.2
 Requires at least: 3.0.*
 */
 

@@ -27,7 +27,7 @@ $config['argws_resources'] = [
     'hr_profile' => ['name' => 'Recursos humanos', 'description' => 'Cadastros e rotinas de recursos humanos.', 'requires' => []],
     'ideal' => ['name' => 'iDEAL', 'description' => 'Integração de pagamentos iDEAL.', 'requires' => []],
     'invoices_builder' => ['name' => 'Editor de faturas', 'description' => 'Composição e personalização de documentos.', 'requires' => []],
-    'issuers' => ['name' => 'Emitentes (fundação cadastral)', 'description' => 'Cadastro opt-in de empresas e vínculos. Não habilita operação financeira multiemitente.', 'requires' => []],
+    'issuers' => ['name' => 'Emitentes', 'description' => 'Recurso essencial de cadastro e vínculos. Não habilita operação financeira multiemitente.', 'requires' => [], 'essential' => true],
     'ma' => ['name' => 'Automação de marketing', 'description' => 'Automação de campanhas e contatos.', 'requires' => []],
     'menu_setup' => ['name' => 'Menus', 'description' => 'Configuração da navegação da instalação.', 'requires' => []],
     'multiple_companies' => ['name' => 'Múltiplas empresas', 'description' => 'Organização de empresas dentro da instalação.', 'requires' => []],

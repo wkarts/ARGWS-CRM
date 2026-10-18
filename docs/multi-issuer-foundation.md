@@ -1,10 +1,10 @@
-# Fundação cadastral de emitentes (opt-in)
+# Fundação cadastral essencial de emitentes
 
 ## Resultado e limite obrigatório
 
 Uma instalação e **um banco**, com várias empresas independentes no cadastro. Este módulo é uma fundação preparatória, **não um CRM com isolamento multiemitente concluído**. Faturas, despesas, pagamentos, contratos, projetos, tarefas, arquivos, relatórios, integrações e portal continuam com a semântica legada. Não iniciar a operação financeira de uma segunda empresa nesta fase.
 
-O recurso aparece em Configurações → Recursos pelo catálogo `application/config/argws_resources.php`. Ativar `issuers` é uma escolha administrativa explícita. A instalação do código, sozinha, não ativa o módulo. O módulo `multiple_companies` existente trata empresas de clientes/contatos e não representa empresas emitentes; ambos continuam independentes.
+O recurso aparece em Configurações → Recursos pelo catálogo `application/config/argws_resources.php`. Desde 1.0.2, `issuers` é essencial, obrigatório e não desativável. O provisionamento controlado conclui sua configuração automaticamente; instalação/upgrade web exigem a segunda etapa autenticada antes de liberar o painel. Copiar arquivos, sozinho, não conclui essa configuração. O módulo `multiple_companies` existente trata empresas de clientes/contatos e não representa empresas emitentes; ambos continuam independentes.
 
 `IssuerPolicy::assertOperationalScope($issuerId)` e `issuers_assert_operational_scope($issuerId)` sempre falham com `issuer_rollout_blocked` para qualquer ID válido. Não há opção, configuração, permissão administrativa ou parâmetro de requisição que libere a operação nesta fase. Este gate é contrato para futuros consumidores; não se deve anunciar que intercepta todos os fluxos existentes.
 
@@ -28,11 +28,11 @@ O recurso aparece em Configurações → Recursos pelo catálogo `application/co
 - Clonar dados financeiros, configurações globais ou integrações entre empresas.
 - Credenciais Asaas, `account_id` ou vínculo financeiro de faturas. Uma integração futura deve usar `issuer_id` inteiro positivo, conta remota imutável e ambiente explícito; nunca inferir o emitente a partir de um cliente compartilhado.
 - Alteração de `Cron_model`, `Invoices_model`, `modules/asaas`, migrations core ou schema inicial legado.
-- Ativação automática, merge, deploy, uso de dados reais ou configuração de segredos.
+- Ativação em GET/pré-login, merge, deploy, uso de dados reais ou configuração de segredos.
 
 ## Banco de dados
 
-O módulo 1.0.1 possui `migrations/101_version_101.php`, derivada de `App_module_migration`. Todo DDL base é aplicado pela migration; `install.php` somente encaminha ao executor nativo e confirma `installed_version`. A instalação e reativação partem da baseline 1.0.0; upgrades existentes usam o mesmo runner. Ver [convenção e recuperação de falhas](module-migrations.md).
+A versão inicial 1.0.1 possui `migrations/101_version_101.php`, derivada de `App_module_migration`. Todo DDL base é aplicado pela migration; `install.php` somente encaminha ao executor nativo e confirma `installed_version`. A instalação e reativação partem da baseline 1.0.0; upgrades existentes usam o mesmo runner. Ver [convenção e recuperação de falhas](module-migrations.md).
 
 Todas as tabelas usam o prefixo configurado mais `issuers_` e InnoDB:
 
@@ -106,8 +106,12 @@ Evidência local inicial: PHP 8.5.10 via PHP-WASM, 126 verificações funcionais
 
 ## Implantação futura e rollback
 
-Esta PR é draft para revisão; nenhuma ativação ou implantação é autorizada por ela. Em uma futura implantação autorizada, fazer backup verificado, revisar permissões e conflitos em homologação, aplicar o código sem ativação automática, ativar o módulo somente após aprovação do cadastro preparatório e executar o roteiro acima. Não migrar clientes ou finanças em massa.
+Esta PR é draft para revisão; nenhuma ativação ou implantação é autorizada por ela. Em uma futura implantação autorizada, fazer backup verificado, revisar permissões e conflitos em homologação, aplicar o código e concluir a configuração obrigatória pelo fluxo controlado documentado, mantendo os gates operacionais fechados, e executar o roteiro acima. Não migrar clientes ou finanças em massa.
 
-Rollback não destrutivo: desativar o módulo e reverter seus arquivos. Manter as tabelas e a auditoria para eventual reativação/revisão. Não há uninstall destrutivo. Tabelas, vínculos ou registros não são removidos automaticamente. A ausência de mudanças nos fluxos core evita dependência operacional nova.
+A partir de 1.0.2, Emitentes é obrigatório e não pode ser desativado ou desinstalado pelo aplicativo. A migration 101 publicada permanece intacta; 102 confirma o contrato essencial sem copiar dados. O rollback exige revisão operacional: não apagar tabelas, vínculos, auditoria nem reduzir o marcador para contornar a configuração obrigatória. Consulte [instalação e recuperação](issuer-essential-module.md).
 
 Para liberar mais de um emitente operacional futuramente: primeiro mapear e implementar isolamento de todos os objetos/processos financeiros, definir propriedade dos legados, validar portal/relatórios/arquivos/jobs/webhooks por empresa, revisar permissões e referências imutáveis de conta/ambiente, testar fuga cruzada e concorrência em MySQL e só então alterar o gate em uma PR independente.
+
+## Configuração obrigatória
+
+A versão 1.0.2 permanece ativa após instalação concluída. Instalação web legada e upgrade web possuem uma segunda etapa autenticada, com POST e CSRF próprio, antes de liberar o painel. O provisionamento CLI controlado executa essa etapa automaticamente. Nenhum GET ou acesso pré-login aplica DDL. [Contrato, falhas e testes](issuer-essential-module.md). A obrigatoriedade cadastral não abre os gates financeiros multiemitente.
