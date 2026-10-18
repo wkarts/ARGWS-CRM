@@ -23,5 +23,4 @@
 <?php } else { ?>
     <div class="alert alert-success">O banco desta instalação já está atualizado para a migration incluída no código atual.</div>
 <?php } ?>
-<a class="btn btn-primary" href="<?= html_escape(ARGWS_RELEASES_URL); ?>" target="_blank" rel="noopener noreferrer">Abrir versões do CRM</a>
 <p class="text-muted mtop15">Para instalações PHP tradicionais, copie os arquivos do pacote incremental. Para FrankenPHP, use uma tag de imagem versionada publicada no GHCR. Preserve `application/config/app-config.php` e `uploads/`.</p>

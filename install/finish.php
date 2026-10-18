@@ -22,7 +22,5 @@
         target="_blank" rel="noopener noreferrer">a área do cliente</a>.</li>
 </ul>
 <hr />
-<p>Consulte as versões e os pacotes oficiais do CRM no
-    <a href="https://github.com/wkarts/argws-crm/releases" target="_blank" rel="noopener noreferrer">canal de distribuição ARGWS</a>.
-</p>
+<p>Utilize os pacotes oficiais do CRM fornecidos pelo administrador responsável pela instalação.</p>
 <p>O atendimento aos clientes da instalação pode ser configurado em <b>Configurações &gt; Plataforma</b>.</p>

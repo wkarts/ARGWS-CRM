@@ -18,4 +18,8 @@ $options=['support_contact_channel'=>'website'];putenv('CRM_SUPPORT_SITE_URL=htt
 $options['support_site_url']='https://local.example.test';check(support_contact_destination()['href']==='https://local.example.test','local config priority');
 $menu=file_get_contents(__DIR__.'/../application/views/admin/includes/setup_menu.php');check(strpos($menu,'ARGWS_RELEASES_URL')===false && strpos($menu,'support_contact_destination()')!==false,'setup help uses support config');
 check(strpos(file_get_contents(__DIR__.'/../application/config/constants.php'),'https://github.com/wkarts/argws-crm/releases')!==false,'technical releases retained');
+foreach (['application/views/admin/settings/includes/update.php','install/finish.php'] as $file) {
+ $html=file_get_contents(__DIR__.'/../'.$file);
+ check(strpos($html,'github.com')===false && strpos($html,'ARGWS_RELEASES_URL')===false,'no visible repository link: '.$file);
+}
 echo "CRM support contact: $n checks passed\n";
