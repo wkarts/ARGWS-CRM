@@ -237,8 +237,10 @@ class ModuleMigrationDelta(unittest.TestCase):
         self.assertIn("fetch-depth: 0", workflow)
         self.assertIn("persist-credentials: false", workflow)
         self.assertIn("contents: read", workflow)
-        self.assertIn("ref: ${{ github.event.pull_request.head.sha }}", workflow)
+        self.assertIn("ref: ${{ github.sha }}", workflow)
+        self.assertNotIn("ref: ${{ github.event.pull_request.head.sha }}", workflow)
         self.assertIn("PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}", workflow)
+        self.assertIn("PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}", workflow)
         self.assertIn(' --base "$PR_BASE_SHA" --head "$PR_HEAD_SHA"', workflow)
         self.assertNotIn("paths:", workflow)
 
@@ -325,6 +327,45 @@ class GitBaselineIntegration(unittest.TestCase):
         head = self.commit("new correction")
         self.assertEqual([], POLICY.compare_repository(self.root, self.initial, head)[1])
         self.assertTrue(POLICY.compare_repository(self.root, advanced, head)[1])
+
+    def composed_checkout(self, pr_files, base_files):
+        self.command("checkout", "-qb", "older-pr")
+        self.write(pr_files)
+        head = self.commit("PR predating policy adoption")
+        self.assertFalse((self.root / "scripts/check-module-migration-diff.py").exists())
+        self.assertFalse((self.root / "tests/test_module_migration_diff.py").exists())
+        self.command("checkout", "-qb", "base-with-policy", self.initial)
+        self.write(base_files)
+        self.write({path: (ROOT / path).read_text() for path in (
+            "scripts/check-module-migration-diff.py", "tests/test_module_migration_diff.py")})
+        base = self.commit("base adopts policy independently")
+        self.command("checkout", "older-pr")
+        self.command("merge", "--no-ff", "-m", "synthetic PR merge", "base-with-policy")
+        self.assertTrue((self.root / "tests/test_module_migration_diff.py").is_file())
+        self.assertNotIn(self.command("rev-parse", "HEAD"), (base, head))
+        result = subprocess.run([
+            sys.executable, str(self.root / "scripts/check-module-migration-diff.py"),
+            "--base", base, "--head", head,
+        ], capture_output=True, text=True, cwd=self.root)
+        self.assertIn("Module migration baseline: " + self.initial, result.stdout)
+        return result, base, head
+
+    def test_older_pr_uses_gate_from_composed_tree_without_importing_base_modules(self):
+        result, _, _ = self.composed_checkout(
+            upgrade(module()), module("bad legacy", (), "unrelated"))
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn('Functional modules: ["demo"]', result.stdout)
+
+    def test_base_bump_cannot_hide_unbumped_pr_in_composed_checkout(self):
+        result, base, head = self.composed_checkout(
+            {"modules/demo/views/index.php": "functional correction without bump"},
+            upgrade(module()))
+        self.assertEqual(1, result.returncode)
+        self.assertIn("FAIL", result.stderr)
+        # Comparing the composed tree instead would wrongly borrow the base's bump.
+        composed = self.command("rev-parse", "HEAD")
+        self.assertEqual([], POLICY.compare_repository(self.root, self.initial, composed)[1])
+        self.assertTrue(POLICY.compare_repository(self.root, base, head)[1])
 
     def test_invalid_or_missing_shas_fail_closed(self):
         for sha in ("HEAD", "--help", "0" * 40, "a" * 40, self.initial[:7]):

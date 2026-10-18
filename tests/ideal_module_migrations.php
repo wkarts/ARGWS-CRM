@@ -31,6 +31,7 @@ class ModuleFixture {
     function __construct(public MigrationDb $db){}
     function get($name=null){$row=['system_name'=>'ideal','headers'=>['version'=>$this->header], 'installed_version'=>$this->db->exists?$this->db->version:false,'activated'=>$this->db->active];return $name===null?[$row]:($name==='ideal'?$row:null);}
     function upgrade_database($name){$this->upgrades++;$migration=new App_module_migration($name);return $migration->to_latest()===false?$migration->error_string():true;}
+    function is_essential($name){return $name==='issuers';}
     function is_database_upgrade_required($name){return $this->db->version!==$this->header;}
 }
 class MigrationLoad { public array $data=[];function dbforge(){}function view($name,$data){$this->data=$data;} }
