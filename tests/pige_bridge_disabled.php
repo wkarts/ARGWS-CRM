@@ -10,3 +10,13 @@ echo "PIGE bridge disabled-by-default: passed\n";
 require __DIR__.'/../application/config/argws_resources.php';
 if (!isset($config['argws_resources']['pige_bridge'])) throw new RuntimeException('Module must be explicitly available in the CRM resource catalog');
 echo "PIGE bridge resource catalog: passed\n";
+
+// Exercise the repository's actual HMVC route parser, not a mocked routing assumption.
+define('APPPATH', dirname(__DIR__) . '/application/');
+$CFG = new class { public function item($name) { return $name === 'modules_locations' ? [dirname(__DIR__) . '/modules/' => '../../modules/'] : null; } };
+function log_message($level, $message) {}
+require __DIR__ . '/../application/third_party/MX/Modules.php';
+$route = Modules::parse_routes('pige_bridge', 'pige_bridge/api/v1/requests');
+if ($route !== ['pige_bridge', 'bridge', 'requests']) { throw new RuntimeException('Canonical endpoint must resolve without a duplicate module prefix'); }
+if (!is_file(dirname(__DIR__) . '/modules/' . $route[0] . '/controllers/' . ucfirst($route[1]) . '.php') || !method_exists('Bridge', $route[2])) { throw new RuntimeException('Resolved controller/action must exist'); }
+echo "PIGE bridge actual HMVC route: passed\n";
