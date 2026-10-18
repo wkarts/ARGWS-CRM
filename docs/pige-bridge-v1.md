@@ -40,3 +40,9 @@ Isolamento operacional por emitente em faturas, clientes, contas, numeração, d
 ## Validação e rollback
 
 Testes puros e de controller usam stubs; o teste de storage em memória não comprova MySQL. `tests/pige_bridge_mysql.php` executa o schema/modelo em MySQL real quando DSN de teste está definido; sem DSN informa NOT RUN. CI executa versões PHP 8.1 e 8.5 com MySQL 8.4 isolado. Validação visual/HTTP completo em uma instalação CRM e homologação conjunta ainda são necessárias. Rollback: desativar módulo/flag e reverter código, preservando tabela e recibos; não há cobrança remota a desfazer nesta etapa.
+
+## Relação com a API geral do CRM
+
+O módulo `modules/api` continua disponível para integrações gerais. Seu controller de faturas oferece CRUD e encaminha gravações ao `Invoices_model`; a busca passa por `Api_model`. A autorização dessa API é por token e permissões de recursos. Não equivale ao contrato da ponte PIGE: assinatura do corpo com timestamp/evento, escopo escola/emitente/conta/ambiente, recibo durável e chave de idempotência.
+
+A ponte específica não exige disponibilizar o CRUD geral ao PIGE nem o substitui. O futuro executor deve reutilizar serviços internos de emissão já isolados e autorizados, e não simular chamadas HTTP ao CRUD legado ou duplicar regras financeiras. Ambas as entradas precisam respeitar o mesmo isolamento de dados. Nesta versão a ponte apenas recebe solicitações bloqueadas; nenhum desses caminhos já representa emissão multiempresa pronta.
