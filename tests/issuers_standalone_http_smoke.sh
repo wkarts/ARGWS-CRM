@@ -48,6 +48,15 @@ docker cp "$work/router.php" "$legacy:/tmp/issuer-router.php"
 cat > "$work/my_hooks.php" <<'PHP'
 <?php
 $hook['pre_controller'][] = function () {
+    if (strpos((string) ($_SERVER['REQUEST_URI'] ?? ''), '/argws_provisioning/') === 0) {
+        $ci = &get_instance();
+        $class = isset($ci->router) && method_exists($ci->router, 'fetch_class') ? $ci->router->fetch_class() : 'unknown';
+        $method = isset($ci->router) && method_exists($ci->router, 'fetch_method') ? $ci->router->fetch_method() : 'unknown';
+        $running = class_exists('InstallationMigrationBootstrap', false)
+            ? (InstallationMigrationBootstrap::isRunning() ? '1' : '0')
+            : 'missing';
+        error_log('[issuer smoke hook] route=' . $class . '/' . $method . ' running=' . $running);
+    }
     if (class_exists('InstallationMigrationBootstrap', false) && InstallationMigrationBootstrap::isRunning()) {
         file_put_contents('/tmp/issuer-installer-hook-input.json', json_encode([array_keys($_POST),array_keys($_REQUEST),file_get_contents('php://input')]));
     }
