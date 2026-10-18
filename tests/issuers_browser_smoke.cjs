@@ -25,7 +25,26 @@ async function login(page) {
   assert(!page.url().includes('/authentication'), 'authentication established');
 }
 async function shell(page) {
-  await page.locator('#header').waitFor();
+  try {
+    await page.locator('#header').waitFor();
+  } catch (error) {
+    const currentUrl = new URL(page.url());
+    currentUrl.search = '';
+    currentUrl.hash = '';
+    const body = await page.locator('body').innerText().catch(() => '');
+    const safeSql = query => { try { return sql(query); } catch { return 'unavailable'; } };
+    const diagnostic = {
+      url: currentUrl.toString(),
+      title: await page.title().catch(() => ''),
+      body: body.replace(/\s+/g, ' ').slice(0, 500),
+      migrationVersion: safeSql('SELECT version FROM tblmigrations LIMIT 1'),
+      companyTableCount: safeSql("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE 'tblissuers_%'"),
+      permissionColumns: safeSql("SELECT GROUP_CONCAT(COLUMN_NAME ORDER BY ORDINAL_POSITION) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_resource_permissions'"),
+      adminState: safeSql("SELECT CONCAT(admin, ':', active) FROM tblstaff WHERE email='admin-ci@example.invalid' LIMIT 1"),
+    };
+    console.error('Native shell diagnostic: ' + JSON.stringify(diagnostic));
+    throw error;
+  }
   await page.locator('#menu').waitFor({ state: 'attached' });
   await page.locator('#setup-menu').waitFor({ state: 'attached' });
   await page.locator('#wrapper .content').waitFor();
