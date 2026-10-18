@@ -1,4 +1,17 @@
 <?php
+defined('BASEPATH') or exit('No direct script access allowed');
+$CI = &get_instance();
+// The framework records the header version before the activation hook.
+$target = (string) $CI->app_modules->get('asaas')['headers']['version'];
+$version = $CI->db->where('module_name', 'asaas')->get(db_prefix() . 'modules')->row();
+if (!$version || version_compare((string) $version->installed_version, $target, '>')) {
+    throw new RuntimeException('asaas_activation_version_invalid');
+}
+if ((string) $version->installed_version === $target
+    && !$CI->db->where('module_name', 'asaas')->update(db_prefix() . 'modules', ['installed_version' => '1.4.5'])) {
+    throw new RuntimeException('asaas_activation_version_write_failed');
+}
+
 if (!$CI->db->field_exists('asaas_customer_id', db_prefix() . 'clients')) {
     $CI->db->query('ALTER TABLE `' . db_prefix() . 'clients` ADD `asaas_customer_id` VARCHAR(25) NULL DEFAULT NULL;');
 }
@@ -66,5 +79,9 @@ if (!$CI->db->table_exists($logsTable)) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 }
 
-require_once __DIR__ . '/libraries/Asaas/PaymentOriginSchema.php';
-\Asaas\PaymentOriginSchema::install($CI->db);
+$migration = new App_module_migration('asaas');
+if ($migration->to_latest() === false) { throw new RuntimeException('asaas_native_migration_failed'); }
+$version = $CI->db->where('module_name', 'asaas')->get(db_prefix() . 'modules')->row();
+if (!$version || (string) $version->installed_version !== $target) {
+    throw new RuntimeException('asaas_migration_version_unconfirmed');
+}

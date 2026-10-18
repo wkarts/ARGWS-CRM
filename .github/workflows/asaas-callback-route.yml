@@ -1,0 +1,41 @@
+name: Rota segura callback Asaas
+on:
+  pull_request:
+    branches: [main, develop, fix/asaas-immutable-payment-origin]
+    paths: ['modules/asaas/**', 'tests/asaas_callback_*.php', '.github/workflows/asaas-callback-route.yml']
+  push:
+    branches: [main, develop]
+    paths: ['modules/asaas/**', 'tests/asaas_callback_*.php', '.github/workflows/asaas-callback-route.yml']
+permissions:
+  contents: read
+jobs:
+  callback:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.5']
+    container: php:${{ matrix.php }}-cli
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: disposable_ci_only
+          MYSQL_DATABASE: callback_test
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pdisposable_ci_only"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker-php-ext-install pdo_mysql
+      - run: |
+          php -l modules/asaas/controllers/gateways/Callback.php
+          php -l modules/asaas/config/routes.php
+          php -l modules/asaas/install.php
+          php -l modules/asaas/migrations/147_version_147.php
+          php tests/asaas_callback_route.php
+          php tests/asaas_callback_version.php
+          php tests/asaas_callback_migration.php
+        env:
+          ASAAS_TEST_MYSQL_DSN: mysql:host=mysql;dbname=callback_test;charset=utf8mb4
+          ASAAS_TEST_MYSQL_USER: root
+          ASAAS_TEST_MYSQL_PASSWORD: disposable_ci_only
