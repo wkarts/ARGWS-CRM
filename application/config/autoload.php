@@ -2,6 +2,11 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+// Veto named-company hashes at the legacy module entrypoint before global provider hydration.
+require_once APPPATH.'services/AsaasLegacyCheckoutPreflight.php';
+$asaasLegacyBootstrap=&get_instance();
+if(!AsaasLegacyCheckoutPreflight::allowsBootstrap($asaasLegacyBootstrap)){show_404();return;}
+
 // Machine inboxes select only exact server-owned routes, before optional modules or sessions.
 require_once APPPATH.'services/CompanyAsaasCallbackScope.php';
 $companyInboxBootstrap=&get_instance();

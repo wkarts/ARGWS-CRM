@@ -6,16 +6,35 @@ class Checkout extends ClientsController
     public function __construct()
     {
         parent::__construct();
-        $this->load->library('asaas_gateway');
         $this->load->helper('general');
+    }
+
+    /** Legacy routes accept only explicit NULL ownership; named-company checkout has its own sealed flow. */
+    private function legacyInvoice($hash)
+    {
+        if (!is_string($hash) || !preg_match('/^[A-Za-z0-9_-]{1,128}$/D', $hash)) {
+            show_404();
+            return null;
+        }
+        // Filter ownership in SQL before hydrating a document, settings, totals or a provider adapter.
+        $this->db->where('hash', $hash);
+        $this->db->where('issuer_id', null);
+        $invoice = $this->db->get(db_prefix() . 'invoices')->row();
+        if (!$invoice || isset($invoice->issuer_id)) {
+            show_404();
+            return null;
+        }
+        check_invoice_restrictions($invoice->id, $hash);
+        if (!isset($this->asaas_gateway)) {
+            $this->load->library('asaas/asaas_gateway');
+        }
+        return $invoice;
     }
 
     public function index($hash)
     {
-
-        $this->db->where('hash', $hash);
-
-        $invoice = $this->db->get(db_prefix() . 'invoices')->row();
+        $invoice = $this->legacyInvoice($hash);
+        if (!$invoice) { return; }
 
         $data = [
             'billet_only' => $this->asaas_gateway->getSetting('billet_only'),
@@ -35,8 +54,8 @@ class Checkout extends ClientsController
 
     public function boleto($hash)
     {
-        $this->db->where('hash', $hash);
-        $invoice = $this->db->get(db_prefix() . 'invoices')->row();
+        $invoice = $this->legacyInvoice($hash);
+        if (!$invoice) { return; }
 
         $data = [];
         $data['invoice'] = $invoice;
@@ -57,14 +76,8 @@ class Checkout extends ClientsController
     public function cartao($hash)
     {
         require_once __DIR__ . '/../libraries/Asaas/HostedCardCheckout.php';
-        if (!is_string($hash) || !preg_match('/^[A-Za-z0-9_-]{1,128}$/D', $hash)) {
-            show_404();
-            return;
-        }
-        $this->db->where('hash', $hash);
-        $invoice = $this->db->get(db_prefix() . 'invoices')->row();
-        if (!$invoice) { show_404(); return; }
-        check_invoice_restrictions($invoice->id, $hash);
+        $invoice = $this->legacyInvoice($hash);
+        if (!$invoice) { return; }
         if (!in_array((int) $invoice->status, [1, 4], true)
             || $this->asaas_gateway->getSetting('active') !== '1'
             || $this->asaas_gateway->getSetting('card_only') !== '1'
@@ -120,13 +133,8 @@ class Checkout extends ClientsController
 
     public function qrcode($hash)
     {
-        $this->db->where('hash', $hash);
-        $invoice = $this->db->get(db_prefix() . 'invoices')->row();
-
-        if (!$invoice) {
-            set_alert('warning', 'Fatura não encontrada.');
-            redirect(site_url('invoices'));
-        }
+        $invoice = $this->legacyInvoice($hash);
+        if (!$invoice) { return; }
 
         $invoice->total_left_to_pay = get_invoice_total_left_to_pay($invoice->id, $invoice->total);
 

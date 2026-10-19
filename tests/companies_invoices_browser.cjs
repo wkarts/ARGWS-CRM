@@ -138,11 +138,14 @@ async function next(page) { await navigate(page, page.locator('section form butt
    const fileRetry=await context.request.post(url+'/admin/company_invoices',{multipart:{...fileUploadFields,portal_visible:'1',invoice_attachment:{name:'visible-'+letter+'.pdf',mimeType:'application/pdf',buffer:await expandedPdf.body()}}});assert.equal(fileRetry.status(),200);assert.equal(sql('SELECT COUNT(*) FROM tblcompany_invoice_attachments WHERE invoice_id='+expandedId),'2','multipart retry stores one blob and receipt');
    // Explicit private recipient, native queue and durable retry in both companies. No SMTP worker runs here.
    const expandedUrl=page.url();
-   await page.goto(url+'/admin/company_clients?client='+clients[issuer]);
-   const permit=page.getByRole('button',{name:'Permitir acesso a faturas no portal',exact:true});
-   if(await permit.count())await navigate(page,permit);
-   await page.goto(expandedUrl);
    const contact=sql('SELECT id FROM tblcontacts WHERE userid='+clients[issuer]+' AND active=1 ORDER BY id LIMIT 1');
+   assert.match(contact,/^[1-9]\d*$/);
+   await page.goto(url+'/admin/company_clients?client='+clients[issuer]);
+   const grant=page.locator('form').filter({has:page.locator('input[name=action][value=contact_invoice_access]')}).filter({has:page.locator('input[name=contact_id][value="'+contact+'"]')});
+   assert.equal(await grant.count(),1,'exact native contact permission form is available');
+   if(await grant.locator('input[name=invoice_access]').inputValue()==='1')await navigate(page,grant.locator('button[type=submit]'));
+   assert.equal(sql('SELECT COUNT(*) FROM tblcontact_permissions WHERE userid='+contact+' AND permission_id=1'),'1','native permission persisted before notification');
+   await page.goto(expandedUrl);
    await page.locator('#invoice-notify-contact').selectOption(contact);
    const notificationForm=page.locator('form').filter({has:page.locator('#invoice-notify-contact')});const notificationFields=await fields(notificationForm);
    await navigate(page,notificationForm.locator('button[type=submit]'));

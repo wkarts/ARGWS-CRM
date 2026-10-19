@@ -99,11 +99,17 @@ final class InvoiceIssuerDocumentData
             'date'=>self::date($record['date']), 'due_date'=>empty($record['duedate']) ? null : self::date($record['duedate']),
             'status'=>(int) $record['status'], 'items'=>array_values($items),
             'totals'=>array_map([self::class,'decimal'],$totals),
+            'position'=>self::position($source['position']??null,$invoiceId,$issuerId,$totals['total']),
             'note'=>self::text($record['clientnote'] ?? '',20000),
         ];
         if (strlen(json_encode($this->data, JSON_THROW_ON_ERROR)) > 4194304) {
             throw new DomainException('issuer_document_content_too_large');
         }
+    }
+
+    private static function position($position,int $invoice,int $issuer,int $total):array
+    {
+        if(!is_array($position)||($position['invoice_id']??null)!==$invoice||($position['issuer_id']??null)!==$issuer)throw new DomainException('issuer_document_scope_mismatch');$result=[];foreach(['total','received','applied_credit','settlement_discount','settlement_abatement','noncash_reductions','receivable'] as $field)$result[$field]=self::decimal(self::cents($position[$field]??null));if(self::cents($result['total'])!==$total||self::cents($result['settlement_discount'])+self::cents($result['settlement_abatement'])!==self::cents($result['noncash_reductions'])||self::cents($result['received'])+self::cents($result['applied_credit'])+self::cents($result['noncash_reductions'])+self::cents($result['receivable'])!==$total)throw new DomainException('issuer_document_invalid_totals');return $result;
     }
 
     public static function fromInvoice(InvoiceIssuerDocuments $documents, $invoice, $issuer): self

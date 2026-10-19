@@ -8,6 +8,7 @@ require_once __DIR__.'/ApiPayload.php';
 require_once __DIR__.'/ApiReceiptSchema.php';
 require_once __DIR__.'/ApiAmendments.php';
 require_once __DIR__.'/ApiMovements.php';
+require_once APPPATH.'services/CompanyInvoiceBalance.php';
 
 /** Invoice-bound API outbox. Every request uses the immutable origin; no ambient bank/account defaults. */
 final class ApiService
@@ -29,7 +30,7 @@ final class ApiService
         require_once __DIR__.'/ApiWebhookSchema.php';ApiWebhookSchema::ensure($this->db,$this->prefix,false);
         ApiReceiptSchema::ensure($this->db,$this->prefix,false);$tables=self::receiptTables();
         if($this->db->table_exists($this->prefix.'asaas_payment_origins'))$tables[]='asaas_payment_origins';
-        return \IssuerTransaction::run($this->db,$this->prefix,$tables,$work);
+        return \IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge($tables,(new \CompanyInvoiceBalance($this->db,$this->prefix))->tables()))),$work);
     }
     /** Internal table contract for the core-owned receipt transaction, never a session scope. */
     public static function receiptTables():array
@@ -45,7 +46,7 @@ final class ApiService
     {
         $module=$this->rows('SELECT active,installed_version FROM '.$this->prefix.'modules WHERE module_name=? FOR UPDATE',['banco_brasil'])[0]??[];
         $acl=new \IssuerResourceAccess($this->db,$this->prefix);$acl->lockFinancialIdentity($issuer,$actor);
-        if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.1.2'||!$acl->can($issuer,$actor,'banco_brasil','view')||!$acl->can($issuer,$actor,'banco_brasil',$cap)||($invoice&&!$acl->can($issuer,$actor,'invoices','view')))throw new \DomainException('bb_api_access_denied');
+        if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.1.3'||!$acl->can($issuer,$actor,'banco_brasil','view')||!$acl->can($issuer,$actor,'banco_brasil',$cap)||($invoice&&!$acl->can($issuer,$actor,'invoices','view')))throw new \DomainException('bb_api_access_denied');
     }
     private function connection(int $issuer,int $id):array
     {
@@ -121,6 +122,7 @@ final class ApiService
             $record=$this->rows('SELECT i.id,i.issuer_id,i.clientid,i.total,i.status,i.date,i.duedate,i.currency currency_id FROM '.$this->prefix.'invoices i WHERE i.id=? AND i.issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
             if($record){$record['currency']=(new \CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($record['currency_id'])['iso_code'];}
             if(!$record||!in_array((int)$record['status'],[1,4],true)||$record['currency']!=='BRL')throw new \DomainException('bb_api_invoice_not_eligible');
+            (new \CompanyInvoiceBalance($this->db,$this->prefix))->inOwned($issuer,$actor,$invoice);
             foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT amount FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice]))throw new \DomainException('bb_api_invoice_not_eligible');
             // Keep all historical origins. Only an API-origin bank-confirmed cancellation can release its active slot.
             foreach($this->rows('SELECT id,state,active_slot,channel FROM '.$this->prefix.'bb_origins WHERE invoice_id=? FOR UPDATE',[$invoice]) as $old)if($old['active_slot']!==null||$old['channel']!=='api'||$old['state']!=='api_cancelled_confirmed')throw new \DomainException('bb_invoice_already_bound');
@@ -182,6 +184,7 @@ final class ApiService
             if($operation==='amend_due'&&$op){$saved=json_decode($op['result_json'],true,32,JSON_THROW_ON_ERROR);if(($saved['amendment']??null)!==$amendment||(int)$op['actor_id']!==$actor)throw new \DomainException('bb_api_request_conflict');}
             if($op&&in_array($op['status'],['validated','confirmed','rejected','unknown','sending'],true))return ['id'=>(int)$op['id'],'execute'=>false];
             if($op&&$op['status']==='authenticating'&&$op['locked_until']>gmdate('Y-m-d H:i:s'))return ['id'=>(int)$op['id'],'execute'=>false];
+            $this->assertUnmovedFinancialPosition($issuer,$actor,$origin,$operation);
             if($operation==='issue'){
                 if(!in_array($origin['state'],['api_reserved','api_auth_failed'],true))throw new \DomainException('bb_api_issue_requires_query');
                 $current=$this->rows('SELECT total,status FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$origin['invoice_id'],$issuer])[0]??null;
@@ -210,7 +213,7 @@ final class ApiService
             $this->transaction(function()use($issuer,$actor,$originId,$operation,$prepared,$id):void{
                 $this->authorizeOperation($issuer,$actor,$operation);$op=$this->rows('SELECT claim_token,status,actor_id FROM '.$this->prefix.'bb_api_operations WHERE id=? AND origin_id=? FOR UPDATE',[$id,$originId])[0]??[];
                 if(($op['claim_token']??null)!==$prepared['claim']||($op['status']??null)!=='authenticating'||(int)$op['actor_id']!==$actor)throw new \DomainException('bb_api_claim_superseded');
-                $this->loadOrigin($issuer,$originId);if($operation==='issue'&&(ApiClient::decodeExact($prepared['stored']['payload_json'])['jurosMora']['tipo']??null)==='1')$this->authorize($issuer,$actor,'api_charges',true);
+                [$currentOrigin]=$this->loadOrigin($issuer,$originId);$this->assertUnmovedFinancialPosition($issuer,$actor,$currentOrigin,$operation);if($operation==='issue'&&(ApiClient::decodeExact($prepared['stored']['payload_json'])['jurosMora']['tipo']??null)==='1')$this->authorize($issuer,$actor,'api_charges',true);
                 $currentCredential=$this->rows('SELECT id FROM '.$this->prefix.'bb_api_credentials WHERE profile_id=? AND issuer_id=? ORDER BY id DESC LIMIT 1 FOR UPDATE',[$prepared['profile']['id'],$issuer])[0]??[];
                 if((int)($currentCredential['id']??0)!==(int)$prepared['credential']['id'])throw new \DomainException('bb_api_credentials_rotated');
                 \IssuerStorage::query($this->db,"UPDATE ".$this->prefix."bb_api_operations SET status='sending',updated_at=? WHERE id=?",[gmdate('Y-m-d H:i:s'),$id]);
@@ -237,6 +240,12 @@ final class ApiService
             throw new \RuntimeException($sending?'bb_api_result_unconfirmed_query_origin':'bb_api_authentication_not_submitted');
         }
         return $id;
+    }
+    /** Rechecked immediately before the confirmed sending marker, without expanding query authority. */
+    private function assertUnmovedFinancialPosition(int $issuer,int $actor,array $origin,string $operation):void
+    {
+        if(!in_array($operation,['issue','cancel','amend_due'],true))return;$invoice=(int)$origin['invoice_id'];$position=(new \CompanyInvoiceBalance($this->db,$this->prefix))->inOwned($issuer,$actor,$invoice);$currency=$this->rows('SELECT currency FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;if(!$currency)throw new \DomainException('bb_api_invoice_not_eligible');(new \CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($currency['currency']);
+        $error=match($operation){'cancel'=>'bb_api_cancel_financial_history','amend_due'=>'bb_api_amendment_financial_history',default=>'bb_api_invoice_not_eligible'};if($position['receivable']!==$position['total'])throw new \DomainException($error);foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice]))throw new \DomainException($error);
     }
     private function completeOperation(int $issuer,int $actor,int $originId,int $id,string $claim,string $operation,int $http,string $responseHash,array $result):void
     {

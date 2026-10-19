@@ -15,7 +15,7 @@ trait ApiAmendments
     }
     private function authorizeOperation(int $issuer,int $actor,string $operation):void
     {
-        if($operation==='amend_due'){ $module=$this->rows("SELECT installed_version FROM {$this->prefix}modules WHERE module_name='banco_brasil' FOR UPDATE")[0]??[];if(($module['installed_version']??null)!=='1.1.2')throw new \DomainException('bb_api_access_denied'); }
+        if($operation==='amend_due'){ $module=$this->rows("SELECT installed_version FROM {$this->prefix}modules WHERE module_name='banco_brasil' FOR UPDATE")[0]??[];if(($module['installed_version']??null)!=='1.1.3')throw new \DomainException('bb_api_access_denied'); }
         $this->authorize($issuer,$actor,$operation==='amend_due'?'api_amend':($operation==='movements'?'api_query':'api_'.$operation),true);
         if($operation==='amend_due'&&!(new \IssuerResourceAccess($this->db,$this->prefix))->can($issuer,$actor,'invoices','edit'))throw new \DomainException('bb_api_access_denied');
     }
@@ -37,6 +37,7 @@ trait ApiAmendments
         $latest=$this->rows("SELECT * FROM {$this->prefix}bb_api_operations WHERE origin_id=? AND operation='amend_due' ORDER BY id DESC LIMIT 1 FOR UPDATE",[$originId])[0]??null;
         if(!in_array($operation,['query','movements'],true)&&$latest&&!in_array($latest['status'],['confirmed','rejected','auth_failed'],true))throw new \DomainException('bb_api_amendment_requires_query');
         if($operation!=='amend_due')return;
+        (new \CompanyInvoiceBalance($this->db,$this->prefix))->inOwned($issuer,$actor,(int)$origin['invoice_id']);
         foreach($this->rows("SELECT projection_json FROM {$this->prefix}bb_api_notifications WHERE origin_id=? FOR UPDATE",[$originId]) as $notification){$event=json_decode($notification['projection_json'],true,32,JSON_THROW_ON_ERROR);if(($event['codigoEstadoBaixaOperacional']??null)==='10')throw new \DomainException('bb_api_amendment_adverse_history');}
         if(!in_array($origin['state'],['api_registered','api_query_observed'],true))throw new \DomainException('bb_api_amendment_requires_fresh_normal_query');
         $query=$this->rows("SELECT result_json,updated_at FROM {$this->prefix}bb_api_operations WHERE origin_id=? AND operation='query' AND status='validated' ORDER BY id DESC LIMIT 1 FOR UPDATE",[$originId])[0]??null;

@@ -9,6 +9,7 @@ require_once __DIR__.'/issuers/InvoiceIssuerDocuments.php';
 require_once __DIR__.'/issuers/IssuerResourceAccess.php';
 require_once __DIR__.'/CompanyCurrencyUnits.php';
 require_once __DIR__.'/CompanyFinancialJournal.php';
+require_once __DIR__.'/CompanyInvoiceBalance.php';
 /** Named-company credit and reversal entries share the native financial writer and installation lock. */
 trait CompanyCreditWriter
 {
@@ -22,7 +23,7 @@ trait CompanyCreditWriter
         $this->creditAuth($issuer,$actor,$caps);\CompanyCreditSchema::assertValid($this->db,db_prefix());
         $tables=['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','issuers_client_links','clients','invoices','issuers_invoice_documents','creditnotes','creditnote_refunds','credits','currencies','options','itemable','item_tax','issuers_sequences','invoicepaymentrecords','company_payment_receipts','company_credit_documents','company_credit_entries','issuers_audit'];
         foreach(['bb_origins','asaas_payment_origins'] as $table)if($this->db->table_exists(db_prefix().$table))$tables[]=$table;
-        $journal=new \CompanyFinancialJournal($this->db,db_prefix());$tables=array_values(array_unique(array_merge($tables,(new \CompanyCurrencyUnits($this->db,db_prefix()))->tables(),$journal->tables('credit'),$journal->tables('credit_entry'),$journal->tables('payment'))));
+        $journal=new \CompanyFinancialJournal($this->db,db_prefix());$tables=array_values(array_unique(array_merge($tables,(new \CompanyCurrencyUnits($this->db,db_prefix()))->tables(),$journal->tables('credit'),$journal->tables('credit_entry'),$journal->tables('payment'),(new \CompanyInvoiceBalance($this->db,db_prefix()))->tables())));
         return \IssuerTransaction::run($this->db,db_prefix(),$tables,function()use($issuer,$actor,$caps,$work){(new \IssuerResourceAccess($this->db,db_prefix()))->lockFinancialIdentity($issuer,$actor);$this->creditAuth($issuer,$actor,$caps);$result=$work();$this->creditAuth($issuer,$actor,$caps);return $result;});
     }
     private static function creditText($value,int $max,bool $required=false):string
@@ -96,18 +97,18 @@ trait CompanyCreditWriter
         $p=db_prefix();$row=$this->creditRows('SELECT i.* FROM '.$p.'invoices i JOIN '.$p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE i.id=? AND i.issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;if(!$row)throw new \DomainException('company_credit_access_denied');(new \CompanyCurrencyUnits($this->db,$p))->resolveRead($row['currency']);
         foreach(['bb_origins','asaas_payment_origins'] as $table)if($this->db->table_exists($p.$table)&&$this->creditRows('SELECT id FROM '.$p.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('company_credit_provider_review_required');if(!in_array((int)$row['status'],[1,2,3,4],true))throw new \DomainException('company_credit_invalid_state');return $row;
     }
-    private function invoiceRemainder(array $invoice):int
+    private function invoiceRemainder(array $invoice,int $actor):int
     {
-        $left=self::minorUnits($invoice['total']);foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])foreach($this->creditRows('SELECT amount FROM '.db_prefix().$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice['id']]) as $row){$amount=self::minorUnits($row['amount']);if($amount>$left)throw new \DomainException('company_credit_balance_review');$left-=$amount;}return $left;
+        $position=(new \CompanyInvoiceBalance($this->db,db_prefix()))->inOwned((int)$invoice['issuer_id'],$actor,(int)$invoice['id'],false);return self::minorUnits($position['receivable']);
     }
     private function refreshCredit(array $credit):void
     {
         $remaining=$this->creditAvailable($credit);\IssuerStorage::query($this->db,'UPDATE '.db_prefix().'creditnotes SET status=? WHERE id=? AND issuer_id=?',[$remaining===0?2:1,$credit['id'],$credit['issuer_id']]);
         if((int)$this->ownedCredit((int)$credit['issuer_id'],(int)$credit['id'])['status']!==($remaining===0?2:1))throw new \RuntimeException('issuer_credit_write_unconfirmed');
     }
-    private function refreshInvoice(array $invoice):void
+    private function refreshInvoice(array $invoice,int $actor):void
     {
-        $left=$this->invoiceRemainder($invoice);$status=$left===0?2:($left<self::minorUnits($invoice['total'])?3:(!empty($invoice['duedate'])&&$invoice['duedate']<date('Y-m-d')?4:1));\IssuerStorage::query($this->db,'UPDATE '.db_prefix().'invoices SET status=? WHERE id=? AND issuer_id=?',[$status,$invoice['id'],$invoice['issuer_id']]);
+        $left=$this->invoiceRemainder($invoice,$actor);$status=$left===0?2:($left<self::minorUnits($invoice['total'])?3:(!empty($invoice['duedate'])&&$invoice['duedate']<date('Y-m-d')?4:1));\IssuerStorage::query($this->db,'UPDATE '.db_prefix().'invoices SET status=? WHERE id=? AND issuer_id=?',[$status,$invoice['id'],$invoice['issuer_id']]);
         $check=$this->creditRows('SELECT status FROM '.db_prefix().'invoices WHERE id=? AND issuer_id=?',[$invoice['id'],$invoice['issuer_id']])[0]??[];if((int)($check['status']??0)!==$status)throw new \RuntimeException('issuer_credit_write_unconfirmed');
     }
     /** New entries use exact positive magnitudes; reversal kind and parent point to immutable original evidence. */
@@ -129,9 +130,9 @@ trait CompanyCreditWriter
             if(($credit&&$data['date']<$credit['date'])||($invoice&&$data['date']<$invoice['date']))throw new \DomainException('company_credit_invalid_input');
             if($credit&&(int)$credit['status']===3)throw new \DomainException('company_credit_invalid_state');
             $units=new \CompanyCurrencyUnits($this->db,$p);if($credit)$units->assertWrite($credit['currency']);if($invoice)$units->assertWrite($invoice['currency']);
-            $before=['date'=>$data['date'],'credit_id'=>$data['credit_id'],'invoice_id'=>$data['invoice_id'],'credit_available'=>$credit?\CompanyInvoiceAmounts::decimal($this->creditAvailable($credit)):null,'invoice_balance'=>$invoice?\CompanyInvoiceAmounts::decimal($this->invoiceRemainder($invoice)):null];
+            $before=['date'=>$data['date'],'credit_id'=>$data['credit_id'],'invoice_id'=>$data['invoice_id'],'credit_available'=>$credit?\CompanyInvoiceAmounts::decimal($this->creditAvailable($credit)):null,'invoice_balance'=>$invoice?\CompanyInvoiceAmounts::decimal($this->invoiceRemainder($invoice,$actor)):null];
             if($kind==='apply'){
-                if((int)$credit['clientid']!==(int)$invoice['clientid']||(int)$credit['currency']!==(int)$invoice['currency'])throw new \DomainException('company_credit_target_mismatch');if($amount>$this->creditAvailable($credit)||$amount>$this->invoiceRemainder($invoice))throw new \DomainException('company_credit_exceeds_balance');
+                if((int)$credit['clientid']!==(int)$invoice['clientid']||(int)$credit['currency']!==(int)$invoice['currency'])throw new \DomainException('company_credit_target_mismatch');if($amount>$this->creditAvailable($credit)||$amount>$this->invoiceRemainder($invoice,$actor))throw new \DomainException('company_credit_exceeds_balance');
                 $native=$this->creditInsert('credits',['invoice_id'=>$invoice['id'],'credit_id'=>$credit['id'],'staff_id'=>$actor,'date'=>$data['date'],'date_applied'=>date('Y-m-d H:i:s'),'amount'=>$data['amount']]);
             }elseif($kind==='refund'){
                 if($amount>$this->creditAvailable($credit))throw new \DomainException('company_credit_exceeds_balance');$native=$this->creditInsert('creditnote_refunds',['credit_note_id'=>$credit['id'],'staff_id'=>$actor,'refunded_on'=>$data['date'],'payment_mode'=>'company_manual','note'=>$data['reason'],'amount'=>$data['amount'],'created_at'=>date('Y-m-d H:i:s')]);
@@ -146,9 +147,9 @@ trait CompanyCreditWriter
             if($native>0){$target=match($kind){'apply','unapply'=>'credits','refund','refund_reverse'=>'creditnote_refunds','manual_reverse'=>'invoicepaymentrecords'};$projection=$this->creditRows('SELECT amount FROM '.$p.$target.' WHERE id=?',[$native])[0]??[];if(!isset($projection['amount'])||self::minorUnits($projection['amount'])!==self::minorUnits($projected??$data['amount']))throw new \RuntimeException('issuer_credit_write_unconfirmed');}
             if($native<1)throw new \RuntimeException('issuer_credit_write_unconfirmed');
             $entry=['request_key'=>$key,'issuer_id'=>$issuer,'actor_id'=>$actor,'kind'=>$kind,'credit_id'=>$data['credit_id'],'invoice_id'=>$data['invoice_id'],'native_id'=>$native,'parent_key'=>$data['parent_key'],'amount'=>$data['amount'],'input_hash'=>$hash,'reference_hash'=>$ref,'reference'=>$data['reference'],'book_date'=>$data['date'],'reason'=>$data['reason'],'created_at'=>date('Y-m-d H:i:s')];$this->creditInsert('company_credit_entries',$entry);
-            if($credit)$this->refreshCredit($credit);if($invoice)$this->refreshInvoice($invoice);
+            if($credit)$this->refreshCredit($credit);if($invoice)$this->refreshInvoice($invoice,$actor);
             if(!$this->creditRows('SELECT request_key FROM '.$p.'company_credit_entries WHERE request_key=? AND input_hash=?',[$key,$hash]))throw new \RuntimeException('issuer_credit_write_unconfirmed');$this->creditAudit($issuer,$actor,$credit?(int)$credit['id']:(int)$invoice['id'],'company_credit_'.$kind,$key);
-            $after=['date'=>$data['date'],'credit_id'=>$data['credit_id'],'invoice_id'=>$data['invoice_id'],'native_id'=>$native,'amount'=>$data['amount'],'credit_available'=>$credit?\CompanyInvoiceAmounts::decimal($this->creditAvailable($credit)):null,'invoice_balance'=>$invoice?\CompanyInvoiceAmounts::decimal($this->invoiceRemainder($invoice)):null,'parent_key'=>$data['parent_key']];
+            $after=['date'=>$data['date'],'credit_id'=>$data['credit_id'],'invoice_id'=>$data['invoice_id'],'native_id'=>$native,'amount'=>$data['amount'],'credit_available'=>$credit?\CompanyInvoiceAmounts::decimal($this->creditAvailable($credit)):null,'invoice_balance'=>$invoice?\CompanyInvoiceAmounts::decimal($this->invoiceRemainder($invoice,$actor)):null,'parent_key'=>$data['parent_key']];
             $eventKind=match($kind){'apply'=>'credit_applied','unapply'=>'credit_unapplied','refund'=>'credit_refunded','refund_reverse'=>'credit_refund_reversed','manual_reverse'=>'receipt_reversed'};$this->creditJournal($issuer,$actor,$eventKind,$kind==='manual_reverse'?'payment':'credit_entry',$kind==='manual_reverse'?$native:$key,(int)($credit['currency']??$invoice['currency']),$data['date'],$data['amount'],$before,$after,hash('sha256','company-journal:credit-entry:'.$key));return $key;
         });
     }

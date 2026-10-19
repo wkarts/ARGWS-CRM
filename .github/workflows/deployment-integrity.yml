@@ -40,6 +40,7 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright@1.55.1
           npx playwright install --with-deps chromium
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
       - name: Testar navegação das abas no shell isolado de Empresas
         run: node tests/company_context_tabs_browser.cjs
       - name: Provisionar schema e primeiro administrador em MySQL limpo

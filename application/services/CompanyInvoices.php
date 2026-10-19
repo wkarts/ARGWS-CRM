@@ -10,6 +10,7 @@ require_once __DIR__.'/CompanyInvoiceAmounts.php';
 require_once __DIR__.'/CompanyAssets.php';
 require_once __DIR__.'/CompanyCurrencyUnits.php';
 require_once __DIR__.'/CompanyFinancialJournal.php';
+require_once __DIR__.'/CompanyInvoiceBalance.php';
 
 /** Native named-company invoices; legacy models, providers and hooks are never invoked by this adapter. */
 final class CompanyInvoices
@@ -67,7 +68,7 @@ final class CompanyInvoices
     {
         $tables=['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_clients','issuers_client_links','issuers_audit','staff','clients','invoices','issuers_invoice_documents','issuers_sequences','itemable','item_tax','currencies','options','company_invoice_requests','invoicepaymentrecords','credits'];
         foreach(['bb_origins','asaas_payment_origins'] as $table)if($this->db->table_exists($this->prefix.$table))$tables[]=$table;
-        $tables=array_values(array_unique(array_merge($tables,$extraTables,(new CompanyCurrencyUnits($this->db,$this->prefix))->tables(),(new CompanyFinancialJournal($this->db,$this->prefix))->tables('invoice'))));
+        $tables=array_values(array_unique(array_merge($tables,$extraTables,(new CompanyCurrencyUnits($this->db,$this->prefix))->tables(),(new CompanyFinancialJournal($this->db,$this->prefix))->tables('invoice'),(new CompanyInvoiceBalance($this->db,$this->prefix))->tables())));
         return IssuerTransaction::run($this->db,$this->prefix,$tables,$operation);
     }
     public function currencies($issuer,$actor):array
@@ -162,17 +163,23 @@ final class CompanyInvoices
         return ['discount_type'=>$row['discount_type'],'discount_mode'=>$percent>0?'percent':'fixed',
             'discount_value'=>$percent>0?CompanyInvoiceAmounts::decimal($percent):(string)$row['discount_total'],'adjustment'=>(string)$row['adjustment']];
     }
+    /** Current position keeps provider reductions apart from cash and the issued invoice total. */
+    public function position($issuer,$actor,$invoice):array
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$invoice=IssuerPolicy::id($invoice);return $this->transaction(function()use($issuer,$actor,$invoice):array{$this->authorize($issuer,$actor,'view');return (new CompanyInvoiceBalance($this->db,$this->prefix))->inOwned($issuer,$actor,$invoice);});
+    }
     public function payments($issuer,$actor,$invoice):array
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$invoice=IssuerPolicy::id($invoice);$this->authorize($issuer,$actor,'view');
+        return $this->transaction(function()use($issuer,$actor,$invoice):array{$position=(new CompanyInvoiceBalance($this->db,$this->prefix))->inOwned($issuer,$actor,$invoice);
         $resource=$this->rows('SELECT currency FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$invoice,$issuer])[0]??null;if(!$resource)throw new DomainException('company_invoice_access_denied');(new CompanyCurrencyUnits($this->db,$this->prefix))->resolveRead($resource['currency']);
         $rows=$this->rows('SELECT p.id,p.amount,p.date,p.paymentmode,p.transactionid,p.note FROM '.$this->prefix.'invoicepaymentrecords p JOIN '.$this->prefix.'invoices i ON i.id=p.invoiceid WHERE p.invoiceid=? AND i.issuer_id=? ORDER BY p.id',[$invoice,$issuer]);
-        foreach($rows as &$row){$reversed=0;$row['reversals']=[];
+        foreach($rows as &$row){$row['bank_components']=$position['components'][(int)$row['id']]??null;$reversed=0;$row['reversals']=[];
             if($this->db->table_exists($this->prefix.'company_credit_entries'))$row['reversals']=$this->rows("SELECT amount,book_date,reference,reason FROM {$this->prefix}company_credit_entries WHERE issuer_id=? AND invoice_id=? AND kind='manual_reverse' AND native_id=? ORDER BY created_at,request_key",[$issuer,$invoice,$row['id']]);
             foreach($row['reversals'] as $entry){$n=CompanyInvoiceAmounts::minor((string)$entry['amount']);if($n>999999999999999-$reversed)throw new DomainException('company_credit_balance_review');$reversed+=$n;}
             $remaining=CompanyInvoiceAmounts::minor((string)$row['amount']);if($remaining>999999999999999-$reversed)throw new DomainException('company_credit_balance_review');$row['original_amount']=CompanyInvoiceAmounts::decimal($remaining+$reversed);$row['reversed_amount']=CompanyInvoiceAmounts::decimal($reversed);
         }unset($row);
-        $this->authorize($issuer,$actor,'view');return $rows;
+        $this->authorize($issuer,$actor,'view');return $rows;});
     }
     public function confirmPdfDownload($issuer,$actor,$invoice):void
     {
@@ -214,6 +221,7 @@ final class CompanyInvoices
             (new CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($row['currency']);
             $before=['date'=>$row['date'],'total'=>self::decimal(self::cents($row['total'])),'status'=>(int)$row['status'],'revision'=>$revision];
             foreach(['bb_origins','asaas_payment_origins'] as $table)if($this->db->table_exists($this->prefix.$table)&&$this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new DomainException('company_invoice_provider_review_required');
+            if((new CompanyBankReceiptComponents($this->db,$this->prefix))->forInvoiceInOwned($issuer,$actor,$invoice))throw new DomainException('company_invoice_immutable');
             foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT amount FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice]))throw new DomainException('company_invoice_immutable');
             if($data===null){IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'invoices SET status=5 WHERE id=? AND issuer_id=?',[$invoice,$issuer]);}
             else{

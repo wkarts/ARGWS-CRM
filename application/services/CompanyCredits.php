@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-require_once __DIR__.'/CompanyCurrencyUnits.php';require_once __DIR__.'/CompanyCreditSchema.php';require_once __DIR__.'/CompanyInvoiceAmounts.php';require_once __DIR__.'/issuers/IssuerResourceAccess.php';require_once __DIR__.'/issuers/IssuerTransaction.php';
+require_once __DIR__.'/CompanyInvoiceBalance.php';require_once __DIR__.'/CompanyCurrencyUnits.php';require_once __DIR__.'/CompanyCreditSchema.php';require_once __DIR__.'/CompanyInvoiceAmounts.php';require_once __DIR__.'/issuers/IssuerResourceAccess.php';require_once __DIR__.'/issuers/IssuerTransaction.php';
 
 /** Private reader of canonical company credits. Never hydrates legacy Credit_notes_model. */
 final class CompanyCredits
@@ -13,7 +13,7 @@ final class CompanyCredits
     private function transaction(int $issuer,int $actor,callable $work)
     {
         $this->authorize($issuer,$actor);CompanyCreditSchema::assertValid($this->db,$this->p);
-        return IssuerTransaction::run($this->db,$this->p,['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','creditnotes','credits','creditnote_refunds','invoices','issuers_invoice_documents','company_credit_documents','company_credit_entries','currencies','company_currency_units','issuers_audit'],function()use($issuer,$actor,$work){$this->acl->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor);$result=$work();$this->authorize($issuer,$actor);return $result;});
+        return IssuerTransaction::run($this->db,$this->p,array_values(array_unique(array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','creditnotes','credits','creditnote_refunds','invoices','issuers_invoice_documents','company_credit_documents','company_credit_entries','currencies','company_currency_units','issuers_audit'],(new CompanyInvoiceBalance($this->db,$this->p))->tables()))),function()use($issuer,$actor,$work){$this->acl->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor);$result=$work();$this->authorize($issuer,$actor);return $result;});
     }
     private static function minor($value):int{try{$n=CompanyInvoiceAmounts::minor($value);if($n>CompanyInvoiceAmounts::MAX)throw new DomainException();return $n;}catch(Throwable $e){throw new DomainException('company_credit_balance_review');}}
     private function document(int $issuer,int $credit):array
@@ -47,7 +47,7 @@ final class CompanyCredits
     }
     public function invoiceOptions($issuer,$actor,$credit):array
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$credit=IssuerPolicy::id($credit);return $this->transaction($issuer,$actor,function()use($issuer,$actor,$credit):array{if(!$this->acl->can($issuer,$actor,'invoices','view'))return [];$doc=$this->document($issuer,$credit);return $this->rows('SELECT i.id,i.formatted_number,i.total,i.status FROM '.$this->p.'invoices i JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE i.issuer_id=? AND i.clientid=? AND i.currency=? AND i.status IN (1,3,4) ORDER BY i.id LIMIT 100',[$issuer,$doc['client_id'],$doc['currency_id']]);});
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$credit=IssuerPolicy::id($credit);return $this->transaction($issuer,$actor,function()use($issuer,$actor,$credit):array{if(!$this->acl->can($issuer,$actor,'invoices','view'))return [];$doc=$this->document($issuer,$credit);$rows=$this->rows('SELECT i.id,i.formatted_number,i.total,i.status FROM '.$this->p.'invoices i JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE i.issuer_id=? AND i.clientid=? AND i.currency=? AND i.status IN (1,3,4) ORDER BY i.id LIMIT 100',[$issuer,$doc['client_id'],$doc['currency_id']]);$result=[];foreach($rows as $row){$position=(new CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$row['id']);if(CompanyInvoiceAmounts::minor($position['receivable'])>0){$row['receivable']=$position['receivable'];$result[]=$row;}}return $result;});
     }
     public function currencies($issuer,$actor):array{$issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$this->authorize($issuer,$actor);$rows=$this->rows('SELECT id,name FROM '.$this->p.'currencies ORDER BY id LIMIT 100');$this->authorize($issuer,$actor);return $rows;}
     public function pdf($issuer,$actor,$credit):string

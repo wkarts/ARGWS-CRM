@@ -39,6 +39,15 @@ de execução. Os hashes inicial/final e o delta documental são registrados no 
 de QA. Não houve Docker: processos isolados; adaptação estrita só de comandos de
 fixture/SQL. A aplicação, banco e navegador foram executados de fato.
 
+## CI remoto426
+
+HEAD `4c5dd23b31836f2bd562980c4e075e9017910c29`:18 execuções concluídas
+com sucesso, cobrindo16 workflows distintos. Empresas rodou PHP8.1/8.5; stack e
+bancos pertencem a esse SHA, sem contar jobs pulados como teste executado.
+[Empresas](https://github.com/wkarts/ARGWS-CRM/actions/runs/39304894232),
+[stack](https://github.com/wkarts/ARGWS-CRM/actions/runs/39304894205) e
+[BB](https://github.com/wkarts/ARGWS-CRM/actions/runs/39304894229).
+
 ## Correções reproduzidas durante QA
 
 - Sem empresa selecionada, relatório retorna403 antes de um helper tipado receberNULL.

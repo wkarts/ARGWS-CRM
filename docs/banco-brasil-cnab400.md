@@ -110,3 +110,11 @@ homologa o novo canal. O trailer de remessa CBR641 permanece resolvido e não é
 pendência. O candidato continua indisponível; isso é bloqueio documental para
 escrita correta e trabalho técnico de integração posterior, separado da
 homologação bancária externa.
+
+
+## Situação no núcleo427 / BB113
+
+A composição financeira427 pertence somente ao perfil assistido CNAB240. Não
+transforma o candidato400 em canal operacional, não resolve BRL85–86 ou picture
+CBR64326–39 e não presume isenção de juros do beneficiário. Faltam os documentos
+específicos e, depois, integração/testes próprios; homologação externa é outra etapa.

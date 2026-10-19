@@ -75,6 +75,13 @@ Emissão: <?= $escape($date($data['date'])) ?><br />
 </tr>
 <?php } ?>
 </table>
+<?php if (($data['position']['noncash_reductions'] ?? '0.00') !== '0.00') { ?>
+<br /><b>Posição do principal na geração deste documento</b>
+<table cellpadding="5" width="100%">
+<?php foreach (['received'=>'Principal recebido','applied_credit'=>'Crédito aplicado','settlement_discount'=>'Desconto na liquidação (sem recebimento)','settlement_abatement'=>'Abatimento na liquidação (sem recebimento)','receivable'=>'Principal em aberto'] as $field=>$label) { ?>
+<tr><td width="72%" align="right"><?= $escape($label) ?></td><td width="28%" align="right"><?= $money($data['position'][$field]) ?></td></tr>
+<?php } ?></table>
+<?php } ?>
 <?php if ($data['note'] !== '') { ?><br /><b>Observações</b><br /><?= $lines($data['note']) ?><?php } ?>
 <?php if ($identity['terms'] !== '') { ?><br /><br /><b>Condições</b><br /><?= $lines($identity['terms']) ?><?php } ?>
 

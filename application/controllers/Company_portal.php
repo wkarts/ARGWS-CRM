@@ -15,7 +15,7 @@ class Company_portal extends CI_Controller
         $this->output->set_header('X-Content-Type-Options: nosniff');
         try{$issuer=IssuerPolicy::id($issuer);$portal=new CompanyPortal($this->db,db_prefix(),(string)$this->config->item('encryption_key'));}
         catch(Throwable $error){show_404();return;}
-        $invoices=null;$sales=[];
+        $invoices=null;$sales=[];$hostedCheckout=[];
         $sessionKey='company_portal_identity';$identity=$this->session->userdata($sessionKey);$message=null;$error=null;
         $csrf=$this->session->userdata('company_portal_csrf');
         if(!is_string($csrf)||strlen($csrf)!==64){$csrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_portal_csrf',$csrf);}
@@ -29,6 +29,12 @@ class Company_portal extends CI_Controller
                 if($action==='logout'){
                     $this->session->unset_userdata($sessionKey);$this->session->sess_regenerate(true);
                     redirect($this->config->site_url('company_portal/index/'.$issuer),'location',303);return;
+                }
+                if($action==='invoice_checkout'){
+                    if(!$current||!is_array($identity)){show_404();return;}
+                    require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyHostedLinks.php';
+                    try{$link=(new \Asaas\CompanyHostedLinks($this->db,db_prefix()))->portalLink($portal,$identity,$issuer,$this->input->post('invoice_id',false));}catch(DomainException $denied){show_404();return;}
+                    $this->output->set_header('Referrer-Policy: no-referrer');redirect($link['url'],'location',303);return;
                 }
                 if($action==='invoice_attachment'){
                     if(!$current||!is_array($identity)){show_404();return;}
@@ -103,10 +109,11 @@ class Company_portal extends CI_Controller
         if(($current??null)&&is_array($identity)){
             try{require_once APPPATH.'services/CompanyPortalInvoices.php';$invoices=(new CompanyPortalInvoices($this->db,db_prefix(),$portal))->page($identity,$issuer,$this->input->get('before',false)??0);}
             catch(Throwable $unavailable){$error='Faturas indisponíveis no momento. Tente novamente mais tarde.';}
+            if(is_array($invoices)&&$this->db->table_exists(db_prefix().'asaas_company_hosted_links')){try{require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyHostedLinks.php';$hostedCheckout=(new \Asaas\CompanyHostedLinks($this->db,db_prefix()))->portalPage($portal,$identity,$issuer,array_column($invoices['items'],'id'));}catch(Throwable $unavailable){$hostedCheckout=[];}}
             try{require_once APPPATH.'services/CompanyPortalSales.php';$salesReader=new CompanyPortalSales($this->db,db_prefix(),$portal);foreach(['estimates','proposals'] as $kind)$sales[$kind]=$salesReader->page($identity,$issuer,$kind);$ids=[];foreach($sales as $rows)foreach($rows??[] as $row)$ids[]=$row['id'];if($ids){require_once APPPATH.'services/CompanySalesFiles.php';$published=(new CompanySalesFiles($this->db,db_prefix()))->portalPages($portal,$identity,$issuer,$ids);foreach($sales as &$rows)if(is_array($rows))foreach($rows as &$row)$row['files']=$published[(int)$row['id']]??[];unset($rows,$row);}}
             catch(Throwable $unavailable){$error='Documentos indisponíveis no momento. Tente novamente mais tarde.';}
 
         }
-        $this->load->view('company_portal/index',['sales'=>$sales,'invoices'=>$invoices,'issuer'=>$issuer,'identity'=>$current??null,'message'=>$message,'error'=>$error,'portal_csrf'=>$csrf,'script_nonce'=>$nonce]);
+        $this->load->view('company_portal/index',['hosted_checkout'=>$hostedCheckout,'sales'=>$sales,'invoices'=>$invoices,'issuer'=>$issuer,'identity'=>$current??null,'message'=>$message,'error'=>$error,'portal_csrf'=>$csrf,'script_nonce'=>$nonce]);
     }
 }

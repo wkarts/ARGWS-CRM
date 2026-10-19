@@ -62,6 +62,12 @@ final class CompanyPortalInvoices
         $pdo=$this->db->pdo??$this->db->conn_id??null;if($pdo instanceof PDO&&$pdo->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite')return;
         $tables=array_map(fn($s)=>$this->p.$s,['contacts','clients','contact_permissions','issuers_clients','issuers_installation_identity']);$rows=$this->rows('SELECT TABLE_NAME name,ENGINE engine FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('.implode(',',array_fill(0,count($tables),'?')).')',$tables);$engines=[];foreach($rows as $row)$engines[$row['name']]=strtoupper($row['engine']);foreach($tables as $table)if(($engines[$table]??null)!=='INNODB')throw new RuntimeException('issuer_transactional_storage_required');
     }
+    /** Explicit authority for the shared financial reader, bound to this exact connection and prefix. */
+    public function balanceTables():array{return ['issuers_registry','issuers_installation_identity','issuers_clients','contacts','clients','contact_permissions','invoices','issuers_invoice_documents'];}
+    public function balanceIdentityInOwnedTransaction(array $session,int $issuer,int $invoice,$db,string $prefix):array
+    {
+        if($this->db!==$db||$this->p!==$prefix)throw new DomainException('company_portal_invoice_unavailable');IssuerTransaction::assertOwned($this->db,$this->p,$this->balanceTables());$who=$this->invoice($session,$issuer,$invoice,true);if(!$this->rows('SELECT invoice_id FROM '.$this->p.'issuers_invoice_documents WHERE invoice_id=? AND issuer_id=?',[$invoice,$issuer]))throw new DomainException('company_portal_invoice_unavailable');return $who;
+    }
     public function document(array $session,$issuer,$invoice):InvoiceIssuerDocumentData
     {
         $issuer=IssuerPolicy::id($issuer);$invoice=IssuerPolicy::id($invoice);$this->assertEngines();$who=$this->invoice($session,$issuer,$invoice,false);
@@ -69,7 +75,7 @@ final class CompanyPortalInvoices
         $documents=new InvoiceIssuerDocuments($this->db,$this->p,$who['contact_id'],function($i,$contact,$cap)use($session,$issuer,$invoice,$who):bool{
             if($i!==$issuer||$contact!==$who['contact_id']||!in_array($cap,['view_invoices','render_invoices'],true))return false;
             try{$this->invoice($session,$issuer,$invoice,false);return true;}catch(DomainException $error){return false;}
-        });
+        },$this,$session);
         return InvoiceIssuerDocumentData::fromInvoice($documents,$invoice,$issuer);
     }
     /** Called after rendering, before releasing PDF bytes. Permission revocation/audit failure denies delivery. */

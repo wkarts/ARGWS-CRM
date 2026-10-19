@@ -405,3 +405,24 @@ Recebimentos com juros, descontos e tarifas ainda exigem componentes financeiros
 canônicos; o diário426 é proveniência local e não será descrito como essa
 escrituração. A ampliação427 de componentes será separada e não afrouxa o crédito
 restrito existente. Homologação externa permanece distinta de código pendente.
+
+
+## Incremento113 / núcleo427 — componentes no crédito assistido240
+
+O novo perfil `settle_components_event` registra principal efetivamente recebido
+em caixa separado de desconto/abatimento e encargos agregados observados. Requer
+política explícita, confirmação independente do operador, origem íntegra e o mesmo
+writer/recibo canônico, sem duplicidade entre o crédito240 anterior e o novo.
+A confirmação não autentica o upload nem executa uma operação bancária.
+
+Saldo, fatura/PDF, portal, API, relatórios, diário e guards de emissão usam
+`CompanyInvoiceBalance`. Exemplo100 com pago95, encargos5 e extinções10 resulta
+em caixa90 e dívida extinta100; não chama100 de recebimento. O perfil exige
+tarifas/IOF/outros zero, líquido igual ao pago e caixa positivo.
+
+[Contrato e consumidores](companies/bank-components-operations.md) e
+[validação427](companies/pr45-validation-427.md) distinguem execução local/CI e
+homologação externa. BB113 é migration NOOP nova; núcleo427 cria o schema aditivo,
+sem modificar histórico. Crédito API parcial/ajustes, reversão própria dos novos
+componentes e demais fórmulas/perfis continuam pendências técnicas, separadas dos
+bloqueios documentais400 e da homologação externa de todos os canais.

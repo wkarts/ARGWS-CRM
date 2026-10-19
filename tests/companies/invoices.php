@@ -26,6 +26,8 @@ if($db->driver()==='mysql'){
     $db->query("CREATE TABLE {$p}company_invoice_requests(request_key varchar(64) PRIMARY KEY,issuer_id int unsigned NOT NULL,actor_id int NOT NULL,input_hash varchar(64) NOT NULL,invoice_id int NOT NULL,created_at datetime NOT NULL)");
     $db->query("CREATE TABLE {$p}company_payment_receipts(request_key varchar(64) PRIMARY KEY,issuer_id int unsigned NOT NULL,actor_id int NOT NULL,input_hash varchar(64) NOT NULL,invoice_id int NOT NULL,payment_id int NOT NULL,created_at datetime NOT NULL)");
 }
+require_once APPPATH.'services/CompanyBankComponentsSchema.php';
+if($db->driver()==='mysql')CompanyBankComponentsSchema::ensure($db,$p);else{$parts=[];foreach(CompanyBankComponentsSchema::fields() as $name=>$type)$parts[]='`'.$name.'` '.str_replace(' NULL','',$type).(str_ends_with($type,' NULL')?' NULL':' NOT NULL');$parts[]='PRIMARY KEY(request_key)';$parts[]='UNIQUE(payment_id)';$db->query('CREATE TABLE '.$p.'company_bank_receipt_components('.implode(',',$parts).')');}
 $db->query("INSERT INTO {$p}currencies(id,symbol,name,decimal_separator,thousand_separator,placement,isdefault) VALUES(1,'R$','BRL',',','.','before',1)");
 require_once APPPATH.'services/CompanyCurrencyUnitSchema.php';
 require_once APPPATH.'services/CompanyFinancialJournalSchema.php';

@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/IssuerPolicy.php';
 require_once __DIR__.'/IssuerTransaction.php';
 require_once __DIR__.'/../CompanyCurrencyUnits.php';
+require_once __DIR__.'/../CompanyInvoiceBalance.php';
 
 /** Immutable issuer identity and issuer/series-local numbering. Never reads global options. */
 final class InvoiceIssuerDocuments
@@ -14,9 +15,10 @@ final class InvoiceIssuerDocuments
     private string $tables;
     private int $actor;
     private $authorize;
+    private ?CompanyPortalInvoices $portalSource;private ?array $portalSession;
 
     /** Authorization is mandatory; the production adapter must also enforce the rollout gate. */
-    public function __construct($db, string $prefix, $actor, callable $authorize)
+    public function __construct($db, string $prefix, $actor, callable $authorize,?CompanyPortalInvoices $portalSource=null,?array $portalSession=null)
     {
         if (!preg_match('/^[A-Za-z0-9_]+$/D', $prefix)) {
             throw new InvalidArgumentException('Invalid table prefix');
@@ -26,6 +28,7 @@ final class InvoiceIssuerDocuments
         $this->tables = $prefix . 'issuers_';
         $this->actor = IssuerPolicy::id($actor);
         $this->authorize = $authorize;
+        if(($portalSource===null)!==($portalSession===null))throw new InvalidArgumentException('issuer_document_portal_context_required');$this->portalSource=$portalSource;$this->portalSession=$portalSession;
     }
 
     private function query(string $sql, array $bindings = [])
@@ -360,7 +363,7 @@ final class InvoiceIssuerDocuments
         $issuer = IssuerPolicy::id($issuer);
         $this->requireAccess($issuer, 'render_invoices');
         $this->requireAccess($issuer, 'view_invoices');
-        return $this->transaction(['currencies','company_currency_units', 'itemable', 'item_tax', 'countries'], function () use ($invoice, $issuer): array {
+        return IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge(['issuers_lock','issuers_registry','invoices','issuers_invoice_documents','issuers_sequences','issuers_audit','currencies','company_currency_units','itemable','item_tax','countries'],(new CompanyInvoiceBalance($this->db,$this->prefix))->tables(),$this->portalSource?$this->portalSource->balanceTables():[]))), function () use ($invoice, $issuer): array {
             // Serialize permission changes while constructing the authorized DTO, as allocation does.
             if (!$this->one("SELECT id FROM {$this->tables}lock WHERE id=1 FOR UPDATE")) {
                 throw new RuntimeException('issuer_document_storage_failed');
@@ -387,7 +390,9 @@ final class InvoiceIssuerDocuments
             }
             $this->requireAccess($issuer, 'render_invoices');
             $this->requireAccess($issuer, 'view_invoices');
-            return compact('snapshot', 'record', 'currency', 'items', 'taxes', 'countries');
+            $balance=new CompanyInvoiceBalance($this->db,$this->prefix);$position=$this->portalSource?$balance->portalInOwned($this->portalSource,$this->portalSession,$issuer,$invoice):$balance->inOwned($issuer,$this->actor,$invoice);
+            $this->requireAccess($issuer, 'render_invoices');$this->requireAccess($issuer, 'view_invoices');
+            return compact('snapshot', 'record', 'currency', 'items', 'taxes', 'countries','position');
         });
     }
 
