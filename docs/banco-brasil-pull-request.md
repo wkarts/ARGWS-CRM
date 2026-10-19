@@ -1,7 +1,7 @@
 # PR45 — Banco do Brasil e Empresas no núcleo
 
 A PR46 foi incorporada à branch `feat/banco-brasil-billing-cnab240`; PR45 continua
-com destino main. Núcleo4.1.9/419, BB1.0.9/101–109, Asaas1.4.8/148. Migrations e
+com destino main. Núcleo4.2.1/421, BB1.1.0/101–110, Asaas1.4.8/148. Migrations e
 histórico publicados preservados; nenhum merge, deploy, tag ou release autorizado.
 
 Foram ligados ao núcleo o responsável/master e wizard retomável, clientes privados
@@ -49,3 +49,9 @@ consumidores legados para contatos privados. Conferir resultados do SHA final.
 Fixtures sintéticas, MySQL/MariaDB descartáveis e HTTP/browser não são homologação.
 Nenhum canal foi homologado externamente e não houve uso de credenciais de cliente,
 OAuth bancário ou transação real. Não apagar tabelas/migrations como rollback.
+
+A revisão110 normaliza somente a comparação de Nosso Número API20/CNAB17 nos
+vetos de crédito/histórico adverso. Não reescreve origens ou recibos.344 checks
+acumulados de API/crédito/concorrência e131 de CNAB/concorrência passaram localmente
+em MariaDB10.11.14. O teste HTTP exige recarga após a fixture CLI, pois fragmento
+de URL não recarrega o DOM. Ver PR/CI do HEAD efetivo para a validação do navegador.

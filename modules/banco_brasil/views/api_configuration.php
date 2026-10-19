@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <p>API Cobranças v2, especificação oficial3.2.2. Perfil restrito: carteira17 simples, convênio7, BRL, sem Pix/encargos/protesto/pagamento parcial na emissão. Não houve homologação externa. Sandbox fictício, homologação e produção são perfis explícitos, sem fallback. Salvar configuração não chama o banco.</p>
-<?php if(!$api_ready){?><p class="alert alert-warning">API indisponível: confirme a atualização nativa para1.0.9 e a criptografia/armazenamento do CRM.</p><?php } ?>
+<?php if(!$api_ready){?><p class="alert alert-warning">API indisponível: confirme a atualização nativa para1.1.0 e a criptografia/armazenamento do CRM.</p><?php } ?>
 <?php if($selected && $api_ready && $can_manage && $connections){?>
 <h3>Declarar contrato e perfil API</h3>
 <?= form_open($bbAdminUrl('banco_brasil/declare_api_profile')); ?><input type="hidden" name="csrf_bb" value="<?= html_escape($csrf); ?>"><input type="hidden" name="issuer_id" value="<?= (int)$selected['id']; ?>">

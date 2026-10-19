@@ -5159,7 +5159,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/ApiService.php": {
-      "sha256": "aa3ff1fde5e04dbce1163192bc665a4e1194529071fea8726c11cdd6a2f8ab24",
+      "sha256": "6b516e6a38203e46e03508e18bbe969a7bd3c500a09213a6c057b0e3ef6aa280",
       "categories": [
         "invoice_table",
         "payments"
@@ -5176,7 +5176,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Origination.php": {
-      "sha256": "8e203054ca33f4e760173299d5d8d3e66204131f84d6200bca1bdf3f47db3c11",
+      "sha256": "6e3098fe2261d17c2e352cdcaf11108400ceb6a07c395121dc33217a0a51152d",
       "categories": [
         "invoice_table",
         "payments"
@@ -5192,7 +5192,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Reconciliation.php": {
-      "sha256": "0082ed402ad60a0563d4986ff1fa51057bafecd0f3325ed6470f1e7f777ed80a",
+      "sha256": "dfd19b422f2353fc21a69f3d2dd012dcecb556272b36838964f32f92bf513b33",
       "categories": [
         "invoice_table"
       ],
@@ -5204,7 +5204,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/ReviewedReceipt.php": {
-      "sha256": "976fe1e8c47421b97f76fc432bf4bc5c0f8f72ca44b08c5ad7c15504b34be621",
+      "sha256": "929274cd5be95dbc2d09ea6a2051292b60ed4e9c7dda56880fbcacba5a901a83",
       "categories": [
         "invoice_table",
         "payments"

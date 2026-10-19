@@ -79,3 +79,24 @@ $db->query("ALTER TABLE {$p}bb_api_receipts ALTER issuer_id SET DEFAULT 0");
 essentialThrows(fn()=>\BancoBrasil\ApiReceiptSchema::ensure($db,$p,false),'bb_api_receipt_schema_invalid','metadata DEFAULT0 is not accepted as missing origin');
 $db->query("ALTER TABLE {$p}bb_api_receipts ALTER issuer_id DROP DEFAULT");\BancoBrasil\ApiReceiptSchema::ensure($db,$p,false);
 echo 'API credit schema/immutable conflict: '.$GLOBALS['essentialChecks'].' cumulative actual DB checks.'.PHP_EOL;
+
+// Seed already-persisted counterpart ledger evidence; compare real17 vs API20, not equal-format IDs.
+$insertFixture=static function(string $table,array $row)use($db,$p):int{
+ $db->query('INSERT INTO '.$p.$table.' (`'.implode('`,`',array_keys($row)).'`) VALUES ('.implode(',',array_fill(0,count($row),'?')).')',array_values($row));return (int)$db->insert_id();
+};
+$seedEvent=static function(int $originId,string $number,string $code)use($db,$p,$insertFixture,$a):int{
+ $o=$db->query("SELECT * FROM {$p}bb_origins WHERE id=?",[$originId])->row_array();$hash=hash('sha256','counterpart-'.$number.$code);$now=date('Y-m-d H:i:s');
+ $file=$insertFixture('bb_return_files',['issuer_id'=>$a,'connection_id'=>$o['connection_id'],'scope_key'=>$o['scope_key'],'content_hash'=>$hash,'layout_id'=>\BancoBrasil\Agreement::LAYOUT_ID,'record_count'=>6,'event_count'=>1,'process_state'=>'review_required','created_by'=>7,'created_at'=>$now]);
+ return $insertFixture('bb_return_events',['return_file_id'=>$file,'issuer_id'=>$a,'connection_id'=>$o['connection_id'],'scope_key'=>$o['scope_key'],'event_key'=>$hash,'payload_hash'=>$hash,'remote_id'=>$number,'control_reference'=>$o['control_reference'],'occurrence'=>$code,'observation'=>$code==='44'?'cheque_returned':'settlement_reported','observation_json'=>'{}','created_at'=>$now]);
+};
+[$adverseInvoice17,$adverseOrigin17,$adverseQuery17,$adverseNumber20]=creditedOrigin($a,$profile,$ca);
+$seedEvent($adverseOrigin17,substr($adverseNumber20,3),'44');
+essentialThrows(fn()=>$writer->recordCompanyProviderReceipt($a,7,new \BancoBrasil\ApiCreditedReceipt($adverseOrigin17,$adverseQuery17)),'bb_api_credit_adverse_history','17-digit adverse CNAB observation blocks corresponding20-digit API receipt');
+[$crossInvoice17,$crossOrigin17,$crossQuery17,$crossNumber20]=creditedOrigin($a,$profile,$ca);
+$counterInvoice=$s->create($a,7,$apiInput,bin2hex(random_bytes(32)));$counterPayment=$writer->recordCompanyManual($a,7,$counterInvoice,['amount'=>'105.53','date'=>$apiInput['date'],'reference'=>'synthetic-counterpart-proof','note'=>'Synthetic existing native financial ledger'],bin2hex(random_bytes(32)));
+$counter=$db->query("SELECT * FROM {$p}bb_origins WHERE id=?",[$crossOrigin17])->row_array();unset($counter['id']);$counter['invoice_id']=$counterInvoice;$counter['channel']='cnab240';$counter['remote_id']=substr($crossNumber20,3);$counter['control_reference']='CNAB17-'.$counterInvoice;$counter['active_slot']=null;
+$counterOrigin=$insertFixture('bb_origins',$counter);$counterEvent=$seedEvent($crossOrigin17,substr($crossNumber20,3),'06');
+$insertFixture('bb_event_receipts',['event_id'=>$counterEvent,'origin_id'=>$counterOrigin,'issuer_id'=>$a,'canonical_key'=>hash('sha256','synthetic-cnab-counterpart'),'payment_id'=>$counterPayment,'evidence_hash'=>hash('sha256','synthetic-proof'),'created_by'=>7,'created_at'=>date('Y-m-d H:i:s')]);
+essentialThrows(fn()=>$writer->recordCompanyProviderReceipt($a,7,new \BancoBrasil\ApiCreditedReceipt($crossOrigin17,$crossQuery17)),'bb_api_credit_already_recorded_cnab','applied17-digit CNAB counterpart cannot be credited again by20-digit API origin');
+essentialCheck($s->payments($a,7,$crossInvoice17)===[],'cross-format duplicate produces no financial write');
+echo 'API20/CNAB17 canonical counterpart checks: '.$GLOBALS['essentialChecks'].' cumulative checks.'.PHP_EOL;

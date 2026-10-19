@@ -361,3 +361,13 @@ encargos/parciais/estorno contábil; ampliação CNAB240 e canal operacional400.
 Dados/contratos400 faltantes são específicos e separados da homologação externa.
 Asaas positivo por origem e os demais consumidores multiempresa continuam pendentes.
 Consultar a matriz do HEAD atual; uma execução anterior não valida um novo diff.
+
+
+## Continuidade421 / módulo1.1.0
+
+Comparação bancária entre API20 e CNAB17 aceita a representação equivalente
+000+17 dígitos nos vetos de recibo aplicado e histórico adverso. Conta, ambiente,
+convênio e empresa continuam obrigatórios; não há reatribuição de origem ou número.
+Migration110 é NOOP funcional, core421 marcador, histórico preservado. Testes
+cruzados reais do writer passaram em MariaDB10.11.14/PHP8.3.6:344 checks API
+acumulados e131 CNAB acumulados. Provedor simulado; nenhuma homologação externa.

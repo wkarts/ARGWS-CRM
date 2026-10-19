@@ -29,6 +29,17 @@ essentialThrows(fn()=>$apply($e1,$evidence),'bb_event_explicit_link_required','c
 essentialThrows(fn()=>new \BancoBrasil\ReviewedReceipt($e1,array_replace($evidence,['credit_confirmed'=>'0'])),'bb_independent_credit_confirmation_required','file code06 cannot replace explicit independent bank credit confirmation');
 essentialThrows(fn()=>$reconcile->link($b,7,$e1),'bb_event_unavailable','cross company numeric event ID denied');
 essentialCheck($reconcile->link($a,7,$e1)===(int)$origin['id']&&$reconcile->link($a,7,$e1)===(int)$origin['id'],'exact scope/number/control/document link is durable and idempotent');
+// A persisted API20 counterpart must veto the eligible CNAB17 receipt before financial effects.
+$fixtureInsert=static function(string $table,array $row)use($db,$p):int{$db->query('INSERT INTO '.$p.$table.' (`'.implode('`,`',array_keys($row)).'`) VALUES ('.implode(',',array_fill(0,count($row),'?')).')',array_values($row));return (int)$db->insert_id();};
+$counterInvoice=$s->create($a,7,$input,bin2hex(random_bytes(32)));$counterPayment=$writer->recordCompanyManual($a,7,$counterInvoice,['amount'=>'105.53','date'=>'2026-10-19','reference'=>'synthetic-api-counterpart','note'=>'Synthetic persisted financial evidence'],bin2hex(random_bytes(32)));
+$counter=$origin;unset($counter['id']);$counter['invoice_id']=$counterInvoice;$counter['channel']='api';$counter['remote_id']='000'.$origin['remote_id'];$counter['control_reference']='API20-'.$counterInvoice;$counter['active_slot']=null;
+$apiCounterOrigin=$fixtureInsert('bb_origins',$counter);$now=gmdate('Y-m-d H:i:s');
+$apiCounterOp=$fixtureInsert('bb_api_operations',['origin_id'=>$apiCounterOrigin,'operation'=>'query','request_key'=>hash('sha256','cross-format-operation'),'claim_token'=>str_repeat('a',64),'status'=>'validated','http_status'=>200,'response_hash'=>str_repeat('b',64),'result_json'=>'{}','failure_category'=>'','actor_id'=>7,'locked_until'=>$now,'created_at'=>$now,'updated_at'=>$now]);
+$fixtureInsert('bb_api_receipts',['origin_id'=>$apiCounterOrigin,'issuer_id'=>$a,'operation_id'=>$apiCounterOp,'canonical_key'=>hash('sha256','cross-format-api-receipt'),'payment_id'=>$counterPayment,'evidence_hash'=>str_repeat('c',64),'created_by'=>7,'created_at'=>$now]);
+essentialThrows(fn()=>$apply($e1,$evidence),'bb_event_credit_already_recorded_api','applied20-digit API counterpart blocks eligible17-digit CNAB credit');
+essentialCheck($s->payments($a,7,$origin['invoice_id'])===[],'CNAB duplicate veto precedes native payment');
+// Reset only seeded counterpart provenance so subsequent independent CNAB cases exercise their original fixture.
+$db->query("DELETE FROM {$p}bb_api_receipts WHERE origin_id=?",[$apiCounterOrigin]);$db->query("DELETE FROM {$p}bb_api_operations WHERE id=?",[$apiCounterOp]);$db->query("DELETE FROM {$p}bb_origins WHERE id=?",[$apiCounterOrigin]);
 $db->failOn='INSERT INTO '.$p.'bb_event_receipts';
 essentialThrows(fn()=>$apply($e1,$evidence),'issuer_storage_failed','provider receipt failure rolls back native payment and invoice status');$db->failOn=null;
 essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}invoicepaymentrecords WHERE invoiceid=?",[$origin['invoice_id']])->row()->n===0,'failed receipt leaves no false invoice payment');

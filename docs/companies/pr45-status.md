@@ -1,6 +1,6 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Núcleo atual4.2.0/420; BB1.0.9/101–109;
+Escopo integral em andamento. Núcleo atual4.2.1/421; BB1.1.0/101–110;
 Asaas1.4.8/148. As migrations publicadas402–412 foram preservadas. Não há
 merge/deploy/release nem autorização implícita por um resultado de CI.
 
@@ -129,3 +129,18 @@ recarrega o documento por HTTP antes de confirmar. Mantém os asserts de consult
 validada sem pagamento automático, formulário real, writer, recibo e retry.
 420 é marcador core NOOP; BB permanece1.0.9/109 sem nova alteração funcional.
 Resultado do navegador corresponde ao novo HEAD; não atribuir o CI419 ao420.
+
+## Incremento421 / BB110 — identidade bancária entre representações
+
+API usa20 dígitos (000+Nosso Número17); CNAB240 usa17. Os vetos de recibo já
+aplicado e observação adversa agora comparam ambas as representações, mantendo
+empresa/conta/ambiente/convênio. Nenhum dado histórico, payload, número reservado
+ou comprovante é reescrito.110 é NOOP funcional nativo;421 é marcador core.
+
+Testes reais em MariaDB10.11.14/PHP8.3.6: crédito API e concorrência344 checks
+acumulados; CNAB assistido/concorrência131 acumulados. Incluem recibo CNAB17
+bloqueando API20, recibo API20 bloqueando CNAB17 e observação adversa17 impedindo
+crédito20 antes de efeito. Casos sem duplicidade continuam positivos.
+A fixture de evidência cruzada é sintética, restrita ao banco descartável; não é
+prova de autenticidade de upload ou homologação bancária. Resultado HTTP/Chromium
+permanece vinculado ao SHA final, com recarga real após a fixture externa ao DOM.
