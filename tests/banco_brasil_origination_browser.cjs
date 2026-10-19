@@ -96,8 +96,19 @@ async function next(page) { await navigate(page, page.locator('section form butt
   const settlementData=await settle.locator('input').evaluateAll(xs=>Object.fromEntries(xs.filter(x=>x.name).map(x=>[x.name,x.value])));await navigate(page,settle.locator('button'));
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+invoice),'1');assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+invoice),'2');assert.equal(sql('SELECT financial_state FROM tblbb_return_events WHERE id='+event),'applied_assisted');
   const retry=await context.request.post(url+'/admin/banco_brasil/settle_event',{form:settlementData});assert.equal(retry.status(),200);await context.request.post(url+'/admin/banco_brasil/import_return',{multipart});assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+invoice),'1','retry and reimport cannot duplicate reviewed payment');
+  // Configure native API vault through the real UI. This browser never invokes an API banking operation.
+  await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-auth');await page.locator('#bb-api-connection').selectOption(connection);await page.locator('#bb-api-stage').selectOption('homologation');
+  for(const [key,value]of Object.entries({first_number:'100',last_number:'999',first_file:'1',reference:'SYNTHETIC API CONTRACT ONLY'}))await page.locator('#bb-api-'+key).fill(value);
+  await page.locator('input[name="api_profile[interest_exempt]"]').check();await page.locator('input[name="api_profile[exclusive_range]"]').check();await navigate(page,page.locator('form[action*="declare_api_profile"] button'));
+  const apiProfile=sql('SELECT id FROM tblbb_api_profiles WHERE issuer_id='+a);assert.match(apiProfile,/^[1-9]\d*$/);
+  await page.locator('#bb-api-credential-profile').selectOption(apiProfile);
+  for(const [key,value]of Object.entries({client_id:'SYNTHETIC-UI-CLIENT',client_secret:'SYNTHETIC-UI-SECRET',application_key:'SYNTHETIC-UI-KEY'}))await page.locator('#bb-api-credential-'+key).fill(value);
+  await navigate(page,page.locator('form[action*="save_api_credentials"] button'));
+  assert.equal(sql('SELECT COUNT(*) FROM tblbb_api_credentials WHERE profile_id='+apiProfile),'1','native encryption/vault UI saves the explicitly selected profile');
+  const ciphertext=sql('SELECT ciphertext FROM tblbb_api_credentials WHERE profile_id='+apiProfile);assert(!ciphertext.includes('SYNTHETIC-UI-SECRET'));assert(!(await page.content()).includes('SYNTHETIC-UI-SECRET'));assert.equal(await page.locator('#bb-api-credential-client_secret').inputValue(),'');
+  assert.equal(sql('SELECT COUNT(*) FROM tblbb_api_operations'),'0','saving credentials does not enqueue a bank operation');
   await select(b);response=await context.request.post(url+'/admin/banco_brasil/download_remittance',{form:data});assert.equal(response.status(),409,'stale context rejected before old batch download');
   const cross=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(cross.status(),403,'selected B cannot request A banking history');
-  assert.deepEqual(errors,[]);console.log('BB invoice-bound CNAB240 declaration/generation/download/manual report/return upload/assisted receipt/retry and A/B scope: actual HTTP/MySQL/Chromium, no bank calls.');
+  assert.deepEqual(errors,[]);console.log('BB invoice-bound CNAB240 declaration/generation/download/manual report/return upload/assisted receipt/retry/API native encrypted configuration and A/B scope: actual HTTP/MySQL/Chromium, no bank calls.');
  }catch(error){const logs=spawnSync('docker',['logs','--tail','80',app],{encoding:'utf8'});console.error('Disposable BB HTTP server diagnostic:',(logs.stdout||'')+(logs.stderr||''));throw error;}finally{await browser.close();}
 })().catch(e=>{console.error(e.stack);process.exitCode=1;});

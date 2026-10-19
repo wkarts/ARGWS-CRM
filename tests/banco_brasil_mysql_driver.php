@@ -57,6 +57,9 @@ function waitingChild(string $sequence,string $mode='normal',string $format='240
    WHERE requester.PROCESSLIST_ID=? AND blocker.PROCESSLIST_ID=CONNECTION_ID() AND w.ENGINE='INNODB'
    AND requested.OBJECT_SCHEMA=DATABASE() AND requested.OBJECT_NAME='bb_native_bb_connections'
    AND requested.INDEX_NAME='PRIMARY' AND requested.LOCK_TYPE='RECORD' AND requested.LOCK_STATUS='WAITING' LIMIT 1";
+  if(str_contains((string)$db->query('SELECT VERSION() AS version')->row_array()['version'],'MariaDB')){
+   $wait="SELECT 1 AS waiting FROM information_schema.INNODB_LOCK_WAITS w JOIN information_schema.INNODB_TRX requester ON requester.trx_id=w.requesting_trx_id JOIN information_schema.INNODB_TRX blocker ON blocker.trx_id=w.blocking_trx_id JOIN information_schema.INNODB_LOCKS requested ON requested.lock_id=w.requested_lock_id WHERE requester.trx_mysql_thread_id=? AND blocker.trx_mysql_thread_id=CONNECTION_ID() AND requested.lock_table=CONCAT('`',DATABASE(),'`.`bb_native_bb_connections`') AND requested.lock_index='PRIMARY' AND requested.lock_type='RECORD' LIMIT 1";
+  }
   $found=false;$deadline=hrtime(true)+5000000000;
   do{$r=$db->query($wait,[$m[1]]);$found=$r&&$r->row_array();if($found||!proc_get_status($process)['running'])break;usleep(20000);}while(hrtime(true)<$deadline);
   check((bool)$found,'native second worker waits on exact parent connection row');

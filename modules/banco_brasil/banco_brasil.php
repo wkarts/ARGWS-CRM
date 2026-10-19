@@ -3,8 +3,8 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: Banco do Brasil - Cobrança e CNAB 240/400
 Description: Conexões isoladas por emitente, perfis CNAB 240/400 e revisão de retornos. Operação bancária depende de contrato validado e homologação.
-Version: 1.0.7
-Requires at least: 3.0.*
+Version: 1.0.8
+Requires at least: 4.1.3
 */
 define('BANCO_BRASIL_MODULE_NAME','banco_brasil');
 register_activation_hook(BANCO_BRASIL_MODULE_NAME,'banco_brasil_activate');
@@ -12,7 +12,7 @@ hooks()->add_action('admin_init','banco_brasil_admin_init');
 function banco_brasil_activate() { require __DIR__.'/install.php'; }
 function banco_brasil_admin_init()
 {
-    register_staff_capabilities('banco_brasil',['capabilities'=>['view'=>'Visualizar','manage'=>'Gerenciar integrações','generate'=>'Gerar remessa CNAB 240','download'=>'Baixar remessas','import'=>'Importar retornos','reconcile'=>'Conciliar retornos com evidência']], 'Banco do Brasil');
+    register_staff_capabilities('banco_brasil',['capabilities'=>['view'=>'Visualizar','manage'=>'Gerenciar integrações','generate'=>'Gerar remessa CNAB 240','download'=>'Baixar remessas','import'=>'Importar retornos','reconcile'=>'Conciliar retornos com evidência','api_issue'=>'Registrar cobrança API','api_query'=>'Consultar cobrança API','api_cancel'=>'Solicitar baixa API']], 'Banco do Brasil');
     if (banco_brasil_has_company_access()) get_instance()->app_menu->add_sidebar_menu_item('banco_brasil',[
         'name'=>'Banco do Brasil','href'=>admin_url('banco_brasil'),'icon'=>'fa fa-bank','position'=>61,
     ]);

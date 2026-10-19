@@ -342,7 +342,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Company_onboarding.php": {
-      "sha256": "bae6006451cf4ffcf2e91f25afdf60c6332ee63125417cfaa31ad8c17a107bcb",
+      "sha256": "02964617eeeb6c166371081d26050a46ba8eedebb3e45f84db6337ccd9d8feed",
       "categories": [
         "invoice_table"
       ],
@@ -5079,18 +5079,36 @@
       "evidence": ""
     },
     "modules/banco_brasil/controllers/Banco_brasil.php": {
-      "sha256": "1028ec9071c13b4178705972057f918a765d6bf3990635a841254579641a18ac",
+      "sha256": "d3a636bd5ee6b1e1942b9e1c252cebf4420d438a19879b54ea324707baa28826",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        44
+        44,
+        45
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ApiService.php": {
+      "sha256": "673c5548138a483cb3a6a6d349f999a7a783474cc11b23a39323030f5c4d5ec8",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        25,
+        33,
+        105,
+        107,
+        111,
+        164
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Origination.php": {
-      "sha256": "b4d1e1a48d813320fb26c4a612e6f7caadea49f693bc2f67729da1727419df13",
+      "sha256": "908d79a1c7ebaaaec872311a885d4fdf9c33a943cb9b49e1812649450142bb4d",
       "categories": [
         "invoice_table",
         "payments"
@@ -5106,7 +5124,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Reconciliation.php": {
-      "sha256": "cb53f760adae91639f20f8c24ac2a0ffbefd6241442583187581fffa992080b1",
+      "sha256": "8fa2192834ea3b9fbda31f1d5d219a9fcc949b48c4c6626f2651d8454ea26974",
       "categories": [
         "invoice_table"
       ],

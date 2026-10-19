@@ -26,6 +26,7 @@ jobs:
       - run: php tests/banco_brasil_layouts.php
       - run: php tests/banco_brasil_layout_migration.php
       - run: php tests/banco_brasil_module_version.php
+      - run: php tests/banco_brasil_api_client.php
   mysql:
     runs-on: ubuntu-latest
     services:
@@ -48,3 +49,41 @@ jobs:
           MYSQL_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
           MYSQL_USER: root
           MYSQL_PASSWORD: root
+
+  mariadb:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: synthetic-ci-password
+          MARIADB_DATABASE: bb_test
+        ports: ['3306:3306']
+        options: --health-cmd="mariadb-admin ping -psynthetic-ci-password" --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, mysqli, curl, mbstring, bcmath
+          coverage: none
+      - name: Instalação, upgrade, drivers, origem e conciliação em MariaDB descartável
+        env:
+          MYSQL_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
+          MYSQL_USER: root
+          MYSQL_PASSWORD: synthetic-ci-password
+          ISSUERS_TEST_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: synthetic-ci-password
+        run: |
+          php tests/banco_brasil_mysql.php
+          php tests/banco_brasil_layout_mysql.php
+          php tests/banco_brasil_mysql_driver.php
+          php tests/issuers_core.php
+          php tests/companies/clients.php
+          php tests/companies/client_concurrency.php
+          php tests/companies/portal_positive.php
+          php tests/companies/portal_concurrency.php
+          php tests/banco_brasil_origination_concurrency.php
+          php tests/banco_brasil_reconciliation_concurrency.php
+          php tests/banco_brasil_api_concurrency.php

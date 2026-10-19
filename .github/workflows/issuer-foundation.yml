@@ -122,6 +122,7 @@ jobs:
           php tests/banco_brasil_origination_concurrency.php
           php tests/banco_brasil_reconciliation_mysql.php
           php tests/banco_brasil_reconciliation_concurrency.php
+          php tests/banco_brasil_api_concurrency.php
           php tests/issuers_integration_view.php
           php tests/companies/module_tracking.php
           php tests/settings/company_settings.php

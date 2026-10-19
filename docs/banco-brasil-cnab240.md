@@ -4,7 +4,7 @@
 
 ## Estado desta entrega
 
-Módulo `banco_brasil`, versão **1.0.4**, com migrations nativas **101–104** preservadas. A PR45 já incorporou a PR46; Empresas pertence ao núcleo, sem carregar o módulo histórico issuers. O núcleo avança para **4.0.5/405** com responsabilidade e wizard, descritos em [Empresas](companies/onboarding.md). A instalação usa `App_module_migration`; não há executor paralelo. Este é um recorte revisável do pedido de API de cobrança e CNAB 240, **não a conclusão de ambos os canais**.
+Histórico405 (estado atual em [matriz](companies/pr45-status.md)): módulo `banco_brasil`, versão **1.0.4**, com migrations nativas **101–104** preservadas. A PR45 já incorporou a PR46; Empresas pertence ao núcleo, sem carregar o módulo histórico issuers. O núcleo avança para **4.0.5/405** com responsabilidade e wizard, descritos em [Empresas](companies/onboarding.md). A instalação usa `App_module_migration`; não há executor paralelo. Este é um recorte revisável do pedido de API de cobrança e CNAB 240, **não a conclusão de ambos os canais**.
 
 Implementado e ligado à interface:
 
@@ -32,7 +32,7 @@ A importação salva observações e **não cria pagamento, não muda a fatura e
 3. [BB: API de Cobrança](https://www.bb.com.br/site/developers/api-cobranca/), que descreve API v2 e pré-requisitos de convênio/cadastro Developers. A página geral diz que algumas APIs requerem certificados; não foi inferido mTLS universal.
 4. [BB: credenciais](https://apoio.developers.bb.com.br/guias-e-tutoriais/primeiros-passos/credenciais). Não foram geradas, lidas, configuradas ou utilizadas credenciais reais.
 
-A página de referência da API e o endpoint público de especificação não forneceram OpenAPI utilizável durante a pesquisa: ocorreram erros de TLS/upstream/timeout. O endereço `https://api.bb.com.br/cobrancas/v2/swagger?` respondeu 403 exigindo AppKey. Nenhuma proteção foi contornada. Endpoint, schema, scopes OAuth e exigência de certificado **não foram inventados** com base em implementações de terceiros. Para concluir o executor é necessário obter a especificação oficial atual por uma rota pública funcional ou exportação autorizada, sem segredos.
+Na pesquisa inicial405, a página de referência da API e o endpoint público de especificação não forneceram OpenAPI utilizável: ocorreram erros de TLS/upstream/timeout. O endereço `https://api.bb.com.br/cobrancas/v2/swagger?` respondeu 403 exigindo AppKey. Nenhuma proteção foi contornada. Endpoint, schema, scopes OAuth e exigência de certificado **não foram inventados** com base em implementações de terceiros. Para concluir o executor é necessário obter a especificação oficial atual por uma rota pública funcional ou exportação autorizada, sem segredos.
 
 O projeto `wkarts/argws-financial-platform`, consultado somente para aprendizado no commit `688ddf93d2e4a3879bb60d11b8c025a9b115a053`, contém um adaptador BB de **CNAB 400**, e suas alegações de API não substituem a especificação/homologação. Nenhum código desse adaptador foi promovido a contrato CNAB 240.
 
@@ -86,3 +86,10 @@ Testes executados no CI do commit `30fb0f10a3ab5eac598d795ef9c712a1187b8364`, [w
 Em 19/10/2026, os três PDFs oficiais foram baixados novamente e os hashes coincidiram com os registrados. A página oficial de Cobrança aponta para `https://apoio.developers.bb.com.br/apis/5?versaoApi=2`; a página depende de JavaScript e não forneceu OpenAPI utilizável nesta consulta. A URL pública `https://api.bb.com.br/cobrancas/v2/swagger?` retornou 403. Nenhuma AppKey foi utilizada.
 
 Não existe evidência de homologação, processamento de arquivo real, emissão de boleto, API autenticada ou integração de baixa PIGE. O pedido BB completo exige esses incrementos revisados, além do isolamento de emitente no core.
+
+## Atualização413
+
+Originação240 e retorno assistido estão ligados às faturas do núcleo; a API possui
+executor separado conforme [handoff](banco-brasil-handoff.md). As limitações do codec
+240 e a ausência de homologação permanecem. A especificação API oficial foi obtida
+em19/10/2026; a indisponibilidade documental histórica acima foi resolvida.

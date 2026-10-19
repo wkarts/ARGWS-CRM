@@ -1,7 +1,7 @@
 # PR45 — estado da integração BB e Empresas
 
-Código atual: núcleo4.1.2/412, BB1.0.7/107, Asaas1.4.8/148. A matriz
-[atual](companies/pr45-status.md) e os incrementos406–411 abaixo substituem as
+Código atual: núcleo4.1.3/413, BB1.0.8/108, Asaas1.4.8/148. A matriz
+[atual](companies/pr45-status.md) e os incrementos406–413 abaixo substituem as
 pendências do checkpoint405 preservado como histórico. Conferir o HEAD remoto e
 os testes do SHA final; não há homologação externa, merge ou deploy.
 
@@ -70,10 +70,10 @@ seu trailer de remessa: 9, brancos 2–394, sequência 395–400. A divergência
 BRL no campo 85–86 do CBR641 continua sem código explícito na nota 30; juros podem
 herdar a configuração do beneficiário. O candidato 400 permanece indisponível para envio.
 
-A página oficial aponta para `https://apoio.developers.bb.com.br/apis/5?versaoApi=2`,
-sem OpenAPI utilizável nesta consulta. `https://api.bb.com.br/cobrancas/v2/swagger?`
-retornou 403 sem AppKey. É necessária uma exportação oficial atual, sem segredos,
-ou acesso público funcional à especificação. Não usar contratos de terceiros como prova.
+A especificação primária foi recuperada pela rota pública do próprio portal em
+19/10/2026, conforme a seção de fonte oficial abaixo. A indisponibilidade anterior
+não é mais bloqueio documental. O Swagger operacional sem AppKey continua não sendo
+fonte pública. Não usar contratos de terceiros como prova.
 
 O usuário informou ter remessas aceitas de outra aplicação, mas elas não estão anexadas.
 Quando fornecidas, tratar os originais como privados, anonimizar estrutura antes dos
@@ -213,3 +213,56 @@ de consultar suporte de módulo, e preserva o comportamento legado fora desse
 contexto. O teste usa a decisão do `App_Loader` real sem módulos/helper carregados.
 O BB permanece107; este incremento altera o renderer do núcleo, sem DDL ou mudança
 funcional nos arquivos de módulos. Repetir HTTP/Chromium no SHA412.
+
+## Incremento413 / BB108: executor API com origem e outbox
+
+A API usa a OpenAPI oficial3.2.2, com servidores OAuth/API explícitos de sandbox,
+homologação e produção, sem fallback de credenciais ou ambiente. Perfis contratuais
+imutáveis ligam empresa/conexão/conta/convênio/carteira/faixa e versão da especificação.
+O painel nativo declara perfil e salva/rotaciona credenciais com `CI_Encryption`
+autenticado e envelope de contexto. A UI não recupera segredos já salvos. Configurar
+não faz autenticação nem envia títulos. O namespace de Nosso Número é compartilhado
+com CNAB; a troca de conexão ou de canal não reinicia a faixa.
+
+O recorte operacional é carteira17/simples, convênio7, BRL, sem Pix, juros, multa,
+desconto, protesto ou emissão com recebimento parcial. A fatura e seu documento
+canônico definem identificação fiscal, CPF/CNPJ, valor e datas; endereço/especie/
+aceite são informados explicitamente. O JSON preserva valores monetários exatos.
+O POST de registro valida número de20 dígitos, agência/conta, carteira/variação,
+código de barras44, linha47, DVs, fator de vencimento e campo livre do convênio.
+Referência oficial adicional do boleto:
+https://www.bb.com.br/docs/pub/emp/empl/dwn/Doc5175Bloqueto.pdf
+SHA256 `6da3d3f4cde0cb94b20f957001c10cd683efd6f9c5ec6dfe68193f9585e79902`.
+
+Reserva de número/origem e intenção durável precedem a rede. OAuth ocorre fora da
+transação; autorização é revalidada antes do marcador confirmado de envio. Timeout,
+5xx ou resposta divergente após POST mantêm resultado incerto, sem reenvio automático.
+Falha apenas de autenticação pode retomar a mesma reserva. Claims serializados e
+recibo de requisição impedem dois escritores de enviar o mesmo registro. Tokens ficam
+somente em memória; diagnósticos não guardam corpo bruto de erro, credenciais ou URL.
+
+A consulta detalhada confere fatura/snapshot/identificadores/contrato e depois cruza
+Nosso Número com a listagem oficial filtrada por agência/conta/pagador/vencimento.
+Paginação limitada ou ausência da origem exigem revisão; não provam inexistência.
+Estado não confirmado pela listagem fica pendente, mesmo com resposta de detalhe.
+O pedido POST de baixa exige consulta NORMAL confirmada há menos de5 minutos e usa
+sempre a conta/perfil antigos. Sua resposta é somente pedido; a confirmação depende
+de consulta coerente com código7. Só então a origem libera o slot, mantendo histórico
+para eventual emissão explícita com novo Nosso Número. Código6/16 é observação de
+liquidação; **não cria pagamento automaticamente nem cancela a fatura local**.
+
+A migration108 adiciona apenas perfis, credenciais, vínculos API e operações;101–107
+permanecem intactas. Novos testes locais de protocolo usam transporte simulado. Os
+novos cenários de criptografia nativa, tracking, retomada, A/B, rotação, revogação e
+dois escritores reais são executáveis nos jobs MySQL8.4/PHP8.1/8.5 e MariaDB11.4;
+atribuir passagem somente ao SHA/run que os executar. O navegador testa cadastro e
+criptografia pela UI, sem realizar chamada ao banco. O último baseline completo antes
+deste incremento foi7aa56e60 (412),16 workflows concluídos com sucesso, inclusive
+HTTP/Chromium e originação/retorno assistido.
+
+Continuam pendências técnicas: alteração de títulos, emissão com encargos, webhook
+mTLS (previsto para baixa operacional), aplicação financeira de observações API,
+conciliação de ajustes/estornos e os demais consumidores multiempresa da matriz.
+Certificados/ingresso mTLS não são substituídos por cabeçalho de origem ou HMAC
+inventado. Não houve credenciais reais, OAuth bancário, transmissão, homologação,
+merge ou deploy nesta sessão.

@@ -6,9 +6,9 @@ final class CapabilityPolicy
     public static function matrix(): array
     {
         return [
-            'api.issue'=>['label'=>'Emitir cobrança por API','implemented'=>false,'available'=>false,'reason'=>'Executor/contrato de operação pendentes; OpenAPI oficial3.2.2 obtida e identificada'],
-            'api.query'=>['label'=>'Consultar e conciliar cobrança por API','implemented'=>false,'available'=>false,'reason'=>'Executor/contrato de operação pendentes; OpenAPI oficial3.2.2 obtida e identificada'],
-            'api.remove'=>['label'=>'Solicitar baixa por API','implemented'=>false,'available'=>false,'reason'=>'Executor/contrato de operação pendentes; OpenAPI oficial3.2.2 obtida e identificada'],
+            'api.issue'=>['label'=>'Registrar cobrança por API','implemented'=>true,'available'=>true,'reason'=>'Origem/fatura, perfil e cofre nativo; OAuth/especificação3.2.2; testes simulados, sem homologação externa'],
+            'api.query'=>['label'=>'Consultar cobrança API por origem','implemented'=>true,'available'=>true,'reason'=>'Consulta vinculada e projeção validada; não cria pagamento automático'],
+            'api.remove'=>['label'=>'Solicitar baixa API por origem','implemented'=>true,'available'=>true,'reason'=>'Exige consulta NORMAL recente; pedido não cancela fatura local nem confirma estado final'],
             'cnab.generate'=>['label'=>'Gerar remessa CNAB 240','implemented'=>true,'available'=>true,'reason'=>'Geração local condicionada a fatura/origem, perfil240 e declaração de contrato; não transmite nem comprova aceite/homologação'],
             'cnab400.candidate'=>['label'=>'Preparar candidato de remessa CNAB 400','implemented'=>true,'available'=>false,'reason'=>'Codec de testes; campo BRL, contrato e homologação pendentes'],
             'cnab.download'=>['label'=>'Baixar remessa registrada','implemented'=>true,'available'=>true,'reason'=>'Download próprio auditado; não equivale a envio ou aceite bancário'],

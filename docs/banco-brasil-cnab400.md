@@ -2,7 +2,7 @@
 
 ## Escopo e estado real
 
-A versão 102 acrescenta o retorno observacional CBR643 e um **codificador de candidato** CBR641. Também exige seleção explícita de perfil para novas importações 240/400. Não representa homologação do BB nem uma integração bancária completa. A API Cobranças ainda aguarda especificação primária acessível; não há executor API, download operacional, transmissão, email de remessa, emissão de fatura ou baixa financeira automática.
+A versão 102 acrescenta o retorno observacional CBR643 e um **codificador de candidato** CBR641. Também exige seleção explícita de perfil para novas importações 240/400. Não representa homologação do BB nem uma integração bancária completa. Este parágrafo descreve o incremento102. Para originação240, retorno assistido e executor API108, consulte a [matriz atual](companies/pr45-status.md). Nenhum desses incrementos libera a remessa400 nem demonstra homologação.
 
 A remessa 400 não fica disponível na interface. O método de teste `Cnab400Generator::candidate` retorna `operational=false` e as pendências, além do conteúdo sintético. Não existe código monetário BRL presumido: o chamador de testes precisa informar os dois caracteres candidatos. O manual atual só enumera 02/dólar e 14/euro; ambos são recusados no recorte BRL. **Esse candidato não deve ser enviado ao banco.** A confirmação escrita do banco sobre o campo, os juros da carteira e a homologação por conta/convênio continuam obrigatórias antes da entrega operacional.
 
@@ -56,7 +56,7 @@ Menu **Banco do Brasil → Conta**:
 
 Cada ação usa `issuer_resource_can(empresa, staff, 'banco_brasil', capability) === true` como autorização contextual completa, com capabilities nativas `view`, `manage` e `import`. A lista de empresas e a visibilidade do menu também são filtradas por `view` do recurso. O papel global não concede nem veta esse grant contextual. O catálogo nativo de capabilities continua registrado. Não existe fallback para `manage_integrations`. Administrador comum não herda grants por empresa. O administrador principal só é reconhecido pelo helper de Empresas emitentes através de registro explícito persistido, com staff ainda ativo/admin; BB não presume ID1 nem resolve esse papel por conta própria. O helper pertence ao núcleo Empresas na PR45 unificada. As concessões são explícitas; ausência de autorização permanece bloqueada. O módulo histórico issuers não é carregado operacionalmente.
 
-POST, CSRF próprio, escapamento, auditoria e escopo são preservados. Consultas e transações desabilitam `db_debug/save_queries` durante o acesso e restauram o estado do chamador. Falha de consulta mostra aviso genérico de armazenamento e desabilita ações, sem se passar por ausência de dados ou falta de autorização. Esse boundary não substitui a política de logs do driver CI3 nem afirma redigir logs internos do framework; não há coleta de credenciais nesta versão. Parâmetros funcionais ficam na interface nativa, não em ENV/app-config. Nenhuma credencial é solicitada nesta fase. A API futura deverá ter configuração visual própria, protegida, mascarada e auditada, sem presumir requisitos ainda não validados.
+POST, CSRF próprio, escapamento, auditoria e escopo são preservados. Consultas e transações desabilitam `db_debug/save_queries` durante o acesso e restauram o estado do chamador. Falha de consulta mostra aviso genérico de armazenamento e desabilita ações, sem se passar por ausência de dados ou falta de autorização. Esse boundary não substitui a política de logs do driver CI3 nem afirma redigir logs internos do framework; não há coleta de credenciais nesta versão. Parâmetros funcionais ficam na interface nativa, não em ENV/app-config. Nenhuma credencial é solicitada nesta fase. No histórico102, a API futura deveria ter configuração visual própria, protegida, mascarada e auditada, sem presumir requisitos ainda não validados.
 
 ## Proveniência e limites do retorno
 
@@ -86,3 +86,7 @@ Falha de DDL/validação impede avançar o tracking. DDL parcialmente concluído
 PHP 8.1 e 8.5, local: 412 verificações distintas (240 118; store 48; admin 63; 400 82; vínculos 38; migration101 36; migration102 27). Lint de 33 arquivos PHP e `git diff --check` passaram.
 
 Workflow atualizado executa também MySQL 8.4 com driver PDO/CI3 mysqli, upgrade real com histórico 101, constraints e dois processos concorrentes para ambos os formatos. A espera no lock da conexão é comprovada pelo Performance Schema. **A execução CI da versão 102 ainda está pendente; o verde da versão 101 não comprova a 102.** Nenhum teste contata endpoints bancários nem usa dados de clientes.
+
+Atualização413: a especificação primária API foi recuperada e o executor é separado
+do candidato400. Consulte o [handoff](banco-brasil-handoff.md). Os bloqueios BRL/juros
+CBR641 e a divergência de picture CBR643 continuam válidos.

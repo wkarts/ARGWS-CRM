@@ -29,7 +29,7 @@ function race(array $input,?callable $beforeRelease=null): array
         }
         $deadline=microtime(true)+15;$waiters=0;
         do{
-            $waiters=(int)$observer->query('SELECT COUNT(DISTINCT w.REQUESTING_THREAD_ID) n FROM performance_schema.data_lock_waits w JOIN performance_schema.threads b ON b.THREAD_ID=w.BLOCKING_THREAD_ID WHERE b.PROCESSLIST_ID=?',[$blocker])->row()->n;
+            $waiters=essentialLockWaiters($observer,$blocker);
             if($waiters>=2){break;}usleep(20000);
         }while(microtime(true)<$deadline);
         essentialCheck($waiters>=2,'both real connections observed waiting on installation row lock');
