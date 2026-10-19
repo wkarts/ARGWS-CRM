@@ -105,14 +105,14 @@
       "evidence": ""
     },
     "application/controllers/Company_portal.php": {
-      "sha256": "a428a373ce32466941f2400f3c055471f8295b7a6e700877925c19db18960d24",
+      "sha256": "76e4762aba869fce35f715dc0be4df33e858d6f0cdafda8c6b6ad831baebbfe3",
       "categories": [
         "documents_numbering",
         "invoice_table"
       ],
       "signal_lines": [
-        59,
-        117
+        64,
+        125
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -372,12 +372,12 @@
       "evidence": ""
     },
     "application/controllers/admin/Company_contracts.php": {
-      "sha256": "4dd046d86367a582811612539754197ea1d28897f36be4512c0daaad013f44c8",
+      "sha256": "23e64857b35099dee869c5ef4c18874d131d0bedb9b0537c7365da1d6dac2646",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        23
+        24
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -422,12 +422,12 @@
       "evidence": ""
     },
     "application/controllers/admin/Company_projects.php": {
-      "sha256": "e3c2cfd755dfe03feb5832399b37568e491ac4bf63d892531b07a9de7d1d109e",
+      "sha256": "9ea9ef6bea3493a4cf70cb4428334c3d36a59701f226d18c449b06e7257777b6",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        27
+        29
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -458,12 +458,12 @@
       "evidence": ""
     },
     "application/controllers/admin/Company_tickets.php": {
-      "sha256": "50cfafed4734549ea8b11b58bf8bc52fa2e36cd5f8831929fbb49663f4d4e0ec",
+      "sha256": "05d8761e49a8b1bc3d882adaffbf402bd864ab65df7d5c8471a9ced8f8e98716",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        24
+        25
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -2879,7 +2879,7 @@
       "evidence": ""
     },
     "application/services/CompanyApiService.php": {
-      "sha256": "2305c0201abb0287de4ccead53876008348f14bb7380b0711b28ca24122a9bc4",
+      "sha256": "e69a4080409e9d8612aa522a644eaf624746c1bf7d11519a2b4ffaa0e7373303",
       "categories": [
         "documents_numbering",
         "invoice_table"
@@ -2941,6 +2941,47 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "application/services/CompanyBankReceiptReversals.php": {
+      "sha256": "43f669c78a381259f21877514658383df986ce5d859a1df396f113cb8bdbefe1",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        14,
+        18
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/CompanyBankReversalSchema.php": {
+      "sha256": "22523c122f3babc0ca24247bd5dbd3bc7969f95845da06f3515be2af65218116",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        12,
+        17
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/CompanyBankReversalWriter.php": {
+      "sha256": "fa48e5848a3a95117a9421f5fb7490bbdd11ec001dc476533c1c473d870b48cd",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        13,
+        20,
+        22,
+        23,
+        25
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/services/CompanyClients.php": {
       "sha256": "20a7c6875d12894fd8bf75a4118cd082875ef6081ed3b5f8cfa4ebbac587837b",
       "categories": [
@@ -2961,6 +3002,17 @@
       "signal_lines": [
         17,
         22
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/CompanyContactOperationAccess.php": {
+      "sha256": "8d6d7dd61d1c68adb6b16b83c2ecfe58e4e6b05076bc49c2badb653318723967",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        17
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3071,7 +3123,7 @@
       "evidence": ""
     },
     "application/services/CompanyFinancialJournal.php": {
-      "sha256": "8fbc02595f31f1342bb84dd9e86f491055ac78883e941833dd6bb85cf48952fd",
+      "sha256": "c17be310fd7f1371f3da8d05d37d11f0e03f349856a9d7bc9d2ceaa930c90043",
       "categories": [
         "invoice_table",
         "payments"
@@ -3082,8 +3134,9 @@
         22,
         38,
         40,
-        47,
-        60
+        43,
+        50,
+        63
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3127,7 +3180,7 @@
       "evidence": ""
     },
     "application/services/CompanyInvoiceBalance.php": {
-      "sha256": "6a7d51863d24b349f217dbfd32be7c4b94ec274dd20272164c6a60fb6bb32e00",
+      "sha256": "f51b3ad7aea364da57d931c0f1b404ec76d9bd049d907ca2f7a1cf4b8e8df4c5",
       "categories": [
         "invoice_table",
         "payments"
@@ -3168,7 +3221,7 @@
       "evidence": ""
     },
     "application/services/CompanyInvoices.php": {
-      "sha256": "4756db8524fff6f1af1709d80fa92c9a2cdbfcb21816dc523de8c3b4a6a82d18",
+      "sha256": "f31887f82a9b31f2b30ed42adef43891dd03f7743f886a2dacc1483f11356640",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -3202,7 +3255,7 @@
       "evidence": ""
     },
     "application/services/CompanyLedgerReports.php": {
-      "sha256": "232df787a1321aa7619fd66219a495d4c49390da9f6a7bb8cdcc009e307fccb6",
+      "sha256": "0c679493f10b78ca09e734100257fc45d411f1b0360b67b4a3e31bdc60185913",
       "categories": [
         "invoice_table",
         "payments"
@@ -3254,13 +3307,24 @@
       "state": "unreviewed",
       "evidence": ""
     },
-    "application/services/CompanyPortalSales.php": {
-      "sha256": "27ed26e7f0ddfaa39d361adad2a73e04fa3019e9439650d9ea3879a1277f2714",
+    "application/services/CompanyPortalOperationsStorage.php": {
+      "sha256": "a30c38163324dc68f2e8e6c2edd6dac3f0783caec381349ce0c0c222f46d38cf",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        13
+        10
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/CompanyPortalSales.php": {
+      "sha256": "32604d014422ee5ce60ceec031c7f40aabe539f7c64481d360ad33dbc393ad2b",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        14
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3303,7 +3367,7 @@
       "evidence": ""
     },
     "application/services/CompanyReports.php": {
-      "sha256": "a629a22facb5518e91dab3609d1cf47b1537b289f7ef9107b2ca762c677673e9",
+      "sha256": "621ca3f0ef67f3398a5d19981b0eda42ef9b94328389fab0843f01408f1a1ba1",
       "categories": [
         "invoice_table",
         "payments"
@@ -3311,13 +3375,13 @@
       "signal_lines": [
         10,
         17,
-        28
+        37
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "application/services/CompanyResourceCatalog.php": {
-      "sha256": "119a8a7065d2c3cb70160ca7e19f48cc99308018819bf45e4f00b88491011476",
+      "sha256": "f6839aa7c0eb17af9b9d2010292acbd6f4f371b1add8d3efa548c8cee9b05bc5",
       "categories": [
         "invoice_table"
       ],
@@ -3328,7 +3392,7 @@
       "evidence": ""
     },
     "application/services/CompanySales.php": {
-      "sha256": "457453de78c10cc2e5dab124ea7c11f53732513c514f1cc10a54fa521526fa09",
+      "sha256": "fbbc5be768ce72eef8f2ec43685f74994d931eded1d0ff0d7fff20810917aa9f",
       "categories": [
         "invoice_table"
       ],
@@ -3339,28 +3403,31 @@
       "evidence": ""
     },
     "application/services/CompanySalesBase.php": {
-      "sha256": "55399ddbbba4acca148af40f7af941f895124f9e69d4dd236d6b1f377010c38b",
+      "sha256": "e2c66cdd56ad8d006ffb166dca07c1941218229db82ba8a26bac5ad69465bbfe",
       "categories": [
         "customer_privacy",
         "documents_numbering",
         "invoice_table"
       ],
       "signal_lines": [
-        14,
         15,
-        36,
-        48
+        16,
+        29,
+        37,
+        42,
+        47,
+        51
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "application/services/CompanySalesDelivery.php": {
-      "sha256": "c39ec555493d7ed9e172089ec3d061e85c24a0ead003c3e38cc0a0a90895b569",
+      "sha256": "3e8f480f5f75049e194e652e8b3303963e145550cc73286f8f6d1a1ee7d6d040",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        25
+        26
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3377,7 +3444,7 @@
       "evidence": ""
     },
     "application/services/CompanySettingsCatalog.php": {
-      "sha256": "e818bd956d19e5b0b4f35ac2df4ed0141ece613f5487b22664ba61e26ea16b82",
+      "sha256": "0c0c6264ab6150d712aac7a593033a9edb630189d8bba3d3a6bf51482ce9ebb6",
       "categories": [
         "documents_numbering"
       ],
@@ -3483,25 +3550,25 @@
       "evidence": "tests/issuers_essential.php (205 SQLite/207 MySQL on102): schema constraints and current marker/active/lock checked, request metadata cache only. Does not grant data access."
     },
     "application/services/InvoicePaymentWriter.php": {
-      "sha256": "0a921104f7b3db31a34096d15b710966c18fe54ca8cc7bb8a8ff4b2d528fc3f3",
+      "sha256": "12209eae42d6e461cd8f4079ed3fecd48ada96a011ef3d25ab8178a11290b158",
       "categories": [
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
-        56,
-        72,
-        103,
+        58,
+        74,
         105,
-        113,
-        122,
-        127,
-        130,
-        133,
-        169,
-        182,
-        190,
-        226
+        107,
+        115,
+        124,
+        129,
+        132,
+        135,
+        171,
+        184,
+        192,
+        228
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4347,7 +4414,7 @@
       "evidence": ""
     },
     "application/views/admin/settings/company_scoped.php": {
-      "sha256": "a22a201d7ad0bc8195328d2162cab6c998518b26949d505fa5e110d4eeddd7a3",
+      "sha256": "9a09312aa9072838134d36ef49195cb79403c97f81e00067647dffe2b857c66d",
       "categories": [
         "documents_numbering"
       ],
@@ -4355,7 +4422,7 @@
         4,
         5,
         6,
-        48
+        51
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4864,12 +4931,12 @@
       "evidence": ""
     },
     "application/views/company_portal/index.php": {
-      "sha256": "6e7ce7f436e9f020ddd30bbc1204941e24a4bb3c6e27933bb249b883bf2bd9c3",
+      "sha256": "9554db80a711f9a1e2e94618d4b816fb9e3641e8713877e9447f068b0b60bb17",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        17
+        18
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5737,7 +5804,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/controllers/Banco_brasil.php": {
-      "sha256": "e37d520cf22a189cf84610974f6badcfdd244d51e6a04c9aed94c46d60f66261",
+      "sha256": "cf2042e6995b11079419b78ff3e7ece5806e2dbc8fd40267d7344d26672f742b",
       "categories": [
         "invoice_table"
       ],
@@ -5749,7 +5816,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/ApiAmendments.php": {
-      "sha256": "d241f06191c51e1ba591df6b08f285b401a44544d657fcded352762f0f416218",
+      "sha256": "d36c44141b20680d17b5cee2dd1b2681f673b101d444495bdd3ba7d5a3ae41aa",
       "categories": [
         "invoice_table",
         "payments"
@@ -5762,7 +5829,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/ApiService.php": {
-      "sha256": "8741181a901f54c8f9fe487cd403010e0aa0eae73080372c5c1ce4af46fc1b9f",
+      "sha256": "be896bf8375186d7222a550f7d5ae39b2df2d914b605b11a121da278a379d3b7",
       "categories": [
         "invoice_table",
         "payments"
@@ -5781,7 +5848,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Origination.php": {
-      "sha256": "2531fafa12080ede071401085f354783c9420d1eb338c78374207117ae7b9ccd",
+      "sha256": "2c992805bcc40df4c613723071df4df60fc9a786b7f1f25087ee937c596fc5eb",
       "categories": [
         "invoice_table",
         "payments"
@@ -5796,8 +5863,19 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "modules/banco_brasil/libraries/BancoBrasil/ReceiptReversalOverview.php": {
+      "sha256": "414b62423e470113f3db7a1ef57eca18f8b4146d82a108bdf402391f51a30e1a",
+      "categories": [
+        "payments"
+      ],
+      "signal_lines": [
+        13
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "modules/banco_brasil/libraries/BancoBrasil/Reconciliation.php": {
-      "sha256": "0cd39a893010a3140c484ebe8fe732912940a1326dbfe8cad9243adbb1108a08",
+      "sha256": "340d2e36bcbe020c45f610f6137f2c2a842fc358b85bce78de9d1376df5ff91c",
       "categories": [
         "invoice_table"
       ],
@@ -5817,6 +5895,20 @@
       "signal_lines": [
         36,
         50
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ReviewedExternalReversal.php": {
+      "sha256": "da2ab992c58e650a105647699645ff7e0c3d1836eba5c5f02661cefe1b43146b",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        23,
+        26,
+        27
       ],
       "state": "unreviewed",
       "evidence": ""

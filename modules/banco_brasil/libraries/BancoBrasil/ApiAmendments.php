@@ -15,7 +15,7 @@ trait ApiAmendments
     }
     private function authorizeOperation(int $issuer,int $actor,string $operation):void
     {
-        if($operation==='amend_due'){ $module=$this->rows("SELECT installed_version FROM {$this->prefix}modules WHERE module_name='banco_brasil' FOR UPDATE")[0]??[];if(($module['installed_version']??null)!=='1.1.3')throw new \DomainException('bb_api_access_denied'); }
+        if($operation==='amend_due'){ $module=$this->rows("SELECT installed_version FROM {$this->prefix}modules WHERE module_name='banco_brasil' FOR UPDATE")[0]??[];if(($module['installed_version']??null)!=='1.1.4')throw new \DomainException('bb_api_access_denied'); }
         $this->authorize($issuer,$actor,$operation==='amend_due'?'api_amend':($operation==='movements'?'api_query':'api_'.$operation),true);
         if($operation==='amend_due'&&!(new \IssuerResourceAccess($this->db,$this->prefix))->can($issuer,$actor,'invoices','edit'))throw new \DomainException('bb_api_access_denied');
     }

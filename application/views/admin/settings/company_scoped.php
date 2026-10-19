@@ -5,6 +5,8 @@ $labels = [
     'invoice_company_address' => 'Endereço', 'invoice_company_city' => 'Cidade', 'company_state' => 'Estado',
     'invoice_company_country_code' => 'País', 'invoice_company_postal_code' => 'CEP', 'invoice_company_phonenumber' => 'Telefone',
     'invoice_prefix'=>'Prefixo da numeração de faturas','predefined_terms_invoice'=>'Condições padrão das faturas',
+    'estimate_prefix'=>'Prefixo da numeração de orçamentos','predefined_terms_estimate'=>'Condições padrão dos orçamentos',
+    'proposal_number_prefix'=>'Prefixo da numeração de propostas','predefined_terms_proposal'=>'Condições padrão das propostas',
     'credit_note_prefix'=>'Prefixo da numeração de créditos','predefined_terms_credit_note'=>'Condições padrão dos créditos',
     'email_header'=>'Cabeçalho HTML','email_signature'=>'Assinatura HTML','email_footer'=>'Rodapé HTML',
     'dateformat' => 'Formato da data', 'time_format' => 'Formato da hora',
@@ -27,6 +29,7 @@ $labels = [
         <?php if ($company_identity['identity_status'] === 'pending') { ?><div class="alert alert-warning">A identidade fiscal desta empresa precisa ser conferida.</div><?php } ?>
         <?php if ($group === 'email') { ?><p>As credenciais são exclusivas desta empresa. A configuração é usada pelas notificações de fatura e pela recuperação do portal desta empresa. Salvar não envia e-mail nem valida credenciais no provedor.</p><?php } ?>
         <?php if ($group === 'email_content') { ?><p>HTML de apresentação usado nos e-mails desta empresa. Cada campo é um fragmento completo. Formatação de texto, tabelas e links HTTPS são preservados; scripts, formulários e imagens remotas são removidos. As alterações valem para novos e-mails enfileirados; mensagens já enfileiradas mantêm seu conteúdo.</p><?php } ?>
+        <?php if ($group === 'sales_documents') { ?><p>Preferências próprias para novos documentos. Prefixo vazio exibe somente o número. Condições são texto literal. Documentos e notificações já emitidos preservam seu snapshot. A conversão usa identidade, condições e numeração próprias da fatura.</p><?php } ?>
         <form method="post" action="<?= $escape($company_urls[$group]); ?>" autocomplete="off">
             <input type="hidden" name="_company_context" value="<?= $escape($context_token); ?>">
             <?php if ($this->config->item('csrf_protection')) { ?><input type="hidden" name="<?= $escape($this->security->get_csrf_token_name()); ?>" value="<?= $escape($this->security->get_csrf_hash()); ?>"><?php } ?>
@@ -45,7 +48,7 @@ $labels = [
                             <?php foreach (['' => 'Nenhuma', 'ssl' => 'SSL', 'tls' => 'TLS'] as $key => $label) { ?><option value="<?= $escape($key); ?>" <?= $value === $key ? 'selected' : ''; ?>><?= $escape($label); ?></option><?php } ?>
                         </select>
                     <?php } else { ?>
-                        <input class="form-control" id="company-setting-<?= $escape($name); ?>" name="settings[<?= $escape($name); ?>]" type="<?= $name === 'smtp_email' ? 'email' : 'text'; ?>" value="<?= $escape($value); ?>" maxlength="<?= $name === 'invoice_company_name' ? '191' : '2000'; ?>">
+                        <input class="form-control" id="company-setting-<?= $escape($name); ?>" name="settings[<?= $escape($name); ?>]" type="<?= $name === 'smtp_email' ? 'email' : 'text'; ?>" value="<?= $escape($value); ?>" maxlength="<?= in_array($name,['invoice_prefix','credit_note_prefix','estimate_prefix','proposal_number_prefix'],true)?'50':($name === 'invoice_company_name' ? '191' : '2000'); ?>">
                     <?php } ?></div>
                 <?php } ?>
                 <?php if ($group === 'email') { ?>

@@ -84,6 +84,10 @@ final class CompanySettingsRuntime
     {
         $s=self::scope();return $s->storage->updateBatch($s->issuerId,$s->staffId,$values);
     }
+    public static function updateSalesDocumentPreferences(array $values): int
+    {
+        $s=self::scope();return $s->storage->updateSalesDocumentPreferences($s->issuerId,$s->staffId,$values);
+    }
     public static function saveIdentity(array $input): bool
     {
         $s = self::scope();

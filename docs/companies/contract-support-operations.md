@@ -71,8 +71,7 @@ tabelas e seu histórico; não apagar dados para voltar código.
   suporte→mensagem→resolver→reabrir→responder→encerrar, stale e IDs cruzados.
 
 Ainda faltam: assinatura/aceite, modelos e renovação automática de contratos,
-notificações/SMTP desses domínios, portal de contratos
-ou chamados, abertura por e-mail, automações/SLA, importação/exportação. A API operacional própria já fornece CRUD e ações explícitas destes domínios; ainda não expõe os novos arquivos.
+notificações/SMTP desses domínios, escrita pelo cliente no portal, abertura por e-mail, automações/SLA, importação/exportação. A API operacional própria já fornece CRUD e ações explícitas destes domínios; ainda não expõe os novos arquivos na API. O portal operacional está descrito em `operational-portal.md`.
 São funcionalidades técnicas pendentes, não homologação externa. Nenhum envio
 externo, credencial real, assinatura ou acesso de produção é usado pelos testes.
 
@@ -125,3 +124,7 @@ Execução local inicial observada: SQLite serviço 129 e controller 103 checks
 cumulativos, além da regressão dos controllers existente. MySQL/MariaDB e browser
 estão preparados, ainda não executados neste patch. Não há chamada externa nem
 homologação bancária relacionada a anexos internos.
+
+O incremento de portal posterior mantém todos os registros e anexos privados por
+padrão e oferece publicação explícita por registro/arquivo/resposta, com permissões
+nativas3/5. Leia `operational-portal.md` para código, testes e limites atuais.

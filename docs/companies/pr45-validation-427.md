@@ -24,7 +24,7 @@ Protocolo dos provedores e SMTP simulados; sem credenciais ou dados reais.
 | Regressões financeiras | Asaas jobs/fees, BB API receipt e reconciliação240 |177/344/131 MariaDB; chaves/provas e comportamento anterior preservados |
 | Diário e portal | ledger controller, portal revogação, sales worker |162 MariaDB, portal96 MariaDB e worker241 SQLite |
 | Release/inventários |6 módulos unittest Python |62 testes aprovados; políticas estáticas não comprovam operação bancária |
-| Sintaxe | Fonte congelado: PHP92 arquivos, JavaScript4, bash e diff |PASS; fixture BB corrigida para esperar versão113 exige nova rodada HTTP |
+| Sintaxe | Fonte congelado: PHP92 arquivos, JavaScript5, bash e diff |PASS; fixture BB corrigida para esperar versão113 exige nova rodada HTTP |
 
 ## HTTP e Chromium
 
@@ -56,8 +56,12 @@ código executado. Transporte de providers/SMTP simulado, sem homologação.
 
 ## CI e limites
 
-CI deste incremento será consultado no SHA remoto publicado. O CI426 terminou
-18 execuções/16 workflows com sucesso; não é prova do novo427.
+HEAD remoto427 `11026cdbbfecbd1a2a557f2bee09f451fdd18506`:16 workflows distintos
+com execuções terminais aprovadas. Duas execuções de política antigas foram
+canceladas/substituídas, sem contá-las como testes aprovados. [Empresas](https://github.com/wkarts/ARGWS-CRM/actions/runs/39311433294),
+[BB](https://github.com/wkarts/ARGWS-CRM/actions/runs/39311433149) e
+[stack](https://github.com/wkarts/ARGWS-CRM/actions/runs/39311433190).
+O CI426 permanece histórico separado.
 
 A composição240 é restrita a tarifas/IOF/outros zero e líquido igual ao pago;
 encargos são agregados, sem inventar multa/juros individuais. A aplicação API

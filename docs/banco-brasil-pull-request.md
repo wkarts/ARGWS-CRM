@@ -101,3 +101,22 @@ homologação externa. BB113 é migration NOOP nova; núcleo427 cria o schema ad
 sem modificar histórico. Crédito API parcial/ajustes, reversão própria dos novos
 componentes e demais fórmulas/perfis continuam pendências técnicas, separadas dos
 bloqueios documentais400 e da homologação externa de todos os canais.
+
+
+## Incremento114 / núcleo428 — declaração de reversão externa
+
+O operador pode registrar reversão externa integral de um recibo240 composto427,
+com comprovação independente, referência, motivo, data válida, valor pago integral
+restituído e principal integralmente restabelecido. Requer capacidade própria
+external_reverse, conciliação, fatura/view e payments/delete. A fonte final e o
+writer canônico confirmam recibo, status, revisãoBB, auditoria e journal juntos.
+Native cash e componentes originais não são atualizados nem excluídos; o saldo
+projeta valor efetivo e os leitores mostram original/revertido separadamente.
+
+[Guia operacional](banco-brasil-declared-reversal.md) e
+[relatórios](companies/declared-reversal-reporting.md) descrevem o perfil.
+Nenhuma transação de estorno é enviada ao BB, e declaração não autentica banco.
+CNAB44 permanece evento de cheque devolvido em revisão, sem autoridade genérica.
+Reversão parcial, recibos API/outros canais e tarifas/IOF/outras equações seguem
+pendências técnicas. Não há homologaçãoAPI/240/400. BB114 é NOOP funcional novo;
+núcleo428 cria o recibo aditivo, preservando todo o histórico.

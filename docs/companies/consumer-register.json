@@ -5,11 +5,11 @@
   "frozen_candidate": "b8a5cec7286edc88191a1b1d07813ea40ed79bce",
   "counts": {
     "company_core_and_settings": {
-      "pending": 625,
-      "boundary_tested": 6
+      "pending": 661,
+      "boundary_tested": 5
     },
     "customer_portal": {
-      "pending": 219,
+      "pending": 221,
       "boundary_tested": 3
     },
     "files_and_reports": {
@@ -21,7 +21,7 @@
       "boundary_tested": 10
     },
     "modules": {
-      "pending": 6678,
+      "pending": 6681,
       "boundary_tested": 13
     },
     "other_core": {
@@ -2104,27 +2104,6 @@
       "full_operation_ready": false
     },
     {
-      "consumer": "application/services/CompanySettingsRuntime.php::canResource",
-      "category": "company_core_and_settings",
-      "line": 64,
-      "source_sha256": "76f25b574a045eda619f633278be109283627fa0a173c82774ee1e5ba0c39581",
-      "risk_candidates": [
-        "identity_context"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/email_template_bootstrap.php"
-        ],
-        "exercised": [
-          "actual_company_resource_acl_and_revocation"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
-        "source_sha256": "76f25b574a045eda619f633278be109283627fa0a173c82774ee1e5ba0c39581"
-      },
-      "full_operation_ready": false
-    },
-    {
       "consumer": "application/services/PortalClientIdentity.php::fromAuthenticatedSession",
       "category": "customer_portal",
       "line": 11,
@@ -2528,7 +2507,7 @@
       "full_operation_ready": false
     }
   ],
-  "source_manifest_sha256": "70499ed9b095cf4badde77bf2a484a1957f33645c6248bfae1d2c4f7ffe89dd6",
-  "total_consumers": 10617,
+  "source_manifest_sha256": "5ab887c273df64029bff0a498012643da78b02bb965b4557fcf23125dcfb031a",
+  "total_consumers": 10657,
   "full_register_command": "python3 scripts/register-company-consumers.py --full-output /tmp/company-consumers-full.json"
 }

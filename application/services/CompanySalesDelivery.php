@@ -3,6 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/CompanySales.php';
 require_once __DIR__.'/CompanyMailConfig.php';
+require_once __DIR__.'/CompanySalesPreferences.php';
 require_once __DIR__.'/CompanyEmailTemplates.php';
 require_once __DIR__.'/CompanySalesExtrasSchema.php';
 
@@ -26,7 +27,7 @@ final class CompanySalesDelivery
     }
     private function parent(int $issuer,int $document):array
     {
-        $row=$this->rows('SELECT d.id,d.kind,d.state,d.number,d.client_id AS clientid,d.payload_json,d.context_json,d.origin_hash,d.input_hash,r.legal_name FROM '.$this->p.'company_sales_documents d JOIN '.$this->p.'issuers_registry r ON r.id=d.issuer_id AND r.active=1 JOIN '.$this->p.'clients c ON c.userid=d.client_id AND c.active=1 JOIN '.$this->p.'issuers_clients o ON o.client_id=c.userid AND o.owner_issuer_id=d.issuer_id WHERE d.id=? AND d.issuer_id=? FOR UPDATE',[$document,$issuer])[0]??null;if(!$row)throw new DomainException('company_sales_delivery_denied');$row['formatted_number']=($row['kind']==='estimates'?'EST':'PROP').'-'.str_pad((string)$row['number'],6,'0',STR_PAD_LEFT);return $row;
+        $row=$this->rows('SELECT d.id,d.kind,d.state,d.number,d.client_id AS clientid,d.payload_json,d.context_json,d.origin_hash,d.input_hash,r.legal_name FROM '.$this->p.'company_sales_documents d JOIN '.$this->p.'issuers_registry r ON r.id=d.issuer_id AND r.active=1 JOIN '.$this->p.'clients c ON c.userid=d.client_id AND c.active=1 JOIN '.$this->p.'issuers_clients o ON o.client_id=c.userid AND o.owner_issuer_id=d.issuer_id WHERE d.id=? AND d.issuer_id=? FOR UPDATE',[$document,$issuer])[0]??null;if(!$row)throw new DomainException('company_sales_delivery_denied');$context=CompanySalesPreferences::context($row['context_json'],$row['origin_hash'],$issuer,(int)$row['clientid']);$row['formatted_number']=CompanySalesPreferences::presentation($row['kind'],$row['number'],$context,$row['kind']==='estimates'?'EST-':'PROP-')['formatted_number'];return $row;
     }
     private static function permission(array $row):int{return $row['kind']==='estimates'?2:4;}
     private static function revisionFor(array $row):string{return hash('sha256',json_encode([$row['id'],$row['kind'],$row['state'],$row['number'],$row['origin_hash'],$row['input_hash']],JSON_THROW_ON_ERROR));}

@@ -173,18 +173,34 @@ final class CompanySettingsStorage
     {
         return $this->persistBatch($issuerId,$staffId,$values,true);
     }
-    private function persistBatch($issuerId,$staffId,array $values,bool $owned): int
+    /** Exact public-document keys only; never opens generic principal batch/infrastructure writes. */
+    public function updateSalesDocumentPreferences($issuerId,$staffId,array $values): int
+    {
+        require_once __DIR__.'/CompanySettingsCatalog.php';
+        return $this->persistBatch($issuerId,$staffId,CompanySettingsCatalog::prepare('sales_documents',$values),false,true);
+    }
+    private function persistBatch($issuerId,$staffId,array $values,bool $owned,bool $salesOnly=false): int
     {
         $issuerId=IssuerPolicy::id($issuerId);$staffId=IssuerPolicy::id($staffId);
-        if($this->isPrimary($issuerId)){throw new DomainException('company_settings_batch_scope_required');}
+        $primary=$this->isPrimary($issuerId);
+        if($primary&&!$salesOnly){throw new DomainException('company_settings_batch_scope_required');}
         $prepared=[];
         foreach($values as $name=>$value){$name=self::name($name);$prepared[$name]=self::value($value);
             if(self::infrastructure($name)||CompanySettingsIdentity::handles($name)){throw new DomainException('company_settings_batch_identity_separate');}}
         $access=new IssuerResourceAccess($this->db,$this->prefix);
         if(!$access->can($issuerId,$staffId,'settings','edit')){throw new DomainException('company_settings_access_denied');}
         $tables=['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_audit','staff'];
-        $operation=function()use($issuerId,$staffId,$prepared,$access):int{
+        if($primary)$tables[]='options';
+        $operation=function()use($issuerId,$staffId,$prepared,$access,$primary):int{
                 if(!$access->can($issuerId,$staffId,'settings','edit')){throw new DomainException('company_settings_access_denied');}
+                if($primary){
+                    $count=0;
+                    foreach($prepared as $name=>$value){$original=$this->lookup($issuerId,$name);if($original!==$value){$this->mutateLegacy('update',$name,$value,null,$original!==null);$count++;}}
+                    if($count===0)return 0;
+                    foreach($prepared as $name=>$value)if($this->lookup($issuerId,$name)!==$value)throw new DomainException('company_settings_write_unconfirmed');
+                    IssuerStorage::query($this->db,"INSERT INTO {$this->prefix}issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,NULL,?)",[$staffId,'company_settings_batch_updated',$issuerId,date('Y-m-d H:i:s')]);
+                    return $count;
+                }
                 $document=$this->document($this->issuer($issuerId));$options=$document->{self::JSON_KEY}??new stdClass();$count=0;
                 foreach($prepared as $name=>$value){if(!property_exists($options,$name)||$options->{$name}!==$value){$options->{$name}=$value;$count++;}}
                 if($count===0){return 0;}

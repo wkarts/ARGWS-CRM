@@ -10,7 +10,7 @@ final class CompanySettingsCatalog
     public static function groups(): array
     {
         return ['company'=>'Informações da Empresa','email'=>'Servidor SMTP','email_content'=>'Apresentação dos e-mails',
-            'documents'=>'Faturas e créditos','localization'=>'Data e hora'];
+            'documents'=>'Faturas e créditos','sales_documents'=>'Orçamentos e propostas','localization'=>'Data e hora'];
     }
 
     public static function fields(string $group): array
@@ -18,6 +18,7 @@ final class CompanySettingsCatalog
         return match($group) {
             'company'=>array_merge(['invoice_company_name','company_vat'],CompanySettingsIdentity::PROFILE_OPTIONS),
             'localization'=>['dateformat','time_format'],
+            'sales_documents'=>['estimate_prefix','predefined_terms_estimate','proposal_number_prefix','predefined_terms_proposal'],
             'documents'=>['invoice_prefix','predefined_terms_invoice','credit_note_prefix','predefined_terms_credit_note'],
             'email'=>['smtp_host','smtp_port','smtp_encryption','smtp_email','smtp_username','smtp_password'],
             'email_content'=>['email_header','email_signature','email_footer'],
@@ -25,9 +26,15 @@ final class CompanySettingsCatalog
         };
     }
 
+    public static function defaultValue(string $group,string $field):string
+    {
+        if(!in_array($field,self::fields($group),true))throw new DomainException('company_settings_invalid_input');
+        return $group==='sales_documents'?(['estimate_prefix'=>'ORC-','proposal_number_prefix'=>'PROP-'][$field]??''):'';
+    }
+
     public static function multiline(string $name): bool
     {
-        return in_array($name,['predefined_terms_invoice','predefined_terms_credit_note','email_header','email_signature','email_footer'],true);
+        return in_array($name,['predefined_terms_invoice','predefined_terms_credit_note','predefined_terms_estimate','predefined_terms_proposal','email_header','email_signature','email_footer'],true);
     }
 
     /** Validate the entire form before encryption, SQL or audit. Returns normalized safe fragments. */
@@ -37,7 +44,7 @@ final class CompanySettingsCatalog
         foreach($settings as $name=>$value) {
             if(!is_string($value)||preg_match('//u',$value)!==1
                 ||preg_match('/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/',$value))throw new DomainException('company_settings_invalid_input');
-            $limit=match($name){'invoice_prefix','credit_note_prefix'=>50,'predefined_terms_invoice','predefined_terms_credit_note'=>10000,
+            $limit=match($name){'invoice_prefix','credit_note_prefix','estimate_prefix','proposal_number_prefix'=>50,'predefined_terms_invoice','predefined_terms_credit_note','predefined_terms_estimate','predefined_terms_proposal'=>10000,
                 'email_header','email_signature','email_footer'=>60000,'smtp_password'=>4096,default=>2000};
             if(strlen($value)>$limit)throw new DomainException('company_settings_invalid_input');
             if($group!=='company'&&$name!=='smtp_password'&&!self::multiline($name)&&preg_match('/[\r\n]/',$value))throw new DomainException('company_settings_invalid_input');

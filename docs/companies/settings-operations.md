@@ -96,3 +96,52 @@ Seções de gateways genéricos, OAuth visual, SMS, Connect e demais grupos aind
 consumidor adaptado continuam indisponíveis no catálogo secundário. Não confundir
 armazenamento privado de uma opção com implementação operacional da integração.
 Não houve merge, deploy ou transação externa.
+
+## Preferências de orçamentos e propostas (overlay futuro)
+
+O grupo `sales_documents` libera somente quatro campos com consumidores completos:
+`estimate_prefix`, `predefined_terms_estimate`, `proposal_number_prefix` e
+`predefined_terms_proposal`. Prefixos são de uma linha e até50bytes; condições são
+texto literal UTF-8 de até10.000bytes. Campos desconhecidos/controles/overposting são
+recusados e o lote exige a transação/auditoria e ACL existentes. A GUI preserva CSRF
+e contexto, usa defaults próprios ORC-/PROP- quando ausentes e permite prefixo vazio
+explícito. B não recupera prefixo, termos ou segredo de A/principal.
+
+Novos documentos capturam `sales_preferences` formato1 no contexto imutável e em seu
+hash de origem. Tela/lista, PDF, portal com permissão nativa e número na notificação
+usam esse snapshot. A identidade/condições da futura fatura permanecem separadas: o
+prefixo de orçamento não altera sua sequência nem a numeração ou os termos da fatura.
+Editar preferências não reescreve documentos ou a fila. Retry de criação/conversão e
+falha após o commit da fatura continuam usando o recibo canônico. Mudança antes de
+uma conversão ainda não comprometida exige novo documento revisado.
+
+Documentos históricos sem o campo novo conservam o contrato anterior de apresentação
+por consumidor e continuam legíveis/conversíveis. Recorrências preservam seu contexto
+anterior. Nenhuma coluna, tabela, DDL ou migration histórica é alterada; núcleo428 registra o incremento sem DDL adicional dessas preferências.
+
+As provas implementadas incluem controller/model/view reais A/B, leitor/portal/PDF,
+notificação e recuperação do writer. Concorrência nativa e Chromium foram executados em protótipos isolados; a prova
+composta do SHA é registrada separadamente em [validação428](pr45-validation-428.md).
+Salvar preferências ou gerar uma fila não envia SMTP. Infraestrutura global, gateways
+sem contrato e integrações sem consumidor permanecem indisponíveis.
+
+A investigação atual da prova de provisionamento e o insumo externo mínimo estão em
+[legacy-provisioning-recovery.md](legacy-provisioning-recovery.md). A opção escolhida
+pelo usuário já está registrada; não foi criada autoridade por ID/admin nem reduzida
+a segurança do fluxo atual no console.
+
+
+Na principal, a seção legada de propostas declara o novo campo de condições como
+texto escapado, mantendo sua autorização e armazenamento próprios em options. A
+validação do catálogo ocorre antes dos hooks/uploads/escritas do controller e também
+no model direto. Nenhum campo de infraestrutura ou grupo genérico novo é liberado.
+A/B continuam usando o renderer selado e seu armazenamento privado. Condições novas
+são capturadas apenas pelo fluxo nativo CompanySales; propostas legadas com conteúdo
+próprio e documentos já emitidos não são reescritos.
+
+O lote da principal usa updateSalesDocumentPreferences, limitado às quatro chaves do
+catálogo. Prefixos e condições são confirmados juntos sob lock, readback e auditoria;
+falha na segunda opção ou no audit reverte todo esse lote. updateBatch genérico da
+principal permanece negado. Opções legadas que não pertencem ao lote conservam seu
+fluxo anterior. A GUI trata falha desse lote como503 sem SQL/valores e permite nova
+tentativa; a validação de entrada continua ocorrendo antes dos efeitos legados.

@@ -28,7 +28,7 @@ final class Origination
     public function ready():bool
     {
         $row=$this->rows('SELECT active,installed_version FROM '.$this->prefix.'modules WHERE module_name=?',['banco_brasil'])[0]??[];
-        return (int)($row['active']??0)===1&&($row['installed_version']??null)==='1.1.3';
+        return (int)($row['active']??0)===1&&($row['installed_version']??null)==='1.1.4';
     }
     private function authorize(int $issuer,int $actor,string $cap,bool $invoice=false):void
     {

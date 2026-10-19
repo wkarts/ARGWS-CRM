@@ -15,7 +15,7 @@ class Company_portal extends CI_Controller
         $this->output->set_header('X-Content-Type-Options: nosniff');
         try{$issuer=IssuerPolicy::id($issuer);$portal=new CompanyPortal($this->db,db_prefix(),(string)$this->config->item('encryption_key'));}
         catch(Throwable $error){show_404();return;}
-        $invoices=null;$sales=[];$hostedCheckout=[];
+        $invoices=null;$sales=[];$hostedCheckout=[];$operations=[];$operation_detail=null;$operation_kind=null;
         $sessionKey='company_portal_identity';$identity=$this->session->userdata($sessionKey);$message=null;$error=null;
         $csrf=$this->session->userdata('company_portal_csrf');
         if(!is_string($csrf)||strlen($csrf)!==64){$csrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_portal_csrf',$csrf);}
@@ -29,6 +29,11 @@ class Company_portal extends CI_Controller
                 if($action==='logout'){
                     $this->session->unset_userdata($sessionKey);$this->session->sess_regenerate(true);
                     redirect($this->config->site_url('company_portal/index/'.$issuer),'location',303);return;
+                }
+                if($action==='operation_file'||$action==='operation_contract_pdf'){
+                    if(!$current||!is_array($identity)){show_404();return;}require_once APPPATH.'services/CompanyPortalOperations.php';$reader=new CompanyPortalOperations($this->db,db_prefix(),$portal);$id=$this->input->post('resource_id',false);
+                    if($action==='operation_file'){$kind=$this->input->post('operation_kind',false);$fileKey=$this->input->post('file_key',false);if(!is_string($kind)||!is_string($fileKey)){show_404();return;}try{$file=$reader->file($identity,$issuer,$kind,$id,$fileKey);}catch(DomainException $denied){show_404();return;}$this->output->set_header("Content-Security-Policy: sandbox; default-src 'none'");$this->output->set_header('Content-Disposition: attachment; filename="anexo.'.($file['mime']==='image/png'?'png':'pdf').'"; filename*=UTF-8\'\''.rawurlencode($file['filename']));$this->output->set_content_type($file['mime'])->set_output($file['content']);return;}
+                    try{$record=$reader->detail($identity,$issuer,'contracts',$id);require_once APPPATH.'services/CompanyContractsPdf.php';$pdf=CompanyContractsPdf::render($record);$reader->confirmPdf($identity,$issuer,$id,$record['revision'],hash('sha256',$record['snapshot_json']),hash('sha256',$pdf));}catch(DomainException $denied){show_404();return;}$this->output->set_header('Content-Disposition: attachment; filename="contrato-'.(int)$record['number'].'.pdf"');$this->output->set_content_type('application/pdf')->set_output($pdf);return;
                 }
                 if($action==='invoice_checkout'){
                     if(!$current||!is_array($identity)){show_404();return;}
@@ -112,8 +117,11 @@ class Company_portal extends CI_Controller
             if(is_array($invoices)&&$this->db->table_exists(db_prefix().'asaas_company_hosted_links')){try{require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyHostedLinks.php';$hostedCheckout=(new \Asaas\CompanyHostedLinks($this->db,db_prefix()))->portalPage($portal,$identity,$issuer,array_column($invoices['items'],'id'));}catch(Throwable $unavailable){$hostedCheckout=[];}}
             try{require_once APPPATH.'services/CompanyPortalSales.php';$salesReader=new CompanyPortalSales($this->db,db_prefix(),$portal);foreach(['estimates','proposals'] as $kind)$sales[$kind]=$salesReader->page($identity,$issuer,$kind);$ids=[];foreach($sales as $rows)foreach($rows??[] as $row)$ids[]=$row['id'];if($ids){require_once APPPATH.'services/CompanySalesFiles.php';$published=(new CompanySalesFiles($this->db,db_prefix()))->portalPages($portal,$identity,$issuer,$ids);foreach($sales as &$rows)if(is_array($rows))foreach($rows as &$row)$row['files']=$published[(int)$row['id']]??[];unset($rows,$row);}}
             catch(Throwable $unavailable){$error='Documentos indisponíveis no momento. Tente novamente mais tarde.';}
+            try{require_once APPPATH.'services/CompanyPortalOperations.php';$reader=new CompanyPortalOperations($this->db,db_prefix(),$portal);foreach(['contracts','tickets','projects'] as $kind)$operations[$kind]=$reader->page($identity,$issuer,$kind,$this->input->get('op_after_'.$kind,false)??0);$requestedKind=$this->input->get('operation_kind',false);$requestedId=$this->input->get('resource_id',false);if($requestedKind!==null||$requestedId!==null){if(!is_string($requestedKind)||!in_array($requestedKind,['contracts','tickets','projects'],true)){show_404();return;}try{$operation_detail=$reader->detail($identity,$issuer,$requestedKind,$requestedId);$operation_kind=$requestedKind;}catch(DomainException $denied){show_404();return;}}}
+            catch(Throwable $unavailable){$operations=[];$operation_detail=null;$operation_kind=null;$error='Operações indisponíveis no momento. Tente novamente mais tarde.';}
+
 
         }
-        $this->load->view('company_portal/index',['hosted_checkout'=>$hostedCheckout,'sales'=>$sales,'invoices'=>$invoices,'issuer'=>$issuer,'identity'=>$current??null,'message'=>$message,'error'=>$error,'portal_csrf'=>$csrf,'script_nonce'=>$nonce]);
+        $this->load->view('company_portal/index',['hosted_checkout'=>$hostedCheckout,'operations'=>$operations,'operation_detail'=>$operation_detail,'operation_kind'=>$operation_kind,'sales'=>$sales,'invoices'=>$invoices,'issuer'=>$issuer,'identity'=>$current??null,'message'=>$message,'error'=>$error,'portal_csrf'=>$csrf,'script_nonce'=>$nonce]);
     }
 }

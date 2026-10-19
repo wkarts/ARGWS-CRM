@@ -1,6 +1,6 @@
 <?php
 /** Real controllers/services/storage; only framework HTTP/session/context are synthetic. */
-require __DIR__.'/projects_operations.php';
+require __DIR__.'/portal_operations_cleanup.php';require __DIR__.'/projects_operations.php';require __DIR__.'/portal_operations_schema_fixture.php';
 class CompanyRequestScope
 {
     public static bool $sealed=true;public static int $issuer;public static int $actor=7;

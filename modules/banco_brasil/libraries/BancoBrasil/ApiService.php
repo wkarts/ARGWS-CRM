@@ -46,7 +46,7 @@ final class ApiService
     {
         $module=$this->rows('SELECT active,installed_version FROM '.$this->prefix.'modules WHERE module_name=? FOR UPDATE',['banco_brasil'])[0]??[];
         $acl=new \IssuerResourceAccess($this->db,$this->prefix);$acl->lockFinancialIdentity($issuer,$actor);
-        if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.1.3'||!$acl->can($issuer,$actor,'banco_brasil','view')||!$acl->can($issuer,$actor,'banco_brasil',$cap)||($invoice&&!$acl->can($issuer,$actor,'invoices','view')))throw new \DomainException('bb_api_access_denied');
+        if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.1.4'||!$acl->can($issuer,$actor,'banco_brasil','view')||!$acl->can($issuer,$actor,'banco_brasil',$cap)||($invoice&&!$acl->can($issuer,$actor,'invoices','view')))throw new \DomainException('bb_api_access_denied');
     }
     private function connection(int $issuer,int $id):array
     {

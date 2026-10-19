@@ -108,7 +108,12 @@ Testes adicionais:
   percorrem marcos/seguir/dependências/quadro/upload multipart/download/ocultação e
   tarefa avulsa com checklist/comentário/cronômetro/conclusão.
 
-Ainda são pendências técnicas faturar tempo, portal, importação/exportação,
+Ainda são pendências técnicas faturar tempo, escrita/tarefas no portal, importação/exportação,
 recorrência e notificações destes domínios; assinatura/integrações externas não
 foram executadas. Não confundir o novo quadro com compatibilidade já comprovada
 com todos os hooks e módulos legados, que continuam no gate correspondente.
+
+O incremento de portal posterior permite lista/detalhe de projetos e anexos do
+projeto explicitamente publicados, com permissão nativa6 e contato privado do
+cliente. Tarefas, timers, marcos e seguidores não são publicados automaticamente.
+Veja `operational-portal.md` para autorização, evidências e limites.

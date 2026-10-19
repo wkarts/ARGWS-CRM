@@ -33,7 +33,7 @@ final class CompanyRequestScope
         return in_array($directory,['admin','../../modules/banco_brasil/controllers'],true)
             && strtolower((string)$ci->router->fetch_module())==='banco_brasil'
             && strtolower((string)$ci->router->fetch_class())==='banco_brasil'
-            && in_array(strtolower((string)$ci->router->fetch_method()),['index','register_connection','register_layout','import_return','declare_contract','generate_remittance','retry_remittance','download_remittance','report_transmission','link_event','review_event','settle_event','settle_components_event','declare_api_profile','save_api_credentials','issue_api','resume_api_issue','query_api','cancel_api','settle_api','amend_api_due','configure_api_webhook','query_api_movements'],true);
+            && in_array(strtolower((string)$ci->router->fetch_method()),['index','register_connection','register_layout','import_return','declare_contract','generate_remittance','retry_remittance','download_remittance','report_transmission','link_event','review_event','settle_event','settle_components_event','declare_external_reversal','declare_api_profile','save_api_credentials','issue_api','resume_api_issue','query_api','cancel_api','settle_api','amend_api_due','configure_api_webhook','query_api_movements'],true);
     }
 
     public static function bootstrap($ci): void

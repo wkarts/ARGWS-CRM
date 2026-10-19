@@ -91,3 +91,9 @@ if (count($custom_fields) > 0) {
     echo '<hr />';
 }
 ?>
+<hr />
+<div class="form-group">
+    <label for="proposal-default-terms">Condições padrão de novas propostas da empresa principal</label>
+    <textarea id="proposal-default-terms" name="settings[predefined_terms_proposal]" class="form-control" rows="6" maxlength="10000"><?= htmlspecialchars((string)get_option('predefined_terms_proposal'),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); ?></textarea>
+    <p class="text-muted">Texto literal capturado nas novas propostas emitidas em Empresas. Alterar não reescreve documentos nem substitui as condições de fatura. As demais empresas usam suas próprias definições.</p>
+</div>

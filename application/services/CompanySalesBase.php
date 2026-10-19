@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__.'/CompanyInvoices.php';
 require_once __DIR__.'/CompanySalesSchema.php';
 require_once __DIR__.'/CompanyCurrencyUnits.php';
+require_once __DIR__.'/CompanySalesPreferences.php';
 
 /** Internal explicit-origin helpers. Ambient session and legacy document models are never read. */
 abstract class CompanySalesBase
@@ -25,7 +26,7 @@ abstract class CompanySalesBase
         $date=self::date($input['date']??null);$due=self::date($input['due_date']??null);if($due<$date)throw new DomainException('company_sales_invalid');
         return ['client_id'=>IssuerPolicy::id($input['client_id']??null),'currency'=>IssuerPolicy::id($input['currency']??null),'date'=>$date,'due_date'=>$due,'items'=>array_map(fn($r)=>['description'=>$r['description'],'qty'=>$r['qty'],'rate'=>$r['rate'],'taxes'=>$r['taxes']],$amounts['items']),'note'=>trim($note),'discount_mode'=>$amounts['discount_mode'],'discount_value'=>$amounts['discount_value'],'discount_type'=>$amounts['discount_type'],'adjustment'=>$amounts['adjustment']];
     }
-    protected function context(int $issuer,int $actor,int $client,int $currency):array
+    protected function context(int $issuer,int $actor,int $client,int $currency,string $kind='invoices'):array
     {
         $this->auth($issuer,$actor,'customers');
         $r=$this->rows('SELECT legal_name,tax_id,settings_json FROM '.$this->prefix.'issuers_registry WHERE id=? AND active=1 FOR UPDATE',[$issuer])[0]??null;if(!$r)throw new DomainException('company_sales_denied');
@@ -37,16 +38,18 @@ abstract class CompanySalesBase
         $r['settings_json']=json_encode(['document_profile'=>$profile],JSON_THROW_ON_ERROR);$identity=InvoiceIssuerDocuments::identity($r);
         // Only a digest of transport/settings is persisted. Secrets never enter document DTOs.
         $config=[];foreach(['smtp_host','smtp_port','smtp_encryption','smtp_email','smtp_username','smtp_password','invoice_prefix','predefined_terms_invoice'] as $name)$config[$name]=$g($name);
-        return ['issuer_id'=>$issuer,'identity'=>$identity,'recipient'=>['client_id'=>$client,'name'=>(string)$c['company'],'tax_id'=>$tax],'currency'=>['id'=>(int)$cur['id'],'name'=>$cur['name']],'configuration_hash'=>hash('sha256',json_encode([$settings,$config],JSON_THROW_ON_ERROR)),'transport'=>['mode'=>'manual_notification','automatic_delivery'=>false]];
+        $context=['issuer_id'=>$issuer,'identity'=>$identity,'recipient'=>['client_id'=>$client,'name'=>(string)$c['company'],'tax_id'=>$tax],'currency'=>['id'=>(int)$cur['id'],'name'=>$cur['name']],'configuration_hash'=>hash('sha256',json_encode([$settings,$config],JSON_THROW_ON_ERROR)),'transport'=>['mode'=>'manual_notification','automatic_delivery'=>false]];
+        if($kind!=='invoices')$context['sales_preferences']=CompanySalesPreferences::capture($store,$issuer,$kind);
+        return $context;
     }
     protected static function encode(array $data):string{return json_encode($data,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);}
     protected static function hash(array $data):string{return hash('sha256',self::encode($data));}
-    protected function assertOrigin(int $issuer,int $actor,array $payload,string $originHash):void{if(!hash_equals($originHash,self::hash($this->context($issuer,$actor,(int)$payload['client_id'],(int)$payload['currency']))))throw new DomainException('company_sales_origin_changed');}
+    protected function assertOrigin(int $issuer,int $actor,array $payload,string $originHash,array $context=[]):void{if(!hash_equals($originHash,self::hash($this->context($issuer,$actor,(int)$payload['client_id'],(int)$payload['currency'],$context['sales_preferences']['kind']??'invoices'))))throw new DomainException('company_sales_origin_changed');}
     /** A committed canonical receipt can be finalized after configuration changes. Its immutable document snapshot must match the frozen origin. */
     protected function assertOriginOrReceipt(int $issuer,int $actor,array $payload,string $originHash,array $context,string $key):void
     {
         $receipt=$this->rows('SELECT r.issuer_id,r.actor_id,r.invoice_id,d.legal_identity_json AS identity_json,d.recipient_identity_json AS recipient_json FROM '.$this->prefix.'company_invoice_requests r JOIN '.$this->prefix.'invoices i ON i.id=r.invoice_id AND i.issuer_id=r.issuer_id JOIN '.$this->prefix.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE r.request_key=? FOR UPDATE',[$key])[0]??null;
-        if(!$receipt){$this->assertOrigin($issuer,$actor,$payload,$originHash);return;}
+        if(!$receipt){$this->assertOrigin($issuer,$actor,$payload,$originHash,$context);return;}
         if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||!hash_equals(self::hash($this->decode($receipt['identity_json'])),self::hash($context['identity']))||!hash_equals(self::hash($this->decode($receipt['recipient_json'])),self::hash($context['recipient'])) )throw new DomainException('company_sales_origin_changed');
     }
     protected function decode(string $json):array{$value=json_decode($json,true,32,JSON_THROW_ON_ERROR);if(!is_array($value))throw new RuntimeException('issuer_sales_write_unconfirmed');return $value;}

@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace app\services;
 defined('BASEPATH') or exit('No direct script access allowed');
 require_once __DIR__.'/CompanyReceiptSource.php';
+require_once __DIR__.'/CompanyBankReversalWriter.php';
 require_once __DIR__.'/CompanyCreditWriter.php';
 require_once __DIR__.'/CompanyCurrencyUnits.php';
 require_once __DIR__.'/CompanyFinancialJournal.php';
@@ -12,6 +13,7 @@ require_once __DIR__.'/CompanyInvoiceBalance.php';
 final class InvoicePaymentWriter
 {
     use CompanyCreditWriter;
+    use CompanyBankReversalWriter;
     private $db;
     public function __construct($db) { $this->db = $db; }
 

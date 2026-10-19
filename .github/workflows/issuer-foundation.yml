@@ -144,6 +144,7 @@ jobs:
           php tests/companies/sales_extras_worker.php
           php tests/companies/recurring_worker_scope.php
           php tests/companies/api_concurrency.php
+          php tests/companies/api_invoice_output_guard.php
           php tests/companies/api_scope.php
           php tests/asaas_checkout_legacy_scope.php
           php tests/asaas_checkout_preflight.php
@@ -170,12 +171,20 @@ jobs:
           php tests/companies/operation_files.php
           php tests/companies/operation_files_controller.php
           php tests/companies/operation_files_concurrency.php
+          php tests/companies/portal_operations.php
+          php tests/companies/portal_operations_controller.php
+          php tests/companies/portal_operations_concurrency.php
+          php tests/companies/bank_reversal_amounts.php
+          php tests/companies/bank_reversal_readers.php
+          php tests/companies/bank_reversal_provider_guards.php
+          php tests/companies/bank_reversal_report_views.php
           php tests/companies/currency_units.php
           php tests/companies/currency_concurrency.php
           php tests/companies/financial_journal.php
           php tests/companies/journal_writers.php
           php tests/companies/ledger_controller.php
           php tests/companies/native_427.php
+          php tests/companies/native_428.php
           php tests/companies/asaas_boundaries.php
           php tests/companies/asaas_exact_json.php
           php tests/companies/invoice_delivery_concurrency.php
@@ -189,6 +198,7 @@ jobs:
           php tests/banco_brasil_api_concurrency.php
           php tests/banco_brasil_api_movements_mysql.php
           php tests/banco_brasil_components_concurrency.php
+          php tests/banco_brasil_external_reversal_concurrency.php
           php tests/banco_brasil_api_receipt_concurrency.php
           php tests/banco_brasil_webhook_mysql.php
           php tests/banco_brasil_amendment_concurrency.php
@@ -197,6 +207,11 @@ jobs:
           php tests/settings/company_assets.php
           php tests/companies/asset_concurrency.php
           php tests/settings/company_settings.php
+          php tests/settings/sales_documents.php
+          php tests/companies/sales_preferences.php
+          php tests/companies/sales_preferences_concurrency.php
+          php tests/settings/primary_sales_documents.php
+          php tests/settings/primary_sales_preferences_concurrency.php
           php tests/settings/company_presentation.php
           php tests/settings/company_presentation_delivery.php
           php tests/settings/company_options_helpers.php

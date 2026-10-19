@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
 $file_query='?'.$file_kind.'='.(int)$file_parent['id'];$file_editable=$can_edit&&($file_kind==='contract'?in_array($file_parent['status'],['draft','active'],true):$file_parent['status']==='open'); ?>
-<section class="company-settings-card"><h3>Anexos privados</h3><p>PDF até 2 MiB ou PNG/JPEG até 512 KiB (imagens normalizadas). Até 20 arquivos e 20 MiB por registro, incluindo ocultos. Somente funcionários autorizados nesta empresa podem consultar; não há publicação no portal.</p>
+<section class="company-settings-card"><h3>Anexos privados</h3><p>PDF até 2 MiB ou PNG/JPEG até 512 KiB (imagens normalizadas). Até 20 arquivos e 20 MiB por registro, incluindo ocultos. Somente funcionários autorizados nesta empresa podem consultar. O portal exige publicação separada do registro e de cada arquivo nos controles abaixo.</p>
 <ul><?php foreach($operation_files as $file){ ?><li><a href="<?= $esc($url($file_query.'&file='.$file['file_key'])); ?>"><?= $esc($file['filename']); ?></a> · <?= (int)$file['byte_size']; ?> bytes
 <?php if($file['mime']==='image/png'){ ?><a href="<?= $esc($url($file_query.'&file='.$file['file_key'].'&preview=1')); ?>">Visualizar imagem normalizada</a><?php } ?>
 <?php if($can_edit){ ?><?= form_open($url());$hidden('file_hide'); ?><input type="hidden" name="file_key" value="<?= $esc($file['file_key']); ?>"><button type="submit">Ocultar anexo e preservar histórico</button><?= form_close(); ?><?php } ?></li><?php } ?></ul>

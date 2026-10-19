@@ -46,6 +46,10 @@ class Settings_model extends App_Model
         if ($isolated && (isset($data['tags']) || isset($data['custom_fields']))) {
             throw new DomainException('company_settings_global_resource_unavailable');
         }
+        // The principal uses its existing options storage; direct calls share the declared field contract.
+        $salesPreferences = array_intersect_key(is_array($data['settings'] ?? null) ? $data['settings'] : [], array_flip(CompanySettingsCatalog::fields('sales_documents')));
+        if ($salesPreferences !== []) { $data['settings'] = array_replace($data['settings'], CompanySettingsCatalog::prepare('sales_documents', $salesPreferences)); }
+        $primarySalesPreferences = [];
         $original_encrypted_fields = [];
 
         foreach ($this->encrypted_fields as $ef) {
@@ -100,6 +104,7 @@ class Settings_model extends App_Model
             $hook_data          = $isolated ? $hook_data : hooks()->apply_filters('before_single_setting_updated_in_loop', $hook_data);
             $name               = $hook_data['name'];
             $val                = $hook_data['value'];
+            if (CompanySettingsRuntime::active() && CompanySettingsRuntime::isPrimary() && in_array($name, CompanySettingsCatalog::fields('sales_documents'), true)) { $primarySalesPreferences[$name] = $val; continue; }
 
             if ($name == 'default_contact_permissions') {
                 $val = serialize($val);
@@ -161,6 +166,8 @@ class Settings_model extends App_Model
             }
         }
 
+        if ($primarySalesPreferences !== []) { $affectedRows += CompanySettingsRuntime::updateSalesDocumentPreferences($primarySalesPreferences); }
+
         // Contact permission default none
         if (! in_array('default_contact_permissions', $all_settings_looped)
                 && in_array('customer_settings', $all_settings_looped)) {
@@ -212,7 +219,7 @@ class Settings_model extends App_Model
         if(isset($data['tags'])||isset($data['custom_fields'])){throw new DomainException('company_settings_global_resource_unavailable');}
         if(!is_array($data['settings']??null)){throw new DomainException('company_settings_invalid_input');}
         // Internal callers share the same validation and HTML policy as the native form.
-        foreach (['email','email_content','documents'] as $group) {
+        foreach (['email','email_content','documents','sales_documents'] as $group) {
             $known=array_intersect_key($data['settings'],array_flip(CompanySettingsCatalog::fields($group)));
             if($known!==[])$data['settings']=array_replace($data['settings'],CompanySettingsCatalog::prepare($group,$known));
         }

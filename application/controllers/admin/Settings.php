@@ -54,6 +54,14 @@ class Settings extends AdminController
                 $post_data['settings'] = [];
             }
 
+            // Known sales document preferences retain literal text and fail before legacy hooks/uploads.
+            $rawSales = $this->input->post(null, false);
+            $salesPreferences = array_intersect_key(is_array($rawSales['settings'] ?? null) ? $rawSales['settings'] : [], array_flip(CompanySettingsCatalog::fields('sales_documents')));
+            if ($salesPreferences !== []) {
+                try { $post_data['settings'] = array_replace($post_data['settings'], CompanySettingsCatalog::prepare('sales_documents', $salesPreferences)); }
+                catch (DomainException $error) { show_error('Confira os prefixos e as condições dos documentos. Nenhuma definição foi alterada.', 422); return; }
+            }
+
             // Normalize language keys even when posted through another settings tab.
             if (in_array($group, ['general', 'localization', 'argws_platform'], true)
                 || array_intersect(['active_language', 'enabled_languages', 'disable_language'], array_keys($post_data['settings']))) {
@@ -109,7 +117,15 @@ class Settings extends AdminController
                 $post_data['settings']['smtp_password'] = $tmpData['settings']['smtp_password'];
             }
 
-            $success = $this->settings_model->update($post_data);
+            try { $success = $this->settings_model->update($post_data); }
+            catch (DomainException $error) {
+                if ($salesPreferences === [] || !CompanySettingsRuntime::active() || !CompanySettingsRuntime::isPrimary()) { throw $error; }
+                show_error('Não foi possível salvar as preferências. Confira os campos e sua permissão nesta empresa.', CompanySettingsRuntime::can('edit') ? 422 : 403); return;
+            } catch (RuntimeException $error) {
+                if ($salesPreferences === [] || !CompanySettingsRuntime::active() || !CompanySettingsRuntime::isPrimary()) { throw $error; }
+                log_message('error','Principal sales preferences unconfirmed; no submitted values logged.');
+                show_error('Não foi possível confirmar as preferências. Recarregue a página antes de tentar novamente.', 503); return;
+            }
 
             if ($success > 0) {
                 set_alert('success', _l('settings_updated'));
@@ -236,7 +252,7 @@ class Settings extends AdminController
         $identity = (new CompanySettingsIdentity($this->db, db_prefix()))->read(CompanySettingsRuntime::issuerId());
         $values = [];
         foreach ($fields as $name) {
-            if ($name !== 'smtp_password') { $values[$name] = CompanySettingsRuntime::get($name); }
+            if ($name !== 'smtp_password') { $values[$name] = CompanySettingsRuntime::exists($name)?CompanySettingsRuntime::get($name):CompanySettingsCatalog::defaultValue($group,$name); }
         }
         $this->load->view('admin/settings/company_scoped', [
             'company_identity' => $identity, 'company_id' => CompanySettingsRuntime::issuerId(),
@@ -250,6 +266,7 @@ class Settings extends AdminController
                 'email' => CompanyRequestScope::adminUrl($this, 'settings?group=email'),
                 'localization' => CompanyRequestScope::adminUrl($this, 'settings?group=localization'),
                 'documents' => CompanyRequestScope::adminUrl($this, 'settings?group=documents'),
+                'sales_documents' => CompanyRequestScope::adminUrl($this, 'settings?group=sales_documents'),
                 'email_content' => CompanyRequestScope::adminUrl($this, 'settings?group=email_content'),
             ],
         ]);

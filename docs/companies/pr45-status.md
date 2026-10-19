@@ -1,10 +1,12 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Este incremento usa núcleo4.2.7/427,
-BB1.1.3/101–113 e Asaas1.5.1/151, sobre o incremento426 publicado em
-`4c5dd23b31836f2bd562980c4e075e9017910c29` (18 execuções/16 workflows aprovados).
-A [validação427](pr45-validation-427.md) separa composição/InnoDB, HTTP e CI do novo
-HEAD. A evidência426 permanece em [validação426](pr45-validation-426.md).
+Escopo integral em andamento. Este incremento usa núcleo4.2.8/428,
+BB1.1.4/101–114 e Asaas1.5.1/151, sobre427 publicado em
+`11026cdbbfecbd1a2a557f2bee09f451fdd18506`.
+A [validação428](pr45-validation-428.md) registra29/29 execuções HTTP/Chromium
+em uma rodada limpa, instalação/upgrade/tracking e bytes conferidos; CI do novo
+SHA é acompanhado separadamente na descrição da PR. O427 passou25/25 execuções HTTP numa rodada limpa e16 workflows distintos
+concluíram com sucesso no próprio SHA; [evidência427](pr45-validation-427.md) preservada.
 Todos os passos históricos permanecem preservados. Sem merge, deploy, tag ou release manual.
 
 A prova425 está em [validação425](pr45-validation-425.md): fonte congelado,
@@ -12,7 +14,7 @@ instalação/upgrade nativos, aplicação real mysqli, MariaDB e Chromium. Os re
 locais não equivalem às matrizes remotas de outro SHA nem a homologação bancária.
 Inventários orientam revisão; contagens lexicais não medem bugs ou cobertura.
 
-| Requisito | Implementação incorporada até427 | Prova e limite |
+| Requisito | Implementação incorporada até428 | Prova e limite |
 |---|---|---|
 | Empresa principal/master/equipe | Identidade real do instalador, master diferente de1, wizard, grants/default por recurso e seletor409 | Bootstrap/upgrade/concorrência/HTTP; legado ambíguo usa console+senha; recuperação totalmente gráfica depende de autoridade independente |
 | Clientes privados/opt-in | Diretório positivo, compartilhamento explícito somente da identidade, contatos e sessões próprios | A/B/principal/NULL, concorrência e navegador; não compartilha histórico financeiro |
@@ -23,11 +25,11 @@ Inventários orientam revisão; contagens lexicais não medem bugs ou cobertura.
 | Vendas/conversão/recorrência | Orçamentos/propostas, decisões, conversão retomável no writer de fatura; agenda mensal e worker por ator/origem | Snapshot e guard sob lock; âncora mensal31; anexos/envios desses documentos integram426 |
 | Projetos/tarefas | Projetos, tarefas/comentários/checklists/timers, marcos/DAG/seguidores/arquivos/Kanban, tarefas avulsas | Serviços/controladores/concorrência/Chromium; API operacional integra426 |
 | Despesas | Categorias, despesas/referências próprias, tributos, arquivos, edição/cancelamento auditados | A/B/principal/legado e navegador; importação/exportação por lote integra426 |
-| Contratos/tickets | Documentos, cópia/PDF, conversas e referências próprias | Serviços, controllers reais, arquivos privados427 e navegador; portal operacional permanece pendente |
+| Contratos/tickets | Documentos, cópia/PDF, conversas e referências próprias | Serviços, controllers reais, arquivos privados427 e portal operacional428, com publicação explícita e grants3/5/6 |
 | Relatórios/API financeira | Posição atual por moeda e CSV auditado; quatro scopes de API vinculados a empresa/ator | API/locks/revogação/PDF e Chromium; diário/períodos e moeda imutável integram426; posição atual não é fechamento histórico |
 | Asaas por origem | Contas/credenciais/ambientes, cobrança, consulta, inbox, recebimento nominal Pix/boleto, worker opt-in e despesa de tarifa explícita | Suítes writer/protocolo/concorrência, native149 e HTTP; transporte simulado; remoção remota150 e pagador privado/cartão hospedado avulso151; sem parcelas/assinaturas/antecipação |
 | BB API | OAuth, reserva/outbox, registro, consulta/prova de conta, pedido/confirmação de baixa, crédito16 integral, alteração de vencimento confirmada, receptor mTLS observacional | MariaDB240, webhook229, TLS local e Chromium425; nenhum OAuth/registro/homologação BB real; encargos/parciais/estornos financeiros continuam técnicos pendentes |
-| CNAB240 | Originação, reserva API/CNAB, geração/download/retry, envio manual declarado, retorno/revisão/vínculo e crédito assistido parcial e componentes427 | Principal em caixa separado de descontos/abatimentos/encargos agregados; tarifas/IOF/outros e estorno próprio pendentes; upload não autentica banco |
+| CNAB240 | Originação, reserva API/CNAB, geração/download/retry, envio manual declarado, retorno/revisão/vínculo e crédito assistido parcial e componentes427 | Principal em caixa separado de descontos/abatimentos/encargos agregados; tarifas/IOF/outros e reversão parcial continuam pendentes; reversão externa integral declarada428 preserva originais; upload não autentica banco |
 | CNAB400 | Parser CBR643 e candidato CBR641 | Operação indisponível: BRL85–86, juros herdados/contrato e picture CBR64326–39; trailer já resolvido; amostras aceitas/retornos não fornecidos |
 | Homologação externa | Nenhuma realizada em API/240/400/Asaas/SMTP | Depende de autorização, canal/conta/convênio/carteira e acesso próprios; não esconde código ainda faltante |
 
@@ -37,6 +39,22 @@ Guias: [faturas](invoice-operations.md), [créditos](credit-operations.md),
 
 A falta de homologação não elimina pendências técnicas. Não aplicar eventos sem
 origem, evidência canônica e writer transacional; não atribuir ao banco uma prova local.
+
+## Incremento428 — portal operacional, reversão e preferências
+
+| Fluxo | Implementação e prova | Limite |
+|---|---|---|
+| Portal operacional | Publicação explícita de contratos/chamados/projetos, arquivos e mensagens; grants nativos3/5/6, sessão e owner privados | Ainda não oferece criação/resposta do contato, anexos pelo contato ou assinatura de contrato |
+| Reversão de componentes | Fonte final fechada, declaração independente de reversão externa integral, recibo/journal e saldo único; original nativo preservado | Não envia nem autentica estorno no BB; não converte ocorrência44 em refund; restrito aos recibos compostos427 |
+| Relatórios/diário | Original/revertido/efetivo, pernas monetárias e não monetárias, cobertura e CSV próprios | Não é saldo bancário autenticado ou escrituração fiscal |
+| Preferências de vendas | Prefixos/termos próprios de orçamento/proposta em snapshots, PDF/portal/notificação; principal com lote conhecido atômico | Demais settings desconhecidos e infraestrutura global conservam seus contratos |
+| API fatura/bytes | Revalidação canônica após auditoria e após TCPDF, com comparação do DTO | Prova RED/GREEN token/ator/owner; revogação tardia não libera o documento autorizado anteriormente |
+
+API dos subrecursos operacionais e criação/resposta de suporte pelo contato estão
+preparadas para429/430, ainda fora desta entrega. Permissões do contato não viram
+permissões de funcionário. Recuperação gráfica legada exige autoridade independente
+original/registro verificável; o estado transitório do provisionador é removido no
+sucesso e o marcador restante não prova identidade. Ver guia específico.
 
 ## Incremento427 — composição financeira, checkout e arquivos
 

@@ -20,12 +20,17 @@ final class CompanyApiService
     {
         $who=$this->tokens->resolve($secret,$scope);$invoice=IssuerPolicy::id($invoice);$tokenService=$this->tokens;
         $documents=new InvoiceIssuerDocuments($this->db,$this->p,$who['actor_id'],static function($issuer,$actor,$cap)use($tokenService,$secret,$scope,$who):bool{if($issuer!==$who['issuer_id']||$actor!==$who['actor_id']||!in_array($cap,['render_invoices','view_invoices'],true))return false;$tokenService->guard($secret,$scope,$issuer,$actor);return true;});
-        $dto=$documents->forPdf($invoice,$who['issuer_id']);$this->transaction($who,function()use($secret,$scope,$who,$invoice):void{$this->tokens->usedInOwnedTransaction($secret,$scope,$who['issuer_id'],$who['actor_id'],$scope==='invoices:pdf'?'invoice_pdf':'invoice_read',null,['invoice_id'=>$invoice]);});return [$who,$dto];
+        $dto=$documents->forPdf($invoice,$who['issuer_id']);$this->transaction($who,function()use($secret,$scope,$who,$invoice):void{$this->tokens->usedInOwnedTransaction($secret,$scope,$who['issuer_id'],$who['actor_id'],$scope==='invoices:pdf'?'invoice_pdf':'invoice_read',null,['invoice_id'=>$invoice]);});$this->confirmInvoiceData($documents,$dto,$invoice,$who['issuer_id']);return [$who,$dto,$documents];
+    }
+    /** Read again through the canonical source: token, actor and persisted origin remain current. */
+    private function confirmInvoiceData(InvoiceIssuerDocuments $documents,InvoiceIssuerDocumentData $dto,int $invoice,int $issuer):void
+    {
+        if($documents->forPdf($invoice,$issuer)->data()!==$dto->data())throw new DomainException('issuer_document_scope_mismatch');
     }
     public function invoice(string $secret,$invoice):array{[$who,$dto]=$this->invoiceData($secret,'invoices:read',$invoice);return ['issuer_id'=>$who['issuer_id'],'document'=>$dto->data()];}
     public function invoicePdf(string $secret,$invoice):string
     {
-        [$who,$dto]=$this->invoiceData($secret,'invoices:pdf',$invoice);if(!class_exists('TCPDF'))require_once APPPATH.'vendor/tecnickcom/tcpdf/tcpdf.php';require_once APPPATH.'libraries/pdf/Issuer_invoice_pdf.php';return (new Issuer_invoice_pdf($dto))->prepare()->Output('','S');
+        [$who,$dto,$documents]=$this->invoiceData($secret,'invoices:pdf',$invoice);if(!class_exists('TCPDF'))require_once APPPATH.'vendor/tecnickcom/tcpdf/tcpdf.php';require_once APPPATH.'libraries/pdf/Issuer_invoice_pdf.php';$bytes=(new Issuer_invoice_pdf($dto))->prepare()->Output('','S');$this->confirmInvoiceData($documents,$dto,IssuerPolicy::id($invoice),$who['issuer_id']);return $bytes;
     }
     public function createInvoice(string $secret,array $input,string $idempotencyKey):array
     {
