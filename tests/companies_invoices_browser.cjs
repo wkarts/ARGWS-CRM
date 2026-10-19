@@ -46,7 +46,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
    for(const [field,value]of Object.entries({invoice_company_address:'Synthetic '+letter+' street',invoice_company_city:'Synthetic city',company_state:'BA',invoice_company_country_code:'BR',invoice_company_postal_code:'00000-000'}))await page.locator('#company-setting-'+field).fill(value);
    await navigate(page,page.locator('section form button[type=submit]'));
    await page.goto(url+'/admin/company_invoices');await page.locator('#invoice-client').selectOption(clients[issuer]);await page.locator('#invoice-currency').selectOption({label:'BRL'});
-   await page.locator('#invoice-item-0-description').fill('Synthetic invoice '+letter);await page.locator('#invoice-item-0-qty').fill('2.00');await page.locator('#invoice-item-0-rate').fill('50.25');await page.locator('#invoice-item-0-taxname').fill('Synthetic tax');await page.locator('#invoice-item-0-taxrate').fill('5.00');
+   await page.locator('#invoice-item-0-description').fill('Synthetic invoice '+letter);await page.locator('#invoice-item-0-qty').fill('2.00');await page.locator('#invoice-item-0-rate').fill('50.25');await page.locator('#invoice-item-0-tax-0-name').fill('Synthetic tax');await page.locator('#invoice-item-0-tax-0-rate').fill('5.00');
    const form=page.locator('form').filter({has:page.locator('#invoice-client')});const creation=await fields(form);
    await navigate(page,form.locator('button[type=submit]'));
    ids[issuer]=new URL(page.url()).searchParams.get('invoice');assert.match(ids[issuer]||'',/^[1-9]\d*$/);
@@ -93,6 +93,28 @@ async function next(page) { await navigate(page, page.locator('section form butt
    await select(a);await page.goto(url+'/admin/company_clients?client='+clients[a]);await navigate(page,page.getByRole('button',{name:'Revogar acesso a faturas no portal',exact:true}));await portalA.reload();assert.equal(await portalA.locator('#portal-invoices').count(),0,'native revocation takes effect in existing session');assert.equal((await portalPdf(publicA,portalA,a,ids[a])).status(),404,'revoked session cannot download PDF');
    assert.equal(sql("SELECT COUNT(*) FROM tblissuers_audit WHERE event='company_portal_invoice_pdf_downloaded' AND issuer_id="+a+" AND subject_id="+ids[a]),'1','only authorized PDF delivery is audited as delivered');
   }finally{for(const ctx of publicContexts)await ctx.close();}
+  // Expanded monetary editor: two native taxes, discount timing and signed adjustment in both owners.
+  for(const [issuer,letter]of[[a,'a'],[b,'b']]){
+   await select(issuer);await page.goto(url+'/admin/company_invoices');
+   await page.locator('#invoice-client').selectOption(clients[issuer]);await page.locator('#invoice-currency').selectOption({label:'BRL'});
+   await page.locator('#invoice-item-0-description').fill('Expanded '+letter);await page.locator('#invoice-item-0-rate').fill('100.00');
+   await page.locator('#invoice-item-0-tax-0-name').fill('ISS');await page.locator('#invoice-item-0-tax-0-rate').fill('5.00');
+   await page.locator('#invoice-items [data-add-tax]').click();await page.locator('#invoice-item-0-tax-1-name').fill('Levy');await page.locator('#invoice-item-0-tax-1-rate').fill('2.50');
+   await page.locator('#discount-mode').selectOption('percent');await page.locator('#discount-value').fill('10.00');await page.locator('#discount-type').selectOption('before_tax');await page.locator('#adjustment').fill('-0.01');
+   await navigate(page,page.locator('form').filter({has:page.locator('#invoice-client')}).locator('button[type=submit]'));
+   const expandedId=new URL(page.url()).searchParams.get('invoice');assert.match(expandedId||'',/^[1-9]\d*$/);
+   assert.equal(sql('SELECT CONCAT(total,"/",total_tax,"/",discount_total,"/",adjustment) FROM tblinvoices WHERE id='+expandedId),'96.74/6.75/10.00/-0.01');
+   assert.equal(await page.locator('#edit-item-0-tax-1-rate').inputValue(),'2.50');assert.equal(await page.locator('#edit-discount-mode').inputValue(),'percent');
+   const expandedPdf=await context.request.get(url+'/admin/company_invoices?invoice='+expandedId+'&pdf=1');assert.equal(expandedPdf.status(),200);assert.equal((await expandedPdf.body()).subarray(0,5).toString(),'%PDF-');
+   await page.locator('#edit-discount-mode').selectOption('fixed');await page.locator('#edit-discount-type').selectOption('after_tax');await page.locator('#edit-adjustment').fill('0.01');
+   await navigate(page,page.locator('form').filter({has:page.locator('#edit-invoice-date')}).locator('button[type=submit]'));
+   assert.equal(sql('SELECT total FROM tblinvoices WHERE id='+expandedId),'97.51');
+   // Two tabs: a saved monetary form from A cannot mutate after switching to B.
+   const prior=await fields(page.locator('form').filter({has:page.locator('#edit-invoice-date')}));
+   await select(issuer===a?b:a);
+   const obsolete=await context.request.post(url+'/admin/company_invoices',{form:{...prior,action:'cancel'}});assert.equal(obsolete.status(),409);
+   assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+expandedId),'1');
+  }
   await page.screenshot({path:output+'/company-invoices.png',fullPage:true});assert.deepEqual(errors,[]);
   console.log('Named-company invoice CRUD/numbering/PDF/manual partial+final receipts/private portal grant+PDF+revocation: real HTTP/MySQL/Chromium passed; no bank/provider operations.');
  }finally{await browser.close();}

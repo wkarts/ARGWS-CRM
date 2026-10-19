@@ -11,7 +11,7 @@ class Company_invoices extends AdminController
         if(!$acl->can($issuer,$actor,'invoices','view')){show_error('Sem permissão para faturas desta empresa.',403);return;}
         $this->output->set_header('Cache-Control: no-store');$s=new CompanyInvoices($this->db,db_prefix());
         $csrf=$this->session->userdata('company_invoices_csrf');if(!is_string($csrf)||strlen($csrf)!==64){$csrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_invoices_csrf',$csrf);}
-        $error=null;$document=null;$payments=[];$page=['items'=>[],'next'=>null];$clients=[];$currencies=[];$revision=null;
+        $error=null;$document=null;$payments=[];$page=['items'=>[],'next'=>null];$clients=[];$currencies=[];$revision=null;$adjustments=[];
         try{
             if($this->input->method(true)==='POST'){
                 $posted=$this->input->post('company_invoices_csrf',false);if(!is_string($posted)||!hash_equals($csrf,$posted)){show_error('Recarregue antes de salvar.',403);return;}
@@ -28,7 +28,7 @@ class Company_invoices extends AdminController
             }elseif(!in_array($this->input->method(true),['GET','HEAD'],true)){show_error('Método não permitido.',405);return;}
             $id=$this->input->get('invoice',false);
             if($id!==null){
-                $dto=$s->document($issuer,$actor,$id);$document=$dto->data();$payments=$s->payments($issuer,$actor,$id);$revision=$s->revision($issuer,$actor,$id);
+                $dto=$s->document($issuer,$actor,$id);$document=$dto->data();$adjustments=$s->adjustments($issuer,$actor,$id);$payments=$s->payments($issuer,$actor,$id);$revision=$s->revision($issuer,$actor,$id);
                 if($this->input->get('pdf',false)==='1'){
                     require_once APPPATH.'vendor/tecnickcom/tcpdf/tcpdf.php';require_once APPPATH.'libraries/pdf/Issuer_invoice_pdf.php';
                     $pdf=(new Issuer_invoice_pdf($dto))->prepare();
@@ -51,6 +51,6 @@ class Company_invoices extends AdminController
                 default=>'Não foi possível concluir. Confira os dados, o estado e as permissões. Esta tentativa não aplicou alterações.',
             };
         }catch(Throwable $e){log_message('error','Company invoice operation unconfirmed; no document or payment values logged.');$this->output->set_status_header(503);$error='Não foi possível confirmar a operação. Reabra a fatura antes de tentar novamente.';}
-        $this->load->view('admin/companies/invoices',['issuer'=>$issuer,'document'=>$document,'payments'=>$payments,'directory'=>$page,'clients'=>$clients,'currencies'=>$currencies,'revision'=>$revision,'error'=>$error,'company_invoices_csrf'=>$csrf,'request_key'=>bin2hex(random_bytes(32)),'can_create'=>$acl->can($issuer,$actor,'invoices','create'),'can_edit'=>$acl->can($issuer,$actor,'invoices','edit'),'can_payment'=>$acl->can($issuer,$actor,'payments','create')]);
+        $this->load->view('admin/companies/invoices',['issuer'=>$issuer,'document'=>$document,'adjustments'=>$adjustments,'payments'=>$payments,'directory'=>$page,'clients'=>$clients,'currencies'=>$currencies,'revision'=>$revision,'error'=>$error,'company_invoices_csrf'=>$csrf,'request_key'=>bin2hex(random_bytes(32)),'can_create'=>$acl->can($issuer,$actor,'invoices','create'),'can_edit'=>$acl->can($issuer,$actor,'invoices','edit'),'can_payment'=>$acl->can($issuer,$actor,'payments','create')]);
     }
 }

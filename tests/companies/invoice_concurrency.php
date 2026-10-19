@@ -12,8 +12,9 @@ if(($argv[1]??'')==='worker'){
     $input=json_decode(stream_get_contents(STDIN),true,16,JSON_THROW_ON_ERROR);$db=raceConnection($p);$GLOBALS['essentialPrefix']=$p;
     try{
         if($input['operation']==='create')echo (new CompanyInvoices($db,$p))->create($input['issuer'],7,$input['invoice'],$input['key']);
+        elseif($input['operation']==='update'){(new CompanyInvoices($db,$p))->change($input['issuer'],7,$input['invoice_id'],$input['revision'],$input['invoice']);echo 'updated';}
         else echo (new \app\services\InvoicePaymentWriter($db))->recordCompanyManual($input['issuer'],7,$input['invoice_id'],$input['payment'],$input['key']);
-    }catch(DomainException $error){if(in_array($error->getMessage(),['company_invoice_access_denied','company_payment_access_denied','company_payment_exceeds_balance','company_payment_invoice_not_eligible'],true)){echo 'denied';}else{throw $error;}}
+    }catch(DomainException $error){if(in_array($error->getMessage(),['company_invoice_stale','company_invoice_access_denied','company_payment_access_denied','company_payment_exceeds_balance','company_payment_invoice_not_eligible'],true)){echo 'denied';}else{throw $error;}}
     exit(0);
 }
 require __DIR__.'/invoices.php';
@@ -53,3 +54,14 @@ $revoked=$s->create($a,7,$input,str_repeat('7',64));
 essentialCheck(race(['operation'=>'payment','issuer'=>$a,'invoice_id'=>$revoked,'payment'=>$receipt,'key'=>str_repeat('8',64)],fn()=>$db->query("UPDATE {$p}staff SET active=0 WHERE staffid=7"))===['denied','denied'],'revocation during lock wait blocks both positive-company payments');
 essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}invoicepaymentrecords WHERE invoiceid=?",[$revoked])->row()->n===0,'no orphan receipt after revocation race');
 echo 'Named-company invoice/payment concurrency: '.$GLOBALS['essentialChecks'].' checks passed, actual MySQL row locks.'.PHP_EOL;
+
+$db->query("UPDATE {$p}staff SET active=1 WHERE staffid=7");
+$editable=$s->create($a,7,$input,str_repeat('9',64));$editRevision=$s->revision($a,7,$editable);
+$adjusted=$input;$adjusted['discount_mode']='percent';$adjusted['discount_value']='10';$adjusted['discount_type']='before_tax';$adjusted['adjustment']='-0.01';
+$out=race(['operation'=>'update','issuer'=>$a,'invoice_id'=>$editable,'revision'=>$editRevision,'invoice'=>$adjusted]);sort($out);
+essentialCheck($out===['denied','updated'],'concurrent monetary editors have one winner and one stale revision');
+essentialCheck($s->document($a,7,$editable)->data()['totals']['total']==='94.96','winning before-tax discount, rounded tax and adjustment persist together');
+$editRevision=$s->revision($a,7,$editable);
+essentialCheck(race(['operation'=>'update','issuer'=>$a,'invoice_id'=>$editable,'revision'=>$editRevision,'invoice'=>$input],fn()=>$db->query("UPDATE {$p}staff SET active=0 WHERE staffid=7"))===['denied','denied'],'revocation while waiting on lock denies both monetary updates');
+essentialCheck($db->query("SELECT total FROM {$p}invoices WHERE id=?",[$editable])->row()->total==='94.96','revoked editors leave financial amount unchanged');
+echo 'Expanded monetary edits/concurrency/revocation: '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;

@@ -101,3 +101,38 @@ $untrustedSource=new class implements CompanyReceiptSource {
     public function applied($db,string $prefix,int $issuer,int $actor,int $payment):void {}
 };
 essentialThrows(fn()=>$writer->recordCompanyProviderReceipt($a,7,$untrustedSource),'company_receipt_source_denied','an arbitrary provider adapter cannot grant positive-company payment authority');
+
+// Positive A/B amounts, immutable snapshots, retries and rollback for the expanded editor.
+$expanded=['client_id'=>$ca,'currency'=>1,'date'=>'2026-10-19','due_date'=>'2026-11-19',
+ 'items'=>[['description'=>'Expanded amounts','qty'=>'1.00','rate'=>'100.00','taxes'=>[['name'=>'ISS','rate'=>'5.00'],['name'=>'Levy','rate'=>'2.50']]]],
+ 'discount_mode'=>'percent','discount_value'=>'10.00','discount_type'=>'before_tax','adjustment'=>'-0.01','note'=>'Synthetic'];
+foreach([[$a,$ca],[$b,$cb]] as [$owner,$customer]){
+ $expanded['client_id']=$customer;$expandedKey=hash('sha256','expanded-'.$owner);$expandedId=$s->create($owner,7,$expanded,$expandedKey);
+ $expandedDoc=$s->document($owner,7,$expandedId)->data();
+ essentialCheck($expandedDoc['totals']===['subtotal'=>'100.00','total_tax'=>'6.75','discount_total'=>'10.00','adjustment'=>'-0.01','total'=>'96.74'],'A/B DTO/PDF amounts reconcile multiple taxes and before-tax discount');
+ essentialCheck(count($expandedDoc['items'][0]['taxes'])===2,'both taxes persist and are visible to the authorized document reader');
+ essentialCheck($s->adjustments($owner,7,$expandedId)['discount_value']==='10.00','editor reload preserves percentage input');
+ essentialCheck($s->create($owner,7,$expanded,$expandedKey)===$expandedId,'expanded monetary retry does not consume sequence');
+ $divergent=$expanded;$divergent['adjustment']='0.01';
+ essentialThrows(fn()=>$s->create($owner,7,$divergent,$expandedKey),'company_invoice_request_conflict','same request with different adjustment conflicts');
+ $prior=$s->revision($owner,7,$expandedId);$divergent['discount_mode']='fixed';$divergent['discount_type']='after_tax';
+ $db->failOn='INSERT INTO '.$p.'issuers_audit';
+ essentialThrows(fn()=>$s->change($owner,7,$expandedId,$prior,$divergent),'issuer_storage_failed','expanded update rolls back amounts and both taxes if audit fails');$db->failOn=null;
+ essentialCheck($s->document($owner,7,$expandedId)->data()['totals']===$expandedDoc['totals'],'failed update leaves totals intact');
+ $s->change($owner,7,$expandedId,$prior,$divergent);
+ essentialCheck($s->document($owner,7,$expandedId)->data()['totals']['total']==='97.51','positive edit recalculates after-tax fixed discount in A/B');
+ essentialThrows(fn()=>$s->change($owner,7,$expandedId,$prior,$expanded),'company_invoice_stale','discount editor uses optimistic concurrency');
+ $writer->recordCompanyManual($owner,7,$expandedId,['amount'=>'97.51','date'=>'2026-10-19','reference'=>'expanded-'.$owner,'note'=>'Synthetic'],hash('sha256','expanded-payment-'.$owner));
+ essentialCheck($s->document($owner,7,$expandedId)->data()['status']===2,'canonical writer settles discounted adjusted amount');
+ essentialThrows(fn()=>$s->change($owner,7,$expandedId,$s->revision($owner,7,$expandedId),$expanded),'company_invoice_immutable','discount cannot be changed after a financial movement');
+}
+// A durable pre-417 receipt must survive software upgrade without a second invoice.
+$legacyInput=$input;$legacyInput['client_id']=$ca;$legacyKey=hash('sha256','pre417');$legacyId=$s->create($a,7,$legacyInput,$legacyKey);
+$oldPayload=['client_id'=>$ca,'date'=>'2026-10-19','due_date'=>'2026-11-19','currency'=>1,
+ 'items'=>[['description'=>'Synthetic service <script>','qty'=>'2.00','rate'=>'50.25','taxrate'=>'5.00','taxname'=>'Synthetic tax']],
+ 'note'=>'Synthetic note','subtotal'=>'100.50','tax'=>'5.03','total'=>'105.53'];
+$db->query("UPDATE {$p}company_invoice_requests SET input_hash=? WHERE request_key=?",[hash('sha256',json_encode($oldPayload,JSON_THROW_ON_ERROR)),$legacyKey]);
+essentialCheck($s->create($a,7,$legacyInput,$legacyKey)===$legacyId,'pre-upgrade request hash remains retryable without recreating the invoice');
+essentialThrows(fn()=>$s->adjustments($b,7,$legacyId),'company_invoice_access_denied','adjustment reader rejects cross-company ID');
+essentialCheck($db->query("SELECT * FROM {$p}invoices WHERE id=42")->result_array()===$legacyBefore,'expanded operations preserve historical NULL rows');
+echo 'Expanded invoice amounts/retry/A+B/rollback: '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;

@@ -6,7 +6,7 @@ validados antes da hidratação. Não carrega Invoices_model, gateways ou hooks 
 O caminho antigo continua reservado ao histórico NULL; não adota ou reclassifica
 faturas antigas. O cadastro Empresas e o shell oferecem links conforme o recurso.
 
-Fluxos implementados: emitir fatura com itens/tributo percentual por item, listar,
+Fluxos implementados: emitir fatura com itens/múltiplos tributos percentuais por item, descontos e ajustes, listar,
 consultar, editar itens/datas/observação enquanto não há movimento ou origem bancária,
 cancelar sem apagar, baixar PDF autorizado e registrar recebimentos manuais parciais
 ou finais. A UI distingue fatura de boleto/remessa e registro manual de confirmação
@@ -60,10 +60,22 @@ Snapshot do destinatário permanece histórico mesmo após revogação do compar
 Resultados executados são os do SHA/run indicados na PR45. SQLite não prova locks.
 Não houve provedor, transação bancária, entrega externa, merge ou deploy.
 
-O perfil atual não libera descontos/ajustes, múltiplos tributos no mesmo item,
-créditos/refunds/estornos, recorrência, envio de fatura/e-mail, anexos, portal de
-faturas, relatórios agregados, API pública ou integrações dos demais módulos.
-Esses consumidores permanecem pendentes e seus gates não foram removidos. A lista
-por empresa não é uma declaração de adaptação completa dos relatórios do CRM.
+Desde o incremento417, o editor aceita até dez tributos por item, desconto fixo ou
+percentual sobre o subtotal (antes/depois dos tributos) e ajuste positivo/negativo.
+Antes dos tributos, desconto é distribuído pelos valores de item por maior resto,
+com desempate pela ordem dos itens. Cada tributo arredonda meio centavo para cima.
+O ajuste não muda bases fiscais. Total precisa permanecer positivo e dentro de
+DECIMAL(15,2). O formulário recarrega todos os tributos/modalidade/valor; o PDF e
+portal usam os totalizadores persistidos. Recibos de criação anteriores ao417
+continuam aceitos para retry idêntico, com ator/empresa/payload conferidos.
+`tests/companies/invoice_amounts.php` contém exemplos monetários e limites;
+`invoices.php` testa A/B, rollback, edição e recebimento pelo writer canônico;
+o navegador exercita o formulário, PDF e409 após troca de empresa. Ver resultados
+executados no SHA da matriz, sem atribuir uma execução antiga a código novo.
+
+Portal de faturas emitidas já possui lista/PDF próprio e permissão nativa explícita
+(ver [portal](portal-recovery.md)). Permanecem pendentes créditos/refunds/estornos,
+recorrência, envio de fatura/e-mail, anexos, relatórios agregados, API pública e
+integrações dos demais módulos. Os gates correspondentes não foram removidos.
 API BB, originação/remessas e conciliação bancária continuam frentes técnicas próprias;
 esta operação manual não as homologa nem transforma retorno observacional em baixa.

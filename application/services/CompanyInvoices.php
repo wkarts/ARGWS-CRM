@@ -6,6 +6,7 @@ require_once __DIR__.'/issuers/IssuerResourceAccess.php';
 require_once __DIR__.'/issuers/InvoiceIssuerDocuments.php';
 require_once __DIR__.'/CompanySettingsStorage.php';
 require_once __DIR__.'/InvoicePaymentWriter.php';
+require_once __DIR__.'/CompanyInvoiceAmounts.php';
 
 /** Native named-company invoices; legacy models, providers and hooks are never invoked by this adapter. */
 final class CompanyInvoices
@@ -47,24 +48,17 @@ final class CompanyInvoices
     {
         try{return \app\services\InvoicePaymentWriter::minorUnits($value);}catch(Throwable $e){throw new DomainException('company_invoice_invalid_input');}
     }
-    public static function decimal(int $value):string{return intdiv($value,100).'.'.str_pad((string)($value%100),2,'0',STR_PAD_LEFT);}
+    public static function decimal(int $value):string{return CompanyInvoiceAmounts::decimal($value);}
     private static function input(array $input):array
     {
-        if(array_diff(array_keys($input),['client_id','date','due_date','currency','items','note'])||!isset($input['items'])||!is_array($input['items'])||count($input['items'])<1||count($input['items'])>100)throw new DomainException('company_invoice_invalid_input');
-        $items=[];$subtotal=0;$tax=0;
-        foreach($input['items'] as $item){
-            if(!is_array($item)||array_diff(array_keys($item),['description','qty','rate','taxname','taxrate']))throw new DomainException('company_invoice_invalid_input');
-            $qty=self::cents($item['qty']??null);$rate=self::cents($item['rate']??null);$taxRate=self::cents($item['taxrate']??'0');
-            if($qty<1||$qty>99999900||$rate<1||$qty>intdiv(self::MAX*100,$rate)||$taxRate>10000)throw new DomainException('company_invoice_invalid_input');
-            $line=intdiv($qty*$rate+50,100);$lineTax=intdiv($line,10000)*$taxRate+intdiv(($line%10000)*$taxRate+5000,10000);
-            if($subtotal>self::MAX-$line||$tax>self::MAX-$lineTax)throw new DomainException('company_invoice_invalid_input');
-            $subtotal+=$line;$tax+=$lineTax;
-            $items[]=['description'=>self::text($item['description']??null,10000,true),'qty'=>self::decimal($qty),'rate'=>self::decimal($rate),'taxrate'=>self::decimal($taxRate),'taxname'=>self::text($item['taxname']??'',100,$taxRate>0)];
-        }
-        if($subtotal+$tax<1||$subtotal>self::MAX-$tax)throw new DomainException('company_invoice_invalid_input');
+        $optionNames=['discount_mode','discount_value','discount_type','adjustment'];
+        if(array_diff(array_keys($input),array_merge(['client_id','date','due_date','currency','items','note'],$optionNames))
+            ||!isset($input['items'])||!is_array($input['items']))throw new DomainException('company_invoice_invalid_input');
+        $amounts=CompanyInvoiceAmounts::calculate($input['items'],array_intersect_key($input,array_flip($optionNames)));
         $date=self::date($input['date']??null);$due=self::date($input['due_date']??null);
         if($due<$date)throw new DomainException('company_invoice_invalid_input');
-        return ['client_id'=>IssuerPolicy::id($input['client_id']??null),'date'=>$date,'due_date'=>$due,'currency'=>IssuerPolicy::id($input['currency']??null),'items'=>$items,'note'=>self::text($input['note']??'',20000),'subtotal'=>self::decimal($subtotal),'tax'=>self::decimal($tax),'total'=>self::decimal($subtotal+$tax)];
+        return array_merge($amounts,['client_id'=>IssuerPolicy::id($input['client_id']??null),'date'=>$date,'due_date'=>$due,
+            'currency'=>IssuerPolicy::id($input['currency']??null),'note'=>self::text($input['note']??'',20000)]);
     }
     private function transaction(callable $operation)
     {
@@ -81,12 +75,12 @@ final class CompanyInvoices
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input);
         if(!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new DomainException('company_invoice_invalid_input');
-        $hash=hash('sha256',json_encode($data,JSON_THROW_ON_ERROR));
-        return $this->transaction(function()use($issuer,$actor,$data,$requestKey,$hash):int{
+        $hash=hash('sha256',json_encode($data,JSON_THROW_ON_ERROR));$legacyHash=$this->legacyRequestHash($data,$input);
+        return $this->transaction(function()use($issuer,$actor,$data,$requestKey,$hash,$legacyHash):int{
             $this->authorize($issuer,$actor,'create');$this->authorize($issuer,$actor,'view');
             $receipt=$this->rows('SELECT * FROM '.$this->prefix.'company_invoice_requests WHERE request_key=? FOR UPDATE',[$requestKey])[0]??null;
             if($receipt){
-                if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||!hash_equals($receipt['input_hash'],$hash))throw new DomainException('company_invoice_request_conflict');
+                if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||(!hash_equals($receipt['input_hash'],$hash)&&($legacyHash===null||!hash_equals($receipt['input_hash'],$legacyHash))))throw new DomainException('company_invoice_request_conflict');
                 if(!$this->rows('SELECT id FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$receipt['invoice_id'],$issuer]))throw new RuntimeException('issuer_invoice_write_unconfirmed');
                 return (int)$receipt['invoice_id'];
             }
@@ -94,7 +88,7 @@ final class CompanyInvoices
             if(!(new IssuerResourceAccess($this->db,$this->prefix))->can($issuer,$actor,'customers','view'))throw new DomainException('company_invoice_recipient_denied');
             if(!$this->rows('SELECT c.userid FROM '.$this->prefix.'clients c JOIN '.$this->prefix.'issuers_clients o ON o.client_id=c.userid WHERE c.userid=? AND c.active=1 AND (o.owner_issuer_id=? OR EXISTS(SELECT 1 FROM '.$this->prefix.'issuers_client_links l WHERE l.client_id=c.userid AND l.issuer_id=?)) FOR UPDATE',[$client,$issuer,$issuer]))throw new DomainException('company_invoice_recipient_denied');
             if(!$this->rows('SELECT id FROM '.$this->prefix.'currencies WHERE id=?',[$data['currency']]))throw new DomainException('company_invoice_invalid_input');
-            $fields=['issuer_id'=>$issuer,'clientid'=>$client,'number'=>0,'prefix'=>'','number_format'=>1,'datecreated'=>date('Y-m-d H:i:s'),'date'=>$data['date'],'duedate'=>$data['due_date'],'currency'=>$data['currency'],'subtotal'=>$data['subtotal'],'total_tax'=>$data['tax'],'total'=>$data['total'],'adjustment'=>'0.00','addedfrom'=>$actor,'hash'=>bin2hex(random_bytes(16)),'status'=>1,'clientnote'=>$data['note'],'discount_type'=>'after_tax','discount_total'=>'0.00','include_shipping'=>0,'show_shipping_on_invoice'=>0,'cancel_overdue_reminders'=>1,'allowed_payment_modes'=>serialize([]),'billing_street'=>'','billing_city'=>'','billing_state'=>'','billing_zip'=>'','billing_country'=>0,'shipping_street'=>'','shipping_city'=>'','shipping_state'=>'','shipping_zip'=>'','shipping_country'=>0];
+            $fields=['issuer_id'=>$issuer,'clientid'=>$client,'number'=>0,'prefix'=>'','number_format'=>1,'datecreated'=>date('Y-m-d H:i:s'),'date'=>$data['date'],'duedate'=>$data['due_date'],'currency'=>$data['currency'],'subtotal'=>$data['subtotal'],'total_tax'=>$data['tax'],'total'=>$data['total'],'adjustment'=>$data['adjustment'],'addedfrom'=>$actor,'hash'=>bin2hex(random_bytes(16)),'status'=>1,'clientnote'=>$data['note'],'discount_type'=>$data['discount_type'],'discount_percent'=>$data['discount_percent'],'discount_total'=>$data['discount_total'],'include_shipping'=>0,'show_shipping_on_invoice'=>0,'cancel_overdue_reminders'=>1,'allowed_payment_modes'=>serialize([]),'billing_street'=>'','billing_city'=>'','billing_state'=>'','billing_zip'=>'','billing_country'=>0,'shipping_street'=>'','shipping_city'=>'','shipping_state'=>'','shipping_zip'=>'','shipping_country'=>0];
             $this->insert('invoices',$fields);$id=(int)$this->db->insert_id();if($id<1)throw new RuntimeException('issuer_invoice_write_unconfirmed');
             $doc=$this->documents($issuer,$actor)->allocateInOwnedTransaction($id,$issuer,'INV',$this->profile($issuer));
             if(strlen($doc['number'])>10||(int)$doc['number']>2147483647)throw new DomainException('company_invoice_sequence_exhausted');
@@ -111,6 +105,19 @@ final class CompanyInvoices
             return $id;
         });
     }
+    /** Pre-417 receipts remain retryable; no monetary option is silently discarded. */
+    private function legacyRequestHash(array $data,array $input):?string
+    {
+        if($data['discount_total']!=='0.00'||$data['adjustment']!=='0.00'||$data['discount_percent']!=='0.00'||$data['discount_type']!=='after_tax')return null;
+        $items=[];
+        foreach($data['items'] as $i=>$item){
+            if(count($item['taxes'])>1)return null;
+            $tax=$item['taxes'][0]??['name'=>trim((string)($input['items'][$i]['taxname']??'')),'rate'=>'0.00'];
+            $items[]=['description'=>$item['description'],'qty'=>$item['qty'],'rate'=>$item['rate'],'taxrate'=>$tax['rate'],'taxname'=>$tax['name']];
+        }
+        return hash('sha256',json_encode(['client_id'=>$data['client_id'],'date'=>$data['date'],'due_date'=>$data['due_date'],'currency'=>$data['currency'],
+            'items'=>$items,'note'=>$data['note'],'subtotal'=>$data['subtotal'],'tax'=>$data['tax'],'total'=>$data['total']],JSON_THROW_ON_ERROR));
+    }
     private function insert(string $table,array $fields):void
     {
         IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.$table.' (`'.implode('`,`',array_keys($fields)).'`) VALUES ('.implode(',',array_fill(0,count($fields),'?')).')',array_values($fields));
@@ -120,7 +127,7 @@ final class CompanyInvoices
         foreach($items as $index=>$item){
             $this->insert('itemable',['rel_id'=>$invoice,'rel_type'=>'invoice','description'=>$item['description'],'long_description'=>'','qty'=>$item['qty'],'rate'=>$item['rate'],'unit'=>'','is_optional'=>0,'is_selected'=>1,'item_order'=>$index+1]);
             $id=(int)$this->db->insert_id();if($id<1)throw new RuntimeException('issuer_invoice_write_unconfirmed');
-            if($item['taxrate']!=='0.00')$this->insert('item_tax',['itemid'=>$id,'rel_id'=>$invoice,'rel_type'=>'invoice','taxrate'=>$item['taxrate'],'taxname'=>$item['taxname']]);
+            foreach($item['taxes'] as $tax)$this->insert('item_tax',['itemid'=>$id,'rel_id'=>$invoice,'rel_type'=>'invoice','taxrate'=>$tax['rate'],'taxname'=>$tax['name']]);
         }
     }
     public function document($issuer,$actor,$invoice):InvoiceIssuerDocumentData
@@ -133,6 +140,16 @@ final class CompanyInvoices
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);if($after!==0)$after=IssuerPolicy::id($after);$this->authorize($issuer,$actor,'view');
         $rows=$this->rows('SELECT i.id,i.date,i.duedate,i.total,i.status,d.formatted_number,c.name currency FROM '.$this->prefix.'invoices i JOIN '.$this->prefix.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id JOIN '.$this->prefix.'currencies c ON c.id=i.currency WHERE i.issuer_id=? AND i.id>? ORDER BY i.id LIMIT 51',[$issuer,$after]);
         $this->authorize($issuer,$actor,'view');$next=count($rows)>50?(int)$rows[49]['id']:null;return ['items'=>array_slice($rows,0,50),'next'=>$next];
+    }
+    public function adjustments($issuer,$actor,$invoice):array
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$invoice=IssuerPolicy::id($invoice);$this->authorize($issuer,$actor,'view');
+        $row=$this->rows('SELECT discount_type,discount_percent,discount_total,adjustment FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$invoice,$issuer])[0]??null;
+        if(!$row)throw new DomainException('company_invoice_access_denied');
+        $this->authorize($issuer,$actor,'view');
+        $percent=CompanyInvoiceAmounts::minor((string)($row['discount_percent']??'0'));
+        return ['discount_type'=>$row['discount_type'],'discount_mode'=>$percent>0?'percent':'fixed',
+            'discount_value'=>$percent>0?CompanyInvoiceAmounts::decimal($percent):(string)$row['discount_total'],'adjustment'=>(string)$row['adjustment']];
     }
     public function payments($issuer,$actor,$invoice):array
     {
@@ -159,7 +176,7 @@ final class CompanyInvoices
     }
     private function fingerprint(int $issuer,int $invoice):string
     {
-        $row=$this->rows('SELECT id,clientid,currency,date,duedate,total,status,clientnote FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$invoice,$issuer])[0]??null;
+        $row=$this->rows('SELECT id,clientid,currency,date,duedate,subtotal,total_tax,discount_type,discount_percent,discount_total,adjustment,total,status,clientnote FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$invoice,$issuer])[0]??null;
         if(!$row)throw new DomainException('company_invoice_access_denied');
         $items=$this->rows("SELECT id,description,qty,rate FROM ".$this->prefix."itemable WHERE rel_id=? AND rel_type='invoice' ORDER BY item_order,id",[$invoice]);
         $taxes=$this->rows("SELECT itemid,taxname,taxrate FROM ".$this->prefix."item_tax WHERE rel_id=? AND rel_type='invoice' ORDER BY id",[$invoice]);
@@ -182,7 +199,7 @@ final class CompanyInvoices
             if($data===null){IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'invoices SET status=5 WHERE id=? AND issuer_id=?',[$invoice,$issuer]);}
             else{
                 if((int)$row['clientid']!==$data['client_id']||(int)$row['currency']!==$data['currency'])throw new DomainException('company_invoice_immutable');
-                IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'invoices SET date=?,duedate=?,subtotal=?,total_tax=?,total=?,clientnote=? WHERE id=? AND issuer_id=?',[$data['date'],$data['due_date'],$data['subtotal'],$data['tax'],$data['total'],$data['note'],$invoice,$issuer]);
+                IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'invoices SET date=?,duedate=?,subtotal=?,total_tax=?,discount_type=?,discount_percent=?,discount_total=?,adjustment=?,total=?,clientnote=? WHERE id=? AND issuer_id=?',[$data['date'],$data['due_date'],$data['subtotal'],$data['tax'],$data['discount_type'],$data['discount_percent'],$data['discount_total'],$data['adjustment'],$data['total'],$data['note'],$invoice,$issuer]);
                 IssuerStorage::query($this->db,"DELETE FROM ".$this->prefix."item_tax WHERE rel_id=? AND rel_type='invoice'",[$invoice]);
                 IssuerStorage::query($this->db,"DELETE FROM ".$this->prefix."itemable WHERE rel_id=? AND rel_type='invoice'",[$invoice]);$this->items($invoice,$data['items']);
             }

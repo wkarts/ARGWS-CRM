@@ -13,7 +13,7 @@ $labels=[1=>'Em aberto',2=>'Paga',3=>'Parcialmente paga',4=>'Vencida',5=>'Cancel
 <p><a href="<?= $esc($url('?invoice='.$id.'&pdf=1')); ?>">Baixar PDF da fatura</a></p>
 <div class="table-responsive"><table class="table"><thead><tr><th>Descrição</th><th>Quantidade</th><th>Preço unitário</th><th>Valor</th></tr></thead><tbody>
 <?php foreach($document['items'] as $item){?><tr><td><?= $esc($item['description']); ?></td><td><?= $esc($item['quantity']); ?></td><td><?= $esc($item['rate']); ?></td><td><?= $esc($item['amount']); ?></td></tr><?php } ?></tbody></table></div>
-<p>Subtotal <?= $esc($document['totals']['subtotal']); ?> · Tributos <?= $esc($document['totals']['total_tax']); ?> · Total <?= $esc($document['totals']['total']); ?></p>
+<p>Subtotal <?= $esc($document['totals']['subtotal']); ?> · Tributos <?= $esc($document['totals']['total_tax']); ?> · Desconto <?= $esc($document['totals']['discount_total']); ?> · Ajuste <?= $esc($document['totals']['adjustment']); ?> · Total <?= $esc($document['totals']['total']); ?></p>
 <h3>Recebimentos</h3>
 <?php if(!$payments){?><p>Nenhum recebimento registrado nesta fatura.</p><?php }else{?><table class="table"><thead><tr><th>Data</th><th>Valor</th><th>Referência</th></tr></thead><tbody><?php foreach($payments as $payment){?><tr><td><?= $esc($payment['date']); ?></td><td><?= $esc($payment['amount']); ?></td><td><?= $esc($payment['transactionid']); ?></td></tr><?php } ?></tbody></table><?php } ?>
 <?php if($can_payment&&in_array($document['status'],[1,3,4],true)){?>
@@ -30,8 +30,10 @@ $labels=[1=>'Em aberto',2=>'Paga',3=>'Parcialmente paga',4=>'Vencida',5=>'Cancel
 <?php $currencyId=null;foreach($currencies as $currency)if($currency['name']===$document['currency'])$currencyId=$currency['id']; ?>
 <input type="hidden" name="invoice[currency]" value="<?= (int)$currencyId; ?>">
 <label for="edit-invoice-date">Emissão</label><input id="edit-invoice-date" class="form-control" type="date" name="invoice[date]" value="<?= $esc($document['date']); ?>" required><label for="edit-invoice-due">Vencimento</label><input id="edit-invoice-due" class="form-control" type="date" name="invoice[due_date]" value="<?= $esc($document['due_date']); ?>" required>
-<?php foreach($document['items'] as $index=>$item){?><fieldset><legend>Item <?= $index+1; ?></legend>
-<?php foreach(['description'=>['Descrição',$item['description']],'qty'=>['Quantidade',$item['quantity']],'rate'=>['Preço unitário',$item['rate']],'taxname'=>['Nome do tributo',$item['taxes'][0]['name']??''],'taxrate'=>['Alíquota %',$item['taxes'][0]['rate']??'0.00']] as $field=>[$label,$value]){?><label for="edit-item-<?= $index.'-'.$field; ?>"><?= $esc($label); ?></label><input id="edit-item-<?= $index.'-'.$field; ?>" class="form-control" name="invoice[items][<?= $index; ?>][<?= $field; ?>]" value="<?= $esc($value); ?>" <?= $field!=='taxname'?'required':''; ?>><?php } ?></fieldset><?php } ?>
+<div class="company-invoice-items" id="edit-invoice-items">
+<?php foreach($document['items'] as $index=>$item){$editing=true;require APPPATH.'views/admin/companies/invoice_item_fields.php';} ?>
+</div><button type="button" data-invoice-add="edit-invoice-items">Adicionar item</button>
+<?php $fieldPrefix='edit-';require APPPATH.'views/admin/companies/invoice_adjustment_fields.php'; ?>
 <label for="edit-invoice-note">Observação</label><textarea id="edit-invoice-note" class="form-control" name="invoice[note]" maxlength="20000"><?= $esc($document['note']); ?></textarea><button type="submit">Salvar fatura</button><?= form_close(); ?>
 <?= form_open($url());$hidden('cancel'); ?><input type="hidden" name="invoice_id" value="<?= $id; ?>"><input type="hidden" name="revision" value="<?= $esc($revision); ?>"><p>Cancelar conserva o registro e a numeração. Não solicita baixa bancária.</p><button type="submit">Cancelar fatura sem movimento</button><?= form_close(); ?>
 <?php } ?>
@@ -40,15 +42,47 @@ $labels=[1=>'Em aberto',2=>'Paga',3=>'Parcialmente paga',4=>'Vencida',5=>'Cancel
 <?php foreach($directory['items'] as $row){?><tr><td><a href="<?= $esc($url('?invoice='.(int)$row['id'])); ?>"><?= $esc($row['formatted_number']); ?></a></td><td><?= $esc($row['date']); ?></td><td><?= $esc($row['duedate']); ?></td><td><?= $esc($row['currency'].' '.$row['total']); ?></td><td><?= $esc($labels[(int)$row['status']]??'Revisão'); ?></td></tr><?php } ?></tbody></table></div>
 <?php if($directory['next']!==null){?><a href="<?= $esc($url('?after='.$directory['next'])); ?>">Próxima página</a><?php } ?>
 <?php if($can_create){?>
-<h2>Emitir fatura</h2><p>Complete antes a identidade e o endereço da empresa nas Definições. Este formulário emite fatura com itens e tributo por item; não gera boleto ou transmite cobrança bancária.</p>
+<h2>Emitir fatura</h2><p>Complete antes a identidade e o endereço da empresa nas Definições. Este formulário emite fatura com itens, múltiplos tributos, descontos e ajustes; não gera boleto ou transmite cobrança bancária.</p>
 <?= form_open($url());$hidden('create'); ?><input type="hidden" name="request_key" value="<?= $esc($request_key); ?>">
 <label for="invoice-client">Cliente autorizado</label><select class="form-control" id="invoice-client" name="invoice[client_id]" required><option value="">Selecione</option><?php foreach($clients as $client){?><option value="<?= $client['userid']; ?>"><?= $esc($client['company']); ?></option><?php } ?></select>
 <label for="invoice-currency">Moeda</label><select class="form-control" id="invoice-currency" name="invoice[currency]" required><?php foreach($currencies as $currency){?><option value="<?= (int)$currency['id']; ?>"><?= $esc($currency['name']); ?></option><?php } ?></select>
 <label for="invoice-date">Emissão</label><input class="form-control" id="invoice-date" type="date" name="invoice[date]" value="<?= date('Y-m-d'); ?>" required><label for="invoice-due">Vencimento</label><input class="form-control" id="invoice-due" type="date" name="invoice[due_date]" value="<?= date('Y-m-d',time()+30*86400); ?>" required>
-<div id="invoice-items"><fieldset data-item-index="0"><legend>Item 1</legend>
-<?php foreach(['description'=>['Descrição','',true],'qty'=>['Quantidade','1.00',true],'rate'=>['Preço unitário','',true],'taxname'=>['Nome do tributo','',false],'taxrate'=>['Alíquota %','0.00',true]] as $field=>[$label,$value,$required]){?><label for="invoice-item-0-<?= $field; ?>"><?= $esc($label); ?></label><input class="form-control" id="invoice-item-0-<?= $field; ?>" name="invoice[items][0][<?= $field; ?>]" value="<?= $esc($value); ?>" <?= $required?'required':''; ?>><?php } ?></fieldset></div>
-<button type="button" id="invoice-add-item">Adicionar item</button><label for="invoice-note">Observação</label><textarea id="invoice-note" class="form-control" name="invoice[note]" maxlength="20000"></textarea><button type="submit">Emitir fatura da empresa</button><?= form_close(); ?>
+<div class="company-invoice-items" id="invoice-items"><?php $index=0;$item=['description'=>'','quantity'=>'1.00','rate'=>'','taxes'=>[]];$editing=false;require APPPATH.'views/admin/companies/invoice_item_fields.php'; ?></div>
+<button type="button" id="invoice-add-item" data-invoice-add="invoice-items">Adicionar item</button>
+<?php $fieldPrefix='';$adjustments=[];require APPPATH.'views/admin/companies/invoice_adjustment_fields.php'; ?>
+<label for="invoice-note">Observação</label><textarea id="invoice-note" class="form-control" name="invoice[note]" maxlength="20000"></textarea><button type="submit">Emitir fatura da empresa</button><?= form_close(); ?>
 <?php } ?>
 </section><script>
-(()=>{const add=document.getElementById('invoice-add-item'),items=document.getElementById('invoice-items');if(!add||!items)return;add.addEventListener('click',()=>{const index=items.children.length;if(index>=100){add.disabled=true;return;}const copy=items.firstElementChild.cloneNode(true);copy.dataset.itemIndex=index;copy.querySelector('legend').textContent='Item '+(index+1);copy.querySelectorAll('input').forEach(input=>{const old=input.id;input.id=old.replace('item-0-','item-'+index+'-');input.name=input.name.replace('[0]','['+index+']');copy.querySelector('label[for="'+old+'"]').htmlFor=input.id;input.value=input.name.includes('[qty]')?'1.00':(input.name.includes('[taxrate]')?'0.00':'');});items.appendChild(copy);copy.querySelector('input').focus();});})();
+(()=>{
+  const renumber=(field,index)=>{
+    const previous=field.dataset.itemIndex;field.dataset.itemIndex=index;
+    field.querySelector('legend').textContent='Item '+(index+1);
+    field.querySelectorAll('input').forEach(input=>{
+      const old=input.id;input.id=old.replace('item-'+previous+'-','item-'+index+'-');
+      input.name=input.name.replace('[items]['+previous+']','[items]['+index+']');
+      field.querySelectorAll('label').forEach(label=>{if(label.htmlFor===old)label.htmlFor=input.id;});
+    });
+  };
+  document.addEventListener('click',event=>{
+    const add=event.target.closest('[data-invoice-add]');
+    if(add){
+      const items=document.getElementById(add.dataset.invoiceAdd);if(items.children.length>=100)return;
+      const copy=items.firstElementChild.cloneNode(true);renumber(copy,items.children.length);
+      copy.querySelectorAll('input').forEach(input=>input.value=input.name.endsWith('[qty]')?'1.00':(input.name.endsWith('[rate]')&&input.name.includes('[taxes]')?'0.00':''));
+      copy.querySelectorAll('[data-tax-row]').forEach((row,i)=>{if(i>0)row.remove();});
+      items.appendChild(copy);copy.querySelector('input').focus();return;
+    }
+    const taxAdd=event.target.closest('[data-add-tax]');
+    if(taxAdd){
+      const field=taxAdd.closest('[data-item-index]'),rows=field.querySelector('[data-taxes]');if(rows.children.length>=10)return;
+      const copy=rows.firstElementChild.cloneNode(true),index=rows.children.length;
+      copy.querySelectorAll('input').forEach(input=>{
+        const old=input.id;input.id=old.replace(/tax-\d+-/,'tax-'+index+'-');
+        input.name=input.name.replace(/\[taxes\]\[\d+\]/,'[taxes]['+index+']');
+        copy.querySelectorAll('label').forEach(label=>{if(label.htmlFor===old)label.htmlFor=input.id;});
+        input.value=input.name.endsWith('[rate]')?'0.00':'';
+      });rows.appendChild(copy);copy.querySelector('input').focus();
+    }
+  });
+})();
 </script><?php require APPPATH.'views/admin/companies/layout_tail.php'; ?>

@@ -1,5 +1,23 @@
 # Registro auditável de consumidores de empresas
 
+## Estado atual reconciliado em 19/10/2026
+
+O histórico abaixo descreve etapas anteriores. `admin/company_clients` já está
+roteado no renderer isolado com CRUD/busca/paginação/compartilhamento/revogação.
+Portal privado já tem login/reset, templates/SMTP/fila por origem, permissão
+nativa e lista/PDF de faturas emitidas. Faturas nomeadas já têm emissão, edição
+elegível, cancelamento, PDF e recebimento manual;417 amplia tributos/descontos/ajustes.
+Há execuções MySQL/concorrência/CRM HTTP/Chromium nos SHAs referenciados em
+[pr45-status.md](pr45-status.md). Isso não libera todos os consumidores nem
+comprova SMTP externo ou homologação bancária. O novo código tem resultado próprio
+registrado por SHA; não reutilizar automaticamente resultados anteriores.
+
+As guardas genéricas continuam fechadas. Os fluxos novos têm rotas/serviços
+explicitamente autorizados, sem permitir modelos legados por prefixo.
+
+## Histórico de investigação — não representa o estado atual
+
+
 O registro é finito e reproduzível: `scripts/register-company-consumers.py` gera `consumer-register.json`. A opção `--full-output /tmp/company-consumers-full.json` inclui cada candidato com arquivo, símbolo, linha, hash e categoria. O resumo versionado evita incluir um artefato de vários megabytes. `consumer-evidence.json` associa somente os resultados efetivamente exercitados a símbolos concretos; mudar o arquivo invalida a evidência até nova execução/revisão.
 
 ## Como interpretar
