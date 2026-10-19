@@ -7,6 +7,20 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Estimates_model extends App_Model
 {
+    private array $authorizedDocumentDeletion = [];
+    private function permitsLegacyDocument($id): bool
+    {
+        if ((!is_string($id) && !is_int($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        return isset($this->authorizedDocumentDeletion[(string)$id])
+            || \app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'estimates', $id);
+    }
+    private function permitsLegacyDocumentFile($id, $expected = null): bool
+    {
+        if ((!is_string($id) && !is_int($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        $file = $this->db->query("SELECT rel_id FROM ".db_prefix()."files WHERE id=? AND rel_type='estimate'", [$id])->row();
+        return $file && ($expected === null || (string)$file->rel_id === (string)$expected) && $this->permitsLegacyDocument($file->rel_id);
+    }
+
     private $statuses;
     private $shipping_fields = ['shipping_street', 'shipping_city', 'shipping_city', 'shipping_state', 'shipping_zip', 'shipping_country'];
 
@@ -30,7 +44,7 @@ class Estimates_model extends App_Model
      */
     public function get_sale_agents()
     {
-        return $this->db->query("SELECT DISTINCT(sale_agent) as sale_agent, CONCAT(firstname, ' ', lastname) as full_name FROM " . db_prefix() . 'estimates JOIN ' . db_prefix() . 'staff on ' . db_prefix() . 'staff.staffid=' . db_prefix() . 'estimates.sale_agent WHERE sale_agent != 0')->result_array();
+        return $this->db->query("SELECT DISTINCT(sale_agent) as sale_agent, CONCAT(firstname, ' ', lastname) as full_name FROM " . db_prefix() . 'estimates JOIN ' . db_prefix() . 'staff on ' . db_prefix() . 'staff.staffid=' . db_prefix() . 'estimates.sale_agent WHERE sale_agent != 0 AND ' . \app\services\ClientIssuerScope::legacyDocumentSql($this->db, db_prefix(), 'estimates', db_prefix().'estimates'))->result_array();
     }
 
     /**
@@ -46,7 +60,8 @@ class Estimates_model extends App_Model
         $this->db->select('*,' . db_prefix() . 'currencies.id as currencyid, ' . db_prefix() . 'estimates.id as id, ' . db_prefix() . 'currencies.name as currency_name');
         $this->db->from(db_prefix() . 'estimates');
         $this->db->join(db_prefix() . 'currencies', db_prefix() . 'currencies.id = ' . db_prefix() . 'estimates.currency', 'left');
-        $this->db->where($where);
+        $this->db->where(\app\services\ClientIssuerScope::legacyDocumentSql($this->db, db_prefix(), 'estimates', db_prefix().'estimates'), null, false);
+        if ($where) $this->db->group_start()->where($where)->group_end();
         if (is_numeric($id)) {
             $this->db->where(db_prefix() . 'estimates.id', $id);
             $estimate = $this->db->get()->row();
@@ -99,6 +114,7 @@ class Estimates_model extends App_Model
 
     public function clear_signature($id)
     {
+        if (!$this->permitsLegacyDocument($id)) return false;
         $this->db->select('signature');
         $this->db->where('id', $id);
         $estimate = $this->db->get(db_prefix() . 'estimates')->row();
@@ -128,6 +144,7 @@ class Estimates_model extends App_Model
      */
     public function convert_to_invoice($id, $client = false, $draft_invoice = false)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'estimates', $id)) { return false; }
         // Recurring invoice date is okey lets convert it to new invoice
         $_estimate = $this->get($id);
 
@@ -306,6 +323,7 @@ class Estimates_model extends App_Model
      */
     public function copy($id)
     {
+        if (!\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'estimates', $id)) { return false; }
         $_estimate                       = $this->get($id);
         $new_estimate_data               = [];
         $new_estimate_data['clientid']   = $_estimate->clientid;
@@ -415,6 +433,7 @@ class Estimates_model extends App_Model
      */
     public function get_estimates_total($data)
     {
+        if (!empty($data['customer_id']) && !\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $data['customer_id'])) { return []; }
         $statuses            = $this->get_statuses();
         $has_permission_view = staff_can('view', 'estimates');
         $this->load->model('currencies_model');
@@ -427,19 +446,21 @@ class Estimates_model extends App_Model
             }
         } elseif (isset($data['project_id']) && $data['project_id'] != '') {
             $this->load->model('projects_model');
-            $currencyid = $this->projects_model->get_currency($data['project_id'])->id;
+            $projectCurrency = $this->projects_model->get_currency($data['project_id']);
+            if (!$projectCurrency) { return []; }
+            $currencyid = $projectCurrency->id;
         } else {
             $currencyid = $this->currencies_model->get_base_currency()->id;
         }
 
         $currency = get_currency($currencyid);
-        $where    = '';
+        $where    = ' AND ' . \app\services\ClientIssuerScope::legacyDocumentSql($this->db, db_prefix(), 'estimates', db_prefix().'estimates');
         if (isset($data['customer_id']) && $data['customer_id'] != '') {
-            $where = ' AND clientid=' . $data['customer_id'];
+            $where .= ' AND clientid=' . $this->db->escape($data['customer_id']);
         }
 
         if (isset($data['project_id']) && $data['project_id'] != '') {
-            $where .= ' AND project_id=' . $data['project_id'];
+            $where .= ' AND project_id=' . $this->db->escape($data['project_id']);
         }
 
         if (! $has_permission_view) {
@@ -450,10 +471,10 @@ class Estimates_model extends App_Model
 
         foreach ($statuses as $estimate_status) {
             $sql .= '(SELECT SUM(total) FROM ' . db_prefix() . 'estimates WHERE status=' . $estimate_status;
-            $sql .= ' AND currency =' . $this->db->escape_str($currencyid);
+            $sql .= ' AND currency =' . $this->db->escape($currencyid);
             if (isset($data['years']) && count($data['years']) > 0) {
                 $sql .= ' AND YEAR(date) IN (' . implode(', ', array_map(function ($year) {
-                    return get_instance()->db->escape_str($year);
+                    return get_instance()->db->escape($year);
                 }, $data['years'])) . ')';
             } else {
                 $sql .= ' AND YEAR(date) = ' . date('Y');
@@ -490,6 +511,7 @@ class Estimates_model extends App_Model
      */
     public function add($data)
     {
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'clientid', true)) { return false; }
         $data['datecreated'] = date('Y-m-d H:i:s');
 
         $data['addedfrom'] = get_staff_user_id();
@@ -538,6 +560,7 @@ class Estimates_model extends App_Model
         $data  = $hook['data'];
         $items = $hook['items'];
 
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'clientid', true)) { return false; }
         $this->db->insert(db_prefix() . 'estimates', $data);
         $insert_id = $this->db->insert_id();
 
@@ -609,6 +632,7 @@ class Estimates_model extends App_Model
      */
     public function update($data, $id)
     {
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'clientid', false) || !\app\services\ClientIssuerScope::isLegacyDocumentClient($this->db, db_prefix(), 'estimates', $id)) { return false; }
         $affectedRows = 0;
 
         $data['number'] = trim($data['number']);
@@ -665,6 +689,7 @@ class Estimates_model extends App_Model
         ], $id);
 
         $data                  = $hook['data'];
+        if (!\app\services\ClientIssuerScope::allowsLegacyWrite($this->db, db_prefix(), $data, 'clientid', false)) { return false; }
         $items                 = $hook['items'];
         $newitems              = $hook['newitems'];
         $data['removed_items'] = $hook['removed_items'];
@@ -829,6 +854,7 @@ class Estimates_model extends App_Model
 
     public function mark_action_status($action, $id, $client = false)
     {
+        if (!$this->permitsLegacyDocument($id)) return false;
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'estimates', [
             'status' => $action,
@@ -957,6 +983,7 @@ class Estimates_model extends App_Model
      */
     public function get_attachments($estimate_id, $id = '')
     {
+        if (is_numeric($id) ? !$this->permitsLegacyDocumentFile($id, $estimate_id === '' ? null : $estimate_id) : !$this->permitsLegacyDocument($estimate_id)) return is_numeric($id) ? null : [];
         // If is passed id get return only 1 attachment
         if (is_numeric($id)) {
             $this->db->where('id', $id);
@@ -1017,6 +1044,9 @@ class Estimates_model extends App_Model
      */
     public function delete($id, $simpleDelete = false)
     {
+        if (!$this->permitsLegacyDocument($id)) return false;
+        $this->authorizedDocumentDeletion[(string)$id] = true;
+        try {
         if (get_option('delete_only_on_last_estimate') == 1 && $simpleDelete == false) {
             if (! is_last_estimate($id)) {
                 return false;
@@ -1055,6 +1085,7 @@ class Estimates_model extends App_Model
             if (total_rows(db_prefix() . 'proposals', [
                 'estimate_id' => $id,
             ]) > 0) {
+                $this->db->where(\app\services\ClientIssuerScope::legacyDocumentSql($this->db, db_prefix(), 'proposals', db_prefix().'proposals'), null, false);
                 $this->db->where('estimate_id', $id);
                 $estimate = $this->db->get(db_prefix() . 'proposals')->row();
                 $this->db->where('id', $estimate->id);
@@ -1131,10 +1162,12 @@ class Estimates_model extends App_Model
         }
 
         return false;
+        } finally { unset($this->authorizedDocumentDeletion[(string)$id]); }
     }
 
     public function save_formatted_number($id)
     {
+        if (!$this->permitsLegacyDocument($id)) return false;
         $formattedNumber = format_estimate_number($id);
 
         $this->db->where('id', $id);
@@ -1149,6 +1182,7 @@ class Estimates_model extends App_Model
      */
     public function set_estimate_sent($id, $emails_sent = [])
     {
+        if (!$this->permitsLegacyDocument($id)) return false;
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'estimates', [
             'sent'     => 1,
@@ -1368,6 +1402,7 @@ class Estimates_model extends App_Model
      */
     public function get_estimate_activity($id)
     {
+        if (!$this->permitsLegacyDocument($id)) return [];
         $this->db->where('rel_id', $id);
         $this->db->where('rel_type', 'estimate');
         $this->db->order_by('date', 'asc');
@@ -1385,6 +1420,7 @@ class Estimates_model extends App_Model
      */
     public function log_estimate_activity($id, $description = '', $client = false, $additional_data = '')
     {
+        if (!$this->permitsLegacyDocument($id)) return false;
         $staffid   = get_staff_user_id();
         $full_name = get_staff_full_name(get_staff_user_id());
         if (defined('CRON')) {
@@ -1415,6 +1451,7 @@ class Estimates_model extends App_Model
      */
     public function update_pipeline($data)
     {
+        if (!isset($data['order']) || !AbstractKanban::permitsOrder($data['order'], 'estimates')) return false;
         $this->mark_action_status($data['status'], $data['estimateid']);
         AbstractKanban::updateOrder($data['order'], 'pipeline_order', 'estimates', $data['status']);
     }
@@ -1426,7 +1463,7 @@ class Estimates_model extends App_Model
      */
     public function get_estimates_years()
     {
-        return $this->db->query('SELECT DISTINCT(YEAR(date)) as year FROM ' . db_prefix() . 'estimates ORDER BY year DESC')->result_array();
+        return $this->db->query('SELECT DISTINCT(YEAR(date)) as year FROM ' . db_prefix() . 'estimates WHERE ' . \app\services\ClientIssuerScope::legacyDocumentSql($this->db, db_prefix(), 'estimates', db_prefix().'estimates') . ' ORDER BY year DESC')->result_array();
     }
 
     private function map_shipping_columns($data)

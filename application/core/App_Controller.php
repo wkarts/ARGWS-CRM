@@ -15,6 +15,16 @@ class App_Controller extends CI_Controller
     {
         parent::__construct();
 
+        require_once APPPATH . 'services/CompanyRequestScope.php';
+        CompanyRequestScope::beforeHydration($this);
+        if (CompanyRequestScope::isolated()) {
+            return; // No legacy hooks, gateway/email hydration or Admin assets for the isolated selector.
+        }
+        if (CompanyRequestScope::nativeUpgradeOnlyFor($this)) {
+            $this->current_db_version = $this->app->get_current_db_version();
+            return; // Let AdminController run only its native authenticated upgrade gate.
+        }
+
         $GLOBALS['EXT']->call_hook('pre_controller_constructor');
 
         /*

@@ -12,15 +12,25 @@ class Banco_brasil extends AdminController
     }
     public function index()
     {
+        $companyId=$this->companyContextId();
         $data=['title'=>'Banco do Brasil','issuers'=>[],'selected'=>null,'connections'=>[],
-            'returns'=>[],'events'=>[],'layout_bindings'=>[],'layouts'=>\BancoBrasil\LayoutCatalog::all(),'can_manage'=>false,'can_import'=>false,'resource_acl_ready'=>false,'storage_error'=>false,'csrf'=>$this->csrfToken(),'matrix'=>\BancoBrasil\CapabilityPolicy::matrix()];
-        if($this->issuerModuleReady()){
+            'returns'=>[],'events'=>[],'layout_bindings'=>[],'layouts'=>\BancoBrasil\LayoutCatalog::all(),'can_manage'=>false,'can_import'=>false,'resource_acl_ready'=>false,'storage_error'=>false,'isolated'=>false,'company_context_token'=>null,'csrf'=>$this->csrfToken(),'matrix'=>\BancoBrasil\CapabilityPolicy::matrix()];
+        if(class_exists('CompanyRequestScope',false)){
+            $data['isolated']=\CompanyRequestScope::sealedFor($this);
+            $data['company_context_token']=\CompanyRequestScope::token();
+        }
+        if($this->issuerCoreReady()){
             $data['resource_acl_ready']=true;
             try{
-                $available=\BancoBrasil\Transaction::quiet($this->db,fn()=>$this->issuers_model->available(get_staff_user_id()));
-                $data['issuers']=array_values(array_filter($available,fn($row)=>$this->allowed((int)((array)$row)['id'],'view')));
+                $registry = new \IssuerRegistry($this->db, db_prefix());
+                $available=\BancoBrasil\Transaction::quiet($this->db,fn()=>$registry->available(get_staff_user_id()));
+                $data['issuers']=array_values(array_filter($available,fn($row)=>($companyId===null||(int)((array)$row)['id']===$companyId)&&$this->allowed((int)((array)$row)['id'],'view')));
             }catch(Throwable $e){$data['storage_error']=true;}
             $raw=$this->input->get('issuer_id');
+            if($companyId!==null){
+                if($raw!==null&&$raw!==''&&$this->positiveId($raw)!==$companyId)access_denied('banco_brasil');
+                $raw=(string)$companyId;
+            }
             if($raw!==null && $raw!==''){
                 $id=$this->positiveId($raw);$issuer=$this->issuer($id,'view');
                 $data['selected']=$issuer;
@@ -85,17 +95,27 @@ class Banco_brasil extends AdminController
         try{return \BancoBrasil\Transaction::quiet($this->db,fn()=>issuer_resource_can($issuer,get_staff_user_id(),'banco_brasil',$permission))===true;}
         catch(Throwable $e){show_error('Armazenamento indisponível. Tente novamente após verificar a instalação.',503);return false;}
     }
-    private function issuerModuleReady():bool
+    private function issuerCoreReady():bool
     {
-        if(!$this->app_modules->is_active('issuers'))return false;
-        $this->load->helper('issuers/issuers');
-        if(!function_exists('issuer_resource_can'))return false;
-        $this->load->model('issuers/issuers_model');return true;
+        if(!class_exists('IssuerCore',false))require_once APPPATH.'services/issuers/IssuerCore.php';
+        if(!class_exists('IssuerRegistry',false))require_once APPPATH.'services/issuers/IssuerRegistry.php';
+        if(!function_exists('issuer_resource_can'))$this->load->helper('issuers');
+        return \IssuerCore::ready($this->db,db_prefix())&&function_exists('issuer_resource_can');
+    }
+    private function companyContextId():?int
+    {
+        if(!class_exists('CompanyRequestScope',false))return null;
+        $context=\CompanyRequestScope::context();
+        if(!is_object($context)||!method_exists($context,'issuerId'))access_denied('banco_brasil');
+        $id=$context->issuerId();
+        if(!is_int($id)||$id<1)access_denied('banco_brasil');
+        return $id;
     }
     private function issuer(int $id,string $capability):array
     {
-        if(!$this->issuerModuleReady()||!$this->allowed($id,$capability))access_denied('banco_brasil');
-        try{$row=\BancoBrasil\Transaction::quiet($this->db,fn()=>$this->issuers_model->get($id));}
+        $companyId=$this->companyContextId();
+        if(($companyId!==null&&$companyId!==$id)||!$this->issuerCoreReady()||!$this->allowed($id,$capability))access_denied('banco_brasil');
+        try{$row=\BancoBrasil\Transaction::quiet($this->db,fn()=>(new \IssuerRegistry($this->db,db_prefix()))->get($id,get_staff_user_id()));}
         catch(Throwable $e){show_error('Armazenamento indisponível. Tente novamente após verificar a instalação.',503);return [];}
         if(!$row)access_denied('banco_brasil');
         $row=(array)$row;

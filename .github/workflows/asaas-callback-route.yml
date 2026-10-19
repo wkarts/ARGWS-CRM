@@ -1,7 +1,7 @@
 name: Rota segura callback Asaas
 on:
   pull_request:
-    branches: [main, develop, fix/asaas-immutable-payment-origin]
+    branches: [main, develop, fix/asaas-immutable-payment-origin, fix/asaas-callback-hmvc-route, feat/banco-brasil-billing-cnab240]
     paths: ['modules/asaas/**', 'tests/asaas_callback_*.php', '.github/workflows/asaas-callback-route.yml']
   push:
     branches: [main, develop]

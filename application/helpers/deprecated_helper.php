@@ -384,7 +384,7 @@ function get_email_template_for_sending($template_slug, $email)
             // Template message blank use the active language default template
             $template = $CI->emails_model->get(['language' => get_option('active_language'), 'slug' => $template_slug], 'row');
 
-            if ($template->message == '') {
+            if (!$template || $template->message == '') {
                 $template = $CI->emails_model->get(['language' => 'english', 'slug' => $template_slug], 'row');
             }
         }

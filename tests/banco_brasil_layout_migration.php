@@ -39,19 +39,19 @@ class BbLayoutMigrationDb extends BbMigrationDb
         return new class($rows){function __construct(private $r){}function row_array(){return $this->r[0]??[];}function result_array(){return $this->r;}};
     }
 }
-$n=0;$CI->db=new BbLayoutMigrationDb();$CI->app_modules=new class{function get($v){return ['headers'=>['version'=>'1.0.2']];}};
+$n=0;$CI->db=new BbLayoutMigrationDb();$CI->app_modules=new class{function get($v){return ['headers'=>['version'=>'1.0.3']];}};
 $original101=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/101_version_101.php');
 check(hash('sha256',$original101)==='5ccb8760ab18b3beae7d6fe7d1b7864e4ce7cd3f925ac24c7e582a27def7e306','published migration101 unchanged');
-check((string)(new App_module_migration('banco_brasil'))->to_latest()==='102','native101 to102');
-check($CI->db->version==='1.0.2','native tracking102');
+check((string)(new App_module_migration('banco_brasil'))->to_latest()==='103','native101 to103 including 102 and NOOP 103');
+check($CI->db->version==='1.0.3','native tracking103');
 check(count($CI->db->catalog)===8,'eight tables');
 check($CI->db->catalog['bb_return_files']['columns']['layout_binding_id']==='bigint unsigned?','legacy nullable provenance');
 check((new App_module_migration('banco_brasil'))->to_latest()===true,'current no-op');
 $statements=count($CI->db->statements);require APP_MODULES_PATH.'banco_brasil/install.php';
-check($CI->db->version==='1.0.2','reactivation tracks target');
+check($CI->db->version==='1.0.3','reactivation tracks target 1.0.3');
 check(count($CI->db->statements)===$statements+8,'reactivation no repeated ALTER');
 $CI->db=new BbLayoutMigrationDb();$CI->db->version='1.0.2';require APP_MODULES_PATH.'banco_brasil/install.php';
-check($CI->db->version==='1.0.2'&&count($CI->db->catalog)===8,'fresh activation executes101 then102');
+check($CI->db->version==='1.0.3'&&count($CI->db->catalog)===8,'replay from 1.0.2 advances only the new NOOP 103');
 foreach(['engine','missing','width','null','unique','prefix','nonnull'] as $bad){
     $CI->db=new BbLayoutMigrationDb();$CI->db->badLayout=$bad;
     try{(new App_module_migration('banco_brasil'))->to_latest();throw new LogicException('schema accepted');}
@@ -59,7 +59,7 @@ foreach(['engine','missing','width','null','unique','prefix','nonnull'] as $bad)
 }
 $CI->db=new BbLayoutMigrationDb();$CI->db->failAlter=true;
 try{(new App_module_migration('banco_brasil'))->to_latest();throw new LogicException('alter accepted');}catch(RuntimeException $e){check($CI->db->version==='1.0.1','partialDDL no advance');}
-$CI->db->failAlter=false;check((string)(new App_module_migration('banco_brasil'))->to_latest()==='102','additiveDDL retry');
+$CI->db->failAlter=false;check((string)(new App_module_migration('banco_brasil'))->to_latest()==='103','additiveDDL retry');
 check(!preg_match('/DROP|TRUNCATE|DELETE FROM|UPDATE /i',implode("\n",$CI->db->statements)),'no backfill or destructive DDL');
 $CI->db=new BbLayoutMigrationDb();$CI->db->fail102Tracking=true;
 $trackingFailure=null;try{require APP_MODULES_PATH.'banco_brasil/install.php';throw new LogicException('tracking accepted');}catch(RuntimeException $e){$trackingFailure=$e->getMessage();}check(in_array($trackingFailure,['bb_migration_failed','bb_migration_version_unconfirmed'],true),'failed102 tracking visible');check($CI->db->version==='1.0.1','failed102 tracking preserves baseline');

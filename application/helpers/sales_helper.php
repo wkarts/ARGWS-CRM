@@ -329,6 +329,8 @@ if (! function_exists('format_customer_info')) {
      */
     function format_customer_info($data, $for, $type, $companyLink = false)
     {
+        $identityOnly = !empty($data->client->issuer_financial_identity_only);
+        if ($identityOnly) { $companyLink = false; }
         $format   = get_option('customer_info_format');
         $clientId = '';
 
@@ -414,7 +416,7 @@ if (! function_exists('format_customer_info')) {
         $customFieldsCustomer = [];
 
         // On shipping address no custom fields are shown
-        if ($type != 'shipping') {
+        if ($type != 'shipping' && !$identityOnly) {
             $whereCF = [];
 
             if (is_custom_fields_for_customers_portal()) {

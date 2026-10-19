@@ -138,6 +138,7 @@
                     </div>
                     <?php } ?>
                 </div>
+            <?php if (function_exists('issuers_render_staff_access')) { issuers_render_staff_access(get_staff_user_id(), true); } ?>
                 <div class="panel-footer text-right">
                     <button type="submit" class="btn btn-primary">
                         <?= _l('submit'); ?>

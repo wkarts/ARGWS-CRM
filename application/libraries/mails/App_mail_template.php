@@ -447,7 +447,7 @@ class App_mail_template
                 // Template message blank use the active language default template
                 $template = $this->ci->emails_model->get(['language' => get_option('active_language'), 'slug' => $slug], 'row');
 
-                if ($template->message == '') {
+                if (!$template || $template->message == '') {
                     $template = $this->ci->emails_model->get(['language' => 'english', 'slug' => $slug], 'row');
                 }
             }

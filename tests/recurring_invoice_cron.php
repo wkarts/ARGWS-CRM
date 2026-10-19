@@ -78,6 +78,13 @@ function hooks(): RecurrenceTestHooks
 
 final class RecurrenceTestDatabase
 {
+    public function field_exists($field, $table): bool
+    {
+        if ($field !== 'issuer_id' || $table !== 'tblinvoices') {
+            throw new RuntimeException('Unexpected schema lookup');
+        }
+        return false; // This existing suite exercises the schema before issuer ownership is added.
+    }
     public function query($sql, $params): object
     {
         if (!str_contains($sql, 'GET_LOCK') && !str_contains($sql, 'RELEASE_LOCK')) {

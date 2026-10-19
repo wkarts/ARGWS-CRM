@@ -72,6 +72,9 @@ final class EmailTemplatesPtBr
             return 0;
         }
 
+        require_once __DIR__.'/CompanyEmailTemplates.php';
+        $scope=CompanyEmailTemplates::scopeSql($db,db_prefix(),$table,CompanyEmailTemplates::currentIssuer());
+        $db->where($scope,null,false);
         $rows = $db->where_in('slug', array_keys($definitions))
             ->get($table)->result_array();
         $bySlug = [];
@@ -106,7 +109,7 @@ final class EmailTemplatesPtBr
 
             $updates = self::defaultOnlyChanges($localized, $definition);
             if ($updates) {
-                $db->where('emailtemplateid', (int) $localized['emailtemplateid'])
+                $db->where($scope,null,false)->where('emailtemplateid', (int) $localized['emailtemplateid'])
                     ->update($table, $updates);
                 ++$count;
             }

@@ -1,7 +1,7 @@
 name: Regras recorrentes independentes
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, feat/banco-brasil-billing-cnab240]
     paths:
       - 'application/models/Cron_model.php'
       - 'application/models/Invoices_model.php'

@@ -1,0 +1,21 @@
+<?php
+require __DIR__.'/company_identity_transaction.php';
+require_once APPPATH.'services/issuers/IssuerRegistry.php';
+$registry=new IssuerRegistry($db,$p);
+essentialCheck(!$registry->canCreate(13),'ordinary administrator cannot create companies implicitly');
+essentialCheck($registry->catalog(13)===[],'ordinary administrator cannot list foreign identities');
+essentialCheck(array_column($registry->catalog(12),'id')===[41],'catalog constrained to active memberships');
+settingThrows(fn()=>$registry->saveIssuer(13,['legal_name'=>'Denied','tax_id'=>'11222333000181']),'issuer_access_denied','global administrator cannot create across tenant boundary');
+$new=$registry->saveIssuer(7,['legal_name'=>'Wizard company','tax_id'=>'11222333000181','profile'=>['invoice_company_city'=>'Wizard city']]);
+essentialCheck($identity->get($new,'invoice_company_city')==='Wizard city','registration saves canonical profile');
+essentialCheck($store->get($new,'smtp_password')==='','new company still inherits no SMTP secret');
+settingThrows(fn()=>$registry->saveIssuer(12,['legal_name'=>'Foreign edit','tax_id'=>'11222333000181'],$new),'issuer_access_denied','member cannot edit another company via guessed ID');
+$identity->save(41,12,['profile'=>['invoice_company_city'=>'Settings city']]);
+$registry->saveIssuer(12,['legal_name'=>'Registered identity','tax_id'=>'12345678000195','profile'=>['invoice_company_city'=>'Registry city']],41);
+essentialCheck($identity->get(41,'companyname')==='Registered identity' && $identity->get(41,'invoice_company_city')==='Registry city','resource-authorized staff edits same canonical source');
+$before=$identity->read(41);
+$db->failOn='INSERT INTO '.$p.'issuers_audit';
+settingThrows(fn()=>$registry->saveIssuer(12,['legal_name'=>'Must rollback','tax_id'=>'12345678000195','profile'=>['invoice_company_city'=>'Must rollback']],41),'issuer_storage_failed','audit failure rolls back whole registration');
+$db->failOn=null;
+essentialCheck($identity->read(41)===$before,'registry identity and profile roll back together');
+echo 'Company registration identity: '.$GLOBALS['essentialChecks']." total checks passed.\n";

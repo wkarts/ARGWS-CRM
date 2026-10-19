@@ -45,7 +45,11 @@ $CI->db->failTracking=false;$CI->db->version='1.0.2';try{require APP_MODULES_PAT
 $ddl=implode("\n",\BancoBrasil\ModuleSchema::statements('test_'));
 check(substr_count($ddl,'ENGINE=InnoDB')===7,'all transactional tables');
 check(!preg_match('/DROP|TRUNCATE|DELETE FROM/i',$ddl),'non destructive schema');
-check(str_contains(file_get_contents(APP_MODULES_PATH.'banco_brasil/banco_brasil.php'),'Version: 1.0.2'),'header advances to new native migration without rewriting 101');
+check(str_contains(file_get_contents(APP_MODULES_PATH.'banco_brasil/banco_brasil.php'),'Version: 1.0.4'),'header advances to new native migration without rewriting earlier history');
+$source104=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/104_version_104.php');
+check(str_contains($source104,'class Migration_Version_104 extends App_module_migration')&&str_contains($source104,'public function up()'),'104 is a native NOOP migration');
+$source103=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/103_version_103.php');
+check(str_contains($source103,'class Migration_Version_103 extends App_module_migration')&&str_contains($source103,'public function up()'),'103 is a native NOOP migration');
 foreach(['engine','missing_column','type','null','auto_increment','collation','pk','missing_unique','prefix_unique','non_unique','partial_unique'] as $bad){
  $CI->db->version='1.0.0';$CI->db->badSchema=$bad;
  try{(new App_module_migration('banco_brasil'))->to_latest();throw new LogicException('bad schema accepted');}

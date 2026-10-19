@@ -403,17 +403,13 @@ function app_set_update_message_info($version)
     update_option('update_info_message', '
         <div class="col-md-12">
             <div class="alert alert-success bold">
-                <h4 class="bold">Ol·! Obrigado por atualizar o HUB CRM - VocÍ est· usando a vers„o ' . wordwrap($version, 1, '.', true) . '</h4>
+                <h4 class="bold">Ol√°! Obrigado por atualizar o HUB CRM - Voc√™ est√° usando a vers√£o ' . wordwrap($version, 1, '.', true) . '</h4>
                 <p>
-                   Esta janela ser· recarregada automaticamente em 10 segundos e tentar· limpar o cache do seu navegador/Cloudflare. No entanto, È recomend·vel limpar o cache do navegador manualmente.
+                   Atualiza√ß√£o conclu√≠da. Se a interface ainda mostrar arquivos antigos, recarregue a p√°gina e revise o cache do navegador ou do proxy.
                 </p>
             </div>
         </div>
-        <script>
-        setTimeout(function(){
-            window.location.reload();
-        },10000);
-        </script>');
+        ');
 }
 
 /**
@@ -509,13 +505,34 @@ function _maybe_mistaken_login_area_check_performed()
 }
 
 /**
- * On each update there is message/code inserted in the database
+ * Stored update notices are HTML fragments, never executable page content.
+ * Use a dedicated, non-hookable policy: a malformed historical notice must not
+ * capture dashboard siblings or inject script, CSS, images or interactive forms.
+ *
+ * @param string $message
+ * @return string
+ */
+function app_safe_update_message($message)
+{
+    $config = HTMLPurifier_Config::createDefault();
+    $config->set('Core.Encoding', 'UTF-8');
+    $config->set('Cache.DefinitionImpl', null);
+    $config->set('HTML.Allowed', 'div[class],p[class],span[class],h2[class],h3[class],h4[class],strong,b,em,i,br,ul,ol,li,a[href|title]');
+    $config->set('Attr.AllowedClasses', ['col-md-12', 'alert', 'alert-success', 'alert-info', 'alert-warning', 'alert-danger', 'bold']);
+    $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true]);
+    $purifier = new HTMLPurifier($config);
+
+    return $purifier->purify((string) $message);
+}
+
+/**
+ * Display the stored update notice once, to an administrator only.
  */
 function _maybe_show_just_updated_message()
 {
     if (get_option('update_info_message') != '') {
         if (is_admin()) {
-            $message = get_option('update_info_message');
+            $message = app_safe_update_message(get_option('update_info_message'));
             update_option('update_info_message', '');
             echo $message;
         }

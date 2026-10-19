@@ -1,12 +1,21 @@
-name: Fundação cadastral de emitentes
+name: Empresas no núcleo
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, feat/banco-brasil-billing-cnab240]
     paths:
       - application/**
       - modules/issuers/**
       - modules/pige_bridge/**
       - tests/issuers*.php
+      - tests/company_context.php
+      - tests/company_email_catalog.test.cjs
+      - scripts/generate-company-email-catalog.cjs
+      - install/database.sql
+      - tests/settings/**
+      - tests/companies/**
+      - scripts/inventory-company-boundaries.py
+      - tests/test_company_boundary_inventory.py
+      - docs/companies/**
       - tests/test_module_migration_convention.py
       - docs/module-migrations.md
       - docs/issuer-essential-module.md
@@ -18,6 +27,15 @@ on:
       - modules/issuers/**
       - modules/pige_bridge/**
       - tests/issuers*.php
+      - tests/company_context.php
+      - tests/company_email_catalog.test.cjs
+      - scripts/generate-company-email-catalog.cjs
+      - install/database.sql
+      - tests/settings/**
+      - tests/companies/**
+      - scripts/inventory-company-boundaries.py
+      - tests/test_company_boundary_inventory.py
+      - docs/companies/**
       - tests/test_module_migration_convention.py
       - docs/module-migrations.md
       - docs/issuer-essential-module.md
@@ -30,6 +48,21 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - run: python3 -m unittest tests/test_module_migration_convention.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tests/company_email_catalog.test.cjs tests/email_templates_ptbr.test.cjs
+  boundary-inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: python3 -m unittest tests/test_company_boundary_inventory.py
+      - run: python3 scripts/inventory-company-boundaries.py --check
+      - run: python3 scripts/inventory-company-boundaries.py --full --output /tmp/company-boundaries-full.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: company-boundaries-full
+          path: /tmp/company-boundaries-full.json
   registry:
     runs-on: ubuntu-latest
     strategy:
@@ -53,18 +86,15 @@ jobs:
         run: |
           find tests -name 'issuers*.php' -exec php -l '{}' \;
           php -l application/config/argws_resources.php
-          php -l application/services/EssentialIssuerModule.php
           php -l application/libraries/App_modules.php
           php -l application/libraries/App.php
           php -l application/core/AdminController.php
-          php -l application/controllers/admin/Essential_modules.php
           php -l application/controllers/admin/Mods.php
           php -l application/hooks/InitHook.php
-          php -l application/views/admin/modules/essential_setup.php
           php -l application/views/admin/modules/list.php
           find modules/issuers -name '*.php' -exec php -l '{}' \;
           php tests/issuers_controller.php
-          php tests/issuers_essential_upgrade.php
+          php tests/issuers_admin_upgrade_gate.php
       - name: Testar schema, transações, ACL e concorrência em MySQL isolado
         env:
           ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_tests;charset=utf8mb4
@@ -72,7 +102,35 @@ jobs:
           ISSUERS_TEST_PASSWORD: synthetic-test-password
         run: |
           php tests/issuers_migration.php
-          php tests/issuers_essential.php
-          php tests/issuers_essential_controller.php
+          php tests/issuers_core.php
+          php tests/issuers_core_retirement.php
+          php tests/issuers_core_upgrade.php
+          php tests/issuers_installation_bootstrap.php
+          php tests/issuers_installation_abort.php
+          php tests/issuers_legacy_access.php
+          php tests/company_context.php
+          php tests/companies/clients.php
+          php tests/companies/module_tracking.php
+          php tests/settings/company_settings.php
+          php tests/settings/company_options_helpers.php
+          php tests/settings/company_identity_transaction.php
+          php tests/settings/company_registry_identity.php
+          php tests/settings/company_mail_config.php
+          php tests/settings/company_mail_queue.php
+          php tests/settings/company_mail_schema.php
+          php tests/issuers_staff_access.php
+          php tests/issuers_staff_native.php
+          php tests/issuers_staff_master.php
+          php tests/settings/settings_model_controller.php
+          php tests/settings/company_formatting.php
+          php tests/settings/portal_mail_config.php
+          php tests/settings/portal_mail_templates.php
+          php tests/settings/company_email_templates.php
+          php tests/companies/email_template_scope.php
+          php tests/companies/email_template_controller.php
+          php tests/companies/email_template_editor.php
+          php tests/companies/email_template_bootstrap.php
+          php tests/companies/portal_recovery_tokens.php
+          php tests/companies/portal_recovery_atomic.php
           php tests/issuers_registry.php
           php tests/issuers_concurrency.php

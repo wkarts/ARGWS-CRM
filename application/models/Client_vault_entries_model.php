@@ -1,5 +1,7 @@
 <?php
 
+use app\services\ClientIssuerScope;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Client_vault_entries_model extends App_Model
@@ -16,6 +18,7 @@ class Client_vault_entries_model extends App_Model
      */
     public function get($id)
     {
+        ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix() . 'vault', 'customer_id');
         $this->db->where('id', $id);
 
         return $this->db->get(db_prefix().'vault')->row();
@@ -29,10 +32,15 @@ class Client_vault_entries_model extends App_Model
      */
     public function get_by_customer_id($customer_id, $where = [])
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { return []; }
         $this->db->where('customer_id', $customer_id);
         $this->db->order_by('date_created', 'desc');
 
-        $this->db->where($where);
+        if (!empty($where)) {
+            $this->db->group_start();
+            $this->db->where($where);
+            $this->db->group_end();
+        }
 
         return $this->db->get(db_prefix().'vault')->result_array();
     }
@@ -45,6 +53,8 @@ class Client_vault_entries_model extends App_Model
      */
     public function create($data, $customer_id)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { return false; }
+        unset($data['id']);
         $data['date_created']      = date('Y-m-d H:i:s');
         $data['customer_id']       = $customer_id;
         $data['share_in_projects'] = isset($data['share_in_projects']) ? 1 : 0;
@@ -62,9 +72,10 @@ class Client_vault_entries_model extends App_Model
     public function update($id, $data)
     {
         $vault = $this->get($id);
+        if (!$vault) { return false; }
 
         $last_updated_from = $data['last_updated_from'];
-        unset($data['last_updated_from']);
+        unset($data['last_updated_from'], $data['customer_id'], $data['id']);
         $data['share_in_projects'] = isset($data['share_in_projects']) ? 1 : 0;
 
         $this->db->where('id', $id);
@@ -89,6 +100,7 @@ class Client_vault_entries_model extends App_Model
     public function delete($id)
     {
         $vault = $this->get($id);
+        if (!$vault) { return false; }
 
         $this->db->where('id', $id);
         $this->db->delete(db_prefix().'vault');

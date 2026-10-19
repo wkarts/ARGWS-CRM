@@ -514,15 +514,8 @@ function set_system_popup($message)
  */
 function get_available_date_formats()
 {
-    $date_formats = [
-        'd-m-Y|%d-%m-%Y' => 'd-m-Y',
-        'd/m/Y|%d/%m/%Y' => 'd/m/Y',
-        'm-d-Y|%m-%d-%Y' => 'm-d-Y',
-        'm.d.Y|%m.%d.%Y' => 'm.d.Y',
-        'm/d/Y|%m/%d/%Y' => 'm/d/Y',
-        'Y-m-d|%Y-%m-%d' => 'Y-m-d',
-        'd.m.Y|%d.%m.%Y' => 'd.m.Y',
-    ];
+    require_once APPPATH.'services/CompanySettingsFormats.php';
+    $date_formats = CompanySettingsFormats::dates();
 
     return hooks()->apply_filters('available_date_formats', $date_formats);
 }

@@ -332,7 +332,13 @@ function app_init_admin_sidebar_menu_items()
         ]);
     }
 
-    // Setup menu
+    // Setup menu: companies are a native core resource, immediately before Staff.
+    if (issuer_core_ready() && (is_admin() || count((new IssuerRegistry($CI->db, db_prefix()))->available(get_staff_user_id())) > 0)) {
+        $CI->app_menu->add_setup_menu_item('issuers', [
+            'name' => _l('issuers_title'), 'href' => admin_url('issuers'),
+            'position' => 4, 'badge' => [],
+        ]);
+    }
     if (staff_can('view',  'staff')) {
         $CI->app_menu->add_setup_menu_item('staff', [
             'name'     => _l('als_staff'),

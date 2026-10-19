@@ -62,7 +62,7 @@ foreach(['0.9.9','1.0.0.1','invalid'] as $invalid){[$db]=setup();$db->version=$i
 $count=count($db->writes);check($migration->to_latest()===true&&count($db->writes)===$count,'native upgrade replay has no write');
 check(array_keys($migration->find_migrations())===[101],'only real101 migration, no synthetic100');
 [$db]=setup();$db->version='1.0.1';$db->failBaseline=true;fails(fn()=>idealModuleActivation(),'ideal_activation_version_write_failed');check($db->active===0&&$db->version==='1.0.1','baseline write failure cannot activate');
-[$db]=setup();$db->failTracking=true;fails(fn()=>idealModuleActivation(),'ideal_migration_version_unconfirmed');check($db->active===0&&$db->version==='1.0.0','failed native marker cannot claim success');
+[$db]=setup();$db->failTracking=true;$trackingFailure=null;try{idealModuleActivation();}catch(Throwable $e){$trackingFailure=$e->getMessage();}check(in_array($trackingFailure,['ideal_migration_failed','ideal_migration_version_unconfirmed'],true)&&$db->active===0&&$db->version==='1.0.0','failed native marker cannot claim success');
 [$db]=setup();$db->version='1.0.2';fails(fn()=>idealModuleActivation(),'ideal_activation_version_invalid');check($db->writes===[],'no downgrade on activation');
 [$db]=setup();$db->exists=false;fails(fn()=>idealModuleActivation(),'ideal_activation_version_invalid');
 foreach(['false','true'] as $flag){

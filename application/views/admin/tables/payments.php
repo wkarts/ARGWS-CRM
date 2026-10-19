@@ -21,7 +21,10 @@ $join = [
     'LEFT JOIN ' . db_prefix() . 'payment_modes ON ' . db_prefix() . 'payment_modes.id = ' . db_prefix() . 'invoicepaymentrecords.paymentmode',
 ];
 
-$where = [];
+$where = ['AND ' . \app\services\InvoiceIssuerScope::legacySql($this->ci->db, db_prefix() . 'invoices')];
+if (\app\services\InvoiceIssuerScope::schemaReady($this->ci->db, db_prefix() . 'invoices')) {
+    $where[] = 'AND ' . db_prefix() . 'invoices.id IS NOT NULL';
+}
 if ($clientid != '') {
     array_push($where, 'AND ' . db_prefix() . 'clients.userid=' . $this->ci->db->escape_str($clientid));
 }

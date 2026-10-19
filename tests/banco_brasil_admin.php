@@ -2,16 +2,38 @@
 declare(strict_types=1);
 require __DIR__.'/banco_brasil_store.php';
 define('BASEPATH',__DIR__);
+define('APPPATH',dirname(__DIR__).'/application/');
+$GLOBALS['issuerCoreReady']=true;
+$GLOBALS['issuerRows']=[
+ 1=>['id'=>1,'legal_name'=>'EMPRESA SINTETICA','tax_id'=>'12ABC34501DE35'],
+ 2=>['id'=>2,'legal_name'=>'SEGUNDA EMPRESA SINTETICA','tax_id'=>'11222333000181'],
+];
+$GLOBALS['resourceCompanies']=[1];
+$GLOBALS['currentCompanyId']=1;
 class BbDenied extends RuntimeException{} class BbHttp extends RuntimeException{} class BbRedirect extends RuntimeException{}
 $GLOBALS['permissions']=['view'=>true,'manage'=>true,'import'=>true];$GLOBALS['issuerGrant']=true;$GLOBALS['issuerView']=true;$GLOBALS['resourceGrants']=['view'=>true,'manage'=>true,'import'=>true,'download'=>false];$GLOBALS['explicitMaster']=false;
 function staff_can($cap,$module){return $GLOBALS['permissions'][$cap]??false;}
 function get_staff_user_id(){return 9;}function issuers_can_access($id,$actor,$cap){throw new LogicException('generic permission must not be used');}
-function issuer_resource_can($id,$actor,$feature,$cap){return $id===1&&$actor===9&&$feature==='banco_brasil'&&($GLOBALS['explicitMaster']||(($cap==='view'?$GLOBALS['issuerView']:$GLOBALS['issuerGrant'])&&($GLOBALS['resourceGrants'][$cap]??false)));}
+function issuer_resource_can($id,$actor,$feature,$cap){return in_array($id,$GLOBALS['resourceCompanies'],true)&&$actor===9&&$feature==='banco_brasil'&&($GLOBALS['explicitMaster']||(($cap==='view'?$GLOBALS['issuerView']:$GLOBALS['issuerGrant'])&&($GLOBALS['resourceGrants'][$cap]??false)));}
 function access_denied($v){throw new BbDenied('denied');}function show_error($m,$s){throw new BbHttp((string)$s);}
 function admin_url($p){return 'https://crm.example.test/admin/'.$p;}function set_alert($kind,$text){$GLOBALS['alerts'][]=[$kind,$text];}
 function redirect($url){throw new BbRedirect($url);}function db_prefix(){return 't_';}
+class IssuerCore { public static function ready($db,$prefix): bool { return $GLOBALS['issuerCoreReady']; } }
+class IssuerRegistry {
+ public function __construct($db,$prefix) {}
+ public function available($actor): array { return array_values($GLOBALS['issuerRows']); }
+ public function get($id,$actor): ?array { return $GLOBALS['issuerRows'][$id]??null; }
+}
+final class BbSelectedCompany { public function issuerId(): int { return $GLOBALS['currentCompanyId']; } }
+class CompanyRequestScope {
+ public static function context(){ return new BbSelectedCompany(); }
+ public static function isolated(): bool { return false; }
+ public static function sealedFor($controller): bool { return false; }
+ public static function token(){ return 'synthetic-company-context'; }
+}
+
 function html_escape($value){return htmlspecialchars((string)$value,ENT_QUOTES,'UTF-8');}
-function init_head(){}function init_tail(){}function form_open($url){return '<form method="post" action="'.html_escape($url).'">';}
+function init_head(){}function init_tail(){}function form_open($url){$form='<form method="post" action="'.html_escape($url).'">';if(CompanyRequestScope::token()!==null&&str_starts_with($url,'https://crm.example.test/'))$form.='<input type="hidden" name="_company_context" value="'.html_escape(CompanyRequestScope::token()).'">';return $form;}
 function form_open_multipart($url){return form_open($url);}function form_close(){return '</form>';}
 class BbInput{public $verb='GET';public $posts=[];public $gets=[];function method(){return $this->verb;}function post($k=null){return $k===null?$this->posts:($this->posts[$k]??null);}function get($k){return $this->gets[$k]??null;}}
 class BbSession{public $data=[];function userdata($k){return $this->data[$k]??null;}function set_userdata($k,$v){$this->data[$k]=$v;}}
@@ -26,7 +48,7 @@ $GLOBALS['adminCI']=(object)['db'=>new BbDb(),'input'=>new BbInput(),'session'=>
  'issuers_model'=>new class{public $row=['id'=>1,'legal_name'=>'EMPRESA SINTETICA','tax_id'=>'12ABC34501DE35'];function available($actor){return [$this->row];}function get($id){return $id===1?$this->row:null;}}];
 require __DIR__.'/../modules/banco_brasil/controllers/Banco_brasil.php';
 $n=0;$ci=$GLOBALS['adminCI'];$controller=new Banco_brasil();$controller->index();
-check($ci->load->viewData['selected']===null,'no global issuer fallback');check(strlen($ci->session->data['bb_admin_csrf'])===64,'own CSRF established');
+check($ci->load->viewData['selected']['id']===1,'native company context selects the current company without an ID parameter');check(strlen($ci->session->data['bb_admin_csrf'])===64,'own CSRF established');
 $csrf=$ci->session->data['bb_admin_csrf'];$ci->input->gets=['issuer_id'=>'1'];$controller->index();check($ci->load->viewData['selected']['tax_id']==='12ABC34501DE35','authorized issuer identity');
 check($ci->load->viewData['can_manage']===true,'AND permissions allowed');
 $GLOBALS['issuerGrant']=false;$controller->index();check($ci->load->viewData['can_manage']===false,'view does not imply manage');
@@ -43,12 +65,16 @@ check($ci->db->tables['t_bb_connections'][0]['lifecycle']==='pending_verificatio
 $ci->input->posts['issuer_id']='2';rejects(fn()=>$controller->register_connection(),'cross issuer POST');
 $ci->input->gets=['issuer_id'=>'2'];rejects(fn()=>$controller->index(),'cross issuer GET');
 $ci->input->gets=['issuer_id'=>['1']];rejects(fn()=>$controller->index(),'array issuer refused');
-$ci->app_modules->active=false;$ci->input->gets=[];$controller->index();check($ci->load->viewData['issuers']===[],'missing issuer module consultative');$ci->app_modules->active=true;
-$ci->input->gets=['issuer_id'=>'1'];$ci->issuers_model->row['legal_name']='<script>evil</script>';$controller->index();
+$ci->app_modules->active=false;$ci->input->gets=[];$controller->index();check($ci->load->viewData['selected']['id']===1,'BB company access uses the native core without the legacy issuers module');$ci->app_modules->active=true;
+$GLOBALS['issuerCoreReady']=false;$controller->index();check($ci->load->viewData['issuers']===[],'unready native company core fails closed');$GLOBALS['issuerCoreReady']=true;
+$ci->input->gets=['issuer_id'=>'1'];$GLOBALS['issuerRows'][1]['legal_name']='<script>evil</script>';$controller->index();
 extract($ci->load->viewData);ob_start();include __DIR__.'/../modules/banco_brasil/views/index.php';$html=ob_get_clean();
 check(!str_contains($html,'<script>evil</script>')&&str_contains($html,'&lt;script&gt;evil&lt;/script&gt;'),'escaped issuer label');
 foreach(['Autenticação','Ambiente','Convênio','Conta','Cobrança','Remessa','Retorno','Webhook'] as $label)check(str_contains($html,$label),'PTBR tab '.$label);
 check(!str_contains($html,'name="client_secret"')&&!str_contains($html,'name="tax_id"'),'no secret or substitute identity field');
+$connectionForm=[];check((bool)preg_match('~<form\b[^>]*action="https://crm\.example\.test/admin/banco_brasil/register_connection"[^>]*>(.*?)</form>~s',$html,$connectionForm),'connection form rendered');
+check(substr_count($connectionForm[1],'name="_company_context"')===1,'connection form carries one company scope token from the native helper');
+check(str_contains($html,'aria-labelledby="bb-tab-auth"')&&str_contains($html,'aria-selected="true"'),'BB tabs expose selected state and panel labels');
 check(str_contains($html,'Nenhum pagamento será criado'),'financial impact visible');
 $ci->input->verb='POST';$ci->input->posts=['issuer_id'=>'1','connection_id'=>'1','layout_id'=>\BancoBrasil\LayoutCatalog::CNAB400,'csrf_bb'=>$csrf];
 $GLOBALS['issuerGrant']=false;rejects(fn()=>$controller->register_layout(),'profile needs issuer manage grant');$GLOBALS['issuerGrant']=true;
@@ -66,7 +92,7 @@ check(str_contains($html,'name="layout_binding_id"')&&str_contains($html,'Seleci
 check(str_contains($html,'name="layout_id"')&&str_contains($html,'CNAB 400')&&str_contains($html,'CNAB 240'),'GUI profile registration both formats');
 check(str_contains($html,'não contém evidência inequívoca')&&str_contains($html,'2000–2099'),'provenance and dates limitations visible');
 check(!str_contains($html,'getenv(')&&!str_contains($html,'app-config'),'functional parameters in native GUI');
-$GLOBALS['resourceGrants']['view']=false;$ci->input->gets=[];$controller->index();check($ci->load->viewData['issuers']===[],'no company list leakage without resource view');
+$GLOBALS['resourceGrants']['view']=false;$ci->input->gets=[];rejects(fn()=>$controller->index(),'selected company access requires resource view');
 $ci->input->gets=['issuer_id'=>'1'];rejects(fn()=>$controller->index(),'resource view required on direct URL');$GLOBALS['resourceGrants']['view']=true;
 $GLOBALS['resourceGrants']['manage']=false;$ci->input->posts['layout_id']=\BancoBrasil\LayoutCatalog::CNAB400;
 rejects(fn()=>$controller->register_layout(),'module/global role does not inherit company resource manage');
@@ -96,4 +122,14 @@ check($ci->db->protectedReads===1&&$ci->db->db_debug===true&&$ci->db->save_queri
 check($ci->load->viewData['connections']===[]&&$ci->load->viewData['can_manage']===false&&$ci->load->viewData['can_import']===false,'failed reads disable actions');
 extract($ci->load->viewData);ob_start();include __DIR__.'/../modules/banco_brasil/views/index.php';$failedHtml=ob_get_clean();
 check(str_contains($failedHtml,'Armazenamento indisponível')&&!str_contains($failedHtml,'SELECT '),'generic storage alert without SQL');
+// Explicit A/B context tests: direct issuer IDs cannot escape the selected Companies record.
+$ci->db=new BbDb();$GLOBALS['currentCompanyId']=2;$GLOBALS['resourceCompanies']=[1,2];
+$ci->input->verb='GET';$ci->input->gets=[];$companyTwoController=new Banco_brasil();$companyTwoController->index();
+check($ci->load->viewData['selected']['id']===2&&array_column($ci->load->viewData['issuers'],'id')===[2],'company B context lists and selects B only');
+$ci->input->gets=['issuer_id'=>'1'];rejects(fn()=>$companyTwoController->index(),'authorized company A ID cannot bypass selected B context');
+$ci->input->gets=[];$ci->input->verb='POST';$ci->input->posts=$data+['issuer_id'=>'1','csrf_bb'=>$csrf];
+rejects(fn()=>$companyTwoController->register_connection(),'company A POST cannot escape selected B context');
+$ci->input->posts=$data+['issuer_id'=>'2','csrf_bb'=>$csrf];try{$companyTwoController->register_connection();}catch(BbRedirect $e){check(str_contains($e->getMessage(),'issuer_id=2'),'company B remains immutable through connection action');}
+check(count($ci->db->tables['t_bb_connections'])===1&&$ci->db->tables['t_bb_connections'][0]['issuer_id']===2&&$ci->db->tables['t_bb_connections'][0]['issuer_tax_id']==='11222333000181','new bank connection is bound to company B identity');
+$GLOBALS['currentCompanyId']=1;
 echo "OK {$n} Banco do Brasil admin checks\n";

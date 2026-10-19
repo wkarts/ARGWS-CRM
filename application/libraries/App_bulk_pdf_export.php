@@ -1,5 +1,7 @@
 <?php
 
+use app\services\InvoiceIssuerScope;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 @ini_set('memory_limit', '512M');
@@ -205,6 +207,10 @@ class App_bulk_pdf_export
         $this->ci->db->select('' . db_prefix() . 'invoicepaymentrecords.id as paymentid');
         $this->ci->db->from(db_prefix() . 'invoicepaymentrecords');
         $this->ci->db->join(db_prefix() . 'invoices', '' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid', 'left');
+        InvoiceIssuerScope::applyLegacy($this->ci->db, db_prefix() . 'invoices');
+        if (InvoiceIssuerScope::schemaReady($this->ci->db, db_prefix() . 'invoices')) {
+            $this->ci->db->where(db_prefix() . 'invoices.id IS NOT NULL', null, false);
+        }
         $this->ci->db->join(db_prefix() . 'clients', '' . db_prefix() . 'clients.userid = ' . db_prefix() . 'invoices.clientid', 'left');
 
         if (!$this->can_view) {
@@ -228,6 +234,7 @@ class App_bulk_pdf_export
         $this->ci->load->model('invoices_model');
         foreach ($data as $payment) {
             $payment_data = $this->ci->payments_model->get($payment['paymentid']);
+            if (!$payment_data) { continue; }
 
             $payment_data->invoice_data = $this->ci->invoices_model->get($payment_data->invoiceid);
 
@@ -368,6 +375,7 @@ class App_bulk_pdf_export
 
         $this->ci->db->select('id');
         $this->ci->db->from(db_prefix() . 'invoices');
+        InvoiceIssuerScope::applyLegacy($this->ci->db, db_prefix() . 'invoices');
         if ($this->status != 'all') {
             if (is_numeric($this->status)) {
                 $this->ci->db->where('status', $this->status);
@@ -387,6 +395,7 @@ class App_bulk_pdf_export
         $this->ci->load->model('invoices_model');
         foreach ($data as $invoice) {
             $invoice = $this->ci->invoices_model->get($invoice['id']);
+            if (!$invoice) { continue; }
             $pdf     = invoice_pdf($invoice, $this->pdf_tag);
             $this->save_to_dir($invoice, $pdf, strtoupper(slug_it(format_invoice_number($invoice->id))) . '.pdf');
         }

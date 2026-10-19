@@ -2,6 +2,33 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+// Resolve browser company scope before App/options, gateways, email, modules or models.
+require_once APPPATH . 'services/CompanyRequestScope.php';
+$companyBootstrap = &get_instance();
+CompanyRequestScope::bootstrap($companyBootstrap);
+if (CompanyRequestScope::isolated()) {
+    $autoload = ['packages' => [], 'config' => [], 'helper' => ['url', 'form'],
+        'language' => [], 'drivers' => [], 'libraries' => [], 'model' => []];
+    return;
+}
+if (CompanyRequestScope::nativeUpgradeOnly()) {
+    // Native settings helpers use total_rows(), whose company predicate resolver
+    // is deliberately kept out of the normal recovery autoload set.
+    require_once APPPATH . 'services/ClientIssuerScope.php';
+    // A damaged company core admits only the authenticated native upgrade gate.
+    // Do not hydrate modules, gateways, email transports, or application models.
+    $autoload = [
+        'packages' => [],
+        'config' => [],
+        'helper' => ['url', 'form', 'settings', 'admin', 'staff', 'general', 'files', 'database'],
+        'language' => [],
+        'drivers' => [],
+        'libraries' => ['database', 'app_object_cache', 'app'],
+        'model' => [],
+    ];
+    return;
+}
+
 /*
 | -------------------------------------------------------------------
 | AUTO-LOADER
@@ -114,6 +141,8 @@ $autoload['drivers'] = ['session'];
 include_once(APPPATH . 'third_party/action_hooks.php');
 
 $autoload['helper'] = [
+    'issuers',
+    'invoice_issuer',
     'app_branding',
     'emails_tracking',
         'language',
@@ -165,7 +194,10 @@ $autoload['helper'] = [
         'deprecated',
     ];
 
-if (file_exists(APPPATH . 'helpers/my_functions_helper.php')) {
+// Installer bootstrap isolates optional application customizers from its body.
+$internalInstallation = class_exists('InstallationMigrationBootstrap', false)
+    && InstallationMigrationBootstrap::isRunning();
+if (!$internalInstallation && file_exists(APPPATH . 'helpers/my_functions_helper.php')) {
     array_push($autoload['helper'], 'my_functions');
 }
 
@@ -217,6 +249,6 @@ $autoload['model'] = [
     'tasks_model',
 ];
 
-if (file_exists(APPPATH . 'config/my_autoload.php')) {
+if (!$internalInstallation && file_exists(APPPATH . 'config/my_autoload.php')) {
     include_once(APPPATH . 'config/my_autoload.php');
 }

@@ -187,14 +187,14 @@ class App_module_migration
             $migration[0] = new $migration[0];
             call_user_func($migration);
             $current_version = $number;
-            $this->_update_version($current_version);
+            if ($this->_update_version($current_version) === false) { return false; }
         }
 
         // This is necessary when moving down, since the the last migration applied
         // will be the down() method for the next migration up from the target
         if ($current_version <> $target_version) {
             $current_version = $target_version;
-            $this->_update_version($current_version);
+            if ($this->_update_version($current_version) === false) { return false; }
         }
 
         return $current_version;
@@ -348,9 +348,18 @@ class App_module_migration
      */
     protected function _update_version($migration)
     {
+        $version = wordwrap($migration, 1, '.', true);
         $this->ci->db->where('module_name', $this->module_name);
-        $this->ci->db->update($this->_migration_table, [
-            'installed_version' => wordwrap($migration, 1, '.', true),
-        ]);
+        if ($this->ci->db->update($this->_migration_table, ['installed_version' => $version]) === false) {
+            $this->_error_string = 'module_migration_version_write_failed';
+            return false;
+        }
+        $query = $this->ci->db->select('installed_version')->where('module_name', $this->module_name)->get($this->_migration_table);
+        $row = $query === false ? null : $query->row();
+        if (!$row || (string) $row->installed_version !== $version) {
+            $this->_error_string = 'module_migration_version_unconfirmed';
+            return false;
+        }
+        return true;
     }
 }

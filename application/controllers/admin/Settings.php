@@ -1,12 +1,20 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH . 'services/CompanySettingsRuntime.php';
+require_once APPPATH . 'services/CompanySettingsFormats.php';
 
 class Settings extends AdminController
 {
     public function __construct()
     {
         parent::__construct();
+        if ($this->isolated_company()) {
+            if (!class_exists('CompanyRequestScope', false) || !CompanyRequestScope::sealedFor($this)) { show_error('Acesso negado.', 403); return; }
+            $this->load->library('encryption');
+            $this->load->model('settings_model');
+            return;
+        }
         $this->load->model('payment_modes_model');
         $this->load->model('settings_model');
     }
@@ -14,14 +22,18 @@ class Settings extends AdminController
     // View all settings
     public function index()
     {
-        if (staff_cant('view', 'settings')) {
+        if ($this->isolated_company()) { return $this->isolated_index(); }
+        if (!$this->settings_allowed('view')) {
             access_denied('settings');
         }
 
         $group = $this->input->get('group');
+        if (CompanySettingsRuntime::active() && in_array($group, ['update', 'info'], true)
+            && !CompanySettingsRuntime::canInfrastructure()) { access_denied('settings'); }
+        if ($this->isolated_company() && $group === 'tags') { access_denied('settings'); }
 
-        // Support credentials and release controls are restricted to administrators.
-        if ($group === 'argws_platform' && !is_admin()) {
+        // Legacy installation support controls retain their administrator check; explicit company context uses resource ACL.
+        if ($group === 'argws_platform' && !is_admin() && !CompanySettingsRuntime::active()) {
             access_denied('settings');
         }
 
@@ -31,7 +43,7 @@ class Settings extends AdminController
         }
 
         if ($this->input->post()) {
-            if (staff_cant('edit', 'settings')) {
+            if (!$this->settings_allowed('edit')) {
                 access_denied('settings');
             }
 
@@ -53,7 +65,7 @@ class Settings extends AdminController
                 array_keys($post_data['settings']),
                 ['argws_support_enabled', 'argws_support_base_url', 'argws_support_public_token', 'argws_support_position', 'argws_support_type', 'argws_support_launcher_title', 'argws_terminology_policy', 'support_contact_channel', 'support_whatsapp', 'support_email', 'support_site_url']
             ) !== [];
-            if ($hasArgwsPlatformSettings && !is_admin()) {
+            if ($hasArgwsPlatformSettings && !is_admin() && !CompanySettingsRuntime::active()) {
                 access_denied('settings');
             }
 
@@ -66,11 +78,17 @@ class Settings extends AdminController
                 $post_data['settings'], $this->payment_modes_model->get_payment_gateways(true)
             );
 
-            hooks()->do_action('before_update_system_options', $post_data);
+            if ($this->isolated_company()) {
+                if (isset($post_data['tags']) || isset($post_data['custom_fields']) || $this->has_uploaded_files()) {
+                    access_denied('settings');
+                }
+            } else {
+                hooks()->do_action('before_update_system_options', $post_data);
+            }
 
-            $logo_uploaded     = (handle_company_logo_upload() ? true : false);
-            $favicon_uploaded  = (handle_favicon_upload() ? true : false);
-            $signatureUploaded = (handle_company_signature_upload() ? true : false);
+            $logo_uploaded     = (!$this->isolated_company() && handle_company_logo_upload() ? true : false);
+            $favicon_uploaded  = (!$this->isolated_company() && handle_favicon_upload() ? true : false);
+            $signatureUploaded = (!$this->isolated_company() && handle_company_signature_upload() ? true : false);
 
             $tmpData = $this->input->post(null, false);
 
@@ -132,7 +150,7 @@ class Settings extends AdminController
 
         $data['admin_tabs'] = ['update', 'info', 'argws_platform'];
 
-        if (! $group || (in_array($group, $data['admin_tabs']) && ! is_admin())) {
+        if (! $group || (in_array($group, $data['admin_tabs']) && !CompanySettingsRuntime::active() && ! is_admin())) {
             $group = 'general';
         }
 
@@ -172,6 +190,93 @@ class Settings extends AdminController
         );
 
         $this->load->view('admin/settings/all', $data);
+    }
+
+    /** Same Settings route and model, with no legacy global navigation or callback hydration. */
+    private function isolated_index()
+    {
+        if (!$this->settings_allowed('view')) { show_error('Acesso negado.', 403); return; }
+        $group = $this->input->get('group') ?: 'company';
+        $fields = [
+            'company' => array_merge(['invoice_company_name', 'company_vat'], CompanySettingsIdentity::PROFILE_OPTIONS),
+            'localization' => ['dateformat','time_format'],
+            'email' => ['smtp_host', 'smtp_port', 'smtp_encryption', 'smtp_email', 'smtp_username', 'smtp_password'],
+        ];
+        if (!isset($fields[$group])) { show_error('Esta seção ainda não está disponível para a empresa selecionada.', 403); return; }
+        $error = null;
+        $saved = false;
+        if ($this->input->post()) {
+            if (!$this->settings_allowed('edit')) { show_error('Acesso negado.', 403); return; }
+            $post = $this->input->post(null, false);
+            $settings = $post['settings'] ?? null;
+            try {
+                if (!is_array($settings) || isset($post['tags']) || isset($post['custom_fields']) || $this->has_uploaded_files()
+                    || array_diff(array_keys($settings), $fields[$group])) { throw new DomainException('company_settings_invalid_input'); }
+                foreach ($settings as $value) { if (!is_string($value)) { throw new DomainException('company_settings_invalid_input'); } }
+                if ($group === 'localization') { CompanySettingsFormats::validate($settings); }
+                if ($group === 'email') {
+                    if (isset($settings['smtp_encryption']) && !in_array($settings['smtp_encryption'], ['', 'ssl', 'tls'], true)) { throw new DomainException('company_settings_invalid_input'); }
+                    if (!empty($settings['smtp_port']) && (!ctype_digit($settings['smtp_port']) || (int) $settings['smtp_port'] < 1 || (int) $settings['smtp_port'] > 65535)) { throw new DomainException('company_settings_invalid_input'); }
+                    if (!empty($settings['smtp_email']) && !filter_var($settings['smtp_email'], FILTER_VALIDATE_EMAIL)) { throw new DomainException('company_settings_invalid_input'); }
+                    if (!empty($post['clear_smtp_password'])) { $settings['smtp_password'] = ''; }
+                    elseif (($settings['smtp_password'] ?? '') === '') { unset($settings['smtp_password']); }
+                    $settings['mail_engine'] = 'phpmailer';
+                    $settings['email_protocol'] = 'smtp';
+                }
+                $this->settings_model->update(['settings' => $settings]);
+                $saved = true;
+            } catch (DomainException $exception) {
+                $this->output->set_status_header(422);
+                $messages = [
+                    'issuer_invalid_name' => 'Informe um nome válido para a empresa.',
+                    'issuer_invalid_tax_id' => 'Informe um CPF ou CNPJ válido.',
+                    'issuer_tax_conflict' => 'Este CPF ou CNPJ já está cadastrado em outra empresa.',
+                    'company_settings_encryption_failed' => 'Não foi possível proteger a senha. Nenhuma senha em texto aberto foi salva.',
+                ];
+                $error = $messages[$exception->getMessage()] ?? 'Não foi possível salvar os dados. Verifique os campos e sua permissão nesta empresa.';
+            } catch (RuntimeException $exception) {
+                $this->output->set_status_header(503);
+                $error = 'Não foi possível confirmar a gravação. Recarregue a página antes de tentar novamente.';
+            }
+        }
+        $identity = (new CompanySettingsIdentity($this->db, db_prefix()))->read(CompanySettingsRuntime::issuerId());
+        $values = [];
+        foreach ($fields[$group] as $name) {
+            if ($name !== 'smtp_password') { $values[$name] = CompanySettingsRuntime::get($name); }
+        }
+        $this->load->view('admin/settings/company_scoped', [
+            'company_identity' => $identity, 'company_id' => CompanySettingsRuntime::issuerId(),
+            'group' => $group, 'values' => $values, 'can_edit' => $this->settings_allowed('edit'),
+            'password_configured' => $group === 'email' && CompanySettingsRuntime::get('smtp_password') !== '',
+            'error' => $error, 'saved' => $saved,
+            'context_token' => CompanyRequestScope::token(),
+            'company_urls' => [
+                'companies' => CompanyRequestScope::adminUrl($this, 'company_context'),
+                'company' => CompanyRequestScope::adminUrl($this, 'settings?group=company'),
+                'email' => CompanyRequestScope::adminUrl($this, 'settings?group=email'),
+                'localization' => CompanyRequestScope::adminUrl($this, 'settings?group=localization'),
+            ],
+        ]);
+    }
+
+    private function settings_allowed(string $capability): bool
+    {
+        return CompanySettingsRuntime::active()
+            ? CompanySettingsRuntime::can($capability) : staff_can($capability, 'settings');
+    }
+
+    private function isolated_company(): bool
+    {
+        return CompanySettingsRuntime::active() && !CompanySettingsRuntime::isPrimary();
+    }
+
+    private function has_uploaded_files(): bool
+    {
+        foreach ($_FILES as $file) {
+            $errors = (array) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+            foreach ($errors as $error) { if ((int) $error !== UPLOAD_ERR_NO_FILE) { return true; } }
+        }
+        return false;
     }
 
     private function normalize_argws_platform_settings(array &$settings)
@@ -220,6 +325,7 @@ class Settings extends AdminController
             'email' => trim((string) getenv('CRM_SUPPORT_EMAIL')),
             'website' => trim((string) getenv('CRM_SUPPORT_SITE_URL')),
         ];
+        if ($this->isolated_company()) { $fallback = ['whatsapp' => '', 'email' => '', 'website' => '']; }
         $selection = ['whatsapp' => $phone, 'email' => $email, 'website' => $site];
         if (isset($selection[$contactChannel]) && $selection[$contactChannel] === ''
             && $fallback[$contactChannel] === '') {
@@ -295,11 +401,12 @@ class Settings extends AdminController
 
     public function delete_tag($id)
     {
+        if ($this->isolated_company()) { access_denied('settings'); }
         if (! $id) {
             redirect(admin_url('settings?group=tags'));
         }
 
-        if (staff_cant('delete', 'settings')) {
+        if (!$this->settings_allowed('delete')) {
             access_denied('settings');
         }
 
@@ -313,7 +420,8 @@ class Settings extends AdminController
 
     public function remove_signature_image()
     {
-        if (staff_cant('delete', 'settings')) {
+        if ($this->isolated_company()) { access_denied('settings'); }
+        if (!$this->settings_allowed('delete')) {
             access_denied('settings');
         }
 
@@ -330,9 +438,10 @@ class Settings extends AdminController
     // Remove company logo from settings / ajax
     public function remove_company_logo($type = '')
     {
+        if ($this->isolated_company()) { access_denied('settings'); }
         hooks()->do_action('before_remove_company_logo');
 
-        if (staff_cant('delete', 'settings')) {
+        if (!$this->settings_allowed('delete')) {
             access_denied('settings');
         }
 
@@ -352,8 +461,9 @@ class Settings extends AdminController
 
     public function remove_fv()
     {
+        if ($this->isolated_company()) { access_denied('settings'); }
         hooks()->do_action('before_remove_favicon');
-        if (staff_cant('delete', 'settings')) {
+        if (!$this->settings_allowed('delete')) {
             access_denied('settings');
         }
         if (file_exists(get_upload_path_by_type('company') . '/' . get_option('favicon'))) {
@@ -365,7 +475,7 @@ class Settings extends AdminController
 
     public function delete_option($name)
     {
-        if (staff_cant('delete', 'settings')) {
+        if (!$this->settings_allowed('delete')) {
             access_denied('settings');
         }
 
@@ -376,7 +486,8 @@ class Settings extends AdminController
 
     public function clear_sessions()
     {
-        if (staff_cant('delete', 'settings')) {
+        if (CompanySettingsRuntime::active() && !CompanySettingsRuntime::canInfrastructure()) { access_denied('settings'); }
+        if (!$this->settings_allowed('delete')) {
             access_denied('settings');
         }
         $this->db->empty_table(db_prefix() . 'sessions');

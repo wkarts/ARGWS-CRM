@@ -56,24 +56,19 @@ class App_modules
         $this->initialize();
     }
 
-    /** These checks never install, migrate or activate during request bootstrap. */
+    /** Retained API names for older callers; companies are now core, never a module. */
     public function essential_modules_ready()
     {
-        require_once APPPATH . 'services/EssentialIssuerModule.php';
-        return EssentialIssuerModule::ready($this->ci);
+        require_once APPPATH . 'services/issuers/IssuerCore.php';
+        return IssuerCore::ready($this->ci->db, db_prefix());
     }
-
-    /** Called only by authenticated setup or the controlled provisioning path. */
     public function ensure_essential_modules()
     {
-        return $this->activate('issuers') && $this->essential_modules_ready();
+        require_once APPPATH . 'services/issuers/IssuerCore.php';
+        IssuerCore::reconcile($this->ci->db, db_prefix());
+        return $this->essential_modules_ready();
     }
-
-    public function is_essential($name)
-    {
-        require_once APPPATH . 'services/EssentialIssuerModule.php';
-        return EssentialIssuerModule::isEssential($name);
-    }
+    public function is_essential($name) { return false; }
 
     /**
      * Activate Module
@@ -381,6 +376,9 @@ class App_modules
      */
     public function upgrade_database($name)
     {
+        if ($name === 'issuers') {
+            return false; // Retired module history is never executed through the module runner.
+        }
         if ($this->is_essential($name)) {
             return $this->ensure_essential_modules() ? true : 'Configuração obrigatória de Emitentes não confirmada.';
         }
@@ -533,6 +531,7 @@ class App_modules
 
         foreach (static::get_valid_modules() as $module) {
             $name = $module['name'];
+            if ($name === 'issuers') { continue; }
             // If the module hasn't already been added and isn't a file
             if (!isset($this->modules[$name])) {
                 /**
@@ -696,6 +695,9 @@ class App_modules
                     $name = rtrim($name, $trim);
                 }
 
+                // The retired issuer module is retained on disk only for immutable upgrade history.
+                if ($name === 'issuers') { continue; }
+
                 // If the module hasn't already been added and isn't a file
                 if (!stripos($name, '.')) {
                     $module_path = APP_MODULES_PATH . $name . '/';
@@ -721,6 +723,7 @@ class App_modules
         $db_modules = $this->ci->db->get(db_prefix() . 'modules')->result();
 
         foreach ($db_modules as $db_module) {
+            if ($db_module->module_name === 'issuers') { continue; }
             $this->db_modules[$db_module->module_name] = $db_module;
         }
     }
