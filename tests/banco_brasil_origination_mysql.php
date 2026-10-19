@@ -77,6 +77,8 @@ essentialCheck($bank->download($a,7,$batch)===$file,'old batch download never fo
 $db->query("UPDATE {$p}staff SET active=0 WHERE staffid=7");
 essentialThrows(fn()=>$bank->download($a,7,$batch),'bb_origination_access_denied','revoked actor cannot download stored remittance');
 $db->query("UPDATE {$p}staff SET active=1 WHERE staffid=7");
+// Keep the FK intact while removing only the uniqueness property under test.
+$db->query("ALTER TABLE {$p}bb_batch_origins ADD INDEX origin_support(origin_id)");
 $db->query("ALTER TABLE {$p}bb_batch_origins DROP INDEX origin_batch");
 essentialThrows(fn()=>\BancoBrasil\OriginationSchema::assertValid($db,$p),'bb_origination_schema_invalid','missing unique origin constraint fails read-only operational preflight');
 $db->query("ALTER TABLE {$p}bb_batch_origins ADD UNIQUE KEY origin_batch(origin_id)");
