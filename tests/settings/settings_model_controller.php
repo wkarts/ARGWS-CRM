@@ -163,3 +163,16 @@ foreach ([41=>['d/m/Y|%d/%m/%Y','24'],82=>['Y-m-d|%Y-%m-%d','12']] as $issuer=>$
 }
 essentialCheck($store->get(41,'dateformat')==='d/m/Y|%d/%m/%Y' && $store->get(82,'dateformat')==='Y-m-d|%Y-%m-%d', 'A/B formatting independent after switching');
 echo 'Settings formatting controller: '.$GLOBALS['essentialChecks'].' total checks passed.'.PHP_EOL;
+
+foreach([41=>'A',82=>'B'] as $owner=>$letter){
+ CompanySettingsRuntime::run($db,$p,$owner,12,function()use($viewHarness,$letter){
+  $controller=new Settings();$GLOBALS['CI']->input->group='documents';
+  $GLOBALS['CI']->input->payload=['settings'=>['invoice_prefix'=>'SYN-'.$letter.'-','predefined_terms_invoice'=>'Synthetic terms '.$letter.' <script>literal</script>']];$controller->index();$view=end($GLOBALS['CI']->load->views)[1];
+  essentialCheck($view['saved']&&$view['values']['invoice_prefix']==='SYN-'.$letter.'-','document preferences saved through actual isolated settings controller');
+  $html=$viewHarness->render($view);essentialCheck(str_contains($html,'settings[predefined_terms_invoice]')&&!str_contains($html,'<script>literal</script>'),'document terms render as escaped text, never executable HTML');
+  $before=CompanySettingsRuntime::all();$GLOBALS['CI']->output->status=200;$GLOBALS['CI']->input->payload=['settings'=>['invoice_prefix'=>str_repeat('x',51),'predefined_terms_invoice'=>'must not write']];$controller->index();
+  essentialCheck($GLOBALS['CI']->output->status===422&&CompanySettingsRuntime::all()===$before,'invalid document batch leaves all prior preferences untouched');
+ });
+}
+essentialCheck($store->get(41,'invoice_prefix')==='SYN-A-'&&$store->get(82,'invoice_prefix')==='SYN-B-','company switching never shares invoice prefix or terms');
+echo 'Document preferences controller: '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;

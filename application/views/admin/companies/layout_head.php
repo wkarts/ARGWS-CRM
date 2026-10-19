@@ -37,7 +37,7 @@ body.company-context-shell{background:#f3f4f6;margin:0;color:#334155}
 <nav id="menu" aria-label="Menu do CRM">
 <?php if ($companyLayoutPrimary) { ?><a class="company-dashboard" href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this)); ?>">Painel</a><?php } ?>
 <a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'issuers')); ?>">Empresas</a>
-<?php if (CompanySettingsRuntime::active() && CompanySettingsRuntime::can('view')) { ?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'settings?group=company')); ?>">Definições</a><?php } ?>
+<?php if (CompanySettingsRuntime::active() && CompanySettingsRuntime::can('view')) { ?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'settings?group=company')); ?>">Definições</a><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'company_assets')); ?>">Logotipo e assinatura</a><?php } ?>
 <?php if (CompanySettingsRuntime::active() && CompanySettingsRuntime::canResource('email_templates','view')) { ?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'emails')); ?>">Modelos de e-mail</a><?php } ?>
 <?php if (CompanySettingsRuntime::active() && CompanySettingsRuntime::canResource('customers','view')) { ?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'company_clients')); ?>">Clientes da empresa</a><?php } ?>
 <?php if (CompanySettingsRuntime::active() && CompanySettingsRuntime::canResource('invoices','view')) { ?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'company_invoices')); ?>">Faturas da empresa</a><?php } ?>

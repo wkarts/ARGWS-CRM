@@ -1,6 +1,6 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Núcleo atual4.1.7/417; BB1.0.8/101–108;
+Escopo integral em andamento. Núcleo atual4.1.8/418; BB1.0.8/101–108;
 Asaas1.4.8/148. As migrations publicadas402–412 foram preservadas. Não há
 merge/deploy/release nem autorização implícita por um resultado de CI.
 
@@ -20,7 +20,7 @@ Inventários atualizados localizam revisão; não medem bugs, cobertura ou concl
 | Seletor e contexto | ACL própria, nonce/CSRF/HMAC,409 de aba obsoleta antes de hidratar | Company context e navegador | Preservado; sem replay de POST antigo |
 | Clientes privados/opt-in | Diretório positivo criar/editar/ler/buscar/paginar, compartilhar/revogar identidade; recibos duráveis | Clients PDO, concorrência, CRM/Chromium | Fluxo positivo entregue; outros consumidores continuam com barreiras |
 | Contatos e portal/recuperação | Contatos próprios; login por owner; A/B com e-mail igual; template/SMTP/fila por origem; reset transacional, anti-replay e sessões | Portal positivo/concorrência/navegador; regressões legadas | Portal de identidade/recuperação; entrega SMTP externa não realizada; 414 adiciona lista/PDF de faturas próprias com permissão nativa explícita; demais documentos/operações do portal pendentes |
-| Settings/SMTP/templates | Identidade canônica, preferências, próprios segredos sem fallback, templates por origem | Suítes settings, queue, portal e HTTP | Parcial; catálogo integral, logos/assinaturas/uploads/integrações restantes pendentes |
+| Settings/SMTP/templates | Identidade canônica, preferências, próprios segredos sem fallback, templates por origem | Suítes settings, queue, portal e HTTP | Identidade/SMTP/templates/data-hora, preferências de fatura e imagens próprias; catálogo/integrações restantes pendentes |
 | Faturas nomeadas | UI isolada emitir/listar/consultar/editar sem movimento/cancelar; itens/múltiplos tributos/descontos/ajustes, numeração e snapshots atômicos | Invoices PDO, MySQL concorrente, CRM HTTP/Chromium | Incremento408; perfil restrito documentado, validação remota pertence ao SHA final |
 | Recebimentos manuais | Entrada explícita no writer; ACL/owner/saldo sob lock, referência, retry, status e auditoria atômicos | Invoices/concorrência e regressões writer Asaas | Registro manual local; não confirma banco; origens BB/Asaas recusadas para revisão própria |
 | PDF de faturas nomeadas | DTO autorizado e TCPDF; staff e portal privado com permissão nativa explícita; revalidação/auditoria antes dos bytes | PDF real, A/B, legado NULL e testes414 de revogação/HTTP | Lista/PDF de faturas emitidas do cliente e empresa próprios; rascunhos ocultos; sem conceder demais operações ou histórico compartilhado |
@@ -56,3 +56,28 @@ sem alterar migrations históricas. Gates de outros consumidores permanecem fech
 | Editor monetário concorrente/revogação e GUI A/B/PDF/aba obsoleta | Testes ampliados em invoice_concurrency.php e companies_invoices_browser.cjs | MariaDB10.11.14 local:83 checks acumulados de fatura/edição/recebimento/concorrência e89 de portal/revogação; MySQL8/Chromium aguardam CI do novo HEAD |
 
 Nenhuma chamada real de banco/SMTP, merge ou deploy neste incremento.
+
+## Incremento418 — imagens e preferências de faturas por empresa
+
+`admin/company_assets` usa renderer isolado, contexto/CSRF, settings/view+edit,
+revisão concorrente e ownership pela empresa atual. PNG/JPEG até512 KiB são
+validados por dimensão/pixels e convertidos para PNG, removendo metadados/conteúdo
+adicional. Registro privado no JSON da empresa, sem URL pública ou caminho físico.
+Download confirma ACL e auditoria transacional antes dos bytes. Não há fallback
+para imagens de outra empresa ou uploads globais. Assinatura é imagem, não A1/GovBR.
+Novas faturas capturam logo/assinatura; documentos antigos conservam seu snapshot.
+Definições/Faturas oferece prefixo e condições próprias, validados e escapados.
+Migration418 é NOOP; não altera schema, tracking ou migrations históricas.
+
+| Requisito | Execução local PHP8.3.6 | Limitação |
+|---|---|---|
+| Upload, preview, remoção, download, A/B/principal, ACL, auditoria/falha, imagem inválida/oversized | company_assets.php:24 checks em SQLite e MariaDB10.11.14 | Sem HTTP local; o novo teste Chromium pertence ao novo HEAD |
+| Escritores concorrentes e revogação aguardando lock | asset_concurrency.php:32 checks acumulados em MariaDB10.11.14 | MySQL8/PHP8.1/8.5 no CI |
+| Snapshot/PDF real após troca/remoção de imagens | invoices.php:63 checks acumulados; invoice_concurrency.php:87 em MariaDB | Sem certificado digital |
+| Portal/PDF e revogação durante lock | portal_invoice_concurrency.php:93 checks acumulados em MariaDB | Sem banco/SMTP externos |
+| Prefixo/condições A/B, batch inválido e escape | settings_model_controller.php:134 checks acumulados em SQLite | Demais configurações não declaradas continuam bloqueadas |
+
+CI do417 (`5d0f41a3`): fluxos MySQL8/PHP8.1/8.5, BB MySQL/MariaDB e stack
+HTTP/Chromium aprovados. Dois gates falharam por inventário desatualizado;418
+regenera os inventários conservando entradas alteradas como pendentes. Não reutiliza
+essa execução como prova do código418 nem muda rollout global para liberado.

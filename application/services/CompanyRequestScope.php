@@ -64,6 +64,7 @@ final class CompanyRequestScope
             || ($native && $class === 'company_onboarding' && $method === 'index')
             || ($native && $class === 'company_clients' && $method === 'index')
             || ($native && $class === 'company_invoices' && $method === 'index')
+            || ($native && $class === 'company_assets' && $method === 'index')
             || $companyScopedBbRoute;
         if (!IssuerCore::ready($ci->db, db_prefix())) {
             // Only native, non-module admin routes may enter the recovery gate.

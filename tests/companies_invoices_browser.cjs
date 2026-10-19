@@ -94,8 +94,23 @@ async function next(page) { await navigate(page, page.locator('section form butt
    assert.equal(sql("SELECT COUNT(*) FROM tblissuers_audit WHERE event='company_portal_invoice_pdf_downloaded' AND issuer_id="+a+" AND subject_id="+ids[a]),'1','only authorized PDF delivery is audited as delivered');
   }finally{for(const ctx of publicContexts)await ctx.close();}
   // Expanded monetary editor: two native taxes, discount timing and signed adjustment in both owners.
+  const raster=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAIAAAASFvFNAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAC0lEQVQImWNgwAQAABQAAWX1h1kAAAAASUVORK5CYII=','base64');
   for(const [issuer,letter]of[[a,'a'],[b,'b']]){
-   await select(issuer);await page.goto(url+'/admin/company_invoices');
+   await select(issuer);await page.goto(url+'/admin/company_assets');
+   for(const kind of ['logo','signature']){
+    const form=page.locator('form').filter({has:page.locator('#asset-upload-'+kind)});
+    await page.locator('#asset-upload-'+kind).setInputFiles({name:'synthetic-'+kind+'.png',mimeType:'image/png',buffer:raster});
+    const oldFields=await fields(form);await navigate(page,form.locator('button[value=upload]'));
+    assert.equal(await page.locator('#company-asset-'+kind).count(),1,'own image preview after real multipart upload');
+    const downloaded=await context.request.get(url+'/admin/company_assets?download='+kind);assert.equal(downloaded.status(),200);assert.equal((await downloaded.body()).subarray(0,4).toString('hex'),'89504e47');
+    const stale=await context.request.post(url+'/admin/company_assets',{form:{...oldFields,action:'remove'}});assert.equal(stale.status(),409,'old image editor cannot remove a newer revision');
+   }
+   const assetFields=await fields(page.locator('form').filter({has:page.locator('#asset-upload-logo')}));await select(issuer===a?b:a);
+   assert.equal((await context.request.post(url+'/admin/company_assets',{form:{...assetFields,action:'remove'}})).status(),409,'image mutation from obsolete company tab denied before effects');
+   await select(issuer);await page.goto(url+'/admin/settings?group=documents');
+   await page.locator('#company-setting-invoice_prefix').fill('SYN-'+letter+'-');await page.locator('#company-setting-predefined_terms_invoice').fill('Synthetic terms '+letter);
+   await navigate(page,page.locator('section form button[type=submit]'));
+   await page.goto(url+'/admin/company_invoices');
    await page.locator('#invoice-client').selectOption(clients[issuer]);await page.locator('#invoice-currency').selectOption({label:'BRL'});
    await page.locator('#invoice-item-0-description').fill('Expanded '+letter);await page.locator('#invoice-item-0-rate').fill('100.00');
    await page.locator('#invoice-item-0-tax-0-name').fill('ISS');await page.locator('#invoice-item-0-tax-0-rate').fill('5.00');

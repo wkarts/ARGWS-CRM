@@ -172,7 +172,7 @@ final class InvoiceIssuerDocuments
         if (!is_array($profile)) { throw new DomainException('issuer_document_profile_required'); }
         $limits = ['address'=>500, 'city'=>100, 'state'=>100, 'postcode'=>32, 'country_code'=>2, 'phone'=>50, 'email'=>191, 'prefix'=>50, 'terms'=>10000];
         $keys = array_merge(array_keys($limits), ['padding', 'logo_inline']);
-        if (array_diff($keys, array_keys($profile)) || array_diff(array_keys($profile), $keys)) {
+        if (array_diff($keys, array_keys($profile)) || array_diff(array_keys($profile), array_merge($keys,['signature_inline']))) {
             throw new DomainException('issuer_document_invalid_profile');
         }
         $identity = [
@@ -189,6 +189,7 @@ final class InvoiceIssuerDocuments
         }
         $identity['padding'] = $profile['padding'];
         $identity['logo_inline'] = self::logo($profile['logo_inline']);
+        if(array_key_exists('signature_inline',$profile)){$identity['signature_inline']=self::logo($profile['signature_inline']);}
         return $identity;
     }
 

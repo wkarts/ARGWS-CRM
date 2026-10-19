@@ -81,7 +81,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Preparar driver MySQL de teste
-        run: docker-php-ext-install pdo_mysql
+        run: |
+          apt-get update && apt-get install -y --no-install-recommends libpng-dev libjpeg62-turbo-dev
+          docker-php-ext-configure gd --with-jpeg
+          docker-php-ext-install pdo_mysql gd
       - name: Validar sintaxe e controles HTTP
         run: |
           find tests -name 'issuers*.php' -exec php -l '{}' \;
@@ -127,6 +130,8 @@ jobs:
           php tests/banco_brasil_api_concurrency.php
           php tests/issuers_integration_view.php
           php tests/companies/module_tracking.php
+          php tests/settings/company_assets.php
+          php tests/companies/asset_concurrency.php
           php tests/settings/company_settings.php
           php tests/settings/company_options_helpers.php
           php tests/settings/company_identity_transaction.php

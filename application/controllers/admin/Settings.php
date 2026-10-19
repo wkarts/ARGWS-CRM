@@ -200,6 +200,7 @@ class Settings extends AdminController
         $fields = [
             'company' => array_merge(['invoice_company_name', 'company_vat'], CompanySettingsIdentity::PROFILE_OPTIONS),
             'localization' => ['dateformat','time_format'],
+            'documents' => ['invoice_prefix','predefined_terms_invoice'],
             'email' => ['smtp_host', 'smtp_port', 'smtp_encryption', 'smtp_email', 'smtp_username', 'smtp_password'],
         ];
         if (!isset($fields[$group])) { show_error('Esta seção ainda não está disponível para a empresa selecionada.', 403); return; }
@@ -214,6 +215,7 @@ class Settings extends AdminController
                     || array_diff(array_keys($settings), $fields[$group])) { throw new DomainException('company_settings_invalid_input'); }
                 foreach ($settings as $value) { if (!is_string($value)) { throw new DomainException('company_settings_invalid_input'); } }
                 if ($group === 'localization') { CompanySettingsFormats::validate($settings); }
+                if($group==='documents'){foreach($settings as $key=>$value){if(strlen($value)>($key==='invoice_prefix'?50:10000)||preg_match('//u',$value)!==1||preg_match('/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/',$value))throw new DomainException('company_settings_invalid_input');}}
                 if ($group === 'email') {
                     if (isset($settings['smtp_encryption']) && !in_array($settings['smtp_encryption'], ['', 'ssl', 'tls'], true)) { throw new DomainException('company_settings_invalid_input'); }
                     if (!empty($settings['smtp_port']) && (!ctype_digit($settings['smtp_port']) || (int) $settings['smtp_port'] < 1 || (int) $settings['smtp_port'] > 65535)) { throw new DomainException('company_settings_invalid_input'); }
@@ -255,6 +257,7 @@ class Settings extends AdminController
                 'company' => CompanyRequestScope::adminUrl($this, 'settings?group=company'),
                 'email' => CompanyRequestScope::adminUrl($this, 'settings?group=email'),
                 'localization' => CompanyRequestScope::adminUrl($this, 'settings?group=localization'),
+                'documents' => CompanyRequestScope::adminUrl($this, 'settings?group=documents'),
             ],
         ]);
     }

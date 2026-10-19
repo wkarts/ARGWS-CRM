@@ -7,6 +7,7 @@ require_once __DIR__.'/issuers/InvoiceIssuerDocuments.php';
 require_once __DIR__.'/CompanySettingsStorage.php';
 require_once __DIR__.'/InvoicePaymentWriter.php';
 require_once __DIR__.'/CompanyInvoiceAmounts.php';
+require_once __DIR__.'/CompanyAssets.php';
 
 /** Native named-company invoices; legacy models, providers and hooks are never invoked by this adapter. */
 final class CompanyInvoices
@@ -26,13 +27,13 @@ final class CompanyInvoices
         $acl=new IssuerResourceAccess($this->db,$this->prefix);
         return new InvoiceIssuerDocuments($this->db,$this->prefix,$actor,static fn($id,$staff,$cap)=>$id===$issuer&&$staff===$actor&&$acl->can($issuer,$actor,'invoices',$cap==='create_invoices'?'create':'view'));
     }
-    private function profile(int $issuer):array
+    private function profile(int $issuer,int $actor):array
     {
         $store=new CompanySettingsStorage($this->db,$this->prefix);$get=fn($name)=>$store->get($issuer,$name);
         return ['address'=>$get('invoice_company_address'),'city'=>$get('invoice_company_city'),'state'=>$get('company_state'),
             'postcode'=>$get('invoice_company_postal_code'),'country_code'=>strtoupper($get('invoice_company_country_code')),
             'phone'=>$get('invoice_company_phonenumber'),'email'=>$get('smtp_email'),'prefix'=>$get('invoice_prefix'),
-            'terms'=>$get('predefined_terms_invoice'),'padding'=>6,'logo_inline'=>''];
+            'terms'=>$get('predefined_terms_invoice'),'padding'=>6]+(new CompanyAssets($this->db,$this->prefix))->invoiceProfileInOwnedTransaction($issuer,$actor);
     }
     private static function text($value,int $max,bool $required=false):string
     {
@@ -90,7 +91,7 @@ final class CompanyInvoices
             if(!$this->rows('SELECT id FROM '.$this->prefix.'currencies WHERE id=?',[$data['currency']]))throw new DomainException('company_invoice_invalid_input');
             $fields=['issuer_id'=>$issuer,'clientid'=>$client,'number'=>0,'prefix'=>'','number_format'=>1,'datecreated'=>date('Y-m-d H:i:s'),'date'=>$data['date'],'duedate'=>$data['due_date'],'currency'=>$data['currency'],'subtotal'=>$data['subtotal'],'total_tax'=>$data['tax'],'total'=>$data['total'],'adjustment'=>$data['adjustment'],'addedfrom'=>$actor,'hash'=>bin2hex(random_bytes(16)),'status'=>1,'clientnote'=>$data['note'],'discount_type'=>$data['discount_type'],'discount_percent'=>$data['discount_percent'],'discount_total'=>$data['discount_total'],'include_shipping'=>0,'show_shipping_on_invoice'=>0,'cancel_overdue_reminders'=>1,'allowed_payment_modes'=>serialize([]),'billing_street'=>'','billing_city'=>'','billing_state'=>'','billing_zip'=>'','billing_country'=>0,'shipping_street'=>'','shipping_city'=>'','shipping_state'=>'','shipping_zip'=>'','shipping_country'=>0];
             $this->insert('invoices',$fields);$id=(int)$this->db->insert_id();if($id<1)throw new RuntimeException('issuer_invoice_write_unconfirmed');
-            $doc=$this->documents($issuer,$actor)->allocateInOwnedTransaction($id,$issuer,'INV',$this->profile($issuer));
+            $doc=$this->documents($issuer,$actor)->allocateInOwnedTransaction($id,$issuer,'INV',$this->profile($issuer,$actor));
             if(strlen($doc['number'])>10||(int)$doc['number']>2147483647)throw new DomainException('company_invoice_sequence_exhausted');
             IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'invoices SET number=?,prefix=?,formatted_number=?,terms=? WHERE id=? AND issuer_id=?',[$doc['number'],$doc['prefix'],$doc['formatted_number'],$doc['identity']['terms'],$id,$issuer]);
             $this->items($id,$data['items']);

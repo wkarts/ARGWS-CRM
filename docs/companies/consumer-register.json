@@ -5,8 +5,8 @@
   "frozen_candidate": "b8a5cec7286edc88191a1b1d07813ea40ed79bce",
   "counts": {
     "company_core_and_settings": {
-      "pending": 281,
-      "boundary_tested": 7
+      "pending": 300,
+      "boundary_tested": 6
     },
     "customer_portal": {
       "pending": 217,
@@ -21,11 +21,11 @@
       "boundary_tested": 10
     },
     "modules": {
-      "pending": 6524,
+      "pending": 6588,
       "boundary_tested": 13
     },
     "other_core": {
-      "pending": 2170,
+      "pending": 2174,
       "boundary_tested": 9
     },
     "sales_documents": {
@@ -158,31 +158,6 @@
         ],
         "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
         "source_sha256": "f586b66a44c66cf7b7505740ccf5d306dee880e3cfb3b2b02454261837ecbfd3"
-      },
-      "full_operation_ready": false
-    },
-    {
-      "consumer": "application/controllers/admin/Settings.php::isolated_index",
-      "category": "company_core_and_settings",
-      "line": 196,
-      "source_sha256": "7644a02136883a5301c930f32fa4c02eec1706e8641d522c6f262f480c0e61cc",
-      "risk_candidates": [
-        "database",
-        "settings",
-        "identity_context"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/settings/settings_model_controller.php"
-        ],
-        "exercised": [
-          "secondary_company_positive_formatting",
-          "independent_A_B_values",
-          "invalid_input_atomic_rejection"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
-        "source_sha256": "7644a02136883a5301c930f32fa4c02eec1706e8641d522c6f262f480c0e61cc"
       },
       "full_operation_ready": false
     },
@@ -2553,7 +2528,7 @@
       "full_operation_ready": false
     }
   ],
-  "source_manifest_sha256": "837b75a51cb42fbd9643be989941ab843ab495c8bd7651949d81059011920e23",
-  "total_consumers": 10089,
+  "source_manifest_sha256": "48ef2615313640ba10e0f547bee3f8858c58ef0cd1e2768fda42d6c73dd7ee68",
+  "total_consumers": 10175,
   "full_register_command": "python3 scripts/register-company-consumers.py --full-output /tmp/company-consumers-full.json"
 }

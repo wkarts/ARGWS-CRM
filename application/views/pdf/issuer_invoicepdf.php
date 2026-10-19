@@ -77,3 +77,5 @@ Emissão: <?= $escape($date($data['date'])) ?><br />
 </table>
 <?php if ($data['note'] !== '') { ?><br /><b>Observações</b><br /><?= $lines($data['note']) ?><?php } ?>
 <?php if ($identity['terms'] !== '') { ?><br /><br /><b>Condições</b><br /><?= $lines($identity['terms']) ?><?php } ?>
+
+<?php if(!empty($identity['signature_inline'])){ ?><br /><br /><img width="140" src="<?= $escape($identity['signature_inline']); ?>"><br />Assinatura do emitente<?php } ?>
