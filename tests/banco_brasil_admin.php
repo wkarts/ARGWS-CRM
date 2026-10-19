@@ -72,7 +72,8 @@ extract($ci->load->viewData);ob_start();include __DIR__.'/../modules/banco_brasi
 check(!str_contains($html,'<script>evil</script>')&&str_contains($html,'&lt;script&gt;evil&lt;/script&gt;'),'escaped issuer label');
 foreach(['Autenticação','Ambiente','Convênio','Conta','Cobrança','Remessa','Retorno','Webhook'] as $label)check(str_contains($html,$label),'PTBR tab '.$label);
 check(!str_contains($html,'name="client_secret"')&&!str_contains($html,'name="tax_id"'),'no secret or substitute identity field');
-check(substr_count($html,'name="_company_context"')===1,'connection form carries one company scope token');
+$connectionForm=[];check((bool)preg_match('~<form\b[^>]*action="https://crm\.example\.test/admin/banco_brasil/register_connection"[^>]*>(.*?)</form>~s',$html,$connectionForm),'connection form rendered');
+check(substr_count($connectionForm[1],'name="_company_context"')===1,'connection form carries one company scope token from the native helper');
 check(str_contains($html,'aria-labelledby="bb-tab-auth"')&&str_contains($html,'aria-selected="true"'),'BB tabs expose selected state and panel labels');
 check(str_contains($html,'Nenhum pagamento será criado'),'financial impact visible');
 $ci->input->verb='POST';$ci->input->posts=['issuer_id'=>'1','connection_id'=>'1','layout_id'=>\BancoBrasil\LayoutCatalog::CNAB400,'csrf_bb'=>$csrf];
