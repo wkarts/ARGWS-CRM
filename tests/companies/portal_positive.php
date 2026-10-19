@@ -1,9 +1,9 @@
 <?php
 /** Real service/PDO data, synthetic credentials and a durable queue; never delivers externally. */
 require_once dirname(__DIR__).'/issuers_core_support.php';
-require APPPATH.'services/CompanyPortal.php';
-require APPPATH.'services/CompanyContacts.php';
-require APPPATH.'services/CompanyClients.php';
+require_once APPPATH.'services/CompanyPortal.php';
+require_once APPPATH.'services/CompanyContacts.php';
+require_once APPPATH.'services/CompanyClients.php';
 register_shutdown_function('essentialCleanup');
 $f=essentialFixture('1.0.2',1);$db=$f->db;$p=$f->prefix;
 $db->query("CREATE TABLE {$p}emailtemplates(emailtemplateid ".($db->driver()==='mysql'?'int NOT NULL AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').",type TEXT NOT NULL,slug VARCHAR(100) NOT NULL,language VARCHAR(40),name TEXT NOT NULL,subject TEXT NOT NULL,message TEXT NOT NULL,fromname TEXT NOT NULL,fromemail VARCHAR(100),plaintext INT NOT NULL DEFAULT 0,active INT NOT NULL DEFAULT 0,`order` INT NOT NULL)");
