@@ -112,7 +112,9 @@ async function next(page) { await navigate(page, page.locator('section form butt
   execFileSync('docker',['cp','tests/banco_brasil_api_credit_http_fixture.php',app+':/app/tests/banco_brasil_api_credit_http_fixture.php']);
   const creditFixture=JSON.parse(execFileSync('docker',['exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',app,'php','tests/banco_brasil_api_credit_http_fixture.php'],{encoding:'utf8'}));
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+creditFixture.invoice),'0','validated API query does not apply payment automatically');
-  await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-billing');await page.locator('#bb-tab-billing').click();
+  await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-billing');
+  // A fragment-only navigation reuses the old DOM; the CLI fixture changed the server state.
+  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#bb-tab-billing').click();
   const apiCredit=page.locator('form[action*=settle_api]').filter({has:page.locator('input[name=operation_id][value="'+creditFixture.operation+'"]')});
   assert.equal(await apiCredit.count(),1,JSON.stringify({page:(await page.locator('body').innerText()).slice(0,18000),proof:sql('SELECT operation,status,result_json FROM tblbb_api_operations WHERE id='+creditFixture.operation),receipt:sql('SELECT COUNT(*) FROM tblbb_api_receipts WHERE origin_id='+creditFixture.origin)}));
   await apiCredit.locator('input[type=checkbox]').check();const apiCreditFields=await apiCredit.locator('input').evaluateAll(xs=>Object.fromEntries(xs.filter(x=>x.name).map(x=>[x.name,x.value])));

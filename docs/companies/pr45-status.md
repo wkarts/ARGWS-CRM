@@ -1,6 +1,6 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Núcleo atual4.1.9/419; BB1.0.9/101–109;
+Escopo integral em andamento. Núcleo atual4.2.0/420; BB1.0.9/101–109;
 Asaas1.4.8/148. As migrations publicadas402–412 foram preservadas. Não há
 merge/deploy/release nem autorização implícita por um resultado de CI.
 
@@ -119,3 +119,13 @@ A semântica documenta6 LIQUIDADO e16 CREDITADO; somente16 é elegível neste re
 Alterações de título, webhook mTLS, encargos/parciais/estornos e demais perfis são
 pendências técnicas. CNAB400 continua candidato bloqueado pelos insumos contratuais
 listados no guia400. Não há homologação API/240/400 nem autorização de merge/deploy.
+
+## Incremento420 — leitura fresca no teste HTTP do crédito
+
+O serviço e o writer419 passaram nas matrizes MySQL/MariaDB. O primeiro teste
+Chromium falhou procurando o form após a fixture CLI criar uma consulta: mudar
+somente #bb-auth → #bb-billing não faz GET nem atualiza o DOM. O teste agora
+recarrega o documento por HTTP antes de confirmar. Mantém os asserts de consulta
+validada sem pagamento automático, formulário real, writer, recibo e retry.
+420 é marcador core NOOP; BB permanece1.0.9/109 sem nova alteração funcional.
+Resultado do navegador corresponde ao novo HEAD; não atribuir o CI419 ao420.
