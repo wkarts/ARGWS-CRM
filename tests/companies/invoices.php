@@ -85,7 +85,7 @@ essentialThrows(fn()=>$s->create($a,12,$input,str_repeat('3',64)),'company_invoi
 essentialThrows(fn()=>$writer->recordCompanyManual($a,12,$id,$payment,str_repeat('4',64)),'company_payment_access_denied','invoice view does not imply payment create');
 $db->query("UPDATE {$p}issuers_staff SET can_view=0 WHERE issuer_id=? AND staff_id=12",[$a]);
 essentialThrows(fn()=>$s->document($a,12,$id),'company_invoice_access_denied','revocation invalidates direct PDF/data access');
-$db->query("DROP TABLE {$p}bb_origins");
+$db->query("DROP TABLE {$p}bb_origins");unset($db->data_cache['table_names']);
 echo 'Financial origin/ACL boundaries: '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;
 
 essentialCheck($db->query("SELECT * FROM {$p}invoices WHERE id=42")->result_array()===$legacyBefore,'all named-company operations preserve original NULL legacy invoice byte values');
