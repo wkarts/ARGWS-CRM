@@ -91,3 +91,22 @@ Workflow atualizado executa também MySQL 8.4 com driver PDO/CI3 mysqli, upgrade
 Atualização413: a especificação primária API foi recuperada e o executor é separado
 do candidato400. Consulte o [handoff](banco-brasil-handoff.md). Os bloqueios BRL/juros
 CBR641 e a divergência de picture CBR643 continuam válidos.
+
+## Continuação111: insumos específicos ainda necessários
+
+A busca primária desta continuação reabriu o retorno CBR643 julho/2023 no endereço
+oficial acima: a página16 continua apresentando26–39 (14 posições) com picture
+`9(013)v99` (15). A revisão julho/2026 de CBR641 não abriu nesta ferramenta;
+o endereço oficial alternativo `Doc2627CBR641Pos7.pdf` abriu junho/2024, cujas notas
+10/30 continuam documentando herança de juros do beneficiário e apenas02/dólar e
+14/euro. Isso não substitui a revisão canônica julho/2026 nem resolve BRL.
+
+O desbloqueio400 requer confirmação primária específica: conteúdo BRL85–86;
+isenção ou parâmetros efetivos de juros do beneficiário para o convênio/carteira/
+variação; e correção oficial do total CBR64326–39. Remessa aceita de outra
+aplicação, quando fornecida privadamente e com origem verificável, pode orientar
+uma fixture anonimizada, mas não resolve por si só o picture do retorno ou
+homologa o novo canal. O trailer de remessa CBR641 permanece resolvido e não é
+pendência. O candidato continua indisponível; isso é bloqueio documental para
+escrita correta e trabalho técnico de integração posterior, separado da
+homologação bancária externa.

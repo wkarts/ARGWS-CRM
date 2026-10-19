@@ -11,9 +11,14 @@ function issuers_staff_resource_catalog(): array
         foreach(($definition['capabilities']??[]) as $capability=>$label) {
             try { IssuerResourceAccess::key($capability); } catch(DomainException $error) { continue; }
             if(is_array($label)&&!empty($label['not_applicable'])) { continue; }
-            $catalog[$feature]['name']=$definition['name'];
+            $catalog[$feature]['name']=$catalog[$feature]['name']??$definition['name'];
             $catalog[$feature]['capabilities'][$capability]=is_array($label)?$label['name']:$label;
         }
+    }
+    require_once APPPATH.'services/CompanyResourceCatalog.php';
+    foreach(CompanyResourceCatalog::definitions() as $feature=>$definition){
+        $catalog[$feature]['name']=$catalog[$feature]['name']??$definition['name'];
+        $catalog[$feature]['capabilities']=array_merge($catalog[$feature]['capabilities']??[],$definition['capabilities']);
     }
     return $catalog;
 }

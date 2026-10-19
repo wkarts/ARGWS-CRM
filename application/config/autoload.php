@@ -2,6 +2,35 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+// Machine inboxes select only exact server-owned routes, before optional modules or sessions.
+require_once APPPATH.'services/CompanyAsaasCallbackScope.php';
+$companyInboxBootstrap=&get_instance();
+if(CompanyAsaasCallbackScope::prepare($companyInboxBootstrap)){
+    $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+require_once APPPATH.'services/CompanyBbCallbackScope.php';
+if(CompanyBbCallbackScope::prepare($companyInboxBootstrap)){
+    // Native mTLS authentication happens in the controller before the first database connection.
+    $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>[],'model'=>[]];
+    return;
+}
+
+require_once APPPATH.'services/CompanyApiScope.php';
+if(CompanyApiScope::prepare($companyInboxBootstrap)){
+    $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+require_once APPPATH.'services/CompanyRecurringWorkerScope.php';
+if(CompanyRecurringWorkerScope::prepare($companyInboxBootstrap)){
+    $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+// A malformed machine-route candidate must never fall through to global application hydration.
+$machineClass=strtolower((string)$companyInboxBootstrap->router->fetch_class());
+$machineModule=strtolower((string)$companyInboxBootstrap->router->fetch_module());
+if(in_array($machineClass,['company_api','company_asaas_callback','company_recurring_worker'],true)||($machineModule==='banco_brasil'&&$machineClass==='notifications')){show_404();return;}
+
 // Public owner-bound portal must not hydrate legacy models, providers or optional modules.
 require_once APPPATH.'services/PortalRequestScope.php';
 $portalBootstrap=&get_instance();

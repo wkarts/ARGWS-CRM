@@ -1,0 +1,52 @@
+<?php
+/** Native database composition and simulated bank. Date instructions never mutate the invoice snapshot. */
+require __DIR__.'/banco_brasil_api_mysql.php';
+$patchMode='normal';$patches=0;
+$patchTransport=function($method,$url,$headers,$body)use(&$patchMode,&$patches,&$titles,$transport,$db):array{
+    if($method!=='PATCH')return $transport($method,$url,$headers,$body);
+    essentialCheck(!$db->pdo->inTransaction(),'PATCH instruction executes outside SQL locks');$patches++;
+    if($patchMode==='reject')return ['status'=>403,'body'=>'{"secret":"must never persist"}'];
+    $wire=\BancoBrasil\ApiClient::decodeExact($body);preg_match('~/boletos/([0-9]{20})~',$url,$m);$number=$m[1];
+    essentialCheck($wire['numeroConvenio']==='1234567'&&$wire['indicadorNovaDataVencimento']==='S'&&$wire['indicadorCobrarJuros']==='N'&&$wire['indicadorNovoValorNominal']==='N','official PATCH body changes date only with explicit required flags');
+    $titles[$number]['dataVencimento']=$wire['alteracaoData']['novaDataVencimento'];
+    if($patchMode==='timeout')throw new RuntimeException('synthetic sensitive transport diagnostic');
+    return ['status'=>200,'body'=>json_encode(['numeroContratoCobranca'=>1234,'dataAtualizacao'=>date('d.m.Y'),'horarioAtualizacao'=>'14:21:05'])];
+};
+$amendApi=new \BancoBrasil\ApiService($db,$p,$encrypt,$decrypt,$patchTransport);
+$amendInvoice=$s->create($a,7,$apiInput,hash('sha256','amend-invoice'));$amendOrigin=$amendApi->issue($a,7,$profile,$amendInvoice,$address,hash('sha256','amend-issue'));
+$newDue=(new DateTimeImmutable($apiInput['due_date']))->modify('+3 days')->format('Y-m-d');$change=['due_date'=>$newDue,'reason'=>'Synthetic contract date extension'];$amendKey=hash('sha256','amend-key');
+essentialThrows(fn()=>$amendApi->amendDue($a,7,$amendOrigin,$change,$amendKey),'bb_api_amendment_requires_fresh_normal_query','date instruction requires fresh account-proven NORMAL query');
+$amendApi->query($a,7,$amendOrigin,hash('sha256','amend-normal'));
+$db->query("INSERT INTO {$p}staff(staffid,active,admin) VALUES(13,1,0)");$db->query("INSERT INTO {$p}issuers_staff(issuer_id,staff_id,can_view) VALUES(?,13,1)",[$a]);
+foreach([['banco_brasil','view'],['banco_brasil','api_issue'],['invoices','view'],['invoices','edit']] as [$feature,$cap])$db->query("INSERT INTO {$p}issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,13,?,?)",[$a,$feature,$cap]);
+essentialThrows(fn()=>$amendApi->amendDue($a,13,$amendOrigin,$change,hash('sha256','issue-does-not-grant-amend')),'bb_api_access_denied','existing API issuance grant does not silently authorize new amendment capability');
+
+essentialThrows(fn()=>$amendApi->amendDue($b,7,$amendOrigin,$change,$amendKey),'bb_api_origin_unavailable','B cannot alter A bank title');
+$op=$amendApi->amendDue($a,7,$amendOrigin,$change,$amendKey);$row=$db->query("SELECT * FROM {$p}bb_api_operations WHERE id=?",[$op])->row_array();
+essentialCheck($row['status']==='validated'&&json_decode($row['result_json'],true)['bank_state']==='amendment_requested','PATCH acknowledgment is request only until authenticated account query');
+essentialCheck($amendApi->amendDue($a,7,$amendOrigin,array_reverse($change,true),$amendKey)===$op&&$patches===1,'same canonical instruction retry never repeats PATCH');
+essentialThrows(fn()=>$amendApi->amendDue($a,7,$amendOrigin,array_replace($change,['reason'=>'Other']),$amendKey),'bb_api_request_conflict','same key divergent reason conflicts before HTTP');
+essentialThrows(fn()=>$amendApi->amendDue($a,7,$amendOrigin,$change,hash('sha256','new-key-pending')),'bb_api_amendment_requires_query','new key cannot duplicate unconfirmed instruction');
+essentialThrows(fn()=>$amendApi->cancel($a,7,$amendOrigin),'bb_api_amendment_requires_query','cancel cannot race pending date instruction');
+$amendApi->query($a,7,$amendOrigin,hash('sha256','confirm-amendment'));
+$row=$db->query("SELECT status,result_json FROM {$p}bb_api_operations WHERE id=?",[$op])->row_array();essentialCheck($row['status']==='confirmed'&&json_decode($row['result_json'],true)['bank_state']==='amendment_confirmed','detail new date plus exact account list confirms instruction');
+essentialCheck($s->document($a,7,$amendInvoice)->data()['due_date']===$apiInput['due_date'],'bank instruction preserves original native invoice and immutable document snapshot');
+$amendApi->query($a,7,$amendOrigin,hash('sha256','query-confirmed-date'));
+$nextChange=['due_date'=>(new DateTimeImmutable($newDue))->modify('+2 days')->format('Y-m-d'),'reason'=>'Second synthetic extension'];$patchMode='timeout';
+essentialThrows(fn()=>$amendApi->amendDue($a,7,$amendOrigin,$nextChange,hash('sha256','timeout-amend')),'bb_api_result_unconfirmed_query_origin','timeout after PATCH remains uncertain without blind resend');
+$before=$patches;$amendApi->amendDue($a,7,$amendOrigin,$nextChange,hash('sha256','timeout-amend'));essentialCheck($patches===$before,'timeout retry does not repeat remote write');$patchMode='normal';
+$amendApi->query($a,7,$amendOrigin,hash('sha256','query-timeout-amend'));
+$latest=$db->query("SELECT status FROM {$p}bb_api_operations WHERE origin_id=? AND operation='amend_due' ORDER BY id DESC LIMIT 1",[$amendOrigin])->row_array();essentialCheck($latest['status']==='confirmed','account-proven query reconciles lost PATCH reply');
+$patchMode='reject';$rejectedChange=['due_date'=>(new DateTimeImmutable($nextChange['due_date']))->modify('+2 days')->format('Y-m-d'),'reason'=>'Rejected synthetic extension'];
+essentialThrows(fn()=>$amendApi->amendDue($a,7,$amendOrigin,$rejectedChange,hash('sha256','rejected-amend')),'bb_api_result_unconfirmed_query_origin','403 records rejection without false confirmation');
+$latest=$db->query("SELECT status,failure_category,result_json FROM {$p}bb_api_operations WHERE origin_id=? AND operation='amend_due' ORDER BY id DESC LIMIT 1",[$amendOrigin])->row_array();essentialCheck($latest['status']==='rejected'&&!str_contains(json_encode($latest),'must never persist'),'provider rejection diagnostics exclude raw response');
+$amendApi->query($a,7,$amendOrigin,hash('sha256','query-after-reject'));$patchMode='normal';
+$afterHttp=fn()=>$db->query("UPDATE {$p}staff SET active=0 WHERE staffid=7");$before=$patches;
+essentialThrows(fn()=>$amendApi->amendDue($a,7,$amendOrigin,$rejectedChange,hash('sha256','revoked-amend')),'bb_api_authentication_not_submitted','actor revoked during OAuth cannot submit PATCH');
+essentialCheck($patches===$before,'revoked actor generates no instruction HTTP');$db->query("UPDATE {$p}staff SET active=1 WHERE staffid=7");
+$rotateKey=hash('sha256','rotated-amendment');$rotateBefore=$patches;
+$afterHttp=fn()=>$amendApi->saveCredentials($a,7,$profile,['client_id'=>'SYNTHETIC-NEW-ROTATED','client_secret'=>'SYNTHETIC-NEW-SECRET','application_key'=>'SYNTHETIC-NEW-KEY']);
+essentialThrows(fn()=>$amendApi->amendDue($a,7,$amendOrigin,$rejectedChange,$rotateKey),'bb_api_authentication_not_submitted','credentials rotated during OAuth are revalidated before PATCH sending marker');
+essentialCheck($patches===$rotateBefore,'old credential claim sends no instruction after local rotation');
+$amendApi->amendDue($a,7,$amendOrigin,$rejectedChange,$rotateKey);essentialCheck($patches===$rotateBefore+1,'same pre-send reservation resumes with latest credential and one PATCH');
+echo 'BB date amendment: '.$GLOBALS['essentialChecks'].' cumulative checks; synthetic provider, no bank homologation.'.PHP_EOL;

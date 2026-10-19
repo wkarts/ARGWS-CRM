@@ -63,14 +63,14 @@ final class InvoicePaymentWriter
         require_once __DIR__.'/issuers/IssuerResourceAccess.php';
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$prefix=db_prefix();
         // An arbitrary veto callback cannot grant provider receipt authority.
-        if(!in_array(get_class($source),['BancoBrasil\\ReviewedReceipt','BancoBrasil\\ApiCreditedReceipt'],true))throw new \DomainException('company_receipt_source_denied');
+        if(!in_array(get_class($source),['BancoBrasil\\ReviewedReceipt','BancoBrasil\\ApiCreditedReceipt','Asaas\\CompanyReceivedReceipt'],true))throw new \DomainException('company_receipt_source_denied');
         $source->assertSchema($this->db,$prefix);
         $tables=array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','modules','invoices','issuers_invoice_documents','invoicepaymentrecords','credits','company_payment_receipts','issuers_audit'],$source->tables());
         return \IssuerTransaction::run($this->db,$prefix,$tables,function()use($issuer,$actor,$prefix,$source):int{
             $claim=$source->claim($this->db,$prefix,$issuer,$actor);
             $invoice=self::invoiceId($claim['invoice']);$key=$claim['key'];
-            $api=get_class($source)==='BancoBrasil\\ApiCreditedReceipt';
-            [$data,$amount,$hash]=$this->companyReceiptInput($invoice,$claim['input'],$key,$api?'bb_api_credited':'bb_cnab240_reviewed',$api?'Crédito BB por consulta API':'Conciliação assistida BB CNAB240');
+            [$mode,$method]=match(get_class($source)){'BancoBrasil\\ApiCreditedReceipt'=>['bb_api_credited','Crédito BB por consulta API'],'Asaas\\CompanyReceivedReceipt'=>['asaas_company_received','Recebimento nominal Asaas'],default=>['bb_cnab240_reviewed','Conciliação assistida BB CNAB240']};
+            [$data,$amount,$hash]=$this->companyReceiptInput($invoice,$claim['input'],$key,$mode,$method);
             $id=$this->companyReceiptLocked($issuer,$actor,$invoice,$key,$amount,$data,$hash,$prefix,[],true);
             $source->applied($this->db,$prefix,$issuer,$actor,$id);
             return $id;

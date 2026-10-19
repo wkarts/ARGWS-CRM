@@ -27,6 +27,8 @@ jobs:
       - run: php tests/banco_brasil_layout_migration.php
       - run: php tests/banco_brasil_module_version.php
       - run: php tests/banco_brasil_api_client.php
+      - run: php tests/banco_brasil_mtls.php
+      - run: python3 tests/banco_brasil_mtls_transport.py
   mysql:
     runs-on: ubuntu-latest
     services:
@@ -89,3 +91,5 @@ jobs:
           php tests/banco_brasil_reconciliation_concurrency.php
           php tests/banco_brasil_api_concurrency.php
           php tests/banco_brasil_api_receipt_concurrency.php
+          php tests/banco_brasil_webhook_mysql.php
+          php tests/banco_brasil_amendment_concurrency.php

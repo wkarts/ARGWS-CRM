@@ -64,3 +64,19 @@ testes; não modifica o estado bancário ou a cobrança. Ver matriz do HEAD422.
 O423 adiciona anexos privados de fatura com visibilidade explícita no portal,
 sem URL pública, quotas, hash e auditoria/owner antes dos bytes. Não altera
 originação, perfis, recibos ou homologação bancária. Matriz por SHA no guia Empresas.
+
+## Incremento111 a integrar na mesma PR45
+
+Alteração de vencimento API com PATCH oficial, intenção durável e confirmação por
+consulta de título/conta, preservando fatura/snapshot. Receptor de baixa operacional
+observacional com mTLS nativo, pin por perfil, GUI local, deduplicação e revogação;
+cancelamento operacional10 veta novos créditos assistidos API/CNAB, sem estorno
+automático. Tabelas aditivas e executor nativo111; histórico101–110 preservado.
+
+A evidência local de transporte inclui três handshakes TLS reais com certificados
+sintéticos. O ingresso implantado/cadeia BB e homologação externa continuam
+pendentes; demais tipos de alteração/perfis/encargos/parciais/estornos API,
+transmissão contratada240 e operação400 permanecem pendências técnicas explícitas.
+Ver [guia operacional111](banco-brasil-api-amendments-webhook.md) para endpoints,
+permissões, migration, testes e rollback futuro. Publicação, CI do HEAD e resultado
+SQL definitivo devem ser registrados pelo integrador; este bloco não os presume.

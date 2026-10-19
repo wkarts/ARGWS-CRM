@@ -14,7 +14,7 @@ class Banco_brasil extends AdminController
     {
         $companyId=$this->companyContextId();
         $data=['title'=>'Banco do Brasil','issuers'=>[],'selected'=>null,'connections'=>[],
-            'returns'=>[],'events'=>[],'layout_bindings'=>[],'layouts'=>\BancoBrasil\LayoutCatalog::all(),'can_manage'=>false,'can_import'=>false,'resource_acl_ready'=>false,'storage_error'=>false,'isolated'=>false,'company_context_token'=>null,'api_ready'=>false,'api_profiles'=>[],'api_origins'=>[],'api_operations'=>[],'api_receipts'=>[],'can_api_issue'=>false,'can_api_query'=>false,'can_api_cancel'=>false,'reconciliations'=>[],'reconciliation_ready'=>false,'can_reconcile'=>false,'can_settle'=>false,'batches'=>[],'origination_ready'=>false,'can_generate'=>false,'can_download'=>false,'request_key'=>bin2hex(random_bytes(32)),'admin_base_url'=>$this->url(''),'notice'=>$this->session->userdata('bb_notice'),'csrf'=>$this->csrfToken(),'matrix'=>\BancoBrasil\CapabilityPolicy::matrix()];
+            'returns'=>[],'events'=>[],'layout_bindings'=>[],'layouts'=>\BancoBrasil\LayoutCatalog::all(),'can_manage'=>false,'can_import'=>false,'resource_acl_ready'=>false,'storage_error'=>false,'isolated'=>false,'company_context_token'=>null,'api_ready'=>false,'api_webhook_ready'=>false,'api_webhook_receivers'=>[],'api_notifications'=>[],'api_profiles'=>[],'api_origins'=>[],'api_operations'=>[],'api_receipts'=>[],'can_api_amend'=>false,'can_api_issue'=>false,'can_api_query'=>false,'can_api_cancel'=>false,'reconciliations'=>[],'reconciliation_ready'=>false,'can_reconcile'=>false,'can_settle'=>false,'batches'=>[],'origination_ready'=>false,'can_generate'=>false,'can_download'=>false,'request_key'=>bin2hex(random_bytes(32)),'admin_base_url'=>$this->url(''),'notice'=>$this->session->userdata('bb_notice'),'csrf'=>$this->csrfToken(),'matrix'=>\BancoBrasil\CapabilityPolicy::matrix()];
         if(class_exists('CompanyRequestScope',false)){
             $data['isolated']=\CompanyRequestScope::sealedFor($this);
             $data['company_context_token']=\CompanyRequestScope::token();
@@ -42,7 +42,8 @@ class Banco_brasil extends AdminController
                 $data['can_manage']=!$data['storage_error']&&$this->allowed($id,'manage');$data['can_import']=!$data['storage_error']&&$this->allowed($id,'import');
                 try{$operations=$this->origination();$data['origination_ready']=$operations->ready();if($data['origination_ready'])$data['batches']=$operations->batches($id,$this->staffId());}catch(Throwable $e){$data['origination_ready']=false;}
                 try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Reconciliation.php';$data['reconciliations']=(new \BancoBrasil\Reconciliation($this->db,db_prefix()))->summaries($id,$this->staffId());$data['reconciliation_ready']=true;$access=new \IssuerResourceAccess($this->db,db_prefix());$data['can_reconcile']=$this->allowed($id,'reconcile')&&$access->can($id,$this->staffId(),'invoices','view');$data['can_settle']=$data['can_reconcile']&&$access->can($id,$this->staffId(),'payments','create');}catch(Throwable $e){$data['reconciliation_ready']=false;}
-                try{$api=$this->api();$overview=$api->overview($id,$this->staffId());$data['api_ready']=true;$data['api_profiles']=$overview['profiles'];$data['api_origins']=$overview['origins'];$data['api_operations']=$overview['operations'];$data['api_receipts']=$overview['receipts'];$access=new \IssuerResourceAccess($this->db,db_prefix());foreach(['issue','query','cancel'] as $op)$data['can_api_'.$op]=$this->allowed($id,'api_'.$op)&&$access->can($id,$this->staffId(),'invoices','view');}catch(Throwable $e){$data['api_ready']=false;}
+                try{$api=$this->api();$overview=$api->overview($id,$this->staffId());$data['api_ready']=true;$data['api_profiles']=$overview['profiles'];$data['api_origins']=$overview['origins'];$data['api_operations']=$overview['operations'];$data['api_receipts']=$overview['receipts'];$access=new \IssuerResourceAccess($this->db,db_prefix());foreach(['issue','query','cancel','amend'] as $op)$data['can_api_'.$op]=$this->allowed($id,'api_'.$op)&&$access->can($id,$this->staffId(),'invoices','view')&&($op!=='amend'||$access->can($id,$this->staffId(),'invoices','edit'));}catch(Throwable $e){$data['api_ready']=false;}
+                if($data['api_ready']&&$data['can_manage']){try{require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiWebhook.php';$wh=(new \BancoBrasil\ApiWebhook($this->db,db_prefix()))->overview($id,$this->staffId());$data['api_webhook_ready']=true;$data['api_webhook_receivers']=$wh['receivers'];$data['api_notifications']=$wh['events'];}catch(Throwable $error){$data['api_webhook_ready']=false;}}
                 $data['can_generate']=$data['origination_ready']&&$this->allowed($id,'generate');$data['can_download']=$data['origination_ready']&&$this->allowed($id,'download');
             }
         }
@@ -207,6 +208,20 @@ class Banco_brasil extends AdminController
         $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_cancel');
         try{$this->api()->cancel($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')));$this->flash('success','Solicitação processada pela origem API. Pedido de baixa não é confirmação final nem cancelamento local de fatura. Consulte novamente para confirmar o estado bancário.');}
         catch(Throwable $error){$this->flash('warning','Pedido de baixa não confirmado. Exige consulta validada NORMAL nos últimos5 minutos. Origem CNAB, liquidação, protesto e estado desconhecido exigem o fluxo de origem; não há redirecionamento para a conta atual.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function configure_api_webhook()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'manage');
+        try{$input=$this->input->post('receiver',false);if(!is_array($input))throw new InvalidArgumentException('invalid_api_webhook');require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiWebhook.php';(new \BancoBrasil\ApiWebhook($this->db,db_prefix()))->configure($id,$this->staffId(),$this->positiveId($this->input->post('profile_id')),$input);$this->flash('success','Recebedor local atualizado para este perfil e certificado. Nenhum webhook remoto foi cadastrado. A entrega exige ingresso mTLS nativo habilitado, cadeia BB confiável e pin correspondente ao ambiente.');}
+        catch(Throwable $error){$this->flash('warning','Recebedor não confirmado. Confira perfil próprio, permissão, fingerprint SHA256 e referência contratual. Nenhum registro remoto foi solicitado.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function amend_api_due()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_amend');
+        try{$input=$this->input->post('amendment',false);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new InvalidArgumentException('invalid_api_amendment');$this->api()->amendDue($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$input,$key);$this->flash('success','Instrução de vencimento processada pela origem. A resposta PATCH confirma o pedido; consulte novamente para confirmar a nova data no título e na conta. A fatura e o snapshot original conservam sua data.');}
+        catch(Throwable $error){$this->flash('warning','Alteração não confirmada. Exige consulta NORMAL recente, permissão de edição de fatura, ausência de movimento financeiro e outra operação pendente. Em resultado incerto, consulte; não reenvie a instrução nem altere manualmente a fatura.');}
         redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
     }
     public function settle_api()

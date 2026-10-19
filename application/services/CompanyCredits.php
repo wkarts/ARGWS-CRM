@@ -35,6 +35,11 @@ final class CompanyCredits
         $available=self::minor($row['total'])-$used;if(((int)$row['status']===3&&$entries)||((int)$row['status']!==3&&(int)$row['status']!==($available===0?2:1)))throw new DomainException('company_credit_balance_review');
         return ['id'=>(int)$row['id'],'issuer_id'=>$issuer,'client_id'=>(int)$row['clientid'],'currency_id'=>(int)$row['currency'],'number'=>$row['formatted_number'],'date'=>$row['date'],'status'=>(int)$row['status'],'identity'=>$identity,'recipient'=>$recipient,'items'=>$calculated['items'],'amounts'=>$calculated,'note'=>$row['clientnote'],'currency'=>$currency['name'],'available'=>CompanyInvoiceAmounts::decimal($available),'applied'=>$totals['apply'],'refunded'=>$totals['refund'],'entries'=>$entries];
     }
+    /** Financial reports may compose this reader only inside an already owned, equivalent boundary. */
+    public function inOwnedTransaction($issuer,$actor,$credit):array
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$credit=IssuerPolicy::id($credit);IssuerTransaction::assertOwned($this->db,$this->p,['issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','creditnotes','credits','creditnote_refunds','invoices','issuers_invoice_documents','company_credit_documents','company_credit_entries','currencies']);$this->authorize($issuer,$actor);$result=$this->document($issuer,$credit);$this->authorize($issuer,$actor);return $result;
+    }
     public function get($issuer,$actor,$credit):array{$issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$credit=IssuerPolicy::id($credit);return $this->transaction($issuer,$actor,fn():array=>$this->document($issuer,$credit));}
     public function page($issuer,$actor,$after=0,int $limit=50):array
     {

@@ -371,3 +371,21 @@ convênio e empresa continuam obrigatórios; não há reatribuição de origem o
 Migration110 é NOOP funcional, core421 marcador, histórico preservado. Testes
 cruzados reais do writer passaram em MariaDB10.11.14/PHP8.3.6:344 checks API
 acumulados e131 CNAB acumulados. Provedor simulado; nenhuma homologação externa.
+
+## Continuação111: vencimento API e observação mTLS
+
+O incremento111 acrescenta PATCH oficial de vencimento, com intenção durável,
+confirmação por consulta do título+conta, retry sem repetição de escrita incerta e
+preservação do snapshot/data da fatura. A GUI mostra pedido e confirmação como
+estados distintos. Acrescenta receptor local de baixa operacional com autenticação
+por variáveis TLS nativas e pin de certificado por perfil; configuração gráfica,
+revogação e lista de observações conservam a origem. Não há registro automático de
+webhook remoto. Código10 é histórico adverso, sem estorno financeiro automático.
+
+Detalhes, migrations e testes em [guia de alteração/webhook](banco-brasil-api-amendments-webhook.md).
+A variável de infraestrutura, cadeia cliente BB e pin oficial continuam necessários
+para aceitar entrega real; os testes sintéticos não comprovam handshake do ingresso
+nem homologação. Outros tipos de alteração API, perfis, encargos, parciais/estornos
+API, transmissão contratada240 e integração400 continuam técnicos pendentes. As
+lacunas documentais400 estão explicitadas no guia400; o trailer CBR641 já está
+resolvido e não foi reaberto.

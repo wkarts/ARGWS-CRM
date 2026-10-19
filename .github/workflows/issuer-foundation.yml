@@ -126,6 +126,22 @@ jobs:
           php tests/companies/projects_concurrency.php
           php tests/companies/projects_controller.php
           php tests/companies/expenses_concurrency.php
+          php tests/companies/projects_extras_concurrency.php
+          php tests/companies/projects_extras_controller.php
+          php tests/companies/standalone_tasks_concurrency.php
+          php tests/companies/standalone_tasks_controller.php
+          php tests/companies/contracts_concurrency.php
+          php tests/companies/contracts_controller.php
+          php tests/companies/portal_sales.php
+          php tests/companies/sales_concurrency.php
+          php tests/companies/recurring_worker_scope.php
+          php tests/companies/api_concurrency.php
+          php tests/companies/api_scope.php
+          php tests/companies/asaas_concurrency.php
+          php tests/companies/asaas_job_fee_concurrency.php
+          php tests/companies/native_425.php
+          php tests/companies/asaas_boundaries.php
+          php tests/companies/asaas_exact_json.php
           php tests/companies/invoice_delivery_concurrency.php
           php tests/companies/invoice_concurrency.php
           php tests/companies/portal_invoice_concurrency.php
@@ -136,6 +152,8 @@ jobs:
           php tests/banco_brasil_reconciliation_concurrency.php
           php tests/banco_brasil_api_concurrency.php
           php tests/banco_brasil_api_receipt_concurrency.php
+          php tests/banco_brasil_webhook_mysql.php
+          php tests/banco_brasil_amendment_concurrency.php
           php tests/issuers_integration_view.php
           php tests/companies/module_tracking.php
           php tests/settings/company_assets.php

@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__.'/issuers/IssuerTransaction.php';
 require_once __DIR__.'/issuers/IssuerResourceAccess.php';
 require_once __DIR__.'/CompanyProjectsSchema.php';
+require_once __DIR__.'/CompanyProjectExtrasSchema.php';require_once __DIR__.'/CompanyStandaloneTasksSchema.php';
 require_once __DIR__.'/CompanyClients.php';
 /** Shared owned transaction and durable operation receipts for the isolated vertical. */
 abstract class CompanyProjectsStorage
@@ -18,8 +19,8 @@ abstract class CompanyProjectsStorage
     }
     protected function transaction(callable $work)
     {
-        CompanyProjectsSchema::assertValid($this->db,$this->p);
-        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyProjectsSchema::definitions($this->p))),$work);
+        CompanyProjectsSchema::assertValid($this->db,$this->p);CompanyProjectExtrasSchema::assertValid($this->db,$this->p);CompanyStandaloneTasksSchema::assertValid($this->db,$this->p);
+        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p))),$work);
     }
     protected static function text($value,int $max,bool $required=true):string
     {
@@ -40,14 +41,15 @@ abstract class CompanyProjectsStorage
         IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,?,?)',[$actor,$event,$issuer,$id,date('Y-m-d H:i:s')]);$audit=(int)$this->db->insert_id();
         if(!$this->rows('SELECT id FROM '.$this->p.'issuers_audit WHERE id=? AND issuer_id=? AND actor_id=? AND subject_id=? AND event=?',[$audit,$issuer,$actor,$id,$event]))throw new RuntimeException('issuer_project_write_unconfirmed');
     }
+    protected function receiptResourceTable(string $operation):string{return str_starts_with($operation,'task_')?'company_tasks':'company_projects';}
     protected function operation(int $issuer,int $actor,string $cap,string $key,string $op,array $payload,callable $work):int
     {
         if(!preg_match('/^[a-f0-9]{64}$/D',$key))throw new DomainException('company_project_invalid_input');$this->authorize($issuer,$actor,$cap);$hash=hash('sha256',json_encode($payload,JSON_THROW_ON_ERROR));
         return $this->transaction(function()use($issuer,$actor,$cap,$key,$op,$hash,$work):int{
             (new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,$cap);
             $receipt=$this->rows('SELECT issuer_id,actor_id,operation,input_hash,result_id FROM '.$this->p.'company_project_requests WHERE request_key=? FOR UPDATE',[$key])[0]??null;
-            if($receipt){if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||$receipt['operation']!==$op||!hash_equals($receipt['input_hash'],$hash))throw new DomainException('company_project_request_conflict');$table=str_starts_with($op,'task_')?'company_tasks':'company_projects';if(!$this->rows('SELECT id FROM '.$this->p.$table.' WHERE issuer_id=? AND id=?',[$issuer,$receipt['result_id']]))throw new RuntimeException('issuer_project_write_unconfirmed');return (int)$receipt['result_id'];}
-            $id=$work();if($id<1)throw new RuntimeException('issuer_project_write_unconfirmed');$this->audit($issuer,$actor,$id,'company_'.$op);
+            if($receipt){if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||$receipt['operation']!==$op||!hash_equals($receipt['input_hash'],$hash))throw new DomainException('company_project_request_conflict');$table=$this->receiptResourceTable($op);if(!$this->rows('SELECT id FROM '.$this->p.$table.' WHERE issuer_id=? AND id=?',[$issuer,$receipt['result_id']]))throw new RuntimeException('issuer_project_write_unconfirmed');return (int)$receipt['result_id'];}
+            $id=$work();if($id<1||$id>2147483647)throw new RuntimeException('issuer_project_write_unconfirmed');$this->audit($issuer,$actor,$id,'company_'.$op);
             IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_project_requests(request_key,issuer_id,actor_id,input_hash,operation,result_id,created_at) VALUES(?,?,?,?,?,?,?)',[$key,$issuer,$actor,$hash,$op,$id,date('Y-m-d H:i:s')]);
             if(!$this->rows('SELECT result_id FROM '.$this->p.'company_project_requests WHERE request_key=? AND issuer_id=? AND actor_id=? AND input_hash=? AND operation=? AND result_id=?',[$key,$issuer,$actor,$hash,$op,$id]))throw new RuntimeException('issuer_project_write_unconfirmed');$this->authorize($issuer,$actor,$cap);return $id;
         });

@@ -24,13 +24,13 @@ final class ApiClient
     public static function curl(string $method,string $url,array $headers,string $body):array
     {
         $allowed=false;foreach(self::SERVERS as [$api,$oauth])if($url===$oauth||str_starts_with($url,$api.'/'))$allowed=true;
-        if(!$allowed||!in_array($method,['GET','POST'],true))throw new \DomainException('bb_api_transport_target_denied');
+        if(!$allowed||!in_array($method,['GET','POST','PATCH'],true))throw new \DomainException('bb_api_transport_target_denied');
         if(!function_exists('curl_init'))throw new ApiFailure('transport_unavailable',0,false);
         $handle=curl_init($url);if($handle===false)throw new ApiFailure('transport_unavailable',0,true);
         $bytes='';$overflow=false;
         try{
             $options=[CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_HTTPHEADER=>$headers,CURLOPT_FOLLOWLOCATION=>false,CURLOPT_MAXREDIRS=>0,CURLOPT_CONNECTTIMEOUT=>5,CURLOPT_TIMEOUT=>20,CURLOPT_SSL_VERIFYPEER=>true,CURLOPT_SSL_VERIFYHOST=>2,CURLOPT_PROTOCOLS=>CURLPROTO_HTTPS,CURLOPT_REDIR_PROTOCOLS=>CURLPROTO_HTTPS,CURLOPT_RETURNTRANSFER=>false,CURLOPT_WRITEFUNCTION=>static function($curl,$chunk)use(&$bytes,&$overflow):int{if(strlen($bytes)+strlen($chunk)>1024*1024){$overflow=true;return 0;}$bytes.=$chunk;return strlen($chunk);}];
-            if($method==='POST')$options[CURLOPT_POSTFIELDS]=$body;
+            if(in_array($method,['POST','PATCH'],true))$options[CURLOPT_POSTFIELDS]=$body;
             curl_setopt_array($handle,$options);
             $ok=curl_exec($handle);$status=(int)curl_getinfo($handle,CURLINFO_RESPONSE_CODE);
             if($ok===false||$overflow)throw new ApiFailure($overflow?'response_too_large':'transport_unconfirmed',$status,true);
@@ -53,7 +53,7 @@ final class ApiClient
     public function token(string $stage,array $credentials,string $operation):string
     {
         [, $oauth]=self::stage($stage);$credentials=self::credentials($credentials);
-        if(!in_array($operation,['issue','query','cancel'],true))throw new \DomainException('bb_api_operation_invalid');
+        if(!in_array($operation,['issue','query','cancel','amend_due'],true))throw new \DomainException('bb_api_operation_invalid');
         $scope=$operation==='query'?'cobrancas.boletos-info':'cobrancas.boletos-requisicao';
         $basic=base64_encode(rawurlencode($credentials['client_id']).':'.rawurlencode($credentials['client_secret']));
         $response=$this->request('POST',$oauth,['Authorization: Basic '.$basic,'Content-Type: application/x-www-form-urlencoded','Accept: application/json'],http_build_query(['grant_type'=>'client_credentials','scope'=>$scope],'','&',PHP_QUERY_RFC3986));
@@ -67,9 +67,10 @@ final class ApiClient
     {
         [$base]=self::stage($stage);$credentials=self::credentials($credentials);
         if(!preg_match('/^[1-9][0-9]{6}$/D',$agreement)||!preg_match('/^000'.preg_quote($agreement,'/').'[0-9]{10}$/D',$number)||!preg_match('/^[A-Za-z0-9._~+\/-]+=*$/D',$token))throw new \DomainException('bb_api_origin_invalid');
-        if(!in_array($operation,['issue','query','cancel'],true))throw new \DomainException('bb_api_operation_invalid');
+        if(!in_array($operation,['issue','query','cancel','amend_due'],true))throw new \DomainException('bb_api_operation_invalid');
         $query=['gw-dev-app-key'=>$credentials['application_key']];$path='/boletos';$method='POST';
         if($operation==='query'){$path.='/'.$number;$method='GET';$query['numeroConvenio']=$agreement;$payload='';}
+        if($operation==='amend_due'){$path.='/'.$number;$method='PATCH';if($payload===''||strlen($payload)>65536)throw new \DomainException('bb_api_payload_invalid');$wire=self::decodeExact($payload);if(($wire['numeroConvenio']??null)!==$agreement)throw new \DomainException('bb_api_payload_invalid');}
         if($operation==='cancel'){$path.='/'.$number.'/baixar';$payload=json_encode(['numeroConvenio'=>(int)$agreement],JSON_THROW_ON_ERROR);}
         if($operation==='issue'){if($payload===''||strlen($payload)>65536)throw new \DomainException('bb_api_payload_invalid');$wire=self::decodeExact($payload);if(($wire['numeroTituloCliente']??null)!==$number||($wire['numeroConvenio']??null)!==$agreement)throw new \DomainException('bb_api_payload_invalid');}
         $r=$this->request($method,$base.$path.'?'.http_build_query($query,'','&',PHP_QUERY_RFC3986),['Authorization: Bearer '.$token,'Content-Type: application/json','Accept: application/json'],$payload);

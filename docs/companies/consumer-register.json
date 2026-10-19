@@ -5,15 +5,15 @@
   "frozen_candidate": "b8a5cec7286edc88191a1b1d07813ea40ed79bce",
   "counts": {
     "company_core_and_settings": {
-      "pending": 391,
+      "pending": 522,
       "boundary_tested": 6
     },
     "customer_portal": {
-      "pending": 217,
+      "pending": 218,
       "boundary_tested": 3
     },
     "files_and_reports": {
-      "pending": 191,
+      "pending": 192,
       "boundary_tested": 7
     },
     "jobs_and_transport": {
@@ -21,15 +21,15 @@
       "boundary_tested": 10
     },
     "modules": {
-      "pending": 6595,
+      "pending": 6642,
       "boundary_tested": 13
     },
     "other_core": {
-      "pending": 2182,
+      "pending": 2191,
       "boundary_tested": 9
     },
     "sales_documents": {
-      "pending": 312,
+      "pending": 314,
       "boundary_tested": 60
     }
   },
@@ -2528,7 +2528,7 @@
       "full_operation_ready": false
     }
   ],
-  "source_manifest_sha256": "85e8e058827eb8394b59f3b7352123976089a37b5ce93a69bf47148926bb5f3e",
-  "total_consumers": 10281,
+  "source_manifest_sha256": "9e0f647b9498cf50368d3b80c6ce4231dc8f755e84a3e813ea3ef396e30e9f3b",
+  "total_consumers": 10472,
   "full_register_command": "python3 scripts/register-company-consumers.py --full-output /tmp/company-consumers-full.json"
 }

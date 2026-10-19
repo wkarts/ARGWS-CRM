@@ -49,7 +49,7 @@ if ($bbIsolated) {
 <div role="tabpanel" class="tab-pane" id="bb-remittance" aria-labelledby="bb-tab-remittance" aria-hidden="true" tabindex="0">
 <h2 class="tw-text-lg">Remessa CNAB240 vinculada à fatura</h2>
 <p>Geração local do perfil P/Q 084/043, carteira17 simples, BRL. Não há transmissão automática, aceite bancário ou liquidação. O candidato CNAB400 permanece indisponível; não há fallback de formato.</p>
-<?php if(!$origination_ready){?><p class="alert alert-warning">Ative/atualize o módulo pelo executor nativo para a versão1.1.0 antes de gerar remessas.</p><?php } ?>
+<?php if(!$origination_ready){?><p class="alert alert-warning">Ative/atualize o módulo pelo executor nativo para a versão1.1.1 antes de gerar remessas.</p><?php } ?>
 <?php if($selected && $origination_ready && $can_manage && $connections && $layout_bindings){?>
 <h3>Declaração de contrato e faixa exclusiva</h3><p>Confirme com o banco a isenção da carteira e o intercâmbio TESTE no sandbox. Informe uma faixa de Nosso Número exclusivamente destinada a este CRM, superior a qualquer número anterior. A declaração é do operador e não certifica o banco. Não inclua credenciais.</p>
 <?= form_open($bbAdminUrl('banco_brasil/declare_contract')); ?><input type="hidden" name="csrf_bb" value="<?= html_escape($csrf); ?>"><input type="hidden" name="issuer_id" value="<?= (int)$selected['id']; ?>">

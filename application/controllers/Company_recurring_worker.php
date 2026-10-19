@@ -1,0 +1,11 @@
+<?php
+
+defined('BASEPATH') or exit('No direct script access allowed');
+/** Explicit CLI job. HTTP calls cannot discover or process schedule origins. */
+class Company_recurring_worker extends CI_Controller
+{
+    public function index()
+    {
+        if(PHP_SAPI!=='cli'||!$this->input->is_cli_request()||!class_exists('CompanyRecurringWorkerScope',false)||!CompanyRecurringWorkerScope::active()){show_404();return;}$this->load->database();require_once APPPATH.'services/CompanyRecurring.php';$result=(new CompanyRecurring($this->db,db_prefix()))->processPending(date('Y-m-d'));echo 'Recurrences completed: '.$result['completed'].'; blocked: '.$result['blocked'].PHP_EOL;
+    }
+}

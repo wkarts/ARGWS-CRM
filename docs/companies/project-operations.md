@@ -62,7 +62,53 @@ acessadas a partir do projeto, já delimitadas pela origem.
   instalação/upgrade. Chromium percorre criação A/B, tarefa, comentário/checklist,
   timer e encerramento do projeto, além de stale/cross-company. Sem chamadas externas.
 
-Esta vertical ainda não inclui orçamento/faturamento de tempo, kanban, anexos,
-portal de projetos, tarefas avulsas, dependências, importação de projetos legados,
-recorrência, notificações ou integrações externas. Esses itens são código faltante,
-não homologação externa. Os gates dos consumidores legados continuam fechados.
+No incremento inicial, orçamento/faturamento de tempo, quadro, anexos, portal,
+tarefas avulsas, dependências e automações ainda não estavam incluídos. A seção
+seguinte registra a ampliação posterior de quadro/anexos/dependências/avulsas.
+Os gates dos consumidores legados continuam fechados.
+
+## Operações adicionais do incremento posterior
+
+`admin/company_project_extras?kind=project&id=…` e `?kind=task&id=…` fornecem:
+quadro em colunas com transições POST pelo writer de tarefas, marcos do projeto,
+marcação pessoal de seguidor, dependências acíclicas entre tarefas do mesmo projeto
+e anexos privados. Dependência aberta impede conclusão; um pré-requisito não pode
+ser reaberto enquanto houver dependente concluído. Marcos pendentes impedem
+encerramento do projeto. Datas de marcos/tarefas permanecem dentro do projeto.
+
+Anexos usam BLOB imutável por pai e filho, PDF até2 MiB ou PNG/JPEG normalizado
+(até512 KiB,1600 pixels), até20 uploads/20 MiB por recurso no histórico. Downloads
+validam tamanho/hash/tipo/owner e confirmam auditoria antes dos bytes; preview
+somente PNG regravado, com sandbox/nosniff. Ocultar conserva conteúdo e recibo;
+retry antigo não ressuscita arquivo. Não há URL pública. Seguir é marcação pessoal,
+não envio de notificações. O quadro não é hidratado sem `tasks/view`.
+
+`admin/company_standalone_tasks` cria tarefas avulsas sem projeto implícito. Exige
+somente ACL `tasks` na empresa, preserva checklist/comentários/revisão/cronômetro,
+e mantém stores e recibos distintos. Há apenas um cronômetro ativo por funcionário
+entre tarefas avulsas e vinculadas a projetos. Tarefas avulsas não adotam projetos
+ou tarefas NULL do legado.
+
+Migrations novas devem criar, em ordem, base `CompanyProjectsSchema`, adicionais
+`CompanyProjectExtrasSchema` e avulsas `CompanyStandaloneTasksSchema`. Nenhuma DDL
+da migration inicial é reescrita. Todos os writers do incremento exigem esses
+schemas, sem fallback que libere conclusão quando tabelas de dependências faltam.
+
+Testes adicionais:
+
+- `projects_extras.php`: marcos, seguidores, DAG/ciclo, guards reais de conclusão/
+  reabertura, arquivos/bytes/rollback/hide/replay e board sem grant de tarefas.
+- `projects_extras_controller.php`: controller/renderer reais, CSRF/contexto e
+  quadro usando o writer; `projects_extras_concurrency.php`: workers MySQL reais
+  para ciclo concorrente, uploads idempotentes, stale e revogação em espera.
+- `standalone_tasks.php`, `standalone_tasks_controller.php` e
+  `standalone_tasks_concurrency.php`: operação A/B/principal/task-only, templates,
+  CSRF, replay/stale/revogação e disputa de cronômetro entre ambos os domínios.
+- `projects_extras_browser.cjs`: Chromium/HTTP/MySQL da fixture descartável; A/B
+  percorrem marcos/seguir/dependências/quadro/upload multipart/download/ocultação e
+  tarefa avulsa com checklist/comentário/cronômetro/conclusão.
+
+Ainda são pendências técnicas faturar tempo, portal, importação/exportação,
+recorrência e notificações destes domínios; assinatura/integrações externas não
+foram executadas. Não confundir o novo quadro com compatibilidade já comprovada
+com todos os hooks e módulos legados, que continuam no gate correspondente.

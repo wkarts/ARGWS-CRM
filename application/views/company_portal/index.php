@@ -11,6 +11,7 @@ $hidden=function(string $action)use($esc,$portal_csrf){echo '<input type="hidden
 <?php if($identity){?>
 <section id="portal-identity"><h2><?= $esc($identity['issuer_name']); ?></h2><p><?= $esc($identity['firstname'].' '.$identity['lastname']); ?></p><p><?= $esc($identity['company']); ?></p><p><?= $esc($identity['email']); ?></p>
 <p>Seu acesso pertence a esta empresa. Compartilhamentos de cadastro não transferem sua conta ou seu histórico.</p>
+<?php require APPPATH.'views/company_portal/sales.php'; ?>
 <?php if(is_array($invoices??null)){?><section id="portal-invoices"><h2>Faturas desta empresa</h2><p>Somente faturas emitidas por esta empresa para o seu cadastro. O compartilhamento de identidade não amplia este acesso.</p>
 <?php foreach($invoices['items'] as $invoice){?><article><h3><?= $esc($invoice['number']); ?></h3><p>Emissão: <?= $esc($invoice['date']); ?> · Vencimento: <?= $esc($invoice['duedate']); ?> · <?= $esc($invoice['currency'].' '.$invoice['total']); ?></p><p><?= $esc([1=>'Em aberto',2=>'Paga',3=>'Parcialmente paga',4=>'Vencida',5=>'Cancelada',6=>'Rascunho'][(int)$invoice['status']]??'Consultar empresa'); ?></p>
 <?= form_open($url);$hidden('invoice_pdf'); ?><input type="hidden" name="invoice_id" value="<?= (int)$invoice['id']; ?>"><button type="submit">Baixar PDF da fatura</button><?= form_close(); ?>

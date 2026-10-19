@@ -103,3 +103,14 @@ pagamento já aplicada pelo outro canal para a mesma identidade bancária de tí
 Isso não transforma upload em prova autenticada nem libera encargos ou estornos.
 Mudança de versão requer migration109 aditiva; versões/migrations anteriores são
 preservadas. Ver handoff e matriz do HEAD para testes e homologação externa.
+
+## Continuação111: API separada e transporte ainda delimitado
+
+[Alteração de vencimento API e receptor mTLS observacional](banco-brasil-api-amendments-webhook.md)
+foram acrescentados sem modificar bytes ou significado do perfil240. A frase
+histórica sobre ausência de executor API/webhook acima descreve o estágio inicial.
+O transporte automático de remessa240 ainda não existe: não foi fornecido contrato
+de canal/autenticação/recibo que autorize inferir uma transmissão. A operação
+manual auditada mantém geração, download e declaração do operador como estados
+locais distintos de aceite pelo BB. Outros perfis, encargos e estornos continuam
+pendências técnicas; o crédito240 parcial sem encargos já entregue é preservado.

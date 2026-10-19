@@ -1,0 +1,8 @@
+<?php
+/** Exact CLI capability is selected before session, application models, providers or modules. */
+require_once dirname(__DIR__).'/issuers_core_support.php';require_once APPPATH.'services/CompanyRecurringWorkerScope.php';
+$router=new class{public string $directory='';public $module=false;public string $class='company_recurring_worker';public string $method='index';public function fetch_directory(){return $this->directory;}public function fetch_module(){return $this->module;}public function fetch_class(){return $this->class;}public function fetch_method(){return $this->method;}};$input=new class{public bool $cli=true;public function is_cli_request(){return $this->cli;}};$ci=(object)['input'=>$input,'router'=>$router];
+essentialCheck(CompanyRecurringWorkerScope::prepare($ci)&&CompanyRecurringWorkerScope::active(),'exact native CLI worker route enables its minimal bootstrap');
+$input->cli=false;essentialCheck(!CompanyRecurringWorkerScope::prepare($ci)&&!CompanyRecurringWorkerScope::active(),'HTTP worker route cannot retain CLI capability');$input->cli=true;
+foreach([['directory','admin'],['module','arbitrary'],['class','company_recurring'],['method','run']] as [$field,$value]){$before=$router->$field;$router->$field=$value;essentialCheck(!CompanyRecurringWorkerScope::prepare($ci)&&!CompanyRecurringWorkerScope::active(),'noncanonical worker '.$field.' has no bootstrap capability');$router->$field=$before;}
+define('API',true);essentialCheck(!CompanyRecurringWorkerScope::prepare($ci),'generic API cannot activate a CLI recurrence worker');echo 'Recurring CLI scope: '.$GLOBALS['essentialChecks'].' checks passed.'.PHP_EOL;

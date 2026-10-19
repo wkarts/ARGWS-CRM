@@ -14,9 +14,10 @@ final class ApiCreditedReceipt implements \CompanyReceiptSource
     {
         \IssuerPolicy::id($originId);\IssuerPolicy::id($operationId);
     }
-    public function tables():array{return array_merge(array_merge(ApiService::receiptTables(),['bb_return_events','bb_event_receipts']),$this->hasAsaas?['asaas_payment_origins']:[]);}
+    public function tables():array{return array_merge(array_merge(ApiService::receiptTables(),['bb_return_events','bb_event_receipts','bb_api_notifications','bb_api_webhook_receivers']),$this->hasAsaas?['asaas_payment_origins']:[]);}
     public function assertSchema($db,string $p):void
     {
+        require_once __DIR__.'/ApiWebhookSchema.php';ApiWebhookSchema::ensure($db,$p,false);
         ApiSchema::ensure($db,$p,false);ApiReceiptSchema::ensure($db,$p,false);OriginationSchema::assertValid($db,$p);
         require_once __DIR__.'/ReconciliationSchema.php';ReconciliationSchema::ensure($db,$p,false);
         $this->hasAsaas=$db->table_exists($p.'asaas_payment_origins');
@@ -41,6 +42,7 @@ final class ApiCreditedReceipt implements \CompanyReceiptSource
             $history=json_decode($prior['result_json'],true,32,JSON_THROW_ON_ERROR);
             if(in_array($history['codigoEstadoTituloCobranca']??null,['2','3','4','5','7','8','9','10','11','12','13','17','18','19'],true))throw new \DomainException('bb_api_credit_adverse_history');
         }
+        foreach(self::rows($db,"SELECT n.projection_json FROM {$p}bb_api_notifications n JOIN {$p}bb_origins o ON o.id=n.origin_id AND o.issuer_id=n.issuer_id WHERE n.issuer_id=? AND o.account_id=? AND o.environment=? AND o.agreement_number=? AND o.remote_id IN (?,?) FOR UPDATE",[$issuer,$origin['account_id'],$origin['environment'],$origin['agreement_number'],$origin['remote_id'],substr($origin['remote_id'],3)]) as $notification){$observed=json_decode($notification['projection_json'],true,32,JSON_THROW_ON_ERROR);if(($observed['codigoEstadoBaixaOperacional']??null)==='10')throw new \DomainException('bb_api_credit_adverse_history');}
         $zero=['valorPagamentoParcialTitulo','valorImpostoSobreOprFinanceirasRecebidoTitulo','valorAbatimentoTotal','valorJuroMoraRecebido','valorDescontoUtilizado','valorMultaRecebido','valorReajuste','valorOutroRecebido'];
         foreach($zero as $field)if(!array_key_exists($field,$result)||\app\services\InvoicePaymentWriter::minorUnits($result[$field])!==0)throw new \DomainException('bb_api_credit_adjustments_require_review');
         $nominal=\app\services\InvoicePaymentWriter::minorUnits($snapshot['invoice']['total']);

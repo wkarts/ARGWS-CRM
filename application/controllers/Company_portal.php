@@ -15,7 +15,7 @@ class Company_portal extends CI_Controller
         $this->output->set_header('X-Content-Type-Options: nosniff');
         try{$issuer=IssuerPolicy::id($issuer);$portal=new CompanyPortal($this->db,db_prefix(),(string)$this->config->item('encryption_key'));}
         catch(Throwable $error){show_404();return;}
-        $invoices=null;
+        $invoices=null;$sales=[];
         $sessionKey='company_portal_identity';$identity=$this->session->userdata($sessionKey);$message=null;$error=null;
         $csrf=$this->session->userdata('company_portal_csrf');
         if(!is_string($csrf)||strlen($csrf)!==64){$csrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_portal_csrf',$csrf);}
@@ -37,6 +37,13 @@ class Company_portal extends CI_Controller
                     try{$file=(new CompanyInvoiceAttachments($this->db,db_prefix()))->portalDownload(new CompanyPortalInvoices($this->db,db_prefix(),$portal),$identity,$issuer,$invoice,$key);}catch(DomainException $denied){show_404();return;}
                     $this->output->set_header("Content-Security-Policy: sandbox; default-src 'none'");
                     $this->output->set_header('Content-Disposition: attachment; filename="anexo.'.($file['mime']==='image/png'?'png':'pdf').'"; filename*=UTF-8\'\''.rawurlencode($file['filename']));$this->output->set_content_type($file['mime'])->set_output($file['content']);return;
+                }
+                if($action==='sales_pdf'){
+                    if(!$current||!is_array($identity)){show_404();return;}
+                    require_once APPPATH.'services/CompanyPortalSales.php';require_once APPPATH.'services/CompanySalesPdf.php';
+                    $documents=new CompanyPortalSales($this->db,db_prefix(),$portal);$id=$this->input->post('document_id',false);
+                    try{$document=$documents->document($identity,$issuer,$id);if(!class_exists('TCPDF'))require_once APPPATH.'vendor/tecnickcom/tcpdf/tcpdf.php';$pdf=CompanySalesPdf::prepare($document)->Output('','S');$documents->confirmDownload($identity,$issuer,$id,hash('sha256',$pdf));}catch(DomainException $denied){show_404();return;}
+                    $this->output->set_header('Content-Disposition: attachment; filename="documento-'.(int)$id.'.pdf"');$this->output->set_content_type('application/pdf')->set_output($pdf);return;
                 }
                 if($action==='invoice_pdf'){
                     if(!$current||!is_array($identity)){show_404();return;}
@@ -91,7 +98,10 @@ class Company_portal extends CI_Controller
         if(($current??null)&&is_array($identity)){
             try{require_once APPPATH.'services/CompanyPortalInvoices.php';$invoices=(new CompanyPortalInvoices($this->db,db_prefix(),$portal))->page($identity,$issuer,$this->input->get('before',false)??0);}
             catch(Throwable $unavailable){$error='Faturas indisponíveis no momento. Tente novamente mais tarde.';}
+            try{require_once APPPATH.'services/CompanyPortalSales.php';$salesReader=new CompanyPortalSales($this->db,db_prefix(),$portal);foreach(['estimates','proposals'] as $kind)$sales[$kind]=$salesReader->page($identity,$issuer,$kind);}
+            catch(Throwable $unavailable){$error='Documentos indisponíveis no momento. Tente novamente mais tarde.';}
+
         }
-        $this->load->view('company_portal/index',['invoices'=>$invoices,'issuer'=>$issuer,'identity'=>$current??null,'message'=>$message,'error'=>$error,'portal_csrf'=>$csrf,'script_nonce'=>$nonce]);
+        $this->load->view('company_portal/index',['sales'=>$sales,'invoices'=>$invoices,'issuer'=>$issuer,'identity'=>$current??null,'message'=>$message,'error'=>$error,'portal_csrf'=>$csrf,'script_nonce'=>$nonce]);
     }
 }

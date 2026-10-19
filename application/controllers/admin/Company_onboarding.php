@@ -9,14 +9,8 @@ class Company_onboarding extends AdminController
         if(!CompanyRequestScope::sealedFor($this)){show_error('Contexto de empresa indisponível.',503);return;}
         require_once APPPATH.'services/CompanyOnboarding.php';
         require_once APPPATH.'services/CompanySettingsFormats.php';
-        $resources=[
-            'invoices'=>['name'=>'Faturas da empresa','capabilities'=>['view'=>'Consultar e PDF','create'=>'Emitir','edit'=>'Editar/cancelar sem movimento']],
-            'payments'=>['name'=>'Recebimentos da empresa','capabilities'=>['create'=>'Registrar recebimento manual']],
-            'customers'=>['name'=>'Clientes (identidade)','capabilities'=>['view'=>'Consultar','create'=>'Criar','edit'=>'Editar próprios','share'=>'Compartilhar identidade']],
-            'settings'=>['name'=>'Definições','capabilities'=>['view'=>'Consultar','edit'=>'Editar']],
-            'email_templates'=>['name'=>'Modelos de e-mail','capabilities'=>['view'=>'Consultar','edit'=>'Editar']],
-            'banco_brasil'=>['name'=>'Banco do Brasil','capabilities'=>['view'=>'Consultar','manage'=>'Configurar','import'=>'Importar retorno observacional','generate'=>'Gerar remessa240 local','download'=>'Baixar remessa','reconcile'=>'Conciliar retorno com evidência','api_issue'=>'Registrar cobrança API','api_query'=>'Consultar cobrança API','api_cancel'=>'Solicitar baixa API']],
-        ];
+        require_once APPPATH.'services/CompanyResourceCatalog.php';
+        $resources=CompanyResourceCatalog::definitions();
         $service=new CompanyOnboarding($this->db,db_prefix(),array_map(static fn($r)=>array_keys($r['capabilities']),$resources));
         $actor=CompanyRequestScope::context()->staffId();$error=null;$draft=null;
         $this->output->set_header('Cache-Control: no-store');
