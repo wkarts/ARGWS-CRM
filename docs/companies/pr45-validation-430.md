@@ -33,3 +33,7 @@ HTTP430; não atribuir o CI429/HTTP429 aos novos fluxos.
 Exceção única nos testes: helper SQL de settings_primary_sales_browser usa agora --delimiter=// para CREATE TRIGGER composto. A rodada31 usou transporte PDO; separadamente, o cliente MariaDB real reproduziu1064 antes da correção, SIGNAL45000 e rollback atômico após, drop/retry e Chromium completo passaram sem alterar asserts. [Manifesto](evidence/trigger-client-430.json), [RED/GREEN](evidence/trigger-client-430-red-green.log) e [navegador](evidence/trigger-client-430-browser.log). Não equivale a MySQL8: CI430 acompanhará esse cliente. Docs/CI finalizados após congelamento são discriminados no vínculo.
 
 63 testes Python, lint20PHP/1JS, YAML/bash e inventários PASS. CI remoto430 pendente até publicação. Nenhuma homologação externa ou transporte bancário real.
+
+## CI430 terminal
+
+16 workflows distintos no próprio SHA:15 sucesso/1 falha; [evidência](evidence/ci-430.json). A correção do delimitador funcionou. Stacks falhou1419: MySQL8 com binlog ativo exige configuração específica para os triggers de injeção de falhas do usuário de teste semSUPER.434 altera somente o lançamento do banco descartável, mantendo binlog e grants limitados ao banco; sem alterar produção. Prova local realCLI/binlogON RED1419 e GREEN45000/rollback/drop/retry; MySQL8 do novo SHA continua separado. Não chamar430CIverde.

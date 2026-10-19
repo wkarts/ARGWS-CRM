@@ -105,14 +105,14 @@
       "evidence": ""
     },
     "application/controllers/Company_portal.php": {
-      "sha256": "1fde157e471bcffcf33cf49b5453473baff61699ff87659af6ea2c3e7a2d1584",
+      "sha256": "801897784cddde76d7295034c32edb3cdc36cacc94210da4a09b3d8efd67f7e2",
       "categories": [
         "documents_numbering",
         "invoice_table"
       ],
       "signal_lines": [
-        70,
-        131
+        90,
+        158
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -372,12 +372,12 @@
       "evidence": ""
     },
     "application/controllers/admin/Company_contracts.php": {
-      "sha256": "23e64857b35099dee869c5ef4c18874d131d0bedb9b0537c7365da1d6dac2646",
+      "sha256": "f0d1957de8786f5d54846a49e2d1e5a1b40388cc16cee70abd3a18d60c45fed1",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        24
+        26
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3039,6 +3039,17 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "application/services/CompanyContractDiscussions.php": {
+      "sha256": "8fa195da9bf233a52dc65d374ba7ed44e65a4372c6027f4e0804b3d7f7ba9c8c",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        47
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/services/CompanyContractsStorage.php": {
       "sha256": "f5a56ffa26f3d2d187d5fe647e28cec828b67bb2ac7bfa4b0ce7bb754a250281",
       "categories": [
@@ -3269,7 +3280,7 @@
       "evidence": ""
     },
     "application/services/CompanyOperationFiles.php": {
-      "sha256": "c446d13d74501f379020a2adb8e8dd06f0e396947aa0662e400a95b466af3b6d",
+      "sha256": "40fde76afa2c1d2bdc3cf5dce2af8e49149079d706df88d12c9534139f31e0a5",
       "categories": [
         "customer_privacy"
       ],
@@ -3336,6 +3347,17 @@
       ],
       "signal_lines": [
         12
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/CompanyProjectPortalRulesStorage.php": {
+      "sha256": "45306427019d9c6aab3ad0c66975e682292780ebfc19fdeb59dd5b597c284424",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        11
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4931,12 +4953,12 @@
       "evidence": ""
     },
     "application/views/company_portal/index.php": {
-      "sha256": "9554db80a711f9a1e2e94618d4b816fb9e3641e8713877e9447f068b0b60bb17",
+      "sha256": "c235906c4ee8a2d9dd1740d1bbae1fa6145862455a78424b91289645b8606ac1",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        18
+        20
       ],
       "state": "unreviewed",
       "evidence": ""

@@ -105,3 +105,6 @@ Integração: migration nativa 428 preparada deve chamar
 Abertura e resposta pelo contato com permissão nativa5, origem persistida e sem
 personificar funcionários estão descritas em `portal-support-write.md`. Mensagens
 de equipe continuam internas até publicação individual. Sem novos scopes API.
+
+Anexos enviados por contato431 usam audiência autor+equipe e publicação explícita
+para demais contatos; consulte `portal-support-files.md`.

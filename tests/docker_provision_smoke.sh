@@ -67,11 +67,14 @@ echo "Compose entrypoint storage OK: diretórios relativos e graváveis por www-
 
 docker network create "$network" >/dev/null
 docker volume create "$config_volume" >/dev/null
+# Disposable DB only: inject real rollback triggers while preserving database-only app grants.
+# Keep binary logging enabled; production image/config and application privileges are unchanged.
 docker run -d --name "$database" --network "$network" \
     -e MYSQL_ROOT_PASSWORD="$root_password" \
     -e MYSQL_DATABASE="$database_name" \
     -e MYSQL_USER="$database_user" \
-    -e MYSQL_PASSWORD="$database_password" ghcr.io/wkarts/argws-crm-mysql:8.0 >/dev/null
+    -e MYSQL_PASSWORD="$database_password" ghcr.io/wkarts/argws-crm-mysql:8.0 \
+    --log-bin-trust-function-creators=1 >/dev/null
 
 healthy=0
 for _ in $(seq 1 90); do

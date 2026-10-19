@@ -48,6 +48,7 @@ staff, encerramento, CSRF e revogação. Evidências/ambiente constam no arquivo
 integração do incremento. O fixture native430 usa as migrations reais integradas;
 tracking do executor é validado separadamente, não inferido do body de up().
 
-Ainda não há anexação pelo contato, reabertura pelo contato, e-mail de entrada,
+O incremento431 acrescenta anexos privados pelo contato, descritos em
+`portal-support-files.md`. Ainda não há reabertura pelo contato, e-mail de entrada,
 SLA/automação ou notificações externas neste fluxo. Contratos não ganham assinatura,
 aceite nem comentário público neste incremento. Nada disso é homologação bancária.

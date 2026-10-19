@@ -194,6 +194,29 @@ jobs:
           php tests/companies/portal_support_write_controller.php
           php tests/companies/portal_support_write_concurrency.php
           php tests/companies/native_430.php
+          php tests/companies/portal_support_files.php
+          php tests/companies/portal_support_files_controller.php
+          php tests/companies/portal_support_files_concurrency.php
+          php tests/companies/native_431.php
+          php tests/companies/contract_discussions.php
+          php tests/companies/contract_discussions_controller.php
+          php tests/companies/contract_discussions_concurrency.php
+          php tests/companies/native_432.php
+          php tests/companies/project_portal_rules.php
+          php tests/companies/project_portal_rules_schema.php
+          php tests/companies/project_portal_rules_controller.php
+          php tests/companies/project_portal_rules_atomic.php
+          php tests/companies/project_portal_adapter_controller.php
+          php tests/companies/project_portal_rules_concurrency.php
+          php tests/companies/native_433.php
+          php tests/companies/portal_task_write.php
+          php tests/companies/portal_task_receipts.php
+          php tests/companies/portal_task_write_rules.php
+          php tests/companies/portal_task_write_controller.php
+          php tests/companies/portal_task_write_concurrency.php
+          php tests/companies/portal_task_receipts_concurrency.php
+          php tests/companies/native_434.php
+          php tests/companies/operational_author_charset.php
           php tests/companies/asaas_boundaries.php
           php tests/companies/asaas_exact_json.php
           php tests/companies/invoice_delivery_concurrency.php

@@ -1,12 +1,12 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Este incremento usa núcleo4.3.0/430,
-BB1.1.4/101–114 e Asaas1.5.1/151, sobre429 publicado em
-`20d19f1934c653f6b1b6809717c8097fbcd3fb50`.
+Escopo integral em andamento. Este incremento usa núcleo4.3.4/434,
+BB1.1.4/101–114 e Asaas1.5.1/151, sobre430 publicado em
+`05c3bce34fdd515a0a0815d7c4eeb19cd47d9a95`.
 A [validação429](pr45-validation-429.md) registra30/30 execuções HTTP/Chromium
 em uma rodada limpa, instalação/upgrade/tracking e bytes funcionais conferidos.
 O CI428 terminou12sucesso/4falhas por bootstrap e orquestração, corrigidos429 com
-RED/GREEN. CI429 terminou15sucesso/1falha no clienteSQL do teste, corrigida430 com realCLI RED/GREEN. A [validação430](pr45-validation-430.md) registra31/31 HTTP e o CI do novo SHA será acompanhado separadamente. O427 passou25/25 execuções HTTP numa rodada limpa e16 workflows distintos
+RED/GREEN. CI429 terminou15sucesso/1falha de parser do teste, corrigida430. CI430 terminou15sucesso/1falha1419 na infraestrutura do MySQL descartável, corrigida434 com prova CLI/binlogON/nonSUPER. A [validação430](pr45-validation-430.md) registra31/31 HTTP; a [validação434](pr45-validation-434.md) registra35sucessos em36tentativas e todas as migrations431–434 reais. CI do novo SHA é acompanhado separadamente. O427 passou25/25 execuções HTTP numa rodada limpa e16 workflows distintos
 concluíram com sucesso no próprio SHA; [evidência427](pr45-validation-427.md) preservada.
 Todos os passos históricos permanecem preservados. Sem merge, deploy, tag ou release manual.
 
@@ -15,7 +15,7 @@ instalação/upgrade nativos, aplicação real mysqli, MariaDB e Chromium. Os re
 locais não equivalem às matrizes remotas de outro SHA nem a homologação bancária.
 Inventários orientam revisão; contagens lexicais não medem bugs ou cobertura.
 
-| Requisito | Implementação incorporada até430 | Prova e limite |
+| Requisito | Implementação incorporada até434 | Prova e limite |
 |---|---|---|
 | Empresa principal/master/equipe | Identidade real do instalador, master diferente de1, wizard, grants/default por recurso e seletor409 | Bootstrap/upgrade/concorrência/HTTP; legado ambíguo usa console+senha; recuperação totalmente gráfica depende de autoridade independente |
 | Clientes privados/opt-in | Diretório positivo, compartilhamento explícito somente da identidade, contatos e sessões próprios | A/B/principal/NULL, concorrência e navegador; não compartilha histórico financeiro |

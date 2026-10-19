@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-require_once __DIR__.'/CompanyContractsStorage.php';require_once __DIR__.'/CompanyOperationFilesSchema.php';require_once __DIR__.'/CompanyAssets.php';
+require_once __DIR__.'/CompanyContractsStorage.php';require_once __DIR__.'/CompanyOperationFileContent.php';require_once __DIR__.'/CompanyOperationFilesSchema.php';require_once __DIR__.'/CompanyAssets.php';
 /** Private contract/support blobs. Kind is a closed domain choice, never an SQL resource name. */
 final class CompanyOperationFiles extends CompanyContractsStorage
 {
@@ -22,17 +22,13 @@ final class CompanyOperationFiles extends CompanyContractsStorage
     {
         [, $table]=$this->target($kind);IssuerStorage::query($this->db,'UPDATE '.$this->p.$table.' SET revision=revision+1,updated_at=? WHERE issuer_id=? AND id=? AND revision=?',[gmdate('Y-m-d H:i:s'),$issuer,$id,$revision]);if((int)$this->parent($issuer,$kind,$id)['revision']!==$revision+1)throw new RuntimeException('issuer_operation_write_unconfirmed');
     }
-    private static function normalize(string $name,string $bytes):array
-    {
-        if(strlen($name)>191||$name===''||trim($name)!==$name||str_starts_with($name,'.')||preg_match('//u',$name)!==1||preg_match('/[\x00-\x1f\x7f\\\\\/]/',$name)||strlen($bytes)<8||strlen($bytes)>2097152)throw new DomainException('company_operation_file_invalid');$extension=strtolower(pathinfo($name,PATHINFO_EXTENSION));$mime=(new finfo(FILEINFO_MIME_TYPE))->buffer($bytes);
-        if($extension==='pdf'&&$mime==='application/pdf'&&preg_match('/^%PDF-[12]\.[0-9][\r\n]/',$bytes))return [$name,'application/pdf',$bytes];if(!in_array($extension,['png','jpg','jpeg'],true)||!in_array($mime,['image/png','image/jpeg'],true))throw new DomainException('company_operation_file_invalid');try{$inline=CompanyAssets::normalize($bytes);}catch(DomainException $e){throw new DomainException('company_operation_file_invalid');}$name=pathinfo($name,PATHINFO_FILENAME).'.png';if(strlen($name)>191)throw new DomainException('company_operation_file_invalid');return [$name,'image/png',base64_decode(substr($inline,strlen('data:image/png;base64,')),true)];
-    }
+    private static function normalize(string $name,string $bytes):array{return CompanyOperationFileContent::normalize($name,$bytes);}
     public function upload($issuer,$actor,string $kind,$id,$revision,string $key,string $name,string $bytes):int
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=self::revision($revision);[,,$table,$field]=$this->target($kind);$this->authorize($issuer,$actor,'edit');[$name,$mime,$bytes]=self::normalize($name,$bytes);$hash=hash('sha256',$bytes);
         return $this->operation($issuer,$actor,'edit',$key,$kind.'_file_upload',[$id,$revision,$name,$mime,$hash],function()use($issuer,$actor,$kind,$id,$revision,$key,$name,$mime,$bytes,$hash,$table,$field):int{
             $row=$this->parent($issuer,$kind,$id,true);if((int)$row['revision']!==$revision)throw new DomainException('company_operation_stale');
-            $usage=$this->rows('SELECT COUNT(*) n,COALESCE(SUM(byte_size),0) bytes FROM '.$this->p.$table.' WHERE issuer_id=? AND '.$field.'=?',[$issuer,$id])[0];if((int)$usage['n']>=20||(int)$usage['bytes']+strlen($bytes)>20971520)throw new DomainException('company_operation_file_limit');
+            $usage=$this->rows('SELECT COUNT(*) n,COALESCE(SUM(byte_size),0) bytes FROM '.$this->p.$table.' WHERE issuer_id=? AND '.$field.'=?',[$issuer,$id])[0];CompanyOperationFileContent::quota((int)$usage['n'],(int)$usage['bytes'],strlen($bytes));
             IssuerStorage::query($this->db,'INSERT INTO '.$this->p.$table.'(file_key,issuer_id,'.$field.',actor_id,filename,mime,content_hash,byte_size,content,active,created_at) VALUES(?,?,?,?,?,?,?,?,?,1,?)',[$key,$issuer,$id,$actor,$name,$mime,$hash,strlen($bytes),$bytes,gmdate('Y-m-d H:i:s')]);$stored=$this->rows('SELECT filename,mime,content_hash,content,byte_size,active,actor_id FROM '.$this->p.$table.' WHERE file_key=? AND issuer_id=? AND '.$field.'=?',[$key,$issuer,$id])[0]??[];
             if((int)($stored['actor_id']??0)!==$actor||($stored['filename']??null)!==$name||($stored['mime']??null)!==$mime||($stored['content_hash']??null)!==$hash||(int)($stored['active']??0)!==1||(int)($stored['byte_size']??0)!==strlen($bytes)||!hash_equals($hash,hash('sha256',$stored['content']??'')))throw new RuntimeException('issuer_operation_write_unconfirmed');$this->bump($issuer,$kind,$id,$revision);return $id;
         });

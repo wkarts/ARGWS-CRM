@@ -15,7 +15,7 @@ class Company_portal extends CI_Controller
         $this->output->set_header('X-Content-Type-Options: nosniff');
         try{$issuer=IssuerPolicy::id($issuer);$portal=new CompanyPortal($this->db,db_prefix(),(string)$this->config->item('encryption_key'));}
         catch(Throwable $error){show_404();return;}
-        $invoices=null;$sales=[];$hostedCheckout=[];$operations=[];$operation_detail=null;$operation_kind=null;
+        $invoices=null;$sales=[];$hostedCheckout=[];$operations=[];$operation_detail=null;$operation_kind=null;$project_tasks=null;$project_task=null;$task_receipt=null;$author_tasks=null;$task_write_controls=null;$project_task_create_controls=null;
         $sessionKey='company_portal_identity';$identity=$this->session->userdata($sessionKey);$message=null;$error=null;
         $csrf=$this->session->userdata('company_portal_csrf');
         if(!is_string($csrf)||strlen($csrf)!==64){$csrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_portal_csrf',$csrf);}
@@ -29,6 +29,26 @@ class Company_portal extends CI_Controller
                 if($action==='logout'){
                     $this->session->unset_userdata($sessionKey);$this->session->sess_regenerate(true);
                     redirect($this->config->site_url('company_portal/index/'.$issuer),'location',303);return;
+                }
+                if(is_string($action)&&in_array($action,['project_task_create','project_task_edit','project_task_comment','project_task_upload','project_task_hide','project_task_receipt_file'],true)){
+                    if(!$current||!is_array($identity)){show_404();return;}require_once APPPATH.'services/CompanyPortalTaskHttp.php';CompanyPortalTaskHttp::handle($this,$identity,$issuer,$action);return;
+                }
+                if($action==='project_task_file'){
+                    if(!$current||!is_array($identity)){show_404();return;}require_once APPPATH.'services/CompanyPortalProjectTasks.php';$fileKey=$this->input->post('file_key',false);if(!is_string($fileKey)){show_404();return;}
+                    try{$tasks=new CompanyPortalProjectTasks($this->db,db_prefix(),(string)$this->config->item('encryption_key'));$projectId=$this->input->post('project_id',false);$taskId=$this->input->post('task_id',false);$file=$tasks->file($identity,$issuer,$projectId,$taskId,$fileKey);$tasks->confirmFile($identity,$issuer,$projectId,$taskId,$fileKey,$file['content_hash']);}catch(DomainException $denied){show_404();return;}
+                    $this->output->set_header("Content-Security-Policy: sandbox; default-src 'none'");$this->output->set_header('Content-Disposition: attachment; filename="anexo.'.($file['mime']==='image/png'?'png':'pdf').'"; filename*=UTF-8\'\''.rawurlencode($file['filename']));$this->output->set_content_type($file['mime'])->set_output($file['content']);return;
+                }
+                if($action==='contract_discussion'){
+                    if(!$current||!is_array($identity)){show_404();return;}require_once APPPATH.'services/CompanyContractDiscussions.php';$key=$this->input->post('request_key',false);$body=$this->input->post('discussion_body',false);$id=$this->input->post('resource_id',false);
+                    try{if(!is_string($key)||!is_string($body))throw new DomainException('company_contract_discussion_invalid');(new CompanyContractDiscussions($this->db,db_prefix(),$portal))->contactAdd($identity,$issuer,$id,$this->input->post('revision',false),$body,$key);}
+                    catch(DomainException $denied){$reason=$denied->getMessage();if($reason==='company_contract_discussion_unavailable'){show_404();return;}$status=match($reason){'company_contract_discussion_stale','company_contract_discussion_request_conflict'=>409,'company_contract_discussion_limit'=>429,default=>422};show_error($status===409?'O contrato ou a conversa mudou. Reabra antes de comentar.':($status===429?'O contrato atingiu o limite de500 comentários.':'Escreva um comentário de até8000 bytes, em texto.'),$status);return;}
+                    redirect($this->config->site_url('company_portal/index/'.$issuer).'?operation_kind=contracts&resource_id='.(int)$id,'location',303);return;
+                }
+                if($action==='support_file_upload'||$action==='support_file_hide'){
+                    if(!$current||!is_array($identity)){show_404();return;}require_once APPPATH.'services/CompanyPortalSupportFiles.php';require_once APPPATH.'services/CompanyOperationFilesHttp.php';$files=new CompanyPortalSupportFiles($this->db,db_prefix(),$portal);$key=$this->input->post('request_key',false);$id=$this->input->post('resource_id',false);$revision=$this->input->post('revision',false);
+                    try{if(!is_string($key))throw new DomainException('company_portal_support_invalid');if($action==='support_file_upload'){[$name,$bytes]=CompanyOperationFilesHttp::upload();$id=$files->upload($identity,$issuer,$id,$revision,$key,$name,$bytes);}else{$file=$this->input->post('file_key',false);if(!is_string($file))throw new DomainException('company_portal_support_invalid');$id=$files->hide($identity,$issuer,$id,$revision,$file,$key);}}
+                    catch(DomainException $denied){$reason=$denied->getMessage();if($reason==='company_portal_operation_unavailable'){show_404();return;}$status=match($reason){'company_portal_support_stale','company_portal_support_request_conflict','company_portal_support_closed'=>409,'company_operation_file_limit'=>429,default=>422};show_error($status===409?'O chamado mudou ou foi encerrado. Reabra antes de alterar anexos.':($status===429?'O chamado atingiu o limite de20 arquivos ou20 MiB, incluindo ocultos.':'Envie um PDF até2 MiB ou PNG/JPEG até512 KiB pelo formulário de anexo.'),$status);return;}
+                    redirect($this->config->site_url('company_portal/index/'.$issuer).'?operation_kind=tickets&resource_id='.(int)$id,'location',303);return;
                 }
                 if($action==='support_open'||$action==='support_reply'){
                     if(!$current||!is_array($identity)){show_404();return;}require_once APPPATH.'services/CompanyPortalSupportWrite.php';$support=new CompanyPortalSupportWrite($this->db,db_prefix(),$portal);$key=$this->input->post('request_key',false);
@@ -126,8 +146,15 @@ class Company_portal extends CI_Controller
             try{require_once APPPATH.'services/CompanyPortalOperations.php';$reader=new CompanyPortalOperations($this->db,db_prefix(),$portal);foreach(['contracts','tickets','projects'] as $kind)$operations[$kind]=$reader->page($identity,$issuer,$kind,$this->input->get('op_after_'.$kind,false)??0);$requestedKind=$this->input->get('operation_kind',false);$requestedId=$this->input->get('resource_id',false);if($requestedKind!==null||$requestedId!==null){if(!is_string($requestedKind)||!in_array($requestedKind,['contracts','tickets','projects'],true)){show_404();return;}try{$operation_detail=$reader->detail($identity,$issuer,$requestedKind,$requestedId);$operation_kind=$requestedKind;}catch(DomainException $denied){show_404();return;}}}
             catch(Throwable $unavailable){$operations=[];$operation_detail=null;$operation_kind=null;$error='Operações indisponíveis no momento. Tente novamente mais tarde.';}
 
+            $requestedTask=$this->input->get('project_task',false);$tasksAfter=$this->input->get('tasks_after',false);$requestedReceipt=$this->input->get('task_receipt',false);$authorAfter=$this->input->get('author_tasks_after',false);
+            if(($requestedTask!==null||$tasksAfter!==null||$requestedReceipt!==null||$authorAfter!==null)&&($operation_kind!=='projects'||!is_array($operation_detail))){show_404();return;}
+            if($operation_kind==='projects'&&is_array($operation_detail)){
+                try{require_once APPPATH.'services/CompanyPortalProjectTasks.php';$tasks=new CompanyPortalProjectTasks($this->db,db_prefix(),(string)$this->config->item('encryption_key'));$project_tasks=$tasks->page($identity,$issuer,$operation_detail['id'],$tasksAfter??0);if(($requestedTask!==null||$tasksAfter!==null)&&$project_tasks===null){show_404();return;}if($requestedTask!==null)$project_task=$tasks->detail($identity,$issuer,$operation_detail['id'],$requestedTask);require_once APPPATH.'services/CompanyPortalTaskWriteControls.php';require_once APPPATH.'services/CompanyPortalTaskReceipts.php';$controls=new CompanyPortalTaskWriteControls($this->db,db_prefix(),(string)$this->config->item('encryption_key'));$project_task_create_controls=$controls->get($identity,$issuer,$operation_detail['id']);$author_tasks=(new CompanyPortalTaskReceipts($this->db,db_prefix(),(string)$this->config->item('encryption_key')))->page($identity,$issuer,$operation_detail['id'],$authorAfter??0);if($requestedReceipt!==null){if(!is_string($requestedReceipt)){show_404();return;}$task_receipt=(new CompanyPortalTaskReceipts($this->db,db_prefix(),(string)$this->config->item('encryption_key')))->get($identity,$issuer,$operation_detail['id'],$requestedReceipt);$task_write_controls=$controls->get($identity,$issuer,$operation_detail['id'],$task_receipt['task_id']);}elseif($project_task!==null)$task_write_controls=$controls->get($identity,$issuer,$operation_detail['id'],$project_task['id']);}
+                catch(DomainException $denied){show_404();return;}
+                catch(Throwable $unavailable){$project_tasks=null;$project_task=null;$task_receipt=null;$author_tasks=null;$task_write_controls=null;$project_task_create_controls=null;show_error('Tarefas indisponíveis no momento. Tente novamente mais tarde.',503);return;}
+            }
 
         }
-        $this->load->view('company_portal/index',['hosted_checkout'=>$hostedCheckout,'operations'=>$operations,'operation_detail'=>$operation_detail,'operation_kind'=>$operation_kind,'sales'=>$sales,'invoices'=>$invoices,'issuer'=>$issuer,'identity'=>$current??null,'message'=>$message,'error'=>$error,'portal_csrf'=>$csrf,'script_nonce'=>$nonce]);
+        $this->load->view('company_portal/index',['author_tasks'=>$author_tasks,'task_receipt'=>$task_receipt,'task_write_controls'=>$task_write_controls,'project_task_create_controls'=>$project_task_create_controls,'project_tasks'=>$project_tasks,'project_task'=>$project_task,'hosted_checkout'=>$hostedCheckout,'operations'=>$operations,'operation_detail'=>$operation_detail,'operation_kind'=>$operation_kind,'sales'=>$sales,'invoices'=>$invoices,'issuer'=>$issuer,'identity'=>$current??null,'message'=>$message,'error'=>$error,'portal_csrf'=>$csrf,'script_nonce'=>$nonce]);
     }
 }

@@ -8,6 +8,7 @@ $hidden=function($action)use($esc,$company_projects_csrf,$request_key){echo '<in
 <?php if($project){ ?><h2><?= $esc($project['name']); ?></h2><p><?= $esc($labels[$project['status']]); ?> · <?= $esc($project['start_date'].' até '.$project['due_date']); ?></p><p><?= nl2br($esc($project['description'])); ?></p>
 <p><a href="<?= $esc(CompanyRequestScope::adminUrl($this,'company_project_extras?kind=project&id='.(int)$project['id'])); ?>">Marcos, seguidores, quadro e anexos do projeto</a></p>
 <?php if($can_tasks){ ?><a href="<?= $esc(CompanyRequestScope::adminUrl($this,'company_tasks?project='.(int)$project['id'])); ?>">Abrir tarefas deste projeto</a><?php } ?>
+<p><a href="<?= $esc(CompanyRequestScope::adminUrl($this,'company_project_portal_rules?project='.(int)$project['id'])); ?>">Regras e publicações de tarefas no portal do cliente</a></p>
 <?php if($can_edit&&$project['status']==='active'){ ?>
 <h3>Editar projeto</h3><?= form_open($url());$hidden('update'); ?><input type="hidden" name="project_id" value="<?= (int)$project['id']; ?>"><input type="hidden" name="revision" value="<?= (int)$project['revision']; ?>"><input type="hidden" name="project[client_id]" value="<?= (int)$project['client_id']; ?>">
 <?php $values=$project;$form_id='project-edit';require APPPATH.'views/admin/companies/projects_fields.php'; ?>
