@@ -114,6 +114,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+creditFixture.invoice),'0','validated API query does not apply payment automatically');
   await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-billing');await page.locator('#bb-tab-billing').click();
   const apiCredit=page.locator('form[action*=settle_api]').filter({has:page.locator('input[name=operation_id][value="'+creditFixture.operation+'"]')});
+  assert.equal(await apiCredit.count(),1,JSON.stringify({page:(await page.locator('body').innerText()).slice(0,18000),proof:sql('SELECT operation,status,result_json FROM tblbb_api_operations WHERE id='+creditFixture.operation),receipt:sql('SELECT COUNT(*) FROM tblbb_api_receipts WHERE origin_id='+creditFixture.origin)}));
   await apiCredit.locator('input[type=checkbox]').check();const apiCreditFields=await apiCredit.locator('input').evaluateAll(xs=>Object.fromEntries(xs.filter(x=>x.name).map(x=>[x.name,x.value])));
   await navigate(page,apiCredit.locator('button'));assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+creditFixture.invoice),'2');
   assert.equal(sql('SELECT COUNT(*) FROM tblbb_api_receipts WHERE origin_id='+creditFixture.origin),'1','API credit and canonical provenance commit together');

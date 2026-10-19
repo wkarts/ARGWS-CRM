@@ -38,4 +38,5 @@ $transport=static function($method,$url,$headers,$body)use(&$title,&$remote,$db,
 $api=new \BancoBrasil\ApiService($db,'tbl',fn($v)=>$cipher->encrypt($v),fn($v)=>$cipher->decrypt($v),$transport);
 $origin=$api->issue($issuer,$actor,(int)$profile['id'],$invoice,['payer_address'=>'Synthetic street','payer_district'=>'Centro','payer_zip'=>'04000000','payer_city'=>'Salvador','payer_state'=>'BA','species'=>'02','acceptance'=>'N'],bin2hex(random_bytes(32)));
 $operation=$api->query($issuer,$actor,$origin,bin2hex(random_bytes(32)));
+$overview=$api->overview($issuer,$actor);if(count($overview['operations'])<2)throw new RuntimeException('synthetic overview unavailable');
 echo json_encode(compact('invoice','origin','operation'),JSON_THROW_ON_ERROR);
