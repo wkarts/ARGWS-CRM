@@ -170,14 +170,20 @@ O limite atual é 999; excedê-lo exige revisão explícita do executor.
 
 Toda PR destinada a uma release deve conter, no próprio diff:
 
-1. exatamente o próximo ID core, mesmo para mudanças só de módulos, docs ou CI;
+1. incremento core com novos IDs contíguos desde a base + 1 até o alvo, mesmo
+   para mudanças só de módulos, docs ou CI; uma PR pode acumular vários passos;
 2. `VERSION`, `ARGWS_VERSION`, config de migration e imagens de distribuição iguais;
 3. um novo arquivo nativo com a classe correspondente e `public up()`; sem schema,
    mantenha o NOOP documentado gerado pela ferramenta oficial;
 4. preservação byte a byte e de modo de todas as migrations históricas.
 
 O único gerador é `python3 scripts/apply-release-version.py`. Sem argumento,
-prepara o próximo ID; também aceita o alvo explícito para reexecução idempotente.
+prepara exatamente o próximo ID; também aceita o alvo explícito para reexecução
+idempotente. O gerador não permite saltos: passos acumulados são criados um a um.
+O gate e o planner aceitam vários passos somente com todas as migrations nativas
+intermediárias válidas; o gate exige arquivos novos, preserva bytes e modos do
+histórico e rejeita migrations extras acima do alvo. A última migration deve
+corresponder a todos os metadados de versão e distribuição.
 O pipeline reaplica o alvo já revisado e testa coerência; nunca decide uma nova
 versão pelo título e nunca corrige uma PR silenciosamente.
 
@@ -192,7 +198,7 @@ parecido ou um ref substituído não serve como evidência.
 A única exceção de sequência autorizada é **394 → 401 / 4.0.1**, preservando a DDL
 395 de recorrências e acrescentando 396–401 NOOP. Não há release intermediária
 3.9.5 nem downgrade genérico autorizado. Depois da publicação efetiva: PR42 usa
-402 / 4.0.2; PR45 usa 403 / 4.0.3. Outras PRs devem integrar a base publicada e
+402 / 4.0.2; PR45 acumula 403–404 / 4.0.4 após integrar PR46. Outras PRs devem integrar a base publicada e
 recalcular seu próximo ID antes de publicar.
 
 O planner ordena tags verificadas pelo ID de migration e ancestralidade, usando

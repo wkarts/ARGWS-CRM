@@ -235,8 +235,104 @@ class NativeReleaseGitTest(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text('changed')
         head = self.commit('module version alone')
-        with self.assertRaisesRegex(ValueError, 'exatamente o próximo'):
+        with self.assertRaisesRegex(ValueError, 'incremento nativo'):
             POLICY.check_delta(self.root, self.base, head)
+
+    def accumulated(self, baseline=402, target=404):
+        fixture(self.root, baseline)
+        base = self.commit('canonical baseline')
+        self.git('tag', 'v' + POLICY.version_for_id(baseline))
+        for level in range(baseline + 1, target + 1):
+            head = self.advance(POLICY.version_for_id(level))
+        return base, head
+
+    def test_accumulated_403_404_accepts_contiguous_steps_without_writes(self):
+        base, head = self.accumulated()
+        before = self.git('status', '--porcelain')
+        self.assertEqual(POLICY.check_delta(self.root, base, head)['migration'], 404)
+        self.assertEqual(self.git('status', '--porcelain'), before)
+        plan = PLANNER.plan_release(self.root)
+        self.assertEqual((plan['version'], plan['previous_tag']), ('4.0.4', 'v4.0.2'))
+        self.git('tag', 'v4.0.4')
+        self.assertEqual(PLANNER.plan_release(self.root)['bump'], 'resume')
+
+    def test_accumulated_native_rollover(self):
+        base, head = self.accumulated(399, 401)
+        self.assertEqual(POLICY.check_delta(self.root, base, head)['version'], '4.0.1')
+
+    def test_accumulated_missing_intermediate_fails_gate_and_planner(self):
+        base, _ = self.accumulated()
+        (self.root / POLICY.migration_path(403)).unlink()
+        head = self.commit('missing intermediate')
+        with self.assertRaisesRegex(ValueError, 'Lacuna'):
+            POLICY.check_delta(self.root, base, head)
+        with self.assertRaises(ValueError):
+            PLANNER.plan_release(self.root)
+
+    def test_accumulated_invalid_intermediate_marker_fails_gate_and_planner(self):
+        base, _ = self.accumulated()
+        path = self.root / POLICY.migration_path(403)
+        path.write_text(path.read_text().replace('public function up()', 'protected function up()'))
+        head = self.commit('invalid intermediate up')
+        for check in (lambda: POLICY.check_delta(self.root, base, head),
+                      lambda: PLANNER.plan_release(self.root)):
+            with self.assertRaisesRegex(ValueError, 'public up'):
+                check()
+
+    def test_accumulated_history_bytes_mode_delete_and_rename_fail(self):
+        base, valid = self.accumulated()
+        for change in ('bytes', 'mode', 'delete', 'rename'):
+            with self.subTest(change=change):
+                self.git('reset', '--hard', valid)
+                path = self.root / POLICY.migration_path(402)
+                if change == 'bytes':
+                    path.write_text(path.read_text() + '// changed history')
+                elif change == 'mode':
+                    path.chmod(0o755)
+                elif change == 'delete':
+                    path.unlink()
+                else:
+                    path.rename(path.with_name('402_renamed.php'))
+                head = self.commit('tamper history: ' + change)
+                with self.assertRaises(ValueError):
+                    POLICY.check_delta(self.root, base, head)
+
+    def test_accumulated_preexisting_future_marker_does_not_count_as_new(self):
+        fixture(self.root, 402)
+        (self.root / POLICY.migration_path(403)).write_text(APPLIER.migration_marker_source(403))
+        base = self.commit('base contains future migration')
+        self.advance('4.0.3')
+        head = self.advance('4.0.4')
+        with self.assertRaisesRegex(ValueError, 'futuros preexistentes'):
+            POLICY.check_delta(self.root, base, head)
+
+    def test_accumulated_extra_future_migration_fails(self):
+        base, _ = self.accumulated()
+        (self.root / POLICY.migration_path(405)).write_text(APPLIER.migration_marker_source(405))
+        head = self.commit('extra migration above configured target')
+        with self.assertRaisesRegex(ValueError, 'adicional inesperada'):
+            POLICY.check_delta(self.root, base, head)
+
+    def test_accumulated_stale_base_and_incoherent_metadata_fail(self):
+        base, head = self.accumulated()
+        self.git('checkout', '-qb', 'advanced-base', base)
+        (self.root / 'base-only.txt').write_text('independent release on base')
+        advanced_base = self.advance('4.0.3')
+        with self.assertRaisesRegex(ValueError, 'base atual avançou'):
+            POLICY.check_delta(self.root, advanced_base, head)
+        self.git('checkout', '--detach', head)
+        (self.root / 'VERSION').write_text('4.0.3\n')
+        bad = self.commit('incoherent configured target')
+        with self.assertRaisesRegex(ValueError, 'coerentes'):
+            POLICY.check_delta(self.root, base, bad)
+
+    def test_contiguous_validation_does_not_allow_downgrade_or_expand_alias(self):
+        for target in (401, 402, 1000):
+            with self.subTest(target=target), self.assertRaises(ValueError):
+                POLICY.target_levels({'migration': 402}, target, allow_contiguous=True)
+        alias = {'version': '3.11.1', 'migration': 394, 'alias': True}
+        with self.assertRaisesRegex(ValueError, 'única transição'):
+            POLICY.target_levels(alias, 404, allow_contiguous=True)
 
     def test_history_edit_and_mode_change_fail(self):
         self.advance()

@@ -22,7 +22,7 @@ def plan_release(root, head='HEAD'):
         bump = 'resume'
     else:
         if prior:
-            for level in target_levels(prior[-1], current['migration']):
+            for level in target_levels(prior[-1], current['migration'], allow_contiguous=True):
                 validate_marker(git_reader(root, current['commit'])(migration_path(level)), level)
         bump = 'native' if prior else 'initial'
     previous = prior[-1] if prior else None
