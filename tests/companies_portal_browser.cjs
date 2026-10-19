@@ -83,6 +83,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
       const headers=sql("SELECT headers FROM tblmail_queue WHERE issuer_id="+id+" AND email='same-portal@example.invalid' ORDER BY id DESC LIMIT 1");
       assert(headers.includes(letter+'@example.invalid'),'queue sender belongs to own company');
       await p.goto(url+'/company_portal/index/'+id+'#token='+token);
+      await p.waitForFunction(()=>document.getElementById('reset-token')?.value.length===64);
       assert.equal(await p.locator('#reset-token').inputValue(),token);
       assert.equal(new URL(p.url()).hash,'','fragment cleared without sending bearer in query');
       await p.locator('#reset-password').fill('synthetic-password-'+letter);await p.locator('#reset-repeat').fill('synthetic-password-'+letter);
@@ -94,7 +95,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
       assert(!(await p.locator('#portal-identity').innerText()).includes('Synthetic portal client '+(letter==='a'?'b':'a')));
     }
     const p=sessions[a];await navigate(p,p.locator('#portal-identity button[type=submit]'));
-    await p.goto(url+'/company_portal/index/'+a+'#token='+tokens[a]);
+    await p.goto(url+'/company_portal/index/'+a+'#token='+tokens[a]);await p.waitForFunction(()=>document.getElementById('reset-token')?.value.length===64);
     await p.locator('#reset-password').fill('forbidden-token-replay');await p.locator('#reset-repeat').fill('forbidden-token-replay');
     const replayResponse=await Promise.all([p.waitForNavigation(),p.locator('#portal-reset button[type=submit]').click()]);assert.equal(replayResponse[0].status(),422);
     await p.goto(url+'/company_portal/index/'+a);await p.locator('#login-email').fill('same-portal@example.invalid');await p.locator('#login-password').fill('synthetic-password-b');
