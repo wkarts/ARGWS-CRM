@@ -12,6 +12,12 @@ $db->query("INSERT INTO {$p}issuers_registry(id,legal_name,tax_id,active,setting
 $db->query("INSERT INTO {$p}staff VALUES(12,1,0,NULL),(13,1,1,NULL)");
 $db->query("INSERT INTO {$p}issuers_staff(issuer_id,staff_id,can_view) VALUES(41,12,1),(82,12,1)");
 foreach([41,82] as $issuer)foreach(['view','create','edit','share'] as $cap)$db->query("INSERT INTO {$p}issuers_resource_permissions VALUES(?,12,'customers',?)",[$issuer,$cap]);
+if($db->driver()==='mysql'){
+    if(!class_exists('CI_Migration')){#[AllowDynamicProperties] class CI_Migration {}}
+    require_once APPPATH.'migrations/406_version_406.php';$migration=new Migration_Version_406();$migration->db=$db;$migration->up();$migration->up();
+}else{
+    $db->query("CREATE TABLE {$p}company_client_requests(request_key varchar(64) PRIMARY KEY,issuer_id int unsigned NOT NULL,actor_id int NOT NULL,input_hash varchar(64) NOT NULL,client_id int NOT NULL,created_at datetime NOT NULL)");
+}
 $clients=new CompanyClients($db,$p);
 $a=$clients->create(41,12,['company'=>'Private synthetic A','vat'=>'111.444.777-35']);
 $b=$clients->create(82,12,['company'=>'Private synthetic B']);
@@ -66,3 +72,30 @@ essentialThrows(fn()=>$clients->create(41,12,['company'=>'Invalid VAT','vat'=>'0
 $audit=json_encode($db->query("SELECT event,metadata_json FROM {$p}issuers_audit")->result_array());
 essentialCheck(!str_contains($audit,'Private synthetic')&&!str_contains($audit,'11144477735'),'audit excludes private names and taxpayer identifiers');
 echo 'Company private customers: '.$GLOBALS['essentialChecks'].' checks passed.'.PHP_EOL;
+
+$key=str_repeat('a',64);$input=['company'=>'Idempotent synthetic'];
+$id=$clients->create(41,12,$input,$key);$count=(int)$db->query("SELECT COUNT(*) n FROM {$p}clients")->row()->n;
+essentialCheck($clients->create(41,12,$input,$key)===$id,'durable create retry returns original ID');
+essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}clients")->row()->n===$count,'retry does not duplicate customer without taxpayer identifier');
+essentialThrows(fn()=>$clients->create(41,12,['company'=>'changed'],$key),'company_client_request_conflict','same request key cannot adopt different input');
+$db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id=82");
+essentialThrows(fn()=>$clients->create(82,7,$input,$key),'company_client_request_conflict','receipt cannot be replayed in another company');
+$detail=$clients->details(41,12,$id);$revision=$detail['revision'];
+$clients->update(41,12,$id,['company'=>'New revision'],$revision);
+essentialThrows(fn()=>$clients->update(41,12,$id,['company'=>'Stale replacement'],$revision),'company_client_stale','stale edit rejected under owner lock');
+essentialThrows(fn()=>$clients->setSharing(41,12,$id,[],$revision),'company_client_stale','stale sharing cannot overwrite current identity state');
+$revision=$clients->details(41,12,$id)['revision'];$clients->setSharing(41,7,$id,[82],$revision);
+essentialCheck($clients->details(82,7,$id)['targets']===[] && $clients->details(82,7,$id)['revision']===null,'recipient does not enumerate other sharing recipients or owner revision');
+$db->query("UPDATE {$p}issuers_staff SET can_view=0 WHERE issuer_id=82 AND staff_id=12");
+$clients->setSharing(41,12,$id,[],$clients->details(41,12,$id)['revision']);
+essentialCheck($clients->get(82,7,$id)===null,'owner can revoke after losing destination membership');
+essentialCheck(count($clients->page(41,12,0,50,'New revision')['items'])===1,'search returns only visible identities');
+essentialCheck($clients->page(41,12,0,50,'%')['items']===[],'search wildcard is a literal');
+$db->failOn='INSERT INTO '.$p.'company_client_requests';
+essentialThrows(fn()=>$clients->create(41,12,['company'=>'Receipt rollback'],str_repeat('b',64)),'issuer_storage_failed','failed durable receipt rolls back customer and audit');$db->failOn=null;
+essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}clients")->row()->n===$count,'no orphan on receipt failure');
+if($db->driver()==='mysql'){
+    $db->query("ALTER TABLE {$p}company_client_requests DROP PRIMARY KEY, ADD PRIMARY KEY(request_key(32))");
+    essentialThrows(fn()=>CompanyClientRequestSchema::ensure($db,$p),'company_client_request_schema_invalid','prefix receipt index rejected');
+}
+echo 'Company customer directory and receipts: '.$GLOBALS['essentialChecks'].' checks passed.'.PHP_EOL;

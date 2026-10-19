@@ -1,3 +1,15 @@
+## Incremento atual — núcleo 4.0.6/406
+
+Diretório positivo `admin/company_clients`: criação privada idempotente, leitura,
+busca/paginação, edição própria com revisão e compartilhamento/revogação de identidade
+com ACL na origem/destino. Renderer isolado para principal e secundárias. Migration406
+aditiva para recibos duráveis, sem alterar 402–405, BB104 ou Asaas148.
+
+Testes novos/estendidos: clientes PDO, concorrência real MySQL e CRM HTTP/Chromium.
+Consultar a PR45 e os checks do SHA deste incremento para resultados executados.
+O portal privado/recuperação e os demais consumidores continuam pendentes; não há
+liberação global do financeiro, API ou operações BB. Sem merge/deploy/homologação.
+
 # Matriz objetiva da PR45
 
 Este é um estado parcial verificável, não uma declaração de conclusão do escopo total.

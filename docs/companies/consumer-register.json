@@ -5,8 +5,8 @@
   "frozen_candidate": "b8a5cec7286edc88191a1b1d07813ea40ed79bce",
   "counts": {
     "company_core_and_settings": {
-      "pending": 242,
-      "boundary_tested": 12
+      "pending": 253,
+      "boundary_tested": 7
     },
     "customer_portal": {
       "pending": 214,
@@ -25,7 +25,7 @@
       "boundary_tested": 13
     },
     "other_core": {
-      "pending": 2167,
+      "pending": 2168,
       "boundary_tested": 9
     },
     "sales_documents": {
@@ -2013,122 +2013,6 @@
       "full_operation_ready": false
     },
     {
-      "consumer": "application/services/CompanyClients.php::get",
-      "category": "company_core_and_settings",
-      "line": 31,
-      "source_sha256": "b2c92182828d522810c3eeea8cfcd9c6ed00cc70c2388edb0e9a5e331f3bb3b9",
-      "risk_candidates": [
-        "database"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/clients.php"
-        ],
-        "exercised": [
-          "secondary_company_positive_service",
-          "deny_cross_company",
-          "rollback_on_failure"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
-        "source_sha256": "b2c92182828d522810c3eeea8cfcd9c6ed00cc70c2388edb0e9a5e331f3bb3b9"
-      },
-      "full_operation_ready": false
-    },
-    {
-      "consumer": "application/services/CompanyClients.php::page",
-      "category": "company_core_and_settings",
-      "line": 40,
-      "source_sha256": "b2c92182828d522810c3eeea8cfcd9c6ed00cc70c2388edb0e9a5e331f3bb3b9",
-      "risk_candidates": [
-        "database"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/clients.php"
-        ],
-        "exercised": [
-          "secondary_company_positive_service",
-          "deny_cross_company",
-          "rollback_on_failure"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
-        "source_sha256": "b2c92182828d522810c3eeea8cfcd9c6ed00cc70c2388edb0e9a5e331f3bb3b9"
-      },
-      "full_operation_ready": false
-    },
-    {
-      "consumer": "application/services/CompanyClients.php::create",
-      "category": "company_core_and_settings",
-      "line": 78,
-      "source_sha256": "b2c92182828d522810c3eeea8cfcd9c6ed00cc70c2388edb0e9a5e331f3bb3b9",
-      "risk_candidates": [
-        "database"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/clients.php"
-        ],
-        "exercised": [
-          "secondary_company_positive_service",
-          "deny_cross_company",
-          "rollback_on_failure"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
-        "source_sha256": "b2c92182828d522810c3eeea8cfcd9c6ed00cc70c2388edb0e9a5e331f3bb3b9"
-      },
-      "full_operation_ready": false
-    },
-    {
-      "consumer": "application/services/CompanyClients.php::update",
-      "category": "company_core_and_settings",
-      "line": 92,
-      "source_sha256": "b2c92182828d522810c3eeea8cfcd9c6ed00cc70c2388edb0e9a5e331f3bb3b9",
-      "risk_candidates": [
-        "database"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/clients.php"
-        ],
-        "exercised": [
-          "secondary_company_positive_service",
-          "deny_cross_company",
-          "rollback_on_failure"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
-        "source_sha256": "b2c92182828d522810c3eeea8cfcd9c6ed00cc70c2388edb0e9a5e331f3bb3b9"
-      },
-      "full_operation_ready": false
-    },
-    {
-      "consumer": "application/services/CompanyClients.php::setSharing",
-      "category": "company_core_and_settings",
-      "line": 107,
-      "source_sha256": "b2c92182828d522810c3eeea8cfcd9c6ed00cc70c2388edb0e9a5e331f3bb3b9",
-      "risk_candidates": [
-        "database",
-        "identity_context"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/clients.php"
-        ],
-        "exercised": [
-          "secondary_company_positive_service",
-          "deny_cross_company",
-          "rollback_on_failure"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
-        "source_sha256": "b2c92182828d522810c3eeea8cfcd9c6ed00cc70c2388edb0e9a5e331f3bb3b9"
-      },
-      "full_operation_ready": false
-    },
-    {
       "consumer": "application/services/CompanyEmailTemplates.php::findForIssuer",
       "category": "company_core_and_settings",
       "line": 33,
@@ -2669,7 +2553,7 @@
       "full_operation_ready": false
     }
   ],
-  "source_manifest_sha256": "208308d2aee6328680b9a5d540061c85e3d3c042e248656fc9e7f10da2a09534",
-  "total_consumers": 10049,
+  "source_manifest_sha256": "04bab4a004969fa6e2b9441da31249438fd4eb7385ee605fedfcc57ca5c9873f",
+  "total_consumers": 10056,
   "full_register_command": "python3 scripts/register-company-consumers.py --full-output /tmp/company-consumers-full.json"
 }

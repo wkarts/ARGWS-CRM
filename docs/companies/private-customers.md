@@ -1,3 +1,42 @@
+# Diretório de clientes privados no núcleo
+
+O renderer isolado `admin/company_clients` utiliza `CompanyClients` para criar, consultar,
+editar a identidade própria, buscar e paginar, compartilhar explicitamente e revogar.
+Ele exige `customers/view` e a capacidade específica de cada ação. O master continua
+sujeito ao proprietário: nem ele edita um cliente compartilhado pela empresa destino.
+Não carrega Clients_model, hooks, contatos, anexos, totais ou histórico financeiro.
+O cadastro legado permanece separado; não há adoção automática.
+
+Criar recebe chave aleatória de envio e grava recibo durável na mesma transação do
+cliente, propriedade e auditoria. Repetição retorna o ID original; conteúdo, ator ou
+empresa divergentes recebem conflito. A migration 406 é aditiva, verifica InnoDB,
+PK integral, tipos, collation e FK e suporta replay. Edição e compartilhamento da UI
+exigem fingerprint do estado consultado, revalidado sob lock. Aba obsoleta recebe409.
+Busca usa parâmetros, escapa curingas e aplica visibilidade antes de retornar dados.
+
+O destino recebe somente userid, nome, documento, estado ativo e owner. Só o dono
+vê os links de compartilhamento. Adicionar exige create no destino; revogar não
+exige permissão renovada no destino. CPF/CNPJ duplicado globalmente, inclusive
+legado formatado, é recusado sem revelar proprietário. Sem documento, identidades
+distintas são permitidas. Campos extras de ownership são recusados.
+
+A UI usa CSRF nativo e token próprio, além do token HMAC de CompanyRequestScope
+validado antes da hidratação. O wizard oferece as permissões deste diretório;
+privacidade inicial continua sempre privada. O cadastro não compartilha por padrão.
+
+Testes executáveis: `tests/companies/clients.php` (PDO SQLite/MySQL),
+`tests/companies/client_concurrency.php` (somente MySQL com dois writers/locks
+observados), `tests/companies_onboarding_browser.cjs` (CRM HTTP/MySQL/Chromium
+na stack descartável). Resultados efetivamente executados são registrados na PR;
+a existência do teste não comprova sua execução no SHA final.
+
+**Limites técnicos:** contatos/portal privado e recuperação completa, finanças,
+arquivos, relatórios e demais consumidores ainda precisam dos respectivos fluxos
+positivos. Esses caminhos legados permanecem fechados às identidades privadas.
+Este diretório não representa conclusão integral do multiempresa nem da integração BB.
+
+## Histórico das barreiras anteriores (evidências dos respectivos incrementos)
+
 # Clientes privados: continuação local
 
 `CompanyClients` executa criação, edição, consulta por ID, paginação e alteração explícita dos vínculos de compartilhamento no cadastro nativo. Recebe empresa e ator obrigatoriamente; não consulta sessão, papel global, empresa padrão ou configurações financeiras.

@@ -111,6 +111,58 @@ async function next(page) { await navigate(page, page.locator('section form butt
     const staleCompany = await context.request.post(draftUrl, { form: { ...completion, ...switched, action: 'complete', _company_context: oldContext } });
     assert.equal(staleCompany.status(), 409, 'company switch refuses old-tab submission before mutation');
     assert.equal((await context.request.get(url + '/admin/staff')).status(), 403, 'unadapted secondary route remains closed');
+
+    // Positive isolated customer directory, with actual HTTP/CSRF and durable receipts.
+    async function switchCompany(id) {
+      await page.goto(url + '/admin/company_context');
+      await page.locator('#company-context-select').selectOption(id);
+      await navigate(page, page.locator('.company-selector-form button[type=submit]'));
+    }
+    async function formFields(form) {
+      return form.locator('input[type=hidden]').evaluateAll(inputs => Object.fromEntries(inputs.filter(x => x.name).map(x => [x.name, x.value])));
+    }
+    await page.goto(url + '/admin/company_clients');
+    await page.locator('#new_company').fill('Synthetic private B <script>');
+    const createFields = await formFields(page.locator('form').filter({ has: page.locator('#new_company') }));
+    await navigate(page, page.locator('form').filter({ has: page.locator('#new_company') }).locator('button[type=submit]'));
+    const customer = sql("SELECT userid FROM tblclients WHERE company='Synthetic private B <script>'");
+    assert.match(customer, /^[1-9]\d*$/);
+    const currentFields = await formFields(page.locator('form').filter({ has: page.locator('#new_company') }));
+    const retried = await context.request.post(url + '/admin/company_clients', { form: { ...createFields, ...currentFields, request_key: createFields.request_key, 'client[company]': 'Synthetic private B <script>' } });
+    assert.equal(retried.status(), 200);
+    assert.equal(sql("SELECT COUNT(*) FROM tblclients WHERE company='Synthetic private B <script>'"), '1');
+    assert.equal(await page.locator('section script').count(), 0, 'customer text escaped');
+    const beforeEdit = await formFields(page.locator('form').filter({ has: page.locator('#edit_company') }));
+    await page.locator('#edit_company').fill('Synthetic private B updated');
+    await navigate(page, page.locator('form').filter({ has: page.locator('#edit_company') }).locator('button[type=submit]'));
+    const staleEdit = await context.request.post(url + '/admin/company_clients', { form: { ...beforeEdit, ...(await formFields(page.locator('form').filter({ has: page.locator('#edit_company') }))), revision: beforeEdit.revision, 'client[company]': 'Forbidden stale edit' } });
+    assert.equal(staleEdit.status(), 409);
+    const share = page.locator('form').filter({ has: page.locator('input[name=action][value=share]') });
+    await share.locator('input[name="targets[]"][value="' + primary + '"]').check();
+    await navigate(page, share.locator('button[type=submit]'));
+    await switchCompany(primary);
+    await page.goto(url + '/admin/company_clients?client=' + customer);
+    assert.equal(await page.locator('#edit_company').count(), 0, 'shared identity is read only');
+    assert((await page.locator('section').innerText()).includes('Synthetic private B updated'));
+    const foreignWrite = await context.request.post(url + '/admin/company_clients', { form: { ...(await formFields(page.locator('form').filter({ has: page.locator('#new_company') }))), action: 'update', client_id: customer, revision: 'a'.repeat(64), 'client[company]': 'Cross company' } });
+    assert.equal(foreignWrite.status(), 403);
+    await switchCompany(created);
+    await page.goto(url + '/admin/company_clients?client=' + customer);
+    const revoke = page.locator('form').filter({ has: page.locator('input[name=action][value=share]') });
+    await revoke.locator('input[name="targets[]"][value="' + primary + '"]').uncheck();
+    await navigate(page, revoke.locator('button[type=submit]'));
+    const oldCustomerContext = await formFields(page.locator('form').filter({ has: page.locator('#edit_company') }));
+    await switchCompany(primary);
+    assert.equal((await context.request.get(url + '/admin/company_clients?client=' + customer)).status(), 404, 'revoked identity no longer readable by direct ID');
+    await page.goto(url + '/admin/company_clients');
+    const switchedFields = await formFields(page.locator('form').filter({ has: page.locator('#new_company') }));
+    const staleCustomer = await context.request.post(url + '/admin/company_clients', { form: { ...oldCustomerContext, ...switchedFields, _company_context: oldCustomerContext._company_context, action: 'update', client_id: customer, 'client[company]': 'Old tab' } });
+    assert.equal(staleCustomer.status(), 409, 'old company token denied before customer write');
+    await page.locator('#client-search').fill('Synthetic private B updated');
+    await navigate(page, page.locator('form').filter({ has: page.locator('#client-search') }).locator('button[type=submit]'));
+    assert.equal(await page.locator('tbody tr').count(), 0, 'search excludes private other-company identity');
+    assert.equal((await context.request.get(url + '/admin/clients/client/' + customer)).status(), 404, 'legacy reader stays closed to private identity');
+    await page.screenshot({ path: output + '/company-clients-directory.png', fullPage: true });
     const regular = await browser.newContext();
     await regular.route('**/*', route => new URL(route.request().url()).origin === url ? route.continue() : route.abort());
     const employeePage = await regular.newPage();

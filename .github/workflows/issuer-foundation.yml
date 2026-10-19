@@ -113,6 +113,7 @@ jobs:
           php tests/issuers_legacy_access.php
           php tests/company_context.php
           php tests/companies/clients.php
+          php tests/companies/client_concurrency.php
           php tests/companies/module_tracking.php
           php tests/settings/company_settings.php
           php tests/settings/company_options_helpers.php

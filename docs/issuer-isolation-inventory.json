@@ -316,6 +316,17 @@
       "state": "partial",
       "evidence": "tests/client_issuer_scope.php; tests/client_issuer_model.php; tests/client_issuer_mutations.php; tests/client_issuer_api.php; tests/client_issuer_controllers.php; tests/client_issuer_helpers.php; tests/client_issuer_tables.php; tests/invoice_issuer_scope.php; docs/security/client-issuer-privacy-phase2.md (covered legacy boundaries only; portal/session, generic preview/static storage and other domains pending)"
     },
+    "application/controllers/admin/Company_clients.php": {
+      "sha256": "14d31efe5ed25563c427e9a414bfddf95f9435f01ebc256c4c65ae535238c5e5",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        5
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/controllers/admin/Email_schedule_invoice.php": {
       "sha256": "8016a17ca263e738d3db7e6ed49bf1b9856657dc7b58dafd690100295341ed65",
       "categories": [
@@ -2712,12 +2723,12 @@
       "evidence": ""
     },
     "application/services/CompanyClients.php": {
-      "sha256": "b2c92182828d522810c3eeea8cfcd9c6ed00cc70c2388edb0e9a5e331f3bb3b9",
+      "sha256": "20a7c6875d12894fd8bf75a4118cd082875ef6081ed3b5f8cfa4ebbac587837b",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        76
+        79
       ],
       "state": "unreviewed",
       "evidence": ""
