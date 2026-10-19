@@ -26,6 +26,7 @@ function log_message($level, $message) { $GLOBALS['essentialLogs'][] = [$level, 
 final class EssentialTestResult
 {
     public function __construct(private array $rows) {}
+    public function row_array(): array { return $this->rows[0] ?? []; }
     public function row() { return isset($this->rows[0]) ? (object) $this->rows[0] : null; }
     public function result_array(): array { return $this->rows; }
     public function result(): array { return array_map(static fn($row) => (object) $row, $this->rows); }

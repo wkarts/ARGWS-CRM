@@ -14,7 +14,7 @@ class Banco_brasil extends AdminController
     {
         $companyId=$this->companyContextId();
         $data=['title'=>'Banco do Brasil','issuers'=>[],'selected'=>null,'connections'=>[],
-            'returns'=>[],'events'=>[],'layout_bindings'=>[],'layouts'=>\BancoBrasil\LayoutCatalog::all(),'can_manage'=>false,'can_import'=>false,'resource_acl_ready'=>false,'storage_error'=>false,'isolated'=>false,'company_context_token'=>null,'csrf'=>$this->csrfToken(),'matrix'=>\BancoBrasil\CapabilityPolicy::matrix()];
+            'returns'=>[],'events'=>[],'layout_bindings'=>[],'layouts'=>\BancoBrasil\LayoutCatalog::all(),'can_manage'=>false,'can_import'=>false,'resource_acl_ready'=>false,'storage_error'=>false,'isolated'=>false,'company_context_token'=>null,'batches'=>[],'origination_ready'=>false,'can_generate'=>false,'can_download'=>false,'request_key'=>bin2hex(random_bytes(32)),'admin_base_url'=>$this->url(''),'notice'=>$this->session->userdata('bb_notice'),'csrf'=>$this->csrfToken(),'matrix'=>\BancoBrasil\CapabilityPolicy::matrix()];
         if(class_exists('CompanyRequestScope',false)){
             $data['isolated']=\CompanyRequestScope::sealedFor($this);
             $data['company_context_token']=\CompanyRequestScope::token();
@@ -23,12 +23,12 @@ class Banco_brasil extends AdminController
             $data['resource_acl_ready']=true;
             try{
                 $registry = new \IssuerRegistry($this->db, db_prefix());
-                $available=\BancoBrasil\Transaction::quiet($this->db,fn()=>$registry->available(get_staff_user_id()));
+                $available=\BancoBrasil\Transaction::quiet($this->db,fn()=>$registry->available($this->staffId()));
                 $data['issuers']=array_values(array_filter($available,fn($row)=>($companyId===null||(int)((array)$row)['id']===$companyId)&&$this->allowed((int)((array)$row)['id'],'view')));
             }catch(Throwable $e){$data['storage_error']=true;}
             $raw=$this->input->get('issuer_id');
             if($companyId!==null){
-                if($raw!==null&&$raw!==''&&$this->positiveId($raw)!==$companyId)access_denied('banco_brasil');
+                if($raw!==null&&$raw!==''&&$this->positiveId($raw)!==$companyId)$this->denied();
                 $raw=(string)$companyId;
             }
             if($raw!==null && $raw!==''){
@@ -40,43 +40,46 @@ class Banco_brasil extends AdminController
                 $data['returns']=$this->store->recentReturns($id);$data['events']=$this->store->recentEvents($id);
                 }catch(Throwable $e){$data['storage_error']=true;$data['connections']=$data['layout_bindings']=$data['returns']=$data['events']=[];}
                 $data['can_manage']=!$data['storage_error']&&$this->allowed($id,'manage');$data['can_import']=!$data['storage_error']&&$this->allowed($id,'import');
+                try{$operations=$this->origination();$data['origination_ready']=$operations->ready();if($data['origination_ready'])$data['batches']=$operations->batches($id,$this->staffId());}catch(Throwable $e){$data['origination_ready']=false;}
+                $data['can_generate']=$data['origination_ready']&&$this->allowed($id,'generate');$data['can_download']=$data['origination_ready']&&$this->allowed($id,'download');
             }
         }
         $this->output->set_header('Cache-Control: no-store');
+        $this->session->unset_userdata('bb_notice');
         $this->load->view('banco_brasil/index',$data);
     }
     public function register_connection()
     {
         $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$issuer=$this->issuer($id,'manage');
-        if(!$this->allowed($id,'manage'))access_denied('banco_brasil');
+        if(!$this->allowed($id,'manage'))$this->denied();
         try{
             $posted=$this->input->post();
             $allowed=['csrf_bb','issuer_id','account_id','environment','agreement_number','wallet','variation'];
             if(array_diff(array_keys($posted),array_merge($allowed,[$this->security->get_csrf_token_name()])))throw new InvalidArgumentException('unexpected_fields');
             $input=[];foreach(['account_id','environment','agreement_number','wallet','variation'] as $key)$input[$key]=$posted[$key]??null;
-            $this->store->createConnection($id,get_staff_user_id(),$issuer,$input);
-            set_alert('success','Conexão cadastrada para revisão. A titularidade, o contrato e a homologação ainda precisam ser verificados.');
-        }catch(Throwable $e){set_alert('warning','Cadastro não confirmado. Verifique campos e histórico; a conexão existente não pode ser reatribuída.');}
-        redirect(admin_url('banco_brasil?issuer_id='.$id));
+            $this->store->createConnection($id,$this->staffId(),$issuer,$input);
+            $this->flash('success','Conexão cadastrada para revisão. A titularidade, o contrato e a homologação ainda precisam ser verificados.');
+        }catch(Throwable $e){$this->flash('warning','Cadastro não confirmado. Verifique campos e histórico; a conexão existente não pode ser reatribuída.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id));
     }
     public function register_layout()
     {
         $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'manage');
-        if(!$this->allowed($id,'manage'))access_denied('banco_brasil');
+        if(!$this->allowed($id,'manage'))$this->denied();
         try{
             $posted=$this->input->post();
             if(array_diff(array_keys($posted),['csrf_bb','issuer_id','connection_id','layout_id',$this->security->get_csrf_token_name()]))throw new InvalidArgumentException('unexpected_fields');
             $connection=$this->store->connection($this->positiveId($this->input->post('connection_id')),$id);
             $layout=$this->input->post('layout_id');if(!is_string($layout))throw new InvalidArgumentException('layout_invalid');
-            $this->store->registerLayout($connection,get_staff_user_id(),$layout);
-            set_alert('success','Perfil declarado e registrado. Isso não confirma homologação, ambiente remoto ou autenticidade de arquivos.');
-        }catch(Throwable $e){set_alert('warning','Perfil não confirmado. Confira a conexão e o histórico; vínculos anteriores não serão alterados.');}
-        redirect(admin_url('banco_brasil?issuer_id='.$id));
+            $this->store->registerLayout($connection,$this->staffId(),$layout);
+            $this->flash('success','Perfil declarado e registrado. Isso não confirma homologação, ambiente remoto ou autenticidade de arquivos.');
+        }catch(Throwable $e){$this->flash('warning','Perfil não confirmado. Confira a conexão e o histórico; vínculos anteriores não serão alterados.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id));
     }
     public function import_return()
     {
         $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'import');
-        if(!$this->allowed($id,'import'))access_denied('banco_brasil');
+        if(!$this->allowed($id,'import'))$this->denied();
         try{
             $connection=$this->store->connection($this->positiveId($this->input->post('connection_id')),$id);
             $file=$_FILES['return_file']??[];
@@ -84,15 +87,82 @@ class Banco_brasil extends AdminController
                 ||($file['size']??0)<1||$file['size']>16*1024*1024)throw new InvalidArgumentException('return_file_invalid');
             $bytes=file_get_contents($file['tmp_name'],false,null,0,16*1024*1024+1);
             if($bytes===false||strlen($bytes)>16*1024*1024)throw new InvalidArgumentException('return_file_invalid');
-            $result=$this->store->importReturn($connection,get_staff_user_id(),$bytes,$this->positiveId($this->input->post('layout_binding_id')));
-            set_alert('success',$result['duplicate']?'Arquivo já recebido. Nenhum pagamento foi criado.':'Retorno validado e registrado para revisão. Nenhum pagamento foi criado.');
-        }catch(Throwable $e){set_alert('warning','Importação não confirmada. Confira conta, ambiente, convênio, leiaute e histórico antes de tentar novamente.');}
-        redirect(admin_url('banco_brasil?issuer_id='.$id));
+            $result=$this->store->importReturn($connection,$this->staffId(),$bytes,$this->positiveId($this->input->post('layout_binding_id')));
+            $this->flash('success',$result['duplicate']?'Arquivo já recebido. Nenhum pagamento foi criado.':'Retorno validado e registrado para revisão. Nenhum pagamento foi criado.');
+        }catch(Throwable $e){$this->flash('warning','Importação não confirmada. Confira conta, ambiente, convênio, leiaute e histórico antes de tentar novamente.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id));
+    }
+    private function origination():\BancoBrasil\Origination
+    {
+        require_once dirname(__DIR__).'/libraries/BancoBrasil/Origination.php';return new \BancoBrasil\Origination($this->db,db_prefix());
+    }
+    public function declare_contract()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'manage');
+        try{
+            $input=$this->input->post('contract',false);if(!is_array($input))throw new InvalidArgumentException('invalid_contract');
+            $this->origination()->declareContract($id,$this->staffId(),$this->positiveId($this->input->post('connection_id')),$this->positiveId($this->input->post('layout_binding_id')),$input);
+            $this->flash('success','Declaração do operador registrada. Isso não comprova contrato ou homologação pelo banco. A faixa reservada não pode ser reiniciada.');
+        }catch(Throwable $e){$this->flash('warning','Declaração não confirmada. Confira contrato, perfil, isenção, intercâmbio de teste e faixa exclusiva já utilizada; não reduza nem reutilize números.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function generate_remittance()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'generate');
+        try{
+            $titles=$this->input->post('titles',false);$date=$this->input->post('generation_date',false);$key=$this->input->post('request_key',false);
+            if(!is_array($titles)||!is_string($date)||!is_string($key))throw new InvalidArgumentException('invalid_batch');
+            $batch=$this->origination()->generate($id,$this->staffId(),$this->positiveId($this->input->post('connection_id')),$this->positiveId($this->input->post('layout_binding_id')),$date,$titles,$key);
+            $this->flash('success','Lote #'.$batch.' gerado e armazenado. Não foi enviado ao banco; não há aceite nem pagamento confirmado.');
+        }catch(Throwable $e){$this->flash('warning','Geração não confirmada. Confira fatura, moeda BRL, identidade, endereço ASCII, perfil e contrato. Se o lote já foi reservado, retome pelo lote; os números permanecem reservados.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function retry_remittance()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'generate');
+        try{$this->origination()->finish($id,$this->staffId(),$this->positiveId($this->input->post('batch_id')));$this->flash('success','Lote retomado com a mesma origem e numeração. Nenhum envio bancário foi realizado.');}
+        catch(Throwable $e){$this->flash('warning','Não foi possível confirmar a geração. A reserva e o histórico foram preservados.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function download_remittance()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'download');
+        try{
+            $file=$this->origination()->download($id,$this->staffId(),$this->positiveId($this->input->post('batch_id')));
+            $this->output->set_header('Cache-Control: no-store');$this->output->set_header('X-Content-Type-Options: nosniff');$this->output->set_header('Content-Disposition: attachment; filename="'.$file['filename'].'"');$this->output->set_content_type('application/octet-stream')->set_output($file['content']);
+        }catch(Throwable $e){show_error('Arquivo indisponível ou download não confirmado. Nenhum envio bancário foi realizado.',403);}
+    }
+    public function report_transmission()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'generate');
+        try{$reference=$this->input->post('submission_reference',false);if(!is_string($reference))throw new InvalidArgumentException('invalid_reference');$this->origination()->reportTransmission($id,$this->staffId(),$this->positiveId($this->input->post('batch_id')),$reference);$this->flash('success','Envio manual declarado pelo operador. Aceite, rejeição e liquidação continuam sem confirmação bancária.');}
+        catch(Throwable $e){$this->flash('warning','Declaração de envio não confirmada. Confira o lote baixado e a evidência; nenhum estado bancário foi inferido.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    private function staffId():int
+    {
+        if(class_exists('CompanyRequestScope',false)){$context=\CompanyRequestScope::context();if(is_object($context)&&method_exists($context,'staffId'))return $context->staffId();}
+        return get_staff_user_id();
+    }
+    private function url(string $path=''):string
+    {
+        if(function_exists('admin_url'))return admin_url($path);
+        return $this->config->site_url((defined('ADMIN_URI')?ADMIN_URI:'admin').'/'.$path);
+    }
+    private function flash(string $kind,string $message):void
+    {
+        if(function_exists('set_alert'))set_alert($kind,$message);
+        $this->session->set_userdata('bb_notice',['kind'=>$kind,'message'=>$message]);
+    }
+    private function denied():void
+    {
+        if(function_exists('access_denied'))access_denied('banco_brasil');
+        show_error('Acesso negado para este recurso da empresa.',403);throw new RuntimeException('bb_access_denied');
     }
     private function allowed(int $issuer,string $permission):bool
     {
         if(!function_exists('issuer_resource_can'))return false;
-        try{return \BancoBrasil\Transaction::quiet($this->db,fn()=>issuer_resource_can($issuer,get_staff_user_id(),'banco_brasil',$permission))===true;}
+        try{return \BancoBrasil\Transaction::quiet($this->db,fn()=>issuer_resource_can($issuer,$this->staffId(),'banco_brasil',$permission))===true;}
         catch(Throwable $e){show_error('Armazenamento indisponível. Tente novamente após verificar a instalação.',503);return false;}
     }
     private function issuerCoreReady():bool
@@ -106,18 +176,18 @@ class Banco_brasil extends AdminController
     {
         if(!class_exists('CompanyRequestScope',false))return null;
         $context=\CompanyRequestScope::context();
-        if(!is_object($context)||!method_exists($context,'issuerId'))access_denied('banco_brasil');
+        if(!is_object($context)||!method_exists($context,'issuerId'))$this->denied();
         $id=$context->issuerId();
-        if(!is_int($id)||$id<1)access_denied('banco_brasil');
+        if(!is_int($id)||$id<1)$this->denied();
         return $id;
     }
     private function issuer(int $id,string $capability):array
     {
         $companyId=$this->companyContextId();
-        if(($companyId!==null&&$companyId!==$id)||!$this->issuerCoreReady()||!$this->allowed($id,$capability))access_denied('banco_brasil');
-        try{$row=\BancoBrasil\Transaction::quiet($this->db,fn()=>(new \IssuerRegistry($this->db,db_prefix()))->get($id,get_staff_user_id()));}
+        if(($companyId!==null&&$companyId!==$id)||!$this->issuerCoreReady()||!$this->allowed($id,$capability))$this->denied();
+        try{$row=\BancoBrasil\Transaction::quiet($this->db,fn()=>(new \IssuerRegistry($this->db,db_prefix()))->get($id,$this->staffId()));}
         catch(Throwable $e){show_error('Armazenamento indisponível. Tente novamente após verificar a instalação.',503);return [];}
-        if(!$row)access_denied('banco_brasil');
+        if(!$row)$this->denied();
         $row=(array)$row;
         return ['id'=>(int)$row['id'],'legal_name'=>(string)$row['legal_name'],'tax_id'=>(string)$row['tax_id']];
     }

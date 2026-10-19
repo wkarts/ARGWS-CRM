@@ -36,7 +36,7 @@ function html_escape($value){return htmlspecialchars((string)$value,ENT_QUOTES,'
 function init_head(){}function init_tail(){}function form_open($url){$form='<form method="post" action="'.html_escape($url).'">';if(CompanyRequestScope::token()!==null&&str_starts_with($url,'https://crm.example.test/'))$form.='<input type="hidden" name="_company_context" value="'.html_escape(CompanyRequestScope::token()).'">';return $form;}
 function form_open_multipart($url){return form_open($url);}function form_close(){return '</form>';}
 class BbInput{public $verb='GET';public $posts=[];public $gets=[];function method(){return $this->verb;}function post($k=null){return $k===null?$this->posts:($this->posts[$k]??null);}function get($k){return $this->gets[$k]??null;}}
-class BbSession{public $data=[];function userdata($k){return $this->data[$k]??null;}function set_userdata($k,$v){$this->data[$k]=$v;}}
+class BbSession{public $data=[];function userdata($k){return $this->data[$k]??null;}function set_userdata($k,$v){$this->data[$k]=$v;}function unset_userdata($k){unset($this->data[$k]);}}
 class BbLoad{public $viewData;function helper($v){}function model($v){}function view($v,$data){$this->viewData=$data;}}
 class AdminController{
  public $db,$input,$session,$security,$output,$load,$app_modules,$issuers_model,$app_menu;

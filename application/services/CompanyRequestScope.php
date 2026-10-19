@@ -50,7 +50,7 @@ final class CompanyRequestScope
         $admin = trim((string) $ci->router->fetch_directory(), '/') === 'admin';
         $native = $admin && !$module;
         $companyScopedBbRoute = $admin && $module === 'banco_brasil' && $class === 'banco_brasil'
-            && in_array($method, ['index', 'register_connection', 'register_layout', 'import_return'], true);
+            && in_array($method, ['index','register_connection','register_layout','import_return','declare_contract','generate_remittance','retry_remittance','download_remittance','report_transmission'], true);
         self::$isolated = ($native && $class === 'company_context' && in_array($method, ['index', 'select'], true))
             || ($native && $class === 'company_onboarding' && $method === 'index')
             || ($native && $class === 'company_clients' && $method === 'index')

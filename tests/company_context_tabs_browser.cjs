@@ -18,7 +18,7 @@ for (const key of keys) {
 }
 
 (async () => {
-    const browser = await chromium.launch({ headless: true, executablePath: chromium.executablePath() });
+    const browser = await chromium.launch({ headless: true });
     try {
         const page = await browser.newPage();
         const pageErrors = [];
@@ -43,6 +43,9 @@ for (const key of keys) {
         assert.equal(await page.evaluate(() => document.activeElement.id), 'bb-tab-webhook', 'End selects the final tab');
         await page.keyboard.press('Home');
         assert.equal(await page.evaluate(() => document.activeElement.id), 'bb-tab-auth', 'Home selects the first tab');
+        await page.evaluate(() => { window.location.hash = '#bb-remittance'; });
+        await page.waitForFunction(() => document.getElementById('bb-tab-remittance').getAttribute('aria-selected') === 'true');
+        assert.equal(await page.locator('#bb-remittance').getAttribute('aria-hidden'), 'false', 'POST redirect fragment opens the remittance tab');
         assert.deepEqual(pageErrors, []);
     } finally {
         await browser.close();

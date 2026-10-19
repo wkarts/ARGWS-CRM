@@ -1,12 +1,12 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Núcleo atual4.0.8/408; BB1.0.4/101–104;
-Asaas1.4.8/148. As migrations publicadas402–407 foram preservadas. Não há
+Escopo integral em andamento. Núcleo atual4.0.9/409; BB1.0.5/101–105;
+Asaas1.4.8/148. As migrations publicadas402–408 foram preservadas. Não há
 merge/deploy/release nem autorização implícita por um resultado de CI.
 
 Os incrementos405 e406 possuem provas MySQL/HTTP/Chromium publicadas. Para407,
-a correção de navegação está em44260b61; consultar os checks desse SHA. Para408,
-consultar o novo HEAD e seus runs antes de atribuir resultado de SHA anterior.
+a correção de navegação está em44260b61; consultar os checks desse SHA. O incremento408 está validado em a8b17f9 (MySQL8.1/8.5 e stack HTTP/Chromium).
+Para409, consultar o HEAD e seus runs antes de atribuir resultado de SHA anterior.
 Inventários atualizados localizam revisão; não medem bugs, cobertura ou conclusão.
 
 | Requisito | Implementação atual | Testes executáveis/evidência | Estado e limites |
@@ -23,9 +23,9 @@ Inventários atualizados localizam revisão; não medem bugs, cobertura ou concl
 | Demais operações financeiras | Créditos/refunds/estornos, descontos/ajustes, recorrência, envio/anexos, relatórios/API restantes | Suítes existentes e inventários | Pendências técnicas; gates preservados |
 | Projetos/tarefas/despesas/outros módulos | Barreiras e adaptações parciais existentes | Testes por consumidor | Operação positiva completa pendente |
 | BB API Cobrança | Executor/configuração segura/cofre e operações ainda ausentes | Fonte oficial/OpenAPI atual ainda necessária | Pendente técnico e contrato oficial; não inferir endpoints/scopes |
-| CNAB240 | Codec P/Q e parser T/U restritos | Fixtures + MySQL/driver BB | Originação, reserva, lote/download/transmissão ainda pendentes |
+| CNAB240 | Codec P/Q e parser T/U restritos; originação ligada à fatura, reserva durável, retry e download auditado | Fixtures + novos testes de composição/concorrência MySQL no CI409 | Geração local condicionada a contrato/perfil; declaração manual de envio não é aceite; sem transporte ou homologação |
 | CNAB400 | Parser CBR643 e candidato CBR641 | Fixtures e PDFs/hash oficiais | Candidato bloqueado: BRL/juros/contrato e picture CBR643; sem homologação |
-| Origem bancária e conciliação | Conexões/perfis imutáveis e retorno observacional com dedup/conflito/proveniência | Store/ACL/auditoria/concorrência BB | Nenhum pagamento bancário automático; ligação à fatura/evidência/writer pendente |
+| Origem bancária e conciliação | Conexões/perfis imutáveis e retorno observacional com dedup/conflito/proveniência | Store/ACL/auditoria/concorrência BB | Origem240 vinculada à fatura; nenhum pagamento bancário automático; evidência de retorno/writer pendente |
 | Asaas/OI/notificações | Funcionalidade existente preservada; positivo Asaas continua bloqueado | Workflows próprios; aviso88 checks sintéticos | Regressão por SHA, sem inferir homologação/produção |
 | Homologação API/240/400 | Nenhuma realizada | Sem credenciais/transações/arquivos reais | Externa, separada por canal/conta/convênio/carteira |
 

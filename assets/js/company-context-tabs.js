@@ -51,6 +51,14 @@
         return true;
     }
 
+    function activateHash() {
+        document.querySelectorAll('.company-context-shell [role="tablist"] [data-toggle="tab"][role="tab"]').forEach(function (tab) {
+            if (tab.getAttribute('href') === window.location.hash) { activate(tab, false); }
+        });
+    }
+    window.addEventListener('hashchange', activateHash);
+    activateHash();
+
     document.querySelectorAll('.company-context-shell [role="tablist"] [data-toggle="tab"][role="tab"]').forEach(function (tab) {
         tab.addEventListener('click', function (event) {
             if (activate(tab, false)) {

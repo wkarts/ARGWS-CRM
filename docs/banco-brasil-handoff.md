@@ -103,3 +103,33 @@ Não fazer merge na main, deploy, tags, publicação de imagens ou alinhamento d
 sem autorização correspondente. O caminho normal de release permanece intacto. Uma
 PR aberta, CI verde ou cadastro/configuração visual não representa aprovação de merge
 nem uma operação bancária homologada.
+
+## Incremento409 / módulo1.0.5: originação local240
+
+A rota nativa isolada usa faturas nomeadas do núcleo. O operador declara perfil240,
+faixa exclusiva de Nosso Número e de sequência de arquivo, referência contratual,
+isenção de juros habilitada e intercâmbio TESTE no sandbox. Essa declaração é
+registrada como `operator_declaration_not_bank_verification`; não autentica contrato.
+O perfil permanece carteira17/simples/convênio7, BRL, P/Q, sem juros/multa/desconto/
+protesto/pagamento parcial. Endereços e nomes devem caber em ASCII sem truncamento.
+
+A emissão reserva números sob o lock transacional do núcleo, vincula fatura/empresa/
+conta/ambiente/convênio/perfil e snapshot, e confirma a reserva antes de persistir os
+bytes finais. O namespace ambiente/convênio atravessa troca de conta e conexão. Não
+é possível reiniciar a faixa ou consumir duas vezes no retry. Falha após reserva
+preserva Nosso Número e lote para retomada. Faturas pagas, créditos, outra origem BB
+ou Asaas, moeda diversa ou snapshot fiscal divergente são recusados.
+
+`reserved`/`generation_failed`/`generated` são estados locais. O download exige POST,
+CSRF, ACL e auditoria confirmada e muda apenas entrega para `downloaded`. O registro
+manual posterior vira `reported_submitted`, com referência imutável do operador.
+Nenhum desses estados significa transmissão autenticada, aceite ou liquidação.
+Arquivos antigos usam sua origem congelada após troca de conta. Faturas vinculadas
+continuam protegidas contra cancelamento local e recebimento manual indevido.
+
+A migration nativa105 é aditiva;101–104 permanecem intactas. Novos testes
+`banco_brasil_origination_mysql.php` e `_concurrency.php` compõem o núcleo e o
+executor nativo do módulo em MySQL descartável. O resultado só pode ser atribuído
+ao SHA que executar esses testes no CI. O teste de abas verifica também o fragmento
+usado após POST. Homologação externa240, remessa400/API e baixa por retorno continuam
+pendentes; não há transporte bancário nem credenciais neste incremento.
