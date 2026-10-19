@@ -131,5 +131,9 @@ $ci->input->gets=[];$ci->input->verb='POST';$ci->input->posts=$data+['issuer_id'
 rejects(fn()=>$companyTwoController->register_connection(),'company A POST cannot escape selected B context');
 $ci->input->posts=$data+['issuer_id'=>'2','csrf_bb'=>$csrf];try{$companyTwoController->register_connection();}catch(BbRedirect $e){check(str_contains($e->getMessage(),'issuer_id=2'),'company B remains immutable through connection action');}
 check(count($ci->db->tables['t_bb_connections'])===1&&$ci->db->tables['t_bb_connections'][0]['issuer_id']===2&&$ci->db->tables['t_bb_connections'][0]['issuer_tax_id']==='11222333000181','new bank connection is bound to company B identity');
+$ci->input->verb='GET';rejects(fn()=>$companyTwoController->settle_api(),'API credit cannot be applied by GET');
+$ci->input->verb='POST';$ci->input->posts=['issuer_id'=>'2','origin_id'=>'1','operation_id'=>'1','credit_confirmed'=>'1','csrf_bb'=>'invalid'];rejects(fn()=>$companyTwoController->settle_api(),'API credit requires current CSRF before origin hydration');
+$ci->input->posts['csrf_bb']=$csrf;$ci->input->posts['issuer_id']='1';rejects(fn()=>$companyTwoController->settle_api(),'API credit cannot escape selected B using A issuer ID');
+$ci->input->posts['issuer_id']='2';$GLOBALS['resourceGrants']['reconcile']=false;rejects(fn()=>$companyTwoController->settle_api(),'API credit requires its own contextual reconciliation permission');
 $GLOBALS['currentCompanyId']=1;
 echo "OK {$n} Banco do Brasil admin checks\n";

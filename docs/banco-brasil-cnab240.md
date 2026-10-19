@@ -93,3 +93,13 @@ Originação240 e retorno assistido estão ligados às faturas do núcleo; a API
 executor separado conforme [handoff](banco-brasil-handoff.md). As limitações do codec
 240 e a ausência de homologação permanecem. A especificação API oficial foi obtida
 em19/10/2026; a indisponibilidade documental histórica acima foi resolvida.
+
+
+## Atualização419 / BB109
+
+O crédito assistido240 mantém seu contrato e writer. A nova aplicação explícita de
+crédito API16 é um canal independente; os dois adaptadores recusam evidência de
+pagamento já aplicada pelo outro canal para a mesma identidade bancária de título.
+Isso não transforma upload em prova autenticada nem libera encargos ou estornos.
+Mudança de versão requer migration109 aditiva; versões/migrations anteriores são
+preservadas. Ver handoff e matriz do HEAD para testes e homologação externa.

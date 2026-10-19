@@ -8,6 +8,7 @@ final class CapabilityPolicy
         return [
             'api.issue'=>['label'=>'Registrar cobrança por API','implemented'=>true,'available'=>true,'reason'=>'Origem/fatura, perfil e cofre nativo; OAuth/especificação3.2.2; testes simulados, sem homologação externa'],
             'api.query'=>['label'=>'Consultar cobrança API por origem','implemented'=>true,'available'=>true,'reason'=>'Consulta vinculada e projeção validada; não cria pagamento automático'],
+            'api.credit'=>['label'=>'Registrar crédito API confirmado','implemented'=>true,'available'=>true,'reason'=>'Ação explícita, consulta recente16 CREDITADO com prova de conta, integral sem ajustes, snapshot e writer canônicos; sem homologação externa'],
             'api.remove'=>['label'=>'Solicitar baixa API por origem','implemented'=>true,'available'=>true,'reason'=>'Exige consulta NORMAL recente; pedido não cancela fatura local nem confirma estado final'],
             'cnab.generate'=>['label'=>'Gerar remessa CNAB 240','implemented'=>true,'available'=>true,'reason'=>'Geração local condicionada a fatura/origem, perfil240 e declaração de contrato; não transmite nem comprova aceite/homologação'],
             'cnab400.candidate'=>['label'=>'Preparar candidato de remessa CNAB 400','implemented'=>true,'available'=>false,'reason'=>'Codec de testes; campo BRL, contrato e homologação pendentes'],

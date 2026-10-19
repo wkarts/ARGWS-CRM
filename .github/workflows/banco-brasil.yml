@@ -88,3 +88,4 @@ jobs:
           php tests/banco_brasil_origination_concurrency.php
           php tests/banco_brasil_reconciliation_concurrency.php
           php tests/banco_brasil_api_concurrency.php
+          php tests/banco_brasil_api_receipt_concurrency.php

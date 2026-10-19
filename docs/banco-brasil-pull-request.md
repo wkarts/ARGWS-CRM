@@ -1,7 +1,7 @@
 # PR45 — Banco do Brasil e Empresas no núcleo
 
 A PR46 foi incorporada à branch `feat/banco-brasil-billing-cnab240`; PR45 continua
-com destino main. Núcleo4.1.6/416, BB1.0.8/101–108, Asaas1.4.8/148. Migrations e
+com destino main. Núcleo4.1.9/419, BB1.0.9/101–109, Asaas1.4.8/148. Migrations e
 histórico publicados preservados; nenhum merge, deploy, tag ou release autorizado.
 
 Foram ligados ao núcleo o responsável/master e wizard retomável, clientes privados
@@ -18,15 +18,20 @@ A API108 possui configuração nativa com credenciais criptografadas por perfil,
 OAuth, registro com validação do boleto, consulta com confirmação da conta e
 pedido de baixa distinto da confirmação final. Outbox durável preserva a origem
 antiga após troca de conta, evita POST duplicado e não repete resultado desconhecido.
-Perfil restrito17/simples/BRL sem ajustes/Pix; respostas API não criam pagamentos.
+Perfil bancário restrito17/simples/BRL sem encargos/Pix; respostas isoladas não
+criam pagamentos.109 acrescenta confirmação explícita de crédito16, integral sem
+ajustes, por consulta recente com prova da conta e writer canônico.6 LIQUIDADO
+continua observacional. Recibo/auditoria/pagamento/status são atômicos e deduplicados.
 A fonte primária OpenAPI3.2.2 e o manual de boleto têm revisão/hash no handoff.
 A indisponibilidade documental inicial da API foi resolvida.
 
 Consultar a [matriz objetiva](companies/pr45-status.md), o [handoff](banco-brasil-handoff.md),
 [wizard](companies/onboarding.md), [CNAB240](banco-brasil-cnab240.md) e
 [CNAB400](banco-brasil-cnab400.md). Asaas, notificações, permissões e barreiras dos
-consumidores incompletos permanecem. Rollout multiempresa universal, ajustes e
-estornos financeiros, alterações/webhook mTLS e aplicação financeira da API ainda
+consumidores incompletos permanecem.417 entregou descontos/ajustes e múltiplos
+tributos nas faturas;418 adicionou imagens próprias, snapshot/PDF e preferências.
+Rollout multiempresa universal, encargos/estornos bancários, alterações/webhook mTLS
+e os demais perfis financeiros da API ainda
 são pendências técnicas. Remessa400 permanece bloqueada pelo contrato BRL/juros;
 o candidato não é arquivo operacional homologado.
 

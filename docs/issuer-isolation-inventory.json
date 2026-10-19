@@ -2765,7 +2765,7 @@
       "evidence": ""
     },
     "application/services/CompanyAssets.php": {
-      "sha256": "8c6cd6ff7b2c67445d09e250a7c4b550edb3671aaf84a3faa6a4e03f002cfc27",
+      "sha256": "6b090008409346531415159d66fed859a71472790b18f443203ec7664adb6453",
       "categories": [
         "invoice_table"
       ],
@@ -2968,7 +2968,7 @@
       "evidence": "tests/issuers_essential.php (205 SQLite/207 MySQL on102): schema constraints and current marker/active/lock checked, request metadata cache only. Does not grant data access."
     },
     "application/services/InvoicePaymentWriter.php": {
-      "sha256": "ff0ca4fd2c590a85f07e4f84f06d9ea07e092ac3978199602a13e23deea62869",
+      "sha256": "8bf3f223f71996007d573faa431d2ade8fc71479787e3171ec1c31472eda27f7",
       "categories": [
         "invoice_table",
         "payments"
@@ -2976,18 +2976,18 @@
       "signal_lines": [
         51,
         66,
-        94,
-        96,
-        102,
-        109,
-        111,
-        114,
-        117,
-        120,
-        154,
-        167,
-        175,
-        211
+        95,
+        97,
+        103,
+        110,
+        112,
+        115,
+        118,
+        121,
+        155,
+        168,
+        176,
+        212
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5147,7 +5147,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/controllers/Banco_brasil.php": {
-      "sha256": "d3a636bd5ee6b1e1942b9e1c252cebf4420d438a19879b54ea324707baa28826",
+      "sha256": "84c981c1be7071c37eec3b69e71731c2e1c5f78e37306571b186aa4200ddc9fa",
       "categories": [
         "invoice_table"
       ],
@@ -5159,24 +5159,24 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/ApiService.php": {
-      "sha256": "673c5548138a483cb3a6a6d349f999a7a783474cc11b23a39323030f5c4d5ec8",
+      "sha256": "aa3ff1fde5e04dbce1163192bc665a4e1194529071fea8726c11cdd6a2f8ab24",
       "categories": [
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
-        25,
         33,
-        105,
-        107,
-        111,
-        164
+        44,
+        116,
+        118,
+        122,
+        175
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Origination.php": {
-      "sha256": "908d79a1c7ebaaaec872311a885d4fdf9c33a943cb9b49e1812649450142bb4d",
+      "sha256": "8e203054ca33f4e760173299d5d8d3e66204131f84d6200bca1bdf3f47db3c11",
       "categories": [
         "invoice_table",
         "payments"
@@ -5192,7 +5192,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Reconciliation.php": {
-      "sha256": "8fa2192834ea3b9fbda31f1d5d219a9fcc949b48c4c6626f2651d8454ea26974",
+      "sha256": "0082ed402ad60a0563d4986ff1fa51057bafecd0f3325ed6470f1e7f777ed80a",
       "categories": [
         "invoice_table"
       ],
@@ -5204,14 +5204,14 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/ReviewedReceipt.php": {
-      "sha256": "a6044be564899b610bbfb720409f52bff9c9fe9293d4e7578727c971b66e942d",
+      "sha256": "976fe1e8c47421b97f76fc432bf4bc5c0f8f72ca44b08c5ad7c15504b34be621",
       "categories": [
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
-        28,
-        43
+        29,
+        44
       ],
       "state": "unreviewed",
       "evidence": ""

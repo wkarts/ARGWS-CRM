@@ -329,3 +329,35 @@ e executa o schema real antes dos asserts. Nenhum assert foi removido.
 
 Conferir o CI do SHA final416, incluindo MySQL/MariaDB e HTTP/Chromium. Persistem
 as pendências técnicas e contratuais da matriz; não há homologação externa.
+
+
+## Continuidade419 / módulo1.0.9 — crédito API confirmado
+
+API agora tem ação explícita de recebimento via `settle_api`, sem rede dentro da
+transação. O adaptador final `ApiCreditedReceipt` entra no writer nativo somente
+com a última consulta validada, prova da conta, estado16 CREDITADO, valor integral
+sem ajustes e data de crédito ocorrida. Consulta isolada permanece observacional;
+6 LIQUIDADO não lança pagamento. Repetição/nova consulta equivalente retorna o
+mesmo recibo; chave bancária independe da UI. Auditoria/recibo/status/pagamento são
+atômicos. Cancelamento/cheque/parcial/cartório em histórico impõem revisão; uma
+consulta posterior não limpa `api_conflict_review`. Observação posterior adversa
+não estorna nem apaga pagamento. Origem CNAB/Asaas não é contornada.
+
+Migration109 adiciona bb_api_receipts com FK/PK/índices integrais, sem editar108.
+Módulo1.0.9 exige core4.1.9/419. Upgrade/tracking/replay, falhas de auditoria e
+proveniência, A/B e concorrência estão em `tests/banco_brasil_api_receipt_mysql.php`
+e `tests/banco_brasil_api_receipt_concurrency.php`.331 é número acumulado com os
+testes de fundação e API, não331 novos cenários. Execução local usa PHP8.3.6 e
+MariaDB10.11.14 reais; somente o transporte BB é simulado. O teste do CRM/Chromium
+usa fixture restrita ao DB descartável argws_upgrade_ci, serviços reais e transporte
+injetado; o endpoint de crédito usa o escritor real sem chamar o banco.
+
+A OpenAPI oficial foi novamente baixada em19/10/2026:3.2.2 e SHA256
+6767b098b13bc00e42700d80435a73e1f6ff4d31d7a28647926209a58d5f00d3, iguais ao contrato.
+Nenhuma credencial real, OAuth bancário real, operação de cliente ou homologação.
+
+Pendências técnicas preservadas: alteração API, webhook mTLS, outros perfis,
+encargos/parciais/estorno contábil; ampliação CNAB240 e canal operacional400.
+Dados/contratos400 faltantes são específicos e separados da homologação externa.
+Asaas positivo por origem e os demais consumidores multiempresa continuam pendentes.
+Consultar a matriz do HEAD atual; uma execução anterior não valida um novo diff.

@@ -16,3 +16,11 @@
 <?php if($apiOperation['failure_category']){?><p><?= html_escape($apiOperation['failure_category']); ?> — consulte/revise a origem; erro bruto do provedor não é exposto.</p><?php } ?>
 <?php foreach($apiOperation['result'] as $apiField=>$apiValue){if(!is_string($apiValue))continue;?><p><strong><?= html_escape($apiField); ?></strong>: <span><?= html_escape($apiValue); ?></span></p><?php } ?></details><?php } ?>
 <?php } ?>
+
+<?php if($api_ready && $selected){ ?><h3>Créditos API no financeiro</h3><p>Consultar não lança pagamento. A ação abaixo aceita somente16 CREDITADO, consulta com até5 minutos, conta comprovada, valor integral sem encargos/descontos e data de crédito já ocorrida.6 LIQUIDADO, cheque, parcial e estados adversos permanecem em revisão.</p>
+<?php foreach($api_receipts as $receipt){ ?><p>Origem #<?= (int)$receipt['origin_id']; ?> — pagamento nativo #<?= (int)$receipt['payment_id']; ?>, consulta de origem #<?= (int)$receipt['operation_id']; ?>.</p><?php } ?>
+<?php $appliedOrigins=array_column($api_receipts,'payment_id','origin_id');$latestQuery=[];foreach($api_operations as $operation)if($operation['operation']==='query'&&!isset($latestQuery[$operation['origin_id']]))$latestQuery[$operation['origin_id']]=$operation['id'];
+if($can_settle){foreach($api_operations as $operation){if(isset($appliedOrigins[$operation['origin_id']])||($latestQuery[$operation['origin_id']]??null)!==$operation['id']||$operation['operation']!=='query'||$operation['status']!=='validated'||($operation['result']['codigoEstadoTituloCobranca']??null)!=='16')continue; ?>
+<?= form_open($bbAdminUrl('banco_brasil/settle_api')); ?><input type="hidden" name="csrf_bb" value="<?= html_escape($csrf); ?>"><input type="hidden" name="issuer_id" value="<?= (int)$selected['id']; ?>"><input type="hidden" name="origin_id" value="<?= (int)$operation['origin_id']; ?>"><input type="hidden" name="operation_id" value="<?= (int)$operation['id']; ?>">
+<label><input type="checkbox" name="credit_confirmed" value="1" required>Registrar no financeiro o crédito da origem #<?= (int)$operation['origin_id']; ?>, consulta #<?= (int)$operation['id']; ?>.</label><button type="submit">Registrar crédito API confirmado</button><?= form_close(); ?>
+<?php }} } ?>

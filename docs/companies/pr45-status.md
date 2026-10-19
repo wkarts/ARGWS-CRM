@@ -1,6 +1,6 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Núcleo atual4.1.8/418; BB1.0.8/101–108;
+Escopo integral em andamento. Núcleo atual4.1.9/419; BB1.0.9/101–109;
 Asaas1.4.8/148. As migrations publicadas402–412 foram preservadas. Não há
 merge/deploy/release nem autorização implícita por um resultado de CI.
 
@@ -26,7 +26,7 @@ Inventários atualizados localizam revisão; não medem bugs, cobertura ou concl
 | PDF de faturas nomeadas | DTO autorizado e TCPDF; staff e portal privado com permissão nativa explícita; revalidação/auditoria antes dos bytes | PDF real, A/B, legado NULL e testes414 de revogação/HTTP | Lista/PDF de faturas emitidas do cliente e empresa próprios; rascunhos ocultos; sem conceder demais operações ou histórico compartilhado |
 | Demais operações financeiras | Créditos/refunds/estornos, recorrência, envio/anexos, relatórios/API restantes | Suítes existentes e inventários | Pendências técnicas; gates preservados |
 | Projetos/tarefas/despesas/outros módulos | Barreiras e adaptações parciais existentes | Testes por consumidor | Operação positiva completa pendente |
-| BB API Cobrança | Perfis/credenciais criptografadas nativas; OAuth, registro, consulta com prova de conta e pedido/confirmação de baixa; outbox e origem imutável | Cliente HTTP simulado24 checks; composição MySQL/concorrência e MariaDB adicionadas no413, resultado depende do SHA final | Perfil17/simples/BRL sem ajustes/Pix; sem pagamento API automático. Alteração, webhook mTLS e aplicação financeira ainda pendentes; nenhuma homologação |
+| BB API Cobrança | Perfis/credenciais criptografadas nativas; OAuth, registro, consulta com prova de conta e pedido/confirmação de baixa; outbox e origem imutável | Cliente HTTP simulado24 checks; composição MySQL/concorrência e MariaDB adicionadas no413, resultado depende do SHA final | Perfil17/simples/BRL sem ajustes/Pix; sem pagamento API automático.419 adiciona crédito explícito16 integral sem ajustes; alteração, webhook mTLS e demais perfis financeiros ainda pendentes; nenhuma homologação |
 | CNAB240 | Codec P/Q e parser T/U restritos; originação ligada à fatura, reserva durável, retry e download auditado | Fixtures + novos testes de composição/concorrência MySQL/HTTP no baseline412 | Geração local condicionada a contrato/perfil; declaração manual de envio não é aceite; sem transporte ou homologação |
 | CNAB400 | Parser CBR643 e candidato CBR641 | Fixtures e PDFs/hash oficiais | Candidato bloqueado: BRL/juros/contrato e picture CBR643; sem homologação |
 | Origem e conciliação | Conexões/perfis imutáveis, upload observacional; vínculo exato e revisão; crédito240 restrito confirmado pelo operador via writer nativo | Store/ACL e novos testes MySQL/concorrência/HTTP412 | Assistido, sem autenticação automática do arquivo. Parcial sem ajustes suporta saldo; juros/desconto/tarifa/estorno financeiro e automação permanecem pendentes |
@@ -81,3 +81,41 @@ CI do417 (`5d0f41a3`): fluxos MySQL8/PHP8.1/8.5, BB MySQL/MariaDB e stack
 HTTP/Chromium aprovados. Dois gates falharam por inventário desatualizado;418
 regenera os inventários conservando entradas alteradas como pendentes. Não reutiliza
 essa execução como prova do código418 nem muda rollout global para liberado.
+
+## Incremento419 / BB109 — crédito API explícito e canônico
+
+`ApiCreditedReceipt` é a segunda fonte fechada autorizada no writer nativo; uma
+implementação arbitrária da interface continua negada. `settle_api` exige contexto,
+POST/CSRF, BB/view+reconcile, invoices/view e payments/create. Usa somente origem
+imutável e a última consulta validada com prova da conta, até5 minutos no primeiro
+lançamento, estado16 CREDITADO, natureza normal/apresentação, liquidação elegível,
+data de crédito já ocorrida, nominal/pago/líquido integrais e todos os ajustes zero.
+6 LIQUIDADO não basta; parcial/cheque/cartório/ajustes/dados ausentes ficam em revisão.
+Recibos usam identidade bancária estável, independentemente de ator/chave da UI ou
+nova consulta idêntica; pagamento, status, recibo e auditorias confirmam juntos.
+Contradição materializada não é apagada por consulta posterior; nenhum estorno é
+executado por uma observação adversa. Provas financeiras cruzadas API/CNAB impedem
+nova aplicação do mesmo título. SQL/JSON ambíguos não são normalizados para sucesso.
+
+Nova tabela aditiva bb_api_receipts: PK por origem, unicidades de recibo/pagamento,
+FK para origem/consulta, InnoDB/utf8mb4_bin, tipos/nullability/defaults conferidos.
+Migration109 idempotente; falha de tracking preserva108 e retry completa109.419 é
+marcador core NOOP. Migrations históricas não foram alteradas. Módulo requer4.1.9.
+A correção de `imagedestroy` substitui a chamada obsoleta por liberação do objeto,
+sem reduzir os asserts de conteúdo/concorrência no PHP8.5.
+
+| Prova local PHP8.3.6/MariaDB10.11.14 | Resultado | Limite |
+|---|---|---|
+| Native module101–109/instalação/upgrade/replay/falha tracking, API/outbox/criptografia |160 checks acumulados | Transporte BB simulado |
+| Crédito A/B, repetição/nova consulta, revisão por juros/parcial/cheque, data/valor/prova ausente, auditoria/proveniência e conflito imutável |301 checks acumulados incluindo suítes anteriores | Não somar como301 cenários novos |
+| Concorrência de dois créditos, crédito versus manual e revogação aguardando lock |331 checks acumulados incluindo as suítes anteriores | Banco local real, provedor simulado |
+| Regressão da conciliação CNAB240 assistida/concorrência |129 checks acumulados | Evidência sintética, sem autenticação bancária real |
+| Asaas writer/OI |84/88 checks separados | Sem homologação Asaas/produção |
+| Novo fluxo Chromium |Fixture usa serviços reais com transporte injetado; GUI real confirma/retry via writer | Resultado apenas após CI do novo HEAD |
+
+OpenAPI oficial baixada novamente em19/10/2026, versão3.2.2, SHA256 permanece
+6767b098b13bc00e42700d80435a73e1f6ff4d31d7a28647926209a58d5f00d3.
+A semântica documenta6 LIQUIDADO e16 CREDITADO; somente16 é elegível neste recorte.
+Alterações de título, webhook mTLS, encargos/parciais/estornos e demais perfis são
+pendências técnicas. CNAB400 continua candidato bloqueado pelos insumos contratuais
+listados no guia400. Não há homologação API/240/400 nem autorização de merge/deploy.

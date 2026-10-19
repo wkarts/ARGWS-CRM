@@ -6,7 +6,7 @@ require_once BASEPATH.'libraries/Encryption.php';
 $nativeKey=random_bytes(32);
 $nativeCipher=new CI_Encryption(['driver'=>'openssl','cipher'=>'aes-256','mode'=>'cbc','key'=>$nativeKey]);
 $encrypt=fn($plain)=>$nativeCipher->encrypt($plain);$decrypt=fn($cipher)=>$nativeCipher->decrypt($cipher);
-$http=[];$titles=[];$behavior='normal';$afterHttp=null;
+$http=[];$titles=[];$behavior='normal';$providerAccount=123873;$afterHttp=null;
 function apiBarcode(string $number,string $amount,string $due):array
 {
     // Independent manual positions; fake provider, not an assertion of bank homologation.
@@ -18,7 +18,7 @@ function apiBarcode(string $number,string $amount,string $due):array
     $check=static function($field){$sum=0;$weight=2;foreach(array_reverse(str_split($field)) as $digit){$product=(int)$digit*$weight;$sum+=array_sum(array_map('intval',str_split((string)$product)));$weight=3-$weight;}return (string)((10-$sum%10)%10);};
     return [$barcode,$one.$check($one).$two.$check($two).$three.$check($three).$barcode[4].substr($barcode,5,14)];
 }
-$transport=function(string $method,string $url,array $headers,string $body)use(&$http,&$titles,&$behavior,&$afterHttp,$db):array{
+$transport=function(string $method,string $url,array $headers,string $body)use(&$http,&$titles,&$behavior,&$afterHttp,&$providerAccount,$db):array{
     essentialCheck(!$db->pdo->inTransaction(),'OAuth/API HTTP happens outside every SQL transaction');
     $http[]=compact('method','url','headers','body');
     if(str_contains($url,'oauth/token')){
@@ -28,16 +28,17 @@ $transport=function(string $method,string $url,array $headers,string $body)use(&
     }
     parse_str(parse_url($url,PHP_URL_QUERY),$query);$number=preg_match('~/boletos/([0-9]{20})~',$url,$match)?$match[1]:null;
     if($method==='POST'&&str_contains($url,'/boletos?')){
-        $payload=\BancoBrasil\ApiClient::decodeExact($body);$number=$payload['numeroTituloCliente'];$titles[$number]=$payload+['state'=>'1','account'=>$behavior==='wrong-account'?999:123873];
+        $payload=\BancoBrasil\ApiClient::decodeExact($body);$number=$payload['numeroTituloCliente'];$titles[$number]=$payload+['state'=>'1','account'=>$behavior==='wrong-account'?999:$providerAccount];
         if($behavior==='timeout-after-post')throw new RuntimeException('synthetic transport secret detail');
         $due=DateTimeImmutable::createFromFormat('!d.m.Y',$payload['dataVencimento'])->format('Y-m-d');[$barcode,$line]=apiBarcode($number,$payload['valorOriginal'],$due);
-        $response=['numero'=>$number,'numeroCarteira'=>17,'numeroVariacaoCarteira'=>19,'numeroContratoCobranca'=>1234,'codigoBarraNumerico'=>$barcode,'linhaDigitavel'=>$line,'beneficiario'=>['agencia'=>452,'contaCorrente'=>$behavior==='wrong-account'?999:123873]];
+        $response=['numero'=>$number,'numeroCarteira'=>17,'numeroVariacaoCarteira'=>19,'numeroContratoCobranca'=>1234,'codigoBarraNumerico'=>$barcode,'linhaDigitavel'=>$line,'beneficiario'=>['agencia'=>452,'contaCorrente'=>$behavior==='wrong-account'?999:$providerAccount]];
     }elseif($method==='GET'&&!$number){
         $list=[];foreach($titles as $nn=>$t)if((string)$t['account']===($query['contaBeneficiario']??'')&&(string)$t['state']===($query['codigoEstadoTituloCobranca']??''))$list[]=['numeroBoletoBB'=>$nn,'dataVencimento'=>$t['dataVencimento'],'valorOriginal'=>(float)$t['valorOriginal'],'carteiraConvenio'=>17,'variacaoCarteiraConvenio'=>19,'contrato'=>1234,'codigoEstadoTituloCobranca'=>(int)$t['state']];
         $response=['indicadorContinuidade'=>'N','proximoIndice'=>0,'quantidadeRegistros'=>count($list),'boletos'=>$list];
     }elseif($method==='GET'){
         if(!isset($titles[$number]))return ['status'=>404,'body'=>'{"erros":[{"codigo":"synthetic-not-found"}]}'];$t=$titles[$number];
         $response=['numeroContratoCobranca'=>1234,'numeroTituloCedenteCobranca'=>$t['numeroTituloBeneficiario'],'textoCampoUtilizacaoCedente'=>$t['campoUtilizacaoBeneficiario'],'numeroInscricaoSacadoCobranca'=>$t['pagador']['numeroInscricao'],'codigoTipoInscricaoSacado'=>(int)$t['pagador']['tipoInscricao'],'numeroCarteiraCobranca'=>17,'numeroVariacaoCarteiraCobranca'=>19,'codigoModalidadeTitulo'=>1,'codigoIndicadorEconomico'=>9,'valorOriginalTituloCobranca'=>(float)$t['valorOriginal'],'codigoEstadoTituloCobranca'=>(int)$t['state'],'dataEmissaoTituloCobranca'=>$t['dataEmissao'],'dataVencimentoTituloCobranca'=>$t['dataVencimento']];
+        $response=array_merge($response,$t['credit']??[]);
     }else{
         essentialCheck(str_contains($url,'/baixar?'),'only official cancellation path is used');$titles[$number]['state']='7';
         $response=['numeroContratoCobranca'=>'1234','dataBaixa'=>date('d.m.Y'),'horarioBaixa'=>'10:11:12'];

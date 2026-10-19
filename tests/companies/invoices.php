@@ -138,7 +138,7 @@ essentialCheck($db->query("SELECT * FROM {$p}invoices WHERE id=42")->result_arra
 echo 'Expanded invoice amounts/retry/A+B/rollback: '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;
 
 // Owned branding is captured only for a newly issued document, never rewritten retrospectively.
-$assets=new CompanyAssets($db,$p);$image=imagecreatetruecolor(2,2);ob_start();imagepng($image);$imageBytes=ob_get_clean();imagedestroy($image);
+$assets=new CompanyAssets($db,$p);$image=imagecreatetruecolor(2,2);ob_start();imagepng($image);$imageBytes=ob_get_clean();unset($image);
 $emptyAssets=$assets->view($a,7);$assets->save($a,7,'logo',$imageBytes,$emptyAssets['revision']);$assets->save($a,7,'signature',$imageBytes,$assets->view($a,7)['revision']);
 $branded=$s->create($a,7,$legacyInput,hash('sha256','branded-invoice'));$brandDto=$s->document($a,7,$branded);$brandData=$brandDto->data();
 essentialCheck(str_starts_with($brandData['identity']['logo_inline'],'data:image/png;base64,')&&$brandData['identity']['signature_inline']!=='' ,'new invoice snapshots own logo and signature');

@@ -107,6 +107,17 @@ async function next(page) { await navigate(page, page.locator('section form butt
   assert.equal(sql('SELECT COUNT(*) FROM tblbb_api_credentials WHERE profile_id='+apiProfile),'1','native encryption/vault UI saves the explicitly selected profile');
   const ciphertext=sql('SELECT ciphertext FROM tblbb_api_credentials WHERE profile_id='+apiProfile);assert(!ciphertext.includes('SYNTHETIC-UI-SECRET'));assert(!(await page.content()).includes('SYNTHETIC-UI-SECRET'));assert.equal(await page.locator('#bb-api-credential-client_secret').inputValue(),'');
   assert.equal(sql('SELECT COUNT(*) FROM tblbb_api_operations'),'0','saving credentials does not enqueue a bank operation');
+  // The HTTP fixture invokes production API services with an injected simulated transport,
+  // then the real browser endpoint and writer apply the credit without any bank HTTP.
+  execFileSync('docker',['cp','tests/banco_brasil_api_credit_http_fixture.php',app+':/app/tests/banco_brasil_api_credit_http_fixture.php']);
+  const creditFixture=JSON.parse(execFileSync('docker',['exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',app,'php','tests/banco_brasil_api_credit_http_fixture.php'],{encoding:'utf8'}));
+  assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+creditFixture.invoice),'0','validated API query does not apply payment automatically');
+  await page.goto(url+'/admin/banco_brasil?issuer_id='+a+'#bb-billing');await page.locator('#bb-tab-billing').click();
+  const apiCredit=page.locator('form[action*=settle_api]').filter({has:page.locator('input[name=operation_id][value="'+creditFixture.operation+'"]')});
+  await apiCredit.locator('input[type=checkbox]').check();const apiCreditFields=await apiCredit.locator('input').evaluateAll(xs=>Object.fromEntries(xs.filter(x=>x.name).map(x=>[x.name,x.value])));
+  await navigate(page,apiCredit.locator('button'));assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+creditFixture.invoice),'2');
+  assert.equal(sql('SELECT COUNT(*) FROM tblbb_api_receipts WHERE origin_id='+creditFixture.origin),'1','API credit and canonical provenance commit together');
+  await context.request.post(url+'/admin/banco_brasil/settle_api',{form:apiCreditFields});assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+creditFixture.invoice),'1','browser retry does not duplicate API payment');
   await select(b);response=await context.request.post(url+'/admin/banco_brasil/download_remittance',{form:data});assert.equal(response.status(),409,'stale context rejected before old batch download');
   const cross=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(cross.status(),403,'selected B cannot request A banking history');
   assert.deepEqual(errors,[]);console.log('BB invoice-bound CNAB240 declaration/generation/download/manual report/return upload/assisted receipt/retry/API native encrypted configuration and A/B scope: actual HTTP/MySQL/Chromium, no bank calls.');

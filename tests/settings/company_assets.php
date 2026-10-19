@@ -7,7 +7,7 @@ $primary=(new IssuerResourceAccess($db,$p))->primaryId();$registry=new IssuerReg
 $a=$registry->saveIssuer(7,['legal_name'=>'Asset A','tax_id'=>'12345678000195']);$b=$registry->saveIssuer(7,['legal_name'=>'Asset B','tax_id'=>'52998224725']);
 $db->query("INSERT INTO {$p}staff(staffid,active,admin) VALUES(12,1,0)");$db->query("INSERT INTO {$p}issuers_staff(issuer_id,staff_id,can_view) VALUES(?,12,1)",[$a]);
 foreach(['view','edit'] as $cap)$db->query("INSERT INTO {$p}issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,12,'settings',?)",[$a,$cap]);
-$service=new CompanyAssets($db,$p);$image=imagecreatetruecolor(3,2);ob_start();imagepng($image);$bytes=ob_get_clean();imagedestroy($image);
+$service=new CompanyAssets($db,$p);$image=imagecreatetruecolor(3,2);ob_start();imagepng($image);$bytes=ob_get_clean();unset($image);
 $original=$service->view($a,12);essentialCheck($original['assets']===[],'new company never inherits principal or another logo');
 $before=$db->query("SELECT settings_json FROM {$p}issuers_registry WHERE id=?",[$a])->row()->settings_json;
 $db->failOn='INSERT INTO '.$p.'issuers_audit';essentialThrows(fn()=>$service->save($a,12,'logo',$bytes,$original['revision']),'issuer_storage_failed','audit failure rolls back image');$db->failOn=null;
@@ -24,7 +24,7 @@ essentialThrows(fn()=>$service->view($b,12),'company_asset_access_denied','forei
 essentialThrows(fn()=>$service->save($b,12,'logo',$bytes,$service->view($b,7)['revision']),'company_asset_access_denied','foreign mutation denied');
 essentialThrows(fn()=>$service->save($a,12,'../logo',$bytes,$service->view($a,12)['revision']),'company_asset_invalid_kind','kind cannot become filesystem path');
 foreach(['<svg xmlns="http://www.w3.org/2000/svg"></svg>','GIF89a',str_repeat('x',524289)] as $bad)essentialThrows(fn()=>CompanyAssets::normalize($bad),'company_asset_invalid_image','non-raster or oversized content denied');
-$huge=imagecreatetruecolor(1600,1600);ob_start();imagepng($huge);$oversized=ob_get_clean();imagedestroy($huge);
+$huge=imagecreatetruecolor(1600,1600);ob_start();imagepng($huge);$oversized=ob_get_clean();unset($huge);
 essentialThrows(fn()=>CompanyAssets::normalize($oversized),'company_asset_invalid_image','compressed image pixel limit enforced before decode');
 $state=$service->view($a,12);$service->save($a,12,'logo',null,$state['revision']);
 essentialCheck(!isset($service->view($a,12)['assets']['logo'])&&isset($service->view($b,7)['assets']['logo']),'removing A asset never removes B or principal');

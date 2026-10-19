@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace BancoBrasil;
 require_once APPPATH.'services/CompanyReceiptSource.php';
 require_once __DIR__.'/Reconciliation.php';
+require_once __DIR__.'/ApiReceiptSchema.php';
 /** An operator-verified credit, never an authentication assertion derived from an uploaded file. */
 final class ReviewedReceipt implements \CompanyReceiptSource
 {
@@ -17,11 +18,11 @@ final class ReviewedReceipt implements \CompanyReceiptSource
         if(array_diff(array_keys($input),['credit_confirmed','reason','reference'])||($input['credit_confirmed']??null)!=='1')throw new \DomainException('bb_independent_credit_confirmation_required');
         $this->reason=Reconciliation::text($input['reason']??null,2000);$this->reference=Reconciliation::text($input['reference']??null,191);
     }
-    public function tables():array{return array_merge(Reconciliation::tables(),$this->hasAsaas?['asaas_payment_origins']:[]);}
+    public function tables():array{return array_merge(array_merge(Reconciliation::tables(),['bb_api_receipts']),$this->hasAsaas?['asaas_payment_origins']:[]);}
     public function assertSchema($db,string $prefix):void
     {
         $this->hasAsaas=$db->table_exists($prefix.'asaas_payment_origins');
-        ReconciliationSchema::ensure($db,$prefix,false);OriginationSchema::assertValid($db,$prefix);
+        ReconciliationSchema::ensure($db,$prefix,false);ApiReceiptSchema::ensure($db,$prefix,false);OriginationSchema::assertValid($db,$prefix);
     }
     public function claim($db,string $p,int $issuer,int $actor):array
     {
@@ -45,6 +46,8 @@ final class ReviewedReceipt implements \CompanyReceiptSource
         // A reversal/conditional/operational event is never silently ignored, regardless of import order.
         $adverse=\IssuerStorage::query($db,"SELECT id FROM ".$p."bb_return_events WHERE issuer_id=? AND scope_key=? AND remote_id=? AND control_reference=? AND id<>? AND (occurrence IN ('44','50','93') OR observation IN ('cheque_returned','cheque_pending_clearance','operational_down_reported'))",[$issuer,$row['scope_key'],$row['remote_id'],$row['control_reference'],$this->eventId])->result_array();
         if($adverse)throw new \DomainException('bb_event_adverse_history_requires_review');
+        $api=\IssuerStorage::query($db,"SELECT r.payment_id FROM {$p}bb_api_receipts r JOIN {$p}bb_origins o ON o.id=r.origin_id WHERE r.issuer_id=? AND o.account_id=? AND o.environment=? AND o.agreement_number=? AND o.remote_id=? FOR UPDATE",[$issuer,$origin['account_id'],$origin['environment'],$origin['agreement_number'],$origin['remote_id']])->row_array();
+        if($api)throw new \DomainException('bb_event_credit_already_recorded_api');
         $key=hash('sha256',json_encode(['bb-credit',$issuer,$origin['account_id'],$origin['environment'],$origin['agreement_number'],$origin['remote_id'],$e['occurrence_date'],$e['credit_date'],$e['paid_amount'],$e['net_amount']],JSON_THROW_ON_ERROR));
         $evidence=hash('sha256',json_encode([$row['payload_hash'],$origin['payload_hash'],$this->reference,$this->reason,'operator_verified_bank_credit'],JSON_THROW_ON_ERROR));
         $duplicate=\IssuerStorage::query($db,'SELECT event_id,evidence_hash FROM '.$p.'bb_event_receipts WHERE canonical_key=? FOR UPDATE',[$key])->row_array();

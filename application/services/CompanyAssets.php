@@ -46,7 +46,7 @@ final class CompanyAssets
         $image=@imagecreatefromstring($bytes);if(!$image)throw new DomainException('company_asset_invalid_image');
         ob_start();
         try{imagealphablending($image,false);imagesavealpha($image,true);if(!imagepng($image,null,6))throw new RuntimeException('issuer_asset_codec_failed');$png=ob_get_contents();}
-        finally{ob_end_clean();imagedestroy($image);}
+        finally{ob_end_clean();unset($image);}
         if(!is_string($png)||strlen($png)>524288)throw new DomainException('company_asset_invalid_image');
         return self::validateStored('data:image/png;base64,'.base64_encode($png));
     }

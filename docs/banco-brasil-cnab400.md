@@ -41,7 +41,8 @@ os 14 caracteres brutos e declara a interpretação não verificada. Não conver
 essa inconsistência em valor financeiro nem confundi-la com o trailer CBR641.
 Permanece necessária confirmação do banco sobre o picture e o campo BRL.
 
-A página de Cobrança aponta para `https://apoio.developers.bb.com.br/apis/5?versaoApi=2`,
+Histórico da busca anterior (superado para a API pelo contrato3.2.2 no handoff):
+a página de Cobrança apontava para `https://apoio.developers.bb.com.br/apis/5?versaoApi=2`,
 sem OpenAPI utilizável nesta consulta; `https://api.bb.com.br/cobrancas/v2/swagger?`
 retornou 403 sem AppKey. Não foram inferidos endpoints, escopos ou certificados.
 

@@ -21,7 +21,7 @@
       "boundary_tested": 10
     },
     "modules": {
-      "pending": 6588,
+      "pending": 6595,
       "boundary_tested": 13
     },
     "other_core": {
@@ -2528,7 +2528,7 @@
       "full_operation_ready": false
     }
   ],
-  "source_manifest_sha256": "48ef2615313640ba10e0f547bee3f8858c58ef0cd1e2768fda42d6c73dd7ee68",
-  "total_consumers": 10175,
+  "source_manifest_sha256": "1822b3e909f1160baa6e7d07d42281fb858848b38bef8ab3aed5900b1f2ac422",
+  "total_consumers": 10182,
   "full_register_command": "python3 scripts/register-company-consumers.py --full-output /tmp/company-consumers-full.json"
 }

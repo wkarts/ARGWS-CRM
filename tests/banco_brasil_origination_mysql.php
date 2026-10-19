@@ -6,19 +6,19 @@ require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/Origination.ph
 require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/LayoutCatalog.php';
 $db->query("INSERT INTO {$p}modules VALUES('banco_brasil','0.0.0',1)");
 $realModules=$GLOBALS['CI']->app_modules;
-$GLOBALS['CI']->app_modules=new class {function get($name){return ['headers'=>['version'=>'1.0.8']];}};
-$db->failVersion='1.0.8';
-essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native installation catches final108 tracking failure');$db->failVersion=null;
-essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.0.7','failed108 remains at107');
-essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='108','native101 through108 installation can retry additive DDL');
-essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native108 replay is stable');
+$GLOBALS['CI']->app_modules=new class {function get($name){return ['headers'=>['version'=>'1.0.9']];}};
+$db->failVersion='1.0.9';
+essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native installation catches final109 tracking failure');$db->failVersion=null;
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.0.8','failed109 remains at108');
+essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='109','native101 through109 installation can retry additive DDL');
+essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native109 replay is stable');
 \BancoBrasil\OriginationSchema::assertValid($db,$p);
 $GLOBALS['CI']->app_modules=$realModules;
 unset($db->data_cache['table_names']);
-function bbSyntheticConnection(int $issuer,string $agreement='1234567',string $account='001:00452-3:000000123873-X'):array
+function bbSyntheticConnection(int $issuer,string $agreement='1234567',string $account='001:00452-3:000000123873-X',string $tax='12345678000195',string $name='Invoice A'):array
 {
     global $db,$p;
-    $tax='12345678000195';$name='Invoice A';$environment='sandbox';$wallet='17';$variation='019';
+    $environment='sandbox';$wallet='17';$variation='019';
     $identity=hash('sha256',json_encode([$issuer,$account,$environment,$agreement,$wallet,$variation],JSON_THROW_ON_ERROR));
     $configuration=hash('sha256',json_encode([$identity,$tax,$name],JSON_THROW_ON_ERROR));
     $db->query("INSERT INTO {$p}bb_connections(issuer_id,account_id,environment,agreement_number,wallet,variation,issuer_tax_id,issuer_name,identity_hash,configuration_hash,created_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,7,?)",[$issuer,$account,$environment,$agreement,$wallet,$variation,$tax,$name,$identity,$configuration,date('Y-m-d H:i:s')]);

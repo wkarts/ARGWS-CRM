@@ -5,6 +5,7 @@ namespace BancoBrasil;
 require_once __DIR__.'/Origination.php';
 require_once __DIR__.'/ApiSchema.php';
 require_once __DIR__.'/ApiPayload.php';
+require_once __DIR__.'/ApiReceiptSchema.php';
 
 /** Invoice-bound API outbox. Every request uses the immutable origin; no ambient bank/account defaults. */
 final class ApiService
@@ -22,15 +23,25 @@ final class ApiService
     private function transaction(callable $work)
     {
         ApiSchema::ensure($this->db,$this->prefix,false);OriginationSchema::assertValid($this->db,$this->prefix);
-        $tables=['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_audit','staff','modules','invoices','issuers_invoice_documents','currencies','invoicepaymentrecords','credits','bb_connections','bb_layout_bindings','bb_origins','bb_audit','bb_number_reservations','bb_api_profiles','bb_api_credentials','bb_api_origins','bb_api_operations'];
+        ApiReceiptSchema::ensure($this->db,$this->prefix,false);$tables=self::receiptTables();
         if($this->db->table_exists($this->prefix.'asaas_payment_origins'))$tables[]='asaas_payment_origins';
         return \IssuerTransaction::run($this->db,$this->prefix,$tables,$work);
+    }
+    /** Internal table contract for the core-owned receipt transaction, never a session scope. */
+    public static function receiptTables():array
+    {
+        return ['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_audit','staff','modules','invoices','issuers_invoice_documents','currencies','invoicepaymentrecords','credits','bb_connections','bb_layout_bindings','bb_origins','bb_audit','bb_number_reservations','bb_api_profiles','bb_api_credentials','bb_api_origins','bb_api_operations','bb_api_receipts'];
+    }
+    public function receiptOriginInOwnedTransaction(int $issuer,int $actor,int $origin):array
+    {
+        \IssuerTransaction::assertOwned($this->db,$this->prefix,self::receiptTables());
+        $this->authorize($issuer,$actor,'reconcile',true);return $this->loadOrigin($issuer,$origin);
     }
     private function authorize(int $issuer,int $actor,string $cap,bool $invoice=false):void
     {
         $module=$this->rows('SELECT active,installed_version FROM '.$this->prefix.'modules WHERE module_name=? FOR UPDATE',['banco_brasil'])[0]??[];
         $acl=new \IssuerResourceAccess($this->db,$this->prefix);$acl->lockFinancialIdentity($issuer,$actor);
-        if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.0.8'||!$acl->can($issuer,$actor,'banco_brasil','view')||!$acl->can($issuer,$actor,'banco_brasil',$cap)||($invoice&&!$acl->can($issuer,$actor,'invoices','view')))throw new \DomainException('bb_api_access_denied');
+        if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.0.9'||!$acl->can($issuer,$actor,'banco_brasil','view')||!$acl->can($issuer,$actor,'banco_brasil',$cap)||($invoice&&!$acl->can($issuer,$actor,'invoices','view')))throw new \DomainException('bb_api_access_denied');
     }
     private function connection(int $issuer,int $id):array
     {
@@ -223,6 +234,8 @@ final class ApiService
             }
             // A delayed normal query cannot undo a confirmed terminal observation.
             $changed=false;
+            // A later observation cannot erase an already materialized contradictory bank history.
+            if($origin['state']==='api_conflict_review'&&$state!==null)$state='api_conflict_review';
             if($state!==null&&(!in_array($origin['state'],['api_cancelled_confirmed','api_settlement_observed'],true)||in_array($state,['api_cancelled_confirmed','api_settlement_observed'],true))){
                 if($origin['state']==='api_cancelled_confirmed'&&$state==='api_settlement_observed')$state='api_conflict_review';
                 if($origin['state']==='api_settlement_observed'&&$state==='api_cancelled_confirmed')$state='api_conflict_review';
@@ -254,9 +267,10 @@ final class ApiService
             $profiles=$this->rows('SELECT p.id,p.connection_id,p.api_stage,p.definition_json,(SELECT MAX(c.id) FROM '.$this->prefix.'bb_api_credentials c WHERE c.profile_id=p.id AND c.issuer_id=p.issuer_id) credential_id FROM '.$this->prefix.'bb_api_profiles p WHERE p.issuer_id=? ORDER BY p.id DESC LIMIT 30',[$issuer]);
             foreach($profiles as &$p){$def=json_decode($p['definition_json'],true,16,JSON_THROW_ON_ERROR);$p['reference']=$def['reference'];$p['range']=(string)$def['first_number'].'–'.$def['last_number'];unset($p['definition_json']);}unset($p);
             $origins=$this->rows('SELECT o.id,o.invoice_id,o.connection_id,o.remote_id,o.state,a.profile_id FROM '.$this->prefix.'bb_origins o JOIN '.$this->prefix.'bb_api_origins a ON a.origin_id=o.id WHERE o.issuer_id=? ORDER BY o.id DESC LIMIT 30',[$issuer]);
+            $receipts=$this->rows('SELECT r.origin_id,r.payment_id,r.operation_id FROM '.$this->prefix.'bb_api_receipts r JOIN '.$this->prefix.'bb_origins o ON o.id=r.origin_id AND o.issuer_id=r.issuer_id WHERE r.issuer_id=?',[$issuer]);
             $operations=$this->rows('SELECT x.id,x.origin_id,x.operation,x.status,x.http_status,x.failure_category,x.result_json,x.updated_at FROM '.$this->prefix.'bb_api_operations x JOIN '.$this->prefix.'bb_origins o ON o.id=x.origin_id WHERE o.issuer_id=? ORDER BY x.id DESC LIMIT 30',[$issuer]);
             foreach($operations as &$op){$op['result']=json_decode($op['result_json'],true,32,JSON_THROW_ON_ERROR);unset($op['result_json']);}unset($op);
-            return compact('profiles','origins','operations');
+            return compact('profiles','origins','operations','receipts');
         });
     }
 
