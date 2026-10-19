@@ -116,6 +116,9 @@ jobs:
           php tests/companies/client_concurrency.php
           php tests/companies/portal_positive.php
           php tests/companies/portal_concurrency.php
+          php tests/companies/invoices.php
+          php tests/companies/invoice_concurrency.php
+          php tests/issuers_integration_view.php
           php tests/companies/module_tracking.php
           php tests/settings/company_settings.php
           php tests/settings/company_options_helpers.php

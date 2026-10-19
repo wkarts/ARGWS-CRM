@@ -4,6 +4,11 @@
     <h1 class="tw-text-xl"><?php echo _l('issuers_title'); ?></h1>
     <div class="alert alert-warning" role="alert"><?php echo _l('issuer_foundation_warning'); ?></div>
     <?php if (!$can_create && is_admin()) { ?><p><a href="<?php echo admin_url('company_master'); ?>">Resolver a responsabilidade da instalação legada</a></p><?php } ?>
+    <?php if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()){ ?>
+    <nav aria-label="Operações da empresa selecionada">
+    <?php if(CompanySettingsRuntime::canResource('customers','view')){ ?><p><a href="<?php echo admin_url('company_clients'); ?>">Clientes da empresa selecionada</a></p><?php } ?>
+    <?php if(CompanySettingsRuntime::canResource('invoices','view')){ ?><p><a href="<?php echo admin_url('company_invoices'); ?>">Faturas da empresa selecionada</a></p><?php } ?>
+    </nav><?php } ?>
     <div class="row"><div class="col-md-4"><div class="panel_s"><div class="panel-body">
         <h2 class="tw-text-lg"><?php echo _l('issuer_catalog'); ?></h2>
         <ul class="list-unstyled">

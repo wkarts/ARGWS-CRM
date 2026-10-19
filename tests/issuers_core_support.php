@@ -286,7 +286,7 @@ function essentialCleanup(): void
     foreach ($GLOBALS['essentialFixtures'] as $fixture) {
         if ($fixture->db->driver() !== 'mysql') { continue; }
         // Only random-prefix synthetic test tables, children before parents.
-        foreach (['company_portal_tokens','company_portal_limits','user_auto_login','contacts','company_client_requests','issuers_master_authorizations','company_wizard_drafts','recurring_rule_runs','recurring_rule_audit','recurring_rule_batches','recurring_rules','mail_queue','issuers_invoice_documents', 'issuers_sequences', 'issuers_resource_permissions', 'issuers_installation_identity', 'issuers_client_links', 'issuers_staff_defaults', 'issuers_clients', 'issuers_staff', 'issuers_audit', 'issuers_registry', 'issuers_lock', 'modules', 'options', 'invoices', 'clients', 'staff_permissions', 'staff'] as $table) {
+        foreach (['company_payment_receipts','company_invoice_requests','company_portal_tokens','company_portal_limits','user_auto_login','contacts','company_client_requests','issuers_master_authorizations','company_wizard_drafts','recurring_rule_runs','recurring_rule_audit','recurring_rule_batches','recurring_rules','mail_queue','issuers_invoice_documents', 'issuers_sequences', 'issuers_resource_permissions', 'issuers_installation_identity', 'issuers_client_links', 'issuers_staff_defaults', 'issuers_clients', 'issuers_staff', 'issuers_audit', 'issuers_registry', 'issuers_lock', 'modules', 'options','item_tax','itemable','invoicepaymentrecords','credits','currencies','countries', 'invoices', 'clients', 'staff_permissions', 'staff'] as $table) {
             $fixture->db->pdo->exec('DROP TABLE IF EXISTS ' . $fixture->prefix . $table);
         }
     }

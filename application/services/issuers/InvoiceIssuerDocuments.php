@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/IssuerPolicy.php';
+require_once __DIR__.'/IssuerTransaction.php';
 
 /** Immutable issuer identity and issuer/series-local numbering. Never reads global options. */
 final class InvoiceIssuerDocuments
@@ -28,7 +29,7 @@ final class InvoiceIssuerDocuments
 
     private function query(string $sql, array $bindings = [])
     {
-        $result = $this->db->query($sql, $bindings);
+        $result = IssuerStorage::query($this->db,$sql,$bindings);
         if ($result === false) { throw new RuntimeException('issuer_document_storage_failed'); }
         return $result;
     }
@@ -213,8 +214,7 @@ final class InvoiceIssuerDocuments
         $row = $this->one("SELECT c.userid,c.company,c.vat,c.active,r.tax_id AS registered_tax_id
             FROM {$this->prefix}clients c
             JOIN {$this->tables}clients r ON r.client_id=c.userid
-            JOIN {$this->tables}client_links l ON l.client_id=c.userid AND l.issuer_id=?
-            WHERE c.userid=? FOR UPDATE", [$issuer, $client]);
+            WHERE c.userid=? AND (r.owner_issuer_id=? OR EXISTS(SELECT 1 FROM {$this->tables}client_links l WHERE l.client_id=c.userid AND l.issuer_id=?)) FOR UPDATE", [$client,$issuer,$issuer]);
         if (!$row || (int) $row['active'] !== 1) {
             throw new DomainException('issuer_document_recipient_unavailable');
         }
@@ -289,47 +289,58 @@ final class InvoiceIssuerDocuments
         $issuer = IssuerPolicy::id($issuer);
         $series = self::series($series);
         $this->requireAccess($issuer, 'create_invoices');
-        return $this->transaction(['clients', 'issuers_clients', 'issuers_client_links'], function () use ($invoice, $issuer, $series): array {
-            // Same first lock as IssuerRegistry mutations: adoption/share revocation cannot race this capture.
-            if (!$this->one("SELECT id FROM {$this->tables}lock WHERE id=1 FOR UPDATE")) {
-                throw new RuntimeException('issuer_document_storage_failed');
-            }
-            // Fixed remaining order: issuer -> invoice -> snapshot -> recipient -> sequence.
-            $registry = $this->one("SELECT * FROM {$this->tables}registry WHERE id=? FOR UPDATE", [$issuer]);
-            if (!$registry || (int) $registry['active'] !== 1) { throw new DomainException('issuer_unavailable'); }
-            $this->requireAccess($issuer, 'create_invoices');
-            $record = $this->one("SELECT * FROM {$this->prefix}invoices WHERE id=? FOR UPDATE", [$invoice]);
-            if (!$record || !isset($record['issuer_id']) || IssuerPolicy::id($record['issuer_id']) !== $issuer) {
-                throw new DomainException('issuer_document_scope_mismatch');
-            }
-            $snapshot = $this->one("SELECT * FROM {$this->tables}invoice_documents WHERE invoice_id=? FOR UPDATE", [$invoice]);
-            if ($snapshot) {
-                $snapshot = self::decode($snapshot, $invoice, $issuer);
-                self::assertRecipient($snapshot, $record);
-                if ($snapshot['series'] !== $series) { throw new DomainException('issuer_document_immutable'); }
+        return $this->transaction(['clients','issuers_clients','issuers_client_links'],fn():array=>$this->allocateLocked($invoice,$issuer,$series));
+    }
+
+    /** Native invoice creation owns the surrounding transaction; no independent/nested commit. */
+    public function allocateInOwnedTransaction($invoice,$issuer,string $series,array $profile): array
+    {
+        IssuerTransaction::assertOwned($this->db,$this->prefix,['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','invoices','issuers_invoice_documents','issuers_sequences','issuers_audit','clients','issuers_clients','issuers_client_links']);
+        $invoice=IssuerPolicy::id($invoice);$issuer=IssuerPolicy::id($issuer);$series=self::series($series);
+        $this->requireAccess($issuer,'create_invoices');
+        return $this->allocateLocked($invoice,$issuer,$series,$profile);
+    }
+    private function allocateLocked(int $invoice,int $issuer,string $series,?array $profile=null): array
+    {
+        // Same first lock as IssuerRegistry mutations: adoption/share revocation cannot race this capture.
+        if (!$this->one("SELECT id FROM {$this->tables}lock WHERE id=1 FOR UPDATE")) {
+            throw new RuntimeException('issuer_document_storage_failed');
+        }
+        // Fixed remaining order: issuer -> invoice -> snapshot -> recipient -> sequence.
+        $registry = $this->one("SELECT * FROM {$this->tables}registry WHERE id=? FOR UPDATE", [$issuer]);
+        if (!$registry || (int) $registry['active'] !== 1) { throw new DomainException('issuer_unavailable'); }
+        $this->requireAccess($issuer, 'create_invoices');
+        $record = $this->one("SELECT * FROM {$this->prefix}invoices WHERE id=? FOR UPDATE", [$invoice]);
+        if (!$record || !isset($record['issuer_id']) || IssuerPolicy::id($record['issuer_id']) !== $issuer) {
+            throw new DomainException('issuer_document_scope_mismatch');
+        }
+        $snapshot = $this->one("SELECT * FROM {$this->tables}invoice_documents WHERE invoice_id=? FOR UPDATE", [$invoice]);
+        if ($snapshot) {
+            $snapshot = self::decode($snapshot, $invoice, $issuer);
+            self::assertRecipient($snapshot, $record);
+            if ($snapshot['series'] !== $series) { throw new DomainException('issuer_document_immutable'); }
+        } else {
+            $identity = self::identity($profile===null?$registry:array_replace($registry,['settings_json'=>json_encode(['document_profile'=>$profile],JSON_THROW_ON_ERROR)]));
+            $recipient = $this->captureRecipient($record, $issuer);
+            $sequence = $this->one("SELECT next_number FROM {$this->tables}sequences WHERE issuer_id=? AND series=? FOR UPDATE", [$issuer, $series]);
+            $number = self::number($sequence['next_number'] ?? '1');
+            $next = self::increment($number);
+            $formatted = $identity['prefix'] . $series . '-' . str_pad($number, $identity['padding'], '0', STR_PAD_LEFT);
+            $created = date('Y-m-d H:i:s');
+            $json = json_encode($identity, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            $recipientJson = json_encode($recipient, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            $this->query("INSERT INTO {$this->tables}invoice_documents (invoice_id,issuer_id,series,number,prefix,formatted_number,legal_identity_json,recipient_identity_json,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+                [$invoice, $issuer, $series, $number, $identity['prefix'], $formatted, $json, $recipientJson, $created]);
+            if ($sequence) {
+                $this->query("UPDATE {$this->tables}sequences SET next_number=? WHERE issuer_id=? AND series=?", [$next, $issuer, $series]);
             } else {
-                $identity = self::identity($registry);
-                $recipient = $this->captureRecipient($record, $issuer);
-                $sequence = $this->one("SELECT next_number FROM {$this->tables}sequences WHERE issuer_id=? AND series=? FOR UPDATE", [$issuer, $series]);
-                $number = self::number($sequence['next_number'] ?? '1');
-                $next = self::increment($number);
-                $formatted = $identity['prefix'] . $series . '-' . str_pad($number, $identity['padding'], '0', STR_PAD_LEFT);
-                $created = date('Y-m-d H:i:s');
-                $json = json_encode($identity, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-                $recipientJson = json_encode($recipient, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-                $this->query("INSERT INTO {$this->tables}invoice_documents (invoice_id,issuer_id,series,number,prefix,formatted_number,legal_identity_json,recipient_identity_json,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
-                    [$invoice, $issuer, $series, $number, $identity['prefix'], $formatted, $json, $recipientJson, $created]);
-                if ($sequence) {
-                    $this->query("UPDATE {$this->tables}sequences SET next_number=? WHERE issuer_id=? AND series=?", [$next, $issuer, $series]);
-                } else {
-                    $this->query("INSERT INTO {$this->tables}sequences (issuer_id,series,next_number) VALUES (?,?,?)", [$issuer, $series, $next]);
-                }
-                $this->query("INSERT INTO {$this->tables}audit (actor_id,event,issuer_id,subject_id,created_at) VALUES (?,?,?,?,?)",
-                    [$this->actor, 'invoice_document_allocated', $issuer, $invoice, $created]);
-                $snapshot = self::decode($this->one("SELECT * FROM {$this->tables}invoice_documents WHERE invoice_id=?", [$invoice]), $invoice, $issuer);
+                $this->query("INSERT INTO {$this->tables}sequences (issuer_id,series,next_number) VALUES (?,?,?)", [$issuer, $series, $next]);
             }
-            return $snapshot;
-        });
+            $this->query("INSERT INTO {$this->tables}audit (actor_id,event,issuer_id,subject_id,created_at) VALUES (?,?,?,?,?)",
+                [$this->actor, 'invoice_document_allocated', $issuer, $invoice, $created]);
+            $snapshot = self::decode($this->one("SELECT * FROM {$this->tables}invoice_documents WHERE invoice_id=?", [$invoice]), $invoice, $issuer);
+        }
+        return $snapshot;
     }
 
     public function forPdf($invoice, $issuer): InvoiceIssuerDocumentData

@@ -15,6 +15,7 @@ function issuers_can_access(...$args){return true;}
 function renderIntegrationView($admin){
  $GLOBALS['view_admin']=$admin;
  $selected=['id'=>11,'legal_name'=>'Synthetic <Issuer>','tax_id'=>'12345678000195','active'=>1];
+ $can_create=$admin;$can_manage=$admin;$profile=[];
  $catalog=$available=[$selected];$default_issuer=null;$issuers_csrf=str_repeat('a',64);$clients=$targets=[];
  ob_start();require __DIR__.'/../application/views/admin/issuers/manage.php';return ob_get_clean();
 }

@@ -1,55 +1,37 @@
-## Incremento atual — núcleo 4.0.7/407
-
-Contatos privados no diretório, portal público por origem e recuperação via fila
-transacional. E-mails iguais entre A/B não selecionam outro proprietário. Reset
-consome token uma vez; revalida identidade/owner, revoga cookies do contato e sessões
-dedicadas. GUI de contatos/SMTP e renderer público isolado; sem herdar credenciais.
-Ver [contrato, testes e limites](portal-recovery.md).
-
-Fluxo de identidade/recuperação não libera documentos, financeiro ou demais operações
-do portal. A fila foi implementada para o worker nativo; entrega SMTP externa não
-foi realizada. Consultar os checks do SHA final para MySQL/concorrência/HTTP/Chromium.
-BB permanece1.0.4, Asaas1.4.8, migrations históricas preservadas. Operações bancárias
-continuam pendentes tecnicamente; homologação API/240/400 não realizada.
-
-## Incremento atual — núcleo 4.0.6/406
-
-Diretório positivo `admin/company_clients`: criação privada idempotente, leitura,
-busca/paginação, edição própria com revisão e compartilhamento/revogação de identidade
-com ACL na origem/destino. Renderer isolado para principal e secundárias. Migration406
-aditiva para recibos duráveis, sem alterar 402–405, BB104 ou Asaas148.
-
-Testes novos/estendidos: clientes PDO, concorrência real MySQL e CRM HTTP/Chromium.
-Consultar a PR45 e os checks do SHA deste incremento para resultados executados.
-O portal privado/recuperação e os demais consumidores continuam pendentes; não há
-liberação global do financeiro, API ou operações BB. Sem merge/deploy/homologação.
-
 # Matriz objetiva da PR45
 
-Este é um estado parcial verificável, não uma declaração de conclusão do escopo total.
-O primeiro incremento de responsabilidade/wizard é `30fb0f10a3ab5eac598d795ef9c712a1187b8364`.
-Se o HEAD avançar, consultar o CI dessa revisão antes de atribuir-lhe resultados antigos.
+Escopo integral em andamento. Núcleo atual4.0.8/408; BB1.0.4/101–104;
+Asaas1.4.8/148. As migrations publicadas402–407 foram preservadas. Não há
+merge/deploy/release nem autorização implícita por um resultado de CI.
 
-| Requisito | Implementação | Evidência | Situação |
+Os incrementos405 e406 possuem provas MySQL/HTTP/Chromium publicadas. Para407,
+a correção de navegação está em44260b61; consultar os checks desse SHA. Para408,
+consultar o novo HEAD e seus runs antes de atribuir resultado de SHA anterior.
+Inventários atualizados localizam revisão; não medem bugs, cobertura ou conclusão.
+
+| Requisito | Implementação atual | Testes executáveis/evidência | Estado e limites |
 |---|---|---|---|
-| Empresa principal e administrador provado pelo instalador | Preservados, sem presumir ID1 | Instalação/upgrade e núcleo MySQL | Implementado/testado no recorte |
-| Legado sem prova do original | Designação autorizada; console + senha no CRM; hash/expiração/rate limit/auditoria | `issuers_master_resolution.php`, HTTP/Chromium | Implementado/testado; não afirma identidade histórica |
-| Nova empresa no núcleo | Wizard persistente, revisão, criação/config/grants atômicos | `issuers_onboarding.php`, HTTP/Chromium | Implementado/testado; compartilhamento ainda indisponível |
-| Colaborador novo com empresa/default | Recusa prévia sem acesso; grants por recurso; falha parcial de perfil/grants explícita | `issuers_staff_native.php`, formulário nativo HTTP | Implementado/testado no fluxo descrito |
-| Corridas e revogação | Lock nativo + revisão + verificação ativa de master | Teste MySQL de duas conexões e Performance Schema | Consultar CI do HEAD com `issuers_onboarding_concurrency.php` |
-| Configuração/SMTP/modelos por empresa | Adaptações existentes e credenciais sem fallback | Suítes settings/mail/context | Parcial; não prova entrega de e-mail externo |
-| Clientes privados/compartilhamento/portal/reset | Serviços e barreiras existentes; rotas positivas incompletas | Testes de barreira e fixtures documentadas | Pendente técnico |
-| Financeiro/projetos/tarefas/despesas/relatórios/arquivos | Consumidores parcialmente adaptados; gates preservados | Suítes e inventários conservadores | Rollout completo pendente técnico |
-| API/cron/jobs/módulos/webhooks por empresa | Exigem origem explícita em cada consumidor | Testes específicos existentes | Não declarado universalmente concluído |
-| BB API Cobrança | Executor e cofre/configuração ainda ausentes | Swagger público 403; OpenAPI atual ainda não obtida | Pendente técnico e contrato oficial |
-| CNAB240 | Codec P/Q e parser T/U restritos | Fixtures + MySQL/driver BB | Sem orquestração operacional de emissão/lotes/download |
-| CNAB400 | Parser CBR643; candidato CBR641 bloqueado | Fixtures e PDF canônico revalidado | BRL/picture/contrato pendentes; candidato não homologado |
-| Origem bancária imutável ligada à fatura | Conexões/perfis imutáveis; tabelas de origens/lotes ainda não ligadas à emissão | Store/ACL/proveniência | Originação/reserva/lotes pendentes técnicos |
-| Retorno/baixa financeira | Importação observacional transacional, dedup/conflito/auditoria | Store e corridas BB | Nenhum pagamento/baixa criado; conciliação financeira pendente |
-| Asaas/notificações | Preservados; Asaas positivo continua bloqueado | Workflows próprios + aviso 88 checks sintéticos | Regressões aprovadas no SHA de referência |
-| Homologação API/240/400 | Nenhuma realizada | Sem credenciais, transações ou arquivos reais | Externa, separada por canal/contrato |
-| Release | Branch PR45 atualizada; migrations preservadas | Gates de versão e ancestralidade | Sem merge/deploy/autorização de release |
+| Empresa principal/master | Identidade do instalador preservada; designação legada autorizada com console+senha/hash/expiração/auditoria | Instalação/upgrade, master e concorrência, HTTP/Chromium | Implementado/testado no recorte; designação não prova identidade histórica e depende de console |
+| Nova empresa e funcionários | Wizard persistente/revisão; criação/settings/grants/default atômicos; novo funcionário exige empresa/default | Onboarding, native Staff, MySQL com lock observado e navegador | Implementado no recorte; não libera todos os domínios |
+| Seletor e contexto | ACL própria, nonce/CSRF/HMAC,409 de aba obsoleta antes de hidratar | Company context e navegador | Preservado; sem replay de POST antigo |
+| Clientes privados/opt-in | Diretório positivo criar/editar/ler/buscar/paginar, compartilhar/revogar identidade; recibos duráveis | Clients PDO, concorrência, CRM/Chromium | Fluxo positivo entregue; outros consumidores continuam com barreiras |
+| Contatos e portal/recuperação | Contatos próprios; login por owner; A/B com e-mail igual; template/SMTP/fila por origem; reset transacional, anti-replay e sessões | Portal positivo/concorrência/navegador; regressões legadas | Portal de identidade/recuperação; entrega SMTP externa não realizada; documentos/finanças do portal pendentes |
+| Settings/SMTP/templates | Identidade canônica, preferências, próprios segredos sem fallback, templates por origem | Suítes settings, queue, portal e HTTP | Parcial; catálogo integral, logos/assinaturas/uploads/integrações restantes pendentes |
+| Faturas nomeadas | UI isolada emitir/listar/consultar/editar sem movimento/cancelar; itens/tributo por item, numeração e snapshots atômicos | Invoices PDO, MySQL concorrente, CRM HTTP/Chromium | Incremento408; perfil restrito documentado, validação remota pertence ao SHA final |
+| Recebimentos manuais | Entrada explícita no writer; ACL/owner/saldo sob lock, referência, retry, status e auditoria atômicos | Invoices/concorrência e regressões writer Asaas | Registro manual local; não confirma banco; origens BB/Asaas recusadas para revisão própria |
+| PDF de faturas nomeadas | DTO autorizado e renderer TCPDF existente; revalidação/auditoria antes do download | PDF binário real, acesso A/B e legado NULL | Somente rota adaptada; caminhos antigos continuam bloqueados para owner positivo |
+| Demais operações financeiras | Créditos/refunds/estornos, descontos/ajustes, recorrência, envio/anexos, relatórios/API restantes | Suítes existentes e inventários | Pendências técnicas; gates preservados |
+| Projetos/tarefas/despesas/outros módulos | Barreiras e adaptações parciais existentes | Testes por consumidor | Operação positiva completa pendente |
+| BB API Cobrança | Executor/configuração segura/cofre e operações ainda ausentes | Fonte oficial/OpenAPI atual ainda necessária | Pendente técnico e contrato oficial; não inferir endpoints/scopes |
+| CNAB240 | Codec P/Q e parser T/U restritos | Fixtures + MySQL/driver BB | Originação, reserva, lote/download/transmissão ainda pendentes |
+| CNAB400 | Parser CBR643 e candidato CBR641 | Fixtures e PDFs/hash oficiais | Candidato bloqueado: BRL/juros/contrato e picture CBR643; sem homologação |
+| Origem bancária e conciliação | Conexões/perfis imutáveis e retorno observacional com dedup/conflito/proveniência | Store/ACL/auditoria/concorrência BB | Nenhum pagamento bancário automático; ligação à fatura/evidência/writer pendente |
+| Asaas/OI/notificações | Funcionalidade existente preservada; positivo Asaas continua bloqueado | Workflows próprios; aviso88 checks sintéticos | Regressão por SHA, sem inferir homologação/produção |
+| Homologação API/240/400 | Nenhuma realizada | Sem credenciais/transações/arquivos reais | Externa, separada por canal/conta/convênio/carteira |
 
-A homologação externa não substitui a implementação que ainda falta. Uma ocorrência de
-retorno 06 não autentica o banco, download não transmite arquivo e exclusão local não
-comprova baixa bancária. Não aplicar pagamentos sem origem, evidência e escritor aprovado.
+Contratos detalhados: [clientes](private-customers.md), [portal](portal-recovery.md),
+[faturas/recebimentos](invoice-operations.md), [wizard](onboarding.md).
+
+A falta de homologação não elimina as pendências técnicas. Ocorrência06 não autentica
+o banco, download não transmite e cancelamento local não confirma baixa remota.
+Não aplicar eventos bancários sem origem, evidência canônica e writer transacional.
