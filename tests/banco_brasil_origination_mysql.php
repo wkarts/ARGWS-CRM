@@ -12,6 +12,11 @@ essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'
 essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.1.3','failed114 remains at113');
 essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='114','native101 through114 installation can retry additive DDL');
 essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native114 replay is stable');
+$GLOBALS['CI']->app_modules=new class {function get($name){return ['headers'=>['version'=>'1.1.5']];}};
+$db->failVersion='1.1.5';essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native115 failure cannot falsely advance final profile migration tracking');$db->failVersion=null;
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.1.4','failed115 preserves successfully applied114');
+essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='115','actual NOOP115 can retry through the native module runner');
+essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native115 replay is stable');
 \BancoBrasil\OriginationSchema::assertValid($db,$p);
 $GLOBALS['CI']->app_modules=$realModules;
 unset($db->data_cache['table_names']);

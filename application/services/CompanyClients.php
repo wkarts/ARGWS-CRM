@@ -74,16 +74,34 @@ final class CompanyClients
             throw new DomainException('company_client_identity_conflict');
         }
     }
+    /** Participants for the same native writer, including durable create receipts when requested. */
+    public function tables(bool $receipts=true):array
+    {
+        return array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_clients','issuers_client_links','issuers_audit','staff','clients'],$receipts?['company_client_requests']:[]);
+    }
     private function transaction(callable $operation,bool $receipts=false)
     {
-        return IssuerTransaction::run($this->db,$this->prefix,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_clients','issuers_client_links','issuers_audit','staff','clients'],$receipts?['company_client_requests']:[]),$operation);
+        return IssuerTransaction::run($this->db,$this->prefix,$this->tables($receipts),$operation);
+    }
+    /** Veto-only preview: uses exactly the writer's name/VAT policy, without adopting existing identities. */
+    public function previewInOwnedTransaction($issuer,$actor,array $input):array
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);IssuerTransaction::assertOwned($this->db,$this->prefix,$this->tables(false));$this->authorize($issuer,$actor,'create');[$name,$tax]=$this->input($input);$this->conflict($tax,null);$this->authorize($issuer,$actor,'create');return ['company'=>$name,'vat'=>$tax??''];
     }
     public function create($issuer,$actor,array $input,?string $requestKey=null): int
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);[$name,$tax]=$this->input($input);
         if($requestKey!==null&&!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new DomainException('company_client_invalid_input');
-        $hash=hash('sha256',json_encode([$name,$tax],JSON_THROW_ON_ERROR));
-        return $this->transaction(function()use($issuer,$actor,$name,$tax,$requestKey,$hash):int{
+        return $this->transaction(fn():int=>$this->createPreparedInOwned($issuer,$actor,$name,$tax,$requestKey),$requestKey!==null);
+    }
+    /** A bounded import composes this exact writer; raw outer transactions remain forbidden. */
+    public function createInOwnedTransaction($issuer,$actor,array $input,string $requestKey):int
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);[$name,$tax]=$this->input($input);if(!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new DomainException('company_client_invalid_input');return $this->createPreparedInOwned($issuer,$actor,$name,$tax,$requestKey);
+    }
+    private function createPreparedInOwned(int $issuer,int $actor,string $name,?string $tax,?string $requestKey):int
+    {
+        IssuerTransaction::assertOwned($this->db,$this->prefix,$this->tables($requestKey!==null));$hash=hash('sha256',json_encode([$name,$tax],JSON_THROW_ON_ERROR));
             $this->authorize($issuer,$actor,'create');
             if($requestKey!==null){
                 $receipt=$this->rows('SELECT issuer_id,actor_id,input_hash,client_id FROM '.$this->prefix.'company_client_requests WHERE request_key=? FOR UPDATE',[$requestKey])[0]??null;
@@ -106,7 +124,6 @@ final class CompanyClients
             }
             $this->authorize($issuer,$actor,'create');
             return $id;
-        },$requestKey!==null);
     }
     public function update($issuer,$actor,$client,array $input,?string $revision=null): void
     {
@@ -187,5 +204,6 @@ final class CompanyClients
     private function audit(int $actor,int $issuer,int $client,string $event): void
     {
         IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,?,?)',[$actor,$event,$issuer,$client,date('Y-m-d H:i:s')]);
+        $id=(int)$this->db->insert_id();if(!$this->rows('SELECT id FROM '.$this->prefix.'issuers_audit WHERE id=? AND actor_id=? AND event=? AND issuer_id=? AND subject_id=?',[$id,$actor,$event,$issuer,$client]))throw new RuntimeException('issuer_client_write_unconfirmed');
     }
 }

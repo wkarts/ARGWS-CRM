@@ -9,6 +9,8 @@ $labels = [
     'proposal_number_prefix'=>'Prefixo da numeração de propostas','predefined_terms_proposal'=>'Condições padrão das propostas',
     'credit_note_prefix'=>'Prefixo da numeração de créditos','predefined_terms_credit_note'=>'Condições padrão dos créditos',
     'email_header'=>'Cabeçalho HTML','email_signature'=>'Assinatura HTML','email_footer'=>'Rodapé HTML',
+    'pdf_format_invoice'=>'PDF de faturas','pdf_format_credit_note'=>'PDF de créditos','pdf_format_contract'=>'PDF de contratos',
+    'pdf_format_estimate'=>'PDF de orçamentos','pdf_format_proposal'=>'PDF de propostas',
     'dateformat' => 'Formato da data', 'time_format' => 'Formato da hora',
     'smtp_host' => 'Servidor SMTP', 'smtp_port' => 'Porta SMTP', 'smtp_encryption' => 'Criptografia',
     'smtp_email' => 'E-mail do remetente', 'smtp_username' => 'Usuário SMTP',
@@ -30,6 +32,8 @@ $labels = [
         <?php if ($group === 'email') { ?><p>As credenciais são exclusivas desta empresa. A configuração é usada pelas notificações de fatura e pela recuperação do portal desta empresa. Salvar não envia e-mail nem valida credenciais no provedor.</p><?php } ?>
         <?php if ($group === 'email_content') { ?><p>HTML de apresentação usado nos e-mails desta empresa. Cada campo é um fragmento completo. Formatação de texto, tabelas e links HTTPS são preservados; scripts, formulários e imagens remotas são removidos. As alterações valem para novos e-mails enfileirados; mensagens já enfileiradas mantêm seu conteúdo.</p><?php } ?>
         <?php if ($group === 'sales_documents') { ?><p>Preferências próprias para novos documentos. Prefixo vazio exibe somente o número. Condições são texto literal. Documentos e notificações já emitidos preservam seu snapshot. A conversão usa identidade, condições e numeração próprias da fatura.</p><?php } ?>
+        <?php if ($group === 'sales_pdf') { ?><p>Formato e orientação capturados nos novos orçamentos e propostas. Documentos existentes mantêm sua escolha original; documentos anteriores a esta preferência mantêm A4 retrato. Outros tipos de PDF ainda não usam estas opções.</p><?php } ?>
+        <?php if ($group === 'document_pdf') { ?><p>Formato e orientação capturados na emissão de novas faturas e créditos, e na ativação de novos contratos. Documentos existentes preservam seu snapshot; os anteriores a esta preferência mantêm A4 retrato. Formato de PDF não representa assinatura ou aceite jurídico.</p><?php } ?>
         <form method="post" action="<?= $escape($company_urls[$group]); ?>" autocomplete="off">
             <input type="hidden" name="_company_context" value="<?= $escape($context_token); ?>">
             <?php if ($this->config->item('csrf_protection')) { ?><input type="hidden" name="<?= $escape($this->security->get_csrf_token_name()); ?>" value="<?= $escape($this->security->get_csrf_hash()); ?>"><?php } ?>
@@ -42,6 +46,10 @@ $labels = [
                         <select class="form-control" id="company-setting-<?= $escape($name); ?>" name="settings[<?= $escape($name); ?>]" required>
                             <option value="">Não configurado</option>
                             <?php foreach ($name === 'dateformat' ? CompanySettingsFormats::dates() : ['24'=>'24 horas','12'=>'12 horas'] as $key=>$label) { ?><option value="<?= $escape($key); ?>" <?= $value === (string)$key ? 'selected' : ''; ?>><?= $escape($label); ?></option><?php } ?>
+                        </select>
+                    <?php } elseif (in_array($name,['pdf_format_estimate','pdf_format_proposal','pdf_format_invoice','pdf_format_credit_note','pdf_format_contract'],true)) { ?>
+                        <select class="form-control" id="company-setting-<?= $escape($name); ?>" name="settings[<?= $escape($name); ?>]" required>
+                            <?php foreach (CompanyDocumentPdf::choices() as $key=>$label) { ?><option value="<?= $escape($key); ?>" <?= $value === $key ? 'selected' : ''; ?>><?= $escape($label); ?></option><?php } ?>
                         </select>
                     <?php } elseif ($name === 'smtp_encryption') { ?>
                         <select class="form-control" id="company-setting-<?= $escape($name); ?>" name="settings[<?= $escape($name); ?>]">

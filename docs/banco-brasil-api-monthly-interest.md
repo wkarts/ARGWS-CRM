@@ -1,0 +1,15 @@
+# Perfil API com taxa percentual mensal
+
+A OpenAPI oficial3.2.2 do catálogo17395705/2 define `RequisicaoRegistroBoletos.jurosMora.tipo=2` como taxa mensal e usa `porcentagem` para informá-la. `RespostaDetalhamentoBoleto` permite conferir o tipo e `percentualJuroMoraTitulo`; o campo de valor fixo deve permanecer zero neste perfil. Fonte pública do próprio portal: <https://api.externo.bb.com.br/docs/v1/openapi/17395705/2>. A cópia primária recuperada em19/10/2026 tem SHA256 `6767b098b13bc00e42700d80435a73e1f6ff4d31d7a28647926209a58d5f00d3`.
+
+A GUI permite declarar perfil distinto de taxa mensal, com confirmação do contrato e permissão `api_charges`, além de Gerenciar. Perfis anteriores isentos e de valor fixo diário preservam definição, hash, credenciais e numeração. Declarar outro perfil não reinicia a faixa compartilhada nem reinterpreta títulos antigos. A declaração é do operador; não autentica a contratação bancária.
+
+Na emissão, informar somente o percentual mensal, entre0.01 e100.00%, com até duas casas. Essa faixa é uma restrição conservadora deste perfil local, não um limite bancário universal. Não aceitar campo de valor diário junto da taxa mensal, nem taxa mensal em perfil diário/isento. O payload é `jurosMora: {tipo:2, porcentagem:1.25}` para1.25% ao mês, usando número JSON decimal exato sem conversão por float. A autorização de encargos é revalidada na reserva, na retomada e imediatamente antes do marcador de envio, inclusive após OAuth.
+
+A consulta exige tipo2, percentual idêntico ao payload imutável e valor fixo zero, além das provas anteriores de conta, origem, ambiente, convênio, titular, nominal e paginação. Divergência continua incerta/requer revisão; não confirma o título pela simples resposta HTTP.
+
+O CRM publica a taxa contratada; não calcula juros mensais, taxa diária equivalente, capitalização, pro rata ou valor final a receber. Fatura continua com nominal original. `ApiCreditedReceipt` mantém a recusa de juros efetivamente recebidos e outros ajustes sem o contrato financeiro apropriado. Taxa de emissão e dinheiro recebido são aspectos separados. Multa continua indisponível pela divergência interna da especificação e não foi inferida a partir da regra de juros.
+
+Testes: `banco_brasil_api_monthly_interest.php` testa o contrato decimal, segregação de perfis e confirmação; `banco_brasil_api_monthly_interest_mysql.php` usa banco nativo, criptografia e serviços reais com transporte bancário injetado, incluindo A/B, replay, fingerprints antigos, revogação de encargos durante OAuth e preservação do financeiro quando a API informa juros recebidos. O roteiro `banco_brasil_api_monthly_browser.cjs` prepara configuração gráfica, credenciais protegidas, contexto A/B e apresentação; a emissão/consulta nele são feitas pela fixture restrita ao banco descartável usando os serviços reais e transporte simulado. Não executa emissão bancária pelo controlador HTTP.
+
+Não houve credencial real, OAuth bancário, transmissão a cliente, homologação, merge ou deploy. A integração final deve registrar o SHA e os resultados efetivamente executados, distinguindo o navegador preparado do navegador aprovado.

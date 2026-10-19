@@ -13,8 +13,8 @@ final class CompanyResourceCatalog
         $result['email_templates']=['name'=>'Modelos de e-mail','capabilities'=>['view'=>'Consultar','edit'=>'Editar']];
         $result['reports']=['name'=>'Relatórios da empresa','capabilities'=>['view'=>'Consultar e exportar com acesso aos recursos']];
         $result['company_api']=['name'=>'Credenciais da API da empresa','capabilities'=>['manage'=>'Gerenciar as próprias credenciais vinculadas a esta empresa']];
-        $result['imports']=['name'=>'Importação de despesas da empresa','capabilities'=>['manage'=>'Validar e confirmar lotes próprios']];
-        $result['banco_brasil']=['name'=>'Banco do Brasil','capabilities'=>['view'=>'Consultar','manage'=>'Configurar','import'=>'Importar retorno observacional','generate'=>'Gerar remessa240 local','download'=>'Baixar remessa','reconcile'=>'Conciliar retorno com evidência','reconcile_components'=>'Conciliar componentes com confirmação independente','external_reverse'=>'Declarar estorno externo integral de recibo composto','api_issue'=>'Registrar cobrança API','api_query'=>'Consultar cobrança API','api_charges'=>'Emitir API com juros diários declarados','api_amend'=>'Solicitar alteração de vencimento API','api_cancel'=>'Solicitar baixa API']];
+        $result['imports']=['name'=>'Importação e exportação de clientes/despesas da empresa','capabilities'=>['manage'=>'Validar e confirmar lotes próprios']];
+        $result['banco_brasil']=['name'=>'Banco do Brasil','capabilities'=>['view'=>'Consultar','manage'=>'Configurar','import'=>'Importar retorno observacional','generate'=>'Gerar remessa240 local','download'=>'Baixar remessa','reconcile'=>'Conciliar retorno com evidência','reconcile_components'=>'Conciliar componentes com confirmação independente','external_reverse'=>'Declarar estorno externo integral de recibo composto','api_issue'=>'Registrar cobrança API','api_query'=>'Consultar cobrança API','api_charges'=>'Emitir API com juros diários/mensais declarados','api_discount'=>'Declarar e emitir ofertas de desconto API','api_amend'=>'Solicitar alteração de vencimento API','api_cancel'=>'Solicitar baixa API']];
         return $result;
     }
 }

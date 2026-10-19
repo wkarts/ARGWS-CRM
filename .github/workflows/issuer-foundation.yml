@@ -217,6 +217,27 @@ jobs:
           php tests/companies/portal_task_receipts_concurrency.php
           php tests/companies/native_434.php
           php tests/companies/operational_author_charset.php
+          php tests/companies/client_imports.php
+          php tests/companies/client_imports_controller.php
+          php tests/companies/client_imports_concurrency.php
+          php tests/companies/expense_export_cursor.php
+          php tests/companies/expense_billing.php
+          php tests/companies/expense_billing_atomic.php
+          php tests/companies/expense_billing_controller.php
+          php tests/companies/expense_billing_schema.php
+          php tests/companies/expense_billing_concurrency.php
+          php tests/settings/sales_pdf.php
+          php tests/settings/primary_sales_pdf.php
+          php tests/companies/sales_pdf_preferences.php
+          php tests/settings/sales_pdf_concurrency.php
+          php tests/settings/document_pdf.php
+          php tests/settings/primary_document_pdf.php
+          php tests/companies/invoice_credit_pdf_preferences.php
+          php tests/companies/contracts_pdf_preferences.php
+          php tests/companies/pdf_fiscal_identity.php
+          php tests/companies/credit_pdf_revalidation.php
+          php tests/settings/document_pdf_concurrency.php
+          php tests/companies/native_435.php
           php tests/companies/asaas_boundaries.php
           php tests/companies/asaas_exact_json.php
           php tests/companies/invoice_delivery_concurrency.php

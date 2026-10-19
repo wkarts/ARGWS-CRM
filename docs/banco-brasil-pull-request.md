@@ -1,5 +1,12 @@
 # PR45 — Banco do Brasil e Empresas no núcleo
 
+## Incremento435 — perfis API e prova financeira cruzada
+
+Núcleo4.3.5/435 e móduloBB1.1.5/115 (NOOP de schema); os contratos anteriores e hashes não são reclassificados. Registro API agora oferece juros mensais percentuais e primeiro desconto fixo ou percentual até data, com declaração contratual/capacidade explícita, perfil imutável e consulta coerente da conta. Publicar taxa/oferta não lança juros nem reduz a dívida: recebimento API com ajustes continua em revisão neste incremento. Asaas1.5.1/151 preservado. A [validação435](companies/pr45-validation-435.md) separa testes locais, tracking e CI do próprio SHA.
+
+A disputa financeira API20/CNAB17 passou com duas fontes finais reais/two-process InnoDB e controles positivos separados. Colisão de identidade entre faturas é adversarial/sintética; não representa importação GUI de retorno240 sobre origemAPI, cujo adaptador segue como código em implementação. Layout240 e contrato manual mantêm seu significado: download/declaração não são transmissão ou aceite autenticado. CNAB400 segue indisponível por BRL85–86, juros herdados/contrato e pictureCBR64326–39 ainda sem confirmação suficiente; trailer641 não é reaberto. Nenhum canal/API/240/400/Asaas/SMTP foi homologado externamente.
+
+
 A PR46 foi incorporada à branch `feat/banco-brasil-billing-cnab240`; PR45 continua
 com destino main. Núcleo4.2.3/423, BB1.1.0/101–110, Asaas1.4.8/148. Migrations e
 histórico publicados preservados; nenhum merge, deploy, tag ou release autorizado.

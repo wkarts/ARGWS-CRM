@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 namespace BancoBrasil;
+require_once __DIR__.'/ModuleRelease.php';
 
 /** Date-only instructions use the existing durable API outbox. Original invoice/origin snapshots are immutable. */
 trait ApiAmendments
@@ -15,7 +16,7 @@ trait ApiAmendments
     }
     private function authorizeOperation(int $issuer,int $actor,string $operation):void
     {
-        if($operation==='amend_due'){ $module=$this->rows("SELECT installed_version FROM {$this->prefix}modules WHERE module_name='banco_brasil' FOR UPDATE")[0]??[];if(($module['installed_version']??null)!=='1.1.4')throw new \DomainException('bb_api_access_denied'); }
+        if($operation==='amend_due'){ $module=$this->rows("SELECT installed_version FROM {$this->prefix}modules WHERE module_name='banco_brasil' FOR UPDATE")[0]??[];if(($module['installed_version']??null)!==ModuleRelease::VERSION)throw new \DomainException('bb_api_access_denied'); }
         $this->authorize($issuer,$actor,$operation==='amend_due'?'api_amend':($operation==='movements'?'api_query':'api_'.$operation),true);
         if($operation==='amend_due'&&!(new \IssuerResourceAccess($this->db,$this->prefix))->can($issuer,$actor,'invoices','edit'))throw new \DomainException('bb_api_access_denied');
     }
@@ -46,6 +47,7 @@ trait ApiAmendments
         if($this->rows("SELECT origin_id FROM {$this->prefix}bb_api_receipts WHERE origin_id=? FOR UPDATE",[$originId]))throw new \DomainException('bb_api_amendment_financial_history');
         foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$field])if($this->rows("SELECT amount FROM {$this->prefix}{$table} WHERE {$field}=? FOR UPDATE",[$origin['invoice_id']]))throw new \DomainException('bb_api_amendment_financial_history');
         $today=(new \DateTimeImmutable('now',new \DateTimeZone('America/Sao_Paulo')))->format('Y-m-d');$due=$amendment['due_date'];
+        $offer=$this->rows("SELECT payload_json FROM {$this->prefix}bb_api_origins WHERE origin_id=?",[$originId])[0]??[];if(isset($offer['payload_json'])){$offer=ApiClient::decodeExact($offer['payload_json'])['desconto']??[];if(in_array($offer['tipo']??null,['1','2'],true)){$until=\DateTimeImmutable::createFromFormat('!d.m.Y',$offer['dataExpiracao']??'');if(!$until||$until->format('d.m.Y')!==($offer['dataExpiracao']??null)||$due<$until->format('Y-m-d'))throw new \DomainException('bb_api_discount_due_conflict');}}
         $old=$result['bank_due_date']??$snapshot['invoice']['duedate'];
         if($due===$old||$due<$today||$due<$snapshot['invoice']['date']||(new \DateTimeImmutable($snapshot['invoice']['date']))->diff(new \DateTimeImmutable($due))->days>2500)throw new \DomainException('bb_api_amendment_date_invalid');
     }

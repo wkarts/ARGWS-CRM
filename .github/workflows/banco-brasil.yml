@@ -46,13 +46,22 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: gd, pdo_mysql, mysqli
+          extensions: gd, pdo_mysql, mysqli, curl, mbstring, bcmath
           coverage: none
       - run: |
           php tests/banco_brasil_mysql.php
           php tests/banco_brasil_layout_mysql.php
           php tests/banco_brasil_mysql_driver.php
           php tests/banco_brasil_components_concurrency.php
+          php tests/banco_brasil_api_monthly_interest.php
+          php tests/banco_brasil_api_monthly_interest_mysql.php
+          php tests/banco_brasil_api_fixed_discount.php
+          php tests/banco_brasil_api_fixed_discount_mysql.php
+          php tests/banco_brasil_api_fixed_discount_concurrency.php
+          php tests/banco_brasil_api_percentage_discount.php
+          php tests/banco_brasil_api_percentage_discount_mysql.php
+          php tests/banco_brasil_api_percentage_discount_concurrency.php
+          php tests/banco_brasil_cross_channel_receipt_concurrency.php
           php tests/banco_brasil_external_reversal_concurrency.php
         env:
           MYSQL_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
@@ -101,6 +110,15 @@ jobs:
           php tests/banco_brasil_reconciliation_concurrency.php
           php tests/banco_brasil_api_concurrency.php
           php tests/banco_brasil_api_receipt_concurrency.php
+          php tests/banco_brasil_cross_channel_receipt_concurrency.php
+          php tests/banco_brasil_api_monthly_interest.php
+          php tests/banco_brasil_api_monthly_interest_mysql.php
+          php tests/banco_brasil_api_fixed_discount.php
+          php tests/banco_brasil_api_fixed_discount_mysql.php
+          php tests/banco_brasil_api_fixed_discount_concurrency.php
+          php tests/banco_brasil_api_percentage_discount.php
+          php tests/banco_brasil_api_percentage_discount_mysql.php
+          php tests/banco_brasil_api_percentage_discount_concurrency.php
           php tests/banco_brasil_webhook_mysql.php
           php tests/banco_brasil_amendment_concurrency.php
           php tests/banco_brasil_components_concurrency.php

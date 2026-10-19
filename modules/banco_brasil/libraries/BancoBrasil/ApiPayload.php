@@ -4,16 +4,19 @@ declare(strict_types=1);
 namespace BancoBrasil;
 require_once __DIR__.'/ApiClient.php';
 require_once __DIR__.'/Agreement.php';
-require_once __DIR__.'/ApiDailyInterest.php';
+require_once __DIR__.'/ApiDailyInterest.php';require_once __DIR__.'/ApiFixedDiscount.php';
 final class ApiPayload
 {
     public static function input(array $input):array
     {
         $fields=['payer_address'=>60,'payer_district'=>30,'payer_zip'=>8,'payer_city'=>30,'payer_state'=>2,'species'=>2,'acceptance'=>1];
-        if(array_diff(array_keys($input),array_merge(array_keys($fields),['daily_interest']))||array_diff(array_keys($fields),array_keys($input)))throw new \DomainException('bb_api_title_invalid');
+        if(array_diff(array_keys($input),array_merge(array_keys($fields),['daily_interest','monthly_interest_percentage','fixed_discount','discount_percentage','discount_until']))||array_diff(array_keys($fields),array_keys($input)))throw new \DomainException('bb_api_title_invalid');
         foreach($fields as $field=>$max){$value=$input[$field];if(!is_string($value)||trim($value)===''||strlen($value)>$max||preg_match('/[\x00-\x1f\x7f]/',$value)||preg_match('//u',$value)!==1)throw new \DomainException('bb_api_title_invalid');$input[$field]=trim($value);}
         if(!preg_match('/^[0-9]{8}$/D',$input['payer_zip'])||!in_array($input['payer_state'],['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'],true)||!in_array($input['species'],['02','04','12','17','19'],true)||!in_array($input['acceptance'],['A','N'],true))throw new \DomainException('bb_api_title_invalid');
         if(isset($input['daily_interest']))$input['daily_interest']=ApiDailyInterest::amount($input['daily_interest']);
+        if(isset($input['monthly_interest_percentage']))$input['monthly_interest_percentage']=ApiDailyInterest::monthlyRate($input['monthly_interest_percentage']);
+        if(array_key_exists('fixed_discount',$input))$input['fixed_discount']=ApiFixedDiscount::amount($input['fixed_discount']);if(array_key_exists('discount_until',$input))$input['discount_until']=ApiFixedDiscount::date($input['discount_until']);
+        if(array_key_exists('discount_percentage',$input))$input['discount_percentage']=ApiPercentageDiscount::percentage($input['discount_percentage']);
         return array_replace($fields,$input);
     }
     public static function build(Agreement $a,array $invoice,array $doc,string $number,array $input,array $profile=[]):string
@@ -27,9 +30,9 @@ final class ApiPayload
         if($name===''||strlen($name)>60)throw new \DomainException('bb_api_payer_invalid');
         $money=Fields::amount($amount);$date=static fn($iso)=>(new \DateTimeImmutable($iso))->format('d.m.Y');
         $data=['numeroConvenio'=>(int)$a->scope->agreement,'numeroCarteira'=>17,'numeroVariacaoCarteira'=>(int)$a->variation,'codigoModalidade'=>1,'dataEmissao'=>$date($invoice['date']),'dataVencimento'=>$date($invoice['duedate']),'valorOriginal'=>$money,'valorAbatimento'=>0,'quantidadeDiasProtesto'=>0,'quantidadeDiasNegativacao'=>0,'indicadorAceiteTituloVencido'=>'N','codigoAceite'=>$input['acceptance'],'codigoTipoTitulo'=>(int)$input['species'],'indicadorPermissaoRecebimentoParcial'=>'N','numeroTituloBeneficiario'=>'CRM'.$invoice['id'],'numeroTituloCliente'=>$number,'campoUtilizacaoBeneficiario'=>'CRM'.$invoice['id'].'N'.(string)(int)substr($number,-10),'desconto'=>['tipo'=>0],'jurosMora'=>['tipo'=>3],'multa'=>['tipo'=>0],'indicadorPix'=>'N','pagador'=>['tipoInscricao'=>strlen($tax)===11?1:2,'numeroInscricao'=>$tax,'nome'=>$name,'endereco'=>$input['payer_address'],'bairro'=>$input['payer_district'],'cep'=>(int)$input['payer_zip'],'cidade'=>$input['payer_city'],'uf'=>$input['payer_state']]];
-        $data['jurosMora']=ApiDailyInterest::parameters($profile,$input,$amount);
+        $data['jurosMora']=ApiDailyInterest::parameters($profile,$input,$amount);$data['desconto']=ApiFixedDiscount::parameters($profile,$input,$invoice,$today,$amount);
         // OpenAPI requires a JSON number. Encode its validated decimal lexeme without float conversion.
-        $json=ApiDailyInterest::encode($data);$json=preg_replace('/"valorOriginal":"([0-9]+\.[0-9]{2})"/','"valorOriginal":$1',$json,1,$count);if($count!==1)throw new \DomainException('bb_api_payload_invalid');return $json;
+        $json=ApiFixedDiscount::encode(ApiDailyInterest::encode($data),$data);$json=preg_replace('/"valorOriginal":"([0-9]+\.[0-9]{2})"/','"valorOriginal":$1',$json,1,$count);if($count!==1)throw new \DomainException('bb_api_payload_invalid');return $json;
     }
     public static function validateResult(string $operation,array $data,array $snapshot,array $origin,Agreement $a):array
     {

@@ -62,6 +62,20 @@ class Settings extends AdminController
                 catch (DomainException $error) { show_error('Confira os prefixos e as condições dos documentos. Nenhuma definição foi alterada.', 422); return; }
             }
 
+            // The exact native sales PDF choices fail before hooks/uploads or adjacent option writes.
+            $pdfPreferences = array_intersect_key(is_array($rawSales['settings'] ?? null) ? $rawSales['settings'] : [], array_flip(CompanySettingsCatalog::fields('sales_pdf')));
+            if ($pdfPreferences !== []) {
+                try { $post_data['settings'] = array_replace($post_data['settings'], CompanySettingsCatalog::prepare('sales_pdf', $pdfPreferences)); }
+                catch (DomainException $error) { show_error('Confira o formato dos PDFs. Nenhuma definição foi alterada.', 422); return; }
+            }
+
+            // Known immutable document PDF preferences share an exact narrow native contract.
+            $documentPdfPreferences=array_intersect_key(is_array($rawSales['settings']??null)?$rawSales['settings']:[],array_flip(CompanySettingsCatalog::fields('document_pdf')));
+            if($documentPdfPreferences!==[]){
+                try{$post_data['settings']=array_replace($post_data['settings'],CompanySettingsCatalog::prepare('document_pdf',$documentPdfPreferences));}
+                catch(DomainException $error){show_error('Confira o formato dos PDFs. Nenhuma definição foi alterada.',422);return;}
+            }
+
             // Normalize language keys even when posted through another settings tab.
             if (in_array($group, ['general', 'localization', 'argws_platform'], true)
                 || array_intersect(['active_language', 'enabled_languages', 'disable_language'], array_keys($post_data['settings']))) {
@@ -119,10 +133,10 @@ class Settings extends AdminController
 
             try { $success = $this->settings_model->update($post_data); }
             catch (DomainException $error) {
-                if ($salesPreferences === [] || !CompanySettingsRuntime::active() || !CompanySettingsRuntime::isPrimary()) { throw $error; }
+                if (($salesPreferences === [] && $pdfPreferences === [] && $documentPdfPreferences === []) || !CompanySettingsRuntime::active() || !CompanySettingsRuntime::isPrimary()) { throw $error; }
                 show_error('Não foi possível salvar as preferências. Confira os campos e sua permissão nesta empresa.', CompanySettingsRuntime::can('edit') ? 422 : 403); return;
             } catch (RuntimeException $error) {
-                if ($salesPreferences === [] || !CompanySettingsRuntime::active() || !CompanySettingsRuntime::isPrimary()) { throw $error; }
+                if (($salesPreferences === [] && $pdfPreferences === [] && $documentPdfPreferences === []) || !CompanySettingsRuntime::active() || !CompanySettingsRuntime::isPrimary()) { throw $error; }
                 log_message('error','Principal sales preferences unconfirmed; no submitted values logged.');
                 show_error('Não foi possível confirmar as preferências. Recarregue a página antes de tentar novamente.', 503); return;
             }
@@ -267,6 +281,8 @@ class Settings extends AdminController
                 'localization' => CompanyRequestScope::adminUrl($this, 'settings?group=localization'),
                 'documents' => CompanyRequestScope::adminUrl($this, 'settings?group=documents'),
                 'sales_documents' => CompanyRequestScope::adminUrl($this, 'settings?group=sales_documents'),
+                'document_pdf' => CompanyRequestScope::adminUrl($this, 'settings?group=document_pdf'),
+                'sales_pdf' => CompanyRequestScope::adminUrl($this, 'settings?group=sales_pdf'),
                 'email_content' => CompanyRequestScope::adminUrl($this, 'settings?group=email_content'),
             ],
         ]);

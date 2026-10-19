@@ -179,6 +179,16 @@ final class CompanySettingsStorage
         require_once __DIR__.'/CompanySettingsCatalog.php';
         return $this->persistBatch($issuerId,$staffId,CompanySettingsCatalog::prepare('sales_documents',$values),false,true);
     }
+    public function updateDocumentPdfPreferences($issuerId,$staffId,array $values): int
+    {
+        require_once __DIR__.'/CompanySettingsCatalog.php';
+        return $this->persistBatch($issuerId,$staffId,CompanySettingsCatalog::prepare('document_pdf',$values),false,true);
+    }
+    public function updateSalesPdfPreferences($issuerId,$staffId,array $values): int
+    {
+        require_once __DIR__.'/CompanySettingsCatalog.php';
+        return $this->persistBatch($issuerId,$staffId,CompanySettingsCatalog::prepare('sales_pdf',$values),false,true);
+    }
     private function persistBatch($issuerId,$staffId,array $values,bool $owned,bool $salesOnly=false): int
     {
         $issuerId=IssuerPolicy::id($issuerId);$staffId=IssuerPolicy::id($staffId);

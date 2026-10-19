@@ -145,3 +145,13 @@ falha na segunda opção ou no audit reverte todo esse lote. updateBatch genéri
 principal permanece negado. Opções legadas que não pertencem ao lote conservam seu
 fluxo anterior. A GUI trata falha desse lote como503 sem SQL/valores e permite nova
 tentativa; a validação de entrada continua ocorrendo antes dos efeitos legados.
+
+
+## PDF de orçamentos e propostas
+
+As quatro escolhas nativas de papel/orientação agora têm captura própria em novos documentos e batch estreito na principal. Consulte [sales-pdf-preferences.md](sales-pdf-preferences.md) para compatibilidade de snapshots históricos, rollback e alcance exato. Esse grupo não aceita opções de outras famílias PDF nem integrações de plugins.
+
+
+## PDF de faturas, créditos e contratos
+
+A preferência nativa de papel/orientação é capturada na nova emissão (contratos, na ativação). Consulte [document-pdf-preferences.md](document-pdf-preferences.md) para compatibilidade histórica, guarda fiscal e confirmação pós-render do crédito. Recibos e extratos não foram liberados por este grupo.

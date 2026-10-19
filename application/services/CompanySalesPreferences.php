@@ -12,7 +12,7 @@ final class CompanySalesPreferences
         $prefix=$type==='estimate'?'estimate_prefix':'proposal_number_prefix';$terms='predefined_terms_'.$type;$values=[];
         foreach([$prefix,$terms] as $field)$values[$field]=$store->exists($issuer,$field)?$store->get($issuer,$field):CompanySettingsCatalog::defaultValue('sales_documents',$field);
         $values=CompanySettingsCatalog::prepare('sales_documents',$values);
-        return ['format'=>1,'kind'=>$kind,'prefix'=>$values[$prefix],'terms'=>$values[$terms]];
+        return ['format'=>2,'kind'=>$kind,'prefix'=>$values[$prefix],'terms'=>$values[$terms],'pdf'=>CompanyDocumentPdf::capture($store,$issuer,$kind)];
     }
     public static function presentation(string $kind,$number,array $context,string $legacyPrefix=''):array
     {
@@ -20,7 +20,8 @@ final class CompanySalesPreferences
         $prefix=$legacyPrefix;$terms=$context['identity']['terms']??'';
         if(array_key_exists('sales_preferences',$context)){
             $prefs=$context['sales_preferences'];
-            if(!is_array($prefs)||array_keys($prefs)!==['format','kind','prefix','terms']||$prefs['format']!==1||$prefs['kind']!==$kind||!is_string($prefs['prefix'])||!is_string($prefs['terms']))throw new DomainException('company_sales_invalid');
+            if(!is_array($prefs)||!in_array($prefs['format']??null,[1,2],true)||array_keys($prefs)!==(($prefs['format']??null)===2?['format','kind','prefix','terms','pdf']:['format','kind','prefix','terms'])||$prefs['kind']!==$kind||!is_string($prefs['prefix'])||!is_string($prefs['terms']))throw new DomainException('company_sales_invalid');
+            if($prefs['format']===2)CompanyDocumentPdf::validate($prefs['pdf']);
             $type=$kind==='estimates'?'estimate':'proposal';CompanySettingsCatalog::prepare('sales_documents',[($type==='estimate'?'estimate_prefix':'proposal_number_prefix')=>$prefs['prefix'],'predefined_terms_'.$type=>$prefs['terms']]);$prefix=$prefs['prefix'];$terms=$prefs['terms'];
         }
         if(!is_string($terms))throw new DomainException('company_sales_invalid');

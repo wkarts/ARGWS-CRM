@@ -8,7 +8,7 @@ require __DIR__.'/support/BbPdoDatabase.php';require APPPATH.'libraries/App_modu
 function db_prefix(){return 'tbl';}function &get_instance(){return $GLOBALS['CI'];}
 $pdo=new PDO('mysql:host='.APP_DB_HOSTNAME.';dbname='.APP_DB_NAME.';charset=utf8mb4',APP_DB_USERNAME,APP_DB_PASSWORD,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
 $db=new BbPdoDatabase($pdo);
-$GLOBALS['CI']=(object)['db'=>$db,'load'=>new class{function dbforge(){}},'lang'=>new class{function load($v){}function line($v){return $v;}},'app_modules'=>new class{function get($v){return ['headers'=>['version'=>'1.1.4']];}}];
+$GLOBALS['CI']=(object)['db'=>$db,'load'=>new class{function dbforge(){}},'lang'=>new class{function load($v){}function line($v){return $v;}},'app_modules'=>new class{function get($v){return ['headers'=>['version'=>'1.1.5']];}}];
 $db->query("INSERT INTO tblmodules(module_name,installed_version,active) VALUES('banco_brasil','0.0.0',1)");
-if((string)(new App_module_migration('banco_brasil'))->to_latest()!=='114')throw new RuntimeException('native fixture BB installation failed');
-echo "Native Banco do Brasil114 installed in disposable HTTP fixture.\n";
+if((string)(new App_module_migration('banco_brasil'))->to_latest()!=='115')throw new RuntimeException('native fixture BB installation failed');
+echo "Native Banco do Brasil115 installed in disposable HTTP fixture.\n";

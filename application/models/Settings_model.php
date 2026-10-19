@@ -49,6 +49,12 @@ class Settings_model extends App_Model
         // The principal uses its existing options storage; direct calls share the declared field contract.
         $salesPreferences = array_intersect_key(is_array($data['settings'] ?? null) ? $data['settings'] : [], array_flip(CompanySettingsCatalog::fields('sales_documents')));
         if ($salesPreferences !== []) { $data['settings'] = array_replace($data['settings'], CompanySettingsCatalog::prepare('sales_documents', $salesPreferences)); }
+        $pdfPreferences=array_intersect_key(is_array($data['settings']??null)?$data['settings']:[],array_flip(CompanySettingsCatalog::fields('sales_pdf')));
+        if($pdfPreferences!==[])$data['settings']=array_replace($data['settings'],CompanySettingsCatalog::prepare('sales_pdf',$pdfPreferences));
+        $documentPdfPreferences=array_intersect_key(is_array($data['settings']??null)?$data['settings']:[],array_flip(CompanySettingsCatalog::fields('document_pdf')));
+        if($documentPdfPreferences!==[])$data['settings']=array_replace($data['settings'],CompanySettingsCatalog::prepare('document_pdf',$documentPdfPreferences));
+        $primaryDocumentPdfPreferences = [];
+        $primaryPdfPreferences = [];
         $primarySalesPreferences = [];
         $original_encrypted_fields = [];
 
@@ -105,6 +111,10 @@ class Settings_model extends App_Model
             $name               = $hook_data['name'];
             $val                = $hook_data['value'];
             if (CompanySettingsRuntime::active() && CompanySettingsRuntime::isPrimary() && in_array($name, CompanySettingsCatalog::fields('sales_documents'), true)) { $primarySalesPreferences[$name] = $val; continue; }
+
+            if (CompanySettingsRuntime::active() && CompanySettingsRuntime::isPrimary() && in_array($name, CompanySettingsCatalog::fields('sales_pdf'), true)) { $primaryPdfPreferences[$name] = $val; continue; }
+
+            if (CompanySettingsRuntime::active() && CompanySettingsRuntime::isPrimary() && in_array($name, CompanySettingsCatalog::fields('document_pdf'), true)) { $primaryDocumentPdfPreferences[$name] = $val; continue; }
 
             if ($name == 'default_contact_permissions') {
                 $val = serialize($val);
@@ -166,6 +176,8 @@ class Settings_model extends App_Model
             }
         }
 
+        if ($primaryDocumentPdfPreferences !== []) { $affectedRows += CompanySettingsRuntime::updateDocumentPdfPreferences($primaryDocumentPdfPreferences); }
+        if ($primaryPdfPreferences !== []) { $affectedRows += CompanySettingsRuntime::updateSalesPdfPreferences($primaryPdfPreferences); }
         if ($primarySalesPreferences !== []) { $affectedRows += CompanySettingsRuntime::updateSalesDocumentPreferences($primarySalesPreferences); }
 
         // Contact permission default none
@@ -219,7 +231,7 @@ class Settings_model extends App_Model
         if(isset($data['tags'])||isset($data['custom_fields'])){throw new DomainException('company_settings_global_resource_unavailable');}
         if(!is_array($data['settings']??null)){throw new DomainException('company_settings_invalid_input');}
         // Internal callers share the same validation and HTML policy as the native form.
-        foreach (['email','email_content','documents','sales_documents'] as $group) {
+        foreach (['email','email_content','documents','sales_documents','sales_pdf','document_pdf'] as $group) {
             $known=array_intersect_key($data['settings'],array_flip(CompanySettingsCatalog::fields($group)));
             if($known!==[])$data['settings']=array_replace($data['settings'],CompanySettingsCatalog::prepare($group,$known));
         }

@@ -9,6 +9,61 @@ import unittest
 
 
 class BrowserEnvironmentTest(unittest.TestCase):
+    def test_fixtures_are_copied_into_a_test_free_runtime_before_php(self):
+        # Execute the actual browser prelude. The model starts with no /app/tests,
+        # as .dockerignore requires; unlike permissive local adapters, cp cannot
+        # create its destination parent and PHP cannot read host-only fixtures.
+        node = r"""
+const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const browser=process.argv[1],omitCopy=process.argv[2]==='omit';
+const directories=new Set(['/app']),files=new Set();let reachedBrowser=false,fixtureRuns=0;
+function docker(binary,args){
+  if(binary!=='docker')throw Error('unexpected binary');
+  if(args[0]==='exec'&&args[2]==='mkdir'){
+    for(const directory of args.slice(4)){
+      let parent='';for(const part of directory.split('/').filter(Boolean)){
+        parent+='/'+part;directories.add(parent);
+      }
+    }return '';
+  }
+  if(args[0]==='cp'){
+    if(omitCopy)return '';
+    const destination=args[2].split(':')[1];
+    if(!directories.has(path.posix.dirname(destination)))throw Error('cp parent missing');
+    if(!fs.existsSync(args[1]))throw Error('host fixture missing');
+    files.add(destination);return '';
+  }
+  const php=args.indexOf('php');
+  if(args[0]==='exec'&&php>0){
+    if(!files.has('/app/'+args[php+1]))throw Error('fixture not copied');
+    if(!files.has('/app/tests/support/BbPdoDatabase.php'))throw Error('fixture helper not copied');
+    fixtureRuns++;return '{}';
+  }
+  throw Error('unexpected Docker operation '+JSON.stringify(args));
+}
+const environment={ISSUERS_BROWSER_URL:'http://127.0.0.1:48095',
+ ISSUERS_BROWSER_DB_CONTAINER:'argws-crm-provision-db-999',
+ ISSUERS_BROWSER_APP_CONTAINER:'argws-crm-upgrade-999',ISSUERS_BROWSER_DB_NAME:'argws_upgrade_ci'};
+const localProcess={env:environment,exitCode:0};
+const context={process:localProcess,console:{error(){}},Buffer,URL,
+ require(name){
+  if(name==='node:child_process')return {execFileSync:docker};
+  if(name==='playwright')return {chromium:{async launch(){reachedBrowser=true;throw Error('stop after fixture');}}};
+  return require(name);
+ }};
+vm.runInNewContext(fs.readFileSync(browser,'utf8'),context,{filename:browser});
+setImmediate(()=>{if(!reachedBrowser||fixtureRuns!==1){console.error('fixture setup failed before browser');process.exitCode=1;}});
+"""
+        root = Path(__file__).resolve().parents[1]
+        for browser in ('project_portal_tasks', 'portal_task_write', 'expense_billing'):
+            with self.subTest(browser=browser):
+                command = ['node', '-e', node, 'tests/companies/' + browser + '_browser.cjs']
+                green = subprocess.run(command, cwd=root, text=True, capture_output=True)
+                self.assertEqual(green.returncode, 0, green.stderr)
+                red = subprocess.run(command + ['omit'], cwd=root, text=True, capture_output=True)
+                self.assertNotEqual(red.returncode, 0, 'missing fixture copies must fail')
+                self.assertIn('fixture setup failed before browser', red.stderr)
+
     def test_every_browser_receives_its_disposable_environment(self):
         script = Path(__file__).with_name("issuers_standalone_http_smoke.sh")
         blocks, pending = [], []

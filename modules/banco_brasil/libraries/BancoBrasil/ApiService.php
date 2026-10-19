@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 namespace BancoBrasil;
+require_once __DIR__.'/ModuleRelease.php';
 require_once __DIR__.'/Origination.php';
 require_once __DIR__.'/ApiSchema.php';
 require_once __DIR__.'/ApiPayload.php';
@@ -46,7 +47,7 @@ final class ApiService
     {
         $module=$this->rows('SELECT active,installed_version FROM '.$this->prefix.'modules WHERE module_name=? FOR UPDATE',['banco_brasil'])[0]??[];
         $acl=new \IssuerResourceAccess($this->db,$this->prefix);$acl->lockFinancialIdentity($issuer,$actor);
-        if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.1.4'||!$acl->can($issuer,$actor,'banco_brasil','view')||!$acl->can($issuer,$actor,'banco_brasil',$cap)||($invoice&&!$acl->can($issuer,$actor,'invoices','view')))throw new \DomainException('bb_api_access_denied');
+        if((int)($module['active']??0)!==1||($module['installed_version']??null)!==ModuleRelease::VERSION||!$acl->can($issuer,$actor,'banco_brasil','view')||!$acl->can($issuer,$actor,'banco_brasil',$cap)||($invoice&&!$acl->can($issuer,$actor,'invoices','view')))throw new \DomainException('bb_api_access_denied');
     }
     private function connection(int $issuer,int $id):array
     {
@@ -74,10 +75,10 @@ final class ApiService
     public function declareProfile($issuer,$actor,$connection,array $input):int
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$connection=\IssuerPolicy::id($connection);
-        if(array_diff(array_keys($input),['api_stage','first_number','last_number','first_file','reference','interest_exempt','exclusive_range','interest_policy','interest_policy_confirmed'])||($input['exclusive_range']??null)!=='1'||!is_string($input['api_stage']??null))throw new \DomainException('bb_api_contract_declaration_required');
-        $terms=ApiDailyInterest::declaration($input);ApiClient::stage($input['api_stage']);$first=self::number($input['first_number']??null,9999999999);$last=self::number($input['last_number']??null,9999999999);$file=self::number($input['first_file']??null,999999);$reference=self::text($input['reference']??null,191);if($last<$first)throw new \DomainException('bb_api_invalid_input');
-        return $this->transaction(function()use($issuer,$actor,$connection,$input,$first,$last,$file,$reference,$terms):int{
-            $this->authorize($issuer,$actor,'manage');if($terms)$this->authorize($issuer,$actor,'api_charges');[$c,$a]=$this->connection($issuer,$connection);
+        if(array_diff(array_keys($input),['api_stage','first_number','last_number','first_file','reference','interest_exempt','exclusive_range','interest_policy','interest_policy_confirmed','discount_policy','discount_policy_confirmed'])||($input['exclusive_range']??null)!=='1'||!is_string($input['api_stage']??null))throw new \DomainException('bb_api_contract_declaration_required');
+        $terms=ApiDailyInterest::declaration($input);$discountTerms=ApiFixedDiscount::declaration($input);ApiClient::stage($input['api_stage']);$first=self::number($input['first_number']??null,9999999999);$last=self::number($input['last_number']??null,9999999999);$file=self::number($input['first_file']??null,999999);$reference=self::text($input['reference']??null,191);if($last<$first)throw new \DomainException('bb_api_invalid_input');
+        return $this->transaction(function()use($issuer,$actor,$connection,$input,$first,$last,$file,$reference,$terms,$discountTerms):int{
+            $this->authorize($issuer,$actor,'manage');if($terms)$this->authorize($issuer,$actor,'api_charges');if($discountTerms)$this->authorize($issuer,$actor,'api_discount');[$c,$a]=$this->connection($issuer,$connection);
             if(($input['api_stage']==='production')!==($c['environment']==='production'))throw new \DomainException('bb_api_environment_invalid');
             $namespace=self::bankNamespace($a);$range=$this->rows('SELECT * FROM '.$this->prefix.'bb_number_reservations WHERE bank_namespace=? FOR UPDATE',[$namespace])[0]??null;
             if($range){if((int)$range['issuer_id']!==$issuer||$range['beneficiary_tax_id']!==$a->taxId||(int)$range['first_number']!==$first||(int)$range['last_number']!==$last||(int)$range['first_file']!==$file)throw new \DomainException('bb_number_range_conflict');}
@@ -86,7 +87,8 @@ final class ApiService
                 \IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'bb_number_reservations(bank_namespace,issuer_id,beneficiary_tax_id,first_number,last_number,next_number,first_file,next_file) VALUES(?,?,?,?,?,?,?,?)',[$namespace,$issuer,$a->taxId,$first,$last,$first,$file,$file]);
             }
             $def=['issuer_id'=>$issuer,'connection_id'=>$connection,'configuration_hash'=>$c['configuration_hash'],'api_stage'=>$input['api_stage'],'spec_sha256'=>ApiClient::SPEC_SHA256,'first_number'=>$first,'last_number'=>$last,'first_file'=>$file,'reference'=>$reference,'interest_exempt'=>true,'exclusive_range'=>true,'verification'=>'operator_declaration_not_bank_verification','profile'=>'17-simple-BRL-no-adjustments-no-Pix'];
-            if($terms){$def=array_replace($def,$terms,['interest_exempt'=>false,'profile'=>'17-simple-BRL-daily-interest-no-Pix']);}
+            if($terms){$def=array_replace($def,$terms,['interest_exempt'=>false,'profile'=>$terms['interest_policy']==='monthly_percentage'?'17-simple-BRL-monthly-percentage-no-Pix':'17-simple-BRL-daily-interest-no-Pix']);}
+            if($discountTerms)$def=array_replace($def,$discountTerms,['profile'=>$def['profile'].($discountTerms['discount_policy']==='percentage_until'?'-first-percentage-discount':'-first-fixed-discount')]);
             $json=json_encode($def,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);$hash=hash('sha256',$json);$old=$this->rows('SELECT id FROM '.$this->prefix.'bb_api_profiles WHERE profile_hash=?',[$hash])[0]??null;if($old)return (int)$old['id'];
             $id=$this->insert('bb_api_profiles',['issuer_id'=>$issuer,'connection_id'=>$connection,'api_stage'=>$input['api_stage'],'configuration_hash'=>$c['configuration_hash'],'profile_hash'=>$hash,'definition_json'=>$json,'created_by'=>$actor,'created_at'=>date('Y-m-d H:i:s')]);$this->audit($issuer,$connection,$actor,'api_profile_declared','api_profile',$id);return $id;
         });
@@ -115,7 +117,7 @@ final class ApiService
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$profile=\IssuerPolicy::id($profile);$invoice=\IssuerPolicy::id($invoice);$input=ApiPayload::input($input);if(!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new \DomainException('bb_api_invalid_input');$inputHash=hash('sha256',json_encode([$profile,$invoice,$input],JSON_THROW_ON_ERROR));
         $origin=$this->transaction(function()use($issuer,$actor,$profile,$invoice,$input,$requestKey,$inputHash):int{
-            $this->authorize($issuer,$actor,'api_issue',true);[$p,$definition,$c,$a]=$this->profile($issuer,$profile);if(isset($definition['interest_policy']))$this->authorize($issuer,$actor,'api_charges',true);
+            $this->authorize($issuer,$actor,'api_issue',true);[$p,$definition,$c,$a]=$this->profile($issuer,$profile);if(isset($definition['interest_policy']))$this->authorize($issuer,$actor,'api_charges',true);if(isset($definition['discount_policy']))$this->authorize($issuer,$actor,'api_discount',true);
             $old=$this->rows('SELECT o.origin_id,o.input_hash,b.issuer_id FROM '.$this->prefix.'bb_api_origins o JOIN '.$this->prefix.'bb_origins b ON b.id=o.origin_id WHERE o.request_key=? FOR UPDATE',[$requestKey])[0]??null;
             if($old){if((int)$old['issuer_id']!==$issuer||!hash_equals($old['input_hash'],$inputHash))throw new \DomainException('bb_api_request_conflict');return (int)$old['origin_id'];}
             if(!$this->rows('SELECT id FROM '.$this->prefix.'bb_api_credentials WHERE profile_id=? AND issuer_id=?',[$profile,$issuer]))throw new \DomainException('bb_api_credentials_required');
@@ -178,7 +180,7 @@ final class ApiService
     {
         if(!in_array($operation,['issue','query','cancel','amend_due','movements'],true)||!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new \DomainException('bb_api_invalid_input');
         $prepared=$this->transaction(function()use($issuer,$actor,$originId,$operation,$requestKey,$amendment):array{
-            $this->authorizeOperation($issuer,$actor,$operation);[$origin,$stored,$snapshot,$profile,$agreement]=$this->loadOrigin($issuer,$originId);if($operation==='issue'&&(ApiClient::decodeExact($stored['payload_json'])['jurosMora']['tipo']??null)==='1')$this->authorize($issuer,$actor,'api_charges',true);
+            $this->authorizeOperation($issuer,$actor,$operation);[$origin,$stored,$snapshot,$profile,$agreement]=$this->loadOrigin($issuer,$originId);if($operation==='issue'&&in_array(ApiClient::decodeExact($stored['payload_json'])['jurosMora']['tipo']??null,['1','2'],true))$this->authorize($issuer,$actor,'api_charges',true);if($operation==='issue'&&in_array(ApiClient::decodeExact($stored['payload_json'])['desconto']['tipo']??null,['1','2'],true))$this->authorize($issuer,$actor,'api_discount',true);
             $op=$this->rows('SELECT * FROM '.$this->prefix.'bb_api_operations WHERE origin_id=? AND operation=? AND request_key=? FOR UPDATE',[$originId,$operation,$requestKey])[0]??null;
             if($operation==='movements'&&$op){$saved=json_decode($op['result_json'],true,32,JSON_THROW_ON_ERROR);if(($saved['movement_window']??null)!==$amendment||(int)$op['actor_id']!==$actor)throw new \DomainException('bb_api_request_conflict');}
             if($operation==='amend_due'&&$op){$saved=json_decode($op['result_json'],true,32,JSON_THROW_ON_ERROR);if(($saved['amendment']??null)!==$amendment||(int)$op['actor_id']!==$actor)throw new \DomainException('bb_api_request_conflict');}
@@ -213,7 +215,7 @@ final class ApiService
             $this->transaction(function()use($issuer,$actor,$originId,$operation,$prepared,$id):void{
                 $this->authorizeOperation($issuer,$actor,$operation);$op=$this->rows('SELECT claim_token,status,actor_id FROM '.$this->prefix.'bb_api_operations WHERE id=? AND origin_id=? FOR UPDATE',[$id,$originId])[0]??[];
                 if(($op['claim_token']??null)!==$prepared['claim']||($op['status']??null)!=='authenticating'||(int)$op['actor_id']!==$actor)throw new \DomainException('bb_api_claim_superseded');
-                [$currentOrigin]=$this->loadOrigin($issuer,$originId);$this->assertUnmovedFinancialPosition($issuer,$actor,$currentOrigin,$operation);if($operation==='issue'&&(ApiClient::decodeExact($prepared['stored']['payload_json'])['jurosMora']['tipo']??null)==='1')$this->authorize($issuer,$actor,'api_charges',true);
+                [$currentOrigin]=$this->loadOrigin($issuer,$originId);$this->assertUnmovedFinancialPosition($issuer,$actor,$currentOrigin,$operation);if($operation==='issue'&&in_array(ApiClient::decodeExact($prepared['stored']['payload_json'])['jurosMora']['tipo']??null,['1','2'],true))$this->authorize($issuer,$actor,'api_charges',true);if($operation==='issue'&&in_array(ApiClient::decodeExact($prepared['stored']['payload_json'])['desconto']['tipo']??null,['1','2'],true))$this->authorize($issuer,$actor,'api_discount',true);
                 $currentCredential=$this->rows('SELECT id FROM '.$this->prefix.'bb_api_credentials WHERE profile_id=? AND issuer_id=? ORDER BY id DESC LIMIT 1 FOR UPDATE',[$prepared['profile']['id'],$issuer])[0]??[];
                 if((int)($currentCredential['id']??0)!==(int)$prepared['credential']['id'])throw new \DomainException('bb_api_credentials_rotated');
                 \IssuerStorage::query($this->db,"UPDATE ".$this->prefix."bb_api_operations SET status='sending',updated_at=? WHERE id=?",[gmdate('Y-m-d H:i:s'),$id]);
@@ -226,7 +228,7 @@ final class ApiService
             $querySnapshot=$prepared['snapshot'];
             if($operation==='query')$querySnapshot=$this->queryAmendmentSnapshot($originId,$response['data'],$querySnapshot);
             $projection=$operation==='movements'?ApiMovements::projection($response['data'],$prepared['amendment'],$prepared['origin'],$prepared['snapshot'],$prepared['agreement']):($operation==='amend_due'?self::amendmentResult($response['data'],$prepared['snapshot'],$prepared['amendment']):ApiPayload::validateResult($operation,$response['data'],$querySnapshot,$prepared['origin'],$prepared['agreement']));
-            if($operation==='query')ApiDailyInterest::confirm($response['data'],ApiClient::decodeExact($prepared['stored']['payload_json']));
+            if($operation==='query'){ApiDailyInterest::confirm($response['data'],ApiClient::decodeExact($prepared['stored']['payload_json']));ApiFixedDiscount::confirm($response['data'],ApiClient::decodeExact($prepared['stored']['payload_json']));$projection+=ApiFixedDiscount::projection(ApiClient::decodeExact($prepared['stored']['payload_json']));}
             if($operation==='query')$projection+=$this->client->confirmAccount($prepared['profile']['api_stage'],$credentials,$prepared['agreement'],$prepared['origin']['remote_id'],$token,$querySnapshot,$projection);
             if($operation==='query'&&isset($querySnapshot['amendment_id']))$projection+=['amendment_id'=>(string)$querySnapshot['amendment_id'],'bank_due_date'=>$querySnapshot['invoice']['duedate']];
             $this->completeOperation($issuer,$actor,$originId,$id,$prepared['claim'],$operation,$response['status'],$response['response_hash'],$projection);
@@ -296,7 +298,7 @@ final class ApiService
         return $this->transaction(function()use($issuer,$actor):array{
             $this->authorize($issuer,$actor,'view');
             $profiles=$this->rows('SELECT p.id,p.connection_id,p.api_stage,p.definition_json,(SELECT MAX(c.id) FROM '.$this->prefix.'bb_api_credentials c WHERE c.profile_id=p.id AND c.issuer_id=p.issuer_id) credential_id FROM '.$this->prefix.'bb_api_profiles p WHERE p.issuer_id=? ORDER BY p.id DESC LIMIT 30',[$issuer]);
-            foreach($profiles as &$p){$def=json_decode($p['definition_json'],true,16,JSON_THROW_ON_ERROR);$p['interest_policy']=$def['interest_policy']??'exempt';$p['reference']=$def['reference'];$p['range']=(string)$def['first_number'].'–'.$def['last_number'];unset($p['definition_json']);}unset($p);
+            foreach($profiles as &$p){$def=json_decode($p['definition_json'],true,16,JSON_THROW_ON_ERROR);$p['interest_policy']=$def['interest_policy']??'exempt';$p['discount_policy']=$def['discount_policy']??'none';$p['reference']=$def['reference'];$p['range']=(string)$def['first_number'].'–'.$def['last_number'];unset($p['definition_json']);}unset($p);
             $origins=$this->rows('SELECT o.id,o.invoice_id,o.connection_id,o.remote_id,o.state,a.profile_id FROM '.$this->prefix.'bb_origins o JOIN '.$this->prefix.'bb_api_origins a ON a.origin_id=o.id WHERE o.issuer_id=? ORDER BY o.id DESC LIMIT 30',[$issuer]);
             $receipts=$this->rows('SELECT r.origin_id,r.payment_id,r.operation_id FROM '.$this->prefix.'bb_api_receipts r JOIN '.$this->prefix.'bb_origins o ON o.id=r.origin_id AND o.issuer_id=r.issuer_id WHERE r.issuer_id=?',[$issuer]);
             $operations=$this->rows('SELECT x.id,x.origin_id,x.operation,x.status,x.http_status,x.failure_category,x.result_json,x.updated_at FROM '.$this->prefix.'bb_api_operations x JOIN '.$this->prefix.'bb_origins o ON o.id=x.origin_id WHERE o.issuer_id=? ORDER BY x.id DESC LIMIT 30',[$issuer]);

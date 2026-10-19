@@ -28,7 +28,7 @@ abstract class CompanyContractsStorage
     protected function transaction(callable $work)
     {
         CompanyContractsSchema::assertValid($this->db,$this->p);
-        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyContractsSchema::definitions($this->p)),$this->apiTables()),$this->guardedWork($work));
+        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','options','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyContractsSchema::definitions($this->p)),$this->apiTables()),$this->guardedWork($work));
     }
     protected static function text($value,int $max,bool $required=true):string
     {

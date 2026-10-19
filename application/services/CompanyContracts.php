@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 require_once __DIR__.'/CompanyContractsStorage.php';
+require_once __DIR__.'/CompanySettingsStorage.php';
+require_once __DIR__.'/CompanyInvoicePresentation.php';
 final class CompanyContracts extends CompanyContractsStorage
 {
     protected string $feature='contracts';
@@ -39,7 +41,7 @@ final class CompanyContracts extends CompanyContractsStorage
             if($action==='activate'){
                 if($row['status']!=='draft')throw new DomainException('company_contract_immutable');$client=$this->client($issuer,$actor,(int)$row['client_id']);$identity=$this->rows('SELECT legal_name,tax_id FROM '.$this->p.'issuers_registry WHERE id=? AND active=1 FOR UPDATE',[$issuer])[0]??null;if(!$identity||trim($identity['legal_name'])===''||!is_string($identity['tax_id'])||$identity['tax_id']==='')throw new DomainException('company_contract_identity_required');
                 $counter=$this->rows('SELECT next_number FROM '.$this->p.'company_contract_counters WHERE issuer_id=? FOR UPDATE',[$issuer])[0]??null;if(!$counter){IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_contract_counters(issuer_id,next_number) VALUES(?,1)',[$issuer]);$counter=['next_number'=>1];}$number=(int)$counter['next_number'];if($number<1||$number>2147483646)throw new DomainException('company_operation_limit');IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_contract_counters SET next_number=? WHERE issuer_id=?',[$number+1,$issuer]);if(!$this->rows('SELECT issuer_id FROM '.$this->p.'company_contract_counters WHERE issuer_id=? AND next_number=?',[$issuer,$number+1]))throw new RuntimeException('issuer_operation_write_unconfirmed');
-                $snapshot=json_encode(['issuer_id'=>$issuer,'identity'=>$identity,'client'=>['id'=>(int)$client['userid'],'name'=>$client['company'],'tax_id'=>$client['vat']],'number'=>$number,'name'=>$row['name'],'body'=>$row['body'],'start_date'=>$row['start_date'],'due_date'=>$row['due_date']],JSON_THROW_ON_ERROR);
+                $snapshot=json_encode(['issuer_id'=>$issuer,'identity'=>$identity,'client'=>['id'=>(int)$client['userid'],'name'=>$client['company'],'tax_id'=>$client['vat']],'number'=>$number,'name'=>$row['name'],'body'=>$row['body'],'start_date'=>$row['start_date'],'due_date'=>$row['due_date'],'pdf_preferences'=>CompanyInvoicePresentation::capture(new CompanySettingsStorage($this->db,$this->p),$issuer,'contracts')],JSON_THROW_ON_ERROR);
             }elseif(!in_array($row['status'],['draft','active'],true))throw new DomainException('company_contract_immutable');
             $status=$action==='activate'?'active':'cancelled';IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_contracts SET number=?,snapshot_json=?,status=?,revision=revision+1,updated_at=? WHERE issuer_id=? AND id=? AND revision=?',[$number,$snapshot,$status,date('Y-m-d H:i:s'),$issuer,$id,$revision]);$r=$this->row($issuer,$id);if($r['status']!==$status||(int)$r['revision']!==$revision+1||$r['snapshot_json']!==$snapshot)throw new RuntimeException('issuer_operation_write_unconfirmed');return $id;
         });

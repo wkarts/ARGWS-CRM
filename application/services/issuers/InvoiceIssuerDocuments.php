@@ -7,6 +7,8 @@ require_once __DIR__.'/IssuerTransaction.php';
 require_once __DIR__.'/../CompanyCurrencyUnits.php';
 require_once __DIR__.'/../CompanyInvoiceBalance.php';
 
+require_once __DIR__.'/../CompanyInvoicePresentation.php';
+
 /** Immutable issuer identity and issuer/series-local numbering. Never reads global options. */
 final class InvoiceIssuerDocuments
 {
@@ -176,7 +178,7 @@ final class InvoiceIssuerDocuments
         if (!is_array($profile)) { throw new DomainException('issuer_document_profile_required'); }
         $limits = ['address'=>500, 'city'=>100, 'state'=>100, 'postcode'=>32, 'country_code'=>2, 'phone'=>50, 'email'=>191, 'prefix'=>50, 'terms'=>10000];
         $keys = array_merge(array_keys($limits), ['padding', 'logo_inline']);
-        if (array_diff($keys, array_keys($profile)) || array_diff(array_keys($profile), array_merge($keys,['signature_inline']))) {
+        if (array_diff($keys, array_keys($profile)) || array_diff(array_keys($profile), array_merge($keys,['signature_inline','pdf_preferences']))) {
             throw new DomainException('issuer_document_invalid_profile');
         }
         $identity = [
@@ -194,6 +196,10 @@ final class InvoiceIssuerDocuments
         $identity['padding'] = $profile['padding'];
         $identity['logo_inline'] = self::logo($profile['logo_inline']);
         if(array_key_exists('signature_inline',$profile)){$identity['signature_inline']=self::logo($profile['signature_inline']);}
+        if(array_key_exists('pdf_preferences',$profile)){
+            $kind=is_array($profile['pdf_preferences'])?($profile['pdf_preferences']['kind']??null):null;if(!in_array($kind,['invoices','creditnotes'],true))throw new DomainException('company_document_pdf_invalid');
+            $identity['pdf_preferences']=CompanyInvoicePresentation::validate($profile['pdf_preferences'],$kind);
+        }
         return $identity;
     }
 
@@ -276,6 +282,7 @@ final class InvoiceIssuerDocuments
             'legal_name'=>$identity['legal_name'], 'tax_id'=>$identity['tax_id'],
             'settings_json'=>json_encode(['document_profile'=>$profile], JSON_THROW_ON_ERROR),
         ]);
+        CompanyInvoicePresentation::specification($identity,'invoices');
         $snapshot['series'] = self::series($snapshot['series']);
         $snapshot['number'] = self::number($snapshot['number']);
         $expected = $identity['prefix'] . $snapshot['series'] . '-' . str_pad($snapshot['number'], $identity['padding'], '0', STR_PAD_LEFT);

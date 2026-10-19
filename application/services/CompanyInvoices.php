@@ -36,7 +36,7 @@ final class CompanyInvoices
         return ['address'=>$get('invoice_company_address'),'city'=>$get('invoice_company_city'),'state'=>$get('company_state'),
             'postcode'=>$get('invoice_company_postal_code'),'country_code'=>strtoupper($get('invoice_company_country_code')),
             'phone'=>$get('invoice_company_phonenumber'),'email'=>$get('smtp_email'),'prefix'=>$get('invoice_prefix'),
-            'terms'=>$get('predefined_terms_invoice'),'padding'=>6]+(new CompanyAssets($this->db,$this->prefix))->invoiceProfileInOwnedTransaction($issuer,$actor);
+            'terms'=>$get('predefined_terms_invoice'),'padding'=>6,'pdf_preferences'=>CompanyInvoicePresentation::capture($store,$issuer,'invoices')]+(new CompanyAssets($this->db,$this->prefix))->invoiceProfileInOwnedTransaction($issuer,$actor);
     }
     private static function text($value,int $max,bool $required=false):string
     {

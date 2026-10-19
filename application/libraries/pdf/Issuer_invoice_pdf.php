@@ -12,7 +12,8 @@ final class Issuer_invoice_pdf extends TCPDF
     public function __construct(InvoiceIssuerDocumentData $document)
     {
         $this->document = $document;
-        parent::__construct('P','mm','A4',true,'UTF-8',false,false);
+        $format=CompanyInvoicePresentation::specification($document->data()['identity'],'invoices');
+        parent::__construct($format['orientation'],'mm',$format['format'],true,'UTF-8',false,false);
         $this->tcpdflink = false;
         $this->setPrintHeader(false);
         $this->setPrintFooter(true);

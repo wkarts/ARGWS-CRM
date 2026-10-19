@@ -1,5 +1,12 @@
 # Banco do Brasil 1.0.2: perfis explícitos CNAB 240 e 400
 
+## Incremento435 — perfis API e prova financeira cruzada
+
+Núcleo4.3.5/435 e móduloBB1.1.5/115 (NOOP de schema); os contratos anteriores e hashes não são reclassificados. Registro API agora oferece juros mensais percentuais e primeiro desconto fixo ou percentual até data, com declaração contratual/capacidade explícita, perfil imutável e consulta coerente da conta. Publicar taxa/oferta não lança juros nem reduz a dívida: recebimento API com ajustes continua em revisão neste incremento. Asaas1.5.1/151 preservado. A [validação435](companies/pr45-validation-435.md) separa testes locais, tracking e CI do próprio SHA.
+
+A disputa financeira API20/CNAB17 passou com duas fontes finais reais/two-process InnoDB e controles positivos separados. Colisão de identidade entre faturas é adversarial/sintética; não representa importação GUI de retorno240 sobre origemAPI, cujo adaptador segue como código em implementação. Layout240 e contrato manual mantêm seu significado: download/declaração não são transmissão ou aceite autenticado. CNAB400 segue indisponível por BRL85–86, juros herdados/contrato e pictureCBR64326–39 ainda sem confirmação suficiente; trailer641 não é reaberto. Nenhum canal/API/240/400/Asaas/SMTP foi homologado externamente.
+
+
 ## Escopo e estado real
 
 A versão 102 acrescenta o retorno observacional CBR643 e um **codificador de candidato** CBR641. Também exige seleção explícita de perfil para novas importações 240/400. Não representa homologação do BB nem uma integração bancária completa. Este parágrafo descreve o incremento102. Para originação240, retorno assistido e executor API108, consulte a [matriz atual](companies/pr45-status.md). Nenhum desses incrementos libera a remessa400 nem demonstra homologação.

@@ -88,6 +88,14 @@ final class CompanySettingsRuntime
     {
         $s=self::scope();return $s->storage->updateSalesDocumentPreferences($s->issuerId,$s->staffId,$values);
     }
+    public static function updateDocumentPdfPreferences(array $values): int
+    {
+        $s=self::scope();return $s->storage->updateDocumentPdfPreferences($s->issuerId,$s->staffId,$values);
+    }
+    public static function updateSalesPdfPreferences(array $values): int
+    {
+        $s=self::scope();return $s->storage->updateSalesPdfPreferences($s->issuerId,$s->staffId,$values);
+    }
     public static function saveIdentity(array $input): bool
     {
         $s = self::scope();

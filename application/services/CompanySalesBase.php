@@ -44,13 +44,19 @@ abstract class CompanySalesBase
     }
     protected static function encode(array $data):string{return json_encode($data,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);}
     protected static function hash(array $data):string{return hash('sha256',self::encode($data));}
-    protected function assertOrigin(int $issuer,int $actor,array $payload,string $originHash,array $context=[]):void{if(!hash_equals($originHash,self::hash($this->context($issuer,$actor,(int)$payload['client_id'],(int)$payload['currency'],$context['sales_preferences']['kind']??'invoices'))))throw new DomainException('company_sales_origin_changed');}
+    protected function assertOrigin(int $issuer,int $actor,array $payload,string $originHash,array $context=[]):void
+    {
+        $current=$this->context($issuer,$actor,(int)$payload['client_id'],(int)$payload['currency'],$context['sales_preferences']['kind']??'invoices');
+        // Read and conversion of version 1 documents retain their exact original hash contract.
+        if(($context['sales_preferences']['format']??null)===1){unset($current['sales_preferences']['pdf']);$current['sales_preferences']['format']=1;}
+        if(!hash_equals($originHash,self::hash($current)))throw new DomainException('company_sales_origin_changed');
+    }
     /** A committed canonical receipt can be finalized after configuration changes. Its immutable document snapshot must match the frozen origin. */
     protected function assertOriginOrReceipt(int $issuer,int $actor,array $payload,string $originHash,array $context,string $key):void
     {
         $receipt=$this->rows('SELECT r.issuer_id,r.actor_id,r.invoice_id,d.legal_identity_json AS identity_json,d.recipient_identity_json AS recipient_json FROM '.$this->prefix.'company_invoice_requests r JOIN '.$this->prefix.'invoices i ON i.id=r.invoice_id AND i.issuer_id=r.issuer_id JOIN '.$this->prefix.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE r.request_key=? FOR UPDATE',[$key])[0]??null;
         if(!$receipt){$this->assertOrigin($issuer,$actor,$payload,$originHash,$context);return;}
-        if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||!hash_equals(self::hash($this->decode($receipt['identity_json'])),self::hash($context['identity']))||!hash_equals(self::hash($this->decode($receipt['recipient_json'])),self::hash($context['recipient'])) )throw new DomainException('company_sales_origin_changed');
+        if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||!hash_equals(self::hash(CompanyInvoicePresentation::fiscalIdentity($this->decode($receipt['identity_json']))),self::hash(CompanyInvoicePresentation::fiscalIdentity($context['identity'])))||!hash_equals(self::hash($this->decode($receipt['recipient_json'])),self::hash($context['recipient'])) )throw new DomainException('company_sales_origin_changed');
     }
     protected function decode(string $json):array{$value=json_decode($json,true,32,JSON_THROW_ON_ERROR);if(!is_array($value))throw new RuntimeException('issuer_sales_write_unconfirmed');return $value;}
 }

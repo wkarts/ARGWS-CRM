@@ -3,6 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/CompanySettingsIdentity.php';
 require_once __DIR__.'/CompanySettingsFormats.php';
+require_once __DIR__.'/CompanyDocumentPdf.php';
 
 /** Only groups consumed by the isolated company flows; never the legacy plugin catalog. */
 final class CompanySettingsCatalog
@@ -10,7 +11,7 @@ final class CompanySettingsCatalog
     public static function groups(): array
     {
         return ['company'=>'Informações da Empresa','email'=>'Servidor SMTP','email_content'=>'Apresentação dos e-mails',
-            'documents'=>'Faturas e créditos','sales_documents'=>'Orçamentos e propostas','localization'=>'Data e hora'];
+            'documents'=>'Faturas e créditos','sales_documents'=>'Orçamentos e propostas','document_pdf'=>'PDF de faturas, créditos e contratos','sales_pdf'=>'PDF de orçamentos e propostas','localization'=>'Data e hora'];
     }
 
     public static function fields(string $group): array
@@ -18,6 +19,8 @@ final class CompanySettingsCatalog
         return match($group) {
             'company'=>array_merge(['invoice_company_name','company_vat'],CompanySettingsIdentity::PROFILE_OPTIONS),
             'localization'=>['dateformat','time_format'],
+            'document_pdf'=>['pdf_format_invoice','pdf_format_credit_note','pdf_format_contract'],
+            'sales_pdf'=>['pdf_format_estimate','pdf_format_proposal'],
             'sales_documents'=>['estimate_prefix','predefined_terms_estimate','proposal_number_prefix','predefined_terms_proposal'],
             'documents'=>['invoice_prefix','predefined_terms_invoice','credit_note_prefix','predefined_terms_credit_note'],
             'email'=>['smtp_host','smtp_port','smtp_encryption','smtp_email','smtp_username','smtp_password'],
@@ -29,6 +32,7 @@ final class CompanySettingsCatalog
     public static function defaultValue(string $group,string $field):string
     {
         if(!in_array($field,self::fields($group),true))throw new DomainException('company_settings_invalid_input');
+        if(in_array($group,['sales_pdf','document_pdf'],true))return 'A4-PORTRAIT';
         return $group==='sales_documents'?(['estimate_prefix'=>'ORC-','proposal_number_prefix'=>'PROP-'][$field]??''):'';
     }
 
@@ -50,6 +54,7 @@ final class CompanySettingsCatalog
             if($group!=='company'&&$name!=='smtp_password'&&!self::multiline($name)&&preg_match('/[\r\n]/',$value))throw new DomainException('company_settings_invalid_input');
         }
         if($group==='localization')CompanySettingsFormats::validate($settings);
+        if(in_array($group,['sales_pdf','document_pdf'],true))foreach($settings as $value)CompanyDocumentPdf::validate($value);
         if($group==='email') {
             if(isset($settings['smtp_encryption'])&&!in_array($settings['smtp_encryption'],['','ssl','tls'],true))throw new DomainException('company_settings_invalid_input');
             if(($settings['smtp_port']??'')!==''&&(!ctype_digit($settings['smtp_port'])||(int)$settings['smtp_port']<1||(int)$settings['smtp_port']>65535))throw new DomainException('company_settings_invalid_input');

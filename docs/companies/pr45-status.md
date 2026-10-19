@@ -1,8 +1,8 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Este incremento usa núcleo4.3.4/434,
-BB1.1.4/101–114 e Asaas1.5.1/151, sobre430 publicado em
-`05c3bce34fdd515a0a0815d7c4eeb19cd47d9a95`.
+Escopo integral em andamento. Este incremento usa núcleo4.3.5/435,
+BB1.1.5/101–115 e Asaas1.5.1/151, sobre434 publicado em
+`bfef30e6b0e11065acda2c7dbe29fc6c66b4ffd3`.
 A [validação429](pr45-validation-429.md) registra30/30 execuções HTTP/Chromium
 em uma rodada limpa, instalação/upgrade/tracking e bytes funcionais conferidos.
 O CI428 terminou12sucesso/4falhas por bootstrap e orquestração, corrigidos429 com
@@ -15,7 +15,7 @@ instalação/upgrade nativos, aplicação real mysqli, MariaDB e Chromium. Os re
 locais não equivalem às matrizes remotas de outro SHA nem a homologação bancária.
 Inventários orientam revisão; contagens lexicais não medem bugs ou cobertura.
 
-| Requisito | Implementação incorporada até434 | Prova e limite |
+| Requisito | Implementação incorporada até435 | Prova e limite |
 |---|---|---|
 | Empresa principal/master/equipe | Identidade real do instalador, master diferente de1, wizard, grants/default por recurso e seletor409 | Bootstrap/upgrade/concorrência/HTTP; legado ambíguo usa console+senha; recuperação totalmente gráfica depende de autoridade independente |
 | Clientes privados/opt-in | Diretório positivo, compartilhamento explícito somente da identidade, contatos e sessões próprios | A/B/principal/NULL, concorrência e navegador; não compartilha histórico financeiro |
