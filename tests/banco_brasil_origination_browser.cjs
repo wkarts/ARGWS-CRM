@@ -52,7 +52,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   await page.locator('#invoice-item-0-description').fill('SYNTHETIC BB SERVICE');await page.locator('#invoice-item-0-qty').fill('1');await page.locator('#invoice-item-0-rate').fill('100.00');
   await navigate(page,page.locator('form').filter({has:page.locator('#invoice-client')}).locator('button[type=submit]'));
   const invoice=new URL(page.url()).searchParams.get('invoice');assert.match(invoice||'',/^[1-9]\d*$/);
-  let response=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(response.status(),200);
+  let response=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(response.status(),200,(await page.locator('body').innerText()).replace(/\s+/g,' ').slice(0,350));
   await page.locator('#bb-tab-account').click();await page.locator('#bb_account_id').fill('001:00452-3:000000123873-X');await page.locator('#bb_env').selectOption('sandbox');await page.locator('#bb_agreement').fill('1234567');
   const variation=page.locator('input[name=variation]');await variation.fill('019');
   await navigate(page,variation.locator('xpath=ancestor::form').locator('button'));
@@ -77,8 +77,27 @@ async function next(page) { await navigate(page, page.locator('section form butt
   await page.reload();await page.locator('#bb-tab-remittance').click();await page.locator('input[name=submission_reference]').fill('SYNTHETIC OPERATOR STATEMENT');await navigate(page,page.locator('form[action*="report_transmission"]').locator('button'));
   assert.equal(sql('SELECT delivery_state FROM tblbb_batches WHERE id='+batch),'reported_submitted');assert.equal(sql('SELECT financial_state FROM tblbb_batches WHERE id='+batch),'not_applied');
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+invoice),'0');
+  // Independent synthetic T/U fixture, delivered through the actual multipart route.
+  const due=sql('SELECT duedate FROM tblinvoices WHERE id='+invoice).split('-').reverse().join('');
+  const credit=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date()).split('-').reverse().join('');
+  const records=bytes.toString().split('\r\n');function record(fields){let line=' '.repeat(240);for(const [start,value]of fields){line=line.slice(0,start-1)+value+line.slice(start-1+value.length);}return line;}
+  const account='000000123873';const remote='12345670000000100';
+  const t=record([[1,'0010001300001T 06'],[18,'00452'],[23,'3'],[24,account],[36,'X'],[38,remote.padEnd(20)],[58,'7'],[59,('CRM'+invoice).padEnd(15)],[74,due],[82,'10000'.padStart(15,'0')],[106,('CRM'+invoice).padEnd(25)],[131,'09'],[199,'0'.repeat(15)],[214,' '.repeat(10)]]);
+  const u=record([[1,'0010001300002U 06'],[18,'0'.repeat(60)],[78,'10000'.padStart(15,'0')],[93,'10000'.padStart(15,'0')],[108,'0'.repeat(30)],[138,credit],[146,credit]]);
+  const returned=Buffer.from([records[0].slice(0,142)+'2'+records[0].slice(143),records[1].slice(0,8)+'T'+records[1].slice(9),t,u,records[4],records[5]].join('\r\n')+'\r\n');
+  await page.locator('#bb-tab-return').click();const importForm=page.locator('form[action*="import_return"]');
+  const hiddenReturn=await importForm.locator('input[type=hidden]').evaluateAll(xs=>Object.fromEntries(xs.map(x=>[x.name,x.value])));
+  const multipart={...hiddenReturn,connection_id:connection,layout_binding_id:binding,return_file:{name:'synthetic.ret',mimeType:'application/octet-stream',buffer:returned}};
+  const imported=await context.request.post(url+'/admin/banco_brasil/import_return',{multipart});assert.equal(imported.status(),200);assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+invoice),'0','upload cannot become an automatic payment');
+  await page.reload();await page.locator('#bb-tab-return').click();const event=sql('SELECT id FROM tblbb_return_events WHERE issuer_id='+a);assert.match(event,/^[1-9]\d*$/);
+  let detail=page.locator('details').filter({has:page.locator('input[name=event_id][value="'+event+'"]')});await detail.locator('summary').click();await navigate(page,detail.locator('form[action*="link_event"] button'));
+  assert.equal(sql('SELECT COUNT(*) FROM tblbb_event_links WHERE event_id='+event),'1');detail=page.locator('details').filter({has:page.locator('input[name=event_id][value="'+event+'"]')});await detail.locator('summary').click();
+  const settle=detail.locator('form[action*="settle_event"]');await settle.locator('input[type=checkbox]').check();await settle.locator('input[name="settlement[reason]"]').fill('Synthetic credit independently reviewed');await settle.locator('input[name="settlement[reference]"]').fill('SYNTHETIC CI CREDIT ONLY');
+  const settlementData=await settle.locator('input').evaluateAll(xs=>Object.fromEntries(xs.filter(x=>x.name).map(x=>[x.name,x.value])));await navigate(page,settle.locator('button'));
+  assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+invoice),'1');assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+invoice),'2');assert.equal(sql('SELECT financial_state FROM tblbb_return_events WHERE id='+event),'applied_assisted');
+  const retry=await context.request.post(url+'/admin/banco_brasil/settle_event',{form:settlementData});assert.equal(retry.status(),200);await context.request.post(url+'/admin/banco_brasil/import_return',{multipart});assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+invoice),'1','retry and reimport cannot duplicate reviewed payment');
   await select(b);response=await context.request.post(url+'/admin/banco_brasil/download_remittance',{form:data});assert.equal(response.status(),409,'stale context rejected before old batch download');
   const cross=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(cross.status(),403,'selected B cannot request A banking history');
-  assert.deepEqual(errors,[]);console.log('BB invoice-bound CNAB240 declaration/generation/download/manual report and A/B scope: actual HTTP/MySQL/Chromium, no bank calls.');
+  assert.deepEqual(errors,[]);console.log('BB invoice-bound CNAB240 declaration/generation/download/manual report/return upload/assisted receipt/retry and A/B scope: actual HTTP/MySQL/Chromium, no bank calls.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e.stack);process.exitCode=1;});

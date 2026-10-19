@@ -6,12 +6,12 @@ require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/Origination.ph
 require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/LayoutCatalog.php';
 $db->query("INSERT INTO {$p}modules VALUES('banco_brasil','0.0.0',1)");
 $realModules=$GLOBALS['CI']->app_modules;
-$GLOBALS['CI']->app_modules=new class {function get($name){return ['headers'=>['version'=>'1.0.6']];}};
-$db->failVersion='1.0.6';
-essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native installation catches final106 tracking failure');$db->failVersion=null;
-essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.0.5','failed106 remains at105');
-essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='106','native101 through106 installation can retry additive DDL');
-essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native106 replay is stable');
+$GLOBALS['CI']->app_modules=new class {function get($name){return ['headers'=>['version'=>'1.0.7']];}};
+$db->failVersion='1.0.7';
+essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native installation catches final107 tracking failure');$db->failVersion=null;
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.0.6','failed107 remains at106');
+essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='107','native101 through107 installation can retry additive DDL');
+essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native107 replay is stable');
 \BancoBrasil\OriginationSchema::assertValid($db,$p);
 $GLOBALS['CI']->app_modules=$realModules;
 unset($db->data_cache['table_names']);

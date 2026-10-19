@@ -20,6 +20,16 @@ final class IssuerResourceAccess
         if ($result===false) { throw new RuntimeException('issuer_storage_failed'); }
         return $result->result_array();
     }
+    /** Lock current authorization rows inside a core-owned financial transaction. */
+    public function lockFinancialIdentity(int $issuer,int $staff):void
+    {
+        require_once __DIR__.'/IssuerTransaction.php';
+        IssuerTransaction::assertOwned($this->db,$this->prefix,['issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff']);
+        $this->rows('SELECT id FROM '.$this->prefix.'issuers_registry WHERE id=? FOR UPDATE',[$issuer]);
+        $this->rows('SELECT staffid FROM '.$this->prefix.'staff WHERE staffid=? FOR UPDATE',[$staff]);
+        $this->rows('SELECT issuer_id FROM '.$this->prefix.'issuers_staff WHERE issuer_id=? AND staff_id=? FOR UPDATE',[$issuer,$staff]);
+        $this->rows('SELECT issuer_id FROM '.$this->prefix.'issuers_resource_permissions WHERE issuer_id=? AND staff_id=? FOR UPDATE',[$issuer,$staff]);
+    }
     public static function key($value): string
     {
         if(!is_string($value)||strlen($value)>100||!preg_match('/^[A-Za-z][A-Za-z0-9_-]{0,99}(?:\(\))?$/D',$value)) { throw new DomainException('issuer_invalid_permission'); }

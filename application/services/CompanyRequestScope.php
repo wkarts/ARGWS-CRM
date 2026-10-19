@@ -23,7 +23,17 @@ final class CompanyRequestScope
         $class = strtolower((string) $ci->router->fetch_class());
         if ($class === 'authentication') { return false; }
         // Module AdminControllers also require the browser boundary. Public/job routes never inspect session.
-        return $directory === 'admin' || $ci instanceof AdminController;
+        return $directory === 'admin' || $ci instanceof AdminController || self::companyBbRoute($ci);
+    }
+
+    private static function companyBbRoute($ci):bool
+    {
+        // MX strips ADMIN_URI and records the module's controller directory, not admin/.
+        $directory=trim((string)$ci->router->fetch_directory(),'/');
+        return in_array($directory,['admin','../../modules/banco_brasil/controllers'],true)
+            && strtolower((string)$ci->router->fetch_module())==='banco_brasil'
+            && strtolower((string)$ci->router->fetch_class())==='banco_brasil'
+            && in_array(strtolower((string)$ci->router->fetch_method()),['index','register_connection','register_layout','import_return','declare_contract','generate_remittance','retry_remittance','download_remittance','report_transmission','link_event','review_event','settle_event'],true);
     }
 
     public static function bootstrap($ci): void
@@ -49,8 +59,7 @@ final class CompanyRequestScope
         $module = strtolower((string) $ci->router->fetch_module());
         $admin = trim((string) $ci->router->fetch_directory(), '/') === 'admin';
         $native = $admin && !$module;
-        $companyScopedBbRoute = $admin && $module === 'banco_brasil' && $class === 'banco_brasil'
-            && in_array($method, ['index','register_connection','register_layout','import_return','declare_contract','generate_remittance','retry_remittance','download_remittance','report_transmission'], true);
+        $companyScopedBbRoute = self::companyBbRoute($ci);
         self::$isolated = ($native && $class === 'company_context' && in_array($method, ['index', 'select'], true))
             || ($native && $class === 'company_onboarding' && $method === 'index')
             || ($native && $class === 'company_clients' && $method === 'index')

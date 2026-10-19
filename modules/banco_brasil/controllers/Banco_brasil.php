@@ -14,7 +14,7 @@ class Banco_brasil extends AdminController
     {
         $companyId=$this->companyContextId();
         $data=['title'=>'Banco do Brasil','issuers'=>[],'selected'=>null,'connections'=>[],
-            'returns'=>[],'events'=>[],'layout_bindings'=>[],'layouts'=>\BancoBrasil\LayoutCatalog::all(),'can_manage'=>false,'can_import'=>false,'resource_acl_ready'=>false,'storage_error'=>false,'isolated'=>false,'company_context_token'=>null,'batches'=>[],'origination_ready'=>false,'can_generate'=>false,'can_download'=>false,'request_key'=>bin2hex(random_bytes(32)),'admin_base_url'=>$this->url(''),'notice'=>$this->session->userdata('bb_notice'),'csrf'=>$this->csrfToken(),'matrix'=>\BancoBrasil\CapabilityPolicy::matrix()];
+            'returns'=>[],'events'=>[],'layout_bindings'=>[],'layouts'=>\BancoBrasil\LayoutCatalog::all(),'can_manage'=>false,'can_import'=>false,'resource_acl_ready'=>false,'storage_error'=>false,'isolated'=>false,'company_context_token'=>null,'reconciliations'=>[],'reconciliation_ready'=>false,'can_reconcile'=>false,'can_settle'=>false,'batches'=>[],'origination_ready'=>false,'can_generate'=>false,'can_download'=>false,'request_key'=>bin2hex(random_bytes(32)),'admin_base_url'=>$this->url(''),'notice'=>$this->session->userdata('bb_notice'),'csrf'=>$this->csrfToken(),'matrix'=>\BancoBrasil\CapabilityPolicy::matrix()];
         if(class_exists('CompanyRequestScope',false)){
             $data['isolated']=\CompanyRequestScope::sealedFor($this);
             $data['company_context_token']=\CompanyRequestScope::token();
@@ -41,6 +41,7 @@ class Banco_brasil extends AdminController
                 }catch(Throwable $e){$data['storage_error']=true;$data['connections']=$data['layout_bindings']=$data['returns']=$data['events']=[];}
                 $data['can_manage']=!$data['storage_error']&&$this->allowed($id,'manage');$data['can_import']=!$data['storage_error']&&$this->allowed($id,'import');
                 try{$operations=$this->origination();$data['origination_ready']=$operations->ready();if($data['origination_ready'])$data['batches']=$operations->batches($id,$this->staffId());}catch(Throwable $e){$data['origination_ready']=false;}
+                try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Reconciliation.php';$data['reconciliations']=(new \BancoBrasil\Reconciliation($this->db,db_prefix()))->summaries($id,$this->staffId());$data['reconciliation_ready']=true;$access=new \IssuerResourceAccess($this->db,db_prefix());$data['can_reconcile']=$this->allowed($id,'reconcile')&&$access->can($id,$this->staffId(),'invoices','view');$data['can_settle']=$data['can_reconcile']&&$access->can($id,$this->staffId(),'payments','create');}catch(Throwable $e){$data['reconciliation_ready']=false;}
                 $data['can_generate']=$data['origination_ready']&&$this->allowed($id,'generate');$data['can_download']=$data['origination_ready']&&$this->allowed($id,'download');
             }
         }
@@ -138,6 +139,27 @@ class Banco_brasil extends AdminController
         try{$reference=$this->input->post('submission_reference',false);if(!is_string($reference))throw new InvalidArgumentException('invalid_reference');$this->origination()->reportTransmission($id,$this->staffId(),$this->positiveId($this->input->post('batch_id')),$reference);$this->flash('success','Envio manual declarado pelo operador. Aceite, rejeição e liquidação continuam sem confirmação bancária.');}
         catch(Throwable $e){$this->flash('warning','Declaração de envio não confirmada. Confira o lote baixado e a evidência; nenhum estado bancário foi inferido.');}
         redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function link_event()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'reconcile');
+        try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Reconciliation.php';(new \BancoBrasil\Reconciliation($this->db,db_prefix()))->link($id,$this->staffId(),$this->positiveId($this->input->post('event_id')));$this->flash('success','Origem vinculada por empresa, conta, ambiente, convênio, perfil, Nosso Número, controle e documento. Nenhum pagamento foi criado.');}
+        catch(Throwable $e){$this->flash('warning','Vínculo não confirmado. Confira a origem imutável; valor ou nome não permitem forçar um vínculo.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-return');
+    }
+    public function review_event()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'reconcile');
+        try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Reconciliation.php';$input=$this->input->post('review',false);if(!is_array($input))throw new InvalidArgumentException('invalid_review');(new \BancoBrasil\Reconciliation($this->db,db_prefix()))->review($id,$this->staffId(),$this->positiveId($this->input->post('event_id')),$input);$this->flash('success','Revisão e evidência registradas no histórico. A revisão não criou nem estornou pagamento.');}
+        catch(Throwable $e){$this->flash('warning','Revisão não confirmada. Confira empresa, evento, permissões, motivo e referência.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-return');
+    }
+    public function settle_event()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'reconcile');
+        try{require_once dirname(__DIR__).'/libraries/BancoBrasil/ReviewedReceipt.php';$input=$this->input->post('settlement',false);if(!is_array($input))throw new InvalidArgumentException('invalid_settlement');$payment=(new \app\services\InvoicePaymentWriter($this->db))->recordCompanyProviderReceipt($id,$this->staffId(),new \BancoBrasil\ReviewedReceipt($this->positiveId($this->input->post('event_id')),$input));$this->flash('success','Recebimento #'.$payment.' registrado por conciliação assistida. A fonte importada não foi autenticada automaticamente; a confirmação e evidência do operador estão auditadas.');}
+        catch(Throwable $e){$this->flash('warning','Recebimento não confirmado. Exige origem vinculada, remessa com envio declarado, crédito conferido fora do arquivo, código06 T/U, BRL, datas válidas, saldo e ausência de encargos/divergências/eventos adversos. Registre revisão; não force baixa manual.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-return');
     }
     private function staffId():int
     {

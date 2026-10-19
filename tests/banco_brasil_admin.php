@@ -75,7 +75,7 @@ check(!str_contains($html,'name="client_secret"')&&!str_contains($html,'name="ta
 $connectionForm=[];check((bool)preg_match('~<form\b[^>]*action="https://crm\.example\.test/admin/banco_brasil/register_connection"[^>]*>(.*?)</form>~s',$html,$connectionForm),'connection form rendered');
 check(substr_count($connectionForm[1],'name="_company_context"')===1,'connection form carries one company scope token from the native helper');
 check(str_contains($html,'aria-labelledby="bb-tab-auth"')&&str_contains($html,'aria-selected="true"'),'BB tabs expose selected state and panel labels');
-check(str_contains($html,'Nenhum pagamento será criado'),'financial impact visible');
+check(str_contains($html,'A importação não cria pagamento')&&str_contains($html,'confirmação e evidência do operador'),'import and assisted financial impact are explicitly distinct');
 $ci->input->verb='POST';$ci->input->posts=['issuer_id'=>'1','connection_id'=>'1','layout_id'=>\BancoBrasil\LayoutCatalog::CNAB400,'csrf_bb'=>$csrf];
 $GLOBALS['issuerGrant']=false;rejects(fn()=>$controller->register_layout(),'profile needs issuer manage grant');$GLOBALS['issuerGrant']=true;
 $GLOBALS['permissions']['manage']=false;$controller->index();check($ci->load->viewData['can_manage']===true,'profile contextual grant overrides global deny');$GLOBALS['permissions']['manage']=true;

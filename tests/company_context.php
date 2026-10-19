@@ -218,6 +218,14 @@ essentialCheck(CompanyRequestScope::isolated()&&CompanyRequestScope::context()->
 CompanyRequestScope::finish();
 $ci=contextEnvironment($f,$s,'banco_brasil','register_connection','POST');$ci->router->module='banco_brasil';$_POST=['_company_context'=>$tokenA];
 expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),409);
+$ci=contextEnvironment($f,$s,'banco_brasil','index');$ci->router->module='banco_brasil';$ci->router->directory='../../modules/banco_brasil/controllers/';
+CompanyRequestScope::bootstrap($ci);
+essentialCheck(CompanyRequestScope::isolated()&&CompanyRequestScope::context()->issuerId()===54,'actual MX module controller directory is sealed before autoload');
+CompanyRequestScope::finish();
+$ci=contextEnvironment($f,$s,'banco_brasil','index');$ci->router->module='banco_brasil';$ci->router->directory='../../modules/banco_brasil/controllers/public/';
+CompanyRequestScope::beforeHydration($ci);
+essentialCheck(!CompanyRequestScope::isolated(),'unreviewed module directory cannot opt into the isolated route set');
+CompanyRequestScope::finish();
 $ci=contextEnvironment($f,$s,'banco_brasil','send_to_bank','POST');$ci->router->module='banco_brasil';$_POST=['_company_context'=>$bbContextToken];
 expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
 $ci = contextEnvironment($f, $s, 'settings', 'email_test'); expectStatus(fn() => new Settings(), 403);

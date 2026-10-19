@@ -163,12 +163,12 @@ final class ModuleStore
     public function recentEvents(int $issuerId): array
     {
         return Transaction::quiet($this->db,function()use($issuerId){
-        $rows=self::rows($this->db->select('id,connection_id,remote_id,occurrence,observation,observation_json,created_at')
+        $rows=self::rows($this->db->select('id,connection_id,remote_id,occurrence,observation,observation_json,financial_state,created_at')
             ->where('issuer_id',$issuerId)->order_by('id','DESC')->limit(50)->get($this->prefix.'bb_return_events'),'result_array');
         foreach($rows as &$row){
             $event=json_decode($row['observation_json'],true);
             unset($row['observation_json']);
-            foreach(['channel','layout','declared_currency','currency_evidence','posting_amount','posting_direction','currency','paid_amount','net_amount','other_expenses','other_credits','occurrence_date','credit_date'] as $field)$row[$field]=$event[$field]??null;
+            foreach(['nominal_amount','fees','interest','discount','abatement','iof','channel','layout','declared_currency','currency_evidence','posting_amount','posting_direction','currency','paid_amount','net_amount','other_expenses','other_credits','occurrence_date','credit_date'] as $field)$row[$field]=$event[$field]??null;
         }
         return $rows;
             });

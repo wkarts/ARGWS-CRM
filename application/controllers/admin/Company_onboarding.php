@@ -15,7 +15,7 @@ class Company_onboarding extends AdminController
             'customers'=>['name'=>'Clientes (identidade)','capabilities'=>['view'=>'Consultar','create'=>'Criar','edit'=>'Editar próprios','share'=>'Compartilhar identidade']],
             'settings'=>['name'=>'Definições','capabilities'=>['view'=>'Consultar','edit'=>'Editar']],
             'email_templates'=>['name'=>'Modelos de e-mail','capabilities'=>['view'=>'Consultar','edit'=>'Editar']],
-            'banco_brasil'=>['name'=>'Banco do Brasil','capabilities'=>['view'=>'Consultar','manage'=>'Configurar','import'=>'Importar retorno observacional','generate'=>'Gerar remessa240 local','download'=>'Baixar remessa']],
+            'banco_brasil'=>['name'=>'Banco do Brasil','capabilities'=>['view'=>'Consultar','manage'=>'Configurar','import'=>'Importar retorno observacional','generate'=>'Gerar remessa240 local','download'=>'Baixar remessa','reconcile'=>'Conciliar retorno com evidência']],
         ];
         $service=new CompanyOnboarding($this->db,db_prefix(),array_map(static fn($r)=>array_keys($r['capabilities']),$resources));
         $actor=CompanyRequestScope::context()->staffId();$error=null;$draft=null;

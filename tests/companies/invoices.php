@@ -93,3 +93,11 @@ essentialThrows(fn()=>$s->document($a,7,42),'issuer_document_scope_mismatch','na
 $s->confirmPdfDownload($a,7,$id);
 essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}issuers_audit WHERE event='company_invoice_pdf_downloaded' AND subject_id=?",[$id])->row()->n===1,'PDF authorization and download provenance commit together');
 echo 'Invoice legacy/PDF provenance: '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;
+
+$untrustedSource=new class implements CompanyReceiptSource {
+    public function assertSchema($db,string $prefix):void { throw new LogicException('untrusted adapter must not run'); }
+    public function tables():array { return []; }
+    public function claim($db,string $prefix,int $issuer,int $actor):array { return []; }
+    public function applied($db,string $prefix,int $issuer,int $actor,int $payment):void {}
+};
+essentialThrows(fn()=>$writer->recordCompanyProviderReceipt($a,7,$untrustedSource),'company_receipt_source_denied','an arbitrary provider adapter cannot grant positive-company payment authority');

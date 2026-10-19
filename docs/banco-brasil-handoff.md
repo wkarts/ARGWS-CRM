@@ -1,6 +1,11 @@
 # PR45 — estado da integração BB e Empresas
 
-## Branch e ancestralidade
+Código atual: núcleo4.1.1/411, BB1.0.7/107, Asaas1.4.8/148. A matriz
+[atual](companies/pr45-status.md) e os incrementos406–411 abaixo substituem as
+pendências do checkpoint405 preservado como histórico. Conferir o HEAD remoto e
+os testes do SHA final; não há homologação externa, merge ou deploy.
+
+## Histórico405: branch e ancestralidade
 
 - PR45: https://github.com/wkarts/ARGWS-CRM/pull/45
 - Branch única de escrita: `feat/banco-brasil-billing-cnab240`; destino `main`.
@@ -14,7 +19,7 @@
 - BB 1.0.4/101–104 e Asaas 1.4.8/148 preservados. Núcleo402→403→404→405;
   nenhuma migration histórica renumerada, removida ou reescrita.
 
-## Implementação ligada ao CRM
+## Histórico405: implementação ligada ao CRM
 
 Empresas é um recurso do núcleo. `modules/issuers` continua fora da carga operacional.
 A empresa principal é a identidade persistida da instalação; não se presume ID1.
@@ -37,7 +42,7 @@ variação e identidade legal; perfis 240/400 são explícitos e imutáveis. Gui
 no shell isolado; tokens não são duplicados. A importação guarda observações,
 deduplicação, conflito e proveniência com auditoria. Nenhum pagamento é criado.
 
-## O que continua faltando implementar
+## Pendências registradas no405 (histórico; consultar matriz atual)
 
 - Clientes privados: adoção e edição pela interface, compartilhamento explícito apenas
   da identidade, portal e recuperação por empresa; validar leitores e consumidores
@@ -160,3 +165,41 @@ simultaneamente; essa inconsistência formal deve ser considerada no consumidor.
 A posse da especificação não implementa o executor nem prova contrato/homologação.
 API ainda está indisponível no incremento410. Não houve chamadas bancárias, tokens
 ou uso de credenciais do cliente.
+
+## Incremento411 / BB107: conciliação assistida restrita
+
+O vínculo é persistente e exige empresa, conexão, conta/ambiente/convênio, canal,
+Nosso Número, controle, documento, vencimento, perfil e snapshot íntegros. Não há
+reclassificação por coincidência de nome/valor, nem adoção de títulos externos.
+O histórico de revisão armazena classificação, motivo, referência e ator, sem
+alterar pagamentos. Código44, cheque pendente, baixa operacional e divergências
+permanecem para revisão; registrar “estorno” **não executa estorno financeiro**.
+
+A entrada explícita `InvoicePaymentWriter::recordCompanyProviderReceipt` aceita
+somente o adaptador final BB revisado, mantém a rejeição de owner positivo em
+`record()`/callbacks legados e possui a transação inteira. O adaptador não executa
+rede: lê a origem/evento sob o mesmo lock do núcleo. Exige BB Conciliar + faturas
+Visualizar + pagamentos Criar, vínculo prévio e confirmação explícita de crédito
+conferido no banco por fonte independente do upload, com motivo/referência.
+O arquivo mantém proveniência `authenticity=not_verified`: a confirmação é do
+operador, não uma autenticação técnica fictícia.
+
+O recorte financeiro assistido é T/U, ocorrência06, BRL, nominal igual à fatura,
+remessa gerada com envio manual declarado, datas de crédito já ocorridas, líquido
+igual ao pago e encargos/ajustes todos zero. Créditos parciais confirmados deixam
+saldo e status parcial. Retry/reimportação e concorrência usam recibo canônico
+único, pagamento/status/ledger/auditoria no mesmo commit; falha reverte todos.
+Alteração de evidência após aplicação, excesso de saldo, origem Asaas concorrente,
+encargos e eventos adversos em qualquer ordem não recebem bypass manual.
+Juros/descontos/tarifas/estorno contábil e reconciliação automática autenticada
+continuam pendências técnicas; não são tratados como operações concluídas.
+
+A migration107 só adiciona links/revisões/recibos;101–106 ficam preservadas. Os
+novos testes MySQL/concorrência e o navegador real incluem upload multipart,
+vínculo e recebimento assistido com dados/evidências sintéticos. Conferir o SHA
+final e seus runs; homologação externa e SMTP externo não foram executados.
+
+O teste HTTP410 também expôs o diretório real do roteador MX
+(`../../modules/banco_brasil/controllers/`).411 reconhece somente o controlador e
+as ações BB revisadas, antes do autoload. A lista fechada e o token de empresa
+permanecem; diretórios/métodos não revisados não passam a ser isolados por prefixo.
