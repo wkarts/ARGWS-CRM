@@ -42,6 +42,12 @@ final class CompanyOperationFiles extends CompanyContractsStorage
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);[,,$table,$field]=$this->target($kind);$this->authorize($issuer,$actor,'view');
         return $this->transaction(function()use($issuer,$actor,$kind,$id,$table,$field):array{(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'view');$this->parent($issuer,$kind,$id);$rows=$this->rows('SELECT file_key,filename,mime,byte_size,content_hash,created_at FROM '.$this->p.$table.' WHERE issuer_id=? AND '.$field.'=? AND active=1 ORDER BY created_at,file_key LIMIT 20',[$issuer,$id]);$this->authorize($issuer,$actor,'view');return $rows;});
     }
+    /** Atomic metadata and parent revision for the dedicated file API. */
+    public function catalog($issuer,$actor,string $kind,$id):array
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);[,,$table,$field]=$this->target($kind);$this->authorize($issuer,$actor,'view');
+        return $this->transaction(function()use($issuer,$actor,$kind,$id,$table,$field):array{(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'view');$parent=$this->parent($issuer,$kind,$id);$items=$this->rows('SELECT file_key,filename,mime,byte_size,content_hash,created_at FROM '.$this->p.$table.' WHERE issuer_id=? AND '.$field.'=? AND active=1 ORDER BY created_at,file_key LIMIT 20',[$issuer,$id]);$this->authorize($issuer,$actor,'view');return ['revision'=>(int)$parent['revision'],'items'=>$items];});
+    }
     public function file($issuer,$actor,string $kind,$id,string $key):array
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);[,,$table,$field]=$this->target($kind);if(!preg_match('/^[a-f0-9]{64}$/D',$key))throw new DomainException('company_operation_file_invalid');$this->authorize($issuer,$actor,'view');

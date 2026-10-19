@@ -1,11 +1,12 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Este incremento usa núcleo4.2.8/428,
-BB1.1.4/101–114 e Asaas1.5.1/151, sobre427 publicado em
-`11026cdbbfecbd1a2a557f2bee09f451fdd18506`.
-A [validação428](pr45-validation-428.md) registra29/29 execuções HTTP/Chromium
-em uma rodada limpa, instalação/upgrade/tracking e bytes conferidos; CI do novo
-SHA é acompanhado separadamente na descrição da PR. O427 passou25/25 execuções HTTP numa rodada limpa e16 workflows distintos
+Escopo integral em andamento. Este incremento usa núcleo4.2.9/429,
+BB1.1.4/101–114 e Asaas1.5.1/151, sobre428 publicado em
+`0f182e68b936fe53ab43d69cbd1157c4caa574d5`.
+A [validação429](pr45-validation-429.md) registra30/30 execuções HTTP/Chromium
+em uma rodada limpa, instalação/upgrade/tracking e bytes funcionais conferidos.
+O CI428 terminou12sucesso/4falhas por bootstrap e orquestração, corrigidos429 com
+RED/GREEN. O CI do novo SHA é acompanhado separadamente na descrição da PR. O427 passou25/25 execuções HTTP numa rodada limpa e16 workflows distintos
 concluíram com sucesso no próprio SHA; [evidência427](pr45-validation-427.md) preservada.
 Todos os passos históricos permanecem preservados. Sem merge, deploy, tag ou release manual.
 
@@ -40,6 +41,13 @@ Guias: [faturas](invoice-operations.md), [créditos](credit-operations.md),
 A falta de homologação não elimina pendências técnicas. Não aplicar eventos sem
 origem, evidência canônica e writer transacional; não atribuir ao banco uma prova local.
 
+## Incremento429 — API de subrecursos operacionais
+
+16 scopes novos explícitos para arquivos privados de projetos/tarefas/contratos/
+chamados, marcos, dependências e seguir a si mesmo. Writers e uso do token são
+transacionais; limites JSON/base64 prévios, bytes privados e quotas originais.
+Scopes antigos não se ampliam e upload não publica no portal. [Validação429](pr45-validation-429.md).
+
 ## Incremento428 — portal operacional, reversão e preferências
 
 | Fluxo | Implementação e prova | Limite |
@@ -50,8 +58,8 @@ origem, evidência canônica e writer transacional; não atribuir ao banco uma p
 | Preferências de vendas | Prefixos/termos próprios de orçamento/proposta em snapshots, PDF/portal/notificação; principal com lote conhecido atômico | Demais settings desconhecidos e infraestrutura global conservam seus contratos |
 | API fatura/bytes | Revalidação canônica após auditoria e após TCPDF, com comparação do DTO | Prova RED/GREEN token/ator/owner; revogação tardia não libera o documento autorizado anteriormente |
 
-API dos subrecursos operacionais e criação/resposta de suporte pelo contato estão
-preparadas para429/430, ainda fora desta entrega. Permissões do contato não viram
+API dos subrecursos operacionais integra429. Criação/resposta de suporte pelo
+contato está preparada para430, ainda fora desta entrega. Permissões do contato não viram
 permissões de funcionário. Recuperação gráfica legada exige autoridade independente
 original/registro verificável; o estado transitório do provisionador é removido no
 sucesso e o marcador restante não prova identidade. Ver guia específico.

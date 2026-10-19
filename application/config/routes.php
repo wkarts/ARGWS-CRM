@@ -62,6 +62,14 @@ foreach(['projects','tasks','standalone_tasks','contracts','tickets'] as $compan
     $route['company_operations_api/'.$companyOperationRoute.'/([1-9][0-9]{0,9})']='company_operations_api/'.$companyOperationRoute.'/$1';
 }
 unset($companyOperationRoute);
+// Explicit reviewed subresources: opaque blob key is always subordinate to a canonical parent ID.
+foreach(['project_files','task_files','contract_files','ticket_files'] as $companyOperationRoute){
+    $route['company_operations_api/'.$companyOperationRoute.'/([1-9][0-9]{0,9})']='company_operations_api/'.$companyOperationRoute.'/$1';
+    $route['company_operations_api/'.$companyOperationRoute.'/([1-9][0-9]{0,9})/([a-f0-9]{64})']='company_operations_api/'.$companyOperationRoute.'/$1/$2';
+}
+foreach(['project_milestones','task_dependencies','project_follow','task_follow'] as $companyOperationRoute)$route['company_operations_api/'.$companyOperationRoute.'/([1-9][0-9]{0,9})']='company_operations_api/'.$companyOperationRoute.'/$1';
+unset($companyOperationRoute);
+
 
 /**
  * Dashboard clean route

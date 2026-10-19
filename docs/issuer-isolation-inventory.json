@@ -23,13 +23,13 @@
       "evidence": ""
     },
     "application/config/routes.php": {
-      "sha256": "b18e929e08feb0bcb491884f3127fa37de7dd4b014de1760bfbcfbdecfbcdc37",
+      "sha256": "8a733bfbae4aac28bdb3e3ff58f6f12efc681f4fd372006d3737ecaf81447290",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
         54,
-        92
+        100
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -2892,7 +2892,7 @@
       "evidence": ""
     },
     "application/services/CompanyApiTokens.php": {
-      "sha256": "b822136ca0a9bc451c78b88f42786fde06df2646116ecd43972f4499d8ca7b64",
+      "sha256": "87c75c73ac872988bc59801300cc57f2daac7e0c7cc89a1f6a3736442859570e",
       "categories": [
         "invoice_table"
       ],
@@ -2955,7 +2955,7 @@
       "evidence": ""
     },
     "application/services/CompanyBankReversalSchema.php": {
-      "sha256": "22523c122f3babc0ca24247bd5dbd3bc7969f95845da06f3515be2af65218116",
+      "sha256": "74f5ae248a0a1269567612bf4aa442a29549bd7428c159e95b918631921f8c36",
       "categories": [
         "invoice_table",
         "payments"
@@ -3269,7 +3269,7 @@
       "evidence": ""
     },
     "application/services/CompanyOperationFiles.php": {
-      "sha256": "822d404c93b77d5b4f92784bc199814a9a7aaa065a59f416032b00bad1918666",
+      "sha256": "c446d13d74501f379020a2adb8e8dd06f0e396947aa0662e400a95b466af3b6d",
       "categories": [
         "customer_privacy"
       ],
@@ -3330,7 +3330,7 @@
       "evidence": ""
     },
     "application/services/CompanyProjectExtras.php": {
-      "sha256": "1c97331b6dda5678aa532e049a23749253ca97432412bfeabad84af2521d46a1",
+      "sha256": "a700fd0e5f79bb25d91499ebab29b14048f554c03f653ea45afbd02d09fac29d",
       "categories": [
         "customer_privacy"
       ],
@@ -3758,7 +3758,7 @@
       "evidence": ""
     },
     "application/views/admin/companies/api_tokens.php": {
-      "sha256": "b08b303e36dd50fabee734fbe35f19945caad7aec6e187ca19036caa85d14eba",
+      "sha256": "4513c2485ec20f1a66acdf3fb9a4267e05fb646c02629d00323cb341712e404e",
       "categories": [
         "documents_numbering"
       ],

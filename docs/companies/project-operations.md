@@ -117,3 +117,9 @@ O incremento de portal posterior permite lista/detalhe de projetos e anexos do
 projeto explicitamente publicados, com permissão nativa6 e contato privado do
 cliente. Tarefas, timers, marcos e seguidores não são publicados automaticamente.
 Veja `operational-portal.md` para autorização, evidências e limites.
+
+## API de subrecursos429
+
+Arquivos privados, marcos, dependências e seguir a si mesmo possuem rotas exatas e
+16 scopes opt-in novos, sem expandir credenciais antigas. Consulte
+`operations-subresource-api.md` para corpos, limites, revisão/idempotência e evidências.

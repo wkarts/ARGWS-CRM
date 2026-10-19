@@ -8,6 +8,7 @@ on:
       - application/models/Payments_model.php
       - application/models/Credit_notes_model.php
       - application/services/InvoicePaymentWriter.php
+      - application/services/CompanyBankReversalSchema.php
       - tests/asaas_*.php
       - tests/asaas_*.test.js
       - .github/workflows/asaas-payment-origin.yml
@@ -19,6 +20,7 @@ on:
       - application/models/Payments_model.php
       - application/models/Credit_notes_model.php
       - application/services/InvoicePaymentWriter.php
+      - application/services/CompanyBankReversalSchema.php
       - tests/asaas_*.php
       - tests/asaas_*.test.js
       - .github/workflows/asaas-payment-origin.yml

@@ -1,0 +1,319 @@
+{
+  "source": "/tmp/pr45-http-frozen-429-s3ll_59i",
+  "source_manifest_sha256": "f6fd13439600077eeca37070655f6a861de6a3789b9b03af5bab575844e88693",
+  "final_source_manifest_sha256": "f6fd13439600077eeca37070655f6a861de6a3789b9b03af5bab575844e88693",
+  "runtime_source_files_count": 17921,
+  "runtime_source_manifest_sha256": "cdde757ed4bb40b0edea8a1e11bdb6471bae9db055ae6a034a404bbb94b751f5",
+  "source_doc_updates_confirmed_by_coordinator": true,
+  "source_change_details": [],
+  "runtime_source_changes_since_start": [],
+  "recorded_at_utc": "2026-10-19T20:08:19.195390+00:00",
+  "source_diff_since_start": [],
+  "production_byte_differences_in_running_copy": [],
+  "generated_runtime_files_outside_versioned_manifest": [
+    {
+      "path": "application/config/my_hooks.php",
+      "sha256": "e99910db2ae81b8c0c4036ccd8e072eba96bbadf13b8985a7a832c026081e534",
+      "origin": "Native framework copied existing modules/webhooks/resources/application/config/my_hooks.php byte-for-byte; also present in425/427 QA runtime"
+    },
+    {
+      "path": "application/config/app-config.php",
+      "sha256": "107a30177f6a186ccc54725b111563c4b1961e6f15f71f3cb5928475cf419257",
+      "origin": "Native installer synthetic disposable DB/URL/encryption configuration"
+    },
+    {
+      "path": "application/vendor/ezyang/htmlpurifier/library/HTMLPurifier/DefinitionCache/Serializer/HTML/4.18.0,da6d6a6e5b0031b629d110c3afda53741973bf07,429.ser",
+      "sha256": "f88262403c9b46204e72ff9ac126731ea24edeeddda19629cbfc9988c8bd57eb",
+      "origin": "Native HTMLPurifier definition cache data"
+    }
+  ],
+  "application_versions": {
+    "core": "4.2.9/429",
+    "banco_brasil": "1.1.4/114",
+    "asaas": "1.5.1/151"
+  },
+  "runtimes": {
+    "php": "8.3.6 mysqli application / PDO fixture adapter",
+    "database": "10.11.14-MariaDB-0ubuntu0.24.04.1 InnoDB",
+    "browser": "Chromium140.0.7339.186"
+  },
+  "container_engine": "none; isolated native processes, restricted Docker-call adapter only for disposable fixture paths/SQL",
+  "adaptations": [
+    "PHP fixture PDO host:port parsed into host;port in disposable copy",
+    "Playwright executablePath points to available native Chromium",
+    "Installer synthetic admin auto_increment17 in disposable install/database.sql"
+  ],
+  "native_installation": {
+    "http_installer": "pass admin17",
+    "old_bundled_schema_native_http_upgrade_to_429": "pass",
+    "native_429_NOOP_up_body_replay_twice_readback_retained4_schemas": "pass; tracking429 unchanged, distinct from native runner transition"
+  },
+  "expected_executions": 30,
+  "passed_executions": 30,
+  "all_passed": true,
+  "executions": [
+    {
+      "command": "node tests/issuers_browser_smoke.cjs",
+      "exit_code": 0,
+      "output": "Issuer browser smoke passed: native shell/menu, installation/upgrade, errors/retry, desktop/mobile."
+    },
+    {
+      "command": "node tests/issuers_browser_smoke.cjs",
+      "exit_code": 0,
+      "output": "Issuer browser smoke passed: native shell/menu, installation/upgrade, errors/retry, desktop/mobile."
+    },
+    {
+      "command": "node tests/companies_onboarding_browser.cjs",
+      "exit_code": 0,
+      "output": "Legacy master + native Staff + resumable company wizard: real HTTP/MySQL/browser checks passed."
+    },
+    {
+      "command": "node tests/companies_portal_browser.cjs",
+      "exit_code": 0,
+      "output": "Private contacts + A/B duplicate-email portal + HTTP recovery/reset/session: real MySQL/Chromium checks passed; queue only, no external delivery."
+    },
+    {
+      "command": "node tests/companies_invoices_browser.cjs",
+      "exit_code": 0,
+      "output": "Named-company invoice CRUD/numbering/PDF/manual partial+final receipts/private portal grant+PDF+revocation: real HTTP/MySQL/Chromium passed, including owner-bound notifications and private attachment upload/preview/download/portal revocation; no SMTP or bank/provider operations."
+    },
+    {
+      "command": "node tests/companies_credits_browser.cjs",
+      "exit_code": 0,
+      "output": "Company credits A/B native create/private PDF/apply/unapply/refund/refund_reverse/void/stale context: actual HTTP/MySQL/Chromium passed. Accounting evidence only, no bank, gateway or SMTP operations."
+    },
+    {
+      "command": "node tests/companies/projects_browser.cjs",
+      "exit_code": 0,
+      "output": "{\"projects\":\"A/B created, own tasks/checklist/comment/timer completed, parent closed, stale/cross-owner denied\",\"external_transports\":false}"
+    },
+    {
+      "command": "node tests/companies_expenses_browser.cjs",
+      "exit_code": 0,
+      "output": "Company expenses A/B create/edit/revision/cancel/categories/private evidence/stale context: actual HTTP/MySQL/Chromium passed. No bank or SMTP operations."
+    },
+    {
+      "command": "node tests/companies_imports_browser.cjs",
+      "exit_code": 0,
+      "output": "Company expense import CSV/JSON multipart preview/atomic commit/retry/private export/A+B/stale context: actual HTTP/MySQL/Chromium passed. No bank/provider operations."
+    },
+    {
+      "command": "node tests/companies/contracts_browser.cjs",
+      "exit_code": 0,
+      "output": "{\"contracts\":\"A/B draft activation snapshot PDF stale copy cancel passed\",\"support\":\"A/B create reply resolve reopen close stale/cross-owner passed\",\"external_transports\":false,\"signatures\":false}"
+    },
+    {
+      "command": "node tests/companies/operation_files_browser.cjs",
+      "exit_code": 0,
+      "output": "Private contract/support A/B actual multipart/PDF/PNG/download/preview/hide/stale/cross-owner/snapshot passed. No external transports."
+    },
+    {
+      "command": "node tests/companies/portal_operations_browser.cjs",
+      "exit_code": 0,
+      "output": "Operational portal actual A/B native3/5/6 admin grant/publication/list/detail/internal-message privacy/multipart/private bytes/PDF/revocation/cross-owner passed. No external transport or signature."
+    },
+    {
+      "command": "node tests/companies/projects_extras_browser.cjs",
+      "exit_code": 0,
+      "output": "{\"extras\":\"A/B milestones follow dependency-gated kanban private multipart/download/hide passed\",\"standalone\":\"A/B no-project task checklist comments timer completion passed\",\"external_transports\":false}"
+    },
+    {
+      "command": "node tests/companies_sales_browser.cjs",
+      "exit_code": 0,
+      "output": "{\"sales\":\"A/B quotes proposals snapshot PDF explicit acceptance canonical conversion retry\",\"recurrence\":\"A/B create process pause resume durable occurrence\",\"portal\":\"native permission2 private PDF cross-company revoke\",\"legacy\":\"NULL unchanged\",\"external_operations\":false}"
+    },
+    {
+      "command": "node tests/companies_sales_extras_browser.cjs",
+      "exit_code": 0,
+      "output": "{\"files\":\"A/B multipart PDF/PNG normalization download sandbox preview hide stale/cross-parent\",\"portal\":\"explicit per-file publication native2 authenticated download hide/cross-owner\",\"notifications\":\"A/B queue status immutable retry own sender/template/portal link\",\"smtp\":\"not executed externally\"}"
+    },
+    {
+      "command": "node tests/settings_sales_documents_browser.cjs",
+      "exit_code": 0,
+      "output": "Future sales settings GUI A/B, snapshots, PDF/conversion and stale409 passed. No external mail/provider."
+    },
+    {
+      "command": "node tests/settings_primary_sales_browser.cjs",
+      "exit_code": 0,
+      "output": "Principal actual legacy Settings proposal terms literal escape/save/validation/atomic failure503/recovery/own-storage and A/B isolation passed. No external transport."
+    },
+    {
+      "command": "node tests/companies_reports_api_browser.cjs",
+      "exit_code": 0,
+      "output": "Company report private CSV and API one-time token/scopes/create/retry/PDF/financial/A+B/rotation/revocation: actual HTTP/MySQL/Chromium passed. No provider calls."
+    },
+    {
+      "command": "node tests/companies_ledger_browser.cjs",
+      "exit_code": 0,
+      "output": "Company historical journal actual HTTP/Chromium A+B original/reversal knowledge-cutoff, watermark/page100/CSV, canonical101-event fixture, Back, owner and ACL boundaries passed. No bank/SMTP or fiscal ledger claims."
+    },
+    {
+      "command": "node tests/companies/operations_api_browser.cjs",
+      "exit_code": 0,
+      "output": "Operational API GUI scopes + A/B native HTTP projects/tasks/standalone/contracts/support/create/read/retry/cross-owner/rotation passed. No external transports."
+    },
+    {
+      "command": "node tests/companies/operations_subresources_browser.cjs",
+      "exit_code": 0,
+      "output": "Operational API subresources actual opt-in GUI/A+B/JSON-base64/PDF-PNG/binary-HEAD/limits/retry/rotation/owner/hide/milestones/dependencies/self-follow passed. No external transport."
+    },
+    {
+      "command": "node tests/banco_brasil_origination_browser.cjs",
+      "exit_code": 0,
+      "output": "BB invoice-bound CNAB240 declaration/generation/download/manual report/return upload/assisted receipt/retry/API native encrypted configuration and A/B scope: actual HTTP/MySQL/Chromium, no bank calls."
+    },
+    {
+      "command": "node tests/banco_brasil_components_browser.cjs",
+      "exit_code": 0,
+      "output": "BB114 components actual CRM/HTTP/Chromium: A full + B partial/remaining, explicit policy/link/credit, replay/cross-owner, real TCPDF text, bearer invoice/PDF/financial, current report+CSV and journal+CSV distinguish cash/noncash/aggregate charges. Synthetic bank evidence; no BB transport or homologation."
+    },
+    {
+      "command": "node tests/banco_brasil_external_reversal_browser.cjs",
+      "exit_code": 0,
+      "output": "BB114 external reversal full CRM/HTTP/Chromium: A full and B last-receipt reversal, independent confirmations, immutable originals, retry/conflict/A-B, effective cash/noncash, real TCPDF, bearer/report+CSV and pinned journal+CSV. Synthetic declared evidence; no authenticated bank reversal, BB transport or homologation."
+    },
+    {
+      "command": "node tests/banco_brasil_callback_http.cjs",
+      "exit_code": 0,
+      "output": "BB public callback actual HTTP: 12 rejection/JSON/no-redirect checks passed; no BB TLS handshake or homologation."
+    },
+    {
+      "command": "node tests/companies_asaas_browser.cjs",
+      "exit_code": 0,
+      "output": "Company Asaas A/B actual UI credentials/token-once/receipt + HTTP inbox/dedup/stale/company isolation passed. Tariff native expense and opt-in worker passed; creation/query transport simulated by CLI fixture; no real Asaas homologation."
+    },
+    {
+      "command": "node tests/companies_asaas_remote_browser.cjs",
+      "exit_code": 0,
+      "output": "Asaas150 actual A/B UI/controller scoped removal, CSRF/stale/isolation/local preservation/retry passed. Canonical GET/DELETE transport simulated through CLI; no external bank homologation."
+    },
+    {
+      "command": "node tests/companies_asaas_checkout_browser.cjs",
+      "exit_code": 0,
+      "output": "Asaas151 actual A/B UI payer retry, explicit hosted publication, private portal303/revocation and A/B canonical received card nominal/creditDate/separate fee expense passed. Bank customer/charge creation/query simulated by CLI; no external homologation."
+    },
+    {
+      "command": "node tests/asaas_checkout_legacy_scope_http.cjs",
+      "exit_code": 0,
+      "output": "Asaas legacy HTTP named A/B/unknown hash isolation passed; four native controller actions; no provider operation or external homologation."
+    },
+    {
+      "command": "node /tmp/crm-http-qa429-final/settings-qa.cjs",
+      "exit_code": 0,
+      "output": "Additional actual HTTP/Chromium company settings A/B email presentation HTMLPurifier, credit prefix, and stale-context409 passed. No SMTP."
+    }
+  ],
+  "test_transport_only_adapted_files": [
+    "tests/banco_brasil_api_credit_http_fixture.php",
+    "tests/banco_brasil_components_browser.cjs",
+    "tests/banco_brasil_components_http_fixture.php",
+    "tests/banco_brasil_external_reversal_browser.cjs",
+    "tests/banco_brasil_external_reversal_http_fixture.php",
+    "tests/banco_brasil_http_fixture.php",
+    "tests/banco_brasil_origination_browser.cjs",
+    "tests/companies/asaas_checkout_http_fixture.php",
+    "tests/companies/asaas_http_fixture.php",
+    "tests/companies/asaas_install_http_fixture.php",
+    "tests/companies/asaas_install_remote_http_fixture.php",
+    "tests/companies/contracts_browser.cjs",
+    "tests/companies/ledger_http_fixture.php",
+    "tests/companies/operation_files_browser.cjs",
+    "tests/companies/operations_api_browser.cjs",
+    "tests/companies/operations_subresources_browser.cjs",
+    "tests/companies/portal_operations_browser.cjs",
+    "tests/companies/projects_browser.cjs",
+    "tests/companies/projects_extras_browser.cjs",
+    "tests/companies_asaas_browser.cjs",
+    "tests/companies_asaas_checkout_browser.cjs",
+    "tests/companies_asaas_remote_browser.cjs",
+    "tests/companies_credits_browser.cjs",
+    "tests/companies_expenses_browser.cjs",
+    "tests/companies_imports_browser.cjs",
+    "tests/companies_invoices_browser.cjs",
+    "tests/companies_ledger_browser.cjs",
+    "tests/companies_onboarding_browser.cjs",
+    "tests/companies_portal_browser.cjs",
+    "tests/companies_reports_api_browser.cjs",
+    "tests/companies_sales_browser.cjs",
+    "tests/companies_sales_extras_browser.cjs",
+    "tests/issuers_browser_smoke.cjs",
+    "tests/settings_primary_sales_browser.cjs",
+    "tests/settings_sales_documents_browser.cjs"
+  ],
+  "harness_sha256": {
+    "prepare429.py": "d608b7e5325626adc71d6961baab8c44b5715e1450e1804d57edb793ed1b49a3",
+    "final429.py": "779f3afb65ab2960fb6cccc7b7aabaaa1fe59d59eb8ec9f4f42cc56a378c3aff",
+    "replay429.php": "76452bf7a36271288a08b7ae6547be86ae7dec0551a3c89891eb3c35d3928509",
+    "bin/docker": "3b58b071da84f8b8082671b83de3a76d16173bccfea0a97ad64d817b8bf9af9a",
+    "bin/node": "2402b987eda18fd237d5ce11a20f8f51d86209cadf90f9ce5e91e08b7754106b",
+    "router.php": "aba64812608d4cbb16c6fed79661c27de0bdf945f7b040391415deb025c105cb",
+    "php.ini": "a72fa6a11931a86bfa1fe3e3e7562e0addfedbacd05f0b94fb624c76f702ccda",
+    "settings-qa.cjs": "a5234491f06ddf2e4e5b0d546feed014882e007063b6ffbded89533908e53382"
+  },
+  "ci_shell_orchestration": {
+    "frozen_repository_bash_smoke_executed": false,
+    "native_harness_scope": "Execute each Node suite with exported disposable environment; preserve exact frozen smoke list and order. This does not test Bash per-command environment scope.",
+    "coordinator_reported_final_script_change": "Final429 main/compose smoke adds missing per-command environment prefixes for four428 nodes and new429 node; browser list/order and production runtime unchanged.",
+    "required_separate_evidence": "Coordinator scrubbed-environment real Bash subprocess regression and actual CI429 full-shell run. Those orchestration changes and added regression are outside frozen HTTP source manifest."
+  },
+  "commit_source_binding": {
+    "matched_runtime_and_functional_test_files": 18269,
+    "all_index_runtime_files_match_http_source": true,
+    "source": "/tmp/pr45-http-frozen-429-s3ll_59i",
+    "orchestration_only_changed": [
+      "tests/issuers_standalone_http_smoke.sh"
+    ],
+    "new_separately_executed_regression": [
+      "tests/test_issuer_browser_environment.py"
+    ],
+    "browser_commands_and_order_identical": true,
+    "separate_bash_regression": "RED5 failures before command-local environment assignments; GREEN actual29 command blocks, no inherited ISSUERS_BROWSER variables. CI429 full shell still required."
+  },
+  "inherited_baseline428_test_corrections": [
+    {
+      "path": "tests/companies/portal_operations_browser.cjs",
+      "reason": "supply native CSRF and portal_csrf before asserting private-file404; explicit authenticated portal precondition",
+      "production_bug": false
+    },
+    {
+      "path": "tests/banco_brasil_components_browser.cjs",
+      "reason": "restore published427 cursor helper using actual watermark/UTC permalink after stale overlay replacement",
+      "production_bug": false
+    }
+  ],
+  "inherited_baseline427_test_corrections": [
+    {
+      "path": "tests/companies/operation_files_browser.cjs",
+      "reason": "file input shares button role/name with submit; target actual submit button",
+      "production_bug": false
+    },
+    {
+      "path": "tests/banco_brasil_http_fixture.php",
+      "reason": "native migration reaches113; fixture still expected112",
+      "production_bug": false
+    },
+    {
+      "path": "tests/banco_brasil_components_http_fixture.php",
+      "reason": "CNAB240 wire alpha fields require uppercase ASCII fixture literals",
+      "production_bug": false
+    },
+    {
+      "path": "tests/banco_brasil_components_browser.cjs",
+      "reason": "journal cursor must preserve actual watermark and UTC cutoff permalink",
+      "production_bug": false
+    },
+    {
+      "path": "tests/companies_asaas_checkout_browser.cjs",
+      "reason": "open native issue/payers disclosure and charges section before interacting",
+      "production_bug": false
+    },
+    {
+      "path": "tests/companies_invoices_browser.cjs",
+      "reason": "prove exact contact grant state and native persistence before notification, replacing optional button-count precondition",
+      "production_bug": false,
+      "diagnosis": "Earlier selector timeout followed absent permission; native UI grant independently passed200 and restored recipient eligibility. No production defect reproduced."
+    }
+  ],
+  "external_bank_or_smtp_operations": false,
+  "bank_homologation": false
+}

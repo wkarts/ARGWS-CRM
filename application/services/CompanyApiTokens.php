@@ -6,7 +6,24 @@ require_once __DIR__.'/CompanyApiSchema.php';require_once __DIR__.'/CompanyRepor
 /** Independent company API credentials. Never consumes a legacy module API token. */
 final class CompanyApiTokens
 {
-    public const SCOPES=['invoices:read'=>[['invoices','view']],'invoices:pdf'=>[['invoices','view']],'invoices:create'=>[['invoices','view'],['invoices','create'],['customers','view']],'reports:read'=>CompanyReports::CAPABILITIES,'projects:read'=>[['projects','view']],'projects:write'=>[['projects','view'],['projects','create'],['projects','edit'],['customers','view']],'tasks:read'=>[['tasks','view']],'tasks:write'=>[['tasks','view'],['tasks','create'],['tasks','edit']],'contracts:read'=>[['contracts','view']],'contracts:write'=>[['contracts','view'],['contracts','create'],['contracts','edit'],['customers','view']],'tickets:read'=>[['tickets','view']],'tickets:write'=>[['tickets','view'],['tickets','create'],['tickets','edit'],['customers','view']]];
+    public const SCOPES=['invoices:read'=>[['invoices','view']],'invoices:pdf'=>[['invoices','view']],'invoices:create'=>[['invoices','view'],['invoices','create'],['customers','view']],'reports:read'=>CompanyReports::CAPABILITIES,'projects:read'=>[['projects','view']],'projects:write'=>[['projects','view'],['projects','create'],['projects','edit'],['customers','view']],'tasks:read'=>[['tasks','view']],'tasks:write'=>[['tasks','view'],['tasks','create'],['tasks','edit']],'contracts:read'=>[['contracts','view']],'contracts:write'=>[['contracts','view'],['contracts','create'],['contracts','edit'],['customers','view']],'tickets:read'=>[['tickets','view']],'tickets:write'=>[['tickets','view'],['tickets','create'],['tickets','edit'],['customers','view']],
+        'projects:files:read'=>[['projects','view']],
+        'projects:files:write'=>[['projects','view'],['projects','edit']],
+        'tasks:files:read'=>[['tasks','view'],['projects','view']],
+        'tasks:files:write'=>[['tasks','view'],['projects','view'],['tasks','edit']],
+        'contracts:files:read'=>[['contracts','view']],
+        'contracts:files:write'=>[['contracts','view'],['contracts','edit']],
+        'tickets:files:read'=>[['tickets','view']],
+        'tickets:files:write'=>[['tickets','view'],['tickets','edit']],
+        'projects:milestones:read'=>[['projects','view']],
+        'projects:milestones:write'=>[['projects','view'],['projects','edit']],
+        'tasks:dependencies:read'=>[['tasks','view'],['projects','view']],
+        'tasks:dependencies:write'=>[['tasks','view'],['projects','view'],['tasks','edit']],
+        'projects:follow:read'=>[['projects','view']],
+        'projects:follow:write'=>[['projects','view']],
+        'tasks:follow:read'=>[['tasks','view'],['projects','view']],
+        'tasks:follow:write'=>[['tasks','view'],['projects','view']]
+    ];
     private IssuerResourceAccess $acl;
     public function __construct(private $db,private string $p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid table prefix');$this->acl=new IssuerResourceAccess($db,$p);}
     private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}

@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-require_once APPPATH.'services/issuers/IssuerStorage.php';
+require_once __DIR__.'/issuers/IssuerStorage.php';
 
 /** New 428-only declared external reversal evidence. No adoption/backfill of generic legacy payment rows. */
 final class CompanyBankReversalSchema

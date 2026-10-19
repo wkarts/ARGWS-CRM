@@ -71,7 +71,7 @@ tabelas e seu histórico; não apagar dados para voltar código.
   suporte→mensagem→resolver→reabrir→responder→encerrar, stale e IDs cruzados.
 
 Ainda faltam: assinatura/aceite, modelos e renovação automática de contratos,
-notificações/SMTP desses domínios, escrita pelo cliente no portal, abertura por e-mail, automações/SLA, importação/exportação. A API operacional própria já fornece CRUD e ações explícitas destes domínios; ainda não expõe os novos arquivos na API. O portal operacional está descrito em `operational-portal.md`.
+notificações/SMTP desses domínios, escrita pelo cliente no portal, abertura por e-mail, automações/SLA, importação/exportação. A API operacional própria já fornece CRUD e ações explícitas destes domínios; os arquivos privados recebem scopes opt-in próprios no incremento429, descritos em `operations-subresource-api.md`. O portal operacional está descrito em `operational-portal.md`.
 São funcionalidades técnicas pendentes, não homologação externa. Nenhum envio
 externo, credencial real, assinatura ou acesso de produção é usado pelos testes.
 

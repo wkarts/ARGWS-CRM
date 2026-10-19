@@ -65,3 +65,13 @@ canal bancário/SMTP foi homologado. Portal428 só publica/leitura; escrita de s
 e API de subrecursos estão preparadas para incrementos posteriores. Recuperação
 legada totalmente gráfica exige prova original e cadeia de autoridade ausentes;
 console+senha preservado. Não confundir provisão transitória apagada com prova.
+
+## CI428 terminal — duas causas, quatro workflows falharam
+
+No SHA0f182e68b936fe53ab43d69cbd1157c4caa574d5,16 workflows distintos
+terminaram:12 com sucesso e4 com falha. [Lista dos workflows](evidence/ci-428.json).
+Asaas, BBunit e scope de faturas falharam na dependênciaAPPPATH do novo schema
+carregado pelo writer isolado. Stacks falhou em Node sem ambiente: os novos
+comandos do smoke não repetiram as variáveis por comando. Correções entram no429
+com provas RED/GREEN próprias.29/29 HTTP local continua restrito aos seus cenários
+e usa env exportado; não era prova da orquestração Bash doCI. Não declarar428verde.

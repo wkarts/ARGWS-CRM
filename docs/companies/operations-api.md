@@ -82,5 +82,7 @@ as rotas GUI. HEAD autoriza a leitura e suprime o corpo. Erros usam 401, 403, 40
 
 Esses endpoints não expõem credenciais, arquivos públicos, imports em lote,
 notificações, conversão de tarefas entre projetos ou bypasses financeiros. A API
-de faturas/relatórios existente continua em sua superfície própria. Uploads e
-PDFs operacionais permanecem nas rotas gráficas autorizadas até adaptação específica.
+de faturas/relatórios existente continua em sua superfície própria. Arquivos privados, marcos, dependências e marcação pessoal de seguidor recebem
+rotas e scopes opt-in próprios no incremento429, descritos em
+`operations-subresource-api.md`. PDFs gerados de contratos permanecem nas rotas
+gráficas e no portal autorizado; não são o mesmo recurso que um PDF anexado.
