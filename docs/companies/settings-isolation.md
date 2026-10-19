@@ -1,6 +1,11 @@
-# Definições por empresa: contrato da primeira fatia
+# Definições por empresa: contrato histórico da primeira fatia
 
-## Estado da entrega
+> Registro histórico de 18/10/2026. O estado operacional atual está em
+> [settings-operations.md](settings-operations.md), com os grupos adicionais,
+> apresentação HTML, transporte por origem e limites atuais. As limitações abaixo
+> descrevem o incremento original e não revogam as ampliações posteriores.
+
+## Estado da entrega original
 
 Código local, sem publicação, merge, implantação, acesso a provedores ou dados reais. Esta fatia depende da composição do `CompanyRequestScope` pré-autoload, do retorno autenticado/selado no `AdminController` e do despacho dos helpers de opções. Não habilitar uma empresa secundária no fluxo legado sem essas fronteiras.
 

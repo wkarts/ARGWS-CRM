@@ -3,6 +3,7 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 require_once APPPATH . 'services/CompanySettingsRuntime.php';
 require_once APPPATH . 'services/CompanySettingsFormats.php';
+require_once APPPATH . 'services/CompanySettingsCatalog.php';
 
 class Settings extends AdminController
 {
@@ -197,13 +198,9 @@ class Settings extends AdminController
     {
         if (!$this->settings_allowed('view')) { show_error('Acesso negado.', 403); return; }
         $group = $this->input->get('group') ?: 'company';
-        $fields = [
-            'company' => array_merge(['invoice_company_name', 'company_vat'], CompanySettingsIdentity::PROFILE_OPTIONS),
-            'localization' => ['dateformat','time_format'],
-            'documents' => ['invoice_prefix','predefined_terms_invoice'],
-            'email' => ['smtp_host', 'smtp_port', 'smtp_encryption', 'smtp_email', 'smtp_username', 'smtp_password'],
-        ];
-        if (!isset($fields[$group])) { show_error('Esta seção ainda não está disponível para a empresa selecionada.', 403); return; }
+        $groups = CompanySettingsCatalog::groups();
+        if (!isset($groups[$group])) { show_error('Esta seção ainda não está disponível para a empresa selecionada.', 403); return; }
+        $fields = CompanySettingsCatalog::fields($group);
         $error = null;
         $saved = false;
         if ($this->input->post()) {
@@ -212,14 +209,9 @@ class Settings extends AdminController
             $settings = $post['settings'] ?? null;
             try {
                 if (!is_array($settings) || isset($post['tags']) || isset($post['custom_fields']) || $this->has_uploaded_files()
-                    || array_diff(array_keys($settings), $fields[$group])) { throw new DomainException('company_settings_invalid_input'); }
-                foreach ($settings as $value) { if (!is_string($value)) { throw new DomainException('company_settings_invalid_input'); } }
-                if ($group === 'localization') { CompanySettingsFormats::validate($settings); }
-                if($group==='documents'){foreach($settings as $key=>$value){if(strlen($value)>($key==='invoice_prefix'?50:10000)||preg_match('//u',$value)!==1||preg_match('/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/',$value))throw new DomainException('company_settings_invalid_input');}}
+                    || array_diff(array_keys($settings), $fields)) { throw new DomainException('company_settings_invalid_input'); }
+                $settings = CompanySettingsCatalog::prepare($group, $settings);
                 if ($group === 'email') {
-                    if (isset($settings['smtp_encryption']) && !in_array($settings['smtp_encryption'], ['', 'ssl', 'tls'], true)) { throw new DomainException('company_settings_invalid_input'); }
-                    if (!empty($settings['smtp_port']) && (!ctype_digit($settings['smtp_port']) || (int) $settings['smtp_port'] < 1 || (int) $settings['smtp_port'] > 65535)) { throw new DomainException('company_settings_invalid_input'); }
-                    if (!empty($settings['smtp_email']) && !filter_var($settings['smtp_email'], FILTER_VALIDATE_EMAIL)) { throw new DomainException('company_settings_invalid_input'); }
                     if (!empty($post['clear_smtp_password'])) { $settings['smtp_password'] = ''; }
                     elseif (($settings['smtp_password'] ?? '') === '') { unset($settings['smtp_password']); }
                     $settings['mail_engine'] = 'phpmailer';
@@ -243,12 +235,12 @@ class Settings extends AdminController
         }
         $identity = (new CompanySettingsIdentity($this->db, db_prefix()))->read(CompanySettingsRuntime::issuerId());
         $values = [];
-        foreach ($fields[$group] as $name) {
+        foreach ($fields as $name) {
             if ($name !== 'smtp_password') { $values[$name] = CompanySettingsRuntime::get($name); }
         }
         $this->load->view('admin/settings/company_scoped', [
             'company_identity' => $identity, 'company_id' => CompanySettingsRuntime::issuerId(),
-            'group' => $group, 'values' => $values, 'can_edit' => $this->settings_allowed('edit'),
+            'group' => $group, 'groups' => $groups, 'values' => $values, 'can_edit' => $this->settings_allowed('edit'),
             'password_configured' => $group === 'email' && CompanySettingsRuntime::get('smtp_password') !== '',
             'error' => $error, 'saved' => $saved,
             'context_token' => CompanyRequestScope::token(),
@@ -258,6 +250,7 @@ class Settings extends AdminController
                 'email' => CompanyRequestScope::adminUrl($this, 'settings?group=email'),
                 'localization' => CompanyRequestScope::adminUrl($this, 'settings?group=localization'),
                 'documents' => CompanyRequestScope::adminUrl($this, 'settings?group=documents'),
+                'email_content' => CompanyRequestScope::adminUrl($this, 'settings?group=email_content'),
             ],
         ]);
     }

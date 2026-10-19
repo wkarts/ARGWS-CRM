@@ -72,17 +72,20 @@ final class CompanyInvoices
         $this->authorize(IssuerPolicy::id($issuer),IssuerPolicy::id($actor),'view');
         return $this->rows('SELECT id,name FROM '.$this->prefix.'currencies ORDER BY id');
     }
-    public function create($issuer,$actor,array $input,string $requestKey):int
+    /** Optional origin guard only vetoes an issue; it never grants authority. Runs under the canonical writer lock. */
+    public function create($issuer,$actor,array $input,string $requestKey,?callable $originGuard=null):int
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input);
         if(!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new DomainException('company_invoice_invalid_input');
         $hash=hash('sha256',json_encode($data,JSON_THROW_ON_ERROR));$legacyHash=$this->legacyRequestHash($data,$input);
-        return $this->transaction(function()use($issuer,$actor,$data,$requestKey,$hash,$legacyHash):int{
+        return $this->transaction(function()use($issuer,$actor,$data,$requestKey,$hash,$legacyHash,$originGuard):int{
             $this->authorize($issuer,$actor,'create');$this->authorize($issuer,$actor,'view');
+            if($originGuard!==null)$originGuard();
             $receipt=$this->rows('SELECT * FROM '.$this->prefix.'company_invoice_requests WHERE request_key=? FOR UPDATE',[$requestKey])[0]??null;
             if($receipt){
                 if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||(!hash_equals($receipt['input_hash'],$hash)&&($legacyHash===null||!hash_equals($receipt['input_hash'],$legacyHash))))throw new DomainException('company_invoice_request_conflict');
                 if(!$this->rows('SELECT id FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$receipt['invoice_id'],$issuer]))throw new RuntimeException('issuer_invoice_write_unconfirmed');
+                if($originGuard!==null)$originGuard();
                 return (int)$receipt['invoice_id'];
             }
             $client=$data['client_id'];
@@ -103,6 +106,7 @@ final class CompanyInvoices
             $this->audit($issuer,$actor,$id,'company_invoice_created');$this->authorize($issuer,$actor,'create');
             $stored=$this->rows('SELECT issuer_id,total,formatted_number FROM '.$this->prefix.'invoices WHERE id=?',[$id])[0]??[];
             if((int)($stored['issuer_id']??0)!==$issuer||self::cents($stored['total']??null)!==self::cents($data['total'])||($stored['formatted_number']??null)!==$doc['formatted_number'])throw new RuntimeException('issuer_invoice_write_unconfirmed');
+            if($originGuard!==null)$originGuard();
             return $id;
         });
     }
@@ -157,6 +161,11 @@ final class CompanyInvoices
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$invoice=IssuerPolicy::id($invoice);$this->authorize($issuer,$actor,'view');
         if(!$this->rows('SELECT id FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$invoice,$issuer]))throw new DomainException('company_invoice_access_denied');
         $rows=$this->rows('SELECT p.id,p.amount,p.date,p.paymentmode,p.transactionid,p.note FROM '.$this->prefix.'invoicepaymentrecords p JOIN '.$this->prefix.'invoices i ON i.id=p.invoiceid WHERE p.invoiceid=? AND i.issuer_id=? ORDER BY p.id',[$invoice,$issuer]);
+        foreach($rows as &$row){$reversed=0;$row['reversals']=[];
+            if($this->db->table_exists($this->prefix.'company_credit_entries'))$row['reversals']=$this->rows("SELECT amount,book_date,reference,reason FROM {$this->prefix}company_credit_entries WHERE issuer_id=? AND invoice_id=? AND kind='manual_reverse' AND native_id=? ORDER BY created_at,request_key",[$issuer,$invoice,$row['id']]);
+            foreach($row['reversals'] as $entry){$n=CompanyInvoiceAmounts::minor((string)$entry['amount']);if($n>999999999999999-$reversed)throw new DomainException('company_credit_balance_review');$reversed+=$n;}
+            $remaining=CompanyInvoiceAmounts::minor((string)$row['amount']);if($remaining>999999999999999-$reversed)throw new DomainException('company_credit_balance_review');$row['original_amount']=CompanyInvoiceAmounts::decimal($remaining+$reversed);$row['reversed_amount']=CompanyInvoiceAmounts::decimal($reversed);
+        }unset($row);
         $this->authorize($issuer,$actor,'view');return $rows;
     }
     public function confirmPdfDownload($issuer,$actor,$invoice):void

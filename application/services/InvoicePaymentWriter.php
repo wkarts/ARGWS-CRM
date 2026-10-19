@@ -3,10 +3,12 @@ declare(strict_types=1);
 namespace app\services;
 defined('BASEPATH') or exit('No direct script access allowed');
 require_once __DIR__.'/CompanyReceiptSource.php';
+require_once __DIR__.'/CompanyCreditWriter.php';
 
 /** Atomic receipt insertion only. The caller runs notifications/hooks after record() returns. */
 final class InvoicePaymentWriter
 {
+    use CompanyCreditWriter;
     private $db;
     public function __construct($db) { $this->db = $db; }
 
@@ -100,6 +102,7 @@ final class InvoicePaymentWriter
             $receipt=$query('SELECT * FROM '.$prefix.'company_payment_receipts WHERE request_key=? FOR UPDATE',[$requestKey])[0]??null;
             if($receipt){
                 if((int)$receipt['issuer_id']!==$issuer||(!$provider&&(int)$receipt['actor_id']!==$actor)||(int)$receipt['invoice_id']!==$invoice||!hash_equals($receipt['input_hash'],$hash))throw new \DomainException('company_payment_request_conflict');
+                if($this->db->table_exists($prefix.'company_credit_entries')&&$query("SELECT request_key FROM {$prefix}company_credit_entries WHERE issuer_id=? AND kind='manual_reverse' AND native_id=?",[$issuer,$receipt['payment_id']]))throw new \DomainException('company_payment_reversed');
                 $stored=$query('SELECT invoiceid,amount,transactionid FROM '.$prefix.'invoicepaymentrecords WHERE id=?',[$receipt['payment_id']])[0]??null;
                 if(!$stored||(int)$stored['invoiceid']!==$invoice||self::minorUnits($stored['amount'])!==$amount||$stored['transactionid']!==$data['transactionid'])throw new \RuntimeException('issuer_payment_receipt_unconfirmed');
                 return (int)$receipt['payment_id'];

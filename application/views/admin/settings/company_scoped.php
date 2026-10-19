@@ -5,6 +5,8 @@ $labels = [
     'invoice_company_address' => 'Endereço', 'invoice_company_city' => 'Cidade', 'company_state' => 'Estado',
     'invoice_company_country_code' => 'País', 'invoice_company_postal_code' => 'CEP', 'invoice_company_phonenumber' => 'Telefone',
     'invoice_prefix'=>'Prefixo da numeração de faturas','predefined_terms_invoice'=>'Condições padrão das faturas',
+    'credit_note_prefix'=>'Prefixo da numeração de créditos','predefined_terms_credit_note'=>'Condições padrão dos créditos',
+    'email_header'=>'Cabeçalho HTML','email_signature'=>'Assinatura HTML','email_footer'=>'Rodapé HTML',
     'dateformat' => 'Formato da data', 'time_format' => 'Formato da hora',
     'smtp_host' => 'Servidor SMTP', 'smtp_port' => 'Porta SMTP', 'smtp_encryption' => 'Criptografia',
     'smtp_email' => 'E-mail do remetente', 'smtp_username' => 'Usuário SMTP',
@@ -16,17 +18,15 @@ $labels = [
     <p>Empresa selecionada: <strong><?= $escape($company_identity['legal_name']); ?></strong></p>
     <nav class="company-settings-nav" aria-label="Seções de definições">
         <a href="<?= $escape(CompanyRequestScope::adminUrl($this,'company_assets')); ?>">Logotipo e assinatura</a>
-        <a href="<?= $escape($company_urls['company']); ?>" <?= $group === 'company' ? 'aria-current="page"' : ''; ?>>Informações da Empresa</a>
-        <a href="<?= $escape($company_urls['email']); ?>" <?= $group === 'email' ? 'aria-current="page"' : ''; ?>>E-mail</a>
-        <a href="<?= $escape($company_urls['documents']); ?>" <?= $group === 'documents' ? 'aria-current="page"' : ''; ?>>Faturas</a>
-        <a href="<?= $escape($company_urls['localization']); ?>" <?= $group === 'localization' ? 'aria-current="page"' : ''; ?>>Data e hora</a>
+        <?php foreach ($groups as $key=>$label) { ?><a href="<?= $escape($company_urls[$key]); ?>" <?= $group === $key ? 'aria-current="page"' : ''; ?>><?= $escape($label); ?></a><?php } ?>
     </nav>
     <section class="company-settings-card">
-        <h2><?= $group === 'company' ? 'Informações da Empresa' : ($group === 'email' ? 'Servidor SMTP' : ($group==='documents'?'Faturas':'Formato de data e hora')); ?></h2>
+        <h2><?= $escape($groups[$group]); ?></h2>
         <?php if ($error !== null) { ?><div role="alert" class="alert alert-danger"><?= $escape($error); ?></div><?php } ?>
         <?php if ($saved) { ?><div role="status" class="alert alert-success">Definições salvas para esta empresa.</div><?php } ?>
         <?php if ($company_identity['identity_status'] === 'pending') { ?><div class="alert alert-warning">A identidade fiscal desta empresa precisa ser conferida.</div><?php } ?>
-        <?php if ($group === 'email') { ?><p>As credenciais são exclusivas desta empresa. O envio de teste estará disponível após a integração do transporte de e-mail por empresa.</p><?php } ?>
+        <?php if ($group === 'email') { ?><p>As credenciais são exclusivas desta empresa. A configuração é usada pelas notificações de fatura e pela recuperação do portal desta empresa. Salvar não envia e-mail nem valida credenciais no provedor.</p><?php } ?>
+        <?php if ($group === 'email_content') { ?><p>HTML de apresentação usado nos e-mails desta empresa. Cada campo é um fragmento completo. Formatação de texto, tabelas e links HTTPS são preservados; scripts, formulários e imagens remotas são removidos. As alterações valem para novos e-mails enfileirados; mensagens já enfileiradas mantêm seu conteúdo.</p><?php } ?>
         <form method="post" action="<?= $escape($company_urls[$group]); ?>" autocomplete="off">
             <input type="hidden" name="_company_context" value="<?= $escape($context_token); ?>">
             <?php if ($this->config->item('csrf_protection')) { ?><input type="hidden" name="<?= $escape($this->security->get_csrf_token_name()); ?>" value="<?= $escape($this->security->get_csrf_hash()); ?>"><?php } ?>
@@ -34,7 +34,7 @@ $labels = [
                 <div class="company-settings-grid">
                 <?php foreach ($values as $name => $value) { ?>
                     <div class="form-group"><label for="company-setting-<?= $escape($name); ?>"><?= $escape($labels[$name] ?? $name); ?></label>
-                    <?php if($name==='predefined_terms_invoice'){ ?><textarea class="form-control" id="company-setting-<?= $escape($name); ?>" name="settings[<?= $escape($name); ?>]" maxlength="10000"><?= $escape($value); ?></textarea>
+                    <?php if(CompanySettingsCatalog::multiline($name)){ ?><textarea class="form-control" id="company-setting-<?= $escape($name); ?>" name="settings[<?= $escape($name); ?>]" maxlength="<?= $group === 'email_content' ? '60000' : '10000'; ?>" rows="6"><?= $escape($value); ?></textarea>
                     <?php }elseif (in_array($name,['dateformat','time_format'],true)) { ?>
                         <select class="form-control" id="company-setting-<?= $escape($name); ?>" name="settings[<?= $escape($name); ?>]" required>
                             <option value="">Não configurado</option>

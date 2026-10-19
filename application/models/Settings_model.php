@@ -2,6 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 require_once APPPATH . 'services/CompanySettingsRuntime.php';
+require_once APPPATH . 'services/CompanySettingsCatalog.php';
 
 class Settings_model extends App_Model
 {
@@ -210,6 +211,11 @@ class Settings_model extends App_Model
         CompanySettingsRuntime::assertCan('edit');
         if(isset($data['tags'])||isset($data['custom_fields'])){throw new DomainException('company_settings_global_resource_unavailable');}
         if(!is_array($data['settings']??null)){throw new DomainException('company_settings_invalid_input');}
+        // Internal callers share the same validation and HTML policy as the native form.
+        foreach (['email','email_content','documents'] as $group) {
+            $known=array_intersect_key($data['settings'],array_flip(CompanySettingsCatalog::fields($group)));
+            if($known!==[])$data['settings']=array_replace($data['settings'],CompanySettingsCatalog::prepare($group,$known));
+        }
         $identity=false;$options=false;$prepared=[];
         foreach($data['settings'] as $name=>$value){
             CompanySettingsStorage::name($name);

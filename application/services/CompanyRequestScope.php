@@ -63,7 +63,7 @@ final class CompanyRequestScope
         self::$isolated = ($native && $class === 'company_context' && in_array($method, ['index', 'select'], true))
             || ($native && $class === 'company_onboarding' && $method === 'index')
             || ($native && $class === 'company_clients' && $method === 'index')
-            || ($native && $class === 'company_invoices' && $method === 'index')
+            || ($native && in_array($class,['company_invoices','company_credits','company_projects','company_tasks','company_expenses'],true) && $method === 'index')
             || ($native && $class === 'company_assets' && $method === 'index')
             || $companyScopedBbRoute;
         if (!IssuerCore::ready($ci->db, db_prefix())) {

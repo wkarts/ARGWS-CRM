@@ -121,6 +121,11 @@ jobs:
           php tests/companies/portal_concurrency.php
           php tests/companies/invoice_amounts.php
           php tests/companies/invoices.php
+          php tests/companies/credits_concurrency.php
+          php tests/companies/credits_reader.php
+          php tests/companies/projects_concurrency.php
+          php tests/companies/projects_controller.php
+          php tests/companies/expenses_concurrency.php
           php tests/companies/invoice_delivery_concurrency.php
           php tests/companies/invoice_concurrency.php
           php tests/companies/portal_invoice_concurrency.php
@@ -136,6 +141,8 @@ jobs:
           php tests/settings/company_assets.php
           php tests/companies/asset_concurrency.php
           php tests/settings/company_settings.php
+          php tests/settings/company_presentation.php
+          php tests/settings/company_presentation_delivery.php
           php tests/settings/company_options_helpers.php
           php tests/settings/company_identity_transaction.php
           php tests/settings/company_registry_identity.php

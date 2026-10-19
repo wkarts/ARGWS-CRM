@@ -1,0 +1,23 @@
+<?php
+require __DIR__.'/expenses_operations.php';require_once APPPATH.'services/CompanyExpenseFiles.php';
+$files=new CompanyExpenseFiles($db,$p);$expense=$ib;$pdf="%PDF-1.7\nSynthetic private evidence\n%%EOF\n";$fileKey=$key('file-b');
+$files->upload($b,7,$expense,$fileKey,'comprovante.pdf',$pdf);$files->upload($b,7,$expense,$fileKey,'comprovante.pdf',$pdf);
+essentialCheck(count($files->page($b,7,$expense))===1,'upload retry retains one expense evidence');
+essentialCheck($files->download($b,7,$expense,$fileKey)['content']===$pdf,'private B download returns exact stored evidence after committed audit');
+essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p."issuers_audit WHERE event='company_expense_file_downloaded' AND issuer_id=? AND subject_id=?",[$b,$expense])->row()->n===1,'download provenance persisted before returning file');
+essentialThrows(fn()=>$files->download($a,7,$expense,$fileKey),'company_expense_denied','cross origin expense evidence denied despite known key');
+essentialThrows(fn()=>$files->download($b,7,$own,$fileKey),'company_expense_denied','file key never crosses parent expense');
+essentialThrows(fn()=>$files->upload($b,7,$expense,$fileKey,'comprovante.pdf',$pdf.'changed'),'company_expense_file_conflict','file key cannot overwrite immutable evidence');
+essentialThrows(fn()=>$files->upload($a,7,$id,$key('cancelled-file'),'comprovante.pdf',$pdf),'company_expense_immutable','cancelled expense cannot acquire new evidence');
+foreach(['../secret.pdf','bad.php','.hidden.pdf',"bad\r\n.pdf"] as $name)essentialThrows(fn()=>$files->upload($b,7,$expense,$key($name),$name,$pdf),'company_expense_file_invalid','unsafe filename or executable extension refused');
+essentialThrows(fn()=>$files->upload($b,7,$expense,$key('oversize'),'large.pdf',str_pad($pdf,2097153,'x')),'company_expense_file_invalid','bounded file bytes refused before transaction');
+$image=imagecreatetruecolor(3,3);ob_start();imagepng($image);$imageBytes=ob_get_clean();unset($image);$pngKey=$key('image');$files->upload($b,7,$expense,$pngKey,'foto.png',$imageBytes.'synthetic trailing content');$png=$files->download($b,7,$expense,$pngKey);essentialCheck($png['mime']==='image/png'&&!str_contains($png['content'],'synthetic trailing content'),'image decoded and reencoded without trailing payload');
+$db->failOn='INSERT INTO '.$p.'issuers_audit';essentialThrows(fn()=>$files->upload($b,7,$expense,$key('fail-file'),'proof.pdf',$pdf),'issuer_storage_failed','failed upload audit rolls back blob');essentialThrows(fn()=>$files->download($b,7,$expense,$fileKey),'issuer_storage_failed','failed download provenance returns no bytes');$db->failOn=null;
+essentialCheck(count($files->page($b,7,$expense))===2,'failed upload leaves no evidence orphan');
+$hash=hash('sha256',$pdf);$files->hide($b,7,$expense,$fileKey,$hash);$files->hide($b,7,$expense,$fileKey,$hash);essentialThrows(fn()=>$files->download($b,7,$expense,$fileKey),'company_expense_denied','hidden expense evidence cannot be downloaded');
+essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'company_expense_files WHERE file_key=?',[$fileKey])->row()->n===1,'hide preserves blob and audit history');
+$files->upload($b,7,$expense,$fileKey,'comprovante.pdf',$pdf);essentialCheck(count($files->page($b,7,$expense))===1,'original upload retry does not reactivate hidden evidence');
+for($i=0;$i<18;$i++)$files->upload($b,7,$expense,$key('limit-'.$i),'proof-'.$i.'.pdf',$pdf);
+essentialThrows(fn()=>$files->upload($b,7,$expense,$key('limit-over'),'proof.pdf',$pdf),'company_expense_file_limit','history cap counts hidden evidence too');
+essentialCheck($db->query("SELECT * FROM {$p}expenses ORDER BY id")->result_array()===$legacy,'private evidence never touches native legacy expenses');
+echo 'Company expense files: '.$GLOBALS['essentialChecks'].' cumulative checks passed ('.$db->driver().'). No provider calls.'.PHP_EOL;

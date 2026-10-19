@@ -21,6 +21,9 @@ class Company_invoices extends AdminController
                 elseif($action==='payment'){
                     $input=$this->input->post('payment',false);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new DomainException('company_payment_invalid_input');
                     (new \app\services\InvoicePaymentWriter($this->db))->recordCompanyManual($issuer,$actor,$id,$input,$key);
+                }elseif($action==='reverse_payment'){
+                    $input=$this->input->post('reversal',false);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key)||isset($input['invoice_id']))throw new DomainException('company_credit_invalid_input');$input['invoice_id']=$id;
+                    (new \app\services\InvoicePaymentWriter($this->db))->moveCompanyCredit($issuer,$actor,'manual_reverse',$input,$key);
                 }elseif(in_array($action,['attachment_upload','attachment_hide'],true)){
                     $files=new CompanyInvoiceAttachments($this->db,db_prefix());
                     if($action==='attachment_upload'){
@@ -69,7 +72,7 @@ class Company_invoices extends AdminController
             $page=$s->page($issuer,$actor,$this->input->get('after',false)??0);$currencies=$s->currencies($issuer,$actor);
             if($acl->can($issuer,$actor,'invoices','create')&&$acl->can($issuer,$actor,'customers','view'))$clients=(new CompanyClients($this->db,db_prefix()))->page($issuer,$actor,0,100)['items'];
         }catch(DomainException $e){
-            if(in_array($e->getMessage(),['company_invoice_access_denied','issuer_access_denied','company_payment_access_denied','issuer_document_scope_mismatch','company_invoice_delivery_denied','company_invoice_attachment_denied'],true)){show_error('Fatura indisponível ou ação não autorizada nesta empresa.',403);return;}
+            if(in_array($e->getMessage(),['company_invoice_access_denied','issuer_access_denied','company_payment_access_denied','issuer_document_scope_mismatch','company_invoice_delivery_denied','company_invoice_attachment_denied','company_credit_access_denied'],true)){show_error('Fatura indisponível ou ação não autorizada nesta empresa.',403);return;}
             $this->output->set_status_header(str_contains($e->getMessage(),'stale')||str_contains($e->getMessage(),'conflict')?409:422);
             $error=match($e->getMessage()){
                 'company_invoice_attachment_invalid'=>'Envie PDF de até2 MiB ou PNG/JPEG de até512 KiB e1600 pixels por dimensão. Use nome sem caminhos.',
@@ -78,13 +81,14 @@ class Company_invoices extends AdminController
                 'company_invoice_delivery_template_required'=>'Ative o template de envio de fatura desta empresa e mantenha o campo {invoice_link}.',
                 'company_invoice_delivery_sender_required','company_mail_configuration_required','company_mail_secret_unavailable'=>'Complete a configuração de e-mail desta empresa antes de agendar.',
                 'issuer_document_invalid_profile','issuer_document_profile_required'=>'Complete nome, documento e endereço da empresa nas Definições antes de emitir.',
-                'company_invoice_provider_review_required','company_payment_provider_review_required'=>'Esta fatura possui origem bancária. Use a revisão e a conciliação da integração de origem.',
+                'company_payment_reversed'=>'Este recebimento já possui estorno. Confira o histórico e o saldo atual.',
+                'company_credit_provider_review_required','company_invoice_provider_review_required','company_payment_provider_review_required'=>'Esta fatura possui origem bancária. Use a revisão e a conciliação da integração de origem.',
                 'company_invoice_immutable'=>'A origem, moeda ou estado financeiro impede esta alteração. Nenhum cancelamento bancário foi solicitado.',
                 'company_payment_exceeds_balance'=>'O recebimento excede o saldo atual da fatura.',
                 'company_payment_reference_conflict'=>'Esta referência já possui recebimento nesta fatura. Confira o lançamento antes de tentar novamente.',
                 default=>'Não foi possível concluir. Confira os dados, o estado e as permissões. Esta tentativa não aplicou alterações.',
             };
         }catch(Throwable $e){log_message('error','Company invoice operation unconfirmed; no document or payment values logged.');$this->output->set_status_header(503);$error='Não foi possível confirmar a operação. Reabra a fatura antes de tentar novamente.';}
-        $this->load->view('admin/companies/invoices',['issuer'=>$issuer,'document'=>$document,'attachment_files'=>$attachmentFiles,'delivery'=>$delivery,'delivery_blocked'=>$deliveryBlocked,'can_send'=>$canSend,'adjustments'=>$adjustments,'payments'=>$payments,'directory'=>$page,'clients'=>$clients,'currencies'=>$currencies,'revision'=>$revision,'error'=>$error,'company_invoices_csrf'=>$csrf,'request_key'=>bin2hex(random_bytes(32)),'can_create'=>$acl->can($issuer,$actor,'invoices','create'),'can_edit'=>$acl->can($issuer,$actor,'invoices','edit'),'can_payment'=>$acl->can($issuer,$actor,'payments','create')]);
+        $this->load->view('admin/companies/invoices',['issuer'=>$issuer,'document'=>$document,'attachment_files'=>$attachmentFiles,'delivery'=>$delivery,'delivery_blocked'=>$deliveryBlocked,'can_send'=>$canSend,'adjustments'=>$adjustments,'payments'=>$payments,'directory'=>$page,'clients'=>$clients,'currencies'=>$currencies,'revision'=>$revision,'error'=>$error,'company_invoices_csrf'=>$csrf,'request_key'=>bin2hex(random_bytes(32)),'can_create'=>$acl->can($issuer,$actor,'invoices','create'),'can_edit'=>$acl->can($issuer,$actor,'invoices','edit'),'can_reverse_payment'=>$acl->can($issuer,$actor,'payments','delete'),'can_payment'=>$acl->can($issuer,$actor,'payments','create')]);
     }
 }

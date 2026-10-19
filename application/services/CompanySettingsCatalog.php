@@ -1,0 +1,71 @@
+<?php
+
+declare(strict_types=1);
+require_once __DIR__.'/CompanySettingsIdentity.php';
+require_once __DIR__.'/CompanySettingsFormats.php';
+
+/** Only groups consumed by the isolated company flows; never the legacy plugin catalog. */
+final class CompanySettingsCatalog
+{
+    public static function groups(): array
+    {
+        return ['company'=>'Informações da Empresa','email'=>'Servidor SMTP','email_content'=>'Apresentação dos e-mails',
+            'documents'=>'Faturas e créditos','localization'=>'Data e hora'];
+    }
+
+    public static function fields(string $group): array
+    {
+        return match($group) {
+            'company'=>array_merge(['invoice_company_name','company_vat'],CompanySettingsIdentity::PROFILE_OPTIONS),
+            'localization'=>['dateformat','time_format'],
+            'documents'=>['invoice_prefix','predefined_terms_invoice','credit_note_prefix','predefined_terms_credit_note'],
+            'email'=>['smtp_host','smtp_port','smtp_encryption','smtp_email','smtp_username','smtp_password'],
+            'email_content'=>['email_header','email_signature','email_footer'],
+            default=>throw new DomainException('company_settings_group_unavailable'),
+        };
+    }
+
+    public static function multiline(string $name): bool
+    {
+        return in_array($name,['predefined_terms_invoice','predefined_terms_credit_note','email_header','email_signature','email_footer'],true);
+    }
+
+    /** Validate the entire form before encryption, SQL or audit. Returns normalized safe fragments. */
+    public static function prepare(string $group,array $settings): array
+    {
+        if(array_diff(array_keys($settings),self::fields($group)))throw new DomainException('company_settings_invalid_input');
+        foreach($settings as $name=>$value) {
+            if(!is_string($value)||preg_match('//u',$value)!==1
+                ||preg_match('/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/',$value))throw new DomainException('company_settings_invalid_input');
+            $limit=match($name){'invoice_prefix','credit_note_prefix'=>50,'predefined_terms_invoice','predefined_terms_credit_note'=>10000,
+                'email_header','email_signature','email_footer'=>60000,'smtp_password'=>4096,default=>2000};
+            if(strlen($value)>$limit)throw new DomainException('company_settings_invalid_input');
+            if($group!=='company'&&$name!=='smtp_password'&&!self::multiline($name)&&preg_match('/[\r\n]/',$value))throw new DomainException('company_settings_invalid_input');
+        }
+        if($group==='localization')CompanySettingsFormats::validate($settings);
+        if($group==='email') {
+            if(isset($settings['smtp_encryption'])&&!in_array($settings['smtp_encryption'],['','ssl','tls'],true))throw new DomainException('company_settings_invalid_input');
+            if(($settings['smtp_port']??'')!==''&&(!ctype_digit($settings['smtp_port'])||(int)$settings['smtp_port']<1||(int)$settings['smtp_port']>65535))throw new DomainException('company_settings_invalid_input');
+            if(($settings['smtp_email']??'')!==''&&!filter_var($settings['smtp_email'],FILTER_VALIDATE_EMAIL))throw new DomainException('company_settings_invalid_input');
+            if(($settings['smtp_host']??'')!==''&&!preg_match('/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9.-]{0,251}[a-zA-Z0-9])?|\[[a-fA-F0-9:]+\])$/D',$settings['smtp_host']))throw new DomainException('company_settings_invalid_input');
+        }
+        if($group==='email_content') {
+            foreach($settings as $name=>$value)$settings[$name]=self::emailHtml($value);
+        }
+        return $settings;
+    }
+
+    /** Independent HTML fragments; no scripts, remote images, forms, stylesheets or hooks. */
+    private static function emailHtml(string $html): string
+    {
+        if(!class_exists('HTMLPurifier'))require_once __DIR__.'/../vendor/ezyang/htmlpurifier/library/HTMLPurifier.auto.php';
+        $config=HTMLPurifier_Config::createDefault();
+        $config->set('Core.Encoding','UTF-8');
+        $config->set('Cache.DefinitionImpl',null);
+        $config->set('HTML.Doctype','HTML 4.01 Transitional');
+        $config->set('HTML.Allowed','div[style],p[style],span[style],h1[style],h2[style],h3[style],strong,b,em,i,u,br,hr,ul,ol,li,a[href|title],table[style|cellpadding|cellspacing|border],thead,tbody,tr,th[style|colspan|rowspan],td[style|colspan|rowspan]');
+        $config->set('CSS.AllowedProperties',['color','background-color','font-family','font-size','font-weight','font-style','text-align','text-decoration','padding','padding-top','padding-right','padding-bottom','padding-left','margin','margin-top','margin-right','margin-bottom','margin-left','border','border-collapse','width']);
+        $config->set('URI.AllowedSchemes',['https'=>true,'mailto'=>true]);
+        return (new HTMLPurifier($config))->purify($html);
+    }
+}
