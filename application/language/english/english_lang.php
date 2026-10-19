@@ -4172,3 +4172,4 @@ $lang['issuer_primary_deactivation_denied'] = 'The installation primary company 
 $lang['issuer_client_adoption_blocked'] = 'Private client creation and sharing await integration of the core access controls.';
 
 $lang['permission_share_customer_companies'] = 'Share customer identity with other companies';
+$lang['issuer_staff_company_access_required'] = 'The employee was not created: select at least one authorized company and a default company. If the legacy installation has no designated owner, resolve installation responsibility under Settings > Companies before creating employees.';

@@ -4194,3 +4194,4 @@ $lang['issuer_primary_deactivation_denied'] = 'A empresa principal da instalaç�
 $lang['issuer_client_adoption_blocked'] = 'O cadastro e o compartilhamento privado de clientes aguardam a integração dos controles de acesso do núcleo.';
 
 $lang['permission_share_customer_companies'] = 'Compartilhar cadastro com outras empresas';
+$lang['issuer_staff_company_access_required'] = 'O colaborador não foi criado: selecione pelo menos uma empresa autorizada e uma empresa padrão. Se a instalação legada ainda não tem responsável definido, resolva a responsabilidade em Configurações > Empresas antes de cadastrar novos colaboradores.';

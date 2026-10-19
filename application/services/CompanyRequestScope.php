@@ -52,6 +52,7 @@ final class CompanyRequestScope
         $companyScopedBbRoute = $admin && $module === 'banco_brasil' && $class === 'banco_brasil'
             && in_array($method, ['index', 'register_connection', 'register_layout', 'import_return'], true);
         self::$isolated = ($native && $class === 'company_context' && in_array($method, ['index', 'select'], true))
+            || ($native && $class === 'company_onboarding' && $method === 'index')
             || $companyScopedBbRoute;
         if (!IssuerCore::ready($ci->db, db_prefix())) {
             // Only native, non-module admin routes may enter the recovery gate.

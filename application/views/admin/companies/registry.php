@@ -7,7 +7,7 @@ $url=fn($path)=>CompanyRequestScope::adminUrl($this,$path);
 <?php if(is_array($company_notice??null)){?><div class="alert <?= ($company_notice['type']??'')==='success'?'alert-success':'alert-danger'; ?>" role="status"><?= $esc($company_notice['text']??''); ?></div><?php } ?>
 <div class="row"><section class="col-md-4"><div class="company-settings-card"><h2>Cadastro de empresas</h2>
 <ul class="list-unstyled"><?php foreach($catalog as $entry){?><li><a href="<?= $esc($url('issuers/index/'.(int)$entry['id'])); ?>"><?= $esc($entry['legal_name']); ?></a> <small><?= (int)$entry['active']===1?'Ativa':'Inativa'; ?></small></li><?php } ?></ul>
-<?php if($can_create){?><a class="btn btn-default" href="<?= $esc($url('issuers')); ?>">Nova empresa</a><?php } ?>
+<?php if($can_create){?><a class="btn btn-default" href="<?= $esc($url('company_onboarding')); ?>">Nova empresa</a><?php } ?>
 </div></section><section class="col-md-8"><div class="company-settings-card">
 <?php if($can_manage){?><h2><?= $selected?'Informações da empresa':'Nova empresa'; ?></h2>
 <?php if($selected && ($selected['identity_status']??'')==='pending'){?><p class="alert alert-warning">Revise os dados cadastrais preservados da instalação.</p><?php } ?>

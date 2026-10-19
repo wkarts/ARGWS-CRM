@@ -35,7 +35,10 @@ class Staff extends AdminController
             $data = $this->input->post();
             $issuerAccess = null;
             if (function_exists('issuers_prepare_staff_access')) {
-                try { $issuerAccess = issuers_prepare_staff_access($data, $id === '' ? null : $id); }
+                try {
+                    $issuerAccess = issuers_prepare_staff_access($data, $id === '' ? null : $id);
+                    if ($id === '') { issuers_require_new_staff_access($issuerAccess); }
+                }
                 catch (Throwable $error) {
                     set_alert('warning', _l($error instanceof DomainException ? $error->getMessage() : 'issuer_storage_failed'));
                     redirect(admin_url('staff/member/' . $id));

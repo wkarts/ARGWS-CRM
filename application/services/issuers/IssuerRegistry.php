@@ -174,6 +174,17 @@ final class IssuerRegistry
 
     public function saveIssuer($actor, array $input, $issuer = null): int
     {
+        return $this->persistIssuer($actor,$input,$issuer,false);
+    }
+
+    /** Atomic wizard composition; only an attested IssuerTransaction owner may call this. */
+    public function createInOwnedTransaction($actor, array $input): int
+    {
+        return $this->persistIssuer($actor,$input,null,true);
+    }
+
+    private function persistIssuer($actor, array $input, $issuer, bool $owned): int
+    {
         $actor = IssuerPolicy::id($actor);
         $id = $issuer === null ? null : IssuerPolicy::id($issuer);
         $this->requireCompanyMutation($actor, $id);
@@ -191,7 +202,7 @@ final class IssuerRegistry
             throw new DomainException('issuer_invalid_status');
         }
         $seedTemplates=$native && $id===null && $this->db->table_exists($this->prefix.'emailtemplates');
-        return $this->transaction(function () use ($actor, $id, $name, $tax, $active, $native, $profile, $seedTemplates) {
+        $operation = function () use ($actor, $id, $name, $tax, $active, $native, $profile, $seedTemplates) {
             $this->requireCompanyMutation($actor, $id);
             if($id!==null&&(int)$active!==1&&(new IssuerResourceAccess($this->db,$this->prefix))->primaryId()===$id){throw new DomainException('issuer_primary_deactivation_denied');}
             $duplicate = $this->one("SELECT id FROM {$this->tables}registry WHERE tax_id=?", [$tax]);
@@ -220,7 +231,14 @@ final class IssuerRegistry
             }
             $this->audit($actor, 'issuer_saved', $id);
             return $id;
-        }, $native ? array_merge(['issuers_resource_permissions','issuers_installation_identity','options'],$seedTemplates?['emailtemplates']:[]) : []);
+        };
+        $extra = $native ? array_merge(['issuers_resource_permissions','issuers_installation_identity','options'],$seedTemplates?['emailtemplates']:[]) : [];
+        if ($owned) {
+            IssuerTransaction::assertOwned($this->db,$this->prefix,array_unique(array_merge(
+                ['issuers_lock','issuers_registry','issuers_staff','issuers_staff_defaults','issuers_audit','staff'],$extra)));
+            return $operation();
+        }
+        return $this->transaction($operation,$extra);
     }
 
     public function defaultForStaff($staff): ?int

@@ -101,7 +101,14 @@ final class IssuerStaffAccess
     public function save($staff, array $memberships, $default, array $resources=[]): void
     {
         $staff=IssuerPolicy::id($staff);
-        $this->transaction($staff,function()use($staff,$memberships,$default,$resources):void {
+        $this->transaction($staff,fn()=>$this->saveInOwnedTransaction($staff,$memberships,$default,$resources));
+    }
+    public function saveInOwnedTransaction($staff, array $memberships, $default, array $resources=[]): void
+    {
+        $staff=IssuerPolicy::id($staff);
+        IssuerTransaction::assertOwned($this->db,$this->prefix,
+            ['staff','issuers_registry','issuers_staff','issuers_staff_defaults','issuers_lock','issuers_audit','issuers_resource_permissions','issuers_installation_identity']);
+        $this->rows("SELECT staffid FROM {$this->prefix}staff WHERE staffid IN (?,?) FOR UPDATE",[$this->actor,$staff]);
             $data=$this->prepare($staff,$memberships,$default,$resources);
             $before=$this->auditSnapshot($staff);
             $primary=$this->access->primaryId();
@@ -123,9 +130,33 @@ final class IssuerStaffAccess
             } } }
             if($data['default']!==null) { $this->query("INSERT INTO {$this->prefix}issuers_staff_defaults (staff_id,issuer_id) VALUES (?,?)",[$staff,$data['default']]); }
             $this->audit($staff,'staff_issuer_access_saved',$before);
-        });
     }
     public function ownOptions(): array { return ['catalog'=>$this->registry->available($this->actor),'default'=>$this->registry->defaultForStaff($this->actor),'master'=>$this->access->isMaster($this->actor)]; }
+    /** Add a wizard-created company without replacing any existing memberships or grants. */
+    public function addCompanyInOwnedTransaction($staff,$issuer,array $resources,bool $makeDefault): void
+    {
+        $staff=IssuerPolicy::id($staff);$issuer=IssuerPolicy::id($issuer);
+        IssuerTransaction::assertOwned($this->db,$this->prefix,
+            ['staff','issuers_registry','issuers_staff','issuers_staff_defaults','issuers_lock','issuers_audit','issuers_resource_permissions','issuers_installation_identity']);
+        $this->registry->requireAccessAdministrator($this->actor);
+        $this->rows("SELECT staffid FROM {$this->prefix}staff WHERE staffid IN (?,?) FOR UPDATE",[$this->actor,$staff]);
+        $this->staff($staff);
+        if($this->access->isInstallationMaster($staff)){throw new DomainException('issuer_master_access_automatic');}
+        // Validate the new grants through the same native catalog, independently of old grants.
+        $data=$this->prepare($staff,[$issuer=>'1'],$makeDefault?$issuer:null,[$issuer=>$resources]);
+        $before=$this->auditSnapshot($staff);
+        $existing=$this->rows("SELECT can_view FROM {$this->prefix}issuers_staff WHERE issuer_id=? AND staff_id=?",[$issuer,$staff]);
+        if($existing&&(int)$existing[0]['can_view']!==1){throw new DomainException('issuer_access_denied');}
+        if(!$existing){$this->query("INSERT INTO {$this->prefix}issuers_staff(issuer_id,staff_id,can_view,can_manage_clients,can_share_clients,can_manage_integrations) VALUES(?,?,1,0,0,0)",[$issuer,$staff]);}
+        foreach($data['resources'][$issuer]??[] as $feature=>$capabilities){foreach($capabilities as $capability=>$enabled){
+            $this->query("INSERT IGNORE INTO {$this->prefix}issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,?,?,?)",[$issuer,$staff,$feature,$capability]);
+        }}
+        if($makeDefault){
+            $this->query("DELETE FROM {$this->prefix}issuers_staff_defaults WHERE staff_id=?",[$staff]);
+            $this->query("INSERT INTO {$this->prefix}issuers_staff_defaults(staff_id,issuer_id) VALUES(?,?)",[$staff,$issuer]);
+        }
+        $this->audit($staff,'staff_company_onboarded',$before);
+    }
     public function validateOwnDefault($default): ?int
     {
         $this->staff($this->actor); $default=$default===null||$default===''?null:IssuerPolicy::id($default);

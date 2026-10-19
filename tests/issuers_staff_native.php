@@ -38,6 +38,9 @@ $controller=new Staff();$controller->load=$loader;$controller->staff_model=$mode
 $input=new class{public array $data=[];function post($key=null,$clean=null){return $key===null?$this->data:($this->data[$key]??'');}};$controller->input=$input;
 function nativeStaffPost($data,$target='3',$personal=false){global$controller,$input;$input->data=array_merge(['email_signature'=>'','password'=>''],$data);try{if($personal)$controller->edit_profile();else$controller->member($target);}catch(StaffRedirect $stop){return $stop->getMessage();}throw new RuntimeException('missing native redirect');}
 $base=['issuers_access_present'=>'1','issuers_access_csrf'=>$token,'issuer_memberships'=>[$a=>'1'],'issuer_default'=>(string)$a,'issuer_resource_permissions'=>[$a=>['banco_brasil'=>['view','manage']]]];
+$attempts=count($model->calls);
+nativeStaffPost([], '');same($attempts,count($model->calls),'new staff without company/default refused before native creation');
+nativeStaffPost(array_merge($base,['issuer_default'=>'']), '');same($attempts,count($model->calls),'new staff requires usable default before native creation');
 same('/admin/staff/member/50',nativeStaffPost($base,''),'new staff grants use actual created ID');
 same(true,issuer_resource_can($a,50,'banco_brasil','manage'),'helper uses actual company ACL');
 same(false,issuer_resource_can($b,50,'banco_brasil','manage'),'global stub allow never crosses issuer');

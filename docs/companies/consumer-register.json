@@ -5,12 +5,12 @@
   "frozen_candidate": "b8a5cec7286edc88191a1b1d07813ea40ed79bce",
   "counts": {
     "company_core_and_settings": {
-      "pending": 217,
-      "boundary_tested": 13
+      "pending": 242,
+      "boundary_tested": 12
     },
     "customer_portal": {
-      "pending": 205,
-      "boundary_tested": 11
+      "pending": 214,
+      "boundary_tested": 3
     },
     "files_and_reports": {
       "pending": 191,
@@ -21,11 +21,11 @@
       "boundary_tested": 10
     },
     "modules": {
-      "pending": 6523,
+      "pending": 6524,
       "boundary_tested": 13
     },
     "other_core": {
-      "pending": 2164,
+      "pending": 2167,
       "boundary_tested": 9
     },
     "sales_documents": {
@@ -409,196 +409,6 @@
         ],
         "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
         "source_sha256": "431a154fd50f0a78c8aaef7c34a2bfb23751bac2e0c01a44942b6417c00305c9"
-      },
-      "full_operation_ready": false
-    },
-    {
-      "consumer": "application/models/Authentication_model.php::login",
-      "category": "customer_portal",
-      "line": 31,
-      "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1",
-      "risk_candidates": [
-        "database",
-        "identity_context",
-        "session_cache"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/portal_autologin.php"
-        ],
-        "exercised": [
-          "legacy_and_private_own_identity_positive",
-          "deny_wrong_password_or_reparented_contact"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite, fake password verifier/cookie provider/mail delivery; not HTTP, SMTP or MySQL",
-        "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1"
-      },
-      "full_operation_ready": false
-    },
-    {
-      "consumer": "application/models/Authentication_model.php::autologin",
-      "category": "customer_portal",
-      "line": 223,
-      "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1",
-      "risk_candidates": [
-        "database",
-        "session_cache",
-        "extension_points"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/portal_autologin.php"
-        ],
-        "exercised": [
-          "legacy_and_private_own_identity_positive",
-          "deny_cookie_renewal_for_revoked_identity"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite, fake password verifier/cookie provider/mail delivery; not HTTP, SMTP or MySQL",
-        "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1"
-      },
-      "full_operation_ready": false
-    },
-    {
-      "consumer": "application/models/Authentication_model.php::set_password_email",
-      "category": "customer_portal",
-      "line": 325,
-      "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1",
-      "risk_candidates": [
-        "database",
-        "transport"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/portal_recovery.php"
-        ],
-        "exercised": [
-          "legacy_recovery_positive_fake_delivery",
-          "deny_private_implicit_origin_before_token_mutation"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite, fake password verifier/cookie provider/mail delivery; not HTTP, SMTP or MySQL",
-        "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1"
-      },
-      "full_operation_ready": false
-    },
-    {
-      "consumer": "application/models/Authentication_model.php::forgot_password",
-      "category": "customer_portal",
-      "line": 375,
-      "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1",
-      "risk_candidates": [
-        "database",
-        "identity_context",
-        "transport"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/portal_recovery.php"
-        ],
-        "exercised": [
-          "legacy_and_staff_recovery_positive_fake_delivery",
-          "deny_private_implicit_origin_before_token_mutation"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite, fake password verifier/cookie provider/mail delivery; not HTTP, SMTP or MySQL",
-        "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1"
-      },
-      "full_operation_ready": false
-    },
-    {
-      "consumer": "application/models/Authentication_model.php::set_password",
-      "category": "customer_portal",
-      "line": 441,
-      "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1",
-      "risk_candidates": [
-        "database",
-        "identity_context"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/portal_recovery_tokens.php"
-        ],
-        "exercised": [
-          "deny_existing_private_token_before_password_mutation_or_global_mail"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite; positive private completion, atomic completion, real concurrency and HTTP remain pending",
-        "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1"
-      },
-      "full_operation_ready": false
-    },
-    {
-      "consumer": "application/models/Authentication_model.php::reset_password",
-      "category": "customer_portal",
-      "line": 492,
-      "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1",
-      "risk_candidates": [
-        "database",
-        "identity_context",
-        "transport"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/portal_recovery_tokens.php"
-        ],
-        "exercised": [
-          "deny_existing_private_token_before_password_mutation_or_global_mail"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite; positive private completion, atomic completion, real concurrency and HTTP remain pending",
-        "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1"
-      },
-      "full_operation_ready": false
-    },
-    {
-      "consumer": "application/models/Authentication_model.php::can_reset_password",
-      "category": "customer_portal",
-      "line": 548,
-      "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1",
-      "risk_candidates": [
-        "database",
-        "identity_context"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/portal_recovery_tokens.php"
-        ],
-        "exercised": [
-          "legacy_and_staff_token_validation",
-          "deny_existing_private_token_before_mutation_or_global_mail",
-          "deny_inactive_contact_or_parent",
-          "preserve_expiry_windows"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite; positive private completion, atomic completion, real concurrency and HTTP remain pending",
-        "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1"
-      },
-      "full_operation_ready": false
-    },
-    {
-      "consumer": "application/models/Authentication_model.php::can_set_password",
-      "category": "customer_portal",
-      "line": 584,
-      "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1",
-      "risk_candidates": [
-        "database",
-        "identity_context"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/companies/portal_recovery_tokens.php"
-        ],
-        "exercised": [
-          "legacy_and_staff_token_validation",
-          "deny_existing_private_token_before_mutation_or_global_mail",
-          "deny_inactive_contact_or_parent",
-          "preserve_expiry_windows"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite; positive private completion, atomic completion, real concurrency and HTTP remain pending",
-        "source_sha256": "9fb56583e5e550ce4ee5a98b3a669db6267c2872b0590e186e1879a35c6608c1"
       },
       "full_operation_ready": false
     },
@@ -2319,28 +2129,6 @@
       "full_operation_ready": false
     },
     {
-      "consumer": "application/services/CompanyEmailTemplateSchema.php::ensure",
-      "category": "company_core_and_settings",
-      "line": 7,
-      "source_sha256": "43cabd990f3d4c3a654f1a847a0c184c6fc30b518094e97807527807dfacc2e5",
-      "risk_candidates": [
-        "database",
-        "identity_context"
-      ],
-      "state": "boundary_tested",
-      "evidence": {
-        "tests": [
-          "tests/settings/company_email_templates.php"
-        ],
-        "exercised": [
-          "native_schema_upgrade_repeat_preserves_primary_customizations"
-        ],
-        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
-        "source_sha256": "43cabd990f3d4c3a654f1a847a0c184c6fc30b518094e97807527807dfacc2e5"
-      },
-      "full_operation_ready": false
-    },
-    {
       "consumer": "application/services/CompanyEmailTemplates.php::findForIssuer",
       "category": "company_core_and_settings",
       "line": 33,
@@ -2881,7 +2669,7 @@
       "full_operation_ready": false
     }
   ],
-  "source_manifest_sha256": "81eaf29e41ec9475603764e6c4d2466c3179fd3c73180b3dabf57a76be67e48e",
-  "total_consumers": 10020,
+  "source_manifest_sha256": "055dd45a8845447324065347237ed293ed4268c665e70dfa603e7b8f57f246d2",
+  "total_consumers": 10049,
   "full_register_command": "python3 scripts/register-company-consumers.py --full-output /tmp/company-consumers-full.json"
 }

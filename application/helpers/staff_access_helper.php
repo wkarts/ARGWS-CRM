@@ -57,6 +57,14 @@ function issuers_prepare_staff_access(array &$data,$staff=null,bool $personal=fa
     $prepared=issuers_staff_access_service()->prepare($staff,$input['issuer_memberships']??[],$input['issuer_default']??null,$input['issuer_resource_permissions']??[]);
     return array_merge($prepared,['personal'=>false]);
 }
+/** An active new employee must not be silently created without any usable company. */
+function issuers_require_new_staff_access(?array $prepared): void
+{
+    if (!issuer_core_ready()) { return; }
+    if ($prepared === null || !empty($prepared['personal']) || empty($prepared['memberships']) || $prepared['default'] === null) {
+        throw new DomainException('issuer_staff_company_access_required');
+    }
+}
 /** Staff profile and issuer access are separate units; never report grants saved after a failure. */
 function issuers_apply_staff_access(?array $prepared,$staff): bool
 {

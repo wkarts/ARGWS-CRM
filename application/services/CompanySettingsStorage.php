@@ -167,6 +167,14 @@ final class CompanySettingsStorage
     /** Atomic replacement of submitted private options, without joining caller transactions. */
     public function updateBatch($issuerId,$staffId,array $values): int
     {
+        return $this->persistBatch($issuerId,$staffId,$values,false);
+    }
+    public function updateBatchInOwnedTransaction($issuerId,$staffId,array $values): int
+    {
+        return $this->persistBatch($issuerId,$staffId,$values,true);
+    }
+    private function persistBatch($issuerId,$staffId,array $values,bool $owned): int
+    {
         $issuerId=IssuerPolicy::id($issuerId);$staffId=IssuerPolicy::id($staffId);
         if($this->isPrimary($issuerId)){throw new DomainException('company_settings_batch_scope_required');}
         $prepared=[];
@@ -174,9 +182,8 @@ final class CompanySettingsStorage
             if(self::infrastructure($name)||CompanySettingsIdentity::handles($name)){throw new DomainException('company_settings_batch_identity_separate');}}
         $access=new IssuerResourceAccess($this->db,$this->prefix);
         if(!$access->can($issuerId,$staffId,'settings','edit')){throw new DomainException('company_settings_access_denied');}
-        return IssuerTransaction::run($this->db,$this->prefix,
-            ['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_audit','staff'],
-            function()use($issuerId,$staffId,$prepared,$access):int{
+        $tables=['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_audit','staff'];
+        $operation=function()use($issuerId,$staffId,$prepared,$access):int{
                 if(!$access->can($issuerId,$staffId,'settings','edit')){throw new DomainException('company_settings_access_denied');}
                 $document=$this->document($this->issuer($issuerId));$options=$document->{self::JSON_KEY}??new stdClass();$count=0;
                 foreach($prepared as $name=>$value){if(!property_exists($options,$name)||$options->{$name}!==$value){$options->{$name}=$value;$count++;}}
@@ -187,7 +194,9 @@ final class CompanySettingsStorage
                 foreach($prepared as $name=>$value){if($this->lookup($issuerId,$name)!==$value){throw new DomainException('company_settings_write_unconfirmed');}}
                 IssuerStorage::query($this->db,"INSERT INTO {$this->prefix}issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,NULL,?)",[$staffId,'company_settings_batch_updated',$issuerId,date('Y-m-d H:i:s')]);
                 return $count;
-            });
+            };
+        if($owned){IssuerTransaction::assertOwned($this->db,$this->prefix,$tables);return $operation();}
+        return IssuerTransaction::run($this->db,$this->prefix,$tables,$operation);
     }
 
     public function saveIdentity($issuerId, $staffId, array $input): bool

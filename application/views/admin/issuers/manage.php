@@ -3,6 +3,7 @@
 <div id="wrapper"><div class="content">
     <h1 class="tw-text-xl"><?php echo _l('issuers_title'); ?></h1>
     <div class="alert alert-warning" role="alert"><?php echo _l('issuer_foundation_warning'); ?></div>
+    <?php if (!$can_create && is_admin()) { ?><p><a href="<?php echo admin_url('company_master'); ?>">Resolver a responsabilidade da instalação legada</a></p><?php } ?>
     <div class="row"><div class="col-md-4"><div class="panel_s"><div class="panel-body">
         <h2 class="tw-text-lg"><?php echo _l('issuer_catalog'); ?></h2>
         <ul class="list-unstyled">
@@ -13,7 +14,7 @@
             </li>
         <?php } ?>
         </ul>
-        <?php if ($can_create) { ?><a class="btn btn-default" href="<?php echo admin_url('issuers'); ?>"><?php echo _l('issuer_new'); ?></a><?php } ?>
+        <?php if ($can_create) { ?><a class="btn btn-default" href="<?php echo admin_url('company_onboarding'); ?>"><?php echo _l('issuer_new'); ?></a><?php } ?>
     </div></div></div><div class="col-md-8">
     <?php if ($can_manage) { ?>
         <div class="panel_s"><div class="panel-body">

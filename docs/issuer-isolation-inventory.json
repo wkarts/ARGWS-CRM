@@ -3003,8 +3003,19 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "application/views/admin/companies/onboarding.php": {
+      "sha256": "e4f762b7b1f555ef3bb1d0ced03a1c0ddf76dbfab109cd5cfa3fbf8f3cab2fe6",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        33
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/views/admin/companies/registry.php": {
-      "sha256": "084c62d30a6633272a8aa69b3c7b5828650f8523084984fe8af8f16193b10203",
+      "sha256": "0b5ef4683e7af2440ba994b82d41d5f2a00b195218dd8c671a32942767b00c94",
       "categories": [
         "documents_numbering"
       ],
@@ -3446,12 +3457,12 @@
       "evidence": ""
     },
     "application/views/admin/issuers/manage.php": {
-      "sha256": "a7a4a9f5276ac3a25045d919ee31c3e3c42c59d7f620168baf2fdfae71a8bda3",
+      "sha256": "1ebf17e1a90d287919c730f2b3fb6ae9cce96691fd6d1a09b1c4a78f8a2bf347",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        36
+        37
       ],
       "state": "unreviewed",
       "evidence": ""
