@@ -25,7 +25,7 @@ final class CompanyPortalInvoices
     private function invoice(array $session,int $issuer,int $invoice,bool $lock):array
     {
         $who=$this->identity($session,$issuer,$lock);if(!$who)throw new DomainException('company_portal_invoice_unavailable');
-        if(!$this->rows('SELECT id FROM '.$this->p.'invoices WHERE id=? AND issuer_id=? AND clientid=?'.($lock?' FOR UPDATE':''),[$invoice,$issuer,$who['client_id']]))throw new DomainException('company_portal_invoice_unavailable');return $who;
+        if(!$this->rows('SELECT id FROM '.$this->p.'invoices WHERE id=? AND issuer_id=? AND clientid=? AND status IN (1,2,3,4,5)'.($lock?' FOR UPDATE':''),[$invoice,$issuer,$who['client_id']]))throw new DomainException('company_portal_invoice_unavailable');return $who;
     }
     /** NULL means no financial permission; an empty authorized list is distinct in the UI. */
     public function page(array $session,$issuer,$before=0):?array
@@ -33,7 +33,7 @@ final class CompanyPortalInvoices
         $issuer=IssuerPolicy::id($issuer);if((!is_int($before)&&!is_string($before))||!preg_match('/^(0|[1-9][0-9]*)$/D',(string)$before)||(string)(int)$before!==(string)$before)throw new DomainException('company_portal_invoice_unavailable');$before=(int)$before;
         return $this->transaction(function()use($session,$issuer,$before):?array{
             $who=$this->identity($session,$issuer,true);if(!$who)return null;
-            $sql='SELECT i.id,d.formatted_number number,i.date,i.duedate,i.status,i.total,c.name currency FROM '.$this->p.'invoices i JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id JOIN '.$this->p.'currencies c ON c.id=i.currency WHERE i.issuer_id=? AND i.clientid=?'.($before?' AND i.id<?':'').' ORDER BY i.id DESC LIMIT 51';$args=[$issuer,$who['client_id']];if($before)$args[]=$before;$rows=$this->rows($sql,$args);$next=count($rows)>50?(int)$rows[49]['id']:null;
+            $sql='SELECT i.id,d.formatted_number number,i.date,i.duedate,i.status,i.total,c.name currency FROM '.$this->p.'invoices i JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id JOIN '.$this->p.'currencies c ON c.id=i.currency WHERE i.issuer_id=? AND i.clientid=? AND i.status IN (1,2,3,4,5)'.($before?' AND i.id<?':'').' ORDER BY i.id DESC LIMIT 51';$args=[$issuer,$who['client_id']];if($before)$args[]=$before;$rows=$this->rows($sql,$args);$next=count($rows)>50?(int)$rows[49]['id']:null;
             return ['items'=>array_slice($rows,0,50),'next'=>$next];
         });
     }

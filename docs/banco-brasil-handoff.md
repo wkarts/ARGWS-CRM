@@ -1,6 +1,6 @@
 # PR45 — estado da integração BB e Empresas
 
-Código atual: núcleo4.1.5/415, BB1.0.8/108, Asaas1.4.8/148. A matriz
+Código atual: núcleo4.1.6/416, BB1.0.8/108, Asaas1.4.8/148. A matriz
 [atual](companies/pr45-status.md) e os incrementos406–413 abaixo substituem as
 pendências do checkpoint405 preservado como histórico. Conferir o HEAD remoto e
 os testes do SHA final; não há homologação externa, merge ou deploy.
@@ -316,3 +316,16 @@ remover a permissão nativa nem criar outra fonte de concessões.
 O CI do415 precisa confirmar portal/concorrência, MariaDB e HTTP/Chromium. O414
 já passou Empresas em MySQL/PHP8.1/8.5; não atribuir essa evidência ao415 sem seus
 runs. A matriz continua parcial e nenhuma homologação externa foi executada.
+
+## Incremento416: faturas emitidas no portal
+
+A permissão de faturas do contato não libera rascunhos. Lista, PDF por ID e a
+revalidação antes dos bytes exigem estados emitidos1–5; estado6 e estados inválidos
+continuam indisponíveis. As três regressões adicionais levam a suíte local de
+portal/PDF a60 verificações acumuladas em SQLite. Faturas emitidas pagas/parciais/
+canceladas preservam sua história. O teste de default0 no415 também revelou cache
+antigo de tabela na fixture de fila criada por DDL bruto;28e49fd2 invalida o cache
+e executa o schema real antes dos asserts. Nenhum assert foi removido.
+
+Conferir o CI do SHA final416, incluindo MySQL/MariaDB e HTTP/Chromium. Persistem
+as pendências técnicas e contratuais da matriz; não há homologação externa.

@@ -1,6 +1,6 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Núcleo atual4.1.5/415; BB1.0.8/101–108;
+Escopo integral em andamento. Núcleo atual4.1.6/416; BB1.0.8/101–108;
 Asaas1.4.8/148. As migrations publicadas402–412 foram preservadas. Não há
 merge/deploy/release nem autorização implícita por um resultado de CI.
 
@@ -9,7 +9,7 @@ a correção de navegação está em44260b61; consultar os checks desse SHA. O i
 O baseline412 (7aa56e60) passou nos16 workflows, incluindo originação e retorno
 assistido por HTTP/Chromium. 413/API passou em MySQL/PHP8.1/8.5 e HTTP/Chromium. O job MariaDB detectou
 cache de locks no teste e SQL NULL no metadata do núcleo/templates/fila, tratados nos incrementos
-seguintes. Para415/portal/MariaDB, consultar o HEAD e seus runs;
+seguintes. Para416/portal/MariaDB, consultar o HEAD e seus runs;
 não atribuir os resultados412 aos novos testes.
 Inventários atualizados localizam revisão; não medem bugs, cobertura ou conclusão.
 
@@ -23,7 +23,7 @@ Inventários atualizados localizam revisão; não medem bugs, cobertura ou concl
 | Settings/SMTP/templates | Identidade canônica, preferências, próprios segredos sem fallback, templates por origem | Suítes settings, queue, portal e HTTP | Parcial; catálogo integral, logos/assinaturas/uploads/integrações restantes pendentes |
 | Faturas nomeadas | UI isolada emitir/listar/consultar/editar sem movimento/cancelar; itens/tributo por item, numeração e snapshots atômicos | Invoices PDO, MySQL concorrente, CRM HTTP/Chromium | Incremento408; perfil restrito documentado, validação remota pertence ao SHA final |
 | Recebimentos manuais | Entrada explícita no writer; ACL/owner/saldo sob lock, referência, retry, status e auditoria atômicos | Invoices/concorrência e regressões writer Asaas | Registro manual local; não confirma banco; origens BB/Asaas recusadas para revisão própria |
-| PDF de faturas nomeadas | DTO autorizado e TCPDF; staff e portal privado com permissão nativa explícita; revalidação/auditoria antes dos bytes | PDF real, A/B, legado NULL e testes414 de revogação/HTTP | Lista/PDF de faturas do cliente e empresa próprios; sem conceder demais operações ou histórico compartilhado |
+| PDF de faturas nomeadas | DTO autorizado e TCPDF; staff e portal privado com permissão nativa explícita; revalidação/auditoria antes dos bytes | PDF real, A/B, legado NULL e testes414 de revogação/HTTP | Lista/PDF de faturas emitidas do cliente e empresa próprios; rascunhos ocultos; sem conceder demais operações ou histórico compartilhado |
 | Demais operações financeiras | Créditos/refunds/estornos, descontos/ajustes, recorrência, envio/anexos, relatórios/API restantes | Suítes existentes e inventários | Pendências técnicas; gates preservados |
 | Projetos/tarefas/despesas/outros módulos | Barreiras e adaptações parciais existentes | Testes por consumidor | Operação positiva completa pendente |
 | BB API Cobrança | Perfis/credenciais criptografadas nativas; OAuth, registro, consulta com prova de conta e pedido/confirmação de baixa; outbox e origem imutável | Cliente HTTP simulado24 checks; composição MySQL/concorrência e MariaDB adicionadas no413, resultado depende do SHA final | Perfil17/simples/BRL sem ajustes/Pix; sem pagamento API automático. Alteração, webhook mTLS e aplicação financeira ainda pendentes; nenhuma homologação |

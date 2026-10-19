@@ -2857,7 +2857,7 @@
       "evidence": ""
     },
     "application/services/CompanyPortalInvoices.php": {
-      "sha256": "978e3cc04f85b8930efca57cf0f0c16b24b88a7a3d0ac8242678c6c5b978d5cb",
+      "sha256": "5c824e9e8d41edf9ff1658554a276107a1a89ff69f4f8b73c6828c37195b6e6c",
       "categories": [
         "customer_privacy",
         "invoice_table"

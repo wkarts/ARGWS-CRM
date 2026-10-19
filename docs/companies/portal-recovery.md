@@ -86,3 +86,6 @@ pagamentos no portal e entrega SMTP externa continuam fora deste recorte.
 No415, o helper de permissões do tema legado continua negando contatos privados.
 A concessão nativa1 só abre a lista/PDF do portal isolado com owner e cliente
 comprovados; não abre automaticamente as antigas páginas de faturas/outros módulos.
+
+No416, rascunhos e estados inválidos não aparecem na lista e não podem ser baixados
+por ID. A condição de fatura emitida também é revalidada antes de liberar os bytes.

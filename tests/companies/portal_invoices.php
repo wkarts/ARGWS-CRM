@@ -35,6 +35,10 @@ essentialThrows(fn()=>$documents->document($sessionA,$a,$ib),'company_portal_inv
 essentialThrows(fn()=>$documents->document($sessionA,$a,42),'company_portal_invoice_unavailable','NULL legacy invoice is never adopted into named portal');
 $other=$customers->create($a,7,['company'=>'Other A private customer']);$otherInvoice=$s->create($a,7,array_replace($input,['client_id'=>$other]),str_repeat('5',64));
 essentialThrows(fn()=>$documents->document($sessionA,$a,$otherInvoice),'company_portal_invoice_unavailable','same-company different customer invoice denied');
+$draftInvoice=$s->create($a,7,$input,str_repeat('7',64));$db->query("UPDATE {$p}invoices SET status=6 WHERE id=?",[$draftInvoice]);
+essentialCheck(count(array_filter($documents->page($sessionA,$a)['items'],fn($row)=>(int)$row['id']===$draftInvoice))===0,'draft invoice never appears in private portal list');
+essentialThrows(fn()=>$documents->document($sessionA,$a,$draftInvoice),'company_portal_invoice_unavailable','direct PDF cannot expose an unissued draft');
+essentialThrows(fn()=>$documents->confirmDownload($sessionA,$a,$draftInvoice,str_repeat('a',64)),'company_portal_invoice_unavailable','delivery rechecks issued state as well as contact permission');
 $dto=$documents->document($sessionA,$a,$id);$pdf=(new Issuer_invoice_pdf($dto))->prepare()->Output('','S');essentialCheck(str_starts_with($pdf,'%PDF-'),'portal renders real authorized TCPDF bytes');$pdfHash=hash('sha256',$pdf);$documents->confirmDownload($sessionA,$a,$id,$pdfHash);
 $record=$db->query("SELECT metadata_json FROM {$p}issuers_audit WHERE event='company_portal_invoice_pdf_downloaded'")->row_array();$evidence=json_decode($record['metadata_json'],true,16,JSON_THROW_ON_ERROR);
 essentialCheck($evidence['contact_id']===$contactA&&$evidence['sha256']===$pdfHash&&!str_contains($record['metadata_json'],$person['email']),'audited PDF delivery identifies contact and bytes without email or bearer');

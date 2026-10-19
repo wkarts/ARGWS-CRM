@@ -1,7 +1,7 @@
 # PR45 — Banco do Brasil e Empresas no núcleo
 
 A PR46 foi incorporada à branch `feat/banco-brasil-billing-cnab240`; PR45 continua
-com destino main. Núcleo4.1.5/415, BB1.0.8/101–108, Asaas1.4.8/148. Migrations e
+com destino main. Núcleo4.1.6/416, BB1.0.8/101–108, Asaas1.4.8/148. Migrations e
 histórico publicados preservados; nenhum merge, deploy, tag ou release autorizado.
 
 Foram ligados ao núcleo o responsável/master e wizard retomável, clientes privados
