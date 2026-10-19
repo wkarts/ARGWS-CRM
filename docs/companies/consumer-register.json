@@ -5,7 +5,7 @@
   "frozen_candidate": "b8a5cec7286edc88191a1b1d07813ea40ed79bce",
   "counts": {
     "company_core_and_settings": {
-      "pending": 300,
+      "pending": 309,
       "boundary_tested": 6
     },
     "customer_portal": {
@@ -2528,7 +2528,7 @@
       "full_operation_ready": false
     }
   ],
-  "source_manifest_sha256": "65177f9b1e53b3674a1bc1c579eb54e0536c621f4b1bae11a9d52f0ea9ddf907",
-  "total_consumers": 10182,
+  "source_manifest_sha256": "cf7929dad8319312b400107a0b6e0e9eb1eb73bf06c6cc418707785a14908d01",
+  "total_consumers": 10191,
   "full_register_command": "python3 scripts/register-company-consumers.py --full-output /tmp/company-consumers-full.json"
 }

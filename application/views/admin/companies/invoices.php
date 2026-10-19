@@ -14,6 +14,18 @@ $labels=[1=>'Em aberto',2=>'Paga',3=>'Parcialmente paga',4=>'Vencida',5=>'Cancel
 <div class="table-responsive"><table class="table"><thead><tr><th>Descrição</th><th>Quantidade</th><th>Preço unitário</th><th>Valor</th></tr></thead><tbody>
 <?php foreach($document['items'] as $item){?><tr><td><?= $esc($item['description']); ?></td><td><?= $esc($item['quantity']); ?></td><td><?= $esc($item['rate']); ?></td><td><?= $esc($item['amount']); ?></td></tr><?php } ?></tbody></table></div>
 <p>Subtotal <?= $esc($document['totals']['subtotal']); ?> · Tributos <?= $esc($document['totals']['total_tax']); ?> · Desconto <?= $esc($document['totals']['discount_total']); ?> · Ajuste <?= $esc($document['totals']['adjustment']); ?> · Total <?= $esc($document['totals']['total']); ?></p>
+<?php if($can_send){ ?>
+<h3>Notificar no portal</h3>
+<p>O contato precisa pertencer a esta empresa e ter acesso a faturas no portal. A mensagem usa o template e o transporte da empresa. O link exige login e permissão; nenhum PDF público é criado.</p>
+<?php if($delivery_blocked){ ?><p>Notificação indisponível para este destinatário. Compartilhamento de identidade não compartilha contatos.</p><?php }elseif($delivery){ ?>
+<?php if($delivery['recipients']){ ?>
+<?= form_open($url());$hidden('notify'); ?><input type="hidden" name="invoice_id" value="<?= $id; ?>"><input type="hidden" name="revision" value="<?= $esc($revision); ?>"><input type="hidden" name="request_key" value="<?= $esc($request_key); ?>">
+<label for="invoice-notify-contact">Contato privado autorizado</label><select class="form-control" id="invoice-notify-contact" name="contact_id" required><option value="">Selecione</option><?php foreach($delivery['recipients'] as $recipient){ ?><option value="<?= (int)$recipient['id']; ?>"><?= $esc(trim($recipient['firstname'].' '.$recipient['lastname']).' — '.$recipient['email']); ?></option><?php } ?></select>
+<p>Agendar confirma somente a gravação na fila. O transporte SMTP e a leitura pelo destinatário são etapas distintas. Mudança de fatura, contato, permissão ou funcionário antes do processamento impede o envio.</p><button type="submit">Agendar notificação da fatura</button><?= form_close(); ?>
+<?php }else{ ?><p>Nenhum contato elegível. Confira a permissão de faturas no cadastro privado de contatos e o estado da fatura.</p><?php } ?>
+<?php if($delivery['history']){ ?><ul aria-label="Estado das notificações"><?php $deliveryLabels=['pending'=>'Na fila','sending'=>'Em processamento','sent'=>'Aceita pelo transporte; leitura não confirmada','failed'=>'Falha ou revalidação recusada; confira antes de reagendar','archived'=>'Registro preservado; fila já removida'];foreach($delivery['history'] as $notification){ ?><li><?= $esc($notification['created_at'].' · '.($deliveryLabels[$notification['status']]??'Revisão necessária')); ?></li><?php } ?></ul><?php } ?>
+<?php } ?>
+<?php } ?>
 <h3>Recebimentos</h3>
 <?php if(!$payments){?><p>Nenhum recebimento registrado nesta fatura.</p><?php }else{?><table class="table"><thead><tr><th>Data</th><th>Valor</th><th>Referência</th></tr></thead><tbody><?php foreach($payments as $payment){?><tr><td><?= $esc($payment['date']); ?></td><td><?= $esc($payment['amount']); ?></td><td><?= $esc($payment['transactionid']); ?></td></tr><?php } ?></tbody></table><?php } ?>
 <?php if($can_payment&&in_array($document['status'],[1,3,4],true)){?>

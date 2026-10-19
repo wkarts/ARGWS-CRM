@@ -1,6 +1,6 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Núcleo atual4.2.1/421; BB1.1.0/101–110;
+Escopo integral em andamento. Núcleo atual4.2.2/422; BB1.1.0/101–110;
 Asaas1.4.8/148. As migrations publicadas402–412 foram preservadas. Não há
 merge/deploy/release nem autorização implícita por um resultado de CI.
 
@@ -24,7 +24,8 @@ Inventários atualizados localizam revisão; não medem bugs, cobertura ou concl
 | Faturas nomeadas | UI isolada emitir/listar/consultar/editar sem movimento/cancelar; itens/múltiplos tributos/descontos/ajustes, numeração e snapshots atômicos | Invoices PDO, MySQL concorrente, CRM HTTP/Chromium | Incremento408; perfil restrito documentado, validação remota pertence ao SHA final |
 | Recebimentos manuais | Entrada explícita no writer; ACL/owner/saldo sob lock, referência, retry, status e auditoria atômicos | Invoices/concorrência e regressões writer Asaas | Registro manual local; não confirma banco; origens BB/Asaas recusadas para revisão própria |
 | PDF de faturas nomeadas | DTO autorizado e TCPDF; staff e portal privado com permissão nativa explícita; revalidação/auditoria antes dos bytes | PDF real, A/B, legado NULL e testes414 de revogação/HTTP | Lista/PDF de faturas emitidas do cliente e empresa próprios; rascunhos ocultos; sem conceder demais operações ou histórico compartilhado |
-| Demais operações financeiras | Créditos/refunds/estornos, recorrência, envio/anexos, relatórios/API restantes | Suítes existentes e inventários | Pendências técnicas; gates preservados |
+| Notificação de fatura no portal | Contato privado com permissão explícita, template/SMTP próprio, recibo e fila transacionais, revalidação antes do transporte | Delivery PDO/worker/concorrência e fluxo HTTP A/B adicionados no422 | Agendamento e aceite do transporte são estados separados; SMTP simulado nos testes; sem PDF público |
+| Demais operações financeiras | Créditos/refunds/estornos, recorrência, anexos, relatórios/API restantes | Suítes existentes e inventários | Pendências técnicas; gates preservados |
 | Projetos/tarefas/despesas/outros módulos | Barreiras e adaptações parciais existentes | Testes por consumidor | Operação positiva completa pendente |
 | BB API Cobrança | Perfis/credenciais criptografadas nativas; OAuth, registro, consulta com prova de conta e pedido/confirmação de baixa; outbox e origem imutável | Cliente HTTP simulado24 checks; composição MySQL/concorrência e MariaDB adicionadas no413, resultado depende do SHA final | Perfil17/simples/BRL sem ajustes/Pix; sem pagamento API automático.419 adiciona crédito explícito16 integral sem ajustes; alteração, webhook mTLS e demais perfis financeiros ainda pendentes; nenhuma homologação |
 | CNAB240 | Codec P/Q e parser T/U restritos; originação ligada à fatura, reserva durável, retry e download auditado | Fixtures + novos testes de composição/concorrência MySQL/HTTP no baseline412 | Geração local condicionada a contrato/perfil; declaração manual de envio não é aceite; sem transporte ou homologação |
@@ -144,3 +145,38 @@ crédito20 antes de efeito. Casos sem duplicidade continuam positivos.
 A fixture de evidência cruzada é sintética, restrita ao banco descartável; não é
 prova de autenticidade de upload ou homologação bancária. Resultado HTTP/Chromium
 permanece vinculado ao SHA final, com recarga real após a fixture externa ao DOM.
+
+
+## Incremento422 — notificação privada de faturas pelo portal
+
+`CompanyInvoiceDelivery` fornece estado/destinatários e agenda uma mensagem por
+requisição explícita em `admin/company_invoices`. Requer invoices/view+edit e
+customers/view; contato ativo próprio, cliente ativo, fatura emitida e permissão
+nativa1. Compartilhar identidade não libera o envio aos contatos do proprietário.
+Template `invoice-send-to-client`, remetente, assinatura e transporte são resolvidos
+na origem. Link só abre o portal autenticado; sem hash público, bearer ou PDF anexo.
+
+Migration422 cria `company_invoice_deliveries`: PK de requisição ascii_bin, revisão
+e hash do contato, fila única, índice origem/fatura, FK empresa/fatura e validação
+InnoDB/tipos/defaults/índices. Recibo não mantém endereço de e-mail e sobrevive à
+limpeza da fila. Gravação de fila/recibo/auditoria confirma junta; retry após limpeza
+não cria outra mensagem. Default indevido/índice não único bloqueiam a migration.
+
+O worker nativo reconhece o marcador interno, valida recibo, origem, ator, contato,
+permissão e revisão de fatura antes do transporte e remove o marcador dos headers.
+Mudança de contato/empresa/funcionário/permissão/fatura impede envio. Nenhuma rede
+ocorre na transação. Aceite pelo transporte não comprova entrega na caixa ou leitura;
+crash entre SMTP e atualização da fila mantém a limitação usual de entrega de e-mail,
+sem garantia de exactly-once externo. A UI exibe fila/processamento/falha/aceite/arquivo.
+
+| Execução | Resultado observado | Limite |
+|---|---|---|
+| PHP8.3.6/SQLite: invoice_delivery_worker.php |93 checks acumulados, incluindo63 de faturas anteriores | Transação SQLite não prova locks; SMTP capturado |
+| PHP8.3.6/MariaDB10.11.14: invoice_delivery_concurrency.php |109 checks acumulados: migração/replay/default/índice, A/B/e-mail igual, contato compartilhado negado, worker real, idempotência/rollback e dois processos aguardando lock/revogação | Transporte final capturado, nenhum SMTP externo |
+| Regressão company_mail_queue.php |78 de settings+14 adicionais de fila em SQLite | Preserva fila legada e origem sem sessão |
+| companies_invoices_browser.cjs |Novo fluxo A/B: seleção explícita, fila real, retry, contato cruzado403 e aba obsoleta409 | Resultado HTTP/MySQL/Chromium pertence ao CI do HEAD422, não ao anterior |
+
+O HEAD anterior `b413fa7171f4d294488b35223c346d2f1ccf67df` passou nos16 workflows,
+incluindo BB API A/B no navegador. Essa evidência não é reaproveitada para o422.
+Anexos, créditos/refunds/estornos/recorrência, relatórios/APIs, demais consumidores,
+Asaas positivo e ampliações BB continuam pendências técnicas, separadas da homologação.

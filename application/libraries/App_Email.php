@@ -194,6 +194,12 @@ class App_Email extends App_mailer
                 if (isset($email->issuer_id) && $transport['useragent'] !== $email->engine) {
                     throw new DomainException('company_mail_engine_changed');
                 }
+                if (array_key_exists('companyInvoiceDelivery', $headers)) {
+                    require_once APPPATH . 'services/CompanyInvoiceDelivery.php';
+                    if (!is_string($headers[CompanyInvoiceDelivery::HEADER])) { throw new DomainException('company_mail_payload_invalid'); }
+                    (new CompanyInvoiceDelivery($this->CI->db, db_prefix()))->assertDispatch($email, $headers[CompanyInvoiceDelivery::HEADER]);
+                    unset($headers[CompanyInvoiceDelivery::HEADER]);
+                }
                 $this->reset_account_transport();
                 $this->set_mailer_engine($email->engine);
                 $this->initialize($transport);

@@ -124,13 +124,31 @@ async function next(page) { await navigate(page, page.locator('section form butt
    await page.locator('#edit-discount-mode').selectOption('fixed');await page.locator('#edit-discount-type').selectOption('after_tax');await page.locator('#edit-adjustment').fill('0.01');
    await navigate(page,page.locator('form').filter({has:page.locator('#edit-invoice-date')}).locator('button[type=submit]'));
    assert.equal(sql('SELECT total FROM tblinvoices WHERE id='+expandedId),'97.51');
+   // Explicit private recipient, native queue and durable retry in both companies. No SMTP worker runs here.
+   const expandedUrl=page.url();
+   await page.goto(url+'/admin/company_clients?client='+clients[issuer]);
+   const permit=page.getByRole('button',{name:'Permitir acesso a faturas no portal',exact:true});
+   if(await permit.count())await navigate(page,permit);
+   await page.goto(expandedUrl);
+   const contact=sql('SELECT id FROM tblcontacts WHERE userid='+clients[issuer]+' AND active=1 ORDER BY id LIMIT 1');
+   await page.locator('#invoice-notify-contact').selectOption(contact);
+   const notificationForm=page.locator('form').filter({has:page.locator('#invoice-notify-contact')});const notificationFields=await fields(notificationForm);
+   await navigate(page,notificationForm.locator('button[type=submit]'));
+   assert.equal(sql('SELECT COUNT(*) FROM tblcompany_invoice_deliveries WHERE issuer_id='+issuer+' AND invoice_id='+expandedId),'1');
+   const queued=sql('SELECT q.status FROM tblmail_queue q JOIN tblcompany_invoice_deliveries d ON d.queue_id=q.id WHERE d.invoice_id='+expandedId);assert.equal(queued,'pending','GUI confirms queue persistence, never SMTP success');
+   assert.match(await page.locator('[aria-label="Estado das notificações"]').innerText(),/Na fila/);
+   const retryNotification=await context.request.post(url+'/admin/company_invoices',{form:{...notificationFields,contact_id:contact}});assert.equal(retryNotification.status(),200);
+   assert.equal(sql('SELECT COUNT(*) FROM tblcompany_invoice_deliveries WHERE invoice_id='+expandedId),'1','same notification request does not queue twice');
+   const otherContact=sql('SELECT id FROM tblcontacts WHERE userid='+clients[issuer===a?b:a]+' AND active=1 ORDER BY id LIMIT 1');
+   const crossedNotification=await context.request.post(url+'/admin/company_invoices',{form:{...notificationFields,request_key:'e'.repeat(64),contact_id:otherContact}});assert.equal(crossedNotification.status(),403,'foreign contact ID denied despite equal or familiar email');
    // Two tabs: a saved monetary form from A cannot mutate after switching to B.
    const prior=await fields(page.locator('form').filter({has:page.locator('#edit-invoice-date')}));
    await select(issuer===a?b:a);
+   const obsoleteNotification=await context.request.post(url+'/admin/company_invoices',{form:{...notificationFields,contact_id:contact}});assert.equal(obsoleteNotification.status(),409,'obsolete company notification page denied before queue effects');
    const obsolete=await context.request.post(url+'/admin/company_invoices',{form:{...prior,action:'cancel'}});assert.equal(obsolete.status(),409);
    assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+expandedId),'1');
   }
   await page.screenshot({path:output+'/company-invoices.png',fullPage:true});assert.deepEqual(errors,[]);
-  console.log('Named-company invoice CRUD/numbering/PDF/manual partial+final receipts/private portal grant+PDF+revocation: real HTTP/MySQL/Chromium passed; no bank/provider operations.');
+  console.log('Named-company invoice CRUD/numbering/PDF/manual partial+final receipts/private portal grant+PDF+revocation: real HTTP/MySQL/Chromium passed, including owner-bound portal notifications; no SMTP or bank/provider operations.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e.message);process.exitCode=1;});

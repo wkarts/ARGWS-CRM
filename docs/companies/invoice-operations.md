@@ -75,7 +75,37 @@ executados no SHA da matriz, sem atribuir uma execução antiga a código novo.
 
 Portal de faturas emitidas já possui lista/PDF próprio e permissão nativa explícita
 (ver [portal](portal-recovery.md)). Permanecem pendentes créditos/refunds/estornos,
-recorrência, envio de fatura/e-mail, anexos, relatórios agregados, API pública e
+recorrência, anexos, relatórios agregados, API pública e
 integrações dos demais módulos. Os gates correspondentes não foram removidos.
 API BB, originação/remessas e conciliação bancária continuam frentes técnicas próprias;
 esta operação manual não as homologa nem transforma retorno observacional em baixa.
+
+
+## Notificar fatura no portal (422)
+
+Na consulta da fatura, “Notificar no portal” oferece até100 contatos ativos do
+cliente proprietário, com permissão explícita de faturas. Exige faturas Visualizar
+e Editar, clientes Visualizar. Não permite usar contato de cliente compartilhado.
+Conceda a permissão no cadastro de contatos antes de agendar; isso não muda outras
+permissões. O template ativo “Enviar fatura ao cliente” precisa conter
+`{invoice_link}`; SMTP/remetente/template/assinatura pertencem à empresa atual.
+Não se usa fallback para segredos de outra empresa.
+
+“Agendar” persiste fila, recibo idempotente e auditoria na mesma transação, sem
+rede. O link abre o portal e exige login/permissão antes de mostrar qualquer PDF.
+Nenhum bearer, hash público ou anexo é criado. O remetente não recebe confirmação
+de leitura. A lista de estados confirma gravação/aceite pelo transporte somente.
+Repetir a mesma requisição não cria outra mensagem, mesmo após limpeza da fila.
+Agendar novamente com formulário novo é uma nova solicitação deliberada.
+
+Antes do transporte, o worker revalida origem/ator/cliente/contato/permissão e revisão
+da fatura. Mudanças invalidam a mensagem antiga e a fila fica em falha; reabra a
+fatura e confira os dados antes de agendar novamente. O marcador interno não sai
+nos headers SMTP. A fila usa o transporte existente; falha/crash depois do aceite
+SMTP pode deixar estado incerto, sem promessa de exactly-once no serviço externo.
+A fila limpa aparece como “registro preservado”, sem inferir sucesso anterior.
+
+Testes de fila usam o worker real com a chamada final de SMTP capturada. O teste
+HTTP/Chromium agenda A/B sem rodar SMTP. Entrega real depende de configuração e
+validação externa própria; não foi realizada nesta implementação. Os demais
+fluxos financeiros e anexos continuam pendentes conforme a matriz da PR45.

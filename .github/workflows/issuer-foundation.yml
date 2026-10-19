@@ -121,6 +121,7 @@ jobs:
           php tests/companies/portal_concurrency.php
           php tests/companies/invoice_amounts.php
           php tests/companies/invoices.php
+          php tests/companies/invoice_delivery_concurrency.php
           php tests/companies/invoice_concurrency.php
           php tests/companies/portal_invoice_concurrency.php
           php tests/banco_brasil_origination_mysql.php

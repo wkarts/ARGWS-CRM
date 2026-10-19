@@ -1,7 +1,7 @@
 # PR45 — Banco do Brasil e Empresas no núcleo
 
 A PR46 foi incorporada à branch `feat/banco-brasil-billing-cnab240`; PR45 continua
-com destino main. Núcleo4.2.1/421, BB1.1.0/101–110, Asaas1.4.8/148. Migrations e
+com destino main. Núcleo4.2.2/422, BB1.1.0/101–110, Asaas1.4.8/148. Migrations e
 histórico publicados preservados; nenhum merge, deploy, tag ou release autorizado.
 
 Foram ligados ao núcleo o responsável/master e wizard retomável, clientes privados
@@ -55,3 +55,8 @@ vetos de crédito/histórico adverso. Não reescreve origens ou recibos.344 chec
 acumulados de API/crédito/concorrência e131 de CNAB/concorrência passaram localmente
 em MariaDB10.11.14. O teste HTTP exige recarga após a fixture CLI, pois fragmento
 de URL não recarrega o DOM. Ver PR/CI do HEAD efetivo para a validação do navegador.
+
+O422 acrescenta notificação privada de fatura pelo portal: recibo/fila/auditoria
+atômicos e revalidação de contato, recurso, revisão e origem no worker. Estados
+de agendamento e aceite do transporte são distintos. SMTP final é simulado nos
+testes; não modifica o estado bancário ou a cobrança. Ver matriz do HEAD422.
