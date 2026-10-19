@@ -298,6 +298,9 @@ function essentialCleanup(): void
 function essentialLockWaiters(EssentialTestDb $observer,int $blocker):int
 {
     if(str_contains($observer->pdo->getAttribute(PDO::ATTR_SERVER_VERSION),'MariaDB')){
+        // MariaDB trx0i_s.cc CACHE_MIN_IDLE_TIME_NS=100ms: every read renews last_read.
+        // Polling every20ms would keep the initial empty lock snapshot alive indefinitely.
+        usleep(150000);
         return (int)$observer->query('SELECT COUNT(DISTINCT w.requesting_trx_id) n FROM information_schema.INNODB_LOCK_WAITS w JOIN information_schema.INNODB_TRX b ON b.trx_id=w.blocking_trx_id WHERE b.trx_mysql_thread_id=?',[$blocker])->row()->n;
     }
     return (int)$observer->query('SELECT COUNT(DISTINCT w.REQUESTING_THREAD_ID) n FROM performance_schema.data_lock_waits w JOIN performance_schema.threads b ON b.THREAD_ID=w.BLOCKING_THREAD_ID WHERE b.PROCESSLIST_ID=?',[$blocker])->row()->n;
