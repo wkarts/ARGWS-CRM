@@ -6,9 +6,11 @@ require APPPATH.'config/app-config.php';if(APP_DB_NAME!=='argws_upgrade_ci')exit
 require __DIR__.'/support/BbPdoDatabase.php';require APPPATH.'services/CompanyInvoices.php';require APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/ApiService.php';require BASEPATH.'libraries/Encryption.php';
 function db_prefix(){return 'tbl';}function log_message($level,$message){}
 $pdo=new PDO('mysql:host='.APP_DB_HOSTNAME.';dbname='.APP_DB_NAME.';charset=utf8mb4',APP_DB_USERNAME,APP_DB_PASSWORD,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);$db=new BbPdoDatabase($pdo);
-$issuer=(int)$db->query("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'")->row()->id;
+$case=$argv[1]??'a';if(!in_array($case,['a','b'],true))exit(2);$issuerTax=$case==='a'?'11222333000181':'52998224725';
+$issuer=(int)$db->query('SELECT id FROM tblissuers_registry WHERE tax_id=?',[$issuerTax])->row()->id;
 $actor=(int)$db->query('SELECT master_staff_id FROM tblissuers_installation_identity WHERE id=1')->row()->master_staff_id;
-$client=(int)$db->query("SELECT c.userid FROM tblclients c JOIN tblissuers_clients o ON o.client_id=c.userid WHERE o.owner_issuer_id=? AND c.vat='11144477735'",[$issuer])->row()->userid;
+$payerTax=$case==='a'?'11144477735':'12345678909';$clientRow=$db->query('SELECT c.userid FROM tblclients c JOIN tblissuers_clients o ON o.client_id=c.userid WHERE o.owner_issuer_id=? AND c.vat=?',[$issuer,$payerTax])->row_array();
+$client=(int)($clientRow['userid']??0);if(!$client&&$case==='b'){require_once APPPATH.'services/CompanyClients.php';$client=(new CompanyClients($db,'tbl'))->create($issuer,$actor,['company'=>'Synthetic API B payer','vat'=>$payerTax]);}
 $profile=$db->query('SELECT * FROM tblbb_api_profiles WHERE issuer_id=? ORDER BY id DESC LIMIT 1',[$issuer])->row_array();
 if(!$profile||$profile['api_stage']!=='homologation'||$issuer<1||$actor<1||$client<1)throw new RuntimeException('synthetic fixture unavailable');
 $connection=$db->query('SELECT * FROM tblbb_connections WHERE id=? AND issuer_id=?',[$profile['connection_id'],$issuer])->row_array();

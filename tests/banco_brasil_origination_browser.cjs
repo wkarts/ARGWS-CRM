@@ -123,6 +123,22 @@ async function next(page) { await navigate(page, page.locator('section form butt
   await context.request.post(url+'/admin/banco_brasil/settle_api',{form:apiCreditFields});assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+creditFixture.invoice),'1','browser retry does not duplicate API payment');
   await select(b);response=await context.request.post(url+'/admin/banco_brasil/download_remittance',{form:data});assert.equal(response.status(),409,'stale context rejected before old batch download');
   const cross=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(cross.status(),403,'selected B cannot request A banking history');
+  // Complete positive UI credit path for B, with a distinct account/agreement/profile.
+  await page.goto(url+'/admin/banco_brasil?issuer_id='+b);await page.locator('#bb-tab-account').click();
+  await page.locator('#bb_account_id').fill('001:00452-3:000000223873-X');await page.locator('#bb_env').selectOption('sandbox');await page.locator('#bb_agreement').fill('7654321');
+  await page.locator('input[name=variation]').fill('019');await navigate(page,page.locator('input[name=variation]').locator('xpath=ancestor::form').locator('button'));
+  const connectionB=sql('SELECT id FROM tblbb_connections WHERE issuer_id='+b);await page.locator('#bb-api-connection').selectOption(connectionB);await page.locator('#bb-api-stage').selectOption('homologation');
+  for(const [key,value]of Object.entries({first_number:'100',last_number:'999',first_file:'1',reference:'SYNTHETIC B API CONTRACT'}))await page.locator('#bb-api-'+key).fill(value);
+  await page.locator('input[name="api_profile[interest_exempt]"]').check();await page.locator('input[name="api_profile[exclusive_range]"]').check();await navigate(page,page.locator('form[action*="declare_api_profile"] button'));
+  const profileB=sql('SELECT id FROM tblbb_api_profiles WHERE issuer_id='+b);await page.locator('#bb-api-credential-profile').selectOption(profileB);
+  for(const [key,value]of Object.entries({client_id:'SYNTHETIC-B-CLIENT',client_secret:'SYNTHETIC-B-SECRET',application_key:'SYNTHETIC-B-KEY'}))await page.locator('#bb-api-credential-'+key).fill(value);
+  await navigate(page,page.locator('form[action*="save_api_credentials"] button'));
+  const fixtureB=JSON.parse(execFileSync('docker',['exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',app,'php','tests/banco_brasil_api_credit_http_fixture.php','b'],{encoding:'utf8'}));
+  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#bb-tab-billing').click();
+  const creditB=page.locator('form[action*=settle_api]').filter({has:page.locator('input[name=operation_id][value="'+fixtureB.operation+'"]')});await creditB.locator('input[type=checkbox]').check();await navigate(page,creditB.locator('button'));
+  assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+fixtureB.invoice+' AND issuer_id='+b),'2','B positive credit settles its independently owned invoice');
+  assert.equal(sql('SELECT COUNT(*) FROM tblbb_api_receipts WHERE origin_id='+fixtureB.origin+' AND issuer_id='+b),'1');
+  assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+creditFixture.invoice),'1','B positive flow preserves A payment');
   assert.deepEqual(errors,[]);console.log('BB invoice-bound CNAB240 declaration/generation/download/manual report/return upload/assisted receipt/retry/API native encrypted configuration and A/B scope: actual HTTP/MySQL/Chromium, no bank calls.');
  }catch(error){const logs=spawnSync('docker',['logs','--tail','80',app],{encoding:'utf8'});console.error('Disposable BB HTTP server diagnostic:',(logs.stdout||'')+(logs.stderr||''));throw error;}finally{await browser.close();}
 })().catch(e=>{console.error(e.stack);process.exitCode=1;});
