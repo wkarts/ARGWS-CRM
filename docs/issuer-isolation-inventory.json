@@ -8,15 +8,16 @@
   ],
   "files": {
     "application/config/autoload.php": {
-      "sha256": "d04f1053306b6d798369f4af8453b0cd5f5eac3f0df803bea3d94727d3342b5f",
+      "sha256": "7468694aa6113b32193784a2f1a6edb0e62af880126ff89e5678359ebc3e1976",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
-        141,
-        155,
-        214
+        17,
+        172,
+        186,
+        248
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -119,19 +120,20 @@
       "evidence": ""
     },
     "application/controllers/Download.php": {
-      "sha256": "4cc96e2d115057e558443ade4312a082dfa6c881b8c135e9fde02af337f17dbc",
+      "sha256": "a87e45df6d2e5af698ffd7bec4257fb08be9518c173f6afbd0814185517c4c5e",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
-        175,
-        207,
-        265,
-        271
+        138,
+        178,
+        211,
+        269,
+        285
       ],
-      "state": "partial",
-      "evidence": "tests/invoice_issuer_http_files.php (42) and client_issuer_preview.php (32): NULL invoice keys/paths, private customer preview ACL, sales type allowlist rejects customer/task before path/output; other domains remain outside proof."
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/controllers/Estimate.php": {
       "sha256": "b85a8b47107da7fe4602a3d9d911dfb66d166f2e493eaece74141d0a2084146a",
@@ -147,7 +149,7 @@
       "evidence": ""
     },
     "application/controllers/Invoice.php": {
-      "sha256": "da1d3bafa36681ea6924d55669871d8cac207ac4c00bcc2657ffd2996714e8c0",
+      "sha256": "176d8130921d42451704e44ab6a7adff02bb75fefa48283b8c52bde3f93c95cf",
       "categories": [
         "documents_numbering",
         "invoice_model"
@@ -158,10 +160,10 @@
         28,
         29,
         54,
-        69
+        71
       ],
-      "state": "partial",
-      "evidence": "tests/invoice_issuer_http_files.php; tests/test_invoice_attachment_storage.py; tests/docker_provision_smoke.sh; docs/invoice-issuer-core-scope.md. Invoice attachment/HTTP barrier only; other relation types remain pending."
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/controllers/Migration.php": {
       "sha256": "a6e87dfa4460a5801602a1be25c3401657160110d90d2ed5fd4770bc8f6b0f81",
@@ -653,6 +655,17 @@
       "state": "partial",
       "evidence": "tests/invoice_issuer_discovery.php; docs/invoice-issuer-core-scope.md (invoice queries only; other domains pending)"
     },
+    "application/controllers/admin/Settings.php": {
+      "sha256": "7644a02136883a5301c930f32fa4c02eec1706e8641d522c6f262f480c0e61cc",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        201
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/controllers/admin/Tasks.php": {
       "sha256": "ce8e0764907a0ecb2f72b3640c3a84b5cd6d72699d8154a9abc70f2bdb6f5383",
       "categories": [
@@ -855,18 +868,18 @@
       "evidence": ""
     },
     "application/core/AdminController.php": {
-      "sha256": "ce95aa2eb6ed3610d03b920eeb0cc932b9c81433e9890f67435451c8274528b2",
+      "sha256": "1438c14bb9e5d1ae95153348c74dd81b3edcfc19ccb7ffd16ba8c647302b842c",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        109
+        140
       ],
-      "state": "partial",
-      "evidence": "tests/issuers_essential_controller.php (230): authenticated active-admin setup gate before controller body; does not authorize issuer data."
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/helpers/admin_helper.php": {
-      "sha256": "a555d587da30ffe3f26865ece1c408deba648a7e702525655b3cc2850f50e66a",
+      "sha256": "5a333ae01026af15deeb6ffc9abf9749d6bd706bc1b9ff2a0845c485ad345772",
       "categories": [
         "invoice_table"
       ],
@@ -878,7 +891,7 @@
       "evidence": ""
     },
     "application/helpers/clients_helper.php": {
-      "sha256": "60e7b64bdd611e04a0aca3898f6edce0ccbe1022b01412b0be06d9538f30ebf4",
+      "sha256": "93671849dd66f743a6c2e6a190a034190064bb3971f41a60c3d0c63f7e8ced09",
       "categories": [
         "customer_privacy",
         "invoice_table"
@@ -907,21 +920,21 @@
         628,
         662,
         691,
-        788,
-        818,
-        871,
-        885,
-        962,
-        1055,
-        1059,
-        1063,
-        1064,
-        1175,
-        1283,
-        1295
+        754,
+        784,
+        837,
+        851,
+        928,
+        1021,
+        1025,
+        1029,
+        1030,
+        1141,
+        1249,
+        1261
       ],
-      "state": "partial",
-      "evidence": "tests/client_issuer_scope.php; tests/client_issuer_model.php; tests/client_issuer_mutations.php; tests/client_issuer_api.php; tests/client_issuer_controllers.php; tests/client_issuer_helpers.php; tests/client_issuer_tables.php; tests/invoice_issuer_scope.php; docs/security/client-issuer-privacy-phase2.md (covered legacy boundaries only; portal/session, generic preview/static storage and other domains pending)"
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/helpers/credit_notes_helper.php": {
       "sha256": "415e77396844b9fc5f6b74c554b8b382f2566f2630a5c0baaf57bcb18f12020c",
@@ -940,19 +953,32 @@
       "evidence": ""
     },
     "application/helpers/database_helper.php": {
-      "sha256": "f9ce2f33618fe0d881241e006f6884670f6634df5eb52ad70a1f1a9bd25fb729",
+      "sha256": "61ac72209dd6f7806d3b17b59984142027770d56291378e2ba47af7087af6241",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        190,
-        220
+        123,
+        151,
+        200,
+        230
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/helpers/datatables_helper.php": {
+      "sha256": "19c8e64643bc1f4b96f77a320ba3e8b208ef903d31f9ef0574b271b93ff0fab3",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        230
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "application/helpers/deprecated_helper.php": {
-      "sha256": "4a12db4667b8b92ad685d0c7b194a8bed509b4d3a8d3d230ef13298548e2b483",
+      "sha256": "ca2b4cc08fcf0cd16cf681e56ffa61c2dac0976676cad04bc6b97113e200a88e",
       "categories": [
         "invoice_table"
       ],
@@ -974,7 +1000,7 @@
       "evidence": ""
     },
     "application/helpers/general_helper.php": {
-      "sha256": "4a00ab1e8100c730b03b0bf04db0595db42cfaca9cf9078feeb0187145cf62e8",
+      "sha256": "689a003a47e1a9361258746e19aec0b333074588b8a172504af2e23bfc3ca366",
       "categories": [
         "customer_privacy"
       ],
@@ -985,15 +1011,15 @@
       "evidence": ""
     },
     "application/helpers/invoice_issuer_helper.php": {
-      "sha256": "17b6c14e337cc65060cb4c9951e71a0552cd800b2381514395722ba4e6732e5e",
+      "sha256": "e9435c0a6d2a6e7f945deaf56b63e8003a1ce2f5ddd96f9f0698964d0ac19344",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
         17
       ],
-      "state": "partial",
-      "evidence": "tests/issuers_documents.php; tests/issuers_document_helpers.php; tests/issuers_document_render.php; docs/issuer-document-snapshots.md (gate remains blocked; permissions, complete financial isolation and independent transaction hardening pending)"
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/helpers/invoices_helper.php": {
       "sha256": "5a2338442601577558cce045bd03b8913e8035698811c0b5d6310deedab382b7",
@@ -1088,8 +1114,19 @@
       "state": "partial",
       "evidence": "tests/issuers_documents.php; tests/issuers_document_helpers.php; tests/issuers_document_render.php; docs/issuer-document-snapshots.md (gate remains blocked; permissions, complete financial isolation and independent transaction hardening pending)"
     },
+    "application/helpers/issuers_helper.php": {
+      "sha256": "0a8b270437ce7f1261f84c45e662eb44bd33846bad000914b13d9cc1cf56000d",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        58
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/helpers/menu_helper.php": {
-      "sha256": "597aad0cc818c5d91c94a77e336738657bc5f50455b983868e2dca6750eed01f",
+      "sha256": "0e11f1f9013a8f38835fa020521cb16406c198dc78bef3b10a3f4d65255a68b8",
       "categories": [
         "customer_privacy",
         "invoice_table"
@@ -1101,25 +1138,36 @@
         68,
         69,
         76,
-        348
+        354
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/helpers/payment_gateways_helper.php": {
+      "sha256": "2726cd7e2682c69815e628d2002d3feddcd24dcd32880f5e5840afd8d3318c53",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        136
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "application/helpers/pdf_helper.php": {
-      "sha256": "13ab10380615592935600398a78f931e6731beb7110b737109dc075c552399a7",
+      "sha256": "4c3ce261bc33d8cd2ebb9da762f3fba67f8cc24473d6bdfc72361feae232a7ae",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        149,
-        159
+        129,
+        139
       ],
-      "state": "partial",
-      "evidence": "tests/issuers_documents.php; tests/issuers_document_helpers.php; tests/issuers_document_render.php; docs/issuer-document-snapshots.md (gate remains blocked; permissions, complete financial isolation and independent transaction hardening pending)"
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/helpers/projects_helper.php": {
-      "sha256": "e4484de8f87b064db52ba9298cd1b67b5b44ae7e48537ffeb1420df9b0fa7339",
+      "sha256": "9290b862d4d5885d5202a19914abb90ba538edd518cf6870f38e4249fe4aa722",
       "categories": [
         "customer_privacy",
         "invoice_table"
@@ -1127,7 +1175,8 @@
       "signal_lines": [
         118,
         128,
-        306
+        304,
+        307
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -1171,12 +1220,12 @@
       "evidence": "tests/client_issuer_scope.php; tests/client_issuer_model.php; tests/client_issuer_mutations.php; tests/client_issuer_api.php; tests/client_issuer_controllers.php; tests/client_issuer_helpers.php; tests/client_issuer_tables.php; tests/invoice_issuer_scope.php; docs/security/client-issuer-privacy-phase2.md (covered legacy boundaries only; portal/session, generic preview/static storage and other domains pending)"
     },
     "application/helpers/settings_helper.php": {
-      "sha256": "a7e5fdc74b5dbcf70bca9394214ce4ef2f7d94755a04344426fd40c6fd9c4ebb",
+      "sha256": "60c58bb48107366047cba64bd050bffd5d7001cd4d17d6767088f7f9a4757188",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        169
+        177
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -1198,7 +1247,7 @@
       "evidence": ""
     },
     "application/helpers/staff_helper.php": {
-      "sha256": "2e4fdf356c154d852c5f96c8fc8cbee75d72d40810a499c8a23cdd14a3f29ca9",
+      "sha256": "bb81e4fb322acb70c1657d791458c519e8c8271b5f162dd8976f160f3eb1628f",
       "categories": [
         "customer_privacy",
         "invoice_table"
@@ -1240,25 +1289,25 @@
       "evidence": ""
     },
     "application/helpers/tasks_helper.php": {
-      "sha256": "db16046fb9dda15479b8d61a59c632d8d7bbfe5f127d276c85f95018275e3a6b",
+      "sha256": "07be9b792516420c210213ab302eb43aa741de536cdf801c0b90cb97aa36f321",
       "categories": [
         "customer_privacy",
         "documents_numbering",
         "invoice_table"
       ],
       "signal_lines": [
-        203,
-        255,
-        258,
+        204,
+        256,
         259,
-        346,
-        387
+        260,
+        347,
+        388
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "application/helpers/themes_helper.php": {
-      "sha256": "587ffa8265340636d67c459bcb52fbe65540085edd40a7632892888673eca76c",
+      "sha256": "2cfc5c93b6195d2467db0a7173c9d89095101149c8476df6b110868e8059dc66",
       "categories": [
         "invoice_table"
       ],
@@ -1270,34 +1319,36 @@
       "evidence": ""
     },
     "application/helpers/upload_helper.php": {
-      "sha256": "bb1e95d3981c89671f31bcfb473a9ead72d4b786333e6f0f27a6d0763465d605",
+      "sha256": "c7e7d285842f691a51c40441406b3790574ba0623fd4f8f578f397a8c51a2234",
       "categories": [
         "customer_privacy",
         "invoice_model",
         "invoice_table"
       ],
       "signal_lines": [
-        501,
-        552,
-        553,
-        587,
-        1043
+        314,
+        507,
+        509,
+        560,
+        561,
+        595,
+        1055
       ],
-      "state": "partial",
-      "evidence": "tests/client_issuer_scope.php; tests/client_issuer_model.php; tests/client_issuer_mutations.php; tests/client_issuer_api.php; tests/client_issuer_controllers.php; tests/client_issuer_helpers.php; tests/client_issuer_tables.php; tests/invoice_issuer_scope.php; docs/security/client-issuer-privacy-phase2.md (covered legacy boundaries only; portal/session, generic preview/static storage and other domains pending)"
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/libraries/App.php": {
-      "sha256": "3f5c318da9297ec86fb61b4195c151eafab66879f62f67938f78f3e1260e6231",
+      "sha256": "3d97146c379b2980cc966212c9b6dd214140e0fe8b2bb97ae3d2bf4a1dc0a792",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
-        516,
-        532
+        613,
+        629
       ],
-      "state": "partial",
-      "evidence": "tests/issuers_essential_upgrade.php (17), essential lifecycle/controller and PR38 Docker/MySQL CI: essential reconciliation only controlled CLI or authenticated setup POST; web upgrade does not run essential DDL implicitly."
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/libraries/App_bulk_pdf_export.php": {
       "sha256": "90f0a86c5e255df416ec89acdd3de253b2b4852023471815a61a8f81d5e561ca",
@@ -1650,6 +1701,26 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "application/models/Authentication_model.php": {
+      "sha256": "8d7ad3dc5734dbf2421247ae858504b68846a2f3220dd0528cbe982b1fd848ea",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        106,
+        107,
+        254,
+        255,
+        317,
+        318,
+        320,
+        322,
+        445,
+        446
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/models/Client_groups_model.php": {
       "sha256": "5dea098cb2cd79128034a0cce1b0d6e99ac3136875ee85ba18de034954b4f60d",
       "categories": [
@@ -1749,26 +1820,31 @@
       "evidence": "tests/client_issuer_scope.php; tests/client_issuer_model.php; tests/client_issuer_mutations.php; tests/client_issuer_api.php; tests/client_issuer_controllers.php; tests/client_issuer_helpers.php; tests/client_issuer_tables.php; tests/invoice_issuer_scope.php; docs/security/client-issuer-privacy-phase2.md (covered legacy boundaries only; portal/session, generic preview/static storage and other domains pending)"
     },
     "application/models/Contracts_model.php": {
-      "sha256": "e724a4ec8a42b7c1c0c40ee08c5ca9df2e13f4277e5dc76af3610d2676740dab",
+      "sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        25,
-        90,
-        122,
-        146,
-        178,
-        314,
-        392,
-        569,
-        661
+        12,
+        40,
+        43,
+        79,
+        109,
+        141,
+        165,
+        197,
+        336,
+        418,
+        601,
+        693,
+        812,
+        907
       ],
-      "state": "partial",
-      "evidence": "tests/client_issuer_document_writers.php, tests/client_issuer_scope.php and tests/invoice_issuer_exports.php cover explicit legacy customer writer/reference and projection boundaries with synthetic SQLite. Other readers, extensions and MySQL concurrency remain pending; see docs/private-client-rollout-checklist.md."
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/models/Credit_notes_model.php": {
-      "sha256": "bbdd28d97e07728406e292077293748ab257b61d18f8dccf6a4fcb47c1099f87",
+      "sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -1777,44 +1853,52 @@
       ],
       "signal_lines": [
         15,
-        47,
-        54,
-        60,
-        61,
-        62,
+        26,
+        40,
+        72,
+        73,
+        80,
+        86,
+        87,
         88,
-        106,
-        168,
-        187,
-        213,
-        258,
-        292,
-        566,
-        577,
-        578,
-        606,
-        643,
+        114,
+        132,
+        180,
+        195,
+        214,
+        240,
+        285,
+        319,
+        532,
+        604,
+        615,
+        616,
         644,
-        645,
-        652,
-        655,
-        790,
-        811,
-        812,
-        814,
-        815,
-        816,
-        820,
-        821,
-        823,
-        825,
-        828,
-        902,
-        911,
-        912
+        681,
+        682,
+        683,
+        690,
+        693,
+        834,
+        855,
+        856,
+        858,
+        859,
+        860,
+        864,
+        865,
+        867,
+        869,
+        872,
+        930,
+        948,
+        949,
+        959,
+        960,
+        1017
       ],
-      "state": "partial",
-      "evidence": "tests/client_issuer_document_writers.php, tests/client_issuer_scope.php and tests/invoice_issuer_exports.php cover explicit legacy customer writer/reference and projection boundaries with synthetic SQLite. Other readers, extensions and MySQL concurrency remain pending; see docs/private-client-rollout-checklist.md."
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/models/Cron_model.php": {
       "sha256": "61bd7100dcab36b7cf669f0bb7313da364ffdf21c7a09cb493b1e7058d66d045",
@@ -1914,7 +1998,7 @@
       "evidence": "tests/invoice_issuer_schedule.php; docs/invoice-issuer-core-scope.md (legacy invoice queue and immutable relation only)"
     },
     "application/models/Estimates_model.php": {
-      "sha256": "dad385d3fb83590fd14f511ea7877d676b0819e78d347182ca411941a17de24e",
+      "sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -1922,34 +2006,41 @@
         "invoice_table"
       ],
       "signal_lines": [
-        72,
-        131,
-        141,
-        220,
-        221,
-        228,
-        235,
-        291,
-        310,
-        426,
-        495,
-        544,
-        616,
-        673,
-        862,
-        865,
-        867,
-        875,
-        903,
-        1203,
-        1279,
-        1319
+        15,
+        47,
+        63,
+        87,
+        147,
+        157,
+        236,
+        237,
+        244,
+        251,
+        307,
+        326,
+        436,
+        443,
+        457,
+        514,
+        563,
+        635,
+        692,
+        882,
+        885,
+        887,
+        895,
+        923,
+        1088,
+        1231,
+        1307,
+        1347,
+        1466
       ],
-      "state": "partial",
-      "evidence": "tests/client_issuer_document_writers.php, tests/client_issuer_scope.php and tests/invoice_issuer_exports.php cover explicit legacy customer writer/reference and projection boundaries with synthetic SQLite. Other readers, extensions and MySQL concurrency remain pending; see docs/private-client-rollout-checklist.md."
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/models/Expenses_model.php": {
-      "sha256": "2bba497c9af0db0192262d401c8182e24e31cbc410e330e4bd14f9e4de2f6c59",
+      "sha256": "12dbb931610d7cf03424c73fb3dc514e12f593acb37c0247120118b819ce85ea",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -1957,21 +2048,21 @@
         "invoice_table"
       ],
       "signal_lines": [
-        23,
-        186,
-        254,
-        308,
-        328,
-        486,
-        492,
-        581,
-        583
+        33,
+        200,
+        269,
+        323,
+        343,
+        509,
+        515,
+        604,
+        606
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "application/models/Invoices_model.php": {
-      "sha256": "be6c8aefdd3f7981d7195518557f5f6edc0c4210a267a4d6625e669dcf336373",
+      "sha256": "45b6499307cd80aaab18f91f95030fbae9758815a459448eece202c224549010",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -1997,96 +2088,96 @@
         129,
         161,
         166,
-        172,
-        195,
+        176,
         199,
-        222,
+        203,
         226,
-        228,
-        251,
-        267,
-        268,
-        275,
-        277,
-        280,
+        230,
+        232,
+        255,
+        271,
+        272,
+        279,
         281,
-        417,
-        418,
-        506,
-        507,
-        508,
-        513,
-        537,
-        544,
-        652,
-        694,
-        697,
-        710,
+        284,
+        285,
+        421,
+        422,
+        510,
+        511,
+        512,
+        517,
+        541,
+        548,
+        656,
+        698,
+        701,
         714,
-        723,
-        745,
-        746,
-        752,
-        825,
-        828,
-        849,
-        868,
-        869,
-        871,
-        883,
-        900,
-        996,
-        1007,
-        1041,
-        1055,
-        1074,
-        1136,
-        1149,
-        1155,
-        1327,
-        1330,
-        1374,
-        1383,
+        718,
+        727,
+        749,
+        750,
+        756,
+        829,
+        832,
+        853,
+        872,
+        873,
+        875,
+        887,
+        904,
+        1000,
+        1011,
+        1045,
+        1059,
+        1078,
+        1140,
+        1153,
+        1159,
+        1331,
+        1334,
+        1378,
         1391,
         1399,
-        1490,
-        1497,
+        1407,
         1498,
-        1553,
-        1557,
-        1607,
-        1611,
-        1613,
-        1628,
-        1694,
-        1698,
+        1505,
+        1506,
+        1561,
+        1565,
+        1615,
+        1619,
+        1621,
+        1636,
         1702,
-        1715,
-        1781,
-        1824,
-        1834,
-        1838,
-        1851,
-        1891,
-        1915,
-        1937,
-        1940,
-        1950,
-        1967,
-        2001,
-        2050,
-        2054,
-        2056,
-        2059,
-        2068,
-        2071,
-        2074,
-        2087,
-        2101,
-        2115
+        1706,
+        1710,
+        1723,
+        1789,
+        1832,
+        1842,
+        1846,
+        1859,
+        1899,
+        1923,
+        1945,
+        1948,
+        1958,
+        1975,
+        2009,
+        2058,
+        2062,
+        2064,
+        2067,
+        2076,
+        2079,
+        2082,
+        2095,
+        2109,
+        2123
       ],
-      "state": "partial",
-      "evidence": "tests/client_issuer_document_writers.php, tests/client_issuer_scope.php and tests/invoice_issuer_exports.php cover explicit legacy customer writer/reference and projection boundaries with synthetic SQLite. Other readers, extensions and MySQL concurrency remain pending; see docs/private-client-rollout-checklist.md."
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/models/Leads_model.php": {
       "sha256": "0f5daddc1a96f50c701124c036639b2cd765ac7bff4e33b146c8e07fd9611680",
@@ -2220,7 +2311,7 @@
       "evidence": ""
     },
     "application/models/Payments_model.php": {
-      "sha256": "6f31b93b2fea46b80c0fdd5a59b484ef83d0f73fb0c86b27fc93b2615e461433",
+      "sha256": "1ea01e8de62da451d474a1f0e0be95124724149bd013e2434a2126f964d5f222",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -2242,85 +2333,89 @@
         58,
         87,
         125,
-        144,
-        177,
-        181,
-        193,
-        235,
-        239,
-        242,
-        243,
-        246,
-        249,
-        253,
-        260,
+        149,
+        182,
+        186,
+        198,
+        240,
+        244,
+        247,
+        248,
+        251,
+        254,
+        258,
         265,
-        269,
-        291,
-        293,
-        303,
-        305,
+        270,
+        274,
+        296,
+        298,
+        308,
         310,
-        353,
-        375,
-        424,
-        458,
-        466,
-        469,
-        473,
-        500,
-        506,
-        513,
-        516,
-        517,
-        520,
-        523,
-        527,
-        529,
-        538,
-        580,
-        581,
-        582,
-        583,
-        598,
-        609,
-        610,
-        616,
-        637,
-        639,
-        654,
-        655,
-        658,
-        665,
-        668
+        315,
+        358,
+        380,
+        429,
+        463,
+        471,
+        474,
+        478,
+        505,
+        511,
+        518,
+        521,
+        522,
+        525,
+        528,
+        532,
+        534,
+        543,
+        585,
+        586,
+        587,
+        588,
+        603,
+        614,
+        615,
+        621,
+        642,
+        644,
+        659,
+        660,
+        663,
+        670,
+        673
       ],
-      "state": "partial",
-      "evidence": "tests/asaas_payment_writer.php; tests/asaas_payment_writer_entrypoints.php; tests/invoice_issuer_scope.php; tests/invoice_issuer_statement.php; docs/invoice-payment-writer.md (manual update/refund concurrency and canonical MySQL integration pending)"
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/models/Projects_model.php": {
-      "sha256": "03c41364ad41d041d165dd2de1958fac4fe46b1b440858ee5e240418fbf12b1f",
+      "sha256": "4ced28bbf837b67413dacc1e7fdfc19c25075bd53488ecd4866c1ec0c641db11",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
-        145,
-        221,
-        273,
-        285,
-        1092,
-        1918,
-        2184,
-        2185,
-        2261,
-        2263,
-        2488
+        165,
+        244,
+        296,
+        308,
+        1129,
+        1963,
+        2230,
+        2231,
+        2307,
+        2312,
+        2314,
+        2319,
+        2325,
+        2337,
+        2545
       ],
-      "state": "partial",
-      "evidence": "tests/invoice_issuer_maintenance.php; docs/invoice-issuer-core-scope.md (invoice references and badge only; other associated domains pending)"
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/models/Proposals_model.php": {
-      "sha256": "0268d8d6198924569c3a5ff44f8c2b92198c398ab05166f6a276a9b1746f8d7a",
+      "sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -2328,23 +2423,27 @@
         "invoice_table"
       ],
       "signal_lines": [
-        48,
-        103,
-        180,
-        236,
-        614,
-        943,
-        948,
-        969,
-        1084,
-        1095,
-        1162,
-        1163,
-        1170,
-        1177
+        15,
+        53,
+        58,
+        68,
+        123,
+        200,
+        256,
+        369,
+        643,
+        977,
+        982,
+        1003,
+        1118,
+        1129,
+        1196,
+        1197,
+        1204,
+        1211
       ],
-      "state": "partial",
-      "evidence": "tests/client_issuer_document_writers.php, tests/client_issuer_scope.php and tests/invoice_issuer_exports.php cover explicit legacy customer writer/reference and projection boundaries with synthetic SQLite. Other readers, extensions and MySQL concurrency remain pending; see docs/private-client-rollout-checklist.md."
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/models/Recurring_rules_model.php": {
       "sha256": "206880c6b0cd344b0450d8278dee158695c872d6c0cebe2d3c581ec359080ac6",
@@ -2433,22 +2532,22 @@
       "evidence": "tests/invoice_issuer_reports.php; docs/invoice-issuer-core-scope.md. Invoice revenue/address/reference guard only; other financial domains and customer privacy remain pending."
     },
     "application/models/Staff_model.php": {
-      "sha256": "437c9bfd2c5d483ab13702bced387f644bbba16a8fa33076ed7faeee6c3c6e75",
+      "sha256": "04fcf08bff4b5ff252b6690be3f21100c9a3239d121354046ed82092292b4153",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        12,
-        13,
-        47,
-        49,
-        53,
+        18,
+        19,
         55,
-        94,
-        95
+        57,
+        61,
+        63,
+        102,
+        103
       ],
-      "state": "partial",
-      "evidence": "tests/invoice_issuer_maintenance.php; docs/invoice-issuer-core-scope.md (invoice references and badge only; other associated domains pending)"
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/models/Statement_model.php": {
       "sha256": "fd95ff2d1e0de3a26c707a55a5558ff3fe5c8c4f4cf2b9f55d43a50043345216",
@@ -2528,33 +2627,35 @@
       "evidence": "tests/invoice_issuer_discovery.php; docs/invoice-issuer-core-scope.md (invoice queries only; other domains pending)"
     },
     "application/models/Tasks_model.php": {
-      "sha256": "2bef6a6a56f88aec170b24d90efc639584dfc9414efa5c3cf2a3e4a62a019264",
+      "sha256": "ea393090f8fbf963ceffa0afdfd043d63ac995c604fb462d0d3e615af15a3a6a",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
-        337,
-        349,
-        1774,
-        1775
+        340,
+        359,
+        371,
+        1828,
+        1829
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "application/models/Tickets_model.php": {
-      "sha256": "853ab716d151a764e97765491df7d28a6db82db7114669be5105ca451d8a66c3",
+      "sha256": "9fd062d51570818442924c1e5927d37a865fb2fc2f42496b51e442631e8f459e",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        309,
-        341,
-        544,
-        695,
-        700,
-        730,
-        886
+        321,
+        354,
+        563,
+        718,
+        723,
+        755,
+        913,
+        1599
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -2582,41 +2683,113 @@
       "state": "partial",
       "evidence": "tests/invoice_issuer_discovery.php; docs/invoice-issuer-core-scope.md (invoice queries only; other domains pending)"
     },
+    "application/services/AbstractKanban.php": {
+      "sha256": "aa36af0312f884a8ecd2528efce1d22af0fbd3667f1376cb29e35828ecc73cbc",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        173,
+        187
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/services/ClientIssuerScope.php": {
-      "sha256": "0f4ef9df1c15e2babdd33b32825e4fb809d8df949157789031a21b02413498f5",
+      "sha256": "dcd3357740973305c2fd2ec9424d2e6b370123f2d9544db5874d9a6d299a1261",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
         6,
-        32,
-        67,
-        95,
-        97
+        44,
+        87,
+        115,
+        117
       ],
-      "state": "partial",
-      "evidence": "tests/client_issuer_document_writers.php (164), tests/client_issuer_scope.php (27): private reference denial, post-hook effective proposal relationship and explicit identity projection. Remaining readers/concurrency pending; see docs/private-client-rollout-checklist.md."
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/CompanyClients.php": {
+      "sha256": "b2c92182828d522810c3eeea8cfcd9c6ed00cc70c2388edb0e9a5e331f3bb3b9",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        76
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/CompanySettingsIdentity.php": {
+      "sha256": "5cba34a9327c9a227a10c95ab214d7a870f51c340a3162e68b0cd45c6b26f126",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        12,
+        13,
+        58,
+        59
+      ],
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/services/CustomerProfileBadges.php": {
-      "sha256": "4cbd1245414298fc6b29fd6557634af0954d6afe43e33923fa279a51bd04f617",
+      "sha256": "799c7725a2bc81e6e6fde9707230d5a6ef8e019a46c87cb81fffc6dc741f3acb",
       "categories": [
         "customer_privacy",
         "invoice_model",
         "invoice_table"
       ],
       "signal_lines": [
-        72,
-        73,
+        24,
+        53,
+        66,
+        75,
         76,
+        77,
         80,
-        81,
         84,
-        235,
-        241
+        85,
+        88,
+        93,
+        107,
+        124,
+        141,
+        154,
+        167,
+        180,
+        212,
+        221,
+        229,
+        239,
+        249,
+        251,
+        257
       ],
-      "state": "partial",
-      "evidence": "tests/invoice_issuer_maintenance.php; docs/invoice-issuer-core-scope.md (invoice references and badge only; other associated domains pending)"
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/CustomerRelationBoundary.php": {
+      "sha256": "21bbb02e483b79200bcbda78d90eaea3b6452ba4df3d917f21d747bac5e3453b",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        12,
+        14,
+        17,
+        18,
+        19,
+        28,
+        30,
+        31
+      ],
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/services/EssentialIssuerModule.php": {
       "sha256": "fb5c6ac3017dcc22feae30844ff9517037f97c4a6f9d8b3e437d53edd6ba71a0",
@@ -2649,31 +2822,102 @@
       "evidence": "tests/asaas_payment_writer.php; tests/asaas_payment_writer_entrypoints.php; tests/invoice_issuer_scope.php; tests/invoice_issuer_statement.php; docs/invoice-payment-writer.md (manual update/refund concurrency and canonical MySQL integration pending)"
     },
     "application/services/PortalClientIdentity.php": {
-      "sha256": "70e6d92c39dc0edfbb9bd6500df53d0780e1cb88f2c5b9e507fde704c2915062",
+      "sha256": "ed2d609e18383bf6429081c2570b51dc495eaa3cf9d1cb5dc45312bc9a1e113b",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
         6
       ],
-      "state": "partial",
-      "evidence": "tests/portal_client_identity.php and portal_client_constructor.php (55 cumulative): explicit authenticated contact/client session binding, active status and minimal projection; no ambient scope or financial authorization."
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/TaskClientBoundary.php": {
+      "sha256": "90176411b2765a513527942700de879434c4433848e0776e0bf0c40b35f363b8",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        9,
+        11,
+        31,
+        60
+      ],
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/services/estimates/EstimatesPipeline.php": {
-      "sha256": "a09aa3372ecd0e3012f85db7a6984a6a8325a588d36b940339010cd6d64c35a3",
+      "sha256": "deeb957e07e934c7a568729ea2e91ed37bccec3af7727ddf46b2d5b31877d251",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
         32,
         40,
-        72
+        72,
+        73
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/issuers/InvoiceIssuerDocuments.php": {
+      "sha256": "b253dd82888eebae2564d6d3d17f2a4aa52c754096be70eadf2d517294df4a69",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        51,
+        292
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/issuers/IssuerCore.php": {
+      "sha256": "6fc343b1b77c205c2d99139ff18024e23ce2f1a0ab42cbecd017f6363b07adbf",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        95,
+        97
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/issuers/IssuerCoreSchema.php": {
+      "sha256": "7e0c2f3970e20056253ea0304fd8e6b7cd2c855d8bce30072d0321e2f1cd3269",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        73,
+        128,
+        140,
+        141,
+        157
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/issuers/IssuerFinancialSchema.php": {
+      "sha256": "14795f9313fdf8f77f328b84d64d31c2f3a23e592c7681b28963aeb20192bcbe",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        29,
+        47,
+        62,
+        64,
+        68
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "application/services/leads/LeadsKanban.php": {
-      "sha256": "43aacc0661fa1b0c3ec9378aaa46c1bfccbd8819d73fb94a832d442d32b3a6b7",
+      "sha256": "1771486454d4ce254ba37e67100cc6e33366cf2ffa9bfdd77925343b59002347",
       "categories": [
         "customer_privacy"
       ],
@@ -2755,6 +2999,17 @@
         164,
         215,
         218
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/companies/registry.php": {
+      "sha256": "084c62d30a6633272a8aa69b3c7b5828650f8523084984fe8af8f16193b10203",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        22
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -2932,13 +3187,13 @@
       "evidence": ""
     },
     "application/views/admin/expenses/expense.php": {
-      "sha256": "8fc3f181543c546ee999abe655f183595d48e269ed4279f23320d5015ca5d9de",
+      "sha256": "c513777f827f6b0a1ac3f698aa0533cfd5cca0471c14f4c05248a49952348f04",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        160,
-        168
+        161,
+        169
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3066,20 +3321,20 @@
       "evidence": ""
     },
     "application/views/admin/invoices/invoice_template.php": {
-      "sha256": "5f4eeafb342d6ff6985e00d24cb4fd580b468fdccbebc8e95b41ff74b61e391e",
+      "sha256": "f0d7d1a0c806e44f7800640bc36ab8cdab370b9f51616672a161ba3babb17f89",
       "categories": [
         "documents_numbering",
         "invoice_model"
       ],
       "signal_lines": [
-        2,
-        15,
-        135,
-        145,
-        156,
-        166,
-        177,
-        181
+        3,
+        16,
+        136,
+        146,
+        157,
+        167,
+        178,
+        182
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3133,12 +3388,12 @@
       "evidence": ""
     },
     "application/views/admin/invoices/record_payment_template.php": {
-      "sha256": "84defb1264d9398a449457b96891ffd88b3b8712e0dab07bcde15a88baf50e25",
+      "sha256": "0c674e79207e6410c6b5725268b1a9d5d96535f40ba91f00cf5beb4c8d858834",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        9
+        10
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3186,6 +3441,17 @@
       ],
       "signal_lines": [
         28
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/issuers/manage.php": {
+      "sha256": "a7a4a9f5276ac3a25045d919ee31c3e3c42c59d7f620168baf2fdfae71a8bda3",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        36
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3239,18 +3505,18 @@
       "evidence": ""
     },
     "application/views/admin/payments/payment.php": {
-      "sha256": "605c951bf3fcb10e678a49d3a472864200963f35bb918c68d43c06d64df5d12e",
+      "sha256": "9d37f8967288eb9062b8d966191a1a3f76d82e17a02c3e16065ec83bc95d0da3",
       "categories": [
         "documents_numbering",
         "invoice_model"
       ],
       "signal_lines": [
-        10,
-        163,
+        11,
         164,
-        174,
-        182,
-        183
+        165,
+        175,
+        183,
+        184
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3353,6 +3619,20 @@
         47,
         48,
         68
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/settings/company_scoped.php": {
+      "sha256": "b4052bb32a6ff7fe51eadb0858b43408d00f17d38879b1fbfe862c78015fa6e3",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        4,
+        5,
+        6,
+        44
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4048,7 +4328,7 @@
       "evidence": ""
     },
     "modules/accounting/controllers/Accounting.php": {
-      "sha256": "7a488b87ea7179f33c53e95d763d90718a65340c4bfa10e26bfc92037798e60b",
+      "sha256": "9b6f3fd22fc63b706a79a33f112f17e3db8722c4e3e089e881d595c0e0213470",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -4095,45 +4375,46 @@
         4212,
         6643,
         6644,
-        6658,
-        7043,
-        7103,
-        7107,
-        7144,
-        7374,
+        6645,
+        6659,
+        7044,
+        7104,
+        7108,
+        7145,
         7375,
-        7404,
+        7376,
         7405,
-        8566,
-        11036,
-        11038,
-        11042,
-        11047,
-        11095,
-        11097,
-        11099,
-        11104,
-        11109,
-        11111,
+        7406,
+        8567,
+        11037,
+        11039,
+        11043,
+        11048,
+        11096,
+        11098,
+        11100,
+        11105,
+        11110,
         11112,
-        11114,
-        11150,
-        11154,
-        11746,
+        11113,
+        11115,
+        11151,
+        11155,
         11747,
-        12102,
+        11748,
         12103,
-        12531,
+        12104,
         12532,
-        12534,
+        12533,
         12535,
-        14873
+        12536,
+        14874
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "modules/accounting/models/Accounting_model.php": {
-      "sha256": "c55fc4dfec5f0e787a1be72b401285d0556a6d043526aeee52f0fd9de0972fe9",
+      "sha256": "b28f1278b40c836646cee83f6f6b89a7aa77b2913b6f01a70bf4d44a3ce98b8a",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -4214,18 +4495,20 @@
         24288,
         24289,
         28409,
-        28536,
-        29126,
-        29127,
-        29970,
-        29974,
-        30012,
-        30061,
-        30065,
-        30069,
-        30107,
-        30458,
-        30998
+        28410,
+        28537,
+        28538,
+        29128,
+        29129,
+        29972,
+        29976,
+        30014,
+        30063,
+        30067,
+        30071,
+        30109,
+        30460,
+        31000
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4420,7 +4703,7 @@
       "evidence": ""
     },
     "modules/api/models/Api_model.php": {
-      "sha256": "1f643bfeb91f0b0d4054c0906a05bf0bfc95a8f334125658f4a3faf67c033567",
+      "sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -4428,111 +4711,74 @@
         "payments"
       ],
       "signal_lines": [
-        43,
-        44,
         45,
-        53,
-        54,
+        46,
+        47,
         55,
-        79,
-        120,
-        121,
-        125,
-        126,
-        129,
-        130,
+        56,
+        57,
+        81,
+        122,
+        123,
+        127,
+        128,
         131,
-        330,
+        132,
+        133,
+        225,
+        316,
+        317,
+        319,
+        320,
         331,
-        333,
+        332,
         334,
-        345,
-        346,
-        348,
-        349,
-        350,
-        351,
-        352,
-        353,
-        358,
-        361,
-        362,
-        363,
-        364,
-        365,
-        366,
-        367,
-        368,
-        369,
-        370,
-        371,
-        372,
-        373,
-        377,
-        692,
-        701,
-        706,
-        707,
-        709,
-        720,
-        723,
-        724,
-        726,
-        727,
-        735,
-        816,
-        924,
-        925,
-        926,
-        930,
-        931,
-        946,
-        949,
+        335,
+        336,
+        337,
+        338,
+        339,
+        342,
+        344,
+        379,
+        653,
+        656,
+        660,
+        668,
+        670,
+        671,
+        672,
+        674,
+        682,
+        766,
+        877,
+        878,
+        879,
+        883,
+        884,
+        899,
+        902,
+        910,
+        911,
+        912,
+        915,
+        916,
+        918,
+        955,
         957,
-        958,
         959,
-        962,
-        963,
-        965,
-        1086,
-        1090,
-        1092,
-        1095,
-        1097,
-        1098,
-        1099,
-        1100,
-        1101,
-        1112,
-        1113,
-        1114,
-        1115,
-        1116,
-        1117,
-        1118,
-        1119,
-        1156,
-        1216,
-        1220,
-        1222,
-        1225,
-        1227,
-        1228,
-        1229,
-        1230,
-        1231,
-        1232,
-        1244,
-        1245,
-        1246,
-        1247,
-        1248,
-        1249,
-        1250,
-        1251
+        964,
+        1040,
+        1044,
+        1046,
+        1077,
+        1085,
+        1127,
+        1131,
+        1133
       ],
-      "state": "partial",
-      "evidence": "tests/client_issuer_scope.php; tests/client_issuer_model.php; tests/client_issuer_mutations.php; tests/client_issuer_api.php; tests/client_issuer_controllers.php; tests/client_issuer_helpers.php; tests/client_issuer_tables.php; tests/invoice_issuer_scope.php; docs/security/client-issuer-privacy-phase2.md (covered legacy boundaries only; portal/session, generic preview/static storage and other domains pending)"
+      "state": "unreviewed",
+      "evidence": ""
     },
     "modules/api/views/apidoc.php": {
       "sha256": "773d06d80e80c809e9f2bfe0a0c65fe5afeb6ffcf00c580dd7ca2f720e6c06d1",
@@ -4546,54 +4792,52 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "a1533f5a5f22d6e4eb8b86fe790d1bb8e298388856ace364366afc53ad969ba1",
+      "sha256": "c09cac933b95cdffdd6b2da5b897886fd2c9a6422ae74c155aca3506ba14eb44",
       "categories": [
         "customer_privacy",
         "invoice_model",
         "payments"
       ],
       "signal_lines": [
-        175,
-        176,
-        220,
-        228,
+        156,
+        157,
+        214,
+        222,
         277,
-        477,
-        491
+        482,
+        496
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "modules/asaas/controllers/Asaas.php": {
-      "sha256": "5faba575cbcbd12f7791d2740a54632861f7bfedba68375de344d8bac7c4a440",
+      "sha256": "048dbd6258e149e505e7c977f96ef7309a838bffca4d0043d7e1a79ad630d725",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        34
+        204
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "modules/asaas/controllers/Checkout.php": {
-      "sha256": "b2a50df6b85e576b27e0c66c564cdc3891b2f3c7ef19b43607e3460aa519d424",
+      "sha256": "bfaa7102509abb6f6f12b2ecca1d14c44986c6dcbec7214919e181dbb5d695ab",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
         18,
         39,
-        63,
-        97,
-        137,
-        157,
-        161
+        65,
+        124,
+        128
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/AsaasAdapter.php": {
-      "sha256": "ff8ba73c01f942d99f6146904c3e83ceb212aaf3141104823bd8192abd6365a6",
+      "sha256": "397a83c21f36b5cf5e2fb560c58b9b37ee781b0846cd82d7e0f48cde15cabcfc",
       "categories": [
         "customer_privacy",
         "invoice_table",
@@ -4602,52 +4846,66 @@
       "signal_lines": [
         338,
         340,
-        641,
-        645,
         659,
-        700
+        685,
+        696,
+        741,
+        775,
+        803,
+        809,
+        833,
+        867,
+        917
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/libraries/Asaas/CanonicalReceiptRecorder.php": {
+      "sha256": "5909da19ae8b308ab28ddc4e9f9595b4a280bc2dc8014838ea8b3e42405e91dc",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        34,
+        42,
+        47
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas_gateway.php": {
-      "sha256": "32d83b3cd09ba6e45838a0a150d8ffdb11804d19573f0c5e9e8b11843cc7cd7c",
+      "sha256": "3c325f8797c5685e2a4f98b606f78520f49558ba7985b0d03faefd99825106c1",
       "categories": [
         "customer_privacy",
         "documents_numbering",
-        "invoice_table"
+        "invoice_table",
+        "payments"
       ],
       "signal_lines": [
-        259,
-        262,
-        298,
-        510,
-        527,
-        612,
-        754,
-        757,
-        829,
-        1011,
-        1014,
-        1118
+        269,
+        277,
+        313,
+        525,
+        542,
+        641,
+        797,
+        819,
+        822,
+        864,
+        868,
+        972
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "modules/asaas/views/cartao.php": {
-      "sha256": "305aa00c682f2a464ee04dd76b670abc4e6ff7c891fcffb791ae88a8523bb40a",
+      "sha256": "f29e2d88c8fa7b75fc457faf2a48fc53e6536112cb9728621f9e2209d8921f72",
       "categories": [
-        "documents_numbering",
-        "invoice_model",
-        "invoice_table",
-        "payments"
+        "documents_numbering"
       ],
       "signal_lines": [
-        22,
-        35,
-        47,
-        124,
-        133
+        4
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4682,12 +4940,13 @@
       "evidence": ""
     },
     "modules/connect_api_chat/models/Connect_api_chat_model.php": {
-      "sha256": "9db2e04aa6b7b619267e197067b6ad2ad812d04e1cc423cfc903b09ca02cf126",
+      "sha256": "111be612ffb95f2e701c274bbb50892d3cf9a311a35160dc2437d0ab934aae30",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        1093
+        1093,
+        1096
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4734,17 +4993,20 @@
       "evidence": ""
     },
     "modules/custom_links/models/Custom_links_model.php": {
-      "sha256": "aa5381f1e8d386068ddb0cb4fb16e8548a940e09c273340a6009f67b8e50447b",
+      "sha256": "4c55aa2f774ad655750ae2bf00fecdf134472a93a7730df5280f946f1b20e4e5",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
         221,
         222,
-        224,
+        223,
         225,
         226,
-        230
+        227,
+        228,
+        232,
+        233
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5122,7 +5384,7 @@
       "evidence": ""
     },
     "modules/goals/goals.php": {
-      "sha256": "5c04e335d17b5bb89b7a855f6b85a6364dac70a9e3df154cf7e542afee9507ef",
+      "sha256": "fdbd2935df22bb5990bd333ac1006304aedb7b96c284e03a30d2c28fcf76aa50",
       "categories": [
         "invoice_table"
       ],
@@ -5134,7 +5396,7 @@
       "evidence": ""
     },
     "modules/goals/models/Goals_model.php": {
-      "sha256": "666fa04b8b5882c3762294e949331a0ad41ff41d22b221ab7c6c0b06a59c9ac6",
+      "sha256": "98bcbd781aa99aec8359326f9381f6d3e8339ed2faa38f74aa889db1d7e97b3f",
       "categories": [
         "customer_privacy",
         "invoice_table",
@@ -5149,7 +5411,8 @@
         245,
         250,
         255,
-        269
+        269,
+        282
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5167,7 +5430,7 @@
       "evidence": ""
     },
     "modules/ideal/controllers/Ideal.php": {
-      "sha256": "4d2effe5341c1a694ecad77320159be6763465a6381c0976817e7aafd0034cab",
+      "sha256": "061e0a3dd146b7cfd48db1f8d44ada310da3d9b48bf81f48c7f25dbd56e30fe8",
       "categories": [
         "documents_numbering",
         "invoice_model",
@@ -5181,7 +5444,7 @@
         112,
         115,
         132,
-        209
+        232
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5511,42 +5774,6 @@
       "state": "partial",
       "evidence": "tests/issuers_controller.php and client_issuer_controllers.php: trusted actor, POST/CSRF/input shape and adoption gate; registry-only scope."
     },
-    "modules/issuers/services/InvoiceIssuerDocuments.php": {
-      "sha256": "b253dd82888eebae2564d6d3d17f2a4aa52c754096be70eadf2d517294df4a69",
-      "categories": [
-        "customer_privacy",
-        "invoice_table"
-      ],
-      "signal_lines": [
-        51,
-        292
-      ],
-      "state": "partial",
-      "evidence": "tests/issuers_documents.php, document_helpers, document_render, document_transactions (185): own confirmed transaction, authorized recipient/issuer snapshot and dedicated renderer; rollout remains blocked; concurrent MySQL phase2 validation pending."
-    },
-    "modules/issuers/services/IssuerRegistry.php": {
-      "sha256": "9ea7d9f3823e9871de1ac05b8e43ff5c3cf85b46d63805de9a7a7448452902a3",
-      "categories": [
-        "customer_privacy"
-      ],
-      "signal_lines": [
-        273,
-        274
-      ],
-      "state": "partial",
-      "evidence": "tests/issuers_registry.php (138): explicit membership including manage_integrations default denied, identity/conflict/sharing; phase2 adoption blocked pending complete portal/core coverage."
-    },
-    "modules/issuers/views/manage.php": {
-      "sha256": "9646bf3d62c45ed341357ba04916f8f76114c65ba78162ee751578e5456d1e1a",
-      "categories": [
-        "customer_privacy"
-      ],
-      "signal_lines": [
-        75
-      ],
-      "state": "unreviewed",
-      "evidence": ""
-    },
     "modules/ma/controllers/Ma.php": {
       "sha256": "e802d181bcccc29e29622651cae5fbc82fea0b4d91c78642537c4ce9bd51d4ab",
       "categories": [
@@ -5590,7 +5817,7 @@
       "evidence": ""
     },
     "modules/ma/models/Ma_model.php": {
-      "sha256": "7425a80457feb1ae1086e41c42ad6ebe582c195cb10cfefba9ee7fe127d9462a",
+      "sha256": "f928755dc8bda25aef0f402c7cf2cb480b7be4aaae79a2ed8647fe1f7e3a15f7",
       "categories": [
         "customer_privacy"
       ],
@@ -5604,31 +5831,34 @@
         5727,
         5751,
         5754,
-        5755,
-        5758,
-        5759,
+        5756,
+        5757,
         5760,
-        5775,
-        5791,
-        5800,
+        5761,
+        5762,
+        5777,
+        5793,
+        5802,
         5804,
-        6148,
-        7047,
-        7054,
-        7108,
-        7109,
-        7155,
-        7156,
-        7200,
-        7201,
-        7203,
-        7210,
-        7248,
-        7298,
-        7300,
-        7303,
+        5808,
+        6152,
+        7051,
+        7058,
+        7112,
+        7113,
+        7159,
+        7160,
+        7204,
+        7205,
+        7207,
+        7214,
+        7252,
+        7302,
         7304,
-        7307
+        7307,
+        7309,
+        7310,
+        7313
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5662,30 +5892,47 @@
       "evidence": ""
     },
     "modules/multiple_companies/models/Multiple_companies_model.php": {
-      "sha256": "f65ba33efe05c1e2046a27f8949623d6c7a0ab88d1cf237120287054c59d8a92",
+      "sha256": "8808ccb56f8482d33ff6d4be9d0a423e37b0052fb19b6b3c20e984f67ac2c562",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        27
+        25,
+        28,
+        40,
+        41
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "modules/multiple_companies/multiple_companies.php": {
-      "sha256": "a38f398eb4efd1f5a4d35f3f2b9bea4ffe8aa19713a9487b1c8f3cb12379a586",
+      "sha256": "f07b466311132d1d44c66a6863a10afd823121b2530033789be1ef8645a92a42",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
-        65,
-        387,
-        391,
-        462,
-        688,
-        703,
-        856
+        310,
+        314,
+        385,
+        611,
+        626,
+        739,
+        777,
+        781
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/multiple_companies/services/LegacyContactIdentity.php": {
+      "sha256": "363fd28f0c6ce892ebb9cba4ecaf1689751efaf3476a049558937df67889f80a",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        12,
+        13,
+        23
       ],
       "state": "unreviewed",
       "evidence": ""
