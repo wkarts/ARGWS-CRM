@@ -72,3 +72,7 @@ separadamente; comandos/ordem/bytes de browsers e fixtures são idênticos.
 62 testesPython de release/pacote/convenção/inventários e a nova regressãoBash
 passaram separadamente (63 testes). Lint19PHP/1JS, schema bootstrap, YAML3, bash e
 inventários coerentes. Não inferir o CI429 a partir do HTTP local ou do CI428.
+
+## CI429 terminal
+
+16 workflows distintos no próprio SHA:15 sucesso/1 falha; [evidência](evidence/ci-429.json). Stacks falhou1064: o cliente mysql dividia CREATE TRIGGER composto no delimitador padrão. A prova HTTP local usou PDO e não cobria esse parser. Correção restrita ao helper de teste integra430, com prova realCLI RED/GREEN; nenhuma alegação de CI429 verde.

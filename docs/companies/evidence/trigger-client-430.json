@@ -1,0 +1,32 @@
+{
+  "current": {
+    "tests/settings_primary_sales_browser.cjs": {
+      "base": "/workspace/scratch/6b72446d684f/crm/tests/settings_primary_sales_browser.cjs",
+      "before": "5fb06b438c09375fe89539c1827b70bd0c3761d56959dc15b68ef5284686a43d",
+      "after": "e7df3a308903072acc12b7728758a3b7aa5926fa4a9d7f7385dbdff6a5467739"
+    }
+  },
+  "current_patch_sha256": "5b907792a6f46cd34d11532f06a53895d6ad9ef70e8d30a88736b09f0eb4fe55",
+  "future": {
+    "tests/settings_sales_pdf_browser.cjs": {
+      "base": "/tmp/pr45-settings-pdf-future/work/tests/settings_sales_pdf_browser.cjs",
+      "before": "4225e3a8e2115940cda95febecd116b18aa9fc18e39f5c774c2baf958441b8e3",
+      "after": "0686e879c08fa96ab9547312677836537696dd05f2343bd41ad06d430da619c8"
+    },
+    "tests/settings_document_pdf_browser.cjs": {
+      "base": "/tmp/pr45-settings-document-pdf-future/work/tests/settings_document_pdf_browser.cjs",
+      "before": "97fe673f1e910e42215861ad7cc2f75f9c95652596ed57a37bb17203b98be051",
+      "after": "5b948ef315282c0e86a0ed359bb6b7e59b184a4ba82fb7d8d9a2841e62b7ac19"
+    }
+  },
+  "future_patch_sha256": "ace4ae90c3b86797ed2c223f05da860b0b3f08cf0747731756676fc89a599f13",
+  "proofs": {
+    "native_client": "/tmp/crm-db-runtime/usr/bin/mysql  Ver 15.1 Distrib 10.11.14-MariaDB, for debian-linux-gnu (x86_64) using  EditLine wrapper",
+    "MariaDB_RED_GREEN": "three exact original/fixed helpers, realCLI1064 \u2192 real45000 rollback/retry PASS",
+    "Chromium": "three full browser suites with realCLI SQL transport PASS",
+    "MySQL8_runtime": false,
+    "MySQL8_primary_source": "https://dev.mysql.com/doc/refman/8.0/en/mysql-command-options.html#option_mysql_delimiter",
+    "production_changed": false,
+    "delivered_PDF_patches_changed": false
+  }
+}

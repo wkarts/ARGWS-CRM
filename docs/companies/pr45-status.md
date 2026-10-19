@@ -1,12 +1,12 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Este incremento usa núcleo4.2.9/429,
-BB1.1.4/101–114 e Asaas1.5.1/151, sobre428 publicado em
-`0f182e68b936fe53ab43d69cbd1157c4caa574d5`.
+Escopo integral em andamento. Este incremento usa núcleo4.3.0/430,
+BB1.1.4/101–114 e Asaas1.5.1/151, sobre429 publicado em
+`20d19f1934c653f6b1b6809717c8097fbcd3fb50`.
 A [validação429](pr45-validation-429.md) registra30/30 execuções HTTP/Chromium
 em uma rodada limpa, instalação/upgrade/tracking e bytes funcionais conferidos.
 O CI428 terminou12sucesso/4falhas por bootstrap e orquestração, corrigidos429 com
-RED/GREEN. O CI do novo SHA é acompanhado separadamente na descrição da PR. O427 passou25/25 execuções HTTP numa rodada limpa e16 workflows distintos
+RED/GREEN. CI429 terminou15sucesso/1falha no clienteSQL do teste, corrigida430 com realCLI RED/GREEN. A [validação430](pr45-validation-430.md) registra31/31 HTTP e o CI do novo SHA será acompanhado separadamente. O427 passou25/25 execuções HTTP numa rodada limpa e16 workflows distintos
 concluíram com sucesso no próprio SHA; [evidência427](pr45-validation-427.md) preservada.
 Todos os passos históricos permanecem preservados. Sem merge, deploy, tag ou release manual.
 
@@ -15,7 +15,7 @@ instalação/upgrade nativos, aplicação real mysqli, MariaDB e Chromium. Os re
 locais não equivalem às matrizes remotas de outro SHA nem a homologação bancária.
 Inventários orientam revisão; contagens lexicais não medem bugs ou cobertura.
 
-| Requisito | Implementação incorporada até428 | Prova e limite |
+| Requisito | Implementação incorporada até430 | Prova e limite |
 |---|---|---|
 | Empresa principal/master/equipe | Identidade real do instalador, master diferente de1, wizard, grants/default por recurso e seletor409 | Bootstrap/upgrade/concorrência/HTTP; legado ambíguo usa console+senha; recuperação totalmente gráfica depende de autoridade independente |
 | Clientes privados/opt-in | Diretório positivo, compartilhamento explícito somente da identidade, contatos e sessões próprios | A/B/principal/NULL, concorrência e navegador; não compartilha histórico financeiro |
@@ -41,6 +41,13 @@ Guias: [faturas](invoice-operations.md), [créditos](credit-operations.md),
 A falta de homologação não elimina pendências técnicas. Não aplicar eventos sem
 origem, evidência canônica e writer transacional; não atribuir ao banco uma prova local.
 
+## Incremento430 — abertura e resposta de suporte pelo contato
+
+Contato próprio/native5 cria e responde no chamado publicado e privado,
+com autoria distinta do staff, recibo/revisão/auditoria, limites e revogação sob lock.
+Sem concessão financeira ou API genérica. [Validação430](pr45-validation-430.md).
+Anexos enviados pelo contato seguem na integração431; não são funcionalidade430.
+
 ## Incremento429 — API de subrecursos operacionais
 
 16 scopes novos explícitos para arquivos privados de projetos/tarefas/contratos/
@@ -59,7 +66,7 @@ Scopes antigos não se ampliam e upload não publica no portal. [Validação429]
 | API fatura/bytes | Revalidação canônica após auditoria e após TCPDF, com comparação do DTO | Prova RED/GREEN token/ator/owner; revogação tardia não libera o documento autorizado anteriormente |
 
 API dos subrecursos operacionais integra429. Criação/resposta de suporte pelo
-contato está preparada para430, ainda fora desta entrega. Permissões do contato não viram
+contato integra430; arquivos do contato seguem431. Permissões do contato não viram
 permissões de funcionário. Recuperação gráfica legada exige autoridade independente
 original/registro verificável; o estado transitório do provisionador é removido no
 sucesso e o marcador restante não prova identidade. Ver guia específico.

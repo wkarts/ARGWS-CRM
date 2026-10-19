@@ -1,11 +1,12 @@
 <?php
 
 declare(strict_types=1);
-require_once __DIR__.'/CompanyPortalOperationsStorage.php';require_once __DIR__.'/CompanyPortal.php';
+require_once __DIR__.'/CompanyPortalOperationsStorage.php';require_once __DIR__.'/CompanyPortalSupportWriteSchema.php';require_once __DIR__.'/CompanyPortal.php';
 /** Native3/5/6, explicit publication and private contact/client/issuer ownership before hydration. */
 final class CompanyPortalOperations extends CompanyPortalOperationsStorage
 {
  public function __construct($db,string $p,private CompanyPortal $portal){parent::__construct($db,$p);}
+ protected function extraTables():array{CompanyPortalSupportWriteSchema::assertValid($this->db,$this->p);return array_keys(CompanyPortalSupportWriteSchema::definitions($this->p));}
  private function identity(array $session,int $issuer,string $kind):?array
  {
   $t=self::target($kind);$who=$this->portal->invoiceIdentity($session,$issuer,true);if(!$who)return null;
@@ -31,7 +32,7 @@ final class CompanyPortalOperations extends CompanyPortalOperationsStorage
   $issuer=IssuerPolicy::id($issuer);$id=IssuerPolicy::id($id);self::target($kind);
   return $this->tx(function()use($session,$issuer,$kind,$id):array{[$row,$who]=$this->owned($session,$issuer,$kind,$id);
    if($kind==='contracts'){$snapshot=json_decode($row['snapshot_json'],true,32,JSON_THROW_ON_ERROR);if(!is_array($snapshot)||($snapshot['issuer_id']??null)!==$issuer||($snapshot['client']['id']??null)!==$who['client_id']||($snapshot['number']??null)!==(int)$row['number'])throw new DomainException('company_portal_operation_unavailable');$record=['id'=>$id,'issuer_id'=>$issuer,'client_id'=>$who['client_id'],'number'=>(int)$row['number'],'status'=>$row['status'],'revision'=>(int)$row['revision'],'snapshot_json'=>$row['snapshot_json'],'name'=>$snapshot['name'],'body'=>$snapshot['body'],'start_date'=>$snapshot['start_date'],'due_date'=>$snapshot['due_date']];}
-   elseif($kind==='tickets'){$record=['id'=>$id,'name'=>$row['subject'],'body'=>$row['body'],'status'=>$row['status'],'priority'=>$row['priority'],'revision'=>(int)$row['revision']];$record['replies']=$this->rows('SELECT r.id,r.body,r.created_at FROM '.$this->p.'company_ticket_replies r JOIN '.$this->p.'company_portal_ticket_replies v ON v.issuer_id=r.issuer_id AND v.ticket_id=r.ticket_id AND v.reply_id=r.id AND v.visible=1 WHERE r.issuer_id=? AND r.ticket_id=? ORDER BY r.id LIMIT 500',[$issuer,$id]);}
+   elseif($kind==='tickets'){$record=['id'=>$id,'name'=>$row['subject'],'body'=>$row['body'],'status'=>$row['status'],'priority'=>$row['priority'],'revision'=>(int)$row['revision']];$record['replies']=$this->rows('SELECT r.id,r.body,r.created_at,r.actor_id,o.author_name contact_author FROM '.$this->p.'company_ticket_replies r LEFT JOIN '.$this->p.'company_portal_support_replies o ON o.issuer_id=r.issuer_id AND o.ticket_id=r.ticket_id AND o.reply_id=r.id JOIN '.$this->p.'company_portal_ticket_replies v ON v.issuer_id=r.issuer_id AND v.ticket_id=r.ticket_id AND v.reply_id=r.id AND v.visible=1 WHERE r.issuer_id=? AND r.ticket_id=? ORDER BY r.id LIMIT 500',[$issuer,$id]);}
    else $record=['id'=>$id,'name'=>$row['name'],'description'=>$row['description'],'status'=>$row['status'],'start_date'=>$row['start_date'],'due_date'=>$row['due_date'],'revision'=>(int)$row['revision']];
    $record['files']=$this->files($issuer,$kind,$id);$this->audit($issuer,0,$id,'company_portal_operation_viewed',['kind'=>$kind,'contact_id'=>$who['contact_id'],'client_id'=>$who['client_id'],'revision'=>$record['revision']]);$this->owned($session,$issuer,$kind,$id);return $record;
   });

@@ -190,6 +190,10 @@ jobs:
           php tests/companies/native_427.php
           php tests/companies/native_428.php
           php tests/companies/native_429.php
+          php tests/companies/portal_support_write.php
+          php tests/companies/portal_support_write_controller.php
+          php tests/companies/portal_support_write_concurrency.php
+          php tests/companies/native_430.php
           php tests/companies/asaas_boundaries.php
           php tests/companies/asaas_exact_json.php
           php tests/companies/invoice_delivery_concurrency.php

@@ -8,3 +8,9 @@ unset($db->data_cache['table_names']);if($db->driver()==='mysql'){CompanyPortalO
  foreach(CompanyPortalOperationsSchema::TARGETS as $t)$db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.$t['files'].'_portal_origin ON '.$p.$t['files'].'(issuer_id,'.$t['field'].',file_key)');$db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.'reply_portal_origin ON '.$p.'company_ticket_replies(issuer_id,ticket_id,id)');
  foreach(CompanyPortalOperationsSchema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}
 }unset($db->data_cache['table_names']);
+
+require_once APPPATH.'services/CompanyPortalSupportWriteSchema.php';
+if($db->driver()==='mysql')CompanyPortalSupportWriteSchema::ensure($db,$p);else{
+ $db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.'portal_support_client ON '.$p.'company_tickets(issuer_id,id,client_id)');$db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.'portal_support_contact ON '.$p.'contacts(userid,id)');
+ foreach(CompanyPortalSupportWriteSchema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}
+}unset($db->data_cache['table_names']);

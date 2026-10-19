@@ -105,14 +105,14 @@
       "evidence": ""
     },
     "application/controllers/Company_portal.php": {
-      "sha256": "76e4762aba869fce35f715dc0be4df33e858d6f0cdafda8c6b6ad831baebbfe3",
+      "sha256": "1fde157e471bcffcf33cf49b5453473baff61699ff87659af6ea2c3e7a2d1584",
       "categories": [
         "documents_numbering",
         "invoice_table"
       ],
       "signal_lines": [
-        64,
-        125
+        70,
+        131
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -458,7 +458,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Company_tickets.php": {
-      "sha256": "05d8761e49a8b1bc3d882adaffbf402bd864ab65df7d5c8471a9ced8f8e98716",
+      "sha256": "ba7ab414df5e16f6668e3a20913b9f102b12cdef2c37103f61b4b52908fb8133",
       "categories": [
         "customer_privacy"
       ],
@@ -3308,12 +3308,12 @@
       "evidence": ""
     },
     "application/services/CompanyPortalOperationsStorage.php": {
-      "sha256": "a30c38163324dc68f2e8e6c2edd6dac3f0783caec381349ce0c0c222f46d38cf",
+      "sha256": "a6c2d66ce315835a53ddc20f69f84962ebaae4cbd1150a35beb310e8f17c91a4",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        10
+        11
       ],
       "state": "unreviewed",
       "evidence": ""

@@ -1,0 +1,36 @@
+settings_primary_sales_browser.cjs RED native mysql -e1064 reproduced
+settings_primary_sales_browser.cjs GREEN realCLI create/SIGNAL45000/atomic rollback/drop/retry passed
+settings_sales_pdf_browser.cjs RED native mysql -e1064 reproduced
+settings_sales_pdf_browser.cjs GREEN realCLI create/SIGNAL45000/atomic rollback/drop/retry passed
+settings_document_pdf_browser.cjs RED native mysql -e1064 reproduced
+settings_document_pdf_browser.cjs GREEN realCLI create/SIGNAL45000/atomic rollback/drop/retry passed
+--------------
+CREATE TRIGGER qa_cli_delimiter_0 BEFORE UPDATE ON qa_settings_cli_probe_0 FOR EACH ROW BEGIN IF NEW.name='second' AND NEW.value='fail' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic native CLI failure'
+--------------
+
+ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 1
+--------------
+UPDATE qa_settings_cli_probe_0 SET value='fail' WHERE name='second'
+--------------
+
+ERROR 1644 (45000) at line 1: synthetic native CLI failure
+--------------
+CREATE TRIGGER qa_cli_delimiter_1 BEFORE UPDATE ON qa_settings_cli_probe_1 FOR EACH ROW BEGIN IF NEW.name='second' AND NEW.value='fail' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic native CLI failure'
+--------------
+
+ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 1
+--------------
+UPDATE qa_settings_cli_probe_1 SET value='fail' WHERE name='second'
+--------------
+
+ERROR 1644 (45000) at line 1: synthetic native CLI failure
+--------------
+CREATE TRIGGER qa_cli_delimiter_2 BEFORE UPDATE ON qa_settings_cli_probe_2 FOR EACH ROW BEGIN IF NEW.name='second' AND NEW.value='fail' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic native CLI failure'
+--------------
+
+ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 1
+--------------
+UPDATE qa_settings_cli_probe_2 SET value='fail' WHERE name='second'
+--------------
+
+ERROR 1644 (45000) at line 1: synthetic native CLI failure

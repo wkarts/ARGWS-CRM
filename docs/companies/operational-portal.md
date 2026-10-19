@@ -99,3 +99,9 @@ bancária ou entrega externa relacionada a esta funcionalidade.
 Integração: migration nativa 428 preparada deve chamar
 `CompanyPortalOperationsSchema::ensure` após todos os schemas de projetos e anexos
 427. Preservar tabela/bytes/auditoria em rollback; nunca apagar dados por downgrade.
+
+## Escrita de suporte430
+
+Abertura e resposta pelo contato com permissão nativa5, origem persistida e sem
+personificar funcionários estão descritas em `portal-support-write.md`. Mensagens
+de equipe continuam internas até publicação individual. Sem novos scopes API.

@@ -32,7 +32,7 @@ final class CompanyTickets extends CompanyContractsStorage
     }
     public function get($issuer,$actor,$id):array
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);return $this->transaction(function()use($issuer,$actor,$id):array{(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'view');$row=$this->row($issuer,$id);$row['replies']=$this->rows('SELECT actor_id,body,created_at FROM '.$this->p.'company_ticket_replies WHERE issuer_id=? AND ticket_id=? ORDER BY id LIMIT 500',[$issuer,$id]);$this->authorize($issuer,$actor,'view');return $row;});
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);return $this->transaction(function()use($issuer,$actor,$id):array{(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'view');$row=$this->row($issuer,$id);$row['replies']=$this->rows('SELECT id,actor_id,body,created_at FROM '.$this->p.'company_ticket_replies WHERE issuer_id=? AND ticket_id=? ORDER BY id LIMIT 500',[$issuer,$id]);$this->authorize($issuer,$actor,'view');return $row;});
     }
     public function page($issuer,$actor,$after=0,string $search=''):array
     {
