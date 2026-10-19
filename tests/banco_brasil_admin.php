@@ -29,11 +29,11 @@ class CompanyRequestScope {
  public static function context(){ return new BbSelectedCompany(); }
  public static function isolated(): bool { return false; }
  public static function sealedFor($controller): bool { return false; }
- public static function token(){ return null; }
+ public static function token(){ return 'synthetic-company-context'; }
 }
 
 function html_escape($value){return htmlspecialchars((string)$value,ENT_QUOTES,'UTF-8');}
-function init_head(){}function init_tail(){}function form_open($url){return '<form method="post" action="'.html_escape($url).'">';}
+function init_head(){}function init_tail(){}function form_open($url){$form='<form method="post" action="'.html_escape($url).'">';if(CompanyRequestScope::token()!==null&&str_starts_with($url,'https://crm.example.test/'))$form.='<input type="hidden" name="_company_context" value="'.html_escape(CompanyRequestScope::token()).'">';return $form;}
 function form_open_multipart($url){return form_open($url);}function form_close(){return '</form>';}
 class BbInput{public $verb='GET';public $posts=[];public $gets=[];function method(){return $this->verb;}function post($k=null){return $k===null?$this->posts:($this->posts[$k]??null);}function get($k){return $this->gets[$k]??null;}}
 class BbSession{public $data=[];function userdata($k){return $this->data[$k]??null;}function set_userdata($k,$v){$this->data[$k]=$v;}}
@@ -72,6 +72,8 @@ extract($ci->load->viewData);ob_start();include __DIR__.'/../modules/banco_brasi
 check(!str_contains($html,'<script>evil</script>')&&str_contains($html,'&lt;script&gt;evil&lt;/script&gt;'),'escaped issuer label');
 foreach(['Autenticação','Ambiente','Convênio','Conta','Cobrança','Remessa','Retorno','Webhook'] as $label)check(str_contains($html,$label),'PTBR tab '.$label);
 check(!str_contains($html,'name="client_secret"')&&!str_contains($html,'name="tax_id"'),'no secret or substitute identity field');
+check(substr_count($html,'name="_company_context"')===1,'connection form carries one company scope token');
+check(str_contains($html,'aria-labelledby="bb-tab-auth"')&&str_contains($html,'aria-selected="true"'),'BB tabs expose selected state and panel labels');
 check(str_contains($html,'Nenhum pagamento será criado'),'financial impact visible');
 $ci->input->verb='POST';$ci->input->posts=['issuer_id'=>'1','connection_id'=>'1','layout_id'=>\BancoBrasil\LayoutCatalog::CNAB400,'csrf_bb'=>$csrf];
 $GLOBALS['issuerGrant']=false;rejects(fn()=>$controller->register_layout(),'profile needs issuer manage grant');$GLOBALS['issuerGrant']=true;
