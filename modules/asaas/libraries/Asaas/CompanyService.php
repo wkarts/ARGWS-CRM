@@ -3,11 +3,13 @@
 declare(strict_types=1);
 namespace Asaas;
 require_once __DIR__.'/CompanySchema.php';
+require_once __DIR__.'/CompanyRemoteOperationsSchema.php';
 require_once __DIR__.'/CompanyClient.php';
 require_once __DIR__.'/WebhookSecurity.php';
 require_once APPPATH.'services/issuers/IssuerTransaction.php';
 require_once APPPATH.'services/issuers/IssuerResourceAccess.php';
 require_once APPPATH.'services/CompanyInvoices.php';
+require_once APPPATH.'services/CompanyCurrencyUnits.php';
 
 /** Named-company adapter. Never enters the legacy gateway, global configuration or invoice map. */
 final class CompanyService
@@ -24,12 +26,12 @@ final class CompanyService
     }
     public static function tables():array
     {
-        return array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','modules','issuers_audit','invoices','issuers_invoice_documents','itemable','item_tax','currencies','clients','issuers_clients','invoicepaymentrecords','credits','asaas_payment_origins'],CompanySchema::tables());
+        return array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','modules','issuers_audit','invoices','issuers_invoice_documents','itemable','item_tax','currencies','company_currency_units','clients','issuers_clients','invoicepaymentrecords','credits','asaas_payment_origins'],CompanySchema::tables());
     }
-    private function tablesForRun():array{return array_merge(self::tables(),$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[]);}
+    private function tablesForRun():array{return array_merge(self::tables(),$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[],$this->db->table_exists($this->p.'asaas_company_remote_operations')?['asaas_company_remote_operations']:[]);}
     private function transaction(callable $operation)
     {
-        CompanySchema::ensure($this->db,$this->p,false);$this->module();
+        CompanySchema::ensure($this->db,$this->p,false);if($this->db->table_exists($this->p.'asaas_company_remote_operations'))CompanyRemoteOperationsSchema::ensure($this->db,$this->p,false);$this->module();
         return \IssuerTransaction::run($this->db,$this->p,$this->tablesForRun(),function()use($operation){$this->module();return $operation();});
     }
     public function authorize(int $issuer,int $actor,string $action):void
@@ -38,7 +40,7 @@ final class CompanyService
         if($action==='view'){if(!$acl->can($issuer,$actor,'invoices','view')&&!$acl->can($issuer,$actor,'settings','view'))throw new \DomainException('asaas_company_access_denied');return;}
         $requirements=match($action){'configure'=>[['settings','edit']],'configuration'=>[['settings','view']],
             'issue'=>[['invoices','view'],['invoices','edit'],['customers','view']],
-            'settle'=>[['invoices','view'],['payments','create']],default=>[['invoices','view']]};
+            'remote_remove'=>[['invoices','view'],['invoices','edit'],['invoices','delete'],['settings','edit']],'settle'=>[['invoices','view'],['payments','create']],default=>[['invoices','view']]};
         foreach($requirements as [$resource,$cap])if(!$acl->can($issuer,$actor,$resource,$cap))throw new \DomainException('asaas_company_access_denied');
     }
     private static function opaque($value,int $limit=128):string
@@ -151,8 +153,10 @@ final class CompanyService
     }
     private function parent(int $issuer,int $invoice):array
     {
-        $row=$this->rows('SELECT i.id,i.issuer_id,i.clientid,i.hash,i.date,i.duedate,i.total,i.currency,i.status,c.name currency_name,d.legal_identity_json,d.recipient_identity_json,d.formatted_number FROM '.$this->p.'invoices i JOIN '.$this->p.'currencies c ON c.id=i.currency JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE i.id=? AND i.issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
-        if(!$row||$row['currency_name']!=='BRL')throw new \DomainException('asaas_company_invoice_denied');
+        $row=$this->rows('SELECT i.id,i.issuer_id,i.clientid,i.hash,i.date,i.duedate,i.total,i.currency,i.status,NULL currency_name,d.legal_identity_json,d.recipient_identity_json,d.formatted_number FROM '.$this->p.'invoices i JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE i.id=? AND i.issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
+        if(!$row)throw new \DomainException('asaas_company_invoice_denied');
+        $row['currency_name']=(new \CompanyCurrencyUnits($this->db,$this->p))->resolveRead($row['currency'])['iso_code'];
+        if($row['currency_name']!=='BRL')throw new \DomainException('asaas_company_invoice_denied');
         // DECIMAL database values are normalized at the trusted storage boundary (SQLite's PDO fixture returns floats).
         $row['total']=\CompanyInvoiceAmounts::decimal(\app\services\InvoicePaymentWriter::minorUnits($row['total']));
         $recipient=json_decode($row['recipient_identity_json'],true,8,JSON_THROW_ON_ERROR);\IssuerPolicy::taxId($recipient['tax_id']??null);
@@ -177,11 +181,11 @@ final class CompanyService
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$invoice=\IssuerPolicy::id($invoice);$account=\IssuerPolicy::id($account);self::opaque($customer,64);self::revision($revision);self::revision($requestKey);
         if(!in_array($billingType,['PIX','BOLETO'],true))throw new \DomainException('asaas_company_profile_unavailable');$this->authorize($issuer,$actor,'issue');
-        $prepared=$this->transaction(function()use($issuer,$actor,$invoice,$account,$revision):array{$this->authorize($issuer,$actor,'issue');$row=$this->account($issuer,$account);if($row['verified_at']===null||(int)$row['enabled']!==1)throw new \DomainException('asaas_company_account_unverified');if(!hash_equals((new \CompanyInvoices($this->db,$this->p))->revision($issuer,$actor,$invoice),$revision))throw new \DomainException('asaas_company_stale');return [$row,$this->parent($issuer,$invoice)];});
+        $prepared=$this->transaction(function()use($issuer,$actor,$invoice,$account,$revision):array{$this->authorize($issuer,$actor,'issue');$row=$this->account($issuer,$account);if($row['verified_at']===null||(int)$row['enabled']!==1)throw new \DomainException('asaas_company_account_unverified'); $parent=$this->parent($issuer,$invoice);(new \CompanyCurrencyUnits($this->db,$this->p))->assertWrite($parent['currency']);if(!hash_equals((new \CompanyInvoices($this->db,$this->p))->revision($issuer,$actor,$invoice),$revision))throw new \DomainException('asaas_company_stale');return [$row,$parent];});
         [$config,$parent]=$prepared;$client=$this->client($config,$decrypt,$transport);self::wallet($client,$config);self::customer($client,$customer,$parent);
         $reserved=$this->transaction(function()use($issuer,$actor,$invoice,$account,$config,$parent,$revision,$requestKey,$customer,$billingType):array{
             $this->authorize($issuer,$actor,'issue');$current=$this->account($issuer,$account);if(!hash_equals($current['revision'],$config['revision'])||$current['verified_at']===null)throw new \DomainException('asaas_company_stale');
-            $now=$this->parent($issuer,$invoice);if(self::snapshot($now)!==self::snapshot($parent)||!hash_equals((new \CompanyInvoices($this->db,$this->p))->revision($issuer,$actor,$invoice),$revision))throw new \DomainException('asaas_company_stale');
+            $now=$this->parent($issuer,$invoice);(new \CompanyCurrencyUnits($this->db,$this->p))->assertWrite($now['currency']);if(self::snapshot($now)!==self::snapshot($parent)||!hash_equals((new \CompanyInvoices($this->db,$this->p))->revision($issuer,$actor,$invoice),$revision))throw new \DomainException('asaas_company_stale');
             $old=$this->rows('SELECT o.id,m.request_key,m.account_row,m.customer_id,m.billing_type,m.snapshot_hash FROM '.$this->p.'asaas_payment_origins o LEFT JOIN '.$this->p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.invoice_id=? FOR UPDATE',[$invoice])[0]??null;
             if($old){if((int)$old['account_row']!==$account||$old['request_key']!==$requestKey||$old['customer_id']!==$customer||$old['billing_type']!==$billingType||$old['snapshot_hash']!==self::hash(self::snapshot($parent)))throw new \DomainException('asaas_company_origin_conflict');return [(int)$old['id'],false];}
             if(!in_array((int)$now['status'],[1,4],true)||$this->rows('SELECT id FROM '.$this->p.'invoicepaymentrecords WHERE invoiceid=? FOR UPDATE',[$invoice])||$this->rows('SELECT id FROM '.$this->p.'credits WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('asaas_company_balance_requires_review');
@@ -205,6 +209,11 @@ final class CompanyService
         if($row['account_id']!==$account['account_id']||$row['environment']!==$account['environment']||(int)$account['enabled']!==1||$account['verified_at']===null)throw new \DomainException('asaas_company_account_unverified');
         $parent=$this->parent($issuer,(int)$row['invoice_id']);$this->unchanged($meta,$parent);return [$row,$meta,$account,$parent];
     }
+    /** Internal composition: private credentials never leave a transaction-owning service. */
+    public function remoteSourceInOwnedTransaction(int $issuer,int $actor,int $origin):array
+    {
+        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->authorize($issuer,$actor,'remote_remove');return $this->source($issuer,$origin);
+    }
     private static function money($value):string
     {
         try{if(is_float($value))throw new \DomainException();return \CompanyInvoiceAmounts::decimal(\app\services\InvoicePaymentWriter::minorUnits($value));}catch(\Throwable $e){throw new \DomainException('asaas_company_amount_requires_review');}
@@ -212,6 +221,7 @@ final class CompanyService
     private static function normalize(array $response,array $origin,array $meta,array $parent,string $remote):array
     {
         if(($response['id']??null)!==$remote||($origin['remote_id']!==null&&$origin['remote_id']!==$remote)||($response['externalReference']??null)!==$parent['hash']||($response['customer']??null)!==$meta['customer_id']||($response['dueDate']??null)!==$parent['duedate']||($response['billingType']??null)!==$meta['billing_type']||self::money($response['value']??null)!==self::money($parent['total']))throw new \DomainException('asaas_company_response_conflict');
+        if(isset($response['deleted'])&&!is_bool($response['deleted']))throw new \DomainException('asaas_company_response_conflict');
         $status=$response['status']??null;if(!is_string($status)||!preg_match('/^[A-Z_]{1,32}$/D',$status))throw new \DomainException('asaas_company_response_conflict');
         $safe=['id'=>$remote,'status'=>$status,'value'=>self::money($response['value']),'net_value'=>isset($response['netValue'])?self::money($response['netValue']):'',
             'customer'=>$meta['customer_id'],'billing_type'=>$meta['billing_type'],'due_date'=>$parent['duedate'],'external_reference'=>$parent['hash'],'payment_date'=>$response['paymentDate']??'','credit_date'=>$response['creditDate']??'',
@@ -231,6 +241,12 @@ final class CompanyService
             $review=$safe['adverse']||$safe['deleted']||str_contains($safe['status'],'REFUND')||str_contains($safe['status'],'CHARGEBACK');
             if($row['state']==='review_required')$review=true;
             $state=$review?'review_required':($operation==='query'&&$safe['status']==='RECEIVED'?'received_observed':'issued');
+            if($this->db->table_exists($this->p.'asaas_company_remote_operations')&&($remoteOperation=$this->rows('SELECT state FROM '.$this->p.'asaas_company_remote_operations WHERE origin_id=? FOR UPDATE',[$origin])[0]??null)){
+                $stillDeleted=$safe['deleted']&&!$safe['adverse']&&in_array($safe['status'],['PENDING','OVERDUE'],true);
+                if($remoteOperation['state']==='deleted'&&!$stillDeleted){
+                    \IssuerStorage::query($this->db,"UPDATE {$this->p}asaas_company_remote_operations SET state='review_required',last_code='canonical_deleted_contradicted',updated_at=? WHERE origin_id=?",[gmdate('Y-m-d H:i:s'),$origin]);$state='review_required';
+                }else $state=$remoteOperation['state']==='deleted'?'remote_removed':'remote_removal_pending';
+            }
             \IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'asaas_company_proofs(origin_id,account_revision,actor_id,operation,result_json,evidence_hash,state,created_at) VALUES(?,?,?,?,?,?,?,?)',[$origin,$config['revision'],$actor,$operation,json_encode($safe,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),self::hash($safe),$state,gmdate('Y-m-d H:i:s')]);$proof=(int)$this->db->insert_id();
             \IssuerStorage::query($this->db,'UPDATE '.$this->p.'asaas_payment_origins SET remote_id=?,state=?,last_code=?,updated_at=? WHERE id=? AND issuer_id=?',[$remote,$state,'company_query_'.$safe['status'],gmdate('Y-m-d H:i:s'),$origin,$issuer]);
             if($proof<1||!$this->rows('SELECT id FROM '.$this->p.'asaas_company_proofs WHERE id=? AND evidence_hash=?',[$proof,self::hash($safe)]))throw new \RuntimeException('issuer_asaas_proof_unconfirmed');$this->audit($issuer,$actor,'company_asaas_canonical_observed',$origin);return $proof;
@@ -273,12 +289,13 @@ final class CompanyService
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$this->authorize($issuer,$actor,'view');CompanySchema::ensure($this->db,$this->p,false);
         $canInvoices=(new \IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'invoices','view');
         $origins=$canInvoices?$this->rows('SELECT o.id,o.invoice_id,o.account_id,o.environment,o.remote_id,o.state,m.billing_type,m.created_by FROM '.$this->p.'asaas_payment_origins o JOIN '.$this->p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.issuer_id=? ORDER BY o.id DESC LIMIT 100',[$issuer]):[];
-        foreach($origins as &$origin){$proof=$this->rows('SELECT id,state,result_json,created_at FROM '.$this->p.'asaas_company_proofs WHERE origin_id=? ORDER BY id DESC LIMIT 1',[$origin['id']])[0]??null;if($proof){$safe=json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR);unset($proof['result_json']);$proof+=array_intersect_key($safe,array_flip(['status','value','net_value','fee','payment_date','credit_date']));$proof['fee_posting_status']=$safe['fee']==='0.00'?'not_applicable':'not_posted';$linked=$this->rows('SELECT f.expense_id,e.total_cents,e.state FROM '.$this->p.'asaas_company_fee_expenses f JOIN '.$this->p.'company_expenses e ON e.id=f.expense_id AND e.issuer_id=f.issuer_id WHERE f.origin_id=? AND f.issuer_id=?',[$origin['id'],$issuer])[0]??null;if($linked){$proof['fee_posting_status']=$linked['state']==='recorded'&&(int)$linked['total_cents']===\app\services\InvoicePaymentWriter::minorUnits($safe['fee'])?'posted':'review_required';$proof['fee_expense_id']=(int)$linked['expense_id'];}}$origin['proof']=$proof;$origin['receipt']=$this->rows('SELECT payment_id,created_at FROM '.$this->p.'asaas_company_receipts WHERE origin_id=? AND issuer_id=?',[$origin['id'],$issuer])[0]??null;}
+        foreach($origins as &$origin){$proof=$this->rows('SELECT id,state,result_json,created_at FROM '.$this->p.'asaas_company_proofs WHERE origin_id=? ORDER BY id DESC LIMIT 1',[$origin['id']])[0]??null;if($proof){$safe=json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR);unset($proof['result_json']);$proof+=array_intersect_key($safe,array_flip(['status','value','net_value','fee','payment_date','credit_date']));$proof['fee_posting_status']=$safe['fee']==='0.00'?'not_applicable':'not_posted';$linked=$this->rows('SELECT f.expense_id,e.total_cents,e.state FROM '.$this->p.'asaas_company_fee_expenses f JOIN '.$this->p.'company_expenses e ON e.id=f.expense_id AND e.issuer_id=f.issuer_id WHERE f.origin_id=? AND f.issuer_id=?',[$origin['id'],$issuer])[0]??null;if($linked){$proof['fee_posting_status']=$linked['state']==='recorded'&&(int)$linked['total_cents']===\app\services\InvoicePaymentWriter::minorUnits($safe['fee'])?'posted':'review_required';$proof['fee_expense_id']=(int)$linked['expense_id'];}}$origin['remote_operation']=$this->db->table_exists($this->p.'asaas_company_remote_operations')?($this->rows('SELECT state,last_code,updated_at FROM '.$this->p.'asaas_company_remote_operations WHERE origin_id=? AND issuer_id=?',[$origin['id'],$issuer])[0]??null):null;$origin['proof']=$proof;$origin['receipt']=$this->rows('SELECT payment_id,created_at FROM '.$this->p.'asaas_company_receipts WHERE origin_id=? AND issuer_id=?',[$origin['id'],$issuer])[0]??null;}
         unset($origin);
         $events=$canInvoices?$this->rows('SELECT e.event_id,e.event_type,e.remote_id,e.state,e.created_at,a.environment FROM '.$this->p.'asaas_company_events e JOIN '.$this->p.'asaas_company_accounts a ON a.id=e.account_row WHERE a.issuer_id=? ORDER BY e.id DESC LIMIT 100',[$issuer]):[];
         $jobs=$canInvoices?$this->rows('SELECT event_id,origin_id,actor_id,state,attempts,next_attempt_at,last_code,updated_at FROM '.$this->p.'asaas_company_jobs WHERE issuer_id=? ORDER BY event_id DESC LIMIT 100',[$issuer]):[];
         $acl=new \IssuerResourceAccess($this->db,$this->p);$feeCategories=$acl->can($issuer,$actor,'expenses','view')&&$acl->can($issuer,$actor,'expenses','create')?$this->rows('SELECT id,name FROM '.$this->p.'company_expense_categories WHERE issuer_id=? AND active=1 ORDER BY id LIMIT 500',[$issuer]):[];
-        return ['accounts'=>$this->accounts($issuer,$actor),'origins'=>$origins,'events'=>$events,'jobs'=>$jobs,'fee_categories'=>$feeCategories];
+        $remoteReady=$this->db->table_exists($this->p.'asaas_company_remote_operations')&&version_compare(($this->rows('SELECT installed_version FROM '.$this->p.'modules WHERE module_name=?',['asaas'])[0]['installed_version']??'0'),'1.5.0','>=');
+        return ['remote_operations_ready'=>$remoteReady,'accounts'=>$this->accounts($issuer,$actor),'origins'=>$origins,'events'=>$events,'jobs'=>$jobs,'fee_categories'=>$feeCategories];
     }
     /** Trusted final receipt adapter only: caller must own the entire core transaction. */
     public function receiptClaim(int $issuer,int $actor,int $origin,int $proofId):array

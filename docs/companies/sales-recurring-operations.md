@@ -86,9 +86,9 @@ python3 /tmp/run-crm-php-tests.py tests/companies/sales.php
 python3 /tmp/run-crm-php-tests.py tests/companies/portal_sales.php
 ```
 
-`sales.php`: 135 checks cumulativos, dos quais 63 pertencem à fixture/regressão de
-faturas e 72 cobrem vendas/recorrência/guardas. `portal_sales.php`: 151 cumulativos,
-incluindo mais 16 cenários de portal/permissões/PDF. Cobrem A/B/legado `NULL`,
+`sales.php`: 139 checks cumulativos, dos quais 63 pertencem à fixture/regressão de
+faturas e 76 cobrem vendas/recorrência/guardas. `portal_sales.php`: 158 cumulativos,
+incluindo mais 19 cenários de portal/permissões/PDF. Cobrem A/B/legado `NULL`,
 retries, conflito de entrada, decisões, conversão, calendário, pausa, worker sem
 sessão, revogação, falha tardia, recuperação, origem divergente, pesquisa e PDF
 real. Isso não comprova locks/engine MySQL/MariaDB ou HTTP real.
@@ -107,6 +107,8 @@ A sintaxe JS foi validada; execução HTTP/Chromium e matrizes MySQL/MariaDB dev
 registradas no SHA efetivamente integrado. Não houve e-mail externo, transação
 bancária nem homologação externa nesta vertical.
 
-Anexos de vendas, envio SMTP automático de vendas, assinatura eletrônica do cliente
-e aceite público não são implementados por estes adaptadores; não são efeitos
-implícitos de emitir PDF ou registrar decisão interna.
+A extensão de [anexos e notificação privada](sales-extras-operations.md) acrescenta
+publicação explícita por arquivo e fila/worker com origem própria. Recorrência
+permanece com notificação manual explicitamente escolhida. Assinatura eletrônica
+do cliente e aceite público não são efeitos implícitos de emitir PDF ou registrar
+decisão interna.

@@ -53,6 +53,9 @@ final class CompanyTasks extends CompanyProjectsStorage
     }
     public function page($issuer,$actor,$project,$after=0):array
     {
+        $read=function()use($issuer,$actor,$project,$after){
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$project=IssuerPolicy::id($project);$after=$after===0?0:IssuerPolicy::id($after);$this->authorize($issuer,$actor,'view');$this->parent($issuer,$project);$rows=$this->rows('SELECT id,name,status,due_date,assignee_id,revision FROM '.$this->p.'company_tasks WHERE issuer_id=? AND project_id=? AND id>? ORDER BY id LIMIT 51',[$issuer,$project,$after]);$this->authorize($issuer,$actor,'view');return ['items'=>array_slice($rows,0,50),'next'=>count($rows)>50?(int)$rows[49]['id']:null];
+
+        };return $this->originGuard===null?$read():$this->transaction($read);
     }
 }

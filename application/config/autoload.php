@@ -16,6 +16,13 @@ if(CompanyBbCallbackScope::prepare($companyInboxBootstrap)){
     return;
 }
 
+require_once APPPATH.'services/CompanyOperationsApiScope.php';
+if(CompanyOperationsApiScope::prepare($companyInboxBootstrap)){
+    $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+if(CompanyOperationsApiScope::requested()||CompanyOperationsApiScope::earlyCandidate($_SERVER)){show_404();return;}
+
 require_once APPPATH.'services/CompanyApiScope.php';
 if(CompanyApiScope::prepare($companyInboxBootstrap)){
     $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]];
@@ -29,7 +36,7 @@ if(CompanyRecurringWorkerScope::prepare($companyInboxBootstrap)){
 // A malformed machine-route candidate must never fall through to global application hydration.
 $machineClass=strtolower((string)$companyInboxBootstrap->router->fetch_class());
 $machineModule=strtolower((string)$companyInboxBootstrap->router->fetch_module());
-if(in_array($machineClass,['company_api','company_asaas_callback','company_recurring_worker'],true)||($machineModule==='banco_brasil'&&$machineClass==='notifications')){show_404();return;}
+if(in_array($machineClass,['company_api','company_operations_api','company_asaas_callback','company_recurring_worker'],true)||($machineModule==='banco_brasil'&&$machineClass==='notifications')){show_404();return;}
 
 // Public owner-bound portal must not hydrate legacy models, providers or optional modules.
 require_once APPPATH.'services/PortalRequestScope.php';

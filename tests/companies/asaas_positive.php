@@ -5,7 +5,7 @@ if(!defined('FCPATH'))define('FCPATH',dirname(__DIR__,2).'/');
 require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyService.php';
 require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyReceivedReceipt.php';
 $start=$GLOBALS['essentialChecks'];
-$db->query("INSERT INTO {$p}modules(module_name,installed_version,active) VALUES('asaas','1.4.9',1)");
+$db->query("INSERT INTO {$p}modules(module_name,installed_version,active) VALUES('asaas','1.5.0',1)");
 if(!$db->table_exists($p.'asaas_payment_origins')){
     $db->query("CREATE TABLE {$p}asaas_payment_origins(id ".($db->driver()==='sqlite'?'INTEGER PRIMARY KEY AUTOINCREMENT':'INT NOT NULL AUTO_INCREMENT PRIMARY KEY').",invoice_id INT NOT NULL UNIQUE,invoice_hash VARCHAR(64) NOT NULL,invoice_total DECIMAL(15,2) NOT NULL,invoice_due_date DATE NULL,issuer_id INT NULL,provider VARCHAR(32) NOT NULL,account_id VARCHAR(128) NOT NULL,environment VARCHAR(16) NOT NULL,channel VARCHAR(16) NOT NULL,remote_id VARCHAR(64) NULL,batch_id VARCHAR(128) NULL,state VARCHAR(32) NOT NULL,last_code VARCHAR(64) NOT NULL,created_at DATETIME NOT NULL,updated_at DATETIME NOT NULL,UNIQUE(provider,account_id,environment,remote_id))".($db->driver()==='mysql'?' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin':''));
 }
@@ -13,7 +13,8 @@ require_once APPPATH.'services/CompanyExpenseSchema.php';
 if($db->driver()==='mysql')CompanyExpenseSchema::ensure($db,$p);
 else foreach(CompanyExpenseSchema::definitions() as $table=>$fields){$parts=[];foreach($fields as $name=>$type)$parts[]='`'.$name.'` '.(str_contains($type,'AUTO_INCREMENT')?'INTEGER PRIMARY KEY AUTOINCREMENT':$type.' NOT NULL');if($table==='company_expense_requests')$parts[]='PRIMARY KEY(request_key)';$db->query('CREATE TABLE '.$p.$table.'('.implode(',',$parts).')');}
 if(!$db->table_exists($p.'company_projects'))$db->query('CREATE TABLE '.$p.'company_projects(id int unsigned PRIMARY KEY,issuer_id int unsigned,name varchar(191),client_id int,status varchar(20))');
-\Asaas\CompanySchema::ensure($db,$p);\Asaas\CompanySchema::ensure($db,$p);unset($db->data_cache['table_names']);
+\Asaas\CompanySchema::ensure($db,$p);\Asaas\CompanySchema::ensure($db,$p);\Asaas\CompanyRemoteOperationsSchema::ensure($db,$p);unset($db->data_cache['table_names']);
+(new CompanyCurrencyUnits($db,$p))->captureObservedUsed();
 $asaas=new \Asaas\CompanyService($db,$p);$enc=fn($value)=>'synthetic:'.base64_encode($value);$dec=fn($value)=>str_starts_with($value,'synthetic:')?base64_decode(substr($value,10),true):false;
 $zero=str_repeat('0',64);$calls=[];$responses=[];$customerTax=['cus_a'=>'11144477735','cus_b'=>'12345678909'];
 $mock=function($environment,$method,$path,$payload,$secret)use(&$calls,&$responses,&$customerTax){

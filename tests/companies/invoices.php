@@ -27,6 +27,16 @@ if($db->driver()==='mysql'){
     $db->query("CREATE TABLE {$p}company_payment_receipts(request_key varchar(64) PRIMARY KEY,issuer_id int unsigned NOT NULL,actor_id int NOT NULL,input_hash varchar(64) NOT NULL,invoice_id int NOT NULL,payment_id int NOT NULL,created_at datetime NOT NULL)");
 }
 $db->query("INSERT INTO {$p}currencies(id,symbol,name,decimal_separator,thousand_separator,placement,isdefault) VALUES(1,'R$','BRL',',','.','before',1)");
+require_once APPPATH.'services/CompanyCurrencyUnitSchema.php';
+require_once APPPATH.'services/CompanyFinancialJournalSchema.php';
+if($db->driver()==='mysql'){
+    CompanyCurrencyUnitSchema::ensure($db,$p);CompanyFinancialJournalSchema::ensure($db,$p);
+}else{
+    $db->query('CREATE TABLE '.$p.'company_currency_units(currency_id int PRIMARY KEY,iso_code varchar(3) NOT NULL,basis varchar(48) NOT NULL,recorded_at datetime NOT NULL,source_hash varchar(64) NOT NULL)');
+    $parts=[];foreach(CompanyFinancialJournalSchema::fields() as $name=>$type)$parts[]='`'.$name.'` '.str_replace(' NULL','',$type).(str_ends_with($type,' NULL')?' NULL':' NOT NULL');$parts[]='PRIMARY KEY(evidence_key)';$parts[]='UNIQUE(issuer_id,issuer_sequence)';
+    $db->query('CREATE TABLE '.$p.'company_financial_events('.implode(',',$parts).')');
+}
+
 $db->query("INSERT INTO {$p}clients(userid,company,datecreated,active) VALUES(9999,'Synthetic untouched legacy',?,1)",[date('Y-m-d H:i:s')]);
 $db->query("INSERT INTO {$p}invoices(id,clientid,number,datecreated,date,currency,subtotal,total,hash,discount_type,include_shipping) VALUES(42,9999,999,?,'2026-10-19',1,7,7,?,'after_tax',0)",[date('Y-m-d H:i:s'),str_repeat('a',32)]);
 $legacyBefore=$db->query("SELECT * FROM {$p}invoices WHERE id=42")->result_array();

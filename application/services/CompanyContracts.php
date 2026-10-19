@@ -50,7 +50,10 @@ final class CompanyContracts extends CompanyContractsStorage
     }
     public function page($issuer,$actor,$after=0,string $search=''):array
     {
+        $read=function()use($issuer,$actor,$after,$search){
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$after=$after===0?0:IssuerPolicy::id($after);$search=self::text($search,191,false);$this->authorize($issuer,$actor,'view');$needle='%'.str_replace(['!','%','_'],['!!','!%','!_'],$search).'%';$rows=$this->rows('SELECT id,number,name,status,due_date,revision FROM '.$this->p.'company_contracts WHERE issuer_id=? AND id>? AND name LIKE ? ESCAPE \'!\' ORDER BY id LIMIT 51',[$issuer,$after,$needle]);$this->authorize($issuer,$actor,'view');return ['items'=>array_slice($rows,0,50),'next'=>count($rows)>50?(int)$rows[49]['id']:null];
+
+        };return $this->originGuard===null?$read():$this->transaction($read);
     }
     /** Revalidated after rendering and before any PDF bytes leave the controller. */
     public function confirmDownload($issuer,$actor,$id,$revision):void

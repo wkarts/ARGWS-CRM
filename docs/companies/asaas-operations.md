@@ -4,7 +4,7 @@
 
 O adapter nativo `admin/company_asaas` é independente do gateway legado e de suas
 seis abas. Ele exige contexto selado, associação ativa, ACL por recurso e módulo
-Asaas instalado/ativo com o incremento149. Não remove o veto genérico de rollout
+Asaas instalado/ativo. A versão1.5.0 exige núcleo4.2.6; as capacidades149 seguem preservadas e a remoção exige migration150 confirmada. Não remove o veto genérico de rollout
 nem abre callbacks/checkout legados para empresas nomeadas.
 
 1. Cadastre a carteira Asaas (`walletId`), ambiente explícito e chave API. A chave é
@@ -151,10 +151,121 @@ bancária, registro remoto de webhook, merge ou deploy.
 ## Pendências técnicas e homologação
 
 Continuam técnicos: cadastro automático de pagador por origem com recuperação, cartão
-hospedado por empresa, assinaturas/parcelamento, alterações/remoções remotas, ajustes/parciais e estorno/refund financeiros
+hospedado por empresa, assinaturas/parcelamento, alterações remotas (exceto remoção avulsa não paga descrita abaixo), ajustes/parciais e estorno/refund financeiros
 conforme seus contratos. Não atribuir essas lacunas à falta de credenciais.
 
 Homologação externa é outra etapa: autorização, credenciais e conta/ambiente de teste,
 registros e consultas aceitos pelo Asaas, callbacks reais, repetição/timeout e liquidação
 observados. Ambientes e resultados devem ser registrados sem segredos. Implementação
 sintética/CI não comprova essa homologação.
+
+
+## Remoção remota por origem — módulo150
+
+A migration150 adiciona `asaas_company_remote_operations`, com chave primária por
+origem, chave única de intenção, empresa, ator, revisão de credencial, prova inicial,
+estado e instantes. Não altera as sete tabelas149 nem a remoção legada148.
+O serviço `CompanyRemoteOperations` exige módulo ativo1.5.0, schema válido, empresa
+ativa e permissões `invoices.view/edit/delete` e `settings.edit` revalidadas sob lock.
+A GUI oferece a operação na seção Cobranças da origem, com confirmação expressa.
+
+O perfil suportado é cobrança avulsa própria em `PENDING`/`OVERDUE`, sem pagamento,
+crédito, recibo, histórico adverso, outra origem/provedor ou job de conciliação pendente.
+Carteira, conta/ambiente, pagador, referência, vencimento, valor e snapshot são
+reconferidos por GET autenticado antes de reservar. Uma transação durável reserva a
+intenção; outra revalida direitos/revisão/prova e grava `sending` antes do único DELETE.
+A origem e a fonte financeira final ficam bloqueadas contra recebimento após a intenção.
+
+Um timeout preserva `uncertain`; uma resposta positiva preserva
+`awaiting_confirmation` até GET canônico comprovar `deleted=true`, ainda não pago.
+404, resposta DELETE isolada e callback `PAYMENT_DELETED` não comprovam exclusão.
+A ação de consulta nunca repete DELETE. O único envio retomável é `reserved`, que
+prova que o estado `sending` nunca foi confirmado; rotação de credencial ou revogação
+impede esse envio. Intenções já enviadas não aceitam outro DELETE, mesmo com nova chave.
+Divergências permanecem em revisão; não há remoção manual do ledger ou botão de exceção.
+Se a API nunca confirmar o efeito remoto, o operador precisa resolver o estado na conta
+Asaas e consultar novamente; isso não autoriza repetição cega nem perda do histórico.
+
+A exclusão remota não cancela a fatura local, não apaga origem/recibos, não devolve
+valores e não produz estorno, refund ou chargeback. A emissão local continua protegida
+pela origem preservada. Restauração remota não tem operação local adaptada nesta versão.
+
+Contrato oficial consultado em2026-10-19:
+- [Excluir cobrança](https://docs.asaas.com/reference/excluir-cobranca): DELETE
+  `/v3/payments/{id}`, sem devolução de valores; exclusão individual não encerra
+  assinatura/parcelamento, perfis que este adaptador recusa.
+- [Recuperar cobrança](https://docs.asaas.com/reference/recuperar-uma-unica-cobranca):
+  GET `/v3/payments/{id}` para confirmação autenticada da cobrança da mesma origem.
+
+Provas técnicas próprias:
+- `tests/companies/asaas_remote_operations.php`:49 adicionais/166 cumulativos em
+  SQLite observados; A/B, NULL legado, histórico financeiro, status recebido sem baixa,
+  job pendente, callback excluído seguido de GET, timeout/retry, rotação, revogação,
+  falha antes do envio, retomada de intenção nunca enviada e fatura local preservada.
+- `tests/companies/asaas_remote_concurrency.php`: implementa duas conexões/processos
+  reais, intenção única/DELETE único e revogação sob lock; resultado MariaDB deve ser
+  registrado na matriz integrada após execução.
+- `tests/companies_asaas_remote_browser.cjs`: GUI/controller/CSRF/contexto A/B reais;
+  GET/DELETE canônicos do serviço usam transporte simulado pelo CLI restrito ao banco
+  descartável. O POST HTTP prova retry de intenção já confirmada sem rede externa;
+  não existe hook de transporte de teste no controller de produção. Executar depois
+  da suíte `companies_asaas_browser.cjs`; migration150 aplicada pelo fixture nativo.
+  Resultado do SHA final deve ser observado e registrado na matriz integrada.
+
+Essas provas não equivalem a homologação no Asaas. Não foram usadas credenciais reais,
+rede financeira real, valores reais, merge ou deploy.
+
+
+## Coerência150 e moeda documental426
+
+O cabeçalho1.5.0 exige núcleo4.2.6. A migration150 valida a base149 e cria somente
+o ledger remoto adicional. As migrations146–149 permanecem históricas. As provas de
+tracking exercitam149 explicitamente,150 como HEAD, falha de gravação/readback sem
+avançar149, upgrade, replay e recusa de downgrade. As fixtures nativas removem o ledger
+remoto antes das provas/origens/emitentes, sem desabilitar FKs nem tocar tabelas externas
+aos prefixes descartáveis autorizados.
+
+O adapter participa de `company_currency_units`. Depois de conferir ACL e propriedade,
+o ISO de leitura vem de `CompanyCurrencyUnits::resolveRead`; não lê o nome mutável do
+catálogo para reinterpretar a moeda. A posição/chaves/valorISO do snapshot149 foram
+preservados. Emissão revalida `assertWrite` antes de consultar carteira/pagador e outra
+vez dentro da reserva, antes do POST. Um catálogo alterado durante o GET veta a emissão
+sem deixar origem reservada. O writer central compõe as tabelas do journal e da moeda;
+o recebimento nominal continua único e a despesa da tarifa continua separada.
+
+- `tests/asaas_callback_version.php`:12 assertions observadas com runner nativo e
+  double de metadados; não é prova de engine MySQL.
+- `tests/companies/asaas_currency_units.php`:10 adicionais/127 cumulativos SQLite
+  observados, snapshot149 estável, catálogo adulterado antes/durante emissão, evidência
+  ISO inválida, barreira de propriedade antes da leitura e legadoNULL preservado.
+- `tests/companies/asaas_environments.php`:10 adicionais/127 cumulativos SQLite
+  observados; mesma carteira/ID remoto em sandbox e produção, origem/inbox/credencial
+  distintos, token do outro ambiente recusado, remoção apenas na origem correta.
+  Ambos os ambientes usam transporte simulado; não houve conta real de produção.
+
+## Próximos recortes técnicos por origem
+
+O documento de continuidade exige preservar os contratos existentes e adaptar cada
+capacidade antes de abrir seu gate. As capacidades já positivas149/150 são configuração,
+emissão Pix/boleto avulsos, consulta/recuperação, callback local, conciliação canônica,
+recebimento nominal, despesa de tarifa e remoção avulsa não paga. As seis abas legadas,
+tokens locais, antigos endpoints404, checkout à vista legado e avisoOI continuam separados.
+Cadastro remoto automático de webhook não é pendência: o documento exige mantê-lo manual.
+
+Permanecem técnicos os seguintes recortes; não são problemas de homologação:
+
+| Recorte | Implementação que ainda falta por origem |
+| --- | --- |
+| Checkout hospedado à vista para empresa nomeada | Origem `CREDIT_CARD`, URL de checkout autenticada/validada, GUI/portal isolados e conciliação pelo mesmo source. Reaproveitar a política de URL legada sem importar seu cálculo monetário float. Não receber PAN/CVV nem prometer cartão salvo. |
+| Cadastro de pagador na conta | Reserva/idempotência/recuperação por conta e ambiente, validação do cliente privado e prova do ID remoto. O fluxo atual exige ID existente e confere CPF/CNPJ antes de emitir. |
+| Alterações de cobrança | Intenção/prova/versionamento de alterações aceitas pela API, sem sobrescrever o snapshot inicial ou reusar prova anterior.150 implementa apenas exclusão não paga. |
+| Parciais/encargos e ajustes de recebimento | Composição exata de principal/encargos/tarifas e evidência cumulativa, saldo/journal e revalidação no writer central. Hoje o source aceita somente nominal integral. |
+| Refunds/chargebacks e estornos financeiros | Source confiável de evento e lançamento contrário com conta/moeda, saldo, idempotência e evidência canônica suficiente. Hoje observação adversa bloqueia; não existe aplicação financeira automática desses eventos. |
+| Parcelamento/assinaturas/cartão reutilizável | Mapas por título/parcela/ciclo e reconciliação cumulativa; o ledger atual representa uma cobrança avulsa. O checkout legado à vista não implementa esses perfis. |
+| Exportações financeiras por provedor | Levar bruto/líquido/tarifa/estado de contabilização já existentes no DTO próprio aos consumidores e arquivos globais que os exigirem, preservando o recebimento nominal e a despesa vinculada. |
+
+A próxima entrega vertical recomendada é o checkout hospedado à vista por origem,
+apoiado na política de URL existente, seguido do cadastro de pagador. Ambos podem ser
+implementados/testados sem credenciais reais e exigem novo incremento/capability antes
+de liberar a GUI. Parciais/refunds exigem primeiro o contrato do lançamento contrário
+no writer central, não apenas adicionar um status ao callback.

@@ -1,46 +1,54 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Núcleo atual4.2.3/423; BB1.1.0/101–110;
-Asaas1.4.8/148. As migrations publicadas402–412 foram preservadas. Não há
-merge/deploy/release nem autorização implícita por um resultado de CI.
+Escopo integral em andamento. Este incremento usa núcleo4.2.6/426,
+BB1.1.2/101–112 e Asaas1.5.0/150, sobre o incremento425 publicado em
+`1369969f6c27a5e9528870709d57e203cf7f9ef2`.
+A [validação426](pr45-validation-426.md) registra21/21 execuções HTTP aprovadas,
+instalação/upgrade/replay, MariaDB e Chromium. O CI do novo HEAD é uma etapa
+separada, consultada após a publicação. Código preparado para427 não é evidência426.
+Todos os passos históricos permanecem preservados. Sem merge, deploy, tag ou release manual.
 
-Os incrementos405 e406 possuem provas MySQL/HTTP/Chromium publicadas. Para407,
-a correção de navegação está em44260b61; consultar os checks desse SHA. O incremento408 está validado em a8b17f9 (MySQL8.1/8.5 e stack HTTP/Chromium).
-O baseline412 (7aa56e60) passou nos16 workflows, incluindo originação e retorno
-assistido por HTTP/Chromium. 413/API passou em MySQL/PHP8.1/8.5 e HTTP/Chromium. O job MariaDB detectou
-cache de locks no teste e SQL NULL no metadata do núcleo/templates/fila, tratados nos incrementos
-seguintes. Para416/portal/MariaDB, consultar o HEAD e seus runs;
-não atribuir os resultados412 aos novos testes.
-Inventários atualizados localizam revisão; não medem bugs, cobertura ou conclusão.
+A prova425 está em [validação425](pr45-validation-425.md): fonte congelado,
+instalação/upgrade nativos, aplicação real mysqli, MariaDB e Chromium. Os resultados
+locais não equivalem às matrizes remotas de outro SHA nem a homologação bancária.
+Inventários orientam revisão; contagens lexicais não medem bugs ou cobertura.
 
-| Requisito | Implementação atual | Testes executáveis/evidência | Estado e limites |
-|---|---|---|---|
-| Empresa principal/master | Identidade do instalador preservada; designação legada autorizada com console+senha/hash/expiração/auditoria | Instalação/upgrade, master e concorrência, HTTP/Chromium | Implementado/testado no recorte; designação não prova identidade histórica e depende de console |
-| Nova empresa e funcionários | Wizard persistente/revisão; criação/settings/grants/default atômicos; novo funcionário exige empresa/default | Onboarding, native Staff, MySQL com lock observado e navegador | Implementado no recorte; não libera todos os domínios |
-| Seletor e contexto | ACL própria, nonce/CSRF/HMAC,409 de aba obsoleta antes de hidratar | Company context e navegador | Preservado; sem replay de POST antigo |
-| Clientes privados/opt-in | Diretório positivo criar/editar/ler/buscar/paginar, compartilhar/revogar identidade; recibos duráveis | Clients PDO, concorrência, CRM/Chromium | Fluxo positivo entregue; outros consumidores continuam com barreiras |
-| Contatos e portal/recuperação | Contatos próprios; login por owner; A/B com e-mail igual; template/SMTP/fila por origem; reset transacional, anti-replay e sessões | Portal positivo/concorrência/navegador; regressões legadas | Portal de identidade/recuperação; entrega SMTP externa não realizada; 414 adiciona lista/PDF de faturas próprias com permissão nativa explícita; demais documentos/operações do portal pendentes |
-| Settings/SMTP/templates | Identidade canônica, preferências, próprios segredos sem fallback, templates por origem | Suítes settings, queue, portal e HTTP | Identidade/SMTP/templates/data-hora, preferências de fatura e imagens próprias; catálogo/integrações restantes pendentes |
-| Faturas nomeadas | UI isolada emitir/listar/consultar/editar sem movimento/cancelar; itens/múltiplos tributos/descontos/ajustes, numeração e snapshots atômicos | Invoices PDO, MySQL concorrente, CRM HTTP/Chromium | Incremento408; perfil restrito documentado, validação remota pertence ao SHA final |
-| Recebimentos manuais | Entrada explícita no writer; ACL/owner/saldo sob lock, referência, retry, status e auditoria atômicos | Invoices/concorrência e regressões writer Asaas | Registro manual local; não confirma banco; origens BB/Asaas recusadas para revisão própria |
-| PDF de faturas nomeadas | DTO autorizado e TCPDF; staff e portal privado com permissão nativa explícita; revalidação/auditoria antes dos bytes | PDF real, A/B, legado NULL e testes414 de revogação/HTTP | Lista/PDF de faturas emitidas do cliente e empresa próprios; rascunhos ocultos; sem conceder demais operações ou histórico compartilhado |
-| Notificação de fatura no portal | Contato privado com permissão explícita, template/SMTP próprio, recibo e fila transacionais, revalidação antes do transporte | Delivery PDO/worker/concorrência e fluxo HTTP A/B adicionados no422 | Agendamento e aceite do transporte são estados separados; SMTP simulado nos testes; sem PDF público |
-| Anexos de fatura | BLOB privado, upload/download/preview PNG e ocultação auditados; publicação explícita por arquivo no portal | Nova suíte A/B/principal/NULL, quotas reais, corrupção/falhas e revogação concorrente; Chromium423 | Sem URL pública; PDF só download; ocultação conserva histórico; demais domínios de arquivo pendentes |
-| Demais operações financeiras | Créditos/refunds/estornos, recorrência, relatórios/API e anexos de outros domínios | Suítes existentes e inventários | Pendências técnicas; gates preservados |
-| Projetos/tarefas/despesas/outros módulos | Barreiras e adaptações parciais existentes | Testes por consumidor | Operação positiva completa pendente |
-| BB API Cobrança | Perfis/credenciais criptografadas nativas; OAuth, registro, consulta com prova de conta e pedido/confirmação de baixa; outbox e origem imutável | Cliente HTTP simulado24 checks; composição MySQL/concorrência e MariaDB adicionadas no413, resultado depende do SHA final | Perfil17/simples/BRL sem ajustes/Pix; sem pagamento API automático.419 adiciona crédito explícito16 integral sem ajustes; alteração, webhook mTLS e demais perfis financeiros ainda pendentes; nenhuma homologação |
-| CNAB240 | Codec P/Q e parser T/U restritos; originação ligada à fatura, reserva durável, retry e download auditado | Fixtures + novos testes de composição/concorrência MySQL/HTTP no baseline412 | Geração local condicionada a contrato/perfil; declaração manual de envio não é aceite; sem transporte ou homologação |
-| CNAB400 | Parser CBR643 e candidato CBR641 | Fixtures e PDFs/hash oficiais | Candidato bloqueado: BRL/juros/contrato e picture CBR643; sem homologação |
-| Origem e conciliação | Conexões/perfis imutáveis, upload observacional; vínculo exato e revisão; crédito240 restrito confirmado pelo operador via writer nativo | Store/ACL e novos testes MySQL/concorrência/HTTP412 | Assistido, sem autenticação automática do arquivo. Parcial sem ajustes suporta saldo; juros/desconto/tarifa/estorno financeiro e automação permanecem pendentes |
-| Asaas/OI/notificações | Funcionalidade existente preservada; positivo Asaas continua bloqueado | Workflows próprios; aviso88 checks sintéticos | Regressões do writer e workflows por SHA; sem inferir homologação/produção |
-| Homologação API/240/400 | Nenhuma realizada | Sem credenciais/transações/arquivos reais | Externa, separada por canal/conta/convênio/carteira |
+| Requisito | Implementação publicada até425 | Prova e limite |
+|---|---|---|
+| Empresa principal/master/equipe | Identidade real do instalador, master diferente de1, wizard, grants/default por recurso e seletor409 | Bootstrap/upgrade/concorrência/HTTP; legado ambíguo usa console+senha; recuperação totalmente gráfica depende de autoridade independente |
+| Clientes privados/opt-in | Diretório positivo, compartilhamento explícito somente da identidade, contatos e sessões próprios | A/B/principal/NULL, concorrência e navegador; não compartilha histórico financeiro |
+| Settings/SMTP/templates | Identidade, data/hora, imagens próprias, preferências de fatura, prefixo, templates e SMTP próprios | Settings A/B, HTMLPurifier e aba obsoleta; SMTP capturado, entrega externa não exercitada; demais integrações exigem contrato próprio |
+| Portal | Login/reset, faturas emitidas/PDF/anexos publicados, orçamentos/propostas aceitos/convertidos com permissões nativas | Sessão, owner, permissão, revogação e bytes privados; sem documentos rascunhos ou acesso por identidade compartilhada |
+| Faturas/recebimentos | Itens, tributos, descontos, ajustes, numeração, snapshots, PDF, edição/cancelamento elegíveis, anexos e notificação | Writer e saldo sob lock, idempotência e auditoria; manual não contorna origem BB/Asaas |
+| Créditos/refunds/estornos | Emissão, aplicação/desaplicação, refund/reversão e reversão manual parcial/final preservando originais | Suítes créditos/leitores/concorrência e Chromium; registro local não prova movimentação bancária |
+| Vendas/conversão/recorrência | Orçamentos/propostas, decisões, conversão retomável no writer de fatura; agenda mensal e worker por ator/origem | Snapshot e guard sob lock; âncora mensal31; anexos/envios desses documentos integram426 |
+| Projetos/tarefas | Projetos, tarefas/comentários/checklists/timers, marcos/DAG/seguidores/arquivos/Kanban, tarefas avulsas | Serviços/controladores/concorrência/Chromium; API operacional integra426 |
+| Despesas | Categorias, despesas/referências próprias, tributos, arquivos, edição/cancelamento auditados | A/B/principal/legado e navegador; importação/exportação por lote integra426 |
+| Contratos/tickets | Documentos, cópia/PDF, conversas e referências próprias | Serviços, controllers reais e navegador; cópia mysqli revalidada425 |
+| Relatórios/API financeira | Posição atual por moeda e CSV auditado; quatro scopes de API vinculados a empresa/ator | API/locks/revogação/PDF e Chromium; diário/períodos e moeda imutável integram426; posição atual não é fechamento histórico |
+| Asaas por origem | Contas/credenciais/ambientes, cobrança, consulta, inbox, recebimento nominal Pix/boleto, worker opt-in e despesa de tarifa explícita | Suítes writer/protocolo/concorrência, native149 e HTTP; transporte simulado; remoção remota própria integra150/426 |
+| BB API | OAuth, reserva/outbox, registro, consulta/prova de conta, pedido/confirmação de baixa, crédito16 integral, alteração de vencimento confirmada, receptor mTLS observacional | MariaDB240, webhook229, TLS local e Chromium425; nenhum OAuth/registro/homologação BB real; encargos/parciais/estornos financeiros continuam técnicos pendentes |
+| CNAB240 | Originação, reserva API/CNAB, geração/download/retry, envio manual declarado, retorno/revisão/vínculo e crédito assistido sem ajustes | Composição/concorrência/HTTP; declaração não é aceite, upload não autentica banco; encargos e estornos financeiros pendentes |
+| CNAB400 | Parser CBR643 e candidato CBR641 | Operação indisponível: BRL85–86, juros herdados/contrato e picture CBR64326–39; trailer já resolvido; amostras aceitas/retornos não fornecidos |
+| Homologação externa | Nenhuma realizada em API/240/400/Asaas/SMTP | Depende de autorização, canal/conta/convênio/carteira e acesso próprios; não esconde código ainda faltante |
 
-Contratos detalhados: [clientes](private-customers.md), [portal](portal-recovery.md),
-[faturas/recebimentos](invoice-operations.md), [wizard](onboarding.md).
+Guias: [faturas](invoice-operations.md), [créditos](credit-operations.md),
+[vendas](sales-recurring-operations.md), [Asaas](asaas-operations.md),
+[settings](settings-operations.md) e [API](report-api-operations.md).
 
-A falta de homologação não elimina as pendências técnicas. Ocorrência06 não autentica
-o banco, download não transmite e cancelamento local não confirma baixa remota.
-Não aplicar eventos bancários sem origem, evidência canônica e writer transacional.
+A falta de homologação não elimina pendências técnicas. Não aplicar eventos sem
+origem, evidência canônica e writer transacional; não atribuir ao banco uma prova local.
+
+## Incremento426 — fluxos transversais e integridade
+
+| Fluxo | Implementação e prova | Limite |
+|---|---|---|
+| API operacional | Oito scopes adicionais, A/B/principal, cinco domínios, guards/locks e tokenusage na mesmaTX; MySQL/MariaDB e HTTP | Não amplia scopes de credenciais antigas |
+| Vendas/arquivos/envios | PDF/PNG privados, publicação por arquivo, SMTP/fila com origem/revisão/ator | SMTP simulado; nenhum PDF público |
+| Importação/exportação de despesas | CSV/JSON preview, referências/revisão, commit atômico, retry e CSV privado |100linhas/256KiB; nenhuma adoção do legado |
+| Moeda/diário/relatórios | ISO congelado, writers/eventos nominais, período/corteUTC/watermark/CSV; coverage não oculta órfãos | Upgrade é observação explícita; não reconstrói fatos históricos ausentes |
+| Asaas150 | Remoção remota própria, intenção durável/DELETEúnico/consulta de confirmação, contas/ambientes separados | Transporte simulado; fatura local preservada |
+| BB112 | Perfil declarado de juros diários fixos e consulta observacional de movimentos, outbox/GUI e vetos adversos | Não é aplicação financeira de encargos nem homologação |
 
 ## Incremento417 — editor monetário completo no recorte de faturas
 

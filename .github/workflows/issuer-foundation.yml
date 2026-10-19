@@ -13,6 +13,8 @@ on:
       - install/database.sql
       - tests/settings/**
       - tests/companies/**
+      - tests/companies*.cjs
+      - tests/issuers_standalone_http_smoke.sh
       - scripts/inventory-company-boundaries.py
       - tests/test_company_boundary_inventory.py
       - docs/companies/**
@@ -33,6 +35,8 @@ on:
       - install/database.sql
       - tests/settings/**
       - tests/companies/**
+      - tests/companies*.cjs
+      - tests/issuers_standalone_http_smoke.sh
       - scripts/inventory-company-boundaries.py
       - tests/test_company_boundary_inventory.py
       - docs/companies/**
@@ -126,6 +130,8 @@ jobs:
           php tests/companies/projects_concurrency.php
           php tests/companies/projects_controller.php
           php tests/companies/expenses_concurrency.php
+          php tests/companies/imports_concurrency.php
+          php tests/companies/expenses_journal.php
           php tests/companies/projects_extras_concurrency.php
           php tests/companies/projects_extras_controller.php
           php tests/companies/standalone_tasks_concurrency.php
@@ -134,12 +140,26 @@ jobs:
           php tests/companies/contracts_controller.php
           php tests/companies/portal_sales.php
           php tests/companies/sales_concurrency.php
+          php tests/companies/sales_extras_concurrency.php
+          php tests/companies/sales_extras_worker.php
           php tests/companies/recurring_worker_scope.php
           php tests/companies/api_concurrency.php
           php tests/companies/api_scope.php
+          php tests/companies/operations_api_scope.php
+          php tests/companies/operations_api_controller.php
+          php tests/companies/operations_api_concurrency.php
+          php tests/companies/operations_api_bootstrap.php
           php tests/companies/asaas_concurrency.php
           php tests/companies/asaas_job_fee_concurrency.php
-          php tests/companies/native_425.php
+          php tests/companies/asaas_remote_concurrency.php
+          php tests/companies/asaas_currency_units.php
+          php tests/companies/asaas_environments.php
+          php tests/companies/currency_units.php
+          php tests/companies/currency_concurrency.php
+          php tests/companies/financial_journal.php
+          php tests/companies/journal_writers.php
+          php tests/companies/ledger_controller.php
+          php tests/companies/native_426.php
           php tests/companies/asaas_boundaries.php
           php tests/companies/asaas_exact_json.php
           php tests/companies/invoice_delivery_concurrency.php
@@ -151,6 +171,7 @@ jobs:
           php tests/banco_brasil_reconciliation_mysql.php
           php tests/banco_brasil_reconciliation_concurrency.php
           php tests/banco_brasil_api_concurrency.php
+          php tests/banco_brasil_api_movements_mysql.php
           php tests/banco_brasil_api_receipt_concurrency.php
           php tests/banco_brasil_webhook_mysql.php
           php tests/banco_brasil_amendment_concurrency.php

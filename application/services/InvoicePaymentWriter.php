@@ -4,6 +4,8 @@ namespace app\services;
 defined('BASEPATH') or exit('No direct script access allowed');
 require_once __DIR__.'/CompanyReceiptSource.php';
 require_once __DIR__.'/CompanyCreditWriter.php';
+require_once __DIR__.'/CompanyCurrencyUnits.php';
+require_once __DIR__.'/CompanyFinancialJournal.php';
 
 /** Atomic receipt insertion only. The caller runs notifications/hooks after record() returns. */
 final class InvoicePaymentWriter
@@ -51,6 +53,7 @@ final class InvoicePaymentWriter
         [$data,$amount,$hash]=$this->companyReceiptInput($invoice,$input,$requestKey,'company_manual','Recebimento manual');$prefix=db_prefix();
         $origins=[];foreach(['bb_origins','asaas_payment_origins'] as $table)if($this->db->table_exists($prefix.$table))$origins[]=$table;
         $tables=array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','invoices','issuers_invoice_documents','invoicepaymentrecords','credits','company_payment_receipts','issuers_audit'],$origins);
+        $tables=array_values(array_unique(array_merge($tables,(new \CompanyCurrencyUnits($this->db,$prefix))->tables(),(new \CompanyFinancialJournal($this->db,$prefix))->tables('payment'))));
         return \IssuerTransaction::run($this->db,$prefix,$tables,function()use($issuer,$actor,$invoice,$requestKey,$amount,$data,$hash,$prefix,$origins):int{
             return $this->companyReceiptLocked($issuer,$actor,$invoice,$requestKey,$amount,$data,$hash,$prefix,$origins,false);
         });
@@ -66,6 +69,7 @@ final class InvoicePaymentWriter
         if(!in_array(get_class($source),['BancoBrasil\\ReviewedReceipt','BancoBrasil\\ApiCreditedReceipt','Asaas\\CompanyReceivedReceipt'],true))throw new \DomainException('company_receipt_source_denied');
         $source->assertSchema($this->db,$prefix);
         $tables=array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','modules','invoices','issuers_invoice_documents','invoicepaymentrecords','credits','company_payment_receipts','issuers_audit'],$source->tables());
+        $tables=array_values(array_unique(array_merge($tables,(new \CompanyCurrencyUnits($this->db,$prefix))->tables(),(new \CompanyFinancialJournal($this->db,$prefix))->tables('payment'))));
         return \IssuerTransaction::run($this->db,$prefix,$tables,function()use($issuer,$actor,$prefix,$source):int{
             $claim=$source->claim($this->db,$prefix,$issuer,$actor);
             $invoice=self::invoiceId($claim['invoice']);$key=$claim['key'];
@@ -96,9 +100,10 @@ final class InvoicePaymentWriter
             $acl=new \IssuerResourceAccess($this->db,$prefix);$acl->lockFinancialIdentity($issuer,$actor);
             $authorize=static function()use($acl,$issuer,$actor):void{if(!$acl->can($issuer,$actor,'invoices','view')||!$acl->can($issuer,$actor,'payments','create'))throw new \DomainException('company_payment_access_denied');};
             $authorize();
-            $parent=$query('SELECT id,issuer_id,total,status,duedate FROM '.$prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
+            $parent=$query('SELECT id,issuer_id,total,status,date,duedate,currency FROM '.$prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
             if(!$parent)throw new \DomainException('company_payment_access_denied');
             if(!$query('SELECT invoice_id FROM '.$prefix.'issuers_invoice_documents WHERE invoice_id=? AND issuer_id=?',[$invoice,$issuer]))throw new \DomainException('company_payment_invoice_not_eligible');
+            $units=new \CompanyCurrencyUnits($this->db,$prefix);$unit=$units->resolveRead($parent['currency']);
             $receipt=$query('SELECT * FROM '.$prefix.'company_payment_receipts WHERE request_key=? FOR UPDATE',[$requestKey])[0]??null;
             if($receipt){
                 if((int)$receipt['issuer_id']!==$issuer||(!$provider&&(int)$receipt['actor_id']!==$actor)||(int)$receipt['invoice_id']!==$invoice||!hash_equals($receipt['input_hash'],$hash))throw new \DomainException('company_payment_request_conflict');
@@ -109,6 +114,7 @@ final class InvoicePaymentWriter
             }
             if(!in_array((int)$parent['status'],[1,3,4],true))throw new \DomainException('company_payment_invoice_not_eligible');
             foreach($origins as $table)if($query('SELECT id FROM '.$prefix.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('company_payment_provider_review_required');
+            $unit=$units->assertWrite($parent['currency']);
             // An external reference cannot be silently counted twice under a fresh UI key.
             if($query('SELECT id FROM '.$prefix.'invoicepaymentrecords WHERE invoiceid=? AND paymentmode=? AND transactionid=? FOR UPDATE',[$invoice,$data['paymentmode'],$data['transactionid']]))throw new \DomainException('company_payment_reference_conflict');
             $balance=self::minorUnits($parent['total']);
@@ -123,6 +129,7 @@ final class InvoicePaymentWriter
             \IssuerStorage::query($this->db,'INSERT INTO '.$prefix.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,?,?)',[$actor,$provider?'company_provider_payment_recorded':'company_manual_payment_recorded',$issuer,$invoice,date('Y-m-d H:i:s')]);
             $confirmed=$query('SELECT p.invoiceid,p.amount,i.status FROM '.$prefix.'invoicepaymentrecords p JOIN '.$prefix.'invoices i ON i.id=p.invoiceid WHERE p.id=? AND i.issuer_id=?',[$id,$issuer])[0]??null;
             if(!$confirmed||(int)$confirmed['invoiceid']!==$invoice||self::minorUnits($confirmed['amount'])!==$amount||(int)$confirmed['status']!==$status||count($query('SELECT request_key FROM '.$prefix.'company_payment_receipts WHERE request_key=?',[$requestKey]))!==1)throw new \RuntimeException('issuer_payment_write_unconfirmed');
+            (new \CompanyFinancialJournal($this->db,$prefix))->recordInOwned($issuer,$actor,['kind'=>'receipt_recorded','source_type'=>'payment','source_id'=>$id,'book_date'=>$data['date'],'currency'=>$unit['iso_code'],'currency_basis'=>$unit['basis'],'amount'=>$data['amount'],'before'=>['date'=>$data['date'],'amount'=>'0.00','invoice_id'=>$invoice,'invoice_status'=>(int)$parent['status'],'balance'=>\CompanyInvoiceAmounts::decimal($balance)],'after'=>['date'=>$data['date'],'amount'=>$data['amount'],'invoice_id'=>$invoice,'invoice_status'=>$status,'balance'=>\CompanyInvoiceAmounts::decimal($balance-$amount),'mode'=>$data['paymentmode']]],hash('sha256','company-journal:receipt-recorded:'.$requestKey));
             $authorize();return $id;
     }
 

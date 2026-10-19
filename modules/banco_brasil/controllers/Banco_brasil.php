@@ -14,7 +14,7 @@ class Banco_brasil extends AdminController
     {
         $companyId=$this->companyContextId();
         $data=['title'=>'Banco do Brasil','issuers'=>[],'selected'=>null,'connections'=>[],
-            'returns'=>[],'events'=>[],'layout_bindings'=>[],'layouts'=>\BancoBrasil\LayoutCatalog::all(),'can_manage'=>false,'can_import'=>false,'resource_acl_ready'=>false,'storage_error'=>false,'isolated'=>false,'company_context_token'=>null,'api_ready'=>false,'api_webhook_ready'=>false,'api_webhook_receivers'=>[],'api_notifications'=>[],'api_profiles'=>[],'api_origins'=>[],'api_operations'=>[],'api_receipts'=>[],'can_api_amend'=>false,'can_api_issue'=>false,'can_api_query'=>false,'can_api_cancel'=>false,'reconciliations'=>[],'reconciliation_ready'=>false,'can_reconcile'=>false,'can_settle'=>false,'batches'=>[],'origination_ready'=>false,'can_generate'=>false,'can_download'=>false,'request_key'=>bin2hex(random_bytes(32)),'admin_base_url'=>$this->url(''),'notice'=>$this->session->userdata('bb_notice'),'csrf'=>$this->csrfToken(),'matrix'=>\BancoBrasil\CapabilityPolicy::matrix()];
+            'returns'=>[],'events'=>[],'layout_bindings'=>[],'layouts'=>\BancoBrasil\LayoutCatalog::all(),'can_manage'=>false,'can_import'=>false,'resource_acl_ready'=>false,'storage_error'=>false,'isolated'=>false,'company_context_token'=>null,'api_ready'=>false,'api_webhook_ready'=>false,'api_webhook_receivers'=>[],'api_notifications'=>[],'api_profiles'=>[],'api_origins'=>[],'api_operations'=>[],'api_receipts'=>[],'can_api_charges'=>false,'can_api_amend'=>false,'can_api_issue'=>false,'can_api_query'=>false,'can_api_cancel'=>false,'reconciliations'=>[],'reconciliation_ready'=>false,'can_reconcile'=>false,'can_settle'=>false,'batches'=>[],'origination_ready'=>false,'can_generate'=>false,'can_download'=>false,'request_key'=>bin2hex(random_bytes(32)),'admin_base_url'=>$this->url(''),'notice'=>$this->session->userdata('bb_notice'),'csrf'=>$this->csrfToken(),'matrix'=>\BancoBrasil\CapabilityPolicy::matrix()];
         if(class_exists('CompanyRequestScope',false)){
             $data['isolated']=\CompanyRequestScope::sealedFor($this);
             $data['company_context_token']=\CompanyRequestScope::token();
@@ -39,7 +39,7 @@ class Banco_brasil extends AdminController
                 $data['layout_bindings']=$this->store->layoutBindings($id);
                 $data['returns']=$this->store->recentReturns($id);$data['events']=$this->store->recentEvents($id);
                 }catch(Throwable $e){$data['storage_error']=true;$data['connections']=$data['layout_bindings']=$data['returns']=$data['events']=[];}
-                $data['can_manage']=!$data['storage_error']&&$this->allowed($id,'manage');$data['can_import']=!$data['storage_error']&&$this->allowed($id,'import');
+                $data['can_manage']=!$data['storage_error']&&$this->allowed($id,'manage');$data['can_api_charges']=!$data['storage_error']&&$this->allowed($id,'api_charges');$data['can_import']=!$data['storage_error']&&$this->allowed($id,'import');
                 try{$operations=$this->origination();$data['origination_ready']=$operations->ready();if($data['origination_ready'])$data['batches']=$operations->batches($id,$this->staffId());}catch(Throwable $e){$data['origination_ready']=false;}
                 try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Reconciliation.php';$data['reconciliations']=(new \BancoBrasil\Reconciliation($this->db,db_prefix()))->summaries($id,$this->staffId());$data['reconciliation_ready']=true;$access=new \IssuerResourceAccess($this->db,db_prefix());$data['can_reconcile']=$this->allowed($id,'reconcile')&&$access->can($id,$this->staffId(),'invoices','view');$data['can_settle']=$data['can_reconcile']&&$access->can($id,$this->staffId(),'payments','create');}catch(Throwable $e){$data['reconciliation_ready']=false;}
                 try{$api=$this->api();$overview=$api->overview($id,$this->staffId());$data['api_ready']=true;$data['api_profiles']=$overview['profiles'];$data['api_origins']=$overview['origins'];$data['api_operations']=$overview['operations'];$data['api_receipts']=$overview['receipts'];$access=new \IssuerResourceAccess($this->db,db_prefix());foreach(['issue','query','cancel','amend'] as $op)$data['can_api_'.$op]=$this->allowed($id,'api_'.$op)&&$access->can($id,$this->staffId(),'invoices','view')&&($op!=='amend'||$access->can($id,$this->staffId(),'invoices','edit'));}catch(Throwable $e){$data['api_ready']=false;}
@@ -185,7 +185,7 @@ class Banco_brasil extends AdminController
     public function issue_api()
     {
         $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_issue');
-        try{$input=$this->input->post('api_title',false);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new InvalidArgumentException('invalid_api_title');$origin=$this->api()->issue($id,$this->staffId(),$this->positiveId($this->input->post('profile_id')),$this->positiveId($this->input->post('invoice_id')),$input,$key);$this->flash('success','Origem API #'.$origin.' registrada. Confira o estado e a resposta validada abaixo; intenção, registro, pedido de baixa e liquidação são estados distintos.');}
+        try{$input=$this->input->post('api_title',false);if(is_array($input)&&($input['daily_interest']??null)==='')unset($input['daily_interest']);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new InvalidArgumentException('invalid_api_title');$origin=$this->api()->issue($id,$this->staffId(),$this->positiveId($this->input->post('profile_id')),$this->positiveId($this->input->post('invoice_id')),$input,$key);$this->flash('success','Origem API #'.$origin.' registrada. Confira o estado e a resposta validada abaixo; intenção, registro, pedido de baixa e liquidação são estados distintos.');}
         catch(Throwable $error){$this->flash('warning','Registro API não confirmado. A origem e o Nosso Número reservados são preservados. Em resultado desconhecido, consulte a origem; não crie outra cobrança para substituir um timeout.');}
         redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
     }
@@ -201,6 +201,13 @@ class Banco_brasil extends AdminController
         $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_query');
         try{$key=$this->input->post('request_key',false);if(!is_string($key))throw new InvalidArgumentException('invalid_api_query');$this->api()->query($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$key);$this->flash('success','Consulta pela origem registrada. Confira a resposta validada e seus estados. Esta ação não cria pagamento financeiro.');}
         catch(Throwable $error){$this->flash('warning','Consulta não confirmada. Nenhum estado bancário ou pagamento foi inferido. Confira perfil e credenciais da origem.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function query_api_movements()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_query');
+        try{$window=$this->input->post('movement_window',false);$key=$this->input->post('request_key',false);if(!is_array($window)||!is_string($key))throw new InvalidArgumentException('invalid_api_movements');$this->api()->movements($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$window,$key);$this->flash('success','Página de movimentos consultada pela conta da origem. Apenas registros deste título são exibidos; ausência/página limitada não prova inexistência nem cria crédito financeiro.');}
+        catch(Throwable $error){$this->flash('warning','Movimentos não confirmados. Confira janela de até31 dias, cursor explícito, conta/perfil e histórico. Nenhum pagamento ou estado final foi inferido.');}
         redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
     }
     public function cancel_api()

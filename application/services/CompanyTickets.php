@@ -36,6 +36,9 @@ final class CompanyTickets extends CompanyContractsStorage
     }
     public function page($issuer,$actor,$after=0,string $search=''):array
     {
+        $read=function()use($issuer,$actor,$after,$search){
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$after=$after===0?0:IssuerPolicy::id($after);$search=self::text($search,191,false);$this->authorize($issuer,$actor,'view');$needle='%'.str_replace(['!','%','_'],['!!','!%','!_'],$search).'%';$rows=$this->rows('SELECT id,subject,status,priority,updated_at,revision FROM '.$this->p.'company_tickets WHERE issuer_id=? AND id>? AND (subject LIKE ? ESCAPE \'!\' OR body LIKE ? ESCAPE \'!\') ORDER BY id LIMIT 51',[$issuer,$after,$needle,$needle]);$this->authorize($issuer,$actor,'view');return ['items'=>array_slice($rows,0,50),'next'=>count($rows)>50?(int)$rows[49]['id']:null];
+
+        };return $this->originGuard===null?$read():$this->transaction($read);
     }
 }

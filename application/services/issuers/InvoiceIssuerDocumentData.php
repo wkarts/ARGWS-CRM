@@ -95,7 +95,7 @@ final class InvoiceIssuerDocumentData
         }
         $this->data = [
             'invoice_id'=>$invoiceId, 'issuer_id'=>$issuerId, 'number'=>$snapshot['formatted_number'],
-            'identity'=>$snapshot['identity'], 'recipient'=>$recipient, 'currency'=>$currency['name'],
+            'identity'=>$snapshot['identity'], 'recipient'=>$recipient, 'currency'=>$currency['name'],'currency_basis'=>$currency['basis'],
             'date'=>self::date($record['date']), 'due_date'=>empty($record['duedate']) ? null : self::date($record['duedate']),
             'status'=>(int) $record['status'], 'items'=>array_values($items),
             'totals'=>array_map([self::class,'decimal'],$totals),

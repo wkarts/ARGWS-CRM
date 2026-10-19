@@ -10,6 +10,7 @@ require_once APPPATH.'services/issuers/IssuerTransaction.php';
 require_once APPPATH.'services/issuers/IssuerResourceAccess.php';
 require_once APPPATH.'services/issuers/InvoiceIssuerDocuments.php';
 require_once APPPATH.'services/InvoicePaymentWriter.php';
+require_once APPPATH.'services/CompanyCurrencyUnits.php';
 
 /** Local remittance production. No bank transport, API authentication or financial settlement. */
 final class Origination
@@ -26,7 +27,7 @@ final class Origination
     public function ready():bool
     {
         $row=$this->rows('SELECT active,installed_version FROM '.$this->prefix.'modules WHERE module_name=?',['banco_brasil'])[0]??[];
-        return (int)($row['active']??0)===1&&($row['installed_version']??null)==='1.1.1';
+        return (int)($row['active']??0)===1&&($row['installed_version']??null)==='1.1.2';
     }
     private function authorize(int $issuer,int $actor,string $cap,bool $invoice=false):void
     {
@@ -37,7 +38,7 @@ final class Origination
     private function transaction(callable $work)
     {
         OriginationSchema::assertValid($this->db,$this->prefix);
-        $tables=['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','modules','invoices','issuers_invoice_documents','currencies','invoicepaymentrecords','credits','bb_connections','bb_layout_bindings','bb_origins','bb_batches','bb_audit','bb_number_reservations','bb_contract_declarations','bb_origin_snapshots','bb_batch_origins','bb_batch_actions'];
+        $tables=['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','modules','invoices','issuers_invoice_documents','currencies','company_currency_units','company_financial_events','invoicepaymentrecords','credits','bb_connections','bb_layout_bindings','bb_origins','bb_batches','bb_audit','bb_number_reservations','bb_contract_declarations','bb_origin_snapshots','bb_batch_origins','bb_batch_actions'];
         if($this->db->table_exists($this->prefix.'asaas_payment_origins'))$tables[]='asaas_payment_origins';
         return \IssuerTransaction::run($this->db,$this->prefix,$tables,$work);
     }
@@ -117,7 +118,8 @@ final class Origination
             $number=(int)$counter['next_number'];$file=(int)$counter['next_file'];$snapshots=[];$wire=[];
             $acl=new \IssuerResourceAccess($this->db,$this->prefix);$docs=new \InvoiceIssuerDocuments($this->db,$this->prefix,$actor,static fn($id,$staff,$cap)=>$id===$issuer&&$staff===$actor&&$acl->can($issuer,$actor,'invoices','view'));
             foreach($normalized as $invoice=>$payer){
-                $record=$this->rows('SELECT i.id,i.issuer_id,i.clientid,i.total,i.status,i.date,i.duedate,c.name currency FROM '.$this->prefix.'invoices i JOIN '.$this->prefix.'currencies c ON c.id=i.currency WHERE i.id=? AND i.issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
+                $record=$this->rows('SELECT i.id,i.issuer_id,i.clientid,i.total,i.status,i.date,i.duedate,i.currency currency_id FROM '.$this->prefix.'invoices i WHERE i.id=? AND i.issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
+                if($record){$record['currency']=(new \CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($record['currency_id'])['iso_code'];}
                 if(!$record||!in_array((int)$record['status'],[1,4],true)||$record['currency']!=='BRL')throw new \DomainException('bb_invoice_not_eligible');
                 foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT amount FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice]))throw new \DomainException('bb_invoice_not_eligible');
                 if($this->rows('SELECT id FROM '.$this->prefix.'bb_origins WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('bb_invoice_already_bound');

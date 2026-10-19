@@ -38,6 +38,11 @@ class Company_portal extends CI_Controller
                     $this->output->set_header("Content-Security-Policy: sandbox; default-src 'none'");
                     $this->output->set_header('Content-Disposition: attachment; filename="anexo.'.($file['mime']==='image/png'?'png':'pdf').'"; filename*=UTF-8\'\''.rawurlencode($file['filename']));$this->output->set_content_type($file['mime'])->set_output($file['content']);return;
                 }
+                if($action==='sales_file'){
+                    if(!$current||!is_array($identity)){show_404();return;}require_once APPPATH.'services/CompanySalesExtrasHttp.php';
+                    $id=$this->input->post('document_id',false);$key=$this->input->post('file_key',false);if(!is_string($key)){show_404();return;}
+                    try{$file=(new CompanySalesFiles($this->db,db_prefix()))->portalDownload($portal,$identity,$issuer,$id,$key);}catch(DomainException $denied){show_404();return;}CompanySalesExtrasHttp::output($this,$file);return;
+                }
                 if($action==='sales_pdf'){
                     if(!$current||!is_array($identity)){show_404();return;}
                     require_once APPPATH.'services/CompanyPortalSales.php';require_once APPPATH.'services/CompanySalesPdf.php';
@@ -98,7 +103,7 @@ class Company_portal extends CI_Controller
         if(($current??null)&&is_array($identity)){
             try{require_once APPPATH.'services/CompanyPortalInvoices.php';$invoices=(new CompanyPortalInvoices($this->db,db_prefix(),$portal))->page($identity,$issuer,$this->input->get('before',false)??0);}
             catch(Throwable $unavailable){$error='Faturas indisponíveis no momento. Tente novamente mais tarde.';}
-            try{require_once APPPATH.'services/CompanyPortalSales.php';$salesReader=new CompanyPortalSales($this->db,db_prefix(),$portal);foreach(['estimates','proposals'] as $kind)$sales[$kind]=$salesReader->page($identity,$issuer,$kind);}
+            try{require_once APPPATH.'services/CompanyPortalSales.php';$salesReader=new CompanyPortalSales($this->db,db_prefix(),$portal);foreach(['estimates','proposals'] as $kind)$sales[$kind]=$salesReader->page($identity,$issuer,$kind);$ids=[];foreach($sales as $rows)foreach($rows??[] as $row)$ids[]=$row['id'];if($ids){require_once APPPATH.'services/CompanySalesFiles.php';$published=(new CompanySalesFiles($this->db,db_prefix()))->portalPages($portal,$identity,$issuer,$ids);foreach($sales as &$rows)if(is_array($rows))foreach($rows as &$row)$row['files']=$published[(int)$row['id']]??[];unset($rows,$row);}}
             catch(Throwable $unavailable){$error='Documentos indisponíveis no momento. Tente novamente mais tarde.';}
 
         }

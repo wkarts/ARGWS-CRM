@@ -14,7 +14,7 @@ final class CompanyClient
     public static function decodeExact(string $json):array{return ExactJson::decode($json);}
     public function request(string $method,string $path,?array $payload=null):array
     {
-        if(!in_array($method,['GET','POST'],true)||!preg_match('~^(?:wallets/|customers/[A-Za-z0-9_-]{1,64}|payments(?:/[A-Za-z0-9_-]{1,64})?)$~D',$path)||($method==='POST'&&$path!=='payments')||($method==='GET'&&$payload!==null))throw new \DomainException('asaas_company_request_invalid');
+        if(!in_array($method,['GET','POST','DELETE'],true)||!preg_match('~^(?:wallets/|customers/[A-Za-z0-9_-]{1,64}|payments(?:/[A-Za-z0-9_-]{1,64})?)$~D',$path)||($method==='POST'&&$path!=='payments')||($method!=='POST'&&$payload!==null)||($method==='DELETE'&&!preg_match('~^payments/[A-Za-z0-9_-]{1,64}$~D',$path)))throw new \DomainException('asaas_company_request_invalid');
         try {
             if($this->transport!==null){$response=($this->transport)($this->environment,$method,$path,$payload,$this->secret);if(is_string($response))$response=self::decodeExact($response);if(!is_array($response)||array_is_list($response))throw new \RuntimeException();return $response;}
             $base=$this->environment==='sandbox'?'https://api-sandbox.asaas.com/v3/':'https://api.asaas.com/v3/';

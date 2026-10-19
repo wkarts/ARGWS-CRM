@@ -31,10 +31,10 @@ final class CompanyApiService
     {
         if(!preg_match('/^[a-f0-9]{64}$/D',$idempotencyKey))throw new DomainException('company_api_invalid_input');$who=$this->tokens->resolve($secret,'invoices:create');$issuer=$who['issuer_id'];$actor=$who['actor_id'];$key=hash('sha256','company-api-invoice|'.$issuer.'|'.$actor.'|'.$idempotencyKey);$audited=false;$replayed=false;
         $guard=function()use($secret,$issuer,$actor,$key,&$audited,&$replayed):void{$this->tokens->guard($secret,'invoices:create',$issuer,$actor);if(!$audited){$replayed=IssuerStorage::query($this->db,'SELECT request_key FROM '.$this->p.'company_invoice_requests WHERE request_key=? AND issuer_id=? AND actor_id=?',[$key,$issuer,$actor])->result_array()!==[];$this->tokens->usedInOwnedTransaction($secret,'invoices:create',$issuer,$actor,'invoice_create',$key);$audited=true;}};
-        $id=(new CompanyInvoices($this->db,$this->p))->create($issuer,$actor,$input,$key,$guard);return ['issuer_id'=>$issuer,'invoice_id'=>$id,'replayed'=>$replayed];
+        $id=(new CompanyInvoices($this->db,$this->p))->create($issuer,$actor,$input,$key,$guard,['company_api_tokens','company_api_token_requests']);return ['issuer_id'=>$issuer,'invoice_id'=>$id,'replayed'=>$replayed];
     }
     public function financial(string $secret,bool $csv=false)
     {
-        $who=$this->tokens->resolve($secret,'reports:read');$audited=false;$guard=function()use($secret,$who,&$audited):void{$this->tokens->guard($secret,'reports:read',$who['issuer_id'],$who['actor_id']);if(!$audited){$this->tokens->usedInOwnedTransaction($secret,'reports:read',$who['issuer_id'],$who['actor_id'],'financial_report');$audited=true;}};$reports=new CompanyReports($this->db,$this->p,$guard);return $csv?$reports->csv($who['issuer_id'],$who['actor_id']):$reports->financialPosition($who['issuer_id'],$who['actor_id']);
+        $who=$this->tokens->resolve($secret,'reports:read');$audited=false;$guard=function()use($secret,$who,&$audited):void{$this->tokens->guard($secret,'reports:read',$who['issuer_id'],$who['actor_id']);if(!$audited){$this->tokens->usedInOwnedTransaction($secret,'reports:read',$who['issuer_id'],$who['actor_id'],'financial_report');$audited=true;}};$reports=new CompanyReports($this->db,$this->p,$guard,['company_api_tokens','company_api_token_requests']);return $csv?$reports->csv($who['issuer_id'],$who['actor_id']):$reports->financialPosition($who['issuer_id'],$who['actor_id']);
     }
 }

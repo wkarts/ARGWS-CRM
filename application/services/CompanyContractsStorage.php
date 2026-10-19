@@ -9,17 +9,26 @@ require_once __DIR__.'/CompanyClients.php';
 abstract class CompanyContractsStorage
 {
     protected string $feature;
-    public function __construct(protected $db,protected string $p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid table prefix');}
+    protected $originGuard;
+    public function __construct(protected $db,protected string $p,?callable $originGuard=null){$this->originGuard=$originGuard;if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid table prefix');}
     protected function rows(string $sql,array $params=[]):array{return IssuerStorage::query($this->db,$sql,$params)->result_array();}
     protected function authorize(int $issuer,int $actor,string $cap):void
     {
         $acl=new IssuerResourceAccess($this->db,$this->p);
         if(!$acl->can($issuer,$actor,$this->feature,'view')||!$acl->can($issuer,$actor,$this->feature,$cap))throw new DomainException('company_operation_access_denied');
     }
+    protected function apiTables():array
+    {
+        if($this->originGuard===null)return [];require_once __DIR__.'/CompanyApiSchema.php';CompanyApiSchema::assertValid($this->db,$this->p);return ['company_api_tokens','company_api_token_requests'];
+    }
+    protected function guardedWork(callable $work):callable
+    {
+        return function()use($work){if($this->originGuard!==null&&($this->originGuard)()===false)throw new DomainException('company_api_scope_denied');$result=$work();if($this->originGuard!==null&&($this->originGuard)()===false)throw new DomainException('company_api_scope_denied');return $result;};
+    }
     protected function transaction(callable $work)
     {
         CompanyContractsSchema::assertValid($this->db,$this->p);
-        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyContractsSchema::definitions($this->p))),$work);
+        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyContractsSchema::definitions($this->p)),$this->apiTables()),$this->guardedWork($work));
     }
     protected static function text($value,int $max,bool $required=true):string
     {

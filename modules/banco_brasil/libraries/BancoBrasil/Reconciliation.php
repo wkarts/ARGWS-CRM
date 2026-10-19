@@ -16,7 +16,7 @@ final class Reconciliation
     {
         $row=\IssuerStorage::query($db,'SELECT active,installed_version FROM '.$p.'modules WHERE module_name=?',['banco_brasil'])->row_array();
         $acl=new \IssuerResourceAccess($db,$p);
-        if((int)($row['active']??0)!==1||($row['installed_version']??null)!=='1.1.1'||!$acl->can($issuer,$actor,'banco_brasil','view')||!$acl->can($issuer,$actor,'banco_brasil',$cap)||($cap==='reconcile'&&!$acl->can($issuer,$actor,'invoices','view')))throw new \DomainException('bb_reconciliation_access_denied');
+        if((int)($row['active']??0)!==1||($row['installed_version']??null)!=='1.1.2'||!$acl->can($issuer,$actor,'banco_brasil','view')||!$acl->can($issuer,$actor,'banco_brasil',$cap)||($cap==='reconcile'&&!$acl->can($issuer,$actor,'invoices','view')))throw new \DomainException('bb_reconciliation_access_denied');
     }
     public static function event($db,string $p,int $issuer,int $event):array
     {

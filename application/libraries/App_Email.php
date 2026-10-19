@@ -200,6 +200,12 @@ class App_Email extends App_mailer
                     (new CompanyInvoiceDelivery($this->CI->db, db_prefix()))->assertDispatch($email, $headers[CompanyInvoiceDelivery::HEADER]);
                     unset($headers[CompanyInvoiceDelivery::HEADER]);
                 }
+                if (array_key_exists('companySalesDelivery', $headers)) {
+                    require_once APPPATH . 'services/CompanySalesDelivery.php';
+                    if (!is_string($headers[CompanySalesDelivery::HEADER])) { throw new DomainException('company_mail_payload_invalid'); }
+                    (new CompanySalesDelivery($this->CI->db, db_prefix()))->assertDispatch($email, $headers[CompanySalesDelivery::HEADER]);
+                    unset($headers[CompanySalesDelivery::HEADER]);
+                }
                 $this->reset_account_transport();
                 $this->set_mailer_engine($email->engine);
                 $this->initialize($transport);

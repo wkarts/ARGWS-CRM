@@ -15,8 +15,8 @@ trait ApiAmendments
     }
     private function authorizeOperation(int $issuer,int $actor,string $operation):void
     {
-        if($operation==='amend_due'){ $module=$this->rows("SELECT installed_version FROM {$this->prefix}modules WHERE module_name='banco_brasil' FOR UPDATE")[0]??[];if(($module['installed_version']??null)!=='1.1.1')throw new \DomainException('bb_api_access_denied'); }
-        $this->authorize($issuer,$actor,$operation==='amend_due'?'api_amend':'api_'.$operation,true);
+        if($operation==='amend_due'){ $module=$this->rows("SELECT installed_version FROM {$this->prefix}modules WHERE module_name='banco_brasil' FOR UPDATE")[0]??[];if(($module['installed_version']??null)!=='1.1.2')throw new \DomainException('bb_api_access_denied'); }
+        $this->authorize($issuer,$actor,$operation==='amend_due'?'api_amend':($operation==='movements'?'api_query':'api_'.$operation),true);
         if($operation==='amend_due'&&!(new \IssuerResourceAccess($this->db,$this->prefix))->can($issuer,$actor,'invoices','edit'))throw new \DomainException('bb_api_access_denied');
     }
     public static function amendmentPayload(string $agreement,string $due):string
@@ -29,13 +29,13 @@ trait ApiAmendments
     }
     private function prepareAmendment(int $issuer,int $actor,int $originId,string $operation,?array $amendment,array $snapshot,array $origin,int $retryId):void
     {
-        if(!in_array($operation,['query','cancel','amend_due'],true))return;
+        if(!in_array($operation,['query','cancel','amend_due','movements'],true))return;
         // A stale pre-send lease may be revoked: its worker must still pass the confirmed sending marker.
         \IssuerStorage::query($this->db,"UPDATE {$this->prefix}bb_api_operations SET status='auth_failed',failure_category='authentication_lease_expired' WHERE origin_id=? AND status='authenticating' AND locked_until<=? AND id<>?",[$originId,gmdate('Y-m-d H:i:s'),$retryId]);
         // An expired sending claim remains uncertain; never steal a possibly submitted write.
         if($this->rows("SELECT id FROM {$this->prefix}bb_api_operations WHERE origin_id=? AND status IN ('authenticating','sending') AND id<>? FOR UPDATE",[$originId,$retryId]))throw new \DomainException('bb_api_operation_in_progress');
         $latest=$this->rows("SELECT * FROM {$this->prefix}bb_api_operations WHERE origin_id=? AND operation='amend_due' ORDER BY id DESC LIMIT 1 FOR UPDATE",[$originId])[0]??null;
-        if($operation!=='query'&&$latest&&!in_array($latest['status'],['confirmed','rejected','auth_failed'],true))throw new \DomainException('bb_api_amendment_requires_query');
+        if(!in_array($operation,['query','movements'],true)&&$latest&&!in_array($latest['status'],['confirmed','rejected','auth_failed'],true))throw new \DomainException('bb_api_amendment_requires_query');
         if($operation!=='amend_due')return;
         foreach($this->rows("SELECT projection_json FROM {$this->prefix}bb_api_notifications WHERE origin_id=? FOR UPDATE",[$originId]) as $notification){$event=json_decode($notification['projection_json'],true,32,JSON_THROW_ON_ERROR);if(($event['codigoEstadoBaixaOperacional']??null)==='10')throw new \DomainException('bb_api_amendment_adverse_history');}
         if(!in_array($origin['state'],['api_registered','api_query_observed'],true))throw new \DomainException('bb_api_amendment_requires_fresh_normal_query');

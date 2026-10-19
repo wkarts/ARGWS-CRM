@@ -389,3 +389,19 @@ nem homologação. Outros tipos de alteração API, perfis, encargos, parciais/e
 API, transmissão contratada240 e integração400 continuam técnicos pendentes. As
 lacunas documentais400 estão explicitadas no guia400; o trailer CBR641 já está
 resolvido e não foi reaberto.
+
+## Incremento112: juros diários explícitos, movimentos e ISO congelado
+
+A GUI permite perfil API distinto com juros BRL fixos por dia (tipo1), contratação
+declarada e capability `api_charges`, conservando perfis isentos existentes.
+Payload monetário exato e query de tipo/valor são conferidos. Movimentos oficiais
+são consultados por conta/origem com janela/cursor explícitos e campos separados;
+continuidade não é prova de ausência. Histórico adverso alimenta os vetos do
+writer, sem efeito financeiro automático. [Guia112](banco-brasil-api-interest.md).
+
+Originação nova240/API exige ISO congelado compatível com catálogo e BRL; consulta
+de moeda histórica não é reclassificada por alteração de `currencies.name`.
+Recebimentos com juros, descontos e tarifas ainda exigem componentes financeiros
+canônicos; o diário426 é proveniência local e não será descrito como essa
+escrituração. A ampliação427 de componentes será separada e não afrouxa o crédito
+restrito existente. Homologação externa permanece distinta de código pendente.

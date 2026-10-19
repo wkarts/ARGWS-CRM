@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/IssuerPolicy.php';
 require_once __DIR__.'/IssuerTransaction.php';
+require_once __DIR__.'/../CompanyCurrencyUnits.php';
 
 /** Immutable issuer identity and issuer/series-local numbering. Never reads global options. */
 final class InvoiceIssuerDocuments
@@ -290,13 +291,13 @@ final class InvoiceIssuerDocuments
         $issuer = IssuerPolicy::id($issuer);
         $series = self::series($series);
         $this->requireAccess($issuer, 'create_invoices');
-        return $this->transaction(['clients','issuers_clients','issuers_client_links'],fn():array=>$this->allocateLocked($invoice,$issuer,$series));
+        return IssuerTransaction::run($this->db,$this->prefix,['issuers_lock','issuers_registry','invoices','issuers_invoice_documents','issuers_sequences','issuers_audit','clients','issuers_clients','issuers_client_links','currencies','company_currency_units'],fn():array=>$this->allocateLocked($invoice,$issuer,$series));
     }
 
     /** Native invoice creation owns the surrounding transaction; no independent/nested commit. */
     public function allocateInOwnedTransaction($invoice,$issuer,string $series,array $profile): array
     {
-        IssuerTransaction::assertOwned($this->db,$this->prefix,['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','invoices','issuers_invoice_documents','issuers_sequences','issuers_audit','clients','issuers_clients','issuers_client_links']);
+        IssuerTransaction::assertOwned($this->db,$this->prefix,['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','invoices','issuers_invoice_documents','issuers_sequences','issuers_audit','clients','issuers_clients','issuers_client_links','currencies','company_currency_units']);
         $invoice=IssuerPolicy::id($invoice);$issuer=IssuerPolicy::id($issuer);$series=self::series($series);
         $this->requireAccess($issuer,'create_invoices');
         return $this->allocateLocked($invoice,$issuer,$series,$profile);
@@ -317,10 +318,12 @@ final class InvoiceIssuerDocuments
         }
         $snapshot = $this->one("SELECT * FROM {$this->tables}invoice_documents WHERE invoice_id=? FOR UPDATE", [$invoice]);
         if ($snapshot) {
+            (new CompanyCurrencyUnits($this->db,$this->prefix))->resolveRead($record['currency']);
             $snapshot = self::decode($snapshot, $invoice, $issuer);
             self::assertRecipient($snapshot, $record);
             if ($snapshot['series'] !== $series) { throw new DomainException('issuer_document_immutable'); }
         } else {
+            (new CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($record['currency']);
             $identity = self::identity($profile===null?$registry:array_replace($registry,['settings_json'=>json_encode(['document_profile'=>$profile],JSON_THROW_ON_ERROR)]));
             $recipient = $this->captureRecipient($record, $issuer);
             $sequence = $this->one("SELECT next_number FROM {$this->tables}sequences WHERE issuer_id=? AND series=? FOR UPDATE", [$issuer, $series]);
@@ -357,7 +360,7 @@ final class InvoiceIssuerDocuments
         $issuer = IssuerPolicy::id($issuer);
         $this->requireAccess($issuer, 'render_invoices');
         $this->requireAccess($issuer, 'view_invoices');
-        return $this->transaction(['currencies', 'itemable', 'item_tax', 'countries'], function () use ($invoice, $issuer): array {
+        return $this->transaction(['currencies','company_currency_units', 'itemable', 'item_tax', 'countries'], function () use ($invoice, $issuer): array {
             // Serialize permission changes while constructing the authorized DTO, as allocation does.
             if (!$this->one("SELECT id FROM {$this->tables}lock WHERE id=1 FOR UPDATE")) {
                 throw new RuntimeException('issuer_document_storage_failed');
@@ -371,7 +374,8 @@ final class InvoiceIssuerDocuments
                 throw new DomainException('issuer_document_scope_mismatch');
             }
             $snapshot = $this->get($invoice, $issuer);
-            $currency = $this->one("SELECT id,name FROM {$this->prefix}currencies WHERE id=? FOR UPDATE", [$record['currency']]);
+            $unit=(new CompanyCurrencyUnits($this->db,$this->prefix))->resolveRead($record['currency']);
+            $currency=['id'=>(int)$record['currency'],'name'=>$unit['iso_code'],'basis'=>$unit['basis']];
             $items = $this->query("SELECT id,rel_id,rel_type,description,long_description,qty,rate,unit,is_optional,is_selected FROM {$this->prefix}itemable WHERE rel_id=? AND rel_type='invoice' ORDER BY item_order,id FOR UPDATE", [$invoice])->result_array();
             $taxes = $this->query("SELECT itemid,rel_id,rel_type,taxname,taxrate FROM {$this->prefix}item_tax WHERE rel_id=? AND rel_type='invoice' ORDER BY id FOR UPDATE", [$invoice])->result_array();
             $countries = [];

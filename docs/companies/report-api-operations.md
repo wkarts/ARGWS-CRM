@@ -3,8 +3,8 @@
 ## Posição atual e CSV privado
 
 `CompanyReports` e a tela selada `admin/company_reports` apresentam uma posição
-financeira atual por moeda, sem conversão: faturas emitidas, recebimentos líquidos
-atuais, créditos aplicados, saldo a receber, créditos emitidos/disponíveis,
+financeira atual por moeda congelada, sem conversão: faturas emitidas, recebimentos
+nominais após estornos, créditos aplicados, saldo a receber, créditos emitidos/disponíveis,
 reembolsos líquidos registrados e despesas/tributos registrados. Cancelamentos
 permanecem contabilizados separadamente no histórico, sem entrar nos valores ativos.
 
@@ -20,10 +20,12 @@ impedem exibir totais ou exportar. CSV tem apenas dados numéricos e moedas vali
 sem campos de texto do cliente que possam executar fórmulas de planilha. A auditoria
 do hash do CSV precisa confirmar antes dos bytes. Não há URL pública.
 
-Este relatório representa a posição líquida **atual**, incluindo estornos já
-registrados. Não reconstrói fechamento histórico por período, fluxo de caixa,
+Este relatório representa a posição **atual**, incluindo estornos já registrados;
+não comprova saldo líquido bancário. Não reconstrói fechamento histórico por período, fluxo de caixa,
 resultado contábil, lucro ou escrituração fiscal. Despesa registrada não comprova
-pagamento. Esses relatórios adicionais ainda precisam de implementação específica.
+pagamento. O livro de eventos verificados acrescentado na 426 usa datas de competência
+e corte UTC, com cobertura explícita: ver [moeda e eventos](currency-journal-operations.md).
+Fechamento contábil/fiscal e fluxo de caixa bancário continuam fora deste contrato.
 
 ## Tokens exclusivos da API
 
@@ -42,7 +44,11 @@ Scopes disponíveis são uma lista fechada:
 | `invoices:read` | `invoices/view` |
 | `invoices:pdf` | `invoices/view` |
 | `invoices:create` | `invoices/view`, `invoices/create`, `customers/view` |
-| `reports:read` | Todas as capacidades do relatório acima |
+| `reports:read` | Todas as capacidades do relatório acima; somente posição atual |
+
+A 426 acrescenta oito scopes operacionais explícitos, sem ampliar tokens anteriores:
+[contrato de projetos, tarefas, contratos e chamados](operations-api.md). O livro
+de eventos administrativo não reutiliza automaticamente `reports:read`.
 
 Além disso, `company_api/manage`, funcionário ativo e acesso ativo à empresa continuam
 obrigatórios em cada uso. Perder uma capacidade impede o scope correspondente, mesmo
@@ -89,7 +95,8 @@ sem módulos, sessão de funcionário ou contexto global. A exceção CSRF é so
 POST bearer JSON canônico; não abre administração ou endpoints legados.
 
 Criação passa pelo `CompanyInvoices::create` já existente, com guard de veto executado
-sob o lock antes/depois de escrever. Relatórios executam o guard antes/depois da
+sob o lock antes/depois de escrever. Os participantes adicionais do guard incluem
+as tabelas próprias de tokens e recibos; sua engine é validada na transação. Relatórios executam o guard antes/depois da
 montagem/exportação na mesma transação. Leitura/PDF usa a autorização do reader nativo
 e auditoria revalidada antes de retornar dados. Revogação durante espera do lock
 impede escrita/exportação; não basta autenticar um token uma única vez fora do writer.
@@ -112,5 +119,7 @@ Não houve operação bancária, SMTP, homologação ou deploy nesta implementa�
 
 A API não disponibiliza todos os domínios do CRM: edição/cancelamento de faturas,
 pagamentos, créditos, despesas, portal e operações bancárias ainda não têm endpoints
-públicos neste contrato. Fechamentos históricos, análises e exportações detalhadas
-adicionais continuam pendências de código. A superfície legada permanece fechada.
+públicos neste contrato. O livro histórico administrativo e o importador/exportador
+próprio de despesas são descritos nos contratos da 426; não abrem uma API financeira
+genérica. Análises contábeis e exportações de outros domínios ainda exigem código
+específico. A superfície legada permanece fechada.

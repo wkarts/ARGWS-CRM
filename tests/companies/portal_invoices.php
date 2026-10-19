@@ -57,6 +57,12 @@ essentialThrows(fn()=>$access->set($a,7,$ca,$contactA,$permission['revision'],'1
 essentialCheck($documents->page($sessionA,$a)===null,'failed audit grants no portal financial permission');
 $access->set($a,7,$ca,$contactA,$permission['revision'],'1');$db->failOn='INSERT INTO '.$p.'issuers_audit';
 essentialThrows(fn()=>$documents->confirmDownload($sessionA,$a,$id,$pdfHash),'issuer_storage_failed','audit failure prevents authorized PDF delivery');$db->failOn=null;
+// Historical portal amounts keep their captured ISO after an out-of-band catalog rename.
+$db->query('UPDATE '.$p.'currencies SET name=? WHERE id=1',['USD']);
+$stable=$documents->page($sessionA,$a);essentialCheck(count($stable['items'])>0&&array_unique(array_column($stable['items'],'currency'))===['BRL'],'portal list preserves captured currency after outside catalog mutation');
+$stableDto=$documents->document($sessionA,$a,$id);essentialCheck($stableDto->data()['currency']==='BRL','portal PDF DTO uses captured ISO independent of global catalog');
+essentialCheck($documents->page($sessionA,$b)===null,'currency freezing never grants a foreign portal company');
+$db->query('UPDATE '.$p.'currencies SET name=? WHERE id=1',['BRL']);
 $db->query("UPDATE {$p}contacts SET password=? WHERE id=?",[password_hash('changed-password',PASSWORD_DEFAULT),$contactA]);
 essentialCheck($documents->page($sessionA,$a)===null,'password change invalidates existing invoice session');
 echo 'Private portal invoices/PDF/native grants: '.$GLOBALS['essentialChecks'].' cumulative checks ('.$db->driver().'); no bank/SMTP calls.'.PHP_EOL;

@@ -44,6 +44,9 @@ final class CompanyProjects extends CompanyProjectsStorage
     }
     public function page($issuer,$actor,$after=0):array
     {
+        $read=function()use($issuer,$actor,$after){
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$after=$after===0?0:IssuerPolicy::id($after);$this->authorize($issuer,$actor,'view');$rows=$this->rows('SELECT id,name,status,due_date,revision FROM '.$this->p.'company_projects WHERE issuer_id=? AND id>? ORDER BY id LIMIT 51',[$issuer,$after]);$this->authorize($issuer,$actor,'view');return ['items'=>array_slice($rows,0,50),'next'=>count($rows)>50?(int)$rows[49]['id']:null];
+
+        };return $this->originGuard===null?$read():$this->transaction($read);
     }
 }

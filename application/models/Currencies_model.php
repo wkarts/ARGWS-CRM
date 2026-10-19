@@ -83,15 +83,14 @@ class Currencies_model extends App_Model
         $currencyid = $data['currencyid'];
         unset($data['currencyid']);
         $data['name'] = strtoupper($data['name']);
-        $this->db->where('id', $currencyid);
-        $this->db->update(db_prefix() . 'currencies', $data);
-        if ($this->db->affected_rows() > 0) {
-            log_activity('Currency Updated [' . $data['name'] . ']');
-
-            return true;
-        }
-
-        return false;
+        require_once APPPATH.'services/CompanyCurrencyUnits.php';
+        $changed=(new CompanyCurrencyUnits($this->db,db_prefix()))->editCatalog($currencyid,$data['name'],function()use($currencyid,$data):bool{
+            $this->db->where('id', $currencyid);
+            $this->db->update(db_prefix() . 'currencies', $data);
+            return $this->db->affected_rows() > 0;
+        });
+        if($changed){log_activity('Currency Updated [' . $data['name'] . ']');}
+        return $changed;
     }
 
     /**
@@ -116,9 +115,18 @@ class Currencies_model extends App_Model
             ];
         }
 
-        $this->db->where('id', $id);
-        $this->db->delete(db_prefix() . 'currencies');
-        if ($this->db->affected_rows() > 0) {
+        require_once APPPATH.'services/CompanyCurrencyUnits.php';
+        try{
+            $deleted=(new CompanyCurrencyUnits($this->db,db_prefix()))->deleteCatalog($id,function()use($id):bool{
+                $this->db->where('id', $id);
+                $this->db->delete(db_prefix() . 'currencies');
+                return $this->db->affected_rows() > 0;
+            });
+        }catch(DomainException $error){
+            if($error->getMessage()!=='company_currency_catalog_locked')throw $error;
+            return ['referenced'=>true];
+        }
+        if ($deleted) {
             $this->load->dbforge();
             $columns = $this->db->list_fields(db_prefix() . 'items');
             foreach ($columns as $column) {

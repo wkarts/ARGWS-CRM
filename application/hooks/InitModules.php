@@ -19,6 +19,11 @@ class InitModules
             return;
         }
 
+        // This only suppresses optional module metadata; exact routing and bearer
+        // authorization are independently required later by the native controller.
+        require_once APPPATH.'services/CompanyOperationsApiScope.php';
+        if(CompanyOperationsApiScope::earlyCandidate($_SERVER)){return;}
+
         include_once(LIBSPATH.'App_modules.php');
         // Load the directory helper so the directory_map function can be used
         include_once(BASEPATH . 'helpers/directory_helper.php');

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__.'/CompanyPortal.php';
+require_once __DIR__.'/CompanyCurrencyUnits.php';
 require_once __DIR__.'/CompanyInvoiceAttachmentSchema.php';
 require_once __DIR__.'/issuers/InvoiceIssuerDocumentData.php';
 
@@ -16,7 +17,7 @@ final class CompanyPortalInvoices
     private function transaction(callable $work)
     {
         $extra=[];if($this->db->table_exists($this->p.'company_invoice_attachments')){CompanyInvoiceAttachmentSchema::assertValid($this->db,$this->p);$extra[]='company_invoice_attachments';}
-        return IssuerTransaction::run($this->db,$this->p,array_merge($extra,['issuers_lock','issuers_registry','issuers_installation_identity','issuers_clients','contacts','clients','contact_permissions','invoices','issuers_invoice_documents','currencies','issuers_audit']),$work);
+        return IssuerTransaction::run($this->db,$this->p,array_merge($extra,['issuers_lock','issuers_registry','issuers_installation_identity','issuers_clients','contacts','clients','contact_permissions','invoices','issuers_invoice_documents','currencies','company_currency_units','issuers_audit']),$work);
     }
     private function identity(array $session,int $issuer,bool $lock):?array
     {
@@ -42,8 +43,9 @@ final class CompanyPortalInvoices
         $issuer=IssuerPolicy::id($issuer);if((!is_int($before)&&!is_string($before))||!preg_match('/^(0|[1-9][0-9]*)$/D',(string)$before)||(string)(int)$before!==(string)$before)throw new DomainException('company_portal_invoice_unavailable');$before=(int)$before;
         return $this->transaction(function()use($session,$issuer,$before):?array{
             $who=$this->identity($session,$issuer,true);if(!$who)return null;
-            $sql='SELECT i.id,d.formatted_number number,i.date,i.duedate,i.status,i.total,c.name currency FROM '.$this->p.'invoices i JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id JOIN '.$this->p.'currencies c ON c.id=i.currency WHERE i.issuer_id=? AND i.clientid=? AND i.status IN (1,2,3,4,5)'.($before?' AND i.id<?':'').' ORDER BY i.id DESC LIMIT 51';$args=[$issuer,$who['client_id']];if($before)$args[]=$before;$rows=$this->rows($sql,$args);$next=count($rows)>50?(int)$rows[49]['id']:null;
+            $sql='SELECT i.id,d.formatted_number number,i.date,i.duedate,i.status,i.total,i.currency currency_id FROM '.$this->p.'invoices i JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE i.issuer_id=? AND i.clientid=? AND i.status IN (1,2,3,4,5)'.($before?' AND i.id<?':'').' ORDER BY i.id DESC LIMIT 51';$args=[$issuer,$who['client_id']];if($before)$args[]=$before;$rows=$this->rows($sql,$args);$next=count($rows)>50?(int)$rows[49]['id']:null;
             $rows=array_slice($rows,0,50);
+            $units=new CompanyCurrencyUnits($this->db,$this->p);foreach($rows as &$row){$row['currency']=$units->resolveRead($row['currency_id'])['iso_code'];unset($row['currency_id']);}unset($row);
             $attachments=[];
             if($rows&&$this->db->table_exists($this->p.'company_invoice_attachments')){
                 $ids=array_map('intval',array_column($rows,'id'));

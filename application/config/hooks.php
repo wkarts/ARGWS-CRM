@@ -79,7 +79,7 @@ $hook['pre_controller_constructor'][] = [
 ];
 
 $hook['post_controller'] = function () {
-    if((class_exists('CompanyApiScope',false)&&CompanyApiScope::active())||(class_exists('CompanyRecurringWorkerScope',false)&&CompanyRecurringWorkerScope::active())||(class_exists('CompanyAsaasCallbackScope',false)&&CompanyAsaasCallbackScope::active())||(class_exists('CompanyBbCallbackScope',false)&&CompanyBbCallbackScope::active())){return;}
+    if((class_exists('CompanyOperationsApiScope',false)&&CompanyOperationsApiScope::requested())||(class_exists('CompanyApiScope',false)&&CompanyApiScope::active())||(class_exists('CompanyRecurringWorkerScope',false)&&CompanyRecurringWorkerScope::active())||(class_exists('CompanyAsaasCallbackScope',false)&&CompanyAsaasCallbackScope::active())||(class_exists('CompanyBbCallbackScope',false)&&CompanyBbCallbackScope::active())){return;}
     if(class_exists('PortalRequestScope',false)&&PortalRequestScope::active()){return;}
     if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::isolated()) {
         CompanyRequestScope::finish();

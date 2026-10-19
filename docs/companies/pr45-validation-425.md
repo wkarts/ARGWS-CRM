@@ -65,8 +65,12 @@ entrega de e-mail externo.
 
 ## Limites e continuação
 
-O CI deste incremento deve ser consultado no SHA remoto publicado; os checks de
-8078d910 não substituem seus resultados. Homologação bancária, configuração real
+O HEAD remoto425 `1369969f6c27a5e9528870709d57e203cf7f9ef2` terminou
+com18 execuções aprovadas, cobrindo16 workflows distintos. A
+[stack HTTP/Chromium](https://github.com/wkarts/ARGWS-CRM/actions/runs/39289900874),
+[Empresas](https://github.com/wkarts/ARGWS-CRM/actions/runs/39289901069) e
+[BB](https://github.com/wkarts/ARGWS-CRM/actions/runs/39289900930) pertencem a esse SHA.
+Jobs pulados não representam cenários executados; checks de8078d910 não substituem425. Homologação bancária, configuração real
 do ingresso mTLS e SMTP externo seguem separados da prova de código. CNAB400
 continua bloqueado pelos insumos BRL/juros/contrato/CBR643 descritos no guia próprio.
 

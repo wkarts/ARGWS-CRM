@@ -39,7 +39,12 @@ class Currencies extends AdminController
                     'message' => $message,
                 ]);
             } else {
-                $success = $this->currencies_model->edit($data);
+                try{$success = $this->currencies_model->edit($data);}
+                catch(DomainException $error){
+                    if(!in_array($error->getMessage(),['company_currency_catalog_locked','company_currency_snapshot_required','company_currency_catalog_changed'],true))throw $error;
+                    echo json_encode(['success'=>false,'message'=>'O código desta moeda está vinculado ao histórico de empresas e não pode ser redefinido. Restaure o código congelado ou crie outra moeda com um novo ID.']);
+                    return;
+                }
                 $message = '';
                 if ($success == true) {
                     $message = _l('updated_successfully', _l('currency'));
