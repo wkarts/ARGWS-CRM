@@ -15,7 +15,7 @@ class Company_clients extends AdminController
         if(!$access->can($issuer,$actor,'customers','view')){show_error('Sem permissão para consultar clientes desta empresa.',403);return;}
         $csrf=$this->session->userdata('company_clients_csrf');
         if(!is_string($csrf)||strlen($csrf)!==64){$csrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_clients_csrf',$csrf);}
-        $contacts=[];$error=null;$details=null;$page=['items'=>[],'next'=>null];$options=[];
+        $contacts=[];$invoiceAccess=[];$error=null;$details=null;$page=['items'=>[],'next'=>null];$options=[];
         try{
             if($this->input->method(true)==='POST'){
                 $submitted=$this->input->post('company_clients_csrf',false);
@@ -37,6 +37,13 @@ class Company_clients extends AdminController
                         if(!$owner||$owner['client']['owner_issuer_id']!==$issuer)throw new DomainException('company_client_access_denied');
                         if(!hash_equals($owner['revision'],$revision))throw new DomainException('company_client_stale');
                         (new CompanyContacts($this->db,db_prefix()))->save($issuer,$actor,$id,$contactInput,$this->input->post('contact_id',false),$this->input->post('contact_revision',false));
+                    }elseif($action==='contact_invoice_access'){
+                        require_once APPPATH.'services/CompanyContactInvoiceAccess.php';
+                        $owner=$service->details($issuer,$actor,$id);
+                        if(!$owner||$owner['client']['owner_issuer_id']!==$issuer||!hash_equals($owner['revision'],$revision))throw new DomainException('company_client_stale');
+                        $grantRevision=$this->input->post('grant_revision',false);$allowed=$this->input->post('invoice_access',false);
+                        if(!is_string($grantRevision)||!is_string($allowed))throw new DomainException('company_contact_invalid_input');
+                        (new CompanyContactInvoiceAccess($this->db,db_prefix()))->set($issuer,$actor,$id,$this->input->post('contact_id',false),$grantRevision,$allowed);
                     }elseif($action==='update')$service->update($issuer,$actor,$id,$this->clientInput(),$revision);
                     elseif($action==='share'){
                         $targets=$this->input->post('targets',false)??[];
@@ -52,7 +59,8 @@ class Company_clients extends AdminController
             $after=$this->input->get('after',false)??0;$search=$this->input->get('search',false)??'';
             if(!is_string($search))throw new DomainException('company_client_invalid_input');
             $page=$service->page($issuer,$actor,$after,50,$search);
-            if($details&&$details['client']['owner_issuer_id']===$issuer){require_once APPPATH.'services/CompanyContacts.php';$contacts=(new CompanyContacts($this->db,db_prefix()))->page($issuer,$actor,$details['client']['userid']);}
+            if($details&&$details['client']['owner_issuer_id']===$issuer){require_once APPPATH.'services/CompanyContacts.php';$contacts=(new CompanyContacts($this->db,db_prefix()))->page($issuer,$actor,$details['client']['userid']);
+                if($access->can($issuer,$actor,'invoices','view')){require_once APPPATH.'services/CompanyContactInvoiceAccess.php';$invoiceAccess=(new CompanyContactInvoiceAccess($this->db,db_prefix()))->page($issuer,$actor,$details['client']['userid']);}}
             if($details&&$details['client']['owner_issuer_id']===$issuer&&$access->can($issuer,$actor,'customers','share'))$options=$service->sharingOptions($issuer,$actor);
         }catch(DomainException $exception){
             $reason=$exception->getMessage();
@@ -71,7 +79,7 @@ class Company_clients extends AdminController
         }
         $capabilities=[];foreach(['create','edit','share'] as $cap)$capabilities[$cap]=$access->can($issuer,$actor,'customers',$cap);
         $this->load->view('admin/companies/clients',[
-            'contacts'=>$contacts,'portal_url'=>$this->config->site_url('company_portal/index/'.$issuer),
+            'invoice_access'=>$invoiceAccess,'contacts'=>$contacts,'portal_url'=>$this->config->site_url('company_portal/index/'.$issuer),
             'issuer'=>$issuer,'directory'=>$page,'details'=>$details,'sharing_options'=>$options,'capabilities'=>$capabilities,
             'error'=>$error,'company_clients_csrf'=>$csrf,'request_key'=>bin2hex(random_bytes(32)),
             'search'=>is_string($this->input->get('search',false))?$this->input->get('search',false):'',

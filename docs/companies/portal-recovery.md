@@ -63,3 +63,22 @@ Este portal oferece identidade e recuperação. Documentos, finanças, anexos, p
 relatórios e demais serviços precisam de adaptação positiva própria; não foram
 abertos por este endpoint. Nenhuma autenticação deste portal libera operações BB.
 Não há homologação bancária, merge ou deploy associado a estes testes.
+
+## Portal de faturas no incremento414
+
+Após autenticar, o contato vê lista e baixa o PDF somente quando possui a permissão
+nativa de faturas1. O cadastro de contatos permite conceder/revogar esse acesso com
+clientes Editar e faturas Visualizar do proprietário. Contatos novos continuam sem
+acesso financeiro. A permissão não se transfere por identidade compartilhada.
+
+A consulta exige empresa de login, cliente autenticado e fatura nomeada; não adota
+fatura NULL legado nem expõe documento de outro cliente da mesma empresa. PDFs usam
+DTO/TCPDF nativos, sem tema/modelos financeiros legados. O download requer POST e
+CSRF, revalida após renderização e confirma auditoria antes dos bytes. Mudar senha,
+e-mail, owner, ativação ou permissão revoga os acessos correspondentes.
+
+`tests/companies/portal_invoices.php` cobre nativamente permissões, A/B, outro
+cliente, identidade compartilhada, PDF, auditoria e falha. `_invoice_concurrency.php`
+observa dois leitores no lock real e revoga antes de liberar. O navegador exercita
+as rotas/UI reais. Consultar os runs do SHA final; créditos, outros documentos,
+pagamentos no portal e entrega SMTP externa continuam fora deste recorte.

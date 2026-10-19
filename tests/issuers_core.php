@@ -30,6 +30,11 @@ essentialCheck(!IssuerCore::ready($db,$p),'incompatible schema fails readiness')
 $db->query("DROP TABLE {$p}issuers_resource_permissions");$db->query("ALTER TABLE {$p}saved_resource_permissions RENAME TO {$p}issuers_resource_permissions");IssuerCore::invalidate($db);IssuerCore::reconcile($db,$p);essentialCheck(IssuerCore::ready($db,$p),'explicit fixture repair permits retry');
 $db->trans_begin();essentialThrows(fn()=>IssuerCore::reconcile($db,$p),'issuer_outer_transaction_not_allowed','core DDL never commits caller transaction');essentialCheck($db->pdo->inTransaction(),'caller transaction preserved');$db->trans_rollback();
 if($db->driver()==='mysql') {
+ $db->query("ALTER TABLE {$p}invoices ALTER COLUMN issuer_id SET DEFAULT 0");IssuerCore::invalidate($db);
+ essentialCheck(!IssuerCore::ready($db,$p),'numeric default cannot silently adopt future legacy financial rows');
+ essentialThrows(fn()=>IssuerFinancialSchema::assertValid($db,$p),'issuer_financial_schema_invalid','SQL NULL compatibility never permits default0');
+ $db->query("ALTER TABLE {$p}invoices ALTER COLUMN issuer_id SET DEFAULT NULL");IssuerCore::invalidate($db);
+ essentialCheck(IssuerCore::ready($db,$p),'actual MySQL/MariaDB SQL NULL default accepted without changing legacy owners');
  $old=essentialFixture('1.0.2',1);$op=$old->prefix;essentialSeedSchema($old,static fn($sql)=>str_replace('`tax_id` varchar(14) DEFAULT NULL,','`tax_id` varchar(14) NOT NULL,',$sql));
  IssuerCore::reconcile($old->db,$op);essentialCheck(IssuerCore::ready($old->db,$op),'real MySQL absorbs historical NOT NULL registry with empty legacy VAT');
 } else { echo "Historical MySQL ALTER NULL upgrade awaits MySQL CI; SQLite fixture does not prove that operation.\n"; }

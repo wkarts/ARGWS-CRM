@@ -1,11 +1,12 @@
 # PR45 — Banco do Brasil e Empresas no núcleo
 
 A PR46 foi incorporada à branch `feat/banco-brasil-billing-cnab240`; PR45 continua
-com destino main. Núcleo4.1.3/413, BB1.0.8/101–108, Asaas1.4.8/148. Migrations e
+com destino main. Núcleo4.1.4/414, BB1.0.8/101–108, Asaas1.4.8/148. Migrations e
 histórico publicados preservados; nenhum merge, deploy, tag ou release autorizado.
 
 Foram ligados ao núcleo o responsável/master e wizard retomável, clientes privados
-e opt-in apenas da identidade, contatos/portal/reset por empresa e transporte,
+e opt-in apenas da identidade, contatos/portal/reset por empresa e transporte, lista/PDF privados com permissão
+nativa explícita e revogação,
 faturas nomeadas/numeração/snapshot/PDF e recebimentos manuais transacionais.
 O BB possui originação240 ligada à fatura, reserva compartilhada e concorrente de
 Nosso Número, geração/retry/download auditados e declaração manual de envio.
@@ -35,8 +36,9 @@ O baseline412 `7aa56e60` passou nos16 workflows, incluindo instalação/upgrade,
 MySQL8/PHP8.1/8.5 e HTTP/Chromium com o CRM real e fluxo BB assistido completo.
 No413 `365a0bbb`, Empresas/MySQL8.1/8.5 passou, incluindo criptografia nativa e
 API/concorrência com142 verificações acumuladas e provedor simulado. O novo job
-MariaDB detectou cache de observação de locks; o teste aguarda reexecução com
-intervalo apropriado, sem remover asserts. Conferir resultados do SHA final.
+MariaDB confirmou o codec/driver e detectou diferenças no cache de locks e metadata
+SQL NULL. Os asserts foram preservados;414 corrige a compatibilidade do núcleo e
+adiciona testes de rejeição a DEFAULT0. Conferir resultados do SHA final.
 
 Fixtures sintéticas, MySQL/MariaDB descartáveis e HTTP/browser não são homologação.
 Nenhum canal foi homologado externamente e não houve uso de credenciais de cliente,

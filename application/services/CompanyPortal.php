@@ -62,13 +62,19 @@ final class CompanyPortal
             return ['issuer_id'=>$issuer,'contact_id'=>(int)$row['id'],'client_id'=>(int)$row['userid'],'stamp'=>$stamp];
         });
     }
-    public function sessionIdentity(array $session,$issuer): ?array
+    /** Revalidates every request; password/email/owner changes invalidate the session stamp. */
+    public function invoiceIdentity(array $session,$issuer,bool $lock=false): ?array
     {
         $issuer=IssuerPolicy::id($issuer);
         if(($session['issuer_id']??null)!==$issuer||!is_int($session['contact_id']??null)||!is_string($session['stamp']??null))return null;
-        $row=$this->contact($issuer,null,$session['contact_id']);
+        $row=$this->contact($issuer,null,$session['contact_id'],$lock);
         if(!$row||(int)$row['userid']!==($session['client_id']??null)||!hash_equals($session['stamp'],$this->identityHash($row)))return null;
-        return ['company'=>$row['company'],'firstname'=>$row['firstname'],'lastname'=>$row['lastname'],'email'=>$row['email'],'issuer_name'=>$row['legal_name']];
+        return ['contact_id'=>(int)$row['id'],'client_id'=>(int)$row['userid'],'company'=>$row['company'],'firstname'=>$row['firstname'],'lastname'=>$row['lastname'],'email'=>$row['email'],'issuer_name'=>$row['legal_name']];
+    }
+    public function sessionIdentity(array $session,$issuer): ?array
+    {
+        $row=$this->invoiceIdentity($session,$issuer);if(!$row)return null;
+        unset($row['contact_id'],$row['client_id']);return $row;
     }
     /** Returns no key or account-existence flag. Token and durable queue row commit together. */
     public function requestRecovery($issuer,string $email,string $baseUrl,callable $decrypt): void

@@ -73,7 +73,27 @@ async function next(page) { await navigate(page, page.locator('section form butt
   }
   assert.equal((await context.request.get(url+'/admin/company_invoices?invoice='+ids[a])).status(),403,'B cannot read direct A invoice ID');
   assert.equal((await context.request.get(url+'/admin/company_invoices?invoice='+ids[a]+'&pdf=1')).status(),403,'B cannot download A PDF');
+  // Private portal permission is native, explicit and independent for A/B contacts.
+  const publicContexts=[];
+  try{
+   await select(a);await page.goto(url+'/admin/company_clients?client='+clients[a]);
+   const publicA=await browser.newContext();publicContexts.push(publicA);await publicA.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const portalA=await publicA.newPage();portalA.on('pageerror',e=>errors.push(e.message));
+   async function portalLogin(p,issuer,email,password){await p.goto(url+'/company_portal/index/'+issuer);await p.locator('#login-email').fill(email);await p.locator('#login-password').fill(password);await navigate(p,p.locator('#portal-login button[type=submit]'));}
+   async function portalPdf(ctx,p,issuer,invoice){await p.reload();const csrf=await fields(p.locator('form').filter({has:p.locator('input[name=action][value=logout]')}));return ctx.request.post(url+'/company_portal/index/'+issuer,{form:{...csrf,action:'invoice_pdf',invoice_id:invoice}});}
+   await portalLogin(portalA,a,'changed-portal@example.invalid','synthetic-password-a');assert.equal(await portalA.locator('#portal-identity').count(),1);assert.equal(await portalA.locator('#portal-invoices').count(),0,'identity login does not implicitly grant financial access');
+   assert.equal((await portalPdf(publicA,portalA,a,ids[a])).status(),404,'direct portal PDF denied before grant');
+   await navigate(page,page.getByRole('button',{name:'Permitir acesso a faturas no portal',exact:true}));
+   await portalA.reload();assert.equal(await portalA.locator('#portal-invoices article').count(),1,'native contact permission opens only own invoice list');
+   const portalDownload=await portalPdf(publicA,portalA,a,ids[a]);assert.equal(portalDownload.status(),200);assert.equal((await portalDownload.body()).subarray(0,5).toString(),'%PDF-','authorized portal PDF uses actual TCPDF');
+   assert.equal((await portalPdf(publicA,portalA,a,ids[b])).status(),404,'A cannot download direct B invoice ID');
+   // Earlier recovery test deactivated B; reactivate only this disposable synthetic contact.
+   sql('UPDATE tblcontacts SET active=1 WHERE userid='+clients[b]);const publicB=await browser.newContext();publicContexts.push(publicB);await publicB.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const portalB=await publicB.newPage();portalB.on('pageerror',e=>errors.push(e.message));
+   await portalLogin(portalB,b,'same-portal@example.invalid','synthetic-password-b');assert.equal(await portalB.locator('#portal-invoices').count(),0,'A grant is not inherited by same-email B contact');
+   await select(b);await page.goto(url+'/admin/company_clients?client='+clients[b]);await navigate(page,page.getByRole('button',{name:'Permitir acesso a faturas no portal',exact:true}));await portalB.reload();assert.equal(await portalB.locator('#portal-invoices article').count(),1);assert.equal((await portalPdf(publicB,portalB,b,ids[a])).status(),404,'B grant cannot authorize A PDF');
+   await select(a);await page.goto(url+'/admin/company_clients?client='+clients[a]);await navigate(page,page.getByRole('button',{name:'Revogar acesso a faturas no portal',exact:true}));await portalA.reload();assert.equal(await portalA.locator('#portal-invoices').count(),0,'native revocation takes effect in existing session');assert.equal((await portalPdf(publicA,portalA,a,ids[a])).status(),404,'revoked session cannot download PDF');
+   assert.equal(sql("SELECT COUNT(*) FROM tblissuers_audit WHERE event='company_portal_invoice_pdf_downloaded' AND issuer_id="+a+" AND subject_id="+ids[a]),'1','only authorized PDF delivery is audited as delivered');
+  }finally{for(const ctx of publicContexts)await ctx.close();}
   await page.screenshot({path:output+'/company-invoices.png',fullPage:true});assert.deepEqual(errors,[]);
-  console.log('Named-company invoice CRUD/numbering/PDF/manual partial+final receipts: real HTTP/MySQL/Chromium passed; no bank/provider operations.');
+  console.log('Named-company invoice CRUD/numbering/PDF/manual partial+final receipts/private portal grant+PDF+revocation: real HTTP/MySQL/Chromium passed; no bank/provider operations.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e.message);process.exitCode=1;});

@@ -15,6 +15,7 @@ class Company_portal extends CI_Controller
         $this->output->set_header('X-Content-Type-Options: nosniff');
         try{$issuer=IssuerPolicy::id($issuer);$portal=new CompanyPortal($this->db,db_prefix(),(string)$this->config->item('encryption_key'));}
         catch(Throwable $error){show_404();return;}
+        $invoices=null;
         $sessionKey='company_portal_identity';$identity=$this->session->userdata($sessionKey);$message=null;$error=null;
         $csrf=$this->session->userdata('company_portal_csrf');
         if(!is_string($csrf)||strlen($csrf)!==64){$csrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_portal_csrf',$csrf);}
@@ -28,6 +29,20 @@ class Company_portal extends CI_Controller
                 if($action==='logout'){
                     $this->session->unset_userdata($sessionKey);$this->session->sess_regenerate(true);
                     redirect($this->config->site_url('company_portal/index/'.$issuer),'location',303);return;
+                }
+                if($action==='invoice_pdf'){
+                    if(!$current||!is_array($identity)){show_404();return;}
+                    require_once APPPATH.'services/CompanyPortalInvoices.php';
+                    $documents=new CompanyPortalInvoices($this->db,db_prefix(),$portal);$invoice=$this->input->post('invoice_id',false);
+                    try{
+                        $dto=$documents->document($identity,$issuer,$invoice);
+                        if(!class_exists('TCPDF'))require_once APPPATH.'vendor/tecnickcom/tcpdf/tcpdf.php';
+                        require_once APPPATH.'libraries/pdf/Issuer_invoice_pdf.php';
+                        $pdf=(new Issuer_invoice_pdf($dto))->prepare()->Output('','S');
+                        $documents->confirmDownload($identity,$issuer,$invoice,hash('sha256',$pdf));
+                    }catch(DomainException $denied){show_404();return;}
+                    $this->output->set_header('Content-Disposition: attachment; filename="fatura-'.(int)$invoice.'.pdf"');
+                    $this->output->set_content_type('application/pdf')->set_output($pdf);return;
                 }
                 if(!in_array($action,['login','recovery','reset'],true))throw new DomainException('company_portal_invalid_input');
                 $allowed=$portal->allowAttempt($issuer,$this->input->ip_address(),$action);
@@ -65,6 +80,10 @@ class Company_portal extends CI_Controller
             if($this->input->post('action',false)==='recovery')$message='Se houver uma conta ativa nesta empresa e o envio estiver disponível, você receberá um link. Aguarde antes de solicitar novamente.';
             else{$this->output->set_status_header(503);$error='Serviço indisponível. Tente novamente mais tarde.';}
         }
-        $this->load->view('company_portal/index',['issuer'=>$issuer,'identity'=>$current??null,'message'=>$message,'error'=>$error,'portal_csrf'=>$csrf,'script_nonce'=>$nonce]);
+        if(($current??null)&&is_array($identity)){
+            try{require_once APPPATH.'services/CompanyPortalInvoices.php';$invoices=(new CompanyPortalInvoices($this->db,db_prefix(),$portal))->page($identity,$issuer,$this->input->get('before',false)??0);}
+            catch(Throwable $unavailable){$error='Faturas indisponíveis no momento. Tente novamente mais tarde.';}
+        }
+        $this->load->view('company_portal/index',['invoices'=>$invoices,'issuer'=>$issuer,'identity'=>$current??null,'message'=>$message,'error'=>$error,'portal_csrf'=>$csrf,'script_nonce'=>$nonce]);
     }
 }

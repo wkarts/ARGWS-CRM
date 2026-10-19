@@ -1,6 +1,6 @@
 # PR45 — estado da integração BB e Empresas
 
-Código atual: núcleo4.1.3/413, BB1.0.8/108, Asaas1.4.8/148. A matriz
+Código atual: núcleo4.1.4/414, BB1.0.8/108, Asaas1.4.8/148. A matriz
 [atual](companies/pr45-status.md) e os incrementos406–413 abaixo substituem as
 pendências do checkpoint405 preservado como histórico. Conferir o HEAD remoto e
 os testes do SHA final; não há homologação externa, merge ou deploy.
@@ -266,3 +266,33 @@ conciliação de ajustes/estornos e os demais consumidores multiempresa da matri
 Certificados/ingresso mTLS não são substituídos por cabeçalho de origem ou HMAC
 inventado. Não houve credenciais reais, OAuth bancário, transmissão, homologação,
 merge ou deploy nesta sessão.
+
+## Incremento414: portal de faturas e metadata MariaDB
+
+O contato só vê faturas nomeadas da sua empresa de login e do seu próprio cliente,
+com permissão nativa `contact_permissions.permission_id=1`. Login/reset não concedem
+acesso financeiro. O editor de contatos possui concessão/revogação explícita; exige
+clientes Editar e faturas Visualizar da empresa proprietária. A revisão vincula o
+contato e o estado da permissão, sem sobrescrever outras permissões nativas.
+Compartilhar cadastro não transfere contato, sessão ou histórico de faturas.
+
+A lista usa predicado empresa/cliente antes do resultado; NULL legado e outra empresa
+ficam fora. PDF usa DTO/TCPDF nativos e revalida sessão, permissão e ownership antes
+da construção e antes dos bytes. Auditoria de entrega guarda contato/cliente/hash e
+recibo único, sem e-mail ou bearer; erro de auditoria e revogação impedem entrega.
+Rotas continuam no controlador público isolado `company_portal/index`, com POST/CSRF
+para download; não foi aberta a hidratação financeira do tema legado.
+
+No CI413, MySQL/PHP8.1/8.5 passou a API com142 checks acumulados e HTTP/Chromium
+passou o cadastro criptografado nativo. A observação do lock MariaDB foi corrigida
+em68cd08be: o cache de INNODB_LOCKS precisa de100ms de inatividade; leituras a20ms
+mantinham snapshot vazio. O assert de linha/índice/tabela exatos foi preservado e
+passou49 verificações mysqli/two-process na reexecução. Isso expôs incompatibilidade
+real de metadata do núcleo: MariaDB representa DEFAULT NULL como expressão `NULL`,
+enquanto MySQL retorna null.414 aceita as duas representações, mantendo rejeição a
+DEFAULT0 e ao literal textual. Não muda ownership, dados ou migrations históricas.
+
+Os novos testes de portal usam SQLite local, MySQL/MariaDB com dois leitores reais
+bloqueados durante revogação e HTTP/Chromium com concessão/PDF/IDs A-B/revogação.
+Atribuir passagem somente ao SHA final. Ainda não há entrega SMTP externa,
+homologação bancária ou rollout completo dos demais domínios.
