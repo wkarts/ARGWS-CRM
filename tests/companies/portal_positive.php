@@ -14,6 +14,8 @@ $db->query("CREATE TABLE {$p}user_auto_login(user_id int,staff int,key_id varcha
 // Fixture queue matches the native persisted fields.
 $db->query("DROP TABLE IF EXISTS {$p}mail_queue");
 $db->query("CREATE TABLE {$p}mail_queue(id ".($db->driver()==='mysql'?'int NOT NULL AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').",engine varchar(40),email varchar(191) NOT NULL,cc text,bcc text,message text NOT NULL,alt_message text,status varchar(20),date datetime,headers text,attachments text,issuer_id int unsigned)");
+// Raw fixture DDL is outside CI3's table cache; reconcile the queue as the real installer does.
+unset($db->data_cache['table_names']);CompanyMailQueueSchema::ensure($db,$p);
 if($db->driver()==='mysql'){
     if(!class_exists('CI_Migration')){#[AllowDynamicProperties] class CI_Migration {}}
     require_once APPPATH.'migrations/407_version_407.php';$m=new Migration_Version_407();$m->db=$db;$m->up();$m->up();
