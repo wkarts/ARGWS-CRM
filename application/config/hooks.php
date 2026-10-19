@@ -79,6 +79,7 @@ $hook['pre_controller_constructor'][] = [
 ];
 
 $hook['post_controller'] = function () {
+    if(class_exists('PortalRequestScope',false)&&PortalRequestScope::active()){return;}
     if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::isolated()) {
         CompanyRequestScope::finish();
         return;

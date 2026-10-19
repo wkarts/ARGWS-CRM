@@ -24,3 +24,9 @@ check($auth->forgot_password('staff@example.invalid',true)===true,'staff recover
 $before=count($GLOBALS['recoveryDeliveries']);
 check($auth->forgot_password('missing@example.invalid')===false && count($GLOBALS['recoveryDeliveries'])===$before,'unknown email cannot dispatch');
 echo "Portal recovery legacy/staff: $n synthetic checks passed\n";
+
+$pdo->exec("UPDATE q_contacts SET email='same@example.invalid' WHERE id IN (10,20)");
+$count=count($GLOBALS['recoveryDeliveries']);
+check($auth->forgot_password('same@example.invalid')===false && $auth->set_password_email('same@example.invalid')===false,'global recovery refuses duplicate email without rotating arbitrary owner');
+check(count($GLOBALS['recoveryDeliveries'])===$count,'ambiguous recovery sends no global template');
+$pdo->exec("UPDATE q_contacts SET email='l@example.test' WHERE id=10; UPDATE q_contacts SET email='x@example.test' WHERE id=20");

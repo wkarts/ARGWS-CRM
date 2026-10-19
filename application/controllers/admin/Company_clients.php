@@ -15,7 +15,7 @@ class Company_clients extends AdminController
         if(!$access->can($issuer,$actor,'customers','view')){show_error('Sem permissão para consultar clientes desta empresa.',403);return;}
         $csrf=$this->session->userdata('company_clients_csrf');
         if(!is_string($csrf)||strlen($csrf)!==64){$csrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_clients_csrf',$csrf);}
-        $error=null;$details=null;$page=['items'=>[],'next'=>null];$options=[];
+        $contacts=[];$error=null;$details=null;$page=['items'=>[],'next'=>null];$options=[];
         try{
             if($this->input->method(true)==='POST'){
                 $submitted=$this->input->post('company_clients_csrf',false);
@@ -28,7 +28,16 @@ class Company_clients extends AdminController
                 }else{
                     $id=$this->input->post('client_id',false);$revision=$this->input->post('revision',false);
                     if(!is_string($revision)||!preg_match('/^[a-f0-9]{64}$/D',$revision))throw new DomainException('company_client_stale');
-                    if($action==='update')$service->update($issuer,$actor,$id,$this->clientInput(),$revision);
+                    if($action==='contact'){
+                        require_once APPPATH.'services/CompanyContacts.php';
+                        $contactInput=$this->input->post('contact',false);
+                        if(!is_array($contactInput))throw new DomainException('company_contact_invalid_input');
+                        // A current customer revision is mandatory before adding/editing any subresource.
+                        $owner=$service->details($issuer,$actor,$id);
+                        if(!$owner||$owner['client']['owner_issuer_id']!==$issuer)throw new DomainException('company_client_access_denied');
+                        if(!hash_equals($owner['revision'],$revision))throw new DomainException('company_client_stale');
+                        (new CompanyContacts($this->db,db_prefix()))->save($issuer,$actor,$id,$contactInput,$this->input->post('contact_id',false),$this->input->post('contact_revision',false));
+                    }elseif($action==='update')$service->update($issuer,$actor,$id,$this->clientInput(),$revision);
                     elseif($action==='share'){
                         $targets=$this->input->post('targets',false)??[];
                         if(!is_array($targets))throw new DomainException('company_client_invalid_input');
@@ -43,6 +52,7 @@ class Company_clients extends AdminController
             $after=$this->input->get('after',false)??0;$search=$this->input->get('search',false)??'';
             if(!is_string($search))throw new DomainException('company_client_invalid_input');
             $page=$service->page($issuer,$actor,$after,50,$search);
+            if($details&&$details['client']['owner_issuer_id']===$issuer){require_once APPPATH.'services/CompanyContacts.php';$contacts=(new CompanyContacts($this->db,db_prefix()))->page($issuer,$actor,$details['client']['userid']);}
             if($details&&$details['client']['owner_issuer_id']===$issuer&&$access->can($issuer,$actor,'customers','share'))$options=$service->sharingOptions($issuer,$actor);
         }catch(DomainException $exception){
             $reason=$exception->getMessage();
@@ -51,6 +61,7 @@ class Company_clients extends AdminController
             $error=match($reason){
                 'company_client_stale'=>'Este cliente mudou. Reabra o cadastro antes de salvar; esta tentativa não alterou dados.',
                 'company_client_request_conflict'=>'Este envio já foi utilizado com outros dados. Reabra o formulário.',
+                'company_contact_email_conflict'=>'Este e-mail já está cadastrado nesta empresa. Confira o contato existente.',
                 'company_client_identity_conflict'=>'O documento fiscal já está cadastrado. Solicite ao responsável a revisão ou o compartilhamento da identidade.',
                 default=>'Não foi possível salvar. Confira nome, CPF/CNPJ e empresas autorizadas. Nenhuma alteração desta tentativa foi aplicada.',
             };
@@ -60,6 +71,7 @@ class Company_clients extends AdminController
         }
         $capabilities=[];foreach(['create','edit','share'] as $cap)$capabilities[$cap]=$access->can($issuer,$actor,'customers',$cap);
         $this->load->view('admin/companies/clients',[
+            'contacts'=>$contacts,'portal_url'=>$this->config->site_url('company_portal/index/'.$issuer),
             'issuer'=>$issuer,'directory'=>$page,'details'=>$details,'sharing_options'=>$options,'capabilities'=>$capabilities,
             'error'=>$error,'company_clients_csrf'=>$csrf,'request_key'=>bin2hex(random_bytes(32)),
             'search'=>is_string($this->input->get('search',false))?$this->input->get('search',false):'',

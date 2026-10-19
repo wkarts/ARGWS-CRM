@@ -37,8 +37,8 @@ class Authentication_model extends App_Model
                 $table = db_prefix() . 'staff';
                 $_id   = 'staffid';
             }
-            $this->db->where('email', $email);
-            $user = $this->db->get($table)->row();
+            if($staff){$this->db->where('email',$email);$user=$this->db->get($table)->row();}
+            else{$user=$this->uniqueContactByEmail($email);}
             if ($user) {
                 // Email is okey lets check the password now
                 if (! $user->password || ! app_hasher()->CheckPassword($password, $user->password)) {
@@ -312,6 +312,15 @@ class Authentication_model extends App_Model
      *
      * @param string $email
      */
+    /** The global login/recovery URL cannot choose among equal emails from different owners. */
+    private function uniqueContactByEmail($email): ?object
+    {
+        if(!is_string($email)||strlen($email)>100)return null;
+        require_once APPPATH.'services/issuers/IssuerStorage.php';
+        $rows=IssuerStorage::query($this->db,'SELECT * FROM '.db_prefix().'contacts WHERE LOWER(email)=? ORDER BY id LIMIT 2',[strtolower(trim($email))])->result_array();
+        return count($rows)===1?(object)$rows[0]:null;
+    }
+
     private function permitsLegacyRecoveryMail($user): bool
     {
         require_once APPPATH . 'services/ClientIssuerScope.php';
@@ -324,8 +333,7 @@ class Authentication_model extends App_Model
 
     public function set_password_email($email)
     {
-        $this->db->where('email', $email);
-        $user = $this->db->get(db_prefix() . 'contacts')->row();
+        $user=$this->uniqueContactByEmail($email);
 
         if ($user) {
             if ($user->active == 0) {
@@ -380,8 +388,8 @@ class Authentication_model extends App_Model
             $table = db_prefix() . 'staff';
             $_id   = 'staffid';
         }
-        $this->db->where('email', $email);
-        $user = $this->db->get($table)->row();
+        if($staff){$this->db->where('email',$email);$user=$this->db->get($table)->row();}
+        else{$user=$this->uniqueContactByEmail($email);}
 
         if ($user) {
             if ($user->active == 0) {

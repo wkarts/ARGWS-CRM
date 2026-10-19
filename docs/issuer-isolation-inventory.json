@@ -8,16 +8,16 @@
   ],
   "files": {
     "application/config/autoload.php": {
-      "sha256": "7468694aa6113b32193784a2f1a6edb0e62af880126ff89e5678359ebc3e1976",
+      "sha256": "ed32f8ebbc9862bcf3d0a5056fafb60469d93609442ac4a7396633250930bd38",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
-        17,
-        172,
-        186,
-        248
+        25,
+        180,
+        194,
+        256
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -317,7 +317,7 @@
       "evidence": "tests/client_issuer_scope.php; tests/client_issuer_model.php; tests/client_issuer_mutations.php; tests/client_issuer_api.php; tests/client_issuer_controllers.php; tests/client_issuer_helpers.php; tests/client_issuer_tables.php; tests/invoice_issuer_scope.php; docs/security/client-issuer-privacy-phase2.md (covered legacy boundaries only; portal/session, generic preview/static storage and other domains pending)"
     },
     "application/controllers/admin/Company_clients.php": {
-      "sha256": "14d31efe5ed25563c427e9a414bfddf95f9435f01ebc256c4c65ae535238c5e5",
+      "sha256": "186d81c7c7d2cfef386449902c81ae7e02f8b53a17c004bda7f6d40b9a7c2657",
       "categories": [
         "customer_privacy"
       ],
@@ -1713,7 +1713,7 @@
       "evidence": ""
     },
     "application/models/Authentication_model.php": {
-      "sha256": "8d7ad3dc5734dbf2421247ae858504b68846a2f3220dd0528cbe982b1fd848ea",
+      "sha256": "3ac18ac9190832bbe1ef1a4b7d3b13d7e5dcece82f0be5b6f1ffab1617858297",
       "categories": [
         "customer_privacy"
       ],
@@ -1722,12 +1722,12 @@
         107,
         254,
         255,
-        317,
-        318,
-        320,
-        322,
-        445,
-        446
+        326,
+        327,
+        329,
+        331,
+        453,
+        454
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -2729,6 +2729,28 @@
       ],
       "signal_lines": [
         79
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/CompanyContacts.php": {
+      "sha256": "8e20a989494c6d2bb019eec12f4650202c9e77b16f366580b666c188f72e4f0f",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        35
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/CompanyPortal.php": {
+      "sha256": "15104e0ed04d894e813f43bce80bd42224f37fbf319f422b46ae3b7d00037bec",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        19
       ],
       "state": "unreviewed",
       "evidence": ""

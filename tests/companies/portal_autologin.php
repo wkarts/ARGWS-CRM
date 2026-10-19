@@ -46,3 +46,8 @@ foreach(['UPDATE q_contacts SET active=0 WHERE id=102','UPDATE q_contacts SET ac
  check($GLOBALS['renewedCookies']===0 && $GLOBALS['deletedCookies']===1,'rejected identity expires cookie without renewal');
 }
 echo "Portal autologin: $n synthetic checks passed\n";
+
+$pdo->exec("INSERT INTO q_contacts(id,userid,is_primary,active,email) VALUES(102,2,1,1,'duplicate@example.invalid'); UPDATE q_contacts SET email='duplicate@example.invalid' WHERE id=101");
+$auth->session->data=[];
+check($auth->login('duplicate@example.invalid','synthetic-password',false,false)===false && $auth->session->data===[],'global login refuses ambiguous email instead of choosing an owner');
+echo "Global duplicate-email login boundary passed.\n";

@@ -1,7 +1,7 @@
 name: argws-crm
 services:
   web:
-    image: ghcr.io/wkarts/argws-crm:${ARGWS_VERSION:-4.0.6}
+    image: ghcr.io/wkarts/argws-crm:${ARGWS_VERSION:-4.0.7}
     restart: unless-stopped
     environment:
       ARGWS_DB_HOST: ${ARGWS_DB_HOST:-}

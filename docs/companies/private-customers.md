@@ -30,7 +30,10 @@ observados), `tests/companies_onboarding_browser.cjs` (CRM HTTP/MySQL/Chromium
 na stack descartável). Resultados efetivamente executados são registrados na PR;
 a existência do teste não comprova sua execução no SHA final.
 
-**Limites técnicos:** contatos/portal privado e recuperação completa, finanças,
+**Atualização407:** contatos e portal/recuperação possuem o fluxo descrito em
+[portal-recovery.md](portal-recovery.md).
+
+**Limites técnicos:** documentos privados do portal, finanças,
 arquivos, relatórios e demais consumidores ainda precisam dos respectivos fluxos
 positivos. Esses caminhos legados permanecem fechados às identidades privadas.
 Este diretório não representa conclusão integral do multiempresa nem da integração BB.

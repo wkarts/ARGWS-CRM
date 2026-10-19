@@ -2,6 +2,14 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+// Public owner-bound portal must not hydrate legacy models, providers or optional modules.
+require_once APPPATH.'services/PortalRequestScope.php';
+$portalBootstrap=&get_instance();
+if(PortalRequestScope::prepare($portalBootstrap)){
+    $autoload=['packages'=>[],'config'=>[],'helper'=>['url','form'],'language'=>[],'drivers'=>['session'],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+
 // Resolve browser company scope before App/options, gateways, email, modules or models.
 require_once APPPATH . 'services/CompanyRequestScope.php';
 $companyBootstrap = &get_instance();

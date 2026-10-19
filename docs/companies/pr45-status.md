@@ -1,3 +1,17 @@
+## Incremento atual — núcleo 4.0.7/407
+
+Contatos privados no diretório, portal público por origem e recuperação via fila
+transacional. E-mails iguais entre A/B não selecionam outro proprietário. Reset
+consome token uma vez; revalida identidade/owner, revoga cookies do contato e sessões
+dedicadas. GUI de contatos/SMTP e renderer público isolado; sem herdar credenciais.
+Ver [contrato, testes e limites](portal-recovery.md).
+
+Fluxo de identidade/recuperação não libera documentos, financeiro ou demais operações
+do portal. A fila foi implementada para o worker nativo; entrega SMTP externa não
+foi realizada. Consultar os checks do SHA final para MySQL/concorrência/HTTP/Chromium.
+BB permanece1.0.4, Asaas1.4.8, migrations históricas preservadas. Operações bancárias
+continuam pendentes tecnicamente; homologação API/240/400 não realizada.
+
 ## Incremento atual — núcleo 4.0.6/406
 
 Diretório positivo `admin/company_clients`: criação privada idempotente, leitura,
