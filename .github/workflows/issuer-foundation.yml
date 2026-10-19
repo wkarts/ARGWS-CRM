@@ -124,6 +124,7 @@ jobs:
           php tests/companies/invoice_delivery_concurrency.php
           php tests/companies/invoice_concurrency.php
           php tests/companies/portal_invoice_concurrency.php
+          php tests/companies/invoice_attachment_concurrency.php
           php tests/banco_brasil_origination_mysql.php
           php tests/banco_brasil_origination_concurrency.php
           php tests/banco_brasil_reconciliation_mysql.php

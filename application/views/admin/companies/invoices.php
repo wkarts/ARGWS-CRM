@@ -14,6 +14,16 @@ $labels=[1=>'Em aberto',2=>'Paga',3=>'Parcialmente paga',4=>'Vencida',5=>'Cancel
 <div class="table-responsive"><table class="table"><thead><tr><th>Descrição</th><th>Quantidade</th><th>Preço unitário</th><th>Valor</th></tr></thead><tbody>
 <?php foreach($document['items'] as $item){?><tr><td><?= $esc($item['description']); ?></td><td><?= $esc($item['quantity']); ?></td><td><?= $esc($item['rate']); ?></td><td><?= $esc($item['amount']); ?></td></tr><?php } ?></tbody></table></div>
 <p>Subtotal <?= $esc($document['totals']['subtotal']); ?> · Tributos <?= $esc($document['totals']['total_tax']); ?> · Desconto <?= $esc($document['totals']['discount_total']); ?> · Ajuste <?= $esc($document['totals']['adjustment']); ?> · Total <?= $esc($document['totals']['total']); ?></p>
+<h3>Anexos privados</h3>
+<p>Downloads exigem acesso à fatura. A exibição no portal é uma escolha explícita por arquivo e ainda exige login e permissão do contato.</p>
+<?php if($attachment_files){ ?><ul aria-label="Anexos da fatura"><?php foreach($attachment_files as $file){ ?><li><a href="<?= $esc($url('?invoice='.$id.'&attachment='.$file['file_key'])); ?>"><?= $esc($file['filename']); ?></a> · <?= (int)$file['byte_size']; ?> bytes · <?= (int)$file['portal_visible']===1?'Disponível no portal autorizado':'Somente equipe'; ?>
+<?php if($file['mime']==='image/png'){ ?><a href="<?= $esc($url('?invoice='.$id.'&attachment='.$file['file_key'].'&preview=1')); ?>">Visualizar PNG</a><?php } ?>
+<?php if($can_edit){ ?><?= form_open($url());$hidden('attachment_hide'); ?><input type="hidden" name="invoice_id" value="<?= $id; ?>"><input type="hidden" name="file_key" value="<?= $esc($file['file_key']); ?>"><input type="hidden" name="content_hash" value="<?= $esc($file['content_hash']); ?>"><button type="submit">Ocultar anexo; preservar histórico</button><?= form_close(); ?><?php } ?></li><?php } ?></ul><?php }else{ ?><p>Nenhum anexo ativo.</p><?php } ?>
+<?php if($can_edit&&in_array($document['status'],[1,2,3,4],true)){ ?>
+<?= form_open_multipart($url());$hidden('attachment_upload'); ?><input type="hidden" name="invoice_id" value="<?= $id; ?>"><input type="hidden" name="request_key" value="<?= $esc($request_key); ?>">
+<label for="invoice-attachment">PDF (até2 MiB) ou PNG/JPEG (até512 KiB e1600 pixels)</label><input class="form-control" id="invoice-attachment" type="file" name="invoice_attachment" accept=".pdf,.png,.jpg,.jpeg" required>
+<label><input type="checkbox" name="portal_visible" value="1"> Disponibilizar este arquivo no portal deste cliente</label><p>Até20 uploads e20 MiB por fatura no histórico, incluindo ocultos. Imagens são regravadas em PNG; PDFs são entregues como download. Ocultar revoga downloads e conserva a auditoria.</p><button type="submit">Adicionar anexo privado</button><?= form_close(); ?>
+<?php } ?>
 <?php if($can_send){ ?>
 <h3>Notificar no portal</h3>
 <p>O contato precisa pertencer a esta empresa e ter acesso a faturas no portal. A mensagem usa o template e o transporte da empresa. O link exige login e permissão; nenhum PDF público é criado.</p>

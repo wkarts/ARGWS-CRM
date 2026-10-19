@@ -124,6 +124,18 @@ async function next(page) { await navigate(page, page.locator('section form butt
    await page.locator('#edit-discount-mode').selectOption('fixed');await page.locator('#edit-discount-type').selectOption('after_tax');await page.locator('#edit-adjustment').fill('0.01');
    await navigate(page,page.locator('form').filter({has:page.locator('#edit-invoice-date')}).locator('button[type=submit]'));
    assert.equal(sql('SELECT total FROM tblinvoices WHERE id='+expandedId),'97.51');
+   // Native multipart attachment upload: private by default, explicit portal publication per blob.
+   const uploadForm=page.locator('form').filter({has:page.locator('#invoice-attachment')});
+   await page.locator('#invoice-attachment').setInputFiles({name:'private-'+letter+'.png',mimeType:'image/png',buffer:raster});
+   await navigate(page,uploadForm.locator('button[type=submit]'));
+   const privateFile=sql('SELECT file_key FROM tblcompany_invoice_attachments WHERE invoice_id='+expandedId+' AND portal_visible=0');assert.match(privateFile,/^[a-f0-9]{64}$/);
+   const binaryImage=await context.request.get(url+'/admin/company_invoices?invoice='+expandedId+'&attachment='+privateFile);assert.equal(binaryImage.status(),200);assert.equal((await binaryImage.body()).subarray(0,4).toString('hex'),'89504e47');
+   const preview=await context.request.get(url+'/admin/company_invoices?invoice='+expandedId+'&attachment='+privateFile+'&preview=1');assert.equal(preview.status(),200);assert.equal(preview.headers()['x-content-type-options'],'nosniff');assert.match(preview.headers()['content-disposition'],/^inline;/);
+   await page.locator('#invoice-attachment').setInputFiles({name:'visible-'+letter+'.pdf',mimeType:'application/pdf',buffer:await expandedPdf.body()});await page.locator('input[name=portal_visible]').check();
+   const fileUploadFields=await fields(page.locator('form').filter({has:page.locator('#invoice-attachment')}));
+   await navigate(page,page.locator('form').filter({has:page.locator('#invoice-attachment')}).locator('button[type=submit]'));
+   const publicFile=sql('SELECT file_key FROM tblcompany_invoice_attachments WHERE invoice_id='+expandedId+' AND portal_visible=1');assert.match(publicFile,/^[a-f0-9]{64}$/);
+   const fileRetry=await context.request.post(url+'/admin/company_invoices',{multipart:{...fileUploadFields,portal_visible:'1',invoice_attachment:{name:'visible-'+letter+'.pdf',mimeType:'application/pdf',buffer:await expandedPdf.body()}}});assert.equal(fileRetry.status(),200);assert.equal(sql('SELECT COUNT(*) FROM tblcompany_invoice_attachments WHERE invoice_id='+expandedId),'2','multipart retry stores one blob and receipt');
    // Explicit private recipient, native queue and durable retry in both companies. No SMTP worker runs here.
    const expandedUrl=page.url();
    await page.goto(url+'/admin/company_clients?client='+clients[issuer]);
@@ -141,14 +153,28 @@ async function next(page) { await navigate(page, page.locator('section form butt
    assert.equal(sql('SELECT COUNT(*) FROM tblcompany_invoice_deliveries WHERE invoice_id='+expandedId),'1','same notification request does not queue twice');
    const otherContact=sql('SELECT id FROM tblcontacts WHERE userid='+clients[issuer===a?b:a]+' AND active=1 ORDER BY id LIMIT 1');
    const crossedNotification=await context.request.post(url+'/admin/company_invoices',{form:{...notificationFields,request_key:'e'.repeat(64),contact_id:otherContact}});assert.equal(crossedNotification.status(),403,'foreign contact ID denied despite equal or familiar email');
+   // Real private portal lists only the published blob, and hiding revokes its existing download form.
+   const filePortalContext=await browser.newContext();await filePortalContext.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());
+   try{
+    const filePortal=await filePortalContext.newPage();filePortal.on('pageerror',e=>errors.push(e.message));
+    await filePortal.goto(url+'/company_portal/index/'+issuer);await filePortal.locator('#login-email').fill(letter==='a'?'changed-portal@example.invalid':'same-portal@example.invalid');await filePortal.locator('#login-password').fill('synthetic-password-'+letter);await navigate(filePortal,filePortal.locator('#portal-login button[type=submit]'));
+    const publishedForm=filePortal.locator('form').filter({has:filePortal.locator('input[name=file_key][value="'+publicFile+'"]')});assert.equal(await publishedForm.count(),1);assert.equal(await filePortal.locator('input[name=file_key][value="'+privateFile+'"]').count(),0,'default-private attachment metadata never reaches contact HTML');
+    const portalFileFields=await fields(publishedForm);const publicDownload=await filePortalContext.request.post(url+'/company_portal/index/'+issuer,{form:portalFileFields});assert.equal(publicDownload.status(),200);assert.equal((await publicDownload.body()).subarray(0,5).toString(),'%PDF-');assert.match(publicDownload.headers()['content-disposition'],/^attachment;/);
+    assert.equal((await filePortalContext.request.post(url+'/company_portal/index/'+issuer,{form:{...portalFileFields,file_key:privateFile}})).status(),404,'portal direct private key denied before bytes');
+    const hideForm=page.locator('form').filter({has:page.locator('input[name=action][value=attachment_hide]')}).filter({has:page.locator('input[name=file_key][value="'+publicFile+'"]')});const hideFields=await fields(hideForm);await navigate(page,hideForm.locator('button[type=submit]'));
+    assert.equal((await context.request.post(url+'/admin/company_invoices',{form:hideFields})).status(),200,'hide retry is durable without duplicate mutation');
+    assert.equal((await filePortalContext.request.post(url+'/company_portal/index/'+issuer,{form:portalFileFields})).status(),404,'hidden attachment denies saved authorized portal form');await filePortal.reload();assert.equal(await filePortal.locator('input[name=file_key][value="'+publicFile+'"]').count(),0);
+   }finally{await filePortalContext.close();}
    // Two tabs: a saved monetary form from A cannot mutate after switching to B.
    const prior=await fields(page.locator('form').filter({has:page.locator('#edit-invoice-date')}));
    await select(issuer===a?b:a);
+   assert.equal((await context.request.get(url+'/admin/company_invoices?invoice='+expandedId+'&attachment='+privateFile)).status(),403,'foreign company cannot download attachment by exact known parent and key');
+   const obsoleteUpload=await context.request.post(url+'/admin/company_invoices',{multipart:{...fileUploadFields,portal_visible:'1',invoice_attachment:{name:'visible-'+letter+'.pdf',mimeType:'application/pdf',buffer:await expandedPdf.body()}}});assert.equal(obsoleteUpload.status(),409,'obsolete company multipart denied before write');
    const obsoleteNotification=await context.request.post(url+'/admin/company_invoices',{form:{...notificationFields,contact_id:contact}});assert.equal(obsoleteNotification.status(),409,'obsolete company notification page denied before queue effects');
    const obsolete=await context.request.post(url+'/admin/company_invoices',{form:{...prior,action:'cancel'}});assert.equal(obsolete.status(),409);
    assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+expandedId),'1');
   }
   await page.screenshot({path:output+'/company-invoices.png',fullPage:true});assert.deepEqual(errors,[]);
-  console.log('Named-company invoice CRUD/numbering/PDF/manual partial+final receipts/private portal grant+PDF+revocation: real HTTP/MySQL/Chromium passed, including owner-bound portal notifications; no SMTP or bank/provider operations.');
+  console.log('Named-company invoice CRUD/numbering/PDF/manual partial+final receipts/private portal grant+PDF+revocation: real HTTP/MySQL/Chromium passed, including owner-bound notifications and private attachment upload/preview/download/portal revocation; no SMTP or bank/provider operations.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e.message);process.exitCode=1;});

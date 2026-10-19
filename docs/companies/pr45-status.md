@@ -1,6 +1,6 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Núcleo atual4.2.2/422; BB1.1.0/101–110;
+Escopo integral em andamento. Núcleo atual4.2.3/423; BB1.1.0/101–110;
 Asaas1.4.8/148. As migrations publicadas402–412 foram preservadas. Não há
 merge/deploy/release nem autorização implícita por um resultado de CI.
 
@@ -25,7 +25,8 @@ Inventários atualizados localizam revisão; não medem bugs, cobertura ou concl
 | Recebimentos manuais | Entrada explícita no writer; ACL/owner/saldo sob lock, referência, retry, status e auditoria atômicos | Invoices/concorrência e regressões writer Asaas | Registro manual local; não confirma banco; origens BB/Asaas recusadas para revisão própria |
 | PDF de faturas nomeadas | DTO autorizado e TCPDF; staff e portal privado com permissão nativa explícita; revalidação/auditoria antes dos bytes | PDF real, A/B, legado NULL e testes414 de revogação/HTTP | Lista/PDF de faturas emitidas do cliente e empresa próprios; rascunhos ocultos; sem conceder demais operações ou histórico compartilhado |
 | Notificação de fatura no portal | Contato privado com permissão explícita, template/SMTP próprio, recibo e fila transacionais, revalidação antes do transporte | Delivery PDO/worker/concorrência e fluxo HTTP A/B adicionados no422 | Agendamento e aceite do transporte são estados separados; SMTP simulado nos testes; sem PDF público |
-| Demais operações financeiras | Créditos/refunds/estornos, recorrência, anexos, relatórios/API restantes | Suítes existentes e inventários | Pendências técnicas; gates preservados |
+| Anexos de fatura | BLOB privado, upload/download/preview PNG e ocultação auditados; publicação explícita por arquivo no portal | Nova suíte A/B/principal/NULL, quotas reais, corrupção/falhas e revogação concorrente; Chromium423 | Sem URL pública; PDF só download; ocultação conserva histórico; demais domínios de arquivo pendentes |
+| Demais operações financeiras | Créditos/refunds/estornos, recorrência, relatórios/API e anexos de outros domínios | Suítes existentes e inventários | Pendências técnicas; gates preservados |
 | Projetos/tarefas/despesas/outros módulos | Barreiras e adaptações parciais existentes | Testes por consumidor | Operação positiva completa pendente |
 | BB API Cobrança | Perfis/credenciais criptografadas nativas; OAuth, registro, consulta com prova de conta e pedido/confirmação de baixa; outbox e origem imutável | Cliente HTTP simulado24 checks; composição MySQL/concorrência e MariaDB adicionadas no413, resultado depende do SHA final | Perfil17/simples/BRL sem ajustes/Pix; sem pagamento API automático.419 adiciona crédito explícito16 integral sem ajustes; alteração, webhook mTLS e demais perfis financeiros ainda pendentes; nenhuma homologação |
 | CNAB240 | Codec P/Q e parser T/U restritos; originação ligada à fatura, reserva durável, retry e download auditado | Fixtures + novos testes de composição/concorrência MySQL/HTTP no baseline412 | Geração local condicionada a contrato/perfil; declaração manual de envio não é aceite; sem transporte ou homologação |
@@ -180,3 +181,45 @@ O HEAD anterior `b413fa7171f4d294488b35223c346d2f1ccf67df` passou nos16 workflow
 incluindo BB API A/B no navegador. Essa evidência não é reaproveitada para o422.
 Anexos, créditos/refunds/estornos/recorrência, relatórios/APIs, demais consumidores,
 Asaas positivo e ampliações BB continuam pendências técnicas, separadas da homologação.
+
+
+## Incremento423 — anexos privados de faturas e portal
+
+`CompanyInvoiceAttachments` armazena blobs imutáveis em tabela própria, sem caminho
+no disco ou URL pública. `admin/company_invoices` aceita multipart com contexto de
+aba/CSRF e invoices/view+edit. Listar/baixar/visualizar PNG exige invoices/view e
+owner do pai e filho. Principal explícita funciona; NULL legado não é adotado.
+PDF de até2 MiB é entregue como attachment com sandbox/nosniff; não é declarado
+sanitizado ou certificado. PNG/JPEG até512 KiB usa o normalizador raster existente
+(1600 pixels por dimensão/2 milhões de pixels), regravado como PNG. Tipos executáveis,
+SVG, caminhos e arquivos além dos limites são recusados. Preview só de PNG regravado.
+
+Cada upload possui chave durável, ator/empresa/pai/nome/mime/hash/visibilidade
+conferidos no retry. Recibo cruzado é recusado antes de hidratar nome/conteúdo.
+Conteúdo/hash/tamanho são conferidos na gravação e antes do download. Upload,
+ocultação e downloads precisam confirmar auditoria; falha não libera bytes nem
+muda estado parcialmente. Ocultação é idempotente e não apaga histórico; retry de
+upload antigo não ressuscita arquivo. Até20 uploads/20 MiB por fatura, contando
+ocultos. Os limites de contagem e20 MiB foram exercitados com conteúdo persistido.
+
+Portal só lista arquivos com publicação explícita pelo operador, sessão/cliente/
+empresa/permissão nativa1 e fatura emitida próprios. Lista lê metadados em lote e
+nunca BLOBs. Download é POST com CSRF, valida pai+filho+visibilidade e registra contato
+sem e-mail/bearer. Arquivo privado, oculto, rascunho, ID cruzado ou permissão revogada
+não libera bytes. Compartilhar identidade não compartilha arquivos ou contatos.
+
+Migration423 cria `company_invoice_attachments`, PK ascii_bin, metadados utf8mb4_bin,
+mediumblob, FK empresa/fatura, índice origem/pai/estado; valida tipos/defaults/engine/
+PK/índices/FKs. Default-public1 é rejeitado. Sem DDL em migrations históricas, sem
+purga ou downgrade destrutivo. Versionamento BB permanece1.1.0/110.
+
+| Prova local PHP8.3.6 | Resultado | Limite |
+|---|---|---|
+| invoice_attachments.php |134 verificações acumuladas em SQLite, incluindo89 de faturas/portal anteriores | Não somar suítes incluídas; não prova locks |
+| invoice_attachment_concurrency.php |152 verificações acumuladas em MariaDB10.11.14: A/B/principal/NULL, ACL view/edit, portal, integridade/rollback/quotas reais e dois processos com espera observada/revogação | Banco real local; sem provedor externo |
+| companies_invoices_browser.cjs |Novo fluxo A/B de multipart/retry, binário/preview, portal explícito/privado, ocultação/retry e409 de aba obsoleta | Resultado HTTP/MySQL/Chromium atribuído somente ao HEAD423 após CI |
+
+O HEAD422 `804bf98ee708cd4c80ee31c47185f7864bb0f8c5` passou nas18 execuções dos16
+workflows, incluindo notificação no CRM real. Essa passagem não valida o novo423.
+Persistem créditos/refunds/estornos/recorrência, outros documentos/consumidores,
+Asaas positivo e ampliações bancárias. Nenhuma homologação API/240/400 ou SMTP externo.

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__.'/CompanyPortal.php';
+require_once __DIR__.'/CompanyInvoiceAttachmentSchema.php';
 require_once __DIR__.'/issuers/InvoiceIssuerDocumentData.php';
 
 /** Read-only named-company invoices, private contact permission and native document DTO; no legacy finance hydration. */
@@ -14,7 +15,8 @@ final class CompanyPortalInvoices
     private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private function transaction(callable $work)
     {
-        return IssuerTransaction::run($this->db,$this->p,['issuers_lock','issuers_registry','issuers_installation_identity','issuers_clients','contacts','clients','contact_permissions','invoices','issuers_invoice_documents','currencies','issuers_audit'],$work);
+        $extra=[];if($this->db->table_exists($this->p.'company_invoice_attachments')){CompanyInvoiceAttachmentSchema::assertValid($this->db,$this->p);$extra[]='company_invoice_attachments';}
+        return IssuerTransaction::run($this->db,$this->p,array_merge($extra,['issuers_lock','issuers_registry','issuers_installation_identity','issuers_clients','contacts','clients','contact_permissions','invoices','issuers_invoice_documents','currencies','issuers_audit']),$work);
     }
     private function identity(array $session,int $issuer,bool $lock):?array
     {
@@ -27,6 +29,13 @@ final class CompanyPortalInvoices
         $who=$this->identity($session,$issuer,$lock);if(!$who)throw new DomainException('company_portal_invoice_unavailable');
         if(!$this->rows('SELECT id FROM '.$this->p.'invoices WHERE id=? AND issuer_id=? AND clientid=? AND status IN (1,2,3,4,5)'.($lock?' FOR UPDATE':''),[$invoice,$issuer,$who['client_id']]))throw new DomainException('company_portal_invoice_unavailable');return $who;
     }
+    /** Authority for the private blob reader, only inside its own transaction on this connection. */
+    public function attachmentIdentityInOwnedTransaction(array $session,int $issuer,int $invoice):array
+    {
+        IssuerTransaction::assertOwned($this->db,$this->p,['issuers_registry','issuers_installation_identity','issuers_clients','clients','contacts','contact_permissions','invoices','issuers_invoice_documents','company_invoice_attachments','issuers_audit']);
+        $who=$this->invoice($session,$issuer,$invoice,true);
+        if(!$this->rows('SELECT invoice_id FROM '.$this->p.'issuers_invoice_documents WHERE invoice_id=? AND issuer_id=?',[$invoice,$issuer]))throw new DomainException('company_portal_invoice_unavailable');return $who;
+    }
     /** NULL means no financial permission; an empty authorized list is distinct in the UI. */
     public function page(array $session,$issuer,$before=0):?array
     {
@@ -34,7 +43,16 @@ final class CompanyPortalInvoices
         return $this->transaction(function()use($session,$issuer,$before):?array{
             $who=$this->identity($session,$issuer,true);if(!$who)return null;
             $sql='SELECT i.id,d.formatted_number number,i.date,i.duedate,i.status,i.total,c.name currency FROM '.$this->p.'invoices i JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id JOIN '.$this->p.'currencies c ON c.id=i.currency WHERE i.issuer_id=? AND i.clientid=? AND i.status IN (1,2,3,4,5)'.($before?' AND i.id<?':'').' ORDER BY i.id DESC LIMIT 51';$args=[$issuer,$who['client_id']];if($before)$args[]=$before;$rows=$this->rows($sql,$args);$next=count($rows)>50?(int)$rows[49]['id']:null;
-            return ['items'=>array_slice($rows,0,50),'next'=>$next];
+            $rows=array_slice($rows,0,50);
+            $attachments=[];
+            if($rows&&$this->db->table_exists($this->p.'company_invoice_attachments')){
+                $ids=array_map('intval',array_column($rows,'id'));
+                $files=$this->rows('SELECT invoice_id,file_key,filename,mime,byte_size FROM '.$this->p.'company_invoice_attachments WHERE issuer_id=? AND invoice_id IN ('.implode(',',array_fill(0,count($ids),'?')).') AND active=1 AND portal_visible=1 ORDER BY created_at,file_key LIMIT 1001',array_merge([$issuer],$ids));
+                if(count($files)>1000)throw new RuntimeException('issuer_invoice_attachment_limit_invalid');
+                foreach($files as $file){$parent=(int)$file['invoice_id'];if(count($attachments[$parent]??[])>=20)throw new RuntimeException('issuer_invoice_attachment_limit_invalid');unset($file['invoice_id']);$attachments[$parent][]=$file;}
+            }
+            foreach($rows as &$row)$row['attachments']=$attachments[(int)$row['id']]??[];unset($row);
+            return ['items'=>$rows,'next'=>$next];
         });
     }
     private function assertEngines():void

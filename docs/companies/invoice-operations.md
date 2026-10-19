@@ -75,7 +75,7 @@ executados no SHA da matriz, sem atribuir uma execução antiga a código novo.
 
 Portal de faturas emitidas já possui lista/PDF próprio e permissão nativa explícita
 (ver [portal](portal-recovery.md)). Permanecem pendentes créditos/refunds/estornos,
-recorrência, anexos, relatórios agregados, API pública e
+recorrência, anexos de outros domínios, relatórios agregados, API pública e
 integrações dos demais módulos. Os gates correspondentes não foram removidos.
 API BB, originação/remessas e conciliação bancária continuam frentes técnicas próprias;
 esta operação manual não as homologa nem transforma retorno observacional em baixa.
@@ -108,4 +108,34 @@ A fila limpa aparece como “registro preservado”, sem inferir sucesso anterio
 Testes de fila usam o worker real com a chamada final de SMTP capturada. O teste
 HTTP/Chromium agenda A/B sem rodar SMTP. Entrega real depende de configuração e
 validação externa própria; não foi realizada nesta implementação. Os demais
-fluxos financeiros e anexos continuam pendentes conforme a matriz da PR45.
+fluxos financeiros continuam pendentes conforme a matriz da PR45.
+
+
+## Anexos privados (423)
+
+Na consulta, “Adicionar anexo privado” recebe PDF até2 MiB ou PNG/JPEG até512 KiB e
+1600 pixels por dimensão. Imagens são regravadas como PNG; PDFs são downloads com
+sandbox/nosniff, sem promessa de sanitização. Não há armazenamento em URL pública,
+link por hash de fatura ou caminho físico. Nome não aceita caminhos/controles.
+A equipe com faturas Visualizar pode listar/baixar e abrir preview PNG. Adicionar
+ou ocultar exige também Editar. Nenhum fluxo carrega handlers de uploads legados.
+
+“Disponibilizar este arquivo no portal” começa desmarcado e vale somente para o
+novo arquivo. O contato ainda precisa de login próprio e permissão nativa de
+faturas, no cliente/empresa da fatura. Compartilhamento de identidade não transfere
+arquivos. A opção não cria um endereço público. Cada download revalida pai/filho,
+visibilidade e permissões sob lock e confirma auditoria antes dos bytes.
+
+“Ocultar anexo; preservar histórico” revoga novos downloads e conserva conteúdo e
+proveniência. Repetir a ocultação é seguro; repetir upload antigo não ressuscita o
+arquivo. Até20 uploads/20 MiB contam o histórico completo, incluindo ocultos. Não
+existe purga automática ou exclusão física neste recorte. Limite atingido exige
+política de retenção futura explícita, sem apagar recibos para contornar quota.
+
+Conteúdo, tamanho e hash são validados antes da entrega; corrupção exige revisão.
+Falha de auditoria não aplica upload/ocultação parcial e não libera download. O
+portal nunca lista metadados privados e não entrega rascunhos. Download do portal
+é POST/CSRF; sessões/permissões revogadas e IDs cruzados retornam indisponível.
+
+Testes em SQLite/MariaDB e o fluxo Chromium423 estão na matriz por SHA. Não há
+homologação de arquivos bancários ou entrega externa envolvida neste fluxo.

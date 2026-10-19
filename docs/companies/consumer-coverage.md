@@ -9,6 +9,8 @@ nativa e lista/PDF de faturas emitidas. Faturas nomeadas já têm emissão, edi�
 elegível, cancelamento, PDF e recebimento manual;417 amplia tributos/descontos/ajustes.
 422 acrescenta notificação ao contato privado com permissão, fila/recibo/auditoria
 atômicos e revalidação antes do transporte; SMTP externo não foi executado.
+423 acrescenta anexos de fatura em BLOB privado, upload/preview PNG/download e
+portal com publicação explícita por arquivo e revalidação; histórico é preservado.
 Há execuções MySQL/concorrência/CRM HTTP/Chromium nos SHAs referenciados em
 [pr45-status.md](pr45-status.md). Isso não libera todos os consumidores nem
 comprova SMTP externo ou homologação bancária. O novo código tem resultado próprio

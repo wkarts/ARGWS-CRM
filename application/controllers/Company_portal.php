@@ -30,6 +30,14 @@ class Company_portal extends CI_Controller
                     $this->session->unset_userdata($sessionKey);$this->session->sess_regenerate(true);
                     redirect($this->config->site_url('company_portal/index/'.$issuer),'location',303);return;
                 }
+                if($action==='invoice_attachment'){
+                    if(!$current||!is_array($identity)){show_404();return;}
+                    require_once APPPATH.'services/CompanyPortalInvoices.php';require_once APPPATH.'services/CompanyInvoiceAttachments.php';
+                    $invoice=$this->input->post('invoice_id',false);$key=$this->input->post('file_key',false);if(!is_string($key)){show_404();return;}
+                    try{$file=(new CompanyInvoiceAttachments($this->db,db_prefix()))->portalDownload(new CompanyPortalInvoices($this->db,db_prefix(),$portal),$identity,$issuer,$invoice,$key);}catch(DomainException $denied){show_404();return;}
+                    $this->output->set_header("Content-Security-Policy: sandbox; default-src 'none'");
+                    $this->output->set_header('Content-Disposition: attachment; filename="anexo.'.($file['mime']==='image/png'?'png':'pdf').'"; filename*=UTF-8\'\''.rawurlencode($file['filename']));$this->output->set_content_type($file['mime'])->set_output($file['content']);return;
+                }
                 if($action==='invoice_pdf'){
                     if(!$current||!is_array($identity)){show_404();return;}
                     require_once APPPATH.'services/CompanyPortalInvoices.php';
