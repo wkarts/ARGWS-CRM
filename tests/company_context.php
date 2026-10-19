@@ -260,4 +260,14 @@ $ci = contextEnvironment($f, $s, 'invoices', 'index'); $ci->input->cli = true; $
 CompanyRequestScope::bootstrap($ci); essentialCheck($s->reads === $beforeReads, 'CLI ignores browser selection');
 essentialCheck((int)$db->query("SELECT total FROM {$p}invoices WHERE id=42")->row()->total === 125000, 'all tests preserve financial rows');
 CompanyRequestScope::finish();
+// Actual loader decision, deliberately without modules_helper/app_modules hydration.
+if(!class_exists('CI_Loader',false)){class CI_Loader {}}
+if(!class_exists('CI',false)){class CI { public static $APP; }}
+require_once APPPATH.'core/App_Loader.php';
+$loader=(new ReflectionClass(App_Loader::class))->newInstanceWithoutConstructor();$prefixDecision=new ReflectionMethod(App_Loader::class,'canMyPrefixViewFile');
+$ci=contextEnvironment($f,$s,'banco_brasil','index');$ci->router->module='banco_brasil';$ci->router->directory='../../modules/banco_brasil/controllers/';CompanyRequestScope::beforeHydration($ci);
+essentialCheck($prefixDecision->invoke($loader,'banco_brasil',APP_MODULES_PATH.'banco_brasil/views/index.php')===false,'sealed BB renderer does not call unavailable module_supports/app_modules');
+essentialCheck($prefixDecision->invoke($loader,null,APPPATH.'views/admin/companies/context.php')===false,'sealed core views also refuse unreviewed my_ overrides');
+CompanyRequestScope::finish();
+essentialCheck($prefixDecision->invoke($loader,null,APPPATH.'views/admin/includes/head.php')===true,'ordinary legacy core view override behavior is preserved');
 echo 'Company context/bootstrap: ' . $GLOBALS['essentialChecks'] . ' checks passed (' . $db->driver() . ").\n";

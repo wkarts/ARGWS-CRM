@@ -1,12 +1,12 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Núcleo atual4.1.1/411; BB1.0.7/101–107;
+Escopo integral em andamento. Núcleo atual4.1.2/412; BB1.0.7/101–107;
 Asaas1.4.8/148. As migrations publicadas402–408 foram preservadas. Não há
 merge/deploy/release nem autorização implícita por um resultado de CI.
 
 Os incrementos405 e406 possuem provas MySQL/HTTP/Chromium publicadas. Para407,
 a correção de navegação está em44260b61; consultar os checks desse SHA. O incremento408 está validado em a8b17f9 (MySQL8.1/8.5 e stack HTTP/Chromium).
-Para411, consultar o HEAD e seus runs antes de atribuir resultado de SHA anterior.
+Para412, consultar o HEAD e seus runs antes de atribuir resultado de SHA anterior.
 Inventários atualizados localizam revisão; não medem bugs, cobertura ou conclusão.
 
 | Requisito | Implementação atual | Testes executáveis/evidência | Estado e limites |

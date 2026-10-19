@@ -1,7 +1,7 @@
 'use strict';
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
 const assert = require('node:assert/strict');
-const { execFileSync } = require('node:child_process');
+const { execFileSync, spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const { chromium } = require('playwright');
 const url = process.env.ISSUERS_BROWSER_URL;
@@ -99,5 +99,5 @@ async function next(page) { await navigate(page, page.locator('section form butt
   await select(b);response=await context.request.post(url+'/admin/banco_brasil/download_remittance',{form:data});assert.equal(response.status(),409,'stale context rejected before old batch download');
   const cross=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(cross.status(),403,'selected B cannot request A banking history');
   assert.deepEqual(errors,[]);console.log('BB invoice-bound CNAB240 declaration/generation/download/manual report/return upload/assisted receipt/retry and A/B scope: actual HTTP/MySQL/Chromium, no bank calls.');
- }finally{await browser.close();}
+ }catch(error){const logs=spawnSync('docker',['logs','--tail','80',app],{encoding:'utf8'});console.error('Disposable BB HTTP server diagnostic:',(logs.stdout||'')+(logs.stderr||''));throw error;}finally{await browser.close();}
 })().catch(e=>{console.error(e.stack);process.exitCode=1;});

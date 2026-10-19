@@ -1,6 +1,6 @@
 # PR45 — estado da integração BB e Empresas
 
-Código atual: núcleo4.1.1/411, BB1.0.7/107, Asaas1.4.8/148. A matriz
+Código atual: núcleo4.1.2/412, BB1.0.7/107, Asaas1.4.8/148. A matriz
 [atual](companies/pr45-status.md) e os incrementos406–411 abaixo substituem as
 pendências do checkpoint405 preservado como histórico. Conferir o HEAD remoto e
 os testes do SHA final; não há homologação externa, merge ou deploy.
@@ -203,3 +203,13 @@ O teste HTTP410 também expôs o diretório real do roteador MX
 (`../../modules/banco_brasil/controllers/`).411 reconhece somente o controlador e
 as ações BB revisadas, antes do autoload. A lista fechada e o token de empresa
 permanecem; diretórios/métodos não revisados não passam a ser isolados por prefixo.
+
+## Incremento412: renderer nativo isolado
+
+O teste HTTP411 expôs a chamada a `module_supports()`/`app_modules` pelo loader de
+views, após a barreira MX ter sido corrigida. O contexto isolado não carrega esse
+registro legado.412 recusa overrides `my_` não revisados em views seladas, antes
+de consultar suporte de módulo, e preserva o comportamento legado fora desse
+contexto. O teste usa a decisão do `App_Loader` real sem módulos/helper carregados.
+O BB permanece107; este incremento altera o renderer do núcleo, sem DDL ou mudança
+funcional nos arquivos de módulos. Repetir HTTP/Chromium no SHA412.
