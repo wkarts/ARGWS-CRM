@@ -5,6 +5,11 @@ declare(strict_types=1);
 /** Query boundary: SQL, bindings and identifiers never escape via framework HTML/query logs. */
 final class IssuerStorage
 {
+    /** MySQL NULL and MariaDB's unquoted SQL expression NULL; never a missing key or quoted literal. */
+    public static function sqlNullDefault(array $column): bool
+    {
+        return array_key_exists('COLUMN_DEFAULT',$column)&&in_array($column['COLUMN_DEFAULT'],[null,'NULL'],true);
+    }
     public static function query($db,string $sql,array $params=[])
     {
         return self::run($db,static fn()=>$db->query($sql,$params));

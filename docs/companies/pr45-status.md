@@ -1,6 +1,6 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Núcleo atual4.1.4/414; BB1.0.8/101–108;
+Escopo integral em andamento. Núcleo atual4.1.5/415; BB1.0.8/101–108;
 Asaas1.4.8/148. As migrations publicadas402–412 foram preservadas. Não há
 merge/deploy/release nem autorização implícita por um resultado de CI.
 
@@ -8,8 +8,8 @@ Os incrementos405 e406 possuem provas MySQL/HTTP/Chromium publicadas. Para407,
 a correção de navegação está em44260b61; consultar os checks desse SHA. O incremento408 está validado em a8b17f9 (MySQL8.1/8.5 e stack HTTP/Chromium).
 O baseline412 (7aa56e60) passou nos16 workflows, incluindo originação e retorno
 assistido por HTTP/Chromium. 413/API passou em MySQL/PHP8.1/8.5 e HTTP/Chromium. O job MariaDB detectou
-cache de locks no teste e SQL NULL no metadata do núcleo, tratados nos incrementos
-seguintes. Para414/portal/MariaDB, consultar o HEAD e seus runs;
+cache de locks no teste e SQL NULL no metadata do núcleo/templates/fila, tratados nos incrementos
+seguintes. Para415/portal/MariaDB, consultar o HEAD e seus runs;
 não atribuir os resultados412 aos novos testes.
 Inventários atualizados localizam revisão; não medem bugs, cobertura ou conclusão.
 

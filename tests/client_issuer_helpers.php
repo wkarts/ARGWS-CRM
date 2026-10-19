@@ -39,4 +39,10 @@ check(array_column(get_customer_profile_file_sharing('file_id=1 OR file_id=2'),'
 check(login_as_client(2) === false, 'staff impersonation cannot bypass ownership');
 check(handle_client_attachments_upload(2) === 0 && handle_contact_profile_image_upload(20) === false, 'upload helpers reject before hooks/files');
 check($model->db->writes === 0 && $GLOBALS['effects'] === [], 'helper denials have no writes or effects');
+$pdo->exec("CREATE TABLE q_contact_permissions(id INT,permission_id INT,userid INT); INSERT INTO q_contact_permissions VALUES(1,1,10),(2,1,20),(3,2,20)");
+class app {} // Framework library registration only; the production permission helper is exercised below.
+check(has_contact_permission('invoices',10)===true,'legacy native contact permission remains usable');
+check(has_contact_permission('invoices',20)===false,'private native permission1 cannot open legacy invoice consumers');
+check(has_contact_permission('estimates',20)===false,'other private permissions cannot open unreviewed legacy consumers');
+check(has_contact_permission('invoices',999)===false,'unknown contact denied before module/catalog hydration');
 echo "Client issuer helpers: $n checks passed (real helpers / SQLite)\n";

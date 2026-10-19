@@ -1,6 +1,6 @@
 # PR45 — estado da integração BB e Empresas
 
-Código atual: núcleo4.1.4/414, BB1.0.8/108, Asaas1.4.8/148. A matriz
+Código atual: núcleo4.1.5/415, BB1.0.8/108, Asaas1.4.8/148. A matriz
 [atual](companies/pr45-status.md) e os incrementos406–413 abaixo substituem as
 pendências do checkpoint405 preservado como histórico. Conferir o HEAD remoto e
 os testes do SHA final; não há homologação externa, merge ou deploy.
@@ -296,3 +296,23 @@ Os novos testes de portal usam SQLite local, MySQL/MariaDB com dois leitores rea
 bloqueados durante revogação e HTTP/Chromium com concessão/PDF/IDs A-B/revogação.
 Atribuir passagem somente ao SHA final. Ainda não há entrega SMTP externa,
 homologação bancária ou rollout completo dos demais domínios.
+
+## Incremento415: padrões NULL de mensagens e barreira legada do contato
+
+A execução MariaDB414 confirmou76 verificações do núcleo,47 de clientes, concorrência
+e49 do driver BB. A seguir expôs a mesma representação de DEFAULT NULL em templates.
+`IssuerStorage::sqlNullDefault` centraliza a distinção: null do driver ou expressão
+não citada `NULL` são válidos; metadado ausente, literal citado e DEFAULT0 não são.
+Núcleo, fila e templates usam a mesma validação. Os testes nativos alteram o default
+para0 e exigem rejeição, restauram NULL e exigem passagem; nenhum dado é reatribuído.
+
+A permissão nativa do contato1 é consumida somente pelo novo portal com owner e
+fatura nomeada. O helper legado `has_contact_permission` agora recusa contatos
+privados antes de hidratar catálogo/módulos; uma concessão feita no portal nativo
+não libera os consumidores legados ainda não revisados. O controle positivo de
+contato legado sem owner permanece. Isso preserva a barreira de rollout, sem
+remover a permissão nativa nem criar outra fonte de concessões.
+
+O CI do415 precisa confirmar portal/concorrência, MariaDB e HTTP/Chromium. O414
+já passou Empresas em MySQL/PHP8.1/8.5; não atribuir essa evidência ao415 sem seus
+runs. A matriz continua parcial e nenhuma homologação externa foi executada.

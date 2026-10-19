@@ -942,7 +942,7 @@
       "evidence": ""
     },
     "application/helpers/clients_helper.php": {
-      "sha256": "93671849dd66f743a6c2e6a190a034190064bb3971f41a60c3d0c63f7e8ced09",
+      "sha256": "71b963bb30dbee1430947fc7167608484828fdb76f55efe077e112660d474f7b",
       "categories": [
         "customer_privacy",
         "invoice_table"
@@ -971,18 +971,20 @@
         628,
         662,
         691,
-        754,
-        784,
-        837,
-        851,
-        928,
-        1021,
-        1025,
-        1029,
+        707,
+        709,
+        755,
+        785,
+        838,
+        852,
+        929,
+        1022,
+        1026,
         1030,
-        1141,
-        1249,
-        1261
+        1031,
+        1142,
+        1250,
+        1262
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3060,7 +3062,7 @@
       "evidence": ""
     },
     "application/services/issuers/IssuerFinancialSchema.php": {
-      "sha256": "8deb25e9969217c8bed2f5e28327785ced4610113544689defad740786069ea4",
+      "sha256": "2c9cb7ba3603693cbab09711b976c08e7c2a7ff550a1c0158f40f9e62ff8c4e8",
       "categories": [
         "invoice_table"
       ],

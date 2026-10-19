@@ -703,6 +703,10 @@ function have_assigned_customers($staff_id = '')
 function has_contact_permission($permission, $contact_id = '')
 {
     $CI = &get_instance();
+    if (empty($contact_id)) { $contact_id = get_contact_user_id(); }
+    if (!class_exists(\app\services\ClientIssuerScope::class)) { require_once APPPATH.'services/ClientIssuerScope.php'; }
+    // Private contacts use the owner-bound portal. Native permission1 never opens unreviewed legacy consumers.
+    if (!\app\services\ClientIssuerScope::isLegacyContact($CI->db,db_prefix(),$contact_id)) { return false; }
 
     if (! class_exists('app')) {
         $CI->load->library('app');
@@ -710,9 +714,6 @@ function has_contact_permission($permission, $contact_id = '')
 
     $permissions = get_contact_permissions();
 
-    if (empty($contact_id)) {
-        $contact_id = get_contact_user_id();
-    }
 
     foreach ($permissions as $_permission) {
         if ($_permission['short_name'] == $permission) {

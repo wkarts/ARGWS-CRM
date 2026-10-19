@@ -76,4 +76,11 @@ essentialCheck(!$portal->allowAttempt($a,'127.0.0.1','recovery'),'persistent rec
 essentialCheck($portal->allowAttempt($b,'127.0.0.1','recovery'),'company throttle buckets independent');
 $audits=json_encode($db->query("SELECT event,metadata_json FROM {$p}issuers_audit")->result_array());
 essentialCheck(!str_contains($audits,$token)&&!str_contains($audits,'same@example.invalid'),'audit excludes bearer and email');
+if($db->driver()==='mysql'){
+    foreach(['mail_queue'=>[CompanyMailQueueSchema::class,'company_mail_queue_schema_invalid'],'emailtemplates'=>[CompanyEmailTemplateSchema::class,'company_email_template_schema_invalid']] as $table=>[$schema,$failure]){
+        $db->query("ALTER TABLE {$p}{$table} ALTER COLUMN issuer_id SET DEFAULT 0");
+        essentialThrows(fn()=>$schema::ensure($db,$p),$failure,'mail/template defaults cannot adopt unowned rows');
+        $db->query("ALTER TABLE {$p}{$table} ALTER COLUMN issuer_id SET DEFAULT NULL");$schema::ensure($db,$p);essentialCheck(true,'actual engine SQL NULL accepted for mail/template ownership');
+    }
+}
 echo 'Owner-bound portal/contacts/recovery: '.$GLOBALS['essentialChecks'].' checks passed ('.$db->driver().'). No external delivery.'.PHP_EOL;

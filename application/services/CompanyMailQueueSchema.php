@@ -17,7 +17,7 @@ final class CompanyMailQueueSchema
         $columns = IssuerStorage::query($db, 'SELECT COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?', [$table,'issuer_id'])->result_array();
         $column = $columns[0] ?? [];
         if (count($columns)!==1 || preg_replace('/^int\([0-9]+\)/','int',strtolower((string)($column['COLUMN_TYPE']??'')))!=='int unsigned'
-            || ($column['IS_NULLABLE']??null)!=='YES' || ($column['COLUMN_DEFAULT']??null)!==null) {
+            || ($column['IS_NULLABLE']??null)!=='YES' || !IssuerStorage::sqlNullDefault($column)) {
             throw new RuntimeException('company_mail_queue_schema_invalid');
         }
     }

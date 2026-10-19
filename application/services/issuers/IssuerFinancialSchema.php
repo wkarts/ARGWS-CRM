@@ -62,7 +62,7 @@ final class IssuerFinancialSchema
         // MySQL returns PHP NULL; MariaDB reports the unquoted SQL expression NULL.
         // The quoted literal 'NULL' and numeric defaults remain incompatible.
         $ownerColumn = self::rows($db, 'SELECT COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?', [$prefix . 'invoices', 'issuer_id']);
-        if (count($ownerColumn) !== 1 || !in_array($ownerColumn[0]['COLUMN_DEFAULT'], [null, 'NULL'], true)) { throw new RuntimeException('issuer_financial_schema_invalid'); }
+        if (count($ownerColumn) !== 1 || !IssuerStorage::sqlNullDefault($ownerColumn[0])) { throw new RuntimeException('issuer_financial_schema_invalid'); }
         foreach ([[$prefix.'invoices','issuer_scope',false,['issuer_id','id']], [$p.'sequences','PRIMARY',true,['issuer_id','series']], [$p.'invoice_documents','PRIMARY',true,['invoice_id']], [$p.'invoice_documents','issuer_series_number',true,['issuer_id','series','number']]] as [$table,$key,$unique,$columns]) {
             $index = self::indexes($db, $table)[$key] ?? null;
             if ($index !== ['unique'=>$unique,'columns'=>$columns]) { throw new RuntimeException('issuer_financial_schema_invalid'); }

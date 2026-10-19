@@ -12,7 +12,7 @@ final class CompanyEmailTemplateSchema
         if (!IssuerStorage::fieldExists($db,'issuer_id',$table)) IssuerStorage::query($db,"ALTER TABLE `{$table}` ADD `issuer_id` INT UNSIGNED NULL DEFAULT NULL");
         $rows=IssuerStorage::query($db,'SELECT COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?',[$table,'issuer_id'])->result_array();
         $column=$rows[0]??[];
-        if (count($rows)!==1 || preg_replace('/^int\([0-9]+\)/','int',strtolower((string)($column['COLUMN_TYPE']??'')))!=='int unsigned' || ($column['IS_NULLABLE']??null)!=='YES' || ($column['COLUMN_DEFAULT']??null)!==null) throw new RuntimeException('company_email_template_schema_invalid');
+        if (count($rows)!==1 || preg_replace('/^int\([0-9]+\)/','int',strtolower((string)($column['COLUMN_TYPE']??'')))!=='int unsigned' || ($column['IS_NULLABLE']??null)!=='YES' || !IssuerStorage::sqlNullDefault($column)) throw new RuntimeException('company_email_template_schema_invalid');
         $index=self::index($db,$table);
         if (!$index) { IssuerStorage::query($db,"ALTER TABLE `{$table}` ADD INDEX `issuer_template_lookup` (`issuer_id`,`slug`,`language`)");$index=self::index($db,$table); }
         if ($index!==['issuer_id','slug','language']) throw new RuntimeException('company_email_template_index_invalid');
