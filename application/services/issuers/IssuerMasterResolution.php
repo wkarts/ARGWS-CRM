@@ -41,7 +41,7 @@ final class IssuerMasterResolution
     private function audit(int $staff, string $event, array $metadata): void
     {
         IssuerStorage::query($this->db, "INSERT INTO {$this->prefix}issuers_audit(actor_id,event,issuer_id,subject_id,created_at,metadata_json) VALUES(?,?,NULL,?,?,?)",
-            [$staff,$event,$staff,gmdate('Y-m-d H:i:s'),json_encode($metadata,JSON_THROW_ON_ERROR)]);
+            [$event==='master_designation_authorized'?0:$staff,$event,$staff,gmdate('Y-m-d H:i:s'),json_encode($metadata,JSON_THROW_ON_ERROR)]);
     }
     /** Installation-console possession authorizes a new designation, not a historical assertion. */
     public function authorizeDesignation($staff, string $reason): string

@@ -26,6 +26,7 @@ $verify=static fn($password,$hash)=>password_verify($password,$hash);
 essentialCheck($s->unresolved(),'legacy unresolved without inferred ID1/admin');
 essentialThrows(fn()=>$s->authorizeDesignation(7,'short'),'issuer_master_reason_required','explicit reason required');
 $code=$s->authorizeDesignation(7,'Authorized synthetic installation responsibility decision');
+essentialCheck((int)$db->query("SELECT actor_id FROM {$p}issuers_audit WHERE event='master_designation_authorized'")->row()->actor_id===0,'console authorization never impersonates the nominated employee');
 essentialCheck(strlen($code)===64,'256-bit authorization');
 $stored=$db->query("SELECT * FROM {$p}issuers_master_authorizations")->result_array()[0];
 essentialCheck($stored['token_hash']===hash('sha256',$code)&&!str_contains(json_encode($stored),$code),'only digest persisted');
@@ -63,4 +64,9 @@ $code=$s->authorizeDesignation(7,'Authorized synthetic designation for rate limi
 for($i=0;$i<5;$i++){essentialThrows(fn()=>$s->complete(7,$code,'wrong',$verify),'issuer_master_confirmation_denied','wrong password denied');}
 essentialThrows(fn()=>$s->complete(7,$code,'synthetic-confirmation',$verify),'issuer_master_confirmation_denied','five failures require reissue');
 essentialCheck($s->unresolved(),'failed attempts never resolve identity');
+if($db->driver()==='mysql'){
+    $db->query("ALTER TABLE {$p}issuers_master_authorizations DROP PRIMARY KEY, ADD PRIMARY KEY(token_hash(32))");
+    essentialThrows(fn()=>IssuerMasterResolutionSchema::ensure($db,$p),'issuer_master_schema_invalid','prefix index cannot attest complete authorization digest');
+    essentialCheck((int)$db->query("SELECT SUB_PART n FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND INDEX_NAME='PRIMARY'",[$p.'issuers_master_authorizations'])->row()->n===32,'invalid existing schema is not silently repaired');
+}
 echo 'Legacy master resolution: '.$GLOBALS['essentialChecks'].' checks passed ('.$db->driver().').'.PHP_EOL;

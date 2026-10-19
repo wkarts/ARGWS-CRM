@@ -77,6 +77,9 @@ rastros; restauração de aplicação/banco exige o fluxo normal de manutenção
   revogação por reemissão, retry, rate limit, auditoria/rollback, ativo/admin.
 - `tests/issuers_onboarding.php`: retomada, revisão, validação, permissões,
   defaults, preservação de acessos e legado, falhas antecipadas/tardias e retry.
+- `tests/issuers_onboarding_concurrency.php`: duas conexões MySQL observadas
+  aguardando o lock no Performance Schema, confirmação idempotente e revogação
+  do responsável enquanto os dois escritores aguardam.
 - `tests/issuers_staff_native.php`: controller/helper/serviço reais com I/O de
   framework adaptada; criação sem empresa/padrão é recusada antes do writer.
 - `tests/companies_onboarding_browser.cjs`: cenário HTTP/MySQL/Chromium real no

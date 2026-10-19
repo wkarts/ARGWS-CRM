@@ -2669,7 +2669,7 @@
       "full_operation_ready": false
     }
   ],
-  "source_manifest_sha256": "055dd45a8845447324065347237ed293ed4268c665e70dfa603e7b8f57f246d2",
+  "source_manifest_sha256": "208308d2aee6328680b9a5d540061c85e3d3c042e248656fc9e7f10da2a09534",
   "total_consumers": 10049,
   "full_register_command": "python3 scripts/register-company-consumers.py --full-output /tmp/company-consumers-full.json"
 }

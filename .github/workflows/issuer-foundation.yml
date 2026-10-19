@@ -105,6 +105,7 @@ jobs:
           php tests/issuers_core.php
           php tests/issuers_master_resolution.php
           php tests/issuers_onboarding.php
+          php tests/issuers_onboarding_concurrency.php
           php tests/issuers_core_retirement.php
           php tests/issuers_core_upgrade.php
           php tests/issuers_installation_bootstrap.php

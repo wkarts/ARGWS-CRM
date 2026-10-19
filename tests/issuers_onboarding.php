@@ -62,4 +62,8 @@ essentialCheck(essentialLegacy($f)===$before,'legacy financial/config/client row
 essentialCheck($s->pending(7)===null,'completed draft not resumed as open');
 $db->query("UPDATE {$p}staff SET admin=0 WHERE staffid=7");
 essentialThrows(fn()=>$s->read(7,$d['draft_key']),'issuer_access_denied','master demotion immediately revokes draft access');
+if($db->driver()==='mysql'){
+    $db->query("ALTER TABLE {$p}company_wizard_drafts DROP PRIMARY KEY, ADD PRIMARY KEY(draft_key(32))");
+    essentialThrows(fn()=>CompanyOnboardingSchema::ensure($db,$p),'issuer_wizard_schema_invalid','partial draft-key index rejected without data repair');
+}
 echo 'Company onboarding: '.$GLOBALS['essentialChecks'].' checks passed ('.$db->driver().').'.PHP_EOL;

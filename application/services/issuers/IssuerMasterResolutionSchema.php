@@ -21,8 +21,8 @@ final class IssuerMasterResolutionSchema
             if (preg_replace('/^(int|bigint)\([0-9]+\)/','$1',strtolower($found['COLUMN_TYPE']??'')) !== $type || ($found['IS_NULLABLE']??null) !== $nullable) { throw new RuntimeException('issuer_master_schema_invalid'); }
         }
         $table = $prefix.'issuers_master_authorizations';
-        $pk = IssuerStorage::query($db,"SELECT COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND INDEX_NAME='PRIMARY' ORDER BY SEQ_IN_INDEX",[$table])->result_array();
+        $pk = IssuerStorage::query($db,"SELECT COLUMN_NAME,SUB_PART FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND INDEX_NAME='PRIMARY' ORDER BY SEQ_IN_INDEX",[$table])->result_array();
         $engine = IssuerStorage::query($db,'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$table])->result_array();
-        if (array_column($pk,'COLUMN_NAME') !== ['token_hash'] || ($actual['token_hash']['COLLATION_NAME']??null) !== 'ascii_bin' || strtoupper($engine[0]['ENGINE']??'') !== 'INNODB') { throw new RuntimeException('issuer_master_schema_invalid'); }
+        if (array_column($pk,'COLUMN_NAME') !== ['token_hash'] || ($pk[0]['SUB_PART']??null)!==null || ($actual['token_hash']['COLLATION_NAME']??null) !== 'ascii_bin' || strtoupper($engine[0]['ENGINE']??'') !== 'INNODB') { throw new RuntimeException('issuer_master_schema_invalid'); }
     }
 }

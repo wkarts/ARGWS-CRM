@@ -16,13 +16,34 @@ Catálogo oficial: <https://www.bb.com.br/site/pro-seu-negocio/aplicativos-leiau
 
 Os PDFs completos não são incluídos no repositório. As fixtures foram construídas para os testes e não constituem arquivos homologados fornecidos pelo banco. O repositório Financial Platform foi referência de investigação, não fonte de homologação nem de implementação copiada.
 
-## Rechecagem das fontes oficiais em 18/10/2026
+## Rechecagem histórica em 18/10/2026
 
 O catálogo oficial continua listando CBR641 e CBR643 para convênio de sete posições. A busca oficial desta revisão também retornou o PDF [CBR641 de sete posições](https://www.bb.com.br/docs/pub/emp/empl/dwn/Doc2627CBR641Pos7.pdf), cuja folha de rosto informa versão junho/2024. O endereço e SHA-256 de julho/2026 registrados acima não puderam ser abertos ou recalculados nesta verificação. São referências oficiais diferentes; a revisão canônica precisa ser comparada por download binário e SHA-256 antes de liberar a remessa.
 
 No PDF de junho/2024, o trailer de remessa está definido sem ambiguidade: registro `9`, posições 2–394 em branco e sequência nas posições 395–400. O campo de moeda nas posições 85–86 enumera 02 (dólar) e 14 (euro), sem documentar código BRL neste leiaute. O candidato CBR641 continua bloqueado para cobrança BRL até o BB confirmar o campo e a revisão aplicável ao convênio.
 
-A referência oficial atual da API de Cobrança continua pública, mas a OpenAPI não ficou acessível nesta consulta. Nenhum endpoint, escopo ou requisito de certificado foi inferido; o executor API segue indisponível até que o arquivo oficial vigente possa ser inspecionado.
+## Rechecagem binária em 19/10/2026
+
+Os PDFs canônicos de julho/2026 (CBR641), julho/2023 (CBR643) e junho/2026
+(CNAB240) foram baixados integralmente novamente, extraídos e seus hashes
+coincidem com os registrados. Isso resolve a indisponibilidade de download
+mencionada na verificação histórica acima.
+
+No CBR641 de julho/2026, página 10, o trailer da **remessa** é inequívoco:
+registro 9; posições 2–394 em branco; sequência 395–400. Esse é o contrato já
+codificado pelo candidato. A nota 30 continua listando apenas 02/dólar e 14/euro;
+não autoriza inferir código BRL. A nota 10 confirma que juros zerados/omitidos
+podem herdar a taxa do beneficiário no banco.
+
+A divergência de picture é do trailer de **retorno CBR643**: posições 26–39
+compreendem 14 caracteres, mas a tabela descreve `9(013) v99`. O parser preserva
+os 14 caracteres brutos e declara a interpretação não verificada. Não converter
+essa inconsistência em valor financeiro nem confundi-la com o trailer CBR641.
+Permanece necessária confirmação do banco sobre o picture e o campo BRL.
+
+A página de Cobrança aponta para `https://apoio.developers.bb.com.br/apis/5?versaoApi=2`,
+sem OpenAPI utilizável nesta consulta; `https://api.bb.com.br/cobrancas/v2/swagger?`
+retornou 403 sem AppKey. Não foram inferidos endpoints, escopos ou certificados.
 
 ## Configuração visual e autorização
 
@@ -33,7 +54,7 @@ Menu **Banco do Brasil → Conta**:
 3. Em **Retorno**, escolher explicitamente conexão e perfil. O backend verifica que pertencem ao mesmo emitente/conta/ambiente/convênio. Não há reconhecimento automático com fallback quando o formato selecionado falha.
 4. Rever as observações registradas. Nenhuma delas cria pagamento ou altera fatura.
 
-Cada ação usa `issuer_resource_can(empresa, staff, 'banco_brasil', capability) === true` como autorização contextual completa, com capabilities nativas `view`, `manage` e `import`. A lista de empresas e a visibilidade do menu também são filtradas por `view` do recurso. O papel global não concede nem veta esse grant contextual. O catálogo nativo de capabilities continua registrado. Não existe fallback para `manage_integrations`. Administrador comum não herda grants por empresa. O administrador principal só é reconhecido pelo helper de Empresas emitentes através de registro explícito persistido, com staff ainda ativo/admin; BB não presume ID1 nem resolve esse papel por conta própria. O helper pertence à fase103 de Empresas emitentes. Até que esteja instalado e as concessões existam, a interface permanece consultativa e explica o bloqueio.
+Cada ação usa `issuer_resource_can(empresa, staff, 'banco_brasil', capability) === true` como autorização contextual completa, com capabilities nativas `view`, `manage` e `import`. A lista de empresas e a visibilidade do menu também são filtradas por `view` do recurso. O papel global não concede nem veta esse grant contextual. O catálogo nativo de capabilities continua registrado. Não existe fallback para `manage_integrations`. Administrador comum não herda grants por empresa. O administrador principal só é reconhecido pelo helper de Empresas emitentes através de registro explícito persistido, com staff ainda ativo/admin; BB não presume ID1 nem resolve esse papel por conta própria. O helper pertence ao núcleo Empresas na PR45 unificada. As concessões são explícitas; ausência de autorização permanece bloqueada. O módulo histórico issuers não é carregado operacionalmente.
 
 POST, CSRF próprio, escapamento, auditoria e escopo são preservados. Consultas e transações desabilitam `db_debug/save_queries` durante o acesso e restauram o estado do chamador. Falha de consulta mostra aviso genérico de armazenamento e desabilita ações, sem se passar por ausência de dados ou falta de autorização. Esse boundary não substitui a política de logs do driver CI3 nem afirma redigir logs internos do framework; não há coleta de credenciais nesta versão. Parâmetros funcionais ficam na interface nativa, não em ENV/app-config. Nenhuma credencial é solicitada nesta fase. A API futura deverá ter configuração visual própria, protegida, mascarada e auditada, sem presumir requisitos ainda não validados.
 

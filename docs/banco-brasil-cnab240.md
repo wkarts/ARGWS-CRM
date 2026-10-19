@@ -4,7 +4,7 @@
 
 ## Estado desta entrega
 
-Módulo novo `banco_brasil`, versão **1.0.1**, com migração nativa **101**. A instalação usa `App_module_migration`; não há executor paralelo. Este é um recorte revisável do pedido de API de cobrança e CNAB 240, **não a conclusão de ambos os canais**.
+Módulo `banco_brasil`, versão **1.0.4**, com migrations nativas **101–104** preservadas. A PR45 já incorporou a PR46; Empresas pertence ao núcleo, sem carregar o módulo histórico issuers. O núcleo avança para **4.0.5/405** com responsabilidade e wizard, descritos em [Empresas](companies/onboarding.md). A instalação usa `App_module_migration`; não há executor paralelo. Este é um recorte revisável do pedido de API de cobrança e CNAB 240, **não a conclusão de ambos os canais**.
 
 Implementado e ligado à interface:
 
@@ -45,7 +45,7 @@ O projeto `wkarts/argws-financial-platform`, consultado somente para aprendizado
 - `agreement_number`, carteira e variação pertencem à identidade imutável. Alterar a identidade exige outra conexão; alterar documento/nome do emitente não reatribui a conexão já existente.
 - A partir da versão102 BB, cadastro usa `issuer_resource_can(id, staff, 'banco_brasil', 'manage') === true` como autorização contextual completa.
 - Importação e consulta usam, respectivamente, capabilities nativas `import` e `view` no mesmo recurso Banco do Brasil/Empresa emitente, sem veto ou herança de papéis globais. Lista e menu são filtrados por `view`. Não existe fallback à permissão genérica anterior.
-- O helper por recurso pertence à fase103 de Empresas emitentes, com grants explícitos. Administrador comum não herda acesso; master só vale quando explicitamente registrado pelo módulo de Empresas emitentes. Até essa dependência existir e ser concedida, a interface explica o bloqueio.
+- O helper por recurso pertence ao núcleo Empresas, com grants explícitos. Administrador comum não herda acesso; master exige identidade persistida, colaborador ativo e papel administrativo. A falta de concessão mantém a ação bloqueada.
 - Escritas exigem POST e token CSRF próprio de sessão, comparação constante, além do mecanismo global quando habilitado.
 
 Não foram implementadas permissões implícitas para desativar o gate operacional dos emitentes. Nenhuma migração concede acesso financeiro.
@@ -78,9 +78,11 @@ Para interromper o recurso, desative o módulo ou remova a concessão específic
 
 Testes locais sintéticos, PHP WASM 8.1/8.5: codec, persistência/rollback/CSRF/ACL/interface e executor nativo de migração. Veja o log/CI do commit correspondente para a contagem final; contagem sem SHA não certifica outra revisão.
 
-Testes escritos para CI real, **ainda não executados localmente**:
+Testes executados no CI do commit `30fb0f10a3ab5eac598d795ef9c712a1187b8364`, [workflow BB](https://github.com/wkarts/ARGWS-CRM/actions/runs/39197107753), sem homologação externa:
 
 - PDO/MySQL 8.4: instalação nativa, InnoDB, deduplicação, conflito, rollback, transação externa e preservação histórica.
 - Driver **mysqli CI 3 real**, dois processos: mesmo arquivo, evento reempacotado e payload conflitante; a espera pelo lock de registro PRIMARY da conexão é comprovada em `performance_schema.data_lock_waits`, identificando os dois connection IDs. Também testa transação externa SQL/CI e chained commit.
+
+Em 19/10/2026, os três PDFs oficiais foram baixados novamente e os hashes coincidiram com os registrados. A página oficial de Cobrança aponta para `https://apoio.developers.bb.com.br/apis/5?versaoApi=2`; a página depende de JavaScript e não forneceu OpenAPI utilizável nesta consulta. A URL pública `https://api.bb.com.br/cobrancas/v2/swagger?` retornou 403. Nenhuma AppKey foi utilizada.
 
 Não existe evidência de homologação, processamento de arquivo real, emissão de boleto, API autenticada ou integração de baixa PIGE. O pedido BB completo exige esses incrementos revisados, além do isolamento de emitente no core.

@@ -1,56 +1,105 @@
-# Banco do Brasil — transferência do trabalho em andamento
+# PR45 — estado da integração BB e Empresas
 
-## Ponto de partida
+## Branch e ancestralidade
 
-- Repositório público: https://github.com/wkarts/ARGWS-CRM
-- PR: https://github.com/wkarts/ARGWS-CRM/pull/45
-- Branch: `feat/banco-brasil-billing-cnab240`.
-- Base da #45: `aa58b832b3c5ed04a599caacba125b056c081ba7` (core 4.0.2 / migration 402); head revisado `a0097dd99e5213b71c9ff6853a679caaeb975f09` (core 4.0.3 / migration 403; BB 1.0.2 / migrations 101 e 102).
-- A #46 `wip/companies-core-checkpoint-5833c02e` tem base na branch da #45. Nela, BB foi adaptado ao núcleo Empresas: BB 1.0.3 / migration nativa 103 NOOP, após core 4.0.4 / migration 404. A #46 segue WIP e em rascunho; o SHA vigente está no cabeçalho do PR.
-- Este handoff descreve implementação parcial, não recomendação de merge ou homologação. Confira os SHAs atuais das duas PRs antes de iniciar alterações concorrentes.
+- PR45: https://github.com/wkarts/ARGWS-CRM/pull/45
+- Branch única de escrita: `feat/banco-brasil-billing-cnab240`; destino `main`.
+- Base publicada verificada: `aa58b832b3c5ed04a599caacba125b056c081ba7`, 4.0.2/402.
+- PR46 já incorporada por merge `cdd6f6f2c312a1aaa5f0f02056ad2e8b23eb3378`.
+  Está encerrada; não reabrir nem tratá-la como trabalho independente.
+- HEAD conferido antes deste incremento: `44cd7c3815123883d5c3168ae045a75a3347b236`.
+- Incremento publicado: `30fb0f10a3ab5eac598d795ef9c712a1187b8364`, núcleo 4.0.5/405,
+  responsável da instalação e wizard atômico. Conferir o HEAD remoto antes de escrever;
+  correções e evidências posteriores não são certificadas pelo CI de um SHA anterior.
+- BB 1.0.4/101–104 e Asaas 1.4.8/148 preservados. Núcleo402→403→404→405;
+  nenhuma migration histórica renumerada, removida ou reescrita.
 
-## O que existe
+## Implementação ligada ao CRM
 
-1. Instalação e upgrade nativos `App_module_migration`, validação estrutural InnoDB e tracking somente após sucesso.
-2. Cadastro visual de conexões com origem por empresa, conta, ambiente, convênio e carteira; oito guias administrativas.
-3. Perfis 240/400 imutáveis, seleção explícita por conexão e nenhum fallback por região/formato.
-4. Codec restrito de remessa 240 P/Q e parser de retorno T/U. Parser 400 CBR643 e codificador de candidato CBR641.
-5. Importação observacional, deduplicação/conflito de conteúdo, auditoria e proveniência transacionais. Não há baixa financeira, emissão ou envio bancário.
-6. Na composição da #46, o controlador usa `IssuerCore`/`IssuerRegistry` nativos e o `CompanyRequestScope` selecionado. A allowlist limita o contexto BB aos métodos `index`, `register_connection`, `register_layout` e `import_return`; IDs de outra empresa são recusados, e formulários POST levam o token de contexto. Os testes A/B são sintéticos; isso não prova o rollout multiempresa de todo o CRM.
+Empresas é um recurso do núcleo. `modules/issuers` continua fora da carga operacional.
+A empresa principal é a identidade persistida da instalação; não se presume ID1.
+O instalador captura o administrador realmente criado. O legado ambíguo possui agora
+uma designação explícita com autorização de console, confirmação gráfica por senha,
+expiração, limite de tentativas, vínculo ao colaborador e auditoria atômica. Isso não
+é apresentado como prova do administrador histórico. Ver [onboarding](companies/onboarding.md).
 
-## Lacunas obrigatórias
+O wizard salva rascunhos por responsável e revisões, permite retomada e aplica empresa,
+identidade canônica, preferências, acessos, padrão e auditoria em uma transação.
+O master ativo cobre empresas/recursos futuros sem copiar grants, mas continua sujeito
+às barreiras de funcionalidades não concluídas. O editor nativo de colaboradores
+recusa criação sem empresa/padrão e mantém a mensagem de falha se perfil e grants
+não forem confirmados juntos no fluxo legado.
 
-- A integração BB→núcleo Empresas está na #46, limitada às quatro rotas listadas acima. Permanecem pendentes o rollout global do contexto, validação MySQL/HTTP/navegador e consumidores de jobs, webhooks e demais módulos. Não criar outro módulo Empresas nem conceder acesso por `is_admin` global.
-- Obter e verificar a especificação OpenAPI atual do BB; implementar OAuth, proteção de credenciais/configuração visual e os executores de cobrança/consulta/cancelamento suportados pelo contrato. Não inventar endpoints, escopos ou certificados.
-- Integrar emissão, origem imutável, reserva de Nosso Número, lotes, download auditado, retry idempotente e reconciliação ao core isolado. Tabelas reservadas não provam funcionalidades conectadas.
-- Completar remessa operacional 240 e 400. O candidato 400 está intencionalmente indisponível: código BRL e divergência do picture do trailer exigem confirmação do contrato/manual. Não enviar o candidato sintético ao banco.
-- Retorno permanece observação. Definir e testar elegibilidade de baixa, pagamentos parciais, tarifas, estorno, eventos fora de ordem, reimportação e conciliação assistida antes de qualquer escrita financeira.
-- Homologar separadamente API, CNAB240 e CNAB400 por conta/convênio/carteira. Sem transações ou dados reais nesta transferência.
+BB usa `IssuerCore`/`IssuerRegistry` e o contexto nativo, com ACL por recurso/empresa.
+As quatro rotas permitidas continuam `index`, `register_connection`, `register_layout`
+e `import_return`. O cadastro preserva empresa, conta, ambiente, convênio, carteira,
+variação e identidade legal; perfis 240/400 são explícitos e imutáveis. Guias funcionam
+no shell isolado; tokens não são duplicados. A importação guarda observações,
+deduplicação, conflito e proveniência com auditoria. Nenhum pagamento é criado.
 
-## Fontes e aprendizado
+## O que continua faltando implementar
 
-Leia `docs/banco-brasil-cnab240.md` e `docs/banco-brasil-cnab400.md`: URLs oficiais BB/FEBRABAN, revisões, hashes dos PDFs e limites de cada codec estão registrados ali. Catálogo: https://www.bb.com.br/site/pro-seu-negocio/aplicativos-leiautes-de-arquivos/ .
+- Clientes privados: adoção e edição pela interface, compartilhamento explícito apenas
+  da identidade, portal e recuperação por empresa; validar leitores e consumidores
+  antes de abrir as rotas. As barreiras atuais permanecem.
+- Domínios financeiros e operacionais por empresa: faturas, créditos, pagamentos,
+  recorrências, projetos/tarefas, despesas, relatórios, exportações, arquivos, APIs,
+  módulos, cron e filas. As adaptações existentes não equivalem a rollout completo.
+- BB API: OAuth, configuração protegida por conexão, emissão/consulta/alteração/baixa
+  e notificações conforme a OpenAPI oficial vigente, sem inventar endpoints/scopes/mTLS.
+- Origem de cobrança ligada à fatura, reserva concorrente do Nosso Número, lotes,
+  geração e download auditados, reenvio idempotente e política de transmissão.
+  As tabelas reservadas ainda não são essas operações implementadas.
+- Retorno além da observação: associação comprovada à origem e título, divergências,
+  política de baixa parcial, juros/descontos/tarifas, estorno/rejeição/ordenação,
+  deduplicação entre canais e escrita no gravador financeiro aprovado.
 
-O projeto `wkarts/argws-financial-platform` foi abandonado e nunca homologado pelo usuário. É somente referência de aprendizado; não copiar stubs ou promover suporte presumido.
+Esses itens são **pendências técnicas**, não somente homologação externa.
 
-## Validação neste checkpoint
+## Contratos externos ainda necessários
 
-O total de 412 verificações PHP WASM pertence a um checkpoint anterior e não certifica os heads atuais. Use os workflows da cabeça exata das PRs para validar código e banco descartável; resultados de SHA anterior são apenas diagnóstico. Nenhum browser autenticado, credencial BB, processamento real ou homologação bancária foi realizado.
+Em 19/10/2026 os PDFs canônicos foram baixados e extraídos novamente; os hashes
+correspondem aos documentos240/400. CBR641 julho/2026, página 10, define claramente
+seu trailer de remessa: 9, brancos 2–394, sequência 395–400. A divergência de picture
+é do trailer de retorno CBR643 (26–39 tem 14 posições; picture `9(013) v99`).
+BRL no campo 85–86 do CBR641 continua sem código explícito na nota 30; juros podem
+herdar a configuração do beneficiário. O candidato 400 permanece indisponível para envio.
 
-Com PHP e MySQL de teste disponíveis:
+A página oficial aponta para `https://apoio.developers.bb.com.br/apis/5?versaoApi=2`,
+sem OpenAPI utilizável nesta consulta. `https://api.bb.com.br/cobrancas/v2/swagger?`
+retornou 403 sem AppKey. É necessária uma exportação oficial atual, sem segredos,
+ou acesso público funcional à especificação. Não usar contratos de terceiros como prova.
 
-```sh
-php tests/banco_brasil_admin.php
-php tests/banco_brasil_layouts.php
-php tests/banco_brasil_layout_migration.php
-# MYSQL_DSN/USER/PASSWORD apontando exclusivamente para banco descartável:
-php tests/banco_brasil_mysql.php
-php tests/banco_brasil_layout_mysql.php
-php tests/banco_brasil_mysql_driver.php
-python scripts/check-release-version.py
-python scripts/check-module-migration-diff.py --base origin/main --head HEAD
-```
+O usuário informou ter remessas aceitas de outra aplicação, mas elas não estão anexadas.
+Quando fornecidas, tratar os originais como privados, anonimizar estrutura antes dos
+fixtures e não publicar dados bancários ou pessoais. Não há retornos reais disponíveis.
 
-## Critérios para encerrar
+Homologação é separada por API, CNAB240 e CNAB400 e por empresa/conta/convênio/carteira.
+Nenhum canal foi homologado nesta sessão; nenhuma transação bancária real foi autorizada.
 
-Completar o contrato API oficial e capacidades CNAB240/400, emissão/origem/reserva/lotes e reconciliação sem falsos pagamentos; testar isolamento A/B também em jobs/webhooks/documentos, concorrência e instalações MySQL/MariaDB limpas e upgrade; homologar cada canal por conta/convênio. Cada correção funcional BB exige novo header e migration nativa (NOOP quando aplicável); migrations publicadas não são reescritas. Manter sequência 402→403 (#45)→404 (#46); integrar main em develop por merge normal somente depois de main realmente atualizada e validada.
+## Evidências executadas
+
+No commit `30fb0f1`, todos os 16 workflows terminaram com sucesso. Em particular:
+
+- [Empresas, MySQL 8/PHP 8.1 e 8.5](https://github.com/wkarts/ARGWS-CRM/actions/runs/39197107754).
+- [Instalação/upgrade, HTTP, Chromium e wizard real](https://github.com/wkarts/ARGWS-CRM/actions/runs/39197107803).
+- [BB codecs, módulo, MySQL e driver concorrente](https://github.com/wkarts/ARGWS-CRM/actions/runs/39197107753).
+- Asaas origem/callback, notificações, privacidade, recorrências, versões/migrations e
+  builds de PR também passaram. Isso não valida todos os consumidores do CRM.
+
+Localmente: PHP 8.3, fixtures SQLite, lint e testes de contrato; MariaDB foi preparado,
+mas o ambiente recusou socket Unix e a permissão para iniciá-lo. Portanto a evidência
+MySQL/HTTP completa vem do CI descartável. Chromium local executou a regressão de abas;
+essa regressão sintética não substitui o cenário CRM/HTTP do CI.
+
+Consultar [matriz objetiva](companies/pr45-status.md) e o CI do HEAD exato na entrega.
+Inventários lexicais são localizadores de revisão, não contagem de bugs ou cobertura.
+Não elevar evidência de consumidor só atualizando hash. As entradas antigas com hashes
+divergentes deixam de aparecer como testadas no registro regenerado.
+
+## Release
+
+Não fazer merge na main, deploy, tags, publicação de imagens ou alinhamento de develop
+sem autorização correspondente. O caminho normal de release permanece intacto. Uma
+PR aberta, CI verde ou cadastro/configuração visual não representa aprovação de merge
+nem uma operação bancária homologada.
