@@ -6,12 +6,12 @@ require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/Origination.ph
 require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/LayoutCatalog.php';
 $db->query("INSERT INTO {$p}modules VALUES('banco_brasil','0.0.0',1)");
 $realModules=$GLOBALS['CI']->app_modules;
-$GLOBALS['CI']->app_modules=new class {function get($name){return ['headers'=>['version'=>'1.0.5']];}};
-$db->failVersion='1.0.5';
-essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native installation catches final105 tracking failure');$db->failVersion=null;
-essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.0.4','failed105 remains at104');
-essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='105','native101 through105 installation can retry additive DDL');
-essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native105 replay is stable');
+$GLOBALS['CI']->app_modules=new class {function get($name){return ['headers'=>['version'=>'1.0.6']];}};
+$db->failVersion='1.0.6';
+essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native installation catches final106 tracking failure');$db->failVersion=null;
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.0.5','failed106 remains at105');
+essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='106','native101 through106 installation can retry additive DDL');
+essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native106 replay is stable');
 \BancoBrasil\OriginationSchema::assertValid($db,$p);
 $GLOBALS['CI']->app_modules=$realModules;
 unset($db->data_cache['table_names']);
@@ -29,14 +29,14 @@ function bbSyntheticConnection(int $issuer,string $agreement='1234567',string $a
 }
 [$connection,$binding]=bbSyntheticConnection($a);
 $bank=new \BancoBrasil\Origination($db,$p);
-$contract=['first_number'=>'100','last_number'=>'999','first_file'=>'1','reference'=>'SYNTHETIC CONTRACT ONLY','interest_exempt'=>'1','exclusive_range'=>'1','test_exchange'=>'1'];
+$contract=['beneficiary_name'=>'INVOICE A','first_number'=>'100','last_number'=>'999','first_file'=>'1','reference'=>'SYNTHETIC CONTRACT ONLY','interest_exempt'=>'1','exclusive_range'=>'1','test_exchange'=>'1'];
 $decl=$bank->declareContract($a,7,$connection,$binding,$contract);
 essentialCheck($bank->declareContract($a,7,$connection,$binding,$contract)===$decl,'same declaration idempotent without resetting range');
 essentialThrows(fn()=>$bank->declareContract($a,7,$connection,$binding,array_replace($contract,['first_number'=>'1'])),'bb_number_range_conflict','cannot rewind existing Nosso Numero counter');
 essentialThrows(fn()=>$bank->declareContract($a,7,$connection,$binding,array_replace($contract,['test_exchange'=>'0'])),'bb_contract_declaration_required','sandbox requires declared bank TESTE interchange');
 essentialThrows(fn()=>$bank->declareContract($b,7,$connection,$binding,$contract),'bb_connection_unavailable','cross company connection ID denied');
 $fresh=$s->create($a,7,$input,str_repeat('9',64));
-$title=['invoice_id'=>$fresh,'payer_address'=>'Synthetic street','payer_district'=>'Centro','payer_zip'=>'40000000','payer_city'=>'Salvador','payer_state'=>'BA','species'=>'02','acceptance'=>'N'];
+$title=['invoice_id'=>$fresh,'payer_name'=>'PRIVATE A','payer_address'=>'SYNTHETIC STREET','payer_district'=>'CENTRO','payer_zip'=>'40000000','payer_city'=>'SALVADOR','payer_state'=>'BA','species'=>'02','acceptance'=>'N'];
 $batch=$bank->generate($a,7,$connection,$binding,'2026-10-19',[$title],str_repeat('b',64));
 essentialCheck($bank->generate($a,7,$connection,$binding,'2026-10-19',[$title],str_repeat('b',64))===$batch,'retry returns same batch and numbers');
 $origin=$db->query("SELECT * FROM {$p}bb_origins WHERE invoice_id=?",[$fresh])->row_array();

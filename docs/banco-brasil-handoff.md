@@ -133,3 +133,30 @@ executor nativo do módulo em MySQL descartável. O resultado só pode ser atrib
 ao SHA que executar esses testes no CI. O teste de abas verifica também o fragmento
 usado após POST. Homologação externa240, remessa400/API e baixa por retorno continuam
 pendentes; não há transporte bancário nem credenciais neste incremento.
+
+### Correção410 / BB106
+
+A grafia ASCII de beneficiário/pagador é revisada explicitamente pelo operador,
+sem sobrescrever identidade fiscal ou transliterar nomes silenciosamente. O campo
+Documento bancário usa `CRM{id}`; o número formatado original da fatura é preservado
+no snapshot. Isso corrige a composição entre os documentos nativos (com hífen) e
+o codec restrito.105 é preservada;106 é marker NOOP. A stack HTTP recebeu um teste
+com instalação nativa BB, conexão/perfil/contrato pela UI, geração, download e
+declaração manual, sem chamadas ao banco. Atribuir resultado somente ao SHA do run.
+
+### Fonte oficial da API recuperada em19/10/2026
+
+A página pública de apoio carrega a documentação de Cobranças como API IPA5,
+catálogo17395705, versão2. O download oficial público foi obtido pela mesma rota
+exposta pelo portal:
+https://api.externo.bb.com.br/docs/v1/openapi/17395705/2
+
+OpenAPI3.1.1, `info.version=3.2.2`,198948 bytes; SHA256
+`6767b098b13bc00e42700d80435a73e1f6ff4d31d7a28647926209a58d5f00d3`.
+O documento distingue servidores sandbox/hm/produção, OAuth clientCredentials,
+AppKey de query e webhook de baixa operacional com mTLS. A combinação de múltiplos
+esquemas OAuth no mesmo Security Requirement não significa exigir os três ambientes
+simultaneamente; essa inconsistência formal deve ser considerada no consumidor.
+A posse da especificação não implementa o executor nem prova contrato/homologação.
+API ainda está indisponível no incremento410. Não houve chamadas bancárias, tokens
+ou uso de credenciais do cliente.

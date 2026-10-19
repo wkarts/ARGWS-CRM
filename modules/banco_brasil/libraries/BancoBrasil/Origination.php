@@ -26,7 +26,7 @@ final class Origination
     public function ready():bool
     {
         $row=$this->rows('SELECT active,installed_version FROM '.$this->prefix.'modules WHERE module_name=?',['banco_brasil'])[0]??[];
-        return (int)($row['active']??0)===1&&($row['installed_version']??null)==='1.0.5';
+        return (int)($row['active']??0)===1&&($row['installed_version']??null)==='1.0.6';
     }
     private function authorize(int $issuer,int $actor,string $cap,bool $invoice=false):void
     {
@@ -70,12 +70,13 @@ final class Origination
     public function declareContract($issuer,$actor,$connection,$binding,array $input):int
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$connection=\IssuerPolicy::id($connection);$binding=\IssuerPolicy::id($binding);
-        if(array_diff(array_keys($input),['first_number','last_number','first_file','reference','interest_exempt','exclusive_range','test_exchange'])||($input['interest_exempt']??null)!=='1'||($input['exclusive_range']??null)!=='1')throw new \DomainException('bb_contract_declaration_required');
+        if(array_diff(array_keys($input),['first_number','last_number','first_file','reference','interest_exempt','exclusive_range','test_exchange','beneficiary_name'])||($input['interest_exempt']??null)!=='1'||($input['exclusive_range']??null)!=='1')throw new \DomainException('bb_contract_declaration_required');
         $first=self::number($input['first_number']??null,9999999999);$last=self::number($input['last_number']??null,9999999999);$file=self::number($input['first_file']??null,999999);$reference=self::text($input['reference']??null,191);
         if($last<$first||!in_array($input['test_exchange']??null,['0','1'],true))throw new \DomainException('bb_origination_invalid_input');
         return $this->transaction(function()use($issuer,$actor,$connection,$binding,$input,$first,$last,$file,$reference):int{
             $this->authorize($issuer,$actor,'manage');[$row,$a,$layout]=$this->connection($issuer,$connection,$binding);
             if($a->scope->environment==='sandbox'&&$input['test_exchange']!=='1')throw new \DomainException('bb_contract_declaration_required');
+            $wireName=self::text($input['beneficiary_name']??null,30);Fields::alpha($wireName,30);
             $namespace=self::bankNamespace($a);$counter=$this->rows('SELECT * FROM '.$this->prefix.'bb_number_reservations WHERE bank_namespace=? FOR UPDATE',[$namespace])[0]??null;
             if($counter){
                 if((int)$counter['issuer_id']!==$issuer||$counter['beneficiary_tax_id']!==$a->taxId||(int)$counter['first_number']!==$first||(int)$counter['last_number']!==$last||(int)$counter['first_file']!==$file)throw new \DomainException('bb_number_range_conflict');
@@ -84,7 +85,7 @@ final class Origination
                 foreach($existing as $old)if(!is_string($old['remote_id'])||!preg_match('/^'.preg_quote($a->scope->agreement,'/').'[0-9]{10}$/D',$old['remote_id'])||(int)substr($old['remote_id'],7)>=$first)throw new \DomainException('bb_existing_number_requires_review');
                 $this->insert('bb_number_reservations',['bank_namespace'=>$namespace,'issuer_id'=>$issuer,'beneficiary_tax_id'=>$a->taxId,'first_number'=>$first,'last_number'=>$last,'next_number'=>$first,'first_file'=>$file,'next_file'=>$file]);
             }
-            $declaration=['connection_hash'=>$row['configuration_hash'],'profile_hash'=>$layout['profile_hash'],'first_number'=>$first,'last_number'=>$last,'first_file'=>$file,'interest_exempt'=>true,'exclusive_range'=>true,'test_exchange'=>$input['test_exchange']==='1','reference'=>$reference,'verification'=>'operator_declaration_not_bank_verification'];
+            $declaration=['beneficiary_name'=>$wireName,'connection_hash'=>$row['configuration_hash'],'profile_hash'=>$layout['profile_hash'],'first_number'=>$first,'last_number'=>$last,'first_file'=>$file,'interest_exempt'=>true,'exclusive_range'=>true,'test_exchange'=>$input['test_exchange']==='1','reference'=>$reference,'verification'=>'operator_declaration_not_bank_verification'];
             $json=json_encode($declaration,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);$hash=hash('sha256',$json);
             $old=$this->rows('SELECT id FROM '.$this->prefix.'bb_contract_declarations WHERE declaration_hash=?',[$hash])[0]??null;if($old)return (int)$old['id'];
             $id=$this->insert('bb_contract_declarations',['issuer_id'=>$issuer,'connection_id'=>$connection,'layout_binding_id'=>$binding,'declaration_hash'=>$hash,'reference'=>$reference,'declaration_json'=>$json,'created_by'=>$actor,'created_at'=>date('Y-m-d H:i:s')]);
@@ -96,9 +97,9 @@ final class Origination
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$connection=\IssuerPolicy::id($connection);$binding=\IssuerPolicy::id($binding);
         if(!preg_match('/^[a-f0-9]{64}$/D',$requestKey)||!$titles||count($titles)>100)throw new \DomainException('bb_origination_invalid_input');Fields::date($date);
         $normalized=[];foreach($titles as $input){
-            if(!is_array($input)||array_diff(array_keys($input),['invoice_id','payer_address','payer_district','payer_zip','payer_city','payer_state','species','acceptance']))throw new \DomainException('bb_origination_invalid_input');
+            if(!is_array($input)||array_diff(array_keys($input),['invoice_id','payer_address','payer_district','payer_zip','payer_city','payer_state','species','acceptance','payer_name']))throw new \DomainException('bb_origination_invalid_input');
             $id=\IssuerPolicy::id($input['invoice_id']??null);if(isset($normalized[$id]))throw new \DomainException('bb_duplicate_title');
-            $title=[];foreach(['payer_address','payer_district','payer_zip','payer_city','payer_state','species','acceptance'] as $key)$title[$key]=self::text($input[$key]??null,100);
+            $title=[];foreach(['payer_address','payer_district','payer_zip','payer_city','payer_state','species','acceptance','payer_name'] as $key)$title[$key]=self::text($input[$key]??null,100);
             $normalized[$id]=$title;
         }ksort($normalized,SORT_NUMERIC);
         $hash=hash('sha256',json_encode([$connection,$binding,$date,$normalized],JSON_THROW_ON_ERROR));
@@ -108,6 +109,9 @@ final class Origination
             if($old){if(!hash_equals($old['payload_hash'],$hash))throw new \DomainException('bb_batch_request_conflict');return (int)$old['id'];}
             $contract=$this->rows('SELECT * FROM '.$this->prefix.'bb_contract_declarations WHERE issuer_id=? AND connection_id=? AND layout_binding_id=? ORDER BY id DESC LIMIT 1 FOR UPDATE',[$issuer,$connection,$binding])[0]??null;
             if(!$contract)throw new \DomainException('bb_contract_declaration_required');
+            $declared=json_decode($contract['declaration_json'],true,16,JSON_THROW_ON_ERROR);
+            $wireName=$declared['beneficiary_name']??$c['issuer_name'];Fields::alpha($wireName,30);
+            $a=new Agreement($a->scope,$a->taxId,$wireName,$a->variation,$a->wallet);
             $counter=$this->rows('SELECT * FROM '.$this->prefix.'bb_number_reservations WHERE bank_namespace=? FOR UPDATE',[self::bankNamespace($a)])[0]??null;
             if(!$counter||(int)$counter['issuer_id']!==$issuer||$counter['beneficiary_tax_id']!==$a->taxId||(int)$counter['next_number']> (int)$counter['last_number']-count($normalized)+1||(int)$counter['next_file']>999999)throw new \DomainException('bb_number_range_exhausted');
             $number=(int)$counter['next_number'];$file=(int)$counter['next_file'];$snapshots=[];$wire=[];
@@ -119,8 +123,8 @@ final class Origination
                 if($this->rows('SELECT id FROM '.$this->prefix.'bb_origins WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('bb_invoice_already_bound');
                 if($this->db->table_exists($this->prefix.'asaas_payment_origins')&&$this->rows('SELECT id FROM '.$this->prefix.'asaas_payment_origins WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('bb_invoice_already_bound');
                 $doc=$docs->get($invoice,$issuer);if($doc['identity']['tax_id']!==$a->taxId)throw new \DomainException('bb_beneficiary_identity_mismatch');
-                $t=$payer+['sequence'=>(string)$number,'document'=>$doc['formatted_number'],'control'=>'CRM'.$invoice,'issue_date'=>$record['date'],'due_date'=>$record['duedate'],'amount'=>self::money($record['total']),'payer_tax_id'=>$doc['recipient']['tax_id'],'payer_name'=>$doc['recipient']['name']];
-                $snapshots[]=['invoice'=>$record,'title'=>$t,'connection'=>$c,'layout_binding_id'=>$binding,'contract_id'=>(int)$contract['id'],'scope_key'=>$a->scope->key()];$wire[]=$t;$number++;
+                $t=$payer+['sequence'=>(string)$number,'document'=>'CRM'.$invoice,'control'=>'CRM'.$invoice,'issue_date'=>$record['date'],'due_date'=>$record['duedate'],'amount'=>self::money($record['total']),'payer_tax_id'=>$doc['recipient']['tax_id'],'payer_name'=>$doc['recipient']['name']];
+                $snapshots[]=['invoice_document'=>$doc['formatted_number'],'invoice'=>$record,'title'=>$t,'connection'=>$c,'beneficiary_name'=>$wireName,'layout_binding_id'=>$binding,'contract_id'=>(int)$contract['id'],'scope_key'=>$a->scope->key()];$wire[]=$t;$number++;
             }
             // Validate all fields before a durable reservation. These bytes never leave this scope.
             (new Cnab240Generator())->generate($a,$file,$date,$wire);
@@ -150,7 +154,7 @@ final class Origination
         foreach($rows as $row){
             if(!hash_equals($row['payload_hash'],hash('sha256',$row['snapshot_json'])))throw new \DomainException('bb_batch_corrupt');
             $s=json_decode($row['snapshot_json'],true,32,JSON_THROW_ON_ERROR);$c=$s['connection'];
-            $a=new Agreement(new Scope($issuer,(int)$c['id'],$c['account_id'],$c['environment'],$c['agreement_number']),$c['issuer_tax_id'],$c['issuer_name'],$c['variation'],$c['wallet']);
+            $a=new Agreement(new Scope($issuer,(int)$c['id'],$c['account_id'],$c['environment'],$c['agreement_number']),$c['issuer_tax_id'],$s['beneficiary_name']??$c['issuer_name'],$c['variation'],$c['wallet']);
             if(($s['scope_key']??null)!==$b['scope_key']||$a->scope->key()!==$b['scope_key']||(int)$s['invoice']['id']!==(int)$row['invoice_id']||(int)$s['invoice']['issuer_id']!==$issuer||(int)$c['id']!==(int)$b['connection_id']||(int)$s['layout_binding_id']!==(int)$b['layout_binding_id'])throw new \DomainException('bb_batch_corrupt');
             $expected=['scope_key'=>$b['scope_key'],'provider'=>'banco_brasil','channel'=>'cnab240','account_id'=>$c['account_id'],'environment'=>$c['environment'],'agreement_number'=>$c['agreement_number'],'remote_id'=>$a->ourNumber($s['title']['sequence']),'control_reference'=>$s['title']['control']];
             foreach($expected as $key=>$value)if($row[$key]!==$value)throw new \DomainException('bb_batch_corrupt');
@@ -164,7 +168,7 @@ final class Origination
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$batch=\IssuerPolicy::id($batch);$this->authorize($issuer,$actor,'generate',true);
         [$b,$snapshots]=$this->load($issuer,$batch);if($b['generation_state']==='generated')return;
-        $c=$snapshots[0]['connection'];$a=new Agreement(new Scope($issuer,(int)$c['id'],$c['account_id'],$c['environment'],$c['agreement_number']),$c['issuer_tax_id'],$c['issuer_name'],$c['variation'],$c['wallet']);
+        $c=$snapshots[0]['connection'];$a=new Agreement(new Scope($issuer,(int)$c['id'],$c['account_id'],$c['environment'],$c['agreement_number']),$c['issuer_tax_id'],$snapshots[0]['beneficiary_name']??$c['issuer_name'],$c['variation'],$c['wallet']);
         try{
             $encode=$this->encoder??static fn($agreement,$sequence,$date,$titles)=>(new Cnab240Generator())->generate($agreement,$sequence,$date,$titles);
             $bytes=$encode($a,(int)$b['file_sequence'],$snapshots[0]['generation_date'],array_column($snapshots,'title'));self::validateBytes($bytes,count($snapshots));
