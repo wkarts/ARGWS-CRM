@@ -6,7 +6,8 @@ require APPPATH.'config/app-config.php';if(APP_DB_NAME!=='argws_upgrade_ci')exit
 $case=$argv[1]??'';if(!in_array($case,['a','b'],true))exit(2);
 $pdo=new PDO('mysql:host='.APP_DB_HOSTNAME.';dbname='.APP_DB_NAME.';charset=utf8mb4',APP_DB_USERNAME,APP_DB_PASSWORD,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
 function fixtureRows(string $sql,array $args=[]):array{global $pdo;$query=$pdo->prepare($sql);$query->execute($args);return $query->fetchAll(PDO::FETCH_ASSOC);}
-$module=fixtureRows("SELECT installed_version,active FROM tblmodules WHERE module_name='banco_brasil'")[0]??[];if(($module['installed_version']??null)!=='1.2.0'||(int)($module['active']??0)!==1)throw new RuntimeException('fixture requires native BB120');
+require __DIR__.'/support/BbHttpNativeRelease.php';$release=bbHttpNativeRelease();
+$module=fixtureRows("SELECT installed_version,active FROM tblmodules WHERE module_name='banco_brasil'")[0]??[];if(($module['installed_version']??null)!==$release['version']||(int)($module['active']??0)!==1)throw new RuntimeException('fixture requires exact shipped native BB target');
 $issuer=(int)(fixtureRows('SELECT id FROM tblissuers_registry WHERE tax_id=?',[$case==='a'?'11222333000181':'52998224725'])[0]['id']??0);
 $row=fixtureRows('SELECT c.payment_id,c.invoice_id,r.event_id FROM tblcompany_bank_receipt_components c JOIN tblbb_event_receipts r ON r.payment_id=c.payment_id AND r.issuer_id=c.issuer_id JOIN tblinvoices i ON i.id=c.invoice_id AND i.issuer_id=c.issuer_id WHERE c.issuer_id=? AND EXISTS(SELECT 1 FROM tblitemable item WHERE item.rel_id=i.id AND item.rel_type=? AND item.description=?) ORDER BY c.payment_id DESC LIMIT 1',[$issuer,'invoice','Synthetic BB components browser '.$case])[0]??null;if(!$row)throw new RuntimeException('run BB components browser first');
 $payment=(int)$row['payment_id'];$invoice=(int)$row['invoice_id'];$event=(int)$row['event_id'];

@@ -38,6 +38,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   await login(page,'admin-ci@example.invalid',process.env.ISSUERS_BROWSER_PASSWORD);
   const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
   execFileSync('docker',['exec',app,'mkdir','-p','/app/tests/support']);
+  execFileSync('docker',['cp','tests/support/BbHttpNativeRelease.php',app+':/app/tests/support/BbHttpNativeRelease.php']);
   execFileSync('docker',['cp','tests/banco_brasil_http_fixture.php',app+':/app/tests/banco_brasil_http_fixture.php']);
   execFileSync('docker',['cp','tests/support/BbPdoDatabase.php',app+':/app/tests/support/BbPdoDatabase.php']);
   execFileSync('docker',['exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',app,'php','tests/banco_brasil_http_fixture.php'],{stdio:'pipe'});

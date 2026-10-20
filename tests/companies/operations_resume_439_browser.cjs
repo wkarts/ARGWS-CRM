@@ -138,11 +138,26 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
    results.push({issuer,standalone,wholeInvoice,project,thread,post,task,timeInvoice,batchInvoice,private_file:true,claims_retained_after_cancellation:true});
   }
   assert.equal((await context.request.post(base+'/admin/company_standalone_billing',{form:staleA})).status(),409,'saved A form cannot act while B active');
-  assert.equal((await context.request.get(base+'/admin/company_standalone_billing?task='+results[0].standalone)).status(),403);
-  assert.equal((await context.request.get(base+'/admin/company_project_portal_rules?project='+results[0].project)).status(),403);
+  // Refresh B deliberately: foreign ownership and stale A context are distinct native contracts.
+  await select(b);
+  assert.equal((await page.goto(base+'/admin/company_project_portal_rules?project='+results[1].project+'&discussion='+results[1].thread)).status(),200,'current B project context is valid');
+  const freshB=await hidden(page.locator('#project-discussion-comment'));
+  assert.ok(freshB._company_context&&freshB.company_project_rules_csrf,'native B form carries current scope and dedicated CSRF');
+  assert.equal(freshB.project_id,results[1].project);
+  assert.equal((await context.request.get(base+'/admin/company_standalone_billing?task='+results[0].standalone)).status(),403,'standalone ownership contract is403 under fresh B');
+  const foreignProject=await context.request.get(base+'/admin/company_project_portal_rules?project='+results[0].project);
+  assert.equal(foreignProject.status(),409,'legacy433 project editor ownership contract is409 with unavailable state');
+  const unavailable=await foreignProject.text();assert.ok(unavailable.includes('Referências, publicação ou permissões indisponíveis. Nenhuma alteração foi confirmada.'));
+  for(const privateText of ['Recovery439 project a '+stamp,'Private recovery thread a','Original internal response a','Revised internal response a','proof.pdf'])assert.ok(!unavailable.includes(privateText),'foreign editor emits no A source text/file: '+privateText);
+  assert.ok(!unavailable.includes('id="project-discussion-posts"')&&!unavailable.includes('id="project-discussion-open"'),'foreign editor renders no discussion state or controls');
+  assert.equal((await page.goto(base+'/admin/company_invoices?invoice='+results[1].wholeInvoice)).status(),200,'current B invoice is accessible before cross-owner PDF request');
+  const foreignPdf=await context.request.get(base+'/admin/company_invoices?invoice='+results[0].wholeInvoice+'&pdf=1');
+  assert.equal(foreignPdf.status(),403,'foreign private invoice PDF has the explicit403 ownership contract');
+  assert.ok(!String(foreignPdf.headers()['content-type']||'').includes('application/pdf'));
+  assert.ok(!(await foreignPdf.body()).subarray(0,5).equals(Buffer.from('%PDF-')),'foreign PDF request emits no PDF bytes');
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords'),cashBefore,'new operational billing creates receivables and no payments');
   assert.deepEqual(errors,[]);
-  const proof={source:'rebuilt recovery439 test',results,timer_fixture:'only started_at of GUI-created active synthetic timers adjusted; no hidden business configuration',external_transports:false};
+  const proof={source:'rebuilt recovery439 test;442 exact legacy433 ownership forward expectation',ownership_contracts:{stale_A_form:409,standalone_under_current_B:403,project_editor_under_current_B:409,private_invoice_PDF_under_current_B:403},results,timer_fixture:'only started_at of GUI-created active synthetic timers adjusted; no hidden business configuration',external_transports:false};
   fs.writeFileSync(output+'/operations-resume439.json',JSON.stringify(proof,null,2));console.log(JSON.stringify(proof));
  }finally{await context.close();await browser.close();}
 })().catch(error=>{console.error(error);process.exit(1);});

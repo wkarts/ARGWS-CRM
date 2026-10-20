@@ -95,7 +95,8 @@ upgrade=argws-crm-upgrade-999
 ISSUER_SMOKE_DATABASE=argws-crm-provision-db-999
 ISSUER_SMOKE_DB_USER=synthetic_user
 ISSUER_SMOKE_DB_PASSWORD=synthetic_password
-"""
+work="{directory}"
+""".replace("{directory}",directory)
             for index, (path, block) in enumerate(blocks):
                 with self.subTest(command=path, position=index):
                     result = subprocess.run(["bash", "-c", setup + block], env=environment,

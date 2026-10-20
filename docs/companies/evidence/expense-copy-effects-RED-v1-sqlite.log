@@ -1,0 +1,9 @@
+Company expense operations: 47 checks passed (sqlite). No provider calls.
+Recreated reviewed expense copies442: 90 checks (sqlite).
+Expense copy442 atomic native source/receipt/readbacks: 132 checks (sqlite).
+
+Fatal error: Uncaught LogicException: Expected rejection: final canonical journal amount is confirmed before copy commit in /workspace/scratch/6b72446d684f/expense-copy442/tests/companies/expense_copies_resume_442_support.php:11
+Stack trace:
+#0 /workspace/scratch/6b72446d684f/expense-copy-independent-review/effects-RED-v1.php(22): expenseCopyReject(Object(Closure), Array, 'final canonical...')
+#1 {main}
+  thrown in /workspace/scratch/6b72446d684f/expense-copy442/tests/companies/expense_copies_resume_442_support.php on line 11

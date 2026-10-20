@@ -151,9 +151,10 @@ import json,sys
 print(json.dumps(['docker','exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',sys.argv[1],'php','/app/tests/companies/post_refund_manual_cycle_tls_state.php']))
 PY_STATE
 )"
-python3 tests/companies/finance440_tls_proxy.py --bind "$provider_gateway" \
+python3 tests/companies/provider442_tls_proxy.py --bind "$provider_gateway" \
     --cert-dir "$work/provider-ca" --ready-file "$work/provider-ready.json" \
     --events "$work/provider-events.jsonl" --state-command "$provider_state_command" \
+    --ai-owners-file "$work/ai-owners.json" --fail-reply-once \
     >"$work/provider-proxy.log" 2>&1 &
 provider_proxy_pid=$!
 for _ in $(seq 1 200); do
@@ -166,7 +167,7 @@ provider_proxy_url="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[
 docker create --name "$upgrade" --network "$ISSUER_SMOKE_NETWORK" -p 127.0.0.1::8080 \
     -e HTTPS_PROXY="$provider_proxy_url" -e https_proxy="$provider_proxy_url" \
     -e NO_PROXY=127.0.0.1,localhost -e no_proxy=127.0.0.1,localhost \
-    "$ISSUER_SMOKE_IMAGE" php -d curl.cainfo=/tmp/finance-provider-ca.pem \
+    "$ISSUER_SMOKE_IMAGE" php -d curl.cainfo=/tmp/finance-provider-ca.pem -d openssl.cafile=/tmp/finance-provider-ca.pem \
     -S 0.0.0.0:8080 -t /app /tmp/issuer-router.php >/dev/null
 docker cp "$work/provider-ca/ca.pem" "$upgrade:/tmp/finance-provider-ca.pem"
 docker cp "$legacy:/var/lib/argws-crm/config/app-config.php" "$work/app-config.php"
@@ -182,7 +183,7 @@ docker cp "$work/app-config.php" "$upgrade:/var/lib/argws-crm/config/app-config.
 docker cp "$work/router.php" "$upgrade:/tmp/issuer-router.php"
 docker start "$upgrade" >/dev/null
 docker exec "$upgrade" mkdir -p /app/tests/companies
-for fixture in post_refund_manual_cycle_tls_state.php post_refund_manual_cycle_synthetic_protocol.php post_refund_manual_cycle_tls_probe.php; do
+for fixture in post_refund_manual_cycle_tls_state.php post_refund_manual_cycle_synthetic_protocol.php post_refund_manual_cycle_tls_probe.php company_ai_tls_probe.php; do
     docker cp "tests/companies/$fixture" "$upgrade:/app/tests/companies/$fixture"
 done
 upgrade_port="$(docker port "$upgrade" 8080/tcp | awk -F: 'END {print $NF}')"
@@ -538,3 +539,46 @@ ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/companies/expense_api_browser.cjs
+
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+node tests/companies/expense_copies_resume_442_browser.cjs
+
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+ISSUERS_BROWSER_AI_OWNERS_FILE="$work/ai-owners.json" ISSUERS_BROWSER_PROVIDER_EVENTS="$work/provider-events.jsonl" \
+node tests/settings_company_ai_browser.cjs
+
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+node tests/banco_brasil_own_number_browser.cjs
+
+# Both provider clients keep certificate/hostname verification under the one strict local sink.
+ai_probe_owner="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))[0])' "$work/ai-owners.json")"
+ai_before_calls="$(python3 -c 'import json,sys;print(sum(json.loads(x).get("kind")=="synthetic_completion" for x in open(sys.argv[1])))' "$work/provider-events.jsonl")"
+[ "$ai_before_calls" = 3 ]
+ai_probe_status=0
+docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$upgrade" php -d curl.cainfo= -d openssl.cafile= \
+    /app/tests/companies/company_ai_tls_probe.php "$ai_probe_owner" >"$work/untrusted-ai-probe.log" 2>&1 || ai_probe_status=$?
+[ "$ai_probe_status" = 1 ]
+python3 - "$work/provider-events.jsonl" "$ai_before_calls" <<'PY_AI_UNTRUSTED'
+import json,sys
+assert sum(json.loads(x).get('kind')=='synthetic_completion' for x in open(sys.argv[1]))==int(sys.argv[2]),'untrusted TLS reached an AI completion'
+PY_AI_UNTRUSTED
+docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$upgrade" php \
+    -d curl.cainfo=/tmp/finance-provider-ca.pem -d openssl.cafile=/tmp/finance-provider-ca.pem \
+    /app/tests/companies/company_ai_tls_probe.php "$ai_probe_owner"
+python3 - "$work/provider-events.jsonl" <<'PY_DUAL_TLS'
+import json,sys
+rows=[json.loads(x) for x in open(sys.argv[1])]
+ai=[x for x in rows if x.get('kind')=='synthetic_completion']
+drops=[x for x in rows if x.get('kind')=='simulated_disconnect']
+assert len(ai)==4 and len({x['owner'] for x in ai})==3,'three GUI owners and one explicit SDK probe required'
+assert len(drops)==1,'one interrupted SDK response; uncertain GUI retry must never resend'
+assert all(x['tls_version'] in ('TLSv1.2','TLSv1.3') for x in ai+drops)
+print('Real GUI/SDK AI A/B/principal dispatch used verified local TLS; untrusted CA rejected and uncertain request not resent. No external forwarding.')
+PY_DUAL_TLS
+cp "$work/provider-events.jsonl" "$provider_evidence/dual-provider-local-tls.jsonl"

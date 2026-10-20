@@ -16,9 +16,9 @@ trait ApiAmendments
     }
     private function authorizeOperation(int $issuer,int $actor,string $operation):void
     {
-        if(in_array($operation,['amend_due','amend_abat','amend_addr','amend_disc','amend_win','clear_disc','add_disc'],true)){ $module=$this->rows("SELECT installed_version FROM {$this->prefix}modules WHERE module_name='banco_brasil' FOR UPDATE")[0]??[];if(($module['installed_version']??null)!==ModuleRelease::VERSION)throw new \DomainException('bb_api_access_denied'); }
-        $this->authorize($issuer,$actor,in_array($operation,['amend_win','clear_disc','add_disc'],true)?['amend_win'=>'api_amend_window','clear_disc'=>'api_cancel_discount','add_disc'=>'api_assign_discount'][$operation]:($operation==='amend_disc'?'api_amend_discount':($operation==='amend_addr'?'api_amend_address':($operation==='amend_abat'?'api_amend_abatement':($operation==='amend_due'?'api_amend':($operation==='movements'?'api_query':'api_'.$operation))))),true);
-        if(in_array($operation,['amend_due','amend_abat','amend_addr','amend_disc','amend_win','clear_disc','add_disc'],true)&&!(new \IssuerResourceAccess($this->db,$this->prefix))->can($issuer,$actor,'invoices','edit'))throw new \DomainException('bb_api_access_denied');
+        if(in_array($operation,['amend_due','amend_abat','amend_addr','amend_ref','amend_disc','amend_win','clear_disc','add_disc'],true)){ $module=$this->rows("SELECT installed_version FROM {$this->prefix}modules WHERE module_name='banco_brasil' FOR UPDATE")[0]??[];if(($module['installed_version']??null)!==ModuleRelease::VERSION)throw new \DomainException('bb_api_access_denied'); }
+        $this->authorize($issuer,$actor,in_array($operation,['amend_win','clear_disc','add_disc'],true)?['amend_win'=>'api_amend_window','clear_disc'=>'api_cancel_discount','add_disc'=>'api_assign_discount'][$operation]:($operation==='amend_ref'?'api_amend_reference':($operation==='amend_disc'?'api_amend_discount':($operation==='amend_addr'?'api_amend_address':($operation==='amend_abat'?'api_amend_abatement':($operation==='amend_due'?'api_amend':($operation==='movements'?'api_query':'api_'.$operation)))))),true);
+        if(in_array($operation,['amend_due','amend_abat','amend_addr','amend_ref','amend_disc','amend_win','clear_disc','add_disc'],true)&&!(new \IssuerResourceAccess($this->db,$this->prefix))->can($issuer,$actor,'invoices','edit'))throw new \DomainException('bb_api_access_denied');
     }
     public static function amendmentPayload(string $agreement,string $due):string
     {
@@ -30,7 +30,7 @@ trait ApiAmendments
     }
     private function prepareAmendment(int $issuer,int $actor,int $originId,string $operation,?array $amendment,array $snapshot,array $origin,int $retryId):void
     {
-        if(!in_array($operation,['query','cancel','amend_due','amend_abat','amend_addr','amend_disc','amend_win','clear_disc','add_disc','movements'],true))return;
+        if(!in_array($operation,['query','cancel','amend_due','amend_abat','amend_addr','amend_ref','amend_disc','amend_win','clear_disc','add_disc','movements'],true))return;
         // A stale pre-send lease may be revoked: its worker must still pass the confirmed sending marker.
         \IssuerStorage::query($this->db,"UPDATE {$this->prefix}bb_api_operations SET status='auth_failed',failure_category='authentication_lease_expired' WHERE origin_id=? AND status='authenticating' AND locked_until<=? AND id<>?",[$originId,gmdate('Y-m-d H:i:s'),$retryId]);
         // An expired sending claim remains uncertain; never steal a possibly submitted write.
@@ -45,7 +45,7 @@ trait ApiAmendments
         $latest=$this->rows("SELECT * FROM {$this->prefix}bb_api_operations WHERE origin_id=? AND operation='amend_due' ORDER BY id DESC LIMIT 1 FOR UPDATE",[$originId])[0]??null;
         if(!in_array($operation,['query','movements'],true)&&$latest&&!in_array($latest['status'],['confirmed','rejected','auth_failed'],true))throw new \DomainException('bb_api_amendment_requires_query');
         $this->prepareAbatement($issuer,$actor,$originId,$operation,$amendment,$snapshot,$origin);
-        $this->prepareAddress($issuer,$actor,$originId,$operation,$amendment,$snapshot,$origin);
+        $this->prepareAddress($issuer,$actor,$originId,$operation,$amendment,$snapshot,$origin);$this->prepareOwnNumber($issuer,$actor,$originId,$operation,$amendment,$snapshot,$origin);
         $this->prepareDiscount($issuer,$actor,$originId,$operation,$amendment,$snapshot,$origin);$this->prepareReceiptWindow($issuer,$actor,$originId,$operation,$amendment,$snapshot,$origin);
         if($operation!=='amend_due')return;
         (new \CompanyInvoiceBalance($this->db,$this->prefix))->inOwned($issuer,$actor,(int)$origin['invoice_id']);

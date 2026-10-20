@@ -23,7 +23,7 @@
       "evidence": ""
     },
     "application/config/routes.php": {
-      "sha256": "d18b621e55a87276cbe910879178f3a520fc2b9457bf3a94b8e2eb7fa9de1661",
+      "sha256": "f797b7f5ca30def41b9b5997cbf9bf195c30509eadda19a5ecbfd2eac24f37cf",
       "categories": [
         "customer_privacy"
       ],
@@ -3008,6 +3008,17 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "application/services/CompanyAi.php": {
+      "sha256": "d2a56cbeccd30e3a11c9d4f449c0d4fd9f300743c54cdc613d931762f178934a",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        11
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/services/CompanyApiScope.php": {
       "sha256": "01e1fc94fc4088ae91853e1ed49a931f1eba13875f9bd38e7265f64bf9d2faaa",
       "categories": [
@@ -3388,6 +3399,17 @@
         11,
         14,
         40
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/CompanyExpenseCopies.php": {
+      "sha256": "d02e785b89f87615e18f3daf4e7dbf87c3c70ecb0b8e9b2701c9555253998eb6",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        33
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4104,7 +4126,7 @@
       "evidence": ""
     },
     "application/services/CompanyResourceCatalog.php": {
-      "sha256": "4b591e4c76b03d5ad330283d88be0af7151f8c09c97c65a3d2e69a5ef655aca7",
+      "sha256": "da67bb26630fffa70f3ad319cfbc1c93f12a1d0f62fb3abf614478bdc3f46301",
       "categories": [
         "invoice_table"
       ],
@@ -4602,14 +4624,25 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "application/views/admin/companies/expense_copies.php": {
+      "sha256": "0e83a16530ffe14432e81757ae05fdfa4a61d6ebbdd5809ad0e02c688d9cce98",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        11
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/views/admin/companies/layout_head.php": {
-      "sha256": "c0dd33f3698c241ef437be48e2c16bc7f1c4b66a6d68d455def6b280e5e82bc2",
+      "sha256": "98fae4b7c63f10d6fddc3046115f6288493f28822734b260a9589494c88b3999",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        46,
-        47
+        47,
+        48
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -6656,7 +6689,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/controllers/Banco_brasil.php": {
-      "sha256": "d14be5cca7384816819f96ed4266f91bd86b1f0efc29a0ab7e56d95d9c1bab41",
+      "sha256": "518982526cb4120416be63a969f73c5a313725141c27dca98a537a993c41243b",
       "categories": [
         "invoice_table"
       ],
@@ -6679,7 +6712,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/ApiAmendments.php": {
-      "sha256": "5bd77a1eac0b4afb2f9bb0b43648471b0e4b27d735ac6f3ade10e322470e32a5",
+      "sha256": "e2d242098ea2b5b45f26fedfbbfb2cbb3e3ec95b6d51a9994ed4c3b94d193d2c",
       "categories": [
         "invoice_table",
         "payments"
@@ -6687,6 +6720,17 @@
       "signal_lines": [
         21,
         58
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ApiOwnNumberAmendments.php": {
+      "sha256": "a5bdaebc08e794f9bca97ccfd1f4cde7738dd8f06cb728b9bb9d22246997cb88",
+      "categories": [
+        "payments"
+      ],
+      "signal_lines": [
+        37
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -6703,7 +6747,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/ApiService.php": {
-      "sha256": "0941db54d24820b3b59a7de4f60c32e3c8fb5b2a77100f18b782cde4b969ef06",
+      "sha256": "3bde758b0aa4abec0277f82afc332a22c207b1b7d4b215517efedd36f3635c6a",
       "categories": [
         "invoice_table",
         "payments"
@@ -6714,9 +6758,9 @@
         125,
         129,
         133,
-        197,
-        271,
-        272
+        198,
+        284,
+        285
       ],
       "state": "unreviewed",
       "evidence": ""

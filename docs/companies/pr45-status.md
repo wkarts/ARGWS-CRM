@@ -1,5 +1,13 @@
 # Matriz objetiva da PR45
 
+## Composição442 — cópia de despesas, AI própria e referênciaBB
+
+Núcleo4.4.2/442, BB1.2.1/121, Asaas1.5.3/153. Migration442 acrescenta exatamente duas tabelas (cópias de despesas e requestsAI) e um índice composto de pai; BB121 valida os schemas existentes semDDL. A cópia revisada usa o writer nativo e confirma recibos/diário após a última auditoria; AI por empresa oferece resumo/sugestão de chamado com configuração criptografada e resultado privado por solicitante; Seu NúmeroBB usa comando/outbox tipado e confirmação posterior por consulta de conta, sem alterar a fatura.
+
+Fonte produtivo congelado:18.539arquivos, SHA25647b35c58b8c2f916d0ef1e8d4aebe0a454494bd77041f68c01f079f03d13143b. Nativebody1430/executor195,12execuções compostas finais e143Python passaram. A matriz própria de cópiasV3 passou14SQLite/16MariaDB; AIS4 passou7/8 e seis corridas com dois waiters; BBV2 tem sete suítes MariaDB, contrato/SQLite/render e revalida cada fronteira de I/O. Contadores são cumulativos, não somáveis. Instalação, upgrade e HTTP finais têm relatório próprio; o SHA publicado/CI devem ser conferidos na descrição atual daPR.
+
+Não declarar contrato integral concluído: SalesV3 tem pacote e provas locais, ainda exige integração nativa/HTTP/publicação; perfilLOCALnão-caixaV1 foi rejeitado por revisão dirigida (última confirmação e ciclo posterior à restauração), com V2 em implementação. Outros consumidores/settings e comandos/perfis bancários continuam discriminados. Auxiliares400 observacionais estão em implementação separada; financeiro400 segue bloqueado por campos/documentos específicos, não apenas homologação. Consulte os guias [cópia de despesas](expense-copies.md), [AI](../COMPANY-AI-RECOVERY.md) e [Seu Número](../banco-brasil-own-number.md).
+
 ## Composição441 — API privada de despesas
 
 Core4.4.1/441, BB120 e Asaas153. API de despesas/categorias/arquivos com sete scopes explícitos e writer nativo, revisão/idempotência/limites e confirmação tardia do download.11execuções compostas e instalação/upgrade/HTTP A/B passaram; native441NOOP/tracking/replay e143Python provados. Consulte [recuperação441](pr45-recovery-441.md) e [HTTP441](pr45-validation-441.md). Publicação eCI são vinculados aoSHA efetivo daPR. Demais componentes ainda em recuperação não são anunciados como concluídos.

@@ -89,6 +89,15 @@ jobs:
           php tests/banco_brasil_api_window_discount_mysql.php
           php tests/banco_brasil_api_window_discount_controller.php
           php tests/banco_brasil_api_window_discount_concurrency.php
+          # Typed Seu Numero aliases and after-I/O activity validation442.
+          php tests/banco_brasil_own_number_contract.php
+          php tests/banco_brasil_own_number_view.php
+          php tests/banco_brasil_own_number_sqlite.php
+          php tests/banco_brasil_own_number_mysql.php
+          php tests/banco_brasil_own_number_activity.php
+          php tests/banco_brasil_own_number_controller.php
+          php tests/banco_brasil_own_number_concurrency.php
+          php tests/banco_brasil_own_number_interrupted.php
         env:
           MYSQL_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
           MYSQL_USER: root
@@ -172,3 +181,12 @@ jobs:
           php tests/banco_brasil_api_window_discount_mysql.php
           php tests/banco_brasil_api_window_discount_controller.php
           php tests/banco_brasil_api_window_discount_concurrency.php
+          # Typed Seu Numero aliases and after-I/O activity validation442.
+          php tests/banco_brasil_own_number_contract.php
+          php tests/banco_brasil_own_number_view.php
+          php tests/banco_brasil_own_number_sqlite.php
+          php tests/banco_brasil_own_number_mysql.php
+          php tests/banco_brasil_own_number_activity.php
+          php tests/banco_brasil_own_number_controller.php
+          php tests/banco_brasil_own_number_concurrency.php
+          php tests/banco_brasil_own_number_interrupted.php

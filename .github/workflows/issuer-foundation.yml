@@ -450,3 +450,24 @@ jobs:
           # NOOP nativo 441 real e tracking persistido, sem chamar o helper isoladamente.
           php tests/companies/native_resume_441.php
           php tests/companies/native_resume_441.php --tracking
+          # Reviewed expense copies, private company AI and actual native442 integration.
+          php tests/companies/expense_copies_resume_442.php
+          php tests/companies/expense_copies_resume_442_atomic.php
+          php tests/companies/expense_copies_resume_442_effects.php
+          php tests/companies/expense_copies_resume_442_native_types.php
+          php tests/companies/expense_copies_resume_442_controller.php
+          php tests/companies/expense_copies_resume_442_schema.php
+          php tests/companies/expense_copies_resume_442_billing.php
+          php tests/companies/expense_copies_resume_442_provider.php
+          php tests/companies/expense_copies_resume_442_concurrency.php
+          php tests/companies/expense_copies_resume_442_native_schema.php
+          php tests/settings/company_ai.php
+          php tests/settings/company_ai_boundaries.php
+          php tests/settings/company_ai_final_boundaries.php
+          php tests/settings/company_ai_client.php
+          php tests/settings/company_ai_concurrency.php
+          php tests/settings/company_ai_controller.php
+          php tests/settings/company_ai_schema.php
+          php tests/settings/company_ai_transport.php
+          php tests/companies/native_resume_442.php
+          php tests/companies/native_resume_442.php --tracking
