@@ -1,3 +1,9 @@
+## Atualização450 — calendário do portal e integridade do início de timers
+
+Núcleo **4.5.0/450** NOOP; BB **1.2.3/123** e Asaas **1.5.3/153** preservados. A causa do calendário foi reproduzida pelo writer nativo do portal: assignee_id=0 em tarefa de1/11 era rejeitado na hidratação; somente o mês da empresaB incluía essa data conforme o primeiro dia da semana. A leitura agora representa0como ausência de responsável, sem alterar fonte/ACL/filtros. O timeout não era carregamento ou seletor. Timer450 também preserva o frame anterior e a história completa até a última auditoria e rejeita um segundo timer ativo introduzido durante a operação.
+
+14suítes SQL por motor,4comandosPHP8.1/MariaDB,143Python, freshHTTP14etapas e upgrade449real com315tabelas preservadas; versões/CI do SHA efetivo naPR45. Ver `pr45-validation-450.md` e evidências450. As atualizações abaixo são históricas; a pendência de causa do calendário é superada por esta prova. Contrato integral e pendências técnicas/externas continuam abertos.
+
 # Atualização 449 — preferências e consumidores próprios
 
 | Recorte | Implementado e testado | Pendente |

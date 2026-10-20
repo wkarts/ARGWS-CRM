@@ -9,3 +9,6 @@ A exclusividade já existente de um cronômetro ativo por colaborador permanece:
 Preferência, tarefa, prioridade, referência, ator, permissão, timer e resultado conhecido são reconfirmados após auditoria/recibo antes do commit. Revogação ou alteração final faz rollback integral. Nenhuma preferência reescreve tarefas, timers históricos, opções globais ou dados financeiros.
 
 A migration449 oficial é NOOP: não muda schema nem preenche JSON de empresas antigas. O registro novo nasce apenas no salvamento autorizado. Parada automática, outras regras de timers e recorrência operacional de tarefas permanecem pendências técnicas próprias; recorrência de faturas já tem contrato separado.
+
+
+450 conserva o frame de tarefa/prioridade/seguidores anterior ao início e a história completa dos cronômetros até a última auditoria. Um segundo timer ativo do ator, inclusive na outra modalidade/empresa, recusa a transação inteira; não é encerrado automaticamente. Nove falhas SQL com testemunha e concorrência real cobrem rollback e retry. Ver pr45-validation-450.md.

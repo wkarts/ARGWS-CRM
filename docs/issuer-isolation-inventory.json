@@ -3203,7 +3203,7 @@
       "evidence": ""
     },
     "application/services/CompanyCalendarRead.php": {
-      "sha256": "10925c84cc5c4bc470553236cb9c13671ab461854faace34868f56c2b8afa88b",
+      "sha256": "eaef7cfd82ffb5742e6fef619dafdaccf53a9ec781f78a8bdb2bd3fa62591468",
       "categories": [
         "customer_privacy",
         "invoice_table"
@@ -4361,7 +4361,7 @@
       "evidence": ""
     },
     "application/services/CompanyStandaloneTasks.php": {
-      "sha256": "a3007e37dbaa26d1660bc4deacd23c35e5a39e16c05f1959f27b9d2a9349f9a9",
+      "sha256": "be03c02caf1c00c213208d1bd501f43d98de5d3681d71418906a4f12ebadaca6",
       "categories": [
         "customer_privacy"
       ],
@@ -4444,7 +4444,7 @@
       "evidence": ""
     },
     "application/services/CompanyTasks.php": {
-      "sha256": "ce7098384fe6702b216f569517151f35522f0d32b3d1fb27a20c663dcec7aad2",
+      "sha256": "2b50aa9bb78c0f64fc5f879f880e2fbe621592335910c2c774dd98092ede429d",
       "categories": [
         "customer_privacy"
       ],
