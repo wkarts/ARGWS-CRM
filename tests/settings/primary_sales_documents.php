@@ -4,7 +4,8 @@ if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
 require dirname(__DIR__).'/companies/sales.php';require_once APPPATH.'services/CompanySettingsRuntime.php';$primaryPrefsStart=$GLOBALS['essentialChecks'];
 #[AllowDynamicProperties] class CI_Model{function __get($key){return $GLOBALS['CI']->{$key};}}
 class App_Model extends CI_Model{}class AdminController extends CI_Model{}
-class CompanyRequestScope{static function sealedFor($owner){return false;}static function context(){return null;}}
+require_once APPPATH.'services/CompanyRequestScope.php';
+$GLOBALS['CI']->config=new class{function site_url($path){return 'https://synthetic.invalid/'.ltrim($path,'/');}};
 function get_option($key){return CompanySettingsRuntime::get($key);}function staff_can($cap,$feature){return false;}
 function show_error($message,$status=500){throw new DomainException('http_'.$status);}function access_denied($feature){throw new DomainException('http_403');}
 function admin_url($path){return 'https://synthetic.invalid/admin/'.$path;}

@@ -42,5 +42,5 @@ $CI->db->fail=true;$failed=false;try{require APP_MODULES_PATH.'asaas/install.php
 $CI->db->fail=false;$CI->db->pretend=true;$failed=false;try{require APP_MODULES_PATH.'asaas/install.php';}catch(RuntimeException $e){$failed=$e->getMessage()==='asaas_native_migration_failed';}verify($failed&&$CI->db->version==='1.5.0','unconfirmed151 readback is not success');
 $CI->db->pretend=false;require APP_MODULES_PATH.'asaas/install.php';verify($CI->db->version==='1.5.1','retry tracks final151 version');
 $CI->db->version='1.5.2';$failed=false;try{require APP_MODULES_PATH.'asaas/install.php';}catch(RuntimeException $e){$failed=$e->getMessage()==='asaas_activation_version_invalid';}verify($failed&&$CI->db->version==='1.5.2','older installer cannot downgrade');
-$header=file_get_contents(APP_MODULES_PATH.'asaas/asaas.php');verify(str_contains($header,'Version: 1.5.1')&&str_contains($header,'Requires at least: 4.2.7'),'module header151 requires coherent native core427');
+$header=file_get_contents(APP_MODULES_PATH.'asaas/asaas.php');verify(str_contains($header,'Version: 1.5.2')&&str_contains($header,'Requires at least: 4.3.6'),'current module header152 requires coherent native core436; historical151 tracking cases above remain independent');
 echo "OK: {$n} callback version assertions with real native runner and metadata double.\n";

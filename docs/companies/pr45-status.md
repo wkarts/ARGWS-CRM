@@ -1,11 +1,14 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Composição436 em validação sobre o HEAD435
-`5dd6baf58313484c6854e2c01a2017dff27c04f8`: núcleo4.3.6/436,
-BB1.1.6/101–116 e Asaas1.5.2/152. O CI435 terminou15aprovações/1falha,
-no alerta do upgrade; a correção preserva a asserção original e exercita uma consulta
-intermediária real. Os resultados da composição e do novo SHA serão registrados
-na [validação436](pr45-validation-436.md), sem reutilizar o CI435.
+Escopo integral em andamento. O incremento436 foi publicado no SHA
+`9b114e9808ad92d02530977b0c67ffe09d2da1b1`: núcleo4.3.6/436,
+BB1.1.6/101–116 e Asaas1.5.2/152. Seu primeiro CI encerrou16workflows:
+12aprovados e4falhas de fixtures, registradas na [validação436](pr45-validation-436.md).
+O alerta nativo que falhava no435 passou; a correção mantém a validação original.
+O reparo subsequente corrige expectativas de versão, identidade do instalador,
+contexto real da viewPDF e dados sintéticos de duração, sem alterar produção nem
+migrations. O CI do reparo pertence ao seu próprioSHA; os resultados locais não
+são apresentados como aprovação remota ou como conclusão integral daPR.
 A [validação429](pr45-validation-429.md) registra30/30 execuções HTTP/Chromium
 em uma rodada limpa, instalação/upgrade/tracking e bytes funcionais conferidos.
 O CI428 terminou12sucesso/4falhas por bootstrap e orquestração, corrigidos429 com
@@ -18,7 +21,7 @@ instalação/upgrade nativos, aplicação real mysqli, MariaDB e Chromium. Os re
 locais não equivalem às matrizes remotas de outro SHA nem a homologação bancária.
 Inventários orientam revisão; contagens lexicais não medem bugs ou cobertura.
 
-| Requisito | Implementação incorporada na composição436 | Prova e limite |
+| Requisito | Implementação publicada436 | Prova e limite |
 |---|---|---|
 | Empresa principal/master/equipe | Identidade real do instalador, master diferente de1, wizard, grants/default por recurso e seletor409 | Bootstrap/upgrade/concorrência/HTTP; master já identificado é preservado sem novo provisionamento; somente identidade legada ainda ambígua exige resolução confiável |
 | Clientes privados/opt-in | Diretório positivo, compartilhamento explícito somente da identidade, contatos e sessões próprios | A/B/principal/NULL, concorrência e navegador; não compartilha histórico financeiro |

@@ -183,7 +183,10 @@ async function waitForUpgradeForm(page) {
       // An already identified master may be working in a secondary company.
       // Keep that context during native recovery, without another CLI designation.
       const identityBeforeSecondary = sql("SELECT CONCAT(master_staff_id,':',primary_issuer_id,':',source) FROM tblissuers_installation_identity WHERE id=1");
-      assert(identityBeforeSecondary.startsWith('17:'), 'fresh installer master is already identified before secondary recovery');
+      assert.equal(sql("SELECT COUNT(*) FROM tblstaff WHERE email='admin-ci@example.invalid' AND admin=1 AND active=1"), '1', 'the authenticated synthetic installer administrator is unique');
+      const installerAdminId = sql("SELECT staffid FROM tblstaff WHERE email='admin-ci@example.invalid' AND admin=1 AND active=1");
+      assert.match(installerAdminId, /^[1-9]\d*$/);
+      assert.equal(identityBeforeSecondary.split(':')[0], installerAdminId, 'fresh installer master is already identified as the authenticated administrator before secondary recovery');
       const primaryCompany = sql('SELECT primary_issuer_id FROM tblissuers_installation_identity WHERE id=1');
       if (sql("SELECT COUNT(*) FROM tblissuers_registry WHERE tax_id='52998224725'") === '0') {
         await page.goto(url + '/admin/company_onboarding');

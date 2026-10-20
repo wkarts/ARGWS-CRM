@@ -8,6 +8,8 @@ final class QueueFixtureDb {
     public array $rows=[]; public bool $loseClaim=false; private array $where=[]; private int $affected=0; private array $set=[];
     public function __construct(public $inner) {}
     public function query($sql,$args=[]) { return $this->inner->query($sql,$args); }
+    public array $tablesChecked=[];
+    public function table_exists($table) { $this->tablesChecked[]=$table;return $this->inner->table_exists($table); }
     public function field_exists($field,$table) { return $field==='issuer_id' ? true : $this->inner->field_exists($field,$table); }
     public function where($name,$value=null) { $this->where[$name]=$value; return $this; }
     private function matches($row) { foreach($this->where as $key=>$value) { if(($row[preg_replace('/^q\./','',$key)]??null)!==$value)return false; } return true; }
@@ -41,6 +43,7 @@ foreach([1=>41,2=>82,3=>null] as $id=>$issuer){$q->rows[$id]=['id'=>$id,'issuer_
 $ci=(object)['db'=>$q,'config'=>(object)['config'=>['smtp_host'=>'legacy.invalid','smtp_pass'=>'synthetic-legacy']],'encryption'=>new class{function decrypt($v){return 'decoded:'.$v;}},'load'=>new class{function config($name){}}];
 $mail=new QueueFixtureMailer($ci);
 $mail->send_queue();
+essentialCheck(in_array($p.'company_portal_mail_deliveries',$q->tablesChecked,true)&&in_array($p.'company_google_mail_accounts',$q->tablesChecked,true)&&in_array($p.'company_expense_recurring',$q->tablesChecked,true),'actual queue routing guards inspect real optional schema presence through the fixture adapter');
 essentialCheck(count($mail->sent)===3,'all explicit synthetic queue origins processed');
 essentialCheck(array_column($mail->sent,'smtp_host')===['a.invalid','b.invalid','legacy.invalid'],'worker chooses each durable origin and restores legacy configuration');
 essentialCheck(array_column($mail->sent,'smtp_pass')===['decoded:synthetic-a','decoded:synthetic-b','synthetic-legacy'],'worker cannot retain prior company credential');
