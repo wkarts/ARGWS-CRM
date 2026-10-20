@@ -1,0 +1,394 @@
+{
+  "parent_sha": "c07a03a2155d18f82a825fa48bba53476bf15e98",
+  "core": "4.4.8",
+  "native": 448,
+  "bb": "1.2.3",
+  "asaas": "1.5.3",
+  "production_paths": 18579,
+  "runtime_paths": 18565,
+  "production_manifest_sha256": "2efec4b68a6103e51595bd7942a744c53f5aff945c0cb5884ad13b0963c5e489",
+  "cli": {
+    "mysql8": {
+      "engine": "mysql8",
+      "results": [
+        {
+          "test": "task_operations_schema",
+          "exit": 0,
+          "seconds": 12.81,
+          "footer": [
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql).",
+            "Own task priority exact schema/native migration body: 22 added / 248 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations_settings",
+          "exit": 0,
+          "seconds": 4.58,
+          "footer": [
+            "Settings formatting controller: 127 total checks passed.",
+            "Document preferences controller: 134 cumulative checks passed.",
+            "Own task priority/follow actual settings: 41 added / 175 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations",
+          "exit": 0,
+          "seconds": 12.64,
+          "footer": [
+            "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations_faults",
+          "exit": 0,
+          "seconds": 22.92,
+          "footer": [
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql).",
+            "Own task priority last-write faults: 107 added / 333 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations_copies",
+          "exit": 0,
+          "seconds": 12.41,
+          "footer": [
+            "Reviewed individual task copies: 69 added / 105 cumulative checks (mysql). No time, finance, relation, file, follower or publication adoption.",
+            "Own task preference copy isolation: 6 added / 111 cumulative (mysql).",
+            "Own task priority reviewed copies: 48 added / 159 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations_project_copies",
+          "exit": 0,
+          "seconds": 12.01,
+          "footer": [
+            "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+            "Own reviewed project copy: 72 added / 108 cumulative checks (mysql). No files, time, financial or public/grant adoption.",
+            "Own priority project compositions: 13 added / 121 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations_controller",
+          "exit": 0,
+          "seconds": 13.07,
+          "footer": [
+            "Standalone actual HTTP adapter/controller/renderer: 66 cumulative checks passed.",
+            "Own task defaults native adapters/forms: 37 added / 103 cumulative (mysql).",
+            "Own priority actual task controllers/renderers: 36 added / 139 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations_concurrency",
+          "exit": 0,
+          "seconds": 14.83,
+          "footer": [
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql).",
+            "Own priority/follow fresh-process contention: 60 added / 286 cumulative,13 actual two-waiter cases."
+          ]
+        }
+      ]
+    },
+    "mariadb": {
+      "engine": "mariadb",
+      "results": [
+        {
+          "test": "task_operations_schema",
+          "exit": 0,
+          "seconds": 7.71,
+          "footer": [
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql).",
+            "Own task priority exact schema/native migration body: 22 added / 248 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations_settings",
+          "exit": 0,
+          "seconds": 3.11,
+          "footer": [
+            "Settings formatting controller: 127 total checks passed.",
+            "Document preferences controller: 134 cumulative checks passed.",
+            "Own task priority/follow actual settings: 41 added / 175 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations",
+          "exit": 0,
+          "seconds": 7.14,
+          "footer": [
+            "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations_faults",
+          "exit": 0,
+          "seconds": 14.72,
+          "footer": [
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql).",
+            "Own task priority last-write faults: 107 added / 333 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations_copies",
+          "exit": 0,
+          "seconds": 8.05,
+          "footer": [
+            "Reviewed individual task copies: 69 added / 105 cumulative checks (mysql). No time, finance, relation, file, follower or publication adoption.",
+            "Own task preference copy isolation: 6 added / 111 cumulative (mysql).",
+            "Own task priority reviewed copies: 48 added / 159 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations_project_copies",
+          "exit": 0,
+          "seconds": 8.83,
+          "footer": [
+            "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+            "Own reviewed project copy: 72 added / 108 cumulative checks (mysql). No files, time, financial or public/grant adoption.",
+            "Own priority project compositions: 13 added / 121 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations_controller",
+          "exit": 0,
+          "seconds": 8.26,
+          "footer": [
+            "Standalone actual HTTP adapter/controller/renderer: 66 cumulative checks passed.",
+            "Own task defaults native adapters/forms: 37 added / 103 cumulative (mysql).",
+            "Own priority actual task controllers/renderers: 36 added / 139 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "task_operations_concurrency",
+          "exit": 0,
+          "seconds": 11.88,
+          "footer": [
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql).",
+            "Own priority/follow fresh-process contention: 60 added / 286 cumulative,13 actual two-waiter cases."
+          ]
+        }
+      ]
+    }
+  },
+  "fresh": {
+    "web": "/tmp/http448-fresh-or45_4y8/app",
+    "artifact": "/workspace/scratch/b2c55ff73f4e/recovery/harness448/evidence/run-fresh-1792515551500928239",
+    "source": "/workspace/scratch/b2c55ff73f4e/recovery/task448",
+    "mode": "fresh",
+    "baseline_sha": "c07a03a2155d18f82a825fa48bba53476bf15e98",
+    "db_port": 57245,
+    "url": "http://127.0.0.1:44045",
+    "manifest": "/workspace/scratch/b2c55ff73f4e/recovery/frozen448.json",
+    "phase": "complete",
+    "success": true,
+    "independent_stages_passed": true,
+    "results": [
+      {
+        "name": "native-installer",
+        "native": 448,
+        "exit": 0,
+        "seconds": 2.961,
+        "master": "17:installer",
+        "invalid_csrf_before_ddl": 403
+      },
+      {
+        "name": "companies-native-gui",
+        "exit": 0,
+        "seconds": 15.437
+      },
+      {
+        "name": "bb-native-448",
+        "exit": 0,
+        "seconds": 0.311
+      },
+      {
+        "name": "bb17-native-gui",
+        "exit": 0,
+        "seconds": 8.473
+      },
+      {
+        "name": "bb240-tariff-original",
+        "exit": 0,
+        "seconds": 18.032
+      },
+      {
+        "name": "local-api-profiles-native-gui",
+        "exit": 0,
+        "seconds": 8.354
+      },
+      {
+        "name": "qualified-synthetic-local-protocol",
+        "exit": 0,
+        "seconds": 1.265
+      },
+      {
+        "name": "local-v3-original",
+        "exit": 0,
+        "seconds": 27.482
+      },
+      {
+        "name": "task_preferences-original",
+        "exit": 0,
+        "seconds": 35.405
+      },
+      {
+        "name": "calendar-original",
+        "exit": 0,
+        "seconds": 69.458
+      },
+      {
+        "name": "extra-0-task_operations_browser",
+        "exit": 0,
+        "seconds": 25.022
+      }
+    ]
+  },
+  "upgrade": {
+    "baseline_git_check": {
+      "sha": "c07a03a2155d18f82a825fa48bba53476bf15e98",
+      "checked_paths": 18560,
+      "all_git_blob_equal": true,
+      "native_marker": 447
+    },
+    "history": {
+      "tables_verified": 313,
+      "new_empty_tables": [
+        "tblcompany_standalone_priorities",
+        "tblcompany_task_priorities"
+      ]
+    },
+    "result": {
+      "stage": "upgrade-all",
+      "success": true,
+      "interim": false,
+      "before": {
+        "production_paths": 18579,
+        "runtime_paths_checked": 18565,
+        "installer_paths_removed": [
+          "install/7c189be7bdb2916ff3d3f4846cc85323.png",
+          "install/database.php",
+          "install/database.sql",
+          "install/file_permissions.php",
+          "install/finish.php",
+          "install/html.php",
+          "install/index.php",
+          "install/install.class.php",
+          "install/install.php",
+          "install/logo.png",
+          "install/phpass.php",
+          "install/requirements.php",
+          "install/sqlparser.php",
+          "install/steps.php"
+        ],
+        "manifest_sha256": "2efec4b68a6103e51595bd7942a744c53f5aff945c0cb5884ad13b0963c5e489",
+        "differences": []
+      },
+      "after": {
+        "production_paths": 18579,
+        "runtime_paths_checked": 18565,
+        "installer_paths_removed": [
+          "install/7c189be7bdb2916ff3d3f4846cc85323.png",
+          "install/database.php",
+          "install/database.sql",
+          "install/file_permissions.php",
+          "install/finish.php",
+          "install/html.php",
+          "install/index.php",
+          "install/install.class.php",
+          "install/install.php",
+          "install/logo.png",
+          "install/phpass.php",
+          "install/requirements.php",
+          "install/sqlparser.php",
+          "install/steps.php"
+        ],
+        "manifest_sha256": "2efec4b68a6103e51595bd7942a744c53f5aff945c0cb5884ad13b0963c5e489",
+        "differences": []
+      },
+      "test_source_sha256": {
+        "/workspace/scratch/b2c55ff73f4e/recovery/harness448/native_upgrade.cjs": "1df8393ce2608c83327e7dda2ff68ffaf122e37338bc6ac11bfe9eb6004d549b",
+        "/workspace/scratch/b2c55ff73f4e/recovery/task448/tests/banco_brasil_tariff_browser.cjs": "c48a63e14af3b3da60e19ace6e6846b1cc6644b19e9916add8e260b8ba255fa4",
+        "/workspace/scratch/b2c55ff73f4e/recovery/harness448/setup_local_api_profiles.cjs": "1cc290ae1d6e889ed1bd253355ed08c3b5f8591679f97b6d19f978d9c35e8bee",
+        "/workspace/scratch/b2c55ff73f4e/recovery/task448/tests/banco_brasil_local_noncash_browser_v3.cjs": "36c48dc641c4f66ca6f89aa166f710222fb614a9819b81c2cd2dc4558cc20642",
+        "/workspace/scratch/b2c55ff73f4e/recovery/task448/tests/settings/task_preferences_browser.cjs": "90524cb20b91976f0132a7f73c1d1efb36e3391e034d6a9e226de657f60ecf6c",
+        "/workspace/scratch/b2c55ff73f4e/recovery/task448/tests/settings/calendar_browser.cjs": "e0848af381c61e3c1a705c4aabae962c5adca07f44a270b20a451178a47ebc00",
+        "/workspace/scratch/b2c55ff73f4e/recovery/task448/tests/settings/task_operations_browser.cjs": "1ce3cf5c5167cb7ecd9ac71c1e96a814f64450aa0a3b627ac8f60103c2a8e585"
+      },
+      "results": [
+        {
+          "stage": "native447-to448-upgrade",
+          "exit": 0,
+          "seconds": 1.718,
+          "log": "native447-to448-upgrade-1792516131064834286.log"
+        },
+        {
+          "stage": "bb-native448",
+          "exit": 0,
+          "seconds": 0.056,
+          "log": "bb-native448-1792516131064834286.log"
+        },
+        {
+          "stage": "bb240-tariff-original",
+          "exit": 0,
+          "seconds": 18.169,
+          "log": "bb240-tariff-original-1792516131064834286.log"
+        },
+        {
+          "stage": "local-api-profiles-native-gui",
+          "exit": 0,
+          "seconds": 8.308,
+          "log": "local-api-profiles-native-gui-1792516131064834286.log"
+        },
+        {
+          "stage": "qualified-synthetic-local-protocol",
+          "exit": 0,
+          "seconds": 1.224,
+          "log": "qualified-synthetic-local-protocol-1792516131064834286.log"
+        },
+        {
+          "stage": "local-v3-original",
+          "exit": 0,
+          "seconds": 26.67,
+          "log": "local-v3-original-1792516131064834286.log"
+        },
+        {
+          "stage": "task_preferences-original",
+          "exit": 0,
+          "seconds": 32.429,
+          "log": "task_preferences-original-1792516131064834286.log"
+        },
+        {
+          "stage": "calendar-original",
+          "exit": 0,
+          "seconds": 71.182,
+          "log": "calendar-original-1792516131064834286.log"
+        },
+        {
+          "stage": "task_operations-original",
+          "exit": 0,
+          "seconds": 25.567,
+          "log": "task_operations-original-1792516131064834286.log"
+        }
+      ],
+      "web": "/tmp/http448-upgrade-m16hpjar/app",
+      "cluster": "/workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-dtniqg_p"
+    }
+  },
+  "qualified_harness_reds": [
+    "preflight target literal4.4.7",
+    "runtime path substring in scratch-only harness",
+    "new-auto-follow test ran before historical default-off assertion; corrected test order without removing assertions",
+    "missing harness history_snapshot.php, resumed original447 bank without reinstall/reset"
+  ],
+  "external_bank_operation": false,
+  "universal_isolation_claim": false
+}

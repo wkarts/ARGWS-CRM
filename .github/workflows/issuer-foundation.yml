@@ -509,3 +509,13 @@ jobs:
           php tests/companies/native_resume_447.php
           php tests/companies/native_resume_447.php --tracking
           php tests/banco_brasil_local_noncash_restored_pdf_v3.php
+          #448: own priority/follow, strict additive schema and actual native runner.
+          php tests/settings/task_operations_schema.php
+          php tests/settings/task_operations_settings.php
+          php tests/settings/task_operations.php
+          php tests/settings/task_operations_faults.php
+          php tests/settings/task_operations_copies.php
+          php tests/settings/task_operations_project_copies.php
+          php tests/settings/task_operations_controller.php
+          php tests/settings/task_operations_concurrency.php
+          php tests/companies/native_resume_448.php

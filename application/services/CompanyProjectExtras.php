@@ -67,8 +67,18 @@ final class CompanyProjectExtras extends CompanyProjectsStorage
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=self::revision($revision);$this->target($kind);
         return $this->operation($issuer,$actor,'view',$key,$kind.'_follow',[$id,$revision,$follow],function()use($issuer,$actor,$kind,$id,$revision,$follow):int{$row=$this->parent($issuer,$kind,$id);if((int)$row['revision']!==$revision)throw new DomainException('company_project_stale');$table=$kind==='task'?'company_task_followers':'company_project_followers';$field=$kind==='task'?'task_id':'project_id';$present=$this->rows('SELECT staff_id FROM '.$this->p.$table.' WHERE issuer_id=? AND '.$field.'=? AND staff_id=?',[$issuer,$id,$actor]);
-            if($follow&&!$present)IssuerStorage::query($this->db,'INSERT INTO '.$this->p.$table.'(issuer_id,'.$field.',staff_id) VALUES(?,?,?)',[$issuer,$id,$actor]);elseif(!$follow&&$present)IssuerStorage::query($this->db,'DELETE FROM '.$this->p.$table.' WHERE issuer_id=? AND '.$field.'=? AND staff_id=?',[$issuer,$id,$actor]);$exists=(bool)$this->rows('SELECT staff_id FROM '.$this->p.$table.' WHERE issuer_id=? AND '.$field.'=? AND staff_id=?',[$issuer,$id,$actor]);if($exists!==$follow)throw new RuntimeException('issuer_project_write_unconfirmed');$this->bump($issuer,$kind,$id,$revision);return $id;
+            self::setSelfFollowInOwned($this->db,$this->p,$issuer,$actor,$kind,$id,$follow);$this->bump($issuer,$kind,$id,$revision);return $id;
         });
+    }
+    private static function setSelfFollowInOwned($db,string $p,int $issuer,int $actor,string $kind,int $id,bool $follow):void
+    {
+        $table=$kind==='task'?'company_task_followers':'company_project_followers';$field=$kind==='task'?'task_id':'project_id';IssuerTransaction::assertOwned($db,$p,[$table]);$present=IssuerStorage::query($db,'SELECT staff_id FROM '.$p.$table.' WHERE issuer_id=? AND '.$field.'=? AND staff_id=?',[$issuer,$id,$actor])->result_array();
+        if($follow&&!$present)IssuerStorage::query($db,'INSERT INTO '.$p.$table.'(issuer_id,'.$field.',staff_id) VALUES(?,?,?)',[$issuer,$id,$actor]);elseif(!$follow&&$present)IssuerStorage::query($db,'DELETE FROM '.$p.$table.' WHERE issuer_id=? AND '.$field.'=? AND staff_id=?',[$issuer,$id,$actor]);$exists=(bool)IssuerStorage::query($db,'SELECT staff_id FROM '.$p.$table.' WHERE issuer_id=? AND '.$field.'=? AND staff_id=?',[$issuer,$id,$actor])->result_array();if($exists!==$follow)throw new RuntimeException('issuer_project_write_unconfirmed');
+    }
+    /** Current creator only, using the same native self-follow channel as follow(). No standalone channel. */
+    public static function followCreatedTaskInOwned($db,string $p,int $issuer,int $actor,int $id):void
+    {
+        IssuerTransaction::assertOwned($db,$p,['company_tasks','company_projects','company_task_followers','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff']);$self=new self($db,$p);$self->target('task');$self->authorize($issuer,$actor,'create');$row=$self->parent($issuer,'task',$id);if((int)$row['revision']!==1)throw new DomainException('company_project_stale');self::setSelfFollowInOwned($db,$p,$issuer,$actor,'task',$id,true);$self->authorize($issuer,$actor,'create');
     }
     public function dependencies($issuer,$actor,$task,$revision,array $dependencies,string $key):int
     {

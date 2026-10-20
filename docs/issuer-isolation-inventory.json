@@ -4114,7 +4114,7 @@
       "evidence": ""
     },
     "application/services/CompanyProjectCopies.php": {
-      "sha256": "50e049163a6b82d0e8dd7cd0b203919cd1a48ac38df821f1484c3a2068442330",
+      "sha256": "8d40db488f563f5c3d8c3c553b9c02d6c3b06a4e7051912397da93c0ba5f1ab3",
       "categories": [
         "customer_privacy"
       ],
@@ -4136,7 +4136,7 @@
       "evidence": ""
     },
     "application/services/CompanyProjectExtras.php": {
-      "sha256": "6cab7075616f0a33d800379e09457516fc46dcce6fe1c03da02388fe0b86ab13",
+      "sha256": "ad205358871ad71c07defbb535278ddf5eb6a8d710c7e06b9a8e2c1c337f78f9",
       "categories": [
         "customer_privacy"
       ],
@@ -4191,12 +4191,12 @@
       "evidence": ""
     },
     "application/services/CompanyProjectsStorage.php": {
-      "sha256": "c2ca7b4f6fe8b785ac8d2969544bed90ce379bc7f9b9aa6d7d092db0a118c814",
+      "sha256": "3f511cdeea33627a795a7e0fa220f2e47fbcf470065b6a2adedb068704936546",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        32
+        33
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4311,12 +4311,12 @@
       "evidence": ""
     },
     "application/services/CompanySettingsCatalog.php": {
-      "sha256": "ab09b24096c1a6bd90e41ca8684a472fedf3b3b5313ce695568d1336c3b690f3",
+      "sha256": "451571f1edd5e645e70eecc21ebb90850f86668d626bc00829649395d4d54fb1",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        24
+        25
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4361,13 +4361,13 @@
       "evidence": ""
     },
     "application/services/CompanyStandaloneTasks.php": {
-      "sha256": "b4589ae23e5627965ab9f7ea5b728138f10cafb9127333b5494bea8dd2106b7d",
+      "sha256": "6685d1175249f45719cf702319ca1da81e648d14f433df609fab5c7cb26a325c",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        21,
-        57
+        24,
+        60
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4398,7 +4398,7 @@
       "evidence": ""
     },
     "application/services/CompanyTaskCopies.php": {
-      "sha256": "8750e6924c185291601d7fe0a8563936f6e6f5a6b0c5b6cf833ffbf2b2f859aa",
+      "sha256": "37c050c470e372e60e8be6425b83940132d58d79e676d7b72f45fa1b3e89bbf9",
       "categories": [
         "customer_privacy"
       ],
@@ -4444,13 +4444,13 @@
       "evidence": ""
     },
     "application/services/CompanyTasks.php": {
-      "sha256": "75ab84becf8f5f59a547c5d1f60660b798e1557b78f6ed23164374755fc15f7b",
+      "sha256": "741a2d8ca2b5fb3ba1c772f77b427f77f845668935d8363e0a870cb14ad91270",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        46,
-        55
+        49,
+        58
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5416,15 +5416,15 @@
       "evidence": ""
     },
     "application/views/admin/settings/company_scoped.php": {
-      "sha256": "bed2fcedfa317aab762483de14f58150aaa6a00d7e6bebda6cb1a409d3a06c8e",
+      "sha256": "c430f139b018d4c44938f12132974e6a5c30dce176b2671032602320ca930241",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        8,
         9,
         10,
-        76
+        11,
+        80
       ],
       "state": "unreviewed",
       "evidence": ""

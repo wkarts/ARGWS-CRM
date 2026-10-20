@@ -28,7 +28,7 @@ trait CompanyTaskCreationDefaults
             (new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'create');
             $receipt=$this->rows('SELECT * FROM '.$this->p.'company_project_requests WHERE request_key=? FOR UPDATE',[$key])[0]??null;
             if($receipt){
-                $newMatch=$newValid&&hash_equals((string)$receipt['input_hash'],$hash);$oldMatch=$legacyHash!==null&&hash_equals((string)$receipt['input_hash'],$legacyHash);
+                $newMatch=$newValid&&(hash_equals((string)$receipt['input_hash'],$hash)||$this->sealedCreationReplay($receipt,$hash));$oldMatch=$legacyHash!==null&&hash_equals((string)$receipt['input_hash'],$legacyHash);
                 if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||$receipt['operation']!==$operation||(!$newMatch&&!$oldMatch))throw new DomainException('company_project_request_conflict');
                 $this->row($issuer,(int)$receipt['result_id']);$this->authorize($issuer,$actor,'create');return (int)$receipt['result_id'];
             }
@@ -41,10 +41,11 @@ trait CompanyTaskCreationDefaults
             }
             if(!in_array($data['status'],['todo','in_progress'],true))throw new DomainException('company_project_invalid_input');
             $id=$this->insertCreatedInOwned($issuer,$actor,$data);$expected=$this->row($issuer,$id);
-            // One audit write, with exact native bytes known before any AFTER trigger.
-            $auditFields=['actor_id'=>$actor,'event'=>'company_'.$operation,'issuer_id'=>$issuer,'subject_id'=>$id,'created_at'=>date('Y-m-d H:i:s')];
-            IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,?,?)',array_values($auditFields));$auditId=(int)$this->db->insert_id();$auditFrame=$this->rows('SELECT * FROM '.$this->p.'issuers_audit WHERE id=?',[$auditId])[0]??null;if(!$auditFrame)throw new RuntimeException('issuer_project_write_unconfirmed');foreach($auditFields as$field=>$value)if(!array_key_exists($field,$auditFrame)||(string)$auditFrame[$field]!== (string)$value)throw new RuntimeException('issuer_project_write_unconfirmed');
             $request=['request_key'=>$key,'issuer_id'=>$issuer,'actor_id'=>$actor,'input_hash'=>$hash,'operation'=>$operation,'result_id'=>$id,'created_at'=>date('Y-m-d H:i:s')];
+            $priorityMetadata=$this->sealCreationRequest($request);
+            // One audit write, with exact native bytes known before any AFTER trigger.
+            $auditFields=['actor_id'=>$actor,'event'=>'company_'.$operation,'issuer_id'=>$issuer,'subject_id'=>$id,'created_at'=>date('Y-m-d H:i:s')];if($priorityMetadata!==null)$auditFields['metadata_json']=$priorityMetadata;
+            IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(`'.implode('`,`',array_keys($auditFields)).'`) VALUES('.implode(',',array_fill(0,count($auditFields),'?')).')',array_values($auditFields));$auditId=(int)$this->db->insert_id();$auditFrame=$this->rows('SELECT * FROM '.$this->p.'issuers_audit WHERE id=?',[$auditId])[0]??null;if(!$auditFrame)throw new RuntimeException('issuer_project_write_unconfirmed');foreach($auditFields as$field=>$value)if(!array_key_exists($field,$auditFrame)||(string)$auditFrame[$field]!== (string)$value)throw new RuntimeException('issuer_project_write_unconfirmed');
             IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_project_requests(request_key,issuer_id,actor_id,input_hash,operation,result_id,created_at) VALUES(?,?,?,?,?,?,?)',array_values($request));
             $stored=$this->rows('SELECT * FROM '.$this->p.'company_project_requests WHERE request_key=?',[$key])[0]??null;
             if(!$stored)throw new RuntimeException('issuer_project_write_unconfirmed');foreach($request as$field=>$value)if(!array_key_exists($field,$stored)||(string)$stored[$field]!== (string)$value)throw new RuntimeException('issuer_project_write_unconfirmed');

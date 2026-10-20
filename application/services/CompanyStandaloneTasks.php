@@ -3,9 +3,12 @@
 declare(strict_types=1);
 require_once __DIR__.'/CompanyProjectsStorage.php';require_once __DIR__.'/CompanyStandaloneTasksSchema.php';require_once __DIR__.'/CompanyStandaloneBillingFence.php';
 require_once __DIR__.'/CompanyTaskCreationDefaults.php';
+require_once __DIR__.'/CompanyTaskPriorityOperations.php';
 final class CompanyStandaloneTasks extends CompanyProjectsStorage
 {
     use CompanyTaskCreationDefaults;
+    use CompanyTaskPriorityOperations;
+    protected function taskKind():string{return 'standalone';}
     protected string $feature='tasks';
     protected function apiTables():array{return array_values(array_unique(array_merge(parent::apiTables(),CompanyStandaloneBillingFence::tables($this->db,$this->p))));}
     private function assertBillingMutable(int $issuer,int $actor,int $task):void{CompanyStandaloneBillingFence::assertAvailableInOwned($this->db,$this->p,$issuer,$actor,$task);}
@@ -18,7 +21,7 @@ final class CompanyStandaloneTasks extends CompanyProjectsStorage
     protected function transaction(callable $work)
     {
         CompanyProjectsSchema::assertValid($this->db,$this->p);CompanyProjectExtrasSchema::assertValid($this->db,$this->p);CompanyStandaloneTasksSchema::assertValid($this->db,$this->p);
-        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),$this->apiTables()),$this->guardedWork($work));
+        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),CompanyTaskPrioritySchema::tables($this->db,$this->p),$this->apiTables()),$this->guardedWork($work));
     }
     public function staffOptions($issuer,$actor):array
     {
@@ -30,7 +33,7 @@ final class CompanyStandaloneTasks extends CompanyProjectsStorage
     }
     private static function input(array $input):array
     {
-        if(array_diff(array_keys($input),['assignee_id','name','description','due_date','status','checklist']))throw new DomainException('company_project_invalid_input');$data=['assignee_id'=>IssuerPolicy::id($input['assignee_id']??null),'name'=>self::text($input['name']??null,191),'description'=>self::text($input['description']??'',4000,false),'due_date'=>self::date($input['due_date']??null),'status'=>$input['status']??'todo','checklist_json'=>self::checklist($input['checklist']??[])];if(!in_array($data['status'],['todo','in_progress','done'],true))throw new DomainException('company_project_invalid_input');return $data;
+        if(array_diff(array_keys($input),['assignee_id','name','description','due_date','status','checklist','priority']))throw new DomainException('company_project_invalid_input');$data=['assignee_id'=>IssuerPolicy::id($input['assignee_id']??null),'name'=>self::text($input['name']??null,191),'description'=>self::text($input['description']??'',4000,false),'due_date'=>self::date($input['due_date']??null),'status'=>$input['status']??'todo','checklist_json'=>self::checklist($input['checklist']??[])];if(!in_array($data['status'],['todo','in_progress','done'],true))throw new DomainException('company_project_invalid_input');if(array_key_exists('priority',$input))$data['priority']=CompanyTaskPriority::value($input['priority']);return $data;
     }
     private function references(int $issuer,array $data):void
     {
@@ -38,11 +41,11 @@ final class CompanyStandaloneTasks extends CompanyProjectsStorage
     }
     private function row(int $issuer,int $id):array
     {
-        $row=$this->rows('SELECT * FROM '.$this->p.'company_standalone_tasks WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$id])[0]??null;if(!$row)throw new DomainException('company_project_access_denied');return $row;
+        $row=$this->rows('SELECT * FROM '.$this->p.'company_standalone_tasks WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$id])[0]??null;if(!$row)throw new DomainException('company_project_access_denied');$row['priority']=CompanyTaskPriority::read($this->db,$this->p,'standalone',$issuer,$id);return $row;
     }
     private function insertCreatedInOwned(int $issuer,int $actor,array $data):int
     {
-        $this->references($issuer,$data);$now=date('Y-m-d H:i:s');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_standalone_tasks(issuer_id,assignee_id,name,description,due_date,status,checklist_json,revision,created_at,updated_at) VALUES(?,?,?,?,?,?,?,1,?,?)',[$issuer,$data['assignee_id'],$data['name'],$data['description'],$data['due_date'],$data['status'],$data['checklist_json'],$now,$now]);$id=(int)$this->db->insert_id();$row=$this->row($issuer,$id);foreach($data as $f=>$v)if((string)$row[$f]!== (string)$v)throw new RuntimeException('issuer_project_write_unconfirmed');return $id;
+        $this->references($issuer,$data);$now=date('Y-m-d H:i:s');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_standalone_tasks(issuer_id,assignee_id,name,description,due_date,status,checklist_json,revision,created_at,updated_at) VALUES(?,?,?,?,?,?,?,1,?,?)',[$issuer,$data['assignee_id'],$data['name'],$data['description'],$data['due_date'],$data['status'],$data['checklist_json'],$now,$now]);$id=(int)$this->db->insert_id();$this->createPriorityInOwned($issuer,$actor,$id,$data,$now);$row=$this->row($issuer,$id);foreach($data as $f=>$v)if((string)$row[$f]!== (string)$v)throw new RuntimeException('issuer_project_write_unconfirmed');return $id;
     }
     public function create($issuer,$actor,array $input,string $key):int
     {
@@ -59,7 +62,7 @@ final class CompanyStandaloneTasks extends CompanyProjectsStorage
     }
     public function update($issuer,$actor,$id,$revision,array $input,string $key):int
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=self::revision($revision);$data=self::input($input);return $this->operation($issuer,$actor,'edit',$key,'standalone_task_updated',[$id,$revision,$data],function()use($issuer,$actor,$id,$revision,$data):int{$old=$this->row($issuer,$id);$this->assertBillingMutable($issuer,$actor,$id);if((int)$old['revision']!==$revision)throw new DomainException('company_project_stale');$this->references($issuer,$data);if($data['status']==='done'&&$this->rows('SELECT id FROM '.$this->p.'company_standalone_timers WHERE issuer_id=? AND task_id=? AND stopped_at IS NULL FOR UPDATE',[$issuer,$id]))throw new DomainException('company_project_timer_running');IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_standalone_tasks SET assignee_id=?,name=?,description=?,due_date=?,status=?,checklist_json=?,revision=revision+1,updated_at=? WHERE issuer_id=? AND id=? AND revision=?',[$data['assignee_id'],$data['name'],$data['description'],$data['due_date'],$data['status'],$data['checklist_json'],date('Y-m-d H:i:s'),$issuer,$id,$revision]);$row=$this->row($issuer,$id);$this->assertBillingMutable($issuer,$actor,$id);if((int)$row['revision']!==$revision+1)throw new RuntimeException('issuer_project_write_unconfirmed');foreach($data as $f=>$v)if((string)$row[$f]!== (string)$v)throw new RuntimeException('issuer_project_write_unconfirmed');return $id;});
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=self::revision($revision);$data=self::input($input);return $this->operation($issuer,$actor,'edit',$key,'standalone_task_updated',[$id,$revision,$data],function()use($issuer,$actor,$id,$revision,$data):int{$old=$this->row($issuer,$id);$this->assertBillingMutable($issuer,$actor,$id);if((int)$old['revision']!==$revision)throw new DomainException('company_project_stale');$this->references($issuer,$data);if($data['status']==='done'&&$this->rows('SELECT id FROM '.$this->p.'company_standalone_timers WHERE issuer_id=? AND task_id=? AND stopped_at IS NULL FOR UPDATE',[$issuer,$id]))throw new DomainException('company_project_timer_running');IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_standalone_tasks SET assignee_id=?,name=?,description=?,due_date=?,status=?,checklist_json=?,revision=revision+1,updated_at=? WHERE issuer_id=? AND id=? AND revision=?',[$data['assignee_id'],$data['name'],$data['description'],$data['due_date'],$data['status'],$data['checklist_json'],date('Y-m-d H:i:s'),$issuer,$id,$revision]);if(array_key_exists('priority',$data))CompanyTaskPriority::save($this->db,$this->p,'standalone',$issuer,$id,$data['priority'],false);$row=$this->row($issuer,$id);$this->assertBillingMutable($issuer,$actor,$id);if((int)$row['revision']!==$revision+1)throw new RuntimeException('issuer_project_write_unconfirmed');foreach($data as $f=>$v)if((string)$row[$f]!== (string)$v)throw new RuntimeException('issuer_project_write_unconfirmed');return $id;});
     }
     public function activity($issuer,$actor,$id,$revision,string $action,string $key,string $body=''):int
     {
@@ -82,8 +85,8 @@ final class CompanyStandaloneTasks extends CompanyProjectsStorage
     public function page($issuer,$actor,$after=0):array
     {
         $read=function()use($issuer,$actor,$after){
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$after=$after===0?0:IssuerPolicy::id($after);$this->authorize($issuer,$actor,'view');$rows=$this->rows('SELECT id,name,status,due_date,assignee_id,revision FROM '.$this->p.'company_standalone_tasks WHERE issuer_id=? AND id>? ORDER BY id LIMIT 51',[$issuer,$after]);$this->authorize($issuer,$actor,'view');return ['items'=>array_slice($rows,0,50),'next'=>count($rows)>50?(int)$rows[49]['id']:null];
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$after=$after===0?0:IssuerPolicy::id($after);$this->authorize($issuer,$actor,'view');$rows=$this->rows('SELECT id,name,status,due_date,assignee_id,revision FROM '.$this->p.'company_standalone_tasks WHERE issuer_id=? AND id>? ORDER BY id LIMIT 51',[$issuer,$after]);foreach($rows as &$item)$item['priority']=CompanyTaskPriority::read($this->db,$this->p,'standalone',$issuer,(int)$item['id']);unset($item);$this->authorize($issuer,$actor,'view');return ['items'=>array_slice($rows,0,50),'next'=>count($rows)>50?(int)$rows[49]['id']:null];
 
-        };return $this->originGuard===null?$read():$this->transaction($read);
+        };return $this->transaction($read);
     }
 }

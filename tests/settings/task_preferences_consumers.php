@@ -20,7 +20,7 @@ foreach([$a,$b,$primary]as$owner){
   foreach([null,0,'']as$i=>$invalid)essentialThrows(fn()=>$writer->create($owner,7,$body+['assignee_id'=>$invalid],$key('defaults-null-assignee-'.$kind.'-'.$owner.'-'.$i)),'issuer_invalid_id','explicit null zero empty assignee never promoted');
   $nullStatus=$writer->create($owner,7,$body+['assignee_id'=>7,'status'=>null],$key('defaults-null-status-canonical-'.$kind.'-'.$owner));essentialCheck($writer->get($owner,7,$nullStatus)['status']==='todo','explicit null status retains old validated todo instead of adopting inprogress policy');
   foreach(['done',1]as$i=>$invalid)essentialThrows(fn()=>$writer->create($owner,7,$body+['assignee_id'=>7,'status'=>$invalid],$key('defaults-null-status-'.$kind.'-'.$owner.'-'.$i)),'company_project_invalid_input','explicit invalid or completed status cannot create task');
-  foreach(['priority'=>1,'followers'=>[7]]as$field=>$v)essentialThrows(fn()=>$writer->create($owner,7,$body+['assignee_id'=>7,$field=>$v],$key('defaults-closed-'.$kind.'-'.$owner.'-'.$field)),'company_project_invalid_input','unsupported priority/followers remain rejected');
+  foreach(['priority'=>99,'followers'=>[7]]as$field=>$v)essentialThrows(fn()=>$writer->create($owner,7,$body+['assignee_id'=>7,$field=>$v],$key('defaults-closed-'.$kind.'-'.$owner.'-'.$field)),'company_project_invalid_input','invalid priority and unsupported follower input remain rejected');
  }
 }
 $preferences->save($b,12,2,$values('in_progress'));

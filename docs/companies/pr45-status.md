@@ -1,3 +1,9 @@
+## Atualização 448 — prioridade e auto-follow próprios
+
+Núcleo **4.4.8/448**, BB **1.2.3/123** e Asaas **1.5.3/153** preservados. Prioridade1–4, default próprio2, edição explícita e cópias revisadas; auto-follow opt-in somente do criador de tarefas de projeto, sem herdar seguidores e sem reinscrever após retry. Configuração própria inclusive na principal, duas tabelas auxiliares sem backfill, GUI e API existentes pelo mesmo writer. Ver `task-priority-settings.md` e `pr45-validation-448.md`.
+
+O trabalho447 de diário LOCAL/restauração/fundos e tarifa já está publicado em c07a03a2. A falha remota446 do calendário continua sem causa reproduzida; fontes de diagnóstico foram preservadas. Timers e demais consumidores ainda requerem seus próprios contratos. SHA e CI efetivos são registrados na PR45, sem transferir resultados históricos.
+
 ## Atualização 447 — composição recuperada e validação por origem
 
 Núcleo **4.4.7/447**, Banco do Brasil **1.2.3/123**, Asaas **1.5.3/153** preservado. Pai remoto conferido: `b47d1666f7bb788bf29ead9c9aa03ff3f36221d1`. Publicação e CI efetivos são registrados na PR45; os parágrafos anteriores sobre trabalho somente local são históricos e substituídos apenas para as frentes abaixo depois da confirmação do push.

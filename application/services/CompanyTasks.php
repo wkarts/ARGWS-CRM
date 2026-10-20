@@ -4,9 +4,12 @@ declare(strict_types=1);
 require_once __DIR__.'/CompanyProjectsStorage.php';
 require_once __DIR__.'/CompanyTaskBillingSourceLocks.php';
 require_once __DIR__.'/CompanyTaskCreationDefaults.php';
+require_once __DIR__.'/CompanyTaskPriorityOperations.php';
 final class CompanyTasks extends CompanyProjectsStorage
 {
     use CompanyTaskCreationDefaults;
+    use CompanyTaskPriorityOperations;
+    protected function taskKind():string{return 'project';}
     use CompanyTaskBillingSourceLocks;
     protected string $feature='tasks';
     private static function checklist($items):string
@@ -15,7 +18,7 @@ final class CompanyTasks extends CompanyProjectsStorage
     }
     private static function input(array $input):array
     {
-        if(array_diff(array_keys($input),['project_id','assignee_id','name','description','due_date','status','checklist']))throw new DomainException('company_project_invalid_input');$data=['project_id'=>IssuerPolicy::id($input['project_id']??null),'assignee_id'=>IssuerPolicy::id($input['assignee_id']??null),'name'=>self::text($input['name']??null,191),'description'=>self::text($input['description']??'',4000,false),'due_date'=>self::date($input['due_date']??null),'status'=>$input['status']??'todo','checklist_json'=>self::checklist($input['checklist']??[])];if(!in_array($data['status'],['todo','in_progress','done'],true))throw new DomainException('company_project_invalid_input');return $data;
+        if(array_diff(array_keys($input),['project_id','assignee_id','name','description','due_date','status','checklist','priority']))throw new DomainException('company_project_invalid_input');$data=['project_id'=>IssuerPolicy::id($input['project_id']??null),'assignee_id'=>IssuerPolicy::id($input['assignee_id']??null),'name'=>self::text($input['name']??null,191),'description'=>self::text($input['description']??'',4000,false),'due_date'=>self::date($input['due_date']??null),'status'=>$input['status']??'todo','checklist_json'=>self::checklist($input['checklist']??[])];if(!in_array($data['status'],['todo','in_progress','done'],true))throw new DomainException('company_project_invalid_input');if(array_key_exists('priority',$input))$data['priority']=CompanyTaskPriority::value($input['priority']);return $data;
     }
     private function parent(int $issuer,int $project,bool $active=false):array
     {
@@ -27,11 +30,11 @@ final class CompanyTasks extends CompanyProjectsStorage
     }
     private function row(int $issuer,int $id):array
     {
-        $row=$this->rows('SELECT * FROM '.$this->p.'company_tasks WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$id])[0]??null;if(!$row)throw new DomainException('company_project_access_denied');$this->parent($issuer,(int)$row['project_id']);return $row;
+        $row=$this->rows('SELECT * FROM '.$this->p.'company_tasks WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$id])[0]??null;if(!$row)throw new DomainException('company_project_access_denied');$this->parent($issuer,(int)$row['project_id']);$row['priority']=CompanyTaskPriority::read($this->db,$this->p,'project',$issuer,$id);return $row;
     }
     private function insertCreatedInOwned(int $issuer,int $actor,array $data):int
     {
-        $this->references($issuer,$data);$now=date('Y-m-d H:i:s');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_tasks(issuer_id,project_id,assignee_id,name,description,due_date,status,checklist_json,revision,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,1,?,?)',[$issuer,$data['project_id'],$data['assignee_id'],$data['name'],$data['description'],$data['due_date'],$data['status'],$data['checklist_json'],$now,$now]);$id=(int)$this->db->insert_id();$row=$this->row($issuer,$id);foreach($data as $f=>$v)if((string)$row[$f]!== (string)$v)throw new RuntimeException('issuer_project_write_unconfirmed');return $id;
+        $this->references($issuer,$data);$now=date('Y-m-d H:i:s');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_tasks(issuer_id,project_id,assignee_id,name,description,due_date,status,checklist_json,revision,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,1,?,?)',[$issuer,$data['project_id'],$data['assignee_id'],$data['name'],$data['description'],$data['due_date'],$data['status'],$data['checklist_json'],$now,$now]);$id=(int)$this->db->insert_id();$this->createPriorityInOwned($issuer,$actor,$id,$data,$now);$row=$this->row($issuer,$id);foreach($data as $f=>$v)if((string)$row[$f]!== (string)$v)throw new RuntimeException('issuer_project_write_unconfirmed');return $id;
     }
     public function create($issuer,$actor,array $input,string $key):int
     {
@@ -57,7 +60,7 @@ final class CompanyTasks extends CompanyProjectsStorage
     }
     public function update($issuer,$actor,$id,$revision,array $input,string $key):int
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=self::revision($revision);$data=self::input($input);return $this->operation($issuer,$actor,'edit',$key,'task_updated',[$id,$revision,$data],function()use($issuer,$actor,$id,$revision,$data):int{$old=$this->row($issuer,$id);$this->assertTaskUnclaimed($issuer,$actor,$id);if((int)$old['revision']!==$revision)throw new DomainException('company_project_stale');if((int)$old['project_id']!==$data['project_id'])throw new DomainException('company_project_reference_denied');$this->references($issuer,$data);require_once __DIR__.'/CompanyProjectExtras.php';if($data['status']==='done')CompanyProjectExtras::assertTaskReady($this->db,$this->p,$issuer,$id);elseif($old['status']==='done')CompanyProjectExtras::assertTaskReopenAllowed($this->db,$this->p,$issuer,$id);if($data['status']==='done'&&$this->rows('SELECT id FROM '.$this->p.'company_task_timers WHERE issuer_id=? AND task_id=? AND stopped_at IS NULL FOR UPDATE',[$issuer,$id]))throw new DomainException('company_project_timer_running');IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_tasks SET assignee_id=?,name=?,description=?,due_date=?,status=?,checklist_json=?,revision=revision+1,updated_at=? WHERE issuer_id=? AND id=? AND revision=?',[$data['assignee_id'],$data['name'],$data['description'],$data['due_date'],$data['status'],$data['checklist_json'],date('Y-m-d H:i:s'),$issuer,$id,$revision]);$row=$this->row($issuer,$id);$this->assertTaskUnclaimed($issuer,$actor,$id);if((int)$row['revision']!==$revision+1)throw new RuntimeException('issuer_project_write_unconfirmed');foreach($data as $f=>$v)if((string)$row[$f]!== (string)$v)throw new RuntimeException('issuer_project_write_unconfirmed');return $id;});
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=self::revision($revision);$data=self::input($input);return $this->operation($issuer,$actor,'edit',$key,'task_updated',[$id,$revision,$data],function()use($issuer,$actor,$id,$revision,$data):int{$old=$this->row($issuer,$id);$this->assertTaskUnclaimed($issuer,$actor,$id);if((int)$old['revision']!==$revision)throw new DomainException('company_project_stale');if((int)$old['project_id']!==$data['project_id'])throw new DomainException('company_project_reference_denied');$this->references($issuer,$data);require_once __DIR__.'/CompanyProjectExtras.php';if($data['status']==='done')CompanyProjectExtras::assertTaskReady($this->db,$this->p,$issuer,$id);elseif($old['status']==='done')CompanyProjectExtras::assertTaskReopenAllowed($this->db,$this->p,$issuer,$id);if($data['status']==='done'&&$this->rows('SELECT id FROM '.$this->p.'company_task_timers WHERE issuer_id=? AND task_id=? AND stopped_at IS NULL FOR UPDATE',[$issuer,$id]))throw new DomainException('company_project_timer_running');IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_tasks SET assignee_id=?,name=?,description=?,due_date=?,status=?,checklist_json=?,revision=revision+1,updated_at=? WHERE issuer_id=? AND id=? AND revision=?',[$data['assignee_id'],$data['name'],$data['description'],$data['due_date'],$data['status'],$data['checklist_json'],date('Y-m-d H:i:s'),$issuer,$id,$revision]);if(array_key_exists('priority',$data))CompanyTaskPriority::save($this->db,$this->p,'project',$issuer,$id,$data['priority'],false);$row=$this->row($issuer,$id);$this->assertTaskUnclaimed($issuer,$actor,$id);if((int)$row['revision']!==$revision+1)throw new RuntimeException('issuer_project_write_unconfirmed');foreach($data as $f=>$v)if((string)$row[$f]!== (string)$v)throw new RuntimeException('issuer_project_write_unconfirmed');return $id;});
     }
     public function activity($issuer,$actor,$id,$revision,string $action,string $key,string $body=''):int
     {
@@ -80,8 +83,8 @@ final class CompanyTasks extends CompanyProjectsStorage
     public function page($issuer,$actor,$project,$after=0):array
     {
         $read=function()use($issuer,$actor,$project,$after){
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$project=IssuerPolicy::id($project);$after=$after===0?0:IssuerPolicy::id($after);$this->authorize($issuer,$actor,'view');$this->parent($issuer,$project);$rows=$this->rows('SELECT id,name,status,due_date,assignee_id,revision FROM '.$this->p.'company_tasks WHERE issuer_id=? AND project_id=? AND id>? ORDER BY id LIMIT 51',[$issuer,$project,$after]);$this->authorize($issuer,$actor,'view');return ['items'=>array_slice($rows,0,50),'next'=>count($rows)>50?(int)$rows[49]['id']:null];
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$project=IssuerPolicy::id($project);$after=$after===0?0:IssuerPolicy::id($after);$this->authorize($issuer,$actor,'view');$this->parent($issuer,$project);$rows=$this->rows('SELECT id,name,status,due_date,assignee_id,revision FROM '.$this->p.'company_tasks WHERE issuer_id=? AND project_id=? AND id>? ORDER BY id LIMIT 51',[$issuer,$project,$after]);foreach($rows as &$item)$item['priority']=CompanyTaskPriority::read($this->db,$this->p,'project',$issuer,(int)$item['id']);unset($item);$this->authorize($issuer,$actor,'view');return ['items'=>array_slice($rows,0,50),'next'=>count($rows)>50?(int)$rows[49]['id']:null];
 
-        };return $this->originGuard===null?$read():$this->transaction($read);
+        };return $this->transaction($read);
     }
 }

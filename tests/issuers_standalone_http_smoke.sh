@@ -690,3 +690,17 @@ ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_S
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 ISSUERS_BROWSER_ARTIFACTS="$work/local447-artifacts" NONCASH_BROWSER_FIXTURES="$work/local447-fixtures.json" \
 node tests/banco_brasil_local_noncash_browser_v3.cjs
+
+#448: prior task/calendar regression runs first; this suite then opts into auto-follow by GUI.
+docker exec "$upgrade" mkdir -p /app/tests/settings
+docker cp tests/settings/task_operations_http_fixture.php "$upgrade:/app/tests/settings/task_operations_http_fixture.php"
+cat > "$work/task448-php" <<'PHP448_EXEC'
+#!/bin/sh
+exec docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$ISSUERS_BROWSER_APP_CONTAINER" php "$@"
+PHP448_EXEC
+chmod +x "$work/task448-php"
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+ISSUERS_BROWSER_PHP_BINARY="$work/task448-php" TASK_OPERATIONS_BROWSER_FIXTURE_PHP=/app/tests/settings/task_operations_http_fixture.php \
+node tests/settings/task_operations_browser.cjs
