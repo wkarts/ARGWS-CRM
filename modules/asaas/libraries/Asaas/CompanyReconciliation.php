@@ -46,6 +46,8 @@ final class CompanyReconciliation
     {
         if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active())throw new \DomainException('asaas_company_worker_context_denied');
         if($limit<1||$limit>100)throw new \InvalidArgumentException('asaas_company_worker_limit');$result=['completed'=>0,'retry'=>0,'review'=>0];
+        // Repair old435 observed events before claiming; every job freezes persisted ownership and automation actor.
+        $this->transaction(fn()=>(new CompanyService($this->db,$this->p))->enqueueObservedJobsInOwnedTransaction($limit));
         for($i=0;$i<$limit;$i++){
             $job=$this->claim();if($job===null)break;if(isset($job['skipped'])){$result['review']++;continue;}
             try{

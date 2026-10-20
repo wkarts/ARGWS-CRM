@@ -8,6 +8,7 @@ final class Issuer_invoice_pdf extends TCPDF
 {
     private InvoiceIssuerDocumentData $document;
     private bool $prepared = false;
+    private string $documentFont='dejavusans';
 
     public function __construct(InvoiceIssuerDocumentData $document)
     {
@@ -19,7 +20,9 @@ final class Issuer_invoice_pdf extends TCPDF
         $this->setPrintFooter(true);
         $this->setMargins(15,15,15);
         $this->setAutoPageBreak(true,15);
-        $this->setFont('dejavusans','',9);
+        $typography=CompanyInvoicePresentation::typography($document->data()['identity'],'invoices');
+        $this->documentFont=$typography['font'];
+        $this->setFont($this->documentFont,'',$typography['size']);
         $this->setCreator('CRM');
         $data = $document->data();
         $this->setAuthor($data['identity']['legal_name']);
@@ -30,7 +33,7 @@ final class Issuer_invoice_pdf extends TCPDF
     public function Footer()
     {
         $this->SetY(-12);
-        $this->SetFont('dejavusans','',8);
+        $this->SetFont($this->documentFont,'',8);
         $this->SetTextColor(110,110,110);
         $this->Cell(0,5,'Página ' . $this->getAliasNumPage() . ' / ' . $this->getAliasNbPages(),0,0,'C');
     }

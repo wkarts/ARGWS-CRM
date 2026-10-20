@@ -1,21 +1,21 @@
 <?php
 
 declare(strict_types=1);
-require_once __DIR__.'/CompanySalesBase.php';
+require_once __DIR__.'/CompanySalesBase.php';require_once __DIR__.'/CompanyBillingInvoiceLifecycle.php';
 require_once __DIR__.'/CompanyExpenses.php';
 require_once __DIR__.'/CompanyExpenseBillingSchema.php';
 
 /** Internal source locks and fingerprints. No ambient company, task billing or transport authority. */
 abstract class CompanyExpenseBillingStorage extends CompanySalesBase
 {
-    public function tables():array{return array_values(array_unique(array_merge((new CompanyExpenses($this->db,$this->prefix))->tables(),['company_expense_billing_origins','company_expense_billing_links','currencies','company_currency_units','options','company_invoice_requests','invoices','issuers_invoice_documents'])));}
+    public function tables():array{return array_values(array_unique(array_merge((new CompanyExpenses($this->db,$this->prefix))->tables(),(new CompanyBillingInvoiceLifecycle($this->db,$this->prefix))->tables(),['company_expense_billing_origins','company_expense_billing_links','currencies','company_currency_units','options','company_invoice_requests','invoices','issuers_invoice_documents'])));}
     protected function billingAuth(int $issuer,int $actor,bool $invoice=true):void
     {
         $acl=new IssuerResourceAccess($this->db,$this->prefix);foreach([['expenses','view'],['expenses','edit'],['customers','view']] as [$f,$c])if(!$acl->can($issuer,$actor,$f,$c))throw new DomainException('company_expense_billing_denied');if($invoice)foreach(['view','create'] as $c)if(!$acl->can($issuer,$actor,'invoices',$c))throw new DomainException('company_expense_billing_denied');
     }
-    protected function billingTx(int $issuer,int $actor,callable $work)
+    protected function billingTx(int $issuer,int $actor,callable $work,array $extraTables=[])
     {
-        CompanyExpenseBillingSchema::assertValid($this->db,$this->prefix);return IssuerTransaction::run($this->db,$this->prefix,$this->tables(),function()use($issuer,$actor,$work){(new IssuerResourceAccess($this->db,$this->prefix))->lockFinancialIdentity($issuer,$actor);$this->billingAuth($issuer,$actor);$result=$work();$this->billingAuth($issuer,$actor);return $result;});
+        CompanyExpenseBillingSchema::assertValid($this->db,$this->prefix);return IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge($this->tables(),$extraTables))),function()use($issuer,$actor,$work){(new IssuerResourceAccess($this->db,$this->prefix))->lockFinancialIdentity($issuer,$actor);$this->billingAuth($issuer,$actor);$result=$work();$this->billingAuth($issuer,$actor);return $result;});
     }
     protected function expense(int $issuer,int $id):array
     {

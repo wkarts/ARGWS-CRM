@@ -10,13 +10,15 @@ final class CompanySettingsCatalog
 {
     public static function groups(): array
     {
-        return ['company'=>'Informações da Empresa','email'=>'Servidor SMTP','email_content'=>'Apresentação dos e-mails',
+        return ['pdf_typography'=>'Tipografia dos PDFs','project_files'=>'Arquivos de projetos','company'=>'Informações da Empresa','email'=>'Servidor SMTP','email_content'=>'Apresentação dos e-mails',
             'documents'=>'Faturas e créditos','sales_documents'=>'Orçamentos e propostas','document_pdf'=>'PDF de faturas, créditos e contratos','sales_pdf'=>'PDF de orçamentos e propostas','localization'=>'Data e hora'];
     }
 
     public static function fields(string $group): array
     {
         return match($group) {
+            'pdf_typography'=>['pdf_font','pdf_font_size'],
+            'project_files'=>['allow_contact_to_delete_files'],
             'company'=>array_merge(['invoice_company_name','company_vat'],CompanySettingsIdentity::PROFILE_OPTIONS),
             'localization'=>['dateformat','time_format'],
             'document_pdf'=>['pdf_format_invoice','pdf_format_credit_note','pdf_format_contract'],
@@ -32,6 +34,8 @@ final class CompanySettingsCatalog
     public static function defaultValue(string $group,string $field):string
     {
         if(!in_array($field,self::fields($group),true))throw new DomainException('company_settings_invalid_input');
+        if($group==='pdf_typography')return $field==='pdf_font'?'dejavusans':'';
+        if($group==='project_files')return '0';
         if(in_array($group,['sales_pdf','document_pdf'],true))return 'A4-PORTRAIT';
         return $group==='sales_documents'?(['estimate_prefix'=>'ORC-','proposal_number_prefix'=>'PROP-'][$field]??''):'';
     }
@@ -53,6 +57,8 @@ final class CompanySettingsCatalog
             if(strlen($value)>$limit)throw new DomainException('company_settings_invalid_input');
             if($group!=='company'&&$name!=='smtp_password'&&!self::multiline($name)&&preg_match('/[\r\n]/',$value))throw new DomainException('company_settings_invalid_input');
         }
+        if($group==='project_files'&&(array_keys($settings)!==['allow_contact_to_delete_files']||!in_array($settings['allow_contact_to_delete_files'],['0','1'],true)))throw new DomainException('company_settings_invalid_input');
+        if($group==='pdf_typography'){require_once __DIR__.'/CompanyPdfTypography.php';CompanyPdfTypography::prepare($settings);}
         if($group==='localization')CompanySettingsFormats::validate($settings);
         if(in_array($group,['sales_pdf','document_pdf'],true))foreach($settings as $value)CompanyDocumentPdf::validate($value);
         if($group==='email') {

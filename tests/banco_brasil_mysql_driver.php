@@ -11,7 +11,7 @@ function log_message($level,$message){} // Do not emit test SQL or payloads.
 function is_php($version){return version_compare(PHP_VERSION,$version,'>=');}
 function show_error($message){throw new RuntimeException('ci_database_error');}
 require BASEPATH.'database/DB.php';
-function nativeParams():array{return ['dbdriver'=>'mysqli','hostname'=>getenv('MYSQL_HOST')?:'127.0.0.1','port'=>3306,
+function nativeParams():array{return ['dbdriver'=>'mysqli','hostname'=>getenv('MYSQL_HOST')?:'127.0.0.1','port'=>(int)(getenv('MYSQL_PORT')?:3306),
  'username'=>getenv('MYSQL_USER')?:'root','password'=>getenv('MYSQL_PASSWORD')?:'root','database'=>'bb_test',
  'db_debug'=>false,'pconnect'=>false,'char_set'=>'utf8mb4','dbcollat'=>'utf8mb4_bin','save_queries'=>false,'stricton'=>true];}
 mysqli_report(MYSQLI_REPORT_OFF);

@@ -87,8 +87,8 @@ final class Reconciliation
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);self::authorize($this->db,$this->prefix,$issuer,$actor,'view');
         ReconciliationSchema::ensure($this->db,$this->prefix,false);
-        $rows=\IssuerStorage::query($this->db,'SELECT e.id,l.origin_id,r.payment_id FROM '.$this->prefix.'bb_return_events e LEFT JOIN '.$this->prefix.'bb_event_links l ON l.event_id=e.id AND l.issuer_id=e.issuer_id LEFT JOIN '.$this->prefix.'bb_event_receipts r ON r.event_id=e.id AND r.issuer_id=e.issuer_id WHERE e.issuer_id=? ORDER BY e.id DESC LIMIT 50',[$issuer])->result_array();
-        $result=[];foreach($rows as $row)$result[(int)$row['id']]=['linked'=>$row['origin_id']!==null,'applied'=>$row['payment_id']!==null];
+        $rows=\IssuerStorage::query($this->db,'SELECT e.id,l.origin_id,r.payment_id,o.channel origin_channel FROM '.$this->prefix.'bb_return_events e LEFT JOIN '.$this->prefix.'bb_event_links l ON l.event_id=e.id AND l.issuer_id=e.issuer_id LEFT JOIN '.$this->prefix.'bb_origins o ON o.id=l.origin_id AND o.issuer_id=e.issuer_id LEFT JOIN '.$this->prefix.'bb_event_receipts r ON r.event_id=e.id AND r.issuer_id=e.issuer_id WHERE e.issuer_id=? ORDER BY e.id DESC LIMIT 50',[$issuer])->result_array();
+        $result=[];foreach($rows as $row)$result[(int)$row['id']]=['linked'=>$row['origin_id']!==null,'applied'=>$row['payment_id']!==null,'origin_channel'=>$row['origin_channel']??null,'origin_id'=>$row['origin_id']===null?null:(int)$row['origin_id']];
         return $result;
     }
     public static function audit($db,string $p,int $issuer,int $connection,int $actor,string $action,int $event):void

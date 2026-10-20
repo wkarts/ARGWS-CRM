@@ -62,6 +62,19 @@ jobs:
           php tests/banco_brasil_api_percentage_discount_mysql.php
           php tests/banco_brasil_api_percentage_discount_concurrency.php
           php tests/banco_brasil_cross_channel_receipt_concurrency.php
+          php tests/banco_brasil_api16_components_data.php
+          php tests/banco_brasil_api16_components_mysql.php
+          php tests/banco_brasil_api16_components_concurrency.php
+          php tests/banco_brasil_api16_components_portal_mysql.php
+          php tests/banco_brasil_api16_components_cross_channel.php
+          php tests/banco_brasil_pdf_typography_mysql.php
+          php tests/banco_brasil_api_origin_cnab240_mysql.php
+          php tests/banco_brasil_api_origin_cnab240_concurrency.php
+          php tests/banco_brasil_interrupted_sending_mysql.php
+          php tests/banco_brasil_interrupted_read_mysql.php
+          php tests/banco_brasil_api16_mutation_fence_mysql.php
+          php tests/banco_brasil_api16_mutation_fence_concurrency.php
+          php tests/banco_brasil_api_origin_mutation_fence_concurrency.php
           php tests/banco_brasil_external_reversal_concurrency.php
         env:
           MYSQL_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
@@ -111,6 +124,19 @@ jobs:
           php tests/banco_brasil_api_concurrency.php
           php tests/banco_brasil_api_receipt_concurrency.php
           php tests/banco_brasil_cross_channel_receipt_concurrency.php
+          php tests/banco_brasil_api16_components_data.php
+          php tests/banco_brasil_api16_components_mysql.php
+          php tests/banco_brasil_api16_components_concurrency.php
+          php tests/banco_brasil_api16_components_portal_mysql.php
+          php tests/banco_brasil_api16_components_cross_channel.php
+          php tests/banco_brasil_pdf_typography_mysql.php
+          php tests/banco_brasil_api_origin_cnab240_mysql.php
+          php tests/banco_brasil_api_origin_cnab240_concurrency.php
+          php tests/banco_brasil_interrupted_sending_mysql.php
+          php tests/banco_brasil_interrupted_read_mysql.php
+          php tests/banco_brasil_api16_mutation_fence_mysql.php
+          php tests/banco_brasil_api16_mutation_fence_concurrency.php
+          php tests/banco_brasil_api_origin_mutation_fence_concurrency.php
           php tests/banco_brasil_api_monthly_interest.php
           php tests/banco_brasil_api_monthly_interest_mysql.php
           php tests/banco_brasil_api_fixed_discount.php

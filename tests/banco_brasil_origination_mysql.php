@@ -17,6 +17,16 @@ $db->failVersion='1.1.5';essentialCheck((new App_module_migration('banco_brasil'
 essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.1.4','failed115 preserves successfully applied114');
 essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='115','actual NOOP115 can retry through the native module runner');
 essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native115 replay is stable');
+$GLOBALS['CI']->app_modules=new class {function get($name){return ['headers'=>['version'=>'1.1.6']];}};
+$db->trans_begin();essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'issuer_outer_transaction_not_allowed','native116 cannot create additive DDL inside another transaction');$db->trans_rollback();
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.1.5','outer transaction rejection preserves115');
+$db->failOn='CREATE TABLE IF NOT EXISTS `'.$p.'bb_api_cnab_contracts`';essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_api_cnab_schema_failed','native116 DDL failure propagates before tracking');$db->failOn=null;
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.1.5','failed116 DDL preserves115');
+$db->failVersion='1.1.6';essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native116 tracking failure cannot authorize runtime');$db->failVersion=null;
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.1.5','failed116 tracking preserves115');
+essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='116','actual116 additive schema retries through native runner');
+essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native116 replay is stable');
+essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'bb_api_cnab_contracts')->row()->n===0,'native116 never backfills a contract for an existing origin');
 \BancoBrasil\OriginationSchema::assertValid($db,$p);
 $GLOBALS['CI']->app_modules=$realModules;
 unset($db->data_cache['table_names']);

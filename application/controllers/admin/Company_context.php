@@ -14,7 +14,22 @@ class Company_context extends App_Controller
     public function index(): void
     {
         if (!in_array($this->input->method(true), ['GET', 'HEAD'], true)) { show_error('Use GET para selecionar uma empresa.', 405); return; }
-        $this->load->view('admin/companies/context');
+        $nativeUpgradeSuccess = false;
+        if ($this->session->userdata('admin_database_upgrade_success') !== null
+            && $this->input->method(true) === 'GET' && !$this->input->is_ajax_request()) {
+            require_once APPPATH . 'services/AdminDatabaseUpgrade.php';
+            try {
+                $version = IssuerStorage::query($this->db, 'SELECT version FROM `'.db_prefix().'migrations` LIMIT 1')->row();
+                if (!$version || !preg_match('/^[0-9]+$/D', (string) $version->version)) {
+                    throw new RuntimeException('native_upgrade_version_unavailable');
+                }
+            } catch (Throwable $error) {
+                show_error('Não foi possível confirmar a atualização do núcleo. Tente novamente.', 503);
+                return;
+            }
+            $nativeUpgradeSuccess = AdminDatabaseUpgrade::consumeContextSuccess($this, (string) $version->version);
+        }
+        $this->load->view('admin/companies/context', ['native_database_upgrade_success' => $nativeUpgradeSuccess]);
     }
 
     public function select(): void

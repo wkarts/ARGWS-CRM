@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 require_once __DIR__.'/CompanyProjectsStorage.php';
+require_once __DIR__.'/CompanyTaskBillingSourceLocks.php';
 final class CompanyProjects extends CompanyProjectsStorage
 {
+    use CompanyTaskBillingSourceLocks;
     protected string $feature='projects';
     private static function input(array $input):array
     {
@@ -29,7 +31,7 @@ final class CompanyProjects extends CompanyProjectsStorage
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=self::revision($revision);$data=self::input($input);
         return $this->operation($issuer,$actor,'edit',$key,'project_updated',[$id,$revision,$data],function()use($issuer,$actor,$id,$revision,$data):int{
             $old=$this->row($issuer,$id);if((int)$old['revision']!==$revision)throw new DomainException('company_project_stale');if($old['status']!=='active')throw new DomainException('company_project_closed');
-            if((int)$old['client_id']!==$data['client_id'])throw new DomainException('company_project_reference_denied');$this->references($issuer,$actor,$data);
+            if((int)$old['client_id']!==$data['client_id'])throw new DomainException('company_project_reference_denied');$this->references($issuer,$actor,$data);if($data['status']==='cancelled')$this->assertProjectNoPendingBilling($issuer,$id);
             require_once __DIR__.'/CompanyProjectExtras.php';if($data['status']!=='active')CompanyProjectExtras::assertProjectReady($this->db,$this->p,$issuer,$id);
             if($this->rows('SELECT id FROM '.$this->p.'company_project_milestones WHERE issuer_id=? AND project_id=? AND (due_date<? OR due_date>?) LIMIT 1 FOR UPDATE',[$issuer,$id,$data['start_date'],$data['due_date']]))throw new DomainException('company_project_invalid_input');
             if($data['status']!=='active'&&$this->rows('SELECT id FROM '.$this->p.'company_tasks WHERE issuer_id=? AND project_id=? AND status<>? LIMIT 1 FOR UPDATE',[$issuer,$id,'done']))throw new DomainException('company_project_open_tasks');

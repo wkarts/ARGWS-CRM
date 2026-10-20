@@ -185,11 +185,30 @@ class App_Email extends App_mailer
                     || !is_string($headers['from']) || !is_string($headers['fromName']) || !is_string($headers['subject']))) {
                     throw new DomainException('company_mail_payload_invalid');
                 }
+                require_once APPPATH.'services/CompanyPortalMailQueueConsumer.php';
+                CompanyPortalMailQueueConsumer::assertQueueRouting($this->CI->db,db_prefix(),$email,$headers);
+                require_once APPPATH.'services/CompanyGoogleMailOAuthDispatchSource.php';
+                CompanyGoogleMailOAuthDispatchSource::assertQueueEnvelopeIfBound($this->CI->db,db_prefix(),$email,$headers);
+                require_once APPPATH . 'services/CompanyExpenseRecurringDeliverySource.php';
+                CompanyExpenseRecurringDeliverySource::assertQueueRouting($this->CI->db, db_prefix(), $email, $headers);
                 $transport = $legacyConfig;
                 if (isset($email->issuer_id)) {
                     require_once APPPATH . 'services/CompanyMailConfig.php';
-                    $transport = CompanyMailConfig::build($this->CI->db, db_prefix(), $email->issuer_id,
-                        fn($value) => $this->CI->encryption->decrypt($value));
+                    if(array_key_exists(CompanyPortalRecoveryMail::HEADER,$headers)){
+                        $portalKey=$headers[CompanyPortalRecoveryMail::HEADER];if(!is_string($portalKey))throw new DomainException('company_mail_payload_invalid');
+                        $transport=CompanyPortalMailConfig::forQueue($this->CI->db,db_prefix(),$email,$portalKey,(string)$this->CI->config->item('encryption_key'),fn($v)=>$this->CI->encryption->decrypt($v),fn($v)=>$this->CI->encryption->encrypt($v));
+                    }else{
+                        $documentKind=array_key_exists('companyInvoiceDelivery',$headers)?'invoice':(array_key_exists('companySalesDelivery',$headers)?'sales':null);
+                        $dispatchSource=null;
+                        if($documentKind!==null){
+                            require_once APPPATH.'services/CompanyGoogleMailOAuthDispatchSource.php';
+                            $header=$documentKind==='invoice'?'companyInvoiceDelivery':'companySalesDelivery';
+                            if(!is_string($headers[$header]))throw new DomainException('company_mail_payload_invalid');
+                            $dispatchSource=new CompanyGoogleMailOAuthDispatchSource($this->CI->db,db_prefix(),$email,$documentKind,$headers[$header]);
+                        }
+                        $transport = CompanyMailConfig::build($this->CI->db, db_prefix(), $email->issuer_id,
+                            fn($value) => $this->CI->encryption->decrypt($value),fn($value) => $this->CI->encryption->encrypt($value),$documentKind!==null?'document_notifications':'native',$dispatchSource);
+                    }
                 }
                 if (isset($email->issuer_id) && $transport['useragent'] !== $email->engine) {
                     throw new DomainException('company_mail_engine_changed');
@@ -198,6 +217,10 @@ class App_Email extends App_mailer
                     require_once APPPATH . 'services/CompanyInvoiceDelivery.php';
                     if (!is_string($headers[CompanyInvoiceDelivery::HEADER])) { throw new DomainException('company_mail_payload_invalid'); }
                     (new CompanyInvoiceDelivery($this->CI->db, db_prefix()))->assertDispatch($email, $headers[CompanyInvoiceDelivery::HEADER]);
+                    require_once APPPATH . 'services/CompanyExpenseRecurringDeliverySource.php';
+                    if (isset($headers[CompanyExpenseRecurringDeliverySource::HEADER]) && !is_string($headers[CompanyExpenseRecurringDeliverySource::HEADER])) { throw new DomainException('company_mail_payload_invalid'); }
+                    CompanyExpenseRecurringDeliverySource::assertDispatchIfOwned($this->CI->db, db_prefix(), $email, $headers[CompanyInvoiceDelivery::HEADER], $headers[CompanyExpenseRecurringDeliverySource::HEADER] ?? null);
+                    unset($headers[CompanyExpenseRecurringDeliverySource::HEADER]);
                     unset($headers[CompanyInvoiceDelivery::HEADER]);
                 }
                 if (array_key_exists('companySalesDelivery', $headers)) {
@@ -206,8 +229,11 @@ class App_Email extends App_mailer
                     (new CompanySalesDelivery($this->CI->db, db_prefix()))->assertDispatch($email, $headers[CompanySalesDelivery::HEADER]);
                     unset($headers[CompanySalesDelivery::HEADER]);
                 }
+                if(array_key_exists(CompanyPortalRecoveryMail::HEADER,$headers)){
+                    (new CompanyPortalMailQueueConsumer($this->CI->db,db_prefix(),(string)$this->CI->config->item('encryption_key')))->assertDispatch($email,$headers[CompanyPortalRecoveryMail::HEADER]);unset($headers[CompanyPortalRecoveryMail::HEADER]);
+                }
                 $this->reset_account_transport();
-                $this->set_mailer_engine($email->engine);
+                $this->set_useragent($email->engine);
                 $this->initialize($transport);
             } catch (Throwable $error) {
                 $this->clear(true);

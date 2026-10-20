@@ -34,7 +34,14 @@ trait ApiAmendments
         // A stale pre-send lease may be revoked: its worker must still pass the confirmed sending marker.
         \IssuerStorage::query($this->db,"UPDATE {$this->prefix}bb_api_operations SET status='auth_failed',failure_category='authentication_lease_expired' WHERE origin_id=? AND status='authenticating' AND locked_until<=? AND id<>?",[$originId,gmdate('Y-m-d H:i:s'),$retryId]);
         // An expired sending claim remains uncertain; never steal a possibly submitted write.
-        if($this->rows("SELECT id FROM {$this->prefix}bb_api_operations WHERE origin_id=? AND status IN ('authenticating','sending') AND id<>? FOR UPDATE",[$originId,$retryId]))throw new \DomainException('bb_api_operation_in_progress');
+        foreach($this->rows("SELECT id,operation,status,locked_until,claim_token FROM {$this->prefix}bb_api_operations WHERE origin_id=? AND status IN ('authenticating','sending') AND id<>? FOR UPDATE",[$originId,$retryId])as$pending){
+            // Reads cannot have a remote monetary mutation. Retire only a known, expired read claim during an authorized new query.
+            if($operation==='query'&&in_array($pending['operation'],['query','movements'],true)&&$pending['status']==='sending'&&$pending['locked_until']<=gmdate('Y-m-d H:i:s')&&preg_match('/^[a-f0-9]{64}$/D',$pending['claim_token'])){
+                $now=gmdate('Y-m-d H:i:s');\IssuerStorage::query($this->db,"UPDATE {$this->prefix}bb_api_operations SET status='unknown',failure_category='read_lease_expired',updated_at=? WHERE id=? AND origin_id=? AND operation=? AND status='sending' AND claim_token=? AND locked_until<=?",[$now,$pending['id'],$originId,$pending['operation'],$pending['claim_token'],$now]);$retired=$this->rows("SELECT status,claim_token,locked_until FROM {$this->prefix}bb_api_operations WHERE id=? AND origin_id=?",[$pending['id'],$originId])[0]??[];if(($retired['status']??null)!=='unknown'||($retired['claim_token']??null)!==$pending['claim_token']||($retired['locked_until']??null)!==$pending['locked_until'])throw new \RuntimeException('issuer_bb_api_write_unconfirmed');$this->audit($issuer,(int)$origin['connection_id'],$actor,'api_read_lease_retired','api_operation',(int)$pending['id']);continue;
+            }
+            // Only an explicitly authorized, independent GET may inspect an expired sending claim. Keep its nonce/status intact.
+            if($operation!=='query'||$pending['status']!=='sending'||$pending['locked_until']>gmdate('Y-m-d H:i:s')||!preg_match('/^[a-f0-9]{64}$/D',$pending['claim_token']))throw new \DomainException('bb_api_operation_in_progress');
+        }
         $latest=$this->rows("SELECT * FROM {$this->prefix}bb_api_operations WHERE origin_id=? AND operation='amend_due' ORDER BY id DESC LIMIT 1 FOR UPDATE",[$originId])[0]??null;
         if(!in_array($operation,['query','movements'],true)&&$latest&&!in_array($latest['status'],['confirmed','rejected','auth_failed'],true))throw new \DomainException('bb_api_amendment_requires_query');
         if($operation!=='amend_due')return;
@@ -60,20 +67,22 @@ trait ApiAmendments
     }
     private function queryAmendmentSnapshot(int $origin,array $detail,array $snapshot):array
     {
-        $last=$this->rows("SELECT id,status,result_json FROM {$this->prefix}bb_api_operations WHERE origin_id=? AND operation='amend_due' AND status NOT IN ('rejected','auth_failed') ORDER BY id DESC LIMIT 1",[$origin])[0]??null;
+        $last=$this->rows("SELECT id,status,result_json,claim_token FROM {$this->prefix}bb_api_operations WHERE origin_id=? AND operation='amend_due' AND status NOT IN ('rejected','auth_failed') ORDER BY id DESC LIMIT 1",[$origin])[0]??null;
         if(!$last)return $snapshot;
         $request=json_decode($last['result_json'],true,32,JSON_THROW_ON_ERROR)['amendment']??null;
         if(!is_array($request)||!is_string($request['due_date']??null))throw new \DomainException('bb_api_amendment_corrupt');Fields::date($request['due_date']);
         $expected=(new \DateTimeImmutable($request['due_date']))->format('d.m.Y');
-        if(($detail['dataVencimentoTituloCobranca']??null)===$expected){$snapshot['invoice']['duedate']=$request['due_date'];$snapshot['amendment_id']=(int)$last['id'];}
+        if(($detail['dataVencimentoTituloCobranca']??null)===$expected){$snapshot['invoice']['duedate']=$request['due_date'];$snapshot['amendment_id']=(int)$last['id'];if($last['status']==='sending')$snapshot['amendment_claim_hash']=hash('sha256',$last['claim_token']);}
         elseif($last['status']==='confirmed')throw new \DomainException('bb_api_amendment_bank_divergence');
         return $snapshot;
     }
     private function confirmAmendment(int $origin,array $result):void
     {
         if(!isset($result['amendment_id']))return;
-        $id=(int)$result['amendment_id'];$last=$this->rows("SELECT id,result_json,status FROM {$this->prefix}bb_api_operations WHERE origin_id=? AND operation='amend_due' AND status NOT IN ('rejected','auth_failed') ORDER BY id DESC LIMIT 1 FOR UPDATE",[$origin])[0]??null;
-        if(!$last||(int)$last['id']!==$id||!in_array($last['status'],['validated','unknown','confirmed'],true))throw new \DomainException('bb_api_amendment_bank_divergence');
+        $id=(int)$result['amendment_id'];$last=$this->rows("SELECT id,result_json,status,claim_token,locked_until FROM {$this->prefix}bb_api_operations WHERE origin_id=? AND operation='amend_due' AND status NOT IN ('rejected','auth_failed') ORDER BY id DESC LIMIT 1 FOR UPDATE",[$origin])[0]??null;
+        if(!$last||(int)$last['id']!==$id)throw new \DomainException('bb_api_amendment_bank_divergence');
+        $interrupted=$last['status']==='sending'&&hash_equals(hash('sha256',$last['claim_token']),$result['amendment_claim_hash']??'')&&$last['locked_until']<=gmdate('Y-m-d H:i:s')&&preg_match('/^[a-f0-9]{64}$/D',$last['claim_token'])&&($result['account_scope_confirmed']??null)==='1'&&preg_match('/^[a-f0-9]{64}$/D',$result['account_evidence_hash']??'');
+        if(!in_array($last['status'],['validated','unknown','confirmed'],true)&&!$interrupted)throw new \DomainException('bb_api_amendment_bank_divergence');
         $data=json_decode($last['result_json'],true,32,JSON_THROW_ON_ERROR);if(($data['amendment']['due_date']??null)!==$result['bank_due_date'])throw new \DomainException('bb_api_amendment_bank_divergence');
         $data['bank_state']='amendment_confirmed';$data['account_evidence_hash']=$result['account_evidence_hash'];$json=json_encode($data,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
         \IssuerStorage::query($this->db,"UPDATE {$this->prefix}bb_api_operations SET status='confirmed',result_json=?,updated_at=? WHERE id=?",[$json,gmdate('Y-m-d H:i:s'),$id]);

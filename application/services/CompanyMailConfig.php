@@ -9,10 +9,18 @@ require_once __DIR__ . '/CompanySettingsStorage.php';
  */
 final class CompanyMailConfig
 {
-    public static function build($db, string $prefix, $issuerId, callable $decrypt): array
+    public static function build($db, string $prefix, $issuerId, callable $decrypt, ?callable $encrypt=null, string $purpose='native', ?CompanyGoogleMailOAuthDispatchSource $source=null): array
     {
         $storage = new CompanySettingsStorage($db, $prefix);
         $primary = $storage->isPrimary($issuerId);
+        if($purpose==='document_notifications'){
+            require_once __DIR__.'/CompanyGoogleMailOAuth.php';
+            $oauth=new CompanyGoogleMailOAuth($db,$prefix);$profile=$oauth->transportProfile($issuerId);
+            if($profile!==null){
+                require_once __DIR__.'/CompanyGoogleMailOAuthTokenProvider.php';
+                return ['useragent'=>'phpmailer','protocol'=>'google','smtp_host'=>'smtp.gmail.com','smtp_port'=>'587','smtp_crypto'=>'tls','smtp_auto_tls'=>false,'smtp_timeout'=>30,'smtp_user'=>$profile['sender_email'],'smtp_pass'=>'','smtp_debug'=>0,'debug_output'=>'error_log','smtp_conn_options'=>[],'wordwrap'=>true,'mailtype'=>'html','charset'=>trim($storage->get($issuerId,'smtp_email_charset'))?:'utf-8','validate'=>false,'priority'=>3,'newline'=>"\r\n",'crlf'=>"\r\n",'bcc_batch_mode'=>false,'bcc_batch_size'=>200,'encoding'=>'8bit','client_id'=>'','client_secret'=>'','tenant_id'=>'','refresh_token'=>'','xoauth2'=>'','dkim_domain'=>'','dkim_private'=>'','dkim_private_string'=>'','dkim_selector'=>'','dkim_passphrase'=>'','dkim_identity'=>'','company_google_mail_provider'=>new CompanyGoogleMailOAuthTokenProvider($oauth,(int)$issuerId,$profile['epoch'],$profile['sender_email'],$encrypt,$decrypt,$source)];
+            }
+        }elseif($purpose!=='native'){throw new DomainException('company_mail_purpose_invalid');}
         $get = static fn(string $name): string => $storage->get($issuerId, $name);
         $protocol = $get('email_protocol');
         $engine = $get('mail_engine');
@@ -42,6 +50,7 @@ final class CompanyMailConfig
             'bcc_batch_mode' => false, 'bcc_batch_size' => 200, 'encoding' => '8bit',
             // Explicit resets prevent a reused transport retaining another account's OAuth/DKIM.
             'client_id' => '', 'client_secret' => '', 'tenant_id' => '', 'refresh_token' => '',
+            'company_google_mail_provider'=>null,
             'xoauth2' => '', 'dkim_domain' => '', 'dkim_private' => '', 'dkim_private_string' => '',
             'dkim_selector' => '', 'dkim_passphrase' => '', 'dkim_identity' => '',
         ];

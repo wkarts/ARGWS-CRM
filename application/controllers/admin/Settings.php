@@ -4,6 +4,8 @@ defined('BASEPATH') or exit('No direct script access allowed');
 require_once APPPATH . 'services/CompanySettingsRuntime.php';
 require_once APPPATH . 'services/CompanySettingsFormats.php';
 require_once APPPATH . 'services/CompanySettingsCatalog.php';
+require_once APPPATH . 'services/CompanyProjectFileSettings.php';
+require_once APPPATH . 'services/CompanyPdfTypography.php';
 
 class Settings extends AdminController
 {
@@ -23,7 +25,7 @@ class Settings extends AdminController
     // View all settings
     public function index()
     {
-        if ($this->isolated_company()) { return $this->isolated_index(); }
+        if ($this->isolated_company() || (CompanySettingsRuntime::active() && in_array($this->input->get('group'),['project_files','pdf_typography'],true))) { return $this->isolated_index(); }
         if (!$this->settings_allowed('view')) {
             access_denied('settings');
         }
@@ -32,6 +34,15 @@ class Settings extends AdminController
         if (CompanySettingsRuntime::active() && in_array($group, ['update', 'info'], true)
             && !CompanySettingsRuntime::canInfrastructure()) { access_denied('settings'); }
         if ($this->isolated_company() && $group === 'tags') { access_denied('settings'); }
+        $nativeUpgradeSuccess = false;
+        if ($group === 'update' && $this->input->method(true) === 'GET'
+            && !$this->input->is_ajax_request() && is_staff_logged_in() && is_admin()) {
+            require_once APPPATH . 'services/AdminDatabaseUpgrade.php';
+            $nativeUpgradeSuccess = AdminDatabaseUpgrade::consumeSuccess($this->session, (int) get_staff_user_id(), (string) $this->current_db_version);
+            if ($nativeUpgradeSuccess) {
+                set_alert('success', 'O CRM foi atualizado com sucesso.');
+            }
+        }
 
         // Legacy installation support controls retain their administrator check; explicit company context uses resource ACL.
         if ($group === 'argws_platform' && !is_admin() && !CompanySettingsRuntime::active()) {
@@ -221,6 +232,10 @@ class Settings extends AdminController
         );
 
         $this->load->view('admin/settings/all', $data);
+        if ($nativeUpgradeSuccess) {
+            // The native renderer already emitted this alert in the document.
+            $this->session->unset_userdata('message-success');
+        }
     }
 
     /** Same Settings route and model, with no legacy global navigation or callback hydration. */
@@ -247,10 +262,16 @@ class Settings extends AdminController
                     $settings['mail_engine'] = 'phpmailer';
                     $settings['email_protocol'] = 'smtp';
                 }
-                $this->settings_model->update(['settings' => $settings]);
+                if($group==='pdf_typography'){
+                    $revision=$post['pdf_typography_revision']??null;if(!is_string($revision)||!preg_match('/^(?:0|[1-9][0-9]{0,9})$/D',$revision)||(int)$revision>2147483647)throw new DomainException('company_pdf_typography_invalid');
+                    (new CompanyPdfTypography($this->db,db_prefix()))->save(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId(),(int)$revision,$settings);
+                }elseif($group==='project_files'){
+                    $revision=$post['project_files_revision']??null;if(!is_string($revision)||!preg_match('/^(?:0|[1-9][0-9]{0,9})$/D',$revision)||(int)$revision>2147483647)throw new DomainException('company_project_file_settings_invalid');
+                    (new CompanyProjectFileSettings($this->db,db_prefix()))->save(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId(),(int)$revision,$settings);
+                }else{$this->settings_model->update(['settings' => $settings]);}
                 $saved = true;
             } catch (DomainException $exception) {
-                $this->output->set_status_header(422);
+                $this->output->set_status_header(in_array($exception->getMessage(),['company_project_file_settings_stale','company_pdf_typography_stale'],true)?409:422);
                 $messages = [
                     'issuer_invalid_name' => 'Informe um nome válido para a empresa.',
                     'issuer_invalid_tax_id' => 'Informe um CPF ou CNPJ válido.',
@@ -264,17 +285,23 @@ class Settings extends AdminController
             }
         }
         $identity = (new CompanySettingsIdentity($this->db, db_prefix()))->read(CompanySettingsRuntime::issuerId());
+        $pdfTypography=$group==='pdf_typography'?(new CompanyPdfTypography($this->db,db_prefix()))->page(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId()):null;
+        $projectFiles=$group==='project_files'?(new CompanyProjectFileSettings($this->db,db_prefix()))->page(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId()):null;
         $values = [];
         foreach ($fields as $name) {
-            if ($name !== 'smtp_password') { $values[$name] = CompanySettingsRuntime::exists($name)?CompanySettingsRuntime::get($name):CompanySettingsCatalog::defaultValue($group,$name); }
+            if ($name !== 'smtp_password') { $values[$name] = $pdfTypography!==null?$pdfTypography[$name]:($projectFiles!==null?$projectFiles[$name]:(CompanySettingsRuntime::exists($name)?CompanySettingsRuntime::get($name):CompanySettingsCatalog::defaultValue($group,$name))); }
         }
         $this->load->view('admin/settings/company_scoped', [
             'company_identity' => $identity, 'company_id' => CompanySettingsRuntime::issuerId(),
             'group' => $group, 'groups' => $groups, 'values' => $values, 'can_edit' => $this->settings_allowed('edit'),
             'password_configured' => $group === 'email' && CompanySettingsRuntime::get('smtp_password') !== '',
             'error' => $error, 'saved' => $saved,
+            'pdf_typography_revision'=>$pdfTypography['revision']??null,
+            'project_files_revision'=>$projectFiles['revision']??null,
             'context_token' => CompanyRequestScope::token(),
             'company_urls' => [
+                'pdf_typography'=>CompanyRequestScope::adminUrl($this,'settings?group=pdf_typography'),
+                'project_files'=>CompanyRequestScope::adminUrl($this,'settings?group=project_files'),
                 'companies' => CompanyRequestScope::adminUrl($this, 'company_context'),
                 'company' => CompanyRequestScope::adminUrl($this, 'settings?group=company'),
                 'email' => CompanyRequestScope::adminUrl($this, 'settings?group=email'),

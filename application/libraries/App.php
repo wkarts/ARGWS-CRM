@@ -207,10 +207,10 @@ class App
             return $update;
         } else {
             $this->ci->session->unset_userdata('admin_database_upgrade_csrf');
-            set_alert('success', 'O CRM foi atualizado com sucesso.');
+            AdminDatabaseUpgrade::recordSuccess($this->ci->session, (int) get_staff_user_id(), (string) $this->get_current_db_version());
             update_option('last_updated_date', time());
             if (is_staff_logged_in()) {
-                redirect(admin_url('settings?group=update'), 'refresh');
+                redirect(admin_url('company_context'), 'location', 303);
             } else {
                 redirect(admin_url('authentication'));
             }

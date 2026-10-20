@@ -13,6 +13,10 @@ $hidden=function(string $action)use($esc,$portal_csrf){echo '<input type="hidden
 <p>Seu acesso pertence a esta empresa. Compartilhamentos de cadastro não transferem sua conta ou seu histórico.</p>
 <?php require APPPATH.'views/company_portal/sales.php'; ?>
 <?php require APPPATH.'views/company_portal/operations.php'; ?>
+<?php if(($operation_kind??null)==='projects'&&is_array($operation_detail??null)&&is_array($project_file_controls??null)){$project_file_parent=(int)$operation_detail['id'];require APPPATH.'views/company_portal/project_contact_files.php';} ?>
+<?php if(($operation_kind??null)==='projects'&&is_array($operation_detail??null)&&is_array($project_gantt??null)){$gantt_project_id=(int)$operation_detail['id'];require APPPATH.'views/company_portal/project_gantt.php';} ?>
+<?php if(($operation_kind??null)==='projects'&&is_array($operation_detail??null)&&is_array($project_timesheets??null)){$timesheets_project_id=(int)$operation_detail['id'];require APPPATH.'views/company_portal/project_timesheets.php';} ?>
+<?php if(($operation_kind??null)==='projects'&&is_array($operation_detail??null)&&is_array($project_milestones??null)){require APPPATH.'views/company_portal/project_milestones.php';} ?>
 <?php if(($operation_kind??null)==='projects'&&is_array($operation_detail??null)&&is_array($project_tasks??null)){$project_id=(int)$operation_detail['id'];$task_url=static fn($id)=>$url.'?operation_kind=projects&resource_id='.$project_id.'&project_task='.$id;$tasks_page_url=static fn($after)=>$url.'?operation_kind=projects&resource_id='.$project_id.'&tasks_after='.$after;$task_file_url=$url;require APPPATH.'views/company_portal/project_tasks.php';} ?>
 <?php if(($operation_kind??null)==='projects'&&is_array($operation_detail??null)){require APPPATH.'views/company_portal/task_write.php';} ?>
 <?php if(is_array($invoices??null)){?><section id="portal-invoices"><h2>Faturas desta empresa</h2><p>Somente faturas emitidas por esta empresa para o seu cadastro. O compartilhamento de identidade não amplia este acesso.</p>

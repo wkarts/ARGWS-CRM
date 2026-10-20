@@ -44,7 +44,7 @@ function docker(binary,args){
 const environment={ISSUERS_BROWSER_URL:'http://127.0.0.1:48095',
  ISSUERS_BROWSER_DB_CONTAINER:'argws-crm-provision-db-999',
  ISSUERS_BROWSER_APP_CONTAINER:'argws-crm-upgrade-999',ISSUERS_BROWSER_DB_NAME:'argws_upgrade_ci'};
-const localProcess={env:environment,exitCode:0};
+const localProcess={env:environment,exitCode:0,cwd:()=>process.cwd()};
 const context={process:localProcess,console:{error(){}},Buffer,URL,
  require(name){
   if(name==='node:child_process')return {execFileSync:docker};

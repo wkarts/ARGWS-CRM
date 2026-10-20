@@ -45,7 +45,7 @@ $CI->db->failTracking=false;$CI->db->version='1.0.2';try{require APP_MODULES_PAT
 $ddl=implode("\n",\BancoBrasil\ModuleSchema::statements('test_'));
 check(substr_count($ddl,'ENGINE=InnoDB')===7,'all transactional tables');
 check(!preg_match('/DROP|TRUNCATE|DELETE FROM/i',$ddl),'non destructive schema');
-check(str_contains(file_get_contents(APP_MODULES_PATH.'banco_brasil/banco_brasil.php'),'Version: 1.1.5'),'header advances to new native migration without rewriting earlier history');
+check(str_contains(file_get_contents(APP_MODULES_PATH.'banco_brasil/banco_brasil.php'),'Version: 1.1.6'),'header advances to new native migration without rewriting earlier history');
 $source114=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/114_version_114.php');
 check(str_contains($source114,'class Migration_Version_114 extends App_module_migration')&&str_contains($source114,'public function up()'),'114 is a new native NOOP preserving prior history');
 $source104=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/104_version_104.php');
@@ -63,7 +63,9 @@ check(!preg_match('/ALTER|DROP|TRUNCATE|DELETE FROM|UPDATE /i',implode('\n',$CI-
 
 $source115=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/115_version_115.php');
 check(str_contains($source115,'class Migration_Version_115 extends App_module_migration')&&str_contains($source115,'public function up()')&&str_contains($source115,'NOOP'),'115 is a new native profile NOOP preserving earlier migration history');
-check(str_contains(file_get_contents(APP_MODULES_PATH.'banco_brasil/banco_brasil.php'),'Requires at least: 4.3.5'),'new profile runtime requires its composed native core version');
+check(str_contains(file_get_contents(APP_MODULES_PATH.'banco_brasil/banco_brasil.php'),'Requires at least: 4.3.6'),'new profile runtime requires its composed native core version');
 require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/ModuleRelease.php';
-check(\BancoBrasil\ModuleRelease::VERSION==='1.1.5'&&\BancoBrasil\ModuleRelease::MIGRATION===115&&\BancoBrasil\ModuleRelease::MINIMUM_CORE==='4.3.5','strict runtime release agrees with module header and latest native migration');
+check(\BancoBrasil\ModuleRelease::VERSION==='1.1.6'&&\BancoBrasil\ModuleRelease::MIGRATION===116&&\BancoBrasil\ModuleRelease::MINIMUM_CORE==='4.3.6','strict runtime release agrees with module header and latest native migration');
+$source116=file_get_contents(APP_MODULES_PATH.'banco_brasil/migrations/116_version_116.php');
+check(str_contains($source116,'class Migration_Version_116 extends App_module_migration')&&str_contains($source116,'ApiCnabContractSchema::ensure'),'116 creates an additive native contract schema without rewriting historical declarations');
 echo "OK {$n} Banco do Brasil native migration checks\n";

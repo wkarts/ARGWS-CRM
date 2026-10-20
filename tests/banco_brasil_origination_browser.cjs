@@ -49,6 +49,8 @@ async function next(page) { await navigate(page, page.locator('section form butt
   const vat=page.locator('#edit_vat');await vat.fill('11144477735');
   await navigate(page,vat.locator('xpath=ancestor::form').locator('button[type=submit]'));
   await page.goto(url+'/admin/company_invoices');await page.locator('#invoice-client').selectOption(client);await page.locator('#invoice-currency').selectOption({label:'BRL'});
+  // A bank credit cannot predate invoice issuance: choose the bank's business date explicitly, independent of the PHP default timezone.
+  await page.locator('#invoice-date').fill(new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date()));
   await page.locator('#invoice-item-0-description').fill('SYNTHETIC BB SERVICE');await page.locator('#invoice-item-0-qty').fill('1');await page.locator('#invoice-item-0-rate').fill('100.00');
   await navigate(page,page.locator('form').filter({has:page.locator('#invoice-client')}).locator('button[type=submit]'));
   const invoice=new URL(page.url()).searchParams.get('invoice');assert.match(invoice||'',/^[1-9]\d*$/);
@@ -63,7 +65,9 @@ async function next(page) { await navigate(page, page.locator('section form butt
   await page.locator('#bb-tab-remittance').click();
   for(const [key,value]of Object.entries({beneficiary_name:'SYNTHETIC PORTAL A',first_number:'100',last_number:'999',first_file:'1',reference:'SYNTHETIC CONTRACT ONLY'}))await page.locator('#bb-contract-'+key).fill(value);
   await page.locator('input[name="contract[interest_exempt]"]').check();await page.locator('input[name="contract[exclusive_range]"]').check();await page.locator('#bb-contract-test').selectOption('1');
-  await navigate(page,page.locator('form[action*="declare_contract"]').locator('button'));
+  const nativeContract=page.locator('form').filter({has:page.locator('#bb-contract-beneficiary_name')});
+  assert.equal(await nativeContract.count(),1);
+  await navigate(page,nativeContract.getByRole('button',{name:'Registrar declaração do operador',exact:true}));
   await page.waitForFunction(()=>document.querySelector('#bb-remittance').getAttribute('aria-hidden')==='false');
   assert.equal(sql('SELECT COUNT(*) FROM tblbb_contract_declarations WHERE issuer_id='+a),'1');
   for(const [key,value]of Object.entries({invoice_id:invoice,payer_name:'SYNTHETIC PORTAL CLIENT A',payer_address:'SYNTHETIC STREET',payer_district:'CENTRO',payer_zip:'40000000',payer_city:'SALVADOR',payer_state:'BA'}))await page.locator('#bb-title-'+key).fill(value);

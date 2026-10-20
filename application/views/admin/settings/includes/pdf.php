@@ -219,3 +219,4 @@
 
     </div>
 </div>
+<?php if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()&&CompanySettingsRuntime::can('view')){?><p><a href="<?= htmlspecialchars(CompanyRequestScope::adminUrl($this,'settings?group=pdf_typography'),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); ?>">Tipografia própria dos novos documentos desta empresa</a></p><p>As opções legadas acima não substituem os snapshots dos novos documentos por empresa. A política própria preserva os documentos já emitidos.</p><?php }?>

@@ -231,6 +231,7 @@ final class ApiService
             if($operation==='query'){ApiDailyInterest::confirm($response['data'],ApiClient::decodeExact($prepared['stored']['payload_json']));ApiFixedDiscount::confirm($response['data'],ApiClient::decodeExact($prepared['stored']['payload_json']));$projection+=ApiFixedDiscount::projection(ApiClient::decodeExact($prepared['stored']['payload_json']));}
             if($operation==='query')$projection+=$this->client->confirmAccount($prepared['profile']['api_stage'],$credentials,$prepared['agreement'],$prepared['origin']['remote_id'],$token,$querySnapshot,$projection);
             if($operation==='query'&&isset($querySnapshot['amendment_id']))$projection+=['amendment_id'=>(string)$querySnapshot['amendment_id'],'bank_due_date'=>$querySnapshot['invoice']['duedate']];
+            if($operation==='query'&&isset($querySnapshot['amendment_claim_hash']))$projection['amendment_claim_hash']=$querySnapshot['amendment_claim_hash'];
             $this->completeOperation($issuer,$actor,$originId,$id,$prepared['claim'],$operation,$response['status'],$response['response_hash'],$projection);
         }catch(\Throwable $error){
             $category=$error instanceof ApiFailure?$error->category:($error instanceof \DomainException&&preg_match('/^bb_api_[a-z_]+$/D',$error->getMessage())?substr($error->getMessage(),7):'operation_unconfirmed');
@@ -263,7 +264,7 @@ final class ApiService
                 $observed=(int)$result['codigoEstadoTituloCobranca'];
                 if($observed===7)$state='api_cancelled_confirmed';
                 elseif(in_array($observed,[6,16],true))$state='api_settlement_observed';
-                elseif($origin['state']==='api_reserved'||$origin['state']==='api_unknown')$state='api_query_observed';
+                elseif(in_array($origin['state'],['api_reserved','api_unknown','api_auth_failed'],true))$state='api_query_observed';
             }
             // A delayed normal query cannot undo a confirmed terminal observation.
             $changed=false;

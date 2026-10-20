@@ -115,6 +115,7 @@ jobs:
           php tests/issuers_onboarding_concurrency.php
           php tests/issuers_core_retirement.php
           php tests/issuers_core_upgrade.php
+          php tests/companies/admin_database_upgrade_feedback.php
           php tests/issuers_installation_bootstrap.php
           php tests/issuers_installation_abort.php
           php tests/issuers_legacy_access.php
@@ -238,6 +239,77 @@ jobs:
           php tests/companies/credit_pdf_revalidation.php
           php tests/settings/document_pdf_concurrency.php
           php tests/companies/native_435.php
+          php tests/companies/task_billing.php
+          php tests/companies/task_billing_atomic.php
+          php tests/companies/task_billing_controller.php
+          php tests/companies/task_billing_schema.php
+          php tests/companies/task_billing_concurrency.php
+          php tests/companies/task_billing_timesheets.php
+          php tests/companies/project_billing_rate.php
+          php tests/companies/project_billing_rate_atomic.php
+          php tests/companies/project_billing_rate_controller.php
+          php tests/companies/project_billing_rate_concurrency.php
+          php tests/companies/project_milestones.php
+          php tests/companies/project_milestones_atomic.php
+          php tests/companies/project_milestones_controller.php
+          php tests/companies/project_milestones_concurrency.php
+          php tests/companies/project_timesheets.php
+          php tests/companies/project_timesheets_atomic.php
+          php tests/companies/project_timesheets_controller.php
+          php tests/companies/project_timesheets_concurrency.php
+          php tests/companies/project_gantt.php
+          php tests/companies/project_gantt_atomic.php
+          php tests/companies/project_gantt_controller.php
+          php tests/companies/project_gantt_concurrency.php
+          php tests/companies/expense_recurring.php
+          php tests/companies/expense_recurring_atomic.php
+          php tests/companies/expense_recurring_delivery.php
+          php tests/companies/expense_recurring_schema.php
+          php tests/companies/expense_recurring_controller.php
+          php tests/companies/expense_recurring_cli.php
+          php tests/companies/expense_recurring_mail_worker.php
+          php tests/companies/expense_recurring_google.php
+          php tests/companies/expense_recurring_concurrency.php
+          php tests/settings/google_mail_oauth.php
+          php tests/settings/google_mail_queue.php
+          php tests/settings/google_mail_worker.php
+          php tests/settings/google_mail_envelope.php
+          php tests/settings/google_mail_fingerprint_portability.php
+          php tests/settings/google_portal_mail.php
+          php tests/settings/google_portal_refresh_worker.php
+          php tests/settings/google_mail_concurrency.php
+          php tests/settings/google_portal_concurrency.php
+          php tests/companies/invoice_delivery_worker.php
+          php tests/companies/native_436.php
+          php tests/settings/pdf_typography.php
+          php tests/settings/pdf_typography_concurrency.php
+          php tests/companies/sales_pdf_typography.php
+          php tests/companies/invoice_credit_pdf_typography.php
+          php tests/companies/contracts_pdf_typography.php
+          php tests/companies/pdf_typography_fiscal_identity.php
+          php tests/companies/asaas_pdf_typography.php
+          php tests/companies/project_contact_files.php
+          php tests/companies/project_contact_files_atomic.php
+          php tests/companies/project_contact_files_controller.php
+          php tests/companies/project_contact_files_boundaries.php
+          php tests/companies/project_contact_files_quota.php
+          php tests/companies/project_contact_files_concurrency.php
+          php tests/companies/project_fixed_billing.php
+          php tests/companies/project_fixed_billing_atomic.php
+          php tests/companies/project_fixed_billing_controller.php
+          php tests/companies/project_fixed_billing_concurrency.php
+          php tests/companies/billing_invoice_lifecycle.php
+          php tests/companies/expense_invoice_lifecycle.php
+          php tests/companies/asaas_refunds.php
+          php tests/companies/asaas_refund_schema.php
+          php tests/companies/asaas_refund_boundaries.php
+          php tests/companies/asaas_refund_controller.php
+          php tests/companies/asaas_refund_concurrency.php
+          php tests/companies/asaas_refund_fee_participants.php
+          php tests/companies/asaas_early_events.php
+          php tests/companies/asaas_early_events_concurrency.php
+          php tests/companies/asaas_refund_observe_events.php
+          php tests/settings/project_file_settings.php
           php tests/companies/asaas_boundaries.php
           php tests/companies/asaas_exact_json.php
           php tests/companies/invoice_delivery_concurrency.php

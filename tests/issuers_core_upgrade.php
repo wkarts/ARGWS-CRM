@@ -19,7 +19,7 @@ function is_admin(){return $GLOBALS['isAdmin'];}
 function get_staff_user_id(){return 7;}
 function set_alert($type,$message){$GLOBALS['alerts'][]=[$type,$message];}
 function admin_url($path=''){return '/admin/'.$path;}
-function redirect($url,$mode=null){throw new UpgradeStop($url);}
+function redirect($url,$mode=null,$status=null){$GLOBALS['redirect']=[$url,$mode,$status];throw new UpgradeStop($url);}
 function show_error($message,$status=500){throw new UpgradeStop($message,$status);}
 function delete_option($name){}
 function add_option($name,$value){}
@@ -63,7 +63,7 @@ foreach(['false','throw'] as $mode){[$app,$ci]=fixture();IssuerCore::$mode=$mode
 [$app,$ci]=fixture();$ci->db->version=999;$result=$app->upgrade_database();check($result['success']===false,'newer persisted schema rejects downgrade');check($GLOBALS['coreCalls']===0 && IssuerCore::$calls===0,'downgrade rejected before any migration');
 [$app,$ci]=fixture();$ci->db->version=392;$result=$app->upgrade_database();check($result['success']===false,'unpersisted native migration marker cannot report web success');check(IssuerCore::$calls===0 && !in_array('database_updated',$GLOBALS['events'],true),'tracking failure stops before reconciliation/completion');check(isset($ci->session->data['admin_database_upgrade_csrf']),'tracking failure preserves retry token');
 [$app,$ci]=fixture();$GLOBALS['cli']=false;$result=$app->apply_pending_migrations_for_provisioning();check($result['success']===false,'HTTP cannot invoke provisioning path');check($GLOBALS['coreCalls']===0 && IssuerCore::$calls===0,'HTTP rejection before any migration');
-[$app,$ci]=fixture();$GLOBALS['cli']=false;try{$app->upgrade_database();}catch(UpgradeStop $e){check($e->getMessage()==='/admin/settings?group=update','web native upgrade returns to settings without wizard');}check($GLOBALS['coreCalls']===1,'native core upgrade remains functional');check(IssuerCore::$calls===1,'web upgrade completes company core in the same action');check(!isset($ci->session->data['admin_database_upgrade_csrf']),'success consumes upgrade token');check($GLOBALS['alerts'][0][0]==='success','success has native feedback');
+[$app,$ci]=fixture();$GLOBALS['cli']=false;try{$app->upgrade_database();}catch(UpgradeStop $e){check($e->getMessage()==='/admin/company_context','web native upgrade returns to isolated company selector without wizard');}check($GLOBALS['coreCalls']===1,'native core upgrade remains functional');check(IssuerCore::$calls===1,'web upgrade completes company core in the same action');check(!isset($ci->session->data['admin_database_upgrade_csrf']),'success consumes upgrade token');check($GLOBALS['redirect']===['/admin/company_context','location',303],'successful POST has an explicit303 Location redirect');check($GLOBALS['alerts']===[],'success is not exposed before the authorized destination');$receipt=$ci->session->data['admin_database_upgrade_success'];check($receipt['actor']===7 && $receipt['version']==='393','native success receipt belongs to the actual actor and persisted version');check($receipt['expires_at']>time() && $receipt['expires_at']<=time()+300,'native feedback has a short finite TTL');check(AdminDatabaseUpgrade::consumeSuccess($ci->session,7,'393'),'authorized native destination can consume native success');set_alert('success','O CRM foi atualizado com sucesso.');check($GLOBALS['alerts'][0]===['success','O CRM foi atualizado com sucesso.'],'success has native destination feedback');check(!AdminDatabaseUpgrade::consumeSuccess($ci->session,7,'393'),'native feedback cannot repeat');
 foreach(['GET','guest','staff','inactive','deleted','revoked','csrf_missing','csrf_array','csrf_wrong','stored_array'] as $case){
  [$app,$ci]=fixture();$GLOBALS['cli']=false;
  if($case==='GET')$ci->input->verb='GET';
@@ -85,7 +85,7 @@ foreach(['false','throw'] as $mode){
  check($result['success']===false,'real core schema failure returns to native update form');
  check(strpos($result['message'],'synthetic')===false,'failure does not expose storage details');
  check(isset($ci->session->data['admin_database_upgrade_csrf']),'failure retains upgrade token');check($ci->db->db_debug && $ci->db->save_queries,'failure restores database diagnostics');
- check(!in_array('database_updated',$GLOBALS['events'],true),'failed core has no completion hook');
+ check(!in_array('database_updated',$GLOBALS['events'],true),'failed core has no completion hook');check(!isset($ci->session->data['admin_database_upgrade_success']),'failed core cannot create a success receipt');
  IssuerCore::$mode='ok';try{$app->upgrade_database();}catch(UpgradeStop $e){}
  check(!isset($ci->session->data['admin_database_upgrade_csrf']),'successful retry consumes token');
 }

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 namespace BancoBrasil;
 require_once APPPATH.'services/CompanyReceiptSource.php';
-require_once __DIR__.'/ApiService.php';
+require_once __DIR__.'/ApiService.php';require_once __DIR__.'/ApiFinancialMutationFence.php';
 
 /** Explicit receipt from a completed, account-proven API query; never trusts an upload/webhook/header. */
 final class ApiCreditedReceipt implements \CompanyReceiptSource
@@ -65,7 +65,7 @@ final class ApiCreditedReceipt implements \CompanyReceiptSource
         $evidence=hash('sha256',json_encode([$origin['payload_hash'],$snapshot['api_stage'],$result['numeroContratoCobranca'],$nominal,$credit,'16','account_proven_api_credit'],JSON_THROW_ON_ERROR));
         $old=self::rows($db,"SELECT * FROM {$p}bb_api_receipts WHERE origin_id=? OR canonical_key=? FOR UPDATE",[$this->originId,$key]);
         if(count($old)>1||($old&&((int)$old[0]['origin_id']!==$this->originId||(int)$old[0]['issuer_id']!==$issuer||$old[0]['canonical_key']!==$key||$old[0]['evidence_hash']!==$evidence)))throw new \DomainException('bb_api_credit_receipt_conflict');
-        if(!$old&&$operation['updated_at']<gmdate('Y-m-d H:i:s',time()-300))throw new \DomainException('bb_api_credit_query_stale');
+        if(!$old){if($operation['updated_at']<gmdate('Y-m-d H:i:s',time()-300)||$operation['updated_at']>gmdate('Y-m-d H:i:s'))throw new \DomainException('bb_api_credit_query_stale');ApiFinancialMutationFence::assertResolvedInOwned($db,$p,$this->originId,$operation,$result);}
         $this->captured=compact('issuer','actor','origin','key','evidence');
         return ['invoice'=>(int)$parent['id'],'key'=>$key,'input'=>['amount'=>Fields::amount($nominal),'date'=>$credit,'reference'=>'BBAPI-'.$key,'note'=>'Crédito integral sem ajustes, confirmado por consulta API vinculada à conta de origem.']];
     }

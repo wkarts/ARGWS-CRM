@@ -1,8 +1,11 @@
 # Matriz objetiva da PR45
 
-Escopo integral em andamento. Este incremento usa núcleo4.3.5/435,
-BB1.1.5/101–115 e Asaas1.5.1/151, sobre434 publicado em
-`bfef30e6b0e11065acda2c7dbe29fc6c66b4ffd3`.
+Escopo integral em andamento. Composição436 em validação sobre o HEAD435
+`5dd6baf58313484c6854e2c01a2017dff27c04f8`: núcleo4.3.6/436,
+BB1.1.6/101–116 e Asaas1.5.2/152. O CI435 terminou15aprovações/1falha,
+no alerta do upgrade; a correção preserva a asserção original e exercita uma consulta
+intermediária real. Os resultados da composição e do novo SHA serão registrados
+na [validação436](pr45-validation-436.md), sem reutilizar o CI435.
 A [validação429](pr45-validation-429.md) registra30/30 execuções HTTP/Chromium
 em uma rodada limpa, instalação/upgrade/tracking e bytes funcionais conferidos.
 O CI428 terminou12sucesso/4falhas por bootstrap e orquestração, corrigidos429 com
@@ -15,22 +18,22 @@ instalação/upgrade nativos, aplicação real mysqli, MariaDB e Chromium. Os re
 locais não equivalem às matrizes remotas de outro SHA nem a homologação bancária.
 Inventários orientam revisão; contagens lexicais não medem bugs ou cobertura.
 
-| Requisito | Implementação incorporada até435 | Prova e limite |
+| Requisito | Implementação incorporada na composição436 | Prova e limite |
 |---|---|---|
-| Empresa principal/master/equipe | Identidade real do instalador, master diferente de1, wizard, grants/default por recurso e seletor409 | Bootstrap/upgrade/concorrência/HTTP; legado ambíguo usa console+senha; recuperação totalmente gráfica depende de autoridade independente |
+| Empresa principal/master/equipe | Identidade real do instalador, master diferente de1, wizard, grants/default por recurso e seletor409 | Bootstrap/upgrade/concorrência/HTTP; master já identificado é preservado sem novo provisionamento; somente identidade legada ainda ambígua exige resolução confiável |
 | Clientes privados/opt-in | Diretório positivo, compartilhamento explícito somente da identidade, contatos e sessões próprios | A/B/principal/NULL, concorrência e navegador; não compartilha histórico financeiro |
-| Settings/SMTP/templates | Identidade, data/hora, imagens próprias, preferências de fatura, prefixo, templates e SMTP próprios | Settings A/B, HTMLPurifier e aba obsoleta; SMTP capturado, entrega externa não exercitada; demais integrações exigem contrato próprio |
-| Portal | Login/reset, faturas emitidas/PDF/anexos publicados, orçamentos/propostas aceitos/convertidos com permissões nativas | Sessão, owner, permissão, revogação e bytes privados; sem documentos rascunhos ou acesso por identidade compartilhada |
+| Settings/SMTP/templates | Identidade, data/hora, imagens, preferências e tipografia PDF, arquivos de projeto, templates, SMTP e GoogleOAuth próprios | Settings A/B/principal, HTMLPurifier, snapshots antigos e aba obsoleta; GoogleOAuth/SMTP capturados; Microsoft em integração437, outras integrações continuam inventariadas |
+| Portal | Login/reset, faturas emitidas/PDF/anexos publicados, orçamentos/propostas aceitos/convertidos com permissões nativas | Sessão, owner, permissão, revogação e bytes privados; inclui marcos/apontamentos/Gantt e arquivos privados de projeto436; discussões de projeto em integração437 |
 | Faturas/recebimentos | Itens, tributos, descontos, ajustes, numeração, snapshots, PDF, edição/cancelamento elegíveis, anexos e notificação | Writer e saldo sob lock, idempotência e auditoria; manual não contorna origem BB/Asaas |
 | Créditos/refunds/estornos | Emissão, aplicação/desaplicação, refund/reversão e reversão manual parcial/final preservando originais | Suítes créditos/leitores/concorrência e Chromium; registro local não prova movimentação bancária |
 | Vendas/conversão/recorrência | Orçamentos/propostas, decisões, conversão retomável no writer de fatura; agenda mensal e worker por ator/origem | Snapshot e guard sob lock; âncora mensal31; anexos/envios desses documentos integram426 |
-| Projetos/tarefas | Projetos, tarefas/comentários/checklists/timers, marcos/DAG/seguidores/arquivos/Kanban, tarefas avulsas | Serviços/controladores/concorrência/Chromium; API operacional integra426 |
-| Despesas | Categorias, despesas/referências próprias, tributos, arquivos, edição/cancelamento auditados | A/B/principal/legado e navegador; importação/exportação por lote integra426 |
+| Projetos/tarefas | Projetos, tarefas/comentários/checklists/timers, marcos/DAG/seguidores/arquivos/Kanban, tarefas avulsas | Serviços/controladores/concorrência/Chromium; API operacional426, faturamento por tarefa/timer e preço fixo436; lote e projeto horário integral continuam técnicos pendentes |
+| Despesas | Categorias, despesas/referências próprias, tributos, arquivos, edição/cancelamento auditados | A/B/principal/legado e navegador; importação/exportação426, faturamento435 e agenda436; valor originalmente declarado e estado atual da fatura separados |
 | Contratos/tickets | Documentos, cópia/PDF, conversas e referências próprias | Serviços, controllers reais, arquivos privados427 e portal operacional428, com publicação explícita e grants3/5/6 |
 | Relatórios/API financeira | Posição atual por moeda e CSV auditado; quatro scopes de API vinculados a empresa/ator | API/locks/revogação/PDF e Chromium; diário/períodos e moeda imutável integram426; posição atual não é fechamento histórico |
-| Asaas por origem | Contas/credenciais/ambientes, cobrança, consulta, inbox, recebimento nominal Pix/boleto, worker opt-in e despesa de tarifa explícita | Suítes writer/protocolo/concorrência, native149 e HTTP; transporte simulado; remoção remota150 e pagador privado/cartão hospedado avulso151; sem parcelas/assinaturas/antecipação |
-| BB API | OAuth, reserva/outbox, registro, consulta/prova de conta, pedido/confirmação de baixa, crédito16 integral, alteração de vencimento confirmada, receptor mTLS observacional | MariaDB240, webhook229, TLS local e Chromium425; nenhum OAuth/registro/homologação BB real; encargos/parciais/estornos financeiros continuam técnicos pendentes |
-| CNAB240 | Originação, reserva API/CNAB, geração/download/retry, envio manual declarado, retorno/revisão/vínculo e crédito assistido parcial e componentes427 | Principal em caixa separado de descontos/abatimentos/encargos agregados; tarifas/IOF/outros e reversão parcial continuam pendentes; reversão externa integral declarada428 preserva originais; upload não autentica banco |
+| Asaas por origem | Contas/credenciais/ambientes, cobrança, consulta, inbox, recebimento nominal Pix/boleto, worker opt-in e despesa de tarifa explícita | Suítes writer/protocolo/concorrência, native149–152 e HTTP; callback antecipado recuperado pelo worker436; outbox/refund152 observacional; financeiro integral declarado em integração437; sem parcelas/assinaturas/antecipação |
+| BB API | OAuth, reserva/outbox, registro, consulta/prova de conta, pedido/confirmação de baixa, crédito16 integral, alteração de vencimento confirmada, receptor mTLS observacional | MariaDB/concorrência/TLS local/Chromium; ofertas435 e componentes integrais436; sending interrompido testado com SIGKILL real436. Estorno API em integração437; estados18/19/tarifas/IOF seguem fechados por semântica não demonstrada; nenhum BB real |
+| CNAB240 | Originação, reserva API/CNAB, geração/download/retry, envio manual declarado, retorno/revisão/vínculo e crédito assistido parcial e componentes427 | Principal em caixa separado de descontos/abatimentos/encargos agregados; vínculo de retorno à mesma origem API436 e disputa canônica real; tarifas/IOF/outros/reversão parcial seguem fechados; reversão integral declarada428 preserva originais; upload não autentica banco |
 | CNAB400 | Parser CBR643 e candidato CBR641 | Operação indisponível: BRL85–86, juros herdados/contrato e picture CBR64326–39; trailer já resolvido; amostras aceitas/retornos não fornecidos |
 | Homologação externa | Nenhuma realizada em API/240/400/Asaas/SMTP | Depende de autorização, canal/conta/convênio/carteira e acesso próprios; não esconde código ainda faltante |
 

@@ -22,3 +22,14 @@ require_once APPPATH.'services/CompanyContractDiscussionsSchema.php';if($db->dri
 require_once APPPATH.'services/CompanyProjectPortalRulesSchema.php';if($db->driver()==='mysql')CompanyProjectPortalRulesSchema::ensure($db,$p);else{$db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.'portal_task_origin ON '.$p.'company_tasks(issuer_id,project_id,id)');foreach(CompanyProjectPortalRulesSchema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}}unset($db->data_cache['table_names']);
 
 require_once APPPATH.'services/CompanyPortalTaskWriteSchema.php';if($db->driver()==='mysql')CompanyPortalTaskWriteSchema::ensure($db,$p);else{foreach(['company_task_comments'=>['portal_comment_origin'=>'issuer_id,task_id,id'],'company_project_files'=>['portal_task_file_origin'=>'issuer_id,project_id,task_id,file_key']] as $table=>$indexes)foreach($indexes as $name=>$cols)$db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.$name.' ON '.$p.$table.'('.$cols.')');foreach(CompanyPortalTaskWriteSchema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}}unset($db->data_cache['table_names']);
+
+
+// New436 portal readers remain opt-in; controllers still require their installed schema.
+foreach(['CompanyProjectMilestonesSchema','CompanyProjectTimesheetsSchema','CompanyProjectGanttSchema','CompanyProjectContactFilesSchema'] as $schema){
+ require_once APPPATH.'services/'.$schema.'.php';
+ if($db->driver()==='mysql')$schema::ensure($db,$p);else{
+  if($schema==='CompanyProjectMilestonesSchema')$db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.'portal_milestone_origin ON '.$p.'company_project_milestones(issuer_id,project_id,id)');
+  foreach($schema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}
+ }
+ unset($db->data_cache['table_names']);
+}

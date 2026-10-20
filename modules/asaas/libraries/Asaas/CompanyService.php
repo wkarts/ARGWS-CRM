@@ -44,6 +44,7 @@ final class CompanyService
         if($action==='view'){if(!$acl->can($issuer,$actor,'invoices','view')&&!$acl->can($issuer,$actor,'settings','view'))throw new \DomainException('asaas_company_access_denied');return;}
         $requirements=match($action){'configure'=>[['settings','edit']],'configuration'=>[['settings','view']],
             'issue'=>[['invoices','view'],['invoices','edit'],['customers','view']],
+            'refund'=>[['invoices','view'],['invoices','edit'],['payments','delete'],['settings','edit']],
             'payer'=>[['invoices','view'],['customers','view'],['customers','create']],'remote_remove'=>[['invoices','view'],['invoices','edit'],['invoices','delete'],['settings','edit']],'settle'=>[['invoices','view'],['payments','create']],default=>[['invoices','view']]};
         foreach($requirements as [$resource,$cap])if(!$acl->can($issuer,$actor,$resource,$cap))throw new \DomainException('asaas_company_access_denied');
     }
@@ -161,13 +162,21 @@ final class CompanyService
             $this->audit($issuer,$actor,$enabled?'company_asaas_automation_enabled':'company_asaas_automation_disabled',$account);
         });
     }
-    private function enqueueEvent(array $account,array $event):void
+    private function enqueueEvent(array $account,array $event):bool
     {
-        if($account['automation_actor']===null||$event['event_type']!=='PAYMENT_RECEIVED'||$event['state']!=='observed')return;
-        $origin=$this->rows('SELECT o.id FROM '.$this->p.'asaas_payment_origins o JOIN '.$this->p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.issuer_id=? AND o.account_id=? AND o.environment=? AND o.remote_id=? AND m.account_row=? FOR UPDATE',[$account['issuer_id'],$account['account_id'],$account['environment'],$event['remote_id'],$account['id']])[0]??null;
-        if(!$origin||$this->rows('SELECT event_id FROM '.$this->p.'asaas_company_jobs WHERE event_id=? FOR UPDATE',[$event['id']]))return;
+        \IssuerTransaction::assertOwned($this->db,$this->p,self::tables());
+        if($account['automation_actor']===null||(int)$account['automation_actor']<1||(int)$account['enabled']!==1||$account['verified_at']===null||(int)$event['account_row']!==(int)$account['id']||$event['event_type']!=='PAYMENT_RECEIVED'||$event['state']!=='observed')return false;
+        $origin=$this->rows('SELECT o.id FROM '.$this->p.'asaas_payment_origins o JOIN '.$this->p.'asaas_company_origin_meta m ON m.origin_id=o.id JOIN '.$this->p.'invoices i ON i.id=o.invoice_id AND i.issuer_id=o.issuer_id JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE o.issuer_id=? AND o.account_id=? AND o.environment=? AND o.remote_id=? AND m.account_row=? AND o.provider=\'asaas\' AND o.channel=\'api\' AND o.state IN (\'issued\',\'received_observed\',\'issuing\',\'uncertain\') FOR UPDATE',[$account['issuer_id'],$account['account_id'],$account['environment'],$event['remote_id'],$account['id']])[0]??null;
+        if(!$origin||$this->rows('SELECT event_id FROM '.$this->p.'asaas_company_jobs WHERE event_id=? FOR UPDATE',[$event['id']]))return false;
         $now=gmdate('Y-m-d H:i:s');\IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'asaas_company_jobs(event_id,issuer_id,origin_id,actor_id,state,attempts,lease_token,lease_until,next_attempt_at,last_code,created_at,updated_at) VALUES(?,?,?,?,?,0,NULL,NULL,?,?,?,?)',[$event['id'],$account['issuer_id'],$origin['id'],$account['automation_actor'],'pending',$now,'received_event',$now,$now]);
-        if(!$this->rows('SELECT event_id FROM '.$this->p.'asaas_company_jobs WHERE event_id=? AND origin_id=? AND issuer_id=?',[$event['id'],$origin['id'],$account['issuer_id']]))throw new \RuntimeException('issuer_asaas_job_unconfirmed');
+        if(!$this->rows('SELECT event_id FROM '.$this->p.'asaas_company_jobs WHERE event_id=? AND origin_id=? AND issuer_id=?',[$event['id'],$origin['id'],$account['issuer_id']]))throw new \RuntimeException('issuer_asaas_job_unconfirmed');return true;
+    }
+    /** Bounded repair for authenticated old events whose origin became known after ingress. No HTTP or financial write. */
+    public function enqueueObservedJobsInOwnedTransaction(int $limit=100):int
+    {
+        if($limit<1||$limit>100)throw new \InvalidArgumentException('asaas_company_worker_limit');\IssuerTransaction::assertOwned($this->db,$this->p,self::tables());$this->module();
+        $events=$this->rows("SELECT e.* FROM {$this->p}asaas_company_events e JOIN {$this->p}asaas_company_accounts a ON a.id=e.account_row JOIN {$this->p}issuers_registry r ON r.id=a.issuer_id AND r.active=1 JOIN {$this->p}asaas_payment_origins o ON o.issuer_id=a.issuer_id AND o.account_id=a.account_id AND o.environment=a.environment AND o.remote_id=e.remote_id JOIN {$this->p}asaas_company_origin_meta m ON m.origin_id=o.id AND m.account_row=a.id JOIN {$this->p}invoices i ON i.id=o.invoice_id AND i.issuer_id=o.issuer_id JOIN {$this->p}issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id LEFT JOIN {$this->p}asaas_company_jobs j ON j.event_id=e.id WHERE e.event_type='PAYMENT_RECEIVED' AND e.state='observed' AND a.enabled=1 AND a.verified_at IS NOT NULL AND a.automation_actor>0 AND o.provider='asaas' AND o.channel='api' AND o.state IN ('issued','received_observed','issuing','uncertain') AND j.event_id IS NULL ORDER BY e.id LIMIT ".$limit.' FOR UPDATE');$queued=0;
+        foreach($events as $event){$account=$this->rows('SELECT * FROM '.$this->p.'asaas_company_accounts WHERE id=? FOR UPDATE',[$event['account_row']])[0]??null;if($account&&$this->enqueueEvent($account,$event))$queued++;}return $queued;
     }
     private function parent(int $issuer,int $invoice):array
     {
@@ -241,6 +250,24 @@ final class CompanyService
     {
         \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());$this->authorize($issuer,$actor,'remote_remove');$source=$this->source($issuer,$origin);(new \CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$source[0]['invoice_id']);return $source;
     }
+    /** Refund-only private composition. This grants no remote operation by itself. */
+    public function refundSourceInOwnedTransaction(int $issuer,int $actor,int $origin,bool $write=true):array
+    {
+        \IssuerTransaction::assertOwned($this->db,$this->p,$this->tablesForRun());
+        if($write)$this->authorize($issuer,$actor,'refund');
+        elseif(!(new \IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'invoices','view'))throw new \DomainException('asaas_company_access_denied');
+        if($write)$source=$this->source($issuer,$origin);
+        else{
+            // Historical private metadata remains readable after an account is disabled or rotated.
+            $row=$this->rows('SELECT * FROM '.$this->p.'asaas_payment_origins WHERE id=? AND issuer_id=? AND provider=? AND channel=? FOR UPDATE',[$origin,$issuer,'asaas','api'])[0]??null;
+            $meta=$this->rows('SELECT * FROM '.$this->p.'asaas_company_origin_meta WHERE origin_id=? FOR UPDATE',[$origin])[0]??null;
+            if(!$row||!$meta)throw new \DomainException('asaas_company_origin_denied');$account=$this->account($issuer,(int)$meta['account_row']);
+            if($row['account_id']!==$account['account_id']||$row['environment']!==$account['environment'])throw new \DomainException('asaas_company_origin_denied');
+            $source=[$row,$meta,$account,$this->parent($issuer,(int)$row['invoice_id'])];
+        }
+        (new \CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$source[0]['invoice_id']);
+        return $source;
+    }
     private static function money($value):string
     {
         try{if(is_float($value))throw new \DomainException();return \CompanyInvoiceAmounts::decimal(\app\services\InvoicePaymentWriter::minorUnits($value));}catch(\Throwable $e){throw new \DomainException('asaas_company_amount_requires_review');}
@@ -278,6 +305,8 @@ final class CompanyService
             }
             \IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'asaas_company_proofs(origin_id,account_revision,actor_id,operation,result_json,evidence_hash,state,created_at) VALUES(?,?,?,?,?,?,?,?)',[$origin,$config['revision'],$actor,$operation,json_encode($safe,JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),self::hash($safe),$state,gmdate('Y-m-d H:i:s')]);$proof=(int)$this->db->insert_id();
             \IssuerStorage::query($this->db,'UPDATE '.$this->p.'asaas_payment_origins SET remote_id=?,state=?,last_code=?,updated_at=? WHERE id=? AND issuer_id=?',[$remote,$state,'company_query_'.$safe['status'],gmdate('Y-m-d H:i:s'),$origin,$issuer]);
+            // Bind remote ID and every already-observed eligible callback atomically; a callback may precede the POST response.
+            foreach($this->rows("SELECT e.* FROM {$this->p}asaas_company_events e LEFT JOIN {$this->p}asaas_company_jobs j ON j.event_id=e.id WHERE e.account_row=? AND e.remote_id=? AND e.event_type='PAYMENT_RECEIVED' AND e.state='observed' AND j.event_id IS NULL ORDER BY e.id LIMIT 100 FOR UPDATE",[$account['id'],$remote]) as $event)$this->enqueueEvent($account,$event);
             if($proof<1||!$this->rows('SELECT id FROM '.$this->p.'asaas_company_proofs WHERE id=? AND evidence_hash=?',[$proof,self::hash($safe)]))throw new \RuntimeException('issuer_asaas_proof_unconfirmed');$this->audit($issuer,$actor,'company_asaas_canonical_observed',$origin);return $proof;
         });
         if($out===0)throw new \DomainException('asaas_company_response_conflict');return $out;
@@ -330,6 +359,7 @@ final class CompanyService
     public function receiptClaim(int $issuer,int $actor,int $origin,int $proofId):array
     {
         \IssuerTransaction::assertOwned($this->db,$this->p,self::tables());$this->authorize($issuer,$actor,'settle');[$row,$meta,$account,$parent]=$this->source($issuer,$origin);(new \CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$row['invoice_id']);
+        if($this->db->table_exists($this->p.'asaas_company_refund_requests')){require_once __DIR__.'/CompanyRefundSchema.php';CompanyRefundSchema::ensure($this->db,$this->p,false);\IssuerTransaction::assertOwned($this->db,$this->p,array_keys(CompanyRefundSchema::definitions()));if($this->rows("SELECT request_key FROM {$this->p}asaas_company_refund_requests WHERE origin_id=? AND (sent_at IS NOT NULL OR state<>'cancelled_local') FOR UPDATE",[$origin]))throw new \DomainException('asaas_refund_receipt_review_required');}
         $proof=$this->rows('SELECT * FROM '.$this->p.'asaas_company_proofs WHERE origin_id=? ORDER BY id DESC LIMIT 1 FOR UPDATE',[$origin])[0]??null;
         if(!$proof||(int)$proof['id']!==$proofId||$proof['state']!=='received_observed'||$proof['operation']!=='query'||$row['state']!=='received_observed'||$proof['account_revision']!==$account['revision'])throw new \DomainException('asaas_company_receipt_requires_review');
         $safe=json_decode($proof['result_json'],true,32,JSON_THROW_ON_ERROR);

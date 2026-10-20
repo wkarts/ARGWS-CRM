@@ -15,7 +15,7 @@ final class CompanyClient
     public function request(string $method,string $path,?array $payload=null):array
     {
         $readPath=preg_match('~^(?:wallets/|customers/[A-Za-z0-9_-]{1,64}|customers\?externalReference=[a-f0-9]{64}&limit=100&offset=(?:0|[1-9][0-9]{0,3})|payments/[A-Za-z0-9_-]{1,64})$~D',$path);
-        if(!in_array($method,['GET','POST','DELETE'],true)||($method==='GET'&&(!$readPath||$payload!==null))||($method==='POST'&&!in_array($path,['payments','customers'],true))||($method==='DELETE'&&($payload!==null||!preg_match('~^payments/[A-Za-z0-9_-]{1,64}$~D',$path))))throw new \DomainException('asaas_company_request_invalid');
+        if(!in_array($method,['GET','POST','DELETE'],true)||($method==='GET'&&(!$readPath||$payload!==null))||($method==='POST'&&!in_array($path,['payments','customers'],true)&&!preg_match('~^payments/[A-Za-z0-9_-]{1,64}/refund$~D',$path))||($method==='DELETE'&&($payload!==null||!preg_match('~^payments/[A-Za-z0-9_-]{1,64}$~D',$path))))throw new \DomainException('asaas_company_request_invalid');
         try {
             if($this->transport!==null){$response=($this->transport)($this->environment,$method,$path,$payload,$this->secret);if(is_string($response))$response=self::decodeExact($response);if(!is_array($response)||array_is_list($response))throw new \RuntimeException();return $response;}
             $base=$this->environment==='sandbox'?'https://api-sandbox.asaas.com/v3/':'https://api.asaas.com/v3/';

@@ -149,3 +149,5 @@ if (count($custom_fields) > 0) {
     echo '<hr />';
 }
 ?>
+
+<?php if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()&&CompanySettingsRuntime::can('view')){?><p><a href="<?= htmlspecialchars(CompanyRequestScope::adminUrl($this,'settings?group=project_files'),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); ?>">Política própria de arquivos de projetos desta empresa</a></p><p>A opção de arquivos legada não autoriza ocultação no novo portal por empresa; use a política própria, desativada por padrão.</p><?php }?>

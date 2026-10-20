@@ -3,6 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/CompanySales.php';
 require_once __DIR__.'/CompanyMailConfig.php';
+require_once __DIR__.'/CompanyGoogleMailOAuth.php';
 require_once __DIR__.'/CompanySalesPreferences.php';
 require_once __DIR__.'/CompanyEmailTemplates.php';
 require_once __DIR__.'/CompanySalesExtrasSchema.php';
@@ -23,7 +24,7 @@ final class CompanySalesDelivery
     private function transaction(callable $work)
     {
         CompanySalesExtrasSchema::assertValid($this->db,$this->p);
-        return IssuerTransaction::run($this->db,$this->p,['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','clients','contacts','contact_permissions','company_sales_documents','emailtemplates','options','mail_queue','company_sales_deliveries','issuers_audit'],$work);
+        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','clients','contacts','contact_permissions','company_sales_documents','emailtemplates','options','mail_queue','company_sales_deliveries','issuers_audit'],CompanyGoogleMailOAuth::participantTables($this->db,$this->p)),$work);
     }
     private function parent(int $issuer,int $document):array
     {
@@ -33,7 +34,7 @@ final class CompanySalesDelivery
     private static function revisionFor(array $row):string{return hash('sha256',json_encode([$row['id'],$row['kind'],$row['state'],$row['number'],$row['origin_hash'],$row['input_hash']],JSON_THROW_ON_ERROR));}
     private function configurationHash(int $issuer):string
     {
-        $store=new CompanySettingsStorage($this->db,$this->p);$values=[];foreach(['mail_engine','email_protocol','smtp_host','smtp_username','smtp_email','smtp_password','smtp_port','smtp_encryption','smtp_email_charset','microsoft_mail_client_id','microsoft_mail_client_secret','microsoft_mail_refresh_token','microsoft_mail_azure_tenant_id','google_mail_client_id','google_mail_client_secret','google_mail_refresh_token'] as $key)$values[$key]=$store->get($issuer,$key);return hash('sha256',json_encode($values,JSON_THROW_ON_ERROR));
+        $store=new CompanySettingsStorage($this->db,$this->p);$values=[];foreach(['mail_engine','email_protocol','smtp_host','smtp_username','smtp_email','smtp_password','smtp_port','smtp_encryption','smtp_email_charset','microsoft_mail_client_id','microsoft_mail_client_secret','microsoft_mail_refresh_token','microsoft_mail_azure_tenant_id','google_mail_client_id','google_mail_client_secret','google_mail_refresh_token'] as $key)$values[$key]=$store->get($issuer,$key);$oauth=(new CompanyGoogleMailOAuth($this->db,$this->p))->fingerprint($issuer);if($oauth!==null)$values['company_google_mail_epoch']=$oauth;return hash('sha256',json_encode($values,JSON_THROW_ON_ERROR));
     }
     /** Known factory bodies are adapted to this authenticated portal transport without changing custom templates. */
     private static function privateFactoryMessage(object $template,string $slug,string $type):string
@@ -80,7 +81,7 @@ final class CompanySalesDelivery
             }
             if(!in_array($row['state'],['accepted','converted'],true))throw new DomainException('company_sales_delivery_denied');
             if(!hash_equals(self::revisionFor($row),$revision))throw new DomainException('company_sales_stale');
-            $store=new CompanySettingsStorage($this->db,$this->p);$config=CompanyMailConfig::build($this->db,$this->p,$issuer,$decrypt);
+            $store=new CompanySettingsStorage($this->db,$this->p);$config=CompanyMailConfig::build($this->db,$this->p,$issuer,$decrypt,null,'document_notifications');
             $type=$row['kind']==='estimates'?'estimate':'proposal';$slug=$type==='estimate'?'estimate-send-to-client':'proposal-send-to-customer';$template=CompanyEmailTemplates::findForIssuer($this->db,$this->p,$issuer,$slug,'portuguese_br');
             if(!$template||(int)$template->active!==1||!str_contains($template->message,'{'.$type.'_link}'))throw new DomainException('company_sales_delivery_template_required');
             $from=trim($store->get($issuer,'smtp_email'));if(!filter_var($from,FILTER_VALIDATE_EMAIL)||preg_match('/[\r\n]/',$from))throw new DomainException('company_sales_delivery_sender_required');
@@ -100,6 +101,7 @@ final class CompanySalesDelivery
             $configurationHash=$this->configurationHash($issuer);$payloadHash=self::payloadHash((object)$fields);
             IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_sales_deliveries(request_key,issuer_id,actor_id,document_id,contact_id,revision,recipient_hash,configuration_hash,payload_hash,queue_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)',[$requestKey,$issuer,$actor,$document,$contact,$revision,$fingerprint,$configurationHash,$payloadHash,$queue,date('Y-m-d H:i:s')]);
             $receipt=$this->rows('SELECT * FROM '.$this->p.'company_sales_deliveries WHERE request_key=?',[$requestKey])[0]??[];foreach(['request_key'=>$requestKey,'issuer_id'=>$issuer,'actor_id'=>$actor,'document_id'=>$document,'contact_id'=>$contact,'revision'=>$revision,'recipient_hash'=>$fingerprint,'configuration_hash'=>$configurationHash,'payload_hash'=>$payloadHash,'queue_id'=>$queue] as $field=>$value)if((string)($receipt[$field]??'')!==(string)$value)throw new RuntimeException('issuer_sales_delivery_unconfirmed');
+            if(CompanyGoogleMailOAuthSchema::present($this->db,$this->p))(new CompanyGoogleMailOAuth($this->db,$this->p))->bindQueueInOwnedTransaction($issuer,$actor,$queue,'sales',$requestKey);
             $metadata=json_encode(['queue_id'=>$queue,'contact_id'=>$contact],JSON_THROW_ON_ERROR);
             IssuerStorage::query($this->db,"INSERT INTO ".$this->p."issuers_audit(actor_id,event,issuer_id,subject_id,created_at,metadata_json) VALUES(?,'company_sales_notification_queued',?,?,?,?)",[$actor,$issuer,$document,date('Y-m-d H:i:s'),$metadata]);$audit=(int)$this->db->insert_id();
             if(!$this->rows('SELECT id FROM '.$this->p.'issuers_audit WHERE id=? AND issuer_id=? AND subject_id=? AND metadata_json=?',[$audit,$issuer,$document,$metadata]))throw new RuntimeException('issuer_sales_delivery_unconfirmed');$this->authorize($issuer,$actor,$document);return $queue;
@@ -116,6 +118,7 @@ final class CompanySalesDelivery
             if(!in_array($row['state'],['accepted','converted'],true)||!hash_equals($receipt['revision'],self::revisionFor($row)))throw new DomainException('company_sales_stale');
             $recipient=null;foreach($this->recipientsFor((int)$row['clientid'],self::permission($row)) as $candidate)if((int)$candidate['id']===(int)$receipt['contact_id'])$recipient=$candidate;
             if(!$recipient||$recipient['email']!==$email->email||!hash_equals($receipt['recipient_hash'],self::recipientHash($recipient)))throw new DomainException('company_sales_delivery_denied');
+            if(CompanyGoogleMailOAuthSchema::present($this->db,$this->p))(new CompanyGoogleMailOAuth($this->db,$this->p))->assertQueueInOwnedTransaction($issuer,$actor,(int)$email->id,'sales',$requestKey);
         });
     }
 }

@@ -24,6 +24,8 @@ final class ContextInput
     public function get($name) { return $name === 'group' ? $this->group : null; }
     public function get_request_header($name, $clean = false) { return $this->headers[$name] ?? null; }
     public function is_cli_request() { return $this->cli; }
+    public bool $ajax = false;
+    public function is_ajax_request() { return $this->ajax; }
 }
 final class ContextRouter
 {
@@ -154,6 +156,21 @@ essentialCheck(strpos($html, 'value="41"') < strpos($html, 'value="54"'), 'actua
 essentialCheck(!str_contains(form_open('https://foreign.invalid/endpoint'), '_company_context'), 'form helper never transmits context token cross origin');
 essentialCheck(!str_contains(form_open('https://crm.example.test/admin/read', ['method'=>'get']), '_company_context'), 'GET form does not put a token into URL');
 $controller->index(); essentialCheck($controller->load->views[0][0] === 'admin/companies/context', 'real selector controller renders isolated view');
+// Native recovery feedback is delivered only by the existing attested document.
+require_once APPPATH.'services/AdminDatabaseUpgrade.php';
+$createdFeedbackVersionTable = !$db->table_exists($p.'migrations');
+if($createdFeedbackVersionTable){$db->query('CREATE TABLE '.$p.'migrations(version integer NOT NULL)');$db->query('INSERT INTO '.$p.'migrations(version) VALUES(436)');}
+$feedbackVersion=(string)$db->query('SELECT version FROM '.$p.'migrations LIMIT 1')->row()->version;
+AdminDatabaseUpgrade::recordSuccess($s,8,$feedbackVersion);
+$ci->input->ajax=true;$controller->index();$feedbackView=end($controller->load->views);essentialCheck($feedbackView[1]['native_database_upgrade_success']===false&&isset($s->data['admin_database_upgrade_success']),'real context XHR preserves pending feedback');
+$ci->input->ajax=false;$ci->input->verb='HEAD';$controller->index();$feedbackView=end($controller->load->views);essentialCheck($feedbackView[1]['native_database_upgrade_success']===false&&isset($s->data['admin_database_upgrade_success']),'real context HEAD preserves pending feedback');
+$ci->input->verb='GET';$db->failOn='SELECT version FROM `'.$p.'migrations`';expectStatus(fn()=>$controller->index(),503);essentialCheck(isset($s->data['admin_database_upgrade_success']),'native version read failure preserves receipt for retry');$db->failOn=null;
+$ci=contextEnvironment($f,$s);$controller=new Company_context();
+$controller->index();$feedbackView=end($controller->load->views);essentialCheck($feedbackView[1]['native_database_upgrade_success']===true&&!isset($s->data['admin_database_upgrade_success']),'real scoped GET consumes exact actor/version feedback');essentialCheck(CompanyRequestScope::context()->issuerId()===54,'feedback never changes the active secondary company');
+$controller->index();$feedbackView=end($controller->load->views);essentialCheck($feedbackView[1]['native_database_upgrade_success']===false,'real context feedback is one-shot');
+AdminDatabaseUpgrade::recordSuccess($s,7,$feedbackVersion);$controller->index();$feedbackView=end($controller->load->views);essentialCheck($feedbackView[1]['native_database_upgrade_success']===false,'real context cannot display another staff receipt');
+if($createdFeedbackVersionTable){$db->query('DROP TABLE '.$p.'migrations');unset($db->data_cache['table_names']);}
+
 $tokenB = CompanyRequestScope::token(); $csrfB = CompanyRequestScope::context()->csrf();
 CompanyRequestScope::finish(); essentialCheck(!CompanySettingsRuntime::active(), 'request finalization clears settings runtime'); CompanyRequestScope::finish();
 $ci = contextEnvironment($f, $s, 'invoices', 'invoice');

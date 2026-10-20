@@ -110,6 +110,13 @@ final class CompanySettingsStorage
         return $values;
     }
 
+    /** Own typography, including explicit principal; never global font options. */
+    public function documentTypography(int $issuer,string $kind):?array
+    {
+        require_once __DIR__.'/CompanyPdfTypography.php';
+        return CompanyPdfTypography::capture($this->db,$this->prefix,$issuer,$kind);
+    }
+
     public function get($issuerId, $name): string { return $this->lookup($issuerId, self::name($name)) ?? ''; }
     public function exists($issuerId, $name): bool { return $this->lookup($issuerId, self::name($name)) !== null; }
 

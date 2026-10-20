@@ -1,0 +1,15 @@
+# Apontamentos publicados no portal privado
+
+Consumer nativo: `Clients::project` grupo `project_timesheets`, `Projects_model::get_timesheets`, `project_tabs.php` e `project_timesheets.php`. Há flag `view_timesheets` e recurso `available_features.project_timesheets`, separados e inicialmente desligados. A autorização mantém native6, contato/sessão/senha atuais, cliente proprietário privado ativo, projeto publicado e os gates433 `view_tasks` + `view_task_total_logged_time`. Não há concessão automática por habilitar outro consumer.
+
+O staff com `projects/view` + `projects/edit` usa **Regras do projeto no portal → Apontamentos no portal**, ativa flag e recurso, e publica tarefas e timers encerrados pelo editor433 já existente. A tabela do contato apresenta tarefa (link ao detalhe autorizado), início, fim e duração, apenas para timers com publicação individual válida de tarefas publicadas na revisão atual. Timestamps são os valores canônicos existentes; não se inventa timezone de captura. Não entram cronômetros em execução, timers internos ou contagens privadas. Isto não cria um demonstrativo de cobrança.
+
+O nome do profissional é opcional: exige `view_team_members`, funcionário ativo e permissões atuais de consulta de projeto/tarefa na empresa. Caso contrário aparece “Identidade não publicada”. Sem a regra de equipe, nenhuma consulta de perfil é executada para esse nome; IDs de atores/timers, hashes e outros dados de perfil não saem no DTO. Não há foto ou URL externa.
+
+A paginação usa 50 linhas por página, ordem `started_at DESC, id DESC`, sem total de registros privados. A continuação é um cursor HMAC com issuer/projeto/contato/data/ID; não aceita alteração nem transferência entre empresas, projetos ou contatos, inclusive contatos autorizados do mesmo cliente. Retirada da publicação remove imediatamente a linha. As consultas são limitadas ao conjunto público e ao pai persistido; não usam scanners legados ou IDs coincidentes.
+
+Duas tabelas aditivas guardam regras e recibos de alteração. Não alteram tarefas, timers, associação com marcos, quantidade financeira, clientes ou grants existentes. Schema exige InnoDB, definição de coluna, chave e FK exatas; writers não fazem DDL. Regras usam revisão do projeto e das regras, request key, auditoria e recibo atômicos; replay não repete alteração antiga. O leitor revalida contato/owner/native6/flags/publicações/conteúdo/perfil depois da auditoria antes de liberar a projeção, inclusive após espera pelo lock. Corrupção de duração ou hash falha fechado.
+
+Testes próprios cobrem A/B/principal/NULL, segundo contato, flags independentes, fonte/publicação, cursor e página50+continuação, nomes, rollback/recibos e revogação tardia. Há serviço/GUI/controller/concorrência/HTTP reais separados da prova de tracking de migration nativa. A fixture CLI exige banco descartável, não constitui rota de produção. Não há transporte bancário nem homologação externa neste consumer.
+
+Gantt, discussões de projeto e upload de arquivos de projeto são consumers independentes ainda em continuação. O faturamento de tarefas/projetos é outro escritor canônico, sem ligação a estes controles de visualização.

@@ -301,3 +301,4 @@ echo render_input('settings[smtp_password]', 'settings_email_password', $ps, 'pa
         </table>
     </div>
 </div>
+<?php if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()&&CompanySettingsRuntime::can('view')){?><p><a href="<?= htmlspecialchars(CompanyRequestScope::adminUrl($this,'company_google_mail_oauth'),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); ?>">Google SMTP próprio para notificações de documentos</a></p><?php } ?>

@@ -63,7 +63,7 @@ final class CompanyRequestScope
         self::$isolated = ($native && $class === 'company_context' && in_array($method, ['index', 'select'], true))
             || ($native && $class === 'company_onboarding' && $method === 'index')
             || ($native && $class === 'company_clients' && $method === 'index')
-            || ($native && in_array($class,['company_invoices','company_credits','company_projects','company_project_portal_rules','company_project_extras','company_standalone_tasks','company_tasks','company_expenses','company_contracts','company_tickets','company_sales','company_recurring','company_asaas','company_reports','company_api_tokens','company_imports','company_client_imports'],true) && $method === 'index')
+            || ($native && in_array($class,['company_invoices','company_credits','company_projects','company_project_portal_rules','company_project_extras','company_standalone_tasks','company_tasks','company_task_billing','company_project_billing_rates','company_project_fixed_billing','company_expenses','company_contracts','company_tickets','company_sales','company_recurring','company_asaas','company_reports','company_api_tokens','company_google_mail_oauth','company_imports','company_client_imports'],true) && $method === 'index')
             || ($native && $class === 'company_assets' && $method === 'index')
             || $companyScopedBbRoute;
         if (!IssuerCore::ready($ci->db, db_prefix())) {
@@ -159,7 +159,15 @@ final class CompanyRequestScope
     }
     private static function deny($ci, string $reason, int $status): void
     {
+        // A provider callback denied before controller hydration must also discard its query.
+        $googleCallback=trim((string)$ci->router->fetch_directory(),'/')==='admin'&&!$ci->router->fetch_module()
+            &&strtolower((string)$ci->router->fetch_class())==='company_google_mail_oauth'
+            &&strtolower((string)$ci->router->fetch_method())==='index'
+            &&in_array(strtoupper($ci->input->method(true)),['GET','HEAD'],true)
+            &&($ci->input->get('state',false)!==null||$ci->input->get('code',false)!==null||$ci->input->get('error',false)!==null);
         self::finish();
+        if($googleCallback){$ci->load->helper('url');redirect(self::adminUrl($ci,'company_google_mail_oauth'),'location',303);throw new CompanyRequestDenied('company_google_mail_callback_denied',303);}
+
         $message = $reason === 'company_context_mismatch'
             ? 'A empresa desta aba mudou. Recarregue a página antes de enviar novamente. Nenhuma operação foi executada.'
             : 'Esta operação não está disponível no contexto de empresa atual. Selecione uma empresa autorizada.';

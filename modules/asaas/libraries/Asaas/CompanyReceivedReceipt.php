@@ -11,9 +11,10 @@ final class CompanyReceivedReceipt implements \CompanyReceiptSource
     private ?array $claim=null;
     private bool $hasBb=false;
     private bool $hasRemoteOperations=false;
+    private bool $hasRefunds=false;
     public function __construct(private int $origin,private int $proof,private ?int $jobEvent=null,private ?string $leaseToken=null){\IssuerPolicy::id($origin);\IssuerPolicy::id($proof);if(($jobEvent===null)!==($leaseToken===null)||($jobEvent!==null&&($jobEvent<1||!preg_match('/^[a-f0-9]{64}$/D',$leaseToken))))throw new \DomainException('asaas_company_worker_lease_lost');}
-    public function assertSchema($db,string $p):void{CompanySchema::ensure($db,$p,false);$this->hasBb=$db->table_exists($p.'bb_origins');$this->hasRemoteOperations=$db->table_exists($p.'asaas_company_remote_operations');if($this->hasRemoteOperations)CompanyRemoteOperationsSchema::ensure($db,$p,false);}
-    public function tables():array{return array_merge(CompanyService::tables(),$this->hasBb?['bb_origins']:[],$this->hasRemoteOperations?['asaas_company_remote_operations']:[]);}
+    public function assertSchema($db,string $p):void{CompanySchema::ensure($db,$p,false);$this->hasBb=$db->table_exists($p.'bb_origins');$this->hasRemoteOperations=$db->table_exists($p.'asaas_company_remote_operations');if($this->hasRemoteOperations)CompanyRemoteOperationsSchema::ensure($db,$p,false);if($db->table_exists($p.'asaas_company_refund_requests')){require_once __DIR__.'/CompanyRefundSchema.php';CompanyRefundSchema::ensure($db,$p,false);$this->hasRefunds=true;}}
+    public function tables():array{return array_merge(CompanyService::tables(),$this->hasBb?['bb_origins']:[],$this->hasRemoteOperations?['asaas_company_remote_operations']:[],$this->hasRefunds?array_keys(CompanyRefundSchema::definitions()):[]);}
     public function claim($db,string $p,int $issuer,int $actor):array
     {
         if($this->hasRemoteOperations&&\IssuerStorage::query($db,'SELECT origin_id FROM '.$p.'asaas_company_remote_operations WHERE origin_id=? AND issuer_id=? FOR UPDATE',[$this->origin,$issuer])->row_array())throw new \DomainException('asaas_company_remote_operation_pending');
