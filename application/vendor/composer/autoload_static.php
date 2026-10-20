@@ -104,6 +104,7 @@ class ComposerStaticInit81eaabc8969cc9f36d1eb18edc53f1e5
         ),
         'F' =>
         array (
+            'Firebase\\JWT\\' => 13,
             'Faker\\' => 6,
         ),
         'E' =>
@@ -322,6 +323,10 @@ class ComposerStaticInit81eaabc8969cc9f36d1eb18edc53f1e5
         'Greew\\OAuth2\\Client\\Provider\\' =>
         array (
             0 => __DIR__ . '/..' . '/greew/oauth2-azure-provider/src/Provider',
+        ),
+        'Firebase\\JWT\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/firebase/php-jwt/src',
         ),
         'Faker\\' =>
         array (

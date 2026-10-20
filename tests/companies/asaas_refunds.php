@@ -1,6 +1,6 @@
 <?php
 /** Real owned request outbox + production transport/normalizers; only remote I/O is simulated. */
-register_shutdown_function(function(){if(!isset($GLOBALS['db'],$GLOBALS['p']))return;$db=$GLOBALS['db'];$p=$GLOBALS['p'];foreach(['asaas_company_refund_observations','asaas_company_refund_requests','asaas_company_refund_grants'] as $table){try{$db->query('DROP TABLE IF EXISTS '.$p.$table);}catch(Throwable $ignored){}}});
+register_shutdown_function(function(){if(!isset($GLOBALS['db'],$GLOBALS['p']))return;$db=$GLOBALS['db'];$p=$GLOBALS['p'];foreach(['company_post_refund_manual_receipts','company_post_refund_cancellations','company_asaas_refund_postings','asaas_company_refund_observations','asaas_company_refund_requests','asaas_company_refund_grants'] as $table){try{$db->query('DROP TABLE IF EXISTS '.$p.$table);}catch(Throwable $ignored){}}});
 require __DIR__.'/asaas_positive.php';require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyRefunds.php';
 require __DIR__.'/asaas_refund_native_setup.php';
 $refunds=new \Asaas\CompanyRefunds($db,$p);$rfKey=fn($s)=>hash('sha256','asaas-refund:'.$s);$refundCalls=[];$refundReplies=[];

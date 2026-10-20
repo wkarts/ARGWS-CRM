@@ -79,4 +79,8 @@ $labels = [
 
 <?php if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()&&CompanySettingsRuntime::can('view')&&$group==='email'){?><p><a href="<?= htmlspecialchars(CompanyRequestScope::adminUrl($this,'company_google_mail_oauth'),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); ?>">Google SMTP próprio para notificações de documentos</a></p><?php } ?>
 
+<?php if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()&&CompanySettingsRuntime::can('view')&&$group==='email'){?><p><a href="<?= htmlspecialchars(CompanyRequestScope::adminUrl($this,'company_microsoft_mail_oauth'),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); ?>">Microsoft 365 SMTP próprio e seleção do transporte de documentos</a></p><?php }?>
+
+<?php if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()&&CompanySettingsRuntime::can('view')&&$group==='email'&&(new IssuerResourceAccess($this->db,db_prefix()))->can(CompanyRequestScope::context()->issuerId(),CompanyRequestScope::context()->staffId(),'connect-api-connector','view')){?><p><a href="<?= htmlspecialchars(CompanyRequestScope::adminUrl($this,'company_connect_api'),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); ?>">Connect|API WhatsApp próprio para avisos privados</a></p><?php } ?>
+
 <?php require APPPATH.'views/admin/companies/layout_tail.php'; ?>

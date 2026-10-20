@@ -1,0 +1,66 @@
+{
+  "type": "newly reconstructed tests after source recovery; not restored historical tests",
+  "production_changed": false,
+  "tests": {
+    "tests/companies/recurrence_resume_439_dates.php": "09de40d9e29cff193d5eae9d5d5b0f1bd337dbd6cd9886e4dc9c7f74db2ae7c2",
+    "tests/companies/recurrence_resume_439.php": "0bbf52ec1da8c869e8b72d80fbd2b733b72c32382d008c21d208a97be85ad720",
+    "tests/companies/recurrence_resume_439_concurrency.php": "97ba730d3747773910e8d72c6fa68cc063b7206f9b89f2996eaae34e7d14f752"
+  },
+  "source_binding": {
+    "application/services/CompanyInvoiceRecurring.php": "e2646eafea9c9930b02333e0981028c2d6d037cafcd07da2fecf26cbc792771c",
+    "application/services/CompanyInvoiceRecurringStorage.php": "2f8157f86ad07184dfca1c4482208034fcf65eca1d6d96246c7e14b6229579d0",
+    "application/services/CompanyInvoiceRecurringOrigin.php": "b27049f4b740a6b95852d3c333c0c72119f26d981250ac4cc1aadc62edbf3d7f",
+    "application/services/CompanyInvoiceRecurringDates.php": "712a82b91867ac1d92a0cb3fa2efeddbc99decfd5fb9db3a65bfbf2e063bed2c",
+    "application/services/CompanyInvoiceRecurringSchema.php": "9f7d3349ad0c967d26015f7b7e15ccc16571168f32a3a8a52bb2ac6934307965",
+    "application/services/CompanySalesBase.php": "3c2975a8a8e5b40cab2f8fd35036619da7de5e0f4ef4fce9ba805079b44017c3",
+    "application/services/CompanyInvoices.php": "ee3ac001ef27467bdd7106751de412c927cfd9558a913ae1514460f80c9d5d4b"
+  },
+  "executions": [
+    {
+      "command": "test-runtime/resume-bin/php candidate439/tests/companies/recurrence_resume_439_dates.php",
+      "result": "PASS",
+      "checks": 848,
+      "database": null
+    },
+    {
+      "command": "test-runtime/resume-bin/php tests/companies/recurrence_resume_439.php",
+      "cwd": "candidate439",
+      "result": "PASS",
+      "cumulative_checks": 98,
+      "included_baseline_checks": 63,
+      "new_checks": 35,
+      "driver": "SQLite",
+      "log": "recurrence-resume-439-sqlite-final.log"
+    },
+    {
+      "command": "python ../test-runtime/run_resume_db.py -- php tests/companies/recurrence_resume_439_concurrency.php",
+      "cwd": "candidate439",
+      "result": "PASS",
+      "cumulative_checks": 123,
+      "included_baseline_checks": 63,
+      "service_new_checks": 35,
+      "concurrency_new_checks": 25,
+      "driver": "MariaDB10.11.14 InnoDB/binlogON/nonSUPER",
+      "scenarios": 5,
+      "actual_waiters_each": 2,
+      "log": "recurrence-resume-439-mariadb-concurrency-attempt2.log"
+    }
+  ],
+  "failed_attempts": [
+    "SQLite attempt1: new test queried due_date instead of native duedate; assertion corrected",
+    "SQLite attempt2: new test expected generic ACL error but actual contract is company_sales_denied; exact expected error corrected",
+    "SQLite attempt4: UNIQUE invoice_id blocked chosen corruption fixture before intended reader; use another existing non-recurring same-company invoice; reader rejection preserved",
+    "MariaDB attempt1: runtime client infrastructure not ready before PHP tests; preserved full log",
+    "MariaDB concurrency attempt1: new test assumed second caller always returns null; actual safe contract may return same canonical receipt; now validates one canonical ID or null, exactly one invoice/run, one cycle and next date"
+  ],
+  "not_executed": [
+    "HTTP/Chromium for reconstructed439 recurrence UI",
+    "MySQL matrix",
+    "SMTP/provider external integration"
+  ],
+  "limits": [
+    "SQLite is not lock proof",
+    "Cumulative counts include baseline invoices; not additive across executions",
+    "No production code, migration, version or workflow changed by this agent"
+  ]
+}

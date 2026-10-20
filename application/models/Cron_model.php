@@ -111,6 +111,10 @@ class Cron_model extends App_Model
             app_maybe_delete_old_temporary_files();
 
             hooks()->do_action('after_cron_run', $manually);
+            require_once APPPATH . 'services/CompanyConnectApiCron.php';
+            CompanyConnectApiCron::run($this);
+            require_once APPPATH . 'services/CompanyPusherCron.php';
+            CompanyPusherCron::run($this);
 
             // For all cases try to release the lock after everything is finished
             $this->lockHandle();

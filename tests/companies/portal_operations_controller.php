@@ -1,6 +1,12 @@
 <?php
 /** Actual existing admin/public controllers and PHP templates; framework I/O alone is synthetic. */
 require __DIR__.'/portal_operations_setup.php';
+// Native437/438 installation is required by the current shared project reader.
+// Preparing its metadata must not adopt any conversation or enable portal rules.
+$fixtureDiscussionTables=array_merge(array_keys(CompanyProjectDiscussionsSchema::definitions($p)),array_keys(CompanyProjectDiscussionExtrasSchema::definitions($p)));
+$fixtureDiscussionRows=0;foreach($fixtureDiscussionTables as $fixtureTable)$fixtureDiscussionRows+=(int)$db->query('SELECT COUNT(*) n FROM '.$p.$fixtureTable)->row()->n;
+essentialCheck(count($fixtureDiscussionTables)===11&&$fixtureDiscussionRows===0,'recovered portal metadata installs eleven empty tables without granting rules or adopting discussions');
+
 class CompanyRequestScope{public static int $issuer;public static bool $sealed=true;public static function sealedFor($c){return self::$sealed;}public static function context(){return new class{function issuerId(){return CompanyRequestScope::$issuer;}function staffId(){return 7;}function available(){return [];}function isPrimary(){return false;}function csrf(){return 'synthetic-switch';}};}public static function token(){return 'synthetic-operational-context';}public static function invalidateCaches($c){}public static function adminUrl($c,$path=''){return 'https://synthetic.invalid/admin/'.$path;}}
 class CompanySettingsRuntime{static function active(){return true;}static function can($c){return false;}static function canResource($f,$c){return true;}}
 class PortalRequestScope{public static bool $active=true;static function active(){return self::$active;}}

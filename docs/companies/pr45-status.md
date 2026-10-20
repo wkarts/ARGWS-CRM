@@ -1,5 +1,15 @@
 # Matriz objetiva da PR45
 
+## Retomada de20/10/2026 — composição439 recuperada e validada localmente
+
+Remoto inicial confirmado `e3ffef4a66231562d232d0e6b545c49898d0f548`, núcleo4.3.6/436, BB1.1.6/116 e Asaas1.5.2/152. O CI desse SHA terminou com16workflows distintos aprovados; as falhas históricas abaixo não são a falha atual. A retomada não refez esse reparo deCI.
+
+A composição439 recupera os passos437–439, BB117–119 e Asaas153. Todos os arquivos produtivos do congelamentoS1 foram conferidos por hash. Os154 testes novos não publicados que não sobreviveram foram explicitamente identificados; provas `resume_439` foram recompostas e executadas. Dois defeitos encontrados nesta retomada foram corrigidos: veto a envelope de token não criptografado noConnectAPI e normalização dos campos reais de itens no formulário compartilhado de vendas/recorrência. Não se atribuem os resultados antigos aos fontes corrigidos.
+
+Consulte [recuperação439](pr45-recovery-439.md) para testes, instalação/tracking/replay, fonte congelada e limites. Até publicação eCI do próprio SHA, esta composição não é resultado remoto. Os patches440 são preservados em composições separadas; quitação/rascunhos, cópias de projetos/tarefas, ciclo financeiro pós-refund, notificações de suporte e novos parâmetrosBB exigem integração e prova próprias. CNAB400 continua indisponível pelos três insumos bancários específicos documentados. Código faltante não é homologação externa.
+
+## Histórico publicado até436
+
 Escopo integral em andamento. O incremento436 foi publicado no SHA
 `9b114e9808ad92d02530977b0c67ffe09d2da1b1`: núcleo4.3.6/436,
 BB1.1.6/101–116 e Asaas1.5.2/152. Seu primeiro CI encerrou16workflows:

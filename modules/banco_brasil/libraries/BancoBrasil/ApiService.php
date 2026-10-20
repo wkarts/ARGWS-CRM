@@ -7,14 +7,15 @@ require_once __DIR__.'/Origination.php';
 require_once __DIR__.'/ApiSchema.php';
 require_once __DIR__.'/ApiPayload.php';
 require_once __DIR__.'/ApiReceiptSchema.php';
-require_once __DIR__.'/ApiAmendments.php';
+require_once __DIR__.'/ApiAmendments.php';require_once __DIR__.'/ApiAbatementAmendments.php';
+require_once __DIR__.'/ApiAddressAmendments.php';require_once __DIR__.'/ApiDiscountAmendments.php';
 require_once __DIR__.'/ApiMovements.php';
 require_once APPPATH.'services/CompanyInvoiceBalance.php';
 
 /** Invoice-bound API outbox. Every request uses the immutable origin; no ambient bank/account defaults. */
 final class ApiService
 {
-    use ApiAmendments;
+    use ApiAmendments,ApiAbatementAmendments,ApiAddressAmendments,ApiDiscountAmendments;
     private ApiClient $client;
     public function __construct(private $db,private string $prefix,private $encrypt=null,private $decrypt=null,?callable $transport=null)
     {
@@ -178,12 +179,15 @@ final class ApiService
     }
     private function perform(int $issuer,int $actor,int $originId,string $operation,string $requestKey,?array $amendment=null):int
     {
-        if(!in_array($operation,['issue','query','cancel','amend_due','movements'],true)||!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new \DomainException('bb_api_invalid_input');
+        if(!in_array($operation,['issue','query','cancel','amend_due','amend_abat','amend_addr','amend_disc','movements'],true)||!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new \DomainException('bb_api_invalid_input');
         $prepared=$this->transaction(function()use($issuer,$actor,$originId,$operation,$requestKey,$amendment):array{
             $this->authorizeOperation($issuer,$actor,$operation);[$origin,$stored,$snapshot,$profile,$agreement]=$this->loadOrigin($issuer,$originId);if($operation==='issue'&&in_array(ApiClient::decodeExact($stored['payload_json'])['jurosMora']['tipo']??null,['1','2'],true))$this->authorize($issuer,$actor,'api_charges',true);if($operation==='issue'&&in_array(ApiClient::decodeExact($stored['payload_json'])['desconto']['tipo']??null,['1','2'],true))$this->authorize($issuer,$actor,'api_discount',true);
             $op=$this->rows('SELECT * FROM '.$this->prefix.'bb_api_operations WHERE origin_id=? AND operation=? AND request_key=? FOR UPDATE',[$originId,$operation,$requestKey])[0]??null;
             if($operation==='movements'&&$op){$saved=json_decode($op['result_json'],true,32,JSON_THROW_ON_ERROR);if(($saved['movement_window']??null)!==$amendment||(int)$op['actor_id']!==$actor)throw new \DomainException('bb_api_request_conflict');}
             if($operation==='amend_due'&&$op){$saved=json_decode($op['result_json'],true,32,JSON_THROW_ON_ERROR);if(($saved['amendment']??null)!==$amendment||(int)$op['actor_id']!==$actor)throw new \DomainException('bb_api_request_conflict');}
+            if($operation==='amend_abat'&&$op){$saved=json_decode($op['result_json'],true,32,JSON_THROW_ON_ERROR);if(($saved['abatement']??null)!==$amendment||(int)$op['actor_id']!==$actor||!hash_equals(ApiAbatement::fingerprint($origin,$snapshot,$amendment),$saved['abatement_fingerprint']??''))throw new \DomainException('bb_api_request_conflict');}
+            if($operation==='amend_addr'&&$op){$saved=json_decode($op['result_json'],true,32,JSON_THROW_ON_ERROR);if(($saved['address_instruction']??null)!==$amendment||(int)$op['actor_id']!==$actor||!hash_equals(ApiAddress::fingerprint($origin,$snapshot,$amendment),$saved['address_fingerprint']??''))throw new \DomainException('bb_api_request_conflict');}
+            if($operation==='amend_disc'&&$op){$saved=json_decode($op['result_json'],true,32,JSON_THROW_ON_ERROR);if(($saved['discount_instruction']??null)!==$amendment||(int)$op['actor_id']!==$actor||!hash_equals(ApiDiscountAmendment::fingerprint($origin,$snapshot,$amendment),$saved['discount_fingerprint']??''))throw new \DomainException('bb_api_request_conflict');}
             if($op&&in_array($op['status'],['validated','confirmed','rejected','unknown','sending'],true))return ['id'=>(int)$op['id'],'execute'=>false];
             if($op&&$op['status']==='authenticating'&&$op['locked_until']>gmdate('Y-m-d H:i:s'))return ['id'=>(int)$op['id'],'execute'=>false];
             $this->assertUnmovedFinancialPosition($issuer,$actor,$origin,$operation);
@@ -201,8 +205,11 @@ final class ApiService
             }
             $credential=$this->rows('SELECT * FROM '.$this->prefix.'bb_api_credentials WHERE profile_id=? AND issuer_id=? ORDER BY id DESC LIMIT 1 FOR UPDATE',[$profile['id'],$issuer])[0]??null;if(!$credential)throw new \DomainException('bb_api_credentials_required');
             $claim=bin2hex(random_bytes(32));$now=gmdate('Y-m-d H:i:s');$until=gmdate('Y-m-d H:i:s',time()+300);
+            $discountIntentJson=$operation==='amend_disc'?json_encode(['discount_instruction'=>$amendment,'discount_contract'=>ApiDiscountAmendment::CONTRACT,'discount_fingerprint'=>ApiDiscountAmendment::fingerprint($origin,$snapshot,$amendment)],JSON_THROW_ON_ERROR):null;
+            $addressIntentJson=$operation==='amend_addr'?json_encode(['address_instruction'=>$amendment,'address_contract'=>ApiAddress::CONTRACT,'address_fingerprint'=>ApiAddress::fingerprint($origin,$snapshot,$amendment)],JSON_THROW_ON_ERROR):null;
+            $intentJson=$operation==='amend_abat'?json_encode(['abatement'=>$amendment,'abatement_contract'=>ApiAbatement::CONTRACT,'abatement_fingerprint'=>ApiAbatement::fingerprint($origin,$snapshot,$amendment)],JSON_THROW_ON_ERROR):null;
             if($op){$id=(int)$op['id'];\IssuerStorage::query($this->db,"UPDATE ".$this->prefix."bb_api_operations SET claim_token=?,status='authenticating',http_status=0,credential_id=?,failure_category='',actor_id=?,locked_until=?,updated_at=? WHERE id=?",[$claim,$credential['id'],$actor,$until,$now,$id]);}
-            else{$id=$this->insert('bb_api_operations',['origin_id'=>$originId,'operation'=>$operation,'request_key'=>$requestKey,'claim_token'=>$claim,'status'=>'authenticating','http_status'=>0,'credential_id'=>$credential['id'],'response_hash'=>hash('sha256',''),'result_json'=>in_array($operation,['amend_due','movements'],true)?json_encode([$operation==='amend_due'?'amendment':'movement_window'=>$amendment],JSON_THROW_ON_ERROR):'{}','failure_category'=>'','actor_id'=>$actor,'locked_until'=>$until,'created_at'=>$now,'updated_at'=>$now]);}
+            else{$id=$this->insert('bb_api_operations',['origin_id'=>$originId,'operation'=>$operation,'request_key'=>$requestKey,'claim_token'=>$claim,'status'=>'authenticating','http_status'=>0,'credential_id'=>$credential['id'],'response_hash'=>hash('sha256',''),'result_json'=>$discountIntentJson??$addressIntentJson??$intentJson??(in_array($operation,['amend_due','movements'],true)?json_encode([$operation==='amend_due'?'amendment':'movement_window'=>$amendment],JSON_THROW_ON_ERROR):'{}'),'failure_category'=>'','actor_id'=>$actor,'locked_until'=>$until,'created_at'=>$now,'updated_at'=>$now]);}
             $this->audit($issuer,(int)$origin['connection_id'],$actor,'api_call_intent','api_operation',$id);
             return compact('id','claim','origin','stored','snapshot','profile','agreement','credential','amendment')+['execute'=>true];
         });
@@ -224,11 +231,19 @@ final class ApiService
             $sending=true;
             $wire=$operation==='amend_due'?self::amendmentPayload($prepared['origin']['agreement_number'],$prepared['amendment']['due_date']):$prepared['stored']['payload_json'];
             if($operation==='movements')$wire=ApiMovements::payload($prepared['agreement'],$prepared['amendment']);
+            if($operation==='amend_abat')$wire=ApiAbatement::payload($prepared['origin']['agreement_number'],$prepared['amendment']);
+            if($operation==='amend_addr')$wire=ApiAddress::payload($prepared['origin']['agreement_number'],$prepared['amendment']);
+            if($operation==='amend_disc')$wire=ApiDiscountAmendment::payload($prepared['origin']['agreement_number'],$prepared['amendment']);
             $response=$this->client->execute($prepared['profile']['api_stage'],$credentials,$operation,$prepared['origin']['remote_id'],$prepared['origin']['agreement_number'],$token,$wire);
             $querySnapshot=$prepared['snapshot'];
             if($operation==='query')$querySnapshot=$this->queryAmendmentSnapshot($originId,$response['data'],$querySnapshot);
-            $projection=$operation==='movements'?ApiMovements::projection($response['data'],$prepared['amendment'],$prepared['origin'],$prepared['snapshot'],$prepared['agreement']):($operation==='amend_due'?self::amendmentResult($response['data'],$prepared['snapshot'],$prepared['amendment']):ApiPayload::validateResult($operation,$response['data'],$querySnapshot,$prepared['origin'],$prepared['agreement']));
-            if($operation==='query'){ApiDailyInterest::confirm($response['data'],ApiClient::decodeExact($prepared['stored']['payload_json']));ApiFixedDiscount::confirm($response['data'],ApiClient::decodeExact($prepared['stored']['payload_json']));$projection+=ApiFixedDiscount::projection(ApiClient::decodeExact($prepared['stored']['payload_json']));}
+            $projection=$operation==='movements'?ApiMovements::projection($response['data'],$prepared['amendment'],$prepared['origin'],$prepared['snapshot'],$prepared['agreement']):($operation==='amend_due'?self::amendmentResult($response['data'],$prepared['snapshot'],$prepared['amendment']):(in_array($operation,['amend_abat','amend_addr','amend_disc'],true)?[]:ApiPayload::validateResult($operation,$response['data'],$querySnapshot,$prepared['origin'],$prepared['agreement'])));
+            if($operation==='amend_abat')$projection=ApiAbatement::acknowledged($response['data'],$prepared['snapshot'],$prepared['amendment'],ApiAbatement::fingerprint($prepared['origin'],$prepared['snapshot'],$prepared['amendment']));
+            if($operation==='amend_addr')$projection=ApiAddress::acknowledged($response['data'],$prepared['snapshot'],$prepared['amendment'],ApiAddress::fingerprint($prepared['origin'],$prepared['snapshot'],$prepared['amendment']));
+            if($operation==='amend_disc')$projection=ApiDiscountAmendment::acknowledged($response['data'],$prepared['snapshot'],$prepared['amendment'],ApiDiscountAmendment::fingerprint($prepared['origin'],$prepared['snapshot'],$prepared['amendment']));
+            if($operation==='query')$projection+=$this->addressQueryProjection($prepared['origin'],$prepared['snapshot'],$response['data']);
+            if($operation==='query')$projection+=$this->abatementQueryProjection($prepared['origin'],$prepared['snapshot'],$response['data']);
+            if($operation==='query'){ApiDailyInterest::confirm($response['data'],ApiClient::decodeExact($prepared['stored']['payload_json']));$projection+=$this->discountQueryProjection($prepared['origin'],$prepared['snapshot'],$response['data'],ApiClient::decodeExact($prepared['stored']['payload_json']));}
             if($operation==='query')$projection+=$this->client->confirmAccount($prepared['profile']['api_stage'],$credentials,$prepared['agreement'],$prepared['origin']['remote_id'],$token,$querySnapshot,$projection);
             if($operation==='query'&&isset($querySnapshot['amendment_id']))$projection+=['amendment_id'=>(string)$querySnapshot['amendment_id'],'bank_due_date'=>$querySnapshot['invoice']['duedate']];
             if($operation==='query'&&isset($querySnapshot['amendment_claim_hash']))$projection['amendment_claim_hash']=$querySnapshot['amendment_claim_hash'];
@@ -247,8 +262,8 @@ final class ApiService
     /** Rechecked immediately before the confirmed sending marker, without expanding query authority. */
     private function assertUnmovedFinancialPosition(int $issuer,int $actor,array $origin,string $operation):void
     {
-        if(!in_array($operation,['issue','cancel','amend_due'],true))return;$invoice=(int)$origin['invoice_id'];$position=(new \CompanyInvoiceBalance($this->db,$this->prefix))->inOwned($issuer,$actor,$invoice);$currency=$this->rows('SELECT currency FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;if(!$currency)throw new \DomainException('bb_api_invoice_not_eligible');(new \CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($currency['currency']);
-        $error=match($operation){'cancel'=>'bb_api_cancel_financial_history','amend_due'=>'bb_api_amendment_financial_history',default=>'bb_api_invoice_not_eligible'};if($position['receivable']!==$position['total'])throw new \DomainException($error);foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice]))throw new \DomainException($error);
+        if(!in_array($operation,['issue','cancel','amend_due','amend_abat','amend_addr','amend_disc'],true))return;$invoice=(int)$origin['invoice_id'];$position=(new \CompanyInvoiceBalance($this->db,$this->prefix))->inOwned($issuer,$actor,$invoice);$currency=$this->rows('SELECT currency FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;if(!$currency)throw new \DomainException('bb_api_invoice_not_eligible');(new \CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($currency['currency']);
+        $error=match($operation){'cancel'=>'bb_api_cancel_financial_history','amend_due'=>'bb_api_amendment_financial_history','amend_abat'=>'bb_api_abatement_financial_history','amend_addr'=>'bb_api_address_financial_history','amend_disc'=>'bb_api_discount_amend_financial_history',default=>'bb_api_invoice_not_eligible'};if($position['receivable']!==$position['total'])throw new \DomainException($error);foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice]))throw new \DomainException($error);
     }
     private function completeOperation(int $issuer,int $actor,int $originId,int $id,string $claim,string $operation,int $http,string $responseHash,array $result):void
     {
@@ -258,7 +273,7 @@ final class ApiService
             if(($op['claim_token']??null)!==$claim||($op['status']??null)!=='sending'||(int)$op['actor_id']!==$actor)throw new \DomainException('bb_api_claim_superseded');
             [$origin]=$this->loadOrigin($issuer,$originId);$json=json_encode($result,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
             \IssuerStorage::query($this->db,"UPDATE ".$this->prefix."bb_api_operations SET status='validated',http_status=?,response_hash=?,result_json=?,failure_category='',updated_at=? WHERE id=?",[$http,$responseHash,$json,gmdate('Y-m-d H:i:s'),$id]);
-            if($operation==='query')$this->confirmAmendment($originId,$result);
+            if($operation==='query'){$this->confirmAmendment($originId,$result);$this->confirmAbatement($issuer,$originId,$result);$this->confirmAddress($issuer,$originId,$result);$this->confirmDiscount($issuer,$originId,$result);}
             $state=$operation==='issue'?'api_registered':($operation==='cancel'?'api_cancel_requested':null);
             if($operation==='query'){
                 $observed=(int)$result['codigoEstadoTituloCobranca'];

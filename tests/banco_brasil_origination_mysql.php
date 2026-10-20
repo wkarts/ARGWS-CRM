@@ -27,6 +27,19 @@ essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE modul
 essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='116','actual116 additive schema retries through native runner');
 essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native116 replay is stable');
 essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'bb_api_cnab_contracts')->row()->n===0,'native116 never backfills a contract for an existing origin');
+// The recovered119 runtime keeps the historical116 checks above, then advances
+// through every new native step before any current operational service is used.
+foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119'] as $nativeVersion439=>$nativeStep439){
+    $GLOBALS['CI']->app_modules=new class($nativeVersion439){public function __construct(private string $version){}function get($name){return ['headers'=>['version'=>$this->version]];}};
+    $previousVersion439=$db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version;
+    $db->failVersion=$nativeVersion439;
+    essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native'.$nativeStep439.' tracking failure cannot authorize current runtime');
+    $db->failVersion=null;
+    essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version===$previousVersion439,'failed'.$nativeStep439.' preserves prior native tracking');
+    essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()===$nativeStep439,'native'.$nativeStep439.' retries the exact next published candidate step');
+    essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version===$nativeVersion439,'native'.$nativeStep439.' readback confirms its exact version');
+    essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native'.$nativeStep439.' replay preserves current tracking');
+}
 \BancoBrasil\OriginationSchema::assertValid($db,$p);
 $GLOBALS['CI']->app_modules=$realModules;
 unset($db->data_cache['table_names']);

@@ -123,3 +123,15 @@ públicos neste contrato. O livro histórico administrativo e o importador/expor
 próprio de despesas são descritos nos contratos da 426; não abrem uma API financeira
 genérica. Análises contábeis e exportações de outros domínios ainda exigem código
 específico. A superfície legada permanece fechada.
+
+## Fatura cancelada e residual do documento
+
+No JSON individual, `document.status=5` identifica a fatura cancelada. O total e
+os campos de `document.position` preservam a equação nominal e o histórico:
+`position.receivable` é o principal residual aritmético histórico nessa situação,
+sem cobrança vigente. Não o interprete como dívida atual nem altere o total ou
+recibos para zerá-lo. O relatório de posição atual exclui a fatura cancelada dos
+valores ativos e contabiliza seu cancelamento separadamente. Portal, tela de
+fatura e PDF apresentam o estado Cancelada; o residual no PDF/tela é rotulado
+como histórico. Cancelar localmente não executa baixa, exclusão ou reembolso no
+provedor.

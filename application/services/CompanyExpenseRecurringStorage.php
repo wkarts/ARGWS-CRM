@@ -10,7 +10,7 @@ abstract class CompanyExpenseRecurringStorage extends CompanyExpenseBillingStora
 {
     public function tables():array
     {
-        $tables=array_merge(parent::tables(),array_keys(CompanyExpenseRecurringSchema::definitions()));foreach(['contacts','contact_permissions','emailtemplates','mail_queue','company_invoice_deliveries'] as $t)if($this->db->table_exists($this->prefix.$t))$tables[]=$t;$oauth=__DIR__.'/CompanyGoogleMailOAuth.php';if(is_file($oauth)){require_once $oauth;$tables=array_merge($tables,CompanyGoogleMailOAuth::participantTables($this->db,$this->prefix));}return array_values(array_unique($tables));
+        $tables=array_merge(parent::tables(),array_keys(CompanyExpenseRecurringSchema::definitions()));foreach(['contacts','contact_permissions','emailtemplates','mail_queue','company_invoice_deliveries'] as $t)if($this->db->table_exists($this->prefix.$t))$tables[]=$t;$oauth=__DIR__.'/CompanyGoogleMailOAuth.php';if(is_file($oauth)){require_once $oauth;$tables=array_merge($tables,CompanyGoogleMailOAuth::participantTables($this->db,$this->prefix));}$policy=__DIR__.'/CompanyMailTransportPolicy.php';if(is_file($policy)){require_once $policy;$tables=array_merge($tables,CompanyMailTransportPolicy::participantTables($this->db,$this->prefix));}return array_values(array_unique($tables));
     }
     protected function access(int $issuer,int $actor,array $config=[]):void
     {

@@ -33,3 +33,13 @@ foreach(['CompanyProjectMilestonesSchema','CompanyProjectTimesheetsSchema','Comp
  }
  unset($db->data_cache['table_names']);
 }
+
+// Rebuilt recovery fixture: the current project GET also validates native437/438 schemas,
+// even when the new discussion capabilities retain their default disabled rules.
+foreach(['CompanyProjectDiscussionsSchema','CompanyProjectDiscussionExtrasSchema'] as $schema){
+ require_once APPPATH.'services/'.$schema.'.php';
+ if($db->driver()==='mysql'){$schema::ensure($db,$p);$schema::ensure($db,$p);}else{
+  foreach($schema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}
+ }
+ unset($db->data_cache['table_names']);
+}

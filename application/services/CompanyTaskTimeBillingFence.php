@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+require_once __DIR__.'/CompanyTaskTimeBillingSchema.php';require_once __DIR__.'/CompanyTaskTimeBatchFence.php';
+/** Any reservation survives a final-link fault. Finalized allocations are never released. */
+final class CompanyTaskTimeBillingFence
+{
+ public static function tables($db,string $p):array{$extra=CompanyTaskTimeBatchFence::tables($db,$p);$tables=array_keys(CompanyTaskTimeBillingSchema::definitions());$present=false;foreach($tables as $t)$present=$present||$db->table_exists($p.$t);if(!$present)return $extra;CompanyTaskTimeBillingSchema::assertValid($db,$p);return array_merge(['issuers_lock','company_projects','company_tasks','company_task_timers','company_invoice_requests'],$tables,$extra);}
+ private static function rows($db,string $p,int $issuer,int $task):array{$tables=self::tables($db,$p);if(!$tables||!$db->table_exists($p.'company_time_billing_claims'))return [];IssuerTransaction::assertOwned($db,$p,$tables);return IssuerStorage::query($db,'SELECT timer_id,origin_id,state FROM '.$p.'company_time_billing_claims WHERE issuer_id=? AND task_id=? ORDER BY timer_id FOR UPDATE',[$issuer,$task])->result_array();}
+ public static function stateInOwned($db,string $p,int $issuer,int $task):?string{$rows=self::rows($db,$p,$issuer,$task);$new=CompanyTaskTimeBatchFence::stateInOwned($db,$p,'projects',$issuer,$task);if(!$rows)return $new;$state=$new==='converting'?'converting':'partially_billed';foreach($rows as $r){if(!in_array($r['state'],['converting','converted'],true))throw new RuntimeException('issuer_time_billing_unconfirmed');if($r['state']==='converting')$state='converting';}return $state;}
+ public static function assertMutableInOwned($db,string $p,int $issuer,int $task):void{if(self::stateInOwned($db,$p,$issuer,$task)==='converting')throw new DomainException('company_time_billing_immutable');}
+ public static function assertTaskWholeAvailableInOwned($db,string $p,int $issuer,int $task):void{if(self::stateInOwned($db,$p,$issuer,$task)!==null)throw new DomainException('company_time_billing_overlap');}
+ public static function assertProjectWholeAvailableInOwned($db,string $p,int $issuer,int $project):void{CompanyTaskTimeBatchFence::assertProjectInOwned($db,$p,$issuer,$project);$t=self::tables($db,$p);if(!$t)return;IssuerTransaction::assertOwned($db,$p,$t);if(IssuerStorage::query($db,'SELECT origin_id FROM '.$p.'company_time_billing_claims WHERE issuer_id=? AND project_id=? LIMIT 1 FOR UPDATE',[$issuer,$project])->row_array())throw new DomainException('company_time_billing_overlap');}
+ public static function assertProjectNoPendingInOwned($db,string $p,int $issuer,int $project):void{CompanyTaskTimeBatchFence::assertProjectInOwned($db,$p,$issuer,$project,true);$t=self::tables($db,$p);if(!$t)return;IssuerTransaction::assertOwned($db,$p,$t);if(IssuerStorage::query($db,'SELECT origin_id FROM '.$p.'company_time_billing_claims WHERE issuer_id=? AND project_id=? AND state=? LIMIT 1 FOR UPDATE',[$issuer,$project,'converting'])->row_array())throw new DomainException('company_time_billing_immutable');}
+ public static function key(int $issuer,int $origin):string{return hash('sha256','company-time-batch-invoice:'.$issuer.':'.$origin);}
+}

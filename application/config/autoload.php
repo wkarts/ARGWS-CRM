@@ -33,6 +33,7 @@ if(CompanyApiScope::prepare($companyInboxBootstrap)){
     $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]];
     return;
 }
+if(CompanyApiScope::earlyCandidate($_SERVER)){show_404();return;}
 require_once APPPATH.'services/CompanyRecurringWorkerScope.php';
 if(CompanyRecurringWorkerScope::prepare($companyInboxBootstrap)){
     $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]];

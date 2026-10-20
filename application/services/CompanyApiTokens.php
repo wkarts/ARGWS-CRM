@@ -23,6 +23,17 @@ final class CompanyApiTokens
         'projects:follow:write'=>[['projects','view']],
         'tasks:follow:read'=>[['tasks','view'],['projects','view']],
         'tasks:follow:write'=>[['tasks','view'],['projects','view']]
+        ,'payments:read'=>[['invoices','view']],
+        'payments:create'=>[['invoices','view'],['payments','create']],
+        'payments:reverse'=>[['invoices','view'],['payments','delete']],
+        'credits:read'=>[['credit_notes','view']],
+        'credits:pdf'=>[['credit_notes','view']],
+        'credits:create'=>[['credit_notes','view'],['credit_notes','create'],['customers','view']],
+        'credits:apply'=>[['credit_notes','view'],['credit_notes','edit'],['payments','create'],['invoices','view']],
+        'credits:unapply'=>[['credit_notes','view'],['credit_notes','edit'],['payments','delete'],['invoices','view']],
+        'credits:refund'=>[['credit_notes','view'],['credit_notes','edit'],['payments','create']],
+        'credits:refund_reverse'=>[['credit_notes','view'],['credit_notes','edit'],['payments','delete']],
+        'credits:void'=>[['credit_notes','view'],['credit_notes','delete']]
     ];
     private IssuerResourceAccess $acl;
     public function __construct(private $db,private string $p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid table prefix');$this->acl=new IssuerResourceAccess($db,$p);}

@@ -1,29 +1,30 @@
 <?php
 declare(strict_types=1);
 namespace BancoBrasil;
-/** Shared closed policy for first financial applications from an API query, inside the canonical writer transaction. */
+require_once __DIR__.'/ApiAbatement.php';
+require_once __DIR__.'/ApiAddress.php';require_once __DIR__.'/ApiDiscountAmendment.php';
+/** First financial application requires every write to be independently resolved by its exact typed contract. */
 final class ApiFinancialMutationFence
 {
-    private static function rows($db,string $sql,array $args=[]):array{return \IssuerStorage::query($db,$sql,$args)->result_array();}
-    /** A fresh financial read cannot erase an unresolved write, including a write started before that read. */
-    public static function assertResolvedInOwned($db,string $p,int $origin,array $financialQuery,array $financialResult):void
+    private static function addressMatches(array$result,string$hash):bool{try{return is_array($result['bank_address']??null)&&hash_equals(ApiAddress::addressHash($result['bank_address']),$hash);}catch(\Throwable$error){return false;}}
+    private static function rows($db,string$sql,array$args=[]):array{return \IssuerStorage::query($db,$sql,$args)->result_array();}
+    public static function assertResolvedInOwned($db,string$p,int$origin,array$financialQuery,array$financialResult):void
     {
-        \IssuerTransaction::assertOwned($db,$p,['bb_api_operations']);
-        $writes=self::rows($db,"SELECT * FROM {$p}bb_api_operations WHERE origin_id=? AND operation NOT IN ('issue','query','movements') ORDER BY id FOR UPDATE",[$origin]);$confirmed=[];$latest=null;
-        foreach($writes as $write){
-            if(in_array($write['status'],['rejected','auth_failed'],true))continue;
-            if($write['operation']!=='amend_due'||$write['status']!=='confirmed')throw new \DomainException('bb_api_credit_mutation_requires_review');
-            $data=json_decode($write['result_json'],true,32,JSON_THROW_ON_ERROR);$due=$data['amendment']['due_date']??null;
-            if(($data['bank_state']??null)!=='amendment_confirmed'||!is_string($due)||!preg_match('/^[a-f0-9]{64}$/D',$data['account_evidence_hash']??''))throw new \DomainException('bb_api_credit_mutation_requires_review');
-            try{Fields::date($due);}catch(\Throwable $error){throw new \DomainException('bb_api_credit_mutation_requires_review');}
-            $confirmed[(int)$write['id']]=['due'=>$due,'hash'=>$data['account_evidence_hash'],'proved'=>false];$latest=(int)$write['id'];
+        \IssuerTransaction::assertOwned($db,$p,['bb_api_operations','bb_origins','bb_api_origins']);$writes=self::rows($db,"SELECT * FROM {$p}bb_api_operations WHERE origin_id=? AND operation NOT IN ('issue','query','movements') ORDER BY id FOR UPDATE",[$origin]);$confirmed=[];$latest=[];
+        foreach($writes as$write){
+            if(in_array($write['status'],['rejected','auth_failed'],true))continue;$kind=$write['operation'];if(!in_array($kind,['amend_due','amend_abat','amend_addr','amend_disc'],true)||$write['status']!=='confirmed')throw new \DomainException('bb_api_credit_mutation_requires_review');$data=json_decode($write['result_json'],true,32,JSON_THROW_ON_ERROR);if(!preg_match('/^[a-f0-9]{64}$/D',$data['account_evidence_hash']??''))throw new \DomainException('bb_api_credit_mutation_requires_review');
+            if($kind==='amend_due'){$value=$data['amendment']['due_date']??null;if(($data['bank_state']??null)!=='amendment_confirmed'||!is_string($value))throw new \DomainException('bb_api_credit_mutation_requires_review');try{Fields::date($value);}catch(\Throwable$error){throw new \DomainException('bb_api_credit_mutation_requires_review');}$idField='amendment_id';$valueField='bank_due_date';}
+            elseif($kind==='amend_disc'){
+                try{$intent=ApiDiscountAmendment::input($data['discount_instruction']??[]);$source=self::rows($db,"SELECT o.*,a.snapshot_json FROM {$p}bb_origins o JOIN {$p}bb_api_origins a ON a.origin_id=o.id WHERE o.id=? FOR UPDATE",[$origin])[0]??[];$snapshot=json_decode($source['snapshot_json']??'',true,32,JSON_THROW_ON_ERROR);if(($data['bank_state']??null)!=='discount_confirmed'||($data['discount_contract']??null)!==ApiDiscountAmendment::CONTRACT||!hash_equals(ApiDiscountAmendment::fingerprint($source,$snapshot,$intent),$data['discount_fingerprint']??''))throw new \DomainException();$value=ApiDiscountAmendment::hash($intent);}catch(\Throwable$error){throw new \DomainException('bb_api_credit_mutation_requires_review');}$idField='discount_id';$valueField='bank_discount_offer_hash';
+            }
+            else{
+                $address=$kind==='amend_addr';$contract=$address?ApiAddress::class:ApiAbatement::class;$intentField=$address?'address_instruction':'abatement';$contractField=$address?'address_contract':'abatement_contract';$fingerprintField=$address?'address_fingerprint':'abatement_fingerprint';
+                try{$intent=$contract::input($data[$intentField]??[]);$source=self::rows($db,"SELECT o.*,a.snapshot_json FROM {$p}bb_origins o JOIN {$p}bb_api_origins a ON a.origin_id=o.id WHERE o.id=? FOR UPDATE",[$origin])[0]??[];$snapshot=json_decode($source['snapshot_json']??'',true,32,JSON_THROW_ON_ERROR);if(($data['bank_state']??null)!==($address?'address_confirmed':'abatement_confirmed')||($data[$contractField]??null)!==$contract::CONTRACT||!hash_equals($contract::fingerprint($source,$snapshot,$intent),$data[$fingerprintField]??''))throw new \DomainException();$value=$address?ApiAddress::addressHash($intent):$intent['amount'];}catch(\Throwable$error){throw new \DomainException('bb_api_credit_mutation_requires_review');}$idField=$address?'address_id':'abatement_id';$valueField=$address?'bank_address_hash':'bank_abatement_amount';
+            }
+            $id=(int)$write['id'];$confirmed[$id]=['kind'=>$kind,'value'=>$value,'id_field'=>$idField,'value_field'=>$valueField,'hash'=>$data['account_evidence_hash'],'proved'=>false,'intent'=>$kind==='amend_disc'?$intent:null];$latest[$kind]=$id;
         }
         if(!$confirmed)return;
-        foreach(self::rows($db,"SELECT id,http_status,response_hash,result_json FROM {$p}bb_api_operations WHERE origin_id=? AND operation='query' AND status='validated' FOR UPDATE",[$origin]) as $query){
-            $result=json_decode($query['result_json'],true,32,JSON_THROW_ON_ERROR);$id=(int)($result['amendment_id']??0);if(!isset($confirmed[$id]))continue;$proof=$confirmed[$id];
-            if((int)$query['id']>$id&&(int)$query['http_status']===200&&preg_match('/^[a-f0-9]{64}$/D',$query['response_hash'])&&($result['account_scope_confirmed']??null)==='1'&&($result['account_evidence_hash']??null)===$proof['hash']&&($result['bank_due_date']??null)===$proof['due']&&($result['dataVencimentoTituloCobranca']??null)===(new \DateTimeImmutable($proof['due']))->format('d.m.Y'))$confirmed[$id]['proved']=true;
-        }
-        foreach($confirmed as $proof)if(!$proof['proved'])throw new \DomainException('bb_api_credit_mutation_requires_review');
-        if($latest===null||(int)$financialQuery['id']<=$latest||(string)($financialResult['amendment_id']??'')!==(string)$latest||($financialResult['bank_due_date']??null)!==$confirmed[$latest]['due']||($financialResult['account_evidence_hash']??null)!==$confirmed[$latest]['hash'])throw new \DomainException('bb_api_credit_mutation_requires_review');
+        foreach(self::rows($db,"SELECT id,http_status,response_hash,result_json FROM {$p}bb_api_operations WHERE origin_id=? AND operation='query' AND status='validated' FOR UPDATE",[$origin])as$query){$result=json_decode($query['result_json'],true,32,JSON_THROW_ON_ERROR);foreach(['amendment_id','abatement_id','address_id','discount_id']as$idField){$id=(int)($result[$idField]??0);if(!isset($confirmed[$id])||$confirmed[$id]['id_field']!==$idField)continue;$proof=$confirmed[$id];$matched=(int)$query['id']>$id&&(int)$query['http_status']===200&&preg_match('/^[a-f0-9]{64}$/D',$query['response_hash'])&&($result['account_scope_confirmed']??null)==='1'&&($result['account_evidence_hash']??null)===$proof['hash']&&($result[$proof['value_field']]??null)===$proof['value'];if($proof['kind']==='amend_due')$matched=$matched&&($result['dataVencimentoTituloCobranca']??null)===(new \DateTimeImmutable($proof['value']))->format('d.m.Y');if($proof['kind']==='amend_addr')$matched=$matched&&self::addressMatches($result,$proof['value']);if($proof['kind']==='amend_disc')$matched=$matched&&ApiDiscountAmendment::projectedMatches($result,$proof['intent']);if($matched)$confirmed[$id]['proved']=true;}}
+        foreach($confirmed as$proof)if(!$proof['proved'])throw new \DomainException('bb_api_credit_mutation_requires_review');foreach($latest as$id){$proof=$confirmed[$id];if((int)$financialQuery['id']<=$id||(string)($financialResult[$proof['id_field']]??'')!==(string)$id||($financialResult[$proof['value_field']]??null)!==$proof['value']||($financialResult['account_evidence_hash']??null)!==$proof['hash']||($proof['kind']==='amend_addr'&&!self::addressMatches($financialResult,$proof['value']))||($proof['kind']==='amend_disc'&&!ApiDiscountAmendment::projectedMatches($financialResult,$proof['intent'])))throw new \DomainException('bb_api_credit_mutation_requires_review');}
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__.'/CompanyInvoices.php';
 require_once __DIR__.'/CompanyMailConfig.php';
 require_once __DIR__.'/CompanyGoogleMailOAuth.php';
+require_once __DIR__.'/CompanyMailTransportPolicy.php';
 require_once __DIR__.'/CompanyEmailTemplates.php';
 require_once __DIR__.'/CompanyInvoiceDeliverySchema.php';
 
@@ -24,7 +25,7 @@ final class CompanyInvoiceDelivery
     private function transaction(callable $work,array $extraTables=[])
     {
         CompanyInvoiceDeliverySchema::assertValid($this->db,$this->p);
-        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','clients','contacts','contact_permissions','invoices','itemable','item_tax','issuers_invoice_documents','emailtemplates','options','mail_queue','company_invoice_deliveries','issuers_audit'],CompanyGoogleMailOAuth::participantTables($this->db,$this->p),$extraTables),$work);
+        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','clients','contacts','contact_permissions','invoices','itemable','item_tax','issuers_invoice_documents','emailtemplates','options','mail_queue','company_invoice_deliveries','issuers_audit'],CompanyGoogleMailOAuth::participantTables($this->db,$this->p),CompanyMailTransportPolicy::participantTables($this->db,$this->p),$extraTables),$work);
     }
     private function parent(int $issuer,int $invoice):array
     {
@@ -50,6 +51,11 @@ final class CompanyInvoiceDelivery
         });
     }
     public function queue($issuer,$actor,$invoice,$contact,string $revision,string $requestKey,string $baseUrl,callable $decrypt,?CompanyExpenseRecurringDeliverySource $source=null):int
+    {return $this->queueOwnedSource($issuer,$actor,$invoice,$contact,$revision,$requestKey,$baseUrl,$decrypt,$source);}
+    /** Fixed invoice-schedule veto; does not confer document or recipient authority. */
+    public function queueInvoiceRecurring($issuer,$actor,$invoice,$contact,string $revision,string $requestKey,string $baseUrl,callable $decrypt,CompanyInvoiceRecurringDeliverySource $source):int
+    {return $this->queueOwnedSource($issuer,$actor,$invoice,$contact,$revision,$requestKey,$baseUrl,$decrypt,$source);}
+    private function queueOwnedSource($issuer,$actor,$invoice,$contact,string $revision,string $requestKey,string $baseUrl,callable $decrypt,CompanyExpenseRecurringDeliverySource|CompanyInvoiceRecurringDeliverySource|null $source):int
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$invoice=IssuerPolicy::id($invoice);$contact=IssuerPolicy::id($contact);$this->authorize($issuer,$actor);
         foreach([$revision,$requestKey] as $value)if(!preg_match('/^[a-f0-9]{64}$/D',$value))throw new DomainException('company_invoice_delivery_invalid');
@@ -77,7 +83,7 @@ final class CompanyInvoiceDelivery
             $subject=strtr($template->subject,$plain);$fromName=strtr($template->fromname,$plain);if(preg_match('/[\r\n]/',$subject.$fromName))throw new DomainException('company_invoice_delivery_template_required');
             if((int)$template->plaintext===1)$message=nl2br($escape(html_entity_decode(strip_tags(str_replace(['<br>','<br />','<br/>'],"\n",$message)),ENT_QUOTES,'UTF-8')."\n".$link));
             $headers=$config['useragent']==='phpmailer'?['from'=>$from,'fromName'=>$fromName,'subject'=>$subject]:['From'=>mb_encode_mimeheader($fromName,'UTF-8','B',"\r\n").' <'.$from.'>','Subject'=>mb_encode_mimeheader($subject,'UTF-8','B',"\r\n"),'Content-Type'=>'text/html; charset=UTF-8'];
-            $headers[self::HEADER]=$requestKey;if($source)$headers[CompanyExpenseRecurringDeliverySource::HEADER]=$source->marker();
+            $headers[self::HEADER]=$requestKey;if($source)$headers[$source::HEADER]=$source->marker();
             $fields=['engine'=>$config['useragent'],'email'=>$recipient['email'],'cc'=>'','bcc'=>'','message'=>$message,'alt_message'=>html_entity_decode(strip_tags($message),ENT_QUOTES,'UTF-8')."\n".$link,'headers'=>serialize($headers),'attachments'=>'','status'=>'pending','date'=>date('Y-m-d H:i:s'),'issuer_id'=>$issuer];
             IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'mail_queue (`'.implode('`,`',array_keys($fields)).'`) VALUES ('.implode(',',array_fill(0,count($fields),'?')).')',array_values($fields));$queue=(int)$this->db->insert_id();
             if($queue<1)throw new RuntimeException('issuer_invoice_delivery_unconfirmed');
@@ -85,7 +91,7 @@ final class CompanyInvoiceDelivery
             foreach($fields as $key=>$value)if((string)($written[$key]??'')!==(string)$value)throw new RuntimeException('issuer_invoice_delivery_unconfirmed');
             IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_invoice_deliveries(request_key,issuer_id,actor_id,invoice_id,contact_id,revision,recipient_hash,queue_id,created_at) VALUES(?,?,?,?,?,?,?,?,?)',[$requestKey,$issuer,$actor,$invoice,$contact,$revision,$fingerprint,$queue,date('Y-m-d H:i:s')]);
             $receipt=$this->rows('SELECT queue_id FROM '.$this->p.'company_invoice_deliveries WHERE request_key=?',[$requestKey])[0]??[];if((int)($receipt['queue_id']??0)!==$queue)throw new RuntimeException('issuer_invoice_delivery_unconfirmed');
-            if(CompanyGoogleMailOAuthSchema::present($this->db,$this->p))(new CompanyGoogleMailOAuth($this->db,$this->p))->bindQueueInOwnedTransaction($issuer,$actor,$queue,'invoice',$requestKey);
+            (new CompanyMailTransportPolicy($this->db,$this->p))->bindQueueInOwnedTransaction($issuer,$actor,$queue,'invoice',$requestKey);
             $metadata=json_encode(['queue_id'=>$queue,'contact_id'=>$contact],JSON_THROW_ON_ERROR);
             IssuerStorage::query($this->db,"INSERT INTO ".$this->p."issuers_audit(actor_id,event,issuer_id,subject_id,created_at,metadata_json) VALUES(?,'company_invoice_notification_queued',?,?,?,?)",[$actor,$issuer,$invoice,date('Y-m-d H:i:s'),$metadata]);$audit=(int)$this->db->insert_id();
             if(!$this->rows('SELECT id FROM '.$this->p.'issuers_audit WHERE id=? AND issuer_id=? AND subject_id=? AND metadata_json=?',[$audit,$issuer,$invoice,$metadata]))throw new RuntimeException('issuer_invoice_delivery_unconfirmed');$this->authorize($issuer,$actor);if($source)$source->assertFor($this->db,$this->p,$issuer,$actor,$invoice,$contact);return $queue;
@@ -102,7 +108,7 @@ final class CompanyInvoiceDelivery
             if(!in_array((int)$row['status'],[1,2,3,4],true)||!hash_equals($receipt['revision'],(new CompanyInvoices($this->db,$this->p))->revision($issuer,$actor,$invoice)))throw new DomainException('company_invoice_stale');
             $recipient=null;foreach($this->recipientsFor((int)$row['clientid']) as $candidate)if((int)$candidate['id']===(int)$receipt['contact_id'])$recipient=$candidate;
             if(!$recipient||$recipient['email']!==$email->email||!hash_equals($receipt['recipient_hash'],self::recipientHash($recipient)))throw new DomainException('company_invoice_delivery_denied');
-            if(CompanyGoogleMailOAuthSchema::present($this->db,$this->p))(new CompanyGoogleMailOAuth($this->db,$this->p))->assertQueueInOwnedTransaction($issuer,$actor,(int)$email->id,'invoice',$requestKey);
+            (new CompanyMailTransportPolicy($this->db,$this->p))->assertQueueInOwnedTransaction($issuer,$actor,(int)$email->id,'invoice',$requestKey);
         });
     }
 }

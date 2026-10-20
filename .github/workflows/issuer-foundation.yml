@@ -361,3 +361,30 @@ jobs:
           php tests/companies/portal_recovery_atomic.php
           php tests/issuers_registry.php
           php tests/issuers_concurrency.php
+          # Recreated recovery439 proofs; every published command above remains.
+          php tests/companies/finance_resume_439_api.php
+          php tests/companies/finance_resume_439_asaas.php
+          php tests/companies/finance_resume_439_copies.php
+          php tests/companies/finance_resume_439_copy_concurrency.php
+          php tests/companies/finance_resume_439_full_refund_concurrency.php
+          php tests/companies/finance_resume_439_refund_data.php
+          php tests/companies/native_resume_439.php
+          php tests/companies/operations_resume_439_billing.php
+          php tests/companies/operations_resume_439_concurrency.php
+          php tests/companies/operations_resume_439_discussion_concurrency.php
+          php tests/companies/operations_resume_439_discussions.php
+          php tests/companies/recurrence_resume_439.php
+          php tests/companies/recurrence_resume_439_concurrency.php
+          php tests/companies/recurrence_resume_439_dates.php
+          php tests/settings/resume_439_config_concurrency.php
+          php tests/settings/resume_439_connect.php
+          php tests/settings/resume_439_connect_encryption.php
+          php tests/settings/resume_439_connect_queue.php
+          php tests/settings/resume_439_microsoft.php
+          php tests/settings/resume_439_microsoft_queue.php
+          php tests/settings/resume_439_pusher.php
+          php tests/companies/native_resume_439.php --tracking
+          php tests/companies/finance_resume_439_api_concurrency.php
+          php tests/companies/operations_resume_439_sales_lines.php
+          php tests/settings/resume_439_connect_pairing.php
+          php tests/settings/resume_439_pusher_recovery_controller.php

@@ -12,8 +12,9 @@ $labels=[1=>'Em aberto',2=>'Paga',3=>'Parcialmente paga',4=>'Vencida',5=>'Cancel
 <p>Emissão <?= $esc($document['date']); ?> · Vencimento <?= $esc($document['due_date']); ?> · <?= $esc($document['currency'].' '.$document['totals']['total']); ?></p>
 <p><a href="<?= $esc($url('?invoice='.$id.'&pdf=1')); ?>">Baixar PDF da fatura</a></p>
 <div class="table-responsive"><table class="table"><thead><tr><th>Descrição</th><th>Quantidade</th><th>Preço unitário</th><th>Valor</th></tr></thead><tbody>
-<?php foreach($document['items'] as $item){?><tr><td><?= $esc($item['description']); ?></td><td><?= $esc($item['quantity']); ?></td><td><?= $esc($item['rate']); ?></td><td><?= $esc($item['amount']); ?></td></tr><?php } ?></tbody></table></div>
+<?php foreach($document['items'] as $item){?><tr><td><?= $esc($item['description']); ?><?php if(($item['details']??'')!==''){ ?><pre style="white-space:pre-wrap"><?= $esc($item['details']); ?></pre><?php } ?></td><td><?= $esc($item['quantity'].' '.($item['unit']??'')); ?></td><td><?= $esc($item['rate']); ?></td><td><?= $esc($item['amount']); ?></td></tr><?php } ?></tbody></table></div>
 <p>Subtotal <?= $esc($document['totals']['subtotal']); ?> · Tributos <?= $esc($document['totals']['total_tax']); ?> · Desconto <?= $esc($document['totals']['discount_total']); ?> · Ajuste <?= $esc($document['totals']['adjustment']); ?> · Total <?= $esc($document['totals']['total']); ?></p>
+<?php if($can_create&&!empty($clients)){ ?><p><a id="invoice-reviewed-copy" href="<?= $esc(CompanyRequestScope::adminUrl($this,'company_invoice_copies?source='.$id)); ?>">Revisar cópia para nova emissão numerada</a></p><?php } ?>
 <h3>Anexos privados</h3>
 <p>Downloads exigem acesso à fatura. A exibição no portal é uma escolha explícita por arquivo e ainda exige login e permissão do contato.</p>
 <?php if($attachment_files){ ?><ul aria-label="Anexos da fatura"><?php foreach($attachment_files as $file){ ?><li><a href="<?= $esc($url('?invoice='.$id.'&attachment='.$file['file_key'])); ?>"><?= $esc($file['filename']); ?></a> · <?= (int)$file['byte_size']; ?> bytes · <?= (int)$file['portal_visible']===1?'Disponível no portal autorizado':'Somente equipe'; ?>
@@ -36,8 +37,8 @@ $labels=[1=>'Em aberto',2=>'Paga',3=>'Parcialmente paga',4=>'Vencida',5=>'Cancel
 <?php if($delivery['history']){ ?><ul aria-label="Estado das notificações"><?php $deliveryLabels=['pending'=>'Na fila','sending'=>'Em processamento','sent'=>'Aceita pelo transporte; leitura não confirmada','failed'=>'Falha ou revalidação recusada; confira antes de reagendar','archived'=>'Registro preservado; fila já removida'];foreach($delivery['history'] as $notification){ ?><li><?= $esc($notification['created_at'].' · '.($deliveryLabels[$notification['status']]??'Revisão necessária')); ?></li><?php } ?></ul><?php } ?>
 <?php } ?>
 <?php } ?>
-<?php if(($document['position']['noncash_reductions']??'0.00')!=='0.00'){ ?><h3>Posição do principal</h3><p>Principal recebido <?= $esc($document['currency'].' '.$document['position']['received']); ?> · Crédito aplicado <?= $esc($document['position']['applied_credit']); ?> · Desconto na liquidação <?= $esc($document['position']['settlement_discount']); ?> · Abatimento na liquidação <?= $esc($document['position']['settlement_abatement']); ?> · Principal em aberto <?= $esc($document['position']['receivable']); ?></p><p>Desconto e abatimento extinguem principal sem recebimento. O total original da fatura é preservado.</p><?php } ?>
-<?php if(($document['position']['received_external_reversed']??'0.00')!=='0.00'){ ?><h3>Reversões externas declaradas</h3><p>Principal recebido originalmente <?= $esc($document['currency'].' '.$document['position']['received_original']); ?> · Principal revertido <?= $esc($document['position']['received_external_reversed']); ?> · Principal recebido vigente <?= $esc($document['position']['received']); ?> · Desconto restabelecido <?= $esc($document['position']['settlement_discount_reversed']); ?> · Abatimento restabelecido <?= $esc($document['position']['settlement_abatement_reversed']); ?> · Principal em aberto <?= $esc($document['position']['receivable']); ?></p><p>A declaração registra evidência externa conferida. Não executa estorno no banco nem altera os recibos originais.</p><?php } ?>
+<?php if(($document['position']['noncash_reductions']??'0.00')!=='0.00'){ ?><h3>Posição do principal</h3><p>Principal recebido <?= $esc($document['currency'].' '.$document['position']['received']); ?> · Crédito aplicado <?= $esc($document['position']['applied_credit']); ?> · Desconto na liquidação <?= $esc($document['position']['settlement_discount']); ?> · Abatimento na liquidação <?= $esc($document['position']['settlement_abatement']); ?> · <?= $document['status']===5?'Principal residual histórico (fatura cancelada; sem cobrança vigente)':'Principal em aberto'; ?> <?= $esc($document['position']['receivable']); ?></p><p>Desconto e abatimento extinguem principal sem recebimento. O total original da fatura é preservado.</p><?php } ?>
+<?php if(($document['position']['received_external_reversed']??'0.00')!=='0.00'){ ?><h3>Reversões externas declaradas</h3><?php foreach(($document['position']['reversals']??[]) as $reversal){ if(($reversal['source_type']??'')==='asaas_full_declared'){ ?><p><a href="<?= $esc(CompanyRequestScope::adminUrl($this,'company_post_refund?invoice='.$id)); ?>">Revisar cancelamento local após reembolso integral Asaas</a> <a href="<?= $esc(CompanyRequestScope::adminUrl($this,'company_post_refund_manual?invoice='.$id)); ?>">Revisar novo recebimento manual independente</a></p><?php break; }} ?><p>Principal recebido originalmente <?= $esc($document['currency'].' '.$document['position']['received_original']); ?> · Principal revertido <?= $esc($document['position']['received_external_reversed']); ?> · Principal recebido vigente <?= $esc($document['position']['received']); ?> · Desconto restabelecido <?= $esc($document['position']['settlement_discount_reversed']); ?> · Abatimento restabelecido <?= $esc($document['position']['settlement_abatement_reversed']); ?> · <?= $document['status']===5?'Principal residual histórico (fatura cancelada; sem cobrança vigente)':'Principal em aberto'; ?> <?= $esc($document['position']['receivable']); ?></p><p>A declaração registra evidência externa conferida. Não executa estorno no banco nem altera os recibos originais.</p><?php } ?>
 <h3>Recebimentos</h3>
 <?php if(!$payments){?><p>Nenhum recebimento registrado nesta fatura.</p><?php }else{?><table class="table"><thead><tr><th>Data</th><th>Principal original / vigente</th><th>Referência e estornos</th></tr></thead><tbody><?php foreach($payments as $payment){?><tr><td><?= $esc($payment['date']); ?></td><td><?= $esc(($payment['original_amount']??$payment['amount']).' / '.($payment['effective_amount']??$payment['amount'])); ?></td><td><?= $esc($payment['transactionid']); ?>
 <?php if(!empty($payment['bank_reversal'])){$external=$payment['bank_reversal']; ?><p><?= $esc('Reversão externa declarada '.$external['book_date'].' · principal '.$external['cash_principal_reversed'].' · '.$external['external_reference']); ?></p><?php } ?>
@@ -60,7 +61,7 @@ $labels=[1=>'Em aberto',2=>'Paga',3=>'Parcialmente paga',4=>'Vencida',5=>'Cancel
 <input type="hidden" name="invoice[currency]" value="<?= (int)$currencyId; ?>">
 <label for="edit-invoice-date">Emissão</label><input id="edit-invoice-date" class="form-control" type="date" name="invoice[date]" value="<?= $esc($document['date']); ?>" required><label for="edit-invoice-due">Vencimento</label><input id="edit-invoice-due" class="form-control" type="date" name="invoice[due_date]" value="<?= $esc($document['due_date']); ?>" required>
 <div class="company-invoice-items" id="edit-invoice-items">
-<?php foreach($document['items'] as $index=>$item){$editing=true;require APPPATH.'views/admin/companies/invoice_item_fields.php';} ?>
+<?php foreach(($editor_items??$document['items']) as $index=>$item){$editing=true;require APPPATH.'views/admin/companies/invoice_item_fields.php';} ?>
 </div><button type="button" data-invoice-add="edit-invoice-items">Adicionar item</button>
 <?php $fieldPrefix='edit-';require APPPATH.'views/admin/companies/invoice_adjustment_fields.php'; ?>
 <label for="edit-invoice-note">Observação</label><textarea id="edit-invoice-note" class="form-control" name="invoice[note]" maxlength="20000"><?= $esc($document['note']); ?></textarea><button type="submit">Salvar fatura</button><?= form_close(); ?>
@@ -86,18 +87,19 @@ $labels=[1=>'Em aberto',2=>'Paga',3=>'Parcialmente paga',4=>'Vencida',5=>'Cancel
   const renumber=(field,index)=>{
     const previous=field.dataset.itemIndex;field.dataset.itemIndex=index;
     field.querySelector('legend').textContent='Item '+(index+1);
-    field.querySelectorAll('input').forEach(input=>{
+    field.querySelectorAll('input,textarea,select').forEach(input=>{
       const old=input.id;input.id=old.replace('item-'+previous+'-','item-'+index+'-');
       input.name=input.name.replace('[items]['+previous+']','[items]['+index+']');
       field.querySelectorAll('label').forEach(label=>{if(label.htmlFor===old)label.htmlFor=input.id;});
     });
   };
+  document.addEventListener('change',event=>{if(!event.target.matches('[data-invoice-line-choice]'))return;const field=event.target.closest('[data-item-index]'),choice=event.target.value;field.querySelector('input[name$="[is_optional]"]').value=choice==='required'?'0':'1';field.querySelector('input[name$="[is_selected]"]').value=choice==='unselected'?'0':'1';});
   document.addEventListener('click',event=>{
     const add=event.target.closest('[data-invoice-add]');
     if(add){
       const items=document.getElementById(add.dataset.invoiceAdd);if(items.children.length>=100)return;
       const copy=items.firstElementChild.cloneNode(true);renumber(copy,items.children.length);
-      copy.querySelectorAll('input').forEach(input=>input.value=input.name.endsWith('[qty]')?'1.00':(input.name.endsWith('[rate]')&&input.name.includes('[taxes]')?'0.00':''));
+      copy.querySelectorAll('input,textarea').forEach(input=>input.value=input.name.endsWith('[qty]')?'1.00':input.name.endsWith('[is_optional]')?'0':input.name.endsWith('[is_selected]')?'1':(input.name.endsWith('[rate]')&&input.name.includes('[taxes]')?'0.00':''));copy.querySelector('[data-invoice-line-choice]').value='required';
       copy.querySelectorAll('[data-tax-row]').forEach((row,i)=>{if(i>0)row.remove();});
       items.appendChild(copy);copy.querySelector('input').focus();return;
     }

@@ -1,0 +1,98 @@
+{
+  "package": "firebase/php-jwt",
+  "version": "7.2.1",
+  "source_commit": "0501f5729b9e2448516674aff07c7d1727869b8e",
+  "license": [
+    "BSD-3-Clause"
+  ],
+  "existing_lock_packages_unchanged": 72,
+  "existing_installed_metadata_unchanged": 72,
+  "optimized_classmap_and_platform_check_preserved": true,
+  "new_package_files": [
+    {
+      "path": "application/vendor/firebase/php-jwt/CHANGELOG.md",
+      "bytes": 14154,
+      "sha256": "203234abb960da1a8bb8ffa29634c6e820fa3224b86e86d451f4fcc103437093",
+      "mode": "0o644",
+      "upstream_bytes": 14156,
+      "upstream_sha256": "71978505598e5e43c2d8beca576d3d935928f6c755f44c190cc2b45a85665ce9",
+      "normalization": "Removed exactly two trailing ASCII spaces from documentation lines56/58. Runtime SDK PHP, license, lock, dist and all existing packages remain byte-identical."
+    },
+    {
+      "path": "application/vendor/firebase/php-jwt/LICENSE",
+      "bytes": 1529,
+      "sha256": "00e641cb185172e752bb3ab744925502c099dca06c9ecf53ea6fba941a65910c",
+      "mode": "0o644"
+    },
+    {
+      "path": "application/vendor/firebase/php-jwt/README.md",
+      "bytes": 14352,
+      "sha256": "8e2392c48204a21ad0d73068fb273b7ec1f79ccf13eab3fe6f256382f741dc39",
+      "mode": "0o644",
+      "upstream_bytes": 14358,
+      "upstream_sha256": "438ada1aa84a29a2b0e938f8d3fdcfa298de6587675ae0b342347a2eeb99290d",
+      "normalization": "Equivalent ATX title replaces upstream Setext seven-equals underline, which strict git diff --check classifies as a conflict marker. No runtime, license or lock change."
+    },
+    {
+      "path": "application/vendor/firebase/php-jwt/VERSION",
+      "bytes": 6,
+      "sha256": "d4e1b76ed0d76666ba32fcfaf876e4fb8040a8516f3ef2d9affd040aa10cae9a",
+      "mode": "0o644"
+    },
+    {
+      "path": "application/vendor/firebase/php-jwt/composer.json",
+      "bytes": 1513,
+      "sha256": "05e068d89971fe6733a090cf4a2668b86b4e2c54975fc743f3fccf217d20d7ea",
+      "mode": "0o644"
+    },
+    {
+      "path": "application/vendor/firebase/php-jwt/src/BeforeValidException.php",
+      "bytes": 357,
+      "sha256": "77fe003a44eb941bfd2fac7399f8ca761511a2ad49117f093ef12489b6f09cd0",
+      "mode": "0o644"
+    },
+    {
+      "path": "application/vendor/firebase/php-jwt/src/CachedKeySet.php",
+      "bytes": 7320,
+      "sha256": "835406341fb1b5770330e103ae41106a5cb04ce41eb2976fee008e0441213854",
+      "mode": "0o644"
+    },
+    {
+      "path": "application/vendor/firebase/php-jwt/src/ExpiredException.php",
+      "bytes": 584,
+      "sha256": "fe92315afbde5a898deabc1562b0f1bc3793bade3c2e61231619aa4849cf476d",
+      "mode": "0o644"
+    },
+    {
+      "path": "application/vendor/firebase/php-jwt/src/JWK.php",
+      "bytes": 12896,
+      "sha256": "f4895c87128079ec16ba130b0eab0717a34622afb1578e42bb4dec61f4728411",
+      "mode": "0o644"
+    },
+    {
+      "path": "application/vendor/firebase/php-jwt/src/JWT.php",
+      "bytes": 30463,
+      "sha256": "fa59d2771a8a6542cb33f40de460fd60f54c49b0334a568b1697be7154f6522c",
+      "mode": "0o644"
+    },
+    {
+      "path": "application/vendor/firebase/php-jwt/src/JWTExceptionWithPayloadInterface.php",
+      "bytes": 396,
+      "sha256": "899678f85fe560248895cf921b70ec95ad87b68d5c4da4ff561870d6942cacac",
+      "mode": "0o644"
+    },
+    {
+      "path": "application/vendor/firebase/php-jwt/src/Key.php",
+      "bytes": 1284,
+      "sha256": "458bc77981ae49a8fd15dee7781d5b69e88e701536901488a90241134d522e07",
+      "mode": "0o644"
+    },
+    {
+      "path": "application/vendor/firebase/php-jwt/src/SignatureInvalidException.php",
+      "bytes": 102,
+      "sha256": "fc624b17bf730387079c3b25dd282743259bd3c6c20920e007879412c85ebdee",
+      "mode": "0o644"
+    }
+  ],
+  "composer_dist_archive_sha256": "22aac93a4ef3d44eac8c97880937b495d8a9af30b3e3c2930f05c4ee53c16c02"
+}

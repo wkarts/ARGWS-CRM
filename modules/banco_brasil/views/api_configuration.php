@@ -1,6 +1,6 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') or exit('No direct script access allowed'); require_once dirname(__DIR__).'/libraries/BancoBrasil/ModuleRelease.php'; ?>
 <p>API Cobranças v2, especificação oficial3.2.2. Perfil restrito: carteira17 simples, convênio7, BRL, sem Pix/protesto/pagamento parcial. Juros diários fixos ou taxa mensal exigem perfil específico, contrato declarado e permissão de encargos; isenção permanece no perfil anterior. Não houve homologação externa. Sandbox fictício, homologação e produção são perfis explícitos, sem fallback. Salvar configuração não chama o banco.</p>
-<?php if(!$api_ready){?><p class="alert alert-warning">API indisponível: confirme a atualização nativa para1.1.2 e a criptografia/armazenamento do CRM.</p><?php } ?>
+<?php if(!$api_ready){?><p class="alert alert-warning">API indisponível: confirme o módulo <?= html_escape(\BancoBrasil\ModuleRelease::VERSION); ?>, o núcleo mínimo <?= html_escape(\BancoBrasil\ModuleRelease::MINIMUM_CORE); ?> e a criptografia/armazenamento do CRM.</p><?php } ?>
 <?php if($selected && $api_ready && $can_manage && $connections){?>
 <h3>Declarar contrato e perfil API</h3>
 <?= form_open($bbAdminUrl('banco_brasil/declare_api_profile')); ?><input type="hidden" name="csrf_bb" value="<?= html_escape($csrf); ?>"><input type="hidden" name="issuer_id" value="<?= (int)$selected['id']; ?>">

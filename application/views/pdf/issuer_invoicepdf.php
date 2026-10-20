@@ -69,7 +69,7 @@ Emissão: <?= $escape($date($data['date'])) ?><br />
 </tbody></table>
 <br />
 <table cellpadding="5" width="100%">
-<?php foreach (['subtotal'=>'Subtotal','total_tax'=>'Tributos','discount_total'=>'Desconto','adjustment'=>'Ajuste','total'=>'Total'] as $field=>$label) { ?>
+<?php foreach (['subtotal'=>'Subtotal','total_tax'=>'Tributos','discount_total'=>'Desconto','adjustment'=>'Ajuste','total'=>'Total'] as $field=>$label) { if($field==='receivable'&&$data['status']===5)$label='Principal residual histórico (fatura cancelada; sem cobrança vigente)'; ?>
 <tr<?= $field === 'total' ? ' style="background-color:#e8edf2;font-weight:bold;"' : '' ?>>
 <td width="72%" align="right"><?= $label ?></td><td width="28%" align="right"><?= $field === 'discount_total' && $data['totals'][$field] !== '0.00' ? '-' : '' ?><?= $money($data['totals'][$field]) ?></td>
 </tr>
@@ -78,7 +78,7 @@ Emissão: <?= $escape($date($data['date'])) ?><br />
 <?php if (($data['position']['noncash_reductions'] ?? '0.00') !== '0.00' || ($data['position']['received_external_reversed'] ?? '0.00') !== '0.00') { ?>
 <br /><b>Posição do principal na geração deste documento</b>
 <table cellpadding="5" width="100%">
-<?php foreach (['received_original'=>'Principal recebido originalmente','received_reversed'=>'Principal revertido','received'=>'Principal recebido vigente','applied_credit'=>'Crédito aplicado','settlement_discount'=>'Desconto na liquidação vigente (sem recebimento)','settlement_abatement'=>'Abatimento na liquidação vigente (sem recebimento)','settlement_discount_reversed'=>'Desconto restabelecido por reversão','settlement_abatement_reversed'=>'Abatimento restabelecido por reversão','receivable'=>'Principal em aberto'] as $field=>$label) { ?>
+<?php foreach (['received_original'=>'Principal recebido originalmente','received_reversed'=>'Principal revertido','received'=>'Principal recebido vigente','applied_credit'=>'Crédito aplicado','settlement_discount'=>'Desconto na liquidação vigente (sem recebimento)','settlement_abatement'=>'Abatimento na liquidação vigente (sem recebimento)','settlement_discount_reversed'=>'Desconto restabelecido por reversão','settlement_abatement_reversed'=>'Abatimento restabelecido por reversão','receivable'=>'Principal em aberto'] as $field=>$label) { if($field==='receivable'&&$data['status']===5)$label='Principal residual histórico (fatura cancelada; sem cobrança vigente)'; ?>
 <tr><td width="72%" align="right"><?= $escape($label) ?></td><td width="28%" align="right"><?= $money($data['position'][$field]) ?></td></tr>
 <?php } ?></table>
 <?php if(($data['position']['received_external_reversed']??'0.00')!=='0.00'){ ?><p>Reversão externa declarada com evidência conferida; esta declaração não executa estorno no banco.</p><?php } ?>

@@ -11,7 +11,7 @@ abstract class CompanyTaskBillingStorage extends CompanySalesBase
     public function tables():array
     {
         $t=array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit','currencies','company_currency_units','options','company_invoice_requests','invoices','issuers_invoice_documents'],array_keys(CompanyProjectsSchema::definitions($this->prefix)),['company_task_billing_origins','company_task_billing_links']);
-        if($this->db->table_exists($this->prefix.'company_portal_task_origins'))$t[]='company_portal_task_origins';if($this->db->table_exists($this->prefix.'company_project_billing_rates'))$t=array_merge($t,(new CompanyProjectBillingRates($this->db,$this->prefix))->tables());return array_values(array_unique(array_merge($t,CompanyProjectFixedBillingFence::tables($this->db,$this->prefix),(new CompanyBillingInvoiceLifecycle($this->db,$this->prefix))->tables())));
+        if($this->db->table_exists($this->prefix.'company_portal_task_origins'))$t[]='company_portal_task_origins';if($this->db->table_exists($this->prefix.'company_project_billing_rates'))$t=array_merge($t,(new CompanyProjectBillingRates($this->db,$this->prefix))->tables());return array_values(array_unique(array_merge($t,CompanyTaskTimeBillingFence::tables($this->db,$this->prefix),CompanyProjectFixedBillingFence::tables($this->db,$this->prefix),(new CompanyBillingInvoiceLifecycle($this->db,$this->prefix))->tables())));
     }
     protected function billingAuth(int $issuer,int $actor):void
     {
@@ -32,7 +32,7 @@ abstract class CompanyTaskBillingStorage extends CompanySalesBase
     }
     protected function source(int $issuer,int $id):array
     {
-        $r=$this->task($issuer,$id);if($r['status']!=='done')throw new DomainException('company_task_billing_not_ready');$p=$this->rows('SELECT id,client_id,name,status FROM '.$this->prefix.'company_projects WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$r['project_id']])[0]??null;if(!$p||!in_array($p['status'],['active','completed'],true))throw new DomainException('company_task_billing_reference_denied');
+        $r=$this->task($issuer,$id);CompanyTaskTimeBillingFence::assertTaskWholeAvailableInOwned($this->db,$this->prefix,$issuer,$id);if($r['status']!=='done')throw new DomainException('company_task_billing_not_ready');$p=$this->rows('SELECT id,client_id,name,status FROM '.$this->prefix.'company_projects WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$r['project_id']])[0]??null;if(!$p||!in_array($p['status'],['active','completed'],true))throw new DomainException('company_task_billing_reference_denied');
         $timers=$this->rows('SELECT id,actor_id,started_at,stopped_at,seconds FROM '.$this->prefix.'company_task_timers WHERE issuer_id=? AND task_id=? ORDER BY id LIMIT 501 FOR UPDATE',[$issuer,$id]);
         if(!$timers||count($timers)>500)throw new DomainException('company_task_billing_timer');foreach($timers as $t)if($t['stopped_at']===null)throw new DomainException('company_task_billing_timer');
         $portal=$this->portal($issuer,$id);if($portal&&((int)$portal['project_id']!==(int)$p['id']||(int)$portal['client_id']!==(int)$p['client_id']||!in_array($portal['billing_state'],['unbilled','converting','billed'],true)))throw new DomainException('company_task_billing_reference_denied');if($portal)unset($portal['billing_state']);

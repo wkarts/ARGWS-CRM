@@ -53,6 +53,7 @@ return array(
     'GuzzleHttp\\Promise\\' => array($vendorDir . '/guzzlehttp/promises/src'),
     'GuzzleHttp\\' => array($vendorDir . '/guzzlehttp/guzzle/src'),
     'Greew\\OAuth2\\Client\\Provider\\' => array($vendorDir . '/greew/oauth2-azure-provider/src/Provider'),
+    'Firebase\\JWT\\' => array($vendorDir . '/firebase/php-jwt/src'),
     'Faker\\' => array($vendorDir . '/fakerphp/faker/src/Faker'),
     'EmailReplyParser\\' => array($vendorDir . '/willdurand/email-reply-parser/src/EmailReplyParser'),
     'Ddeboer\\Imap\\' => array($vendorDir . '/ddeboer/imap/src'),

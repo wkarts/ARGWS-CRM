@@ -4,6 +4,8 @@ namespace app\services;
 defined('BASEPATH') or exit('No direct script access allowed');
 require_once __DIR__.'/CompanyReceiptSource.php';
 require_once __DIR__.'/CompanyBankReversalWriter.php';
+require_once __DIR__.'/CompanyAsaasRefundWriter.php';
+require_once __DIR__.'/CompanyPostRefundManualWriter.php';
 require_once __DIR__.'/CompanyCreditWriter.php';
 require_once __DIR__.'/CompanyCurrencyUnits.php';
 require_once __DIR__.'/CompanyFinancialJournal.php';
@@ -14,6 +16,8 @@ final class InvoicePaymentWriter
 {
     use CompanyCreditWriter;
     use CompanyBankReversalWriter;
+    use CompanyAsaasRefundWriter;
+    use CompanyPostRefundManualWriter;
     private $db;
     public function __construct($db) { $this->db = $db; }
 
@@ -48,7 +52,7 @@ final class InvoicePaymentWriter
     }
 
     /** Explicit manual receipt for a named company. Never called by generic legacy/provider paths. */
-    public function recordCompanyManual($issuer,$actor,$invoice,array $input,string $requestKey): int
+    public function recordCompanyManual($issuer,$actor,$invoice,array $input,string $requestKey,?\CompanyFinancialApiGuard $apiGuard=null): int
     {
         require_once __DIR__.'/issuers/IssuerTransaction.php';
         require_once __DIR__.'/issuers/IssuerResourceAccess.php';
@@ -57,8 +61,9 @@ final class InvoicePaymentWriter
         $origins=[];foreach(['bb_origins','asaas_payment_origins'] as $table)if($this->db->table_exists($prefix.$table))$origins[]=$table;
         $tables=array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','invoices','issuers_invoice_documents','invoicepaymentrecords','credits','company_payment_receipts','issuers_audit'],$origins);
         $tables=array_values(array_unique(array_merge($tables,(new \CompanyCurrencyUnits($this->db,$prefix))->tables(),(new \CompanyFinancialJournal($this->db,$prefix))->tables('payment'),(new \CompanyInvoiceBalance($this->db,$prefix))->tables())));
-        return \IssuerTransaction::run($this->db,$prefix,$tables,function()use($issuer,$actor,$invoice,$requestKey,$amount,$data,$hash,$prefix,$origins):int{
-            return $this->companyReceiptLocked($issuer,$actor,$invoice,$requestKey,$amount,$data,$hash,$prefix,$origins,false);
+        if($apiGuard!==null)$tables=array_values(array_unique(array_merge($tables,$apiGuard->tables())));
+        return \IssuerTransaction::run($this->db,$prefix,$tables,function()use($issuer,$actor,$invoice,$requestKey,$amount,$data,$hash,$prefix,$origins,$apiGuard):int{
+            return $this->companyReceiptLocked($issuer,$actor,$invoice,$requestKey,$amount,$data,$hash,$prefix,$origins,false,null,$apiGuard);
         });
     }
 
@@ -99,12 +104,13 @@ final class InvoicePaymentWriter
         $hash=hash('sha256',json_encode($data,JSON_THROW_ON_ERROR));return [$data,$amount,$hash];
 
     }
-    private function companyReceiptLocked(int $issuer,int $actor,int $invoice,string $requestKey,int $amount,array $data,string $hash,string $prefix,array $origins,bool $provider,?\CompanyBankComponentsData $components=null):int
+    private function companyReceiptLocked(int $issuer,int $actor,int $invoice,string $requestKey,int $amount,array $data,string $hash,string $prefix,array $origins,bool $provider,?\CompanyBankComponentsData $components=null,?\CompanyFinancialApiGuard $apiGuard=null):int
     {
             $query=fn($sql,$args=[])=>\IssuerStorage::query($this->db,$sql,$args)->result_array();
             $acl=new \IssuerResourceAccess($this->db,$prefix);$acl->lockFinancialIdentity($issuer,$actor);
             $authorize=static function()use($acl,$issuer,$actor):void{if(!$acl->can($issuer,$actor,'invoices','view')||!$acl->can($issuer,$actor,'payments','create'))throw new \DomainException('company_payment_access_denied');};
             $authorize();
+            if($apiGuard!==null){if($provider)throw new \DomainException('company_api_scope_denied');$apiGuard->beforeInOwned($this->db,$prefix,$issuer,$actor,'manual_payment',['invoice_id'=>$invoice],$requestKey);}
             $parent=$query('SELECT id,issuer_id,total,status,date,duedate,currency FROM '.$prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
             if(!$parent)throw new \DomainException('company_payment_access_denied');
             if(!$query('SELECT invoice_id FROM '.$prefix.'issuers_invoice_documents WHERE invoice_id=? AND issuer_id=?',[$invoice,$issuer]))throw new \DomainException('company_payment_invoice_not_eligible');
@@ -116,7 +122,7 @@ final class InvoicePaymentWriter
                 $stored=$query('SELECT invoiceid,amount,transactionid FROM '.$prefix.'invoicepaymentrecords WHERE id=?',[$receipt['payment_id']])[0]??null;
                 if(!$stored||(int)$stored['invoiceid']!==$invoice||self::minorUnits($stored['amount'])!==$amount||$stored['transactionid']!==$data['transactionid'])throw new \RuntimeException('issuer_payment_receipt_unconfirmed');
                 $captured=(new \CompanyBankReceiptComponents($this->db,$prefix))->capturedInOwned($issuer,$actor,$invoice,$requestKey);if(($components===null)!==($captured===null)||($components!==null&&!hash_equals($components->fingerprint(),$captured->fingerprint())))throw new \DomainException('company_payment_request_conflict');
-                return (int)$receipt['payment_id'];
+                $apiGuard?->afterInOwned($this->db,$prefix,$issuer,$actor,'manual_payment',['invoice_id'=>$invoice],$requestKey);return (int)$receipt['payment_id'];
             }
             if(!in_array((int)$parent['status'],[1,3,4],true))throw new \DomainException('company_payment_invoice_not_eligible');
             foreach($origins as $table)if($query('SELECT id FROM '.$prefix.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('company_payment_provider_review_required');
@@ -137,7 +143,7 @@ final class InvoicePaymentWriter
             if(!$confirmed||(int)$confirmed['invoiceid']!==$invoice||self::minorUnits($confirmed['amount'])!==$amount||(int)$confirmed['status']!==$status||count($query('SELECT request_key FROM '.$prefix.'company_payment_receipts WHERE request_key=?',[$requestKey]))!==1)throw new \RuntimeException('issuer_payment_write_unconfirmed');
             if($components!==null){(new \CompanyBankReceiptComponents($this->db,$prefix))->recordInOwned($issuer,$actor,$invoice,$id,$requestKey,$components);(new \CompanyFinancialJournal($this->db,$prefix))->recordInOwned($issuer,$actor,['kind'=>'bank_components_recorded','source_type'=>'payment','source_id'=>$id,'book_date'=>$data['date'],'currency'=>$unit['iso_code'],'currency_basis'=>$unit['basis'],'amount'=>$components->principalExtinguished(),'before'=>[],'after'=>$components->data()+['request_key'=>$requestKey,'invoice_id'=>$invoice]],hash('sha256','company-journal:bank-components:'.$requestKey));}
             (new \CompanyFinancialJournal($this->db,$prefix))->recordInOwned($issuer,$actor,['kind'=>'receipt_recorded','source_type'=>'payment','source_id'=>$id,'book_date'=>$data['date'],'currency'=>$unit['iso_code'],'currency_basis'=>$unit['basis'],'amount'=>$data['amount'],'before'=>['date'=>$data['date'],'amount'=>'0.00','invoice_id'=>$invoice,'invoice_status'=>(int)$parent['status'],'balance'=>\CompanyInvoiceAmounts::decimal($balance)],'after'=>['date'=>$data['date'],'amount'=>$data['amount'],'invoice_id'=>$invoice,'invoice_status'=>$status,'balance'=>\CompanyInvoiceAmounts::decimal($balance-$extinguished),'mode'=>$data['paymentmode']]],hash('sha256','company-journal:receipt-recorded:'.$requestKey));
-            (new \CompanyInvoiceBalance($this->db,$prefix))->inOwned($issuer,$actor,$invoice);$authorize();return $id;
+            (new \CompanyInvoiceBalance($this->db,$prefix))->inOwned($issuer,$actor,$invoice);$authorize();$apiGuard?->afterInOwned($this->db,$prefix,$issuer,$actor,'manual_payment',['invoice_id'=>$invoice],$requestKey);return $id;
     }
 
     private function write(int $targetInvoiceId, array $data, callable $allowed, ?int $creditNoteId): int

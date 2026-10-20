@@ -13,6 +13,7 @@ final class CompanyExpenseRecurringDeliverySource extends CompanyExpenseRecurrin
     {
         $s=new CompanySettingsStorage($db,$p);$data=[];foreach(['mail_engine','email_protocol','smtp_host','smtp_port','smtp_encryption','smtp_email','smtp_username','smtp_password','smtp_email_charset','email_signature','email_header','email_footer'] as $k)$data[$k]=$s->get($issuer,$k);
         $file=__DIR__.'/CompanyGoogleMailOAuth.php';$fingerprint=null;if(is_file($file)){require_once $file;$fingerprint=(new CompanyGoogleMailOAuth($db,$p))->fingerprint($issuer);}if($data['email_protocol']==='google'&&$fingerprint===null)throw new DomainException('company_expense_recurring_oauth_required');$data['owned_google_account']=$fingerprint;
+        $policyFile=__DIR__.'/CompanyMailTransportPolicy.php';if(is_file($policyFile)){require_once $policyFile;$policy=CompanyMailTransportPolicy::fingerprint($db,$p,$issuer);if($policy!==null)$data['owned_transport_policy']=$policy;}
         // Stable OAuth identity/epoch is above. Access-token refresh must not invalidate future cycles.
         if($data['email_protocol']==='microsoft')foreach(['microsoft_mail_client_id','microsoft_mail_client_secret','microsoft_mail_azure_tenant_id','microsoft_mail_refresh_token'] as $k)$data[$k]=$s->get($issuer,$k);
         return hash('sha256',json_encode($data,JSON_THROW_ON_ERROR));

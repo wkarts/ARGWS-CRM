@@ -64,9 +64,9 @@ final class InvoiceIssuerDocumentData
             $roundedSum += $amount;
             $items[$id] = [
                 'id'=>$id, 'description'=>self::text($item['description'], 10000, true),
-                'details'=>self::text($item['long_description'] ?? '', 20000),
+                'details'=>self::literal($item['long_description'] ?? '', 20000),
                 'quantity'=>self::decimal($quantity), 'rate'=>self::decimal($rate), 'amount'=>self::decimal($amount),
-                'unit'=>self::text($item['unit'] ?? '', 40), 'taxes'=>[],
+                'unit'=>self::unit($item['unit'] ?? ''), 'taxes'=>[],
             ];
         }
         if (!$items) { throw new DomainException('issuer_document_invalid_items'); }
@@ -102,7 +102,7 @@ final class InvoiceIssuerDocumentData
             'position'=>self::position($source['position']??null,$invoiceId,$issuerId,$totals['total']),
             'note'=>self::text($record['clientnote'] ?? '',20000),
         ];
-        if (strlen(json_encode($this->data, JSON_THROW_ON_ERROR)) > 4194304) {
+        if (strlen(json_encode($this->data, JSON_THROW_ON_ERROR)) > 16777215) {
             throw new DomainException('issuer_document_content_too_large');
         }
     }
@@ -125,6 +125,8 @@ final class InvoiceIssuerDocumentData
     public function __serialize(): array { throw new LogicException('issuer_document_dto_not_serializable'); }
     public function __unserialize(array $data): void { throw new LogicException('issuer_document_dto_not_serializable'); }
 
+    private static function unit($value):string{$value=self::literal($value,160);if(preg_match_all('/./us',$value)>40)throw new DomainException('issuer_document_invalid_content');return $value;}
+    private static function literal($value,int $max):string{self::text($value,$max);return $value;}
     private static function text($value, int $max, bool $required = false): string
     {
         if (!is_string($value) || strlen($value) > $max || preg_match('//u',$value) !== 1

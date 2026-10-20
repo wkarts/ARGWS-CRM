@@ -14,7 +14,7 @@ final class CompanyApiService
     }
     public function invoices(string $secret,$after=0):array
     {
-        $who=$this->tokens->resolve($secret,'invoices:read');$after=$after===0?0:IssuerPolicy::id($after);return $this->transaction($who,function()use($who,$secret,$after):array{$this->tokens->usedInOwnedTransaction($secret,'invoices:read',$who['issuer_id'],$who['actor_id'],'invoice_list');$result=(new CompanyInvoices($this->db,$this->p))->page($who['issuer_id'],$who['actor_id'],$after);$this->tokens->guard($secret,'invoices:read',$who['issuer_id'],$who['actor_id']);return ['issuer_id'=>$who['issuer_id']]+$result;});
+        $who=$this->tokens->resolve($secret,'invoices:read');$after=$after===0||$after==='0'?0:IssuerPolicy::id($after);return $this->transaction($who,function()use($who,$secret,$after):array{$this->tokens->usedInOwnedTransaction($secret,'invoices:read',$who['issuer_id'],$who['actor_id'],'invoice_list');$result=(new CompanyInvoices($this->db,$this->p))->page($who['issuer_id'],$who['actor_id'],$after);$this->tokens->guard($secret,'invoices:read',$who['issuer_id'],$who['actor_id']);return ['issuer_id'=>$who['issuer_id']]+$result;});
     }
     private function invoiceData(string $secret,string $scope,$invoice):array
     {

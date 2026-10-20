@@ -1,6 +1,6 @@
 {
     "require": {
-        "php" : "^8.1",
+        "php": "^8.1",
         "cocur/slugify": "^4.0",
         "neitanod/forceutf8": "~2.0",
         "tecnickcom/tcpdf": "^6.2",
@@ -30,7 +30,8 @@
         "pragmarx/google2fa": "^8.0",
         "bacon/bacon-qr-code": "^3.0",
         "league/html-to-markdown": "^5.1",
-        "stripe/stripe-php": "^18.0"
+        "stripe/stripe-php": "^18.0",
+        "firebase/php-jwt": "7.2.1"
     },
     "config": {
         "allow-plugins": {
