@@ -1,0 +1,310 @@
+[
+  {
+    "driver": "sqlite",
+    "script": "tests/companies/project_copies.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/sqlite-project_copies.log",
+    "script_sha256": "2f7095d23edf470b282264a642f645a758aa88e80e7d4b8d3e317fa5bebdc940",
+    "last_lines": [
+      "Owned projects/tasks/checklists/comments/timers: 34 checks passed (sqlite). No external transport.",
+      "Own reviewed project copy: 71 added / 105 cumulative checks (sqlite). No files, time, financial or public/grant adoption."
+    ]
+  },
+  {
+    "driver": "sqlite",
+    "script": "tests/companies/project_copies_api.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/sqlite-project_copies_api.log",
+    "script_sha256": "9d59798653261dda05bd68555f0420148e16ab31770980e3f25dba3eec7100ac",
+    "last_lines": [
+      "Owned projects/tasks/checklists/comments/timers: 34 checks passed (sqlite). No external transport.",
+      "Own reviewed project copy: 71 added / 105 cumulative checks (sqlite). No files, time, financial or public/grant adoption.",
+      "Owned project copy opt-in API: 24 added / 129 cumulative (sqlite)."
+    ]
+  },
+  {
+    "driver": "sqlite",
+    "script": "tests/companies/project_copies_controller.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/sqlite-project_copies_controller.log",
+    "script_sha256": "a5b3ad927dcf26dfda88fc90432451f9f91efe57dd2e662f3338a0766b295d0d",
+    "last_lines": [
+      "Owned projects/tasks/checklists/comments/timers: 34 checks passed (sqlite). No external transport.",
+      "Own reviewed project copy: 71 added / 105 cumulative checks (sqlite). No files, time, financial or public/grant adoption.",
+      "Project copy actual controller/templates: 17 added / 122 cumulative (sqlite)."
+    ]
+  },
+  {
+    "driver": "sqlite",
+    "script": "tests/companies/task_copies.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/sqlite-task_copies.log",
+    "script_sha256": "304726eb93403e11b71080c0f5944aa8564cc1746fc50a761246efd4b0a34680",
+    "last_lines": [
+      "Owned projects/tasks/checklists/comments/timers: 34 checks passed (sqlite). No external transport.",
+      "Reviewed individual task copies: 68 added / 102 cumulative checks (sqlite). No time, finance, relation, file, follower or publication adoption."
+    ]
+  },
+  {
+    "driver": "sqlite",
+    "script": "tests/companies/task_copies_controller.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/sqlite-task_copies_controller.log",
+    "script_sha256": "da847a3e9f17b3075880856577f4edb128337fa10d51966334b148ed5a9b3415",
+    "last_lines": [
+      "Owned projects/tasks/checklists/comments/timers: 34 checks passed (sqlite). No external transport.",
+      "Reviewed individual task copies: 68 added / 102 cumulative checks (sqlite). No time, finance, relation, file, follower or publication adoption.",
+      "Task copy actual controller/templates: 24 added / 126 cumulative (sqlite)."
+    ]
+  },
+  {
+    "driver": "sqlite",
+    "script": "tests/companies/operations_resume_439_billing.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/sqlite-operations_resume_439_billing.log",
+    "script_sha256": "15907dcc33afb0531f2330d6ca97efb1c2069201cc4386ea48248dd71320bcde",
+    "last_lines": [
+      "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+      "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+      "Native task timer billing: 90 cumulative checks passed (sqlite). No external execution.",
+      "Rebuilt recovery439 standalone/selected-timer/batch A+B/idempotency/cancellation/ledger: 119 cumulative checks passed (sqlite)."
+    ]
+  },
+  {
+    "driver": "sqlite",
+    "script": "tests/companies/operations_resume_439_discussions.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/sqlite-operations_resume_439_discussions.log",
+    "script_sha256": "4c61791a0744c0536199a47356dce3536e20fc3dde8d10b4cb956eb96814688f",
+    "last_lines": [
+      "Owned contracts/snapshot/number/PDF/copy/cancel and support/replies/search: 57 checks passed (sqlite). No external transport or signature.",
+      "Rebuilt recovery439 discussions/own versions/private files/A+B/retry/audit rollback/revocation: 109 cumulative checks passed (sqlite)."
+    ]
+  },
+  {
+    "driver": "sqlite",
+    "script": "tests/companies/operations_resume_439_sales_lines.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/sqlite-operations_resume_439_sales_lines.log",
+    "script_sha256": "75bac5f20ce269e3394019988fe94bc71d1cf0af96f0277f15a2c7c8bcab0866",
+    "last_lines": [
+      "Sales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.",
+      "Canonical origin guard / sales search: 135 cumulative checks passed.",
+      "Sales/recurrence principal and legacy distinction: 139 cumulative checks passed.",
+      "Rebuilt recovery439 sales shared-form lines/optional totals/literal PDF/conversion/A+B/default compatibility: 192 cumulative checks passed (sqlite)."
+    ]
+  },
+  {
+    "driver": "sqlite",
+    "script": "tests/companies/project_copy_api_bootstrap.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/sqlite-project_copy_api_bootstrap.log",
+    "script_sha256": "dac72785a2780f80ee72028f3dcef6b1f6b4428892e2002f18b626a05e3faa71",
+    "last_lines": [
+      "Native operational API autoload/pre-system/CSRF/routes: 45 checks passed.",
+      "Operational subresource actual minimal autoload/URI/CSRF/routes: 95 cumulative checks passed.",
+      "Project copy exact API bootstrap checks passed."
+    ]
+  },
+  {
+    "driver": "sqlite",
+    "script": "tests/companies/operations_api_scope.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/sqlite-operations_api_scope.log",
+    "script_sha256": "61de93b3c4c0d766caac86eca813bb5f1d73efc4577e1c0a3d5e0af6da302719",
+    "last_lines": [
+      "Exact operational bearer pre-hydration scope: 75 checks passed."
+    ]
+  },
+  {
+    "driver": "sqlite",
+    "script": "tests/companies/api_scope.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/sqlite-api_scope.log",
+    "script_sha256": "791d05bd52deff785cac441418d86273189dd98d7a196b3c33801902804ef9e8",
+    "last_lines": [
+      "Company API exact scope: 10 checks passed."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/project_copies.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-project_copies.log",
+    "script_sha256": "2f7095d23edf470b282264a642f645a758aa88e80e7d4b8d3e317fa5bebdc940",
+    "last_lines": [
+      "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-ydo3pmgq",
+      "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+      "Own reviewed project copy: 72 added / 108 cumulative checks (mysql). No files, time, financial or public/grant adoption."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/project_copies_api.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-project_copies_api.log",
+    "script_sha256": "9d59798653261dda05bd68555f0420148e16ab31770980e3f25dba3eec7100ac",
+    "last_lines": [
+      "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-fz9f6_or",
+      "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+      "Own reviewed project copy: 72 added / 108 cumulative checks (mysql). No files, time, financial or public/grant adoption.",
+      "Owned project copy opt-in API: 24 added / 132 cumulative (mysql)."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/project_copies_controller.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-project_copies_controller.log",
+    "script_sha256": "a5b3ad927dcf26dfda88fc90432451f9f91efe57dd2e662f3338a0766b295d0d",
+    "last_lines": [
+      "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-czsgf18_",
+      "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+      "Own reviewed project copy: 72 added / 108 cumulative checks (mysql). No files, time, financial or public/grant adoption.",
+      "Project copy actual controller/templates: 17 added / 125 cumulative (mysql)."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/task_copies.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-task_copies.log",
+    "script_sha256": "304726eb93403e11b71080c0f5944aa8564cc1746fc50a761246efd4b0a34680",
+    "last_lines": [
+      "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-hgrv2tij",
+      "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+      "Reviewed individual task copies: 69 added / 105 cumulative checks (mysql). No time, finance, relation, file, follower or publication adoption."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/task_copies_controller.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-task_copies_controller.log",
+    "script_sha256": "da847a3e9f17b3075880856577f4edb128337fa10d51966334b148ed5a9b3415",
+    "last_lines": [
+      "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-9w28fc1a",
+      "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+      "Reviewed individual task copies: 69 added / 105 cumulative checks (mysql). No time, finance, relation, file, follower or publication adoption.",
+      "Task copy actual controller/templates: 24 added / 129 cumulative (mysql)."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/operations_resume_439_billing.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-operations_resume_439_billing.log",
+    "script_sha256": "15907dcc33afb0531f2330d6ca97efb1c2069201cc4386ea48248dd71320bcde",
+    "last_lines": [
+      "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+      "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+      "Native task timer billing: 90 cumulative checks passed (mysql). No external execution.",
+      "Rebuilt recovery439 standalone/selected-timer/batch A+B/idempotency/cancellation/ledger: 119 cumulative checks passed (mysql)."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/operations_resume_439_discussions.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-operations_resume_439_discussions.log",
+    "script_sha256": "4c61791a0744c0536199a47356dce3536e20fc3dde8d10b4cb956eb96814688f",
+    "last_lines": [
+      "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-rjzknt1b",
+      "Owned contracts/snapshot/number/PDF/copy/cancel and support/replies/search: 59 checks passed (mysql). No external transport or signature.",
+      "Rebuilt recovery439 discussions/own versions/private files/A+B/retry/audit rollback/revocation: 111 cumulative checks passed (mysql)."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/operations_resume_439_sales_lines.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-operations_resume_439_sales_lines.log",
+    "script_sha256": "75bac5f20ce269e3394019988fe94bc71d1cf0af96f0277f15a2c7c8bcab0866",
+    "last_lines": [
+      "Sales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.",
+      "Canonical origin guard / sales search: 135 cumulative checks passed.",
+      "Sales/recurrence principal and legacy distinction: 139 cumulative checks passed.",
+      "Rebuilt recovery439 sales shared-form lines/optional totals/literal PDF/conversion/A+B/default compatibility: 192 cumulative checks passed (mysql)."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/project_copy_concurrency.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-project_copy_concurrency.log",
+    "script_sha256": "056ea820fcc314763d6fe1cd39f7f50bfcad79fda29b6a75495c5bad0711a58b",
+    "last_lines": [
+      "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+      "Own reviewed project copy: 72 added / 108 cumulative checks (mysql). No files, time, financial or public/grant adoption.",
+      "Owned project copy opt-in API: 24 added / 132 cumulative (mysql).",
+      "Project copy real InnoDB races: 86 added / 218 cumulative;9scenarios,2independent waiters each, no external effects."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/task_copy_concurrency.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-task_copy_concurrency.log",
+    "script_sha256": "40d0c5c8dd88ece6e8f89965052d3b41644616416249219f0940e4937b23db7f",
+    "last_lines": [
+      "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-k16hgu8y",
+      "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+      "Reviewed individual task copies: 69 added / 105 cumulative checks (mysql). No time, finance, relation, file, follower or publication adoption.",
+      "Individual task-copy InnoDB races: 74 added / 179 cumulative; 11 scenarios with two observed independent waiters each."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/operations_resume_439_concurrency.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-operations_resume_439_concurrency.log",
+    "script_sha256": "05e08cbaf0b7023d6b26e4f44a0180c5a82ccac8222767312c2c460edf1824bc",
+    "last_lines": [
+      "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+      "Native task timer billing: 90 cumulative checks passed (mysql). No external execution.",
+      "Rebuilt recovery439 standalone/selected-timer/batch A+B/idempotency/cancellation/ledger: 119 cumulative checks passed (mysql).",
+      "Rebuilt recovery439 InnoDB standalone/selected/batch idempotency/revocation/source races: 161 cumulative checks passed across 7 scenarios."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/operations_resume_439_discussion_concurrency.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-operations_resume_439_discussion_concurrency.log",
+    "script_sha256": "fe612667071ba38793afb3599af38931e033ab85f97dda281ca81715a10baa43",
+    "last_lines": [
+      "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-7rp211gs",
+      "Owned contracts/snapshot/number/PDF/copy/cancel and support/replies/search: 59 checks passed (mysql). No external transport or signature.",
+      "Rebuilt recovery439 discussions/own versions/private files/A+B/retry/audit rollback/revocation: 111 cumulative checks passed (mysql).",
+      "Rebuilt recovery439 contact discussion InnoDB retry/stale/revocation races: 129 cumulative checks passed across3 scenarios."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/task_copy_native_billing_participants.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-task_copy_native_billing_participants.log",
+    "script_sha256": "80a8cc0f65cdf14916fcd430916af8d83aabfdee1d90739740581e914ea300de",
+    "last_lines": [
+      "Recreated native439: 12 additive tables, exact metadata, replay and historical rows PASS.",
+      "Recreated native437\u2013439 body checks: 903 cumulative; actual runner tracking tested separately.",
+      "Project copy actual native436\u2013439 participants: 31 added / 934 cumulative checks passed.",
+      "Individual copies actual native436\u2013439 participants: 34 added / 968 cumulative checks."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/task_copy_native_billing_participants_440.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/operations440-composition-proof/mariadb-task_copy_native_billing_participants_440.log",
+    "script_sha256": "fea9f52fb32dfbe625663c188a6df74d2fee047f0553dcfa55105d256287a9a1",
+    "last_lines": [
+      "Composed440 actual eleven tables, replay, metadata and unchanged rows: 1077 cumulative checks passed.",
+      "Project copy actual native436\u2013439 participants: 31 added / 1109 cumulative checks passed.",
+      "Rebuilt project-copy full440 composition: 1117 cumulative checks passed.",
+      "Individual copies actual native436\u2013439 participants: 34 added / 1151 cumulative checks.",
+      "Rebuilt task-copy full440 composition: 1159 cumulative checks passed."
+    ],
+    "includes": "native_resume_440; all original project and task copy assertions; eight unrelated installed440 tables unchanged"
+  }
+]

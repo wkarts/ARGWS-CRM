@@ -388,3 +388,54 @@ jobs:
           php tests/companies/operations_resume_439_sales_lines.php
           php tests/settings/resume_439_connect_pairing.php
           php tests/settings/resume_439_pusher_recovery_controller.php
+          # Rascunhos privados 440; fixtures e suporte executam pelas suites.
+          php tests/companies/invoice_drafts.php
+          php tests/companies/invoice_drafts_atomic.php
+          php tests/companies/invoice_drafts_api.php
+          php tests/companies/invoice_drafts_api_controller.php
+          php tests/companies/invoice_drafts_controller.php
+          php tests/companies/invoice_drafts_native.php
+          php tests/companies/invoice_drafts_concurrency.php
+          # Modos e descoberta de recorrencia 440; fixtures e suporte executam pelas suites.
+          php tests/companies/invoice_recurring_modes.php
+          php tests/companies/invoice_recurring_modes_schema.php
+          php tests/companies/invoice_recurring_modes_worker.php
+          php tests/companies/invoice_recurring_modes_controller.php
+          php tests/companies/invoice_recurring_modes_markup_440.php
+          php tests/companies/invoice_recurring_discovery_440.php
+          php tests/companies/invoice_recurring_modes_concurrency.php
+          php tests/companies/invoice_recurring_discovery_concurrency_440.php
+          # Copias de projetos e tarefas 440; fixtures e suporte executam pelas suites.
+          php tests/companies/project_copies.php
+          php tests/companies/project_copies_api.php
+          php tests/companies/project_copies_controller.php
+          php tests/companies/project_copy_api_bootstrap.php
+          php tests/companies/project_copy_concurrency.php
+          php tests/companies/task_copies.php
+          php tests/companies/task_copies_controller.php
+          php tests/companies/task_copy_concurrency.php
+          php tests/companies/project_copy_native_billing_participants.php
+          php tests/companies/task_copy_native_billing_participants.php
+          php tests/companies/project_copy_native_billing_participants_440.php
+          php tests/companies/task_copy_native_billing_participants_440.php
+          # Reversao manual e encerramento de ciclo 440; fixtures e suporte executam pelas suites.
+          php tests/companies/post_refund_manual_reversal.php
+          php tests/companies/post_refund_manual_reversal_controller.php
+          php tests/companies/post_refund_manual_reversal_readers.php
+          php tests/companies/post_refund_manual_reversal_concurrency.php
+          php tests/companies/post_refund_manual_cycle.php
+          php tests/companies/post_refund_manual_cycle_boundaries.php
+          php tests/companies/post_refund_manual_cycle_controller.php
+          php tests/companies/post_refund_manual_cycle_readers.php
+          php tests/companies/post_refund_manual_cycle_reader_integrity.php
+          php tests/companies/post_refund_manual_cycle_principal.php
+          php tests/companies/post_refund_manual_cycle_concurrency.php
+          # Avisos privados de chamados Connect 440; fixtures e suporte executam pelas suites.
+          php tests/settings/ticket_connect.php
+          php tests/settings/ticket_connect_controller.php
+          php tests/settings/ticket_connect_discovery.php
+          php tests/settings/ticket_connect_schema.php
+          php tests/settings/ticket_connect_concurrency.php
+          # Migration nativa 440 completa e tracking; fixtures e suporte executam pelas suites.
+          php tests/companies/native_resume_440.php
+          php tests/companies/native_resume_440.php --tracking

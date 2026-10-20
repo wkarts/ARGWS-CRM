@@ -1,0 +1,561 @@
+{
+  "schema": 1,
+  "scope": "PR45 recovered440 real local HTTP validation",
+  "status": "passed for enumerated source-bound scenarios",
+  "publication_sha": null,
+  "publication_note": "Associate these source-bound proofs with the published SHA at publication stage; no remote CI claim here.",
+  "production_manifest_sha256": "335a3203d495df04c9fb3d98349cb7c0eb8f83a7b23c5738646aa2fb987bc3ff",
+  "production_manifest_files": 18522,
+  "runtime_verified_files": 18508,
+  "runtime_exclusion": "14 installer files absent from deployed web roots",
+  "environment": {
+    "php": "8.3.6",
+    "database": "MariaDB10.11.14",
+    "browser": "Chromium140 official headless shell",
+    "http": "real loopback PHP server with process/shell functions disabled"
+  },
+  "groups": {
+    "fresh440-1": {
+      "results": [
+        {
+          "name": "installer-server",
+          "url": "http://127.0.0.1:41213"
+        },
+        {
+          "name": "fresh-native-installation",
+          "version": 440,
+          "master": 17,
+          "source": "installer",
+          "csrf_denied": true
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "fresh440-before-browser",
+          "files": 18508,
+          "differences": []
+        },
+        {
+          "name": "tests/issuers_browser_smoke.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 11.26,
+          "tail": "Issuer browser smoke passed: native shell/menu, installation/upgrade, errors/retry, desktop/mobile.\n"
+        },
+        {
+          "name": "tests/companies_portal_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 11.81,
+          "tail": "Private contacts + A/B duplicate-email portal + HTTP recovery/reset/session: real MySQL/Chromium checks passed; queue only, no external delivery.\n"
+        },
+        {
+          "name": "tests/companies_invoices_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 37.51,
+          "tail": "Named-company invoice CRUD/numbering/PDF/manual partial+final receipts/private portal grant+PDF+revocation: real HTTP/MySQL/Chromium passed, including owner-bound notifications and private attachment upload/preview/download/portal revocation; no SMTP or bank/provider operations.\n"
+        },
+        {
+          "name": "tests/companies/invoice_drafts_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 22.88,
+          "tail": "Private drafts actual Chromium A/B/principal/restricted, no number before issue, full lines, exact retries, copies/cancel, native/context CSRF, stale, rollback, private PDF and opt-in GUI bearer API PASS. Native marker 440; no bank, mail or provider calls.\n"
+        },
+        {
+          "name": "tests/companies/invoice_recurring_modes_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 28.27,
+          "tail": "Invoice recurrence modes browser440 (reconstructed read-only prerequisite; GUI principal creation and draft edit; real checkbox): declared paid principal (not previous child), private drafts without native numbering, real late-link fault and exact same-ID resume, explicit later issue, PDF bytes, native contexts and cross-owner denial passed. No external bank or SMTP calls.\n"
+        },
+        {
+          "name": "tests/companies/project_copies_http_browser.cjs",
+          "mode": null,
+          "exit": 1,
+          "seconds": 11.77,
+          "tail": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n422 !== 503\n\n    at /workspace/scratch/6b72446d684f/http-resume440/test-source/tests/companies/project_copies_http_browser.cjs:13:318\n"
+        }
+      ],
+      "log_sha256": "16cbeee15c3a3cf46aeb00787187a014848a5e744160f197382a90bd50847990"
+    },
+    "fresh440-finance7": {
+      "results": [
+        {
+          "name": "tls-sink-ready",
+          "host": "api-sandbox.asaas.com",
+          "forwarding": false,
+          "ca_sha256": "64246d1d2242eca75abbb176c5a0bece587fa63cded1a95e9926a510f6a4b8d1"
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "resume440-before-browser",
+          "files": 18508,
+          "differences": []
+        },
+        {
+          "name": "resumed-bank",
+          "source": "fresh440-1 stopped snapshot",
+          "financial_reset": false
+        },
+        {
+          "name": "tests/companies/post_refund_manual_cycle_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 26.79,
+          "tail": "Asaas full return -> NEW manual -> typed LOCAL reversal -> separate LOCAL cancellation -> reviewed NEW independent invoice HTTP/Chromium A/B, private PDFs, unchanged old provider history, current context/CSRF/fingerprints and exact retries PASS. Provider protocol simulated; no external operation.\n"
+        }
+      ],
+      "log_sha256": "876be6708df40b9c37342852781b29e0caeb11bc74f7987433178dbe0cdd706e"
+    },
+    "fresh440-finance8": {
+      "results": [
+        {
+          "name": "tls-sink-ready",
+          "host": "api-sandbox.asaas.com",
+          "forwarding": false,
+          "ca_sha256": "a73189ff0258cf02dd502c8f570c79f8e3f934d0fac7fb60c3020015c8c205fb"
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "resume440-before-browser",
+          "files": 18508,
+          "differences": []
+        },
+        {
+          "name": "resumed-bank",
+          "source": "fresh440-1 stopped snapshot",
+          "financial_reset": false
+        },
+        {
+          "name": "tests/companies/post_refund_manual_cycle_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 25.49,
+          "tail": "Asaas full return -> NEW manual -> typed LOCAL reversal -> separate LOCAL cancellation -> reviewed NEW independent invoice HTTP/Chromium A/B, private PDFs, unchanged old provider history, current context/CSRF/fingerprints and exact retries PASS. Provider protocol simulated; no external operation.\n"
+        },
+        {
+          "name": "verified-local-provider-tls",
+          "post_review_payment_gets": 2,
+          "untrusted_ca_rejected": true,
+          "untrusted_ca_no_get": true,
+          "trusted_ca_wallet_get": true,
+          "tls_versions": [
+            "TLSv1.3"
+          ],
+          "forwarding": false
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "resume440-after-browser",
+          "files": 18508,
+          "differences": []
+        },
+        {
+          "name": "complete",
+          "passed": true
+        }
+      ],
+      "log_sha256": "c4b8fe40afb22f8d3c9305733234570d9cc665c588599bfbd0c810178b67b803"
+    },
+    "fresh440-resume2": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "resume440-before-browser",
+          "files": 18508,
+          "differences": []
+        },
+        {
+          "name": "resumed-bank",
+          "source": "fresh440-1 stopped snapshot",
+          "financial_reset": false
+        },
+        {
+          "name": "tests/companies/task_copies_http_browser.cjs",
+          "mode": null,
+          "exit": 1,
+          "seconds": 40.56,
+          "tail": "page.waitForNavigation: Timeout 30000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"domcontentloaded\"\n============================================================\n    at go (/workspace/scratch/6b72446d684f/http-resume440/test-source/tests/companies/task_copies_http_browser.cjs:7:56)\n    at /workspace/scratch/6b72446d684f/http-resume440/test-source/tests/companies/task_copies_http_browser.cjs:19:356\n"
+        }
+      ],
+      "log_sha256": "41ea02e8c8b252fe6e0c8038a80ead939bf8b784dcd1166a78af28a06d1fb7db"
+    },
+    "fresh440-resume3": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "resume440-before-browser",
+          "files": 18508,
+          "differences": []
+        },
+        {
+          "name": "resumed-bank",
+          "source": "fresh440-1 stopped snapshot",
+          "financial_reset": false
+        },
+        {
+          "name": "tests/companies/project_copies_http_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 35.56,
+          "tail": "Chromium native project copies A/B/principal: GUI source project/task/checklist/comment/timer/milestone/file/follow/completed state, reviewed new private copies, CSRF403, late audit503 rollback+same-attempt retry, stable receipts, no time/files/publication/finance adoption, opt-in API UI+HTTP+idempotency/cross-owner401/403 PASS. No external transports.\n"
+        },
+        {
+          "name": "tests/settings/resume_439_connect_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 12.0,
+          "tail": "Real Chromium Connect439: native A/B own-profile forms, masked tokens, explicit pairing reservation without QR/network, canonical synthetic identity check, phone GUI, private notification queue, own worker dedup, stale context409, restricted B/cross-invoice403, revoke isolation PASS. No WhatsApp or provider network.\n"
+        },
+        {
+          "name": "tests/settings_ticket_connect_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 27.37,
+          "tail": "Chromium own Connect ticket A/B/principal: default OFF, GUI profile/native5/publication/phone/opt-in, local durable queue/replay/CSRF, sessionless synthetic worker, uncertain no-resend, cross issuer403 and suspension isolation PASS. No real WhatsApp.\n"
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "resume440-after-browser",
+          "files": 18508,
+          "differences": []
+        },
+        {
+          "name": "complete",
+          "passed": true
+        }
+      ],
+      "log_sha256": "5b2efc0697821a86add72a683cf23ca933cf7dea172d1b73124244e45815814a"
+    },
+    "fresh440-resume4": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "resume440-before-browser",
+          "files": 18508,
+          "differences": []
+        },
+        {
+          "name": "resumed-bank",
+          "source": "fresh440-1 stopped snapshot",
+          "financial_reset": false
+        },
+        {
+          "name": "tests/companies/task_copies_http_browser.cjs",
+          "mode": null,
+          "exit": 1,
+          "seconds": 34.9,
+          "tail": "AssertionError [ERR_ASSERTION]: individual copies preserve all prior financial/provider/origin/claims rows\n+ actual - expected\n... Skipped lines\n\n  {\n    tblcompany_credit_documents: '35786c7117b4e38d0f169239752ce71158266ae2f6e4aa230fbbb87bd699c0e3',\n    tblcompany_credit_entries: '35786c7117b4e38d0f169239752ce71158266ae2f6e4aa230fbbb87bd699c0e3',\n    tblcompany_expense_billing_links: '35786c7117b4e38d0f169239752ce71158266ae2f6e4aa230fbbb87bd699c0e3',\n    tblcompany_expense_billing_origins: '35786c7117b4e38d0f169239752ce71158266ae2f6e4aa230fbbb87bd699c0e3',\n...\n    tblcompany_standalone_time_clients: '35786c7117b4e38d0f169239752ce71158266ae2f6e4aa230fbbb87bd699c0e3',\n+   tblcompany_standalone_timers: '04d7e420c6a7594f0668fde2a0f63f62c2cefd67a13b5933f591e5bf4912ed66',\n-   tblcompany_standalone_timers: '35786c7117b4e38d0f169239752ce71158266ae2f6e4aa230fbbb87bd699c0e3',\n    tblcompany_task_billing_links: '35786c7117b4e38d0f169239752ce71158266ae2f6e4aa230fbbb87bd699c0e3',\n    tblcompany_task_billing_origins: '35786c7117b4e38d0f169239752ce71158266ae2f6e4aa230fbbb87bd699c0e3',\n    tblcompany_task_time_batch_claims: '35786c7117b4e38d0f169239752ce71158266ae2f6e4aa230fbbb87bd699c0e3',\n    tblcompany_task_time_batch_origins: '35786c7117b4e38d0f169239752ce71158266ae2f6e4aa230fbbb87bd699c0e3',\n    tblcompany_task_time_batches: '35786c7117b4e38d0f169239752ce71158266ae2f6e4aa230fbbb87bd699c0e3',\n\n    at /workspace/scratch/6b72446d684f/http-resume440/test-source/tests/companies/task_copies_http_browser.cjs:33:305\n"
+        }
+      ],
+      "log_sha256": "4c7d510d88c0cf083e1cfbacce8a072adf12e4d7e1f36a957086a8dedb43f443"
+    },
+    "fresh440-resume5": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "resume440-before-browser",
+          "files": 18508,
+          "differences": []
+        },
+        {
+          "name": "resumed-bank",
+          "source": "fresh440-1 stopped snapshot",
+          "financial_reset": false
+        },
+        {
+          "name": "tests/banco_brasil_origination_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 26.5,
+          "tail": "BB invoice-bound CNAB240 declaration/generation/download/manual report/return upload/assisted receipt/retry/API native encrypted configuration and A/B scope: actual HTTP/MySQL/Chromium, no bank calls.\n"
+        },
+        {
+          "name": "tests/banco_brasil_api_window_discount_browser.cjs",
+          "mode": null,
+          "exit": 1,
+          "seconds": 5.67,
+          "tail": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Credencial|credencial/. Input:\n\n'Nova versão de credenciais protegida para o perfil e ambiente indicados. Nenhum token ou operação bancária foi solicitado ao salvar.'\n\n    at /workspace/scratch/6b72446d684f/http-resume440/test-source/tests/banco_brasil_api_window_discount_browser.cjs:23:754\n"
+        }
+      ],
+      "log_sha256": "ec36b51bbf7daa9b18b8696b0ed7a1bb69a7977dfe33f9150c64f68943646ab6"
+    },
+    "fresh440-resume6": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "resume440-before-browser",
+          "files": 18508,
+          "differences": []
+        },
+        {
+          "name": "resumed-bank",
+          "source": "fresh440-1 stopped snapshot",
+          "financial_reset": false
+        },
+        {
+          "name": "tests/companies/task_copies_http_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 38.47,
+          "tail": "Chromium native individual task copies A/B/principal and both namespaces: GUI source/checklist/comment/timer/file/follower, explicit current assignee and owned target, reopened copies, CSRF403, late audit503 rollback+retry, stable receipts, cross-owner403, source bytes and all financial rows preserved PASS. No provider transmissions.\n"
+        },
+        {
+          "name": "tests/banco_brasil_api_window_discount_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 22.91,
+          "tail": "BB explicit positive receipt window and discount none→assign→clear→reassign: real GUI profile/secret setup, A/B context and cross-origin guards, typed canonical synthetic PATCH/query/retry, unchanged original fiscal/API snapshots and balances. Native controllers and races tested separately. No external bank transport/homologation.\n"
+        },
+        {
+          "name": "tests/banco_brasil_resume_439_amend_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 25.47,
+          "tail": "BB119 amendment GUI A+B: explicit profile/credentials, abat/address/discount form contracts, HTML precision, validated request then independent query confirmation, immutable invoice and no cash, idempotent retry. Operations execute canonical services through synthetic CLI transport; bank POST controllers and bank homologation are not claimed.\n"
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "resume440-after-browser",
+          "files": 18508,
+          "differences": []
+        },
+        {
+          "name": "complete",
+          "passed": true
+        }
+      ],
+      "log_sha256": "266d936a9a9659941982cd0aee8343a2f80839775d690b143c94f039ff6999d2"
+    },
+    "upgrade439-440-1": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "upgrade440-before-browser",
+          "files": 18508,
+          "differences": []
+        },
+        {
+          "name": "tests/issuers_browser_smoke.cjs",
+          "mode": "upgrade",
+          "exit": 0,
+          "seconds": 4.53,
+          "tail": "Issuer browser smoke passed: native shell/menu, installation/upgrade, errors/retry, desktop/mobile.\n"
+        },
+        {
+          "name": "native439-to440-history-preserved",
+          "tables": [
+            "issuers_installation_identity",
+            "issuers_registry",
+            "issuers_staff",
+            "issuers_staff_defaults",
+            "issuers_resource_permissions",
+            "clients",
+            "contacts",
+            "invoicepaymentrecords"
+          ],
+          "master": "17:installer",
+          "tracking": 440
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "upgrade440-after-browser",
+          "files": 18508,
+          "differences": []
+        },
+        {
+          "name": "complete",
+          "passed": true
+        }
+      ],
+      "log_sha256": "fcc018df797f6b1cadb3ed10c73aacbf797f8e9c4a0ac18763524342c0f85f62"
+    }
+  },
+  "ci_binding": {
+    "script": "tests/issuers_standalone_http_smoke.sh",
+    "preserved_439_commands": 65,
+    "added_440_commands": [
+      "tests/companies/invoice_drafts_browser.cjs",
+      "tests/companies/invoice_recurring_modes_browser.cjs",
+      "tests/companies/project_copies_http_browser.cjs",
+      "tests/companies/task_copies_http_browser.cjs",
+      "tests/settings_ticket_connect_browser.cjs",
+      "tests/banco_brasil_api_window_discount_browser.cjs",
+      "tests/companies/post_refund_manual_cycle_browser.cjs"
+    ],
+    "script_sha256": "7ff6a11b8b07c69b80cbd3ed283267761ae03d8419d48a7ef9bce1367ae30e78",
+    "bash_syntax": "passed",
+    "browser_environment_test": "2/2 passed; every node command receives complete disposable environment",
+    "full_docker_suite_executed_here": false,
+    "transport": "host Python CONNECT sink bound to the synthetic Docker network gateway; no Python dependency in app image; generated CA copied to disposable app; PHP HTTPS_PROXY and curl.cainfo set at creation; PID trap cleanup; no forwarding"
+  },
+  "tls": {
+    "real_http_review": true,
+    "explicit_review_button_added": true,
+    "payment_gets": 2,
+    "wallet_gets_from_http": 2,
+    "tls_versions": [
+      "TLSv1.3"
+    ],
+    "untrusted_ca_rejected_before_get": true,
+    "trusted_ca_native_company_client_probe": true,
+    "production_tls_verification_unchanged": true,
+    "forwarding": false,
+    "events": [
+      {
+        "kind": "synthetic_get",
+        "letter": "a",
+        "path": "/v3/wallets/",
+        "status": 200,
+        "tls_version": "TLSv1.3"
+      },
+      {
+        "kind": "synthetic_get",
+        "letter": "a",
+        "path": "/v3/payments/pay_refund_browser_a_34",
+        "status": 200,
+        "tls_version": "TLSv1.3"
+      },
+      {
+        "kind": "synthetic_get",
+        "letter": "b",
+        "path": "/v3/wallets/",
+        "status": 200,
+        "tls_version": "TLSv1.3"
+      },
+      {
+        "kind": "synthetic_get",
+        "letter": "b",
+        "path": "/v3/payments/pay_refund_browser_b_35",
+        "status": 200,
+        "tls_version": "TLSv1.3"
+      },
+      {
+        "error_type": "SSLError",
+        "kind": "tls_rejected"
+      },
+      {
+        "kind": "synthetic_get",
+        "letter": "a",
+        "path": "/v3/wallets/",
+        "status": 200,
+        "tls_version": "TLSv1.3"
+      }
+    ],
+    "events_sha256": "f6600f87eab3a92d3d80a7a269338d5806efd05806f6d4fd3b1a729b7054145b"
+  },
+  "passed_scenarios": [
+    {
+      "name": "tests/issuers_browser_smoke.cjs",
+      "mode": null,
+      "exit": 0,
+      "seconds": 11.26,
+      "tail": "Issuer browser smoke passed: native shell/menu, installation/upgrade, errors/retry, desktop/mobile.\n"
+    },
+    {
+      "name": "tests/companies_portal_browser.cjs",
+      "mode": null,
+      "exit": 0,
+      "seconds": 11.81,
+      "tail": "Private contacts + A/B duplicate-email portal + HTTP recovery/reset/session: real MySQL/Chromium checks passed; queue only, no external delivery.\n"
+    },
+    {
+      "name": "tests/companies_invoices_browser.cjs",
+      "mode": null,
+      "exit": 0,
+      "seconds": 37.51,
+      "tail": "Named-company invoice CRUD/numbering/PDF/manual partial+final receipts/private portal grant+PDF+revocation: real HTTP/MySQL/Chromium passed, including owner-bound notifications and private attachment upload/preview/download/portal revocation; no SMTP or bank/provider operations.\n"
+    },
+    {
+      "name": "tests/companies/invoice_drafts_browser.cjs",
+      "mode": null,
+      "exit": 0,
+      "seconds": 22.88,
+      "tail": "Private drafts actual Chromium A/B/principal/restricted, no number before issue, full lines, exact retries, copies/cancel, native/context CSRF, stale, rollback, private PDF and opt-in GUI bearer API PASS. Native marker 440; no bank, mail or provider calls.\n"
+    },
+    {
+      "name": "tests/companies/invoice_recurring_modes_browser.cjs",
+      "mode": null,
+      "exit": 0,
+      "seconds": 28.27,
+      "tail": "Invoice recurrence modes browser440 (reconstructed read-only prerequisite; GUI principal creation and draft edit; real checkbox): declared paid principal (not previous child), private drafts without native numbering, real late-link fault and exact same-ID resume, explicit later issue, PDF bytes, native contexts and cross-owner denial passed. No external bank or SMTP calls.\n"
+    },
+    {
+      "name": "tests/companies/post_refund_manual_cycle_browser.cjs",
+      "mode": null,
+      "exit": 0,
+      "seconds": 25.49,
+      "tail": "Asaas full return -> NEW manual -> typed LOCAL reversal -> separate LOCAL cancellation -> reviewed NEW independent invoice HTTP/Chromium A/B, private PDFs, unchanged old provider history, current context/CSRF/fingerprints and exact retries PASS. Provider protocol simulated; no external operation.\n"
+    },
+    {
+      "name": "tests/companies/project_copies_http_browser.cjs",
+      "mode": null,
+      "exit": 0,
+      "seconds": 35.56,
+      "tail": "Chromium native project copies A/B/principal: GUI source project/task/checklist/comment/timer/milestone/file/follow/completed state, reviewed new private copies, CSRF403, late audit503 rollback+same-attempt retry, stable receipts, no time/files/publication/finance adoption, opt-in API UI+HTTP+idempotency/cross-owner401/403 PASS. No external transports.\n"
+    },
+    {
+      "name": "tests/settings/resume_439_connect_browser.cjs",
+      "mode": null,
+      "exit": 0,
+      "seconds": 12.0,
+      "tail": "Real Chromium Connect439: native A/B own-profile forms, masked tokens, explicit pairing reservation without QR/network, canonical synthetic identity check, phone GUI, private notification queue, own worker dedup, stale context409, restricted B/cross-invoice403, revoke isolation PASS. No WhatsApp or provider network.\n"
+    },
+    {
+      "name": "tests/settings_ticket_connect_browser.cjs",
+      "mode": null,
+      "exit": 0,
+      "seconds": 27.37,
+      "tail": "Chromium own Connect ticket A/B/principal: default OFF, GUI profile/native5/publication/phone/opt-in, local durable queue/replay/CSRF, sessionless synthetic worker, uncertain no-resend, cross issuer403 and suspension isolation PASS. No real WhatsApp.\n"
+    },
+    {
+      "name": "tests/banco_brasil_origination_browser.cjs",
+      "mode": null,
+      "exit": 0,
+      "seconds": 26.5,
+      "tail": "BB invoice-bound CNAB240 declaration/generation/download/manual report/return upload/assisted receipt/retry/API native encrypted configuration and A/B scope: actual HTTP/MySQL/Chromium, no bank calls.\n"
+    },
+    {
+      "name": "tests/companies/task_copies_http_browser.cjs",
+      "mode": null,
+      "exit": 0,
+      "seconds": 38.47,
+      "tail": "Chromium native individual task copies A/B/principal and both namespaces: GUI source/checklist/comment/timer/file/follower, explicit current assignee and owned target, reopened copies, CSRF403, late audit503 rollback+retry, stable receipts, cross-owner403, source bytes and all financial rows preserved PASS. No provider transmissions.\n"
+    },
+    {
+      "name": "tests/banco_brasil_api_window_discount_browser.cjs",
+      "mode": null,
+      "exit": 0,
+      "seconds": 22.91,
+      "tail": "BB explicit positive receipt window and discount none→assign→clear→reassign: real GUI profile/secret setup, A/B context and cross-origin guards, typed canonical synthetic PATCH/query/retry, unchanged original fiscal/API snapshots and balances. Native controllers and races tested separately. No external bank transport/homologation.\n"
+    },
+    {
+      "name": "tests/banco_brasil_resume_439_amend_browser.cjs",
+      "mode": null,
+      "exit": 0,
+      "seconds": 25.47,
+      "tail": "BB119 amendment GUI A+B: explicit profile/credentials, abat/address/discount form contracts, HTML precision, validated request then independent query confirmation, immutable invoice and no cash, idempotent retry. Operations execute canonical services through synthetic CLI transport; bank POST controllers and bank homologation are not claimed.\n"
+    },
+    {
+      "name": "tests/issuers_browser_smoke.cjs",
+      "mode": "upgrade",
+      "exit": 0,
+      "seconds": 4.53,
+      "tail": "Issuer browser smoke passed: native shell/menu, installation/upgrade, errors/retry, desktop/mobile.\n"
+    }
+  ],
+  "source_files_sha256": {
+    "tests/companies/invoice_drafts_browser.cjs": "b8f02063c116269ff2c6f69fa2e87da4ab298ab7ff9b5abfbd754b3bad20b0ea",
+    "tests/companies/invoice_recurring_modes_browser.cjs": "dc845186fa59134759c27b6b549f21a12ba2b37e811427bf9d59ec5267d56814",
+    "tests/companies/project_copies_http_browser.cjs": "7a6582e4d350fa76a1ab7eea474ba3178950489a09a43f87312ddb9dcff36f30",
+    "tests/companies/task_copies_http_browser.cjs": "4f3c9dca53c12a469c91d68286be7bdd008593d7d75be4fca2be77ee923a33a7",
+    "tests/settings_ticket_connect_browser.cjs": "8677e5bcd81270607e96c865748a764f697f4490db14dab4c445108af69ae890",
+    "tests/banco_brasil_api_window_discount_browser.cjs": "ff526d6d9aa1cae104e469a3cbcdf2640b265981ac13b2089be27b74464ef671",
+    "tests/companies/post_refund_manual_cycle_browser.cjs": "b8de49792a00f11664df43dc91ddaff73e5a76c9726e9ee7cf88722f1ab8e7df",
+    "tests/companies/finance440_tls_proxy.py": "672461847fe031e75cf91b364f7d2a95c3db2c0869f88635f229df9d51d2f6eb",
+    "tests/companies/post_refund_manual_cycle_tls_state.php": "617e5542b99524b64682c054aad2ffa8ae9682f7705fb975e48dc22f3473a779",
+    "tests/companies/post_refund_manual_cycle_synthetic_protocol.php": "9ef19e4e3f03bca52691c6a708efb88856b80f9f03b0b03d4d59b07e41cf0c99",
+    "tests/companies/post_refund_manual_cycle_tls_probe.php": "69b591b87f234efd7e8fbf08c849a9a33a47d899d346df4a3ba2e4aaf39f2f9f"
+  }
+}

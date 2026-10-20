@@ -7,6 +7,7 @@ $hidden=function($action)use($esc,$company_projects_csrf,$request_key){echo '<in
 <?php if($error){?><p class="alert alert-danger" role="alert"><?= $esc($error); ?></p><a href="<?= $esc($url()); ?>">Reabrir projetos</a><?php } ?>
 <?php if($project){ ?><h2><?= $esc($project['name']); ?></h2><p><?= $esc($labels[$project['status']]); ?> · <?= $esc($project['start_date'].' até '.$project['due_date']); ?></p><p><?= nl2br($esc($project['description'])); ?></p>
 <p><a href="<?= $esc(CompanyRequestScope::adminUrl($this,'company_project_extras?kind=project&id='.(int)$project['id'])); ?>">Marcos, seguidores, quadro e anexos do projeto</a></p>
+<?php if($can_create){ ?><p><a id="project-reviewed-copy" href="<?= $esc(CompanyRequestScope::adminUrl($this,'company_project_copies?source='.(int)$project['id'])); ?>">Revisar cópia privada deste projeto</a></p><?php } ?>
 <?php if($can_tasks){ ?><a href="<?= $esc(CompanyRequestScope::adminUrl($this,'company_tasks?project='.(int)$project['id'])); ?>">Abrir tarefas deste projeto</a><?php } ?>
 <p><a href="<?= $esc(CompanyRequestScope::adminUrl($this,'company_project_portal_rules?project='.(int)$project['id'])); ?>">Regras e publicações de tarefas no portal do cliente</a></p>
 <?php if($can_edit&&$project['status']==='active'){ ?>

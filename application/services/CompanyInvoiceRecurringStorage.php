@@ -8,7 +8,7 @@ abstract class CompanyInvoiceRecurringStorage extends CompanySalesBase
 {
     public function tables():array
     {
-        $tables=array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','issuers_client_links','clients','currencies','company_currency_units','options','issuers_audit','company_invoice_requests','invoices','issuers_invoice_documents','itemable','item_tax'],array_keys(CompanyInvoiceRecurringSchema::definitions()));
+        $tables=array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','issuers_client_links','clients','currencies','company_currency_units','options','issuers_audit','company_invoice_requests','invoices','issuers_invoice_documents','itemable','item_tax'],array_keys(CompanyInvoiceRecurringSchema::definitions()));$tables=array_merge($tables,(new CompanyInvoiceRecurringModes($this->db,$this->prefix))->tables());
         foreach(['contacts','contact_permissions','emailtemplates','mail_queue','company_invoice_deliveries']as$t)if($this->db->table_exists($this->prefix.$t))$tables[]=$t;
         foreach(['CompanyGoogleMailOAuth','CompanyMailTransportPolicy']as$type)if(is_file(__DIR__.'/'.$type.'.php')){require_once __DIR__.'/'.$type.'.php';$tables=array_merge($tables,$type::participantTables($this->db,$this->prefix));}return array_values(array_unique($tables));
     }
@@ -24,7 +24,7 @@ abstract class CompanyInvoiceRecurringStorage extends CompanySalesBase
         $r=$this->rows('SELECT * FROM '.$this->prefix.'company_invoice_schedules WHERE issuer_id=? AND id=? FOR UPDATE',[$i,$id])[0]??null;if(!$r)throw new DomainException('company_invoice_recurring_denied');
         foreach(['payload','config','context','transport']as$k)if(!hash_equals($r[$k.'_hash'],self::hash($this->decode($r[$k.'_json']))))throw new RuntimeException('issuer_invoice_recurring_corrupt');$payload=$this->decode($r['payload_json']);$config=$this->decode($r['config_json']);$context=$this->decode($r['context_json']);
         if(CompanyInvoiceRecurringDates::configuration($config)!==$config||!hash_equals($r['input_hash'],self::hash([$payload,$config]))||(int)($context['issuer_id']??0)!==$i||(int)($context['recipient']['client_id']??0)!==(int)$payload['client_id']||(int)$r['completed_cycles']<0||(int)$r['completed_cycles']>4000000||($config['cycles']>0&&(int)$r['completed_cycles']>$config['cycles'])||!in_array($r['state'],['active','processing','paused','paused_processing','cancelled','completed'],true))throw new RuntimeException('issuer_invoice_recurring_corrupt');
-        $header=[];foreach(['request_key','input_hash','payload_hash','context_hash','config_hash','transport_hash']as$k)$header[$k]=$r[$k];$creation=$this->rows('SELECT id FROM '.$this->prefix.'issuers_audit WHERE issuer_id=? AND actor_id=? AND subject_id=? AND event=? AND metadata_json=? FOR UPDATE',[$i,$r['actor_id'],$id,'company_invoice_schedule_created',self::encode($header)]);if(count($creation)!==1)throw new RuntimeException('issuer_invoice_recurring_corrupt');
+        $header=[];foreach(['request_key','input_hash','payload_hash','context_hash','config_hash','transport_hash']as$k)$header[$k]=$r[$k];$mode=(new CompanyInvoiceRecurringModes($this->db,$this->prefix))->row($r);if($mode)$header['mode_hash']=$mode['mode_hash'];$creation=$this->rows('SELECT id FROM '.$this->prefix.'issuers_audit WHERE issuer_id=? AND actor_id=? AND subject_id=? AND event=? AND metadata_json=? FOR UPDATE',[$i,$r['actor_id'],$id,'company_invoice_schedule_created',self::encode($header)]);if(count($creation)!==1)throw new RuntimeException('issuer_invoice_recurring_corrupt');
         $next=CompanyInvoiceRecurringDates::occurrence($payload['date'],$config,(int)$r['completed_cycles']);if($next!==$r['next_date']&&!($next===null&&$r['state']==='completed'&&$r['last_error']==='calendar_limit'))throw new RuntimeException('issuer_invoice_recurring_corrupt');return$r;
     }
     protected function occurrence(int$i,int$id,string$date):?array{return$this->rows('SELECT * FROM '.$this->prefix.'company_invoice_schedule_runs WHERE issuer_id=? AND schedule_id=? AND run_date=? FOR UPDATE',[$i,$id,$date])[0]??null;}
@@ -35,6 +35,7 @@ abstract class CompanyInvoiceRecurringStorage extends CompanySalesBase
     protected function validate(int$i,int$a,array$r,?array$run=null,bool$processing=true):array
     {
         $this->access($i,$a);if((int)$r['actor_id']!==$a||($processing&&!in_array($r['state'],['active','processing'],true)))throw new DomainException('company_invoice_recurring_paused');$config=$this->decode($r['config_json']);$payload=$this->decode($r['payload_json']);$date=$run['run_date']??$r['next_date'];$current=$this->payloadFor($r,$date);
+        $modes=new CompanyInvoiceRecurringModes($this->db,$this->prefix);$mode=$modes->row($r);if($run!==null&&!$modes->principalPaid($i,$a,$r,$mode))throw new DomainException('company_invoice_recurring_principal_unpaid');
         $this->assertOriginOrReceipt($i,$a,$current,$r['context_hash'],$this->decode($r['context_json']),self::runKey($i,(int)$r['id'],$date));
         if($config['send']){require_once __DIR__.'/CompanyInvoiceRecurringDeliverySource.php';CompanyInvoiceRecurringDeliverySource::assertFrozenInOwned($this->db,$this->prefix,$i,$a,$payload,$this->decode($r['transport_json']));}return$config;
     }
@@ -46,3 +47,5 @@ abstract class CompanyInvoiceRecurringStorage extends CompanySalesBase
         $json=self::encode($metadata);$this->insert('issuers_audit',['issuer_id'=>$i,'actor_id'=>$a,'subject_id'=>$id,'event'=>$event,'metadata_json'=>$json,'created_at'=>gmdate('Y-m-d H:i:s')]);$audit=(int)$this->db->insert_id();if(!$this->rows('SELECT id FROM '.$this->prefix.'issuers_audit WHERE id=? AND issuer_id=? AND actor_id=? AND subject_id=? AND event=? AND metadata_json=?',[$audit,$i,$a,$id,$event,$json]))throw new RuntimeException('issuer_invoice_recurring_unconfirmed');
     }
 }
+
+require_once __DIR__.'/CompanyInvoiceRecurringModes.php';

@@ -10,7 +10,8 @@ suffix="$$"
 legacy="argws-crm-legacy-$suffix"
 upgrade="argws-crm-upgrade-$suffix"
 work="$(mktemp -d)"
-cleanup() { docker rm -f "$legacy" "$upgrade" >/dev/null 2>&1 || true; rm -rf "$work"; }
+provider_proxy_pid=
+cleanup() { if [ -n "$provider_proxy_pid" ]; then kill "$provider_proxy_pid" 2>/dev/null || true; wait "$provider_proxy_pid" 2>/dev/null || true; fi; docker rm -f "$legacy" "$upgrade" >/dev/null 2>&1 || true; rm -rf "$work"; }
 trap cleanup EXIT
 mysql_root() { docker exec -i -e MYSQL_PWD="$ISSUER_SMOKE_ROOT_PASSWORD" "$ISSUER_SMOKE_DATABASE" mysql --user=root --batch --skip-column-names "$@"; }
 mysql_root -e "CREATE DATABASE argws_legacy_ci; CREATE DATABASE argws_upgrade_ci; GRANT ALL ON argws_legacy_ci.* TO '$ISSUER_SMOKE_DB_USER'@'%'; GRANT ALL ON argws_upgrade_ci.* TO '$ISSUER_SMOKE_DB_USER'@'%';"
@@ -142,8 +143,32 @@ node tests/issuers_browser_smoke.cjs
 # Import the genuinely older bundled schema, not only an older migration marker.
 mysql_root argws_upgrade_ci < install/database.sql
 mysql_root -e "INSERT INTO argws_upgrade_ci.tblstaff (staffid,firstname,lastname,email,password,admin,active,datecreated) SELECT staffid,firstname,lastname,email,password,admin,active,datecreated FROM argws_legacy_ci.tblstaff WHERE staffid=17;"
+# A local CONNECT sink preserves real cURL TLS verification for synthetic refund review.
+# Python/OpenSSL run on the CI host; the application image does not need Python.
+provider_gateway="$(docker network inspect "$ISSUER_SMOKE_NETWORK" --format '{{(index .IPAM.Config 0).Gateway}}')"
+provider_state_command="$(python3 - "$upgrade" <<'PY_STATE'
+import json,sys
+print(json.dumps(['docker','exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',sys.argv[1],'php','/app/tests/companies/post_refund_manual_cycle_tls_state.php']))
+PY_STATE
+)"
+python3 tests/companies/finance440_tls_proxy.py --bind "$provider_gateway" \
+    --cert-dir "$work/provider-ca" --ready-file "$work/provider-ready.json" \
+    --events "$work/provider-events.jsonl" --state-command "$provider_state_command" \
+    >"$work/provider-proxy.log" 2>&1 &
+provider_proxy_pid=$!
+for _ in $(seq 1 200); do
+    [ -s "$work/provider-ready.json" ] && break
+    if ! kill -0 "$provider_proxy_pid" 2>/dev/null; then cat "$work/provider-proxy.log" >&2; exit 1; fi
+    sleep 0.1
+done
+[ -s "$work/provider-ready.json" ]
+provider_proxy_url="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["proxy"])' "$work/provider-ready.json")"
 docker create --name "$upgrade" --network "$ISSUER_SMOKE_NETWORK" -p 127.0.0.1::8080 \
-    "$ISSUER_SMOKE_IMAGE" php -S 0.0.0.0:8080 -t /app /tmp/issuer-router.php >/dev/null
+    -e HTTPS_PROXY="$provider_proxy_url" -e https_proxy="$provider_proxy_url" \
+    -e NO_PROXY=127.0.0.1,localhost -e no_proxy=127.0.0.1,localhost \
+    "$ISSUER_SMOKE_IMAGE" php -d curl.cainfo=/tmp/finance-provider-ca.pem \
+    -S 0.0.0.0:8080 -t /app /tmp/issuer-router.php >/dev/null
+docker cp "$work/provider-ca/ca.pem" "$upgrade:/tmp/finance-provider-ca.pem"
 docker cp "$legacy:/var/lib/argws-crm/config/app-config.php" "$work/app-config.php"
 sed -i 's/argws_legacy_ci/argws_upgrade_ci/g' "$work/app-config.php"
 # This trusted callback is server test infrastructure, never a company secret or request-derived URL.
@@ -156,6 +181,10 @@ printf '\n%s\n' "define('COMPANY_CONNECT_API_ENDPOINTS', ['synthetic'=>['label'=
 docker cp "$work/app-config.php" "$upgrade:/var/lib/argws-crm/config/app-config.php"
 docker cp "$work/router.php" "$upgrade:/tmp/issuer-router.php"
 docker start "$upgrade" >/dev/null
+docker exec "$upgrade" mkdir -p /app/tests/companies
+for fixture in post_refund_manual_cycle_tls_state.php post_refund_manual_cycle_synthetic_protocol.php post_refund_manual_cycle_tls_probe.php; do
+    docker cp "tests/companies/$fixture" "$upgrade:/app/tests/companies/$fixture"
+done
 upgrade_port="$(docker port "$upgrade" 8080/tcp | awk -F: 'END {print $NF}')"
 upgrade_url="http://127.0.0.1:$upgrade_port"
 sed -i "s|$url/|$upgrade_url/|g" "$work/app-config.php"
@@ -444,3 +473,63 @@ ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/banco_brasil_resume_439_amend_browser.cjs
+
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+node tests/companies/invoice_drafts_browser.cjs
+
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+node tests/companies/invoice_recurring_modes_browser.cjs
+
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+node tests/companies/project_copies_http_browser.cjs
+
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+node tests/companies/task_copies_http_browser.cjs
+
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+node tests/settings_ticket_connect_browser.cjs
+
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+node tests/banco_brasil_api_window_discount_browser.cjs
+
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+node tests/companies/post_refund_manual_cycle_browser.cjs
+
+# Untrusted CA must fail in the production client; the generated CA enables the same verified client.
+provider_before_gets="$(python3 -c 'import json,sys;print(sum(json.loads(x).get("kind")=="synthetic_get" for x in open(sys.argv[1])))' "$work/provider-events.jsonl")"
+provider_probe_status=0
+docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$upgrade" php -d curl.cainfo= \
+    /app/tests/companies/post_refund_manual_cycle_tls_probe.php >"$work/untrusted-provider-probe.log" 2>&1 || provider_probe_status=$?
+[ "$provider_probe_status" = 1 ]
+python3 - "$work/provider-events.jsonl" "$provider_before_gets" <<'PY_UNTRUSTED'
+import json,sys
+assert sum(json.loads(x).get('kind')=='synthetic_get' for x in open(sys.argv[1]))==int(sys.argv[2]),'untrusted TLS reached a provider GET'
+PY_UNTRUSTED
+docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$upgrade" php \
+    -d curl.cainfo=/tmp/finance-provider-ca.pem /app/tests/companies/post_refund_manual_cycle_tls_probe.php
+python3 - "$work/provider-events.jsonl" <<'PY_TLS'
+import json,sys
+rows=[json.loads(x) for x in open(sys.argv[1])]
+gets=[x for x in rows if x.get('kind')=='synthetic_get']
+assert {x['letter'] for x in gets if '/payments/' in x['path']}=={'a','b'}
+assert all(x['tls_version'] in ('TLSv1.2','TLSv1.3') for x in gets)
+assert any(x.get('kind')=='tls_rejected' for x in rows)
+print('Real HTTP refund review used verified local provider TLS A/B; untrusted CA rejected before GET. No forwarding.')
+PY_TLS
+provider_evidence="${ISSUERS_BROWSER_ARTIFACTS:-/tmp/issuer-browser-evidence}"
+mkdir -p "$provider_evidence"
+cp "$work/provider-events.jsonl" "$provider_evidence/refund-provider-local-tls.jsonl"

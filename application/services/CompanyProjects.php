@@ -21,10 +21,23 @@ final class CompanyProjects extends CompanyProjectsStorage
     {
         $r=$this->rows('SELECT * FROM '.$this->p.'company_projects WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$id])[0]??null;if(!$r)throw new DomainException('company_project_access_denied');return $r;
     }
+    private function insertCreatedInOwned(int $issuer,int $actor,array $data):int
+    {
+        $this->references($issuer,$actor,$data);$now=date('Y-m-d H:i:s');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_projects(issuer_id,client_id,responsible_id,name,description,start_date,due_date,status,revision,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,1,?,?)',[$issuer,$data['client_id'],$data['responsible_id'],$data['name'],$data['description'],$data['start_date'],$data['due_date'],$data['status'],$now,$now]);$id=(int)$this->db->insert_id();$row=$this->row($issuer,$id);foreach($data as $f=>$v)if((string)$row[$f]!== (string)$v)throw new RuntimeException('issuer_project_write_unconfirmed');return $id;
+    }
     public function create($issuer,$actor,array $input,string $key):int
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input);if($data['status']!=='active')throw new DomainException('company_project_invalid_input');
-        return $this->operation($issuer,$actor,'create',$key,'project_created',$data,function()use($issuer,$actor,$data):int{$this->references($issuer,$actor,$data);$now=date('Y-m-d H:i:s');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_projects(issuer_id,client_id,responsible_id,name,description,start_date,due_date,status,revision,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,1,?,?)',[$issuer,$data['client_id'],$data['responsible_id'],$data['name'],$data['description'],$data['start_date'],$data['due_date'],$data['status'],$now,$now]);$id=(int)$this->db->insert_id();$row=$this->row($issuer,$id);foreach($data as $f=>$v)if((string)$row[$f]!== (string)$v)throw new RuntimeException('issuer_project_write_unconfirmed');return $id;});
+        return $this->operation($issuer,$actor,'create',$key,'project_created',$data,fn():int=>$this->insertCreatedInOwned($issuer,$actor,$data));
+    }
+    /** Canonical copy compositor; cannot join an arbitrary caller transaction. */
+    public function createCopyInOwnedTransaction($issuer,$actor,array $input):int
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input);if($data['status']!=='active')throw new DomainException('company_project_invalid_input');
+        CompanyProjectsSchema::assertValid($this->db,$this->p);CompanyProjectExtrasSchema::assertValid($this->db,$this->p);CompanyStandaloneTasksSchema::assertValid($this->db,$this->p);
+        IssuerTransaction::assertOwned($this->db,$this->p,['company_project_copy_requests','company_project_copy_snapshots']);
+        IssuerTransaction::assertOwned($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),$this->apiTables()));
+        return ($this->guardedWork(function()use($issuer,$actor,$data):int{(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'create');$id=$this->insertCreatedInOwned($issuer,$actor,$data);$this->audit($issuer,$actor,$id,'company_project_created');$this->authorize($issuer,$actor,'create');return $id;}))();
     }
     public function update($issuer,$actor,$id,$revision,array $input,string $key):int
     {

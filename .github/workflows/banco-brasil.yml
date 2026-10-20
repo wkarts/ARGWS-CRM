@@ -26,7 +26,9 @@ jobs:
       - run: php tests/banco_brasil_layouts.php
       - run: php tests/banco_brasil_layout_migration.php
       - run: php tests/banco_brasil_module_version.php
-      - run: php tests/banco_brasil_resume_439_contracts.php
+      # 439 fixtures keep their exact119 guards; version-specific440 entrypoints retain all scenarios and require120.
+      - run: php tests/banco_brasil_resume_440_contracts.php
+      - run: php tests/banco_brasil_api_window_discount_contract.php
       - run: php tests/banco_brasil_api_client.php
       - run: php tests/banco_brasil_api_interest.php
       - run: php tests/banco_brasil_api_movements.php
@@ -77,11 +79,16 @@ jobs:
           php tests/banco_brasil_api16_mutation_fence_concurrency.php
           php tests/banco_brasil_api_origin_mutation_fence_concurrency.php
           php tests/banco_brasil_external_reversal_concurrency.php
-          php tests/banco_brasil_resume_439_contracts.php
-          php tests/banco_brasil_resume_439_mysql.php
-          php tests/banco_brasil_resume_439_concurrency.php
+          # Keep all published436 commands above. Exact119 entrypoints are preserved on disk;440 variants require120.
+          php tests/banco_brasil_resume_440_contracts.php
+          php tests/banco_brasil_resume_440_mysql.php
+          php tests/banco_brasil_resume_440_concurrency.php
           php tests/banco_brasil_resume_439_api16_reversal.php
-          php tests/banco_brasil_resume_439_controller.php
+          php tests/banco_brasil_resume_440_controller.php
+          php tests/banco_brasil_api_window_discount_contract.php
+          php tests/banco_brasil_api_window_discount_mysql.php
+          php tests/banco_brasil_api_window_discount_controller.php
+          php tests/banco_brasil_api_window_discount_concurrency.php
         env:
           MYSQL_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
           MYSQL_USER: root
@@ -155,8 +162,13 @@ jobs:
           php tests/banco_brasil_amendment_concurrency.php
           php tests/banco_brasil_components_concurrency.php
           php tests/banco_brasil_external_reversal_concurrency.php
-          php tests/banco_brasil_resume_439_contracts.php
-          php tests/banco_brasil_resume_439_mysql.php
-          php tests/banco_brasil_resume_439_concurrency.php
+          # Keep all published436 commands above. Exact119 entrypoints are preserved on disk;440 variants require120.
+          php tests/banco_brasil_resume_440_contracts.php
+          php tests/banco_brasil_resume_440_mysql.php
+          php tests/banco_brasil_resume_440_concurrency.php
           php tests/banco_brasil_resume_439_api16_reversal.php
-          php tests/banco_brasil_resume_439_controller.php
+          php tests/banco_brasil_resume_440_controller.php
+          php tests/banco_brasil_api_window_discount_contract.php
+          php tests/banco_brasil_api_window_discount_mysql.php
+          php tests/banco_brasil_api_window_discount_controller.php
+          php tests/banco_brasil_api_window_discount_concurrency.php

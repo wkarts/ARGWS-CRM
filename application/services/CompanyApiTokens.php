@@ -6,7 +6,7 @@ require_once __DIR__.'/CompanyApiSchema.php';require_once __DIR__.'/CompanyRepor
 /** Independent company API credentials. Never consumes a legacy module API token. */
 final class CompanyApiTokens
 {
-    public const SCOPES=['invoices:read'=>[['invoices','view']],'invoices:pdf'=>[['invoices','view']],'invoices:create'=>[['invoices','view'],['invoices','create'],['customers','view']],'reports:read'=>CompanyReports::CAPABILITIES,'projects:read'=>[['projects','view']],'projects:write'=>[['projects','view'],['projects','create'],['projects','edit'],['customers','view']],'tasks:read'=>[['tasks','view']],'tasks:write'=>[['tasks','view'],['tasks','create'],['tasks','edit']],'contracts:read'=>[['contracts','view']],'contracts:write'=>[['contracts','view'],['contracts','create'],['contracts','edit'],['customers','view']],'tickets:read'=>[['tickets','view']],'tickets:write'=>[['tickets','view'],['tickets','create'],['tickets','edit'],['customers','view']],
+    public const SCOPES=['projects:copies:read'=>[['projects','view'],['projects','create'],['customers','view']],'projects:copies:write'=>[['projects','view'],['projects','create'],['customers','view']],'invoices:read'=>[['invoices','view']],'invoices:pdf'=>[['invoices','view']],'invoices:create'=>[['invoices','view'],['invoices','create'],['customers','view']],'reports:read'=>CompanyReports::CAPABILITIES,'projects:read'=>[['projects','view']],'projects:write'=>[['projects','view'],['projects','create'],['projects','edit'],['customers','view']],'tasks:read'=>[['tasks','view']],'tasks:write'=>[['tasks','view'],['tasks','create'],['tasks','edit']],'contracts:read'=>[['contracts','view']],'contracts:write'=>[['contracts','view'],['contracts','create'],['contracts','edit'],['customers','view']],'tickets:read'=>[['tickets','view']],'tickets:write'=>[['tickets','view'],['tickets','create'],['tickets','edit'],['customers','view']],
         'projects:files:read'=>[['projects','view']],
         'projects:files:write'=>[['projects','view'],['projects','edit']],
         'tasks:files:read'=>[['tasks','view'],['projects','view']],
@@ -23,7 +23,8 @@ final class CompanyApiTokens
         'projects:follow:write'=>[['projects','view']],
         'tasks:follow:read'=>[['tasks','view'],['projects','view']],
         'tasks:follow:write'=>[['tasks','view'],['projects','view']]
-        ,'payments:read'=>[['invoices','view']],
+        ,'drafts:read'=>[['invoices','view'],['customers','view']],'drafts:create'=>[['invoices','view'],['invoices','create'],['customers','view']],'drafts:edit'=>[['invoices','view'],['invoices','edit'],['customers','view']],'drafts:cancel'=>[['invoices','view'],['invoices','delete'],['customers','view']],'drafts:issue'=>[['invoices','view'],['invoices','create'],['customers','view']],
+        'payments:read'=>[['invoices','view']],
         'payments:create'=>[['invoices','view'],['payments','create']],
         'payments:reverse'=>[['invoices','view'],['payments','delete']],
         'credits:read'=>[['credit_notes','view']],

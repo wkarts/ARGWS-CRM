@@ -16,9 +16,9 @@ trait ApiAmendments
     }
     private function authorizeOperation(int $issuer,int $actor,string $operation):void
     {
-        if(in_array($operation,['amend_due','amend_abat','amend_addr','amend_disc'],true)){ $module=$this->rows("SELECT installed_version FROM {$this->prefix}modules WHERE module_name='banco_brasil' FOR UPDATE")[0]??[];if(($module['installed_version']??null)!==ModuleRelease::VERSION)throw new \DomainException('bb_api_access_denied'); }
-        $this->authorize($issuer,$actor,$operation==='amend_disc'?'api_amend_discount':($operation==='amend_addr'?'api_amend_address':($operation==='amend_abat'?'api_amend_abatement':($operation==='amend_due'?'api_amend':($operation==='movements'?'api_query':'api_'.$operation)))),true);
-        if(in_array($operation,['amend_due','amend_abat','amend_addr','amend_disc'],true)&&!(new \IssuerResourceAccess($this->db,$this->prefix))->can($issuer,$actor,'invoices','edit'))throw new \DomainException('bb_api_access_denied');
+        if(in_array($operation,['amend_due','amend_abat','amend_addr','amend_disc','amend_win','clear_disc','add_disc'],true)){ $module=$this->rows("SELECT installed_version FROM {$this->prefix}modules WHERE module_name='banco_brasil' FOR UPDATE")[0]??[];if(($module['installed_version']??null)!==ModuleRelease::VERSION)throw new \DomainException('bb_api_access_denied'); }
+        $this->authorize($issuer,$actor,in_array($operation,['amend_win','clear_disc','add_disc'],true)?['amend_win'=>'api_amend_window','clear_disc'=>'api_cancel_discount','add_disc'=>'api_assign_discount'][$operation]:($operation==='amend_disc'?'api_amend_discount':($operation==='amend_addr'?'api_amend_address':($operation==='amend_abat'?'api_amend_abatement':($operation==='amend_due'?'api_amend':($operation==='movements'?'api_query':'api_'.$operation))))),true);
+        if(in_array($operation,['amend_due','amend_abat','amend_addr','amend_disc','amend_win','clear_disc','add_disc'],true)&&!(new \IssuerResourceAccess($this->db,$this->prefix))->can($issuer,$actor,'invoices','edit'))throw new \DomainException('bb_api_access_denied');
     }
     public static function amendmentPayload(string $agreement,string $due):string
     {
@@ -30,7 +30,7 @@ trait ApiAmendments
     }
     private function prepareAmendment(int $issuer,int $actor,int $originId,string $operation,?array $amendment,array $snapshot,array $origin,int $retryId):void
     {
-        if(!in_array($operation,['query','cancel','amend_due','amend_abat','amend_addr','amend_disc','movements'],true))return;
+        if(!in_array($operation,['query','cancel','amend_due','amend_abat','amend_addr','amend_disc','amend_win','clear_disc','add_disc','movements'],true))return;
         // A stale pre-send lease may be revoked: its worker must still pass the confirmed sending marker.
         \IssuerStorage::query($this->db,"UPDATE {$this->prefix}bb_api_operations SET status='auth_failed',failure_category='authentication_lease_expired' WHERE origin_id=? AND status='authenticating' AND locked_until<=? AND id<>?",[$originId,gmdate('Y-m-d H:i:s'),$retryId]);
         // An expired sending claim remains uncertain; never steal a possibly submitted write.
@@ -46,7 +46,7 @@ trait ApiAmendments
         if(!in_array($operation,['query','movements'],true)&&$latest&&!in_array($latest['status'],['confirmed','rejected','auth_failed'],true))throw new \DomainException('bb_api_amendment_requires_query');
         $this->prepareAbatement($issuer,$actor,$originId,$operation,$amendment,$snapshot,$origin);
         $this->prepareAddress($issuer,$actor,$originId,$operation,$amendment,$snapshot,$origin);
-        $this->prepareDiscount($issuer,$actor,$originId,$operation,$amendment,$snapshot,$origin);
+        $this->prepareDiscount($issuer,$actor,$originId,$operation,$amendment,$snapshot,$origin);$this->prepareReceiptWindow($issuer,$actor,$originId,$operation,$amendment,$snapshot,$origin);
         if($operation!=='amend_due')return;
         (new \CompanyInvoiceBalance($this->db,$this->prefix))->inOwned($issuer,$actor,(int)$origin['invoice_id']);
         foreach($this->rows("SELECT projection_json FROM {$this->prefix}bb_api_notifications WHERE origin_id=? FOR UPDATE",[$originId]) as $notification){$event=json_decode($notification['projection_json'],true,32,JSON_THROW_ON_ERROR);if(($event['codigoEstadoBaixaOperacional']??null)==='10')throw new \DomainException('bb_api_amendment_adverse_history');}
@@ -57,7 +57,7 @@ trait ApiAmendments
         if($this->rows("SELECT origin_id FROM {$this->prefix}bb_api_receipts WHERE origin_id=? FOR UPDATE",[$originId]))throw new \DomainException('bb_api_amendment_financial_history');
         foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$field])if($this->rows("SELECT amount FROM {$this->prefix}{$table} WHERE {$field}=? FOR UPDATE",[$origin['invoice_id']]))throw new \DomainException('bb_api_amendment_financial_history');
         $today=(new \DateTimeImmutable('now',new \DateTimeZone('America/Sao_Paulo')))->format('Y-m-d');$due=$amendment['due_date'];
-        if(isset($result['bank_discount_until'])){Fields::date($result['bank_discount_until']);if($due<$result['bank_discount_until'])throw new \DomainException('bb_api_discount_due_conflict');}else{$offer=$this->rows("SELECT payload_json FROM {$this->prefix}bb_api_origins WHERE origin_id=?",[$originId])[0]??[];if(isset($offer['payload_json'])){$offer=ApiClient::decodeExact($offer['payload_json'])['desconto']??[];if(in_array($offer['tipo']??null,['1','2'],true)){$until=\DateTimeImmutable::createFromFormat('!d.m.Y',$offer['dataExpiracao']??'');if(!$until||$until->format('d.m.Y')!==($offer['dataExpiracao']??null)||$due<$until->format('Y-m-d'))throw new \DomainException('bb_api_discount_due_conflict');}}}
+        if(isset($result['bank_discount_until'])){Fields::date($result['bank_discount_until']);if($due<$result['bank_discount_until'])throw new \DomainException('bb_api_discount_due_conflict');}elseif(($result['bank_discount_absent_confirmed']??null)!=='1'){$offer=$this->rows("SELECT payload_json FROM {$this->prefix}bb_api_origins WHERE origin_id=?",[$originId])[0]??[];if(isset($offer['payload_json'])){$offer=ApiClient::decodeExact($offer['payload_json'])['desconto']??[];if(in_array($offer['tipo']??null,['1','2'],true)){$until=\DateTimeImmutable::createFromFormat('!d.m.Y',$offer['dataExpiracao']??'');if(!$until||$until->format('d.m.Y')!==($offer['dataExpiracao']??null)||$due<$until->format('Y-m-d'))throw new \DomainException('bb_api_discount_due_conflict');}}}
         $old=$result['bank_due_date']??$snapshot['invoice']['duedate'];
         if($due===$old||$due<$today||$due<$snapshot['invoice']['date']||(new \DateTimeImmutable($snapshot['invoice']['date']))->diff(new \DateTimeImmutable($due))->days>2500)throw new \DomainException('bb_api_amendment_date_invalid');
     }

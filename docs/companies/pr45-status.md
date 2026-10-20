@@ -1,5 +1,9 @@
 # Matriz objetiva da PR45
 
+## Composição440 — fonte validada, publicação conferida naPR
+
+Core4.4.0/440, BB1.2.0/120 e Asaas1.5.3/153. Os11schemas novos, executor nativo/tracking/replay e todosfluxosHTTP440 foram provados no fonte congelado. Consulte [recuperação440](pr45-recovery-440.md) e [validaçãoHTTP440](pr45-validation-440.md). O SHA439 publicado é b9d7a2f74881e7f0faf01aa4b9f8e0365309a148; CI de cada SHA é registrado separadamente. A fila técnica restante continua aberta e não é reduzida à homologação externa.
+
 ## Retomada de20/10/2026 — composição439 recuperada e validada localmente
 
 Remoto inicial confirmado `e3ffef4a66231562d232d0e6b545c49898d0f548`, núcleo4.3.6/436, BB1.1.6/116 e Asaas1.5.2/152. O CI desse SHA terminou com16workflows distintos aprovados; as falhas históricas abaixo não são a falha atual. A retomada não refez esse reparo deCI.

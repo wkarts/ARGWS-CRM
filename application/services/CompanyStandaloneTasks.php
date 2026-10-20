@@ -38,9 +38,23 @@ final class CompanyStandaloneTasks extends CompanyProjectsStorage
     {
         $row=$this->rows('SELECT * FROM '.$this->p.'company_standalone_tasks WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$id])[0]??null;if(!$row)throw new DomainException('company_project_access_denied');return $row;
     }
+    private function insertCreatedInOwned(int $issuer,int $actor,array $data):int
+    {
+        $this->references($issuer,$data);$now=date('Y-m-d H:i:s');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_standalone_tasks(issuer_id,assignee_id,name,description,due_date,status,checklist_json,revision,created_at,updated_at) VALUES(?,?,?,?,?,?,?,1,?,?)',[$issuer,$data['assignee_id'],$data['name'],$data['description'],$data['due_date'],$data['status'],$data['checklist_json'],$now,$now]);$id=(int)$this->db->insert_id();$row=$this->row($issuer,$id);foreach($data as $f=>$v)if((string)$row[$f]!== (string)$v)throw new RuntimeException('issuer_project_write_unconfirmed');return $id;
+    }
     public function create($issuer,$actor,array $input,string $key):int
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input);if($data['status']!=='todo')throw new DomainException('company_project_invalid_input');return $this->operation($issuer,$actor,'create',$key,'standalone_task_created',$data,function()use($issuer,$data):int{$this->references($issuer,$data);$now=date('Y-m-d H:i:s');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_standalone_tasks(issuer_id,assignee_id,name,description,due_date,status,checklist_json,revision,created_at,updated_at) VALUES(?,?,?,?,?,?,?,1,?,?)',[$issuer,$data['assignee_id'],$data['name'],$data['description'],$data['due_date'],$data['status'],$data['checklist_json'],$now,$now]);$id=(int)$this->db->insert_id();$row=$this->row($issuer,$id);foreach($data as $f=>$v)if((string)$row[$f]!== (string)$v)throw new RuntimeException('issuer_project_write_unconfirmed');return $id;});
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input);if($data['status']!=='todo')throw new DomainException('company_project_invalid_input');
+        return $this->operation($issuer,$actor,'create',$key,'standalone_task_created',$data,fn():int=>$this->insertCreatedInOwned($issuer,$actor,$data));
+    }
+    /** Canonical copy compositor; cannot join an arbitrary caller transaction. */
+    public function createReviewedTaskCopyInOwnedTransaction($issuer,$actor,array $input):int
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input);if($data['status']!=='todo')throw new DomainException('company_project_invalid_input');
+        CompanyProjectsSchema::assertValid($this->db,$this->p);CompanyProjectExtrasSchema::assertValid($this->db,$this->p);CompanyStandaloneTasksSchema::assertValid($this->db,$this->p);
+        IssuerTransaction::assertOwned($this->db,$this->p,['company_task_copy_requests']);
+        IssuerTransaction::assertOwned($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),$this->apiTables()));
+        return ($this->guardedWork(function()use($issuer,$actor,$data):int{(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'create');$id=$this->insertCreatedInOwned($issuer,$actor,$data);$this->audit($issuer,$actor,$id,'company_standalone_task_created');$this->authorize($issuer,$actor,'create');return $id;}))();
     }
     public function update($issuer,$actor,$id,$revision,array $input,string $key):int
     {

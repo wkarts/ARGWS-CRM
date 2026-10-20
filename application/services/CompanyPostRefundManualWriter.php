@@ -17,4 +17,12 @@ trait CompanyPostRefundManualWriter
             $source->applied($this->db,$p,$i,$a,$id);return$id;
         });
     }
+    public function reverseCompanyManualAfterAsaasFullRefund($issuer,$actor,\CompanyPostRefundManualReversalSource $source):string
+    {
+        require_once __DIR__.'/CompanyPostRefundManualReversalSource.php';
+        if(get_class($source)!=='CompanyPostRefundManualReversalSource')throw new \DomainException('company_post_refund_manual_reversal_source_denied');
+        $source->assertStorage($this->db,db_prefix());
+        return $this->moveCompanyCredit($issuer,$actor,'manual_reverse',$source->input(),$source->requestKey(),null,$source);
+    }
+
 }

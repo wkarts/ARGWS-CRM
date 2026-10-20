@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-require_once __DIR__.'/CompanyApiTokens.php';require_once __DIR__.'/CompanyProjectExtras.php';require_once __DIR__.'/CompanyOperationFiles.php';
+require_once __DIR__.'/CompanyApiTokens.php';require_once __DIR__.'/CompanyProjectCopies.php';require_once __DIR__.'/CompanyProjectExtras.php';require_once __DIR__.'/CompanyOperationFiles.php';
 /** Explicit native subresource adapters. Each operation retains its canonical reader/writer transaction. */
 final class CompanyOperationsSubresourceApi
 {
@@ -12,6 +12,7 @@ final class CompanyOperationsSubresourceApi
   'ticket_files'=>['class'=>CompanyOperationFiles::class,'kind'=>'ticket','scope'=>'tickets:files'],
  ];
  public const EXTRAS=[
+  'project_copies'=>['class'=>CompanyProjectCopies::class,'kind'=>'project','part'=>'copy','scope'=>'projects:copies'],
   'project_milestones'=>['kind'=>'project','part'=>'milestones','scope'=>'projects:milestones'],
   'task_dependencies'=>['kind'=>'task','part'=>'dependencies','scope'=>'tasks:dependencies'],
   'project_follow'=>['kind'=>'project','part'=>'following','scope'=>'projects:follow'],
@@ -31,15 +32,20 @@ final class CompanyOperationsSubresourceApi
  public function read(string $secret,string $endpoint,$id):array
  {
   $id=IssuerPolicy::id($id);[$who,$reader,$spec]=$this->consumer($secret,$endpoint,'read','list');$issuer=$who['issuer_id'];$actor=$who['actor_id'];
-  if(isset(self::FILES[$endpoint]))$value=$reader instanceof CompanyProjectExtras?$reader->files($issuer,$actor,$spec['kind'],$id):$reader->catalog($issuer,$actor,$spec['kind'],$id);else $value=$reader->state($issuer,$actor,$spec['kind'],$id,$spec['part']);
+  if($reader instanceof CompanyProjectCopies)$value=$reader->preview($issuer,$actor,$id);else if(isset(self::FILES[$endpoint]))$value=$reader instanceof CompanyProjectExtras?$reader->files($issuer,$actor,$spec['kind'],$id):$reader->catalog($issuer,$actor,$spec['kind'],$id);else $value=$reader->state($issuer,$actor,$spec['kind'],$id,$spec['part']);
   return ['issuer_id'=>$issuer,'endpoint'=>$endpoint,'resource_id'=>$id]+$value;
  }
  public function file(string $secret,string $endpoint,$id,string $file):array
  {
   $id=IssuerPolicy::id($id);if(!isset(self::FILES[$endpoint])||!preg_match('/^[a-f0-9]{64}$/D',$file))throw new DomainException('company_api_invalid_input');[$who,$reader,$spec]=$this->consumer($secret,$endpoint,'read','download');$value=$reader->file($who['issuer_id'],$who['actor_id'],$spec['kind'],$id,$file);return ['issuer_id'=>$who['issuer_id'],'endpoint'=>$endpoint,'resource_id'=>$id]+$value;
  }
+ private function copyProject(string $secret,$source,array $body,string $idempotency):array
+ {
+  $source=IssuerPolicy::id($source);if(!preg_match('/^[a-f0-9]{64}$/D',$idempotency)||array_diff(array_keys($body),['action','input'])||count($body)!==2||($body['action']??null)!=='copy_reviewed'||!is_array($body['input']??null))throw new DomainException('company_api_invalid_input');$who=$this->tokens->resolve($secret,'projects:copies:write');$key=hash('sha256','operational-project-copy|'.$who['issuer_id'].'|'.$who['actor_id'].'|'.$source.'|'.$idempotency);[$who,$writer]=$this->consumer($secret,'project_copies','write','copy_reviewed',$key);$result=$writer->create($who['issuer_id'],$who['actor_id'],$source,$body['input'],$key);return ['issuer_id'=>$who['issuer_id'],'endpoint'=>'project_copies','resource_id'=>$source]+$result;
+ }
  public function write(string $secret,string $endpoint,$id,array $body,string $idempotency):array
  {
+  if($endpoint==='project_copies')return $this->copyProject($secret,$id,$body,$idempotency);
   $id=IssuerPolicy::id($id);if(!preg_match('/^[a-f0-9]{64}$/D',$idempotency)||array_diff(array_keys($body),['action','revision','input'])||!is_string($body['action']??null)||!is_array($body['input']??null))throw new DomainException('company_api_invalid_input');$revision=IssuerPolicy::id($body['revision']??null);$action=$body['action'];$input=$body['input'];$spec=self::spec($endpoint);
   $who=$this->tokens->resolve($secret,$spec['scope'].':write');$key=hash('sha256','operational-subresources|'.$who['issuer_id'].'|'.$who['actor_id'].'|'.$endpoint.'|'.$action.'|'.$idempotency);[$who,$writer,$spec]=$this->consumer($secret,$endpoint,'write',$action,$key);$issuer=$who['issuer_id'];$actor=$who['actor_id'];
   if(isset(self::FILES[$endpoint])){

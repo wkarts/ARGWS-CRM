@@ -27,9 +27,9 @@ essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE modul
 essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='116','actual116 additive schema retries through native runner');
 essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native116 replay is stable');
 essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'bb_api_cnab_contracts')->row()->n===0,'native116 never backfills a contract for an existing origin');
-// The recovered119 runtime keeps the historical116 checks above, then advances
+// The current120 runtime keeps the historical116 checks above, then advances
 // through every new native step before any current operational service is used.
-foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119'] as $nativeVersion439=>$nativeStep439){
+foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119','1.2.0'=>'120'] as $nativeVersion439=>$nativeStep439){
     $GLOBALS['CI']->app_modules=new class($nativeVersion439){public function __construct(private string $version){}function get($name){return ['headers'=>['version'=>$this->version]];}};
     $previousVersion439=$db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version;
     $db->failVersion=$nativeVersion439;

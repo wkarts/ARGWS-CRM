@@ -41,6 +41,24 @@ class Company_api extends CI_Controller
         }catch(DomainException|InvalidArgumentException $e){$reason=$e->getMessage();$status=$reason==='company_api_unauthenticated'?401:(str_ends_with($reason,'access_denied')||$reason==='company_api_scope_denied'||$reason==='issuer_document_scope_mismatch'?403:(str_ends_with($reason,'conflict')||in_array($reason,['company_payment_provider_review_required','company_credit_provider_review_required','company_credit_has_history','company_api_resource_changed'],true)?409:422));if($status===401)$this->output->set_header('WWW-Authenticate: Bearer');$code=match($status){401=>'unauthenticated',403=>'forbidden',409=>'conflict_or_financial_review',default=>'validation_or_balance_review'};$this->output->set_status_header($status)->set_output(json_encode(['error'=>$code]));}
         catch(Throwable $e){log_message('error','Company financial API request failed; credential, body and financial data omitted.');$this->output->set_status_header(503)->set_output('{"error":"temporarily_unavailable"}');}
     }
+    private function executeDraft(string $action,$id=''):void
+    {
+        $this->output->set_content_type('application/json','UTF-8')->set_header('Cache-Control: no-store')->set_header('X-Content-Type-Options: nosniff');
+        try{
+            if(!$this->ready)throw new RuntimeException('issuer_api_unavailable');$verb=$this->input->method(true);$allowed=$action==='drafts'?($id===''?['GET','HEAD','POST']:['GET','HEAD']):['POST'];
+            if(!in_array($verb,$allowed,true)){$this->output->set_header('Allow: '.implode(', ',$allowed))->set_status_header(405)->set_output('{"error":"method_not_allowed"}');return;}
+            $header=$this->input->get_request_header('Authorization',false);if(!is_string($header)||!preg_match('/^Bearer (crmco_[a-f0-9]{32}_[a-f0-9]{64})$/D',$header,$m))throw new DomainException('company_api_unauthenticated');require_once APPPATH.'services/CompanyInvoiceDraftsApi.php';$service=new CompanyInvoiceDraftsApi($this->db,db_prefix());
+            if($verb==='POST'){
+                $type=$this->input->get_request_header('Content-Type',false);if(!is_string($type)||!preg_match('/^application\/json(?:\s*;\s*charset=utf-8)?$/iD',$type))throw new DomainException('company_api_invalid_input');$raw=file_get_contents('php://input',false,null,0,262145);if(!is_string($raw)||strlen($raw)>262144)throw new DomainException('company_api_invalid_input');try{$object=json_decode($raw,false,32,JSON_THROW_ON_ERROR);if(!$object instanceof stdClass)throw new RuntimeException();$input=json_decode($raw,true,32,JSON_THROW_ON_ERROR);}catch(Throwable $bad){throw new DomainException('company_api_invalid_input');}$key=$this->input->get_request_header('Idempotency-Key',false);if(!is_string($key))throw new DomainException('company_api_invalid_input');$value=$service->write($m[1],$action==='drafts'?'create':substr($action,6),$id,$input,$key);
+            }else$value=$service->read($m[1],$id===''?null:$id,$this->input->get('after',false)??0);
+            $this->output->set_status_header(200)->set_output($verb==='HEAD'?'':json_encode(['api_version'=>1,'data'=>$value],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE));
+        }catch(DomainException|InvalidArgumentException $e){$reason=$e->getMessage();$status=$reason==='company_api_unauthenticated'?401:(str_ends_with($reason,'denied')||$reason==='company_api_scope_denied'?403:(str_ends_with($reason,'unavailable')?404:(str_contains($reason,'conflict')||str_contains($reason,'stale')||str_contains($reason,'origin_changed')?409:422)));if($status===401)$this->output->set_header('WWW-Authenticate: Bearer');$this->output->set_status_header($status)->set_output(json_encode(['error'=>match($status){401=>'unauthenticated',403=>'forbidden',404=>'not_found',409=>'conflict_or_review',default=>'validation_review'}]));}
+        catch(Throwable $e){log_message('error','Company draft API unconfirmed; credentials and document content omitted.');$this->output->set_status_header(503)->set_output('{"error":"temporarily_unavailable"}');}
+    }
+    public function drafts($id=''){$this->executeDraft('drafts',$id);}
+    public function draft_change($id=''){$this->executeDraft('draft_change',$id);}
+    public function draft_cancel($id=''){$this->executeDraft('draft_cancel',$id);}
+    public function draft_issue($id=''){$this->executeDraft('draft_issue',$id);}
     public function payments($id=''){ $this->executeFinancial('payments',$id); }
     public function payment_reverse($id=''){ $this->executeFinancial('payment_reverse',$id); }
     public function credits($id=''){ $this->executeFinancial('credits',$id); }

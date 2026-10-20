@@ -1,3 +1,26 @@
+# Estado da composição440 — Banco do Brasil
+
+O núcleo440/4.4.0 usa BB120/1.2.0. Este resumo substitui somente as indicações antigas de próximo trabalho abaixo; as capturas normativas anteriores permanecem históricas. Campos habilitados têm perfil/conta/convênio/carteira/variação explícitos e confirmação posterior por consulta, sem inferir recebimento financeiro.
+
+| Fluxo | Implementação vigente | Limite |
+|---|---|---|
+| Juros diários/mensais de emissão | Perfil explícito, validado | PATCHjuros/multa ainda depende do contrato inequívoco dos campos |
+| Abatimento, endereço operacional, primeiro desconto | BB117–119 | PATCH não altera a fatura nem confirma operação sem consulta |
+| Janela de desconto após vencimento, alteração/cancelamento/primeira atribuição | BB120, somenteperfil explicitamenteS | Não amplia automaticamente perfil legado nem calcula crédito de recebimento |
+| Reversão integral declarada API16 | BB119 | Declaração local não autentica estorno bancário |
+| Nominal, SeuNúmero, protesto/negativação | Adapter/outbox/estados e confirmação ainda incompletos | Não são apenas homologação |
+| API18/19 | Efeito financeiro parcial não implementado | Faltam ID estável por crédito e semântica individual/cumulativa de valorCreditoCedente |
+| CNAB240 | Remessa e conciliação assistida nominal/parcial/componentes existentes | Tarifas/IOF/outros e reversões parciais continuam exigindo adapters/equação próprios |
+| CNAB400 | Codec candidato e parser, canal operacional indisponível | Faltam os três documentos abaixo e a vertical operacional própria |
+
+InsumosCNAB400 indispensáveis: códigoBRL nas posições85–86CBR641; documento da conta/convênio/carteira/variação com isenção inequívoca ou parâmetros dos juros herdados; errata/explicaçãoBB do totalCBR64326–39 (14posições versus9(013)v99). TrailerCBR641 já resolvido. Não pedir nem registrar segredos naPR.
+
+Nenhuma homologação externa é alegada. Provas locais e CI devem ser vinculadas aoSHA publicado.
+
+---
+
+## Histórico anterior preservado
+
 # BB — implementação versus contrato e validação externa
 
 Estado lido: composição436 e pacotes437 independentes, inclusive abatimento registrado agora congelado. Não é declaração de conclusão integral. Primário OpenAPI3.2.2 capturado: https://api.externo.bb.com.br/docs/v1/openapi/17395705/2, SHA256 `6767b098b13bc00e42700d80435a73e1f6ff4d31d7a28647926209a58d5f00d3`.

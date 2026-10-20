@@ -113,6 +113,8 @@ class Cron_model extends App_Model
             hooks()->do_action('after_cron_run', $manually);
             require_once APPPATH . 'services/CompanyConnectApiCron.php';
             CompanyConnectApiCron::run($this);
+            require_once APPPATH . 'services/CompanyTicketConnectCron.php';
+            CompanyTicketConnectCron::run($this);
             require_once APPPATH . 'services/CompanyPusherCron.php';
             CompanyPusherCron::run($this);
 

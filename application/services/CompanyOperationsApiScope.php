@@ -18,7 +18,7 @@ final class CompanyOperationsApiScope
     public static function prepare($ci):bool
     {
         self::$active=false;self::$requested=false;if($ci->input->is_cli_request()||defined('API')||trim((string)$ci->router->fetch_directory(),'/')!==''||$ci->router->fetch_module()||strtolower((string)$ci->router->fetch_class())!=='company_operations_api')return false;
-        self::$requested=true;$regular=['projects','tasks','standalone_tasks','contracts','tickets'];$files=['project_files','task_files','contract_files','ticket_files'];$extras=['project_milestones','task_dependencies','project_follow','task_follow'];$method=strtolower((string)$ci->router->fetch_method());if(!in_array($method,array_merge($regular,$files,$extras),true)||!isset($ci->uri)||!method_exists($ci->uri,'segment'))return false;
+        self::$requested=true;$regular=['projects','tasks','standalone_tasks','contracts','tickets'];$files=['project_files','task_files','contract_files','ticket_files'];$extras=['project_copies','project_milestones','task_dependencies','project_follow','task_follow'];$method=strtolower((string)$ci->router->fetch_method());if(!in_array($method,array_merge($regular,$files,$extras),true)||!isset($ci->uri)||!method_exists($ci->uri,'segment'))return false;
         $segments=[];for($i=1;$i<=6;$i++){$v=$ci->uri->segment($i);if($v===null||$v===false||$v==='')break;$segments[]=(string)$v;}
         if(($segments[0]??null)!=='company_operations_api'||($segments[1]??null)!==$method)return false;
         if(in_array($method,$regular,true)){if(!in_array(count($segments),[2,3],true))return false;}

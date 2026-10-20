@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace BancoBrasil;
 require_once __DIR__.'/ApiClient.php';
 require_once __DIR__.'/Agreement.php';
-require_once __DIR__.'/ApiDailyInterest.php';require_once __DIR__.'/ApiFixedDiscount.php';
+require_once __DIR__.'/ApiDailyInterest.php';require_once __DIR__.'/ApiFixedDiscount.php';require_once __DIR__.'/ApiReceiptWindow.php';
 final class ApiPayload
 {
     public static function input(array $input):array
@@ -30,7 +30,7 @@ final class ApiPayload
         if($name===''||strlen($name)>60)throw new \DomainException('bb_api_payer_invalid');
         $money=Fields::amount($amount);$date=static fn($iso)=>(new \DateTimeImmutable($iso))->format('d.m.Y');
         $data=['numeroConvenio'=>(int)$a->scope->agreement,'numeroCarteira'=>17,'numeroVariacaoCarteira'=>(int)$a->variation,'codigoModalidade'=>1,'dataEmissao'=>$date($invoice['date']),'dataVencimento'=>$date($invoice['duedate']),'valorOriginal'=>$money,'valorAbatimento'=>0,'quantidadeDiasProtesto'=>0,'quantidadeDiasNegativacao'=>0,'indicadorAceiteTituloVencido'=>'N','codigoAceite'=>$input['acceptance'],'codigoTipoTitulo'=>(int)$input['species'],'indicadorPermissaoRecebimentoParcial'=>'N','numeroTituloBeneficiario'=>'CRM'.$invoice['id'],'numeroTituloCliente'=>$number,'campoUtilizacaoBeneficiario'=>'CRM'.$invoice['id'].'N'.(string)(int)substr($number,-10),'desconto'=>['tipo'=>0],'jurosMora'=>['tipo'=>3],'multa'=>['tipo'=>0],'indicadorPix'=>'N','pagador'=>['tipoInscricao'=>strlen($tax)===11?1:2,'numeroInscricao'=>$tax,'nome'=>$name,'endereco'=>$input['payer_address'],'bairro'=>$input['payer_district'],'cep'=>(int)$input['payer_zip'],'cidade'=>$input['payer_city'],'uf'=>$input['payer_state']]];
-        $data['jurosMora']=ApiDailyInterest::parameters($profile,$input,$amount);$data['desconto']=ApiFixedDiscount::parameters($profile,$input,$invoice,$today,$amount);
+        $data=array_replace($data,ApiReceiptWindow::registration($profile));$data['jurosMora']=ApiDailyInterest::parameters($profile,$input,$amount);$data['desconto']=ApiFixedDiscount::parameters($profile,$input,$invoice,$today,$amount);
         // OpenAPI requires a JSON number. Encode its validated decimal lexeme without float conversion.
         $json=ApiFixedDiscount::encode(ApiDailyInterest::encode($data),$data);$json=preg_replace('/"valorOriginal":"([0-9]+\.[0-9]{2})"/','"valorOriginal":$1',$json,1,$count);if($count!==1)throw new \DomainException('bb_api_payload_invalid');return $json;
     }

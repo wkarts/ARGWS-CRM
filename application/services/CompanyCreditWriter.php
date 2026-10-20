@@ -18,13 +18,14 @@ trait CompanyCreditWriter
     {
         $acl=new \IssuerResourceAccess($this->db,db_prefix());foreach($caps as [$feature,$cap])if(!$acl->can($issuer,$actor,$feature,$cap))throw new \DomainException('company_credit_access_denied');
     }
-    private function creditTransaction(int $issuer,int $actor,array $caps,callable $work,?\CompanyFinancialApiGuard $apiGuard=null,string $apiOperation='',array $apiTarget=[],string $apiKey='')
+    private function creditTransaction(int $issuer,int $actor,array $caps,callable $work,?\CompanyFinancialApiGuard $apiGuard=null,string $apiOperation='',array $apiTarget=[],string $apiKey='',?\CompanyPostRefundManualReversalSource $manualSource=null)
     {
         $this->creditAuth($issuer,$actor,$caps);\CompanyCreditSchema::assertValid($this->db,db_prefix());
         $tables=['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','issuers_client_links','clients','invoices','issuers_invoice_documents','creditnotes','creditnote_refunds','credits','currencies','options','itemable','item_tax','issuers_sequences','invoicepaymentrecords','company_payment_receipts','company_credit_documents','company_credit_entries','issuers_audit'];
         foreach(['bb_origins','asaas_payment_origins'] as $table)if($this->db->table_exists(db_prefix().$table))$tables[]=$table;
         $journal=new \CompanyFinancialJournal($this->db,db_prefix());$tables=array_values(array_unique(array_merge($tables,(new \CompanyCurrencyUnits($this->db,db_prefix()))->tables(),$journal->tables('credit'),$journal->tables('credit_entry'),$journal->tables('payment'),(new \CompanyInvoiceBalance($this->db,db_prefix()))->tables())));
         if($apiGuard!==null)$tables=array_values(array_unique(array_merge($tables,$apiGuard->tables())));
+        if($manualSource!==null){$manualSource->assertStorage($this->db,db_prefix());$tables=array_values(array_unique(array_merge($tables,$manualSource->tables())));}
         return \IssuerTransaction::run($this->db,db_prefix(),$tables,function()use($issuer,$actor,$caps,$work,$apiGuard,$apiOperation,$apiTarget,$apiKey){(new \IssuerResourceAccess($this->db,db_prefix()))->lockFinancialIdentity($issuer,$actor);$this->creditAuth($issuer,$actor,$caps);$apiGuard?->beforeInOwned($this->db,db_prefix(),$issuer,$actor,$apiOperation,$apiTarget,$apiKey);$result=$work();$this->creditAuth($issuer,$actor,$caps);$apiGuard?->afterInOwned($this->db,db_prefix(),$issuer,$actor,$apiOperation,$apiTarget,$apiKey);return $result;});
     }
     private static function creditText($value,int $max,bool $required=false):string
@@ -113,21 +114,23 @@ trait CompanyCreditWriter
         $check=$this->creditRows('SELECT status FROM '.db_prefix().'invoices WHERE id=? AND issuer_id=?',[$invoice['id'],$invoice['issuer_id']])[0]??[];if((int)($check['status']??0)!==$status)throw new \RuntimeException('issuer_credit_write_unconfirmed');
     }
     /** New entries use exact positive magnitudes; reversal kind and parent point to immutable original evidence. */
-    public function moveCompanyCredit($issuer,$actor,string $kind,array $input,string $key,?\CompanyFinancialApiGuard $apiGuard=null):string
+    public function moveCompanyCredit($issuer,$actor,string $kind,array $input,string $key,?\CompanyFinancialApiGuard $apiGuard=null,?\CompanyPostRefundManualReversalSource $manualSource=null):string
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);self::creditKey($key);
         if(!in_array($kind,['apply','unapply','refund','refund_reverse','manual_reverse'],true)||array_diff(array_keys($input),['credit_id','invoice_id','parent_key','payment_id','amount','date','reference','reason']))throw new \DomainException('company_credit_invalid_input');
+        if($manualSource!==null&&($kind!=='manual_reverse'||$apiGuard!==null||get_class($manualSource)!=='CompanyPostRefundManualReversalSource'))throw new \DomainException('company_post_refund_manual_reversal_source_denied');
         $reverse=in_array($kind,['unapply','refund_reverse','manual_reverse'],true);$amount=self::minorUnits($input['amount']??null);if($amount<1)throw new \DomainException('company_credit_invalid_input');
         $data=['credit_id'=>isset($input['credit_id'])?\IssuerPolicy::id($input['credit_id']):null,'invoice_id'=>isset($input['invoice_id'])?\IssuerPolicy::id($input['invoice_id']):null,'parent_key'=>$input['parent_key']??null,'payment_id'=>isset($input['payment_id'])?\IssuerPolicy::id($input['payment_id']):null,'amount'=>\CompanyInvoiceAmounts::decimal($amount),'date'=>self::creditDate($input['date']??null),'reference'=>self::creditText($input['reference']??null,191,true),'reason'=>self::creditText($input['reason']??null,4000,true)];
         if($data['date']>date('Y-m-d'))throw new \DomainException('company_credit_invalid_input');if($data['parent_key']!==null){if(!is_string($data['parent_key']))throw new \DomainException('company_credit_invalid_input');self::creditKey($data['parent_key']);}
         if($kind==='manual_reverse'?($data['credit_id']!==null||$data['payment_id']===null||$data['parent_key']!==null||$data['invoice_id']===null):($data['credit_id']===null||$data['payment_id']!==null||($kind==='apply'&&($data['invoice_id']===null||$data['parent_key']!==null))||($kind==='refund'&&($data['invoice_id']!==null||$data['parent_key']!==null))||($reverse&&$data['parent_key']===null)||($kind==='unapply'&&$data['invoice_id']===null)||($kind==='refund_reverse'&&$data['invoice_id']!==null)))throw new \DomainException('company_credit_invalid_input');
         $caps=$kind==='manual_reverse'?[['invoices','view'],['payments','delete']]:[['credit_notes','view'],['credit_notes','edit'],['payments',$reverse?'delete':'create']];if(in_array($kind,['apply','unapply'],true))$caps[]=['invoices','view'];
         $hash=hash('sha256',json_encode([$kind,$data],JSON_THROW_ON_ERROR));
-        return $this->creditTransaction($issuer,$actor,$caps,function()use($issuer,$actor,$kind,$data,$key,$hash,$amount):string{
+        return $this->creditTransaction($issuer,$actor,$caps,function()use($issuer,$actor,$kind,$data,$key,$hash,$amount,$manualSource):string{
+            $manualClaim=$manualSource?->claim($this->db,db_prefix(),$issuer,$actor,$data,$key);
             $p=db_prefix();$old=$this->creditRows('SELECT issuer_id,actor_id,input_hash,kind FROM '.$p.'company_credit_entries WHERE request_key=? FOR UPDATE',[$key])[0]??null;
             if($old){if((int)$old['issuer_id']!==$issuer||(int)$old['actor_id']!==$actor||$old['kind']!==$kind||!hash_equals($old['input_hash'],$hash))throw new \DomainException('company_credit_request_conflict');if($data['credit_id']!==null)$this->ownedCredit($issuer,$data['credit_id']);if($data['invoice_id']!==null){$resource=$this->creditRows('SELECT currency FROM '.$p.'invoices WHERE id=? AND issuer_id=?',[$data['invoice_id'],$issuer])[0]??null;if(!$resource)throw new \DomainException('company_credit_access_denied');(new \CompanyCurrencyUnits($this->db,$p))->resolveRead($resource['currency']);}return $key;}
             $ref=hash('sha256',$data['reference']);if($this->creditRows('SELECT request_key FROM '.$p.'company_credit_entries WHERE issuer_id=? AND kind=? AND reference_hash=?',[$issuer,$kind,$ref]))throw new \DomainException('company_credit_reference_conflict');
-            $credit=$data['credit_id']!==null?$this->ownedCredit($issuer,$data['credit_id']):null;$invoice=$data['invoice_id']!==null?$this->creditInvoice($issuer,$data['invoice_id']):null;$native=0;
+            $credit=$data['credit_id']!==null?$this->ownedCredit($issuer,$data['credit_id']):null;$invoice=$data['invoice_id']!==null?($manualSource!==null?$manualClaim['invoice']:$this->creditInvoice($issuer,$data['invoice_id'])):null;$native=0;
             if(($credit&&$data['date']<$credit['date'])||($invoice&&$data['date']<$invoice['date']))throw new \DomainException('company_credit_invalid_input');
             if($credit&&(int)$credit['status']===3)throw new \DomainException('company_credit_invalid_state');
             $units=new \CompanyCurrencyUnits($this->db,$p);if($credit)$units->assertWrite($credit['currency']);if($invoice)$units->assertWrite($invoice['currency']);
@@ -151,8 +154,8 @@ trait CompanyCreditWriter
             if($credit)$this->refreshCredit($credit);if($invoice)$this->refreshInvoice($invoice,$actor);
             if(!$this->creditRows('SELECT request_key FROM '.$p.'company_credit_entries WHERE request_key=? AND input_hash=?',[$key,$hash]))throw new \RuntimeException('issuer_credit_write_unconfirmed');$this->creditAudit($issuer,$actor,$credit?(int)$credit['id']:(int)$invoice['id'],'company_credit_'.$kind,$key);
             $after=['date'=>$data['date'],'credit_id'=>$data['credit_id'],'invoice_id'=>$data['invoice_id'],'native_id'=>$native,'amount'=>$data['amount'],'credit_available'=>$credit?\CompanyInvoiceAmounts::decimal($this->creditAvailable($credit)):null,'invoice_balance'=>$invoice?\CompanyInvoiceAmounts::decimal($this->invoiceRemainder($invoice,$actor)):null,'parent_key'=>$data['parent_key']];
-            $eventKind=match($kind){'apply'=>'credit_applied','unapply'=>'credit_unapplied','refund'=>'credit_refunded','refund_reverse'=>'credit_refund_reversed','manual_reverse'=>'receipt_reversed'};$this->creditJournal($issuer,$actor,$eventKind,$kind==='manual_reverse'?'payment':'credit_entry',$kind==='manual_reverse'?$native:$key,(int)($credit['currency']??$invoice['currency']),$data['date'],$data['amount'],$before,$after,hash('sha256','company-journal:credit-entry:'.$key));return $key;
-        },$apiGuard,$kind==='manual_reverse'?'manual_reverse':'credit_'.$kind,array_intersect_key($data,array_flip(['credit_id','invoice_id','parent_key','payment_id'])),$key);
+            $eventKind=match($kind){'apply'=>'credit_applied','unapply'=>'credit_unapplied','refund'=>'credit_refunded','refund_reverse'=>'credit_refund_reversed','manual_reverse'=>'receipt_reversed'};$this->creditJournal($issuer,$actor,$eventKind,$kind==='manual_reverse'?'payment':'credit_entry',$kind==='manual_reverse'?$native:$key,(int)($credit['currency']??$invoice['currency']),$data['date'],$data['amount'],$before,$after,hash('sha256','company-journal:credit-entry:'.$key));$manualSource?->applied($this->db,$p,$issuer,$actor,$data,$key,$manualClaim);return $key;
+        },$apiGuard,$kind==='manual_reverse'?'manual_reverse':'credit_'.$kind,array_intersect_key($data,array_flip(['credit_id','invoice_id','parent_key','payment_id'])),$key,$manualSource);
     }
     private function creditJournal(int $issuer,int $actor,string $kind,string $type,$source,int $currency,string $date,string $amount,array $before,array $after,string $key):void
     {
