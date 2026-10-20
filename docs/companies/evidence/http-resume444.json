@@ -1,0 +1,1435 @@
+{
+  "schema": 1,
+  "scope": "PR45 core444 own TicketPreferences real HTTP/Chromium",
+  "status": "passed",
+  "publication_sha": null,
+  "publication_note": "Frozen local source proof; coordinator must bind published remote SHA and terminal CI. No merge/deploy.",
+  "production_manifest_sha256": "7d9a5f3eae930bd609d66aa3ec6073154cd7f79a53c790481f3366139865efba",
+  "production_manifest_files": 18548,
+  "runtime_verified_files": 18534,
+  "runtime_exclusion": "14 installer files absent in web roots",
+  "versions": {
+    "core": "4.4.4 /444 NOOP",
+    "banco_brasil": "1.2.2 /122 minimum4.4.3",
+    "asaas": "1.5.3 /153"
+  },
+  "environment": {
+    "php": "8.3.6",
+    "database": "MariaDB10.11.14 binlogON/nonSUPER real persistent synthetic banks",
+    "browser": "Chromium140 official headless shell",
+    "http": "Real local PHP HTTP with shell/process functions disabled; restricted Docker command adapter",
+    "provider": "No provider requests in444; inherited strict dual TLS infrastructure unchanged, not re-executed in this scope"
+  },
+  "groups": {
+    "fresh444-2": {
+      "results": [
+        {
+          "name": "installer-server",
+          "url": "http://127.0.0.1:56963"
+        },
+        {
+          "name": "fresh-native-installation",
+          "version": 444,
+          "master": 17,
+          "source": "installer",
+          "csrf_denied": true
+        },
+        {
+          "name": "retired-native-installer",
+          "source_manifest": "7d9a5f3eae930bd609d66aa3ec6073154cd7f79a53c790481f3366139865efba",
+          "config_sha256": "b5e13c7d1719aca0f4f1ec28ac50e22424e7a67d1380e68056ac869c00aba5ee",
+          "logs_retained": true,
+          "reconstruction": "Frozen whole production tree plus actual installer-generated config; native installation/master17/CSRF captured above"
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "fresh444-before-browser",
+          "files": 18534,
+          "differences": []
+        },
+        {
+          "name": "tests/issuers_browser_smoke.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 16.2,
+          "tail": "Issuer browser smoke passed: native shell/menu, installation/upgrade, errors/retry, desktop/mobile.\n"
+        },
+        {
+          "name": "tests/companies_portal_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 17.65,
+          "tail": "Private contacts + A/B duplicate-email portal + HTTP recovery/reset/session: real MySQL/Chromium checks passed; queue only, no external delivery.\n"
+        },
+        {
+          "name": "tests/companies_invoices_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 53.65,
+          "tail": "Named-company invoice CRUD/numbering/PDF/manual partial+final receipts/private portal grant+PDF+revocation: real HTTP/MySQL/Chromium passed, including owner-bound notifications and private attachment upload/preview/download/portal revocation; no SMTP or bank/provider operations.\n"
+        },
+        {
+          "name": "tests/settings/ticket_preferences_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 42.01,
+          "tail": "Own ticket444 preferences actual final-audit witness/JSON rollback, native CSRF/enum and GUI B-only actor/current edit revoke Chromium: GUI A/B/principal, defaultasc, ownasc/desc, admin replies, individual portalpublication/private replies, stalecontext409, stalerevision409, financial/options invariant PASS. No external network.\n"
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "fresh444-after-browser",
+          "files": 18534,
+          "differences": []
+        },
+        {
+          "name": "complete",
+          "passed": true
+        }
+      ],
+      "results_sha256": "94fc4709d53c9252b10fdcbb739af45beb9d84e2a551888c5a4c40d6a7940d5a",
+      "ticket_proof": {
+        "native_marker": 444,
+        "owners": {
+          "a": 3,
+          "b": 2,
+          "primary": 1
+        },
+        "legacy_order": "desc",
+        "native_staff": "18",
+        "own_only_b": true,
+        "late_audit_observed": true,
+        "financial_unchanged": true,
+        "unrelated_own_settings_unchanged": true,
+        "external_transport": false
+      },
+      "ticket_proof_sha256": "7f1e6ade8ead094a30cd03149e22940da321e90c05e033928f42bed9a8b3723c"
+    },
+    "upgrade443-444-2": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "upgrade444-before-browser",
+          "files": 18534,
+          "differences": []
+        },
+        {
+          "name": "tests/issuers_browser_smoke.cjs",
+          "mode": "upgrade",
+          "exit": 0,
+          "seconds": 5.14,
+          "tail": "Issuer browser smoke passed: native shell/menu, installation/upgrade, errors/retry, desktop/mobile.\n"
+        },
+        {
+          "name": "native443-to444-history-preserved",
+          "tables": [
+            "issuers_installation_identity",
+            "issuers_registry",
+            "issuers_staff",
+            "issuers_staff_defaults",
+            "issuers_resource_permissions",
+            "clients",
+            "contacts",
+            "invoicepaymentrecords",
+            "company_expenses",
+            "company_financial_events",
+            "asaas_payment_origins",
+            "asaas_company_refund_requests",
+            "asaas_company_refund_observations",
+            "company_asaas_refund_postings",
+            "bb_origins",
+            "bb_return_files",
+            "bb_return_events",
+            "bb_return_file_events",
+            "company_sales_documents",
+            "company_sales_files",
+            "company_sales_deliveries",
+            "company_sales_revisions",
+            "company_sales_copy_requests",
+            "company_tickets",
+            "company_ticket_replies",
+            "company_portal_tickets",
+            "company_portal_ticket_replies"
+          ],
+          "master": "17:installer",
+          "tracking": 444
+        },
+        {
+          "name": "native-bb122-current-replay",
+          "exit": 0,
+          "stdout": "Native Banco do Brasil122 real runner, exact tracking and replay verified from baseline 1.2.2.",
+          "stderr": ""
+        },
+        {
+          "name": "tests/settings/ticket_preferences_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 56.32,
+          "tail": "Own ticket444 preferences actual final-audit witness/JSON rollback, native CSRF/enum and GUI B-only actor/current edit revoke Chromium: GUI A/B/principal, defaultasc, ownasc/desc, admin replies, individual portalpublication/private replies, stalecontext409, stalerevision409, financial/options invariant PASS. No external network.\n"
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "upgrade444-after-browser",
+          "files": 18534,
+          "differences": []
+        },
+        {
+          "name": "complete",
+          "passed": true
+        }
+      ],
+      "results_sha256": "182dede8337e95e126ef6684800ce9a4e902a0198f594dd41c371d1ede4c70ef",
+      "ticket_proof": {
+        "native_marker": 444,
+        "owners": {
+          "a": 3,
+          "b": 2,
+          "primary": 1
+        },
+        "legacy_order": "desc",
+        "native_staff": "21",
+        "own_only_b": true,
+        "late_audit_observed": true,
+        "financial_unchanged": true,
+        "unrelated_own_settings_unchanged": true,
+        "external_transport": false
+      },
+      "ticket_proof_sha256": "1117b7e3ab0e111a72e4fc8f4e7702e87a99a6238377b1e9a4750d62e42aba1c"
+    }
+  },
+  "smoke": {
+    "commands": 79,
+    "old_commands_preserved_exact_order": 78,
+    "new_command": "node tests/settings/ticket_preferences_browser.cjs",
+    "old_prefix_sha256": "54f3d7beb3d96397bc2949e3aaed220bc9aab56e6ffd683ac4ed3b0072af9407"
+  },
+  "test_files_sha256": {
+    "tests/settings/ticket_preferences_browser.cjs": "cdec9eabc1e043ac3e9821c8ca9c2281940d77bf039454ef98c08d5b1a880685",
+    "tests/settings/ticket_preferences_http_fixture.php": "f19d8c2eba3704be339409942cd7446d49901159d46b4356c866f63cb2ebc37f",
+    "tests/issuers_standalone_http_smoke.sh": "e0fd7f64852cf1bfbe777931ac009257d6e34346bd864a66b35e54f77c3e894e"
+  },
+  "checks": {
+    "bash_n": true,
+    "php_lint": true,
+    "node_check": true,
+    "browser_environment_unittest": "2/2 PASS3.782s",
+    "full_docker_job_executed": false
+  },
+  "diagnostics": [
+    {
+      "bank": "db-fa8damzl",
+      "read_only": true,
+      "current_sha256": "fa150014ee28fadfdc14cd87f08ea98a78041f038d403bb8baaf3b5c11cc2ee9",
+      "reconstructed_before_sha256": "974d854cfc3520517b2f6c106b8e57ac51088d693ed016a880f351de23f40718",
+      "added_rows": [
+        {
+          "name": "paymentmethod_asaas_active",
+          "before_sha256": null,
+          "after_sha256": "be5ae7b9d5a4c652e26866689e9906da3944c109f88ee5c033c28cf2fdcb1081"
+        },
+        {
+          "name": "paymentmethod_asaas_label",
+          "before_sha256": null,
+          "after_sha256": "e7b557312fa2d389a6cee4997679f607cd7f8901d51f70cc54d0d4e42ae895c0"
+        },
+        {
+          "name": "paymentmethod_asaas_api_key",
+          "before_sha256": null,
+          "after_sha256": "cbdc6e1fb0c53a9fe5059d4e7bd3ae155f056ad3b0fe1d7d208a141a83cb8c12"
+        },
+        {
+          "name": "paymentmethod_asaas_api_key_sandbox",
+          "before_sha256": null,
+          "after_sha256": "7e82f2a6ccaca490be76f5b2ac8ca8d5f97e9996d88552f577629efb9f5f19f5"
+        },
+        {
+          "name": "paymentmethod_asaas_sandbox",
+          "before_sha256": null,
+          "after_sha256": "9e75401c6e4503c279a44dc4ac0a15b548d9ad4bc6f5587e1c52626d3bcd5ff7"
+        },
+        {
+          "name": "paymentmethod_asaas_debug",
+          "before_sha256": null,
+          "after_sha256": "127961be34443b6b9040a399e30143695ba8060ce02e991b80f4659266782e5b"
+        },
+        {
+          "name": "paymentmethod_asaas_file_log_enabled",
+          "before_sha256": null,
+          "after_sha256": "d17648bc52c0024dfd218040433c6b62408abb3bdc6121480ed2adbcb36edf9b"
+        },
+        {
+          "name": "paymentmethod_asaas_sync_enabled",
+          "before_sha256": null,
+          "after_sha256": "8a895575740dd5e50b3940725050fe1e1badcbd0bb964608a993f536bcd29640"
+        },
+        {
+          "name": "paymentmethod_asaas_sync_days",
+          "before_sha256": null,
+          "after_sha256": "81f2b2e8f1a5785361df50296456fc9f94b0acf83757f8dbd0d87d8630f65728"
+        },
+        {
+          "name": "paymentmethod_asaas_sync_limit",
+          "before_sha256": null,
+          "after_sha256": "7cb498a908e087fbaeee6098ed96c438938479cb4f38972a2e41cc8cd26010c9"
+        },
+        {
+          "name": "paymentmethod_asaas_currencies",
+          "before_sha256": null,
+          "after_sha256": "22c73a4e917163c6d1683066768003225ddf6b12ddb83639ebbea18a208a9298"
+        },
+        {
+          "name": "paymentmethod_asaas_description",
+          "before_sha256": null,
+          "after_sha256": "0a77956b1c5040230dae8ade48a225be4701af81b534337eadb7ffed48f2f26d"
+        },
+        {
+          "name": "paymentmethod_asaas_interest_value",
+          "before_sha256": null,
+          "after_sha256": "9e64725cffafd122e611624fc1b0919c075dd570973d02269b7b6afc957ce8e0"
+        },
+        {
+          "name": "paymentmethod_asaas_fine_value",
+          "before_sha256": null,
+          "after_sha256": "e38a7586b9eb4d40cf6dacbfb85e9295cd5fc372af403a2ab42feec688165f7b"
+        },
+        {
+          "name": "paymentmethod_asaas_discount_type",
+          "before_sha256": null,
+          "after_sha256": "099368e12b2640f66d15341afaedd88f4ac03ac82ed08985581800f1bb40c161"
+        },
+        {
+          "name": "paymentmethod_asaas_discount_value",
+          "before_sha256": null,
+          "after_sha256": "3026ed42b27bd885c87580115734d2ec5b8a661f42c8ff0a97215094b70aaefc"
+        },
+        {
+          "name": "paymentmethod_asaas_discount_days",
+          "before_sha256": null,
+          "after_sha256": "564d9bf56dc54c8baced4b751e49b9bba609a74a7d9699c1c680ee4da1820927"
+        },
+        {
+          "name": "paymentmethod_asaas_installmentCount",
+          "before_sha256": null,
+          "after_sha256": "60594fa7e11d6dfa280ff57af0a07dcf665b7eb3f51e760162b8c6ec0944850e"
+        },
+        {
+          "name": "paymentmethod_asaas_diasdevencimento",
+          "before_sha256": null,
+          "after_sha256": "f400fe4b445b143f6a9bd7ba294a41801325b98cd768982cc06d632042cf3b4b"
+        },
+        {
+          "name": "paymentmethod_asaas_billet_only",
+          "before_sha256": null,
+          "after_sha256": "b9243a1ed7276a4172d0ecbf0a7e65c85059c8a8d63a310fe3705b1c7a539c7a"
+        },
+        {
+          "name": "paymentmethod_asaas_card_only",
+          "before_sha256": null,
+          "after_sha256": "c7a39a8ce9173b47cb39adec6104ceae5663105290a155b7dc1b08c945373dbc"
+        },
+        {
+          "name": "paymentmethod_asaas_pix_only",
+          "before_sha256": null,
+          "after_sha256": "d1e5243d92aa6abc580be63ab682e7e394cf709da89028e889827ef0fda7daa9"
+        },
+        {
+          "name": "paymentmethod_asaas_delete_charge",
+          "before_sha256": null,
+          "after_sha256": "1555ca2c101cc4dd09876ccc88beef6ddd730d185346ac255145e701265a4ff9"
+        },
+        {
+          "name": "paymentmethod_asaas_update_charge",
+          "before_sha256": null,
+          "after_sha256": "1f4fb8c6ad6857dd42f137b3681cad68a923e500b2e79ab04424be334c8a9c7b"
+        },
+        {
+          "name": "paymentmethod_asaas_disable_charge_notification",
+          "before_sha256": null,
+          "after_sha256": "561ca8b30abb9d4cb9e172529031e60aaf8b80c44e830e8cf7ca002dbf5afd4b"
+        },
+        {
+          "name": "paymentmethod_asaas_send_customer_email",
+          "before_sha256": null,
+          "after_sha256": "466a073418eb602b3ce008fb3e0ab3042cc9f1bec83d95c605e9fc868ac31368"
+        },
+        {
+          "name": "paymentmethod_asaas_send_customer_mobile",
+          "before_sha256": null,
+          "after_sha256": "5bd7e086690a72838021c1da0a816a9b6f02b32801797f3689082ae3c100e378"
+        },
+        {
+          "name": "paymentmethod_asaas_ultima_atualizacao_servicos_municipais",
+          "before_sha256": null,
+          "after_sha256": "afbc03aecb2347967e06a21a9eed7a6ecbb2ac5a7a52a9ce97f7d8ef02da5937"
+        },
+        {
+          "name": "paymentmethod_asaas_default_selected",
+          "before_sha256": null,
+          "after_sha256": "d80b0b1596ab3c64ae4af5e92a9741e3e0feb241d2d190f6622635ba45e2c07a"
+        },
+        {
+          "name": "paymentmethod_asaas_initialized",
+          "before_sha256": null,
+          "after_sha256": "4e77e41ac96c9cca333d2b1b59ad39026135ffefb0e294a271e907aa18538044"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_active",
+          "before_sha256": null,
+          "after_sha256": "cbfca42d15fce9c6feb26819679edd4fbac7bb667332ab18ff153de8eca36d67"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_label",
+          "before_sha256": null,
+          "after_sha256": "6def9a932f4fd0e30bee0e61fdd438300d3499550974d5162d529dc350f052f3"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_public_key",
+          "before_sha256": null,
+          "after_sha256": "94559bb1b31cdb352c2507fde1d4718a9aa90a2d9c7bd6699b05c3e8e7ebec6f"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_api_login_id",
+          "before_sha256": null,
+          "after_sha256": "f84df582a1f9891f5b026bebc1aff4bc9875a81983c9289b95f5f4658bcc5b14"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_api_transaction_key",
+          "before_sha256": null,
+          "after_sha256": "99648a38542228836e6a4dc127d4ad11063400f3cdefb3f959b3999f6dcfd54d"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "b3b8935d99aa175db0fdaf39e7450c604b62e3451172944e422b29270f236f67"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_currencies",
+          "before_sha256": null,
+          "after_sha256": "f354a40f9ecad5aef9a6523571d3104dc79bf01d1545420fc24534bff142eec9"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "03cecc21adcd3a06e1fbbcdd0722fc4c94889f4c7cb9fd81460c151f99b87ef9"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_default_selected",
+          "before_sha256": null,
+          "after_sha256": "804666a6652e329d92673498712d16d3ac7769ab8837870e97d150519e23d664"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_initialized",
+          "before_sha256": null,
+          "after_sha256": "9f9cd05b3fc519d4d322a86a0ad2569abc338db8836727ca884918df4d13614b"
+        },
+        {
+          "name": "paymentmethod_instamojo_active",
+          "before_sha256": null,
+          "after_sha256": "0dd18029a001564f538a0dcf4139ee0efa4fa35bb6d9456d7604942113233c28"
+        },
+        {
+          "name": "paymentmethod_instamojo_label",
+          "before_sha256": null,
+          "after_sha256": "34849c28e9124dc0d066c3dcb081b9568ebb08675e27acb7eca093749bd6e228"
+        },
+        {
+          "name": "paymentmethod_instamojo_fee_fixed",
+          "before_sha256": null,
+          "after_sha256": "32c45b1dceef3b7354fdfab4cde57ccd6c09f9a5d589b7cd2cc5f3c21ed100f6"
+        },
+        {
+          "name": "paymentmethod_instamojo_fee_percent",
+          "before_sha256": null,
+          "after_sha256": "dea676b7dff112ad06ef65fd1240888f8bcf9cb5e0e32ae8ccb4378d3114b6bd"
+        },
+        {
+          "name": "paymentmethod_instamojo_api_key",
+          "before_sha256": null,
+          "after_sha256": "08ab57618cb534252e92c319dc87f43802a715992d464ace115043d614accd4e"
+        },
+        {
+          "name": "paymentmethod_instamojo_auth_token",
+          "before_sha256": null,
+          "after_sha256": "97fd006f3cba30a4dbc2d9a300d2b95bf19c2b02a092a452c0276c4f246df1e7"
+        },
+        {
+          "name": "paymentmethod_instamojo_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "fe147c0770d05adb6c7176b3c7c9f455192ab6a59e47e23c090aca9c44793f1f"
+        },
+        {
+          "name": "paymentmethod_instamojo_currencies",
+          "before_sha256": null,
+          "after_sha256": "26d86cbe36c8def622cc545f7be6169e19944bdecd27025263dcc2d28863106b"
+        },
+        {
+          "name": "paymentmethod_instamojo_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "df0e0dade76e4fdd81c95211ee00086f89af17b925422aed2771b414dc053c29"
+        },
+        {
+          "name": "paymentmethod_instamojo_default_selected",
+          "before_sha256": null,
+          "after_sha256": "c2a229bb789a839394d3ff0229f6754ddd33b25d83f24072736d25543c0b34ec"
+        },
+        {
+          "name": "paymentmethod_instamojo_initialized",
+          "before_sha256": null,
+          "after_sha256": "cffa3958f80e2342f60e39e60aadc1426107b38a81590adbd74cc9930ca4ae7b"
+        },
+        {
+          "name": "paymentmethod_mollie_active",
+          "before_sha256": null,
+          "after_sha256": "c2b2e98c6b4c134f0807355c11c6a2afa05e001e50bc439b822274d52a08b68c"
+        },
+        {
+          "name": "paymentmethod_mollie_label",
+          "before_sha256": null,
+          "after_sha256": "58a7953e99f81445ba3c12eb16428d951f3c4d2e17c720c8d2da0d3d17cad45e"
+        },
+        {
+          "name": "paymentmethod_mollie_api_key",
+          "before_sha256": null,
+          "after_sha256": "bfaa18592d5fe548cb19220078b8bace3204e1677ab79091dca7ce72280e4e6e"
+        },
+        {
+          "name": "paymentmethod_mollie_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "f2a11be5fe6be7232d2296c685b124761ea903bc25d41cba08227bc1e9be94eb"
+        },
+        {
+          "name": "paymentmethod_mollie_currencies",
+          "before_sha256": null,
+          "after_sha256": "056cc38101bf1af3413342881dca989dc508d06756ec21fd105dd56ae7b40f10"
+        },
+        {
+          "name": "paymentmethod_mollie_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "a8f71f98943ffcb24c69eb67ecae310bd440af36087e6813086a2f67a8c7a662"
+        },
+        {
+          "name": "paymentmethod_mollie_default_selected",
+          "before_sha256": null,
+          "after_sha256": "272c286d22707663886813a695dc8a4a1d3920f935724540f1a96802ca0b4197"
+        },
+        {
+          "name": "paymentmethod_mollie_initialized",
+          "before_sha256": null,
+          "after_sha256": "8440ec6ba01b23b752e57b85aa3b0c7edd63705cccc7c13c022e2ba59067d8bb"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_active",
+          "before_sha256": null,
+          "after_sha256": "5a3d54ab82f00cc8395546ad00a0d8c3eae98b17d97ab4ddb4a083914734be7a"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_label",
+          "before_sha256": null,
+          "after_sha256": "e75956513cc34b3d1446811396eb928234ee4f9bc68505e0401506c707144747"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_merchant_id",
+          "before_sha256": null,
+          "after_sha256": "d02f216fbcbe51ff207f9a878b6ede3990abf236f6c419d24d7b7afd3c11ad4b"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_api_public_key",
+          "before_sha256": null,
+          "after_sha256": "541bfd16ef5b96a94493d3ebf430a58396c8451235c736b75c044d346d4478f4"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_api_private_key",
+          "before_sha256": null,
+          "after_sha256": "762a9e61b0cb3148742afee4d81e9b7044b837b0063f217be0776ac3bd6511c0"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_currencies",
+          "before_sha256": null,
+          "after_sha256": "1a592fa211805a3df70c6ae81a5b809c84ce8a7a35540a09d7a9b4654beec1a9"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_paypal_enabled",
+          "before_sha256": null,
+          "after_sha256": "e893656562f9ed62bb0feb39fd4a025e4f09d1eade622fb6d907448ca27737e7"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "2985807cacc72032de5d24f4e23288a571b18d601e3f60fe6446242af6877fdf"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_default_selected",
+          "before_sha256": null,
+          "after_sha256": "217c132e2addd6e83623631735d5fd536ea848c3c0afdc4dc0bc58b202bd969d"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_initialized",
+          "before_sha256": null,
+          "after_sha256": "d19c61d34d80d1d1be263ed288f43c3c6b620a7c37c307cea50940dfc76062c1"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_active",
+          "before_sha256": null,
+          "after_sha256": "fc2c96102d369a8094c08b092ed2619f95a7bbb39a27daefd9ce381980b23ae1"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_label",
+          "before_sha256": null,
+          "after_sha256": "9bc2216287b8c8d3b743e8e5e275175505daa1d7e301c4ba487f055b344fad11"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_fee_fixed",
+          "before_sha256": null,
+          "after_sha256": "523d0f21d773fa710d7039aa1b2561233a1f31d91b020836f4ada6b64e7ed0c9"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_fee_percent",
+          "before_sha256": null,
+          "after_sha256": "f3c93ade964ad45c96e8e8f1f03d5ef0c3801e4af3c4f09f4b379241fab62a2b"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_client_id",
+          "before_sha256": null,
+          "after_sha256": "3fa43f3f510f7e72b1f841b40de4237e42edc27c1eb1b31caeab9a22c37ec2da"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_secret",
+          "before_sha256": null,
+          "after_sha256": "d2f276618ea548eb8d7403ef033b6b38429f00c75a373a151b0cf2bf4382441f"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_payment_description",
+          "before_sha256": null,
+          "after_sha256": "871cbafe1bc44d9957249fb99b6c70435e0bd90063d0b0aeeb59b91ca5383a4a"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_currencies",
+          "before_sha256": null,
+          "after_sha256": "3fea33690dae1118f45306f9ff6b6420ff60ce0c5a69d9bbf921f5d9c3ab4a4b"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "4e142f4f6def1b6a46135b3e0cf10615462ead5f91db645b341f7cd34c15181a"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_default_selected",
+          "before_sha256": null,
+          "after_sha256": "e8b88dd41c194f51ba86be0036cd9904b585221fd635734cb07c9d1d8b1c0207"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_initialized",
+          "before_sha256": null,
+          "after_sha256": "ac7ed536163510d3abfb37ab7944d8fed82f9ba504abf1b9d95a32f51a498dd0"
+        },
+        {
+          "name": "paymentmethod_paypal_active",
+          "before_sha256": null,
+          "after_sha256": "211fba6a238dcc49f6d79f1f16b7ea3216eb7fbb80e59c2064b3b3d6a2343a4e"
+        },
+        {
+          "name": "paymentmethod_paypal_label",
+          "before_sha256": null,
+          "after_sha256": "6ce401d8c14713d9d1fbf0b9ac8f24dc1d579c0caf23fa878cad8e475656d1a2"
+        },
+        {
+          "name": "paymentmethod_paypal_fee_fixed",
+          "before_sha256": null,
+          "after_sha256": "f56b0dd205699b73f675c7b180faa058daa28d0a0df12aea4871b18ee32de683"
+        },
+        {
+          "name": "paymentmethod_paypal_fee_percent",
+          "before_sha256": null,
+          "after_sha256": "f074e8efd72398643f662804ef3cff01af736463f82d206f84932c9aa0050cfc"
+        },
+        {
+          "name": "paymentmethod_paypal_username",
+          "before_sha256": null,
+          "after_sha256": "c4be11cbe5e16dadf57d624c02a728f1ad05e680b7836b7b33379ab7d09559aa"
+        },
+        {
+          "name": "paymentmethod_paypal_password",
+          "before_sha256": null,
+          "after_sha256": "1b42ae7a5af62f4144f9803777989c262496c04cb27fe2d2f85639329b62033d"
+        },
+        {
+          "name": "paymentmethod_paypal_signature",
+          "before_sha256": null,
+          "after_sha256": "7738a312696e55593fe684d56f625b336846838a5bf83af262c7ad3531f1eb9c"
+        },
+        {
+          "name": "paymentmethod_paypal_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "babc514011620eb955a479e41f46f41cfad8c87fb9e8faa5dcedf778a69e5879"
+        },
+        {
+          "name": "paymentmethod_paypal_currencies",
+          "before_sha256": null,
+          "after_sha256": "1fc93281ce0d0e9682c0c31fa2c125a4f4cb35eff570220ff0225991198d2116"
+        },
+        {
+          "name": "paymentmethod_paypal_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "b5b3e62c99edceffe9e2909a7717846e9d8438eaf1db93a2e6d42ac2a559ad09"
+        },
+        {
+          "name": "paymentmethod_paypal_default_selected",
+          "before_sha256": null,
+          "after_sha256": "1894162cd9141c205a3214d5b9e63082acd97f2ff8288356457617f46f8e0d99"
+        },
+        {
+          "name": "paymentmethod_paypal_initialized",
+          "before_sha256": null,
+          "after_sha256": "92fcb62308426a285770f192505266c24a2837d08dac209ec69a934588b39644"
+        },
+        {
+          "name": "paymentmethod_payu_money_active",
+          "before_sha256": null,
+          "after_sha256": "eb22ba5a49774031a9247b7b47ad90affec841e42f67430c52b5b9878cbf2202"
+        },
+        {
+          "name": "paymentmethod_payu_money_label",
+          "before_sha256": null,
+          "after_sha256": "eef6926bcd5b86985d3eaf2a5b51b45ecf946d6ab50731e960ae14b98e719ee3"
+        },
+        {
+          "name": "paymentmethod_payu_money_fee_fixed",
+          "before_sha256": null,
+          "after_sha256": "b751bdad22de2b5de3abcb790739f36aeb38fdd64d5bf326dc374f375a57efd4"
+        },
+        {
+          "name": "paymentmethod_payu_money_fee_percent",
+          "before_sha256": null,
+          "after_sha256": "0c8029d3137f0566b2a38513627fc58f107b8bd2c683eefeb73d06f874134698"
+        },
+        {
+          "name": "paymentmethod_payu_money_key",
+          "before_sha256": null,
+          "after_sha256": "1896d92b4a9efdc9b14562cb954a970935dc4fd0734204bd9465e5b2c0562780"
+        },
+        {
+          "name": "paymentmethod_payu_money_salt",
+          "before_sha256": null,
+          "after_sha256": "0792926eb1ee8f699689d6a36082c2180bf0e7a6b7b32f88c08c1ded4eb14014"
+        },
+        {
+          "name": "paymentmethod_payu_money_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "eb3725f8539ec46367e95015593e239cdb31d0b116a86abc30dcb024180abaa3"
+        },
+        {
+          "name": "paymentmethod_payu_money_currencies",
+          "before_sha256": null,
+          "after_sha256": "3d5804bd002046b9bf9be64e6308ca45e765548c944017a898dcbace9331a7a7"
+        },
+        {
+          "name": "paymentmethod_payu_money_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "8b947614347930d0d74a0a048e594853b53bcffce6952bb0543477ff38780ecb"
+        },
+        {
+          "name": "paymentmethod_payu_money_default_selected",
+          "before_sha256": null,
+          "after_sha256": "3cfa0661aa04a93f634fc5d9ddc777326fc96dd76e16586129a4c35b8a965c7a"
+        },
+        {
+          "name": "paymentmethod_payu_money_initialized",
+          "before_sha256": null,
+          "after_sha256": "4c61761bbd633f3a2ea8d44794c9d1b255ec33d7a2729f969fc47c3154ca560d"
+        },
+        {
+          "name": "paymentmethod_stripe_active",
+          "before_sha256": null,
+          "after_sha256": "e2469d164325cb82549a5dbd97eb033ecdb4ae29b453115953efa151e22b2071"
+        },
+        {
+          "name": "paymentmethod_stripe_label",
+          "before_sha256": null,
+          "after_sha256": "25fe940c2a7009755b22063930909afe4ef70ef82fe522b4e6fb1f8e50f21555"
+        },
+        {
+          "name": "paymentmethod_stripe_fee_fixed",
+          "before_sha256": null,
+          "after_sha256": "31865118a9d44db66c0ebacabad97fed0a65a73d1759e1952a5c9f4f10e48f93"
+        },
+        {
+          "name": "paymentmethod_stripe_fee_percent",
+          "before_sha256": null,
+          "after_sha256": "9c37b8ec2ebfece74bbe0df863414747bd5becb3ae2a9cd9015d9fb4aefd9cf8"
+        },
+        {
+          "name": "paymentmethod_stripe_api_publishable_key",
+          "before_sha256": null,
+          "after_sha256": "4268f01e113d9abe62a5b030f92f4276b164d557bae846327ddf5aae1c8d0cd3"
+        },
+        {
+          "name": "paymentmethod_stripe_api_secret_key",
+          "before_sha256": null,
+          "after_sha256": "98c36f2f469188f440c7a3c92d76f5a7d8f4629a8e5453a97f0d582017f19484"
+        },
+        {
+          "name": "paymentmethod_stripe_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "ecc1015a557572b1250fec70eb83af78111e5d0fc5f4c777fec3458e40b7f101"
+        },
+        {
+          "name": "paymentmethod_stripe_currencies",
+          "before_sha256": null,
+          "after_sha256": "41339698b9a144eb01d226076c69184eead001b2c1862ac4e6fba70ff385f20c"
+        },
+        {
+          "name": "paymentmethod_stripe_allow_primary_contact_to_update_credit_card",
+          "before_sha256": null,
+          "after_sha256": "d61ddab83faa55a1b668149f30cc160b4bcfbb1291533809db50ad8fea21d608"
+        },
+        {
+          "name": "paymentmethod_stripe_default_selected",
+          "before_sha256": null,
+          "after_sha256": "2c576e60e8086c3b19b2c28b166a76329e4a937b3655a75dd7c553b3f403574d"
+        },
+        {
+          "name": "paymentmethod_stripe_initialized",
+          "before_sha256": null,
+          "after_sha256": "dfa0c9fa3078a87920b0ddd44ba060dde90e266548cc5468219afda4c4c3d0a2"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_active",
+          "before_sha256": null,
+          "after_sha256": "2fa297fa9bf4fd5a0f11aa540ba18d2f48bd6d058a3af799b12bf52b7984fa53"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_label",
+          "before_sha256": null,
+          "after_sha256": "ac39156f0986648bbe483ab08f489ef2a635db4e7ac116e7e76219049589b5a4"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_api_secret_key",
+          "before_sha256": null,
+          "after_sha256": "1cf616917fc1a22c015261eac2a61a291ac952136d7ad881229a1cf2fdb81195"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_api_publishable_key",
+          "before_sha256": null,
+          "after_sha256": "07201b30623885af297c3967b6b74777f8357b21d6e8e5ee91a7d6e550f336f8"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "68c5249e6947fb9c9e73c58de280ba3aadfb06a224052a43285c61db631a9e23"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_statement_descriptor",
+          "before_sha256": null,
+          "after_sha256": "09039bcefc5fd1c3c0b322991014213b911ed42adeae78b10c946f4c5780f7df"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_currencies",
+          "before_sha256": null,
+          "after_sha256": "a9fb8f1852e7f8918c76ee39ec7e608c6eaea6e179c04dac70744e7c4bdb4acc"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_default_selected",
+          "before_sha256": null,
+          "after_sha256": "3100efab91ad62bd3a5db857f68f0cfd4ec7b8abd6c195f89b3ff6c4da3e3741"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_initialized",
+          "before_sha256": null,
+          "after_sha256": "cfddef395d98887dfeb451ce648bf9bca7840f289a3bbf074150740daa991195"
+        },
+        {
+          "name": "paymentmethod_two_checkout_active",
+          "before_sha256": null,
+          "after_sha256": "5ea5eb340c5bb643172f27baf33746dfd72218ff15811cda0a6d8c1733bdbe08"
+        },
+        {
+          "name": "paymentmethod_two_checkout_label",
+          "before_sha256": null,
+          "after_sha256": "86ec6dd29b99ecc04d188eb1532ae460282c9f78b521a3a6ee0a4305b268a074"
+        },
+        {
+          "name": "paymentmethod_two_checkout_fee_fixed",
+          "before_sha256": null,
+          "after_sha256": "ff3fc269b0b90e7a098807ec54930665f15640a9f52ac458f25027edceae9d99"
+        },
+        {
+          "name": "paymentmethod_two_checkout_fee_percent",
+          "before_sha256": null,
+          "after_sha256": "ccf94f30b2eb41866418146412dc0b2086becf8cbda9133276c5138600710fdb"
+        },
+        {
+          "name": "paymentmethod_two_checkout_merchant_code",
+          "before_sha256": null,
+          "after_sha256": "d50c3ed6ee09177922a2a2da76c8c7be53c177a79da5d6dc85af0da2dca56865"
+        },
+        {
+          "name": "paymentmethod_two_checkout_secret_key",
+          "before_sha256": null,
+          "after_sha256": "2602ae8e16934f2341fd6460d0d6868fabba5832a52ebe9284bd0b5f1c847f05"
+        },
+        {
+          "name": "paymentmethod_two_checkout_description",
+          "before_sha256": null,
+          "after_sha256": "33f43b76fb4bf76f25e17db8fb845714ee5dbf7c67e9aeb81c7a55f075ffa896"
+        },
+        {
+          "name": "paymentmethod_two_checkout_currencies",
+          "before_sha256": null,
+          "after_sha256": "e112b36f04b6ebd16a31fb9a2637ec9d4350bbcb45c0743866ec1b454691385d"
+        },
+        {
+          "name": "paymentmethod_two_checkout_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "895e63481e68f3f0d21bd93636b0520c7632992db926ce626077d13c8f37bd55"
+        },
+        {
+          "name": "paymentmethod_two_checkout_default_selected",
+          "before_sha256": null,
+          "after_sha256": "638ffec57d6eac7863d4af78f422db9aedf27be14b5806d6428c84233c581bd1"
+        },
+        {
+          "name": "paymentmethod_two_checkout_initialized",
+          "before_sha256": null,
+          "after_sha256": "58011d558d2d9ecac3f51008f6ae32ae80b87597a0f4c36f5abf8be6c675113a"
+        }
+      ],
+      "evidence_sha256": "47797177a41343d3a6df9703fb8863ca9277e552571e0569979e2d00291e089e",
+      "cause": "Native App_gateway::initMode adds missing paymentmethod defaults on first primary context/dashboard/gateway load; no existing option changed. Initial financial snapshot preceded this genuine GUI lifecycle. New final tests warm primary GUI before snapshot and retain ALL options without exclusions."
+    },
+    {
+      "bank": "db-dxq_l29h",
+      "read_only": true,
+      "current_sha256": "fb48c758f86f5bd37f6fe5bbca57bc376324b1596332027ddf2dc771f0a555b0",
+      "reconstructed_before_sha256": "c85782123a2f19e09a2f642b9a6717c52c9f06b007029e6245c100bc99831097",
+      "added_rows": [
+        {
+          "name": "paymentmethod_authorize_acceptjs_active",
+          "before_sha256": null,
+          "after_sha256": "a9bc5050dfb730dfff72692cb7e9fd48bae6c12a0de441da08364f5fef987424"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_label",
+          "before_sha256": null,
+          "after_sha256": "218b9d62d9dbb8c32f67de5aebf42ec7f5e80a10bea0ab98cbe9cce85926d245"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_public_key",
+          "before_sha256": null,
+          "after_sha256": "873e49079cb8acbf366e32d1010f3b1fc9a6ccf86c1cf9d7ccbbe27e45642efc"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_api_login_id",
+          "before_sha256": null,
+          "after_sha256": "76eb136354cfca89c39f74f7c452cb7cf10e85258a0d8fb4c42d66706167a9e0"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_api_transaction_key",
+          "before_sha256": null,
+          "after_sha256": "e2e9d2a158e4aadd8bfa915aedcb12a17ab9ba74ec5a07baf67e5526a08f6fc8"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "d71d85d0e39fe2afae2fe27e05de0880ba18803c1d9fae12d53da1f76a7d608e"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_currencies",
+          "before_sha256": null,
+          "after_sha256": "76784b38a1f6ad2427342634a4a8291510bc7f591fc5643b0cf3f91945cdf3b9"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "b93213aced33961db51cc724a65476df09777600afd15986057e7ea57511984d"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_default_selected",
+          "before_sha256": null,
+          "after_sha256": "1a6e27ce0dc337826242ef00206c8b5deae2f4b63367f2109d210c4681052703"
+        },
+        {
+          "name": "paymentmethod_authorize_acceptjs_initialized",
+          "before_sha256": null,
+          "after_sha256": "8ef0c755b78d945e4a33e4481455b92ca22dc1da3ae33ae8b3d8ac16d2ce8034"
+        },
+        {
+          "name": "paymentmethod_instamojo_active",
+          "before_sha256": null,
+          "after_sha256": "7b9f3eef7e60c5bbe9ced84471a3286b5a3765fb4a2dc65b740de434df9da4f4"
+        },
+        {
+          "name": "paymentmethod_instamojo_label",
+          "before_sha256": null,
+          "after_sha256": "81964332e7ceee6de60ed885b0143f6e2c81e020ee5cd178ff5b4f4d00ac62a0"
+        },
+        {
+          "name": "paymentmethod_instamojo_fee_fixed",
+          "before_sha256": null,
+          "after_sha256": "81b3bb318fdbe9fa9375b947c1c7fc999047c94aae740bc3f50ad4d66da1f9b8"
+        },
+        {
+          "name": "paymentmethod_instamojo_fee_percent",
+          "before_sha256": null,
+          "after_sha256": "bc8a7753775f8597ccb9a7af7bec67f98993d49a449352b47a1c529667419777"
+        },
+        {
+          "name": "paymentmethod_instamojo_api_key",
+          "before_sha256": null,
+          "after_sha256": "4e31ad8fbfb174f1f624b74168d3fa80cbff37830c4bd3205020422ca5413585"
+        },
+        {
+          "name": "paymentmethod_instamojo_auth_token",
+          "before_sha256": null,
+          "after_sha256": "fb6ed722468753cd454204f8d1f49e652a78d5953aec0b3c457ae448cd87e561"
+        },
+        {
+          "name": "paymentmethod_instamojo_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "8cabcaf33a488a51f012ce9e4d1571e5768d3c77a3973ec3b849b3e7ae8d182c"
+        },
+        {
+          "name": "paymentmethod_instamojo_currencies",
+          "before_sha256": null,
+          "after_sha256": "c6819c72f9b393484a8df9187c457eaa2d0287b04dff8a4f2f860775714d3d1a"
+        },
+        {
+          "name": "paymentmethod_instamojo_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "795a3e166398b7283b913349e452a06ad955103ec0acf7d4c58cab4160385871"
+        },
+        {
+          "name": "paymentmethod_instamojo_default_selected",
+          "before_sha256": null,
+          "after_sha256": "e50dc3e1338831e384873a2cff9a19b4018b532daf11e1abbb0d61f0db0416be"
+        },
+        {
+          "name": "paymentmethod_instamojo_initialized",
+          "before_sha256": null,
+          "after_sha256": "d58f10cce6c65eba6ce581d457d8ae837e660e4ad5ae2f589038b3cdd01339cb"
+        },
+        {
+          "name": "paymentmethod_mollie_active",
+          "before_sha256": null,
+          "after_sha256": "5f983e608ad22343c78c3f6321781a5590e158d5ecd062f72ec953a3fc8a9ada"
+        },
+        {
+          "name": "paymentmethod_mollie_label",
+          "before_sha256": null,
+          "after_sha256": "bf5f29685f6a75d0929f8e3576ed214f4d2226c4b977bda504b0600f500e53f8"
+        },
+        {
+          "name": "paymentmethod_mollie_api_key",
+          "before_sha256": null,
+          "after_sha256": "5e5b3a69b66d48c6c02a6e4854bf6d47bf4ba61dd7bad1ae283138070c5705ad"
+        },
+        {
+          "name": "paymentmethod_mollie_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "b3bbc113c671d9c838c10c6d76b9dc4b9ab62b61dbe98d0e87deb18519464d36"
+        },
+        {
+          "name": "paymentmethod_mollie_currencies",
+          "before_sha256": null,
+          "after_sha256": "c55730550d681efde16ec76ca6b84cd3e96e471306cc6059398b1d1b8cf598b9"
+        },
+        {
+          "name": "paymentmethod_mollie_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "798f8385e1e3b397820ec83e198ae485e4a2fd5daaa457d4b977a17ce973445c"
+        },
+        {
+          "name": "paymentmethod_mollie_default_selected",
+          "before_sha256": null,
+          "after_sha256": "73d6c3336215d26acff5ac62c5120fe4da62e41f02a2626fdff2f0703674c833"
+        },
+        {
+          "name": "paymentmethod_mollie_initialized",
+          "before_sha256": null,
+          "after_sha256": "9028e69348d3d912950b15b392b02c5c6f39d0e19c5dbda8fdc1cb2e6acd1711"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_active",
+          "before_sha256": null,
+          "after_sha256": "a7a187b7fdf3667df214ac1aba00fe907fafca7e0d111b1924c30e2d84a56ff6"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_label",
+          "before_sha256": null,
+          "after_sha256": "91e8457216ccd5355d468525085f62228c68c5a2579bb9e242529738e090e281"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_merchant_id",
+          "before_sha256": null,
+          "after_sha256": "f00aee45717927b4baf899cc60984865d571e533f860f421a5de0ec83880700b"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_api_public_key",
+          "before_sha256": null,
+          "after_sha256": "8cc8ee24da8c2979b81b63a9e72a49bbae57fd16446a8a16090aa7cd002abac3"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_api_private_key",
+          "before_sha256": null,
+          "after_sha256": "2d2ed394b77eac3d2e3461b731eb42efe0af2f33a0c1cad5c685c453558c4356"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_currencies",
+          "before_sha256": null,
+          "after_sha256": "baccf1829aa791935d4551c0ddea39d858f9fad1de59fecbf5176bd6b3fadd10"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_paypal_enabled",
+          "before_sha256": null,
+          "after_sha256": "ec96f5c2166d9fe38bf5ba79492db08890f8b1e08e2660852ebe09b4be591a28"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "a4a6911bb59db90dfdfe185a3482eb33ec6c6e45372d39735cc3ad5f840c3cc2"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_default_selected",
+          "before_sha256": null,
+          "after_sha256": "0bfe1f5dbfdcd780b468ecd40e6fdf922f9a71eceee8d4e630fdb44bb9d38af7"
+        },
+        {
+          "name": "paymentmethod_paypal_braintree_initialized",
+          "before_sha256": null,
+          "after_sha256": "006e043ddafd48f6ffa371c3e256a979a765a6a8ab09081dea90c2e75cb2aee0"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_active",
+          "before_sha256": null,
+          "after_sha256": "22cccb3bca0fe7cc02f0a743aa89e49e423826c1eda253ced1029b1af35999f5"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_label",
+          "before_sha256": null,
+          "after_sha256": "0eb21193af30aab28e97ab748d1a3fc9bfd7be40da1d0ec041e5dc37b365e414"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_fee_fixed",
+          "before_sha256": null,
+          "after_sha256": "6239ef39218f91f1fe69c444d893645ea7f45ed7a2517a334f8cd84f47395e96"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_fee_percent",
+          "before_sha256": null,
+          "after_sha256": "71b6eed0f44d8c821190838d5b8d430916e8d36c878f4db703ccc6dd88d3f7ca"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_client_id",
+          "before_sha256": null,
+          "after_sha256": "5a93c6cb1a226d2d2754e03857e51055c5a3effdfb3082a45b347c52de80dfc3"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_secret",
+          "before_sha256": null,
+          "after_sha256": "bc8a56a8ee389e97f8b9e0e411bf9bba9ccda036fef67bc1f85eb6fc920d66ed"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_payment_description",
+          "before_sha256": null,
+          "after_sha256": "2dea94c6296d36d71eab8f0efd1fb7f1b17b52e2dc1a2cc2b9a1496d0d72ef3f"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_currencies",
+          "before_sha256": null,
+          "after_sha256": "bcd5d1dbb95d7563296bf20e8a2d9b48d98fdcdb3365610914f9ad5aaf28a54e"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "8700f4a76e363c9d76fcb8aacdd10e9975b252a8267452bc8a0752fabfbe2f84"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_default_selected",
+          "before_sha256": null,
+          "after_sha256": "892a91892ff5ab627cf798408b978335221034b076c1d134985a078b480606d2"
+        },
+        {
+          "name": "paymentmethod_paypal_checkout_initialized",
+          "before_sha256": null,
+          "after_sha256": "dcf80b10f94663fee53e60bcbf0b1d3ab54c9b3de133277ca69cadc86cf3e216"
+        },
+        {
+          "name": "paymentmethod_paypal_active",
+          "before_sha256": null,
+          "after_sha256": "6d73d98e0a77c4f5d941dc02aa8c2b3b2286bea0422ffef92b07e07406cf99ab"
+        },
+        {
+          "name": "paymentmethod_paypal_label",
+          "before_sha256": null,
+          "after_sha256": "c671b8f6dd4f33915aa8177e2bedd5e47b2b040acb55b1670104bd49bfde270e"
+        },
+        {
+          "name": "paymentmethod_paypal_fee_fixed",
+          "before_sha256": null,
+          "after_sha256": "6d1c42dc67ead5af3dc4c396c80b873508ac9ba795557705108e9ef8efa9a432"
+        },
+        {
+          "name": "paymentmethod_paypal_fee_percent",
+          "before_sha256": null,
+          "after_sha256": "2c41d175a805711b4f2e5934fce7cc6a7190c99282cd395d260655f9c86b4ebc"
+        },
+        {
+          "name": "paymentmethod_paypal_username",
+          "before_sha256": null,
+          "after_sha256": "3f5b9b50e9b8f31d953acc35f991ad9eac0a488d46fbcc82fd40303cbc0cf477"
+        },
+        {
+          "name": "paymentmethod_paypal_password",
+          "before_sha256": null,
+          "after_sha256": "284d3dd79095b848383b2ffc66b9bedaef56085a53374ada90a9deb2cc1ad2f2"
+        },
+        {
+          "name": "paymentmethod_paypal_signature",
+          "before_sha256": null,
+          "after_sha256": "d997e640984bc0eb3e53091818e9e77286a49001c510cef4c924fcd115a196ad"
+        },
+        {
+          "name": "paymentmethod_paypal_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "8bfd4edffec6c6e7a0143157d30ebef292e3cede087e3c099844953b35afb504"
+        },
+        {
+          "name": "paymentmethod_paypal_currencies",
+          "before_sha256": null,
+          "after_sha256": "a32eb6f42c9192a21804758b05cb7e07d540a6e2fcaeabc99877d01148e27f26"
+        },
+        {
+          "name": "paymentmethod_paypal_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "37d5f4cd1e40d52ab4f94b4ac51a209e0208c61e68357398ce4e68ae2b63028b"
+        },
+        {
+          "name": "paymentmethod_paypal_default_selected",
+          "before_sha256": null,
+          "after_sha256": "512e0770531da395c2e441be958c8b7655265f1cfd70292784fbffc1b8237d6c"
+        },
+        {
+          "name": "paymentmethod_paypal_initialized",
+          "before_sha256": null,
+          "after_sha256": "eb5025fae4e90180bf44c311ea030bf1e7c907b59dd5eea5a603e2c604ded2e6"
+        },
+        {
+          "name": "paymentmethod_payu_money_active",
+          "before_sha256": null,
+          "after_sha256": "b6d67d9ce525fa8662749f6d03199f4e086e1c3addcf54fe68656615b8db33e2"
+        },
+        {
+          "name": "paymentmethod_payu_money_label",
+          "before_sha256": null,
+          "after_sha256": "2107ac6c60cd998bcb611cdecf2ff71e594700b14ec36318e8a78b1f9a2ef9cd"
+        },
+        {
+          "name": "paymentmethod_payu_money_fee_fixed",
+          "before_sha256": null,
+          "after_sha256": "66518a9baf111e84096563d22a80ff51da127edc83921d2c0bc1efd70d3d76e2"
+        },
+        {
+          "name": "paymentmethod_payu_money_fee_percent",
+          "before_sha256": null,
+          "after_sha256": "3ff76f77ade4aa26657bcfbd16301271fb2378f89ee4803a1c95106631e80c27"
+        },
+        {
+          "name": "paymentmethod_payu_money_key",
+          "before_sha256": null,
+          "after_sha256": "393558c29defa816abff2d1580ee0f08d48e6f10c7cf7fcb93d8763e24e60256"
+        },
+        {
+          "name": "paymentmethod_payu_money_salt",
+          "before_sha256": null,
+          "after_sha256": "76d122bc1f9bb47f7aec252ec450357bce21e8e9b2e5de187698827dddfbc2fc"
+        },
+        {
+          "name": "paymentmethod_payu_money_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "af27b4d3e166f4845a3afda677d76ed3397bca5bc7b10eba96ec33d7426c8b24"
+        },
+        {
+          "name": "paymentmethod_payu_money_currencies",
+          "before_sha256": null,
+          "after_sha256": "2c093af758706eb99cc86a0a75763161de8db35af8ad00969989ec975cd4816a"
+        },
+        {
+          "name": "paymentmethod_payu_money_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "eaf31564a1eca94ea6f1a0cac93aafe5e0b138b99cc98aeb5744dc3e130700e1"
+        },
+        {
+          "name": "paymentmethod_payu_money_default_selected",
+          "before_sha256": null,
+          "after_sha256": "ed2e092b3367ccc442ef23cebddd9e1aa33da955f0e5800b73e8d0dff75cb5b1"
+        },
+        {
+          "name": "paymentmethod_payu_money_initialized",
+          "before_sha256": null,
+          "after_sha256": "a7cd9ca9a8680441b367c4b4bd7c835184dbcb0196bf2b343bfd58b0bac4f5f3"
+        },
+        {
+          "name": "paymentmethod_stripe_active",
+          "before_sha256": null,
+          "after_sha256": "132b02cf9c8d96fb51bd9f23caff6918d6ffcd7730f0471cbcdf206cec215dba"
+        },
+        {
+          "name": "paymentmethod_stripe_label",
+          "before_sha256": null,
+          "after_sha256": "b9d7e539f9e7e26e5cd3c841d3b5d49a63c874f86f031668c7ec012c586dc0ff"
+        },
+        {
+          "name": "paymentmethod_stripe_fee_fixed",
+          "before_sha256": null,
+          "after_sha256": "ec11f2eab7b2e21bef5c89dbba223be9a6ae0cb05161ea18f582ba559def23cb"
+        },
+        {
+          "name": "paymentmethod_stripe_fee_percent",
+          "before_sha256": null,
+          "after_sha256": "200f92db9662ee42c6e33c523fb46e9bc08880b6dc904997de5f43ac9c4850bf"
+        },
+        {
+          "name": "paymentmethod_stripe_api_publishable_key",
+          "before_sha256": null,
+          "after_sha256": "b1208feff63edcf39e6ce79ce522e6fd4311b9574dfc6e22ba0c6929a846508c"
+        },
+        {
+          "name": "paymentmethod_stripe_api_secret_key",
+          "before_sha256": null,
+          "after_sha256": "19cbcaf5254af56bf3f835960f8519e76472b1b12c7b70f5e4ecdb9372a0550c"
+        },
+        {
+          "name": "paymentmethod_stripe_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "480fd4e971d345adb1a48f0dcbaed865ed865928efbb5ddadaf3709f0f44c501"
+        },
+        {
+          "name": "paymentmethod_stripe_currencies",
+          "before_sha256": null,
+          "after_sha256": "a81d881e069d0186b2ee41fc4a4ebb99621b6c32b79e6a2b67ccf6844af9aabe"
+        },
+        {
+          "name": "paymentmethod_stripe_allow_primary_contact_to_update_credit_card",
+          "before_sha256": null,
+          "after_sha256": "3b35e90a2b94b6b333219c16ca3d2cd1ef6c2d45ba7632b66ae8e5821a91e721"
+        },
+        {
+          "name": "paymentmethod_stripe_default_selected",
+          "before_sha256": null,
+          "after_sha256": "c5b8087585506f78e51968266d9a3934b372762dbb97fe542ad21885f37a427b"
+        },
+        {
+          "name": "paymentmethod_stripe_initialized",
+          "before_sha256": null,
+          "after_sha256": "d98c98c42b1ef512f258b95cfe24459e6a38cb66799451a5bfff918877181470"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_active",
+          "before_sha256": null,
+          "after_sha256": "6f899ae94ef6af29fe7901635833490160f833dcd6b049a3a9b67081b2f95818"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_label",
+          "before_sha256": null,
+          "after_sha256": "7778edf30171abbc0b0a6cab183b577fe757ae2a5e5061fc9bdd6ade44e2121b"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_api_secret_key",
+          "before_sha256": null,
+          "after_sha256": "21f07e9e388376af1a9cc80d7ab60b714d562502a52908bb0d0e10aba65b29ad"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_api_publishable_key",
+          "before_sha256": null,
+          "after_sha256": "593b2832e1e92e1b6c94647bf30d82a5b45fb25649ffa9bc2e4bab25033edc3f"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_description_dashboard",
+          "before_sha256": null,
+          "after_sha256": "ef3c6110542d3f4b4876cd65a29b3412fbaea873887495ec633564e291fc3637"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_statement_descriptor",
+          "before_sha256": null,
+          "after_sha256": "8883e6d1c189f668febe64bc668b336638ae0267f7046302bbb73dcd41782525"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_currencies",
+          "before_sha256": null,
+          "after_sha256": "75b89b18ff3145f3792334ec53b7fbe359c22e44c222a31c5c4be1f48cabf194"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_default_selected",
+          "before_sha256": null,
+          "after_sha256": "ea7cfe80b1cd97b8a587d3e4e9d77377fc7368334121e552646d32c4d0ac9857"
+        },
+        {
+          "name": "paymentmethod_stripe_ideal_initialized",
+          "before_sha256": null,
+          "after_sha256": "1762882dc619f4ce89de57a3aadb67b3880b47f128185f6f1142bb04ab49c518"
+        },
+        {
+          "name": "paymentmethod_two_checkout_active",
+          "before_sha256": null,
+          "after_sha256": "f440e87f5c89df00391b3c3552dc21d31dee55743d4ac147833af45c46e8e72d"
+        },
+        {
+          "name": "paymentmethod_two_checkout_label",
+          "before_sha256": null,
+          "after_sha256": "71acc4afc287e8ffc5f3c143110189c41252e55784b6d6b2455dbf83cb99df20"
+        },
+        {
+          "name": "paymentmethod_two_checkout_fee_fixed",
+          "before_sha256": null,
+          "after_sha256": "5db5596705d7cce060c053b2905b57572516a93a10f422eb1b46322a02db6c19"
+        },
+        {
+          "name": "paymentmethod_two_checkout_fee_percent",
+          "before_sha256": null,
+          "after_sha256": "a165b9afdba63f9d9d7d390e488bfd14a62babe6ac1da6ab027fb6ac13143c6b"
+        },
+        {
+          "name": "paymentmethod_two_checkout_merchant_code",
+          "before_sha256": null,
+          "after_sha256": "c39cdbbfe148fbbd323258d85f881310822124e92cb48cce04d8e9f9fe8cebd0"
+        },
+        {
+          "name": "paymentmethod_two_checkout_secret_key",
+          "before_sha256": null,
+          "after_sha256": "101d76e12b9f2dea194c5fd144f7348038d3f6e775f10b5124d680e1f64489a5"
+        },
+        {
+          "name": "paymentmethod_two_checkout_description",
+          "before_sha256": null,
+          "after_sha256": "2dfdc391eeda397c297f099147ad03df44bea8ab1699b63a3e3a27f13bd65894"
+        },
+        {
+          "name": "paymentmethod_two_checkout_currencies",
+          "before_sha256": null,
+          "after_sha256": "71f883f9c84acf1f86e2e0f69507e835c5bf282480522f883c797b94e89b9583"
+        },
+        {
+          "name": "paymentmethod_two_checkout_test_mode_enabled",
+          "before_sha256": null,
+          "after_sha256": "3db4ab29b592a3943381fd65cfed4e1555b7c8a4385aca2f7901d2cf327a04e8"
+        },
+        {
+          "name": "paymentmethod_two_checkout_default_selected",
+          "before_sha256": null,
+          "after_sha256": "c50db566433bc68573b4d99bae3dba7ca523d0f1713cc2d586da22dffcfeb84a"
+        },
+        {
+          "name": "paymentmethod_two_checkout_initialized",
+          "before_sha256": null,
+          "after_sha256": "225615a03ce8dc48d4cd98a9d99a5b4920d7f5cb5d350a122859241266fae91f"
+        }
+      ],
+      "evidence_sha256": "0a921f4ce70465ec60555bc61684f161f8a9038f2f43b8668df57ccc3d1aec23",
+      "cause": "Native App_gateway::initMode adds missing paymentmethod defaults on first primary context/dashboard/gateway load; no existing option changed. Initial financial snapshot preceded this genuine GUI lifecycle. New final tests warm primary GUI before snapshot and retain ALL options without exclusions."
+    }
+  ],
+  "limits": [
+    "No production code changed by HTTP author.",
+    "No external provider, bank, SMTP or OpenAI operation.",
+    "Fresh444 and actual443→444 proven here; published SHA/CI terminal binding remains coordinator responsibility.",
+    "Existing failed diagnostic banks retained without resetting business state; final tests use a new fresh bank and untouched443 U240 bank upgraded natively."
+  ]
+}

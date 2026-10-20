@@ -6,6 +6,7 @@ require_once APPPATH . 'services/CompanySettingsFormats.php';
 require_once APPPATH . 'services/CompanySettingsCatalog.php';
 require_once APPPATH . 'services/CompanyProjectFileSettings.php';
 require_once APPPATH . 'services/CompanyPdfTypography.php';
+require_once APPPATH . 'services/CompanyTicketPreferences.php';
 
 class Settings extends AdminController
 {
@@ -25,7 +26,7 @@ class Settings extends AdminController
     // View all settings
     public function index()
     {
-        if ($this->isolated_company() || (CompanySettingsRuntime::active() && in_array($this->input->get('group'),['project_files','pdf_typography'],true))) { return $this->isolated_index(); }
+        if ($this->isolated_company() || (CompanySettingsRuntime::active() && in_array($this->input->get('group'),['project_files','pdf_typography','ticket_preferences'],true))) { return $this->isolated_index(); }
         if (!$this->settings_allowed('view')) {
             access_denied('settings');
         }
@@ -262,7 +263,10 @@ class Settings extends AdminController
                     $settings['mail_engine'] = 'phpmailer';
                     $settings['email_protocol'] = 'smtp';
                 }
-                if($group==='pdf_typography'){
+                if($group==='ticket_preferences'){
+                    $revision=$post['ticket_preferences_revision']??null;if(!is_string($revision)||!preg_match('/^(?:0|[1-9][0-9]{0,9})$/D',$revision)||(int)$revision>2147483647)throw new DomainException('company_ticket_preferences_invalid');
+                    (new CompanyTicketPreferences($this->db,db_prefix()))->save(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId(),(int)$revision,$settings);
+                }elseif($group==='pdf_typography'){
                     $revision=$post['pdf_typography_revision']??null;if(!is_string($revision)||!preg_match('/^(?:0|[1-9][0-9]{0,9})$/D',$revision)||(int)$revision>2147483647)throw new DomainException('company_pdf_typography_invalid');
                     (new CompanyPdfTypography($this->db,db_prefix()))->save(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId(),(int)$revision,$settings);
                 }elseif($group==='project_files'){
@@ -271,7 +275,7 @@ class Settings extends AdminController
                 }else{$this->settings_model->update(['settings' => $settings]);}
                 $saved = true;
             } catch (DomainException $exception) {
-                $this->output->set_status_header(in_array($exception->getMessage(),['company_project_file_settings_stale','company_pdf_typography_stale'],true)?409:422);
+                $this->output->set_status_header(in_array($exception->getMessage(),['company_project_file_settings_stale','company_pdf_typography_stale','company_ticket_preferences_stale'],true)?409:422);
                 $messages = [
                     'issuer_invalid_name' => 'Informe um nome válido para a empresa.',
                     'issuer_invalid_tax_id' => 'Informe um CPF ou CNPJ válido.',
@@ -287,9 +291,10 @@ class Settings extends AdminController
         $identity = (new CompanySettingsIdentity($this->db, db_prefix()))->read(CompanySettingsRuntime::issuerId());
         $pdfTypography=$group==='pdf_typography'?(new CompanyPdfTypography($this->db,db_prefix()))->page(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId()):null;
         $projectFiles=$group==='project_files'?(new CompanyProjectFileSettings($this->db,db_prefix()))->page(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId()):null;
+        $ticketPreferences=$group==='ticket_preferences'?(new CompanyTicketPreferences($this->db,db_prefix()))->page(CompanySettingsRuntime::issuerId(),CompanySettingsRuntime::staffId()):null;
         $values = [];
         foreach ($fields as $name) {
-            if ($name !== 'smtp_password') { $values[$name] = $pdfTypography!==null?$pdfTypography[$name]:($projectFiles!==null?$projectFiles[$name]:(CompanySettingsRuntime::exists($name)?CompanySettingsRuntime::get($name):CompanySettingsCatalog::defaultValue($group,$name))); }
+            if ($name !== 'smtp_password') { $values[$name] = $ticketPreferences!==null?$ticketPreferences[$name]:($pdfTypography!==null?$pdfTypography[$name]:($projectFiles!==null?$projectFiles[$name]:(CompanySettingsRuntime::exists($name)?CompanySettingsRuntime::get($name):CompanySettingsCatalog::defaultValue($group,$name)))); }
         }
         $this->load->view('admin/settings/company_scoped', [
             'company_identity' => $identity, 'company_id' => CompanySettingsRuntime::issuerId(),
@@ -298,8 +303,10 @@ class Settings extends AdminController
             'error' => $error, 'saved' => $saved,
             'pdf_typography_revision'=>$pdfTypography['revision']??null,
             'project_files_revision'=>$projectFiles['revision']??null,
+            'ticket_preferences_revision'=>$ticketPreferences['revision']??null,
             'context_token' => CompanyRequestScope::token(),
             'company_urls' => [
+                'ticket_preferences'=>CompanyRequestScope::adminUrl($this,'settings?group=ticket_preferences'),
                 'pdf_typography'=>CompanyRequestScope::adminUrl($this,'settings?group=pdf_typography'),
                 'project_files'=>CompanyRequestScope::adminUrl($this,'settings?group=project_files'),
                 'companies' => CompanyRequestScope::adminUrl($this, 'company_context'),

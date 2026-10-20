@@ -1,0 +1,50 @@
+{
+  "application/services/CompanyTicketPreferences.php": {
+    "base_sha256": null,
+    "sha256": "d749badfdcbcfa1cff8b07620a16c4baa2541c78c48bb3161947343d1df2fcee"
+  },
+  "application/services/CompanySettingsCatalog.php": {
+    "base_sha256": "c5721f6261cfddc09e6684f83de82c55da6a0c809caae59c729f17e84427d49f",
+    "sha256": "33349c44c735349c6eb9c28e10c08f972b9fd1ed69c2c0455e103851249df1f0"
+  },
+  "application/controllers/admin/Settings.php": {
+    "base_sha256": "afbd0e7ab0e87c73ff66b01cddaf03951de465901730607046b015928c598204",
+    "sha256": "0f83a0f6c432121947ebbda623cb0b9dbc464d8c93c82dd7948c186a1812d391"
+  },
+  "application/views/admin/settings/company_scoped.php": {
+    "base_sha256": "ac2684c31f973eb513da6b69b729baad63b36e20814d0d787868c85490f2c35b",
+    "sha256": "7e010e4d43ddd5b7b5e3e0f2d5bc9d62c5d12284a274af3de52e0c5edce734cb"
+  },
+  "application/services/CompanyTickets.php": {
+    "base_sha256": "3aeb652e8a817de931aaa5bce54d8ee8f6555b7dcf6a69286e6d084f1d21d4c4",
+    "sha256": "be1e977be14872f2b2a0839f3f568071ed1c3e7e24b72b96e81ab2d5f948b7c6"
+  },
+  "application/services/CompanyPortalOperations.php": {
+    "base_sha256": "b945c4f4080fac3a230be34e742b994c7e7a670dc965cb07b93838ab080d741a",
+    "sha256": "1fe14843e64d109fec547bdea7914ad392e606c09fe3b7965f624a190e74730b"
+  },
+  "docs/companies/ticket-preferences.md": {
+    "base_sha256": null,
+    "sha256": "f6f4242089a90e401f18b6dc58c2603eb9ebc51e29a2482ac0b4316ff6138aef"
+  },
+  "tests/settings/ticket_preferences.php": {
+    "base_sha256": null,
+    "sha256": "d0225d333292052de379a8c3d33fda9ab9651a9be5356a0c76d11890b652b6a3"
+  },
+  "tests/settings/ticket_preferences_readers.php": {
+    "base_sha256": null,
+    "sha256": "dbf79002dc3e6cfbc5ea48cf9a921adc37bb6d8fcf68b619e7e55617e0583a65"
+  },
+  "tests/settings/ticket_preferences_concurrency.php": {
+    "base_sha256": null,
+    "sha256": "8554307997bd39a8d5e22bab4de18d28ef7bcd6739464755b29bdfc68225705b"
+  },
+  "tests/settings/ticket_preferences_http_fixture.php": {
+    "base_sha256": null,
+    "sha256": "968487f1961d9a162666218a57464a62be9b5620eaf5334ba7d877b9ce85a294"
+  },
+  "tests/settings/ticket_preferences_browser.cjs": {
+    "base_sha256": null,
+    "sha256": "92a7fba7a6327e370041beb1f461b724c9c08bf32513f2628167eacaadf34356"
+  }
+}

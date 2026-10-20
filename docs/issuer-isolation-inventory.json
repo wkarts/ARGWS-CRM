@@ -4206,12 +4206,12 @@
       "evidence": ""
     },
     "application/services/CompanySettingsCatalog.php": {
-      "sha256": "c5721f6261cfddc09e6684f83de82c55da6a0c809caae59c729f17e84427d49f",
+      "sha256": "33349c44c735349c6eb9c28e10c08f972b9fd1ed69c2c0455e103851249df1f0",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        22
+        23
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5298,15 +5298,15 @@
       "evidence": ""
     },
     "application/views/admin/settings/company_scoped.php": {
-      "sha256": "ac2684c31f973eb513da6b69b729baad63b36e20814d0d787868c85490f2c35b",
+      "sha256": "7e010e4d43ddd5b7b5e3e0f2d5bc9d62c5d12284a274af3de52e0c5edce734cb",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        6,
         7,
         8,
-        68
+        9,
+        72
       ],
       "state": "unreviewed",
       "evidence": ""

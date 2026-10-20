@@ -1,3 +1,7 @@
+# Incremento444: ordem de respostas por empresa
+
+Pai publicado57a80667e47e203bcb4e388fa3670824bb4bb4e1(443). Fonte444núcleo4.4.4/NOOP, BB122 eAsaas153inalterados. OsseisarquivosprodutivosdeTicketpreferencesconservamoshashesdo componente revisado, native1992/executor1464, cinco execuções finais e143PythonPASS. Fonte18548/7d9a5f3eae930bd609d66aa3ec6073154cd7f79a53c790481f3366139865efba. HTTPfinalfresh42,01s/upgrade56,32sPASS,27tabelashistóricas e18534runtimehashesintactos no relatório próprio; publicação/CI associados naPR. Ver `pr45-recovery-444.md`.
+
 # Incremento443: revisões de vendas e CNAB400 observacional
 
 Pai publicado `7dd715fc371c66d4c95ebc342d02c4391b50869f`, núcleo4.4.2/442, BB121 eAsaas153. Doze testes repetidos contra o SHA publicado passaram, com18539 arquivos produtivos semalteração. CI442 em acompanhamento, sematribuir aele os16sucessos436.

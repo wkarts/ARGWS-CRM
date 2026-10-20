@@ -485,3 +485,9 @@ jobs:
           php tests/companies/sales_mutations_concurrency.php
           php tests/companies/native_resume_443.php
           php tests/companies/native_resume_443.php --tracking
+          # Own ticket reply-order preferences444; historical schemas and settings preserved.
+          php tests/settings/ticket_preferences.php
+          php tests/settings/ticket_preferences_readers.php
+          php tests/settings/ticket_preferences_concurrency.php
+          php tests/companies/native_resume_444.php
+          php tests/companies/native_resume_444.php --tracking
