@@ -490,6 +490,11 @@ $config['csrf_cookie_name']  = defined('APP_CSRF_COOKIE_NAME') ? APP_CSRF_COOKIE
 $config['csrf_expire']       = defined('APP_CSRF_EXPIRE') ? APP_CSRF_EXPIRE : 3660;
 $config['csrf_regenerate']   = false;
 $config['csrf_exclude_uris'] = ['company_operations_api/project_copies/[1-9][0-9]{0,9}', 'company_operations_api/(project_files|task_files|contract_files|ticket_files)/[1-9][0-9]{0,9}(/[a-f0-9]{64})?', 'company_operations_api/(project_milestones|task_dependencies|project_follow|task_follow)/[1-9][0-9]{0,9}', 'company_operations_api/(projects|tasks|standalone_tasks|contracts|tickets)(/[1-9][0-9]{0,9})?', 'company_api/invoices',
+    'company_api/expenses',
+    'company_api/expenses/[1-9][0-9]*',
+    'company_api/expense_categories',
+    'company_api/expense_categories/[1-9][0-9]*',
+    'company_api/expense_files/[1-9][0-9]*',
     'company_api/drafts',
     'company_api/(draft_change|draft_cancel|draft_issue)/[1-9][0-9]*', 'company_api/credits', 'company_api/(payments|payment_reverse|credit_apply|credit_unapply|credit_refund|credit_refund_reverse|credit_void)/[1-9][0-9]*', 'company_asaas_callback/integration/[a-f0-9]{32}', 'forms/wtl/[0-9a-z]+', 'forms/ticket', 'forms/quote/[0-9a-z]+', 'admin/tasks/timer_tracking', 'api\/.+', 'razorpay/success\/.+'];
 

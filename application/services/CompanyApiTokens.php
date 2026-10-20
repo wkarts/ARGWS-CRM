@@ -23,7 +23,8 @@ final class CompanyApiTokens
         'projects:follow:write'=>[['projects','view']],
         'tasks:follow:read'=>[['tasks','view'],['projects','view']],
         'tasks:follow:write'=>[['tasks','view'],['projects','view']]
-        ,'drafts:read'=>[['invoices','view'],['customers','view']],'drafts:create'=>[['invoices','view'],['invoices','create'],['customers','view']],'drafts:edit'=>[['invoices','view'],['invoices','edit'],['customers','view']],'drafts:cancel'=>[['invoices','view'],['invoices','delete'],['customers','view']],'drafts:issue'=>[['invoices','view'],['invoices','create'],['customers','view']],
+        ,'expenses:read'=>[['expenses','view']],'expenses:create'=>[['expenses','view'],['expenses','create']],'expenses:edit'=>[['expenses','view'],['expenses','edit']],'expenses:cancel'=>[['expenses','view'],['expenses','delete']],'expenses:categories:write'=>[['expenses','view'],['expenses','create'],['expenses','edit']],'expenses:files:read'=>[['expenses','view']],'expenses:files:write'=>[['expenses','view'],['expenses','edit']],
+        'drafts:read'=>[['invoices','view'],['customers','view']],'drafts:create'=>[['invoices','view'],['invoices','create'],['customers','view']],'drafts:edit'=>[['invoices','view'],['invoices','edit'],['customers','view']],'drafts:cancel'=>[['invoices','view'],['invoices','delete'],['customers','view']],'drafts:issue'=>[['invoices','view'],['invoices','create'],['customers','view']],
         'payments:read'=>[['invoices','view']],
         'payments:create'=>[['invoices','view'],['payments','create']],
         'payments:reverse'=>[['invoices','view'],['payments','delete']],

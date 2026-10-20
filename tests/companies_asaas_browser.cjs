@@ -9,7 +9,7 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
 (async()=>{const browser=await chromium.launch({headless:true});const context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  execFileSync('docker',['exec',app,'mkdir','-p','/app/tests/support','/app/tests/companies']);
- for(const file of ['tests/support/BbPdoDatabase.php','tests/companies/asaas_install_http_fixture.php','tests/companies/asaas_http_fixture.php'])execFileSync('docker',['cp',file,app+':/app/'+file]);
+ for(const file of ['tests/support/AsaasHttpNativeTarget.php','tests/support/BbPdoDatabase.php','tests/companies/asaas_install_http_fixture.php','tests/companies/asaas_http_fixture.php'])execFileSync('docker',['cp',file,app+':/app/'+file]);
  execFileSync('docker',['exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',app,'php','tests/companies/asaas_install_http_fixture.php'],{stdio:'pipe'});
  await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await go(page,page.locator('button[type=submit]'));
  const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");const prepared={};let oldForm;
@@ -41,4 +41,4 @@ try{
  assert.equal((await context.request.get(url+'/admin/company_asaas?invoice='+prepared[a].invoice)).status(),403,'B cannot hydrate A invoice in issuer UI');
  assert.ok(!(await page.locator('#charges').innerText()).includes(prepared[a].remote),'B charge list never renders A remote identity');
  await page.screenshot({path:output+'/company-asaas.png',fullPage:true});assert.deepEqual(errors,[]);console.log('Company Asaas A/B actual UI credentials/token-once/receipt + HTTP inbox/dedup/stale/company isolation passed. Tariff native expense and opt-in worker passed; creation/query transport simulated by CLI fixture; no real Asaas homologation.');
-}finally{await browser.close();}})().catch(e=>{console.error(e.message);process.exitCode=1;});
+}finally{await browser.close();}})().catch(e=>{console.error(e.stderr?.toString()||e.message);process.exitCode=1;});

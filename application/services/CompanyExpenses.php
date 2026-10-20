@@ -9,9 +9,10 @@ require_once __DIR__.'/CompanyExpenseSchema.php';require_once __DIR__.'/CompanyF
 final class CompanyExpenses
 {
     private IssuerResourceAccess $acl;
-    public function __construct(private $db,private string $p)
+    private $originGuard;private array $originTables;
+    public function __construct(private $db,private string $p,?callable $originGuard=null,array $originTables=[])
     {
-        if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid table prefix');$this->acl=new IssuerResourceAccess($db,$p);
+        if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid table prefix');$this->acl=new IssuerResourceAccess($db,$p);$this->originGuard=$originGuard;$this->originTables=$originGuard===null?[]:$originTables;
     }
     private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private function authorize(int $issuer,int $actor,string $cap):void
@@ -20,12 +21,12 @@ final class CompanyExpenses
     }
     public function tables():array
     {
-        $tables=['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','issuers_client_links','clients','company_projects','company_expenses','company_expense_categories','company_expense_requests','company_expense_files','issuers_audit'];if($this->db->table_exists($this->p.'asaas_company_fee_expenses'))$tables[]='asaas_company_fee_expenses';foreach(['company_expense_billing_links','company_expense_billing_origins'] as $table)if($this->db->table_exists($this->p.$table))$tables[]=$table;return array_values(array_unique(array_merge($tables,(new CompanyFinancialJournal($this->db,$this->p))->tables('expense'))));
+        $tables=['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','issuers_client_links','clients','company_projects','company_expenses','company_expense_categories','company_expense_requests','company_expense_files','issuers_audit'];if($this->db->table_exists($this->p.'asaas_company_fee_expenses'))$tables[]='asaas_company_fee_expenses';foreach(['company_expense_billing_links','company_expense_billing_origins'] as $table)if($this->db->table_exists($this->p.$table))$tables[]=$table;return array_values(array_unique(array_merge($tables,$this->originTables,(new CompanyFinancialJournal($this->db,$this->p))->tables('expense'))));
     }
     private function transaction(int $issuer,int $actor,string $cap,callable $work)
     {
         CompanyExpenseSchema::assertValid($this->db,$this->p);
-        return IssuerTransaction::run($this->db,$this->p,$this->tables(),function()use($issuer,$actor,$cap,$work){$this->acl->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,$cap);$result=$work();$this->authorize($issuer,$actor,$cap);return $result;});
+        return IssuerTransaction::run($this->db,$this->p,$this->tables(),function()use($issuer,$actor,$cap,$work){$this->acl->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,$cap);if($this->originGuard!==null&&($this->originGuard)('before',$issuer,$actor,null)===false)throw new DomainException('company_api_scope_denied');$result=$work();$this->authorize($issuer,$actor,$cap);if($this->originGuard!==null&&($this->originGuard)('after',$issuer,$actor,$result)===false)throw new DomainException('company_api_scope_denied');$this->authorize($issuer,$actor,$cap);return $result;});
     }
     public static function money(int $cents):string{return intdiv($cents,100).'.'.str_pad((string)($cents%100),2,'0',STR_PAD_LEFT);}
     private static function text($value,int $max,bool $required=true):string
@@ -110,7 +111,7 @@ final class CompanyExpenses
         $fields=$data;$this->reference($issuer,$actor,$fields);$max=$this->rows('SELECT COALESCE(MAX(number),0) n FROM '.$this->p.'company_expenses WHERE issuer_id=?',[$issuer])[0];$number=(int)$max['n']+1;if($number>2147483647)throw new DomainException('company_expense_invalid');
         $fields+=['issuer_id'=>$issuer,'number'=>$number,'state'=>'recorded','revision'=>1,'created_by'=>$actor,'created_at'=>date('Y-m-d H:i:s'),'updated_at'=>date('Y-m-d H:i:s')];
         IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_expenses (`'.implode('`,`',array_keys($fields)).'`) VALUES ('.implode(',',array_fill(0,count($fields),'?')).')',array_values($fields));$id=(int)$this->db->insert_id();if($id<1)throw new RuntimeException('issuer_expense_write_unconfirmed');$this->confirm($issuer,$id,$fields);
-        $this->journal($issuer,$actor,$id,'expense_recorded',[], $this->locked($issuer,$id));$this->audit($issuer,$actor,$id,'company_expense_created',['number'=>$number,'total_cents'=>$fields['total_cents'],'currency'=>$fields['currency']]);$this->writeReceipt($issuer,$actor,'create',$key,$data,$id);return $id;
+        $this->journal($issuer,$actor,$id,'expense_recorded',[], $this->locked($issuer,$id));$this->audit($issuer,$actor,$id,'company_expense_created',['number'=>$number,'total_cents'=>$fields['total_cents'],'currency'=>$fields['currency']]);$this->writeReceipt($issuer,$actor,'create',$key,$data,$id);$this->confirm($issuer,$id,$fields);$again=$data;$this->reference($issuer,$actor,$again);foreach(['client_name','project_name']as$field)if($again[$field]!==$fields[$field])throw new RuntimeException('issuer_expense_write_unconfirmed');return $id;
     }
     public function change($issuer,$actor,$id,string $revision,string $key,?array $input=null):void
     {
@@ -121,7 +122,7 @@ final class CompanyExpenses
             if($this->db->table_exists($this->p.'company_expense_billing_links')){require_once __DIR__.'/CompanyExpenseBillingSchema.php';CompanyExpenseBillingSchema::assertValid($this->db,$this->p);if($this->rows('SELECT expense_id FROM '.$this->p.'company_expense_billing_links WHERE expense_id=? AND issuer_id=? AND state IN (?,?) FOR UPDATE',[$id,$issuer,'converting','converted']))throw new DomainException('company_expense_billing_immutable');}
             $fields=$data??['state'=>'cancelled'];if($data!==null){if($data['currency']!==$old['currency'])throw new DomainException('company_expense_immutable');$this->reference($issuer,$actor,$fields);}
             $fields+=['revision'=>(int)$old['revision']+1,'updated_at'=>date('Y-m-d H:i:s')];$set=[];foreach($fields as $field=>$value)$set[]='`'.$field.'`=?';IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_expenses SET '.implode(',',$set).' WHERE id=? AND issuer_id=?',array_merge(array_values($fields),[$id,$issuer]));$this->confirm($issuer,$id,$fields);
-            $this->journal($issuer,$actor,$id,$op==='cancel'?'expense_cancelled':'expense_updated',$old,$this->locked($issuer,$id));$this->audit($issuer,$actor,$id,'company_expense_'.$op,['previous_revision'=>$old['revision'],'revision'=>$fields['revision']]);$this->writeReceipt($issuer,$actor,$op,$key,$payload,$id);
+            $this->journal($issuer,$actor,$id,$op==='cancel'?'expense_cancelled':'expense_updated',$old,$this->locked($issuer,$id));$this->audit($issuer,$actor,$id,'company_expense_'.$op,['previous_revision'=>$old['revision'],'revision'=>$fields['revision']]);$this->writeReceipt($issuer,$actor,$op,$key,$payload,$id);$this->confirm($issuer,$id,array_replace($old,$fields));if($data!==null){$again=$data;$this->reference($issuer,$actor,$again);foreach(['client_name','project_name']as$field)if($again[$field]!==$fields[$field])throw new RuntimeException('issuer_expense_write_unconfirmed');}
         });
     }
     private static function journalSnapshot(array $row):array
@@ -159,7 +160,7 @@ final class CompanyExpenses
             if($this->rows('SELECT id FROM '.$this->p.'company_expense_categories WHERE issuer_id=? AND name=? AND id<>?',[$issuer,$name,$id??0]))throw new DomainException('company_expense_category_conflict');
             if($id===null){$count=(int)$this->rows('SELECT COUNT(*) n FROM '.$this->p.'company_expense_categories WHERE issuer_id=?',[$issuer])[0]['n'];if($count>=500)throw new DomainException('company_expense_invalid');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_expense_categories(issuer_id,name,active,revision,created_at) VALUES(?,?,?,1,?)',[$issuer,$name,(int)$active,date('Y-m-d H:i:s')]);$id=(int)$this->db->insert_id();}
             else{$old=$this->rows('SELECT * FROM '.$this->p.'company_expense_categories WHERE id=? AND issuer_id=? FOR UPDATE',[$id,$issuer])[0]??null;if(!$old)throw new DomainException('company_expense_denied');if($revision===null||!hash_equals(self::revision($old),$revision))throw new DomainException('company_expense_stale');IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_expense_categories SET name=?,active=?,revision=revision+1 WHERE id=? AND issuer_id=?',[$name,(int)$active,$id,$issuer]);}
-            if(!$this->rows('SELECT id FROM '.$this->p.'company_expense_categories WHERE id=? AND issuer_id=? AND name=? AND active=?',[$id,$issuer,$name,(int)$active]))throw new RuntimeException('issuer_expense_write_unconfirmed');$this->audit($issuer,$actor,$id,'company_expense_category_saved');$this->writeReceipt($issuer,$actor,'category',$key,$payload,$id);return $id;
+            if(!$this->rows('SELECT id FROM '.$this->p.'company_expense_categories WHERE id=? AND issuer_id=? AND name=? AND active=?',[$id,$issuer,$name,(int)$active]))throw new RuntimeException('issuer_expense_write_unconfirmed');$this->audit($issuer,$actor,$id,'company_expense_category_saved');$this->writeReceipt($issuer,$actor,'category',$key,$payload,$id);$verified=$this->rows('SELECT name,active,revision FROM '.$this->p.'company_expense_categories WHERE id=? AND issuer_id=? FOR UPDATE',[$id,$issuer])[0]??null;if(!$verified||$verified['name']!==$name||(int)$verified['active']!==(int)$active||(int)$verified['revision']!==(isset($old)?(int)$old['revision']+1:1))throw new RuntimeException('issuer_expense_write_unconfirmed');return $id;
         });
     }
 }

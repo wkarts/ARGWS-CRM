@@ -38,7 +38,12 @@ final class Resume439Database extends BbPdoDatabase {
 $GLOBALS['resume439Checks'] = 0; $GLOBALS['resume439Prefix'] = $argv[1]; $p = db_prefix();
 $db = new Resume439Database(new PDO(getenv('ISSUERS_TEST_DSN'), getenv('ISSUERS_TEST_USER') ?: null, getenv('ISSUERS_TEST_PASSWORD') ?: null, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]));
 $config = []; require APPPATH.'config/migration.php';
-resume439Check(($config['migration_version'] ?? null) === 439, 'shipped configuration targets439');
+$shippedVersion=trim(file_get_contents(dirname(APPPATH).'/VERSION'));
+resume439Check(preg_match('/^(\d)\.(\d)\.(\d)$/D',$shippedVersion,$shippedParts)===1,'canonical native version shape');
+$shippedMarker=(int)($shippedParts[1].$shippedParts[2].$shippedParts[3]);
+resume439Check(($config['migration_version']??null)===$shippedMarker&&$shippedMarker>=439,'shipped configuration exactly matches canonical source and supports historical439');
+$config['migration_version']=439; // Explicit historical boundary, using the real production executor.
+
 $db->query('CREATE TABLE `'.$p.'migrations` (version bigint NOT NULL) ENGINE=InnoDB');
 $db->insert($p.'migrations', ['version'=>436]);
 $GLOBALS['resume439Hooks'] = new class { public array $trace = []; public function do_action($name, ...$args) { $this->trace[] = $name; } };

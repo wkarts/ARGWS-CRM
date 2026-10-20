@@ -86,7 +86,8 @@ jobs:
       - uses: actions/checkout@v5
       - name: Preparar driver MySQL de teste
         run: |
-          apt-get update && apt-get install -y --no-install-recommends libpng-dev libjpeg62-turbo-dev
+          apt-get update && apt-get install -y --no-install-recommends libpng-dev libjpeg62-turbo-dev poppler-utils
+          command -v pdftotext
           docker-php-ext-configure gd --with-jpeg
           docker-php-ext-install pdo_mysql gd
       - name: Validar sintaxe e controles HTTP
@@ -439,3 +440,13 @@ jobs:
           # Migration nativa 440 completa e tracking; fixtures e suporte executam pelas suites.
           php tests/companies/native_resume_440.php
           php tests/companies/native_resume_440.php --tracking
+          # API privada de despesas 441; fixture HTTP e suporte somente pelas suites.
+          php tests/companies/expense_api.php
+          php tests/companies/expense_api_controller.php
+          php tests/companies/expense_api_atomic.php
+          php tests/companies/expense_api_billing.php
+          php tests/companies/expense_api_concurrency.php
+          php tests/companies/expense_api_resume_441_native_file.php
+          # NOOP nativo 441 real e tracking persistido, sem chamar o helper isoladamente.
+          php tests/companies/native_resume_441.php
+          php tests/companies/native_resume_441.php --tracking

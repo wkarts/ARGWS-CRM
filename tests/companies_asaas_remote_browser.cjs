@@ -8,7 +8,7 @@ async function go(page,button){await Promise.all([page.waitForNavigation({waitUn
 async function hidden(form){return form.locator('input[type=hidden]').evaluateAll(xs=>Object.fromEntries(xs.filter(x=>x.name).map(x=>[x.name,x.value])));}
 (async()=>{const browser=await chromium.launch({headless:true});const context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
- for(const file of ['tests/companies/asaas_install_remote_http_fixture.php','tests/companies/asaas_http_fixture.php'])execFileSync('docker',['cp',file,app+':/app/'+file]);
+ for(const file of ['tests/support/AsaasHttpNativeTarget.php','tests/companies/asaas_install_remote_http_fixture.php','tests/companies/asaas_http_fixture.php'])execFileSync('docker',['cp',file,app+':/app/'+file]);
  execFileSync('docker',['exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',app,'php','tests/companies/asaas_install_remote_http_fixture.php'],{stdio:'pipe'});
  await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await go(page,page.locator('button[type=submit]'));
  const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");let oldForm,originA;

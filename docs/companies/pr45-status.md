@@ -1,8 +1,8 @@
 # Matriz objetiva da PR45
 
-## Composição440 — fonte validada, publicação conferida naPR
+## Composição441 — API privada de despesas
 
-Core4.4.0/440, BB1.2.0/120 e Asaas1.5.3/153. Os11schemas novos, executor nativo/tracking/replay e todosfluxosHTTP440 foram provados no fonte congelado. Consulte [recuperação440](pr45-recovery-440.md) e [validaçãoHTTP440](pr45-validation-440.md). O SHA439 publicado é b9d7a2f74881e7f0faf01aa4b9f8e0365309a148; CI de cada SHA é registrado separadamente. A fila técnica restante continua aberta e não é reduzida à homologação externa.
+Core4.4.1/441, BB120 e Asaas153. API de despesas/categorias/arquivos com sete scopes explícitos e writer nativo, revisão/idempotência/limites e confirmação tardia do download.11execuções compostas e instalação/upgrade/HTTP A/B passaram; native441NOOP/tracking/replay e143Python provados. Consulte [recuperação441](pr45-recovery-441.md) e [HTTP441](pr45-validation-441.md). Publicação eCI são vinculados aoSHA efetivo daPR. Demais componentes ainda em recuperação não são anunciados como concluídos.
 
 ## Retomada de20/10/2026 — composição439 recuperada e validada localmente
 

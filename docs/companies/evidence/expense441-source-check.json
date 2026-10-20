@@ -1,0 +1,52 @@
+[
+  {
+    "path": "application/services/CompanyExpenseApi.php",
+    "sha256": "f069a0a7336f7a520fbb8eb1216fcc57287d641ff717dd0e67ba66286f4d413d",
+    "matches_component": true
+  },
+  {
+    "path": "application/services/CompanyExpenseApiReceipt.php",
+    "sha256": "00f5f12af73be1b4417803b79ccd8f72a41c161e60887405e5958be1f064180f",
+    "matches_component": true
+  },
+  {
+    "path": "application/services/CompanyExpenseApiHttp.php",
+    "sha256": "220d0911f9cf5ff86430e1846671e9f74da030fc965c5fe72df6c81871913d25",
+    "matches_component": true
+  },
+  {
+    "path": "application/services/CompanyExpenses.php",
+    "sha256": "f4856b1f8e244a0df17ece430a3d55754217695c213aa40a6d6b89d6a4c289d0",
+    "matches_component": true
+  },
+  {
+    "path": "application/services/CompanyExpenseFiles.php",
+    "sha256": "7fc9c447a7e631f53dbe8ede15d181afff595efb8cdbecf62b974d3e757d9832",
+    "matches_component": true
+  },
+  {
+    "path": "application/services/CompanyApiScope.php",
+    "sha256": "01e1fc94fc4088ae91853e1ed49a931f1eba13875f9bd38e7265f64bf9d2faaa",
+    "matches_component": true
+  },
+  {
+    "path": "application/services/CompanyApiTokens.php",
+    "sha256": "f2f432d2bfecd3d56f1821b23bb8404305482432c99394cdc5d7e2a68c28f482",
+    "matches_component": true
+  },
+  {
+    "path": "application/controllers/Company_api.php",
+    "sha256": "1ac3b9ed318f7847df3c41de59b6c8c03180936e2617617deecf2088bedd7b4e",
+    "matches_component": true
+  },
+  {
+    "path": "application/config/config.php",
+    "sha256": "9aa771ab82308e61f170b1551b320b01ca3a91ff553a27b75e5ee4eb9caa059f",
+    "matches_component": true
+  },
+  {
+    "path": "application/views/admin/companies/api_tokens.php",
+    "sha256": "655c944da66eadfb5891d76877c23a278e0fb21e7c52b8841673f904753bd414",
+    "matches_component": true
+  }
+]

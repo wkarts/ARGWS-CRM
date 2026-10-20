@@ -88,7 +88,7 @@
       "evidence": "tests/invoice_issuer_discovery.php; docs/invoice-issuer-core-scope.md (invoice queries only; other domains pending)"
     },
     "application/controllers/Company_api.php": {
-      "sha256": "8ca515c8f8bdf05b59da1d121bd43eda08024f7b0c6a487ea34cc34d5d8eb668",
+      "sha256": "1ac3b9ed318f7847df3c41de59b6c8c03180936e2617617deecf2088bedd7b4e",
       "categories": [
         "documents_numbering",
         "invoice_table"
@@ -98,8 +98,8 @@
         16,
         17,
         18,
-        71,
-        72
+        74,
+        75
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3009,15 +3009,15 @@
       "evidence": ""
     },
     "application/services/CompanyApiScope.php": {
-      "sha256": "8fa55f65b30648b9d9970879e481366c7478085fc825f27f9b4d1a3850a8a4ea",
+      "sha256": "01e1fc94fc4088ae91853e1ed49a931f1eba13875f9bd38e7265f64bf9d2faaa",
       "categories": [
         "documents_numbering",
         "invoice_table"
       ],
       "signal_lines": [
         19,
-        23,
-        24
+        24,
+        25
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3036,18 +3036,18 @@
       "evidence": ""
     },
     "application/services/CompanyApiTokens.php": {
-      "sha256": "e40fe45ec4089e9034304f54d30e027d31b04b06b000f89f61c3f7b34e4c9ccc",
+      "sha256": "f2f432d2bfecd3d56f1821b23bb8404305482432c99394cdc5d7e2a68c28f482",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
         9,
-        26,
         27,
         28,
         29,
-        33,
-        34
+        30,
+        34,
+        35
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3439,12 +3439,12 @@
       "evidence": ""
     },
     "application/services/CompanyExpenses.php": {
-      "sha256": "bfea1c5ae341e11a8655e94b327c51582436925743c8a62f4d7e6fcc5c5b8e46",
+      "sha256": "f4856b1f8e244a0df17ece430a3d55754217695c213aa40a6d6b89d6a4c289d0",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        23
+        24
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4592,7 +4592,7 @@
       "evidence": ""
     },
     "application/views/admin/companies/api_tokens.php": {
-      "sha256": "c055dc462a4e49f629cb2b2cb49f4f84034ea52f0979817632f760232631738e",
+      "sha256": "655c944da66eadfb5891d76877c23a278e0fb21e7c52b8841673f904753bd414",
       "categories": [
         "documents_numbering"
       ],

@@ -19,7 +19,7 @@ Nativebody completo passou1077checks cumulativas, com11tabelas/metadados/índice
 
 ## Provas da composição
 
-Produção congelada:18.522arquivos, SHA256335a3203d495df04c9fb3d98349cb7c0eb8f83a7b23c5738646aa2fb987bc3ff. MariaDB10.11.14/binlogON/usuáriosemSUPER e SQLite; observação real de dois waiters por cenário.143testesPython e178lintsPHP/Node passaram na revisão final.
+Produção congelada:18.522arquivos, SHA256335a3203d495df04c9fb3d98349cb7c0eb8f83a7b23c5738646aa2fb987bc3ff. MariaDB10.11.14/binlogON/usuáriosemSUPER e SQLite; observação real de dois waiters por cenário.143testesPython passaram.
 
 Drafts7suítesMaria/5SQLite; recorrência8Maria/6SQLite; operações25execuções; configurações22Maria/12SQLite; financeiro15Maria; BBcontrato/SQL/controller/concorrência e guards119sob120. Os contadores dos relatórios são cumulativos, não somáveis. Evidências recentes em docs/companies/evidence/ substituem alegações de overlays separados.
 

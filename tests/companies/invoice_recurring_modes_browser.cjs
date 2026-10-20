@@ -12,7 +12,7 @@ async function hidden(f){return f.locator('input[type=hidden]').evaluateAll(xs=>
 async function submit(p,b){await Promise.all([p.waitForNavigation({waitUntil:'domcontentloaded'}),b.click()]);}
 (async()=>{
  const fixture=JSON.parse(execFileSync('docker',['exec','-e','ISSUERS_BROWSER_DB_NAME','-e','ISSUERS_RECURRING_MODES_BATCH='+batch,app,'php','tests/companies/invoice_recurring_modes_http_fixture.php'],{env:process.env,encoding:'utf8'}));
- assert.equal(fixture.native_marker,440);assert.equal(fixture.read_only,true);assert.equal(fixture.schemas.length,5);
+ assert.ok(Number.isInteger(fixture.expected_marker)&&fixture.expected_marker>=440);assert.equal(fixture.native_marker,fixture.expected_marker);assert.equal(fixture.read_only,true);assert.equal(fixture.schemas.length,5);
  const browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})});let context;
  try{
   context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
