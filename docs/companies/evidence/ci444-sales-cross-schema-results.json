@@ -1,0 +1,134 @@
+{
+  "component": "test-only Sales V4 cross-schema fixture",
+  "published_parent_sha": "004c334c451707e19abcd68bf66a793f547116fb",
+  "original_ci": {
+    "job_id": 118606275393,
+    "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39416371604/job/118606275393",
+    "cause": "issuer_tests is provisioned; the fixture hardcoded unrelated asaas_test without provisioning it; DSN itself is correct",
+    "excerpt_sha256": "a46fd8294c76bf692ab8c01461d00936a21ae42e1c529d203b0369d3e377179c"
+  },
+  "binding": {
+    "base": "candidate445",
+    "changes": {
+      "tests/companies/sales_mutations_foreign_keys.php": {
+        "before_sha256": "2415b7dcaea138c2c4e4f347f9ff3d422c95486303f04dba2fdfab841d952e7b",
+        "after_sha256": "3622f1c3bd671d84c5e94138da371d6afccd1a5522baf95a6a501023cff6bf9f"
+      }
+    },
+    "patch_sha256": "6dd43fd8f6b2db63e6b625fd9aa18b6de9a5a0083491cd211694480d324038cc",
+    "production_modified": false,
+    "workflows_modified": false,
+    "cross_schema_coverage_preserved": true,
+    "new_schema_pattern": "issuer_sales_fk_[a-f0-9]{16}",
+    "existing_schema_never_adopted": true
+  },
+  "runtime": {
+    "php": "8.3.6",
+    "mysql": "8.0.46-0ubuntu0.24.04.3",
+    "mariadb": "10.11.14-0ubuntu0.24.04.1",
+    "transport": "isolated local TCP only; no real providers"
+  },
+  "red": [
+    {
+      "log": "red-mysql8-ci-root.log",
+      "sha256": "7569de3a6c0f21dc007e4355d75ead03265d818d24cfaa47eaa58d7f309c04b6",
+      "exit": 255,
+      "footer": "  thrown in /workspace/scratch/6b72446d684f/ci445/tests/issuers_core_support.php on line 101",
+      "server_stopped": true
+    },
+    {
+      "log": "red-mariadb-ci-root.log",
+      "sha256": "f07ac102f6263115b4ef8e3a173abb277e22a3c71ede6881fcd226bcea7606be",
+      "exit": 255,
+      "footer": "  thrown in /workspace/scratch/6b72446d684f/ci445/tests/issuers_core_support.php on line 101",
+      "server_stopped": true
+    }
+  ],
+  "qualified_red_non_super": {
+    "log": "red-mariadb-functional.log",
+    "sha256": "1cd6a28c1a5d1370b783b769dbcdc8147e8d18a60f33892dcbf8d96e457cb7b8",
+    "exit": 255,
+    "footer": "  thrown in /workspace/scratch/6b72446d684f/ci445/tests/issuers_core_support.php on line 101",
+    "server_stopped": true
+  },
+  "green": [
+    {
+      "log": "green-sqlite.log",
+      "sha256": "6b42c64d5f131d5c65ad5e3a06ad11cab9b21909306c851a812a08361e42a7a3",
+      "exit": 0,
+      "footer": "Sales V4 exact foreign keys: 20 real invalid-engine variants; 227 cumulative (sqlite); both DELETE/UPDATE and NO ACTION/RESTRICT, duplicates/composites/extra/foreign parents.",
+      "server_stopped": null
+    },
+    {
+      "log": "green-mariadb.log",
+      "sha256": "aafca6ee7a7db06f11560bfab791d68b055cb3a4ef24cd73e504d164fdd6747c",
+      "exit": 0,
+      "footer": "Sales V4 exact foreign keys: 22 real invalid-engine variants; 218 cumulative (mysql); both DELETE/UPDATE and NO ACTION/RESTRICT, duplicates/composites/extra/foreign parents.",
+      "server_stopped": true
+    },
+    {
+      "log": "green-mysql8.log",
+      "sha256": "e092e176e073379ceb282a6fb369abb2ad6d9f2534649a7f724d5d32d8f315bc",
+      "exit": 0,
+      "footer": "Sales V4 exact foreign keys: 22 real invalid-engine variants; 218 cumulative (mysql); both DELETE/UPDATE and NO ACTION/RESTRICT, duplicates/composites/extra/foreign parents.",
+      "server_stopped": true
+    }
+  ],
+  "cleanup_after_injected_failure": [
+    {
+      "log": "cleanup-fault-mariadb-final.log",
+      "sha256": "3c0a65cdcabcd7e0e91b7b67183c7e12111d772e9319702e940f4f23faa6634b",
+      "exit": 0,
+      "footer": "Deliberate failure after actual cross-schema FK: local topology restored, owned schema removed, selected DB preserved PASS",
+      "server_stopped": true
+    },
+    {
+      "log": "cleanup-fault-mysql8.log",
+      "sha256": "97071ab9127f21a6d7ec3299b8bf24d7aebb705a03a34bffe6cbdb5efe9a17a0",
+      "exit": 0,
+      "footer": "Deliberate failure after actual cross-schema FK: local topology restored, owned schema removed, selected DB preserved PASS",
+      "server_stopped": true
+    }
+  ],
+  "strict_lint": {
+    "log": "php83-lint.log",
+    "sha256": "c54a6943167c0f7ae35540d77a30f59017adefcf14a0a629ae694fbab8ec9e7f",
+    "exit": 0,
+    "footer": "No syntax errors detected in ci444-sales-fk-overlay/tests/companies/sales_mutations_foreign_keys.php",
+    "server_stopped": null
+  },
+  "coverage": {
+    "mysql_real_invalid_fk_variants": 22,
+    "sqlite_real_invalid_fk_variants": 20,
+    "mysql_checks": 218,
+    "sqlite_checks": 227,
+    "existing_negative_assertions_preserved": true,
+    "added_checks_mysql": 5,
+    "create_database_if_not_exists": false,
+    "existing_schema_adopted_or_dropped": false,
+    "selected_database_preserved": true,
+    "actual_fk_metadata_asserted_before_validation": true,
+    "owned_schema_removed_and_foreign_keys_restored_on_failure": true
+  },
+  "privileges": {
+    "green_user": "crm_test@127.0.0.1, non-SUPER",
+    "foreign_namespace": "issuer_sales_fk_<16 lowercase hex>",
+    "foreign_namespace_privileges": [
+      "CREATE",
+      "DROP",
+      "REFERENCES",
+      "SELECT"
+    ],
+    "global_ddl_grant_added": false,
+    "ci_workflow_grants_changed": false,
+    "red_role": "existing root user inside fresh synthetic server only, matching CI444; no grants changed"
+  },
+  "limits": [
+    "MySQL/MariaDB GREEN used PHP8.3.6 locally; PHP8.1/8.5 in terminal CI remains root responsibility.",
+    "Baseline/root RED uses an immutable copy of the exact original test and ci445 prerequisite root.",
+    "Diagnostic failure copies are not part of the delivered test diff.",
+    "The first Maria bootstrap attempt failed because AF_UNIX is prohibited in this sandbox, before any test execution. Its log is retained and is not a functional RED.",
+    "No production, workflow, module, version or migration modified by this component.",
+    "No commit, push, merge, deploy or published-SHA CI performed by this agent."
+  ]
+}

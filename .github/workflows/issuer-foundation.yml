@@ -491,3 +491,4 @@ jobs:
           php tests/settings/ticket_preferences_concurrency.php
           php tests/companies/native_resume_444.php
           php tests/companies/native_resume_444.php --tracking
+          php tests/companies/native_ci_445.php

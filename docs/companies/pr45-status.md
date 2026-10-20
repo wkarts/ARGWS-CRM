@@ -1,3 +1,18 @@
+## Atualização445 — reparo de CI antes das próximas verticais
+
+Core4.4.5/445 NOOP; BB1.2.2/122 eAsaas1.5.3/153 intocados. Dois defeitos de fixtures444 corrigidos: SalesV4 schema estrangeiro próprio e BBnegativo emSQLite real com restauração doenv. Evidências em pr45-recovery-445.md epr45-validation-445-ci.md. O status remoto do SHA publicado está naPR45; este documento não antecipa16aprovações.
+
+| Requisito | Implementação/arquivo | Prova | Estado do incremento |
+|---|---|---|---|
+| CI Empresas1049 | tests/companies/sales_mutations_foreign_keys.php | RED→GREEN MySQL/Maria,22variantes;SQLite20 | Implementado445 |
+| CI BB SQLite | tests/banco_brasil_own_number_sqlite.php | DSN herdado→SQLite70; positivoMySQL699 | Implementado445 |
+| Trackingcore445 | migrations/445_version_445.php;tests/companies/native_ci_445.php | App real, failed/ignored/readback/retry/replay; histórico444igual | Implementado445 |
+| Defaults tarefas/calendário | snapshot recuperado candidate445 | ProvasHTTP445 anteriores preservadas; precisa reconciliação446 | Local, fora deste commit445 |
+| Registry principal500 | roteamento/bootstrap em investigação | logundefinedissuer_core_ready preservado | Pendente técnico |
+| LOCAL sem caixa/restauração/fundos posteriores | scripts/contratoNoncash preservados | V2incompleto; fontepodada, novasprovasnecessárias | Reimplementação em curso |
+| CNAB240 com tarifa | novo basis/fonte segregados | manualjun2026p31; matrizes emconstrução | Local, não publicado |
+| IOF/outros/estornosparciais/API18–19/CNAB400financeiro | docs/banco-brasil-remaining-contracts.md | contratos eadapters pendentes | Não concluído |
+
 # Incremento444: ordem de respostas por empresa
 
 Pai publicado57a80667e47e203bcb4e388fa3670824bb4bb4e1(443). Fonte444núcleo4.4.4/NOOP, BB122 eAsaas153inalterados. OsseisarquivosprodutivosdeTicketpreferencesconservamoshashesdo componente revisado, native1992/executor1464, cinco execuções finais e143PythonPASS. Fonte18548/7d9a5f3eae930bd609d66aa3ec6073154cd7f79a53c790481f3366139865efba. HTTPfinalfresh42,01s/upgrade56,32sPASS,27tabelashistóricas e18534runtimehashesintactos no relatório próprio; publicação/CI associados naPR. Ver `pr45-recovery-444.md`.
