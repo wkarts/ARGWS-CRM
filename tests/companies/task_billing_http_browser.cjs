@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),fs=require('node:fs'),{chromium}=require('playwright');
-const url=process.env.ISSUERS_BROWSER_URL,db=process.env.ISSUERS_BROWSER_DB_CONTAINER,output=process.env.ISSUERS_BROWSER_ARTIFACTS;assert.match(url||'',/^http:\/\/127\.0\.0\.1:\d+$/);assert.equal(process.env.ISSUERS_BROWSER_DB_NAME,'argws_upgrade_ci');fs.mkdirSync(output,{recursive:true});
+const url=process.env.ISSUERS_BROWSER_URL,db=process.env.ISSUERS_BROWSER_DB_CONTAINER,output=process.env.ISSUERS_BROWSER_ARTIFACTS||'/tmp/issuer-browser-evidence';assert.match(url||'',/^http:\/\/127\.0\.0\.1:\d+$/);assert.equal(process.env.ISSUERS_BROWSER_DB_NAME,'argws_upgrade_ci');fs.mkdirSync(output,{recursive:true});
 function sql(q){return execFileSync('docker',['exec','-e','MYSQL_PWD',db,'mysql','--protocol=tcp','--host=127.0.0.1','--user='+process.env.ISSUERS_BROWSER_DB_USER,'argws_upgrade_ci','--batch','--skip-column-names',...(/^\s*CREATE\s+TRIGGER\b/i.test(q)?['--delimiter=//']:[]),'-e',/^\s*CREATE\s+TRIGGER\b/i.test(q)?q+'//':q],{env:{...process.env,MYSQL_PWD:process.env.ISSUERS_BROWSER_DB_PASSWORD},encoding:'utf8'}).trim();}
 async function go(p,b){await Promise.all([p.waitForNavigation({waitUntil:'domcontentloaded'}),b.click()]);}async function hidden(f){return f.locator('input[type=hidden]').evaluateAll(xs=>Object.fromEntries(xs.filter(x=>x.name).map(x=>[x.name,x.value])));}
 function bootstrapBillingFixture(){

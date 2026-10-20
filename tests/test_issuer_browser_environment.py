@@ -55,7 +55,9 @@ vm.runInNewContext(fs.readFileSync(browser,'utf8'),context,{filename:browser});
 setImmediate(()=>{if(!reachedBrowser||fixtureRuns!==1){console.error('fixture setup failed before browser');process.exitCode=1;}});
 """
         root = Path(__file__).resolve().parents[1]
-        for browser in ('project_portal_tasks', 'portal_task_write', 'expense_billing'):
+        for browser in ('project_portal_tasks', 'portal_task_write', 'expense_billing',
+                        'task_billing_http', 'task_timesheets_http',
+                        'project_billing_rate_http', 'project_fixed_billing_http'):
             with self.subTest(browser=browser):
                 command = ['node', '-e', node, 'tests/companies/' + browser + '_browser.cjs']
                 green = subprocess.run(command, cwd=root, text=True, capture_output=True)
