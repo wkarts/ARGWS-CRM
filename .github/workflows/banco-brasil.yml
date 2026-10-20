@@ -117,6 +117,7 @@ jobs:
           php tests/banco_brasil_local_noncash_concurrency_v3.php
           php tests/banco_brasil_local_noncash_readers_v3.php
           php tests/banco_brasil_local_noncash_recurring_v3.php
+          php tests/banco_brasil_local_noncash_clock_v3.php
           php tests/banco_brasil_local_noncash_api_read_concurrency_v3.php
           php tests/banco_brasil_local_noncash_api_http_scope_v3.php
         env:
@@ -228,5 +229,6 @@ jobs:
           php tests/banco_brasil_local_noncash_concurrency_v3.php
           php tests/banco_brasil_local_noncash_readers_v3.php
           php tests/banco_brasil_local_noncash_recurring_v3.php
+          php tests/banco_brasil_local_noncash_clock_v3.php
           php tests/banco_brasil_local_noncash_api_read_concurrency_v3.php
           php tests/banco_brasil_local_noncash_api_http_scope_v3.php

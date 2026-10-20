@@ -1,3 +1,13 @@
+# Atualização 449 — preferências e consumidores próprios
+
+| Recorte | Implementado e testado | Pendente |
+|---|---|---|
+| Tarefas448 | Prioridade1–4/default2, criação/edição/cópias e auto-follow só do criador autorizado de projeto; duas tabelas auxiliares sem backfill | Demais configurações/consumidores não certificados universalmente |
+| Cronômetros449 | Preferência própria OFF, A/B/principal, início atômico com estado, parada sem conclusão, GUI/API, revisão/CSRF/ACL/retry e revogação concorrente | Auto-stop, regras adicionais e recorrência operacional de tarefas |
+| Recorrência financeira | Contrato439/440 e principal canônico447 preservados; não são tarefas recorrentes | Adaptadores bancários restantes e exceções documentadas abaixo |
+
+447–449 são incrementos contíguos; históricos da matriz abaixo permanecem contexto, substituídos somente nos recortes descritos. Evidências e limites: `pr45-validation-447.md`, `pr45-validation-448.md`, `pr45-validation-449.md`; CI do SHA efetivo na PR45.
+
 # Atualização447 — não substitui o contrato integral
 
 | Recorte | Estado técnico447 | Pendência real |

@@ -519,3 +519,8 @@ jobs:
           php tests/settings/task_operations_controller.php
           php tests/settings/task_operations_concurrency.php
           php tests/companies/native_resume_448.php
+          php tests/settings/task_timer_settings.php
+          php tests/settings/task_timer_transitions.php
+          php tests/settings/task_timer_concurrency.php
+          php tests/companies/native_resume_449.php
+          php tests/banco_brasil_local_noncash_clock_v3.php

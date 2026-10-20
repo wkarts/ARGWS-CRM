@@ -1,3 +1,11 @@
+## Atualização 449 — estado no início do cronômetro, por empresa
+
+Núcleo **4.4.9/449** NOOP; BB **1.2.3/123** e Asaas **1.5.3/153** sem alteração desde447. `task_timers` próprio, default desligado inclusive na principal, transição A fazer→Em andamento na mesma operação de início em tarefas de projeto/avulsas, GUI e API. Parar mantém estado; retry não reaplica política. Configuração, autoridade, linha e timer reconfirmados após a última auditoria. Não modifica dinheiro ou opção global. A composição449 também corrige o horário duplicado da auditoriaLOCAL, com regressão determinística de travessia de segundo e validação estrita preservada.
+
+448 acrescentou prioridade e acompanhamento próprios, recuperados e validados; 449 não os substitui. Ver `task-timer-settings.md`, `pr45-validation-449.md` e resultados por incremento. SHA e checks efetivos ficam na PR45; aprovação anterior não certifica o SHA seguinte. A reprodução remota447 confirmou mensalHTTP422, diária200, cerca de1,6s e2MiB; a rejeição de domínio exata ainda será investigada. Ver pr45-calendar-ci447.md.
+
+**Contrato integral aberto:** auto-stop e outras regras de timers, recorrência operacional de tarefas, demais settings/consumidores, reversão da nova base tarifária e demais componentes/comandos bancários ainda exigem código/provas. Documentos API18/19 e CNAB400 e homologação real permanecem dependências externas específicas. Não se declara isolamento universal.
+
 ## Atualização 448 — prioridade e auto-follow próprios
 
 Núcleo **4.4.8/448**, BB **1.2.3/123** e Asaas **1.5.3/153** preservados. Prioridade1–4, default próprio2, edição explícita e cópias revisadas; auto-follow opt-in somente do criador de tarefas de projeto, sem herdar seguidores e sem reinscrever após retry. Configuração própria inclusive na principal, duas tabelas auxiliares sem backfill, GUI e API existentes pelo mesmo writer. Ver `task-priority-settings.md` e `pr45-validation-448.md`.

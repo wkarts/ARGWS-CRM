@@ -658,6 +658,19 @@ ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_S
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/settings/task_preferences_browser.cjs
 
+# Log only in the synthetic calendar smoke, so technical rejection codes survive production defaults.
+docker exec "$upgrade" php -r '
+$config = "/app/application/config/app-config.php";
+require $config;
+if (APP_DB_NAME !== "argws_upgrade_ci") { exit(2); }
+if (defined("APP_LOG_THRESHOLD")) { if (APP_LOG_THRESHOLD !== 1) { exit(2); } }
+else {
+    $source = file_get_contents($config);
+    if (substr($source, 0, 5) !== "<?php") { exit(2); }
+    if (file_put_contents($config, substr_replace($source, "\ndefine(\"APP_LOG_THRESHOLD\", 1);\n", 5, 0)) === false) { exit(2); }
+}
+'
+
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
@@ -704,3 +717,11 @@ ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_S
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 ISSUERS_BROWSER_PHP_BINARY="$work/task448-php" TASK_OPERATIONS_BROWSER_FIXTURE_PHP=/app/tests/settings/task_operations_http_fixture.php \
 node tests/settings/task_operations_browser.cjs
+
+#449: only explicit own policy changes status during the native start; stopping keeps status.
+docker cp tests/settings/task_timer_http_fixture.php "$upgrade:/app/tests/settings/task_timer_http_fixture.php"
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+ISSUERS_BROWSER_PHP_BINARY="$work/task448-php" TASK_TIMER_BROWSER_FIXTURE_PHP=/app/tests/settings/task_timer_http_fixture.php \
+node tests/settings/task_timer_browser.cjs

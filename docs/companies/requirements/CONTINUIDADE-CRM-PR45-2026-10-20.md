@@ -1,6 +1,8 @@
 # Continuidade e conclusão da PR 45 — ARGWS CRM
 Atualizado em 20/10/2026, 09:57 (America/Bahia). Exclusivo deste repositório.
 
+> Errata expressamente solicitada em 20/10/2026: as referências bancárias abaixo são CBR641, posições 85–86, e CBR643, posições 26–39; trailer resolvido é CBR641. O restante conserva a fotografia histórica do anexo. O pedido posterior do usuário e o HEAD/CI efetivamente conferidos prevalecem. SHA256 do anexo original antes desta errata: `fb4153b2c149bc0254c0917a1f604e17d221ede187415d4041770dbde46db923`.
+
 ## Pedido
 Retome a implementação e conclua as pendências técnicas. Não entregue apenas planejamento. Preserve o trabalho publicado e o trabalho local recuperável. Não faça merge, deploy, force-push, tag ou release manual.
 
@@ -91,10 +93,10 @@ Pendências explícitas da PR:
 - CNAB400 financeiro/outbound ainda não implementado integralmente. Importação observacional não é entrega dessa vertical.
 
 Insumos bancários específicos ainda indicados como necessários:
-1. Código BRL no CBR64 posições185–186.
+1. Código BRL no CBR641, posições 85–86.
 2. Regra inequívoca de isenção ou parâmetros de juros herdados da conta/convênio/carteira/variação.
-3. Errata/explicação CBR64 posições326–339: 14 posições versus 9(013)v99.
-O trailer CBR64 já foi resolvido, segundo a descrição atual.
+3. Errata/explicação CBR643, posições 26–39: 14 posições versus 9(013)v99.
+O trailer CBR641 já foi resolvido, segundo a descrição atual.
 
 Valide esses pontos em documentação primária aplicável ao contrato. Aproveite remessas aceitas fornecidas pelo usuário como casos de regressão, sem tratá-las como autorização para qualquer variação. Se os documentos faltarem, solicite exatamente o necessário e avance nas partes independentes. Nunca inventar regras financeiras para encerrar a tarefa.
 Homologação externa, envio de remessas, cobrança, cancelamento e movimentação bancária real exigem autorização específica; não executar nesta tarefa.

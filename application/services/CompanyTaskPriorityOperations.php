@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__.'/CompanyTaskPriority.php';
+require_once __DIR__.'/CompanyTaskPriority.php';require_once __DIR__.'/CompanyTaskTimerTransitions.php';
 /** Confirm the complete task/priority/follower frame after the last native/API write. */
 trait CompanyTaskPriorityOperations
 {
+ use CompanyTaskTimerTransitions;
  private array $taskPriorityFrames=[];
  private array $taskPriorityAuditFrames=[];
  public function priorityDefaults($issuer,$actor):array
@@ -42,7 +43,7 @@ trait CompanyTaskPriorityOperations
  protected function operationFrame(int $issuer,int $actor,int $id,string $operation):?array{$frame=CompanyTaskPriority::frame($this->db,$this->p,$this->taskKind(),$issuer,$id,false);$this->priorityReferences($issuer,$frame['native']);if($this->taskKind()==='project')$this->assertTaskUnclaimed($issuer,$actor,$id);else $this->assertBillingMutable($issuer,$actor,$id);return $frame;}
  protected function guardedWork(callable $work):callable
  {
-  $guarded=parent::guardedWork($work);return function()use($guarded){$this->taskPriorityFrames=[];$this->taskPriorityAuditFrames=[];try{$result=$guarded();foreach($this->taskPriorityFrames as$expected){if(CompanyTaskPriority::frame($this->db,$this->p,$this->taskKind(),$expected['issuer'],$expected['id'],false)!==$expected['frame'])throw new RuntimeException('issuer_task_priority_unconfirmed');if($expected['preferences']!==null)CompanyTaskOperationPreferences::confirmInOwnedTransaction($this->db,$this->p,$expected['issuer'],$expected['preferences']);$this->priorityReferences($expected['issuer'],$expected['frame']['native']);$this->authorize($expected['issuer'],$expected['actor'],'create');}foreach($this->taskPriorityAuditFrames as$expectedAudit){$actual=IssuerStorage::query($this->db,'SELECT id,actor_id,event,issuer_id,subject_id,created_at,metadata_json FROM '.$this->p.'issuers_audit WHERE id=?',[$expectedAudit['id']])->row_array();if(!$actual||array_map('strval',$actual)!==$expectedAudit)throw new RuntimeException('issuer_task_priority_unconfirmed');}return$result;}finally{$this->taskPriorityFrames=[];$this->taskPriorityAuditFrames=[];}};
+  $guarded=parent::guardedWork($work);return function()use($guarded){$this->taskPriorityFrames=[];$this->taskPriorityAuditFrames=[];$this->timerStarts=[];try{$result=$guarded();foreach($this->taskPriorityFrames as$expected){if(CompanyTaskPriority::frame($this->db,$this->p,$this->taskKind(),$expected['issuer'],$expected['id'],false)!==$expected['frame'])throw new RuntimeException('issuer_task_priority_unconfirmed');if($expected['preferences']!==null)CompanyTaskOperationPreferences::confirmInOwnedTransaction($this->db,$this->p,$expected['issuer'],$expected['preferences']);$this->priorityReferences($expected['issuer'],$expected['frame']['native']);$this->authorize($expected['issuer'],$expected['actor'],'create');}foreach($this->taskPriorityAuditFrames as$expectedAudit){$actual=IssuerStorage::query($this->db,'SELECT id,actor_id,event,issuer_id,subject_id,created_at,metadata_json FROM '.$this->p.'issuers_audit WHERE id=?',[$expectedAudit['id']])->row_array();if(!$actual||array_map('strval',$actual)!==$expectedAudit)throw new RuntimeException('issuer_task_priority_unconfirmed');} $this->confirmTimerStarts();return$result;}finally{$this->taskPriorityFrames=[];$this->taskPriorityAuditFrames=[];$this->timerStarts=[];}};
  }
  private function createPriorityInOwned(int $issuer,int $actor,int $id,array $data,string $now):void
  {
