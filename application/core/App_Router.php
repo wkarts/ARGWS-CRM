@@ -16,4 +16,23 @@ global $CFG;
 /* load the MX_Router class */
 require APPPATH . 'third_party/MX/Router.php';
 
-class App_Router extends MX_Router {}
+class App_Router extends MX_Router
+{
+    public function locate($segments)
+    {
+        // Empresas is a native controller. Its retained module directory is
+        // historical data and must not participate in MX controller/helper lookup.
+        if (($segments[0] ?? null) === ADMIN_URI && strtolower((string) ($segments[1] ?? '')) === 'issuers') {
+            $this->module = null;
+            $this->directory = 'admin/';
+            return array_slice($segments, 1);
+        }
+        if (strtolower((string) ($segments[0] ?? '')) === 'issuers') {
+            // The retired unprefixed module has no public runtime endpoint.
+            $this->module = null;
+            $this->directory = '';
+            return parent::locate(['__retired_issuers_module_has_no_route__']);
+        }
+        return parent::locate($segments);
+    }
+}

@@ -10,13 +10,14 @@ final class CompanySettingsCatalog
 {
     public static function groups(): array
     {
-        return ['ticket_preferences'=>'Ordem das respostas de suporte','pdf_typography'=>'Tipografia dos PDFs','project_files'=>'Arquivos de projetos','company'=>'Informações da Empresa','email'=>'Servidor SMTP','email_content'=>'Apresentação dos e-mails',
+        return ['task_defaults'=>'Padrões de criação de tarefas','ticket_preferences'=>'Ordem das respostas de suporte','pdf_typography'=>'Tipografia dos PDFs','project_files'=>'Arquivos de projetos','company'=>'Informações da Empresa','email'=>'Servidor SMTP','email_content'=>'Apresentação dos e-mails',
             'documents'=>'Faturas e créditos','sales_documents'=>'Orçamentos e propostas','document_pdf'=>'PDF de faturas, créditos e contratos','sales_pdf'=>'PDF de orçamentos e propostas','localization'=>'Data e hora'];
     }
 
     public static function fields(string $group): array
     {
         return match($group) {
+            'task_defaults'=>['default_task_status','new_task_auto_assign_current_member'],
             'ticket_preferences'=>['ticket_replies_order'],
             'pdf_typography'=>['pdf_font','pdf_font_size'],
             'project_files'=>['allow_contact_to_delete_files'],
@@ -36,6 +37,7 @@ final class CompanySettingsCatalog
     {
         if(!in_array($field,self::fields($group),true))throw new DomainException('company_settings_invalid_input');
         if($group==='pdf_typography')return $field==='pdf_font'?'dejavusans':'';
+        if($group==='task_defaults')return $field==='default_task_status'?'todo':'1';
         if($group==='ticket_preferences')return 'asc';
         if($group==='project_files')return '0';
         if(in_array($group,['sales_pdf','document_pdf'],true))return 'A4-PORTRAIT';
@@ -60,6 +62,7 @@ final class CompanySettingsCatalog
             if($group!=='company'&&$name!=='smtp_password'&&!self::multiline($name)&&preg_match('/[\r\n]/',$value))throw new DomainException('company_settings_invalid_input');
         }
         if($group==='project_files'&&(array_keys($settings)!==['allow_contact_to_delete_files']||!in_array($settings['allow_contact_to_delete_files'],['0','1'],true)))throw new DomainException('company_settings_invalid_input');
+        if($group==='task_defaults'){require_once __DIR__.'/CompanyTaskPreferences.php';CompanyTaskPreferences::prepare($settings);}
         if($group==='ticket_preferences'){require_once __DIR__.'/CompanyTicketPreferences.php';CompanyTicketPreferences::prepare($settings);}
         if($group==='pdf_typography'){require_once __DIR__.'/CompanyPdfTypography.php';CompanyPdfTypography::prepare($settings);}
         if($group==='localization')CompanySettingsFormats::validate($settings);

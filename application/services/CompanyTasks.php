@@ -3,8 +3,10 @@
 declare(strict_types=1);
 require_once __DIR__.'/CompanyProjectsStorage.php';
 require_once __DIR__.'/CompanyTaskBillingSourceLocks.php';
+require_once __DIR__.'/CompanyTaskCreationDefaults.php';
 final class CompanyTasks extends CompanyProjectsStorage
 {
+    use CompanyTaskCreationDefaults;
     use CompanyTaskBillingSourceLocks;
     protected string $feature='tasks';
     private static function checklist($items):string
@@ -33,8 +35,7 @@ final class CompanyTasks extends CompanyProjectsStorage
     }
     public function create($issuer,$actor,array $input,string $key):int
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input);if($data['status']!=='todo')throw new DomainException('company_project_invalid_input');
-        return $this->operation($issuer,$actor,'create',$key,'task_created',$data,fn():int=>$this->insertCreatedInOwned($issuer,$actor,$data));
+        return $this->createUsingOwnDefaults($issuer,$actor,$input,$key,'task_created');
     }
     /** Canonical copy compositor; cannot join an arbitrary caller transaction. */
     public function createCopyInOwnedTransaction($issuer,$actor,array $input):int

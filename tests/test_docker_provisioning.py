@@ -279,7 +279,8 @@ esac
         self.assertIn("Executor de migrations sem saída", source)
         self.assertIn("Token interno de migrations ausente ou inválido.", controller)
         router = read("application/core/App_Router.php")
-        self.assertIn("class App_Router extends MX_Router {}", router)
+        # Native Empresas now has an explicit override; behavior is exercised by issuers_native_routing.php.
+        self.assertRegex(router, r"class\s+App_Router\s+extends\s+MX_Router\b")
         init_modules = read("application/hooks/InitModules.php")
         self.assertIn("getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false", init_modules)
         self.assertLess(init_modules.index("return;"), init_modules.index("include_once(LIBSPATH.'App_modules.php')"))

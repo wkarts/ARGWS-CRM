@@ -23,7 +23,21 @@ $property=new ReflectionProperty(App_modules::class,'modules');$available=$prope
 $tables=static fn()=>array_column($db->query('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND LEFT(TABLE_NAME,?)=? ORDER BY TABLE_NAME',[strlen($p),$p])->result_array(),'TABLE_NAME');
 $rows=static function(string$table)use($db):array{$rows=array_map('serialize',$db->query('SELECT * FROM `'.$table.'`')->result_array());sort($rows,SORT_STRING);return$rows;};
 $snapshotRows=static function()use($tables,$rows,$p):array{$out=[];foreach($tables()as$t)if($t!==$p.'modules')$out[$t]=$rows($t);return$out;};
-$snapshotSchema=static function()use($tables,$db):array{$out=[];foreach($tables()as$t){$definition=array_values($db->query('SHOW CREATE TABLE `'.$t.'`')->row_array())[1];$out[$t]=preg_replace('/ AUTO_INCREMENT=[0-9]+/','',$definition);}return$out;};
+$snapshotSchema=static function()use($tables,$db):array {
+    $out=[];
+    foreach($tables()as$t){
+        $definition=array_values($db->query('SHOW CREATE TABLE `'.$t.'`')->row_array())[1];
+        // MySQL retains an explicit charset flag after MODIFY even when it equals
+        // the charset of utf8mb4_bin. Canonicalize only that redundant spelling;
+        // retain every actual column metadata field and every other DDL byte.
+        $definition=preg_replace('/ CHARACTER SET utf8mb4(?= COLLATE utf8mb4_bin(?:[ ,\n]))/','',$definition);
+        $out[$t]=[
+            'ddl'=>preg_replace('/ AUTO_INCREMENT=[0-9]+/','',$definition),
+            'columns'=>$db->query('SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? ORDER BY ORDINAL_POSITION',[$t])->result_array(),
+        ];
+    }
+    return$out;
+};
 $marker=static fn()=>$db->query("SELECT installed_version,active FROM {$p}modules WHERE module_name='banco_brasil'")->row_array();
 $noDdl=static function(int$from,string$label)use($db):void{$ddl=array_values(array_filter(array_slice($db->queries,$from),static fn($q)=>preg_match('/^\s*(?:CREATE|ALTER|DROP|TRUNCATE|RENAME)\b/i',$q[0])));essentialCheck($ddl===[],$label.' executes no extra DDL');};
 $beforeCore=$snapshotRows();unset($db->data_cache['table_names']);essentialCheck(!$db->table_exists($p.'bb_api_operations'),'fresh actual activation starts without BB tables');
@@ -62,5 +76,5 @@ foreach($baseline===null?[]:[$baseline]as$from){
 if($baseline!==null)essentialCheck($routes===[$baseline.'→'.$target],'historical child exercises its actually installed baseline');
 require APP_MODULES_PATH.'banco_brasil/install.php';essentialCheck($marker()['installed_version']===$target&&(int)$marker()['active']===1,'shipped install replay validates every real native step and current tracking');essentialCheck($snapshotRows()===$oldRows&&$snapshotSchema()===$schema,'install replay preserves historical rows and complete original schema');
 essentialCheck($store->importReturn($connectionRow,7,$wire,$binding)['duplicate'],'historical return remains readable and idempotent after target upgrade/install replay');
-if($baseline===null){foreach(['1.2.0','1.2.1']as$from){if(version_compare($from,$target,'>='))continue;$pipes=[];$process=proc_open([PHP_BINARY,__FILE__,'--baseline='.$from],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);if(!is_resource($process))throw new RuntimeException('bb_historical_fixture_worker_unavailable');fclose($pipes[0]);$output=stream_get_contents($pipes[1]);$errors=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);$exit=proc_close($process);echo$output;essentialCheck($exit===0&&$errors==='','independent real fresh native'.$from.'→'.$target.' child passes');$routes[]=$from.'→'.$target;}essentialCheck($routes!==[],'at least one real historical child route executed');if(version_compare($target,'1.2.2','>='))essentialCheck($routes===['1.2.0→'.$target,'1.2.1→'.$target],'actual native120 and121 fixtures both upgrade to122+');}
+if($baseline===null){foreach(['1.2.0','1.2.1']as$from){if(version_compare($from,$target,'>='))continue;$pipes=[];$process=proc_open([PHP_BINARY,__FILE__,'--baseline='.$from],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);if(!is_resource($process))throw new RuntimeException('bb_historical_fixture_worker_unavailable');fclose($pipes[0]);$output=stream_get_contents($pipes[1]);$errors=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);$exit=proc_close($process);echo$output;if($exit!==0||$errors!=='')fwrite(STDERR,'Native BB child '.$from.' exit='.(string)$exit.PHP_EOL.$errors.PHP_EOL);essentialCheck($exit===0&&$errors==='','independent real fresh native'.$from.'→'.$target.' child passes');$routes[]=$from.'→'.$target;}essentialCheck($routes!==[],'at least one real historical child route executed');if(version_compare($target,'1.2.2','>='))essentialCheck($routes===['1.2.0→'.$target,'1.2.1→'.$target],'actual native120 and121 fixtures both upgrade to122+');}
 echo 'BB native current-header '.$target.' (minimum core'.$targetCore.') activation/install/tracking: '.($GLOBALS['essentialChecks']-$nativeBbStart).' added checks; actual routes '.implode(', ',$routes).'; synthetic MariaDB only.'.PHP_EOL;

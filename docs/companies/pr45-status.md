@@ -1,3 +1,23 @@
+## Atualização446 — configurações, calendário e cadastro nativo
+
+Conteúdo deste incremento: núcleo4.4.6/446NOOP, BB1.2.2/122 eAsaas1.5.3/153 intocados. Pai remoto0a10a15022ac8a93c75b3b557253ffc508f4d8a2. SHAs publicados eCI são registrados naPR45; nenhuma aprovação histórica substitui o resultado doHEAD efetivo. Esta atualização supera os estados locais/pendentes dessas três frentes nos parágrafos históricos abaixo.
+
+| Requisito | Implementação/arquivo | Teste | Estado/limite |
+|---|---|---|---|
+| Defaults de tarefas por empresa | CompanyTaskPreferences/CreationDefaults; Settings; dois writers eAPI existente |5suítes porSQLmotor,8corridas×2waiters, ChromiumA/B/principal | Estado inicial eautoatribuição; prioridade/seguidores/timers adicionais continuam pendentes |
+| Calendário por empresa | CompanyCalendarPreferences/Read/Sources/Presentation; controller/view |5suítes porSQLmotor,6corridas×2waiters,21fontes criadasGUI,16preferências,5visões, ACL/revogação | Somente7fontes canônicas privadas, sem legado/Google/reminders |
+| Cadastro principal500 | App_Router::locate reserva admin/issuers nativo |29CI/MXchecks + registryGUI200A/B/principal/master17 | Módulo arquivado preservado, rota pública404 |
+| Tracking446 | native_resume_446 eApp real | body2748/executor1479, ignored/failed/readback/retry/replay; upgradeHTTP445→446 | SemDDL/backfill; módulos intocados |
+| CI BB nativo120/121→122 | teste snapshotSchema conserva metadata real e canonicaliza charset redundante | REDMySQL→GREENMySQL/Maria, todosguards anteriores preservados | Correção apenas do teste; não é o defeitoSQLite já resolvido445 |
+| Recorrência publicada439/440 | CompanyInvoiceRecurring/Dates/Modes/Discovery, canonicalinvoice/draftwriter | Guias eprovas439/440 preservados; não repetidos como implementação ausente | day/week/month/year,0ilimitado limitado porinvocação, notificação opt-in, principalquitada,rascunho/retry |
+| LOCAL sem caixa/restauração/fundos posteriores | finance-v3 novo, nãoV2recuperado | SQL/fault/races/API em validação independente | Local; não incluído446, não concluído |
+| TarifaCNAB240 | pacote novo reconstruído em revisão |3REDs confirmados de fullsource/audit; correção eprovasnovas emcurso | Local; pacoteanterior não é publicável |
+| API18/19 efinanceiro400 | banco-brasil-remaining-contracts.md | campos/documentos primários eadapters específicos | Pendentes; auxiliares400 observacionais443 não são financeiro400 |
+
+Evidências e falhas qualificadas: [recuperação446](pr45-recovery-446.md) e[validação446](pr45-validation-446.md). Todos380comandosEmpresas e79smokes anteriores preservados. operational_ready dosinventários permanece false; não há declaração de isolamento universal ou de conclusão integral. Semmerge/deploy.
+
+---
+
 ## Atualização445 — reparo de CI antes das próximas verticais
 
 Core4.4.5/445 NOOP; BB1.2.2/122 eAsaas1.5.3/153 intocados. Dois defeitos de fixtures444 corrigidos: SalesV4 schema estrangeiro próprio e BBnegativo emSQLite real com restauração doenv. Evidências em pr45-recovery-445.md epr45-validation-445-ci.md. O status remoto do SHA publicado está naPR45; este documento não antecipa16aprovações.

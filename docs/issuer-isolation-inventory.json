@@ -3195,6 +3195,33 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "application/services/CompanyCalendarRead.php": {
+      "sha256": "10925c84cc5c4bc470553236cb9c13671ab461854faace34868f56c2b8afa88b",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        19,
+        33,
+        46,
+        59
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/CompanyCalendarSources.php": {
+      "sha256": "088bd3160650cbde681c0963b7c2ba9d53dad375f89c834d36615b32c9a5fb6f",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        8,
+        18
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/services/CompanyClients.php": {
       "sha256": "5e1aaed1e4d82013ee672c350d9b1bce1d539a93922293d0fe79ee2a06b2c1f9",
       "categories": [
@@ -4126,7 +4153,7 @@
       "evidence": ""
     },
     "application/services/CompanyResourceCatalog.php": {
-      "sha256": "da67bb26630fffa70f3ad319cfbc1c93f12a1d0f62fb3abf614478bdc3f46301",
+      "sha256": "e91a8b275f1595e572be7d416c40c353404472d8adce406ed3de9cd72949de7f",
       "categories": [
         "invoice_table"
       ],
@@ -4206,12 +4233,12 @@
       "evidence": ""
     },
     "application/services/CompanySettingsCatalog.php": {
-      "sha256": "33349c44c735349c6eb9c28e10c08f972b9fd1ed69c2c0455e103851249df1f0",
+      "sha256": "ab09b24096c1a6bd90e41ca8684a472fedf3b3b5313ce695568d1336c3b690f3",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        23
+        24
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4256,13 +4283,13 @@
       "evidence": ""
     },
     "application/services/CompanyStandaloneTasks.php": {
-      "sha256": "1eccdfeb692add49bc4913ca62698bf80337606854a6a7e8dddb0a6ce1c947e1",
+      "sha256": "b4589ae23e5627965ab9f7ea5b728138f10cafb9127333b5494bea8dd2106b7d",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        19,
-        56
+        21,
+        57
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4339,13 +4366,13 @@
       "evidence": ""
     },
     "application/services/CompanyTasks.php": {
-      "sha256": "5814b2af702c4495cb49b8010ae395c689fb0604a8da9506f9a8d3633f638d16",
+      "sha256": "75ab84becf8f5f59a547c5d1f60660b798e1557b78f6ed23164374755fc15f7b",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        45,
-        54
+        46,
+        55
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4641,6 +4668,17 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "application/views/admin/companies/calendar.php": {
+      "sha256": "b23423d425f4f7368bf834fd7db148c993898ef8b22b983a73c55424c7334f8e",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        8
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/views/admin/companies/expense_copies.php": {
       "sha256": "0e83a16530ffe14432e81757ae05fdfa4a61d6ebbdd5809ad0e02c688d9cce98",
       "categories": [
@@ -4653,13 +4691,13 @@
       "evidence": ""
     },
     "application/views/admin/companies/layout_head.php": {
-      "sha256": "98fae4b7c63f10d6fddc3046115f6288493f28822734b260a9589494c88b3999",
+      "sha256": "2fea9398fe035d441ff90f5bb09372cee6044ef49368ff32f5e3d9230fee5de5",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        47,
-        48
+        48,
+        49
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5298,15 +5336,15 @@
       "evidence": ""
     },
     "application/views/admin/settings/company_scoped.php": {
-      "sha256": "7e010e4d43ddd5b7b5e3e0f2d5bc9d62c5d12284a274af3de52e0c5edce734cb",
+      "sha256": "bed2fcedfa317aab762483de14f58150aaa6a00d7e6bebda6cb1a409d3a06c8e",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        7,
         8,
         9,
-        72
+        10,
+        76
       ],
       "state": "unreviewed",
       "evidence": ""

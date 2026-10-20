@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 require_once __DIR__.'/CompanyProjectsStorage.php';require_once __DIR__.'/CompanyStandaloneTasksSchema.php';require_once __DIR__.'/CompanyStandaloneBillingFence.php';
+require_once __DIR__.'/CompanyTaskCreationDefaults.php';
 final class CompanyStandaloneTasks extends CompanyProjectsStorage
 {
+    use CompanyTaskCreationDefaults;
     protected string $feature='tasks';
     protected function apiTables():array{return array_values(array_unique(array_merge(parent::apiTables(),CompanyStandaloneBillingFence::tables($this->db,$this->p))));}
     private function assertBillingMutable(int $issuer,int $actor,int $task):void{CompanyStandaloneBillingFence::assertAvailableInOwned($this->db,$this->p,$issuer,$actor,$task);}
@@ -44,8 +46,7 @@ final class CompanyStandaloneTasks extends CompanyProjectsStorage
     }
     public function create($issuer,$actor,array $input,string $key):int
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input);if($data['status']!=='todo')throw new DomainException('company_project_invalid_input');
-        return $this->operation($issuer,$actor,'create',$key,'standalone_task_created',$data,fn():int=>$this->insertCreatedInOwned($issuer,$actor,$data));
+        return $this->createUsingOwnDefaults($issuer,$actor,$input,$key,'standalone_task_created');
     }
     /** Canonical copy compositor; cannot join an arbitrary caller transaction. */
     public function createReviewedTaskCopyInOwnedTransaction($issuer,$actor,array $input):int

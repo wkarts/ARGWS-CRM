@@ -1,0 +1,23 @@
+{
+  "production_files": 18558,
+  "manifest_sha256": "a5dc6861b4581fff84d070561e16d95074d449aa38f0c16eff4f583e057ac329",
+  "manifest_includes": "Runtime and distribution files including VERSION/config/images; excludes docs/tests/.github. Per-file full binding independently compared to HTTP author, all18558 bytes equal.",
+  "changed_during_execution": [],
+  "release": {
+    "core": "4.4.6",
+    "migration": 446,
+    "banco_brasil": "1.2.2",
+    "banco_brasil_migration": 122,
+    "banco_brasil_minimum_core": "4.4.3",
+    "asaas": "1.5.3",
+    "asaas_migration": 153
+  },
+  "parent_published_sha": "0a10a15022ac8a93c75b3b557253ffc508f4d8a2",
+  "python_tests": 143,
+  "python_passed": true,
+  "cli_commands_per_engine": 17,
+  "workflow_php_commands_preserved": 380,
+  "workflow_php_commands_new_total": 393,
+  "extra_test_correction": "BB native SHOW CREATE redundancy only; exact information_schema.COLUMNS metadata retained; all previous assertion outcomes retained. Final exact-SHA rerun will bind the published tree.",
+  "static_checks": 45
+}
