@@ -4114,15 +4114,15 @@
       "evidence": ""
     },
     "application/services/CompanyProjectCopies.php": {
-      "sha256": "8d40db488f563f5c3d8c3c553b9c02d6c3b06a4e7051912397da93c0ba5f1ab3",
+      "sha256": "6cfc07806ad7140167cb1c963d0fedfa982400eb758551f00d4e98cf7962de40",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
         21
       ],
-      "state": "unreviewed",
-      "evidence": ""
+      "state": "partial",
+      "evidence": "Reviewed release452 owned project-copy transaction composition: same complete participant union as task writer, no relaxed ownership/InnoDB/ACL/receipt guards. Native436–440 full-schema project/individual copies, 9 project-copy races with two observed waiters each, reviewed priority copies and actual A/B/principal Chromium GUI/API late-fault rollback/retry/financial-row invariance passed. docs/companies/pr45-validation-452.md and evidence/resume452-current.json. Partial owned-path review only; legacy/dynamic/provider paths and global rollout remain unapproved."
     },
     "application/services/CompanyProjectDiscussionsStorage.php": {
       "sha256": "c89d84891eae0770c65c535236ac13ffa6c47d588628d4b1b90f45eb4c31afd7",
