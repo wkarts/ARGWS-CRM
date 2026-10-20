@@ -69,7 +69,7 @@ $config['migration_auto_latest'] = false;
 | be upgraded / downgraded to.
 |
 */
-$config['migration_version'] = 451; // Canonical CRM version: one dot between each native migration digit.
+$config['migration_version'] = 452; // Canonical CRM version: one dot between each native migration digit.
 
 /*
 |--------------------------------------------------------------------------

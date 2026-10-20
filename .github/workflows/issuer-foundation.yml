@@ -499,6 +499,7 @@ jobs:
           php tests/settings/task_preferences_copies.php
           php tests/settings/task_preferences_concurrency.php
           php tests/settings/calendar_preferences.php
+          php tests/settings/calendar_smoke_logging_guard.php
           php tests/settings/calendar_read.php
           php tests/settings/calendar_unassigned_portal.php
           php tests/settings/calendar_controller.php
@@ -530,4 +531,5 @@ jobs:
           php tests/companies/native_resume_449.php
           php tests/companies/native_timer_450.php
           php tests/companies/native_timer_451.php
+          php tests/companies/native_diagnostics_452.php
           php tests/banco_brasil_local_noncash_clock_v3.php

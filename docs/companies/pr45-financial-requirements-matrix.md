@@ -1,3 +1,9 @@
+## Atualização452 — cópia com participantes completos e diagnóstico conferido
+
+Núcleo **4.5.2/452** NOOP; BB **1.2.3/123** e Asaas **1.5.3/153** preservados. O compositor de cópia de projeto passa a incluir todos os participantes financeiros exigidos pelo writer de tarefas após451, conservando o veto transacional. Corrigido também o auxiliar449 que encerrava no guard do app-config antes de ativar logs. O452 executa o bloco exato em subprocessos e exige códigos seguros do controller real no smoke. Causas, evidências e limites em `pr45-validation-452.md`; SHA e CI atuais na PR45. O450 teve16/16 workflows aprovados;451 revelou a regressão de composição agora corrigida. Aprovação histórica não certifica o próximo SHA.
+
+O contrato integral permanece aberto nas frentes técnicas e documentais explicitadas no relatório. Os registros anteriores abaixo preservam a história e não representam estado atual do CI.
+
 ## Atualização451 — auto-stop próprio autorizado
 
 Núcleo **4.5.1/451** NOOP; BB **1.2.3/123** e Asaas **1.5.3/153** preservados. A nova opção visual permite encerrar o único cronômetro anterior do mesmo ator e da mesma empresa ao iniciar outro, entre tarefas de projeto e avulsas, com autoridade/fences atuais, fronteira temporal única e rollback conjunto. OFF por ausência, sem herança global, sem alteração silenciosa entre empresas, sem conclusão/cobrança. O nó449 e as correções450 continuam preservados.

@@ -28,5 +28,6 @@ foreach($parents433 as$issuer=>$project){
 }
 foreach($schemas as$schema)foreach(array_keys($schema::definitions())as$t)essentialCheck(in_array($t,$copies->tables(),true),'copy owned participants include native '.$t);
 essentialCheck(in_array('company_invoice_requests',$copies->tables(),true),'copy owned participants retain canonical invoice receipt fence');
+foreach(CompanyTaskAutoStop::tables($db,$p)as$t)essentialCheck(in_array($t,$copies->tables(),true),'copy includes complete task-writer owned participant '.$t);
 foreach($financial as$t=>$rows)essentialCheck($db->query('SELECT * FROM '.$p.$t)->result_array()===$rows,'copy never adopts or changes native financial origin/claims '.$t);
 echo 'Project copy actual native436–439 participants: '.($GLOBALS['essentialChecks']-$start).' added / '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;

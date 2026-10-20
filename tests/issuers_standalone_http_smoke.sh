@@ -660,6 +660,7 @@ node tests/settings/task_preferences_browser.cjs
 
 # Log only in the synthetic calendar smoke, so technical rejection codes survive production defaults.
 docker exec "$upgrade" php -r '
+defined("BASEPATH") || define("BASEPATH", "/app/system/");
 $config = "/app/application/config/app-config.php";
 require $config;
 if (APP_DB_NAME !== "argws_upgrade_ci") { exit(2); }
@@ -675,6 +676,12 @@ ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/settings/calendar_browser.cjs
+
+#452: prove the exact guarded setup produced safe codes from the original native Calendar suite.
+docker exec "$upgrade" mkdir -p /app/tests/settings
+docker cp tests/settings/calendar_smoke_logging_verify.php "$upgrade:/app/tests/settings/calendar_smoke_logging_verify.php"
+docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$upgrade" php /app/tests/settings/calendar_smoke_logging_verify.php
+
 
 #450: canonical unassigned portal tasks; original range, own permissions and read-only proof.
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
