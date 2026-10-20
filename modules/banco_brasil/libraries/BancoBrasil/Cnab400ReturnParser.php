@@ -3,12 +3,14 @@ declare(strict_types=1);
 namespace BancoBrasil;
 require_once __DIR__.'/Fields400.php';
 require_once __DIR__.'/LayoutCatalog.php';
+require_once __DIR__.'/Cnab400Auxiliary.php';
 
 /** CBR643 July/2023, seven-digit agreement, wallet 17 simple, records 0/7/9. */
 final class Cnab400ReturnParser
 {
-    public function parse(Agreement $a, string $bytes): array
+    public function parse(Agreement $a, string $bytes,string $layout=LayoutCatalog::CNAB400): array
     {
+        if(!in_array($layout,[LayoutCatalog::CNAB400,LayoutCatalog::CNAB400_AUX],true))throw new \UnexpectedValueException('bb400_layout_unsupported');
         Fields400::account($a);
         if($bytes===''||strlen($bytes)>16*1024*1024||substr($bytes,-2)!=="\r\n"||preg_match('/[^\x20-\x7E\r\n]/',$bytes))throw new \UnexpectedValueException('bb_return_encoding_invalid');
         $lines=explode("\r\n",substr($bytes,0,-2));$count=count($lines);
@@ -23,11 +25,16 @@ final class Cnab400ReturnParser
         $this->account($h,27,31,32,40,$a);
         $fileDate=Fields400::parseDate(substr($h,94,6));$returnSequence=Fields400::numeric(substr($h,100,7));
         if($returnSequence<1)throw new \UnexpectedValueException('bb400_return_sequence_invalid');
-        $hash=hash('sha256',$bytes);$events=[];$seen=[];
+        $hash=hash('sha256',$bytes);$events=[];$seen=[];$parent=null;$auxSeen=[];
         for($i=1;$i<$count-1;$i++){
             $l=$lines[$i];
-            // Auxiliary records may change meaning (Pix, shared collection, cheque, discounts).
-            // Refuse the complete file instead of silently discarding those records.
+            if($l[0]==='5'&&$layout===LayoutCatalog::CNAB400_AUX){
+                if($parent===null)throw new \UnexpectedValueException('bb400_auxiliary_parent_required');
+                $service=substr($l,1,2);if(isset($auxSeen[$service]))throw new \UnexpectedValueException('bb400_duplicate_auxiliary');
+                $event=Cnab400Auxiliary::event($parent,$l,$hash,$i+1);if(isset($seen[$event['event_key']]))throw new \UnexpectedValueException('bb_return_duplicate_event');
+                $seen[$event['event_key']]=true;$auxSeen[$service]=true;$events[]=$event;continue;
+            }
+            // The original profile continues to reject every auxiliary record.
             if($l[0]!=='7')throw new \UnexpectedValueException('bb400_auxiliary_record_unsupported');
             $this->account($l,18,22,23,31,$a);
             if(substr($l,1,16)!==str_repeat('0',16)||substr($l,31,7)!==$a->scope->agreement
@@ -65,7 +72,7 @@ final class Cnab400ReturnParser
                 $event['posting_amount'],$event['posting_direction'],$event['occurrence_date'],$event['credit_date']];
             $event['event_key']=hash('sha256',json_encode($identity,JSON_THROW_ON_ERROR));
             if(isset($seen[$event['event_key']]))throw new \UnexpectedValueException('bb_return_duplicate_event');
-            $seen[$event['event_key']]=true;$events[]=$event;
+            $seen[$event['event_key']]=true;$events[]=$event;$parent=$event;$auxSeen=[];
         }
         $t=$lines[$count-1];
         if(substr($t,0,7)!=='9201001')throw new \UnexpectedValueException('bb400_trailer_invalid');
@@ -79,7 +86,7 @@ final class Cnab400ReturnParser
         foreach([[8,10],[48,10],[88,10],[128,10],[168,50],[248,147]] as [$start,$width]){
             if(substr($t,$start-1,$width)!==str_repeat(' ',$width))throw new \UnexpectedValueException('bb400_trailer_invalid');
         }
-        return ['file_hash'=>$hash,'scope_key'=>$a->scope->key(),'layout'=>LayoutCatalog::CNAB400,'lots'=>0,'records'=>$count,
+        return ['file_hash'=>$hash,'scope_key'=>$a->scope->key(),'layout'=>$layout,'lots'=>0,'records'=>$count,
             'events'=>$events,'financial_effect'=>'not_applied','file_date'=>$fileDate,'return_sequence'=>$returnSequence,
             'trailer_raw_totals'=>$totals,'trailer_total_interpretation'=>'unverified_position_picture_disagreement',
             'environment_evidence'=>'not_present_in_file','issuer_tax_id_evidence'=>'not_present_in_file',

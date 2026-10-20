@@ -5,6 +5,7 @@ namespace BancoBrasil;
 require_once __DIR__.'/ModuleRelease.php';
 require_once __DIR__.'/Origination.php';
 require_once __DIR__.'/ReconciliationSchema.php';
+require_once __DIR__.'/Cnab400Auxiliary.php';
 /** Explicit source matching and append-only review. No bank transport or implicit money movement. */
 final class Reconciliation
 {
@@ -34,6 +35,7 @@ final class Reconciliation
     }
     public static function origin($db,string $p,int $issuer,array $row,array $e):array
     {
+        if(Cnab400Auxiliary::isAuxiliary($e)||($e['layout']??null)===LayoutCatalog::CNAB400_AUX)throw new \DomainException('bb_auxiliary_observation_only');
         $rows=\IssuerStorage::query($db,'SELECT * FROM '.$p.'bb_origins WHERE issuer_id=? AND connection_id=? AND scope_key=? AND provider=? AND channel=? AND remote_id=? AND control_reference=? FOR UPDATE',[$issuer,$row['connection_id'],$row['scope_key'],'banco_brasil',$e['channel'],$row['remote_id'],$row['control_reference']])->result_array();
         if(count($rows)!==1)throw new \DomainException('bb_event_origin_unmatched');$origin=$rows[0];
         $snapshot=\IssuerStorage::query($db,'SELECT s.*,b.generation_state,b.delivery_state,b.layout_id,b.layout_source_hash FROM '.$p.'bb_origin_snapshots s JOIN '.$p.'bb_batch_origins x ON x.origin_id=s.origin_id JOIN '.$p.'bb_batches b ON b.id=x.batch_id WHERE s.origin_id=? AND b.issuer_id=? AND b.connection_id=? AND b.scope_key=?',[$origin['id'],$issuer,$row['connection_id'],$row['scope_key']])->row_array();
@@ -71,7 +73,7 @@ final class Reconciliation
         if(array_diff(array_keys($input),['decision','reason','reference'])||!in_array($input['decision']??null,['unmatched','divergence','rejected','reversal','operational','other'],true))throw new \DomainException('bb_review_invalid_input');
         $reason=self::text($input['reason']??null,2000);$reference=self::text($input['reference']??null,191);
         $this->transaction(function()use($issuer,$actor,$event,$input,$reason,$reference):void{
-            self::authorize($this->db,$this->prefix,$issuer,$actor,'reconcile');[$row]=self::event($this->db,$this->prefix,$issuer,$event);
+            self::authorize($this->db,$this->prefix,$issuer,$actor,'reconcile');[$row,$projection]=self::event($this->db,$this->prefix,$issuer,$event);if(Cnab400Auxiliary::isAuxiliary($projection)||($projection['layout']??null)===LayoutCatalog::CNAB400_AUX)throw new \DomainException('bb_auxiliary_observation_only');
             self::appendReview($this->db,$this->prefix,$issuer,$actor,$event,$input['decision'],$reason,$reference);
             self::audit($this->db,$this->prefix,$issuer,(int)$row['connection_id'],$actor,'event_review_without_payment',$event);
         });

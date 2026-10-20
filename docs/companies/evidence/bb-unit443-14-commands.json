@@ -1,0 +1,114 @@
+[
+  {
+    "command": "php tests/banco_brasil_admin.php",
+    "exit": 0,
+    "footer": [
+      "OK 76 Banco do Brasil admin checks"
+    ],
+    "log_sha256": "6a522653216a62215d0ca1c33e672e17b961d6862464884cefc5d1156dba4817"
+  },
+  {
+    "command": "php tests/banco_brasil_cnab240.php",
+    "exit": 0,
+    "footer": [
+      "OK 118 Banco do Brasil CNAB240 checks"
+    ],
+    "log_sha256": "2ed76dc660ee226b1f771509c4a66d2e655f675637792198504c436d97413caf"
+  },
+  {
+    "command": "php tests/banco_brasil_cnab400.php",
+    "exit": 0,
+    "footer": [
+      "OK 82 Banco do Brasil CNAB400 checks"
+    ],
+    "log_sha256": "7cf0bd586881c0fb755604ec8a38f13bda7c3db03d8d30a7b0005469ce7aec36"
+  },
+  {
+    "command": "php tests/banco_brasil_store.php",
+    "exit": 0,
+    "footer": [
+      "OK 48 Banco do Brasil store/transaction checks"
+    ],
+    "log_sha256": "b99758d960e42e1bdb82839c703e9f14b1c07a3dc2fef9bd905d977492b84196"
+  },
+  {
+    "command": "php tests/banco_brasil_layouts.php",
+    "exit": 0,
+    "footer": [
+      "OK 38 Banco do Brasil layout binding checks"
+    ],
+    "log_sha256": "e38273def68166f7e5af48dd10b26fac7a46751765044462c2b1a34a94130b8e"
+  },
+  {
+    "command": "php tests/banco_brasil_layout_migration.php",
+    "exit": 0,
+    "footer": [
+      "OK 28 Banco do Brasil layout migration checks"
+    ],
+    "log_sha256": "204c3385d8083fcb255efe5bc4756a425bd0cf419e062b6ede31c76b680887a7"
+  },
+  {
+    "command": "php tests/banco_brasil_module_version.php",
+    "exit": 0,
+    "footer": [
+      "OK 50 Banco do Brasil native migration checks"
+    ],
+    "log_sha256": "353004559ff02c06fcdb2539f17182ce6de1411fff6ea5ea2211e3f149ad165b"
+  },
+  {
+    "command": "php tests/banco_brasil_resume_440_contracts.php",
+    "exit": 0,
+    "footer": [
+      "BB439 reconstructed amendment contracts/protocol: 174 checks passed; transport injected, no banking homologation."
+    ],
+    "log_sha256": "39fbb6947bceba9c15b6b800bc9fa42835f5e35d514280729470b51330527ec4"
+  },
+  {
+    "command": "php tests/banco_brasil_api_window_discount_contract.php",
+    "exit": 0,
+    "footer": [
+      "BB window/discount exact contract: 58 checks; no transport or financial operation."
+    ],
+    "log_sha256": "f360d99a1336f4cd293e14dc1c98b21c926e9435ff132c9d22764df725b63998"
+  },
+  {
+    "command": "php tests/banco_brasil_api_client.php",
+    "exit": 0,
+    "footer": [
+      "BB API client: 24 simulated HTTP/exact JSON checks; no external requests."
+    ],
+    "log_sha256": "33e3ea8043c83a759c1cd3d75c06187180ab6e64e68e514202ad947dc8d3e3a1"
+  },
+  {
+    "command": "php tests/banco_brasil_api_interest.php",
+    "exit": 0,
+    "footer": [
+      "BB fixed daily interest: 43 cumulative contract checks; no external bank operations."
+    ],
+    "log_sha256": "77e87c0ebaae9debdb54c17a50a31aedf9c381443eeb7e980611ac05b53f9598"
+  },
+  {
+    "command": "php tests/banco_brasil_api_movements.php",
+    "exit": 0,
+    "footer": [
+      "BB movement pages: 33 cumulative simulated protocol/exact scope checks; no financial posting."
+    ],
+    "log_sha256": "6b25262b5febd6437b790b6c4ba5204e59f35b9533d346c9e7a5177d3b599ee3"
+  },
+  {
+    "command": "php tests/banco_brasil_mtls.php",
+    "exit": 0,
+    "footer": [
+      "BB mTLS boundary/projection: 28 checks; synthetic certificates, no external bank handshake."
+    ],
+    "log_sha256": "08e6c34aa7f896c88d4ff3df9c25ef51966500349fb1680dafc5cdd0ed6dc07b"
+  },
+  {
+    "command": "python3 tests/banco_brasil_mtls_transport.py",
+    "exit": 0,
+    "footer": [
+      "BB local mTLS transport: 3 actual synthetic TLS cases passed; no deployed ingress or BB homologation."
+    ],
+    "log_sha256": "544aad47d02ef7083bc0ee3ec10c646c3ef576d3046041e0a9ad2e3467cf8120"
+  }
+]

@@ -582,3 +582,13 @@ assert all(x['tls_version'] in ('TLSv1.2','TLSv1.3') for x in ai+drops)
 print('Real GUI/SDK AI A/B/principal dispatch used verified local TLS; untrusted CA rejected and uncertain request not resent. No external forwarding.')
 PY_DUAL_TLS
 cp "$work/provider-events.jsonl" "$provider_evidence/dual-provider-local-tls.jsonl"
+
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+node tests/companies/sales_mutations_browser.cjs
+
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+node tests/banco_brasil_cnab400_aux_browser.cjs

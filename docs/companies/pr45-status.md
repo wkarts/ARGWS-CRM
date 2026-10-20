@@ -1,3 +1,9 @@
+# Incremento443: revisões de vendas e CNAB400 observacional
+
+Pai publicado `7dd715fc371c66d4c95ebc342d02c4391b50869f`, núcleo4.4.2/442, BB121 eAsaas153. Doze testes repetidos contra o SHA publicado passaram, com18539 arquivos produtivos semalteração. CI442 em acompanhamento, sematribuir aele os16sucessos436.
+
+Fonte443: SalesV4 eCNAB400auxV2, núcleo4.4.3/443, BB122/1.2.2 (mínimo4.4.3), Asaas153. Fonte18546/ad7e932e5efcd5479a90c31773ad9fbb43a514d0dd610f8aa3caba4b292fb15f; revisão/migrations/SQL nativos aprovados; validaçãoHTTP em fechamento no relatório próprio. A publicação e CI são associados externamente na descrição daPR, sem autorreferência no commit. Ver `pr45-recovery-443.md`.
+
 # Matriz objetiva da PR45
 
 ## Composição442 — cópia de despesas, AI própria e referênciaBB

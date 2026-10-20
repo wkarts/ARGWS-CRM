@@ -1,7 +1,12 @@
 <?php
-/** Reconstructed119 security under exact120 service integration: real native DB/writer, wholly simulated bank. */
+/** Reconstructed119 scenarios under exact current-header native service integration: real native DB/writer, wholly simulated bank. */
 declare(strict_types=1);
 require __DIR__.'/banco_brasil_api_mysql.php';
+require_once __DIR__.'/support/BbHttpNativeRelease.php';
+$bb440Release=bbHttpNativeRelease();
+$bb440Installed=(string)$db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version;
+essentialCheck($bb440Installed===$bb440Release['version'],'fixture began with actual native current-header installation');
+$bb440Future=implode('.',str_split((string)($bb440Release['migration']+1)));
 $bb439PatchCount=0;$bb439PatchMode='normal';$bb439AfterOauth=null;$bb439Mismatch=[];
 $bb439Transport=static function(string $method,string $url,array $headers,string $body)use(&$bb439PatchCount,&$bb439PatchMode,&$bb439AfterOauth,&$bb439Mismatch,&$titles,$transport,$db):array{
     essentialCheck(!$db->pdo->inTransaction(),'119 bank transport is outside all SQL locks');
@@ -85,8 +90,10 @@ essentialCheck($s->document($a,7,$bb439DiscountInvoice)->data()===$bb439Discount
 $bb439Mismatch=['valorDescontoTitulo'=>'12.01'];essentialThrows(fn()=>$bb439Api->query($a,7,$bb439DiscountOrigin,$bb439Key('discount-divergence')),'bb_api_result_unconfirmed_query_origin','119 divergent bank offer after confirmation cannot silently become truth');$bb439Mismatch=[];
 
 // Old and future module markers do not authorize this exact runtime.
-foreach(['1.1.9','1.2.1'] as $badVersion){$db->query("UPDATE {$p}modules SET installed_version=? WHERE module_name='banco_brasil'",[$badVersion]);$bb439Before=$bb439PatchCount;essentialThrows(fn()=>$bb439Api->query($a,7,$bb439Origin,$bb439Key('version-'.$badVersion)),'bb_api_access_denied','120 exact runtime denies '.$badVersion.' tracking');essentialCheck($bb439PatchCount===$bb439Before,'denied tracking performs no PATCH');}
-$db->query("UPDATE {$p}modules SET installed_version='1.2.0' WHERE module_name='banco_brasil'");
+foreach(['1.1.9',$bb440Future] as $badVersion){$db->query("UPDATE {$p}modules SET installed_version=? WHERE module_name='banco_brasil'",[$badVersion]);$bb439Before=$bb439PatchCount;essentialThrows(fn()=>$bb439Api->query($a,7,$bb439Origin,$bb439Key('version-'.$badVersion)),'bb_api_access_denied','exact current runtime denies '.$badVersion.' tracking');essentialCheck($bb439PatchCount===$bb439Before,'denied tracking performs no PATCH');}
+// Undo only the deliberate version-corruption fixture; original installation was proved above.
+$db->query("UPDATE {$p}modules SET installed_version=? WHERE module_name='banco_brasil'",[$bb440Installed]);
+essentialCheck((string)$db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version===$bb440Release['version'],'original natively installed marker restored after negative probes');
 // OAuth revocation is rechecked before the sending marker, preserving the intent for explicit retry.
 $bb439Api->query($a,7,$bb439Origin,$bb439Key('before-revocation'));
 $bb439RevokeAddress=array_replace($bb439Address,['address'=>'Rua Autorizada 40']);

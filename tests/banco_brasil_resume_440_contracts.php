@@ -13,7 +13,14 @@ $bb439Checks=0;
 function bb439Check(bool $value,string $label):void { ++$GLOBALS['bb439Checks']; if(!$value) throw new RuntimeException($label); }
 function bb439Reject(callable $work,string $expected):void { $actual=null;try{$work();}catch(Throwable $error){$actual=$error->getMessage();}bb439Check($actual===$expected,'expected '.$expected.', got '.var_export($actual,true)); }
 function bb439OneFlag(array $wire,string $flag):void { foreach($wire as $name=>$value)if(str_starts_with($name,'indicador'))bb439Check($value===($name===$flag?'S':'N'),'exact operational flag '.$name); }
-bb439Check(BancoBrasil\ModuleRelease::VERSION==='1.2.0'&&BancoBrasil\ModuleRelease::MIGRATION===120&&BancoBrasil\ModuleRelease::MINIMUM_CORE==='4.4.0','native120 constants exact');
+// This suite preserves the120 protocol contract while the shipped runtime advances.
+$bb440Supported=['1.2.0'=>[120,'4.4.0'],'1.2.1'=>[121,'4.4.2'],'1.2.2'=>[122,'4.4.3']];
+$bb440Header=file_get_contents(dirname(__DIR__).'/modules/banco_brasil/banco_brasil.php');
+bb439Check(preg_match('/^Version: ([0-9]+\.[0-9]+\.[0-9]+)$/m',$bb440Header,$bb440Version)===1&&isset($bb440Supported[$bb440Version[1]]),'shipped header is an explicitly supported native release');
+[$bb440Marker,$bb440Minimum]=$bb440Supported[$bb440Version[1]];
+bb439Check(BancoBrasil\ModuleRelease::VERSION===$bb440Version[1]&&BancoBrasil\ModuleRelease::MIGRATION===$bb440Marker&&BancoBrasil\ModuleRelease::MINIMUM_CORE===$bb440Minimum&&str_contains($bb440Header,'Requires at least: '.$bb440Minimum),'exact current header/release/minimum agree; no historical runtime substitution');
+bb439Check(hash_file('sha256',dirname(__DIR__).'/modules/banco_brasil/migrations/120_version_120.php')==='d1556c5e61ade2ca906a7ead6d22a992e67de12df17202f9f5753e0bdde263d4','published120 native migration remains byte-identical');
+for($bb440Step=120;$bb440Step<=$bb440Marker;++$bb440Step)bb439Check(is_file(dirname(__DIR__).'/modules/banco_brasil/migrations/'.$bb440Step.'_version_'.$bb440Step.'.php'),'contiguous current native history '.$bb440Step);
 $origin=['payload_hash'=>hash('sha256','synthetic original')];$snapshot=['api_stage'=>'homologation','profile_hash'=>hash('sha256','synthetic profile'),'accepted_contract'=>'1234'];
 $ack=['numeroContratoCobranca'=>'1234','dataAtualizacao'=>'20.10.2026','horarioAtualizacao'=>'14:21:05'];
 $abat=['action'=>'include','amount'=>'10.1','contract_confirmed'=>'1','reference'=>' Synthetic independent contract ','reason'=>' Synthetic operational adjustment '];

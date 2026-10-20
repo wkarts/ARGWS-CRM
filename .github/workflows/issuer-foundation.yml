@@ -471,3 +471,17 @@ jobs:
           php tests/settings/company_ai_transport.php
           php tests/companies/native_resume_442.php
           php tests/companies/native_resume_442.php --tracking
+          # Reviewed sales draft revisions and copies443; support/HTTP fixtures execute only through suites.
+          php tests/companies/sales_mutations.php
+          php tests/companies/sales_mutations_actor.php
+          php tests/companies/sales_mutations_controller.php
+          php tests/companies/sales_mutations_extras.php
+          php tests/companies/sales_mutations_final_boundary.php
+          php tests/companies/sales_mutations_guards.php
+          php tests/companies/sales_mutations_legacy.php
+          php tests/companies/sales_mutations_readback.php
+          php tests/companies/sales_mutations_schema.php
+          php tests/companies/sales_mutations_foreign_keys.php
+          php tests/companies/sales_mutations_concurrency.php
+          php tests/companies/native_resume_443.php
+          php tests/companies/native_resume_443.php --tracking

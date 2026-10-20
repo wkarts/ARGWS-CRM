@@ -26,7 +26,7 @@ jobs:
       - run: php tests/banco_brasil_layouts.php
       - run: php tests/banco_brasil_layout_migration.php
       - run: php tests/banco_brasil_module_version.php
-      # 439 fixtures keep their exact119 guards; version-specific440 entrypoints retain all scenarios and require120.
+      # 439 fixtures keep their exact119 guards; 440 protocol scenarios are retained; current header/release is verified explicitly without substituting119/120 at runtime.
       - run: php tests/banco_brasil_resume_440_contracts.php
       - run: php tests/banco_brasil_api_window_discount_contract.php
       - run: php tests/banco_brasil_api_client.php
@@ -79,7 +79,7 @@ jobs:
           php tests/banco_brasil_api16_mutation_fence_concurrency.php
           php tests/banco_brasil_api_origin_mutation_fence_concurrency.php
           php tests/banco_brasil_external_reversal_concurrency.php
-          # Keep all published436 commands above. Exact119 entrypoints are preserved on disk;440 variants require120.
+          # Keep all published436 commands above. Exact119 entrypoints remain on disk;440 protocol suites use the exact current native release.
           php tests/banco_brasil_resume_440_contracts.php
           php tests/banco_brasil_resume_440_mysql.php
           php tests/banco_brasil_resume_440_concurrency.php
@@ -98,6 +98,12 @@ jobs:
           php tests/banco_brasil_own_number_controller.php
           php tests/banco_brasil_own_number_concurrency.php
           php tests/banco_brasil_own_number_interrupted.php
+          # Observational CNAB400 auxiliaries443; no financial/outbound enablement.
+          php tests/banco_brasil_cnab400_aux.php
+          php tests/banco_brasil_cnab400_aux_mysql.php
+          php tests/banco_brasil_cnab400_aux_controller.php
+          php tests/banco_brasil_cnab400_aux_concurrency.php
+          php tests/banco_brasil_resume_443_module_tracking.php
         env:
           MYSQL_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
           MYSQL_USER: root
@@ -171,7 +177,7 @@ jobs:
           php tests/banco_brasil_amendment_concurrency.php
           php tests/banco_brasil_components_concurrency.php
           php tests/banco_brasil_external_reversal_concurrency.php
-          # Keep all published436 commands above. Exact119 entrypoints are preserved on disk;440 variants require120.
+          # Keep all published436 commands above. Exact119 entrypoints remain on disk;440 protocol suites use the exact current native release.
           php tests/banco_brasil_resume_440_contracts.php
           php tests/banco_brasil_resume_440_mysql.php
           php tests/banco_brasil_resume_440_concurrency.php
@@ -190,3 +196,9 @@ jobs:
           php tests/banco_brasil_own_number_controller.php
           php tests/banco_brasil_own_number_concurrency.php
           php tests/banco_brasil_own_number_interrupted.php
+          # Observational CNAB400 auxiliaries443; no financial/outbound enablement.
+          php tests/banco_brasil_cnab400_aux.php
+          php tests/banco_brasil_cnab400_aux_mysql.php
+          php tests/banco_brasil_cnab400_aux_controller.php
+          php tests/banco_brasil_cnab400_aux_concurrency.php
+          php tests/banco_brasil_resume_443_module_tracking.php

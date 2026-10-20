@@ -533,13 +533,13 @@
       "evidence": ""
     },
     "application/controllers/admin/Company_sales.php": {
-      "sha256": "d515a65cb6fb0eb676b90d102680bf4ffdf46550431e98b1bea6909e0124b286",
+      "sha256": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
-        26
+        32
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4137,18 +4137,18 @@
       "evidence": ""
     },
     "application/services/CompanySales.php": {
-      "sha256": "87f77e71ec6c417f49648f889338a0e6a3279ea0b5b13b014a8c06594114b371",
+      "sha256": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        47
+        56
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "application/services/CompanySalesBase.php": {
-      "sha256": "3363f9dc8c41bc52d3df11e1806626ede6d96ce3c55f482c9b1ae11e339ddf20",
+      "sha256": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -4156,12 +4156,12 @@
       ],
       "signal_lines": [
         16,
-        17,
-        30,
-        38,
-        43,
-        50,
-        58
+        18,
+        31,
+        39,
+        44,
+        51,
+        59
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4184,6 +4184,23 @@
       ],
       "signal_lines": [
         27
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/CompanySalesMutations.php": {
+      "sha256": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+      "categories": [
+        "customer_privacy",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        13,
+        20,
+        50,
+        54,
+        56
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -6793,13 +6810,13 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Reconciliation.php": {
-      "sha256": "015a6e5cafd28e0626681c3fbd95af5954349e6a637387e29173af921d7bcef9",
+      "sha256": "890b7b4cf39ca774b0866709169a662eec71c5cce34380a0eab243caab1f7bf6",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        20,
-        49
+        21,
+        51
       ],
       "state": "unreviewed",
       "evidence": ""

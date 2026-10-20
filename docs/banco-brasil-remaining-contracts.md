@@ -1,3 +1,7 @@
+## Atualização443
+
+BB1.2.2/122, mínimo4.4.3: auxiliares5/01 e5/10 doCNAB400 agora importáveis como observações brutas sobperfilretorno independente explicitamente vinculado ao400original. Upload/replay/reempacotamento/HTMLescapado passaram em fresh443 eupgrade442→443;17tabelasfinanceiras intactas. Isso nãohabilita dinheiro/remessa400 nem resolve ascontradições137/135 e2/3dígitos. Ver `banco-brasil-cnab400-aux-observation.md`. SeuNúmero já foiimplementado no442/BB121; alteração nominal, protesto eoutraslacunas abaixo continuam abertas.
+
 # Estado da composição442 — Banco do Brasil
 
 O núcleo442/4.4.2 usa BB121/1.2.1. Este resumo substitui somente as indicações antigas de próximo trabalho abaixo; as capturas normativas anteriores permanecem históricas. Campos habilitados têm perfil/conta/convênio/carteira/variação explícitos e confirmação posterior por consulta, sem inferir recebimento financeiro.
@@ -37,7 +41,7 @@ Estado lido: composição436 e pacotes437 independentes, inclusive abatimento re
 | Prazo após vencimento | alteracaoPrazo.quantidadeDiasAceite + GET quantidadeDiaPrazoLimiteRecebimento | Campo claro, mas origens atuais registram indicadorAceiteTituloVencido=N. Fluxo positivo requer novo perfil S explícito com numeroDiasLimiteRecebimento>0 e confirmação própria; não presumir que o PATCH muda N para S. Código interno possível nessa nova origem. |
 | Juros PATCH | Schema juros atribui descrição de valor a tipoJuros, taxa a valorJuros e domínio de código a taxaJuros | Bloqueio documental exato para composição desse PATCH. Emissão mensal/diária usa outro objeto claro e já funciona. |
 | Multa em emissão/PATCH | Descrições de tipo/valor/taxa/data se contradizem; tipo nominal do objeto e domínio divergentes | Bloqueio documental exato; não copiar semântica de juros. Código pode avançar após contrato primário corrigido/exemplo normativo inequívoco. |
-| Alterar nominal/Seu Número | Campos PATCH existem; GET identifica título original | Contrato de transporte claro, implementação/modelo local ainda pendentes para revisão financeira/fiscal e alias tipado sem quebrar a origem/snapshot/recibo canônicos. Não chamar de homologação. |
+| Alterar nominal | Campos PATCH existem; GET identifica título original | Revisão financeira/fiscal, modelo, estados e provas ainda pendentes. SeuNúmero é separado e foi implementado no442/BB121; não homologa o banco. |
 | Protestar/sustar/cancelar protesto/negativar | Flags/objetos existem; confirmação de cada transição exige contrato específico | Pedido/outbox não implementados; requer máquina de estados e prova de transição independente. Não inferir cancelamento processado de simples sucessoHTTP ou quantidade de dias. |
 | Crédito API16 nominal | Consulta16 integral com ajustes zero e conta | Implementado pelo writer canônico. |
 | Crédito API16 integral com juros/desconto/abatimento | Valores distintos no detalhamento + equação local explícita API | Implementado436: caixa principal separado, componentes imutáveis, líquido=pago, ID canônico, races e HTTP. IOF/multa/outros zero no recorte. |
@@ -47,7 +51,7 @@ Estado lido: composição436 e pacotes437 independentes, inclusive abatimento re
 | CNAB240 geração/retorno, nominal e composição declarada | Manual junho2026 P/Q/T/U | Recorte atual implementado; caixa/extinção/juros separados; crédito individual explícito condicionado ao saldo. Tarifas/IOF/outros e novos perfis/segmentos continuam pendentes de código/equação específica. |
 | Transporte automatizado de arquivo | Leiaute de arquivo não define protocolo/endpoint/recibo contratado | Bloqueio específico de contrato de transporte. Geração/download e declaração manual auditável já existem; não inventar SFTP/API. |
 | Remessa400 BRL e financeiro400 | CBR64185–86 sem BRL confirmado; juros herdáveis/carteira/variação do convênio; CBR64326–39 com14 versus picture15 | Bloqueios documentais exatos mantidos. Após esclarecimento ainda haverá código de origem/lote/snapshot/retorno/dinheiro400 a implementar. Trailer9/brancos2–394/sequência395–400 já resolvido. |
-| Auxiliares observacionais400 | Registros auxiliares primários CBR643 | Decodificadores são código interno possível, com perfil e fingerprint próprios; não resolvem BRL/picture nem autorizam dinheiro400. |
+| Auxiliares observacionais400 | Registros5/01 e5/10, perfil/fingerprint próprios | Implementados443/BB122 e uploadHTTP provado. Preservam bytes e proveniência; não resolvem BRL/picture nem autorizam dinheiro400. |
 | Webhook mTLS | Cadeia/pin/TLS nativo e baixa operacional | Receptor local observacional implementado; ingresso real/cadeia/pin/entrega são configuração e validação externa. Nenhum pagamento por webhook. |
 
 Homologação externa é separada por empresa/conta/convênio/carteira/ambiente: credenciais, contrato do cliente, HTTPS/mTLS reais, respostas/autorização/aceite e arquivos reais. Não substitui nenhuma implementação interna ainda listada, e testes locais não a comprovam.
