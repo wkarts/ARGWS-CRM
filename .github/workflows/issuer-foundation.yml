@@ -506,3 +506,6 @@ jobs:
           php tests/companies/native_resume_446.php
           php tests/companies/native_resume_446.php --tracking
           php tests/issuers_native_routing.php
+          php tests/companies/native_resume_447.php
+          php tests/companies/native_resume_447.php --tracking
+          php tests/banco_brasil_local_noncash_restored_pdf_v3.php

@@ -1,0 +1,18 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__.'/CompanyFinancialApiGuard.php';require_once __DIR__.'/InvoicePaymentWriter.php';require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/LocalNoncashReview.php';
+
+/** Dedicated opt-in bearer scopes; the closed native writers still own all financial authority. */
+final class CompanyLocalNoncashApi
+{
+    public function __construct(private$db,private string$p){}
+    public function read(string$secret,$invoice):array{$who=(new CompanyApiTokens($this->db,$this->p))->resolve($secret,'local_noncash:read');return(new \BancoBrasil\LocalNoncashReview($this->db,$this->p,$secret))->read($who['issuer_id'],$who['actor_id'],$invoice);}
+    public function write(string$secret,$invoice,array$body,string$key):array
+    {
+        $id=IssuerPolicy::id($invoice);CompanyLocalNoncash::key($key);if(array_diff(array_keys($body),['action','origin_id','operation_id','declaration_key','input'])||!is_array($body['input']??null)||array_is_list($body['input']))throw new DomainException('company_api_invalid_input');$action=$body['action']??null;foreach(['amount','discount','abatement']as$field)if(isset($body['input'][$field])&&!is_string($body['input'][$field]))throw new DomainException('company_api_invalid_input');$operation=match($action){'declare'=>'local_noncash_declare','restore'=>'local_noncash_restore','manual_receipt'=>'local_noncash_cash','credit_apply'=>'local_noncash_credit_apply','credit_unapply'=>'local_noncash_credit_unapply','manual_reverse'=>'local_noncash_cash_reverse',default=>throw new DomainException('company_api_invalid_input')};$scope=CompanyFinancialApiGuard::OPERATIONS[$operation];$who=(new CompanyApiTokens($this->db,$this->p))->resolve($secret,$scope);$i=$who['issuer_id'];$a=$who['actor_id'];$key=hash('sha256','company-local-noncash-api|'.$i.'|'.$a.'|'.$operation.'|'.$key);$origin=IssuerPolicy::id($body['origin_id']??null);$query=IssuerPolicy::id($body['operation_id']??null);$review=(new \BancoBrasil\LocalNoncashReview($this->db,$this->p))->read($i,$a,$id);if($review['origin_id']!==$origin)throw new DomainException('company_api_scope_denied');$writer=new \app\services\InvoicePaymentWriter($this->db);$input=$body['input'];
+        $hash=hash('sha256',CompanyLocalNoncash::json(CompanyLocalNoncashIntegrity::canonical(['invoice_id'=>$id,'body'=>$body])));
+        if(in_array($action,['declare','restore'],true)){$guard=new CompanyFinancialApiGuard($this->db,$this->p,$secret,$i,$a,$operation,['origin_id'=>$origin],$key,$hash);$source=new \BancoBrasil\Api16LocalNoncash($origin,$query,$action==='declare'?$input:\BancoBrasil\LocalNoncashReview::placeholder());if($action==='declare'){if(isset($body['declaration_key']))throw new DomainException('company_api_invalid_input');$result=$writer->declareCompanyLocalNoncash($i,$a,$source,$guard,$key);}else{$declaration=CompanyLocalNoncash::key($body['declaration_key']??null);$result=$writer->restoreCompanyLocalNoncash($i,$a,$id,$declaration,$input,$source,$guard,$key);}}
+        else{if(isset($body['declaration_key']))throw new DomainException('company_api_invalid_input');$source=new \BancoBrasil\RestoredLocalNoncashFunds($id,$origin,$query,$key,$action,$input);$target=$action==='manual_receipt'?['invoice_id'=>$id]:['credit_id'=>$input['credit_id']??null,'invoice_id'=>$id,'parent_key'=>$input['parent_key']??null,'payment_id'=>$input['payment_id']??null];$guard=new CompanyFinancialApiGuard($this->db,$this->p,$secret,$i,$a,$operation,$target,$key,$hash);$result=$writer->recordCompanyRestoredLocalFunds($i,$a,$source,$guard);}
+        return['invoice_id'=>$id,'operation'=>$action,'result'=>$result,'replayed'=>$guard->replayed()];
+    }
+}

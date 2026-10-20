@@ -7,6 +7,7 @@ require_once __DIR__.'/CompanyApiTokens.php';require_once __DIR__.'/CompanyFinan
 final class CompanyFinancialApiGuard
 {
     public const OPERATIONS=[
+        'local_noncash_declare'=>'local_noncash:declare','local_noncash_restore'=>'local_noncash:restore','local_noncash_cash'=>'local_noncash:cash','local_noncash_credit_apply'=>'local_noncash:credit_apply','local_noncash_credit_unapply'=>'local_noncash:credit_unapply','local_noncash_cash_reverse'=>'local_noncash:cash_reverse',
         'manual_payment'=>'payments:create','manual_reverse'=>'payments:reverse',
         'credit_issue'=>'credits:create','credit_apply'=>'credits:apply','credit_unapply'=>'credits:unapply',
         'credit_refund'=>'credits:refund','credit_refund_reverse'=>'credits:refund_reverse','credit_void'=>'credits:void'
@@ -56,5 +57,6 @@ final class CompanyFinancialApiGuard
         if($invoice!==null)(new CompanyInvoiceBalance($this->db,$this->p))->inOwned($this->issuer,$this->actor,$invoice);
         if($credit!==null)(new CompanyCredits($this->db,$this->p))->inOwnedTransaction($this->issuer,$this->actor,$credit);
     }
+    public function localOperation(string$canonical):string{$map=['manual_payment'=>'local_noncash_cash','credit_apply'=>'local_noncash_credit_apply','credit_unapply'=>'local_noncash_credit_unapply','manual_reverse'=>'local_noncash_cash_reverse'];if(($map[$canonical]??null)!==$this->operation)throw new DomainException('company_api_scope_denied');return$this->operation;}
     public function replayed():bool{return $this->replayed;}
 }

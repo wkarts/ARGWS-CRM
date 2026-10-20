@@ -25,6 +25,13 @@ final class CompanyApiTokens
         'tasks:follow:write'=>[['tasks','view'],['projects','view']]
         ,'expenses:read'=>[['expenses','view']],'expenses:create'=>[['expenses','view'],['expenses','create']],'expenses:edit'=>[['expenses','view'],['expenses','edit']],'expenses:cancel'=>[['expenses','view'],['expenses','delete']],'expenses:categories:write'=>[['expenses','view'],['expenses','create'],['expenses','edit']],'expenses:files:read'=>[['expenses','view']],'expenses:files:write'=>[['expenses','view'],['expenses','edit']],
         'drafts:read'=>[['invoices','view'],['customers','view']],'drafts:create'=>[['invoices','view'],['invoices','create'],['customers','view']],'drafts:edit'=>[['invoices','view'],['invoices','edit'],['customers','view']],'drafts:cancel'=>[['invoices','view'],['invoices','delete'],['customers','view']],'drafts:issue'=>[['invoices','view'],['invoices','create'],['customers','view']],
+        'local_noncash:read'=>[['banco_brasil','view'],['invoices','view']],
+        'local_noncash:declare'=>[['banco_brasil','view'],['banco_brasil','local_noncash'],['banco_brasil','reconcile'],['banco_brasil','reconcile_api_components'],['invoices','view'],['invoices','edit'],['payments','create']],
+        'local_noncash:restore'=>[['banco_brasil','view'],['banco_brasil','local_noncash'],['banco_brasil','reconcile'],['banco_brasil','reconcile_api_components'],['invoices','view'],['invoices','edit'],['payments','create']],
+        'local_noncash:cash'=>[['banco_brasil','view'],['banco_brasil','settle_after_noncash'],['invoices','view'],['payments','create']],
+        'local_noncash:credit_apply'=>[['banco_brasil','view'],['banco_brasil','settle_after_noncash'],['invoices','view'],['payments','create'],['credit_notes','view'],['credit_notes','edit']],
+        'local_noncash:credit_unapply'=>[['banco_brasil','view'],['banco_brasil','settle_after_noncash'],['invoices','view'],['payments','delete'],['credit_notes','view'],['credit_notes','edit']],
+        'local_noncash:cash_reverse'=>[['banco_brasil','view'],['banco_brasil','settle_after_noncash'],['invoices','view'],['payments','delete']],
         'payments:read'=>[['invoices','view']],
         'payments:create'=>[['invoices','view'],['payments','create']],
         'payments:reverse'=>[['invoices','view'],['payments','delete']],

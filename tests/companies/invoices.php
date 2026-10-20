@@ -41,6 +41,8 @@ if($db->driver()==='mysql'){
     $db->query('CREATE TABLE '.$p.'company_financial_events('.implode(',',$parts).')');
 }
 
+require_once APPPATH.'services/CompanyLocalNoncashSchema.php';CompanyLocalNoncashSchema::ensure($db,$p);
+
 $db->query("INSERT INTO {$p}clients(userid,company,datecreated,active) VALUES(9999,'Synthetic untouched legacy',?,1)",[date('Y-m-d H:i:s')]);
 $db->query("INSERT INTO {$p}invoices(id,clientid,number,datecreated,date,currency,subtotal,total,hash,discount_type,include_shipping) VALUES(42,9999,999,?,'2026-10-19',1,7,7,?,'after_tax',0)",[date('Y-m-d H:i:s'),str_repeat('a',32)]);
 $legacyBefore=$db->query("SELECT * FROM {$p}invoices WHERE id=42")->result_array();

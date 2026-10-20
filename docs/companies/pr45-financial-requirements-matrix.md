@@ -1,3 +1,18 @@
+# Atualização447 — não substitui o contrato integral
+
+| Recorte | Estado técnico447 | Pendência real |
+|---|---|---|
+| TarifaCNAB240 integralnominal | Nova base/grant/consentimento; bruto/tarifa/líquido separados; recibo e replay selam frame completo atéúltimoaudit | Composição com juros/desconto/abatimento, IOF/outros e reversão da nova base não incluídos |
+| API16LOCAL semcaixa/restauração | Evidênciaappend-only própria, consulta final e conta validadas, zero pagamento/crédito fabricado | Não autentica quitação ou estorno pelo banco |
+| Fundos independentes apósLOCAL | Manualcash/crédito nativo/aplicação/desaplicação/reversão com correlação própria e fingerprintfinanceiro completo | Não reutiliza declaraçãoLOCAL como prova de fundos; não cria crédito sintético |
+| Leitores/API | GUI e7scopes separados; guardtokenapóslock/apósaudit/final; PDF/portal/CSV/ledgerdatado canônicos | Não declara isolamento universal dos demais consumidores |
+| Recorrência | Principalquitado consome posição canônica:LOCALativo elegível, restauração bloqueia, fundos independentes reabilitam. Recorrência de fatura/rascunho day/week/month/year/ciclos/descoberta já439/440 | Recorrência própria de tarefa e regras extras detimers ainda ausentes; não confundir com faturas jáentregues |
+| Configurações | Defaultsestado/autoatribuição ecalendário já446 preservados;31arquivos relevantes byte-idênticos aoGitb47 | Prioridade/autofollow/timers e demaissettings/consumidores ainda precisam cortes próprios |
+
+A recuperação integral dos fontesNoncashV2 não ocorreu.447 usa NEWV3 reconstruído e validado explicitamente, com REDs preservados. Versões: núcleo4.4.7/447(três tabelasLOCAL), BB1.2.3/123NOOP/min4.4.7, Asaas1.5.3/153bytesinalterados. Ver pr45-recovery-447.md, relatório de validação447 eSHAefetivo naPR45. Os números e estados históricos abaixo permanecem contexto, não aprovação doSHAatual.
+
+---
+
 # Reconciliação financeira, Asaas, clientes e portal — PR45
 
 Base contratual: leitura do documento de614linhas `CONTINUIDADE-CRM-PR45-2026-10-19-REVISAO-2.md`, especialmente§§3–7,9,11–12. Revisão somente leitura das fontes; nenhum código/gate/versão alterado para produzir esta matriz.

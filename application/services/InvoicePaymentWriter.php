@@ -2,11 +2,11 @@
 declare(strict_types=1);
 namespace app\services;
 defined('BASEPATH') or exit('No direct script access allowed');
-require_once __DIR__.'/CompanyReceiptSource.php';
+require_once __DIR__.'/CompanyReceiptSource.php';require_once __DIR__.'/CompanyLocalNoncashFundsSource.php';
 require_once __DIR__.'/CompanyBankReversalWriter.php';
 require_once __DIR__.'/CompanyAsaasRefundWriter.php';
 require_once __DIR__.'/CompanyPostRefundManualWriter.php';
-require_once __DIR__.'/CompanyCreditWriter.php';
+require_once __DIR__.'/CompanyCreditWriter.php';require_once __DIR__.'/CompanyLocalNoncashWriter.php';
 require_once __DIR__.'/CompanyCurrencyUnits.php';
 require_once __DIR__.'/CompanyFinancialJournal.php';
 require_once __DIR__.'/CompanyInvoiceBalance.php';
@@ -15,6 +15,7 @@ require_once __DIR__.'/CompanyInvoiceBalance.php';
 final class InvoicePaymentWriter
 {
     use CompanyCreditWriter;
+    use CompanyLocalNoncashWriter;
     use CompanyBankReversalWriter;
     use CompanyAsaasRefundWriter;
     use CompanyPostRefundManualWriter;
@@ -67,6 +68,19 @@ final class InvoicePaymentWriter
         });
     }
 
+    /** The exact final LOCAL source composes native primitives; ordinary/manual/provider paths retain their origin veto. */
+    public function recordCompanyRestoredLocalFunds($issuer,$actor,\CompanyLocalNoncashFundsSource$source,?\CompanyFinancialApiGuard$apiGuard=null):int|string
+    {
+        if(get_class($source)!=='BancoBrasil\\RestoredLocalNoncashFunds')throw new \DomainException('company_local_settlement_source_denied');$i=\IssuerPolicy::id($issuer);$a=\IssuerPolicy::id($actor);$p=db_prefix();$source->assertSchema($this->db,$p);$op=$source->operation();
+        if($op!=='manual_receipt')return$this->moveCompanyCredit($i,$a,match($op){'credit_apply'=>'apply','credit_unapply'=>'unapply','manual_reverse'=>'manual_reverse',default=>throw new \DomainException('company_local_settlement_source_denied')},$source->coreInput(),$source->key(),$apiGuard,null,$source);
+        $tables=array_values(array_unique(array_merge($source->tables(),(new \CompanyInvoiceBalance($this->db,$p))->tables(),(new \CompanyFinancialJournal($this->db,$p))->tables('payment'),$apiGuard?->tables()??[])));
+        return \IssuerTransaction::run($this->db,$p,$tables,function()use($i,$a,$p,$source,$apiGuard):int{
+            $target=['invoice_id'=>$source->invoice()];$apiOperation=$apiGuard?->localOperation('manual_payment')??'manual_payment';$apiGuard?->beforeInOwned($this->db,$p,$i,$a,$apiOperation,$target,$source->key());$claim=$source->claim($this->db,$p,$i,$a);
+            if($claim['existing']){$apiGuard?->afterInOwned($this->db,$p,$i,$a,$apiOperation,$target,$source->key());$source->confirmed($this->db,$p,$i,$a);return$claim['payment_id'];}
+            [$data,$amount,$hash]=$this->companyReceiptInput($source->invoice(),$source->coreInput(),$source->key(),\CompanyLocalNoncashSettlements::MODE,\CompanyLocalNoncashSettlements::METHOD);$id=$this->companyReceiptLocked($i,$a,$source->invoice(),$source->key(),$amount,$data,$hash,$p,[],false,null,null,$source);$apiGuard?->afterInOwned($this->db,$p,$i,$a,$apiOperation,$target,$source->key());$source->confirmed($this->db,$p,$i,$a);return$id;
+        });
+    }
+
     /** Separate positive-company provider boundary; legacy record()/callbacks retain their NULL-owner restriction. */
     public function recordCompanyProviderReceipt($issuer,$actor,\CompanyReceiptSource $source): int
     {
@@ -74,16 +88,16 @@ final class InvoicePaymentWriter
         require_once __DIR__.'/issuers/IssuerResourceAccess.php';
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$prefix=db_prefix();
         // An arbitrary veto callback cannot grant provider receipt authority.
-        if(!in_array(get_class($source),['BancoBrasil\\ReviewedReceipt','BancoBrasil\\ReviewedComponentsReceipt','BancoBrasil\\ApiComponentsReceipt','BancoBrasil\\ApiOriginReviewedReceipt','BancoBrasil\\ApiOriginReviewedComponentsReceipt','BancoBrasil\\ApiCreditedReceipt','Asaas\\CompanyReceivedReceipt'],true))throw new \DomainException('company_receipt_source_denied');
+        if(!in_array(get_class($source),['BancoBrasil\\ReviewedTariffReceipt','BancoBrasil\\ReviewedReceipt','BancoBrasil\\ReviewedComponentsReceipt','BancoBrasil\\ApiComponentsReceipt','BancoBrasil\\ApiOriginReviewedReceipt','BancoBrasil\\ApiOriginReviewedComponentsReceipt','BancoBrasil\\ApiCreditedReceipt','Asaas\\CompanyReceivedReceipt'],true))throw new \DomainException('company_receipt_source_denied');
         $source->assertSchema($this->db,$prefix);
         $tables=array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','modules','invoices','issuers_invoice_documents','invoicepaymentrecords','credits','company_payment_receipts','issuers_audit'],$source->tables());
         $tables=array_values(array_unique(array_merge($tables,(new \CompanyCurrencyUnits($this->db,$prefix))->tables(),(new \CompanyFinancialJournal($this->db,$prefix))->tables('payment'),(new \CompanyInvoiceBalance($this->db,$prefix))->tables())));
         return \IssuerTransaction::run($this->db,$prefix,$tables,function()use($issuer,$actor,$prefix,$source):int{
             $claim=$source->claim($this->db,$prefix,$issuer,$actor);
             $invoice=self::invoiceId($claim['invoice']);$key=$claim['key'];
-            $components=$claim['components']??null;$componentSource=in_array(get_class($source),['BancoBrasil\\ReviewedComponentsReceipt','BancoBrasil\\ApiComponentsReceipt','BancoBrasil\\ApiOriginReviewedComponentsReceipt'],true);if($componentSource?!($components instanceof \CompanyBankComponentsData):$components!==null)throw new \DomainException('company_receipt_source_denied');
-            if($components!==null&&$components->data()['basis']!==(get_class($source)==='BancoBrasil\\ApiComponentsReceipt'?\CompanyBankComponentsData::API16_BASIS:\CompanyBankComponentsData::BASIS))throw new \DomainException('company_receipt_source_denied');
-            [$mode,$method]=match(get_class($source)){'BancoBrasil\\ApiOriginReviewedReceipt'=>['bb_cnab240_reviewed','Crédito CNAB240 de origem API'],'BancoBrasil\\ApiOriginReviewedComponentsReceipt'=>['bb_cnab240_components_reviewed','Crédito CNAB240 composto de origem API'],'BancoBrasil\\ApiComponentsReceipt'=>['bb_api16_components_reviewed','Crédito integral BB API16 por componentes'],'BancoBrasil\\ReviewedComponentsReceipt'=>['bb_cnab240_components_reviewed','Conciliação assistida BB CNAB240 por componentes'],'BancoBrasil\\ApiCreditedReceipt'=>['bb_api_credited','Crédito BB por consulta API'],'Asaas\\CompanyReceivedReceipt'=>['asaas_company_received','Recebimento nominal Asaas'],default=>['bb_cnab240_reviewed','Conciliação assistida BB CNAB240']};
+            $components=$claim['components']??null;$componentSource=in_array(get_class($source),['BancoBrasil\\ReviewedTariffReceipt','BancoBrasil\\ReviewedComponentsReceipt','BancoBrasil\\ApiComponentsReceipt','BancoBrasil\\ApiOriginReviewedComponentsReceipt'],true);if($componentSource?!($components instanceof \CompanyBankComponentsData):$components!==null)throw new \DomainException('company_receipt_source_denied');
+            if($components!==null&&$components->data()['basis']!==(match(get_class($source)){'BancoBrasil\\ApiComponentsReceipt'=>\CompanyBankComponentsData::API16_BASIS,'BancoBrasil\\ReviewedTariffReceipt'=>\CompanyBankComponentsData::TARIFF_BASIS,default=>\CompanyBankComponentsData::BASIS}))throw new \DomainException('company_receipt_source_denied');
+            [$mode,$method]=match(get_class($source)){'BancoBrasil\\ReviewedTariffReceipt'=>['bb_cnab240_tariff_reviewed','Crédito integral CNAB240 com tarifa explícita'],'BancoBrasil\\ApiOriginReviewedReceipt'=>['bb_cnab240_reviewed','Crédito CNAB240 de origem API'],'BancoBrasil\\ApiOriginReviewedComponentsReceipt'=>['bb_cnab240_components_reviewed','Crédito CNAB240 composto de origem API'],'BancoBrasil\\ApiComponentsReceipt'=>['bb_api16_components_reviewed','Crédito integral BB API16 por componentes'],'BancoBrasil\\ReviewedComponentsReceipt'=>['bb_cnab240_components_reviewed','Conciliação assistida BB CNAB240 por componentes'],'BancoBrasil\\ApiCreditedReceipt'=>['bb_api_credited','Crédito BB por consulta API'],'Asaas\\CompanyReceivedReceipt'=>['asaas_company_received','Recebimento nominal Asaas'],default=>['bb_cnab240_reviewed','Conciliação assistida BB CNAB240']};
             [$data,$amount,$hash]=$this->companyReceiptInput($invoice,$claim['input'],$key,$mode,$method);
             $id=$this->companyReceiptLocked($issuer,$actor,$invoice,$key,$amount,$data,$hash,$prefix,[],true,$components);
             $source->applied($this->db,$prefix,$issuer,$actor,$id);
@@ -104,7 +118,7 @@ final class InvoicePaymentWriter
         $hash=hash('sha256',json_encode($data,JSON_THROW_ON_ERROR));return [$data,$amount,$hash];
 
     }
-    private function companyReceiptLocked(int $issuer,int $actor,int $invoice,string $requestKey,int $amount,array $data,string $hash,string $prefix,array $origins,bool $provider,?\CompanyBankComponentsData $components=null,?\CompanyFinancialApiGuard $apiGuard=null):int
+    private function companyReceiptLocked(int $issuer,int $actor,int $invoice,string $requestKey,int $amount,array $data,string $hash,string $prefix,array $origins,bool $provider,?\CompanyBankComponentsData $components=null,?\CompanyFinancialApiGuard $apiGuard=null,?\CompanyLocalNoncashFundsSource$localSource=null):int
     {
             $query=fn($sql,$args=[])=>\IssuerStorage::query($this->db,$sql,$args)->result_array();
             $acl=new \IssuerResourceAccess($this->db,$prefix);$acl->lockFinancialIdentity($issuer,$actor);
@@ -137,13 +151,14 @@ final class InvoicePaymentWriter
             $id=(int)$this->db->insert_id();if($id<1)throw new \RuntimeException('issuer_payment_write_unconfirmed');
             $status=$balance===$extinguished?2:3;
             \IssuerStorage::query($this->db,'UPDATE '.$prefix.'invoices SET status=? WHERE id=? AND issuer_id=?',[$status,$invoice,$issuer]);
-            \IssuerStorage::query($this->db,'INSERT INTO '.$prefix.'company_payment_receipts(request_key,issuer_id,actor_id,input_hash,invoice_id,payment_id,created_at) VALUES(?,?,?,?,?,?,?)',[$requestKey,$issuer,$actor,$hash,$invoice,$id,date('Y-m-d H:i:s')]);
-            \IssuerStorage::query($this->db,'INSERT INTO '.$prefix.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,?,?)',[$actor,$provider?'company_provider_payment_recorded':'company_manual_payment_recorded',$issuer,$invoice,date('Y-m-d H:i:s')]);
+            $receiptFields=['request_key'=>$requestKey,'issuer_id'=>$issuer,'actor_id'=>$actor,'input_hash'=>$hash,'invoice_id'=>$invoice,'payment_id'=>$id,'created_at'=>date('Y-m-d H:i:s')];\IssuerStorage::query($this->db,'INSERT INTO '.$prefix.'company_payment_receipts (`'.implode('`,`',array_keys($receiptFields)).'`) VALUES(?,?,?,?,?,?,?)',array_values($receiptFields));
+            $auditFields=['actor_id'=>$actor,'event'=>$provider?'company_provider_payment_recorded':'company_manual_payment_recorded','issuer_id'=>$issuer,'subject_id'=>$invoice,'created_at'=>date('Y-m-d H:i:s'),'metadata_json'=>null];\IssuerStorage::query($this->db,'INSERT INTO '.$prefix.'issuers_audit (`'.implode('`,`',array_keys($auditFields)).'`) VALUES(?,?,?,?,?,?)',array_values($auditFields));$auditId=(int)$this->db->insert_id();$auditFields=['id'=>$auditId]+$auditFields;
+            if($localSource!==null){$paymentFields=['id'=>$id]+$record;$localSource->prepared($this->db,$prefix,$issuer,$actor,['native_id'=>$id,'status'=>$status,'audit'=>$auditFields,'rows'=>[['invoicepaymentrecords','id',$id,$paymentFields],['company_payment_receipts','request_key',$requestKey,$receiptFields],['issuers_audit','id',$auditId,$auditFields]],'frame_changes'=>[['payments','id',$id,$paymentFields],['receipts','request_key',$requestKey,$receiptFields],['audit','id',$auditId,$auditFields]]]);}
             $confirmed=$query('SELECT p.invoiceid,p.amount,i.status FROM '.$prefix.'invoicepaymentrecords p JOIN '.$prefix.'invoices i ON i.id=p.invoiceid WHERE p.id=? AND i.issuer_id=?',[$id,$issuer])[0]??null;
             if(!$confirmed||(int)$confirmed['invoiceid']!==$invoice||self::minorUnits($confirmed['amount'])!==$amount||(int)$confirmed['status']!==$status||count($query('SELECT request_key FROM '.$prefix.'company_payment_receipts WHERE request_key=?',[$requestKey]))!==1)throw new \RuntimeException('issuer_payment_write_unconfirmed');
             if($components!==null){(new \CompanyBankReceiptComponents($this->db,$prefix))->recordInOwned($issuer,$actor,$invoice,$id,$requestKey,$components);(new \CompanyFinancialJournal($this->db,$prefix))->recordInOwned($issuer,$actor,['kind'=>'bank_components_recorded','source_type'=>'payment','source_id'=>$id,'book_date'=>$data['date'],'currency'=>$unit['iso_code'],'currency_basis'=>$unit['basis'],'amount'=>$components->principalExtinguished(),'before'=>[],'after'=>$components->data()+['request_key'=>$requestKey,'invoice_id'=>$invoice]],hash('sha256','company-journal:bank-components:'.$requestKey));}
             (new \CompanyFinancialJournal($this->db,$prefix))->recordInOwned($issuer,$actor,['kind'=>'receipt_recorded','source_type'=>'payment','source_id'=>$id,'book_date'=>$data['date'],'currency'=>$unit['iso_code'],'currency_basis'=>$unit['basis'],'amount'=>$data['amount'],'before'=>['date'=>$data['date'],'amount'=>'0.00','invoice_id'=>$invoice,'invoice_status'=>(int)$parent['status'],'balance'=>\CompanyInvoiceAmounts::decimal($balance)],'after'=>['date'=>$data['date'],'amount'=>$data['amount'],'invoice_id'=>$invoice,'invoice_status'=>$status,'balance'=>\CompanyInvoiceAmounts::decimal($balance-$extinguished),'mode'=>$data['paymentmode']]],hash('sha256','company-journal:receipt-recorded:'.$requestKey));
-            (new \CompanyInvoiceBalance($this->db,$prefix))->inOwned($issuer,$actor,$invoice);$authorize();$apiGuard?->afterInOwned($this->db,$prefix,$issuer,$actor,'manual_payment',['invoice_id'=>$invoice],$requestKey);return $id;
+            $localSource?->applied($this->db,$prefix,$issuer,$actor);(new \CompanyInvoiceBalance($this->db,$prefix))->inOwned($issuer,$actor,$invoice);$authorize();$apiGuard?->afterInOwned($this->db,$prefix,$issuer,$actor,'manual_payment',['invoice_id'=>$invoice],$requestKey);return $id;
     }
 
     private function write(int $targetInvoiceId, array $data, callable $allowed, ?int $creditNoteId): int

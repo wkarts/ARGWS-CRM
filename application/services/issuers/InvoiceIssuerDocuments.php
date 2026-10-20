@@ -364,13 +364,15 @@ final class InvoiceIssuerDocuments
     }
 
     /** Internal DTO source. Explicit render capability; identifiers only, never caller-supplied invoice data. */
-    public function readForPdf($invoice, $issuer): array
+    public function readForPdf($invoice,$issuer):array
     {
-        $invoice = IssuerPolicy::id($invoice);
-        $issuer = IssuerPolicy::id($issuer);
-        $this->requireAccess($issuer, 'render_invoices');
-        $this->requireAccess($issuer, 'view_invoices');
-        return IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge(['issuers_lock','issuers_registry','invoices','issuers_invoice_documents','issuers_sequences','issuers_audit','currencies','company_currency_units','itemable','item_tax','countries'],(new CompanyInvoiceBalance($this->db,$this->prefix))->tables(),$this->portalSource?$this->portalSource->balanceTables():[]))), function () use ($invoice, $issuer): array {
+        $invoice=IssuerPolicy::id($invoice);$issuer=IssuerPolicy::id($issuer);$this->requireAccess($issuer,'render_invoices');$this->requireAccess($issuer,'view_invoices');
+        return IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge(['issuers_lock','issuers_registry','invoices','issuers_invoice_documents','issuers_sequences','issuers_audit','currencies','company_currency_units','itemable','item_tax','countries'],(new CompanyInvoiceBalance($this->db,$this->prefix))->tables(),$this->portalSource?$this->portalSource->balanceTables():[]))),fn():array=>$this->readForPdfInOwned($invoice,$issuer));
+    }
+    /** Same canonical native reader, only inside the exact core-owned transaction. */
+    public function readForPdfInOwned($invoice,$issuer):array
+    {
+        $invoice=IssuerPolicy::id($invoice);$issuer=IssuerPolicy::id($issuer);IssuerTransaction::assertOwned($this->db,$this->prefix,array_values(array_unique(array_merge(['issuers_lock','issuers_registry','invoices','issuers_invoice_documents','issuers_sequences','issuers_audit','currencies','company_currency_units','itemable','item_tax','countries'],(new CompanyInvoiceBalance($this->db,$this->prefix))->tables(),$this->portalSource?$this->portalSource->balanceTables():[]))));$this->requireAccess($issuer,'render_invoices');$this->requireAccess($issuer,'view_invoices');
             // Serialize permission changes while constructing the authorized DTO, as allocation does.
             if (!$this->one("SELECT id FROM {$this->tables}lock WHERE id=1 FOR UPDATE")) {
                 throw new RuntimeException('issuer_document_storage_failed');
@@ -400,7 +402,6 @@ final class InvoiceIssuerDocuments
             $balance=new CompanyInvoiceBalance($this->db,$this->prefix);$position=$this->portalSource?$balance->portalInOwned($this->portalSource,$this->portalSession,$issuer,$invoice):$balance->inOwned($issuer,$this->actor,$invoice);
             $this->requireAccess($issuer, 'render_invoices');$this->requireAccess($issuer, 'view_invoices');
             return compact('snapshot', 'record', 'currency', 'items', 'taxes', 'countries','position');
-        });
     }
 
     /** Read-only. Missing/mismatched snapshots never fall back to global identity or number. */

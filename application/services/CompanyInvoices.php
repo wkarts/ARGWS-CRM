@@ -158,6 +158,10 @@ final class CompanyInvoices
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$this->authorize($issuer,$actor,'view');
         return $this->documents($issuer,$actor)->forPdf($invoice,$issuer);
     }
+    public function documentInOwned($issuer,$actor,$invoice):InvoiceIssuerDocumentData
+    {
+        require_once __DIR__.'/issuers/InvoiceIssuerDocumentData.php';$issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$invoice=IssuerPolicy::id($invoice);$this->authorize($issuer,$actor,'view');return InvoiceIssuerDocumentData::fromInvoiceInOwned($this->documents($issuer,$actor),$invoice,$issuer);
+    }
     public function page($issuer,$actor,$after=0):array
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);if($after!==0)$after=IssuerPolicy::id($after);$this->authorize($issuer,$actor,'view');

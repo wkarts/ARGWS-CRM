@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/InvoiceIssuerDocuments.php';
+require_once __DIR__ . '/../CompanyBankComponentsData.php';
 
 /** Immutable, whitelisted DTO. Construction always reads an explicitly authorized persisted invoice. */
 final class InvoiceIssuerDocumentData
@@ -111,13 +112,19 @@ final class InvoiceIssuerDocumentData
     {
         if(!is_array($position)||($position['invoice_id']??null)!==$invoice||($position['issuer_id']??null)!==$issuer)throw new DomainException('issuer_document_scope_mismatch');$result=[];
         foreach(['total','received','received_original','received_reversed','received_manual_reversed','received_external_reversed','applied_credit','settlement_discount','settlement_abatement','settlement_discount_original','settlement_abatement_original','settlement_discount_reversed','settlement_abatement_reversed','noncash_reductions','receivable'] as $field)$result[$field]=self::decimal(self::cents($position[$field]??null));
-        if(self::cents($result['total'])!==$total||self::cents($result['settlement_discount'])+self::cents($result['settlement_abatement'])!==self::cents($result['noncash_reductions'])||self::cents($result['received'])+self::cents($result['applied_credit'])+self::cents($result['noncash_reductions'])+self::cents($result['receivable'])!==$total||self::cents($result['received'])+self::cents($result['received_reversed'])!==self::cents($result['received_original'])||self::cents($result['received_manual_reversed'])+self::cents($result['received_external_reversed'])!==self::cents($result['received_reversed'])||self::cents($result['settlement_discount'])+self::cents($result['settlement_discount_reversed'])!==self::cents($result['settlement_discount_original'])||self::cents($result['settlement_abatement'])+self::cents($result['settlement_abatement_reversed'])!==self::cents($result['settlement_abatement_original']))throw new DomainException('issuer_document_invalid_totals');return $result;
+        if(self::cents($result['total'])!==$total||self::cents($result['settlement_discount'])+self::cents($result['settlement_abatement'])!==self::cents($result['noncash_reductions'])||self::cents($result['received'])+self::cents($result['applied_credit'])+self::cents($result['noncash_reductions'])+self::cents($result['receivable'])!==$total||self::cents($result['received'])+self::cents($result['received_reversed'])!==self::cents($result['received_original'])||self::cents($result['received_manual_reversed'])+self::cents($result['received_external_reversed'])!==self::cents($result['received_reversed'])||self::cents($result['settlement_discount'])+self::cents($result['settlement_discount_reversed'])!==self::cents($result['settlement_discount_original'])||self::cents($result['settlement_abatement'])+self::cents($result['settlement_abatement_reversed'])!==self::cents($result['settlement_abatement_original']))throw new DomainException('issuer_document_invalid_totals');
+        $tariffs=[];foreach($position['components']??[] as$component){if(($component['basis']??null)!==CompanyBankComponentsData::TARIFF_BASIS)continue;$captured=CompanyBankComponentsData::fromCaptured($component)->data();$tariffs[]=['principal_received'=>$captured['cash_principal'],'tariff_deducted'=>$captured['fees'],'bank_net'=>$captured['net_observed']];}if($tariffs)$result['bank_tariffs']=$tariffs;return $result;
     }
 
     public static function fromInvoice(InvoiceIssuerDocuments $documents, $invoice, $issuer): self
     {
         if (PHP_INT_SIZE < 8) { throw new DomainException('issuer_document_64bit_required'); }
         return new self($documents->readForPdf($invoice, $issuer));
+    }
+
+    public static function fromInvoiceInOwned(InvoiceIssuerDocuments$documents,$invoice,$issuer):self
+    {
+        if(PHP_INT_SIZE<8)throw new DomainException('issuer_document_64bit_required');return new self($documents->readForPdfInOwned($invoice,$issuer));
     }
 
     public function data(): array { return $this->data; }

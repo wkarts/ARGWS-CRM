@@ -1,0 +1,1838 @@
+{
+  "status": "local_runtime_approved_pending_published_sha_binding",
+  "core": "4.4.7",
+  "native_migration": 447,
+  "bb": "1.2.3",
+  "bb_native_migration": 123,
+  "upgrade_baseline_published_sha": "b47d1666f7bb788bf29ead9c9aa03ff3f36221d1",
+  "published_sha_under_test": null,
+  "production_manifest": {
+    "paths": 18574,
+    "sha256": "f8439b879c51f932b82ca275d7594f72dc0dc397fd80a3cf4df977b655024b6f"
+  },
+  "engines": "MariaDB10.11.14 HTTP/PHP8.3.6; complementary MySQL/Maria native CLI evidence owned by root",
+  "runs": {
+    "fresh": {
+      "initial_manifest_sha256": "2af7703cdd54da602f24a5e5696985c7e3536983d1c45834b7eb51c8f9bb986b",
+      "initial_native_stages": [
+        {
+          "name": "native-installer",
+          "native": 447,
+          "exit": 0,
+          "seconds": 4.135,
+          "master": "17:installer",
+          "invalid_csrf_before_ddl": 403
+        },
+        {
+          "name": "companies-native-gui",
+          "exit": 0,
+          "seconds": 18.383
+        },
+        {
+          "name": "bb-native-447",
+          "exit": 0,
+          "seconds": 0.594
+        },
+        {
+          "name": "bb17-native-gui",
+          "exit": 0,
+          "seconds": 8.876
+        },
+        {
+          "name": "bb240-tariff-original",
+          "exit": 1,
+          "seconds": 6.56
+        }
+      ],
+      "final_resume_file": "http447-harness/evidence/run-fresh-1792510009353145956/resume-csrf-local-1792511859544395905.json",
+      "final_resume_sha256": "765d04cd619b8d808c39ad5015bc51f0d2c0a6d1db3dee6cc6f165bc384cd612",
+      "final_resume": {
+        "stage": "csrf-local",
+        "success": true,
+        "interim": false,
+        "before": {
+          "production_paths": 18574,
+          "runtime_paths_checked": 18560,
+          "installer_paths_removed": [
+            "install/7c189be7bdb2916ff3d3f4846cc85323.png",
+            "install/database.php",
+            "install/database.sql",
+            "install/file_permissions.php",
+            "install/finish.php",
+            "install/html.php",
+            "install/index.php",
+            "install/install.class.php",
+            "install/install.php",
+            "install/logo.png",
+            "install/phpass.php",
+            "install/requirements.php",
+            "install/sqlparser.php",
+            "install/steps.php"
+          ],
+          "manifest_sha256": "f8439b879c51f932b82ca275d7594f72dc0dc397fd80a3cf4df977b655024b6f",
+          "differences": []
+        },
+        "after": {
+          "production_paths": 18574,
+          "runtime_paths_checked": 18560,
+          "installer_paths_removed": [
+            "install/7c189be7bdb2916ff3d3f4846cc85323.png",
+            "install/database.php",
+            "install/database.sql",
+            "install/file_permissions.php",
+            "install/finish.php",
+            "install/html.php",
+            "install/index.php",
+            "install/install.class.php",
+            "install/install.php",
+            "install/logo.png",
+            "install/phpass.php",
+            "install/requirements.php",
+            "install/sqlparser.php",
+            "install/steps.php"
+          ],
+          "manifest_sha256": "f8439b879c51f932b82ca275d7594f72dc0dc397fd80a3cf4df977b655024b6f",
+          "differences": []
+        },
+        "test_source_sha256": {
+          "/workspace/scratch/6b72446d684f/http447-harness/local_cross_scope_probe.cjs": "eb424cd9f3fe743ccdb6318ade3fb1ee1ba7028feaee32b012df6023bcb73d1e",
+          "/workspace/scratch/6b72446d684f/http447-harness/csrf_route_probe.cjs": "7b5f2df024683a9a3ef278831b387fc6432ae196bfe527fa370d9b81c5fe5b9f",
+          "/workspace/scratch/6b72446d684f/http447-harness/setup_local_api_profiles.cjs": "1cc290ae1d6e889ed1bd253355ed08c3b5f8591679f97b6d19f978d9c35e8bee",
+          "/workspace/scratch/6b72446d684f/integration447/tests/banco_brasil_local_noncash_browser_v3.cjs": "36c48dc641c4f66ca6f89aa166f710222fb614a9819b81c2cd2dc4558cc20642"
+        },
+        "results": [
+          {
+            "stage": "cross-company-local-bearer-probe",
+            "exit": 0,
+            "seconds": 5.79,
+            "log": "cross-company-local-bearer-probe-1792511859544395905.log"
+          },
+          {
+            "stage": "local-csrf-invalid-bearer-probe",
+            "exit": 0,
+            "seconds": 0.631,
+            "log": "local-csrf-invalid-bearer-probe-1792511859544395905.log"
+          },
+          {
+            "stage": "local-api-profiles-gui",
+            "exit": 0,
+            "seconds": 5.885,
+            "log": "local-api-profiles-gui-1792511859544395905.log"
+          },
+          {
+            "stage": "local-qualified-synthetic-protocol",
+            "exit": 0,
+            "seconds": 1.547,
+            "log": "local-qualified-synthetic-protocol-1792511859544395905.log"
+          },
+          {
+            "stage": "local-v3-original",
+            "exit": 0,
+            "seconds": 33.945,
+            "log": "local-v3-original-1792511859544395905.log"
+          }
+        ],
+        "web": "/tmp/http447-fresh-5sdf3v4c/app",
+        "cluster": "/workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-gq_03usw"
+      },
+      "tariff": {
+        "results": [
+          {
+            "issuer": 3,
+            "invoice": 2,
+            "event": 2,
+            "payment": 1,
+            "gross": "105.53",
+            "fee": "2.53",
+            "net": "103.00",
+            "native_gui_created": true,
+            "sql_read_only": true
+          },
+          {
+            "issuer": 2,
+            "invoice": 3,
+            "event": 3,
+            "payment": 2,
+            "gross": "105.53",
+            "fee": "2.53",
+            "net": "103.00",
+            "native_gui_created": true,
+            "sql_read_only": true
+          }
+        ],
+        "external_bank_calls": false,
+        "fixture_business_writes": false
+      },
+      "local": {
+        "passed": true,
+        "fixtures": [
+          {
+            "issuer": 3,
+            "invoice": 10,
+            "declaration": "b0d535d5a6728d5ca7f393d91e43b21f4d26d5fb868cc22c2fb9dc8d8fef0bc6",
+            "restoration": "5355901f6670717d212f30f8e58d287a988712a4d9a91dd724d52ecb22992be6",
+            "position": {
+              "total": "100.00",
+              "received": "7.00",
+              "received_original": "12.00",
+              "received_reversed": "5.00",
+              "received_manual_reversed": "5.00",
+              "received_external_reversed": "0.00",
+              "applied_credit": "15.00",
+              "settlement_discount": "0.00",
+              "settlement_abatement": "0.00",
+              "settlement_discount_original": "10.00",
+              "settlement_abatement_original": "90.00",
+              "settlement_discount_reversed": "10.00",
+              "settlement_abatement_reversed": "90.00",
+              "noncash_reductions": "0.00",
+              "receivable": "78.00"
+            },
+            "gui_funds": 6,
+            "pdf_sha256": "96dafae6fe60a4f9d59b7cad18b7a61ee5aaa55042200707e5234c370c3d68f0"
+          },
+          {
+            "issuer": 2,
+            "invoice": 11,
+            "declaration": "19a2a4e573deb2fd8408007c14c66cb1d062e89ab51e861097c0926ac099fb06",
+            "restoration": "5d6e7b1f220269f7283ad1f6c9de63134a9fc0be69f4f475271fdc5a39f9e183",
+            "position": {
+              "total": "100.00",
+              "received": "7.00",
+              "received_original": "12.00",
+              "received_reversed": "5.00",
+              "received_manual_reversed": "5.00",
+              "received_external_reversed": "0.00",
+              "applied_credit": "15.00",
+              "settlement_discount": "0.00",
+              "settlement_abatement": "0.00",
+              "settlement_discount_original": "10.00",
+              "settlement_abatement_original": "90.00",
+              "settlement_discount_reversed": "10.00",
+              "settlement_abatement_reversed": "90.00",
+              "noncash_reductions": "0.00",
+              "receivable": "78.00"
+            },
+            "gui_funds": 6,
+            "pdf_sha256": "37c0b648eba658669520817872b5a4da8f2bcea2f1419fe2cda54aef37bcd458"
+          }
+        ]
+      },
+      "qualified_synthetic_protocol": {
+        "fixture_sha256": "e7b628c520988f914ae046282496c93a138cbbfc7da97140ad56bdaaa88c9ea3",
+        "packet_path": "/workspace/scratch/6b72446d684f/integration447/tests/banco_brasil_local_noncash_http_fixture_v3.php",
+        "copied_byte_identical": true,
+        "attempts": [
+          {
+            "case": "a",
+            "exit": 0
+          },
+          {
+            "case": "b",
+            "exit": 0
+          }
+        ],
+        "setup": "CompanyInvoices::create, ApiService::issue/query with injected synthetic provider, InvoicePaymentWriter::issueCompanyCredit(100); canonical service setup before real GUI/bearer actions",
+        "not_gui_business_creation_proof": true,
+        "arbitrary_grants_settings_module_markers": false,
+        "external_bank_calls": false
+      },
+      "csrf_route_probe": {
+        "fixed_assertions": true,
+        "passed": true,
+        "no_authorized_financial_writer": true,
+        "requests": [
+          {
+            "name": "synthetic nonexistent bearer reaches JSON authentication",
+            "path": "/company_api/local_noncash/8",
+            "status": 401,
+            "content_type": "application/json; charset=UTF-8",
+            "body": "{\"error\":\"unauthenticated\"}",
+            "expected_after_fix": 401
+          },
+          {
+            "name": "missing bearer reaches JSON authentication rejection",
+            "path": "/company_api/local_noncash/8",
+            "status": 401,
+            "content_type": "application/json; charset=UTF-8",
+            "body": "{\"error\":\"unauthenticated\"}",
+            "expected_after_fix": 401
+          },
+          {
+            "name": "admin LOCAL GUI still requires native CSRF",
+            "path": "/admin/banco_brasil/local_noncash",
+            "status": 403,
+            "content_type": "text/html; charset=UTF-8",
+            "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n<style type=\"text/css\">\n\n::selection { background-color: #E13300; color: white; }\n::-moz-selection { background-color: #E13300; color: white; }\n\nbody {\n\tbackground-color: #fff;\n\tmargin: 40px;\n\tfont: 13px/20px normal Helvetica, Arial, sans-serif;\n\tcolor: #4F5155;\n}\n\na {\n\tcolor: #003399;\n\tbackground-color: transparent;\n\tfont-weight: normal;\n}\n\nh1 {\n\tcolor: #444;\n\tbackground-color: transparent;\n\tborder-bottom: 1px solid #D0D0D0;\n\tfont-size: 19px;\n\tfont-weight: normal;\n\tmargin: 0 0 14px 0;\n\tpadding: 14px 15px 10px 15px;\n}\n\ncode {\n\tfont-family: Consolas, Monaco, Courier New, Courier, monospace;\n\tfont-size: 12px;\n\tbackground-color: #f9f9f9;\n\tborder: 1px solid #D0D0D0;\n\tcolor: #002166;\n\tdisplay: block;\n\tmargin: 14px 0 14px 0;\n\tpadding: 12px 10px 12px 10px;\n}\n\n#container {\n\tmargin: 10px;\n\tborder: 1px solid #D0D0D0;\n\tbox-shadow: 0 0 8px #D0D0D0;\n}\n\np {\n\tmargin: 12px 15px 12px 15px;\n}\n</style>\n</head>\n<body>\n\t<div id=\"container\">\n\t\t<h1> 419 Page Expired!</h1>\n\t\t<p>Sorry, the page has expired, return to previous page and refresh to continue.</p>\t</div>\n</body>\n</html>\n",
+            "expected_after_fix": 403
+          },
+          {
+            "name": "non-positive/non-numeric API path is not broadly excluded",
+            "path": "/company_api/local_noncash/not-an-id",
+            "status": 403,
+            "content_type": "text/html; charset=UTF-8",
+            "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n<style type=\"text/css\">\n\n::selection { background-color: #E13300; color: white; }\n::-moz-selection { background-color: #E13300; color: white; }\n\nbody {\n\tbackground-color: #fff;\n\tmargin: 40px;\n\tfont: 13px/20px normal Helvetica, Arial, sans-serif;\n\tcolor: #4F5155;\n}\n\na {\n\tcolor: #003399;\n\tbackground-color: transparent;\n\tfont-weight: normal;\n}\n\nh1 {\n\tcolor: #444;\n\tbackground-color: transparent;\n\tborder-bottom: 1px solid #D0D0D0;\n\tfont-size: 19px;\n\tfont-weight: normal;\n\tmargin: 0 0 14px 0;\n\tpadding: 14px 15px 10px 15px;\n}\n\ncode {\n\tfont-family: Consolas, Monaco, Courier New, Courier, monospace;\n\tfont-size: 12px;\n\tbackground-color: #f9f9f9;\n\tborder: 1px solid #D0D0D0;\n\tcolor: #002166;\n\tdisplay: block;\n\tmargin: 14px 0 14px 0;\n\tpadding: 12px 10px 12px 10px;\n}\n\n#container {\n\tmargin: 10px;\n\tborder: 1px solid #D0D0D0;\n\tbox-shadow: 0 0 8px #D0D0D0;\n}\n\np {\n\tmargin: 12px 15px 12px 15px;\n}\n</style>\n</head>\n<body>\n\t<div id=\"container\">\n\t\t<h1> 419 Page Expired!</h1>\n\t\t<p>Sorry, the page has expired, return to previous page and refresh to continue.</p>\t</div>\n</body>\n</html>\n",
+            "expected_after_fix": 403
+          }
+        ]
+      }
+    },
+    "upgrade": {
+      "initial_manifest_sha256": "44284077a849fea45145305436a787e2cfe12542d4b15d7d8d1269cd8b87eeb5",
+      "initial_native_stages": [
+        {
+          "name": "native-installer",
+          "native": 446,
+          "exit": 0,
+          "seconds": 4.022,
+          "master": "17:installer",
+          "invalid_csrf_before_ddl": 403
+        },
+        {
+          "name": "companies-native-gui",
+          "exit": 0,
+          "seconds": 18.289
+        },
+        {
+          "name": "bb-native-446",
+          "exit": 0,
+          "seconds": 0.741
+        },
+        {
+          "name": "bb17-native-gui",
+          "exit": 0,
+          "seconds": 9.876
+        },
+        {
+          "name": "native446-to447-upgrade",
+          "exit": 0,
+          "seconds": 2.097
+        },
+        {
+          "name": "bb-native447",
+          "exit": 0,
+          "seconds": 0.077
+        },
+        {
+          "name": "bb17-preserved-gui-check",
+          "exit": 0,
+          "seconds": 5.273
+        },
+        {
+          "name": "bb240-tariff-original",
+          "exit": 0,
+          "seconds": 20.224
+        }
+      ],
+      "final_resume_file": "http447-harness/evidence/run-upgrade-1792510495991742204/resume-csrf-local-basic-1792511961225391683.json",
+      "final_resume_sha256": "ddf4fb96332bdebdd2989556bdc82e9c975d27226f14250ac77d45682a6783c7",
+      "final_resume": {
+        "stage": "csrf-local-basic",
+        "success": true,
+        "interim": false,
+        "before": {
+          "production_paths": 18574,
+          "runtime_paths_checked": 18560,
+          "installer_paths_removed": [
+            "install/7c189be7bdb2916ff3d3f4846cc85323.png",
+            "install/database.php",
+            "install/database.sql",
+            "install/file_permissions.php",
+            "install/finish.php",
+            "install/html.php",
+            "install/index.php",
+            "install/install.class.php",
+            "install/install.php",
+            "install/logo.png",
+            "install/phpass.php",
+            "install/requirements.php",
+            "install/sqlparser.php",
+            "install/steps.php"
+          ],
+          "manifest_sha256": "f8439b879c51f932b82ca275d7594f72dc0dc397fd80a3cf4df977b655024b6f",
+          "differences": []
+        },
+        "after": {
+          "production_paths": 18574,
+          "runtime_paths_checked": 18560,
+          "installer_paths_removed": [
+            "install/7c189be7bdb2916ff3d3f4846cc85323.png",
+            "install/database.php",
+            "install/database.sql",
+            "install/file_permissions.php",
+            "install/finish.php",
+            "install/html.php",
+            "install/index.php",
+            "install/install.class.php",
+            "install/install.php",
+            "install/logo.png",
+            "install/phpass.php",
+            "install/requirements.php",
+            "install/sqlparser.php",
+            "install/steps.php"
+          ],
+          "manifest_sha256": "f8439b879c51f932b82ca275d7594f72dc0dc397fd80a3cf4df977b655024b6f",
+          "differences": []
+        },
+        "test_source_sha256": {
+          "/workspace/scratch/6b72446d684f/http447-harness/csrf_route_probe.cjs": "621b2a192160fba452823f1ff98346e5db2b498d244440857c701e66bc20ceb1",
+          "/workspace/scratch/6b72446d684f/http447-harness/setup_local_api_profiles.cjs": "1cc290ae1d6e889ed1bd253355ed08c3b5f8591679f97b6d19f978d9c35e8bee",
+          "/workspace/scratch/6b72446d684f/integration447/tests/banco_brasil_local_noncash_browser_v3.cjs": "36c48dc641c4f66ca6f89aa166f710222fb614a9819b81c2cd2dc4558cc20642",
+          "/workspace/scratch/6b72446d684f/http447-harness/basic_task_calendar.cjs": "5ed07d674f333386ce83b0b5b2a77457ad5fee153ad839d14c579805408c7145"
+        },
+        "results": [
+          {
+            "stage": "local-csrf-invalid-bearer-probe",
+            "exit": 0,
+            "seconds": 0.699,
+            "log": "local-csrf-invalid-bearer-probe-1792511961225391683.log"
+          },
+          {
+            "stage": "local-api-profiles-gui",
+            "exit": 0,
+            "seconds": 10.1,
+            "log": "local-api-profiles-gui-1792511961225391683.log"
+          },
+          {
+            "stage": "local-qualified-synthetic-protocol",
+            "exit": 0,
+            "seconds": 1.63,
+            "log": "local-qualified-synthetic-protocol-1792511961225391683.log"
+          },
+          {
+            "stage": "local-v3-original",
+            "exit": 0,
+            "seconds": 33.448,
+            "log": "local-v3-original-1792511961225391683.log"
+          },
+          {
+            "stage": "basic-task-calendar",
+            "exit": 0,
+            "seconds": 7.607,
+            "log": "basic-task-calendar-1792511961225391683.log"
+          }
+        ],
+        "web": "/tmp/http447-upgrade-eun20cku/app",
+        "cluster": "/workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-_cyctddp"
+      },
+      "tariff": {
+        "results": [
+          {
+            "issuer": 3,
+            "invoice": 1,
+            "event": 1,
+            "payment": 1,
+            "gross": "105.53",
+            "fee": "2.53",
+            "net": "103.00",
+            "native_gui_created": true,
+            "sql_read_only": true
+          },
+          {
+            "issuer": 2,
+            "invoice": 2,
+            "event": 2,
+            "payment": 2,
+            "gross": "105.53",
+            "fee": "2.53",
+            "net": "103.00",
+            "native_gui_created": true,
+            "sql_read_only": true
+          }
+        ],
+        "external_bank_calls": false,
+        "fixture_business_writes": false
+      },
+      "local": {
+        "passed": true,
+        "fixtures": [
+          {
+            "issuer": 3,
+            "invoice": 3,
+            "declaration": "8b885ce14aa2fc39d162fa8a242daaa0dae1ef72751a1f15e4b6221b7d61038b",
+            "restoration": "686a593c8a2777efe3d29e550e7d1f4e1d44c74f4b251d9784031e19133962e1",
+            "position": {
+              "total": "100.00",
+              "received": "7.00",
+              "received_original": "12.00",
+              "received_reversed": "5.00",
+              "received_manual_reversed": "5.00",
+              "received_external_reversed": "0.00",
+              "applied_credit": "15.00",
+              "settlement_discount": "0.00",
+              "settlement_abatement": "0.00",
+              "settlement_discount_original": "10.00",
+              "settlement_abatement_original": "90.00",
+              "settlement_discount_reversed": "10.00",
+              "settlement_abatement_reversed": "90.00",
+              "noncash_reductions": "0.00",
+              "receivable": "78.00"
+            },
+            "gui_funds": 6,
+            "pdf_sha256": "4859e84d0704ff3d78a947c5b4ab33ce32e6d54d8dceb783546d2a08e7b90e6c"
+          },
+          {
+            "issuer": 2,
+            "invoice": 4,
+            "declaration": "cf1aabe6200a6c9ae2986e5b1a352159a2fe5ffd23483cbe0e805a72a4e6f758",
+            "restoration": "a4a63919ad67f578f0b03b32a31d769b1c5880c2e6810dc22ed05155df7ea29a",
+            "position": {
+              "total": "100.00",
+              "received": "7.00",
+              "received_original": "12.00",
+              "received_reversed": "5.00",
+              "received_manual_reversed": "5.00",
+              "received_external_reversed": "0.00",
+              "applied_credit": "15.00",
+              "settlement_discount": "0.00",
+              "settlement_abatement": "0.00",
+              "settlement_discount_original": "10.00",
+              "settlement_abatement_original": "90.00",
+              "settlement_discount_reversed": "10.00",
+              "settlement_abatement_reversed": "90.00",
+              "noncash_reductions": "0.00",
+              "receivable": "78.00"
+            },
+            "gui_funds": 6,
+            "pdf_sha256": "98712d372226dd7b722bd65e793524314796517463551e1e75effaa41a04acfe"
+          }
+        ]
+      },
+      "qualified_synthetic_protocol": {
+        "fixture_sha256": "e7b628c520988f914ae046282496c93a138cbbfc7da97140ad56bdaaa88c9ea3",
+        "packet_path": "/workspace/scratch/6b72446d684f/integration447/tests/banco_brasil_local_noncash_http_fixture_v3.php",
+        "copied_byte_identical": true,
+        "attempts": [
+          {
+            "case": "a",
+            "exit": 0
+          },
+          {
+            "case": "b",
+            "exit": 0
+          }
+        ],
+        "setup": "CompanyInvoices::create, ApiService::issue/query with injected synthetic provider, InvoicePaymentWriter::issueCompanyCredit(100); canonical service setup before real GUI/bearer actions",
+        "not_gui_business_creation_proof": true,
+        "arbitrary_grants_settings_module_markers": false,
+        "external_bank_calls": false
+      },
+      "csrf_route_probe": {
+        "fixed_assertions": true,
+        "passed": true,
+        "no_authorized_financial_writer": true,
+        "requests": [
+          {
+            "name": "synthetic nonexistent bearer reaches JSON authentication",
+            "path": "/company_api/local_noncash/1",
+            "status": 401,
+            "content_type": "application/json; charset=UTF-8",
+            "body": "{\"error\":\"unauthenticated\"}",
+            "expected_after_fix": 401
+          },
+          {
+            "name": "missing bearer reaches JSON authentication rejection",
+            "path": "/company_api/local_noncash/1",
+            "status": 401,
+            "content_type": "application/json; charset=UTF-8",
+            "body": "{\"error\":\"unauthenticated\"}",
+            "expected_after_fix": 401
+          },
+          {
+            "name": "admin LOCAL GUI still requires native CSRF",
+            "path": "/admin/banco_brasil/local_noncash",
+            "status": 403,
+            "content_type": "text/html; charset=UTF-8",
+            "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n<style type=\"text/css\">\n\n::selection { background-color: #E13300; color: white; }\n::-moz-selection { background-color: #E13300; color: white; }\n\nbody {\n\tbackground-color: #fff;\n\tmargin: 40px;\n\tfont: 13px/20px normal Helvetica, Arial, sans-serif;\n\tcolor: #4F5155;\n}\n\na {\n\tcolor: #003399;\n\tbackground-color: transparent;\n\tfont-weight: normal;\n}\n\nh1 {\n\tcolor: #444;\n\tbackground-color: transparent;\n\tborder-bottom: 1px solid #D0D0D0;\n\tfont-size: 19px;\n\tfont-weight: normal;\n\tmargin: 0 0 14px 0;\n\tpadding: 14px 15px 10px 15px;\n}\n\ncode {\n\tfont-family: Consolas, Monaco, Courier New, Courier, monospace;\n\tfont-size: 12px;\n\tbackground-color: #f9f9f9;\n\tborder: 1px solid #D0D0D0;\n\tcolor: #002166;\n\tdisplay: block;\n\tmargin: 14px 0 14px 0;\n\tpadding: 12px 10px 12px 10px;\n}\n\n#container {\n\tmargin: 10px;\n\tborder: 1px solid #D0D0D0;\n\tbox-shadow: 0 0 8px #D0D0D0;\n}\n\np {\n\tmargin: 12px 15px 12px 15px;\n}\n</style>\n</head>\n<body>\n\t<div id=\"container\">\n\t\t<h1> 419 Page Expired!</h1>\n\t\t<p>Sorry, the page has expired, return to previous page and refresh to continue.</p>\t</div>\n</body>\n</html>\n",
+            "expected_after_fix": 403
+          },
+          {
+            "name": "non-positive/non-numeric API path is not broadly excluded",
+            "path": "/company_api/local_noncash/not-an-id",
+            "status": 403,
+            "content_type": "text/html; charset=UTF-8",
+            "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n<style type=\"text/css\">\n\n::selection { background-color: #E13300; color: white; }\n::-moz-selection { background-color: #E13300; color: white; }\n\nbody {\n\tbackground-color: #fff;\n\tmargin: 40px;\n\tfont: 13px/20px normal Helvetica, Arial, sans-serif;\n\tcolor: #4F5155;\n}\n\na {\n\tcolor: #003399;\n\tbackground-color: transparent;\n\tfont-weight: normal;\n}\n\nh1 {\n\tcolor: #444;\n\tbackground-color: transparent;\n\tborder-bottom: 1px solid #D0D0D0;\n\tfont-size: 19px;\n\tfont-weight: normal;\n\tmargin: 0 0 14px 0;\n\tpadding: 14px 15px 10px 15px;\n}\n\ncode {\n\tfont-family: Consolas, Monaco, Courier New, Courier, monospace;\n\tfont-size: 12px;\n\tbackground-color: #f9f9f9;\n\tborder: 1px solid #D0D0D0;\n\tcolor: #002166;\n\tdisplay: block;\n\tmargin: 14px 0 14px 0;\n\tpadding: 12px 10px 12px 10px;\n}\n\n#container {\n\tmargin: 10px;\n\tborder: 1px solid #D0D0D0;\n\tbox-shadow: 0 0 8px #D0D0D0;\n}\n\np {\n\tmargin: 12px 15px 12px 15px;\n}\n</style>\n</head>\n<body>\n\t<div id=\"container\">\n\t\t<h1> 419 Page Expired!</h1>\n\t\t<p>Sorry, the page has expired, return to previous page and refresh to continue.</p>\t</div>\n</body>\n</html>\n",
+            "expected_after_fix": 403
+          }
+        ]
+      },
+      "native_upgrade_history": {
+        "historical_tables_verified": 310,
+        "all_table_prefixes_preserved": true,
+        "new_empty_tables": [
+          "tblcompany_local_noncash_declarations",
+          "tblcompany_local_noncash_restorations",
+          "tblcompany_local_noncash_settlements"
+        ],
+        "qualified_native_metadata": {
+          "tblactivity_log": {
+            "appended": [
+              {
+                "id": 3,
+                "description": "User Successfully Logged In [User Id: 17, Is Staff Member: Yes, IP: 127.0.0.1]",
+                "date": "2026-10-20 12:35:39",
+                "staffid": "Admin Synthetic"
+              }
+            ],
+            "historical_rows": 2
+          },
+          "tblissuers_audit": {
+            "appended": [
+              {
+                "id": 19,
+                "actor_id": 17,
+                "event": "company_settings_delete",
+                "issuer_id": 1,
+                "subject_id": null,
+                "created_at": "2026-10-20 12:35:40",
+                "metadata_json": null
+              },
+              {
+                "id": 20,
+                "actor_id": 17,
+                "event": "company_settings_add",
+                "issuer_id": 1,
+                "subject_id": null,
+                "created_at": "2026-10-20 12:35:40",
+                "metadata_json": null
+              },
+              {
+                "id": 21,
+                "actor_id": 17,
+                "event": "company_settings_update",
+                "issuer_id": 1,
+                "subject_id": null,
+                "created_at": "2026-10-20 12:35:40",
+                "metadata_json": null
+              },
+              {
+                "id": 22,
+                "actor_id": 17,
+                "event": "company_settings_update",
+                "issuer_id": 1,
+                "subject_id": null,
+                "created_at": "2026-10-20 12:35:40",
+                "metadata_json": null
+              }
+            ],
+            "historical_rows": 18
+          },
+          "tblmigrations": {
+            "before": [
+              {
+                "version": 446
+              }
+            ],
+            "after": [
+              {
+                "version": 447
+              }
+            ]
+          },
+          "BB installed_version": {
+            "before": "1.2.2",
+            "after": "1.2.3"
+          },
+          "option:upgraded_from_version": {
+            "before": {
+              "id": 366,
+              "name": "upgraded_from_version",
+              "value": "341",
+              "autoload": 1
+            },
+            "after": {
+              "id": 367,
+              "name": "upgraded_from_version",
+              "value": "446",
+              "autoload": 1
+            }
+          },
+          "option:last_updated_date": {
+            "before": {
+              "id": 329,
+              "name": "last_updated_date",
+              "value": "1792510506",
+              "autoload": 1
+            },
+            "after": {
+              "id": 329,
+              "name": "last_updated_date",
+              "value": "1792510540",
+              "autoload": 1
+            }
+          },
+          "option:update_info_message": {
+            "before": {
+              "id": 129,
+              "name": "update_info_message",
+              "value": "",
+              "autoload": 1
+            },
+            "after": {
+              "id": 129,
+              "name": "update_info_message",
+              "value": "\n        <div class=\"col-md-12\">\n            <div class=\"alert alert-success bold\">\n                <h4 class=\"bold\">Olá! Obrigado por atualizar o HUB CRM - Você está usando a versão 4.4.7</h4>\n                <p>\n                   Atualização concluída. Se a interface ainda mostrar arquivos antigos, recarregue a página e revise o cache do navegador ou do proxy.\n                </p>\n            </div>\n        </div>\n        ",
+              "autoload": 1
+            }
+          },
+          "tblsessions": {
+            "before_count": 3,
+            "after_count": 4,
+            "reason": "Native session lifecycle; not customer business state"
+          }
+        },
+        "full_qualified_report_sha256": "24732d4241fd1db510da8680b7e06bba58d402924c88713e76a50499b897db95"
+      },
+      "narrow_task_calendar": {
+        "calendar_a_b": 200,
+        "registry_a_b": 200,
+        "standalone_task": 1,
+        "owner": 3,
+        "own_default": "in_progress",
+        "auto_assignee": 17,
+        "all_options_financial_unchanged": true
+      }
+    }
+  },
+  "preserved_reds": [
+    {
+      "kind": "test_only_tariff_reader",
+      "detail": "Original tariff test selected nonexistent paid_amount/net_amount columns; author corrected read-only JSON extraction. Original failure retained; corrected original CJS passed independently on both sites."
+    },
+    {
+      "kind": "external_helper_only",
+      "detail": "GUI profile helper did not recognize implicit exempt policy in B; COALESCE corrected helper only. A/B canonical GUI profile setup then passed."
+    },
+    {
+      "kind": "real_native_csrf_blocker",
+      "detail": "Real public LOCAL bearer POST intercepted by native CSRF:403 HTML before controller. Exact public numeric route exclusion corrected; standalone no-writer probe then401 JSON. Initial partial A4/B5 protocol fixtures preserved without rollback."
+    },
+    {
+      "kind": "external_probe_only",
+      "detail": "Empty JSON probe payload correctly produced422 input validation before token resolution; probe corrected to nonempty associative input, no product/writer alteration."
+    },
+    {
+      "kind": "real_restored_pdf_and_invoice_presentation",
+      "detail": "Original full LOCAL CJS failed restored PDF missing Principal em aberto and78,00 after real A6 GUI/API flows. Independent preserved-invoice6 diagnostic confirmed PDF/invoice GUI omitted position, while LOCAL review/JSON/reportCSV remained correct. New fixtures used after minimal view fix; original CJS assertions unchanged. A6/B7 retained."
+    },
+    {
+      "kind": "real_http_scope_error_mapping",
+      "detail": "Final original full CJS on A8/B9 completed funds/PDF/report flows but foreign B bearer→A invoice returned422 validation_or_balance_review instead403 forbidden. Independent readonly probe confirmed own200 and indistinguishable foreign/missing422 with no document leak; tokens revoked GUI. Exact mismatch→403 mapping subsequently tested without relaxing original CJS; A8/B9 retained."
+    },
+    {
+      "kind": "external_probe_dependency_only",
+      "detail": "First final upgrade resume stopped before any request because the external no-writer CSRF probe expected a LOCAL fixture file not yet created. Probe now uses numeric resource placeholders1 when absent; invalid/missing bearer rejects before lookup or writer. Same bank resumed, no setup or installation replay."
+    }
+  ],
+  "preserved_readers_diagnostic": {
+    "diagnostic_only": true,
+    "invoice": 6,
+    "issuer": 3,
+    "financial_writers": false,
+    "token_created_and_revoked_through_gui": true,
+    "notes": [
+      "CSV export may append its native audit; no declaration, restoration, settlement or fixture writers invoked."
+    ],
+    "local": {
+      "status": 200,
+      "bytes": 2992,
+      "sha256": "2265eaf8b3bb626f78e5764ffef8283e665ae6f92ae199bbdcba36702cb8202b",
+      "position": {
+        "total": "100.00",
+        "received": "7.00",
+        "received_original": "12.00",
+        "received_reversed": "5.00",
+        "received_manual_reversed": "5.00",
+        "received_external_reversed": "0.00",
+        "applied_credit": "15.00",
+        "settlement_discount": "0.00",
+        "settlement_abatement": "0.00",
+        "settlement_discount_original": "10.00",
+        "settlement_abatement_original": "90.00",
+        "settlement_discount_reversed": "10.00",
+        "settlement_abatement_reversed": "90.00",
+        "noncash_reductions": "0.00",
+        "receivable": "78.00"
+      }
+    },
+    "report": {
+      "status": 200,
+      "bytes": 1541,
+      "sha256": "22352c16f9822ae5928ca97cf4a14f0a9825dbf6416c0e0a63ce1b7404d3fcab"
+    },
+    "csv": {
+      "status": 200,
+      "bytes": 2113,
+      "sha256": "42c6d61301c7c709f88f7147213e26d367bf2a7c61bbe3162ddb855a7da3aad5",
+      "has_noncash_header": true
+    },
+    "pdf": {
+      "status": 200,
+      "bytes": 104221,
+      "sha256": "ef13384ac565a614a7e22be78fd04b8e8d5fc25667fc5e786afe0e5572e86a75",
+      "has_principal": false,
+      "has_78": false
+    },
+    "review": {
+      "status": 200,
+      "has_principal": false,
+      "has_78": false
+    },
+    "invoice_gui": {
+      "status": 200,
+      "has_principal": false,
+      "has_78": false
+    },
+    "token_revoked": true
+  },
+  "preserved_cross_scope_red": {
+    "no_financial_writers": true,
+    "expected_foreign_status": 422,
+    "requests": [
+      {
+        "kind": "own",
+        "id": 9,
+        "status": 200,
+        "content_type": "application/json; charset=UTF-8",
+        "body": "Authorized own position, receivable=78.00"
+      },
+      {
+        "kind": "foreign",
+        "id": 8,
+        "status": 422,
+        "content_type": "application/json; charset=UTF-8",
+        "body": "{\"error\":\"validation_or_balance_review\"}"
+      },
+      {
+        "kind": "missing",
+        "id": 999999,
+        "status": 422,
+        "content_type": "application/json; charset=UTF-8",
+        "body": "{\"error\":\"validation_or_balance_review\"}"
+      }
+    ],
+    "token_revoked": true
+  },
+  "diagnostic_string_probe_qualification": "Review GUI uses Saldo a receber and decimal point BRL78.00, therefore exact Principal em aberto/78,00 substring probes are false although the review balance is correct; preserved review.txt is the evidence. PDF and invoice GUI omit the actual principal-position block before the fix.",
+  "new_remote_ci_446_failures": {
+    "published_baseline_sha": "b47d1666f7bb788bf29ead9c9aa03ff3f36221d1",
+    "observed_by_root": "14 workflows successful,2 failures: Calendar month locator timeout after all seven day sources; Empresas8.1 memory128M under investigation. These are new cuts, distinct from fixed CI445 issues.",
+    "calendar_original_on_447_preserved_history": "Original complete CJS passed77.009s on preserved447 upgrade bank,PHP128M;21 GUI sources,23 captured GET responses200; separate November GETs hydrate two existing financial LOCAL/Tariff invoices perA/B. This does not reproduce or close the larger remote446 history failure."
+  },
+  "limits": [
+    "No bank homologation or external provider call: API16 observation prepared by injected synthetic provider through canonical writers. GUI/bearer consent, funds, reversals, retry, context, PDF and report flows are real HTTP.",
+    "No repeated installation/upgrade, SQL rollback, fabricated grants/settings/module/migration markers or relaxed original CJS assertions.",
+    "Tariff passed on prior immutable freeze; later production deltas are explicitly recorded and limited to LOCAL security/bootstrap and restored invoice presentation.",
+    "Published SHA is bound and tested by root after commit/push; this report alone makes no publication claim."
+  ],
+  "additional_calendar_diagnostic": {
+    "original_full_cjs": {
+      "native_marker": 447,
+      "owners": {
+        "a": 3,
+        "b": 2,
+        "primary": 1
+      },
+      "gui_sources": {
+        "1": {
+          "invoices": 7,
+          "estimates": 5,
+          "proposals": 6,
+          "projects": 3,
+          "project_tasks": 3,
+          "standalone_tasks": 4,
+          "contracts": 3
+        },
+        "2": {
+          "invoices": 6,
+          "estimates": 3,
+          "proposals": 4,
+          "projects": 2,
+          "project_tasks": 2,
+          "standalone_tasks": 3,
+          "contracts": 2
+        },
+        "3": {
+          "invoices": 5,
+          "estimates": 1,
+          "proposals": 2,
+          "projects": 1,
+          "project_tasks": 1,
+          "standalone_tasks": 2,
+          "contracts": 1
+        }
+      },
+      "source_kinds": 7,
+      "read_only_fixture": true,
+      "configuration_fields": 16,
+      "native_b_only_actor": "18",
+      "initial_grants": [
+        "calendar.view",
+        "projects.view"
+      ],
+      "invoices_permission": false,
+      "ids_counts_filtered_before_read": true,
+      "configure_separate": true,
+      "current_revocation": true,
+      "last_audit_witnesses": 3,
+      "all_options_and_source_financial_rows_unchanged": true,
+      "external_transport": false
+    },
+    "resume": {
+      "stage": "calendar-full",
+      "success": true,
+      "interim": true,
+      "before": {
+        "production_paths": 18574,
+        "runtime_paths_checked": 18560,
+        "installer_paths_removed": [
+          "install/7c189be7bdb2916ff3d3f4846cc85323.png",
+          "install/database.php",
+          "install/database.sql",
+          "install/file_permissions.php",
+          "install/finish.php",
+          "install/html.php",
+          "install/index.php",
+          "install/install.class.php",
+          "install/install.php",
+          "install/logo.png",
+          "install/phpass.php",
+          "install/requirements.php",
+          "install/sqlparser.php",
+          "install/steps.php"
+        ],
+        "manifest_sha256": "f8439b879c51f932b82ca275d7594f72dc0dc397fd80a3cf4df977b655024b6f",
+        "differences": []
+      },
+      "after": {
+        "production_paths": 18574,
+        "runtime_paths_checked": 18560,
+        "installer_paths_removed": [
+          "install/7c189be7bdb2916ff3d3f4846cc85323.png",
+          "install/database.php",
+          "install/database.sql",
+          "install/file_permissions.php",
+          "install/finish.php",
+          "install/html.php",
+          "install/index.php",
+          "install/install.class.php",
+          "install/install.php",
+          "install/logo.png",
+          "install/phpass.php",
+          "install/requirements.php",
+          "install/sqlparser.php",
+          "install/steps.php"
+        ],
+        "manifest_sha256": "f8439b879c51f932b82ca275d7594f72dc0dc397fd80a3cf4df977b655024b6f",
+        "differences": []
+      },
+      "test_source_sha256": {
+        "/workspace/scratch/6b72446d684f/integration447/tests/settings/calendar_browser.cjs": "d765623de80c1dfb200d0f0bf4959c259b19e7d037551f620f6c0e6ffdf75587"
+      },
+      "results": [
+        {
+          "stage": "calendar-original-full-preserved-history",
+          "exit": 0,
+          "seconds": 77.009,
+          "log": "calendar-original-full-preserved-history-1792512064190523752.log"
+        }
+      ],
+      "web": "/tmp/http447-upgrade-eun20cku/app",
+      "cluster": "/workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-_cyctddp"
+    },
+    "external_capture_preload_sha256": "4c8a9f56c28658b622afd6577088d2294b11114d5844a60383394066b6d581c3",
+    "capture": [
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 252,
+        "bytes": 19764,
+        "sha256": "c92d3ccf4f8a2e242b5a36adbeb92a89785e08386f2419bc10626fc96577b7b9"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=dayGridDay",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 663,
+        "bytes": 18921,
+        "sha256": "8e4485cb351178838182ea7822c589060a615bca711721848ae7f0dd1a1dad5f"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 759,
+        "bytes": 21313,
+        "sha256": "20a1d044261129fdfb1329088a80596094b6273a6d0e6753644a59b2d4f2b273"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=timeGridDay&sources_present=1&sources%5B%5D=projects&title=Calendar%20private%20%3Cscript%3E%203",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 291,
+        "bytes": 16748,
+        "sha256": "528160bd2f76beca7f1af038b11e3f8afb19fdcc9981d3172e0c5521b6aeb268"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=dayGridWeek",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 647,
+        "bytes": 18487,
+        "sha256": "6563e44fa9631dc15552197dcf98fc3789f7f740b3eb5a5693fbcec9ecfb9c30"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=timeGridWeek",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 626,
+        "bytes": 19710,
+        "sha256": "d5cf98e4a9bc5f29601fabc7d13a6de6c471d8bd9dd4d4a03c12d607dd72d9be"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 200,
+        "bytes": 19821,
+        "sha256": "59533764e080af1d9c811c76d465f9d75abf4e687ef05b4f479c9c0807a4bcb8"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=dayGridDay",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 649,
+        "bytes": 18873,
+        "sha256": "e6634d18e61d69c52be7a44e11a7ec1bd636fb295622b421305aae3493377de8"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 689,
+        "bytes": 21315,
+        "sha256": "e2082296418d1ac9b8bff0f257aab5e6475e45dd9ac7da0d06833de1df91f154"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=timeGridDay&sources_present=1&sources%5B%5D=projects&title=Calendar%20private%20%3Cscript%3E%202",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 254,
+        "bytes": 16757,
+        "sha256": "2dfdf953fa616dce8d5bcb73e830e27f0fdc1c6c2a63774d3d7e1336fc1e2eea"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=dayGridWeek",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 586,
+        "bytes": 18696,
+        "sha256": "c99c7151faebc35559dc686604b162a85da182e16781e43a9264f3d5c3e2c575"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=timeGridWeek",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 599,
+        "bytes": 19634,
+        "sha256": "f6d6944b9150ddcd82042428d6cbb9676491c1a3f863ebed6db872ad65318acb"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 859,
+        "bytes": 19868,
+        "sha256": "21dba3db11ae79c17378a5090dde7f75e21fb68dd0a74f1c783c5263cc3a75a6"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=dayGridDay",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 1004,
+        "bytes": 19047,
+        "sha256": "12560a26440ea43ea92121c992b91f0dcd4d1f6823e5e0e1a8f305ad0a672d4b"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 707,
+        "bytes": 21334,
+        "sha256": "14cfce136fcb75d496d17ffdf3273146b93cc1e7ea9ddb7a3e09d5a471946c86"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=timeGridDay&sources_present=1&sources%5B%5D=projects&title=Calendar%20private%20%3Cscript%3E%201",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 284,
+        "bytes": 16894,
+        "sha256": "261a738c40ef551590809fd7a5a9de5d93d75c4d37f5a533b3895b555a7198d9"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=dayGridWeek",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 648,
+        "bytes": 18881,
+        "sha256": "1da51403ce4f4fb9d6839cb92c89caedeb36c10803053557e47ef06055da6764"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=timeGridWeek",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 618,
+        "bytes": 19751,
+        "sha256": "fb1adaf47fdaa15deb82eef293fe70b1824f4f8d03cc42bbcefed202631e09f2"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 641,
+        "bytes": 21304,
+        "sha256": "e463187757b21562de7f89fd665bb01c3cb4ad49f3dd5064fdde7f45ecbd6f7d"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=dayGridDay",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 399,
+        "bytes": 9955,
+        "sha256": "bad84cb50e7d2f95cd4dcf9ec1825bf6f38536e5d00b47bd9f6d23cb2901ea13"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 857,
+        "bytes": 13745,
+        "sha256": "5ae7e7dd99a22f514793ad0cbdc69a4b4e45b5c55c18ac734d124bbb971ed27e"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 713,
+        "bytes": 17855,
+        "sha256": "bab380458063e4f63e7ec133427bfea84b694a2ad9121b18a810d96f021a840b"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 349,
+        "bytes": 17850,
+        "sha256": "0d8e1617d85bbac15a2d865fbf94caca19a40833b0f0954f3dbf4ad20c07de7a"
+      },
+      {
+        "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+        "status": 200,
+        "content_type": "text/html; charset=UTF-8",
+        "elapsed_ms": 380,
+        "bytes": 13676,
+        "sha256": "456b2549cc7a6a8a9c0accec62c843b7ab9ab149a659ce0876adb8a3b4f4e818"
+      }
+    ],
+    "upgrade_readonly_october_november": {
+      "financial_writers": false,
+      "settings_writers": false,
+      "diagnostic": true,
+      "rows": [
+        {
+          "owner": 3,
+          "anchor": "2026-10-23",
+          "view": "dayGridDay",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=dayGridDay",
+          "status": 200,
+          "bytes": 18960,
+          "tables": 0,
+          "total": "7",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 3,
+          "anchor": "2026-10-23",
+          "view": "dayGridMonth",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=dayGridMonth",
+          "status": 200,
+          "bytes": 22090,
+          "tables": 1,
+          "total": "8",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 3,
+          "anchor": "2026-10-23",
+          "view": "default",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+          "status": 200,
+          "bytes": 22137,
+          "tables": 1,
+          "total": "8",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 3,
+          "anchor": "2026-11-20",
+          "view": "dayGridDay",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-11-20&view=dayGridDay",
+          "status": 200,
+          "bytes": 16897,
+          "tables": 0,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 3,
+          "anchor": "2026-11-20",
+          "view": "dayGridMonth",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-11-20&view=dayGridMonth",
+          "status": 200,
+          "bytes": 20960,
+          "tables": 1,
+          "total": "2",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 3,
+          "anchor": "2026-11-20",
+          "view": "default",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-11-20",
+          "status": 200,
+          "bytes": 20869,
+          "tables": 1,
+          "total": "2",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 2,
+          "anchor": "2026-10-23",
+          "view": "dayGridDay",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=dayGridDay",
+          "status": 200,
+          "bytes": 18949,
+          "tables": 0,
+          "total": "7",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 2,
+          "anchor": "2026-10-23",
+          "view": "dayGridMonth",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=dayGridMonth",
+          "status": 200,
+          "bytes": 21573,
+          "tables": 1,
+          "total": "7",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 2,
+          "anchor": "2026-10-23",
+          "view": "default",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+          "status": 200,
+          "bytes": 21590,
+          "tables": 1,
+          "total": "7",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 2,
+          "anchor": "2026-11-20",
+          "view": "dayGridDay",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-11-20&view=dayGridDay",
+          "status": 200,
+          "bytes": 16970,
+          "tables": 0,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 2,
+          "anchor": "2026-11-20",
+          "view": "dayGridMonth",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-11-20&view=dayGridMonth",
+          "status": 200,
+          "bytes": 21527,
+          "tables": 1,
+          "total": "2",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 2,
+          "anchor": "2026-11-20",
+          "view": "default",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-11-20",
+          "status": 200,
+          "bytes": 21662,
+          "tables": 1,
+          "total": "2",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 1,
+          "anchor": "2026-10-23",
+          "view": "dayGridDay",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=dayGridDay",
+          "status": 200,
+          "bytes": 18995,
+          "tables": 0,
+          "total": "7",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 1,
+          "anchor": "2026-10-23",
+          "view": "dayGridMonth",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23&view=dayGridMonth",
+          "status": 200,
+          "bytes": 21309,
+          "tables": 1,
+          "total": "7",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 1,
+          "anchor": "2026-10-23",
+          "view": "default",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-10-23",
+          "status": 200,
+          "bytes": 21343,
+          "tables": 1,
+          "total": "7",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 1,
+          "anchor": "2026-11-20",
+          "view": "dayGridDay",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-11-20&view=dayGridDay",
+          "status": 200,
+          "bytes": 17043,
+          "tables": 0,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 1,
+          "anchor": "2026-11-20",
+          "view": "dayGridMonth",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-11-20&view=dayGridMonth",
+          "status": 200,
+          "bytes": 21134,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        },
+        {
+          "owner": 1,
+          "anchor": "2026-11-20",
+          "view": "default",
+          "url": "http://127.0.0.1:49281/admin/company_calendar?anchor=2026-11-20",
+          "status": 200,
+          "bytes": 21246,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "1",
+            "settings[show_estimates_on_calendar]": "1",
+            "settings[show_proposals_on_calendar]": "1",
+            "settings[show_projects_on_calendar]": "1",
+            "settings[show_tasks_on_calendar]": "1",
+            "settings[show_contracts_on_calendar]": "1"
+          },
+          "range": null
+        }
+      ]
+    },
+    "fresh_readonly_optout": {
+      "financial_writers": false,
+      "settings_writers": false,
+      "diagnostic": true,
+      "rows": [
+        {
+          "owner": 3,
+          "anchor": "2026-10-23",
+          "view": "dayGridDay",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-10-23&view=dayGridDay",
+          "status": 200,
+          "bytes": 16419,
+          "tables": 0,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 3,
+          "anchor": "2026-10-23",
+          "view": "dayGridMonth",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-10-23&view=dayGridMonth",
+          "status": 200,
+          "bytes": 19774,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 3,
+          "anchor": "2026-10-23",
+          "view": "default",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-10-23",
+          "status": 200,
+          "bytes": 19767,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 3,
+          "anchor": "2026-11-20",
+          "view": "dayGridDay",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-11-20&view=dayGridDay",
+          "status": 200,
+          "bytes": 16379,
+          "tables": 0,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 3,
+          "anchor": "2026-11-20",
+          "view": "dayGridMonth",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-11-20&view=dayGridMonth",
+          "status": 200,
+          "bytes": 20470,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 3,
+          "anchor": "2026-11-20",
+          "view": "default",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-11-20",
+          "status": 200,
+          "bytes": 20454,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 2,
+          "anchor": "2026-10-23",
+          "view": "dayGridDay",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-10-23&view=dayGridDay",
+          "status": 200,
+          "bytes": 16268,
+          "tables": 0,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 2,
+          "anchor": "2026-10-23",
+          "view": "dayGridMonth",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-10-23&view=dayGridMonth",
+          "status": 200,
+          "bytes": 19779,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 2,
+          "anchor": "2026-10-23",
+          "view": "default",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-10-23",
+          "status": 200,
+          "bytes": 19871,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 2,
+          "anchor": "2026-11-20",
+          "view": "dayGridDay",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-11-20&view=dayGridDay",
+          "status": 200,
+          "bytes": 16242,
+          "tables": 0,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 2,
+          "anchor": "2026-11-20",
+          "view": "dayGridMonth",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-11-20&view=dayGridMonth",
+          "status": 200,
+          "bytes": 20504,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 2,
+          "anchor": "2026-11-20",
+          "view": "default",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-11-20",
+          "status": 200,
+          "bytes": 20477,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 1,
+          "anchor": "2026-10-23",
+          "view": "dayGridDay",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-10-23&view=dayGridDay",
+          "status": 200,
+          "bytes": 16411,
+          "tables": 0,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 1,
+          "anchor": "2026-10-23",
+          "view": "dayGridMonth",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-10-23&view=dayGridMonth",
+          "status": 200,
+          "bytes": 19957,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 1,
+          "anchor": "2026-10-23",
+          "view": "default",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-10-23",
+          "status": 200,
+          "bytes": 19812,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 1,
+          "anchor": "2026-11-20",
+          "view": "dayGridDay",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-11-20&view=dayGridDay",
+          "status": 200,
+          "bytes": 16418,
+          "tables": 0,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 1,
+          "anchor": "2026-11-20",
+          "view": "dayGridMonth",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-11-20&view=dayGridMonth",
+          "status": 200,
+          "bytes": 20507,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        },
+        {
+          "owner": 1,
+          "anchor": "2026-11-20",
+          "view": "default",
+          "url": "http://127.0.0.1:58579/admin/company_calendar?anchor=2026-11-20",
+          "status": 200,
+          "bytes": 20569,
+          "tables": 1,
+          "total": "0",
+          "preference_show": {
+            "settings[show_invoices_on_calendar]": "0",
+            "settings[show_estimates_on_calendar]": "0",
+            "settings[show_proposals_on_calendar]": "0",
+            "settings[show_projects_on_calendar]": "0",
+            "settings[show_tasks_on_calendar]": "0",
+            "settings[show_contracts_on_calendar]": "0"
+          },
+          "range": null
+        }
+      ]
+    },
+    "remote_failure_not_reproduced": true
+  }
+}

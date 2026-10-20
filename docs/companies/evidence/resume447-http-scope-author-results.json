@@ -1,0 +1,18 @@
+[
+  {
+    "engine": "maria",
+    "cluster": "db-ikao5yzp",
+    "exit_code": 0,
+    "server_stopped": true,
+    "checks_cumulative": 259,
+    "new_after_248_fixture": 11
+  },
+  {
+    "engine": "mysql8",
+    "cluster": "db-uopx1z0f",
+    "exit_code": 0,
+    "server_stopped": true,
+    "checks_cumulative": 259,
+    "new_after_248_fixture": 11
+  }
+]

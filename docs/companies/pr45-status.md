@@ -1,3 +1,17 @@
+## Atualização 447 — composição recuperada e validação por origem
+
+Núcleo **4.4.7/447**, Banco do Brasil **1.2.3/123**, Asaas **1.5.3/153** preservado. Pai remoto conferido: `b47d1666f7bb788bf29ead9c9aa03ff3f36221d1`. Publicação e CI efetivos são registrados na PR45; os parágrafos anteriores sobre trabalho somente local são históricos e substituídos apenas para as frentes abaixo depois da confirmação do push.
+
+| Requisito | Implementação | Evidências | Limite |
+|---|---|---|---|
+| Diário LOCAL sem caixa e restauração | CompanyLocalNoncash*, CompanyFinancialJournal, leitores canônicos | local_noncash_v3, faults, concurrency, readers, API e HTTP | Declaração local não autentica baixa ou estorno bancário; não fabrica pagamento ou crédito |
+| Fundos depois da restauração | Pagamento manual e crédito nativos com referência independente | funds_v3, funds_faults, recurring, API read races e PDF/CSV | Reversões locais preservam os registros e não executam operação externa |
+| Tarifa CNAB240 | ReviewedTariffReceipt, controller e interface de revisão | tariff SQL, 56 falhas finais, 23 mutações de replay e seis corridas | Integral nominal e tarifa positiva; outros ajustes zero; sem reversão dessa nova base |
+| Memória do teste PHP8.1 | Liberação da trace SQL após a fase de 233 asserções | Controller com 255 asserções em 128 MiB, MySQL e MariaDB | Correção do harness; sem aumento de limite nem mudança no produto |
+| Calendário CI | Resposta/status/URL, screenshot e logs preservados e redigidos | Corpo e asserções originais preservados, HTTP fresh e upgrade recuperados | A falha remota446 não foi reproduzida; diagnóstico não equivale a causa corrigida |
+
+Detalhes: `pr45-recovery-447.md`, `pr45-resume-20261020.md`, `validation-447-http-final-v2.md`, evidências recuperadas e resultados atuais por motor. Prioridade/auto-follow seguem em candidato separado; timers, recorrência de tarefas, demais consumidores e componentes bancários ainda exigem implementação própria. CNAB400 e API18/19 continuam com os documentos exatos descritos em `banco-brasil-remaining-contracts.md`. Nenhuma homologação, merge ou implantação é declarada.
+
 ## Atualização446 — configurações, calendário e cadastro nativo
 
 Conteúdo deste incremento: núcleo4.4.6/446NOOP, BB1.2.2/122 eAsaas1.5.3/153 intocados. Pai remoto0a10a15022ac8a93c75b3b557253ffc508f4d8a2. SHAs publicados eCI são registrados naPR45; nenhuma aprovação histórica substitui o resultado doHEAD efetivo. Esta atualização supera os estados locais/pendentes dessas três frentes nos parágrafos históricos abaixo.

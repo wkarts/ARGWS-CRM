@@ -62,6 +62,7 @@ class Company_api extends CI_Controller
     public function expenses($id=''){require_once APPPATH.'services/CompanyExpenseApiHttp.php';CompanyExpenseApiHttp::execute($this,$this->ready,'expenses',$id);}
     public function expense_categories($id=''){require_once APPPATH.'services/CompanyExpenseApiHttp.php';CompanyExpenseApiHttp::execute($this,$this->ready,'expense_categories',$id);}
     public function expense_files($id='',$file=''){require_once APPPATH.'services/CompanyExpenseApiHttp.php';CompanyExpenseApiHttp::execute($this,$this->ready,'expense_files',$id,$file);}
+    public function local_noncash($id=''){require_once APPPATH.'services/CompanyLocalNoncashApiHttp.php';CompanyLocalNoncashApiHttp::execute($this,$this->ready,$id);}
     public function payments($id=''){ $this->executeFinancial('payments',$id); }
     public function payment_reverse($id=''){ $this->executeFinancial('payment_reverse',$id); }
     public function credits($id=''){ $this->executeFinancial('credits',$id); }

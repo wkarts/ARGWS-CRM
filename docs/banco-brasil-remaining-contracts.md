@@ -1,3 +1,24 @@
+# Atualização447 — limites técnicos e documentos indispensáveis
+
+BB1.2.3/123 exige núcleo4.4.7/447. O novo recorteCNAB240 com tarifa aceita somente ocorrência06, carteira17simples, pagamento integralnominal sem juros/desconto/abatimento/IOF/outros, com principal pago bruto separado de tarifa e líquido. É defaultOFF, possui grant e consentimento próprios e prova de remessa/retorno/recibo completa. A tarifa observada não vira despesa fiscal. Reversão dessa nova base permanece bloqueada: faltam movimento original correlacionável, principal devolvido, tarifa devolvida ou retida e equação do débito líquido.
+
+API16 LOCAL com pago/líquidozero e desconto+abatimento=nominal é declaração local explícita, restauração append-only e fundos posteriores independentes pelos writers canônicos. Nenhuma dessas declarações autentica processamento bancário. Sete scopes próprios e leitura token revalidada após lock/audit; leitores canônicos incluem PDF/portal/CSV/ledger datado. Provas eSHAefetivo ficam naPR45 epr45-validation-447.md.
+
+| Pendente | Campo/documento exato | O que já pode avançar independentemente |
+|---|---|---|
+| Remessa400 emBRL | ConfirmaçãoBB do código de moeda nas posições85–86 doCBR641 aplicável à conta/convênio/carteira/variação | Observaçõesauxiliares400 já443; adapter/outbox400 financeiro ainda terá implementação própria |
+| Juros herdáveis400 | Documento do contrato da conta/convênio/carteira/variação que confirme isenção inequívoca ou informe parâmetros herdados; omissão/zero pode herdar | Não presumir quezero significa isenção |
+| Totalretorno400 | Errata ou esclarecimentoBB paraCBR643posições026–039:14posições, picture9(013)v99 requer15; escala e totalizadores | TrailerCBR641 já resolvido:9+brancos2–394+seq395–400, não reabrir |
+| CréditosAPI18/19 | ID estável por crédito; valorCreditoCedente individual ou cumulativo; principal/pago/líquido/tarifa/data e correlação de reversão | Observações e consultas existentes; não usar delta, cursor ou hash como identidade bancária |
+| PATCHjuros/multa | Contrato corrigido dos campos tipo/valor/taxa/data e domínios contraditórios, ou exemplo normativo inequívoco | Emissão de juros diários/mensais já implementada em contrato distinto |
+| Transporte de arquivos | Protocolo/endpoint/canal, autenticação e recibo contratados; manual de arquivo não defineSFTP/API | Geração/download e declaração manual auditável já existem |
+
+Há também código interno ainda ausente, que não depende apenas de homologação: composiçãoCNAB240 de tarifa com juros/desconto/abatimento; adapters/equações deIOF/outros; alteração nominal com revisão fiscal/financeira; pedidos/outbox/estados/confirmação de protesto e negativação. Cada fluxo exige seus critérios e testes, não se habilita pelo simplesHTTP200. A entrega447 não os declara concluídos.
+
+Nenhuma chamada realBB/Asaas, envio bancário, credencial real, merge ou deploy é realizado. Os detalhes históricos abaixo são preservados e só se aplicam onde não foram atualizados acima.
+
+---
+
 ## Atualização443
 
 BB1.2.2/122, mínimo4.4.3: auxiliares5/01 e5/10 doCNAB400 agora importáveis como observações brutas sobperfilretorno independente explicitamente vinculado ao400original. Upload/replay/reempacotamento/HTMLescapado passaram em fresh443 eupgrade442→443;17tabelasfinanceiras intactas. Isso nãohabilita dinheiro/remessa400 nem resolve ascontradições137/135 e2/3dígitos. Ver `banco-brasil-cnab400-aux-observation.md`. SeuNúmero já foiimplementado no442/BB121; alteração nominal, protesto eoutraslacunas abaixo continuam abertas.

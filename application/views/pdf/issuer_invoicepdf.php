@@ -75,7 +75,7 @@ Emissão: <?= $escape($date($data['date'])) ?><br />
 </tr>
 <?php } ?>
 </table>
-<?php if (($data['position']['noncash_reductions'] ?? '0.00') !== '0.00' || ($data['position']['received_external_reversed'] ?? '0.00') !== '0.00') { ?>
+<?php if (($data['position']['noncash_reductions'] ?? '0.00') !== '0.00' || ($data['position']['received_external_reversed'] ?? '0.00') !== '0.00' || ($data['position']['settlement_discount_reversed'] ?? '0.00') !== '0.00' || ($data['position']['settlement_abatement_reversed'] ?? '0.00') !== '0.00') { ?>
 <br /><b>Posição do principal na geração deste documento</b>
 <table cellpadding="5" width="100%">
 <?php foreach (['received_original'=>'Principal recebido originalmente','received_reversed'=>'Principal revertido','received'=>'Principal recebido vigente','applied_credit'=>'Crédito aplicado','settlement_discount'=>'Desconto na liquidação vigente (sem recebimento)','settlement_abatement'=>'Abatimento na liquidação vigente (sem recebimento)','settlement_discount_reversed'=>'Desconto restabelecido por reversão','settlement_abatement_reversed'=>'Abatimento restabelecido por reversão','receivable'=>'Principal em aberto'] as $field=>$label) { if($field==='receivable'&&$data['status']===5)$label='Principal residual histórico (fatura cancelada; sem cobrança vigente)'; ?>
@@ -83,6 +83,7 @@ Emissão: <?= $escape($date($data['date'])) ?><br />
 <?php } ?></table>
 <?php if(($data['position']['received_external_reversed']??'0.00')!=='0.00'){ ?><p>Reversão externa declarada com evidência conferida; esta declaração não executa estorno no banco.</p><?php } ?>
 <?php } ?>
+<?php if(!empty($data['position']['bank_tariffs'])){ ?><br /><b>Recebimento integral com tarifa bancária separada</b><?php foreach($data['position']['bank_tariffs']as$tariff){ ?><p>Principal recebido do cliente: <?= $money($tariff['principal_received']); ?> · Tarifa deduzida observada: <?= $money($tariff['tariff_deducted']); ?> · Líquido bancário observado: <?= $money($tariff['bank_net']); ?>.</p><?php } ?><p>A tarifa não reduz o principal recebido e não cria despesa fiscal automaticamente.</p><?php } ?>
 <?php if ($data['note'] !== '') { ?><br /><b>Observações</b><br /><?= $lines($data['note']) ?><?php } ?>
 <?php if ($identity['terms'] !== '') { ?><br /><br /><b>Condições</b><br /><?= $lines($identity['terms']) ?><?php } ?>
 

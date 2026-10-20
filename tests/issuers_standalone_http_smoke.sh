@@ -11,20 +11,73 @@ legacy="argws-crm-legacy-$suffix"
 upgrade="argws-crm-upgrade-$suffix"
 work="$(mktemp -d)"
 provider_proxy_pid=
-cleanup() { if [ -n "$provider_proxy_pid" ]; then kill "$provider_proxy_pid" 2>/dev/null || true; wait "$provider_proxy_pid" 2>/dev/null || true; fi; docker rm -f "$legacy" "$upgrade" >/dev/null 2>&1 || true; rm -rf "$work"; }
+sanitize_smoke_failure_log() {
+    python3 -c 'import os,re,sys
+text=sys.stdin.buffer.read(1048577).decode("utf-8","replace")
+truncated=len(text)>1048576
+text=text[:1048576]
+for key in ("ISSUER_SMOKE_DB_PASSWORD","ISSUER_SMOKE_ROOT_PASSWORD","ISSUERS_BROWSER_PASSWORD","ISSUERS_BROWSER_DB_PASSWORD"):
+    secret=os.environ.get(key)
+    if secret:text=text.replace(secret,"[REDACTED]")
+text=text.replace("synthetic-browser-17","[REDACTED]")
+for pattern,replacement in ((r"\bcrmco_[a-f0-9]{32}_[a-f0-9]{64}\b","[REDACTED]"),(r"\b\d+:\d+:[a-f0-9]{64}\b","[REDACTED]"),(r"\b(?:Bearer|Basic)\s+[^\s<>\x22\x27]+","[REDACTED AUTHORIZATION]"),(r"([?&](?:_company_context|[^=&\s]*csrf[^=&\s]*|token|secret|password)=)[^&#\s\x22\x27<>]*",r"\1[REDACTED]"),(r"\b[a-f0-9]{32,}\b","[REDACTED]"),(r"^.*\b(?:authorization|cookie|set-cookie)\s*:.*$","[REDACTED HEADER]")):
+    text=re.sub(pattern,replacement,text,flags=re.I|re.M)
+sys.stdout.write(text[:1048576]+("\n[BOUNDED LOG TRUNCATED]\n" if truncated else ""))'
+}
+collect_smoke_failure() {
+    local failure_status="$1" evidence container
+    evidence="${ISSUERS_BROWSER_ARTIFACTS:-/tmp/issuer-browser-evidence}/smoke-failure"
+    mkdir -p "$evidence" || return 0
+    printf 'original_exit_status=%s\n' "$failure_status" > "$evidence/exit-status.txt"
+    { date -u; df -h /tmp; } 2>&1 | sanitize_smoke_failure_log > "$evidence/host-metrics.txt" || true
+    for container in "$legacy" "$upgrade"; do
+        docker logs --tail 400 "$container" 2>&1 | sanitize_smoke_failure_log > "$evidence/$container-docker.log" || true
+        docker inspect --format '{{json .State}}' "$container" 2>&1 | sanitize_smoke_failure_log > "$evidence/$container-state.json" || true
+        docker stats --no-stream --format '{{json .}}' "$container" 2>&1 | sanitize_smoke_failure_log > "$evidence/$container-metrics.json" || true
+        # Read only bounded application/PHP error logs; never load config, query DB or inspect environment.
+        docker exec "$container" php -r '
+            echo "PHP=".PHP_VERSION." memory_limit=".ini_get("memory_limit").PHP_EOL;
+            $files=array_merge(["/tmp/issuer-http-error.log"],array_slice(glob("/app/application/logs/log-*.php")?:[],-3));
+            foreach($files as $file){if(!is_file($file)||!is_readable($file))continue;$handle=fopen($file,"rb");if($handle===false)continue;$size=filesize($file);if($size>262144)fseek($handle,-262144,SEEK_END);echo PHP_EOL."--- ".basename($file)." (bounded tail) ---".PHP_EOL;echo stream_get_contents($handle,262144);fclose($handle);}
+        ' 2>&1 | sanitize_smoke_failure_log > "$evidence/$container-application.log" || true
+    done
+}
+cleanup() {
+    local status=$?
+    trap - EXIT ERR
+    if [ -n "$provider_proxy_pid" ]; then kill "$provider_proxy_pid" 2>/dev/null || true; wait "$provider_proxy_pid" 2>/dev/null || true; fi
+    if [ "$status" -ne 0 ]; then collect_smoke_failure "$status" || true; fi
+    docker rm -f "$legacy" "$upgrade" >/dev/null 2>&1 || true
+    rm -rf "$work"
+    exit "$status"
+}
 trap cleanup EXIT
 mysql_root() { docker exec -i -e MYSQL_PWD="$ISSUER_SMOKE_ROOT_PASSWORD" "$ISSUER_SMOKE_DATABASE" mysql --user=root --batch --skip-column-names "$@"; }
 mysql_root -e "CREATE DATABASE argws_legacy_ci; CREATE DATABASE argws_upgrade_ci; GRANT ALL ON argws_legacy_ci.* TO '$ISSUER_SMOKE_DB_USER'@'%'; GRANT ALL ON argws_upgrade_ci.* TO '$ISSUER_SMOKE_DB_USER'@'%';"
 cp -a install "$work/install"
 printf '\nALTER TABLE tblstaff AUTO_INCREMENT=17;\n' >> "$work/install/database.sql"
 docker create --name "$legacy" --network "$ISSUER_SMOKE_NETWORK" -p 127.0.0.1::8080 \
-    "$ISSUER_SMOKE_IMAGE" php -d disable_functions=exec,proc_open,shell_exec,system,passthru -S 0.0.0.0:8080 -t /app /tmp/issuer-router.php >/dev/null
+    "$ISSUER_SMOKE_IMAGE" php -d log_errors=1 -d error_log=/tmp/issuer-http-error.log -d disable_functions=exec,proc_open,shell_exec,system,passthru -S 0.0.0.0:8080 -t /app /tmp/issuer-router.php >/dev/null
 docker cp "$work/install" "$legacy:/app/install"
 cat > "$work/router.php" <<'PHP'
 <?php
 $root = '/app';
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $requestPath = is_string($requestPath) && $requestPath !== '' ? $requestPath : '/';
+if ($requestPath === '/admin/company_calendar') {
+    $calendarStarted = microtime(true);
+    register_shutdown_function(static function () use ($calendarStarted) {
+        $last = error_get_last();
+        error_log('[calendar smoke] ' . json_encode([
+            'status' => http_response_code(),
+            'elapsed_ms' => (int) round((microtime(true) - $calendarStarted) * 1000),
+            'peak_bytes' => memory_get_peak_usage(true),
+            'last_error_type' => $last['type'] ?? null,
+            'last_error_file' => $last['file'] ?? null,
+            'last_error_line' => $last['line'] ?? null,
+        ]));
+    });
+}
 $file = $root . $requestPath;
 if ($requestPath !== '/' && is_file($file)) {
     return false;
@@ -167,7 +220,7 @@ provider_proxy_url="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[
 docker create --name "$upgrade" --network "$ISSUER_SMOKE_NETWORK" -p 127.0.0.1::8080 \
     -e HTTPS_PROXY="$provider_proxy_url" -e https_proxy="$provider_proxy_url" \
     -e NO_PROXY=127.0.0.1,localhost -e no_proxy=127.0.0.1,localhost \
-    "$ISSUER_SMOKE_IMAGE" php -d curl.cainfo=/tmp/finance-provider-ca.pem -d openssl.cafile=/tmp/finance-provider-ca.pem \
+    "$ISSUER_SMOKE_IMAGE" php -d log_errors=1 -d error_log=/tmp/issuer-http-error.log -d curl.cainfo=/tmp/finance-provider-ca.pem -d openssl.cafile=/tmp/finance-provider-ca.pem \
     -S 0.0.0.0:8080 -t /app /tmp/issuer-router.php >/dev/null
 docker cp "$work/provider-ca/ca.pem" "$upgrade:/tmp/finance-provider-ca.pem"
 docker cp "$legacy:/var/lib/argws-crm/config/app-config.php" "$work/app-config.php"
@@ -609,3 +662,31 @@ ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/settings/calendar_browser.cjs
+
+#447: tariff is a separate explicit basis; upload alone never records money.
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+node tests/banco_brasil_tariff_browser.cjs
+
+# Prepare only synthetic BB16 observations with injected provider and canonical native writers.
+# The new LOCAL declaration/restoration/funds themselves run through real GUI/API below.
+docker exec "$upgrade" mkdir -p /app/tests/support
+docker cp tests/banco_brasil_local_noncash_http_fixture_v3.php "$upgrade:/app/tests/banco_brasil_local_noncash_http_fixture_v3.php"
+docker cp tests/support/BbPdoDatabase.php "$upgrade:/app/tests/support/BbPdoDatabase.php"
+for local447_case in a b; do
+    docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$upgrade" php /app/tests/banco_brasil_local_noncash_http_fixture_v3.php "$local447_case" > "$work/local447-$local447_case.json"
+done
+python3 - "$work" <<'PY_LOCAL447'
+import json,sys
+from pathlib import Path
+root=Path(sys.argv[1])
+rows=[json.loads((root/('local447-'+case+'.json')).read_text())for case in ['a','b']]
+assert len({row['issuer']for row in rows})==2
+(root/'local447-fixtures.json').write_text(json.dumps({'fixtures':rows}))
+PY_LOCAL447
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+ISSUERS_BROWSER_ARTIFACTS="$work/local447-artifacts" NONCASH_BROWSER_FIXTURES="$work/local447-fixtures.json" \
+node tests/banco_brasil_local_noncash_browser_v3.cjs

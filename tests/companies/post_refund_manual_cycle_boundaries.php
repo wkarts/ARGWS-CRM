@@ -1,5 +1,8 @@
 <?php
 require __DIR__.'/post_refund_manual_cycle.php';require __DIR__.'/post_refund_manual_cycle_fixture.php';
+// The prerequisite cycle has completed all 233 assertions. Release its SQL
+// trace before the independent boundary scenarios; subsequent SQL stays logged.
+$db->queries = [];
 $unreversed=cycleFreshReady('unreversed',false);essentialCheck(!$unreversed['page']['can_confirm']&&$unreversed['page']['manual_reversal_proof']===null&&$unreversed['page']['manual_cycle_block']==='new_manual_requires_full_local_reversal','new active manual receipt is explicitly blocked rather than treated as extinct funds');
 $ready=cycleFreshReady('boundaries');$v=$ready['page'];$do=fn($changes=[])=>$cycle->cancelAfterManualReversal($a,$changes['actor']??7,$ready['invoice'],$v['refund_request'],$changes['observation']??$v['observation_id'],$changes['revision']??$v['revision'],$changes['key']??$cycleKey('boundary-positive'),$cycleReason,true,$changes['proof']??$v['manual_reversal_proof']);
 $when=$db->query('SELECT created_at FROM '.$p.'asaas_company_refund_observations WHERE id=?',[$v['observation_id']])->row()->created_at;$db->query('UPDATE '.$p.'asaas_company_refund_observations SET created_at=? WHERE id=?',[gmdate('Y-m-d H:i:s',time()-301),$v['observation_id']]);try{essentialThrows(fn()=>$do(),'company_post_refund_fresh_query_required','new closed-chain cancellation requires fresh authenticated query of original remote REFUNDED');}finally{$db->query('UPDATE '.$p.'asaas_company_refund_observations SET created_at=? WHERE id=?',[$when,$v['observation_id']]);}
