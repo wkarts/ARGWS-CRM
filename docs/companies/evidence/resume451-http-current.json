@@ -1,0 +1,2186 @@
+{
+  "core": "4.5.1/451",
+  "production_manifest_sha256": "ea3ea41e9697f1844273b357c70a0be22c5d7ef83d78cceb14e305e9c17952ef",
+  "fresh": {
+    "artifact": "run-fresh-1792524390644002019",
+    "results": [
+      {
+        "name": "native-installer",
+        "native": 451,
+        "exit": 0,
+        "seconds": 3.416,
+        "master": "17:installer",
+        "invalid_csrf_before_ddl": 403
+      },
+      {
+        "name": "companies-native-gui",
+        "exit": 0,
+        "seconds": 13.653
+      },
+      {
+        "name": "bb-native-451",
+        "exit": 0,
+        "seconds": 0.302
+      },
+      {
+        "name": "bb17-native-gui",
+        "exit": 0,
+        "seconds": 8.306
+      },
+      {
+        "name": "bb240-tariff-original",
+        "exit": 0,
+        "seconds": 17.426
+      },
+      {
+        "name": "local-api-profiles-native-gui",
+        "exit": 0,
+        "seconds": 8.322
+      },
+      {
+        "name": "qualified-synthetic-local-protocol",
+        "exit": 0,
+        "seconds": 1.264
+      },
+      {
+        "name": "local-v3-original",
+        "exit": 0,
+        "seconds": 26.656
+      },
+      {
+        "name": "pre-calendar-0-portal_task_write_browser",
+        "exit": 0,
+        "seconds": 41.011
+      },
+      {
+        "name": "task_preferences-original",
+        "exit": 0,
+        "seconds": 33.52
+      },
+      {
+        "name": "calendar-original",
+        "exit": 0,
+        "seconds": 68.136
+      },
+      {
+        "name": "extra-0-calendar_unassigned_browser",
+        "exit": 0,
+        "seconds": 8.828
+      },
+      {
+        "name": "extra-1-task_operations_browser",
+        "exit": 0,
+        "seconds": 25.763
+      },
+      {
+        "name": "extra-2-task_timer_browser",
+        "exit": 0,
+        "seconds": 30.235
+      },
+      {
+        "name": "extra-3-task_timer_auto_stop_browser",
+        "exit": 0,
+        "seconds": 90.163
+      }
+    ],
+    "binding": {
+      "before": {
+        "production_paths": 18586,
+        "runtime_paths_checked": 18572,
+        "installer_paths_removed": [
+          "install/7c189be7bdb2916ff3d3f4846cc85323.png",
+          "install/database.php",
+          "install/database.sql",
+          "install/file_permissions.php",
+          "install/finish.php",
+          "install/html.php",
+          "install/index.php",
+          "install/install.class.php",
+          "install/install.php",
+          "install/logo.png",
+          "install/phpass.php",
+          "install/requirements.php",
+          "install/sqlparser.php",
+          "install/steps.php"
+        ],
+        "manifest_sha256": "ea3ea41e9697f1844273b357c70a0be22c5d7ef83d78cceb14e305e9c17952ef",
+        "differences": []
+      },
+      "after": {
+        "production_paths": 18586,
+        "runtime_paths_checked": 18572,
+        "installer_paths_removed": [
+          "install/7c189be7bdb2916ff3d3f4846cc85323.png",
+          "install/database.php",
+          "install/database.sql",
+          "install/file_permissions.php",
+          "install/finish.php",
+          "install/html.php",
+          "install/index.php",
+          "install/install.class.php",
+          "install/install.php",
+          "install/logo.png",
+          "install/phpass.php",
+          "install/requirements.php",
+          "install/sqlparser.php",
+          "install/steps.php"
+        ],
+        "manifest_sha256": "ea3ea41e9697f1844273b357c70a0be22c5d7ef83d78cceb14e305e9c17952ef",
+        "differences": []
+      },
+      "test_source_sha256": {
+        "tests/banco_brasil_tariff_browser.cjs": "c48a63e14af3b3da60e19ace6e6846b1cc6644b19e9916add8e260b8ba255fa4",
+        "tests/settings/calendar_unassigned_browser.cjs": "87e645c3795e8f0d348f879a8ac5aaf657378889f865ddc193dbda2267ef276c",
+        "tests/settings/task_operations_browser.cjs": "1ce3cf5c5167cb7ecd9ac71c1e96a814f64450aa0a3b627ac8f60103c2a8e585",
+        "tests/settings/task_timer_browser.cjs": "d2e97cdef6f7296320bbd00344885f83f81463c8996230fdd43a2a3c6321d817",
+        "tests/settings/task_timer_auto_stop_browser.cjs": "e54b16c834ce74b2b9d66d32763766a23f2755be3477ff12c348251eb3c1a8d7",
+        "tests/companies/portal_task_write_browser.cjs": "21dee9d870f438a210c8570883b9bd816f7f973c87939de1c559bdf77bcf9e58",
+        "tests/settings/task_preferences_browser.cjs": "90524cb20b91976f0132a7f73c1d1efb36e3391e034d6a9e226de657f60ecf6c",
+        "tests/settings/calendar_browser.cjs": "e0848af381c61e3c1a705c4aabae962c5adca07f44a270b20a451178a47ebc00"
+      },
+      "local_packet_sha256": {
+        "banco_brasil_local_noncash_browser_v3.cjs": "36c48dc641c4f66ca6f89aa166f710222fb614a9819b81c2cd2dc4558cc20642",
+        "banco_brasil_local_noncash_http_fixture_v3.php": "e7b628c520988f914ae046282496c93a138cbbfc7da97140ad56bdaaa88c9ea3"
+      },
+      "interim_waiting_local_freeze": false
+    },
+    "auto_stop": {
+      "native_marker": 451,
+      "read_only_fixture": true,
+      "results": [
+        {
+          "owner": 3,
+          "oldKind": "tasks",
+          "newKind": "tasks",
+          "old": 25,
+          "next": 26,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 3,
+          "oldKind": "tasks",
+          "newKind": "standalone_tasks",
+          "old": 27,
+          "next": 22,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 3,
+          "oldKind": "standalone_tasks",
+          "newKind": "tasks",
+          "old": 23,
+          "next": 28,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 3,
+          "oldKind": "standalone_tasks",
+          "newKind": "standalone_tasks",
+          "old": 24,
+          "next": 25,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 2,
+          "oldKind": "tasks",
+          "newKind": "tasks",
+          "old": 29,
+          "next": 30,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 2,
+          "oldKind": "tasks",
+          "newKind": "standalone_tasks",
+          "old": 31,
+          "next": 26,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 2,
+          "oldKind": "standalone_tasks",
+          "newKind": "tasks",
+          "old": 27,
+          "next": 32,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 2,
+          "oldKind": "standalone_tasks",
+          "newKind": "standalone_tasks",
+          "old": 28,
+          "next": 29,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 1,
+          "oldKind": "tasks",
+          "newKind": "tasks",
+          "old": 33,
+          "next": 34,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 1,
+          "oldKind": "tasks",
+          "newKind": "standalone_tasks",
+          "old": 35,
+          "next": 30,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 1,
+          "oldKind": "standalone_tasks",
+          "newKind": "tasks",
+          "old": 31,
+          "next": 36,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 1,
+          "oldKind": "standalone_tasks",
+          "newKind": "standalone_tasks",
+          "old": 32,
+          "next": 33,
+          "same_boundary": true,
+          "retry_exact": true
+        }
+      ],
+      "foreign409": true,
+      "csrf403": true,
+      "stale_policy409": true,
+      "stale_context409": true,
+      "financial_and_global_unchanged": true,
+      "external_transport": false
+    }
+  },
+  "upgrade": {
+    "baseline_sha": "7762a62f4313e2f4ff30ab05093a8240eb77bda6",
+    "baseline_proof": {
+      "sha": "7762a62f4313e2f4ff30ab05093a8240eb77bda6",
+      "checked_paths": 18569,
+      "all_git_blob_equal": true,
+      "native_marker": 450
+    },
+    "history": {
+      "tables": {
+        "tblactivity_log": {
+          "historical_rows": 18,
+          "sha256": "977c488dc272861596bae3b6c3e2eb206b548b791cd67efaa2f033d4c82cb1d3",
+          "preserved": true
+        },
+        "tblannouncements": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblargws_migration_342_backup": {
+          "historical_rows": 15,
+          "sha256": "2af270cc77b11704f10145a53062263fe173f58d675da8b3631d12789f420932",
+          "preserved": true
+        },
+        "tblbb_api_cnab_contracts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblbb_api_credentials": {
+          "historical_rows": 2,
+          "sha256": "805682bb3ab06eb358c610c95fb41cf310d32d79522310346da2e97c0a347e67",
+          "preserved": true
+        },
+        "tblbb_api_notifications": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblbb_api_operations": {
+          "historical_rows": 4,
+          "sha256": "78090ae3bccf7f519b89228caba020188b85939cc8d23425e7f01a617929191e",
+          "preserved": true
+        },
+        "tblbb_api_origins": {
+          "historical_rows": 2,
+          "sha256": "a691f375d9a3c4cda06f0b474ade17b202196553b0a869f9d19a57bd7fbca147",
+          "preserved": true
+        },
+        "tblbb_api_profiles": {
+          "historical_rows": 2,
+          "sha256": "042e2f53d47229c399ef0934b718886d4f49b823fa79458a317139d565530f6e",
+          "preserved": true
+        },
+        "tblbb_api_receipts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblbb_api_webhook_receivers": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblbb_audit": {
+          "historical_rows": 34,
+          "sha256": "931bb23a4a2f2fbcadc42c4ce90867e9680ae551fe6c73c1fa092612015e4ccd",
+          "preserved": true
+        },
+        "tblbb_batch_actions": {
+          "historical_rows": 2,
+          "sha256": "94bb7920faa8c8126c15bd7cac9f607f7a5c6d7237e084a8aad234218b508168",
+          "preserved": true
+        },
+        "tblbb_batch_origins": {
+          "historical_rows": 2,
+          "sha256": "08fbea7e0ae2cadf58e0a38664b95e72de19e74ce343963203e78d6337314aa4",
+          "preserved": true
+        },
+        "tblbb_batches": {
+          "historical_rows": 2,
+          "sha256": "7d618b54bd3e5c63e2df30a5dadb1fbc1940335e38acddae1c5e66b468984249",
+          "preserved": true
+        },
+        "tblbb_connections": {
+          "historical_rows": 2,
+          "sha256": "96f9b0e7a2b0edd534fea36ac6e04b50752e55a5a816d1f1af0a98c5febead06",
+          "preserved": true
+        },
+        "tblbb_contract_declarations": {
+          "historical_rows": 2,
+          "sha256": "7498b64e3ccad07d6370daede28424aec0177dab08c756974abff84987563d34",
+          "preserved": true
+        },
+        "tblbb_event_links": {
+          "historical_rows": 2,
+          "sha256": "8cfd55fd247218662a3e7f73599d0243ac0bfd7894ecd9a816a344622f8ec56f",
+          "preserved": true
+        },
+        "tblbb_event_receipts": {
+          "historical_rows": 2,
+          "sha256": "070b83fcf50c178d7185b60a8213e95bdf03b70819a6b36aac5211519a7b6e9f",
+          "preserved": true
+        },
+        "tblbb_event_reviews": {
+          "historical_rows": 2,
+          "sha256": "74ce5a5fba5f96d6fcc82b05c5950399707e76951c57ead88d337b2fdcf14849",
+          "preserved": true
+        },
+        "tblbb_layout_bindings": {
+          "historical_rows": 2,
+          "sha256": "6212197dc5155f47d2492cfd00389a6b98ad2918919f84a5e9e1aeb5b1b8fc28",
+          "preserved": true
+        },
+        "tblbb_number_reservations": {
+          "historical_rows": 2,
+          "sha256": "25384af1082584a8eaecdf781723464363afa246708aa1f0951feb982bc49994",
+          "preserved": true
+        },
+        "tblbb_origin_snapshots": {
+          "historical_rows": 2,
+          "sha256": "374f6abdb3b64bf986e80568d0fbde0b473c295737004274295375db6f34d119",
+          "preserved": true
+        },
+        "tblbb_origins": {
+          "historical_rows": 4,
+          "sha256": "63cf88ff38c3ac61144bbccf150842dccfd7864134541e1d5b250c626de9cfbd",
+          "preserved": true
+        },
+        "tblbb_return_events": {
+          "historical_rows": 2,
+          "sha256": "7b3f68d3f4a18ac342b5f11dd0df7369a8a3d0f7f16999f7e53305a5e021eb62",
+          "preserved": true
+        },
+        "tblbb_return_file_events": {
+          "historical_rows": 2,
+          "sha256": "887a9f132116a85e135f2449c19b2ddcf5e34078662a722e0e6ba8b209629887",
+          "preserved": true
+        },
+        "tblbb_return_files": {
+          "historical_rows": 2,
+          "sha256": "d78b19184a4f592c983b20ce88a9b51d178ad56d1eb016278212aac2cae3ef27",
+          "preserved": true
+        },
+        "tblclients": {
+          "historical_rows": 18,
+          "sha256": "f1997b548d49d967961738fc108f0ef61fde6d79a0b15675da1317da1acc6b2d",
+          "preserved": true
+        },
+        "tblcompany_ai_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_api_token_requests": {
+          "historical_rows": 2,
+          "sha256": "a5eeb2cba478816a60b9d3e4d990d2ec3bc965aa8ae7bbd9c09f0256de234ecf",
+          "preserved": true
+        },
+        "tblcompany_api_tokens": {
+          "historical_rows": 2,
+          "sha256": "79d1752281d3f550bcd01bee2fdc38c14e6313ea4711bef2c1aeed164d846136",
+          "preserved": true
+        },
+        "tblcompany_asaas_refund_postings": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_bank_receipt_components": {
+          "historical_rows": 2,
+          "sha256": "c47761b1d1e58477802322058eea10b3e8da0658f456e17fcefc82e0624a2577",
+          "preserved": true
+        },
+        "tblcompany_bank_receipt_reversals": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_client_import_batches": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_client_requests": {
+          "historical_rows": 16,
+          "sha256": "36403d7f2c2d442a08b46c53f8215da0c3c4eeabb7fae97df0ed65b62b18f0a9",
+          "preserved": true
+        },
+        "tblcompany_connect_api_accounts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_connect_api_messages": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_connect_instance_operations": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_connect_pairing_attempts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_contract_comment_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_contract_counters": {
+          "historical_rows": 3,
+          "sha256": "8cbc92c83280b8584e70caaa34c29de52fc7c06ae64a812ebd3d2de87d4293c5",
+          "preserved": true
+        },
+        "tblcompany_contract_discussions": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_contract_files": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_contract_requests": {
+          "historical_rows": 6,
+          "sha256": "e90976ca13d8483f0fa4bf54210b64692b1963c8748e619eb5904f76dab8766a",
+          "preserved": true
+        },
+        "tblcompany_contracts": {
+          "historical_rows": 3,
+          "sha256": "1243bd820f3c6d187784c43fcc02cd389c026554890c5b3c11ed720535880941",
+          "preserved": true
+        },
+        "tblcompany_credit_documents": {
+          "historical_rows": 2,
+          "sha256": "9398368722ddbe83c0e07831a727a2a6fb6f3855f08b5653b37ae7b217a6efbe",
+          "preserved": true
+        },
+        "tblcompany_credit_entries": {
+          "historical_rows": 8,
+          "sha256": "5818137835a61d328aaf03cb4cd65642308628c7b776063957dad47005e9e67b",
+          "preserved": true
+        },
+        "tblcompany_currency_units": {
+          "historical_rows": 1,
+          "sha256": "6b929a08bb6bfc89d3e106fb2341b9990a5850d972d38fd19c47dacdf72a5571",
+          "preserved": true
+        },
+        "tblcompany_discussion_file_shares": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_discussion_files": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_discussion_post_heads": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_discussion_post_links": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_discussion_post_versions": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_discussion_receipt_seals": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_expense_billing_links": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_expense_billing_origins": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_expense_categories": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_expense_copies": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_expense_files": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_expense_occurrences": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_expense_recurring": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_expense_recurring_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_expense_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_expenses": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_financial_api_requests": {
+          "historical_rows": 4,
+          "sha256": "7995a6d18206a77f32b9d8a4c56651e83e10bb0784fe839c4547842da71d2b1d",
+          "preserved": true
+        },
+        "tblcompany_financial_events": {
+          "historical_rows": 29,
+          "sha256": "9ccf4efb351b1341a86265dd1c76c8b29565ac248284987de9bbe7b0a315232e",
+          "preserved": true
+        },
+        "tblcompany_google_mail_accounts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_google_mail_queue_bindings": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_google_mail_states": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_import_batches": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_invoice_attachments": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_invoice_copy_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_invoice_deliveries": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_invoice_draft_events": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_invoice_drafts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_invoice_requests": {
+          "historical_rows": 7,
+          "sha256": "ef297d657772ddfe187f85ccab554bbcf6c29e8a84aed9ef432d59d52bb2cfda",
+          "preserved": true
+        },
+        "tblcompany_invoice_schedule_discovery": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_invoice_schedule_drafts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_invoice_schedule_modes": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_invoice_schedule_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_invoice_schedule_runs": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_invoice_schedules": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_local_noncash_declarations": {
+          "historical_rows": 2,
+          "sha256": "aea67069008f40a8f1a5ecef8f73acfea1ff96bd4fbd52c5d73ac0d859eb129b",
+          "preserved": true
+        },
+        "tblcompany_local_noncash_restorations": {
+          "historical_rows": 2,
+          "sha256": "d8676d6e59bc84c0edb5e3829745e110a7ee61831b8700c5176082861a8a3cf5",
+          "preserved": true
+        },
+        "tblcompany_local_noncash_settlements": {
+          "historical_rows": 12,
+          "sha256": "b22ebc4f69be93b8b10aa74e9f0193b1d456d2f69f89ea898dfa33b68231137d",
+          "preserved": true
+        },
+        "tblcompany_mail_transport_queue_bindings": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_microsoft_mail_accounts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_microsoft_mail_states": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_milestone_details": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_milestone_portal_rules": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_milestone_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_payment_receipts": {
+          "historical_rows": 6,
+          "sha256": "ba6ac77bd5921fcbb7cb1f9c6caf238e59685bdb0e861d96a9e48b73222babb4",
+          "preserved": true
+        },
+        "tblcompany_portal_contracts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_portal_contracts_files": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_portal_limits": {
+          "historical_rows": 2,
+          "sha256": "7fbc8214e138e81d2441e92fe2581c11fa12d07ceef6f6bda01d863cec33ca57",
+          "preserved": true
+        },
+        "tblcompany_portal_mail_deliveries": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_portal_mail_preferences": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_portal_milestones": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_portal_operation_requests": {
+          "historical_rows": 2,
+          "sha256": "02dfc2974dadc105f5388a92e4ee05714d4ebfea0edd16e9d3d736ca06fbf8c3",
+          "preserved": true
+        },
+        "tblcompany_portal_project_tasks": {
+          "historical_rows": 2,
+          "sha256": "742e565354831a9ecf159d5a50144d8f91b11a91344e1091e5c1d75d14440c56",
+          "preserved": true
+        },
+        "tblcompany_portal_projects": {
+          "historical_rows": 2,
+          "sha256": "4278d6e7f26832c449288403f278308014ad56772fc74ed236f9fc0c6fc5d950",
+          "preserved": true
+        },
+        "tblcompany_portal_projects_files": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_portal_support_files": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_portal_support_origins": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_portal_support_replies": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_portal_support_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_portal_task_children": {
+          "historical_rows": 4,
+          "sha256": "0ba6ac6514b74f5ecd76f72a963754f23e2d164e820debe27b5baba4e5b8f165",
+          "preserved": true
+        },
+        "tblcompany_portal_task_comments": {
+          "historical_rows": 2,
+          "sha256": "9d18d1878e35df0d844730ac371d13ba92359896d767cbf2da5d06a60d025f96",
+          "preserved": true
+        },
+        "tblcompany_portal_task_files": {
+          "historical_rows": 4,
+          "sha256": "0e61f46eec3c952a98b651aa6a926f62dfaab886174293dc4667dab5da70a371",
+          "preserved": true
+        },
+        "tblcompany_portal_task_origins": {
+          "historical_rows": 2,
+          "sha256": "36d5244cf15e5e9ed88413aae7a44b93e579a44c19f38ff504c5eff293b631b8",
+          "preserved": true
+        },
+        "tblcompany_portal_task_requests": {
+          "historical_rows": 14,
+          "sha256": "88c934ff175157448b355edc2319496924583a89acaa65cc96fbf4013bd9f820",
+          "preserved": true
+        },
+        "tblcompany_portal_ticket_replies": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_portal_tickets": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_portal_tickets_files": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_portal_tokens": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_post_refund_cancellations": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_post_refund_manual_receipts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_post_refund_manual_reversals": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_billing_rates": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_contact_files": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_copy_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_copy_snapshots": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_discussion_posts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_discussion_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_discussion_rules": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_discussion_states": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_discussions": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_file_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_file_rule_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_file_states": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_file_upload_rules": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_files": {
+          "historical_rows": 4,
+          "sha256": "3048711b177049a24ade3e461a64967383faac63db36f1ced2f03f0131f12c29",
+          "preserved": true
+        },
+        "tblcompany_project_fixed_billing_links": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_fixed_billing_origins": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_followers": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_gantt_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_gantt_rules": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_milestones": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_portal_requests": {
+          "historical_rows": 14,
+          "sha256": "c92b928a2d65b6e2bd2368c4b97aaeaa38d1e9b8f93bf6ac89e80a49701da178",
+          "preserved": true
+        },
+        "tblcompany_project_portal_rules": {
+          "historical_rows": 2,
+          "sha256": "ddb0e2414adb91d9611695aace587ed664a2df01d69f4ba8b0994c9bf58a0723",
+          "preserved": true
+        },
+        "tblcompany_project_requests": {
+          "historical_rows": 70,
+          "sha256": "94b865ff715a39e8df5d5a04957e0f381ca2b10ead6f785719ebc50cd0c2e348",
+          "preserved": true
+        },
+        "tblcompany_project_timesheet_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_timesheet_rules": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_project_write_rules": {
+          "historical_rows": 2,
+          "sha256": "b8ccb12a109ebad8a526bf9f43446073fd748a1aa57dcc3fe8c8a2d850f055c8",
+          "preserved": true
+        },
+        "tblcompany_projects": {
+          "historical_rows": 14,
+          "sha256": "349aa4354cac50527b6cdf65ac38515f97ebf1f624da652d462922b42ce7c970",
+          "preserved": true
+        },
+        "tblcompany_pusher_profiles": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_pusher_task_notices": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_recurring": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_recurring_runs": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_sales_copy_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_sales_deliveries": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_sales_documents": {
+          "historical_rows": 6,
+          "sha256": "28ecea7d728b891261a414e7436e810d3852b99e791c602d9afbe9a955e21b64",
+          "preserved": true
+        },
+        "tblcompany_sales_files": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_sales_revisions": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_standalone_billing_links": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_standalone_billing_origins": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_standalone_comments": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_standalone_priorities": {
+          "historical_rows": 21,
+          "sha256": "9e88a11655cebf26e7e39c6a68b90b6dd85b44c285c76eae67a47fadf0d5bda9",
+          "preserved": true
+        },
+        "tblcompany_standalone_tasks": {
+          "historical_rows": 21,
+          "sha256": "812b66e1e07613c2d37c051c3b1524493e9a7c92b15f45608e6bea3a185b38bc",
+          "preserved": true
+        },
+        "tblcompany_standalone_time_claims": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_standalone_time_clients": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_standalone_timers": {
+          "historical_rows": 3,
+          "sha256": "f9cf49bb043401326085d77d8ef0ffbf4d42ad2e2a1c0070179f968585309d07",
+          "preserved": true
+        },
+        "tblcompany_task_billing_links": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_task_billing_origins": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_task_comments": {
+          "historical_rows": 2,
+          "sha256": "7a00019bfc9827e41a792750ca5e77a596644eb377795f9581a44a8100c5c4c0",
+          "preserved": true
+        },
+        "tblcompany_task_copy_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_task_dependencies": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_task_followers": {
+          "historical_rows": 3,
+          "sha256": "447c20494ea852022dc0ee5bfdda40be42cc90b1093500ae96aa015e90583b52",
+          "preserved": true
+        },
+        "tblcompany_task_gantt_dates": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_task_milestones": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_task_priorities": {
+          "historical_rows": 21,
+          "sha256": "4101ec1185510fa85401383924a3e9f9bbebbcaa69f41d96c8dcc12c963bdc50",
+          "preserved": true
+        },
+        "tblcompany_task_time_batch_claims": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_task_time_batch_origins": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_task_time_batches": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_task_timers": {
+          "historical_rows": 3,
+          "sha256": "dd3fbdf1dfe735a85282efa7af08c605f30ab0898d1f81e234cdbd8050907bc1",
+          "preserved": true
+        },
+        "tblcompany_tasks": {
+          "historical_rows": 23,
+          "sha256": "7911b97da4a17b0c8dc3eb7c5fdd82e6659282e263df8a4ac6c220a485b9a595",
+          "preserved": true
+        },
+        "tblcompany_ticket_connect_messages": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_ticket_connect_policies": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_ticket_files": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_ticket_replies": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_ticket_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_tickets": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_time_billing_batches": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_time_billing_claims": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_time_billing_origins": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcompany_wizard_drafts": {
+          "historical_rows": 2,
+          "sha256": "e43ead8addb91091b2c7780f293da489ca75d86d98d4b6abd43950884d905750",
+          "preserved": true
+        },
+        "tblconsent_purposes": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblconsents": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcontact_permissions": {
+          "historical_rows": 4,
+          "sha256": "fb9fcbf315acfa733eff1361c3207d569738780779ff082329601e2136a3e410",
+          "preserved": true
+        },
+        "tblcontacts": {
+          "historical_rows": 4,
+          "sha256": "76ce0b539524e7fdf9160e6fc2553fff247afd055bdb5174a12b2a856589ea6c",
+          "preserved": true
+        },
+        "tblcontract_comments": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcontract_renewals": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcontracts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcontracts_types": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcountries": {
+          "historical_rows": 250,
+          "sha256": "4acc16604b0ff2cffc8a2546051ba4a9d1c81be5f9bb41616cd757e50b378c63",
+          "preserved": true
+        },
+        "tblcreditnote_refunds": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcreditnotes": {
+          "historical_rows": 2,
+          "sha256": "9d4c6acbacfd0b62f9dc93e1ee7a99ee457b5efb3834ad3ee6559712ad7e7cab",
+          "preserved": true
+        },
+        "tblcredits": {
+          "historical_rows": 2,
+          "sha256": "a119fc326d9045b063363515102db34bd3c7595a32a5cac654e96cc20d18039f",
+          "preserved": true
+        },
+        "tblcurrencies": {
+          "historical_rows": 2,
+          "sha256": "17153e02f3a925117a91044e32009cbd4f4ce5cb02ed5c5bc7d76d4eacbe64de",
+          "preserved": true
+        },
+        "tblcustomer_admins": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcustomer_groups": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcustomers_groups": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcustomfields": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblcustomfieldsvalues": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbldepartments": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbldismissed_announcements": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblemailtemplates": {
+          "historical_rows": 492,
+          "sha256": "f1ddb77d8118146f25bd978c0d333398e3af7355d80de67b2ccacd9760df306b",
+          "preserved": true
+        },
+        "tblestimate_request_forms": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblestimate_request_status": {
+          "historical_rows": 3,
+          "sha256": "450e6017b1d6f095b96b3d9c6e4665ddeada3f005d3a8dd77ec2c034bc2c6b2e",
+          "preserved": true
+        },
+        "tblestimate_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblestimates": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblevents": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblexpenses": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblexpenses_categories": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblfiles": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblfilter_defaults": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblfilters": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblform_question_box": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblform_question_box_description": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblform_questions": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblform_results": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblgdpr_requests": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblinvoicepaymentrecords": {
+          "historical_rows": 6,
+          "sha256": "1e5a1c3da7fb889e569257e1a7dd175cd4907564480e563e4188398c68af34ed",
+          "preserved": true
+        },
+        "tblinvoices": {
+          "historical_rows": 7,
+          "sha256": "69577de4067b37fe67736378fad400b18b4cc4beb794250c1e0b822243866592",
+          "preserved": true
+        },
+        "tblissuers_audit": {
+          "historical_rows": 499,
+          "sha256": "1e40db2768010a19afefb7c869f5a3c68dc214b49b858dd3dceae66868da3b1e",
+          "preserved": true
+        },
+        "tblissuers_client_links": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblissuers_clients": {
+          "historical_rows": 18,
+          "sha256": "08db4282506b5551ecb647728824c1f7117b2a1aae9c462507c550305704547b",
+          "preserved": true
+        },
+        "tblissuers_installation_identity": {
+          "historical_rows": 1,
+          "sha256": "d59937e6d1f9b64b9e76bfaf15161fa36e18a81a87d926b3eca1cecd2ed66be3",
+          "preserved": true
+        },
+        "tblissuers_invoice_documents": {
+          "historical_rows": 7,
+          "sha256": "58756e61b7f24850095c475eb07995475ab2c520d1f8cc53ee5b1395c2c57bcf",
+          "preserved": true
+        },
+        "tblissuers_lock": {
+          "historical_rows": 1,
+          "sha256": "2382d8ae2c7ad46b1e01f82007505427d4485cb5b825bcd9a73bb9c85996a807",
+          "preserved": true
+        },
+        "tblissuers_master_authorizations": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblissuers_registry": {
+          "historical_rows": 3,
+          "sha256": "fce70876c4cd23ddfa41f365b59b4e04f1c0fd6b5e77c83dc3ca1e0071230242",
+          "preserved": true
+        },
+        "tblissuers_resource_permissions": {
+          "historical_rows": 102,
+          "sha256": "46d6a6bcf862aa45bbbbb7e108f9bc5bde8b5ed2a0031546b143351e54afc52e",
+          "preserved": true
+        },
+        "tblissuers_sequences": {
+          "historical_rows": 11,
+          "sha256": "fc152d47a2c5f487d3687d604f16cc3ee4d3ddc8130ad47b20c01e4ab3c26b14",
+          "preserved": true
+        },
+        "tblissuers_staff": {
+          "historical_rows": 2,
+          "sha256": "c122d1be31f7f862215eb2c2c32c6a8f9c4e56f764ed41eb2e2ce98be0b814af",
+          "preserved": true
+        },
+        "tblissuers_staff_defaults": {
+          "historical_rows": 2,
+          "sha256": "e17baec117864ef0ffaeeeb2b8cc0bdffe78ae13620634283cdb62f1cee30e82",
+          "preserved": true
+        },
+        "tblitem_tax": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblitemable": {
+          "historical_rows": 9,
+          "sha256": "f55b1a919a9ea266e6fa9991de8517fa4617be6c8d78cbd370049ed07765b025",
+          "preserved": true
+        },
+        "tblitems": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblitems_groups": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblknowedge_base_article_feedback": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblknowledge_base": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblknowledge_base_groups": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbllead_activity_log": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbllead_integration_emails": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblleads": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblleads_email_integration": {
+          "historical_rows": 1,
+          "sha256": "8f168d931a1d88e3798454c194e81cf303a9ac8c3aa19d10b482da7ab107d9da",
+          "preserved": true
+        },
+        "tblleads_sources": {
+          "historical_rows": 2,
+          "sha256": "bae5e04ed81a6e3e1e0ec7453b9ea19b6c222bea1602634bb53345795f80e2a9",
+          "preserved": true
+        },
+        "tblleads_status": {
+          "historical_rows": 1,
+          "sha256": "1fd55fb0ff0e67348398cc3bf121d35820c71cd805c69d3182269265b631f7df",
+          "preserved": true
+        },
+        "tblmail_queue": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblmilestones": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblmodules": {
+          "historical_rows": 2,
+          "sha256": "ec1fed111ce56e0132ddfe15b07c9dc71a5b16d7596d7aa6a30f03713e252afc",
+          "preserved": true
+        },
+        "tblnewsfeed_comment_likes": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblnewsfeed_post_comments": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblnewsfeed_post_likes": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblnewsfeed_posts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblnotes": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblnotifications": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbloptions": {
+          "historical_rows": 464,
+          "sha256": "332011bffa0504438cacc3a28907230e323b5d6fdc21910988613fa9eedfd0b3",
+          "preserved": true
+        },
+        "tblpayment_attempts": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblpayment_modes": {
+          "historical_rows": 1,
+          "sha256": "039bd438b78663eb9a8f3be93bb5b82f25eb62411c5f448416733527e2582804",
+          "preserved": true
+        },
+        "tblpinned_projects": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblproject_activity": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblproject_files": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblproject_members": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblproject_notes": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblproject_settings": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblprojectdiscussioncomments": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblprojectdiscussions": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblprojects": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblproposal_comments": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblproposals": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblrecurring_rule_audit": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblrecurring_rule_batches": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblrecurring_rule_runs": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblrecurring_rules": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblrelated_items": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblreminders": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblroles": {
+          "historical_rows": 1,
+          "sha256": "06a5f21ddd3966fd29b566db79e1e0ac574b59b8f4fd275cdb3dfc20b2e2f48f",
+          "preserved": true
+        },
+        "tblsales_activity": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblscheduled_emails": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblservices": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblshared_customer_files": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblspam_filters": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblstaff": {
+          "historical_rows": 2,
+          "sha256": "7571e36ed51d9de94538c08f8f63ecda0c16df84ee7af21bdc5d6a62e82289f2",
+          "preserved": true
+        },
+        "tblstaff_departments": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblstaff_permissions": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblsubscriptions": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltaggables": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltags": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltask_assigned": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltask_checklist_items": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltask_comments": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltask_followers": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltasks": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltasks_checklist_templates": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltaskstimers": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltaxes": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltemplates": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblticket_attachments": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblticket_replies": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltickets": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltickets_pipe_log": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltickets_predefined_replies": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltickets_priorities": {
+          "historical_rows": 3,
+          "sha256": "496eb8b2c4464319b8d69ca72e8bf5488aca958e247b757f46a9fe0e5a1b6158",
+          "preserved": true
+        },
+        "tbltickets_status": {
+          "historical_rows": 5,
+          "sha256": "01ae6ce57df8460d8d3cb0ce68a2c1b592142cfde150b05eacb4bd64834cdb10",
+          "preserved": true
+        },
+        "tbltodos": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltracked_mails": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbltwocheckout_log": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbluser_auto_login": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tbluser_meta": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblvault": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblviews_tracking": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        },
+        "tblweb_to_lead": {
+          "historical_rows": 0,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "preserved": true
+        }
+      },
+      "native_metadata_changes": {
+        "tblactivity_log": {
+          "appended": [
+            {
+              "id": 19,
+              "description": "User Successfully Logged In [User Id: 17, Is Staff Member: Yes, IP: 127.0.0.1]",
+              "date": "2026-10-20 16:18:05",
+              "staffid": "Admin Synthetic"
+            }
+          ],
+          "historical_rows": 18
+        },
+        "tblissuers_audit": {
+          "appended": [
+            {
+              "id": 505,
+              "actor_id": 17,
+              "event": "company_settings_delete",
+              "issuer_id": 1,
+              "subject_id": null,
+              "created_at": "2026-10-20 16:18:06",
+              "metadata_json": null
+            },
+            {
+              "id": 506,
+              "actor_id": 17,
+              "event": "company_settings_add",
+              "issuer_id": 1,
+              "subject_id": null,
+              "created_at": "2026-10-20 16:18:06",
+              "metadata_json": null
+            },
+            {
+              "id": 507,
+              "actor_id": 17,
+              "event": "company_settings_update",
+              "issuer_id": 1,
+              "subject_id": null,
+              "created_at": "2026-10-20 16:18:06",
+              "metadata_json": null
+            },
+            {
+              "id": 508,
+              "actor_id": 17,
+              "event": "company_settings_update",
+              "issuer_id": 1,
+              "subject_id": null,
+              "created_at": "2026-10-20 16:18:06",
+              "metadata_json": null
+            }
+          ],
+          "historical_rows": 499
+        },
+        "tblmigrations": {
+          "before": [
+            {
+              "version": 450
+            }
+          ],
+          "after": [
+            {
+              "version": 451
+            }
+          ]
+        },
+        "BB installed_version": {
+          "before": "1.2.3",
+          "after": "1.2.3"
+        },
+        "option:upgraded_from_version": {
+          "before": {
+            "id": 366,
+            "name": "upgraded_from_version",
+            "value": "341",
+            "autoload": 1
+          },
+          "after": {
+            "id": 471,
+            "name": "upgraded_from_version",
+            "value": "450",
+            "autoload": 1
+          }
+        },
+        "option:last_updated_date": {
+          "before": {
+            "id": 329,
+            "name": "last_updated_date",
+            "value": "1792522384",
+            "autoload": 1
+          },
+          "after": {
+            "id": 329,
+            "name": "last_updated_date",
+            "value": "1792523886",
+            "autoload": 1
+          }
+        },
+        "option:update_info_message": {
+          "before": {
+            "id": 129,
+            "name": "update_info_message",
+            "value": "",
+            "autoload": 1
+          },
+          "after": {
+            "id": 129,
+            "name": "update_info_message",
+            "value": "\n        <div class=\"col-md-12\">\n            <div class=\"alert alert-success bold\">\n                <h4 class=\"bold\">Ol\u00e1! Obrigado por atualizar o HUB CRM - Voc\u00ea est\u00e1 usando a vers\u00e3o 4.5.1</h4>\n                <p>\n                   Atualiza\u00e7\u00e3o conclu\u00edda. Se a interface ainda mostrar arquivos antigos, recarregue a p\u00e1gina e revise o cache do navegador ou do proxy.\n                </p>\n            </div>\n        </div>\n        ",
+            "autoload": 1
+          }
+        },
+        "tblsessions": {
+          "before_count": 18,
+          "after_count": 19,
+          "reason": "Native session lifecycle; not customer business state"
+        }
+      },
+      "new_empty_tables": [],
+      "historical_tables_verified": 315
+    },
+    "records": [
+      {
+        "record": "resume-upgrade-all-1792523881915431154.json",
+        "before": {
+          "production_paths": 18586,
+          "runtime_paths_checked": 18572,
+          "installer_paths_removed": [
+            "install/7c189be7bdb2916ff3d3f4846cc85323.png",
+            "install/database.php",
+            "install/database.sql",
+            "install/file_permissions.php",
+            "install/finish.php",
+            "install/html.php",
+            "install/index.php",
+            "install/install.class.php",
+            "install/install.php",
+            "install/logo.png",
+            "install/phpass.php",
+            "install/requirements.php",
+            "install/sqlparser.php",
+            "install/steps.php"
+          ],
+          "manifest_sha256": "ea3ea41e9697f1844273b357c70a0be22c5d7ef83d78cceb14e305e9c17952ef",
+          "differences": []
+        },
+        "after": {
+          "production_paths": 18586,
+          "runtime_paths_checked": 18572,
+          "installer_paths_removed": [
+            "install/7c189be7bdb2916ff3d3f4846cc85323.png",
+            "install/database.php",
+            "install/database.sql",
+            "install/file_permissions.php",
+            "install/finish.php",
+            "install/html.php",
+            "install/index.php",
+            "install/install.class.php",
+            "install/install.php",
+            "install/logo.png",
+            "install/phpass.php",
+            "install/requirements.php",
+            "install/sqlparser.php",
+            "install/steps.php"
+          ],
+          "manifest_sha256": "ea3ea41e9697f1844273b357c70a0be22c5d7ef83d78cceb14e305e9c17952ef",
+          "differences": []
+        },
+        "test_source_sha256": {
+          "/workspace/scratch/b2c55ff73f4e/recovery/harness451/native_upgrade.cjs": "a4b565ad21997af66ab401d28506fc1c4a1a97fac183e0f8764ab2b36a31a810",
+          "/workspace/scratch/b2c55ff73f4e/recovery/timer451/tests/settings/calendar_unassigned_browser.cjs": "87e645c3795e8f0d348f879a8ac5aaf657378889f865ddc193dbda2267ef276c",
+          "/workspace/scratch/b2c55ff73f4e/recovery/timer451/tests/settings/task_timer_browser.cjs": "d2e97cdef6f7296320bbd00344885f83f81463c8996230fdd43a2a3c6321d817",
+          "/workspace/scratch/b2c55ff73f4e/recovery/timer451/tests/settings/task_timer_auto_stop_browser.cjs": "e54b16c834ce74b2b9d66d32763766a23f2755be3477ff12c348251eb3c1a8d7"
+        },
+        "results": [
+          {
+            "stage": "native450-to451-upgrade",
+            "exit": 0,
+            "seconds": 1.951,
+            "log": "native450-to451-upgrade-1792523881915431154.log"
+          },
+          {
+            "stage": "bb-native451",
+            "exit": 0,
+            "seconds": 0.08,
+            "log": "bb-native451-1792523881915431154.log"
+          },
+          {
+            "stage": "calendar-unassigned450-original",
+            "exit": 0,
+            "seconds": 10.608,
+            "log": "calendar-unassigned450-original-1792523881915431154.log"
+          },
+          {
+            "stage": "task-timer450-original",
+            "exit": 0,
+            "seconds": 30.986,
+            "log": "task-timer450-original-1792523881915431154.log"
+          },
+          {
+            "stage": "task-auto-stop451-original",
+            "exit": 0,
+            "seconds": 97.468,
+            "log": "task-auto-stop451-original-1792523881915431154.log"
+          }
+        ]
+      }
+    ],
+    "auto_stop": {
+      "native_marker": 451,
+      "read_only_fixture": true,
+      "results": [
+        {
+          "owner": 3,
+          "oldKind": "tasks",
+          "newKind": "tasks",
+          "old": 28,
+          "next": 29,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 3,
+          "oldKind": "tasks",
+          "newKind": "standalone_tasks",
+          "old": 30,
+          "next": 25,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 3,
+          "oldKind": "standalone_tasks",
+          "newKind": "tasks",
+          "old": 26,
+          "next": 31,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 3,
+          "oldKind": "standalone_tasks",
+          "newKind": "standalone_tasks",
+          "old": 27,
+          "next": 28,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 2,
+          "oldKind": "tasks",
+          "newKind": "tasks",
+          "old": 32,
+          "next": 33,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 2,
+          "oldKind": "tasks",
+          "newKind": "standalone_tasks",
+          "old": 34,
+          "next": 29,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 2,
+          "oldKind": "standalone_tasks",
+          "newKind": "tasks",
+          "old": 30,
+          "next": 35,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 2,
+          "oldKind": "standalone_tasks",
+          "newKind": "standalone_tasks",
+          "old": 31,
+          "next": 32,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 1,
+          "oldKind": "tasks",
+          "newKind": "tasks",
+          "old": 36,
+          "next": 37,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 1,
+          "oldKind": "tasks",
+          "newKind": "standalone_tasks",
+          "old": 38,
+          "next": 33,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 1,
+          "oldKind": "standalone_tasks",
+          "newKind": "tasks",
+          "old": 34,
+          "next": 39,
+          "same_boundary": true,
+          "retry_exact": true
+        },
+        {
+          "owner": 1,
+          "oldKind": "standalone_tasks",
+          "newKind": "standalone_tasks",
+          "old": 35,
+          "next": 36,
+          "same_boundary": true,
+          "retry_exact": true
+        }
+      ],
+      "foreign409": true,
+      "csrf403": true,
+      "stale_policy409": true,
+      "stale_context409": true,
+      "financial_and_global_unchanged": true,
+      "external_transport": false
+    }
+  },
+  "actual_local_runtime": "PHP-S8.3.6/Chromium140/MariaDB10.11.14; restricted local CLI adapter, not real Docker CI",
+  "tests_frozen": true,
+  "external_operations": false,
+  "bank_homologation": false
+}

@@ -10,13 +10,14 @@ final class CompanySettingsCatalog
 {
     public static function groups(): array
     {
-        return ['task_timers'=>'Cronômetros das tarefas','task_operations'=>'Prioridade e acompanhamento de tarefas','task_defaults'=>'Padrões de criação de tarefas','ticket_preferences'=>'Ordem das respostas de suporte','pdf_typography'=>'Tipografia dos PDFs','project_files'=>'Arquivos de projetos','company'=>'Informações da Empresa','email'=>'Servidor SMTP','email_content'=>'Apresentação dos e-mails',
+        return ['task_timer_stop'=>'Parada do cronômetro anterior','task_timers'=>'Cronômetros das tarefas','task_operations'=>'Prioridade e acompanhamento de tarefas','task_defaults'=>'Padrões de criação de tarefas','ticket_preferences'=>'Ordem das respostas de suporte','pdf_typography'=>'Tipografia dos PDFs','project_files'=>'Arquivos de projetos','company'=>'Informações da Empresa','email'=>'Servidor SMTP','email_content'=>'Apresentação dos e-mails',
             'documents'=>'Faturas e créditos','sales_documents'=>'Orçamentos e propostas','document_pdf'=>'PDF de faturas, créditos e contratos','sales_pdf'=>'PDF de orçamentos e propostas','localization'=>'Data e hora'];
     }
 
     public static function fields(string $group): array
     {
         return match($group) {
+            'task_timer_stop'=>['auto_stop_tasks_timers_on_new_timer'],
             'task_timers'=>['timer_started_change_status_in_progress'],
             'task_operations'=>['default_task_priority','new_task_auto_follower_current_member'],
             'task_defaults'=>['default_task_status','new_task_auto_assign_current_member'],
@@ -39,7 +40,7 @@ final class CompanySettingsCatalog
     {
         if(!in_array($field,self::fields($group),true))throw new DomainException('company_settings_invalid_input');
         if($group==='pdf_typography')return $field==='pdf_font'?'dejavusans':'';
-        if($group==='task_timers')return '0';
+        if(in_array($group,['task_timers','task_timer_stop'],true))return '0';
         if($group==='task_operations')return $field==='default_task_priority'?'2':'0';
         if($group==='task_defaults')return $field==='default_task_status'?'todo':'1';
         if($group==='ticket_preferences')return 'asc';
@@ -66,6 +67,7 @@ final class CompanySettingsCatalog
             if($group!=='company'&&$name!=='smtp_password'&&!self::multiline($name)&&preg_match('/[\r\n]/',$value))throw new DomainException('company_settings_invalid_input');
         }
         if($group==='project_files'&&(array_keys($settings)!==['allow_contact_to_delete_files']||!in_array($settings['allow_contact_to_delete_files'],['0','1'],true)))throw new DomainException('company_settings_invalid_input');
+        if($group==='task_timer_stop'){require_once __DIR__.'/CompanyTaskTimerStopPreferences.php';CompanyTaskTimerStopPreferences::prepare($settings);}
         if($group==='task_timers'){require_once __DIR__.'/CompanyTaskTimerPreferences.php';CompanyTaskTimerPreferences::prepare($settings);}
         if($group==='task_operations'){require_once __DIR__.'/CompanyTaskOperationPreferences.php';CompanyTaskOperationPreferences::prepare($settings);}
         if($group==='task_defaults'){require_once __DIR__.'/CompanyTaskPreferences.php';CompanyTaskPreferences::prepare($settings);}

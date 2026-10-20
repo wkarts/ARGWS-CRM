@@ -12,3 +12,6 @@ A migration449 oficial é NOOP: não muda schema nem preenche JSON de empresas a
 
 
 450 conserva o frame de tarefa/prioridade/seguidores anterior ao início e a história completa dos cronômetros até a última auditoria. Um segundo timer ativo do ator, inclusive na outra modalidade/empresa, recusa a transação inteira; não é encerrado automaticamente. Nove falhas SQL com testemunha e concorrência real cobrem rollback e retry. Ver pr45-validation-450.md.
+
+
+451 acrescenta, em grupo próprio separado, a parada automática autorizada do cronômetro anterior da mesma empresa. Não muda o contrato ou os documentosJSON449. Consulte `task-timer-auto-stop.md`; as indicações históricas de auto-stop ausente são superadas somente nesse recorte.

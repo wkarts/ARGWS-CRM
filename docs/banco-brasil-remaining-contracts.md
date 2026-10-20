@@ -1,3 +1,14 @@
+# Revisão documental em 20/10/2026 — fontes primárias, sem liberação financeira
+
+Conferidos novamente os manuais públicos do BB, sem chamada financeira:
+
+- [CBR641 para convênios de 7 posições, junho/2024](https://www.bb.com.br/docs/pub/emp/empl/dwn/Doc2627CBR641Pos7.pdf): página 6, campo 13.7, posições **85–86**. A nota 30, página 21, discrimina dólar02/euro14; não fornece código explícito de BRL. Não se presume branco,00 ou09.
+- Nesse CBR641, a nota 10, página 15, diz que a ausência de valor usa a taxa padrão do beneficiário; sem taxa nas duas fontes não há juros de atraso. Isso confirma o risco de herança, sem provar o cadastro efetivo desta conta/convênio/carteira/variação ou sua isenção. Continua necessária essa comprovação contratual.
+- [CBR643 para convênios de 7 posições, julho/2023](https://www.bb.com.br/docs/pub/emp/empl/dwn/Doc2628CBR643Pos7.pdf): página 16, trailer, campo 07, **26–39** continua com 14 posições e picture 9(013)v99, que indica 15 dígitos. Não foi obtida errata que autorize escolher largura/escala alternativa.
+- O [endpoint primário OpenAPI](https://api.externo.bb.com.br/docs/v1/openapi/17395705/2) não ficou acessível pela ferramenta de consulta nesta revisão. A captura 3.2.2 e seu SHA abaixo são históricos, não prova de especificação atual. Não foi confirmado novo identificador estável por crédito nem se `valorCreditoCedente` é individual/acumulado para API18/19. Ainda é necessário documento normativo desses campos e de datas/componentes/reversões.
+
+O [catálogo oficial de leiautes](https://www.bb.com.br/site/pro-seu-negocio/aplicativos-leiautes-de-arquivos/) distingue remessa CBR641 de retorno CBR643 e orienta conferir parâmetros contratados com o banco. Exemplos de terceiros não substituem esse contrato. Esta revisão acrescenta evidência documental; não habilita envio400, dinheiro API18/19 ou homologação. As pendências internas de adaptação abaixo continuam separadas.
+
 # Atualização447 — limites técnicos e documentos indispensáveis
 
 BB1.2.3/123 exige núcleo4.4.7/447. O novo recorteCNAB240 com tarifa aceita somente ocorrência06, carteira17simples, pagamento integralnominal sem juros/desconto/abatimento/IOF/outros, com principal pago bruto separado de tarifa e líquido. É defaultOFF, possui grant e consentimento próprios e prova de remessa/retorno/recibo completa. A tarifa observada não vira despesa fiscal. Reversão dessa nova base permanece bloqueada: faltam movimento original correlacionável, principal devolvido, tarifa devolvida ou retida e equação do débito líquido.

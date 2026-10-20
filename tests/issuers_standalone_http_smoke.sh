@@ -731,3 +731,12 @@ ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_S
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 ISSUERS_BROWSER_PHP_BINARY="$work/task448-php" TASK_TIMER_BROWSER_FIXTURE_PHP=/app/tests/settings/task_timer_http_fixture.php \
 node tests/settings/task_timer_browser.cjs
+
+
+#451: explicit own automatic stop never modifies a timer owned by another company.
+docker cp tests/settings/task_timer_stop_http_fixture.php "$upgrade:/app/tests/settings/task_timer_stop_http_fixture.php"
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+ISSUERS_BROWSER_PHP_BINARY="$work/task448-php" TASK_TIMER_STOP_BROWSER_FIXTURE_PHP=/app/tests/settings/task_timer_stop_http_fixture.php \
+node tests/settings/task_timer_auto_stop_browser.cjs

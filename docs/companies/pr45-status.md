@@ -1,3 +1,11 @@
+## Atualização451 — auto-stop próprio autorizado
+
+Núcleo **4.5.1/451** NOOP; BB **1.2.3/123** e Asaas **1.5.3/153** preservados. A nova opção visual permite encerrar o único cronômetro anterior do mesmo ator e da mesma empresa ao iniciar outro, entre tarefas de projeto e avulsas, com autoridade/fences atuais, fronteira temporal única e rollback conjunto. OFF por ausência, sem herança global, sem alteração silenciosa entre empresas, sem conclusão/cobrança. O nó449 e as correções450 continuam preservados.
+
+20 suítes SQL por motor,4 comandos adicionais PHP 8.1 / MySQL / 128 MiB,143 testes Python, fresh HTTP de 15 etapas e upgrade450 real com315 tabelas preservadas. Dez corridas×dois waiters,14 testemunhas de integridade e12 pares de modalidades no Chromium A/B/principal. Evidências e limites: `pr45-validation-451.md`, `task-timer-auto-stop.md`. CI do SHA efetivo na PR45; estados450 e anteriores são históricos.
+
+A pendência de auto-stop dos parágrafos históricos abaixo é superada apenas por esse contrato próprio. Recorrência operacional de tarefas/demais settings/consumidores e lacunas bancárias internas/externas continuam abertas; os inventários não certificam isolamento universal.
+
 ## Atualização450 — calendário do portal e integridade do início de timers
 
 Núcleo **4.5.0/450** NOOP; BB **1.2.3/123** e Asaas **1.5.3/153** preservados. A causa do calendário foi reproduzida pelo writer nativo do portal: assignee_id=0 em tarefa de1/11 era rejeitado na hidratação; somente o mês da empresaB incluía essa data conforme o primeiro dia da semana. A leitura agora representa0como ausência de responsável, sem alterar fonte/ACL/filtros. O timeout não era carregamento ou seletor. Timer450 também preserva o frame anterior e a história completa até a última auditoria e rejeita um segundo timer ativo introduzido durante a operação.
