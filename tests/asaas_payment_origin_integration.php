@@ -24,15 +24,7 @@ namespace Asaas\Sdk\Exception {
 namespace {
     define('BASEPATH', __DIR__);
     define('FCPATH', dirname(__DIR__) . '/');
-    class App_gateway {
-        public array $settings = ['sandbox' => '1', 'api_key' => 'fixture_production', 'api_key_sandbox' => 'fixture_sandbox', 'delete_charge' => '1'];
-        public function __construct() {}
-        public function setId($id) {}
-        public function setName($name) {}
-        public function setSettings($settings) {}
-        public function getSetting($name) { return $this->settings[$name] ?? ''; }
-        public function decryptSetting($name) { return $this->settings[$name] ?? ''; }
-    }
+    require_once FCPATH . 'application/libraries/gateways/App_gateway.php';
     class App_Model { public $db; }
     class FakeResult {
         public function __construct(private array $rows) {}
@@ -50,6 +42,7 @@ namespace {
         protected string $from = '';
         protected int $affected = 0;
         public function query($sql, $args = []) {
+            if ($sql === 'SELECT installed_version FROM tblmodules WHERE module_name=?') return $this->get_where('tblmodules',['module_name'=>$args[0]]);
             if ($sql === 'SELECT id FROM tblinvoices WHERE id = ? AND tblinvoices.issuer_id IS NULL') {
                 return new FakeResult(array_values(array_filter($this->tables['tblinvoices'], static fn($r) => (string)$r['id'] === (string)$args[0] && ($r['issuer_id'] ?? null) === null)));
             }
@@ -87,6 +80,7 @@ namespace {
     function &get_instance(){global $ci; return $ci;}
     function hooks(){global $hooks;return $hooks;}
     function get_option($n){global $options;return $options[$n]??'';}
+    function profile_option($environment,$field,$value){global $ci;$name=\Asaas\EnvironmentSettings::option($field,$environment);foreach($ci->db->tables['tbloptions'] as &$r)if($r['name']===$name)$r['value']=$value;}
     function decrypt($v){return $v;}
     function db_prefix(){return 'tbl';}
     function get_staff_user_id(){return 7;}
@@ -108,9 +102,14 @@ namespace {
     function throws(callable $fn, string $message){try{$fn();}catch(\Throwable $e){check(true,$message);return;}throw new \RuntimeException($message);}
     function fixture(): array {
         global $ci,$alerts,$options;
-        $options=[];$alerts=[];$ci->db=new FakeDB();$ci->load=new class {public function library(...$x){}};
+        $options=['paymentmethod_asaas_profile_schema'=>'1','paymentmethod_asaas_sandbox'=>'1','paymentmethod_asaas_api_key'=>'fixture_production','paymentmethod_asaas_api_key_sandbox'=>'fixture_sandbox'];$alerts=[];$ci->db=new FakeDB();$ci->load=new class {public function library(...$x){}};
+        $ci->encryption=new class {public function decrypt($v){return $v;}};
+        $ci->db->tables['tblmodules']=[['module_name'=>'asaas','installed_version'=>'1.5.4']];
+        $ci->db->tables['tbloptions']=[];
+        $ci->db->tables['tblcurrencies']=[['id'=>1,'name'=>'BRL']];
+        foreach(\Asaas\EnvironmentSettings::ENVIRONMENTS as $env)foreach(\Asaas\EnvironmentSettings::DEFAULTS as $name=>$value){$ci->db->tables['tbloptions'][]=['name'=>\Asaas\EnvironmentSettings::option($name,$env),'value'=>in_array($name,['active','delete_charge'],true)?'1':$value];}
         $ci->asaas_gateway=new Asaas_gateway();
-        $ci->db->tables['tblinvoices'][]=['id'=>1,'hash'=>'invoice_hash','total'=>'100.00','duedate'=>'2026-11-01','status'=>1,'issuer_id'=>null,'clientid'=>10];
+        $ci->db->tables['tblinvoices'][]=['id'=>1,'hash'=>'invoice_hash','total'=>'100.00','duedate'=>'2026-11-01','status'=>1,'issuer_id'=>null,'clientid'=>10,'currency'=>1];
         $ci->db->tables['tblclients'][]=['userid'=>10,'vat'=>'11144477735'];
         \Asaas\Sdk\Http\Client::$calls=[];\Asaas\Sdk\Http\Client::$responses=[];
         return [$ci->asaas_gateway,$ci->asaas_gateway->getAdapter(),$ci->db];
@@ -128,7 +127,7 @@ namespace {
     if (defined('ASAAS_FIXTURES_ONLY')) return;
 
     [$gw,$adapter,$db]=fixture(); known($adapter,$db);
-    $gw->settings['sandbox']='0'; // Global environment changed after issue.
+    $GLOBALS['options']['paymentmethod_asaas_sandbox']='0'; // Global environment changed after issue.
     Client::$responses=[wallet(),payment(),['id'=>'pay_original','deleted'=>true]];
     $model=new TestInvoices($db);
     check($model->mark_as_cancelled(1)===true,'real core cancel passes after removal');
@@ -172,14 +171,14 @@ namespace {
     asaas_invoice_status_changed(['invoice_id'=>1,'status'=>4]);check(Client::$calls===[],'OVERDUE hook never deletes');
     check(isset(hooks()->actions['invoice_marked_as_cancelled']),'actual core cancel event registered');
     check(asaas_guard_invoice_mutation(false,1,'delete')===false,'preserve earlier veto');
-    [$gw,$adapter,$db]=fixture();known($adapter,$db);$gw->settings['delete_charge']='0';
+    [$gw,$adapter,$db]=fixture();known($adapter,$db);profile_option('sandbox','delete_charge','0');
     check(asaas_guard_invoice_mutation(true,1,'delete')===false&&Client::$calls===[],'disabled automatic delete preserved and known invoice retained');
 
     [$gw,$adapter,$db]=fixture();Client::$responses=[wallet(),customer(),payment()];
     $result=$adapter->createPayment(['externalReference'=>'invoice_hash','customer'=>'cus_original','value'=>100]);
     check($result['id']==='pay_original'&&$adapter->originStore()->byInvoice(1)['state']==='issued','new issue connected to persisted origin');
     check(count($db->tables['tblasaas_payments_map'])===1,'new issue stores map in same call');
-    $gw->settings['sandbox']='0';Client::$responses=[wallet(),payment()];
+    $GLOBALS['options']['paymentmethod_asaas_sandbox']='0';Client::$responses=[wallet(),payment()];
     $adapter->createPayment(['externalReference'=>'invoice_hash','customer'=>'cus_original']);
     check(count(array_filter(Client::$calls,fn($c)=>$c[0]==='POST'))===1,'repeat issuance uses persisted payment not new POST');
     check(!$gw->upsert_payment_map(1,['id'=>'pay_different']),'cannot overwrite immutable map');
@@ -244,7 +243,7 @@ namespace {
     check($webhook->invoke($adapter,['event'=>'PAYMENT_RECEIVED','payment'=>payment('RECEIVED')])['state']==='review_required'&&Client::$calls===[],'issuer webhook remains fail-closed');
 
     foreach(['', 'sandbox', 'true', 'false', '2', 0, 1, true, false] as $ambiguous){
-        [$gw,$adapter,$db]=fixture();$gw->settings['sandbox']=$ambiguous;
+        [$gw,$adapter,$db]=fixture();$GLOBALS['options']['paymentmethod_asaas_sandbox']=$ambiguous;
         throws(fn()=>$adapter->createPayment(['externalReference'=>'invoice_hash','customer'=>'cus_original']),'ambiguous environment fails closed');
         check(Client::$calls===[],'invalid environment cannot default to production');
     }

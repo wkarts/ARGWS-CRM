@@ -428,32 +428,11 @@ class App_mail_template
 
         $language = $this->get_language($email, $template, $params);
 
-        if (!is_dir(APPPATH . 'language/' . $language)) {
-            $language = 'english';
-        }
-
         if (!class_exists('emails_model', false)) {
             $this->ci->load->model('emails_model');
         }
 
-        $template = $this->ci->emails_model->get(['language' => $language, 'slug' => $slug], 'row');
-
-        // Template languages not yet inserted
-        // Users needs to visit Setup->Email Templates->Any template to initialize all languages
-        if (!$template) {
-            $template = $this->ci->emails_model->get(['language' => 'english', 'slug' => $slug], 'row');
-        } else {
-            if ($template && $template->message == '') {
-                // Template message blank use the active language default template
-                $template = $this->ci->emails_model->get(['language' => get_option('active_language'), 'slug' => $slug], 'row');
-
-                if (!$template || $template->message == '') {
-                    $template = $this->ci->emails_model->get(['language' => 'english', 'slug' => $slug], 'row');
-                }
-            }
-        }
-
-        return $template;
+        return $this->ci->emails_model->get_for_sending((string) $slug, (string) $language);
     }
 
     /**

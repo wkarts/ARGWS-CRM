@@ -13,6 +13,7 @@ final class EmailTemplatesPtBr
     private static ?array $phrases = null;
     private static ?array $templates = null;
     private static ?array $moduleTemplates = null;
+    private static ?array $sources = null;
 
     public static function templates(): array
     {
@@ -43,101 +44,30 @@ final class EmailTemplatesPtBr
     }
 
 
-    /**
-     * Reconcilia os modelos dos módulos após a instalação, no upgrade e na
-     * página administrativa. NÃO remove registros, alterna status nem altera
-     * conteúdo personalizado. As edições são feitas campo a campo somente
-     * quando ainda correspondem exatamente ao original conhecido.
-     *
-     * Para instaladores antigos que inseriram registros em inglês, preserva
-     * a origem e cria uma cópia PT-BR, sem alterar o idioma do registro antigo.
-     */
-    public static function synchronizeModuleTemplates($db, ?string $module = null): int
+    /** All known shipped sources, including explicitly cataloged historical variants. */
+    public static function sourceDefinitions(): array
     {
-        $definitions = self::moduleTemplates();
-        if ($module !== null) {
-            $definitions = array_filter(
-                $definitions,
-                static function ($definition) use ($module) {
-                    return ($definition['module'] ?? '') === $module;
-                }
-            );
+        if (self::$sources !== null) return self::$sources;
+        $definitions = [];
+        foreach (self::loadJson('company_defaults.json') as $row) {
+            $labels = self::templates()[$row['slug']];
+            $definitions[$row['slug']][] = $labels + [
+                'source_name' => $row['name'], 'source_subject' => $row['subject'],
+                'source_message' => $row['message'], 'type' => $row['type'], 'module' => null,
+            ];
         }
-        if (!$definitions) {
-            return 0;
+        foreach (self::moduleTemplates() as $slug => $definition) $definitions[$slug][] = $definition;
+        foreach (self::loadJson('legacy_sources.json') as $slug => $sources) {
+            foreach ($sources as $source) $definitions[$slug][] = $source;
         }
-
-        $table = db_prefix() . 'emailtemplates';
-        if (!$db->table_exists($table)) {
-            return 0;
-        }
-
-        require_once __DIR__.'/CompanyEmailTemplates.php';
-        $scope=CompanyEmailTemplates::scopeSql($db,db_prefix(),$table,CompanyEmailTemplates::currentIssuer());
-        $db->where($scope,null,false);
-        $rows = $db->where_in('slug', array_keys($definitions))
-            ->get($table)->result_array();
-        $bySlug = [];
-        foreach ($rows as $row) {
-            $slug = (string) ($row['slug'] ?? '');
-            $language = (string) ($row['language'] ?? '');
-            if ($slug !== '' && in_array($language, ['portuguese_br', 'english'], true)) {
-                $bySlug[$slug][$language] = $row;
-            }
-        }
-
-        $count = 0;
-        foreach ($definitions as $slug => $definition) {
-            $localized = $bySlug[$slug]['portuguese_br'] ?? null;
-            $english = $bySlug[$slug]['english'] ?? null;
-
-            if (!$localized && $english) {
-                $copy = $english;
-                unset($copy['emailtemplateid']);
-                $copy['language'] = 'portuguese_br';
-                $copy = array_replace($copy, self::defaultOnlyChanges($copy, $definition));
-                if ($db->insert($table, $copy)) {
-                    ++$count;
-                }
-                continue;
-            }
-
-            if (!$localized) {
-                // Modelos de módulos não instalados não são criados de modo antecipado.
-                continue;
-            }
-
-            $updates = self::defaultOnlyChanges($localized, $definition);
-            if ($updates) {
-                $db->where($scope,null,false)->where('emailtemplateid', (int) $localized['emailtemplateid'])
-                    ->update($table, $updates);
-                ++$count;
-            }
-        }
-
-        return $count;
+        return self::$sources = $definitions;
     }
 
-    private static function defaultOnlyChanges(array $row, array $definition): array
+    /** Public compatibility hook for module installation and existing admin entry points. */
+    public static function synchronizeModuleTemplates($db, ?string $module = null): int
     {
-        $updates = [];
-        foreach (['name', 'subject', 'message'] as $field) {
-            $source = (string) ($definition['source_' . $field] ?? '');
-            $current = (string) ($row[$field] ?? '');
-            if ($current !== $source) {
-                // Inclusive conteúdos vazios ou personalizados são preservados.
-                continue;
-            }
-
-            $translated = $field === 'message'
-                ? self::translateMessage($source)
-                : (string) ($definition[$field] ?? $source);
-            if ($translated !== $current) {
-                $updates[$field] = $translated;
-            }
-        }
-
-        return $updates;
+        require_once __DIR__.'/EmailTemplateReconciler.php';
+        return EmailTemplateReconciler::synchronize($db, db_prefix(), $module);
     }
 
     public static function translateMessage(string $html): string
@@ -205,7 +135,7 @@ final class EmailTemplatesPtBr
     {
         if (self::$phrases === null) {
             $phrases = [];
-            foreach (['phrases_01.json', 'phrases_02.json', 'phrases_03.json', 'phrases_modules.json'] as $name) {
+            foreach (['phrases_01.json', 'phrases_02.json', 'phrases_03.json', 'phrases_modules.json', 'phrases_legacy.json'] as $name) {
                 $next = self::loadJson($name);
                 foreach ($next as $key => $value) {
                     if (array_key_exists($key, $phrases)) {

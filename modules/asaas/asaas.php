@@ -16,8 +16,8 @@ defined('BASEPATH') or exit('No direct script access allowed');
 Module Name: Asaas - Módulo de Pagamento
 Description: Integração com Sistema Financeiro Asaas com a função de recebimento via catão de crédito, Boleto e Pix.
 Author: WWSoft -> Wallace Kleiton - argws/asaas-sdk-php v0.2.61
-Version: 1.5.3
-Requires at least: 4.3.7
+Version: 1.5.4
+Requires at least: 4.5.8
 Author URI: https://t.me/wkartspro
 */
 
@@ -128,7 +128,13 @@ function asaas_before_render_payment_gateway_settings($gateway)
         echo '<a data-asaas-webhook-admin-url="' . html_escape(admin_url('asaas'))
             . '" data-asaas-environment-valid="' . ($valid ? '1' : '0')
             . '" data-asaas-environment-value="' . ($valid ? $environment : '')
+            . '" data-asaas-settings-admin="' . (is_admin() ? '1' : '0')
+            . '" data-asaas-profile-ready="' . (\Asaas\EnvironmentSettings::ready() ? '1' : '0')
             . '" href="' . html_escape(admin_url('asaas')) . '">Gerenciar recebedores e segurança dos webhooks Asaas</a>';
+        require_once __DIR__ . '/libraries/Asaas/SettingsPresentation.php';
+        $CI = &get_instance();
+        $summary = \Asaas\SettingsPresentation::legacy($CI->db, defined('APP_BASE_URL') ? (string) APP_BASE_URL : '', (string) $CI->config->item('index_page'));
+        $CI->load->view('asaas/settings_summary', ['asaas_summary' => $summary]);
     }
     return $gateway;
 }
@@ -137,8 +143,8 @@ function asaas_validate_admin_settings($data)
 {
     require_once __DIR__ . '/libraries/Asaas/AdminSettingsPolicy.php';
     try { return \Asaas\AdminSettingsPolicy::validate($data); }
-    catch (InvalidArgumentException $error) {
-        show_error('Selecione um único ambiente válido. Tokens exigem a tela de webhooks.', 400);
+    catch (InvalidArgumentException | DomainException $error) {
+        show_error('Configuração Asaas inválida. Confira o ambiente, os campos e os valores permitidos. Tokens exigem a tela de webhooks.', 400);
         return [];
     }
 }
@@ -150,9 +156,12 @@ function asaas_settings_tab_footer()
 
 function asaas_after_invoice_added($invoice_id)
 {
-    if (get_option('paymentmethod_asaas_billet_only')) {
-        $CI = &get_instance();
-        $CI->load->library('asaas_gateway');
+    // The nominal-company service owns its own issuance and must never enter the legacy hook.
+    if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()
+        && !CompanySettingsRuntime::isPrimary()) return $invoice_id;
+    $CI = &get_instance();
+    $CI->load->library('asaas_gateway');
+    if ($CI->asaas_gateway->getSetting('active') === '1' && $CI->asaas_gateway->getSetting('billet_only') === '1') {
         $CI->load->model('invoices_model');
         $invoice = $CI->invoices_model->get($invoice_id);
 
@@ -213,12 +222,6 @@ function asaas_update_invoice_payment($hookData = null)
     $CI->load->library('asaas_gateway');
     $CI->load->model('invoices_model');
 
-    $description = (string) $CI->asaas_gateway->getSetting('description');
-    $discount_value = (float) $CI->asaas_gateway->getSetting('discount_value');
-    $dueDateLimitDays = (int) $CI->asaas_gateway->getSetting('discount_days');
-    $discount_type = (int) $CI->asaas_gateway->getSetting('discount_type');
-    $update_charge = (int) $CI->asaas_gateway->getSetting('update_charge');
-
     $invoice = $CI->invoices_model->get($id);
     if (!$invoice) {
         log_message('error', '[Asaas] invoice_updated: invoice não encontrada para invoice_id=' . $id);
@@ -248,6 +251,16 @@ function asaas_update_invoice_payment($hookData = null)
         log_message('info', '[Asaas] invoice_updated: forma de pagamento asaas não permitida para invoice_id=' . $id);
         return $id;
     }
+
+    $origin = $CI->asaas_gateway->getAdapter()->originStore()->byInvoice((int) $id);
+    $profileSetting = static function (string $name) use ($CI, $origin): string {
+        return $origin ? $CI->asaas_gateway->getSettingForOrigin($name, $origin) : $CI->asaas_gateway->getSetting($name);
+    };
+    $description = $profileSetting('description');
+    $discount_value = (float) $profileSetting('discount_value');
+    $dueDateLimitDays = (int) $profileSetting('discount_days');
+    $discount_type = (int) $profileSetting('discount_type');
+    $update_charge = (int) $profileSetting('update_charge');
 
     // Desconto
     $adminnote = isset($invoice->adminnote) && is_string($invoice->adminnote) ? $invoice->adminnote : '';
@@ -284,7 +297,6 @@ function asaas_update_invoice_payment($hookData = null)
         return $id;
     }
 
-    $origin = $CI->asaas_gateway->getAdapter()->originStore()->byInvoice((int) $id);
     if ($origin) {
         if (empty($origin['remote_id']) || $origin['state'] !== 'issued') {
             log_message('error', '[Asaas] Emissão exige conciliação. invoice_id=' . (int) $id);
@@ -411,7 +423,7 @@ function asaas_guard_invoice_mutation($allowed, int $invoiceId, string $action):
         return true;
     }
     try {
-        if ($action === 'delete' && (int) $CI->asaas_gateway->getSetting('delete_charge') !== 1) {
+        if ($action === 'delete' && (int) $CI->asaas_gateway->getSettingForOrigin('delete_charge', $origin) !== 1) {
             $store->state($invoiceId, 'review_required', 'automatic_removal_disabled');
             $result = ['success' => false, 'code' => 'automatic_removal_disabled'];
         } else {

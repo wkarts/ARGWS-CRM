@@ -98,6 +98,29 @@ e salva screenshots somente de estados sem senha. Não foi executado neste
 ambiente, que bloqueia sockets/MySQL/Chromium.
 O cenário MySQL comprova disputa de revisão e revogação enquanto um writer espera.
 
+## Verificação nativa do passo 458
+
+`tests/certificates/native_458_mysql.php` usa App_Migration/App e os arquivos
+457/458 reais da árvore composta. O baseline 456 é mínimo, com tabelas/linhas
+sintéticas necessárias aos helpers de perfis Clientes e A1; não representa
+replay completo de install.sql. Apenas I/O de framework e reconciliação posterior
+do núcleo não relacionada ao passo 458 são adaptados. Nenhum helper funcional da
+458 é substituído por stub.
+
+Na suíte MySQL dedicada, o teste verifica os marcadores 457/458, CREATE com cache
+pré-preenchido, preservação de perfil/certificado/e-mail customizado, replay,
+falhas de DDL, falha/sucesso falso da escrita do marker
+e erro de readback. Cada falha deve impedir o hook de conclusão; o retry precisa
+concluir preservando dados anteriores. Não testa helper de e-mail ainda ausente
+da migration publicada. O banco permitido é exclusivamente issuer_a1_tests,
+validado pelo DSN e por SELECT DATABASE() antes de qualquer DDL.
+
+Para smoke adicional sem sockets, pode usar `A1_NATIVE_SQLITE_SMOKE=1` e omitir o
+DSN. `A1_NATIVE_SOURCE_ROOT` seleciona uma árvore composta local já existente para
+leitura; não copia nem altera suas migrations. SQLite não comprova MySQL/InnoDB.
+`schema_cache.php` cobre separadamente os métodos reais de cache do CI e reproduz
+o falso negativo de table_exists após CREATE antes da invalidação corrigida.
+
 ## Rollback
 
 Desabilitar acesso à rota até resolver problemas; não rebaixar o marcador nativo.

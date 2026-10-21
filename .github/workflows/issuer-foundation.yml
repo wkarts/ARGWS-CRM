@@ -63,7 +63,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test tests/company_email_catalog.test.cjs tests/email_templates_ptbr.test.cjs
+      - run: node --test tests/company_email_catalog.test.cjs tests/email_templates_ptbr.test.cjs tests/email_template_interface.test.cjs
   boundary-inventory:
     runs-on: ubuntu-latest
     steps:
@@ -334,6 +334,8 @@ jobs:
           php tests/companies/asaas_refund_observe_events.php
           php tests/settings/project_file_settings.php
           php tests/companies/asaas_boundaries.php
+          php tests/companies/asaas_secret_controller.php
+          php tests/companies/asaas_webhook_tokens.php
           php tests/companies/asaas_exact_json.php
           php tests/companies/invoice_delivery_concurrency.php
           php tests/companies/invoice_concurrency.php
@@ -385,6 +387,7 @@ jobs:
           php tests/settings/portal_mail_config.php
           php tests/settings/portal_mail_templates.php
           php tests/settings/company_email_templates.php
+          php tests/settings/email_template_localization.php
           php tests/companies/email_template_scope.php
           php tests/companies/email_template_controller.php
           php tests/companies/email_template_editor.php

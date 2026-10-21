@@ -83,6 +83,17 @@ jobs:
           name: client-identity-presentation
           path: /tmp/client-identity-evidence
           if-no-files-found: error
+      - name: Testar abas nativas e perfis de ambientes Asaas
+        env:
+          ASAAS_UI_ARTIFACTS: /tmp/asaas-settings-evidence
+        run: node tests/asaas_settings_tabs.browser.cjs
+      - name: Preservar capturas sintéticas das abas Asaas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asaas-native-settings-presentation
+          path: /tmp/asaas-settings-evidence
+          if-no-files-found: error
       - name: Provisionar schema e primeiro administrador em MySQL limpo
         env:
           ARGWS_ISSUER_BROWSER_SMOKE: '1'

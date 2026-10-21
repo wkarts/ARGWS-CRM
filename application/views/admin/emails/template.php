@@ -12,7 +12,7 @@
                         <?= form_open($this->uri->uri_string()); ?>
                         <div class="row">
                             <div class="col-md-12">
-                                <?= render_input('name', 'template_name', $template->name, 'text', ['disabled' => true]); ?>
+                                <?= render_input('name', 'template_name', EmailTemplateLocale::templateName($template), 'text', ['disabled' => true]); ?>
                                 <?= render_input('subject[' . $template->emailtemplateid . ']', 'template_subject', $template->subject); ?>
                                 <?= render_input('fromname', 'template_fromname', $template->fromname); ?>
                                 <div style="<?= hooks()->apply_filters('show_deprecated_from_email_header_template_field', false) === false
@@ -47,55 +47,31 @@
                                        $editors = [];
 array_push($editors, 'message[' . $template->emailtemplateid . ']');
 ?>
-                                <h4 class="tw-font-bold tw-text-base">English</h4>
+                                <h4 class="tw-font-bold tw-text-base"><?= e(EmailTemplateLocale::languageLabel((string) $template->language)); ?></h4>
 
                                 <?php if (get_option('disable_ticket_public_url') == '1'
                                 && strpos($template->message ?: '', 'ticket_public_url') !== false) {
-                                    echo '<div class="alert alert-warning">This template contains the <strong/>{ticket_public_url}</strong> merge field, but the public ticket URL is disabled in the settings. Consider updating the merge field to <strong>{ticket_url}</strong> or enable the ticket public URL feature.</div>';
+                                    echo '<div class="alert alert-warning">' . _l('email_template_public_ticket_url_warning') . '</div>';
                                 } ?>
 
                                 <?= render_textarea('message[' . $template->emailtemplateid . ']', '', $template->message, ['data-url-converter-callback' => 'myCustomURLConverter'], [], '', 'tinymce tinymce-manual'); ?>
-                                <?php foreach ($available_languages as $availableLanguage) {
-                                    $lang_template = $this->emails_model->get([
-                                        'slug'     => $template->slug,
-                                        'language' => $availableLanguage,
-                                    ]);
-
-                                    if (count($lang_template) > 0) {
-                                        $lang_used = false;
-                                        if (get_option('active_language') == $availableLanguage
-                                        || total_rows(db_prefix() . 'staff', ['default_language' => $availableLanguage]) > 0
-                                        || total_rows(db_prefix() . 'clients', ['default_language' => $availableLanguage]) > 0
-                                        ) {
-                                            $lang_used = true;
-                                        }
-
-                                        $hide_template_class = '';
-
-                                        if ($lang_used == false) {
-                                            $hide_template_class = 'hide';
-                                        } ?>
+                                <?php foreach ($language_templates as $lang_template) {
+                                    $availableLanguage = (string) $lang_template['language'];
+                                    $editorId = 'message[' . $lang_template['emailtemplateid'] . ']';
+                                    $editors[] = $editorId;
+                                ?>
                                 <hr />
-                                <h4 class="pointer tw-font-bold tw-text-base"
-                                    onclick='slideToggle("#temp_<?= e($availableLanguage); ?>");'>
-                                    <?= e(ucfirst($availableLanguage)); ?>
-                                </h4>
-                                <?php
-                           $lang_template = $lang_template[0];
-                                        array_push($editors, 'message[' . $lang_template['emailtemplateid'] . ']');
-                                        echo '<div id="temp_' . $availableLanguage . '" class="tw-mt-3 ' . $hide_template_class . '">';
-
-                                        if (get_option('disable_ticket_public_url') == '1'
-                                        && strpos($lang_template['message'] ?: '', 'ticket_public_url') !== false) {
-                                            echo '<div class="alert alert-warning">This template contains the <strong>{ticket_public_url}</strong> merge field, but the public ticket URL is disabled in the settings. Consider updating the merge field to <strong> or enable the ticket public URL feature.</div>';
-                                        }
-
-                                        echo render_input('subject[' . $lang_template['emailtemplateid'] . ']', 'template_subject', $lang_template['subject']);
-                                        echo '<p class="bold">' . _l('email_template_email_message') . '</p>';
-                                        echo render_textarea('message[' . $lang_template['emailtemplateid'] . ']', '', $lang_template['message'], ['data-url-converter-callback' => 'myCustomURLConverter'], [], '', 'tinymce tinymce-manual');
-                                        echo '</div>';
-                                    }
-                                } ?>
+                                <h4 class="tw-font-bold tw-text-base"><?= e(EmailTemplateLocale::languageLabel($availableLanguage)); ?></h4>
+                                <div class="tw-mt-3" data-template-language="<?= e($availableLanguage); ?>">
+                                    <?php if (get_option('disable_ticket_public_url') == '1'
+                                        && strpos($lang_template['message'] ?: '', 'ticket_public_url') !== false) { ?>
+                                    <div class="alert alert-warning"><?= _l('email_template_public_ticket_url_warning'); ?></div>
+                                    <?php } ?>
+                                    <?= render_input('subject[' . $lang_template['emailtemplateid'] . ']', 'template_subject', $lang_template['subject']); ?>
+                                    <p class="bold"><?= _l('email_template_email_message'); ?></p>
+                                    <?= render_textarea($editorId, '', $lang_template['message'], ['data-url-converter-callback' => 'myCustomURLConverter'], [], '', 'tinymce tinymce-manual'); ?>
+                                </div>
+                                <?php } ?>
                                 <div class="btn-bottom-toolbar text-right">
                                     <button type="submit"
                                         class="btn btn-primary"><?= _l('submit'); ?></button>
@@ -143,7 +119,7 @@ array_push($editors, 'message[' . $template->emailtemplateid . ']');
 foreach ($available_merge_fields as $field) {
     foreach ($field as $key => $val) {
         echo '<div class="col-md-6 merge_fields_col">';
-        echo '<h5 class="bold tw-text-base tw-rounded-lg tw-bg-neutral-50 tw-py-2 tw-px-3">' . ucwords(str_replace(['-', '_'], ' ', $key)) . '</h5>';
+        echo '<h5 class="bold tw-text-base tw-rounded-lg tw-bg-neutral-50 tw-py-2 tw-px-3">' . e(EmailTemplateLocale::groupLabel($key)) . '</h5>';
 
         foreach ($val as $_field) {
             if (count($_field['available']) == 0
@@ -161,9 +137,9 @@ foreach ($available_merge_fields as $field) {
                     ) && ! in_array($template->slug, $_field['exclude'] ?? [])
                     && ! in_array($_field['name'], $mergeLooped)) {
                     $mergeLooped[] = $_field['name'];
-                    echo '<p>' . $_field['name'];
+                    echo '<p>' . e(EmailTemplateLocale::fieldLabel($_field));
                     echo '<span class="pull-right"><a href="#" class="add_merge_field">';
-                    echo $_field['key'];
+                    echo e($_field['key']);
                     echo '</a>';
                     echo '</span>';
                     echo '</p>';

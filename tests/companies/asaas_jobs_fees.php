@@ -6,7 +6,7 @@ require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyFeeExpense.php';
 $jobsStart=$GLOBALS['essentialChecks'];$worker=new \Asaas\CompanyReconciliation($db,$p);$fees=new \Asaas\CompanyFeeExpense($db,$p);$expenseService=new CompanyExpenses($db,$p);
 $categoryA=$expenseService->saveCategory($a,7,'Tarifas Asaas',hash('sha256','asaas-tariff-A'));$categoryB=$expenseService->saveCategory($b,7,'Tarifas Asaas',hash('sha256','asaas-tariff-B'));
 // Both owners receive a separately confirmed, opt-in automation policy.
-foreach([$a,$b] as $issuer){$config=$asaas->accounts($issuer,7)[0];if(!$config['webhook_configured'])$asaas->rotateWebhook($issuer,7,$accounts[$issuer],$config['revision']);$config=$asaas->accounts($issuer,7)[0];$asaas->configureAutomation($issuer,7,$accounts[$issuer],$config['revision'],true);}
+foreach([$a,$b] as $issuer){$config=$asaas->accounts($issuer,7)[0];if(!$config['webhook_configured'])asaasFixtureRotateWebhook($asaas,$issuer,7,$accounts[$issuer],$config['revision']);$config=$asaas->accounts($issuer,7)[0];$asaas->configureAutomation($issuer,7,$accounts[$issuer],$config['revision'],true);}
 // Existing A adverse event from base fixture is deliberately reviewed, never reapplied.
 $worker->runOnce($dec,$mock);
 function asaasAsyncEvent(int $issuer,int $client,string $customer,string $tag):array
@@ -14,7 +14,7 @@ function asaasAsyncEvent(int $issuer,int $client,string $customer,string $tag):a
     global $asaas,$accounts,$db,$p,$responses;
     [$invoice,$origin,$proof,$remote]=asaasFreshCredit($issuer,$client,$customer,$tag);
     $responses[$remote]['netValue']='104.53';
-    $config=$asaas->accounts($issuer,7)[0];$hook=$asaas->rotateWebhook($issuer,7,$accounts[$issuer],$config['revision']);
+    $config=$asaas->accounts($issuer,7)[0];$hook=asaasFixtureRotateWebhook($asaas,$issuer,7,$accounts[$issuer],$config['revision']);
     $event='evt_async_'.str_replace('-','_',$tag);$headers=['Content-Type'=>'application/json','asaas-access-token'=>$hook['one_time_token']];
     $body=json_encode(['id'=>$event,'event'=>'PAYMENT_RECEIVED','payment'=>['id'=>$remote]],JSON_THROW_ON_ERROR);
     essentialCheck($asaas->receive($hook['public_id'],$headers,$body)['status']===200,'authenticated received event and persisted-origin job commit together');

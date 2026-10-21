@@ -10,6 +10,9 @@ require_once __DIR__.'/CompanyCardSettlement.php';
 require_once __DIR__.'/CompanyCheckoutSchema.php';
 require_once __DIR__.'/HostedCardCheckout.php';
 require_once __DIR__.'/WebhookSecurity.php';
+require_once __DIR__.'/WebhookTokenCipher.php';
+require_once __DIR__.'/WebhookTokenSchema.php';
+require_once __DIR__.'/ModuleReadiness.php';
 require_once APPPATH.'services/issuers/IssuerTransaction.php';
 require_once APPPATH.'services/issuers/IssuerResourceAccess.php';
 require_once APPPATH.'services/CompanyInvoices.php';
@@ -18,7 +21,7 @@ require_once APPPATH.'services/CompanyCurrencyUnits.php';
 /** Named-company adapter. Never enters the legacy gateway, global configuration or invoice map. */
 final class CompanyService
 {
-    public function __construct(private $db,private string $p)
+    public function __construct(private $db,private string $p,private ?WebhookTokenCipher $webhookCipher=null)
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new \InvalidArgumentException('asaas_company_prefix_invalid');
     }
@@ -84,10 +87,25 @@ final class CompanyService
         $row=$this->rows('SELECT * FROM '.$this->p.'asaas_company_accounts WHERE id=? AND issuer_id=? FOR UPDATE',[$account,$issuer])[0]??null;
         if(!$row)throw new \DomainException('asaas_company_access_denied');return $row;
     }
+    public function authorizeWebhook(int $issuer,int $actor):void
+    {
+        $this->module();
+        $acl=new \IssuerResourceAccess($this->db,$this->p);
+        $allowed=$acl->administrative($issuer,$actor);
+        // Scoped exception for this feature only: an active global admin still needs membership
+        // and the explicit configuration grant in this company. Other resources keep their ACL.
+        if(!$allowed && $acl->member($issuer,$actor) && $acl->can($issuer,$actor,'settings','edit')) {
+            $allowed=(bool)$this->rows('SELECT staffid FROM '.$this->p.'staff WHERE staffid=? AND active=1 AND admin=1',[$actor]);
+        }
+        if(!$allowed)throw new \DomainException('asaas_company_access_denied');
+        if(class_exists('CompanySettingsRuntime',false)&&\CompanySettingsRuntime::active()&&(\CompanySettingsRuntime::issuerId()!==$issuer||\CompanySettingsRuntime::staffId()!==$actor))throw new \DomainException('asaas_company_access_denied');
+        ModuleReadiness::require154($this->db,$this->p);
+    }
     private static function publicAccount(array $row):array
     {
         $row['secret_configured']=$row['secret_cipher']!=='';$row['webhook_configured']=$row['token_hash']!==null;
-        unset($row['secret_cipher'],$row['token_hash']);return $row;
+        $row['token_recoverable']=is_string($row['token_cipher']??null)&&$row['token_cipher']!=='';
+        unset($row['secret_cipher'],$row['token_hash'],$row['token_cipher']);return $row;
     }
     public function accounts($issuer,$actor):array
     {
@@ -134,21 +152,50 @@ final class CompanyService
     public function rotateWebhook($issuer,$actor,$account,string $revision):array
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$account=\IssuerPolicy::id($account);self::revision($revision);
-        return $this->transaction(function()use($issuer,$actor,$account,$revision):array{$this->authorize($issuer,$actor,'configure');$row=$this->account($issuer,$account);if(!hash_equals($row['revision'],$revision)||$row['verified_at']===null)throw new \DomainException('asaas_company_stale');
-            $token=bin2hex(random_bytes(32));$next=bin2hex(random_bytes(32));\IssuerStorage::query($this->db,'UPDATE '.$this->p.'asaas_company_accounts SET token_hash=?,revision=? WHERE id=? AND issuer_id=?',[hash('sha256',$token),$next,$account,$issuer]);
-            $saved=$this->account($issuer,$account);if(!hash_equals($saved['token_hash'],hash('sha256',$token)))throw new \RuntimeException('issuer_asaas_token_unconfirmed');$this->audit($issuer,$actor,'company_asaas_webhook_rotated',$account);
-            return ['public_id'=>$saved['webhook_public_id'],'one_time_token'=>$token];
+        $this->authorizeWebhook($issuer,$actor);WebhookTokenSchema::assertReady($this->db,$this->p.'asaas_company_accounts');
+        return $this->transaction(function()use($issuer,$actor,$account,$revision):array{
+            $this->authorizeWebhook($issuer,$actor);$row=$this->account($issuer,$account);
+            if(!hash_equals($row['revision'],$revision)||$row['verified_at']===null||(int)$row['enabled']!==1)throw new \DomainException('asaas_company_stale');
+            $token=bin2hex(random_bytes(32));$next=bin2hex(random_bytes(32));
+            $cipher=($this->webhookCipher??new WebhookTokenCipher())->seal($token,$row,'company');
+            \IssuerStorage::query($this->db,'UPDATE '.$this->p.'asaas_company_accounts SET token_hash=?,token_cipher=?,revision=? WHERE id=? AND issuer_id=?',[hash('sha256',$token),$cipher,$next,$account,$issuer]);
+            $saved=$this->account($issuer,$account);if(!hash_equals($saved['token_hash'],hash('sha256',$token))||$saved['token_cipher']!==$cipher||$saved['revision']!==$next)throw new \RuntimeException('issuer_asaas_token_unconfirmed');
+            $this->audit($issuer,$actor,'company_asaas_webhook_rotated',$account);
+            return ['account_id'=>$account,'public_id'=>$saved['webhook_public_id'],'one_time_token'=>$token];
+        });
+    }
+    public function revealWebhook($issuer,$actor,$account,string $revision):array
+    {
+        $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$account=\IssuerPolicy::id($account);self::revision($revision);$this->authorizeWebhook($issuer,$actor);
+        return $this->transaction(function()use($issuer,$actor,$account,$revision):array{
+            $this->authorizeWebhook($issuer,$actor);$row=$this->account($issuer,$account);
+            if(!hash_equals($row['revision'],$revision)||(int)$row['enabled']!==1)throw new \DomainException('asaas_company_stale');
+            $token=($this->webhookCipher??new WebhookTokenCipher())->open($row['token_cipher']??null,(string)$row['token_hash'],$row,'company');
+            $this->audit($issuer,$actor,'company_asaas_webhook_revealed',$account);
+            return ['account_id'=>$account,'public_id'=>$row['webhook_public_id'],'one_time_token'=>$token,'revealed'=>true];
+        });
+    }
+    public function revealApiKey($issuer,$actor,$account,string $revision,callable $decrypt):array
+    {
+        $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$account=\IssuerPolicy::id($account);self::revision($revision);$this->authorizeWebhook($issuer,$actor);
+        return $this->transaction(function()use($issuer,$actor,$account,$revision,$decrypt):array{
+            $this->authorizeWebhook($issuer,$actor);$row=$this->account($issuer,$account);
+            if(!hash_equals($row['revision'],$revision))throw new \DomainException('asaas_company_stale');
+            try{$key=$decrypt($row['secret_cipher']);}catch(\Throwable $error){throw new \DomainException('asaas_company_credentials_required');}
+            if(!is_string($key)||$key===''||strlen($key)>4096||preg_match('/[\x00-\x20\x7f]/',$key))throw new \DomainException('asaas_company_credentials_required');
+            $this->audit($issuer,$actor,'company_asaas_api_key_revealed',$account);
+            return ['account_id'=>$account,'environment'=>$row['environment'],'api_key'=>$key];
         });
     }
     public function disableAccount($issuer,$actor,$account,string $revision):void
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$account=\IssuerPolicy::id($account);self::revision($revision);
-        $this->transaction(function()use($issuer,$actor,$account,$revision):void{$this->authorize($issuer,$actor,'configure');$row=$this->account($issuer,$account);if(!hash_equals($row['revision'],$revision))throw new \DomainException('asaas_company_stale');\IssuerStorage::query($this->db,'UPDATE '.$this->p.'asaas_company_accounts SET enabled=0,token_hash=NULL,automation_actor=NULL,revision=? WHERE id=? AND issuer_id=?',[bin2hex(random_bytes(32)),$account,$issuer]);$this->audit($issuer,$actor,'company_asaas_account_disabled',$account);});
+        $this->transaction(function()use($issuer,$actor,$account,$revision):void{$this->authorize($issuer,$actor,'configure');$row=$this->account($issuer,$account);if(!hash_equals($row['revision'],$revision))throw new \DomainException('asaas_company_stale');$clearCipher=array_key_exists('token_cipher',$row)?'token_cipher=NULL,':'';\IssuerStorage::query($this->db,'UPDATE '.$this->p.'asaas_company_accounts SET enabled=0,token_hash=NULL,'. $clearCipher .'automation_actor=NULL,revision=? WHERE id=? AND issuer_id=?',[bin2hex(random_bytes(32)),$account,$issuer]);$this->audit($issuer,$actor,'company_asaas_account_disabled',$account);});
     }
     public function enableAccount($issuer,$actor,$account,string $revision):void
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$account=\IssuerPolicy::id($account);self::revision($revision);
-        $this->transaction(function()use($issuer,$actor,$account,$revision):void{$this->authorize($issuer,$actor,'configure');$row=$this->account($issuer,$account);if(!hash_equals($row['revision'],$revision))throw new \DomainException('asaas_company_stale');\IssuerStorage::query($this->db,'UPDATE '.$this->p.'asaas_company_accounts SET enabled=1,verified_at=NULL,token_hash=NULL,automation_actor=NULL,revision=? WHERE id=? AND issuer_id=?',[bin2hex(random_bytes(32)),$account,$issuer]);$this->audit($issuer,$actor,'company_asaas_account_enabled',$account);});
+        $this->transaction(function()use($issuer,$actor,$account,$revision):void{$this->authorize($issuer,$actor,'configure');$row=$this->account($issuer,$account);if(!hash_equals($row['revision'],$revision))throw new \DomainException('asaas_company_stale');$clearCipher=array_key_exists('token_cipher',$row)?'token_cipher=NULL,':'';\IssuerStorage::query($this->db,'UPDATE '.$this->p.'asaas_company_accounts SET enabled=1,verified_at=NULL,token_hash=NULL,'. $clearCipher .'automation_actor=NULL,revision=? WHERE id=? AND issuer_id=?',[bin2hex(random_bytes(32)),$account,$issuer]);$this->audit($issuer,$actor,'company_asaas_account_enabled',$account);});
     }
     public function configureAutomation($issuer,$actor,$account,string $revision,bool $enabled):void
     {

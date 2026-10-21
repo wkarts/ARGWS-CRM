@@ -10,6 +10,7 @@ use Asaas\Sdk\Exception\TransportException;
 use AsaasSdkProvider;
 
 require_once __DIR__ . '/PaymentOriginStore.php';
+require_once __DIR__ . '/EnvironmentSettings.php';
 require_once __DIR__ . '/InvoicePaymentRemoval.php';
 require_once __DIR__ . '/WebhookTransactionGuard.php';
 
@@ -74,7 +75,7 @@ private function normalizePath(string $path): string
         bool $expectsBinary = false,
         ?int $companyId = null
     ): array {
-        $client = $this->resolveRequestClient($method, $path, $query, $companyId);
+        [$client, $requestEnvironment] = $this->resolveRequestClient($method, $path, $query, $companyId);
         // A SDK usa base_uri com /v3. Quando o path começa com '/', o Guzzle zera o path do base_uri.
         // Portanto, no módulo, sempre enviamos path relativo (sem '/').
         $originalPath = $path;
@@ -88,7 +89,7 @@ private function normalizePath(string $path): string
                 'method' => $method,
                 'path' => $path,
                 'correlation_id' => $headers['X-Correlation-Id'] ?? null,
-            ]);
+            ], $requestEnvironment);
 
             if (!is_array($response)) {
                 throw new \RuntimeException('invalid_asaas_response');
@@ -100,7 +101,7 @@ private function normalizePath(string $path): string
                 'path' => $path,
                 'status' => $exception->getStatusCode(),
                 'correlation_id' => $headers['X-Correlation-Id'] ?? null,
-            ]);
+            ], $requestEnvironment);
 
             throw $exception;
         } catch (TransportException $exception) {
@@ -108,7 +109,7 @@ private function normalizePath(string $path): string
                 'method' => $method,
                 'path' => $path,
                 'correlation_id' => $headers['X-Correlation-Id'] ?? null,
-            ]);
+            ], $requestEnvironment);
 
             throw $exception;
         }
@@ -456,6 +457,7 @@ public function refundPayment(string $paymentId, array $payload = []): array
     public function registerWebhookIntegration(string $label, string $environment, string $expectedAccount): array
     {
         require_once __DIR__ . '/WebhookSecurity.php';
+        ModuleReadiness::require154($this->ci->db, db_prefix());
         $client = $this->provider->clientForEnvironment($environment);
         $scope = $this->provider->contextForClient($client, $environment);
         if (!hash_equals($expectedAccount, $scope['account_id'])) throw new \RuntimeException('webhook_account_mismatch');
@@ -781,7 +783,8 @@ public function refundPayment(string $paymentId, array $payload = []): array
                 }
             }
         }
-        return $origin ? $this->provider->clientForOrigin($origin) : $this->provider->client($companyId);
+        $environment = $origin ? EnvironmentSettings::environment((string) $origin['environment']) : $this->provider->env($companyId);
+        return [$origin ? $this->provider->clientForOrigin($origin) : $this->provider->client($companyId), $environment];
     }
 
     public function assertInvoiceScope(array $invoice): void
@@ -822,6 +825,14 @@ public function refundPayment(string $paymentId, array $payload = []): array
             throw new \RuntimeException('legacy_origin_review_required');
         }
         $environment = $this->provider->env();
+        $currency = $this->ci->db->get_where(db_prefix() . 'currencies', ['id' => (int) ($invoice['currency'] ?? 0)])->row_array();
+        if (($currency['name'] ?? '') !== 'BRL' || $this->provider->setting('currencies') !== 'BRL') {
+            throw new \DomainException('asaas_profile_requires_brl');
+        }
+        // Keep the legacy combined boleto/Pix issuance contract: billingType is not a UI toggle.
+        if ($this->provider->setting('active') !== '1') {
+            throw new \DomainException('asaas_profile_payment_disabled');
+        }
         $client = $this->provider->clientForEnvironment($environment);
         $context = $this->provider->contextForClient($client, $environment);
         // A legacy customer map is not account-scoped. Verify the candidate in
@@ -995,14 +1006,14 @@ public function refundPayment(string $paymentId, array $payload = []): array
         return preg_replace('/[^0-9]/', '', $postalCode);
     }
 
-    private function log(string $level, string $message, array $context = []): void
+    private function log(string $level, string $message, array $context = [], ?string $environment = null): void
     {
         $sanitized = $this->sanitizeContext($context);
         $sanitizedContext = json_encode($sanitized, JSON_UNESCAPED_UNICODE);
 
         if ($level === 'error') {
             log_message('error', '[Asaas] ' . $message . ' | context=' . $sanitizedContext);
-        } elseif ($this->shouldWriteFileLog()) {
+        } elseif ($this->shouldWriteFileLog($environment)) {
             log_message('info', '[Asaas] ' . $message . ' | context=' . $sanitizedContext);
         }
 
@@ -1037,13 +1048,13 @@ public function refundPayment(string $paymentId, array $payload = []): array
     }
 
 
-    private function shouldWriteFileLog(): bool
+    private function shouldWriteFileLog(?string $environment = null): bool
     {
         if ($this->gateway === null || !method_exists($this->gateway, 'isFileLogEnabled')) {
             return false;
         }
 
-        return (bool) $this->gateway->isFileLogEnabled();
+        return (bool) $this->gateway->isFileLogEnabled($environment);
     }
 
     private function sanitizeContext(array $context): array

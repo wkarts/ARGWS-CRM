@@ -365,32 +365,11 @@ function get_email_template_for_sending($template_slug, $email)
 
     $language = get_email_template_language($template_slug, $email);
 
-    if (!is_dir(APPPATH . 'language/' . $language)) {
-        $language = 'english';
-    }
-
     if (!class_exists('emails_model', false)) {
         $CI->load->model('emails_model');
     }
 
-    $template = $CI->emails_model->get(['language' => $language, 'slug' => $template_slug], 'row');
-
-    // Template languages not yet inserted
-    // Users needs to visit Setup->Email Templates->Any template to initialize all languages
-    if (!$template) {
-        $template = $CI->emails_model->get(['language' => 'english', 'slug' => $template_slug], 'row');
-    } else {
-        if ($template && $template->message == '') {
-            // Template message blank use the active language default template
-            $template = $CI->emails_model->get(['language' => get_option('active_language'), 'slug' => $template_slug], 'row');
-
-            if (!$template || $template->message == '') {
-                $template = $CI->emails_model->get(['language' => 'english', 'slug' => $template_slug], 'row');
-            }
-        }
-    }
-
-    return $template;
+    return $CI->emails_model->get_for_sending((string) $template_slug, (string) $language);
 }
 
 /**

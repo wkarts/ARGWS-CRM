@@ -4173,3 +4173,6 @@ $lang['issuer_client_adoption_blocked'] = 'Private client creation and sharing a
 
 $lang['permission_share_customer_companies'] = 'Share customer identity with other companies';
 $lang['issuer_staff_company_access_required'] = 'The employee was not created: select at least one authorized company and a default company. If the legacy installation has no designated owner, resolve installation responsibility under Settings > Companies before creating employees.';
+
+$lang['email_template_public_ticket_url_warning'] = 'This template contains <strong>{ticket_public_url}</strong>, but public ticket URLs are disabled. Use <strong>{ticket_url}</strong> or enable public ticket URLs.';
+$lang['email_template_other_models'] = 'Other templates';

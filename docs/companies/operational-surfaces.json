@@ -10,18 +10,18 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "54e0fcc0aa8cf93da309e628f82d8fbd4536c5ea445e4b0d453b75d783c5f0f9",
+    "source_manifest_sha256": "df393228900792adbb31e222ae6eee45a50260149fcaf01c051c0090843a5579",
     "counts": {
         "modules": 38,
-        "source_files": 4173,
+        "source_files": 4184,
         "literal_option_keys": 684,
         "dynamic_option_references": 146,
         "controllers": 254,
         "hook_candidates": 553,
-        "job_file_candidates": 64,
+        "job_file_candidates": 66,
         "report_file_candidates": 293,
         "table_name_candidates": 831,
-        "database_call_candidates": 12533
+        "database_call_candidates": 12535
     },
     "infrastructure_options": [
         "cron_has_run_from_cli",
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.5.3",
+            "version": "1.5.4",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -480,13 +480,15 @@
                 "modules/asaas/libraries/Asaas/WebhookIntegrationSchema.php",
                 "modules/asaas/libraries/Asaas/WebhookIntegrationStore.php",
                 "modules/asaas/libraries/Asaas/WebhookSecurity.php",
+                "modules/asaas/libraries/Asaas/WebhookTokenCipher.php",
+                "modules/asaas/libraries/Asaas/WebhookTokenSchema.php",
                 "modules/asaas/libraries/Asaas/WebhookTransactionGuard.php",
                 "modules/asaas/scripts/assert-webhook-security.php",
                 "modules/asaas/views/webhooks.php"
             ],
             "report_candidates": [],
             "option_keys": [
-                "paymentmethod_asaas_billet_only",
+                "paymentmethod_asaas_profile_schema",
                 "paymentmethod_asaas_sandbox",
                 "show_amount_due_on_invoice",
                 "show_credits_applied_on_invoice",
@@ -536,7 +538,8 @@
                 "modules",
                 "options",
                 "paymentmodes",
-                "sales_activity"
+                "sales_activity",
+                "staff"
             ]
         },
         {
@@ -5133,7 +5136,7 @@
             "reference_count": 5
         },
         {
-            "name": "paymentmethod_asaas_billet_only",
+            "name": "paymentmethod_asaas_profile_schema",
             "classification": "company_private_by_storage_policy",
             "consumer_validation": "not_verified",
             "reference_count": 1
@@ -5142,7 +5145,7 @@
             "name": "paymentmethod_asaas_sandbox",
             "classification": "company_private_by_storage_policy",
             "consumer_validation": "not_verified",
-            "reference_count": 1
+            "reference_count": 3
         },
         {
             "name": "paymentmethod_authorize_aim_description_dashboard",
@@ -9172,19 +9175,19 @@
         },
         {
             "path": "application/controllers/admin/Company_asaas.php",
-            "source_sha256": "1ca82971bf06c3f3f5920a4cf5e596d08a011f2dfa7114cf611cc6ab22dffb1d",
+            "source_sha256": "c6b504dfbac195594dae6521660a709f4f88373d859d36e18825a5906ffd0a2b",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
             "method_candidates": [
                 {
                     "method": "__construct",
-                    "line": 16,
+                    "line": 18,
                     "visibility": "public"
                 },
                 {
                     "method": "index",
-                    "line": 22,
+                    "line": 24,
                     "visibility": "public"
                 }
             ],
@@ -10627,7 +10630,7 @@
         },
         {
             "path": "application/controllers/admin/Emails.php",
-            "source_sha256": "f586b66a44c66cf7b7505740ccf5d306dee880e3cfb3b2b02454261837ecbfd3",
+            "source_sha256": "72b7d6f2822dfb49ff231446366764e0595a7989ce9becc65c62d54a852d4aad",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -10644,42 +10647,42 @@
                 },
                 {
                     "method": "email_template",
-                    "line": 111,
+                    "line": 107,
                     "visibility": "public"
                 },
                 {
                     "method": "enable_by_type",
-                    "line": 166,
+                    "line": 163,
                     "visibility": "public"
                 },
                 {
                     "method": "disable_by_type",
-                    "line": 174,
+                    "line": 171,
                     "visibility": "public"
                 },
                 {
                     "method": "enable",
-                    "line": 182,
+                    "line": 179,
                     "visibility": "public"
                 },
                 {
                     "method": "disable",
-                    "line": 192,
+                    "line": 189,
                     "visibility": "public"
                 },
                 {
                     "method": "sent_smtp_test_email",
-                    "line": 244,
+                    "line": 242,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_queued_email",
-                    "line": 297,
+                    "line": 295,
                     "visibility": "public"
                 },
                 {
                     "method": "clear_queued_emails",
-                    "line": 307,
+                    "line": 305,
                     "visibility": "public"
                 }
             ],
@@ -16553,7 +16556,7 @@
         },
         {
             "path": "modules/asaas/controllers/Asaas.php",
-            "source_sha256": "048dbd6258e149e505e7c977f96ef7309a838bffca4d0043d7e1a79ad630d725",
+            "source_sha256": "0fca9dd80093159f8b877b47981ecaa392262f843e63efda9272011820662055",
             "module": "asaas",
             "base_class": "AdminController",
             "surface": "admin",
@@ -16570,82 +16573,87 @@
                 },
                 {
                     "method": "register_integration",
-                    "line": 83,
+                    "line": 84,
                     "visibility": "public"
                 },
                 {
                     "method": "rotate_integration_token",
-                    "line": 109,
+                    "line": 110,
+                    "visibility": "public"
+                },
+                {
+                    "method": "reveal_integration_token",
+                    "line": 126,
                     "visibility": "public"
                 },
                 {
                     "method": "disable_integration",
-                    "line": 125,
+                    "line": 140,
                     "visibility": "public"
                 },
                 {
                     "method": "retry_reviewed_event",
-                    "line": 139,
+                    "line": 154,
                     "visibility": "public"
                 },
                 {
                     "method": "get_invoice_data",
-                    "line": 201,
+                    "line": 216,
                     "visibility": "public"
                 },
                 {
                     "method": "charges",
-                    "line": 213,
-                    "visibility": "public"
-                },
-                {
-                    "method": "customers",
                     "line": 228,
                     "visibility": "public"
                 },
                 {
+                    "method": "customers",
+                    "line": 243,
+                    "visibility": "public"
+                },
+                {
                     "method": "health",
-                    "line": 241,
-                    "visibility": "public"
-                },
-                {
-                    "method": "merge",
-                    "line": 249,
-                    "visibility": "public"
-                },
-                {
-                    "method": "services",
                     "line": 256,
                     "visibility": "public"
                 },
                 {
-                    "method": "setup_webhook",
-                    "line": 262,
-                    "visibility": "public"
-                },
-                {
-                    "method": "set_webhook",
-                    "line": 263,
-                    "visibility": "public"
-                },
-                {
-                    "method": "set_webhook_invoice",
+                    "method": "merge",
                     "line": 264,
                     "visibility": "public"
                 },
                 {
+                    "method": "services",
+                    "line": 271,
+                    "visibility": "public"
+                },
+                {
+                    "method": "setup_webhook",
+                    "line": 277,
+                    "visibility": "public"
+                },
+                {
+                    "method": "set_webhook",
+                    "line": 278,
+                    "visibility": "public"
+                },
+                {
+                    "method": "set_webhook_invoice",
+                    "line": 279,
+                    "visibility": "public"
+                },
+                {
                     "method": "set_webhook_transfer",
-                    "line": 265,
+                    "line": 280,
                     "visibility": "public"
                 },
                 {
                     "method": "retorna_cobranca",
-                    "line": 267,
+                    "line": 282,
                     "visibility": "public"
                 },
                 {
                     "method": "retorna_cobrancas",
-                    "line": 274,
+                    "line": 289,
                     "visibility": "public"
                 }
             ],
@@ -16657,7 +16665,7 @@
         },
         {
             "path": "modules/asaas/controllers/Checkout.php",
-            "source_sha256": "c3491bc2b34495084c88b53117a3460ef4362f5995af96f8385f5bb57595528b",
+            "source_sha256": "2f70b5df27932a9be5ca74f760d4117a6df3c264d64239c2284ed048e420e7d0",
             "module": "asaas",
             "base_class": "ClientsController",
             "surface": "public_or_api_or_job",
@@ -16669,27 +16677,27 @@
                 },
                 {
                     "method": "index",
-                    "line": 34,
+                    "line": 51,
                     "visibility": "public"
                 },
                 {
                     "method": "boleto",
-                    "line": 55,
+                    "line": 72,
                     "visibility": "public"
                 },
                 {
                     "method": "cartao",
-                    "line": 76,
+                    "line": 93,
                     "visibility": "public"
                 },
                 {
                     "method": "qrcode",
-                    "line": 134,
+                    "line": 151,
                     "visibility": "public"
                 },
                 {
                     "method": "error",
-                    "line": 169,
+                    "line": 186,
                     "visibility": "public"
                 }
             ],
@@ -26625,7 +26633,7 @@
         {
             "name": "asaas_company_accounts",
             "state": "not_verified",
-            "reference_count": 19
+            "reference_count": 20
         },
         {
             "name": "asaas_company_events",
@@ -26730,7 +26738,7 @@
         {
             "name": "asaas_webhook_integrations",
             "state": "not_verified",
-            "reference_count": 3
+            "reference_count": 4
         },
         {
             "name": "audit",
@@ -26920,7 +26928,7 @@
         {
             "name": "clients",
             "state": "not_verified",
-            "reference_count": 292
+            "reference_count": 291
         },
         {
             "name": "color",
@@ -28120,7 +28128,7 @@
         {
             "name": "currencies",
             "state": "not_verified",
-            "reference_count": 73
+            "reference_count": 74
         },
         {
             "name": "currency_rate_logs",
@@ -28230,7 +28238,7 @@
         {
             "name": "emailtemplates",
             "state": "not_verified",
-            "reference_count": 58
+            "reference_count": 59
         },
         {
             "name": "estimate_request_forms",
@@ -28990,7 +28998,7 @@
         {
             "name": "issuers_lock",
             "state": "not_verified",
-            "reference_count": 6
+            "reference_count": 7
         },
         {
             "name": "issuers_master_authorizations",
@@ -29405,7 +29413,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 81
+            "reference_count": 82
         },
         {
             "name": "mrp_manufacturing_orders",
@@ -29460,7 +29468,7 @@
         {
             "name": "options",
             "state": "not_verified",
-            "reference_count": 108
+            "reference_count": 110
         },
         {
             "name": "order_items",

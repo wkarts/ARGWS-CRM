@@ -22,7 +22,7 @@ class Emails extends AdminController
         if (staff_cant('view', 'email_templates')) {
             access_denied('email_templates');
         }
-        // PT-BR é o idioma único do CRM. Não criar modelos para outros idiomas.
+        // O catálogo administrativo prioriza PT-BR sem apagar outros idiomas.
         // Recupera modelos de módulos previamente ativados, sem tocar em
         // personalizações ou nos estados habilitado/desabilitado existentes.
         require_once APPPATH . 'services/EmailTemplatesPtBr.php';
@@ -33,72 +33,68 @@ class Emails extends AdminController
                 . $exception->getMessage());
         }
 
-        $data['staff'] = $this->emails_model->get([
+        $data['staff'] = $this->emails_model->get_catalogue([
             'type'     => 'staff',
-            'language' => 'portuguese_br',
         ]);
 
-        $data['credit_notes'] = $this->emails_model->get([
+        $data['credit_notes'] = $this->emails_model->get_catalogue([
             'type'     => 'credit_note',
-            'language' => 'portuguese_br',
         ]);
 
-        $data['tasks'] = $this->emails_model->get([
+        $data['tasks'] = $this->emails_model->get_catalogue([
             'type'     => 'tasks',
-            'language' => 'portuguese_br',
         ]);
-        $data['client'] = $this->emails_model->get([
+        $data['client'] = $this->emails_model->get_catalogue([
             'type'     => 'client',
-            'language' => 'portuguese_br',
         ]);
-        $data['tickets'] = $this->emails_model->get([
+        $data['tickets'] = $this->emails_model->get_catalogue([
             'type'     => 'ticket',
-            'language' => 'portuguese_br',
         ]);
-        $data['invoice'] = $this->emails_model->get([
+        $data['invoice'] = $this->emails_model->get_catalogue([
             'type'     => 'invoice',
-            'language' => 'portuguese_br',
         ]);
-        $data['estimate'] = $this->emails_model->get([
+        $data['estimate'] = $this->emails_model->get_catalogue([
             'type'     => 'estimate',
-            'language' => 'portuguese_br',
         ]);
-        $data['contracts'] = $this->emails_model->get([
+        $data['contracts'] = $this->emails_model->get_catalogue([
             'type'     => 'contract',
-            'language' => 'portuguese_br',
         ]);
-        $data['proposals'] = $this->emails_model->get([
+        $data['proposals'] = $this->emails_model->get_catalogue([
             'type'     => 'proposals',
-            'language' => 'portuguese_br',
         ]);
-        $data['projects'] = $this->emails_model->get([
+        $data['projects'] = $this->emails_model->get_catalogue([
             'type'     => 'project',
-            'language' => 'portuguese_br',
         ]);
-        $data['leads'] = $this->emails_model->get([
+        $data['leads'] = $this->emails_model->get_catalogue([
             'type'     => 'leads',
-            'language' => 'portuguese_br',
         ]);
 
-        $data['gdpr'] = $this->emails_model->get([
+        $data['gdpr'] = $this->emails_model->get_catalogue([
             'type'     => 'gdpr',
-            'language' => 'portuguese_br',
         ]);
 
-        $data['subscriptions'] = $this->emails_model->get([
+        $data['subscriptions'] = $this->emails_model->get_catalogue([
             'type'     => 'subscriptions',
-            'language' => 'portuguese_br',
         ]);
 
-        $data['estimate_request'] = $this->emails_model->get([
+        $data['estimate_request'] = $this->emails_model->get_catalogue([
             'type'     => 'estimate_request',
-            'language' => 'portuguese_br',
         ]);
 
-        $data['notifications'] = $this->emails_model->get([
+        $data['notifications'] = $this->emails_model->get_catalogue([
             'type'     => 'notifications',
-            'language' => 'portuguese_br',
         ]);
+
+        $knownTypes = ['staff', 'credit_note', 'tasks', 'client', 'ticket', 'invoice', 'estimate',
+            'contract', 'proposals', 'project', 'leads', 'gdpr', 'subscriptions', 'estimate_request', 'notifications'];
+        $moduleTypes = [];
+        foreach (['order' => 'products', 'purchase_order' => 'purchase', 'timesheets_attendance_mgt' => 'timesheets',
+            'invoice_builder' => 'invoices_builder', 'webhooks' => 'webhooks'] as $type => $module) {
+            if ($this->app_modules->is_active($module)) $moduleTypes[] = $type;
+        }
+        $data['other_templates'] = array_values(array_filter($this->emails_model->get_catalogue(),
+            static fn($row) => !in_array($row['type'], $knownTypes, true)
+                && (!in_array($row['type'], $moduleTypes, true) || $row['language'] !== 'portuguese_br')));
 
         $data['title'] = _l('email_templates');
 
@@ -148,17 +144,18 @@ class Emails extends AdminController
             redirect(admin_url('emails/email_template/' . $id));
         }
 
-        // portuguese_br is not included here
-        $data['available_languages'] = $this->app->get_available_languages();
-
-        if (($key = array_search('portuguese_br', $data['available_languages'])) !== false) {
-            unset($data['available_languages'][$key]);
-        }
+        require_once APPPATH . 'services/EmailTemplateLocale.php';
+        // Use persisted variants, including legitimate languages no longer enabled in the UI.
+        // Exclude the actual selected language, not a hard-coded Portuguese variant.
+        $data['language_templates'] = array_values(array_filter(
+            $this->emails_model->get(['slug' => $selectedTemplate->slug]),
+            static fn($row) => (int) $row['emailtemplateid'] !== (int) $selectedTemplate->emailtemplateid
+        ));
 
         $data['available_merge_fields'] = $this->app_merge_fields->all();
 
         $data['template'] = $selectedTemplate;
-        $title            = $data['template']->name;
+        $title            = EmailTemplateLocale::templateName($data['template']);
         $data['title']    = $title;
         $this->load->view('admin/emails/template', $data);
     }
@@ -231,6 +228,7 @@ class Emails extends AdminController
             }
         }
         require_once APPPATH.'services/CompanySettingsIdentity.php';
+        require_once APPPATH.'services/EmailTemplateLocale.php';
         $identity=(new CompanySettingsIdentity($this->db,db_prefix()))->read(CompanySettingsRuntime::issuerId());
         $this->load->view('admin/emails/company_scoped',[
             'company_identity'=>$identity,'selected'=>$selected,'templates'=>$selected?[]:$this->emails_model->get(['language'=>'portuguese_br']),

@@ -26,11 +26,8 @@ function prepare_mail_preview_data($template, $customer_id_or_email, $mailClassP
 
     $data['template_name'] = $slug;
 
-    $template_result = $CI->emails_model->get(['slug' => $slug, 'language' => 'portuguese_br'], 'row');
-    if (!$template_result) {
-        // Compatibilidade com instalações ainda não migradas.
-        $template_result = $CI->emails_model->get(['slug' => $slug, 'language' => 'english'], 'row');
-    }
+    // Preview metadata belongs to the same localized row selected for the actual message.
+    $template_result = $data['template'];
     if (!$template_result) {
         show_error('Modelo de e-mail não encontrado: ' . html_escape($slug));
     }
@@ -62,7 +59,10 @@ function parse_email_template($template, $merge_fields = [])
             $template = $CI->input->post('template_name');
         }
 
-        $template = $CI->emails_model->get(['slug' => $template], 'row');
+        $template = $CI->emails_model->get_for_sending((string) $template,
+            is_object($original_template) && isset($original_template->language)
+                ? (string) $original_template->language : (string) get_option('active_language'));
+        if (!$template) throw new DomainException('email_template_not_found');
 
         if ($CI->input->post('email_template_custom')) {
             $template->message = $CI->input->post('email_template_custom', false);
@@ -189,38 +189,15 @@ function get_mail_template_path($class, &$params)
  */
 function create_email_template($subject, $message, $type, $name, $slug, $active = 1)
 {
-    if (total_rows(db_prefix() . 'emailtemplates', ['slug' => $slug, 'language' => 'portuguese_br']) > 0) {
-        return false;
-    }
-
-    // Somente os textos originais dos módulos recebem tradução automática.
-    // Conteúdo customizado (inclusive HTML, links e merge fields) não é reescrito.
     require_once APPPATH . 'services/EmailTemplatesPtBr.php';
-    $localized = EmailTemplatesPtBr::get((string) $slug);
-    if ($localized && isset($localized['source_subject'], $localized['source_name'], $localized['source_message'])
-        && $subject === $localized['source_subject']
-        && $name === $localized['source_name']
-        && $message === $localized['source_message']) {
-        $subject = $localized['subject'];
-        $name = $localized['name'];
-        $message = EmailTemplatesPtBr::translateMessage($message);
-    }
-
-    $data['subject']   = $subject;
-    $data['message']   = $message;
-    $data['type']      = $type;
-    $data['name']      = $name;
-    $data['slug']      = $slug;
-    $data['language']  = 'portuguese_br';
-    $data['active']    = $active;
-    $data['plaintext'] = 0;
-    $data['order']     = 0; // Campo obrigatório no MySQL estrito.
-    $data['fromname'] = '{companyname} | CRM';
-
-    $CI                = &get_instance();
-    $CI->load->model('emails_model');
-
-    return $CI->emails_model->add_template($data);
+    require_once APPPATH . 'services/EmailTemplateReconciler.php';
+    $CI = &get_instance();
+    return EmailTemplateReconciler::create($CI->db, db_prefix(), [
+        'subject' => $subject, 'message' => $message, 'type' => $type,
+        'name' => $name, 'slug' => $slug, 'language' => 'english',
+        'active' => $active, 'plaintext' => 0, 'order' => 0,
+        'fromname' => '{companyname} | CRM', 'fromemail' => '',
+    ]);
 }
 
 /**

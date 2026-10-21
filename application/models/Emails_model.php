@@ -68,6 +68,37 @@ class Emails_model extends App_Model
         return $this->db->get(db_prefix() . 'emailtemplates')->{$result_type}();
     }
 
+    /** One editable representative per slug; no missing/custom language variant is hidden. */
+    public function get_catalogue(array $where = []): array
+    {
+        require_once APPPATH . 'services/EmailTemplateLocale.php';
+        $groups = [];
+        foreach ($this->get($where) as $row) {
+            if (isset($groups[$row['slug']][$row['language']])) throw new DomainException('company_email_template_ambiguous');
+            $groups[$row['slug']][$row['language']] = $row;
+        }
+        $result = [];
+        foreach ($groups as $variants) {
+            $selected = null;
+            foreach (EmailTemplateLocale::candidates('portuguese_br', (string) get_option('active_language')) as $language) {
+                if (isset($variants[$language])) { $selected = $variants[$language]; break; }
+            }
+            $result[] = $selected ?? reset($variants);
+        }
+        return $result;
+    }
+
+    /** Resolve language without leaving the model's immutable company scope. */
+    public function get_for_sending(string $slug, string $language, ?string $activeLanguage = null): ?object
+    {
+        require_once APPPATH . 'services/EmailTemplateLocale.php';
+        return EmailTemplateLocale::select(function ($candidate) use ($slug) {
+            $rows = $this->get(['slug' => $slug, 'language' => $candidate]);
+            if (count($rows) > 1) throw new DomainException('company_email_template_ambiguous');
+            return $rows ? (object) $rows[0] : null;
+        }, $language, $activeLanguage ?? (string) get_option('active_language'));
+    }
+
     /**
      * @param  integer
      * @return object

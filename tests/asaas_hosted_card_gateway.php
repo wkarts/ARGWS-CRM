@@ -6,7 +6,7 @@ use Asaas\Sdk\Http\Client;
 function get_currency($id){return $id===1?(object)['name'=>'BRL']:null;}
 function get_invoice_total_left_to_pay($id,$total){return (float)$total;}
 function cardFixture(): array {
-    [$gw,$adapter,$db]=fixture();$gw->settings['active']='1';$gw->settings['card_only']='1';
+    [$gw,$adapter,$db]=fixture();profile_option('sandbox','active','1');profile_option('sandbox','card_only','1');
     $db->tables['tblinvoices'][0]['allowed_payment_modes']=serialize(['asaas']);$db->tables['tblinvoices'][0]['currency']=1;
     $db->tables['tblasaas_customers_map']=[['client_id'=>10,'asaas_customer_id'=>'cus_original']];
     return [$gw,$adapter,$db,(object)$db->tables['tblinvoices'][0]];
@@ -19,7 +19,7 @@ foreach (['card','creditCard','creditCardToken','creditCardHolderInfo','unknown'
 [$gw,$adapter,$db,$invoice]=cardFixture();$result=json_decode($gw->charge_credit_card(['invoice'=>$invoice,'installmentCount'=>2]),true);
 check(isset($result['errors'])&&Client::$calls===[],'installments blocked before provider');
 foreach (['CREDIT_CARD','UNDEFINED','BOLETO'] as $type) {
-    [$gw,$adapter,$db,$invoice]=cardFixture();known($adapter,$db);$gw->settings['sandbox']='0';
+    [$gw,$adapter,$db,$invoice]=cardFixture();known($adapter,$db);$GLOBALS['options']['paymentmethod_asaas_sandbox']='0';
     Client::$responses=[wallet(),cardPayment($type)];$result=json_decode($gw->charge_credit_card(['invoice'=>$invoice]),true);
     check(array_column(Client::$calls,0)===['GET','GET'],'existing origin read only for '.$type);
     check(array_column(Client::$calls,3)===['sandbox','sandbox'],'origin sandbox wins over new global production');

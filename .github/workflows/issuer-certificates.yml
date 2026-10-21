@@ -4,6 +4,12 @@ on:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
     paths:
       - application/services/issuers/IssuerCertificate*.php
+      - application/migrations/458_version_458.php
+      - application/services/CompanyClientProfileSchema.php
+      - application/services/email_templates_ptbr/**
+      - application/libraries/App.php
+      - application/libraries/App_Migration.php
+      - system/libraries/Migration.php
       - application/controllers/admin/Company_certificates.php
       - application/views/admin/companies/certificates.php
       - application/views/admin/issuers/certificate_link.php
@@ -15,6 +21,12 @@ on:
     branches: [main, develop]
     paths:
       - application/services/issuers/IssuerCertificate*.php
+      - application/migrations/458_version_458.php
+      - application/services/CompanyClientProfileSchema.php
+      - application/services/email_templates_ptbr/**
+      - application/libraries/App.php
+      - application/libraries/App_Migration.php
+      - system/libraries/Migration.php
       - tests/certificates/**
       - .github/workflows/issuer-certificates.yml
 permissions:
@@ -56,3 +68,4 @@ jobs:
         run: |
           php tests/certificates/manager.php
           php tests/certificates/mysql_concurrency.php
+          php tests/certificates/native_458_mysql.php

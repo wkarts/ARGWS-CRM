@@ -39,7 +39,7 @@
                                                 <td
                                                     class="<?= $ticket_template['active'] == 0 ? 'tw-line-through' : ''; ?>">
                                                     <a
-                                                        href="<?= admin_url('emails/email_template/' . $ticket_template['emailtemplateid']); ?>"><?= e($ticket_template['name']); ?></a>
+                                                        href="<?= admin_url('emails/email_template/' . $ticket_template['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($ticket_template)); ?></a>
                                                     <?php if (ENVIRONMENT !== 'production') { ?>
                                                     <br /><small><?= e($ticket_template['slug']); ?></small>
                                                     <?php } ?>
@@ -82,7 +82,7 @@
                                                 <td
                                                     class="<?= $estimate_template['active'] == 0 ? 'tw-line-through' : ''; ?>">
                                                     <a
-                                                        href="<?= admin_url('emails/email_template/' . $estimate_template['emailtemplateid']); ?>"><?= e($estimate_template['name']); ?></a>
+                                                        href="<?= admin_url('emails/email_template/' . $estimate_template['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($estimate_template)); ?></a>
                                                     <?php if (ENVIRONMENT !== 'production') { ?>
                                                     <br /><small><?= e($estimate_template['slug']); ?></small>
                                                     <?php } ?>
@@ -126,7 +126,7 @@
                                                 <td
                                                     class="<?= $contract_template['active'] == 0 ? 'tw-line-through' : ''; ?>">
                                                     <a
-                                                        href="<?= admin_url('emails/email_template/' . $contract_template['emailtemplateid']); ?>"><?= e($contract_template['name']); ?></a>
+                                                        href="<?= admin_url('emails/email_template/' . $contract_template['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($contract_template)); ?></a>
                                                     <?php if (ENVIRONMENT !== 'production') { ?>
                                                     <br /><small><?= e($contract_template['slug']); ?></small>
                                                     <?php } ?>
@@ -170,7 +170,7 @@
                                                 <td
                                                     class="<?= $invoice_template['active'] == 0 ? 'tw-line-through' : ''; ?>">
                                                     <a
-                                                        href="<?= admin_url('emails/email_template/' . $invoice_template['emailtemplateid']); ?>"><?= e($invoice_template['name']); ?></a>
+                                                        href="<?= admin_url('emails/email_template/' . $invoice_template['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($invoice_template)); ?></a>
                                                     <?php if (ENVIRONMENT !== 'production') { ?>
                                                     <br /><small><?= e($invoice_template['slug']); ?></small>
                                                     <?php } ?>
@@ -215,7 +215,7 @@
                                                 <td
                                                     class="<?= $subscription_template['active'] == 0 ? 'tw-line-through' : ''; ?>">
                                                     <a
-                                                        href="<?= admin_url('emails/email_template/' . $subscription_template['emailtemplateid']); ?>"><?= e($subscription_template['name']); ?></a>
+                                                        href="<?= admin_url('emails/email_template/' . $subscription_template['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($subscription_template)); ?></a>
                                                     <?php if (ENVIRONMENT !== 'production') { ?>
                                                     <br /><small><?= e($subscription_template['slug']); ?></small>
                                                     <?php } ?>
@@ -260,7 +260,7 @@
                                                 <td
                                                     class="<?= $credit_note_template['active'] == 0 ? 'tw-line-through' : ''; ?>">
                                                     <a
-                                                        href="<?= admin_url('emails/email_template/' . $credit_note_template['emailtemplateid']); ?>"><?= e($credit_note_template['name']); ?></a>
+                                                        href="<?= admin_url('emails/email_template/' . $credit_note_template['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($credit_note_template)); ?></a>
                                                     <?php if (ENVIRONMENT !== 'production') { ?>
                                                     <br /><small><?= e($credit_note_template['slug']); ?></small>
                                                     <?php } ?>
@@ -305,7 +305,7 @@
                                                 <td
                                                     class="<?= $task_template['active'] == 0 ? 'tw-line-through' : ''; ?>">
                                                     <a
-                                                        href="<?= admin_url('emails/email_template/' . $task_template['emailtemplateid']); ?>"><?= e($task_template['name']); ?></a>
+                                                        href="<?= admin_url('emails/email_template/' . $task_template['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($task_template)); ?></a>
                                                     <?php if (ENVIRONMENT !== 'production') { ?>
                                                     <br /><small><?= e($task_template['slug']); ?></small>
                                                     <?php } ?>
@@ -352,7 +352,7 @@
                                                 <td
                                                     class="<?= $client_template['active'] == 0 ? 'tw-line-through' : ''; ?>">
                                                     <a
-                                                        href="<?= admin_url('emails/email_template/' . $client_template['emailtemplateid']); ?>"><?= e($client_template['name']); ?></a>
+                                                        href="<?= admin_url('emails/email_template/' . $client_template['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($client_template)); ?></a>
                                                     <?php if (ENVIRONMENT !== 'production') { ?>
                                                     <br /><small><?= e($client_template['slug']); ?></small>
                                                     <?php } ?>
@@ -397,7 +397,7 @@
                                                 <td
                                                     class="<?= $proposal_template['active'] == 0 ? 'tw-line-through' : ''; ?>">
                                                     <a
-                                                        href="<?= admin_url('emails/email_template/' . $proposal_template['emailtemplateid']); ?>"><?= e($proposal_template['name']); ?></a>
+                                                        href="<?= admin_url('emails/email_template/' . $proposal_template['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($proposal_template)); ?></a>
                                                     <?php if (ENVIRONMENT !== 'production') { ?>
                                                     <br /><small><?= e($proposal_template['slug']); ?></small>
                                                     <?php } ?>
@@ -440,7 +440,7 @@
                                                 <td
                                                     class="<?= $project_template['active'] == 0 ? 'tw-line-through' : ''; ?>">
                                                     <a
-                                                        href="<?= admin_url('emails/email_template/' . $project_template['emailtemplateid']); ?>"><?= e($project_template['name']); ?></a>
+                                                        href="<?= admin_url('emails/email_template/' . $project_template['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($project_template)); ?></a>
                                                     <?php if (ENVIRONMENT !== 'production') { ?>
                                                     <br /><small><?= e($project_template['slug']); ?></small>
                                                     <?php } ?>
@@ -484,7 +484,7 @@
                                                 <td
                                                     class="<?= $staff_template['active'] == 0 ? 'tw-line-through' : ''; ?>">
                                                     <a
-                                                        href="<?= admin_url('emails/email_template/' . $staff_template['emailtemplateid']); ?>"><?= e($staff_template['name']); ?></a>
+                                                        href="<?= admin_url('emails/email_template/' . $staff_template['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($staff_template)); ?></a>
                                                     <?php if (ENVIRONMENT !== 'production') { ?>
                                                     <br /><small><?= e($staff_template['slug']); ?></small>
                                                     <?php } ?>
@@ -528,7 +528,7 @@
                                                 <td
                                                     class="<?= $lead_template['active'] == 0 ? 'tw-line-through' : ''; ?>">
                                                     <a
-                                                        href="<?= admin_url('emails/email_template/' . $lead_template['emailtemplateid']); ?>"><?= e($lead_template['name']); ?></a>
+                                                        href="<?= admin_url('emails/email_template/' . $lead_template['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($lead_template)); ?></a>
                                                     <?php if (ENVIRONMENT !== 'production') { ?>
                                                     <br /><small><?= e($lead_template['slug']); ?></small>
                                                     <?php } ?>
@@ -664,7 +664,7 @@
                                                 <td
                                                     class="<?= $gdpr_template['active'] == 0 ? 'tw-line-through' : ''; ?>">
                                                     <a
-                                                        href="<?= admin_url('emails/email_template/' . $gdpr_template['emailtemplateid']); ?>"><?= e($gdpr_template['name']); ?></a>
+                                                        href="<?= admin_url('emails/email_template/' . $gdpr_template['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($gdpr_template)); ?></a>
                                                     <?php if (ENVIRONMENT !== 'production') { ?>
                                                     <br /><small><?= e($gdpr_template['slug']); ?></small>
                                                     <?php } ?>
@@ -679,6 +679,18 @@
                                     </table>
                                 </div>
                             </div>
+                            <?php if ($other_templates) { ?>
+                            <div class="col-md-12">
+                                <h4 class="tw-font-semibold"><?= _l('email_template_other_models'); ?></h4>
+                                <ul>
+                                    <?php foreach ($other_templates as $otherTemplate) { ?>
+                                    <li><a href="<?= admin_url('emails/email_template/' . (int) $otherTemplate['emailtemplateid']); ?>"><?= e(EmailTemplateLocale::templateName($otherTemplate)); ?></a>
+                                        (<?= e(EmailTemplateLocale::groupLabel($otherTemplate['type'])); ?>,
+                                        <?= e(EmailTemplateLocale::languageLabel((string) $otherTemplate['language'])); ?>)</li>
+                                    <?php } ?>
+                                </ul>
+                            </div>
+                            <?php } ?>
                             <?php hooks()->do_action('after_email_templates'); ?>
                             <div class="clearfix"></div>
                         </div>

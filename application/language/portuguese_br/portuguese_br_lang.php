@@ -156,10 +156,10 @@ $lang['template_name']                = 'Nome do Modelo';
 $lang['template_subject']             = 'Assunto';
 $lang['template_fromname']            = 'Remetente';
 $lang['template_fromemail']           = 'Do E-mail';
-$lang['send_as_plain_text']           = 'Enviar como Plaintext';
+$lang['send_as_plain_text']           = 'Enviar como texto simples';
 $lang['email_template_disabled']      = 'Desabilitar';
 $lang['email_template_email_message'] = 'Mensagem do e-mail';
-$lang['available_merge_fields']       = 'Disponibilizar mesclagem dos campos';
+$lang['available_merge_fields']       = 'Campos de mesclagem disponíveis';
 # Home
 $lang['dashboard_string']                          = 'Painel';
 $lang['home_latest_todos']                         = 'Últimas tarefas';
@@ -2465,7 +2465,7 @@ $lang['task_filter_detailed_all_months']     = 'Todos os meses';
 $lang['kb_article_slug']                     = 'Slug';
 
 # Version 1.1.7
-$lang['email_template_ticket_warning']          = 'Se o ticket for importado com o direcionamento de email e o contato não existir no CRM os campos não serão substituidos.';
+$lang['email_template_ticket_warning']          = 'Se o chamado for importado por encaminhamento de e-mail e o contato não existir no CRM, os campos do contato não serão substituídos.';
 $lang['auto_stop_tasks_timers_on_new_timer']    = 'Parar todos os outros cronometros, quando começar um novo?';
 $lang['notification_when_customer_pay_invoice'] = 'Receber notificação quando cliente efetuar um pagamento (embutido)';
 $lang['not_invoice_payment_recorded']           = 'Novo pagamento de fatura - %s';
@@ -4195,3 +4195,6 @@ $lang['issuer_client_adoption_blocked'] = 'O cadastro e o compartilhamento priva
 
 $lang['permission_share_customer_companies'] = 'Compartilhar cadastro com outras empresas';
 $lang['issuer_staff_company_access_required'] = 'O colaborador não foi criado: selecione pelo menos uma empresa autorizada e uma empresa padrão. Se a instalação legada ainda não tem responsável definido, resolva a responsabilidade em Configurações > Empresas antes de cadastrar novos colaboradores.';
+
+$lang['email_template_public_ticket_url_warning'] = 'Este modelo contém o campo <strong>{ticket_public_url}</strong>, mas a URL pública do chamado está desativada nas configurações. Use <strong>{ticket_url}</strong> ou ative a URL pública do chamado.';
+$lang['email_template_other_models'] = 'Outros modelos';

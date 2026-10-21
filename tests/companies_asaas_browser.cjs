@@ -20,9 +20,10 @@ try{
   await go(page,page.locator('form').filter({has:page.locator('#asaas-new-key')}).locator('button[type=submit]'));
   assert.equal(await page.locator('#asaas-new-key').inputValue(),'');assert.ok(!await page.content().then(v=>v.includes('synthetic-browser-key-'+letter)),'stored API secret is never rendered');
   const x=fixture(letter);prepared[issuer]=x;await page.reload({waitUntil:'domcontentloaded'});
-  const rotate=page.locator('form').filter({has:page.locator('input[name=action][value=rotate]')});await go(page,rotate.locator('button[type=submit]'));
-  const token=(await page.locator('#asaas-one-time-token').innerText()).trim();assert.match(token,/^[a-f0-9]{64}$/);
-  fixture(letter,'refresh',x.origin);await page.reload({waitUntil:'domcontentloaded'});assert.equal(await page.locator('#asaas-one-time-token').count(),0,'token has one-time display');
+  await page.locator('#webhooks details summary').click();const rotate=page.locator('form').filter({has:page.locator('input[name=action][value=rotate]')});await rotate.locator('input[name=confirm]').check();await go(page,rotate.locator('button[type=submit]'));
+  const token=(await page.locator('#asaas-one-time-token').inputValue()).trim();assert.match(token,/^[a-f0-9]{64}$/);
+  fixture(letter,'refresh',x.origin);await page.reload({waitUntil:'domcontentloaded'});assert.equal(await page.locator('#asaas-one-time-token').count(),0,'GET never hydrates plaintext token');
+  const reveal=page.locator('form').filter({has:page.locator('input[name=action][value=reveal_webhook]')});await go(page,reveal.locator('button[type=submit]'));assert.equal(await page.locator('#asaas-one-time-token').inputValue(),token,'explicit reveal recovers the original token');assert.equal(await page.locator('#asaas-one-time-token').getAttribute('type'),'password','recovered token starts masked');await page.reload({waitUntil:'domcontentloaded'});
   const settle=page.locator('#asaas-origin-'+x.origin+' form').filter({has:page.locator('input[name=action][value=settle]')});const retry=await hidden(settle);await settle.locator('input[name=confirm]').check();await go(page,settle.locator('button[type=submit]'));
   assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+x.invoice),'1');assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+x.invoice),'2');
   assert.equal((await context.request.post(url+'/admin/company_asaas',{form:{...retry,confirm:'1'}})).status(),200,'same proof retry is idempotent');assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+x.invoice),'1');
@@ -40,5 +41,5 @@ try{
  assert.equal((await context.request.post(url+'/admin/company_asaas',{form:oldForm})).status(),409,'obsolete A company editor denied before effects');
  assert.equal((await context.request.get(url+'/admin/company_asaas?invoice='+prepared[a].invoice)).status(),403,'B cannot hydrate A invoice in issuer UI');
  assert.ok(!(await page.locator('#charges').innerText()).includes(prepared[a].remote),'B charge list never renders A remote identity');
- await page.screenshot({path:output+'/company-asaas.png',fullPage:true});assert.deepEqual(errors,[]);console.log('Company Asaas A/B actual UI credentials/token-once/receipt + HTTP inbox/dedup/stale/company isolation passed. Tariff native expense and opt-in worker passed; creation/query transport simulated by CLI fixture; no real Asaas homologation.');
+ await page.screenshot({path:output+'/company-asaas.png',fullPage:true});assert.deepEqual(errors,[]);console.log('Company Asaas A/B actual UI credentials/protected-token-recovery/receipt + HTTP inbox/dedup/stale/company isolation passed. Tariff native expense and opt-in worker passed; creation/query transport simulated by CLI fixture; no real Asaas homologation.');
 }finally{await browser.close();}})().catch(e=>{console.error(e.stderr?.toString()||e.message);process.exitCode=1;});

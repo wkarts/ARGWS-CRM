@@ -4,6 +4,7 @@ require __DIR__.'/invoices.php';
 if(!defined('FCPATH'))define('FCPATH',dirname(__DIR__,2).'/');
 require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyService.php';
 require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyReceivedReceipt.php';
+require_once __DIR__.'/asaas_token_fixture.php';
 $start=$GLOBALS['essentialChecks'];
 $db->query("INSERT INTO {$p}modules(module_name,installed_version,active) VALUES('asaas','1.5.0',1)");
 if(!$db->table_exists($p.'asaas_payment_origins')){
@@ -15,7 +16,12 @@ else foreach(CompanyExpenseSchema::definitions() as $table=>$fields){$parts=[];f
 if(!$db->table_exists($p.'company_projects'))$db->query('CREATE TABLE '.$p.'company_projects(id int unsigned PRIMARY KEY,issuer_id int unsigned,name varchar(191),client_id int,status varchar(20))');
 \Asaas\CompanySchema::ensure($db,$p);\Asaas\CompanySchema::ensure($db,$p);\Asaas\CompanyRemoteOperationsSchema::ensure($db,$p);unset($db->data_cache['table_names']);
 (new CompanyCurrencyUnits($db,$p))->captureObservedUsed();
-$asaas=new \Asaas\CompanyService($db,$p);$enc=fn($value)=>'synthetic:'.base64_encode($value);$dec=fn($value)=>str_starts_with($value,'synthetic:')?base64_decode(substr($value,10),true):false;
+// Exercise the native cipher against an ephemeral key, never application credentials.
+require_once BASEPATH.'libraries/Encryption.php';$nativeWebhookCipher=new CI_Encryption(['driver'=>'openssl','key'=>random_bytes(32)]);
+if(!$db->table_exists($p.'asaas_webhook_integrations'))$db->query('CREATE TABLE '.$p.'asaas_webhook_integrations(id int PRIMARY KEY)');
+\Asaas\WebhookTokenSchema::ensure($db,$p);\Asaas\WebhookTokenSchema::ensure($db,$p);
+$webhookCipher=new \Asaas\WebhookTokenCipher(fn($v)=>$nativeWebhookCipher->encrypt($v),fn($v)=>$nativeWebhookCipher->decrypt($v));
+$asaas=new \Asaas\CompanyService($db,$p,$webhookCipher);$enc=fn($value)=>'synthetic:'.base64_encode($value);$dec=fn($value)=>str_starts_with($value,'synthetic:')?base64_decode(substr($value,10),true):false;
 $zero=str_repeat('0',64);$calls=[];$responses=[];$customerTax=['cus_a'=>'11144477735','cus_b'=>'12345678909'];
 $mock=function($environment,$method,$path,$payload,$secret)use(&$calls,&$responses,&$customerTax){
     $calls[]=[$environment,$method,$path,$payload,$secret];
@@ -64,14 +70,16 @@ $paymentB=$writer->recordCompanyProviderReceipt($b,7,new \Asaas\CompanyReceivedR
 essentialCheck($paymentA!==$paymentB&&$db->query("SELECT amount FROM {$p}invoicepaymentrecords WHERE id=?",[$paymentA])->row()->amount==105.53,'positive A/B settlements go through one native writer at nominal gross amount');
 essentialCheck($db->query("SELECT * FROM {$p}invoices WHERE id=42")->result_array()===$legacyBefore,'named-company settlement preserves authorized legacy NULL owner invoice');
 // Receive canonical inbox events without a financial write, then test rotation/replay/conflict/adverse order.
-$dto=$asaas->accounts($a,7)[0];$hook=$asaas->rotateWebhook($a,7,$accounts[$a],$dto['revision']);$dto=$asaas->accounts($a,7)[0];
+$historicalTokenVersion=$db->query('SELECT installed_version FROM '.$p.'modules WHERE module_name=?',['asaas'])->row()->installed_version;
+$dto=$asaas->accounts($a,7)[0];$hook=asaasFixtureRotateWebhook($asaas,$a,7,$accounts[$a],$dto['revision']);$dto=$asaas->accounts($a,7)[0];
+essentialCheck($db->query('SELECT installed_version FROM '.$p.'modules WHERE module_name=?',['asaas'])->row()->installed_version===$historicalTokenVersion,'synthetic token preparation restores historical financial tracking');
 $headers=['Content-Type'=>'application/json','asaas-access-token'=>$hook['one_time_token']];$payload=['id'=>'evt-company-A','event'=>'PAYMENT_RECEIVED','payment'=>['id'=>$remote[$a],'creditCardToken'=>'must-not-persist']];$body=json_encode($payload);$paymentsBefore=(int)$db->query("SELECT COUNT(*) n FROM {$p}invoicepaymentrecords")->row()->n;
 essentialCheck($asaas->receive($hook['public_id'],$headers,$body)['status']===200,'origin-specific webhook is authenticated and persisted');
 essentialCheck($asaas->receive($hook['public_id'],$headers,$body)['duplicate']===true,'same callback event is idempotent');
 essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}invoicepaymentrecords")->row()->n===$paymentsBefore,'callback does not imply financial settlement');
 essentialCheck(!str_contains(json_encode($db->query("SELECT * FROM {$p}asaas_company_events")->result_array()),'must-not-persist'),'webhook storage never keeps card/customer raw payload');
 $changed=$payload;$changed['payment']['creditCardToken']='changed';essentialCheck($asaas->receive($hook['public_id'],$headers,json_encode($changed))['status']===409,'same event identity with differing payload becomes durable conflict');
-$rotated=$asaas->rotateWebhook($a,7,$accounts[$a],$dto['revision']);essentialCheck($asaas->receive($hook['public_id'],$headers,$body)['status']===401,'rotating token invalidates its predecessor');
+$rotated=asaasFixtureRotateWebhook($asaas,$a,7,$accounts[$a],$dto['revision']);essentialCheck($asaas->receive($hook['public_id'],$headers,$body)['status']===401,'rotating token invalidates its predecessor');
 $headers['asaas-access-token']=$rotated['one_time_token'];$payload=['id'=>'evt-adverse-A','event'=>'PAYMENT_REFUNDED','payment'=>['id'=>$remote[$a]]];essentialCheck($asaas->receive($hook['public_id'],$headers,json_encode($payload))['status']===200,'authenticated adverse event persists for review');
 $nextProof=$asaas->query($a,7,$origins[$a],$dec,$mock);essentialThrows(fn()=>$writer->recordCompanyProviderReceipt($a,7,new \Asaas\CompanyReceivedReceipt($origins[$a],$nextProof)),'asaas_company_receipt_requires_review','later RECEIVED cannot clear earlier adverse history');
 essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}invoicepaymentrecords")->row()->n===$paymentsBefore,'adverse event never performs an uncontracted financial reversal');

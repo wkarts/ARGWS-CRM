@@ -20,11 +20,11 @@ class ScopeInvoiceDb{
 class ScopeInput{public string $verb='GET';public array $posted=[];function method($upper=false){return $this->verb;}function post($key){return $this->posted[$key]??null;}}
 class ScopeSession{public array $data=[];function userdata($key){return $this->data[$key]??null;}function set_userdata($key,$value){$this->data[$key]=$value;}function set_flashdata(...$x){}}
 class ScopeGateway{
- public array $calls=[];function getSetting($key){$this->calls[]=['setting',$key];return '1';}function getEnvironmentLabel(){$this->calls[]=['environment'];return 'SANDBOX';}
+ public array $calls=[];function getSettingForOrigin($key,$origin){$this->calls[]=['origin_setting',$key,$origin['environment']];return '1';}function getSetting($key){$this->calls[]=['setting',$key];return '1';}function getEnvironmentLabel(){$this->calls[]=['environment'];return 'SANDBOX';}
  function get_charge($hash){$this->calls[]=['get_charge',$hash];return (object)['id'=>'pay_legacy','bankSlipUrl'=>'https://sandbox.asaas.com/b/pdf/legacy'];}
  function create_qrcode($id){$this->calls[]=['qrcode',$id];return json_encode(['encodedImage'=>'synthetic-image','payload'=>'synthetic-pix']);}
  function charge_credit_card($input){$this->calls[]=['hosted',$input];return json_encode(['id'=>'pay_legacy','billingType'=>'CREDIT_CARD','invoiceUrl'=>'https://sandbox.asaas.com/i/legacy']);}
- function getAdapter(){return new class{function originStore(){return new class{function byInvoice($id){return ['state'=>'issued','remote_id'=>'pay_legacy','environment'=>'sandbox'];}};}};}
+ function getAdapter(){return new class{function originStore(){return new class{function byInvoice($id){return ['state'=>'issued','remote_id'=>'pay_legacy','environment'=>'sandbox','issuer_id'=>null,'provider'=>'asaas','channel'=>'api'];}};}};}
 }
 class ScopeLoader{public array $libraries=[],$helpers=[];function __construct(private $owner){}function library($name){$this->libraries[]=$name;if(!in_array($name,['asaas_gateway','asaas/asaas_gateway'],true))throw new LogicException('ambiguous module library');$this->owner->asaas_gateway=new ScopeGateway();}function helper($name){$this->helpers[]=$name;}}
 #[AllowDynamicProperties]class ClientsController{public $db,$input,$session,$load,$asaas_gateway;public array $rendered=[],$effects=[];function __construct(){$this->load=new ScopeLoader($this);$this->db=$GLOBALS['scopeDb'];$this->input=new ScopeInput();$this->session=new ScopeSession();}function data($data){$this->rendered=$data;$this->effects[]='data';}function view($view){$this->effects[]='view:'.$view;}function layout(){$this->effects[]='layout';}function title($title){}function disableNavigation(){}function disableSubMenu(){}}

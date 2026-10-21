@@ -61,14 +61,15 @@ test('todos os modelos dos módulos mapeados são PT-BR e preservam HTML e vari�
 
 test('módulos antigos e novos usam PT-BR e reconciliação sem apagar personalizações', () => {
   const service = read('application/services/EmailTemplatesPtBr.php');
+  const repair = read('application/services/EmailTemplateReconciler.php');
   const controller = read('application/controllers/admin/Emails.php');
   const modules = read('application/libraries/App_modules.php');
   const migration = read('application/migrations/371_version_371.php');
   assert.match(service, /function synchronizeModuleTemplates\(/);
-  assert.match(service, /function defaultOnlyChanges\(/);
-  assert.match(service, /if \(\$current !== \$source\)/);
-  assert.match(service, /\$copy\['language'\] = 'portuguese_br'/);
-  assert.match(service, /unset\(\$copy\['emailtemplateid'\]\)/);
+  assert.match(repair, /function defaultOnlyChanges\(/);
+  assert.match(repair, /if \(\$current !== \$original && !\$legacyName\)/);
+  assert.match(repair, /\$copy\['language'\] = 'portuguese_br'/);
+  assert.match(repair, /unset\(\$copy\['emailtemplateid'\]\)/);
   assert.doesNotMatch(service, /->delete\(|TRUNCATE|DROP TABLE/);
   assert.match(controller, /EmailTemplatesPtBr::synchronizeModuleTemplates\(\$this->db\)/);
   assert.match(modules, /EmailTemplatesPtBr::synchronizeModuleTemplates\(\$this->ci->db, \$name\)/);
@@ -82,7 +83,7 @@ test('módulos antigos e novos usam PT-BR e reconciliação sem apagar personali
   assert.match(read('modules/invoices_builder/helpers/invoices_builder_helper.php'), /'language' => 'portuguese_br'/);
   assert.match(read('modules/purchase/purchase.php'), /function update_email_lang_for_vendor[\s\S]*return 'portuguese_br'/);
   assert.match(read('modules/webhooks/webhooks.php'), /'language' => 'portuguese_br'/);
-  assert.match(read('application/helpers/email_templates_helper.php'), /EmailTemplatesPtBr::get/);
+  assert.match(read('application/helpers/email_templates_helper.php'), /EmailTemplateReconciler::create/);
 });
 
 test('o rótulo é LGPD e o item de configurações é somente Plataforma', () => {

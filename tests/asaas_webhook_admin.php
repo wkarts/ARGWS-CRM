@@ -9,6 +9,7 @@ function check($condition,$message) { global $checks; ++$checks; if (!$condition
 function fails($callable,$message) { try {$callable();} catch(Throwable $e) {check($e->getMessage()===$message,'Expected '.$message.', got '.$e->getMessage());return;} check(false,'Missing error '.$message); }
 $id=str_repeat('a',32);
 check(Presentation::callbackUrl(APP_BASE_URL,$id)==='https://crm.example.test/subdir/asaas/gateways/callback/integration/'.$id,'configured base subpath');
+check(Presentation::companyCallbackUrl(APP_BASE_URL,$id,'index.php')==='https://crm.example.test/subdir/index.php/company_asaas_callback/integration/'.$id,'company callback uses trusted base and index');
 check(Presentation::callbackUrl(APP_BASE_URL,$id,'index.php')==='https://crm.example.test/subdir/index.php/asaas/gateways/callback/integration/'.$id,'configured index page');
 $_SERVER['HTTP_HOST']='attacker.test'; $_SERVER['HTTP_X_FORWARDED_HOST']='attacker.test';
 check(!str_contains(Presentation::callbackUrl(APP_BASE_URL,$id),'attacker'),'never trusts request host');
@@ -26,7 +27,7 @@ class SessionStub { public $values=[]; function userdata($key){return $this->val
 class OutputStub { public $headers=[]; function set_header($header){$this->headers[]=$header;return $this;} }
 class ConfigStub { function item($key){return '';} }
 class LoadStub { public $data=[]; function view($name,$data){$this->data=$data;} }
-class StoreStub { public $ready=true,$calls=[]; function ready(){return $this->ready;} function listForAdmin(){return [['id'=>1,'public_id'=>str_repeat('a',32),'label'=>'<script>name</script>','issuer_id'=>null,'provider'=>'asaas','account_id'=>'wallet_test','environment'=>'sandbox','enabled'=>1,'last_valid_at'=>null,'last_rejected_at'=>null,'rejection_count'=>0,'rotated_at'=>null,'token_hash'=>'NEVER_RENDER_TOKEN_HASH']];} function recentEvents($id,$limit){$this->calls[]=['events',$id,$limit];return [['event_id'=>'evt_1','event_type'=>'PAYMENT_RECEIVED','process_status'=>'failed','verified_status'=>'','received_at'=>'2026-10-18','processed_at'=>null,'attempt_count'=>1,'payload'=>'NEVER_RENDER_PAYLOAD']];} function reviewQueue($limit){return [['id'=>7,'event_id'=>'evt_old','event_type'=>'PAYMENT_RECEIVED','asaas_payment_id'=>'pay_old','process_status'=>'review','received_at'=>'2026-10-18','integration_id'=>null]];} function pendingAutomations($limit){return [['id'=>2,'invoice_id'=>3,'state'=>'pending']];} function rotateToken($id){$this->calls[]=['rotate',$id];return ['integration_id'=>$id,'one_time_token'=>str_repeat('e',64)];} function disable($id){$this->calls[]=['disable',$id];} }
+class StoreStub { public $ready=true,$calls=[]; function ready(){return $this->ready;} function listForAdmin(){return [['id'=>1,'public_id'=>str_repeat('a',32),'label'=>'<script>name</script>','issuer_id'=>null,'provider'=>'asaas','account_id'=>'wallet_test','environment'=>'sandbox','enabled'=>1,'last_valid_at'=>null,'last_rejected_at'=>null,'rejection_count'=>0,'rotated_at'=>null,'token_hash'=>'NEVER_RENDER_TOKEN_HASH']];} function recentEvents($id,$limit){$this->calls[]=['events',$id,$limit];return [['event_id'=>'evt_1','event_type'=>'PAYMENT_RECEIVED','process_status'=>'failed','verified_status'=>'','received_at'=>'2026-10-18','processed_at'=>null,'attempt_count'=>1,'payload'=>'NEVER_RENDER_PAYLOAD']];} function reviewQueue($limit){return [['id'=>7,'event_id'=>'evt_old','event_type'=>'PAYMENT_RECEIVED','asaas_payment_id'=>'pay_old','process_status'=>'review','received_at'=>'2026-10-18','integration_id'=>null]];} function pendingAutomations($limit){return [['id'=>2,'invoice_id'=>3,'state'=>'pending']];} function rotateToken($id){$this->calls[]=['rotate',$id];return ['integration_id'=>$id,'one_time_token'=>str_repeat('e',64)];} function revealToken($id){$this->calls[]=['reveal',$id];return ['integration_id'=>$id,'one_time_token'=>str_repeat('e',64),'revealed'=>true];} function disable($id){$this->calls[]=['disable',$id];} }
 class AdapterStub { public $store,$calls=[]; function __construct(){$this->store=new StoreStub();} function webhookIntegrations(){return $this->store;} function registerWebhookIntegration(...$args){$this->calls[]=['register',...$args];return ['id'=>1,'one_time_token'=>str_repeat('d',64)];} function retryReviewedWebhook(...$args){$this->calls[]=['review',...$args];} }
 class GatewayStub { public $adapter; function __construct(){$this->adapter=new AdapterStub();} function getAdapter(){return $this->adapter;} }
 $GLOBALS['admin']=true; $GLOBALS['alerts']=[];
@@ -43,7 +44,7 @@ check(!str_contains(json_encode($c->load->data['events']),'NEVER_RENDER_PAYLOAD'
 $c->input->get=['integration'=>'999'];fails(fn()=>$c->index(),'404');
 $c->input->get=['integration'=>['1']];fails(fn()=>$c->index(),'404');
 $c->input->get=[];
-foreach (['register_integration','rotate_integration_token','disable_integration','retry_reviewed_event'] as $method) {
+foreach (['register_integration','rotate_integration_token','reveal_integration_token','disable_integration','retry_reviewed_event'] as $method) {
     $c=controller();$GLOBALS['admin']=false;fails(fn()=>$c->$method(),'denied');$GLOBALS['admin']=true;
     fails(fn()=>$c->$method(),'404');
     $c->input->method='POST';fails(fn()=>$c->$method(),'403');
@@ -64,6 +65,7 @@ $c->input->post=$basePost+['integration_id'=>'1'];$c->input->post['webhook_admin
 $c->rotate_integration_token();check(in_array(['rotate',1],$c->asaas_gateway->adapter->store->calls,true),'rotation local without external token');
 check($c->load->data['generated_token']===str_repeat('e',64),'rotation returns new token');
 $c->index();check($c->load->data['generated_token']===null,'subsequent GET never recovers generated token');
+$c->input->post['webhook_admin_csrf']=$c->session->values['asaas_webhook_admin_csrf'];$c->reveal_integration_token();check($c->load->data['generated_token']===str_repeat('e',64)&&$c->load->data['token_revealed'],'explicit protected POST recovers token');
 $c->input->post['webhook_admin_csrf']=$c->session->values['asaas_webhook_admin_csrf'];
 $c->disable_integration();check(in_array(['disable',1],$c->asaas_gateway->adapter->store->calls,true),'disable local');
 $c->input->post+=['event_row_id'=>'7'];$c->retry_reviewed_event();check($c->asaas_gateway->adapter->calls[1]===['review',7,1],'review explicit event/integration');
@@ -89,8 +91,8 @@ check(!str_contains($html,'id="generated-webhook-token"'),'GET has no token fiel
 $generated_token=str_repeat('f',64);$generated_id=1;ob_start();require __DIR__.'/../modules/asaas/views/webhooks.php';$postHtml=ob_get_clean();
 check((bool)preg_match('/<input[^>]*id="generated-webhook-token"[^>]*type="password"[^>]*readonly[^>]*>/', $postHtml),'generated token readonly and masked');
 check(str_contains($postHtml,'Copiar token') && str_contains($postHtml,'Revelar'),'explicit copy/reveal');
-check(str_contains($postHtml,'somente o hash'),'hash storage disclosed');
+check(str_contains($postHtml,'cópia cifrada'),'encrypted recovery storage disclosed');
 check(!str_contains($html,'setup_webhook'),'no old remote mutation button');
 check(\Asaas\WebhookAdminPresentation::statusLabel('observed')==='Observado, sem baixa','observation status localized without implying receipt');
-check(str_contains($html,'Homologação [sandbox]')&&!str_contains($html,'Homologação (sandbox)'),'consistent environment labels');
+check(str_contains($html,'Homologação')&&!str_contains($html,'Homologação [sandbox]')&&!str_contains($html,'>Sandbox<'),'consistent environment labels');
 echo "Asaas webhook admin: {$checks} checks passed\n";

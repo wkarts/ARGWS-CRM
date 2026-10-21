@@ -4,12 +4,14 @@ defined('BASEPATH') or exit('No direct script access allowed');
 require FCPATH . 'modules/asaas/traits/BaseApi.php';
 require_once __DIR__ . '/AsaasSdkProvider.php';
 require_once __DIR__ . '/Asaas/AsaasAdapter.php';
+require_once __DIR__ . '/Asaas/EnvironmentSettings.php';
 
 class Asaas_gateway extends App_gateway
 {
     use BaseApi;
     private \Asaas\AsaasAdapter $adapter;
     private AsaasSdkProvider $provider;
+    private ?string $operationEnvironment = null;
 
     public function __construct()
     {
@@ -30,7 +32,7 @@ class Asaas_gateway extends App_gateway
                 'name' => 'api_key_sandbox',
                 'encrypted' => true,
                 'input_type' => 'password',
-                'label' => 'Chave da API — Homologação [sandbox]',
+                'label' => 'Chave da API — Homologação',
                 'type' => 'input',
             ),
             array(
@@ -189,8 +191,77 @@ class Asaas_gateway extends App_gateway
 
         ));
 
+        $this->settings = \Asaas\EnvironmentSettings::expandDefinitions($this->settings);
+
         $this->provider = new AsaasSdkProvider($this);
         $this->adapter = new \Asaas\AsaasAdapter($this->provider, $this);
+    }
+
+    public function initMode($modes)
+    {
+        if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()
+            && !CompanySettingsRuntime::isPrimary()) return $modes;
+        // Only the tracked native migration may seed profiles; GET registration never migrates data.
+        if (!\Asaas\EnvironmentSettings::ready()) return $modes;
+        return parent::initMode($modes);
+    }
+
+    public function selectedEnvironment(): string
+    {
+        \Asaas\EnvironmentSettings::assertLegacyScope();
+        \Asaas\EnvironmentSettings::requireReady();
+        return \Asaas\EnvironmentSettings::fromSelector(get_option('paymentmethod_asaas_sandbox'));
+    }
+
+    public function getSetting($name)
+    {
+        \Asaas\EnvironmentSettings::assertLegacyScope();
+        if ($name === 'sandbox') {
+            \Asaas\EnvironmentSettings::requireReady();
+            return $this->operationEnvironment === null ? get_option('paymentmethod_asaas_sandbox')
+                : ($this->operationEnvironment === 'sandbox' ? '1' : '0');
+        }
+        if (!array_key_exists($name, \Asaas\EnvironmentSettings::DEFAULTS)) return parent::getSetting($name);
+        if (!\Asaas\EnvironmentSettings::ready()) {
+            if (in_array($name, ['active', 'default_selected'], true)) return '0';
+            if ($name === 'label') return 'Asaas';
+            \Asaas\EnvironmentSettings::requireReady();
+        }
+        try { $environment = $this->operationEnvironment ?? $this->selectedEnvironment(); }
+        catch (\InvalidArgumentException $error) {
+            // Allow administrators to repair an invalid selector; never enable a mode implicitly.
+            if (in_array($name, ['active', 'default_selected'], true)) return '0';
+            if ($name === 'label') return 'Asaas';
+            throw $error;
+        }
+        return $this->getSettingForEnvironment($name, $environment);
+    }
+
+    public function getSettingForEnvironment(string $name, string $environment): string
+    {
+        \Asaas\EnvironmentSettings::assertLegacyScope();
+        \Asaas\EnvironmentSettings::requireReady();
+        return \Asaas\EnvironmentSettings::read($name, $environment, function (string $key) {
+            // Query the row to distinguish an intentionally empty value from an absent one.
+            $row = $this->ci->db->get_where(db_prefix() . 'options', ['name' => $key])->row_array() ?? [];
+            return array_key_exists('value', $row) ? $row['value'] : null;
+        });
+    }
+
+    public function getSettingForOrigin(string $name, array $origin): string
+    {
+        return $this->getSettingForEnvironment($name, \Asaas\EnvironmentSettings::originEnvironment($origin));
+    }
+
+    private function withInvoiceProfile(int $invoiceId, callable $operation)
+    {
+        if ($invoiceId <= 0) throw new \InvalidArgumentException('asaas_invoice_required');
+        $origin = $this->adapter->originStore()->byInvoice($invoiceId);
+        $environment = $origin ? \Asaas\EnvironmentSettings::originEnvironment($origin) : $this->selectedEnvironment();
+        $previous = $this->operationEnvironment;
+        $this->operationEnvironment = $environment;
+        try { return $operation(); }
+        finally { $this->operationEnvironment = $previous; }
     }
 
     public function getProvider(): AsaasSdkProvider
@@ -210,9 +281,9 @@ class Asaas_gateway extends App_gateway
         return $this->provider->environmentLabel();
     }
 
-    public function isFileLogEnabled(): bool
+    public function isFileLogEnabled(?string $environment = null): bool
     {
-        $value = $this->getSetting('file_log_enabled');
+        $value = $environment === null ? $this->getSetting('file_log_enabled') : $this->getSettingForEnvironment('file_log_enabled', $environment);
 
         return $value === '1' || $value === 1 || $value === true;
     }
@@ -247,7 +318,7 @@ class Asaas_gateway extends App_gateway
     public function process_payment($data)
     {
         try {
-            return $this->process_payment_checked($data);
+            return $this->withInvoiceProfile((int) ($data['invoice']->id ?? 0), fn() => $this->process_payment_checked($data));
         } catch (\Throwable $error) {
             log_message('error', '[Asaas] Operação de cobrança não confirmada: process_payment.');
             if (function_exists('set_alert')) {
@@ -606,7 +677,7 @@ class Asaas_gateway extends App_gateway
     public function charge_billet($invoice)
     {
         try {
-            return $this->charge_billet_checked($invoice);
+            return $this->withInvoiceProfile((int) ($invoice->id ?? 0), fn() => $this->charge_billet_checked($invoice));
         } catch (\Throwable $error) {
             log_message('error', '[Asaas] Operação de cobrança não confirmada: charge_billet.');
             if (function_exists('set_alert')) {
@@ -775,7 +846,7 @@ class Asaas_gateway extends App_gateway
     public function charge_credit_card($data)
     {
         try {
-            return $this->charge_credit_card_checked($data);
+            return $this->withInvoiceProfile((int) ($data['invoice']->id ?? 0), fn() => $this->charge_credit_card_checked($data));
         } catch (\Throwable $error) {
             log_message('error', '[Asaas] Operação de cobrança não confirmada: charge_credit_card.');
             if (function_exists('set_alert')) {
@@ -795,8 +866,12 @@ class Asaas_gateway extends App_gateway
         \Asaas\HostedCardCheckout::installments($data['installmentCount'] ?? 1);
         $ci = &get_instance();
         $invoice = $ci->db->get_where(db_prefix() . 'invoices', ['id' => (int) $data['invoice']->id])->row_array();
+        $store = $this->adapter->originStore();
+        $origin = $invoice ? $store->byInvoice((int) $invoice['id']) : null;
+        $active = $origin ? $this->getSettingForOrigin('active', $origin) : $this->getSetting('active');
+        $card = $origin ? $this->getSettingForOrigin('card_only', $origin) : $this->getSetting('card_only');
         if (!$invoice || !in_array((int) $invoice['status'], [1, 4], true)
-            || $this->getSetting('active') !== '1' || $this->getSetting('card_only') !== '1'
+            || $active !== '1' || $card !== '1'
             || !\Asaas\HostedCardCheckout::allowsInvoice($invoice['allowed_payment_modes'] ?? null)) {
             throw new \DomainException('hosted_card_invoice_unavailable');
         }
@@ -805,8 +880,6 @@ class Asaas_gateway extends App_gateway
         if (!$currency || strtoupper((string) $currency->name) !== 'BRL') {
             throw new \DomainException('hosted_card_requires_brl');
         }
-        $store = $this->adapter->originStore();
-        $origin = $store->byInvoice((int) $invoice['id']);
         if ($origin) {
             if (($origin['state'] ?? '') !== 'issued' || empty($origin['remote_id'])) {
                 throw new \DomainException('card_origin_review_required');
@@ -843,7 +916,7 @@ class Asaas_gateway extends App_gateway
     public function charge_pix($data)
     {
         try {
-            return $this->charge_pix_checked($data);
+            return $this->withInvoiceProfile((int) ($data['invoice']->id ?? 0), fn() => $this->charge_pix_checked($data));
         } catch (\Throwable $error) {
             log_message('error', '[Asaas] Operação de cobrança não confirmada: charge_pix.');
             if (function_exists('set_alert')) {

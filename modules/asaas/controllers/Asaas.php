@@ -46,6 +46,7 @@ class Asaas extends AdminController
             'events' => [],
             'review_queue' => [],
             'pending_automations' => [],
+            'token_revealed' => !empty($generated['revealed']),
             'generated_token' => $generated['one_time_token'] ?? null,
             'generated_id' => $generated['integration_id'] ?? $generated['id'] ?? null,
         ];
@@ -118,6 +119,20 @@ class Asaas extends AdminController
             return;
         } catch (Throwable $error) {
             set_alert('danger', 'Rotação não confirmada. Confira o recebedor e o histórico antes de gerar outro token.');
+        }
+        redirect(admin_url('asaas'));
+    }
+
+    public function reveal_integration_token()
+    {
+        if (!$this->require_webhook_management()) return;
+        try {
+            $revealed = $this->asaas_gateway->getAdapter()->webhookIntegrations()->revealToken($this->webhook_posted_id());
+            $this->session->set_userdata('asaas_webhook_admin_csrf', bin2hex(random_bytes(32)));
+            $this->render_webhooks($revealed);
+            return;
+        } catch (Throwable $error) {
+            set_alert('warning', 'Token indisponível para recuperação. Registros antigos guardam somente o hash; use a regeneração explícita para criar um novo token.');
         }
         redirect(admin_url('asaas'));
     }
