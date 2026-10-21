@@ -347,14 +347,14 @@
       "evidence": ""
     },
     "application/controllers/admin/Company_asaas.php": {
-      "sha256": "215ddc8eea05af36dbdd3066d195bf8bb1188f88f8a56255db10a8f17a8a0db0",
+      "sha256": "5d24e0723eba4bba3077e14f85033862565183993db908560b48e5945dd68d48",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        104,
-        107,
-        116
+        106,
+        109,
+        118
       ],
       "state": "unreviewed",
       "evidence": ""

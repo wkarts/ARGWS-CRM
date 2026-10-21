@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "e2121367db4ed1b52d4cc160761e3978cbe5a166a42ade58432aed6f68b6a7b0",
+    "source_manifest_sha256": "1f25911b37db0249cc9378264aa783e387fccdcbfaa1ca32015a28310b08eb85",
     "counts": {
         "modules": 38,
-        "source_files": 4209,
+        "source_files": 4211,
         "literal_option_keys": 684,
         "dynamic_option_references": 146,
         "controllers": 254,
@@ -9179,19 +9179,19 @@
         },
         {
             "path": "application/controllers/admin/Company_asaas.php",
-            "source_sha256": "215ddc8eea05af36dbdd3066d195bf8bb1188f88f8a56255db10a8f17a8a0db0",
+            "source_sha256": "5d24e0723eba4bba3077e14f85033862565183993db908560b48e5945dd68d48",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
             "method_candidates": [
                 {
                     "method": "__construct",
-                    "line": 18,
+                    "line": 19,
                     "visibility": "public"
                 },
                 {
                     "method": "index",
-                    "line": 24,
+                    "line": 25,
                     "visibility": "public"
                 }
             ],

@@ -203,6 +203,7 @@ jobs:
           php tests/companies/asaas_preferences.php
           php tests/companies/asaas_preferences_recovery.php
           php tests/companies/asaas_preferences_controller.php
+          php tests/companies/asaas_isolated_translation.php
           php tests/companies/asaas_checkout_payers.php
           php tests/companies/asaas_checkout_portal.php
           php tests/companies/asaas_checkout_boundaries.php

@@ -37,6 +37,53 @@ function requestDecision(requestUrl, method, origin, permittedPost = null) {
   return 'navigation';
 }
 
+function safePath(value, origin) {
+  try {
+    const url = new URL(value, origin);
+    if (url.origin !== origin || url.username || url.password) return '[external]';
+    const known = ['/admin', '/admin/', '/admin/authentication', '/admin/authentication/admin', '/admin/company_context', '/admin/company_context/select', '/admin/company_asaas', '/admin/dashboard', '/admin/misc/my_reminders', '/admin/misc/notifications_check', '/admin/misc/get_notifications', '/admin/tasks/table'];
+    return known.includes(url.pathname) ? url.pathname : '[other-local]';
+  } catch { return '[invalid]'; }
+}
+function requestScope(requestUrl, documentUrl, origin) {
+  return [requestUrl, documentUrl].some(value => safePath(value, origin) === '/admin/company_asaas') ? 'presentation' : 'session';
+}
+function bodyCategory(body) {
+  const text = typeof body === 'string' ? body.slice(0, 65536) : '';
+  if (/Call to undefined function _l\(\)/.test(text)) return 'translation-helper-missing';
+  if (text.includes('Histórico de reembolso indisponível para conferência')) return 'refund-history-unavailable';
+  if (text.includes('Integração indisponível. Confira a ativação e as migrations')) return 'integration-schema-unavailable';
+  if (text.includes('Integração indisponível ou acesso negado')) return 'integration-access-denied';
+  if (text.includes('contexto de empresas está indisponível')) return 'company-context-unavailable';
+  if (text.includes('Esta operação não está disponível no contexto de empresa atual')) return 'company-context-denied';
+  if (text.includes('Fatura indisponível nesta empresa')) return 'foreign-invoice-denied';
+  if (text.includes('Acesso negado.')) return 'access-denied';
+  return 'unclassified';
+}
+async function responseFacts(response, origin) {
+  if (!response) return {status: null, path: '[no-response]'};
+  const request = response.request(), status = response.status();
+  const facts = {status, path: safePath(response.url(), origin), method: ['GET', 'HEAD', 'POST'].includes(request.method()) ? request.method() : '[other]', redirects: []};
+  for (let previous = request.redirectedFrom(); previous && facts.redirects.length < 8; previous = previous.redirectedFrom()) facts.redirects.unshift(safePath(previous.url(), origin));
+  const location = response.headers().location;
+  if (location) facts.location = safePath(location, origin);
+  if (status !== 200) { try { facts.body = bodyCategory(await response.text()); } catch { facts.body = 'unavailable'; } }
+  return facts;
+}
+function blockedRequests() {
+  const total = {external: 0, mutation: 0, navigation: 0, pageerrors: 0};
+  const presentation = {external: 0, mutation: 0, navigation: 0};
+  const evidence = [];
+  return {total, presentation, evidence, record(decision, requestUrl, method, documentUrl, origin) {
+    if (!['external', 'mutation', 'navigation'].includes(decision)) throw new Error('invalid request decision');
+    const scope = requestScope(requestUrl, documentUrl, origin);
+    total[decision]++;
+    if (scope === 'presentation') presentation[decision]++;
+    const entry = {scope, decision, method: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'].includes(method) ? method : '[other]', path: safePath(requestUrl, origin)};
+    if (evidence.length < 12 && !evidence.some(old => JSON.stringify(old) === JSON.stringify(entry))) evidence.push(entry);
+  }, assertNoPresentationMutation() { assert.equal(presentation.mutation, 0, 'presentation attempted a non-session mutation'); }};
+}
+
 function readOnlyQuery(query) {
   assert.ok(typeof query === 'string' && /^(SELECT|SHOW)\s/i.test(query), 'only SELECT/SHOW evidence queries are admitted');
   assert.ok(!/[;\u0000]|--|\/\*|\b(?:INTO|OUTFILE|DUMPFILE|FOR\s+UPDATE|LOCK\s+IN\s+SHARE)\b/i.test(query), 'query must be a single non-locking read');
@@ -46,7 +93,8 @@ function readOnlyQuery(query) {
 async function run(env = process.env) {
   let browser, config;
   let checks = 0, phase = 'validate disposable environment', screenshotCount = 0;
-  const counts = {external: 0, mutation: 0, navigation: 0, pageerrors: 0};
+  const blocked = blockedRequests(), counts = blocked.total;
+  let lastNavigation = null;
   function check(condition, label) { phase = label; assert.ok(condition, label); checks++; }
   try {
     config = environment(env);
@@ -108,21 +156,30 @@ async function run(env = process.env) {
       await context.route('**/*', route => {
         const request = route.request();
         const decision = requestDecision(request.url(), request.method(), config.url, permittedPost);
-        if (decision !== 'allow') { counts[decision]++; return route.abort(); }
+        if (decision !== 'allow') {
+          let documentUrl = ''; try { documentUrl = request.frame().url(); } catch {}
+          blocked.record(decision, request.url(), request.method(), documentUrl, config.url);
+          return route.abort();
+        }
         return route.continue();
       });
       try {
         const page = await context.newPage();
+        async function navigate(target) { const response = await page.goto(target); lastNavigation = await responseFacts(response, config.url); return response; }
         page.on('pageerror', () => { if (observePageErrors) counts.pageerrors++; });
         async function submitSession(form) {
           const target = new URL(await form.getAttribute('action'), config.url);
           check(target.origin === config.url && ['/admin/authentication', '/admin/authentication/admin', '/admin/company_context/select'].includes(target.pathname), 'only native login/context forms may be submitted');
           permittedPost = target.pathname;
-          try { await Promise.all([page.waitForNavigation({waitUntil: 'domcontentloaded'}), form.locator('button[type=submit]').click()]); }
+          try {
+            const [response] = await Promise.all([page.waitForNavigation({waitUntil: 'domcontentloaded'}), form.locator('button[type=submit]').click()]);
+            lastNavigation = await responseFacts(response, config.url);
+            check(response && response.status() === 200 && response.request().method() === 'GET', 'native session form reaches a successful GET response');
+          }
           finally { permittedPost = null; }
         }
         phase = 'authenticate synthetic administrator';
-        check((await page.goto(config.url + '/admin/authentication')).status() === 200, 'real login renders');
+        check((await navigate(config.url + '/admin/authentication')).status() === 200, 'real login renders');
         await page.locator('input[name=email]').fill('admin-ci@example.invalid');
         await page.locator('input[name=password]').fill(env.ISSUERS_BROWSER_PASSWORD);
         await submitSession(page.locator('form').filter({has: page.locator('input[name=password]')}));
@@ -131,11 +188,12 @@ async function run(env = process.env) {
         for (const owner of owners) {
           phase = 'select real company context: ' + owner.letter;
           observePageErrors = false;
-          await page.goto(config.url + '/admin/company_context');
+          await navigate(config.url + '/admin/company_context');
           await page.locator('#company-context-select').selectOption(owner.issuer);
           await submitSession(page.locator('.company-selector-form'));
+          check(await page.locator('#company-context-select').inputValue() === owner.issuer, 'native context selection is confirmed before Asaas navigation');
           observePageErrors = true;
-          const response = await page.goto(config.url + '/admin/company_asaas');
+          const response = await navigate(config.url + '/admin/company_asaas');
           check(response.status() === 200, 'actual nominal preferences render: ' + owner.letter);
           check((response.headers()['cache-control'] || '').includes('no-store'), 'real nominal view prevents cached account/preferences recovery');
           check(await page.locator('#company-context-select').inputValue() === owner.issuer, 'header confirms the actual active owner');
@@ -200,11 +258,11 @@ async function run(env = process.env) {
           await page.reload({waitUntil: 'domcontentloaded'});
           await page.locator('#company-asaas-profile-tab-sandbox').click();
           check(await sandboxLabel.inputValue() === owner.profiles.sandbox.label && await card.isChecked() === (owner.profiles.sandbox.allow_card === '1'), 'real GET reload discards unsaved edits');
-          await page.goto(config.url + '/admin/company_asaas#company-asaas-profile-production');
+          await navigate(config.url + '/admin/company_asaas#company-asaas-profile-production');
           await active('production');
           check(await page.locator('#preferences input[name=environment][value=sandbox]').count() >= 1, 'deep-link navigation preserves the other environment controls');
           // Owned invoice hydration is a real GET. Never click the financial submit button.
-          check((await page.goto(config.url + '/admin/company_asaas?invoice=' + owner.invoice)).status() === 200, 'existing own invoice opens through the real controller');
+          check((await navigate(config.url + '/admin/company_asaas?invoice=' + owner.invoice)).status() === 200, 'existing own invoice opens through the real controller');
           const issue = page.locator('#issue form').filter({has: page.locator('input[name=action][value=issue]')});
           if (config.phase === 'unselected') {
             check(await issue.count() === 0 && await page.locator('#asaas-issue-account').count() === 0, 'no issuance form/account appears before explicit selection');
@@ -220,7 +278,7 @@ async function run(env = process.env) {
           }
           // Real HTTP 403 using the browser transport, so the same network guard still applies.
           const foreign = owners.find(item => item.issuer !== owner.issuer);
-          check((await page.goto(config.url + '/admin/company_asaas?invoice=' + foreign.invoice)).status() === 403, 'foreign invoice hydration is rejected within the current owner');
+          check((await navigate(config.url + '/admin/company_asaas?invoice=' + foreign.invoice)).status() === 403, 'foreign invoice hydration is rejected within the current owner');
           check(await page.locator('#preferences, #asaas-issue-account').count() === 0, 'denied foreign invoice response exposes no preference or issuance form');
           await page.goBack({waitUntil: 'domcontentloaded'});
           check(await page.locator('#company-context-select').inputValue() === owner.issuer && await page.locator('#preferences').count() === 1, 'Back recovers the owned view without changing company');
@@ -231,20 +289,21 @@ async function run(env = process.env) {
       } finally { await context.close(); }
     }
     check(counts.pageerrors === 0, 'real nominal UI emits no page errors');
-    check(counts.mutation === 0, 'presentation attempted no non-session mutation');
+    phase = 'presentation attempted no non-session mutation';
+    blocked.assertNoPresentationMutation(); checks++;
     check(businessSnapshot() === before, 'all Asaas tables, native financial records and legacy settings remain unchanged');
     const report = {surface: 'authenticated real nominal Asaas preferences', phase: config.phase, nativeVersion: version, widths: [1280, 390], owners: ['a', 'b'], checks, screenshots: screenshotCount,
-      blockedRequests: counts, database: 'all Asaas tables, core financial records and legacy settings unchanged; login/session metadata excluded',
+      blockedRequests: counts, presentationBlockedRequests: blocked.presentation, blockedRequestEvidence: blocked.evidence, database: 'all Asaas tables, core financial records and legacy settings unchanged; login/session metadata excluded',
       limitations: 'No save/selection POST, provider transport, financial action or production/homologation-provider proof. Production preference panel only; synthetic active wallet is sandbox.'};
     fs.writeFileSync(path.join(config.output, 'coverage.json'), JSON.stringify(report, null, 2));
     console.log('Asaas real nominal preferences (' + config.phase + '): ' + checks + ' checks passed; PT-BR tabs, keyboard/mobile, owner isolation and issuance availability. Business state unchanged; no financial/provider action.');
     return report;
   } catch {
     // Never forward Playwright/SQL error payloads, page content, credentials or context URLs.
-    console.error(JSON.stringify({test: 'asaas-real-preferences', phase, checks, blockedRequests: counts}));
+    console.error(JSON.stringify({test: 'asaas-real-preferences', phase, checks, lastNavigation, blockedRequests: counts, presentationBlockedRequests: blocked.presentation, blockedRequestEvidence: blocked.evidence}));
     throw new Error('Asaas real nominal preferences failed at a sanitized phase; inspect its fixed-label CI diagnostics.');
   } finally { if (browser) await browser.close(); }
 }
 
-module.exports = {environment, requestDecision, readOnlyQuery, run};
+module.exports = {environment, requestDecision, readOnlyQuery, safePath, requestScope, bodyCategory, responseFacts, blockedRequests, run};
 if (require.main === module) run().catch(() => { process.exitCode = 1; });

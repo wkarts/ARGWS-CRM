@@ -3,7 +3,7 @@
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
 const fs = require('node:fs');
-const {environment, requestDecision, readOnlyQuery, run} = require('./companies/asaas_preferences_real_browser.cjs');
+const {environment, requestDecision, readOnlyQuery, safePath, requestScope, bodyCategory, responseFacts, blockedRequests, run} = require('./companies/asaas_preferences_real_browser.cjs');
 const fixture = {
   ISSUERS_BROWSER_URL: 'http://127.0.0.1:48321',
   ISSUERS_BROWSER_DB_CONTAINER: 'argws-crm-provision-db-999',
@@ -110,4 +110,67 @@ test('real phases surround account preparation and Docker receives the new share
   for (const file of ['companies_asaas_browser.cjs', 'companies_asaas_remote_browser.cjs', 'companies_asaas_checkout_browser.cjs', 'companies/asaas_refund_browser.cjs']) {
     assert.match(fs.readFileSync(__dirname + '/' + file, 'utf8'), /asaas_preferences_fixture\.php/);
   }
+});
+
+
+test('HTTP diagnostics contain only status and allowlisted paths/categories', async () => {
+  const secret = 'synthetic-private-value';
+  assert.equal(safePath(url('/admin/company_asaas?token=' + secret + '#' + secret), fixture.ISSUERS_BROWSER_URL), '/admin/company_asaas');
+  assert.equal(safePath(url('/private/' + secret), fixture.ISSUERS_BROWSER_URL), '[other-local]');
+  assert.equal(safePath('https://outside.invalid/' + secret, fixture.ISSUERS_BROWSER_URL), '[external]');
+  assert.equal(safePath('http://user:' + secret + '@127.0.0.1:48321/admin', fixture.ISSUERS_BROWSER_URL), '[external]');
+  assert.equal(bodyCategory('Call to undefined function _l() ' + secret), 'translation-helper-missing');
+  assert.equal(bodyCategory('Histórico de reembolso indisponível para conferência ' + secret), 'refund-history-unavailable');
+  assert.equal(bodyCategory(secret), 'unclassified');
+  const previous = {url: () => url('/private/' + secret), redirectedFrom: () => null};
+  const request = {method: () => 'GET', redirectedFrom: () => previous};
+  const response = {status: () => 500, url: () => url('/admin/company_asaas?token=' + secret), request: () => request,
+    headers: () => ({location: '/admin/authentication?token=' + secret}), text: async () => 'Call to undefined function _l() ' + secret};
+  const facts = await responseFacts(response, fixture.ISSUERS_BROWSER_URL);
+  assert.deepEqual(facts, {status: 500, path: '/admin/company_asaas', method: 'GET', redirects: ['[other-local]'], location: '/admin/authentication', body: 'translation-helper-missing'});
+  assert.ok(!JSON.stringify(facts).includes(secret));
+  assert.ok(!JSON.stringify(facts).includes('?'));
+  assert.deepEqual(await responseFacts(null, fixture.ISSUERS_BROWSER_URL), {status: null, path: '[no-response]'});
+  assert.equal((await responseFacts({...response, text: async () => {throw new Error(secret);}}, fixture.ISSUERS_BROWSER_URL)).body, 'unavailable');
+});
+
+test('blocked dashboard traffic stays blocked and counted without becoming a presentation mutation', () => {
+  const blocked = blockedRequests();
+  const origin = fixture.ISSUERS_BROWSER_URL;
+  const target = url('/admin/tasks/table?token=synthetic-private-value');
+  assert.equal(requestDecision(target, 'POST', origin), 'mutation');
+  assert.equal(requestScope(target, url('/admin/'), origin), 'session');
+  blocked.record('mutation', target, 'POST', url('/admin/'), origin);
+  blocked.record('external', 'https://outside.invalid/private', 'GET', url('/admin/'), origin);
+  assert.deepEqual(blocked.total, {external: 1, mutation: 1, navigation: 0, pageerrors: 0});
+  assert.deepEqual(blocked.presentation, {external: 0, mutation: 0, navigation: 0});
+  assert.doesNotThrow(() => blocked.assertNoPresentationMutation());
+  assert.ok(!JSON.stringify(blocked.evidence).includes('synthetic-private-value'));
+});
+
+test('any non-session mutation from the Asaas page still fails the presentation gate', () => {
+  const origin = fixture.ISSUERS_BROWSER_URL;
+  for (const [target, document] of [[url('/admin/company_asaas'), url('/admin/')], [url('/admin/tasks/table'), url('/admin/company_asaas?invoice=12')]]) {
+    const blocked = blockedRequests();
+    blocked.record('mutation', url('/admin/tasks/table'), 'POST', url('/admin/'), origin);
+    assert.equal(requestDecision(target, 'POST', origin), 'mutation');
+    assert.equal(requestScope(target, document, origin), 'presentation');
+    blocked.record('mutation', target, 'POST', document, origin);
+    assert.equal(blocked.total.mutation, 2, 'the session total was not reset');
+    assert.equal(blocked.presentation.mutation, 1);
+    assert.throws(() => blocked.assertNoPresentationMutation(), /presentation attempted a non-session mutation/);
+  }
+});
+
+test('blocked request evidence is bounded, deduplicated and cannot disclose arbitrary paths', () => {
+  const blocked = blockedRequests(), origin = fixture.ISSUERS_BROWSER_URL;
+  for (let index = 0; index < 50; index++) blocked.record('navigation', url('/private/synthetic-' + index), 'GET', url('/admin/company_asaas'), origin);
+  assert.equal(blocked.total.navigation, 50);
+  assert.equal(blocked.presentation.navigation, 50);
+  assert.deepEqual(blocked.evidence, [{scope: 'presentation', decision: 'navigation', method: 'GET', path: '[other-local]'}]);
+  for (const method of ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE']) {
+    for (const result of ['mutation', 'external', 'navigation']) blocked.record(result, url('/admin/company_asaas'), method, url('/admin/company_asaas'), origin);
+  }
+  assert.equal(blocked.evidence.length, 12);
+  assert.throws(() => blocked.record('allow', url('/admin'), 'GET', url('/admin'), origin), /invalid request decision/);
 });
