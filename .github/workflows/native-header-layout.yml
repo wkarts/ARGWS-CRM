@@ -1,0 +1,51 @@
+name: Native header layout
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/native-header-layout.yml'
+      - 'application/views/admin/includes/**'
+      - 'application/services/CompanySettingsIdentity.php'
+      - 'modules/asaas/views/settings_summary.php'
+      - 'assets/**'
+      - 'tests/native_header_overflow*'
+      - 'tests/support/NativeHeaderFixture.php'
+      - 'tests/support/AsaasUrlsFixture.php'
+      - 'tests/companies/asaas_settings_real_browser.cjs'
+      - 'tests/asaas_settings_real_browser.test.cjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: none
+      - name: Validate synthetic renderers and sanitized geometry
+        run: node --test tests/native_header_overflow.test.cjs tests/asaas_settings_real_browser.test.cjs
+      - name: Install isolated browser dependency
+        run: |
+          npm install --prefix "$RUNNER_TEMP/native-layout" --no-package-lock --ignore-scripts playwright@1.55.1
+          "$RUNNER_TEMP/native-layout/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Measure actual header and Asaas URL views on desktop and mobile
+        env:
+          ASAAS_PLAYWRIGHT_MODULE: ${{ runner.temp }}/native-layout/node_modules/playwright
+          NATIVE_HEADER_ARTIFACTS: /tmp/native-header-layout-evidence
+        run: node tests/native_header_overflow.browser.cjs
+      - name: Preserve synthetic screenshots and sanitized geometry
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-header-layout
+          path: /tmp/native-header-layout-evidence
+          if-no-files-found: warn

@@ -48,3 +48,28 @@ test('real browser runs after Asaas native installation, with existing artifact 
   assert.ok(native >= 0 && real > native);
   assert.match(fs.readFileSync(__dirname + '/../.github/workflows/deployment-integrity.yml', 'utf8'), /path: \/tmp\/issuer-browser-evidence/);
 });
+test('overflow diagnostics report dimensions without reading form values or page content', () => {
+  const {overflowGeometry} = require('./companies/asaas_settings_real_browser.cjs');
+  const element = {
+    tagName: 'INPUT', clientWidth: 230, scrollWidth: 230,
+    getBoundingClientRect: () => ({left: 332.125, right: 562.125, width: 230, height: 38}),
+    matches: selector => selector === '#search_input', closest: () => null,
+  };
+  for (const key of ['value', 'textContent', 'innerHTML', 'outerHTML', 'href', 'className', 'id']) {
+    Object.defineProperty(element, key, {get() { throw new Error('secret-bearing property read'); }});
+  }
+  const document = {documentElement: {scrollWidth: 562}, querySelectorAll: selector => selector === 'body *' || selector === '#search_input' ? [element] : []};
+  const window = {innerWidth: 390, getComputedStyle: () => ({display: 'block', visibility: 'visible', minWidth: 'auto', flexShrink: '1', overflowX: 'clip'})};
+  const layout = overflowGeometry(document, window);
+  assert.equal(layout.viewport, 390);
+  assert.equal(layout.pageWidth, 562);
+  assert.deepEqual(layout.offenders[0], {tag: 'input', region: '#search_input', left: 332.13, right: 562.13, width: 230, clientWidth: 230, scrollWidth: 230, display: 'block', minWidth: 'auto', flexShrink: '1', overflowX: 'clip'});
+  assert.equal(layout.regions.length, 1);
+});
+test('real overflow gate covers each tab and preserves viewport assertion and masked evidence', () => {
+  const runner = fs.readFileSync(__dirname + '/companies/asaas_settings_real_browser.cjs', 'utf8');
+  assert.match(runner, /check\(layout\.pageWidth <= width \+ 1, 'real settings have no page horizontal overflow'\)/);
+  assert.ok(runner.includes('input[type="password"], [data-asaas-secret-input], [data-asaas-secret], input[name*="token" i], input[id*="token" i], input[name*="api_key" i]'));
+  assert.match(runner, /mask: \[page\.locator/);
+  assert.ok(runner.indexOf('layout = await page.evaluate') > runner.indexOf('for (const section of sections)'));
+});

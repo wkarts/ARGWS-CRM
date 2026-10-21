@@ -23,6 +23,27 @@ function localRequest(requestUrl, origin) {
 function financialMutation(requestUrl, method) {
   return !['GET', 'HEAD'].includes(method) && /^\/(?:admin\/(?:asaas|company_asaas|settings)(?:\/|$)|asaas\/|company_asaas_callback\/)/.test(new URL(requestUrl).pathname);
 }
+// Read-only geometry only: never inspect text, form values, arbitrary classes or URLs.
+function overflowGeometry(document, window) {
+  const width = window.innerWidth;
+  const round = number => Math.round(number * 100) / 100;
+  const selectors = ['#header', '#header > nav', '#header > .hide-menu', '#header > nav > .tw-flex', '#header .company-selector', '#header .company-selector-form', '#header .bootstrap-select', '#top_search', '#search_input', '#header .mobile-menu', '#wrapper', '#settings-form', '#online_payments_asaas_tab', '#asaas-settings-panel-authentication', '#online_payments_asaas_tab .input-group', '#asaas-api-url-production', '#asaas-api-url-sandbox'];
+  const describe = element => {
+    const box = element.getBoundingClientRect(), style = window.getComputedStyle(element);
+    return {left: round(box.left), right: round(box.right), width: round(box.width), clientWidth: element.clientWidth, scrollWidth: element.scrollWidth,
+      display: style.display, minWidth: style.minWidth, flexShrink: style.flexShrink, overflowX: style.overflowX};
+  };
+  const regions = selectors.flatMap(selector => Array.from(document.querySelectorAll(selector)).slice(0, 2).map(element => ({selector, ...describe(element)})));
+  const offenders = Array.from(document.querySelectorAll('body *')).filter(element => {
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0 && rect.right > width + 1 && window.getComputedStyle(element).visibility !== 'hidden';
+  }).map(element => {
+    const tag = element.tagName.toLowerCase();
+    const region = selectors.find(selector => element.matches(selector)) || selectors.slice().reverse().find(selector => element.closest(selector)) || '[other]';
+    return {tag: ['div','form','input','select','button','span','ul','li','a','fieldset','legend','label','p','section','nav'].includes(tag) ? tag : '[other]', region, ...describe(element)};
+  }).sort((a, b) => b.right - a.right).slice(0, 20);
+  return {viewport: width, pageWidth: document.documentElement.scrollWidth, regions, offenders};
+}
 async function run(env = process.env) {
   const config = environment(env);
   const {chromium} = require('playwright');
@@ -47,7 +68,7 @@ async function run(env = process.env) {
   let browser;
   const errors = [], mutations = [];
   let externalRequestsBlocked = 0;
-  let checks = 0, phase = 'launch browser';
+  let checks = 0, phase = 'launch browser', currentWidth = null, currentSection = null, layout = null;
   function check(condition, message) { phase = message; assert.ok(condition, message); checks++; }
   async function submit(page, button) {
     await Promise.all([page.waitForNavigation({waitUntil: 'domcontentloaded', timeout: 15000}), button.click()]);
@@ -55,6 +76,7 @@ async function run(env = process.env) {
   try {
     browser = await chromium.launch({headless: true});
     for (const width of [1280, 390]) {
+      currentWidth = width; currentSection = null; layout = null;
       const context = await browser.newContext({viewport: {width, height: 900}});
       context.setDefaultTimeout(10000);
       await context.route('**/*', route => {
@@ -129,13 +151,19 @@ async function run(env = process.env) {
         const formData = () => page.locator('#settings-form').evaluate(form => JSON.stringify(Array.from(new FormData(form).entries()).filter(([name]) => name.startsWith('settings[paymentmethod_asaas_'))));
         const before = await formData();
         for (const section of sections) {
+          currentSection = section;
           await page.locator('#asaas-settings-tab-' + section).click();
           check(await page.locator('#asaas-settings-panel-' + section).isVisible(), 'real tab is visible: ' + section);
           check(await pane.locator('.tab-pane.active').count() === 1, 'one inner panel remains active');
           check(await page.locator('#asaas-settings-tab-' + section).getAttribute('aria-selected') === 'true' && await page.locator('#asaas-settings-tab-' + section).getAttribute('tabindex') === '0', 'selected tab exposes native accessibility state');
           check(await formData() === before, 'navigation preserves native Asaas form controls');
           check(new URL(await page.locator('#settings-form').getAttribute('action')).searchParams.get('active_tab') === 'online_payments_asaas_tab', 'native save target preserves the parent gateway');
-          check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'real settings have no page horizontal overflow');
+          layout = await page.evaluate("(" + overflowGeometry.toString() + ")(document, window)");
+          if (layout.pageWidth > width + 1) {
+            fs.writeFileSync(path.join(config.output, width + '-' + section + '-overflow.json'), JSON.stringify(layout, null, 2));
+            await page.screenshot({path: path.join(config.output, width + '-' + section + '-overflow.png'), fullPage: true, mask: [page.locator('input[type="password"], [data-asaas-secret-input], [data-asaas-secret], input[name*="token" i], input[id*="token" i], input[name*="api_key" i]')]});
+          }
+          check(layout.pageWidth <= width + 1, 'real settings have no page horizontal overflow');
           await page.screenshot({path: path.join(config.output, width + '-' + section + '.png'), fullPage: true});
         }
         await page.locator('#asaas-settings-tab-webhook').click();
@@ -177,13 +205,13 @@ async function run(env = process.env) {
     console.log('Asaas real authenticated settings: ' + checks + ' checks passed; native PT-BR/URLs/masking/tabs/keyboard/mobile screenshots. HTTP callback base correctly refused; no positive HTTPS browser or provider claim.');
   } catch (error) {
     // Only our fixed step labels/counts leave the browser; raw errors can carry secret values.
-    console.error(JSON.stringify({test: 'asaas-real-settings', phase, checks, pageerrors: errors.length, blockedMutations: mutations.length}));
+    console.error(JSON.stringify({test: 'asaas-real-settings', phase, checks, width: currentWidth, section: currentSection, layout, pageerrors: errors.length, blockedMutations: mutations.length}));
     throw error;
   } finally {
     if (browser) await browser.close();
   }
 }
-module.exports = {environment, localRequest, financialMutation};
+module.exports = {environment, localRequest, financialMutation, overflowGeometry};
 if (require.main === module) run().catch(() => {
   // Playwright failures may include field values, CSRF/context URLs or browser credentials.
   console.error('Asaas real settings browser failed. Inspect the sanitized CI diagnostics; no secret-bearing browser state was logged.');
