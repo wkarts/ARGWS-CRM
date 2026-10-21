@@ -4,12 +4,18 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: CSV Export Manager
 Description: Default module for Exporting data in CSV
-Version: 1.0.0
+Version: 1.0.1
 Requires at least: 2.9.3
 */
 define('EXPORTS_MODULE_NAME', 'exports');
 
 hooks()->add_action('admin_init', 'export_module_init_menu_items');
+register_activation_hook(EXPORTS_MODULE_NAME, 'exports_activation_hook');
+
+function exports_activation_hook()
+{
+    require __DIR__ . '/install.php';
+}
 
 /**
  * Init Export module menu items in setup in admin_init hook

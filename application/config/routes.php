@@ -55,6 +55,44 @@ $route['default_controller']   = 'clients';
 $route['404_override']         = '';
 $route['translate_uri_dashes'] = false;
 
+// Exact purchase namespace; the scope guard also checks the original native URI.
+$route['company_purchase_portal']='company_purchase_portal/index';
+$route['company_purchase_portal/index']='company_purchase_portal/index';
+foreach(['suppliers','requests','quotes','orders','receipts','documents','payables','events','files','file_download','settings','reports','invites','order_pdf','export'] as $purchaseRoute){
+    $route['company_purchases_api/index/'.$purchaseRoute]='company_purchases_api/index/'.$purchaseRoute;
+    $route['company_purchases_api/index/'.$purchaseRoute.'/([1-9][0-9]{0,9})']='company_purchases_api/index/'.$purchaseRoute.'/$1';
+}
+unset($purchaseRoute);
+
+
+// Native operational bearer endpoints only. The controller scope independently
+// attests raw URI, router method, canonical ID and persisted token origin.
+foreach(['projects','tasks','standalone_tasks','contracts','tickets','task_schedules','standalone_schedules'] as $companyOperationRoute){
+    $route['company_operations_api/'.$companyOperationRoute]='company_operations_api/'.$companyOperationRoute;
+    $route['company_operations_api/'.$companyOperationRoute.'/([1-9][0-9]{0,9})']='company_operations_api/'.$companyOperationRoute.'/$1';
+}
+unset($companyOperationRoute);
+// Explicit reviewed subresources: opaque blob key is always subordinate to a canonical parent ID.
+foreach(['project_files','task_files','contract_files','ticket_files'] as $companyOperationRoute){
+    $route['company_operations_api/'.$companyOperationRoute.'/([1-9][0-9]{0,9})']='company_operations_api/'.$companyOperationRoute.'/$1';
+    $route['company_operations_api/'.$companyOperationRoute.'/([1-9][0-9]{0,9})/([a-f0-9]{64})']='company_operations_api/'.$companyOperationRoute.'/$1/$2';
+}
+$route['company_operations_api/project_copies/([1-9][0-9]{0,9})']='company_operations_api/project_copies/$1';
+foreach(['project_milestones','task_dependencies','project_follow','task_follow'] as $companyOperationRoute)$route['company_operations_api/'.$companyOperationRoute.'/([1-9][0-9]{0,9})']='company_operations_api/'.$companyOperationRoute.'/$1';
+unset($companyOperationRoute);
+
+// Lead endpoints remain finite; import batches and file keys have distinct formats.
+foreach(['leads','lead_stages','lead_sources','lead_inbox'] as $companyLeadRoute){
+    $route['company_operations_api/'.$companyLeadRoute]='company_operations_api/'.$companyLeadRoute;
+    $route['company_operations_api/'.$companyLeadRoute.'/([1-9][0-9]{0,9})']='company_operations_api/'.$companyLeadRoute.'/$1';
+}
+foreach(['lead_assignees','lead_exports','lead_imports'] as $companyLeadRoute)$route['company_operations_api/'.$companyLeadRoute]='company_operations_api/'.$companyLeadRoute;
+$route['company_operations_api/lead_imports/([a-f0-9]{32})']='company_operations_api/lead_imports/$1';
+$route['company_operations_api/lead_files/([1-9][0-9]{0,9})']='company_operations_api/lead_files/$1';
+$route['company_operations_api/lead_files/([1-9][0-9]{0,9})/([a-f0-9]{64})']='company_operations_api/lead_files/$1/$2';
+unset($companyLeadRoute);
+
+
 /**
  * Dashboard clean route
  */
@@ -187,3 +225,34 @@ $route['survey/(:num)/(:any)'] = 'surveys/participate/index/$1/$2';
 if (file_exists(APPPATH . 'config/my_routes.php')) {
     include_once(APPPATH . 'config/my_routes.php');
 }
+
+// Finite reviewed private expense-copy route.
+$route['admin/company_expense_copies'] = 'admin/company_expense_copies/index';
+
+// Finite native HR endpoints; the independent scope checks canonical IDs again.
+$route['company_operations_api/hr_structure'] = 'company_operations_api/hr_structure';
+$route['company_operations_api/hr_structure/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_structure/$1';
+$route['company_operations_api/hr_employees'] = 'company_operations_api/hr_employees';
+$route['company_operations_api/hr_employees/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_employees/$1';
+$route['company_operations_api/hr_profiles'] = 'company_operations_api/hr_profiles';
+$route['company_operations_api/hr_profiles/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_profiles/$1';
+$route['company_operations_api/hr_records'] = 'company_operations_api/hr_records';
+$route['company_operations_api/hr_records/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_records/$1';
+$route['company_operations_api/hr_contracts'] = 'company_operations_api/hr_contracts';
+$route['company_operations_api/hr_contracts/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_contracts/$1';
+$route['company_operations_api/hr_courses'] = 'company_operations_api/hr_courses';
+$route['company_operations_api/hr_courses/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_courses/$1';
+$route['company_operations_api/hr_assignments'] = 'company_operations_api/hr_assignments';
+$route['company_operations_api/hr_assignments/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_assignments/$1';
+$route['company_operations_api/hr_accesses'] = 'company_operations_api/hr_accesses';
+$route['company_operations_api/hr_accesses/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_accesses/$1';
+$route['company_operations_api/hr_files'] = 'company_operations_api/hr_files';
+$route['company_operations_api/hr_files/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_files/$1';
+$route['company_operations_api/hr_reports'] = 'company_operations_api/hr_reports';
+$route['company_operations_api/hr_reports/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_reports/$1';
+$route['company_operations_api/hr_imports'] = 'company_operations_api/hr_imports';
+$route['company_operations_api/hr_imports/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_imports/$1';
+$route['company_operations_api/hr_articles'] = 'company_operations_api/hr_articles';
+$route['company_operations_api/hr_articles/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_articles/$1';
+$route['company_operations_api/hr_documents'] = 'company_operations_api/hr_documents';
+$route['company_operations_api/hr_documents/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_documents/$1';

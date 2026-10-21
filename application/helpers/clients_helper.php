@@ -16,6 +16,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 function is_contact_email_verified($id = null)
 {
     $id = ! $id ? get_contact_user_id() : $id;
+    if (!\app\services\ClientIssuerScope::isLegacyContact(get_instance()->db, db_prefix(), $id)) { return false; }
 
     if (isset($GLOBALS['contact']) && $GLOBALS['contact']->id == $id) {
         return ! is_null($GLOBALS['contact']->email_verified_at);
@@ -103,7 +104,8 @@ function customer_has_subscriptions($id)
 function get_client($id = null)
 {
     if (empty($id) && isset($GLOBALS['client'])) {
-        return $GLOBALS['client'];
+        $cached = $GLOBALS['client'];
+        return isset($cached->userid) && \app\services\ClientIssuerScope::isLegacyClient(get_instance()->db, db_prefix(), $cached->userid) ? $cached : null;
     }
 
     // Client global object not set
@@ -375,9 +377,10 @@ function app_init_customer_profile_tabs()
 function get_client_id_by_lead_id($id)
 {
     $CI = &get_instance();
+    \app\services\ClientIssuerScope::applyLegacy($CI->db, db_prefix(), db_prefix() . 'clients');
     $CI->db->select('userid')->from(db_prefix() . 'clients')->where('leadid', $id);
-
-    return $CI->db->get()->row()->userid;
+    $client = $CI->db->get()->row();
+    return $client ? $client->userid : null;
 }
 
 /**
@@ -393,6 +396,8 @@ function is_primary_contact($contact_id = '')
     if (! is_numeric($contact_id)) {
         $contact_id = get_contact_user_id();
     }
+
+    if (!\app\services\ClientIssuerScope::isLegacyContact(get_instance()->db, db_prefix(), $contact_id)) { return false; }
 
     return (bool) (total_rows(db_prefix() . 'contacts', ['id' => $contact_id, 'is_primary' => 1]) > 0);
 }
@@ -451,6 +456,7 @@ function is_client_using_multiple_currencies($clientid = '', $table = null)
 function is_empty_customer_company($id)
 {
     $CI = &get_instance();
+    if (!\app\services\ClientIssuerScope::isLegacyClient($CI->db, db_prefix(), $id)) { return true; }
     $CI->db->select('company');
     $CI->db->from(db_prefix() . 'clients');
     $CI->db->where('userid', $id);
@@ -472,8 +478,14 @@ function is_empty_customer_company($id)
 function get_customer_profile_file_sharing($where = [])
 {
     $CI = &get_instance();
-    $CI->db->where($where);
-
+    $CI->db->where('EXISTS (SELECT 1 FROM ' . db_prefix() . 'files AS customer_file_scope WHERE customer_file_scope.id='
+        . db_prefix() . "shared_customer_files.file_id AND customer_file_scope.rel_type='customer' AND "
+        . \app\services\ClientIssuerScope::legacySql($CI->db, db_prefix(), 'customer_file_scope', 'rel_id') . ')', null, false);
+    if (!empty($where)) {
+        $CI->db->group_start();
+        $CI->db->where($where);
+        $CI->db->group_end();
+    }
     return $CI->db->get(db_prefix() . 'shared_customer_files')->result_array();
 }
 
@@ -487,6 +499,7 @@ function get_customer_profile_file_sharing($where = [])
 function get_user_id_by_contact_id($id)
 {
     $CI = &get_instance();
+    if (!\app\services\ClientIssuerScope::isLegacyContact($CI->db, db_prefix(), $id)) { return false; }
 
     $userid = $CI->app_object_cache->get('user-id-by-contact-id-' . $id);
     if (! $userid) {
@@ -513,6 +526,7 @@ function get_user_id_by_contact_id($id)
 function get_primary_contact_user_id($userid)
 {
     $CI = &get_instance();
+    if (!\app\services\ClientIssuerScope::isLegacyClient($CI->db, db_prefix(), $userid)) { return false; }
     $CI->db->where('userid', $userid);
     $CI->db->where('is_primary', 1);
     $row = $CI->db->get(db_prefix() . 'contacts')->row();
@@ -533,9 +547,10 @@ function get_primary_contact_user_id($userid)
  */
 function get_contact_full_name($contact_id = '')
 {
-    $contact_id == '' ? get_contact_user_id() : $contact_id;
+    $contact_id = $contact_id == '' ? get_contact_user_id() : $contact_id;
 
     $CI = &get_instance();
+    if (!\app\services\ClientIssuerScope::isLegacyContact($CI->db, db_prefix(), $contact_id)) { return ''; }
 
     $contact = $CI->app_object_cache->get('contact-full-name-data-' . $contact_id);
 
@@ -563,6 +578,7 @@ function contact_profile_image_url($contact_id, $type = 'small')
 {
     $url  = base_url('assets/images/user-placeholder.jpg');
     $CI   = &get_instance();
+    if (!\app\services\ClientIssuerScope::isLegacyContact($CI->db, db_prefix(), $contact_id)) { return $url; }
     $path = $CI->app_object_cache->get('contact-profile-image-path-' . $contact_id);
 
     if (! $path) {
@@ -603,6 +619,7 @@ function get_company_name($userid, $prevent_empty_company = false)
         $_userid = $userid;
     }
     $CI = &get_instance();
+    if (!\app\services\ClientIssuerScope::isLegacyClient($CI->db, db_prefix(), $_userid)) { return ''; }
 
     $select = ($prevent_empty_company == false ? get_sql_select_client_company() : 'company');
 
@@ -642,6 +659,7 @@ function is_customer_admin($id, $staff_id = '')
 {
     $staff_id = is_numeric($staff_id) ? $staff_id : get_staff_user_id();
     $CI       = &get_instance();
+    if (!\app\services\ClientIssuerScope::isLegacyClient($CI->db, db_prefix(), $id)) { return false; }
     $cache    = $CI->app_object_cache->get($id . '-is-customer-admin-' . $staff_id);
 
     if ($cache) {
@@ -667,21 +685,13 @@ function is_customer_admin($id, $staff_id = '')
  */
 function have_assigned_customers($staff_id = '')
 {
-    $CI       = &get_instance();
+    $CI = &get_instance();
     $staff_id = is_numeric($staff_id) ? $staff_id : get_staff_user_id();
-    $cache    = $CI->app_object_cache->get('staff-total-assigned-customers-' . $staff_id);
-
-    if (is_numeric($cache)) {
-        $result = $cache;
-    } else {
-        $result = total_rows(db_prefix() . 'customer_admins', [
-            'staff_id' => $staff_id,
-        ]);
-        $CI->app_object_cache->add('staff-total-assigned-customers-' . $staff_id, $result);
-    }
-
-    return $result > 0 ? true : false;
+    // Ownership-sensitive authorization is never taken from the object cache.
+    \app\services\ClientIssuerScope::applyLegacy($CI->db, db_prefix(), db_prefix() . 'customer_admins', 'customer_id');
+    return $CI->db->select('staff_id')->where('staff_id', $staff_id)->limit(1)->get(db_prefix() . 'customer_admins')->row() !== null;
 }
+
 /**
  * Check if contact has permission
  *
@@ -693,6 +703,10 @@ function have_assigned_customers($staff_id = '')
 function has_contact_permission($permission, $contact_id = '')
 {
     $CI = &get_instance();
+    if (empty($contact_id)) { $contact_id = get_contact_user_id(); }
+    if (!class_exists(\app\services\ClientIssuerScope::class)) { require_once APPPATH.'services/ClientIssuerScope.php'; }
+    // Private contacts use the owner-bound portal. Native permission1 never opens unreviewed legacy consumers.
+    if (!\app\services\ClientIssuerScope::isLegacyContact($CI->db,db_prefix(),$contact_id)) { return false; }
 
     if (! class_exists('app')) {
         $CI->load->library('app');
@@ -700,9 +714,6 @@ function has_contact_permission($permission, $contact_id = '')
 
     $permissions = get_contact_permissions();
 
-    if (empty($contact_id)) {
-        $contact_id = get_contact_user_id();
-    }
 
     foreach ($permissions as $_permission) {
         if ($_permission['short_name'] == $permission) {
@@ -838,6 +849,7 @@ function can_contact_view_email_notifications_options()
 function login_as_client($id)
 {
     $CI = &get_instance();
+    if (!\app\services\ClientIssuerScope::isLegacyClient($CI->db, db_prefix(), $id)) { return false; }
 
     $CI->db->select(db_prefix() . 'contacts.id, active')
         ->where('userid', $id)
@@ -914,6 +926,7 @@ function contact_consent_url($contact_id)
 function get_all_customer_attachments($id)
 {
     $CI = &get_instance();
+    if (!\app\services\ClientIssuerScope::isLegacyClient($CI->db, db_prefix(), $id)) { return []; }
 
     $attachments = [];
 
@@ -1015,6 +1028,7 @@ function get_all_customer_attachments($id)
         }
 
         $CI->db->from(db_prefix() . 'invoices');
+        \app\services\InvoiceIssuerScope::applyLegacy($CI->db, db_prefix() . 'invoices');
         $invoices = $CI->db->get()->result_array();
         $ids      = array_column($invoices, 'id');
 
@@ -1247,7 +1261,7 @@ function can_loggged_in_user_manage_contacts()
     $id      = get_contact_user_id();
     $contact = get_instance()->clients_model->get_contact($id);
 
-    if (($contact->is_primary != 1) || (get_option('allow_primary_contact_to_manage_other_contacts') != 1)) {
+    if (!$contact || ($contact->is_primary != 1) || (get_option('allow_primary_contact_to_manage_other_contacts') != 1)) {
         return false;
     }
 

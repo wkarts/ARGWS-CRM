@@ -301,6 +301,7 @@ function get_project_status_by_id($id)
 function get_user_pinned_projects()
 {
     $CI = &get_instance();
+    \app\services\ClientIssuerScope::applyLegacy($CI->db, db_prefix(), db_prefix().'projects', 'clientid');
     $CI->db->select(db_prefix() . 'projects.id, ' . db_prefix() . 'projects.name, ' . db_prefix() . 'projects.clientid, ' . get_sql_select_client_company());
     $CI->db->join(db_prefix() . 'projects', db_prefix() . 'projects.id=' . db_prefix() . 'pinned_projects.project_id');
     $CI->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid=' . db_prefix() . 'projects.clientid');
@@ -325,6 +326,7 @@ function get_user_pinned_projects()
 function get_project_name_by_id($id)
 {
     $CI      = &get_instance();
+    if (!\app\services\CustomerRelationBoundary::permitsRecord($CI->db, db_prefix(), 'projects', $id)) return '';
     $project = $CI->app_object_cache->get('project-name-data-' . $id);
 
     if (! $project) {
@@ -351,6 +353,7 @@ function get_project_name_by_id($id)
 function get_project_milestones($project_id)
 {
     $CI = &get_instance();
+    if (!\app\services\CustomerRelationBoundary::permitsRecord($CI->db, db_prefix(), 'projects', $project_id)) return [];
     $CI->db->where('project_id', $project_id);
     $CI->db->order_by('milestone_order', 'ASC');
 
@@ -367,6 +370,7 @@ function get_project_milestones($project_id)
 function get_client_id_by_project_id($id)
 {
     $CI = &get_instance();
+    if (!\app\services\CustomerRelationBoundary::permitsRecord($CI->db, db_prefix(), 'projects', $id)) return false;
     $CI->db->select('clientid');
     $CI->db->where('id', $id);
     $project = $CI->db->get(db_prefix() . 'projects')->row();

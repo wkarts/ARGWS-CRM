@@ -1,0 +1,361 @@
+{
+  "scope": "Recovered Drafts440 original test execution with explicitly recreated lost439 bootstrap; no original assertion changed",
+  "only_file_written": "/workspace/scratch/6b72446d684f/candidate440/tests/companies/invoice_copies.php",
+  "compatibility_sha256": "f6f9971d8c3c54fa2dcb824424986f55bd28e3c16b22f4605e22919b85a11a06",
+  "sqlite": [
+    {
+      "suite": "invoice_drafts",
+      "driver": "sqlite",
+      "code": 0,
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "tests/companies/invoice_drafts.php"
+      ],
+      "log": "/workspace/scratch/6b72446d684f/drafts440-invoice_drafts-sqlite.log"
+    },
+    {
+      "suite": "invoice_drafts_atomic",
+      "driver": "sqlite",
+      "code": 0,
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "tests/companies/invoice_drafts_atomic.php"
+      ],
+      "log": "/workspace/scratch/6b72446d684f/drafts440-invoice_drafts_atomic-sqlite.log"
+    },
+    {
+      "suite": "invoice_drafts_api",
+      "driver": "sqlite",
+      "code": 0,
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "tests/companies/invoice_drafts_api.php"
+      ],
+      "log": "/workspace/scratch/6b72446d684f/drafts440-invoice_drafts_api-sqlite.log"
+    },
+    {
+      "suite": "invoice_drafts_api_controller",
+      "driver": "sqlite",
+      "code": 0,
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "tests/companies/invoice_drafts_api_controller.php"
+      ],
+      "log": "/workspace/scratch/6b72446d684f/drafts440-invoice_drafts_api_controller-sqlite.log"
+    },
+    {
+      "suite": "invoice_drafts_controller",
+      "driver": "sqlite",
+      "code": 0,
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "tests/companies/invoice_drafts_controller.php"
+      ],
+      "log": "/workspace/scratch/6b72446d684f/drafts440-invoice_drafts_controller-sqlite.log"
+    }
+  ],
+  "mariadb": [
+    {
+      "suite": "invoice_drafts",
+      "driver": "mariadb",
+      "code": 0,
+      "command": [
+        "python",
+        "/workspace/scratch/6b72446d684f/test-runtime/run_resume_db.py",
+        "--cwd",
+        "/workspace/scratch/6b72446d684f/candidate440",
+        "--",
+        "php",
+        "tests/companies/invoice_drafts.php"
+      ],
+      "log": "/workspace/scratch/6b72446d684f/drafts440-invoice_drafts-mariadb.log",
+      "tail": "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-swruq0jm\nNamed-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nRecreated439 canonical copies: 88 cumulative checks passed (mysql). No provider calls.\nPrivate invoice drafts: 136 cumulative (mysql). No providers or messages.\n"
+    },
+    {
+      "suite": "invoice_drafts_atomic",
+      "driver": "mariadb",
+      "code": 0,
+      "command": [
+        "python",
+        "/workspace/scratch/6b72446d684f/test-runtime/run_resume_db.py",
+        "--cwd",
+        "/workspace/scratch/6b72446d684f/candidate440",
+        "--",
+        "php",
+        "tests/companies/invoice_drafts_atomic.php"
+      ],
+      "log": "/workspace/scratch/6b72446d684f/drafts440-invoice_drafts_atomic-mariadb.log",
+      "tail": "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-x3drvyqq\nNamed-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nRecreated439 canonical copies: 88 cumulative checks passed (mysql). No provider calls.\nPrivate invoice drafts: 136 cumulative (mysql). No providers or messages.\nPrivate draft late atomicity/snapshots/principal: 180 cumulative (mysql).\n"
+    },
+    {
+      "suite": "invoice_drafts_api",
+      "driver": "mariadb",
+      "code": 0,
+      "command": [
+        "python",
+        "/workspace/scratch/6b72446d684f/test-runtime/run_resume_db.py",
+        "--cwd",
+        "/workspace/scratch/6b72446d684f/candidate440",
+        "--",
+        "php",
+        "tests/companies/invoice_drafts_api.php"
+      ],
+      "log": "/workspace/scratch/6b72446d684f/drafts440-invoice_drafts_api-mariadb.log",
+      "tail": "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-k5qf_d5g\nNamed-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nRecreated439 canonical copies: 88 cumulative checks passed (mysql). No provider calls.\nPrivate invoice drafts: 136 cumulative (mysql). No providers or messages.\nPrivate invoice draft API: 150 cumulative (mysql).\n"
+    },
+    {
+      "suite": "invoice_drafts_api_controller",
+      "driver": "mariadb",
+      "code": 0,
+      "command": [
+        "python",
+        "/workspace/scratch/6b72446d684f/test-runtime/run_resume_db.py",
+        "--cwd",
+        "/workspace/scratch/6b72446d684f/candidate440",
+        "--",
+        "php",
+        "tests/companies/invoice_drafts_api_controller.php"
+      ],
+      "log": "/workspace/scratch/6b72446d684f/drafts440-invoice_drafts_api_controller-mariadb.log",
+      "tail": "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-331ovo8y\nNamed-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nRecreated439 canonical copies: 88 cumulative checks passed (mysql). No provider calls.\nPrivate invoice drafts: 136 cumulative (mysql). No providers or messages.\nPrivate invoice draft API: 150 cumulative (mysql).\nPrivate draft actual API controller/scope: 178 cumulative (mysql).\n"
+    },
+    {
+      "suite": "invoice_drafts_controller",
+      "driver": "mariadb",
+      "code": 0,
+      "command": [
+        "python",
+        "/workspace/scratch/6b72446d684f/test-runtime/run_resume_db.py",
+        "--cwd",
+        "/workspace/scratch/6b72446d684f/candidate440",
+        "--",
+        "php",
+        "tests/companies/invoice_drafts_controller.php"
+      ],
+      "log": "/workspace/scratch/6b72446d684f/drafts440-invoice_drafts_controller-mariadb.log",
+      "tail": "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-qdblz5fo\nNamed-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nRecreated439 canonical copies: 88 cumulative checks passed (mysql). No provider calls.\nPrivate invoice drafts: 136 cumulative (mysql). No providers or messages.\nPrivate draft controller/templates: 152 cumulative (mysql).\n"
+    },
+    {
+      "suite": "invoice_drafts_native",
+      "driver": "mariadb",
+      "code": 0,
+      "command": [
+        "python",
+        "/workspace/scratch/6b72446d684f/test-runtime/run_resume_db.py",
+        "--cwd",
+        "/workspace/scratch/6b72446d684f/candidate440",
+        "--",
+        "php",
+        "tests/companies/invoice_drafts_native.php"
+      ],
+      "log": "/workspace/scratch/6b72446d684f/drafts440-invoice_drafts_native-mariadb.log",
+      "tail": "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-2kjld7bs\nNamed-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nRecreated439 canonical copies: 88 cumulative checks passed (mysql). No provider calls.\nPrivate invoice drafts: 136 cumulative (mysql). No providers or messages.\nPrivate draft native schema/PK/FK/collation/NULL/replay/DDL failures: 169 cumulative. Future core440 executor tracking not claimed by this helper.\n"
+    },
+    {
+      "suite": "invoice_drafts_concurrency",
+      "driver": "mariadb",
+      "code": 0,
+      "command": [
+        "python",
+        "/workspace/scratch/6b72446d684f/test-runtime/run_resume_db.py",
+        "--cwd",
+        "/workspace/scratch/6b72446d684f/candidate440",
+        "--",
+        "php",
+        "tests/companies/invoice_drafts_concurrency.php"
+      ],
+      "log": "/workspace/scratch/6b72446d684f/drafts440-invoice_drafts_concurrency-mariadb.log",
+      "tail": "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-55yvgu90\nNamed-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nRecreated439 canonical copies: 88 cumulative checks passed (mysql). No provider calls.\nPrivate invoice drafts: 136 cumulative (mysql). No providers or messages.\nPrivate draft late atomicity/snapshots/principal: 180 cumulative (mysql).\nPrivate draft concurrency: 292 cumulative,19 scenarios with two actual SQL lock waiters.\n"
+    }
+  ],
+  "original_test_integrity": [
+    {
+      "path": "tests/companies/invoice_drafts.php",
+      "expected": "e63c2bf5cf129a4666adab32bdb0919dbe5d575604923cb05e786e12f45f2cd6",
+      "actual": "e63c2bf5cf129a4666adab32bdb0919dbe5d575604923cb05e786e12f45f2cd6",
+      "unchanged_packet": true
+    },
+    {
+      "path": "tests/companies/invoice_drafts_api.php",
+      "expected": "81cc6c953c0d86544165a7a931f62ea06ca6ac585cbc5eab745bf999b42fb511",
+      "actual": "81cc6c953c0d86544165a7a931f62ea06ca6ac585cbc5eab745bf999b42fb511",
+      "unchanged_packet": true
+    },
+    {
+      "path": "tests/companies/invoice_drafts_api_controller.php",
+      "expected": "46485e41457e9bf9f6af3ebd8ebe55bf2787235683abd4404b945e52f862e3b8",
+      "actual": "46485e41457e9bf9f6af3ebd8ebe55bf2787235683abd4404b945e52f862e3b8",
+      "unchanged_packet": true
+    },
+    {
+      "path": "tests/companies/invoice_drafts_atomic.php",
+      "expected": "26c8ed7248224563d4e4f04f4268f47da22bdd8278eb784266ea6fd95430494b",
+      "actual": "26c8ed7248224563d4e4f04f4268f47da22bdd8278eb784266ea6fd95430494b",
+      "unchanged_packet": true
+    },
+    {
+      "path": "tests/companies/invoice_drafts_browser.cjs",
+      "expected": "b8f02063c116269ff2c6f69fa2e87da4ab298ab7ff9b5abfbd754b3bad20b0ea",
+      "actual": "b8f02063c116269ff2c6f69fa2e87da4ab298ab7ff9b5abfbd754b3bad20b0ea",
+      "unchanged_packet": true
+    },
+    {
+      "path": "tests/companies/invoice_drafts_concurrency.php",
+      "expected": "57340af5c6053d7077e340e0b6040ce13506c6f9e26a05cfbb4be375293a089a",
+      "actual": "57340af5c6053d7077e340e0b6040ce13506c6f9e26a05cfbb4be375293a089a",
+      "unchanged_packet": true
+    },
+    {
+      "path": "tests/companies/invoice_drafts_controller.php",
+      "expected": "27f6bb78d51060966036911d4d7eaeecc529c7be7c0fab98bec1f9b8f610b20e",
+      "actual": "27f6bb78d51060966036911d4d7eaeecc529c7be7c0fab98bec1f9b8f610b20e",
+      "unchanged_packet": true
+    },
+    {
+      "path": "tests/companies/invoice_drafts_http_fixture.php",
+      "expected": "cc97a31e0c2d0242c5b53b24d86de8f5916f4207c2a6447e6ea90c59fbf8d96b",
+      "actual": "cc97a31e0c2d0242c5b53b24d86de8f5916f4207c2a6447e6ea90c59fbf8d96b",
+      "unchanged_packet": true
+    },
+    {
+      "path": "tests/companies/invoice_drafts_native.php",
+      "expected": "72b49ca17caec69236bf9279267d2070979eafc2972da872d6eb0f8d3552a395",
+      "actual": "72b49ca17caec69236bf9279267d2070979eafc2972da872d6eb0f8d3552a395",
+      "unchanged_packet": true
+    }
+  ],
+  "limits": [
+    "Counters are cumulative and overlap; do not sum. Different recovered bootstrap lacks old original439 copy fixture assertions.",
+    "Native suite proves direct helper DDL/metadata/readback/replay only. Native core440 executor/tracking is root task.",
+    "HTTP fixture and real Chromium were not executed by this agent; fixture requires genuine native440 tracking.",
+    "No production/migrations/versions/workflows/candidate439 edits, no commit/push/merge/deploy."
+  ],
+  "lint": [
+    {
+      "path": "tests/companies/invoice_copies.php",
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "-l",
+        "tests/companies/invoice_copies.php"
+      ],
+      "code": 0
+    },
+    {
+      "path": "application/controllers/admin/Company_invoice_drafts.php",
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "-l",
+        "application/controllers/admin/Company_invoice_drafts.php"
+      ],
+      "code": 0
+    },
+    {
+      "path": "application/views/admin/companies/invoice_drafts.php",
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "-l",
+        "application/views/admin/companies/invoice_drafts.php"
+      ],
+      "code": 0
+    },
+    {
+      "path": "application/views/admin/companies/invoice_drafts_editor_script.php",
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "-l",
+        "application/views/admin/companies/invoice_drafts_editor_script.php"
+      ],
+      "code": 0
+    },
+    {
+      "path": "tests/companies/invoice_drafts.php",
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "-l",
+        "tests/companies/invoice_drafts.php"
+      ],
+      "code": 0
+    },
+    {
+      "path": "tests/companies/invoice_drafts_api.php",
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "-l",
+        "tests/companies/invoice_drafts_api.php"
+      ],
+      "code": 0
+    },
+    {
+      "path": "tests/companies/invoice_drafts_api_controller.php",
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "-l",
+        "tests/companies/invoice_drafts_api_controller.php"
+      ],
+      "code": 0
+    },
+    {
+      "path": "tests/companies/invoice_drafts_atomic.php",
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "-l",
+        "tests/companies/invoice_drafts_atomic.php"
+      ],
+      "code": 0
+    },
+    {
+      "path": "tests/companies/invoice_drafts_concurrency.php",
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "-l",
+        "tests/companies/invoice_drafts_concurrency.php"
+      ],
+      "code": 0
+    },
+    {
+      "path": "tests/companies/invoice_drafts_controller.php",
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "-l",
+        "tests/companies/invoice_drafts_controller.php"
+      ],
+      "code": 0
+    },
+    {
+      "path": "tests/companies/invoice_drafts_http_fixture.php",
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "-l",
+        "tests/companies/invoice_drafts_http_fixture.php"
+      ],
+      "code": 0
+    },
+    {
+      "path": "tests/companies/invoice_drafts_native.php",
+      "command": [
+        "/workspace/scratch/6b72446d684f/test-runtime/resume-bin/php",
+        "-l",
+        "tests/companies/invoice_drafts_native.php"
+      ],
+      "code": 0
+    },
+    {
+      "path": "tests/companies/invoice_drafts_browser.cjs",
+      "command": [
+        "node",
+        "--check",
+        "tests/companies/invoice_drafts_browser.cjs"
+      ],
+      "code": 0
+    },
+    {
+      "path": "/workspace/scratch/6b72446d684f/drafts440-editor-inline-final.js",
+      "command": [
+        "node",
+        "--check",
+        "/workspace/scratch/6b72446d684f/drafts440-editor-inline-final.js"
+      ],
+      "code": 0
+    }
+  ]
+}

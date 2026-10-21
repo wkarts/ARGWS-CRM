@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once __DIR__ . '/../../libraries/AccountingLegacyScope.php';
 
 $this->ci->load->model('currencies_model');
 $this->ci->load->model('accounting/accounting_model');
@@ -93,6 +94,8 @@ $sIndexColumn = 'id';
 $sTable       = db_prefix() . 'expenses';
 
 // Fix for big queries. Some hosting have max_join_limit
+
+$where[] = 'AND (' . AccountingLegacyScope::expenseSql($this->ci->db, db_prefix(), db_prefix() . 'expenses') . ')';
 
 $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
      'vendor', db_prefix().'expenses.approved'

@@ -1,0 +1,2513 @@
+{
+  "format": 1,
+  "scope": "Line-anchored named PHP function candidates and top-level blocks in first-party application/modules, excluding translations and migration history. Lexical candidates may include false positives. Anonymous closures belong to their enclosing segment. Not an exhaustive runtime call graph.",
+  "meaning": "boundary_tested means only the outcomes in evidence were exercised with synthetic local fixtures. It never means the whole consumer is isolated or secondary-company operation is ready. All full_operation_ready values remain false pending cross-consumer, MySQL, concurrency and HTTP proof.",
+  "source_identity": "Exact per-file SHA-256 and source_manifest_sha256 below; no historical commit is asserted for a regenerated working tree.",
+  "counts": {
+    "company_core_and_settings": {
+      "pending": 1897,
+      "boundary_tested": 5
+    },
+    "customer_portal": {
+      "pending": 232,
+      "boundary_tested": 3
+    },
+    "files_and_reports": {
+      "pending": 192,
+      "boundary_tested": 7
+    },
+    "jobs_and_transport": {
+      "pending": 287,
+      "boundary_tested": 10
+    },
+    "modules": {
+      "pending": 6789,
+      "boundary_tested": 13
+    },
+    "other_core": {
+      "pending": 2245,
+      "boundary_tested": 9
+    },
+    "sales_documents": {
+      "pending": 315,
+      "boundary_tested": 60
+    }
+  },
+  "consumers": [
+    {
+      "consumer": "application/controllers/Download.php::file",
+      "category": "files_and_reports",
+      "line": 95,
+      "source_sha256": "a87e45df6d2e5af698ffd7bec4257fb08be9518c173f6afbd0814185517c4c5e",
+      "risk_candidates": [
+        "database",
+        "authorization",
+        "identity_context",
+        "files",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/related_file_previews.php"
+        ],
+        "exercised": [
+          "legacy_preview_positive",
+          "deny_private_relation_before_output"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "a87e45df6d2e5af698ffd7bec4257fb08be9518c173f6afbd0814185517c4c5e"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/controllers/Download.php::assert_legacy_preview_path",
+      "category": "files_and_reports",
+      "line": 259,
+      "source_sha256": "a87e45df6d2e5af698ffd7bec4257fb08be9518c173f6afbd0814185517c4c5e",
+      "risk_candidates": [
+        "database",
+        "authorization",
+        "identity_context",
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/related_file_previews.php"
+        ],
+        "exercised": [
+          "legacy_preview_positive",
+          "deny_private_relation_before_output"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "a87e45df6d2e5af698ffd7bec4257fb08be9518c173f6afbd0814185517c4c5e"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/controllers/admin/Emails.php::index",
+      "category": "jobs_and_transport",
+      "line": 19,
+      "source_sha256": "f586b66a44c66cf7b7505740ccf5d306dee880e3cfb3b2b02454261837ecbfd3",
+      "risk_candidates": [
+        "authorization",
+        "transport"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/email_template_editor.php",
+          "tests/companies/email_template_bootstrap.php"
+        ],
+        "exercised": [
+          "secondary_editor_A_B_listing",
+          "deny_missing_resource_permission_or_seal",
+          "server_bootstrap_without_global_hooks"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
+        "source_sha256": "f586b66a44c66cf7b7505740ccf5d306dee880e3cfb3b2b02454261837ecbfd3"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/controllers/admin/Emails.php::email_template",
+      "category": "jobs_and_transport",
+      "line": 111,
+      "source_sha256": "f586b66a44c66cf7b7505740ccf5d306dee880e3cfb3b2b02454261837ecbfd3",
+      "risk_candidates": [
+        "database",
+        "authorization"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/email_template_editor.php",
+          "tests/companies/email_template_bootstrap.php"
+        ],
+        "exercised": [
+          "secondary_editor_A_B_component_positive",
+          "deny_foreign_ID_and_company_override",
+          "resource_acl_and_revocation",
+          "server_bootstrap_without_global_hooks",
+          "escaped_persisted_HTML"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
+        "source_sha256": "f586b66a44c66cf7b7505740ccf5d306dee880e3cfb3b2b02454261837ecbfd3"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/controllers/admin/Emails.php::isolated_templates",
+      "category": "jobs_and_transport",
+      "line": 208,
+      "source_sha256": "f586b66a44c66cf7b7505740ccf5d306dee880e3cfb3b2b02454261837ecbfd3",
+      "risk_candidates": [],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/email_template_editor.php",
+          "tests/companies/email_template_bootstrap.php"
+        ],
+        "exercised": [
+          "secondary_editor_A_B_component_positive",
+          "deny_foreign_ID_and_company_override",
+          "resource_acl_and_revocation",
+          "server_bootstrap_without_global_hooks",
+          "escaped_persisted_HTML"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
+        "source_sha256": "f586b66a44c66cf7b7505740ccf5d306dee880e3cfb3b2b02454261837ecbfd3"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/helpers/general_helper.php::_d",
+      "category": "other_core",
+      "line": 618,
+      "source_sha256": "689a003a47e1a9361258746e19aec0b333074588b8a172504af2e23bfc3ca366",
+      "risk_candidates": [],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/settings/company_formatting.php"
+        ],
+        "exercised": [
+          "secondary_company_positive_formatting",
+          "independent_A_B_values"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "689a003a47e1a9361258746e19aec0b333074588b8a172504af2e23bfc3ca366"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/helpers/general_helper.php::_dt",
+      "category": "other_core",
+      "line": 650,
+      "source_sha256": "689a003a47e1a9361258746e19aec0b333074588b8a172504af2e23bfc3ca366",
+      "risk_candidates": [
+        "settings"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/settings/company_formatting.php"
+        ],
+        "exercised": [
+          "secondary_company_positive_formatting",
+          "independent_A_B_values"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "689a003a47e1a9361258746e19aec0b333074588b8a172504af2e23bfc3ca366"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/helpers/general_helper.php::to_sql_date",
+      "category": "other_core",
+      "line": 695,
+      "source_sha256": "689a003a47e1a9361258746e19aec0b333074588b8a172504af2e23bfc3ca366",
+      "risk_candidates": [
+        "settings"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/settings/company_formatting.php"
+        ],
+        "exercised": [
+          "secondary_company_positive_formatting",
+          "independent_A_B_values"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "689a003a47e1a9361258746e19aec0b333074588b8a172504af2e23bfc3ca366"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/helpers/upload_helper.php::handle_project_file_uploads",
+      "category": "files_and_reports",
+      "line": 186,
+      "source_sha256": "c7e7d285842f691a51c40441406b3790574ba0623fd4f8f578f397a8c51a2234",
+      "risk_candidates": [
+        "database",
+        "identity_context",
+        "files",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/related_uploads.php"
+        ],
+        "exercised": [
+          "deny_private_relation_before_hooks",
+          "legacy_empty_upload_noop"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "c7e7d285842f691a51c40441406b3790574ba0623fd4f8f578f397a8c51a2234"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/helpers/upload_helper.php::handle_contract_attachment",
+      "category": "files_and_reports",
+      "line": 311,
+      "source_sha256": "c7e7d285842f691a51c40441406b3790574ba0623fd4f8f578f397a8c51a2234",
+      "risk_candidates": [
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/related_uploads.php"
+        ],
+        "exercised": [
+          "deny_private_relation_before_hooks",
+          "legacy_empty_upload_noop"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "c7e7d285842f691a51c40441406b3790574ba0623fd4f8f578f397a8c51a2234"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/helpers/upload_helper.php::handle_task_attachments_array",
+      "category": "files_and_reports",
+      "line": 432,
+      "source_sha256": "c7e7d285842f691a51c40441406b3790574ba0623fd4f8f578f397a8c51a2234",
+      "risk_candidates": [
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/related_uploads.php"
+        ],
+        "exercised": [
+          "deny_private_relation_before_hooks",
+          "legacy_empty_upload_noop"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "c7e7d285842f691a51c40441406b3790574ba0623fd4f8f578f397a8c51a2234"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/helpers/upload_helper.php::handle_expense_attachments",
+      "category": "files_and_reports",
+      "line": 671,
+      "source_sha256": "c7e7d285842f691a51c40441406b3790574ba0623fd4f8f578f397a8c51a2234",
+      "risk_candidates": [
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/related_uploads.php"
+        ],
+        "exercised": [
+          "deny_private_relation_before_hooks",
+          "legacy_empty_upload_noop"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "c7e7d285842f691a51c40441406b3790574ba0623fd4f8f578f397a8c51a2234"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/helpers/upload_helper.php::handle_ticket_attachments",
+      "category": "files_and_reports",
+      "line": 724,
+      "source_sha256": "c7e7d285842f691a51c40441406b3790574ba0623fd4f8f578f397a8c51a2234",
+      "risk_candidates": [
+        "settings",
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/related_uploads.php"
+        ],
+        "exercised": [
+          "deny_private_relation_before_hooks"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "c7e7d285842f691a51c40441406b3790574ba0623fd4f8f578f397a8c51a2234"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/libraries/App_clients_area_constructor.php::__construct",
+      "category": "other_core",
+      "line": 9,
+      "source_sha256": "18628c260fa9dfab714db2169e48e2cfd16cdb65df846c0fe69c101a7da235e1",
+      "risk_candidates": [
+        "settings",
+        "session_cache",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "18628c260fa9dfab714db2169e48e2cfd16cdb65df846c0fe69c101a7da235e1",
+        "tests": [
+          "tests/portal_client_constructor.php"
+        ],
+        "exercised": [
+          "own_authenticated_private_identity_positive",
+          "legacy_display_preserved",
+          "deny_stale_identity"
+        ],
+        "runtime": "Actual constructor / synthetic session, SQLite and peripheral service stubs"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/libraries/mails/App_mail_template.php::prepare",
+      "category": "jobs_and_transport",
+      "line": 420,
+      "source_sha256": "431a154fd50f0a78c8aaef7c34a2bfb23751bac2e0c01a44942b6417c00305c9",
+      "risk_candidates": [
+        "settings",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/email_template_scope.php"
+        ],
+        "exercised": [
+          "native_language_fallback_stays_in_company",
+          "no_global_template_borrowing",
+          "legacy_fallback_preserved"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
+        "source_sha256": "431a154fd50f0a78c8aaef7c34a2bfb23751bac2e0c01a44942b6417c00305c9"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::get",
+      "category": "sales_documents",
+      "line": 37,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "legacy_positive_where_applicable",
+          "deny_private_customer"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::get_contract_attachments",
+      "category": "sales_documents",
+      "line": 87,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database",
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "legacy_positive_where_applicable",
+          "deny_private_customer"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::add_signature",
+      "category": "sales_documents",
+      "line": 220,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::clear_signature",
+      "category": "sales_documents",
+      "line": 242,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database",
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::add_comment",
+      "category": "sales_documents",
+      "line": 274,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database",
+        "identity_context",
+        "transport"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::edit_comment",
+      "category": "sales_documents",
+      "line": 353,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "legacy_positive_update",
+          "deny_private_customer",
+          "preserve_private_sibling"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::get_comments",
+      "category": "sales_documents",
+      "line": 373,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "legacy_positive_where_applicable",
+          "deny_private_customer"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::get_comment",
+      "category": "sales_documents",
+      "line": 387,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "legacy_positive_where_applicable",
+          "deny_private_customer"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::remove_comment",
+      "category": "sales_documents",
+      "line": 400,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::delete",
+      "category": "sales_documents",
+      "line": 474,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database",
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "legacy_positive_cleanup",
+          "deny_private_customer",
+          "preserve_other_parent_children"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::mark_as_signed",
+      "category": "sales_documents",
+      "line": 535,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::unmark_as_signed",
+      "category": "sales_documents",
+      "line": 560,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database",
+        "documents_reports"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::delete_renewal",
+      "category": "sales_documents",
+      "line": 760,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::get_contract_renewal_history",
+      "category": "sales_documents",
+      "line": 835,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "legacy_positive_where_applicable",
+          "deny_private_customer"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Contracts_model.php::get_merge_fields",
+      "category": "sales_documents",
+      "line": 905,
+      "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a",
+      "risk_candidates": [],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/contract_relations.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "e27af3992210647bdb2f2b9f1e3056caeb5c0dca627dcc26a0c4a804e2a11b0a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::get_available_creditable_invoices",
+      "category": "sales_documents",
+      "line": 70,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database",
+        "authorization",
+        "identity_context",
+        "documents_reports"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_before_hydration"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::get",
+      "category": "sales_documents",
+      "line": 175,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "legacy_positive_list",
+          "deny_private_customer",
+          "deny_or_escape"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::delete_attachment",
+      "category": "sales_documents",
+      "line": 410,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database",
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_attachment_before_filesystem",
+          "legacy_positive_cleanup_after_parent_removal"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::get_attachments",
+      "category": "sales_documents",
+      "line": 439,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "legacy_positive_attachment_list",
+          "deny_private_attachment"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::delete",
+      "category": "sales_documents",
+      "line": 453,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database",
+        "settings",
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "legacy_positive_native_cleanup",
+          "deny_private_document",
+          "preserve_private_sibling",
+          "release_cleanup_proof"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::mark",
+      "category": "sales_documents",
+      "line": 515,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::total_remaining_credits_by_customer",
+      "category": "sales_documents",
+      "line": 530,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database",
+        "authorization",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::total_remaining_credits_by_credit_note",
+      "category": "sales_documents",
+      "line": 547,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::delete_applied_credit",
+      "category": "sales_documents",
+      "line": 599,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::create_refund",
+      "category": "sales_documents",
+      "line": 708,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::edit_refund",
+      "category": "sales_documents",
+      "line": 738,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::get_refund",
+      "category": "sales_documents",
+      "line": 768,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects",
+          "legacy_positive_read"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::get_refunds",
+      "category": "sales_documents",
+      "line": 776,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::delete_refund",
+      "category": "sales_documents",
+      "line": 807,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::apply_credits",
+      "category": "sales_documents",
+      "line": 830,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database",
+        "identity_context",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::update_credit_note_status",
+      "category": "sales_documents",
+      "line": 893,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_before_mutation"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::get_open_credits",
+      "category": "sales_documents",
+      "line": 928,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database",
+        "authorization",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::get_applied_credits",
+      "category": "sales_documents",
+      "line": 956,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_or_foreign_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::save_formatted_number",
+      "category": "sales_documents",
+      "line": 1006,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "deny_private_customer_before_mutation"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Credit_notes_model.php::get_credits_years",
+      "category": "sales_documents",
+      "line": 1015,
+      "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/sales_document_aggregates.php"
+        ],
+        "exercised": [
+          "legacy_positive_aggregate_or_filter",
+          "exclude_private_customer_records"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "3171a3d3311659c2bf56b667d7762a112b746eec28d7848afb844d35f07bd4ad"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Emails_model.php::get",
+      "category": "jobs_and_transport",
+      "line": 64,
+      "source_sha256": "165c554d9d64455472b1d802981144f8715dfef11a93c854bbc2c854acc72bb5",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/email_template_scope.php",
+          "tests/companies/email_template_editor.php"
+        ],
+        "exercised": [
+          "legacy_template_read_positive",
+          "secondary_A_B_native_model_reads",
+          "deny_foreign_ID_or_OR_predicate"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
+        "source_sha256": "165c554d9d64455472b1d802981144f8715dfef11a93c854bbc2c854acc72bb5"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Emails_model.php::get_email_template_by_id",
+      "category": "jobs_and_transport",
+      "line": 76,
+      "source_sha256": "165c554d9d64455472b1d802981144f8715dfef11a93c854bbc2c854acc72bb5",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/email_template_scope.php",
+          "tests/companies/email_template_editor.php"
+        ],
+        "exercised": [
+          "legacy_template_read_positive",
+          "secondary_A_B_native_model_reads",
+          "deny_foreign_ID_or_OR_predicate"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
+        "source_sha256": "165c554d9d64455472b1d802981144f8715dfef11a93c854bbc2c854acc72bb5"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Emails_model.php::update",
+      "category": "jobs_and_transport",
+      "line": 107,
+      "source_sha256": "165c554d9d64455472b1d802981144f8715dfef11a93c854bbc2c854acc72bb5",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/email_template_scope.php",
+          "tests/companies/email_template_editor.php"
+        ],
+        "exercised": [
+          "legacy_positive",
+          "secondary_A_B_positive_native_model",
+          "deny_foreign_ID_and_mixed_batch",
+          "rollback_storage_failure",
+          "company_scoped_audit_for_editor"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
+        "source_sha256": "165c554d9d64455472b1d802981144f8715dfef11a93c854bbc2c854acc72bb5"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Emails_model.php::update_company_template",
+      "category": "jobs_and_transport",
+      "line": 116,
+      "source_sha256": "165c554d9d64455472b1d802981144f8715dfef11a93c854bbc2c854acc72bb5",
+      "risk_candidates": [],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/email_template_editor.php"
+        ],
+        "exercised": [
+          "secondary_A_B_editor_writes",
+          "read_variants_after_transaction_start",
+          "audit_failure_rolls_back_templates",
+          "deny_missing_resource_permission"
+        ],
+        "runtime": "PHP WASM / SQLite and synthetic I/O/intervening write; no real concurrency, HTTP, SMTP or MySQL",
+        "source_sha256": "165c554d9d64455472b1d802981144f8715dfef11a93c854bbc2c854acc72bb5"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Emails_model.php::updateScopedRows",
+      "category": "jobs_and_transport",
+      "line": 136,
+      "source_sha256": "165c554d9d64455472b1d802981144f8715dfef11a93c854bbc2c854acc72bb5",
+      "risk_candidates": [
+        "database",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/email_template_scope.php",
+          "tests/companies/email_template_editor.php"
+        ],
+        "exercised": [
+          "legacy_positive",
+          "secondary_A_B_positive_native_model",
+          "deny_foreign_ID_and_mixed_batch",
+          "rollback_storage_failure",
+          "company_scoped_audit_for_editor"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
+        "source_sha256": "165c554d9d64455472b1d802981144f8715dfef11a93c854bbc2c854acc72bb5"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Emails_model.php::mark_as",
+      "category": "jobs_and_transport",
+      "line": 196,
+      "source_sha256": "165c554d9d64455472b1d802981144f8715dfef11a93c854bbc2c854acc72bb5",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/email_template_scope.php",
+          "tests/companies/email_template_editor.php"
+        ],
+        "exercised": [
+          "secondary_A_activation_does_not_change_B"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
+        "source_sha256": "165c554d9d64455472b1d802981144f8715dfef11a93c854bbc2c854acc72bb5"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Estimates_model.php::get_sale_agents",
+      "category": "sales_documents",
+      "line": 45,
+      "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+      "risk_candidates": [
+        "database",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/sales_document_aggregates.php"
+        ],
+        "exercised": [
+          "legacy_positive_aggregate_or_filter",
+          "exclude_private_customer_records"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Estimates_model.php::get",
+      "category": "sales_documents",
+      "line": 58,
+      "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+      "risk_candidates": [
+        "database",
+        "identity_context",
+        "files",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "legacy_positive_list",
+          "deny_private_customer",
+          "deny_or_escape"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Estimates_model.php::clear_signature",
+      "category": "sales_documents",
+      "line": 115,
+      "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+      "risk_candidates": [
+        "database",
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Estimates_model.php::get_estimates_total",
+      "category": "sales_documents",
+      "line": 434,
+      "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+      "risk_candidates": [
+        "database",
+        "authorization",
+        "identity_context",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/sales_document_aggregates.php"
+        ],
+        "exercised": [
+          "legacy_positive_aggregate_or_filter",
+          "exclude_private_customer_records"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Estimates_model.php::mark_action_status",
+      "category": "sales_documents",
+      "line": 855,
+      "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+      "risk_candidates": [
+        "database",
+        "settings",
+        "identity_context",
+        "transport",
+        "files",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Estimates_model.php::get_attachments",
+      "category": "sales_documents",
+      "line": 984,
+      "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+      "risk_candidates": [
+        "database",
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "legacy_positive_attachment_list",
+          "deny_private_attachment"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Estimates_model.php::delete_attachment",
+      "category": "sales_documents",
+      "line": 1009,
+      "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+      "risk_candidates": [
+        "database",
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_attachment_before_filesystem"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Estimates_model.php::save_formatted_number",
+      "category": "sales_documents",
+      "line": 1168,
+      "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Estimates_model.php::set_estimate_sent",
+      "category": "sales_documents",
+      "line": 1183,
+      "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Estimates_model.php::get_estimate_activity",
+      "category": "sales_documents",
+      "line": 1403,
+      "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Estimates_model.php::log_estimate_activity",
+      "category": "sales_documents",
+      "line": 1421,
+      "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+      "risk_candidates": [
+        "database",
+        "settings",
+        "identity_context",
+        "background"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Estimates_model.php::update_pipeline",
+      "category": "sales_documents",
+      "line": 1452,
+      "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+      "risk_candidates": [],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+        "tests": [
+          "tests/companies/kanban_scope.php"
+        ],
+        "exercised": [
+          "deny_mixed_batch_before_status"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Estimates_model.php::get_estimates_years",
+      "category": "sales_documents",
+      "line": 1464,
+      "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/sales_document_aggregates.php"
+        ],
+        "exercised": [
+          "legacy_positive_aggregate_or_filter",
+          "exclude_private_customer_records"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "0e1eab4b0ca9bb86b41f02e4adee561ebb6fda8acab8eae796afdb12f988bf15"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Expenses_model.php::delete",
+      "category": "other_core",
+      "line": 445,
+      "source_sha256": "12dbb931610d7cf03424c73fb3dc514e12f593acb37c0247120118b819ce85ea",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/expense_cleanup.php"
+        ],
+        "exercised": [
+          "legacy_positive_cleanup",
+          "deny_private_customer",
+          "preserve_named_invoice_origin"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "12dbb931610d7cf03424c73fb3dc514e12f593acb37c0247120118b819ce85ea"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Projects_model.php::delete",
+      "category": "other_core",
+      "line": 2235,
+      "source_sha256": "4ced28bbf837b67413dacc1e7fdfc19c25075bd53488ecd4866c1ec0c641db11",
+      "risk_candidates": [
+        "database",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/project_cleanup.php"
+        ],
+        "exercised": [
+          "legacy_positive_cleanup",
+          "deny_private_customer",
+          "preserve_private_references"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "4ced28bbf837b67413dacc1e7fdfc19c25075bd53488ecd4866c1ec0c641db11"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Proposals_model.php::get_sale_agents",
+      "category": "sales_documents",
+      "line": 51,
+      "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/sales_document_aggregates.php"
+        ],
+        "exercised": [
+          "legacy_positive_aggregate_or_filter",
+          "exclude_private_customer_records"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Proposals_model.php::get_proposals_years",
+      "category": "sales_documents",
+      "line": 56,
+      "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/sales_document_aggregates.php"
+        ],
+        "exercised": [
+          "legacy_positive_aggregate_or_filter",
+          "exclude_private_customer_records"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Proposals_model.php::get",
+      "category": "sales_documents",
+      "line": 367,
+      "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+      "risk_candidates": [
+        "database",
+        "files",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/sales_document_readers.php"
+        ],
+        "exercised": [
+          "legacy_positive_list",
+          "deny_private_customer",
+          "deny_or_escape"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Proposals_model.php::clear_signature",
+      "category": "sales_documents",
+      "line": 412,
+      "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+      "risk_candidates": [
+        "database",
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Proposals_model.php::get_attachments",
+      "category": "sales_documents",
+      "line": 440,
+      "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+      "risk_candidates": [
+        "database",
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "legacy_positive_attachment_list",
+          "deny_private_attachment"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Proposals_model.php::delete_attachment",
+      "category": "sales_documents",
+      "line": 465,
+      "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+      "risk_candidates": [
+        "database",
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_attachment_before_filesystem"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Proposals_model.php::add_comment",
+      "category": "sales_documents",
+      "line": 498,
+      "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+      "risk_candidates": [
+        "database",
+        "identity_context",
+        "transport"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Proposals_model.php::edit_comment",
+      "category": "sales_documents",
+      "line": 570,
+      "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "legacy_positive_comment_read_or_edit",
+          "deny_private_comment"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Proposals_model.php::get_comments",
+      "category": "sales_documents",
+      "line": 588,
+      "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Proposals_model.php::get_comment",
+      "category": "sales_documents",
+      "line": 604,
+      "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "legacy_positive_comment_read_or_edit",
+          "deny_private_comment"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Proposals_model.php::remove_comment",
+      "category": "sales_documents",
+      "line": 619,
+      "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Proposals_model.php::mark_action_status",
+      "category": "sales_documents",
+      "line": 755,
+      "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+      "risk_candidates": [
+        "database",
+        "settings",
+        "identity_context",
+        "transport",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "ff35b29b112ab847772392bce053857ac5cb3ba503cc04c57aa8284466894d8b",
+        "tests": [
+          "tests/companies/sales_document_files.php"
+        ],
+        "exercised": [
+          "deny_private_parent_before_effects"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/models/Tasks_model.php::delete_task",
+      "category": "other_core",
+      "line": 1686,
+      "source_sha256": "ea393090f8fbf963ceffa0afdfd043d63ac995c604fb462d0d3e615af15a3a6a",
+      "risk_candidates": [
+        "database",
+        "transport"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/task_children.php"
+        ],
+        "exercised": [
+          "legacy_positive_cleanup",
+          "deny_private_customer",
+          "proof_released_after_failure"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "ea393090f8fbf963ceffa0afdfd043d63ac995c604fb462d0d3e615af15a3a6a"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/services/AbstractKanban.php::permitsOrder",
+      "category": "other_core",
+      "line": 161,
+      "source_sha256": "aa36af0312f884a8ecd2528efce1d22af0fbd3667f1376cb29e35828ecc73cbc",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "aa36af0312f884a8ecd2528efce1d22af0fbd3667f1376cb29e35828ecc73cbc",
+        "tests": [
+          "tests/companies/kanban_scope.php"
+        ],
+        "exercised": [
+          "legacy_positive_reorder",
+          "deny_mixed_batch_before_status",
+          "preserve_private_omitted_cards"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/services/AbstractKanban.php::updateOrder",
+      "category": "other_core",
+      "line": 179,
+      "source_sha256": "aa36af0312f884a8ecd2528efce1d22af0fbd3667f1376cb29e35828ecc73cbc",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "aa36af0312f884a8ecd2528efce1d22af0fbd3667f1376cb29e35828ecc73cbc",
+        "tests": [
+          "tests/companies/kanban_scope.php"
+        ],
+        "exercised": [
+          "legacy_positive_reorder",
+          "deny_mixed_batch_before_status",
+          "preserve_private_omitted_cards"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/services/CompanyEmailTemplates.php::findForIssuer",
+      "category": "company_core_and_settings",
+      "line": 33,
+      "source_sha256": "01f97c498f705b4ec03ea0d9fb7254b9cc24eb29f61b5b1c87ca01521f7d89e9",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/settings/company_email_templates.php",
+          "tests/settings/portal_mail_templates.php"
+        ],
+        "exercised": [
+          "explicit_origin_A_during_context_B",
+          "fallback_remains_in_origin",
+          "same_email_contacts_keep_own_template_transport",
+          "deny_inactive_origin"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
+        "source_sha256": "01f97c498f705b4ec03ea0d9fb7254b9cc24eb29f61b5b1c87ca01521f7d89e9"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/services/CompanyEmailTemplates.php::defaults",
+      "category": "company_core_and_settings",
+      "line": 45,
+      "source_sha256": "01f97c498f705b4ec03ea0d9fb7254b9cc24eb29f61b5b1c87ca01521f7d89e9",
+      "risk_candidates": [
+        "files"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/settings/company_email_templates.php"
+        ],
+        "exercised": [
+          "secondary_factory_defaults_no_primary_customizations",
+          "registration_rollback_and_retry",
+          "native_upgrade_replay"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
+        "source_sha256": "01f97c498f705b4ec03ea0d9fb7254b9cc24eb29f61b5b1c87ca01521f7d89e9"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/services/CompanyEmailTemplates.php::seedOwned",
+      "category": "company_core_and_settings",
+      "line": 60,
+      "source_sha256": "01f97c498f705b4ec03ea0d9fb7254b9cc24eb29f61b5b1c87ca01521f7d89e9",
+      "risk_candidates": [
+        "database",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/settings/company_email_templates.php"
+        ],
+        "exercised": [
+          "secondary_factory_defaults_no_primary_customizations",
+          "registration_rollback_and_retry",
+          "native_upgrade_replay"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
+        "source_sha256": "01f97c498f705b4ec03ea0d9fb7254b9cc24eb29f61b5b1c87ca01521f7d89e9"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/services/CompanyEmailTemplates.php::reconcile",
+      "category": "company_core_and_settings",
+      "line": 81,
+      "source_sha256": "01f97c498f705b4ec03ea0d9fb7254b9cc24eb29f61b5b1c87ca01521f7d89e9",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/settings/company_email_templates.php"
+        ],
+        "exercised": [
+          "secondary_factory_defaults_no_primary_customizations",
+          "registration_rollback_and_retry",
+          "native_upgrade_replay"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and framework I/O; actual services/model/controller/bootstrap where named; no HTTP server, SMTP, MySQL or real concurrency",
+        "source_sha256": "01f97c498f705b4ec03ea0d9fb7254b9cc24eb29f61b5b1c87ca01521f7d89e9"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/services/CompanySettingsFormats.php::validate",
+      "category": "company_core_and_settings",
+      "line": 10,
+      "source_sha256": "5fb1f149c3a2cf6d301c4673c36abb6e235eba3d5b723c9ad80ee064939fca90",
+      "risk_candidates": [],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/settings/settings_model_controller.php"
+        ],
+        "exercised": [
+          "secondary_company_positive_formatting",
+          "independent_A_B_values",
+          "invalid_input_atomic_rejection"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "5fb1f149c3a2cf6d301c4673c36abb6e235eba3d5b723c9ad80ee064939fca90"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/services/PortalClientIdentity.php::fromAuthenticatedSession",
+      "category": "customer_portal",
+      "line": 11,
+      "source_sha256": "ed2d609e18383bf6429081c2570b51dc495eaa3cf9d1cb5dc45312bc9a1e113b",
+      "risk_candidates": [
+        "database",
+        "session_cache"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "ed2d609e18383bf6429081c2570b51dc495eaa3cf9d1cb5dc45312bc9a1e113b",
+        "tests": [
+          "tests/portal_client_identity.php"
+        ],
+        "exercised": [
+          "own_authenticated_private_identity_positive",
+          "deny_mismatched_or_inactive_identity",
+          "safe_identity_projection"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/services/PortalClientIdentity.php::activeContact",
+      "category": "customer_portal",
+      "line": 39,
+      "source_sha256": "ed2d609e18383bf6429081c2570b51dc495eaa3cf9d1cb5dc45312bc9a1e113b",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/portal_autologin.php"
+        ],
+        "exercised": [
+          "legacy_and_private_own_identity_positive",
+          "deny_inactive_or_missing_contact_customer"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, fake password verifier/cookie provider/mail delivery; not HTTP, SMTP or MySQL",
+        "source_sha256": "ed2d609e18383bf6429081c2570b51dc495eaa3cf9d1cb5dc45312bc9a1e113b"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "application/services/PortalClientIdentity.php::mailOrigin",
+      "category": "customer_portal",
+      "line": 51,
+      "source_sha256": "ed2d609e18383bf6429081c2570b51dc495eaa3cf9d1cb5dc45312bc9a1e113b",
+      "risk_candidates": [
+        "database",
+        "identity_context",
+        "documents_reports"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/portal_mail_origin.php",
+          "tests/settings/portal_mail_config.php",
+          "tests/settings/portal_mail_templates.php"
+        ],
+        "exercised": [
+          "explicit_contact_A_B_origin_and_transport_config",
+          "sharing_destination_never_replaces_owner",
+          "active_admin_company_does_not_replace_origin",
+          "deny_inactive_ambiguous_missing_origin",
+          "explicit_contact_template_and_transport_composition"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite and fake decryption; no recovery dispatch, SMTP, HTTP or MySQL",
+        "source_sha256": "ed2d609e18383bf6429081c2570b51dc495eaa3cf9d1cb5dc45312bc9a1e113b"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "modules/api/models/Api_model.php::_search_tickets",
+      "category": "modules",
+      "line": 192,
+      "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+      "risk_candidates": [
+        "database",
+        "settings",
+        "authorization",
+        "identity_context",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/api_related_records.php"
+        ],
+        "exercised": [
+          "legacy_positive",
+          "deny_private_relation",
+          "deny_or_escape"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "modules/api/models/Api_model.php::_search_invoices",
+      "category": "modules",
+      "line": 311,
+      "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+      "risk_candidates": [
+        "database",
+        "settings",
+        "authorization",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+        "tests": [
+          "tests/companies/api_sales_search.php"
+        ],
+        "exercised": [
+          "legacy_positive_search",
+          "preserve_invoice_origin_after_customer_adoption",
+          "minimal_customer_projection",
+          "deny_named_issuer",
+          "literal_query_bound"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "modules/api/models/Api_model.php::_search_projects",
+      "category": "modules",
+      "line": 363,
+      "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+      "risk_candidates": [
+        "database",
+        "authorization",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/api_related_records.php"
+        ],
+        "exercised": [
+          "legacy_positive",
+          "deny_private_relation",
+          "deny_or_escape"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "modules/api/models/Api_model.php::_search_tasks",
+      "category": "modules",
+      "line": 449,
+      "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+      "risk_candidates": [
+        "database",
+        "authorization"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/api_related_records.php"
+        ],
+        "exercised": [
+          "legacy_positive",
+          "deny_private_relation",
+          "deny_or_escape"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "modules/api/models/Api_model.php::get_relation_data_api",
+      "category": "modules",
+      "line": 643,
+      "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+      "risk_candidates": [
+        "database",
+        "identity_context",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/api_related_records.php"
+        ],
+        "exercised": [
+          "legacy_positive",
+          "deny_private_relation",
+          "deny_or_escape"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "modules/api/models/Api_model.php::get_milestones_api",
+      "category": "modules",
+      "line": 745,
+      "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/api_related_records.php"
+        ],
+        "exercised": [
+          "legacy_positive",
+          "deny_private_relation",
+          "deny_or_escape"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "modules/api/models/Api_model.php::get_expenses_api",
+      "category": "modules",
+      "line": 762,
+      "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+      "risk_candidates": [
+        "database",
+        "identity_context",
+        "files",
+        "extension_points"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/api_related_records.php"
+        ],
+        "exercised": [
+          "legacy_positive",
+          "deny_private_relation",
+          "deny_or_escape"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "modules/api/models/Api_model.php::_search_proposals",
+      "category": "modules",
+      "line": 975,
+      "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+      "risk_candidates": [
+        "database",
+        "settings",
+        "authorization"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+        "tests": [
+          "tests/companies/api_sales_search.php"
+        ],
+        "exercised": [
+          "legacy_positive_search",
+          "deny_private_customer",
+          "literal_query_bound"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "modules/api/models/Api_model.php::_search_estimates",
+      "category": "modules",
+      "line": 1015,
+      "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+      "risk_candidates": [
+        "database",
+        "settings",
+        "authorization",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+        "tests": [
+          "tests/companies/api_sales_search.php"
+        ],
+        "exercised": [
+          "legacy_positive_search",
+          "deny_private_customer",
+          "literal_query_bound"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "modules/api/models/Api_model.php::_search_expenses",
+      "category": "modules",
+      "line": 1060,
+      "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+      "risk_candidates": [
+        "database",
+        "authorization",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "tests": [
+          "tests/companies/api_related_records.php"
+        ],
+        "exercised": [
+          "legacy_positive",
+          "deny_private_relation",
+          "deny_or_escape"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL",
+        "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "modules/api/models/Api_model.php::_search_credit_notes",
+      "category": "modules",
+      "line": 1103,
+      "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+      "risk_candidates": [
+        "database",
+        "settings",
+        "authorization",
+        "identity_context"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+        "tests": [
+          "tests/companies/api_sales_search.php"
+        ],
+        "exercised": [
+          "legacy_positive_search",
+          "deny_private_customer",
+          "literal_query_bound"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "modules/multiple_companies/controllers/Clients.php::change_auth",
+      "category": "modules",
+      "line": 19,
+      "source_sha256": "a66d5f366afca446a3035291e5494f005869c36be383ffca659d3f8b5b6d63c3",
+      "risk_candidates": [
+        "identity_context",
+        "session_cache"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "a66d5f366afca446a3035291e5494f005869c36be383ffca659d3f8b5b6d63c3",
+        "tests": [
+          "tests/companies/legacy_portal_switch.php"
+        ],
+        "exercised": [
+          "legacy_positive_identity_switch",
+          "deny_stale_cache",
+          "deny_ambiguous_or_revoked_target",
+          "get_rejected"
+        ],
+        "runtime": "Actual controller / synthetic session and SQLite; native HTTP/CSRF untested"
+      },
+      "full_operation_ready": false
+    },
+    {
+      "consumer": "modules/multiple_companies/services/LegacyContactIdentity.php::switchTargets",
+      "category": "modules",
+      "line": 9,
+      "source_sha256": "363fd28f0c6ce892ebb9cba4ecaf1689751efaf3476a049558937df67889f80a",
+      "risk_candidates": [
+        "database"
+      ],
+      "state": "boundary_tested",
+      "evidence": {
+        "source_sha256": "363fd28f0c6ce892ebb9cba4ecaf1689751efaf3476a049558937df67889f80a",
+        "tests": [
+          "tests/companies/legacy_portal_switch.php"
+        ],
+        "exercised": [
+          "legacy_positive_targets",
+          "deny_private_source_or_target",
+          "deny_stale_identity_pair"
+        ],
+        "runtime": "PHP WASM / synthetic SQLite, not HTTP or MySQL"
+      },
+      "full_operation_ready": false
+    }
+  ],
+  "source_manifest_sha256": "c85f0b1248b8a9d8a3f281c02f654e1b3e985fa432d5e8fd30e2f61a7c1f5374",
+  "total_consumers": 12064,
+  "full_register_command": "python3 scripts/register-company-consumers.py --full-output /tmp/company-consumers-full.json"
+}

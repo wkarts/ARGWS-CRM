@@ -127,6 +127,10 @@ class App_Loader extends MX_Loader
      */
     protected function canMyPrefixViewFile($moduleName, $filePath)
     {
+        // Sealed company views cannot load unreviewed my_ overrides or hydrate app_modules.
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::sealedFor(get_instance())) {
+            return false;
+        }
         if (is_null($moduleName)) {
             return true;
         }

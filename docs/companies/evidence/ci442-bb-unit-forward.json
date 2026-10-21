@@ -1,0 +1,25 @@
+{
+  "sha": "7dd715fc371c66d4c95ebc342d02c4391b50869f",
+  "workflow_run": 39411098635,
+  "job_id": 118588771574,
+  "terminal_workflow": true,
+  "job_conclusion": "failure",
+  "cause": "Historical440 contract suite required runtime1.2.0/120/min4.4.0 under shipped1.2.1/121/min4.4.2.",
+  "forward443": "Validate exact header/runtime/minimum against explicit120/121/122 map, pin published120 migration SHA256, preserve all protocol scenarios. RED current122 reproduced; GREEN174. Full14 original BB unit commands including actual synthetic mTLS passed.",
+  "excerpt": "2026-10-20T10:54:09.0700299Z ##[group]Run php tests/banco_brasil_resume_440_contracts.php\n2026-10-20T10:54:09.0700676Z \u001b[36;1mphp tests/banco_brasil_resume_440_contracts.php\u001b[0m\n2026-10-20T10:54:09.2291961Z PHP Fatal error:  Uncaught RuntimeException: native120 constants exact in /home/runner/work/ARGWS-CRM/ARGWS-CRM/tests/banco_brasil_resume_440_contracts.php:13\n2026-10-20T10:54:09.2292593Z #0 /home/runner/work/ARGWS-CRM/ARGWS-CRM/tests/banco_brasil_resume_440_contracts.php(16): bb439Check()\n2026-10-20T10:54:09.2293060Z   thrown in /home/runner/work/ARGWS-CRM/ARGWS-CRM/tests/banco_brasil_resume_440_contracts.php on line 13\n2026-10-20T10:54:09.2354046Z ##[error]Process completed with exit code 255.",
+  "workflow_conclusion": "failure",
+  "additional_failed_jobs": [
+    {
+      "id": 118588771831,
+      "name": "mariadb",
+      "same_error": "native120 constants exact in banco_brasil_resume_440_contracts.php:13"
+    },
+    {
+      "id": 118588771902,
+      "name": "mysql",
+      "same_error": "native120 constants exact in banco_brasil_resume_440_contracts.php:13"
+    }
+  ],
+  "cancelled_sibling": 118588772188,
+  "forward443_sql_fixture": "Also retain old/future version-denial probes and restore only the original natively installed current marker after deliberate corruption; full SQL/controller/nine two-waiter races pass360/457/504."
+}

@@ -1,0 +1,11 @@
+{
+  "started_utc": "2026-10-21T12:20:38.789152+00:00",
+  "finished_utc": "2026-10-21T12:20:54.904903+00:00",
+  "test": "tests/companies/purchases_events_http.cjs",
+  "test_sha256": "613e21853236b105bbcb73c56f166350ff42f93e9ce6dcf603f5256d405e1286",
+  "test_unchanged": true,
+  "live_service_sha256": "bd1b3408ef7e024d5001051b0bb15a2b8bf02d858f3daabfca83fb0da0e329a7",
+  "main_service_sha256": "bd1b3408ef7e024d5001051b0bb15a2b8bf02d858f3daabfca83fb0da0e329a7",
+  "exit_code": 1,
+  "proof_result": "FAIL"
+}

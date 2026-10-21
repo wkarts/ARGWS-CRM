@@ -731,6 +731,9 @@ class Invoices extends REST_Controller {
         $date = $this->input->post('date');
         if (!empty($invoiceid)) {
             $data = $this->Api_model->get_table('invoices', $invoiceid);
+            if (!$data) {
+                return FALSE;
+            }
             $original_number = $data->number;
             if (empty($date)) {
                 $date = $data->date;
@@ -743,7 +746,10 @@ class Invoices extends REST_Controller {
                 return TRUE;
             }
         }
-        if (total_rows(db_prefix() . 'invoices', ['YEAR(date)' => date('Y', strtotime(to_sql_date($date))), 'number' => $number, ]) > 0) {
+        $this->db->where('YEAR(date)', date('Y', strtotime(to_sql_date($date))));
+        $this->db->where('number', $number);
+        \app\services\InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
+        if ($this->db->count_all_results(db_prefix() . 'invoices') > 0) {
             return FALSE;
         } else {
             return TRUE;

@@ -1,0 +1,156 @@
+{
+  "companies": {
+    "a-project": {
+      "issuer": 2,
+      "kind": "project",
+      "source": 19,
+      "schedule": 15,
+      "url": "http://127.0.0.1:43370/admin/company_task_recurring?kind=project&schedule=15"
+    },
+    "a-standalone": {
+      "issuer": 2,
+      "kind": "standalone",
+      "source": 17,
+      "schedule": 16,
+      "url": "http://127.0.0.1:43370/admin/company_task_recurring?kind=standalone&schedule=16"
+    },
+    "b-project": {
+      "issuer": 3,
+      "kind": "project",
+      "source": 21,
+      "schedule": 17,
+      "url": "http://127.0.0.1:43370/admin/company_task_recurring?kind=project&schedule=17"
+    },
+    "b-standalone": {
+      "issuer": 3,
+      "kind": "standalone",
+      "source": 19,
+      "schedule": 18,
+      "url": "http://127.0.0.1:43370/admin/company_task_recurring?kind=standalone&schedule=18"
+    },
+    "primary-project": {
+      "issuer": 1,
+      "kind": "project",
+      "source": 23,
+      "schedule": 19,
+      "url": "http://127.0.0.1:43370/admin/company_task_recurring?kind=project&schedule=19"
+    },
+    "primary-standalone": {
+      "issuer": 1,
+      "kind": "standalone",
+      "source": 21,
+      "schedule": 20,
+      "url": "http://127.0.0.1:43370/admin/company_task_recurring?kind=standalone&schedule=20"
+    }
+  },
+  "follow_policy_proofs": [
+    {
+      "issuer": 2,
+      "kind": "project",
+      "source": 19,
+      "schedule": 15,
+      "child": 20,
+      "policy": "0",
+      "followers": [],
+      "counts": {
+        "comments": 0,
+        "timers": 0,
+        "followers": 0,
+        "dependencies": 0,
+        "files": 0,
+        "publication": 0,
+        "billing": 0,
+        "batch_claims": 0
+      }
+    },
+    {
+      "issuer": 2,
+      "kind": "standalone",
+      "source": 17,
+      "schedule": 16,
+      "child": 18,
+      "policy": "0",
+      "followers": [],
+      "counts": {
+        "comments": 0,
+        "timers": 0,
+        "billing": 0,
+        "batch_claims": 0,
+        "financial_client": 0
+      }
+    },
+    {
+      "issuer": 3,
+      "kind": "project",
+      "source": 21,
+      "schedule": 17,
+      "child": 22,
+      "policy": "0",
+      "followers": [],
+      "counts": {
+        "comments": 0,
+        "timers": 0,
+        "followers": 0,
+        "dependencies": 0,
+        "files": 0,
+        "publication": 0,
+        "billing": 0,
+        "batch_claims": 0
+      }
+    },
+    {
+      "issuer": 3,
+      "kind": "standalone",
+      "source": 19,
+      "schedule": 18,
+      "child": 20,
+      "policy": "0",
+      "followers": [],
+      "counts": {
+        "comments": 0,
+        "timers": 0,
+        "billing": 0,
+        "batch_claims": 0,
+        "financial_client": 0
+      }
+    },
+    {
+      "issuer": 1,
+      "kind": "project",
+      "source": 23,
+      "schedule": 19,
+      "child": 24,
+      "policy": "1",
+      "followers": [
+        17
+      ],
+      "counts": {
+        "comments": 0,
+        "timers": 0,
+        "followers": 1,
+        "dependencies": 0,
+        "files": 0,
+        "publication": 0,
+        "billing": 0,
+        "batch_claims": 0
+      }
+    },
+    {
+      "issuer": 1,
+      "kind": "standalone",
+      "source": 21,
+      "schedule": 20,
+      "child": 22,
+      "policy": "1",
+      "followers": [],
+      "counts": {
+        "comments": 0,
+        "timers": 0,
+        "billing": 0,
+        "batch_claims": 0,
+        "financial_client": 0
+      }
+    }
+  ],
+  "result": "PASS"
+}

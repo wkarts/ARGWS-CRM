@@ -3,6 +3,7 @@
 namespace app\modules\exports\services;
 
 use CI_DB_mysqli_driver;
+use app\services\InvoiceIssuerScope;
 
 class ExpenseCSVExport extends CSVExport
 {
@@ -71,6 +72,9 @@ class ExpenseCSVExport extends CSVExport
         $this->ci->db->join(db_prefix() . 'projects', db_prefix() . 'projects.id = ' . db_prefix() . 'expenses.project_id', 'left');
         $this->ci->db->join(db_prefix() . 'staff', db_prefix() . 'staff.staffid = ' . db_prefix() . 'expenses.addedfrom', 'left');
         $this->ci->db->join(db_prefix() . 'invoices', db_prefix() . 'invoices.id = ' . db_prefix() . 'expenses.invoiceid', 'left');
+        if (InvoiceIssuerScope::schemaReady($this->ci->db, db_prefix() . 'invoices')) {
+            $this->ci->db->where('(' . db_prefix() . 'expenses.invoiceid IS NULL OR ' . db_prefix() . 'expenses.invoiceid = 0 OR (' . db_prefix() . 'invoices.id IS NOT NULL AND ' . InvoiceIssuerScope::legacySql($this->ci->db, db_prefix() . 'invoices') . '))', null, false);
+        }
         $this->applyDateFilter(db_prefix() . 'expenses.dateadded');
 
         return $this->ci->db->from(db_prefix() . 'expenses');

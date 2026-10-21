@@ -2,6 +2,97 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+// Veto named-company hashes at the legacy module entrypoint before global provider hydration.
+require_once APPPATH.'services/AsaasLegacyCheckoutPreflight.php';
+$asaasLegacyBootstrap=&get_instance();
+if(!AsaasLegacyCheckoutPreflight::allowsBootstrap($asaasLegacyBootstrap)){show_404();return;}
+
+// Machine inboxes select only exact server-owned routes, before optional modules or sessions.
+require_once APPPATH.'services/CompanyAsaasCallbackScope.php';
+$companyInboxBootstrap=&get_instance();
+if(CompanyAsaasCallbackScope::prepare($companyInboxBootstrap)){
+    $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+require_once APPPATH.'services/CompanyBbCallbackScope.php';
+if(CompanyBbCallbackScope::prepare($companyInboxBootstrap)){
+    // Native mTLS authentication happens in the controller before the first database connection.
+    $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>[],'model'=>[]];
+    return;
+}
+
+require_once APPPATH.'services/CompanyPurchasesScope.php';
+if(CompanyPurchasesScope::prepare($companyInboxBootstrap)){
+    $portal=CompanyPurchasesScope::activePortal();
+    $autoload=['packages'=>[],'config'=>[],'helper'=>$portal?['url','form']:[],'language'=>[],'drivers'=>$portal?['session']:[],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+if(CompanyPurchasesScope::requested()||CompanyPurchasesScope::earlyCandidate($_SERVER)){show_404();return;}
+
+require_once APPPATH.'services/CompanyOperationsApiScope.php';
+if(CompanyOperationsApiScope::prepare($companyInboxBootstrap)){
+    $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+if(CompanyOperationsApiScope::requested()||CompanyOperationsApiScope::earlyCandidate($_SERVER)){show_404();return;}
+
+require_once APPPATH.'services/CompanyApiScope.php';
+if(CompanyApiScope::prepare($companyInboxBootstrap)){
+    $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+if(CompanyApiScope::earlyCandidate($_SERVER)){show_404();return;}
+require_once APPPATH.'services/CompanyRecurringWorkerScope.php';
+if(CompanyRecurringWorkerScope::prepare($companyInboxBootstrap)){
+    $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+// A malformed machine-route candidate must never fall through to global application hydration.
+$machineClass=strtolower((string)$companyInboxBootstrap->router->fetch_class());
+$machineModule=strtolower((string)$companyInboxBootstrap->router->fetch_module());
+if(in_array($machineClass,['company_api','company_operations_api','company_asaas_callback','company_recurring_worker'],true)||($machineModule==='banco_brasil'&&$machineClass==='notifications')){show_404();return;}
+
+// Public owner-bound portal must not hydrate legacy models, providers or optional modules.
+require_once APPPATH.'services/CompanyHrAccessScope.php';
+if(CompanyHrAccessScope::prepare($companyInboxBootstrap)){
+    $autoload=['packages'=>[],'config'=>[],'helper'=>['url','form'],'language'=>[],'drivers'=>['session'],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+if(CompanyHrAccessScope::requested()||CompanyHrAccessScope::earlyCandidate($_SERVER)){show_404();return;}
+require_once APPPATH.'services/PortalRequestScope.php';
+$portalBootstrap=&get_instance();
+if(PortalRequestScope::prepare($portalBootstrap)){
+    $autoload=['packages'=>[],'config'=>[],'helper'=>['url','form'],'language'=>[],'drivers'=>['session'],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+
+// Resolve browser company scope before App/options, gateways, email, modules or models.
+require_once APPPATH . 'services/CompanyRequestScope.php';
+$companyBootstrap = &get_instance();
+CompanyRequestScope::bootstrap($companyBootstrap);
+if (CompanyRequestScope::isolated()) {
+    $autoload = ['packages' => [], 'config' => [], 'helper' => ['url', 'form'],
+        'language' => [], 'drivers' => [], 'libraries' => [], 'model' => []];
+    return;
+}
+if (CompanyRequestScope::nativeUpgradeOnly()) {
+    // Native settings helpers use total_rows(), whose company predicate resolver
+    // is deliberately kept out of the normal recovery autoload set.
+    require_once APPPATH . 'services/ClientIssuerScope.php';
+    // A damaged company core admits only the authenticated native upgrade gate.
+    // Do not hydrate modules, gateways, email transports, or application models.
+    $autoload = [
+        'packages' => [],
+        'config' => [],
+        'helper' => ['url', 'form', 'settings', 'admin', 'staff', 'general', 'files', 'database'],
+        'language' => [],
+        'drivers' => [],
+        'libraries' => ['database', 'app_object_cache', 'app'],
+        'model' => [],
+    ];
+    return;
+}
+
 /*
 | -------------------------------------------------------------------
 | AUTO-LOADER
@@ -114,6 +205,8 @@ $autoload['drivers'] = ['session'];
 include_once(APPPATH . 'third_party/action_hooks.php');
 
 $autoload['helper'] = [
+    'issuers',
+    'invoice_issuer',
     'app_branding',
     'emails_tracking',
         'language',
@@ -165,7 +258,10 @@ $autoload['helper'] = [
         'deprecated',
     ];
 
-if (file_exists(APPPATH . 'helpers/my_functions_helper.php')) {
+// Installer bootstrap isolates optional application customizers from its body.
+$internalInstallation = class_exists('InstallationMigrationBootstrap', false)
+    && InstallationMigrationBootstrap::isRunning();
+if (!$internalInstallation && file_exists(APPPATH . 'helpers/my_functions_helper.php')) {
     array_push($autoload['helper'], 'my_functions');
 }
 
@@ -217,6 +313,6 @@ $autoload['model'] = [
     'tasks_model',
 ];
 
-if (file_exists(APPPATH . 'config/my_autoload.php')) {
+if (!$internalInstallation && file_exists(APPPATH . 'config/my_autoload.php')) {
     include_once(APPPATH . 'config/my_autoload.php');
 }

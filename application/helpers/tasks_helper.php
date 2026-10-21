@@ -74,6 +74,7 @@ function get_tasks_priorities()
 function get_task_subject_by_id($id)
 {
     $CI = &get_instance();
+    if (!\app\services\TaskClientBoundary::permitsTask($CI->db, db_prefix(), $id)) return '';
     $CI->db->select('name');
     $CI->db->where('id', $id);
     $task = $CI->db->get(db_prefix() . 'tasks')->row();

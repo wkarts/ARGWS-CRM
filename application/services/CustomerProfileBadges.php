@@ -21,6 +21,7 @@ class CustomerProfileBadges
 
     public function getBadge($feature)
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return [];
         $badge = [];
 
         if (method_exists($this, $feature)) {
@@ -49,6 +50,7 @@ class CustomerProfileBadges
      */
     public function contacts()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         $this->CI->db->where('userid', $this->customerId);
 
         return $this->CI->db->count_all_results('contacts');
@@ -61,6 +63,7 @@ class CustomerProfileBadges
      */
     public function notes()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         $this->CI->db->where('rel_type', 'customer');
         $this->CI->db->where('rel_id', $this->customerId);
 
@@ -69,6 +72,7 @@ class CustomerProfileBadges
 
     public function invoices()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         if (!class_exists('Invoices_model', false)) {
             $this->CI->load->model('invoices_model');
         }
@@ -77,6 +81,7 @@ class CustomerProfileBadges
             $where = get_invoices_where_sql_for_staff($this->staffId);
             $this->CI->db->where($where);
         }
+        InvoiceIssuerScope::applyLegacy($this->CI->db, db_prefix() . 'invoices');
         $this->CI->db->where_not_in('status', [\Invoices_model::STATUS_CANCELLED, \Invoices_model::STATUS_PAID]);
         $this->CI->db->where('clientid', $this->customerId);
 
@@ -85,6 +90,7 @@ class CustomerProfileBadges
 
     public function proposals()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         if (staff_cant('view', 'proposals')) {
             $where = get_proposals_sql_where_staff($this->staffId);
             $this->CI->db->where($where);
@@ -98,6 +104,7 @@ class CustomerProfileBadges
 
     public function subscriptions()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         if (staff_cant('view', 'subscriptions')) {
             $this->CI->db->where('(' . db_prefix() . 'subscriptions.created_from=' . $this->staffId . ' AND ' . db_prefix() . 'subscriptions.created_from IN (SELECT staff_id FROM ' . db_prefix() . 'staff_permissions WHERE feature = "subscriptions" AND capability="view_own"))');
         }
@@ -114,6 +121,7 @@ class CustomerProfileBadges
 
     public function estimates()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         if (staff_cant('view', 'estimates')) {
             $where = get_estimates_where_sql_for_staff($this->staffId);
             $this->CI->db->where($where);
@@ -130,6 +138,7 @@ class CustomerProfileBadges
 
     public function credit_notes()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         if (staff_cant('view', 'credit_notes')) {
             $this->CI->db->where('(' . db_prefix() . 'creditnotes.addedfrom=' . $this->staffId . ' AND ' . db_prefix() . 'creditnotes.addedfrom IN (SELECT staff_id FROM ' . db_prefix() . 'staff_permissions WHERE feature = "credit_notes" AND capability="view_own"))');
         }
@@ -142,6 +151,7 @@ class CustomerProfileBadges
 
     public function contracts()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         if (staff_cant('view', 'contracts')) {
             $this->CI->db->where('(' . db_prefix() . 'contracts.addedfrom=' . $this->staffId . ' AND ' . db_prefix() . 'contracts.addedfrom IN (SELECT staff_id FROM ' . db_prefix() . 'staff_permissions WHERE feature = "contracts" AND capability="view_own"))');
         }
@@ -154,6 +164,7 @@ class CustomerProfileBadges
 
     public function projects()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         if (staff_cant('view', 'projects')) {
             $this->CI->db->where(db_prefix() . 'projects.id IN (SELECT project_id FROM ' . db_prefix() . 'project_members WHERE staff_id=' . $this->staffId . ')');
         }
@@ -166,6 +177,7 @@ class CustomerProfileBadges
 
     public function tickets()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         if (!is_admin()) {
             $departments_ids      = [];
             if (get_option('staff_access_only_assigned_departments') == 1) {
@@ -197,6 +209,7 @@ class CustomerProfileBadges
 
     public function attachments()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         $this->CI->db->where('rel_id', $this->customerId);
         $this->CI->db->where('rel_type', 'customer');
 
@@ -205,6 +218,7 @@ class CustomerProfileBadges
 
     public function vault()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         $this->CI->db->where('customer_id', $this->customerId);
 
         return $this->CI->db->count_all_results('vault');
@@ -212,6 +226,7 @@ class CustomerProfileBadges
 
     public function expenses()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         $this->CI->db->where('clientid', $this->customerId);
         $this->CI->db->where('billable', 1);
         $this->CI->db->where('invoiceid IS NULL');
@@ -221,6 +236,7 @@ class CustomerProfileBadges
 
     public function reminders()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         $this->CI->db->where('rel_id', $this->customerId);
         $this->CI->db->where('rel_type', 'customer');
         $this->CI->db->where('isnotified', 0);
@@ -230,8 +246,9 @@ class CustomerProfileBadges
 
     public function tasks()
     {
+        if (!ClientIssuerScope::isLegacyClient($this->CI->db, db_prefix(), $this->customerId)) return 0;
         $where = '(';
-        $where .= '(rel_id IN (SELECT id FROM ' . db_prefix() . 'invoices WHERE clientid=' . $this->customerId . ') AND rel_type="invoice")';
+        $where .= '(rel_id IN (SELECT id FROM ' . db_prefix() . 'invoices WHERE clientid=' . $this->customerId . ' AND ' . InvoiceIssuerScope::legacySql($this->CI->db, db_prefix() . 'invoices') . ') AND rel_type="invoice")';
         $where .= ' OR (rel_id IN (SELECT id FROM ' . db_prefix() . 'estimates WHERE clientid=' . $this->customerId . ') AND rel_type="estimate")';
         $where .= ' OR (rel_id IN (SELECT id FROM ' . db_prefix() . 'contracts WHERE client=' . $this->customerId . ') AND rel_type="contract")';
         $where .= ' OR (rel_id IN (SELECT ticketid FROM ' . db_prefix() . 'tickets WHERE userid=' . $this->customerId . ') AND rel_type="ticket")';

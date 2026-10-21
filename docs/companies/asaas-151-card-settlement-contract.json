@@ -1,0 +1,55 @@
+{
+  "module_version": "1.5.1",
+  "core_minimum": "4.2.7",
+  "policy": "hosted_single_v1",
+  "capture": "2026-10-19",
+  "sources": [
+    {
+      "name": "card-guide",
+      "url": "https://docs.asaas.com/docs/cobrancas-via-cartao-de-credito.md",
+      "sha256": "d9aa4eb18137a28afc837bb90d5ac4a41d6f2aa114fcfa92066c3841d529b469",
+      "bytes": 10576,
+      "captured_at": "2026-10-19T18:50:49.385888+00:00",
+      "document_updated_at": "2026-09-08T21:14:27.000Z",
+      "openapi_version": null
+    },
+    {
+      "name": "get-payment",
+      "url": "https://docs.asaas.com/reference/recuperar-uma-unica-cobranca.md",
+      "sha256": "573ef5c24758bf2ffa7e7434a7ddb9846be61fcdd9c39e54e39f11c399584fa7",
+      "bytes": 34551,
+      "captured_at": "2026-10-19T18:50:49.629878+00:00",
+      "document_updated_at": "2026-09-08T20:05:50.000Z",
+      "openapi_version": null
+    },
+    {
+      "name": "webhook-payments",
+      "url": "https://docs.asaas.com/docs/webhook-para-cobrancas.md",
+      "sha256": "686f712388ceb0c97ab7a0a86c0c5a4b74b2e80e38fcb1fccfeeee4f43cb9e44",
+      "bytes": 23859,
+      "captured_at": "2026-10-19T18:50:49.393423+00:00",
+      "document_updated_at": "2026-10-13T15:01:35.000Z",
+      "openapi_version": null
+    },
+    {
+      "name": "wallets",
+      "url": "https://docs.asaas.com/reference/recuperar-walletid.md",
+      "sha256": "96a578153a348d2ccdb29ed3d0c3b49186c523e2bfb7db5211361e29b90c4479",
+      "bytes": 6959,
+      "captured_at": "2026-10-19T18:50:49.894275+00:00",
+      "document_updated_at": "2026-09-08T20:05:50.000Z",
+      "openapi_version": null
+    }
+  ],
+  "decisions": [
+    "Canonical account identity is authenticated GET wallets/ matching configured immutable wallet, environment and credential revision before GET payments/{id}.",
+    "Only canonical GET RECEIVED permits receipt; authenticated webhook only queues an optional worker. CONFIRMED, AUTHORIZED and estimatedCreditDate never post money.",
+    "CREDIT_CARD origin metadata and response must match, exact gross equals immutable local invoice; net and fee remain distinct.",
+    "No installment/subscription/installmentNumber or installment input fields; anticipated and deleted must be explicit false. Escrow/custody not supported.",
+    "creditDate must be a real occurred date, not earlier than paymentDate or invoice date. It is the card receipt book date.",
+    "Card-only profile is hashed with canonical safe proof/evidence. PIX/BOLETO149 JSON and receipt evidence stay unchanged. Old card proof without profile requires fresh GET.",
+    "No cardholder objects/tokens/PAN/CVV are persisted. No direct card capture, installments, subscriptions, anticipation, escrow settlement or refund/chargeback financial reversal is implemented.",
+    "PAYMENT_ANTICIPATED is sticky adverse history for every named origin. A later GET anticipated=false cannot reopen ordinary settlement. Already committed keys/evidence/payments are not rewritten or automatically reversed."
+  ],
+  "evidence_boundary": "Protocol transport is simulated in automated tests. No external bank homologation, live credentials, acquirer or card network settlement was exercised."
+}

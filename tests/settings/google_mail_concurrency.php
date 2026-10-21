@@ -1,0 +1,27 @@
+<?php
+/** Actual independent native sessions; no network Google/SMTP. */
+require_once dirname(__DIR__).'/issuers_core_support.php';require_once APPPATH.'services/CompanyGoogleMailOAuth.php';
+if(!str_starts_with(getenv('ISSUERS_TEST_DSN')?:'','mysql:'))exit(2);
+function googleRaceDb(string $p):EssentialTestDb{return new EssentialTestDb(new PDO(getenv('ISSUERS_TEST_DSN'),getenv('ISSUERS_TEST_USER'),getenv('ISSUERS_TEST_PASSWORD')),$p);}
+if(($argv[1]??'')==='worker'){
+ $p=$argv[2]??'';if(!preg_match('/^essential_[a-f0-9]{10}_$/D',$p))exit(2);$args=json_decode(stream_get_contents(STDIN),true,16,JSON_THROW_ON_ERROR);$db=googleRaceDb($p);$GLOBALS['essentialPrefix']=$p;
+ $encrypt=fn($v)=>'sealed:'.base64_encode($v);$decrypt=fn($v)=>base64_decode(substr($v,7),true);
+ $oauth=new CompanyGoogleMailOAuth($db,$p,new CompanyGoogleMailOAuthClient(function($url,$method,$form,$bearer)use($db,$args){if($db->pdo->inTransaction())throw new LogicException('network inside TX');if($url===CompanyGoogleMailOAuthClient::TOKEN){file_put_contents($args['log'],"token\n",FILE_APPEND|LOCK_EX);if($args['pause']){$deadline=microtime(true)+15;while(!is_file($args['release'])&&microtime(true)<$deadline)usleep(20000);if(!is_file($args['release']))throw new RuntimeException('fixture deadline');}else usleep(200000);return ['token_type'=>'Bearer','expires_in'=>3600,'scope'=>CompanyGoogleMailOAuthClient::MAIL_SCOPE,'access_token'=>'race-access','refresh_token'=>'race-refresh'];}return ['sub'=>'synthetic-sub-a@example.invalid','email'=>'a@example.invalid','email_verified'=>true];}));
+ try{if($args['mode']==='callback'){$oauth->callback($args['issuer'],7,$args['state'],'race-code',$encrypt,$decrypt);echo'applied';}else{$oauth->accessToken($args['issuer'],$args['epoch'],$encrypt,$decrypt);echo'applied';}}
+ catch(DomainException$e){if(!in_array($e->getMessage(),['company_google_mail_state_invalid','company_google_mail_refresh_busy','company_google_mail_connection_required','company_google_mail_access_denied','company_google_mail_stale'],true))throw$e;echo'denied';}exit;
+}
+require __DIR__.'/google_mail_queue.php';$startRace=$GLOBALS['essentialChecks'];$observer=googleRaceDb($p);$blocker=(int)$db->query('SELECT CONNECTION_ID() id')->row()->id;$root=sys_get_temp_dir().'/'.$p.'google';mkdir($root,0700);$log=$root.'/calls';$release=$root.'/release';
+function googleSpawn(array $args):array{global$p;$pipes=[];$proc=proc_open([PHP_BINARY,__FILE__,'worker',$p],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);fwrite($pipes[0],json_encode($args,JSON_THROW_ON_ERROR));fclose($pipes[0]);return[$proc,$pipes];}
+function googleJoin(array $worker):string{[$proc,$pipes]=$worker;$out=stream_get_contents($pipes[1]);$error=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);essentialCheck(proc_close($proc)===0&&$error==='','independent OAuth worker has no diagnostics');return$out;}
+try{
+ $url=$oauth->begin($a,7,1,'https://crm.example.invalid/admin/company_google_mail_oauth',$encrypt);parse_str(parse_url($url,PHP_URL_QUERY),$params);$args=['issuer'=>$a,'mode'=>'callback','state'=>$params['state'],'epoch'=>0,'log'=>$log,'release'=>$release,'pause'=>false];
+ foreach(['callback','refresh']as$mode){$args['mode']=$mode;if(is_file($log))unlink($log);if($mode==='refresh'){$args['epoch']=$oauth->view($a,7)['epoch'];$db->query("UPDATE {$p}company_google_mail_accounts SET access_expires_at='1970-01-01 00:00:00' WHERE issuer_id=?",[$a]);}
+  $db->trans_begin();$db->query('SELECT id FROM '.$p.'issuers_lock WHERE id=1 FOR UPDATE');$workers=[googleSpawn($args),googleSpawn($args)];$deadline=microtime(true)+15;do{$waiters=essentialLockWaiters($observer,$blocker);if($waiters>=2)break;usleep(20000);}while(microtime(true)<$deadline);essentialCheck($waiters>=2,'two '.$mode.' sessions observed waiting on native lock');$db->trans_commit();$out=array_map('googleJoin',$workers);sort($out);essentialCheck($out===['applied','denied'],'one '.$mode.' wins, second cannot replay external mutation');essentialCheck(file_get_contents($log)==="token\n",'one synthetic token exchange after '.$mode.' contention');
+ }
+ foreach(['revoke','demote']as$action){
+  if($action==='demote'){$u=$oauth->begin($a,7,1,'https://crm.example.invalid/admin/company_google_mail_oauth',$encrypt);parse_str(parse_url($u,PHP_URL_QUERY),$q);$googleEmail='a@example.invalid';$oauth->callback($a,7,$q['state'],'new-race-code',$encrypt,$decrypt);}
+  $db->query("UPDATE {$p}company_google_mail_accounts SET access_expires_at='1970-01-01 00:00:00' WHERE issuer_id=?",[$a]);if(is_file($log))unlink($log);if(is_file($release))unlink($release);$args['epoch']=$oauth->view($a,7)['epoch'];$args['pause']=true;$worker=googleSpawn($args);$deadline=microtime(true)+15;while(!is_file($log)&&microtime(true)<$deadline)usleep(20000);essentialCheck(is_file($log),'refresh lease commits before paused external response');
+  if($action==='revoke')$oauth->revoke($a,7,1);else$db->query('UPDATE '.$p.'staff SET active=0 WHERE staffid=7');file_put_contents($release,'release');essentialCheck(googleJoin($worker)==='denied','real concurrent '.$action.' prevents token persistence/release');if($action==='demote')$db->query('UPDATE '.$p.'staff SET active=1 WHERE staffid=7');
+ }
+ echo 'Google native concurrency: '.($GLOBALS['essentialChecks']-$startRace).' added / '.$GLOBALS['essentialChecks'].' cumulative checks; no provider network.'.PHP_EOL;
+}finally{if($db->pdo->inTransaction())$db->trans_rollback();foreach(glob($root.'/*')as$file)unlink($file);rmdir($root);}

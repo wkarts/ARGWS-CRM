@@ -1,0 +1,229 @@
+{
+  "parent_sha": "5e10bacf9ed050a85e76e4af09e6961edb8f5d42",
+  "type": "test-only artifact directory repair",
+  "failed_workflow_run": 39354531458,
+  "failed_job": 118406171382,
+  "failed_job_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39354531458/job/118406171382",
+  "observed_error": "ERR_INVALID_ARG_TYPE: mkdirSync(undefined), task_billing_http_browser.cjs:3; smoke line319",
+  "scope": {
+    "browser_files": [
+      "tests/companies/task_billing_http_browser.cjs",
+      "tests/companies/task_timesheets_http_browser.cjs",
+      "tests/companies/project_billing_rate_http_browser.cjs",
+      "tests/companies/project_fixed_billing_http_browser.cjs"
+    ],
+    "changes": "same default directory as the other browsers; create it recursively; preserve explicit override and all URL/database/fixture/financial/UI assertions",
+    "existing_test_expanded": "test_fixtures_are_copied_into_a_test_free_runtime_before_php:3→7 browser preludes, real Node fs unchanged; missing-copy negative still required",
+    "versions_unchanged": "core436/BB116/Asaas152",
+    "production_or_migrations_changed": false
+  },
+  "source_validation": {
+    "all_non_directory_bytes_identical": true,
+    "actual_full_js_sources_compile_in_v8": true,
+    "remote_fixtures_found_at_parent": [
+      "tests/support/BbPdoDatabase.php",
+      "tests/companies/project_billing_rate_http_bootstrap.php",
+      "tests/companies/project_fixed_billing_http_bootstrap.php"
+    ]
+  },
+  "executed": {
+    "engine": "Code-mode V8 with strict filesystem and fixture-copy test adapters",
+    "prelude": [
+      {
+        "path": "tests/companies/task_billing_http_browser.cjs",
+        "original_without_artifacts": {
+          "passed": false,
+          "error": "TypeError:directory argument undefined",
+          "created": []
+        },
+        "corrected_without_artifacts": {
+          "passed": true,
+          "created": [
+            "/tmp/issuer-browser-evidence"
+          ]
+        },
+        "explicit_override": {
+          "passed": true,
+          "created": [
+            "/tmp/synthetic-ci-custom-evidence"
+          ]
+        }
+      },
+      {
+        "path": "tests/companies/task_timesheets_http_browser.cjs",
+        "original_without_artifacts": {
+          "passed": true,
+          "created": []
+        },
+        "corrected_without_artifacts": {
+          "passed": true,
+          "created": [
+            "/tmp/issuer-browser-evidence"
+          ]
+        },
+        "explicit_override": {
+          "passed": true,
+          "created": [
+            "/tmp/synthetic-ci-custom-evidence"
+          ]
+        }
+      },
+      {
+        "path": "tests/companies/project_billing_rate_http_browser.cjs",
+        "original_without_artifacts": {
+          "passed": true,
+          "created": []
+        },
+        "corrected_without_artifacts": {
+          "passed": true,
+          "created": [
+            "/tmp/issuer-browser-evidence"
+          ]
+        },
+        "explicit_override": {
+          "passed": true,
+          "created": [
+            "/tmp/synthetic-ci-custom-evidence"
+          ]
+        }
+      },
+      {
+        "path": "tests/companies/project_fixed_billing_http_browser.cjs",
+        "original_without_artifacts": {
+          "passed": false,
+          "error": "TypeError:directory argument undefined",
+          "created": []
+        },
+        "corrected_without_artifacts": {
+          "passed": true,
+          "created": [
+            "/tmp/issuer-browser-evidence"
+          ]
+        },
+        "explicit_override": {
+          "passed": true,
+          "created": [
+            "/tmp/synthetic-ci-custom-evidence"
+          ]
+        }
+      }
+    ],
+    "full_source_bootstrap_cases": [
+      {
+        "path": "tests/companies/task_billing_http_browser.cjs",
+        "variant": "without-artifact-env",
+        "browser_reached": true,
+        "fixture_runs": 1,
+        "artifact_directory": "/tmp/issuer-browser-evidence",
+        "expected_result": "fixture available before browser",
+        "sync_error": null
+      },
+      {
+        "path": "tests/companies/task_billing_http_browser.cjs",
+        "variant": "explicit-artifact-env",
+        "browser_reached": true,
+        "fixture_runs": 1,
+        "artifact_directory": "/tmp/synthetic-ci-evidence",
+        "expected_result": "fixture available before browser",
+        "sync_error": null
+      },
+      {
+        "path": "tests/companies/task_billing_http_browser.cjs",
+        "variant": "missing-fixture-copy",
+        "browser_reached": false,
+        "fixture_runs": 0,
+        "artifact_directory": "/tmp/issuer-browser-evidence",
+        "expected_result": "rejected before browser",
+        "sync_error": null
+      },
+      {
+        "path": "tests/companies/task_timesheets_http_browser.cjs",
+        "variant": "without-artifact-env",
+        "browser_reached": true,
+        "fixture_runs": 1,
+        "artifact_directory": "/tmp/issuer-browser-evidence",
+        "expected_result": "fixture available before browser",
+        "sync_error": null
+      },
+      {
+        "path": "tests/companies/task_timesheets_http_browser.cjs",
+        "variant": "explicit-artifact-env",
+        "browser_reached": true,
+        "fixture_runs": 1,
+        "artifact_directory": "/tmp/synthetic-ci-evidence",
+        "expected_result": "fixture available before browser",
+        "sync_error": null
+      },
+      {
+        "path": "tests/companies/task_timesheets_http_browser.cjs",
+        "variant": "missing-fixture-copy",
+        "browser_reached": false,
+        "fixture_runs": 0,
+        "artifact_directory": "/tmp/issuer-browser-evidence",
+        "expected_result": "rejected before browser",
+        "sync_error": null
+      },
+      {
+        "path": "tests/companies/project_billing_rate_http_browser.cjs",
+        "variant": "without-artifact-env",
+        "browser_reached": true,
+        "fixture_runs": 1,
+        "artifact_directory": "/tmp/issuer-browser-evidence",
+        "expected_result": "fixture available before browser",
+        "sync_error": null
+      },
+      {
+        "path": "tests/companies/project_billing_rate_http_browser.cjs",
+        "variant": "explicit-artifact-env",
+        "browser_reached": true,
+        "fixture_runs": 1,
+        "artifact_directory": "/tmp/synthetic-ci-evidence",
+        "expected_result": "fixture available before browser",
+        "sync_error": null
+      },
+      {
+        "path": "tests/companies/project_billing_rate_http_browser.cjs",
+        "variant": "missing-fixture-copy",
+        "browser_reached": false,
+        "fixture_runs": 0,
+        "artifact_directory": "/tmp/issuer-browser-evidence",
+        "expected_result": "rejected before browser",
+        "sync_error": null
+      },
+      {
+        "path": "tests/companies/project_fixed_billing_http_browser.cjs",
+        "variant": "without-artifact-env",
+        "browser_reached": true,
+        "fixture_runs": 1,
+        "artifact_directory": "/tmp/issuer-browser-evidence",
+        "expected_result": "fixture available before browser",
+        "sync_error": null
+      },
+      {
+        "path": "tests/companies/project_fixed_billing_http_browser.cjs",
+        "variant": "explicit-artifact-env",
+        "browser_reached": true,
+        "fixture_runs": 1,
+        "artifact_directory": "/tmp/synthetic-ci-evidence",
+        "expected_result": "fixture available before browser",
+        "sync_error": null
+      },
+      {
+        "path": "tests/companies/project_fixed_billing_http_browser.cjs",
+        "variant": "missing-fixture-copy",
+        "browser_reached": false,
+        "fixture_runs": 0,
+        "artifact_directory": "/tmp/issuer-browser-evidence",
+        "expected_result": "rejected before browser",
+        "sync_error": null
+      }
+    ],
+    "qualification": "No Node process, Docker, PHP, SQL or Chromium execution was available locally during this repair. The existing Node/Python regression and full HTTP smoke must pass on the new GitHub CI SHA; prior CI or V8 adapters do not prove them."
+  },
+  "executor_block": {
+    "observed": "CreateProcess:409 Conflict environment_offline: Environment is not connected",
+    "scope": "all local shell/filesystem execution; GitHub MCP remained operational",
+    "local_execution_or_source_tree_updated": false
+  },
+  "external_bank_operations": false
+}

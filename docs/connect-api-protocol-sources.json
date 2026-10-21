@@ -1,0 +1,63 @@
+{
+  "wire_profile": "native Connect|API connector1.1.2 routes, strict state-open + explicit v2 flat-instance UUID/owner identity + sendText PENDING phone JID proof",
+  "sources": [
+    {
+      "kind": "provided native source",
+      "path": "modules/connect_api_connector/connect_api_connector.php",
+      "sha256": "631a6f4d6ebd85ca214375d9a01bc54f67b3534b5e5c86157bba73c9de4b5536",
+      "version": "connector1.1.2; App_sms keeps only connect_api_connector"
+    },
+    {
+      "kind": "provided native source",
+      "path": "modules/connect_api_connector/libraries/ConnectApiConnectorClient.php",
+      "sha256": "0cfbf06d9e7f507132532e9db10bc01283edf7dcd6bd83945478ad88955a2505",
+      "version": "connector1.1.2; App_sms keeps only connect_api_connector"
+    },
+    {
+      "kind": "provided native source",
+      "path": "modules/connect_api_connector/libraries/ConnectApiConnectorConfig.php",
+      "sha256": "52d02b905c09bc2aa09adc7170a85f43ce69ad02cc95576354dc755aa8b2b579",
+      "version": "connector1.1.2; App_sms keeps only connect_api_connector"
+    },
+    {
+      "kind": "provided native source",
+      "path": "modules/connect_api_connector/libraries/Sms_connect_api_connector.php",
+      "sha256": "8afa922a49f44f323c0795cf21a876c0ab75031a9fe50fe98ba6abc2bcc53196",
+      "version": "connector1.1.2; App_sms keeps only connect_api_connector"
+    },
+    {
+      "kind": "provided native source",
+      "path": "application/libraries/sms/App_sms.php",
+      "sha256": "b7b309920f44f81a96e510bf39b6d16bed96d537381a7b1b656057d70bf5622b",
+      "version": "connector1.1.2; App_sms keeps only connect_api_connector"
+    },
+    {
+      "kind": "primary external compatibility reference; does NOT identify the deployed Connect API server version",
+      "url": "https://raw.githubusercontent.com/evolution-foundation/evolution-docs/main/docs/05-Endpoints/00-send-plain-text.md",
+      "sha256": "2f34851341580ebb5bc5ff3d698c30b8c9921393cd4aa2613023a7330e81a926",
+      "retrieved_utc": "2026-10-19T23:47:58.613342+00:00"
+    },
+    {
+      "kind": "primary explicit compatibility profile; not proof of deployed server version",
+      "url": "https://raw.githubusercontent.com/evolution-foundation/evolution-api/fa09d37892cdbb1d65a250155d293d92230c5b30/src/api/controllers/instance.controller.ts",
+      "sha256": "b0921eac4e202344e9c3100754965f1b97db94faf74b7b2089ac7cca16d5713f",
+      "retrieved_utc": "2026-10-20T00:04:18.157804+00:00",
+      "upstream_commit": "fa09d37892cdbb1d65a250155d293d92230c5b30"
+    },
+    {
+      "kind": "primary explicit compatibility profile; not proof of deployed server version",
+      "url": "https://raw.githubusercontent.com/evolution-foundation/evolution-api/fa09d37892cdbb1d65a250155d293d92230c5b30/src/api/services/monitor.service.ts",
+      "sha256": "f9b3583c5b70a95f402e7594247ecd42a3825a99e2283c75d336833ef2f9ba17",
+      "retrieved_utc": "2026-10-20T00:04:23.133715+00:00",
+      "upstream_commit": "fa09d37892cdbb1d65a250155d293d92230c5b30"
+    },
+    {
+      "kind": "primary explicit compatibility profile; not proof of deployed server version",
+      "url": "https://raw.githubusercontent.com/evolution-foundation/evolution-api/fa09d37892cdbb1d65a250155d293d92230c5b30/src/api/routes/instance.router.ts",
+      "sha256": "961a89e70ac160ccbf59f3a3027220217cb6401060a37c6841f4ece1d1b27b7f",
+      "retrieved_utc": "2026-10-20T00:04:28.137811+00:00",
+      "upstream_commit": "fa09d37892cdbb1d65a250155d293d92230c5b30"
+    }
+  ],
+  "identity_profile": "evolution-v2-flat-instance-v1"
+}

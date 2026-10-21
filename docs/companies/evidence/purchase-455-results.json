@@ -1,0 +1,1550 @@
+{
+  "scope": "Purchase455 separate company-owned supplier/request/quote/order/receipt/document/AP chain; no full legacy Purchase parity claim",
+  "baseline_published_commit": "5b1a7b6ff880082f339e4dbc43066acd79de460b",
+  "published_sha": null,
+  "publication_status": "Root publishes and verifies the integrated PR45 commit separately. This evidence is bound to local product/test bytes.",
+  "generated_utc": "2026-10-21T12:26:38.608459+00:00",
+  "status": "own_vertical_tests_complete; integrated native455/publication attested separately",
+  "distinct_new_sql_checks": 292,
+  "new_check_breakdown": {
+    "core": 46,
+    "surfaces": 28,
+    "integrity": 39,
+    "concurrency": 22,
+    "schema": 13,
+    "api": 38,
+    "api_final_collection_witnesses": 17,
+    "expense_final_source_fence": 28,
+    "api_company_origin_matrix": 61
+  },
+  "separate_scope_checks": 36,
+  "route_coverage": {
+    "executed_exact_mappings": 32,
+    "invalid_paths": 6
+  },
+  "counting": "Engines, repeated runs, and the original expense API102 cumulative regression checks are not added again. Schema/native integration and bootstrap gates owned by root are reported separately.",
+  "memory_limit": "128M",
+  "product_files": {
+    "application/controllers/Company_purchase_portal.php": {
+      "bytes": 5802,
+      "sha256": "e32a514b39789c0eccbdc85ba0c8b04d372b558ae91f5f3cd38877d5524757a4",
+      "git_sha": "898fe386c10b32ad1af3f6b8b958729d2bdf993c"
+    },
+    "application/controllers/Company_purchases_api.php": {
+      "bytes": 4797,
+      "sha256": "a7e3e013e854ec5a1cfa4cd5f1fff10fcbffeac836ddbc1196576c9ab42bdbe5",
+      "git_sha": "e0af8063851583b2c8edb8f2270ac0f552c21740"
+    },
+    "application/controllers/admin/Company_purchases.php": {
+      "bytes": 10651,
+      "sha256": "0873ddbf97c8c1acb309d4500472aca5213dc0fc2310ec1bbf806c00f6bd4ba3",
+      "git_sha": "4135b1f3c5340e89e8760b79405787b0e7ae5ad7"
+    },
+    "application/services/CompanyExpenses.php": {
+      "bytes": 23559,
+      "sha256": "0fe1846489e83558ee657a53bda09d1d197c224a33eed0fb059796dab19478d8",
+      "git_sha": "8e5f7da300b40d79ca55be8aa67675f2e6be6058"
+    },
+    "application/services/CompanyPurchases.php": {
+      "bytes": 24863,
+      "sha256": "d51609da360bee38526c499310ca1cd878da508fa8cc4d2ff6d020b4c2429c0e",
+      "git_sha": "7accc644e6816d7377272691800f25af47e21376"
+    },
+    "application/services/CompanyPurchasesApi.php": {
+      "bytes": 8728,
+      "sha256": "81b0c85fdd96ec5d67150c4f945dd9a12154cec61e564a58eda2948cc2a66453",
+      "git_sha": "3f864c646701d0f9c55be0b6cfabc1750fbb2d6a"
+    },
+    "application/services/CompanyPurchasesFiles.php": {
+      "bytes": 5637,
+      "sha256": "7873669dab4385aff6d498ff883046b0f89163da4c70d5b4556e69fce47f5610",
+      "git_sha": "8424eb6438adab39ccaf6e2973441baee2867c04"
+    },
+    "application/services/CompanyPurchasesFinance.php": {
+      "bytes": 21134,
+      "sha256": "73a4e7009e91beaf056b4e4128d42a2651faa773b705c0071aa227e4890a1a72",
+      "git_sha": "8dbbe08ad1a93e76516615964f01cac2c1fbff02"
+    },
+    "application/services/CompanyPurchasesPdf.php": {
+      "bytes": 2437,
+      "sha256": "d666d3ebba69b2865a22b02d505a2d04e0cb73a8a27b791154e9dfa1f0c186b6",
+      "git_sha": "38b7121af6334def364268122741844e0f4bcf72"
+    },
+    "application/services/CompanyPurchasesPortal.php": {
+      "bytes": 9665,
+      "sha256": "6c2bcdfc91badceba2aca07cbd4906e2c284eac506d3a5a35e44f86b72114a39",
+      "git_sha": "6c794b567640b7772a134db4a067c3ad1ad040de"
+    },
+    "application/services/CompanyPurchasesReports.php": {
+      "bytes": 5333,
+      "sha256": "dd3fd06bad4f9f1724dd1b37ab8a1cc54d6c78c78faf97aeeb1474cf9b5fd188",
+      "git_sha": "218d4f0240bf48980f6eba55c8964c58644aaf85"
+    },
+    "application/services/CompanyPurchasesSchema.php": {
+      "bytes": 14503,
+      "sha256": "86a0adda73e4da5dfdadf43e95ee4d4fe6a5caa88de2cb49136c9bdf6cd523c1",
+      "git_sha": "e1f888f18d6fd0c44ab85e27ca089f6981a1a1d9"
+    },
+    "application/services/CompanyPurchasesScope.php": {
+      "bytes": 3928,
+      "sha256": "a3bb7afe421f4290901830cd23b1813b6de8597213679ce1f8c05306b91fa9e9",
+      "git_sha": "6e88d6567b70097e338351ae433a9a7a31618e9f"
+    },
+    "application/services/CompanyPurchasesStorage.php": {
+      "bytes": 15812,
+      "sha256": "9fee523ba8bc707407fe35dbae14a722ced9f703a33b94cbfd7ee48b1d0fd680",
+      "git_sha": "8530e472dbf2cfca732f7b7132a56c8e584e3589"
+    },
+    "application/services/CompanyPurchasesValues.php": {
+      "bytes": 5097,
+      "sha256": "88d2eb116698757ba9d66dd179064cd172e8bfa692fe05554cc8c27122ddba2c",
+      "git_sha": "790b7423b77768ed60c624d80821a81b2fca16ab"
+    },
+    "application/views/admin/companies/purchases.php": {
+      "bytes": 13231,
+      "sha256": "85bcfe8e79100d4e9c61d721342ce1432de8784fac0665a015ca156415d90b7d",
+      "git_sha": "cc14ef26248dac2987f41373838bd7dab2fce83a"
+    },
+    "application/views/admin/companies/purchases_payable.php": {
+      "bytes": 4024,
+      "sha256": "c604f55c531d43c0770e0d99f8032fe7dbe1e47487af23f288b1ede20ca6d123",
+      "git_sha": "844201f13c93e8f4c332a4fc7ff735557a790d1d"
+    },
+    "application/views/admin/companies/purchases_workspace.php": {
+      "bytes": 13799,
+      "sha256": "4d467f6869668d764e9430170ab7a36fcf7fc96454c08ad926229206c49c6075",
+      "git_sha": "c30c9168aad24b9a20f5f345bc17619ebb534c13"
+    },
+    "application/views/companies/purchase_portal.php": {
+      "bytes": 7067,
+      "sha256": "51bc51f289a389ed917c377b82b58ad70817cae8e7790976f8f66bbc9b80eb33",
+      "git_sha": "103e0da5e3b71e4fef6b2c09e3c316ef5ba99c16"
+    }
+  },
+  "test_files": {
+    "tests/companies/purchases.php": {
+      "bytes": 8828,
+      "sha256": "ecabc594aa8673958638e43975eb26e45ca6bbd45f34db7a98dcae9ca44fd976",
+      "git_sha": "23c7b86c09ee06bd1ca7921e70bb3a41e679e8ab"
+    },
+    "tests/companies/purchases_api.php": {
+      "bytes": 11075,
+      "sha256": "f29465ad3eb934cb22e0a8da48510119d14fd3a01693c87d011ad74e402e0a92",
+      "git_sha": "da63e37c0e78dcb2e950f3eb9f51b7df0da5351d"
+    },
+    "tests/companies/purchases_api_phantoms.php": {
+      "bytes": 5334,
+      "sha256": "d76a11517bbf9e0e5c32303516292b9d4db1c57a1165162af4c350afa8949775",
+      "git_sha": "01c10f06642b3903cca5d584073288682148b68f"
+    },
+    "tests/companies/purchases_browser.cjs": {
+      "bytes": 24138,
+      "sha256": "bd00c7ea8af99e1cf1feb8524b0ab4e7658e4a082de1e558517e3dd6c247ecce",
+      "git_sha": "c6351adfc8688d48b23d1a0611ec7366841b61e8"
+    },
+    "tests/companies/purchases_concurrency.php": {
+      "bytes": 11014,
+      "sha256": "906b1bd0f8bccf6e14c74463d368cc3eec7184fc651cf6b9799e80425e18b310",
+      "git_sha": "12a159986a1d6564b96f89d67d45eca2b4e4a948"
+    },
+    "tests/companies/purchases_database.php": {
+      "bytes": 1276,
+      "sha256": "3ee132a7b18caa7a263cef3722340956ffd4b482b1565819cb2b93a7c6f60f68",
+      "git_sha": "6e8da6e99153e8e7efd1f485b771b413512c589b"
+    },
+    "tests/companies/purchases_expense_fence.php": {
+      "bytes": 8075,
+      "sha256": "c00dbd5aa8b0c97e041e72e4565c577f0d1884bb75675a04476e14359c2f46c2",
+      "git_sha": "6b8a75cf9bab50a51ce02a33c292783161b26737"
+    },
+    "tests/companies/purchases_fixture.php": {
+      "bytes": 5516,
+      "sha256": "d8a941f4bdb2735cf8e6b8247c8c9ac92e8b2480bd5390f86c4ed329ba25fc1e",
+      "git_sha": "037be7a357530cf901d31e70e152134c96de21e0"
+    },
+    "tests/companies/purchases_http_fixture.php": {
+      "bytes": 7917,
+      "sha256": "171d0669389a99558cc7644f1ca3087cec27152b7bf4b7b9a159fa0fdb61bf1e",
+      "git_sha": "ca55a687cfce4b4639c60bccd549f58c61a195af"
+    },
+    "tests/companies/purchases_http_transport.cjs": {
+      "bytes": 6314,
+      "sha256": "def3a9adb399ea93572780a84242f81c7424cd15fe3b0c317424b6d11cce37f7",
+      "git_sha": "1ca2850d4421935f097d20453431248f8eca5617"
+    },
+    "tests/companies/purchases_integrity.php": {
+      "bytes": 6080,
+      "sha256": "cc3957abec7ab93c7b6abbb1e8fa91aadb904c2e7538eec57e67f8ea0aaddfa9",
+      "git_sha": "b03c9a8b4873481333841ec8a151d7e89869c09b"
+    },
+    "tests/companies/purchases_mobile.cjs": {
+      "bytes": 4236,
+      "sha256": "86c574a21940f07d8dc0017b8f74c0f29d299364e3f7d1a94bc5c3e2258143a7",
+      "git_sha": "ca6c42b4eb83fe39bf48e3a145cf5f783b461195"
+    },
+    "tests/companies/purchases_route_catalog.php": {
+      "bytes": 1606,
+      "sha256": "600052e8055f743c628bee12dc3803b982f94eace348bba3d0b4a4d5e061aabd",
+      "git_sha": "9f80536551feba46422d1ace1fc28c4fb7ae00af"
+    },
+    "tests/companies/purchases_schema.php": {
+      "bytes": 4435,
+      "sha256": "c1927b97cb69de1e50f51934f7aec27e3098c632587ed96fcbec71692f3b5f1f",
+      "git_sha": "5b23ba58b8ce4d1fb76b7d6dd0c6b9484a55ecf2"
+    },
+    "tests/companies/purchases_scope.php": {
+      "bytes": 4973,
+      "sha256": "2494b7fa57e1013972f79d2b75da132bc2202a503a1cee1371a704f1906bb8fd",
+      "git_sha": "9dc05914eed5a9da2e9559e43741ce8146765878"
+    },
+    "tests/companies/purchases_surfaces.php": {
+      "bytes": 8038,
+      "sha256": "0b4928dbc3c7cad5ed43ae89401ff95c04c2830f539174588da998449235debd",
+      "git_sha": "a1fa65b32d361c5544ed07f7595f86f5eeee30fe"
+    },
+    "tests/companies/purchases_api_matrix.php": {
+      "bytes": 13513,
+      "sha256": "330d7ec1ed966e695796ddad0c012681ba9b038edf2886bda27c7cfcb92becf6",
+      "git_sha": "d3bc46b0208369c85e51de05d6cc11b34de43c15"
+    },
+    "tests/companies/purchases_events_http.cjs": {
+      "bytes": 5344,
+      "sha256": "613e21853236b105bbcb73c56f166350ff42f93e9ce6dcf603f5256d405e1286",
+      "git_sha": "a14e60bcd04ea66378e9884ed3ea92afe36d997c"
+    }
+  },
+  "full_r3_sql_runs": [
+    {
+      "engine": "maria",
+      "php": "php83",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "6bccb26d1a9b81e8aaad8a34ddd9472592b6fc61c05dd1b1bf71a9a51f45f248",
+      "time_utc": "2026-10-21T11:42:48.084090+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_api_phantoms.php",
+          "sha256": "04e9db3fb8f6dfe5778757be84f8006b8dfc3f194f0baf206c54611fb0ba8a36",
+          "exit_code": 0,
+          "seconds": 46.961,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases final collection witnesses: 11 checks passed on 10.11.14-MariaDB-0ubuntu0.24.04.1\n",
+          "stdout_sha256": "1fd4fd7be30074f619726622427c7e8b891b573dd772fec1d4f691f57c880b5e"
+        },
+        {
+          "test": "tests/companies/purchases.php",
+          "sha256": "ecabc594aa8673958638e43975eb26e45ca6bbd45f34db7a98dcae9ca44fd976",
+          "exit_code": 0,
+          "seconds": 171.82,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases core: 46 checks passed on real mysql\n",
+          "stdout_sha256": "b5811ea9f36d2c4e626756179a4a1485bea204f058c6f1562f3b64d485ea21db"
+        },
+        {
+          "test": "tests/companies/purchases_integrity.php",
+          "sha256": "cc3957abec7ab93c7b6abbb1e8fa91aadb904c2e7538eec57e67f8ea0aaddfa9",
+          "exit_code": 0,
+          "seconds": 89.387,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases fault/integrity: 39 checks passed on real mysql\n",
+          "stdout_sha256": "2b7d5e811c9c220c8df0457a8a88c37cdb5c6417aa40b2964a308b9e4f6f1c04"
+        },
+        {
+          "test": "tests/companies/purchases_surfaces.php",
+          "sha256": "0b4928dbc3c7cad5ed43ae89401ff95c04c2830f539174588da998449235debd",
+          "exit_code": 0,
+          "seconds": 111.149,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases portal/files/reports: 28 checks passed on real mysql\n",
+          "stdout_sha256": "81e1c5b7da8aadfab7a787a0f41d742ea747f03e49d7da5e42e8baf8e8fcb0a4"
+        },
+        {
+          "test": "tests/companies/purchases_concurrency.php",
+          "sha256": "906b1bd0f8bccf6e14c74463d368cc3eec7184fc651cf6b9799e80425e18b310",
+          "exit_code": 0,
+          "seconds": 68.624,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases actual concurrency: 22 checks; six observed races and one SIGKILL/retry passed on 10.11.14-MariaDB-0ubuntu0.24.04.1\n",
+          "stdout_sha256": "662ce1d4369bd8a3ca884b311eb6628f530a98102b06e19e17d77be8ffa0cb39"
+        },
+        {
+          "test": "tests/companies/purchases_api.php",
+          "sha256": "f29465ad3eb934cb22e0a8da48510119d14fd3a01693c87d011ad74e402e0a92",
+          "exit_code": 0,
+          "seconds": 148.655,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases finite API: 38 checks passed on 10.11.14-MariaDB-0ubuntu0.24.04.1\n",
+          "stdout_sha256": "4aa9e1f55b7aaba2981b823ab9f42e2ab22388e6b170535538d6e8ec4282e728"
+        },
+        {
+          "test": "tests/companies/purchases_schema.php",
+          "sha256": "c1927b97cb69de1e50f51934f7aec27e3098c632587ed96fcbec71692f3b5f1f",
+          "exit_code": 0,
+          "seconds": 41.723,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases schema/retry: 13 checks passed on 10.11.14-MariaDB-0ubuntu0.24.04.1\n",
+          "stdout_sha256": "306faec276688e2500296077f1e0334f32558a909ffc62c24f7c88d2547f3ea7"
+        },
+        {
+          "test": "tests/companies/purchases_scope.php",
+          "sha256": "2494b7fa57e1013972f79d2b75da132bc2202a503a1cee1371a704f1906bb8fd",
+          "exit_code": 0,
+          "seconds": 0.035,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases raw scope: 36 checks passed; source a3bb7afe421f4290901830cd23b1813b6de8597213679ce1f8c05306b91fa9e9\n",
+          "stdout_sha256": "9bac7098f0068ef1e9012a94f93418015be8dfe5315e744c8f3f043814e1c335"
+        },
+        {
+          "test": "tests/companies/purchases_route_catalog.php",
+          "sha256": "600052e8055f743c628bee12dc3803b982f94eace348bba3d0b4a4d5e061aabd",
+          "exit_code": 0,
+          "seconds": 0.03,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases executable route catalog: 32 exact mappings and six invalid paths passed; source 20c0364e8e7606032f54a58d1aafbf88953df1e428c23d5ce3ced3346b64c653\n",
+          "stdout_sha256": "8c4eb150128414b6917bd0011ab29b97b34e08bef0a98b931c2ac23da34b5c98"
+        }
+      ],
+      "label": "purchase-frozen-r3-maria83",
+      "verified_owned_subset_sha256": "efed42319d4a2a6a57121169cc99e2371c7d4789e038f39971bedd3b52b24cd4",
+      "subset_is_git_tree": false
+    },
+    {
+      "engine": "mysql8",
+      "php": "php81",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "6bccb26d1a9b81e8aaad8a34ddd9472592b6fc61c05dd1b1bf71a9a51f45f248",
+      "time_utc": "2026-10-21T11:30:17.142428+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_api_phantoms.php",
+          "sha256": "04e9db3fb8f6dfe5778757be84f8006b8dfc3f194f0baf206c54611fb0ba8a36",
+          "exit_code": 0,
+          "seconds": 2.918,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases final collection witnesses: 11 checks passed on 8.0.46-0ubuntu0.24.04.3\n",
+          "stdout_sha256": "91edc2b50fb5d6365b8ed9dcf478174f621e4ce5d22e6cd3016ce09cf8c3291e"
+        },
+        {
+          "test": "tests/companies/purchases.php",
+          "sha256": "ecabc594aa8673958638e43975eb26e45ca6bbd45f34db7a98dcae9ca44fd976",
+          "exit_code": 0,
+          "seconds": 5.597,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases core: 46 checks passed on real mysql\n",
+          "stdout_sha256": "b5811ea9f36d2c4e626756179a4a1485bea204f058c6f1562f3b64d485ea21db"
+        },
+        {
+          "test": "tests/companies/purchases_integrity.php",
+          "sha256": "cc3957abec7ab93c7b6abbb1e8fa91aadb904c2e7538eec57e67f8ea0aaddfa9",
+          "exit_code": 0,
+          "seconds": 4.549,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases fault/integrity: 39 checks passed on real mysql\n",
+          "stdout_sha256": "2b7d5e811c9c220c8df0457a8a88c37cdb5c6417aa40b2964a308b9e4f6f1c04"
+        },
+        {
+          "test": "tests/companies/purchases_surfaces.php",
+          "sha256": "0b4928dbc3c7cad5ed43ae89401ff95c04c2830f539174588da998449235debd",
+          "exit_code": 0,
+          "seconds": 4.72,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases portal/files/reports: 28 checks passed on real mysql\n",
+          "stdout_sha256": "81e1c5b7da8aadfab7a787a0f41d742ea747f03e49d7da5e42e8baf8e8fcb0a4"
+        },
+        {
+          "test": "tests/companies/purchases_concurrency.php",
+          "sha256": "906b1bd0f8bccf6e14c74463d368cc3eec7184fc651cf6b9799e80425e18b310",
+          "exit_code": 0,
+          "seconds": 3.75,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases actual concurrency: 22 checks; six observed races and one SIGKILL/retry passed on 8.0.46-0ubuntu0.24.04.3\n",
+          "stdout_sha256": "c9c2685cb75972261df8013dab03a1601bbdd47f5af70aa6fee9d719fea991ac"
+        },
+        {
+          "test": "tests/companies/purchases_api.php",
+          "sha256": "f29465ad3eb934cb22e0a8da48510119d14fd3a01693c87d011ad74e402e0a92",
+          "exit_code": 0,
+          "seconds": 7.425,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases finite API: 38 checks passed on 8.0.46-0ubuntu0.24.04.3\n",
+          "stdout_sha256": "d6cf779842487be1835af24c273b6eb22520aea403e0731dac6f3a607102c81f"
+        },
+        {
+          "test": "tests/companies/purchases_schema.php",
+          "sha256": "c1927b97cb69de1e50f51934f7aec27e3098c632587ed96fcbec71692f3b5f1f",
+          "exit_code": 0,
+          "seconds": 3.064,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases schema/retry: 13 checks passed on 8.0.46-0ubuntu0.24.04.3\n",
+          "stdout_sha256": "b17d14dd7679f29c8acb2f0119d4d26b26b35f7fd265e66196b8828707c2998c"
+        },
+        {
+          "test": "tests/companies/purchases_scope.php",
+          "sha256": "2494b7fa57e1013972f79d2b75da132bc2202a503a1cee1371a704f1906bb8fd",
+          "exit_code": 0,
+          "seconds": 0.029,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases raw scope: 36 checks passed; source a3bb7afe421f4290901830cd23b1813b6de8597213679ce1f8c05306b91fa9e9\n",
+          "stdout_sha256": "9bac7098f0068ef1e9012a94f93418015be8dfe5315e744c8f3f043814e1c335"
+        },
+        {
+          "test": "tests/companies/purchases_route_catalog.php",
+          "sha256": "600052e8055f743c628bee12dc3803b982f94eace348bba3d0b4a4d5e061aabd",
+          "exit_code": 0,
+          "seconds": 0.047,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases executable route catalog: 32 exact mappings and six invalid paths passed; source 20c0364e8e7606032f54a58d1aafbf88953df1e428c23d5ce3ced3346b64c653\n",
+          "stdout_sha256": "8c4eb150128414b6917bd0011ab29b97b34e08bef0a98b931c2ac23da34b5c98"
+        }
+      ],
+      "label": "purchase-frozen-r3-mysql81",
+      "verified_owned_subset_sha256": "efed42319d4a2a6a57121169cc99e2371c7d4789e038f39971bedd3b52b24cd4",
+      "subset_is_git_tree": false
+    }
+  ],
+  "targeted_r4_sql_runs": [
+    {
+      "engine": "mysql8",
+      "php": "php81",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "a660737e56ddb39d9a0b946a0d75e7156c37e6791c18a975ddf1514af61cd510",
+      "time_utc": "2026-10-21T11:49:49.013314+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_expense_fence.php",
+          "sha256": "c00dbd5aa8b0c97e041e72e4565c577f0d1884bb75675a04476e14359c2f46c2",
+          "exit_code": 0,
+          "seconds": 5.525,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases final expense fence: 28 checks passed on 8.0.46-0ubuntu0.24.04.3\n",
+          "stdout_sha256": "d03344e12c7ddf7467656148873c5dc41ecb63a0d11bd583d12d4490bd03ac62"
+        },
+        {
+          "test": "tests/companies/expense_api.php",
+          "sha256": "80a259a79117892cd65dcb0cc16801e51ed003cb3965da0e9abc6915dbeb07be",
+          "exit_code": 0,
+          "seconds": 8.351,
+          "source_changed_during_execution": false,
+          "stdout": "Company expense operations: 47 checks passed (mysql). No provider calls.\nExpense own bearer API costs/categories/files: 102 cumulative (mysql). No provider or cash calls.\n",
+          "stdout_sha256": "3c14324a0eb712790441830cb7737ec0cd0f92d2f9fc1c1b0b011c0f5e2f7e54"
+        },
+        {
+          "test": "tests/companies/purchases_surfaces.php",
+          "sha256": "0b4928dbc3c7cad5ed43ae89401ff95c04c2830f539174588da998449235debd",
+          "exit_code": 0,
+          "seconds": 4.917,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases portal/files/reports: 28 checks passed on real mysql\n",
+          "stdout_sha256": "81e1c5b7da8aadfab7a787a0f41d742ea747f03e49d7da5e42e8baf8e8fcb0a4"
+        }
+      ],
+      "label": "purchase-fence-green-mysql8-php81",
+      "verified_owned_subset_sha256": "1c4532723a99215f42a3ca7cf8582b215b34286e9515028a1867f652d22d0ca8",
+      "subset_is_git_tree": false
+    },
+    {
+      "engine": "maria",
+      "php": "php83",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "a660737e56ddb39d9a0b946a0d75e7156c37e6791c18a975ddf1514af61cd510",
+      "time_utc": "2026-10-21T11:52:24.018267+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_expense_fence.php",
+          "sha256": "c00dbd5aa8b0c97e041e72e4565c577f0d1884bb75675a04476e14359c2f46c2",
+          "exit_code": 0,
+          "seconds": 54.822,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases final expense fence: 28 checks passed on 10.11.14-MariaDB-0ubuntu0.24.04.1\n",
+          "stdout_sha256": "097fceda9578a7a3e710eb4ebd4daf02eb40037e2ca206267b0cc82c98f9b5fa"
+        },
+        {
+          "test": "tests/companies/expense_api.php",
+          "sha256": "80a259a79117892cd65dcb0cc16801e51ed003cb3965da0e9abc6915dbeb07be",
+          "exit_code": 0,
+          "seconds": 5.079,
+          "source_changed_during_execution": false,
+          "stdout": "Company expense operations: 47 checks passed (mysql). No provider calls.\nExpense own bearer API costs/categories/files: 102 cumulative (mysql). No provider or cash calls.\n",
+          "stdout_sha256": "3c14324a0eb712790441830cb7737ec0cd0f92d2f9fc1c1b0b011c0f5e2f7e54"
+        },
+        {
+          "test": "tests/companies/purchases_surfaces.php",
+          "sha256": "0b4928dbc3c7cad5ed43ae89401ff95c04c2830f539174588da998449235debd",
+          "exit_code": 0,
+          "seconds": 114.563,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases portal/files/reports: 28 checks passed on real mysql\n",
+          "stdout_sha256": "81e1c5b7da8aadfab7a787a0f41d742ea747f03e49d7da5e42e8baf8e8fcb0a4"
+        }
+      ],
+      "label": "purchase-fence-green-maria-php83",
+      "verified_owned_subset_sha256": "1c4532723a99215f42a3ca7cf8582b215b34286e9515028a1867f652d22d0ca8",
+      "subset_is_git_tree": false
+    }
+  ],
+  "targeted_r6_sql_runs": [
+    {
+      "engine": "mysql8",
+      "php": "php81",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "3e596817674cac273e60b08b4e7f6c388543750b9e9d3f29af1e98cecf1144a1",
+      "time_utc": "2026-10-21T12:15:22.481783+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_api_matrix.php",
+          "sha256": "330d7ec1ed966e695796ddad0c012681ba9b038edf2886bda27c7cfcb92becf6",
+          "exit_code": 0,
+          "seconds": 13.687,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases API company-origin matrix: 61 checks passed on 8.0.46-0ubuntu0.24.04.3\n",
+          "stdout_sha256": "5eb0fca54d6a6d809ae06ecc8af174338e8074065c9e6bcdec3952438c452711"
+        },
+        {
+          "test": "tests/companies/purchases_api_phantoms.php",
+          "sha256": "d76a11517bbf9e0e5c32303516292b9d4db1c57a1165162af4c350afa8949775",
+          "exit_code": 0,
+          "seconds": 4.159,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases final collection witnesses: 17 checks passed on 8.0.46-0ubuntu0.24.04.3\n",
+          "stdout_sha256": "08c2164c9d05195b3d07f1a69293b1653d6ae422a150c18d1e49e9169529f2ff"
+        },
+        {
+          "test": "tests/companies/purchases_api.php",
+          "sha256": "f29465ad3eb934cb22e0a8da48510119d14fd3a01693c87d011ad74e402e0a92",
+          "exit_code": 0,
+          "seconds": 7.82,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases finite API: 38 checks passed on 8.0.46-0ubuntu0.24.04.3\n",
+          "stdout_sha256": "d6cf779842487be1835af24c273b6eb22520aea403e0731dac6f3a607102c81f"
+        }
+      ],
+      "label": "purchase-events-green-mysql81-r1",
+      "verified_owned_subset_sha256": "0dce1078af80361eebf9bca8dcdb9adb018e702928f8aa4fc3e0eff08148a869",
+      "subset_is_git_tree": false
+    },
+    {
+      "engine": "maria",
+      "php": "php83",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "3e596817674cac273e60b08b4e7f6c388543750b9e9d3f29af1e98cecf1144a1",
+      "time_utc": "2026-10-21T12:25:20.421832+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_api_matrix.php",
+          "sha256": "330d7ec1ed966e695796ddad0c012681ba9b038edf2886bda27c7cfcb92becf6",
+          "exit_code": 0,
+          "seconds": 346.77,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases API company-origin matrix: 61 checks passed on 10.11.14-MariaDB-0ubuntu0.24.04.1\n",
+          "stdout_sha256": "aca1279b3628b37f7ef7d65ae8b6eae9ba923704dfa9cc5f63bb9c557413495b"
+        },
+        {
+          "test": "tests/companies/purchases_api_phantoms.php",
+          "sha256": "d76a11517bbf9e0e5c32303516292b9d4db1c57a1165162af4c350afa8949775",
+          "exit_code": 0,
+          "seconds": 71.736,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases final collection witnesses: 17 checks passed on 10.11.14-MariaDB-0ubuntu0.24.04.1\n",
+          "stdout_sha256": "ce4d2437a85795c6779b16d6096acbb9de72aa8bd3495752c3f7c9634e29737e"
+        },
+        {
+          "test": "tests/companies/purchases_api.php",
+          "sha256": "f29465ad3eb934cb22e0a8da48510119d14fd3a01693c87d011ad74e402e0a92",
+          "exit_code": 0,
+          "seconds": 206.925,
+          "source_changed_during_execution": false,
+          "stdout": "Purchases finite API: 38 checks passed on 10.11.14-MariaDB-0ubuntu0.24.04.1\n",
+          "stdout_sha256": "4aa9e1f55b7aaba2981b823ab9f42e2ab22388e6b170535538d6e8ec4282e728"
+        }
+      ],
+      "label": "purchase-events-green-maria83-r1",
+      "verified_owned_subset_sha256": "0dce1078af80361eebf9bca8dcdb9adb018e702928f8aa4fc3e0eff08148a869",
+      "subset_is_git_tree": false
+    }
+  ],
+  "r3_to_r4_product_change": {
+    "path": "application/services/CompanyExpenses.php",
+    "before_sha256": "fafd06995928ef7ab620f8fbd7ec5eef681b8ddd140b77aeae94fbcbbb2b0516",
+    "after_sha256": "0fe1846489e83558ee657a53bda09d1d197c224a33eed0fb059796dab19478d8",
+    "reason": "Veto any AP reference to the global expense ID, including inconsistent ownership; recheck after the final origin guard and authorization.",
+    "other_product_files_unchanged_at_r4": true,
+    "validation": "Same targeted test28 on both engines; original expense_api.php102 cumulative plus prior Purchase surfaces28. Full r3 runs retain their original source manifest and are not relabeled as r4."
+  },
+  "r4_to_r5_product_change": {
+    "path": "application/views/admin/companies/purchases.php",
+    "before_sha256": "c76ff1522b4b1a43d88b2e0bd3d2fabfdf73ecb25ef94c94acefb335278dde18",
+    "after_sha256": "85bcfe8e79100d4e9c61d721342ce1432de8784fac0665a015ca156415d90b7d",
+    "reason": "Wrap long unbroken text inside the own Purchase card without hiding or clipping content. The prior full browser ended at the final mobile overflow assertion (390px viewport,392px document).",
+    "same_test_red_green": "tests/companies/purchases_mobile.cjs; seven pages at390 and320px; same assertion and source bytes before/after.",
+    "changes_since_r3": "Only CompanyExpenses.php and this view; other17 production files and all13 DDL definitions unchanged."
+  },
+  "r5_to_r6_product_change": {
+    "path": "application/services/CompanyPurchases.php",
+    "before_sha256": "bd1b3408ef7e024d5001051b0bb15a2b8bf02d858f3daabfca83fb0da0e329a7",
+    "after_sha256": "d51609da360bee38526c499310ca1cd878da508fa8cc4d2ff6d020b4c2429c0e",
+    "reason": "Implement the advertised AP event collection and bind event detail/page to the validated parent AP and final set witnesses.",
+    "validation": "Same61-scenario origin matrix; final-collection suite retains11 checks and adds6 event-reader checks; original API38 repeated. Directed native HTTP RED/GREEN after the unchanged full r5 browser.",
+    "writes_and_ddl_unchanged": true
+  },
+  "browser_fixture": {
+    "base_commit": "5b1a7b6ff880082f339e4dbc43066acd79de460b",
+    "candidate_source": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+    "origin_database": "argws_crm_ci",
+    "database": "argws_purchase_ci",
+    "origin_preserved": true,
+    "cloned_dump_sha256": "6892c89027bc567b6ff349a89b5481835d614a5c822e968b783788b1902aeb90",
+    "clone_byte_exact": true,
+    "app": "/tmp/argws-purchase455-http-candidate/app",
+    "url": "http://127.0.0.1:43375",
+    "pid": 100199,
+    "configuration_adjustments": [
+      "APP_DB_NAME",
+      "APP_BASE_URL"
+    ],
+    "native_identity": "17:1:installer",
+    "native_version": 454,
+    "purchase_schema": {
+      "candidate_only_purchase_tables": 13,
+      "native_version": 454,
+      "identity_preserved": true
+    },
+    "native455_gate": false,
+    "production_deploy": false,
+    "installer_omitted_after_verified_native454": true,
+    "product_guard_unchanged": true,
+    "native_login_http": 200
+  },
+  "native455_gate": "Separate root evidence for actual fresh/upgrade/tracking and exact schema. Explicit candidate ensure is not counted as native455.",
+  "red_green": [
+    {
+      "reason": "Late valid AP event or paginated row after API audit previously returned a stale success.",
+      "files": {
+        "docs/companies/evidence/purchase-455/red-green/purchase-phantom-red-green/CompanyPurchasesStorage.php.txt": {
+          "bytes": 14109,
+          "sha256": "74eb6bdd2e068edf1574744de2e6279cdd62d377b9acb5bfcdecc846feeb0c72",
+          "git_sha": "16c246dc19d38b3b96826c18689f64f8297bb427"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-phantom-red-green/CompanyPurchasesFinance.php.txt": {
+          "bytes": 20865,
+          "sha256": "2d9baf9753a6ce882cf4e38ca2b5312c553df7c5b2432fed724c79a795003f43",
+          "git_sha": "850ed42e92745bcf849321c47b5fa4568c9c1220"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-phantom-red-green/CompanyPurchases.php.txt": {
+          "bytes": 24332,
+          "sha256": "a4872a3060cdb10e27a4a7104014e42f2a306c56268a001258897a7b5c389c98",
+          "git_sha": "3aaba7d7d1b113adc6437195cb8b2abd0bcf1bdf"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-phantom-red-green/CompanyPurchasesReports.php.txt": {
+          "bytes": 5325,
+          "sha256": "76c338c1b0f6513f58177734a25034cc6d81c1a16f8a5cbf1e38c8f03d7cb946",
+          "git_sha": "d2f0a39a5c905a0e626e260c1b6fbfe1736e123c"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-phantom-red-green/red-sources.json": {
+          "bytes": 484,
+          "sha256": "91541cf489e8f7aa1f4f90569cae73d4a946c3a1663a8adf879d8c22eb6f9f3f",
+          "git_sha": "ece332d5b956a162a12cb11275ab4710e55d5d08"
+        }
+      }
+    },
+    {
+      "reason": "Raw alias was accepted despite exact router segments.",
+      "files": {
+        "docs/companies/evidence/purchase-455/red-green/purchase-scope-red-green/red.json": {
+          "bytes": 195,
+          "sha256": "0d4489e645865fa50b115151c724e8f60bd2d86da469dc423c3d051345ac1842",
+          "git_sha": "85077a5981d72c0777f1f59251e8dabea9376768"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-scope-red-green/green.json": {
+          "bytes": 314,
+          "sha256": "22ab280bb55ffca00e910d5ae64bda203a211e1d43683f5d8e45a4dcb2c41526",
+          "git_sha": "1c4ec0b8ba3171e2c691433289204c23616de0a0"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-scope-red-green/red.log": {
+          "bytes": 932,
+          "sha256": "fd1228036cdb4945017a7b11e0c58783fceceae0d46cf9b98aef4922a178f037",
+          "git_sha": "da2a20e10dd938cea690117cb016bfd8af5855b5"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-scope-red-green/php83-green.log": {
+          "bytes": 111,
+          "sha256": "9bac7098f0068ef1e9012a94f93418015be8dfe5315e744c8f3f043814e1c335",
+          "git_sha": "f154714f4ab4df891d3ef40b525b7d39606e0023"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-scope-red-green/php81-green.log": {
+          "bytes": 111,
+          "sha256": "9bac7098f0068ef1e9012a94f93418015be8dfe5315e744c8f3f043814e1c335",
+          "git_sha": "f154714f4ab4df891d3ef40b525b7d39606e0023"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-scope-red-green/CompanyPurchasesScope-before.php.txt": {
+          "bytes": 2896,
+          "sha256": "f5c64302ce3c7cd0ed87a4e8a33d45906f954409d7e01fcd594ef2e754a9067a",
+          "git_sha": "faf53db9052c043c985a1645792418acc54c8697"
+        }
+      }
+    },
+    {
+      "reason": "Candidate integration block was inserted in a comment, so the executed route catalog was empty.",
+      "files": {
+        "docs/companies/evidence/purchase-455/red-green/purchase-routes-red-green/red.json": {
+          "bytes": 195,
+          "sha256": "f1f9c9cb5049475898d253abcb0a9335570fd8d8f5ed21dcd27f3f03b7e1b3d9",
+          "git_sha": "41e8c5e550d0ebdc1bea22e48b82597a7cbe4387"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-routes-red-green/http-green.json": {
+          "bytes": 108,
+          "sha256": "56b4d271d14638190d404cf7ac96059661ac56ef916780aa371aaae06798c7e8",
+          "git_sha": "b2bc8aec03ebe250ed09f6eca7baf8a15f921b80"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-routes-red-green/red.log": {
+          "bytes": 674,
+          "sha256": "5ad7e7560b79d59cb09b4ec580a3fad4c2f05b8535912e4de7846a7306efe524",
+          "git_sha": "c755f9dbd5699c0e15a8c9d2e7e1942db420b9d5"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-routes-red-green/http-green.log": {
+          "bytes": 156,
+          "sha256": "8c4eb150128414b6917bd0011ab29b97b34e08bef0a98b931c2ac23da34b5c98",
+          "git_sha": "d73dc5ab94f71c297f6c8552777af1552976fb7c"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-routes-red-green/routes-before.php.txt": {
+          "bytes": 9247,
+          "sha256": "ffc2714e62c3615902672e0ffb0de48af352530edadec0c585fe4d9930016b43",
+          "git_sha": "647b3b999ca7f4d0c898e0166e19db355c4ec82b"
+        }
+      }
+    },
+    {
+      "reason": "Inconsistent AP ownership or a late AP insertion/reassociation previously allowed expense mutation.",
+      "files": {
+        "docs/companies/evidence/purchase-455/red-green/purchase-expense-fence-red-green/CompanyExpenses-before.php.txt": {
+          "bytes": 23246,
+          "sha256": "fafd06995928ef7ab620f8fbd7ec5eef681b8ddd140b77aeae94fbcbbb2b0516",
+          "git_sha": "05468f9668fbd518f57c255687fd423533519ea4"
+        }
+      }
+    },
+    {
+      "reason": "Harness expected no cookie although native Security legitimately emitted only its CSRF cookie. Native session bytes stayed identical.",
+      "files": {
+        "docs/companies/evidence/purchase-455/red-green/purchase-browser-harness-red-green/purchases_browser-before.cjs.txt": {
+          "bytes": 21981,
+          "sha256": "688e62bd1d17dcc4fbfda4cd2f94ec410fb687be6c069dae449d24c056f6e890",
+          "git_sha": "c5276f821187328d71a8de384c0f4bc47b8e9316"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-browser-harness-red-green/bearer-cookie-proof.json": {
+          "bytes": 692,
+          "sha256": "528ada9d4796c79db729ee926611468eb025b72945ed47b695b00fbe2bab38ae",
+          "git_sha": "c13134043edeedac168708638c5206c9a465063f"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-browser-harness-red-green/manifest.json": {
+          "bytes": 294,
+          "sha256": "8b7357187be0d9518fee7a3f1cd49ab0d8c0be9bd99eb1e996fd7d59a8b0a928",
+          "git_sha": "885adad0b736f638dd71fe8e9d4b0de4726780d5"
+        }
+      }
+    },
+    {
+      "reason": "An unbroken heading overflowed the390px viewport by2px. Scoped overflow-wrap preserves all content; the same test now verifies seven pages at390 and320px.",
+      "files": {
+        "docs/companies/evidence/purchase-455/red-green/purchase-mobile-red-green/red-proof.json": {
+          "bytes": 499,
+          "sha256": "d78953a051a909ff2dab620e4c0dd8fa23840a793573ebc7c662645eb21eebd4",
+          "git_sha": "9806af19d79147114dbd5f792882b0087b26e93e"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-mobile-red-green/green-mobile390.png": {
+          "bytes": 349078,
+          "sha256": "5d123b858b0aff8b5d0dee1859aa2eedd65d9b712a6ce85dd736cfe3e9efa644",
+          "git_sha": "539b3811c5ae749e620bec1f32bd6412570a92c1"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-mobile-red-green/green-proof.json": {
+          "bytes": 1979,
+          "sha256": "95c27257ecdaae561202adef1e589e12ad0d1aa390094ce916065262eb591fd3",
+          "git_sha": "b714033ca4dd4d029544d4eb7bf5fc76b69fa8bc"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-mobile-red-green/green-mobile320-settings.png": {
+          "bytes": 163939,
+          "sha256": "85645813f6d4a0672a33ccc082406f1489f52261b76af2d2d819b1714c1668be",
+          "git_sha": "d47f43239f0f8006008dda55e3c7b253ef54e5b7"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-mobile-red-green/live-sync.json": {
+          "bytes": 1273,
+          "sha256": "bb1edb75eb044feb2e40d9a76daa2a4b3de5c78763bb0b56019d94873b67bb69",
+          "git_sha": "11f2d11a5607aabd4e924a0cc7ceb403499621ff"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-mobile-red-green/purchases-before.php.txt": {
+          "bytes": 13163,
+          "sha256": "c76ff1522b4b1a43d88b2e0bd3d2fabfdf73ecb25ef94c94acefb335278dde18",
+          "git_sha": "0d1e124c9ec3d7d461f97432bb8c3b8450ad6247"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-mobile-red-green/manifest.json": {
+          "bytes": 498,
+          "sha256": "1a4434601c02fa66777a927c196fc496d0e045fb95eb4cf172a116be6d145cbb",
+          "git_sha": "e176519eb8c6b84623d595ed0e09a5e079cdbd33"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-mobile-red-green/red-mobile390.png": {
+          "bytes": 349141,
+          "sha256": "0e74cb7e70682e8f3e97d19374cd19c78f9f296d4e059e9495e71e5c1e051e8e",
+          "git_sha": "4d4c20a3f3e81746d0fcb4a514db71312c79b00c"
+        }
+      }
+    },
+    {
+      "reason": "Advertised API event collection was refused, and event detail did not witness a valid event added to its parent AP by the final audit.",
+      "files": {
+        "docs/companies/evidence/purchase-455/red-green/purchase-events-red-green/final-service-sync.json": {
+          "bytes": 605,
+          "sha256": "81781704a136c88c9b1f92848a8d841b07b892e96ef20cd21927cfc952713729",
+          "git_sha": "6525db47070ca8feb20217b99eff78d059879eaf"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-events-red-green/manifest.json": {
+          "bytes": 428,
+          "sha256": "bb7483f56cd03878f2bc55567d380aaea88b821b47d91212d252dd86c2b59ff6",
+          "git_sha": "6169eaf3b6ccdc391e0e77af4c44760f99803422"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-events-red-green/purchases_api_matrix.php.txt": {
+          "bytes": 13513,
+          "sha256": "330d7ec1ed966e695796ddad0c012681ba9b038edf2886bda27c7cfcb92becf6",
+          "git_sha": "d3bc46b0208369c85e51de05d6cc11b34de43c15"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-events-red-green/purchases_api_phantoms-before.php.txt": {
+          "bytes": 3988,
+          "sha256": "04e9db3fb8f6dfe5778757be84f8006b8dfc3f194f0baf206c54611fb0ba8a36",
+          "git_sha": "6806058547f26f50cf8e79d69e8123a01ffdeead"
+        },
+        "docs/companies/evidence/purchase-455/red-green/purchase-events-red-green/CompanyPurchases-before.php.txt": {
+          "bytes": 24398,
+          "sha256": "bd1b3408ef7e024d5001051b0bb15a2b8bf02d858f3daabfca83fb0da0e329a7",
+          "git_sha": "89b018e828127b695da59bd09201c9e4d3f92d77"
+        }
+      }
+    }
+  ],
+  "external_dependencies": {
+    "this_vertical": "None for local team/portal/API/PDF/AP operations. Invitation delivery is a copied link; no SMTP transport is claimed.",
+    "bank_execution": "Not provided by a manual declaration. No payment order, bank confirmation, refund, AR settlement or external homologation is inferred."
+  },
+  "remaining_internal_work": [
+    "purchase contracts and signatures",
+    "stock/catalog/warehouse integrations",
+    "purchase returns and credit/debit corrections",
+    "recurring purchase invoices and exact asynchronous origin",
+    "legacy vendor contacts/registration/authentication workflows",
+    "legacy mail templates and external delivery adapters",
+    "multiple taxes per line, price lists and wider currency catalog",
+    "legacy dashboards/reports/accounting mappings and shared project purchase subresources"
+  ],
+  "not_counted_complete": [
+    "blocked legacy Purchase routes",
+    "legacy vendor authentication or public CRUD",
+    "legacy contracts/signatures, stock, returns/credits and invoice recurrence",
+    "all other installed modules",
+    "bank transport or homologation"
+  ],
+  "sql_red_runs": [
+    {
+      "engine": "mysql8",
+      "php": "php81",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "9aac8860e4cd63944bc7c7ef9616f3e1ff98d743671698b7a653b3a472121f08",
+      "time_utc": "2026-10-21T11:27:32.708064+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_api_phantoms.php",
+          "sha256": "04e9db3fb8f6dfe5778757be84f8006b8dfc3f194f0baf206c54611fb0ba8a36",
+          "exit_code": 255,
+          "seconds": 2.471,
+          "source_changed_during_execution": false,
+          "stdout": "PHP Fatal error:  Uncaught RuntimeException: FAIL: API get cannot confirm a stale balance after a valid event is inserted by its final audit (actual: NULL) in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php:192\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php(198): essentialCheck(false, 'API get cannot ...')\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_fixture.php(29): essentialThrows(Object(Closure), 'issuer_purchase...', 'API get cannot ...')\n#2 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_api_phantoms.php(14): purchaseThrows(Object(Closure), 'issuer_purchase...', 'API get cannot ...')\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php on line 192\n\nFatal error: Uncaught RuntimeException: FAIL: API get cannot confirm a stale balance after a valid event is inserted by its final audit (actual: NULL) in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php:192\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php(198): essentialCheck(false, 'API get cannot ...')\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_fixture.php(29): essentialThrows(Object(Closure), 'issuer_purchase...', 'API get cannot ...')\n#2 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_api_phantoms.php(14): purchaseThrows(Object(Closure), 'issuer_purchase...', 'API get cannot ...')\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php on line 192\n",
+          "stdout_sha256": "944339e42447706f8bf384c368fa2620e1c13336d5b93137ae4d2daa6a40d979"
+        }
+      ],
+      "label": "purchase-phantom-red-mysql81",
+      "verified_owned_subset_sha256": "73a6dcc2c8bf9470a09555be2a973d40baa50e8017a6b60d92946d7f21ffce96",
+      "subset_is_git_tree": false
+    },
+    {
+      "engine": "mysql8",
+      "php": "php81",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "6061cef5482f5cf5525db193fde56298c1d2d90d4d87e75c6c48eca1a4db70e9",
+      "time_utc": "2026-10-21T11:48:22.837870+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_expense_fence.php",
+          "sha256": "c00dbd5aa8b0c97e041e72e4565c577f0d1884bb75675a04476e14359c2f46c2",
+          "exit_code": 255,
+          "seconds": 3.23,
+          "source_changed_during_execution": false,
+          "stdout": "PHP Fatal error:  Uncaught RuntimeException: FAIL: wrong-issuer-update cannot mutate a purchase-linked expense (actual: NULL) in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php:192\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php(198): essentialCheck(false, 'wrong-issuer-up...')\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_fixture.php(29): essentialThrows(Object(Closure), 'company_expense...', 'wrong-issuer-up...')\n#2 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_expense_fence.php(69): purchaseThrows(Object(Closure), 'company_expense...', 'wrong-issuer-up...')\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php on line 192\n\nFatal error: Uncaught RuntimeException: FAIL: wrong-issuer-update cannot mutate a purchase-linked expense (actual: NULL) in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php:192\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php(198): essentialCheck(false, 'wrong-issuer-up...')\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_fixture.php(29): essentialThrows(Object(Closure), 'company_expense...', 'wrong-issuer-up...')\n#2 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_expense_fence.php(69): purchaseThrows(Object(Closure), 'company_expense...', 'wrong-issuer-up...')\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php on line 192\n",
+          "stdout_sha256": "2e337722cfbae033f32309c1da52f042c41f17ffed2b285ff2e416cda5e4b980"
+        }
+      ],
+      "label": "purchase-fence-red-wrong-issuer",
+      "verified_owned_subset_sha256": "0fd6c046a5ad0622e731cd24914ba445135bf18f47ee7ac823fe6a7f3b5a1d04",
+      "subset_is_git_tree": false
+    },
+    {
+      "engine": "mysql8",
+      "php": "php81",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "6061cef5482f5cf5525db193fde56298c1d2d90d4d87e75c6c48eca1a4db70e9",
+      "time_utc": "2026-10-21T11:48:24.390695+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_expense_fence.php",
+          "sha256": "c00dbd5aa8b0c97e041e72e4565c577f0d1884bb75675a04476e14359c2f46c2",
+          "exit_code": 255,
+          "seconds": 3.865,
+          "source_changed_during_execution": false,
+          "stdout": "PHP Fatal error:  Uncaught RuntimeException: FAIL: late-native-update cannot mutate a purchase-linked expense (actual: NULL) in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php:192\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php(198): essentialCheck(false, 'late-native-upd...')\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_fixture.php(29): essentialThrows(Object(Closure), 'company_expense...', 'late-native-upd...')\n#2 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_expense_fence.php(69): purchaseThrows(Object(Closure), 'company_expense...', 'late-native-upd...')\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php on line 192\n\nFatal error: Uncaught RuntimeException: FAIL: late-native-update cannot mutate a purchase-linked expense (actual: NULL) in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php:192\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php(198): essentialCheck(false, 'late-native-upd...')\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_fixture.php(29): essentialThrows(Object(Closure), 'company_expense...', 'late-native-upd...')\n#2 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_expense_fence.php(69): purchaseThrows(Object(Closure), 'company_expense...', 'late-native-upd...')\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php on line 192\n",
+          "stdout_sha256": "3e518ef46f0bf9c8a4376ab433fdf4359d00dafcf0f5fdaef842daa563ff0fc6"
+        }
+      ],
+      "label": "purchase-fence-red-late-native",
+      "verified_owned_subset_sha256": "0fd6c046a5ad0622e731cd24914ba445135bf18f47ee7ac823fe6a7f3b5a1d04",
+      "subset_is_git_tree": false
+    },
+    {
+      "engine": "mysql8",
+      "php": "php81",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "6061cef5482f5cf5525db193fde56298c1d2d90d4d87e75c6c48eca1a4db70e9",
+      "time_utc": "2026-10-21T11:48:23.236433+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_expense_fence.php",
+          "sha256": "c00dbd5aa8b0c97e041e72e4565c577f0d1884bb75675a04476e14359c2f46c2",
+          "exit_code": 255,
+          "seconds": 3.474,
+          "source_changed_during_execution": false,
+          "stdout": "PHP Fatal error:  Uncaught RuntimeException: FAIL: late-api-reassign-update cannot mutate an expense after a late AP reference (actual: NULL) in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php:192\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php(198): essentialCheck(false, 'late-api-reassi...')\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_fixture.php(29): essentialThrows(Object(Closure), 'company_expense...', 'late-api-reassi...')\n#2 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_expense_fence.php(66): purchaseThrows(Object(Closure), 'company_expense...', 'late-api-reassi...')\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php on line 192\n\nFatal error: Uncaught RuntimeException: FAIL: late-api-reassign-update cannot mutate an expense after a late AP reference (actual: NULL) in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php:192\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php(198): essentialCheck(false, 'late-api-reassi...')\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_fixture.php(29): essentialThrows(Object(Closure), 'company_expense...', 'late-api-reassi...')\n#2 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_expense_fence.php(66): purchaseThrows(Object(Closure), 'company_expense...', 'late-api-reassi...')\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php on line 192\n",
+          "stdout_sha256": "f1c50920b835815a1bde889a6fd2b3c55d0d74b71a586149f78ce8e6f744ddd3"
+        }
+      ],
+      "label": "purchase-fence-red-late-api-reassign",
+      "verified_owned_subset_sha256": "0fd6c046a5ad0622e731cd24914ba445135bf18f47ee7ac823fe6a7f3b5a1d04",
+      "subset_is_git_tree": false
+    },
+    {
+      "engine": "mysql8",
+      "php": "php81",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "6061cef5482f5cf5525db193fde56298c1d2d90d4d87e75c6c48eca1a4db70e9",
+      "time_utc": "2026-10-21T11:48:26.557968+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_expense_fence.php",
+          "sha256": "c00dbd5aa8b0c97e041e72e4565c577f0d1884bb75675a04476e14359c2f46c2",
+          "exit_code": 255,
+          "seconds": 3.164,
+          "source_changed_during_execution": false,
+          "stdout": "PHP Fatal error:  Uncaught RuntimeException: FAIL: late-api-insert-update cannot mutate an expense after a late AP reference (actual: NULL) in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php:192\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php(198): essentialCheck(false, 'late-api-insert...')\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_fixture.php(29): essentialThrows(Object(Closure), 'company_expense...', 'late-api-insert...')\n#2 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_expense_fence.php(66): purchaseThrows(Object(Closure), 'company_expense...', 'late-api-insert...')\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php on line 192\n\nFatal error: Uncaught RuntimeException: FAIL: late-api-insert-update cannot mutate an expense after a late AP reference (actual: NULL) in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php:192\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php(198): essentialCheck(false, 'late-api-insert...')\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_fixture.php(29): essentialThrows(Object(Closure), 'company_expense...', 'late-api-insert...')\n#2 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_expense_fence.php(66): purchaseThrows(Object(Closure), 'company_expense...', 'late-api-insert...')\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php on line 192\n",
+          "stdout_sha256": "7259d00b4dea6eeb5fd8f1cbdc50359302653606fa0ec24ab20be50499c7db26"
+        }
+      ],
+      "label": "purchase-fence-red-late-api-insert",
+      "verified_owned_subset_sha256": "0fd6c046a5ad0622e731cd24914ba445135bf18f47ee7ac823fe6a7f3b5a1d04",
+      "subset_is_git_tree": false
+    },
+    {
+      "engine": "mysql8",
+      "php": "php81",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "ea0263b83f220d44c62b4386e85869f390d00bf18a32bfb09092fbf4d6b8539a",
+      "time_utc": "2026-10-21T12:10:21.609023+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_api_matrix.php",
+          "sha256": "330d7ec1ed966e695796ddad0c012681ba9b038edf2886bda27c7cfcb92becf6",
+          "exit_code": 255,
+          "seconds": 7.345,
+          "source_changed_during_execution": false,
+          "stdout": "PHP Fatal error:  Uncaught DomainException: company_purchase_invalid in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/application/services/CompanyPurchases.php:242\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/application/services/CompanyPurchasesApi.php(44): CompanyPurchases->page(2, 12, 'event', 0)\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_api_matrix.php(59): CompanyPurchasesApi->read('crmco_ab6c6c97d...', 'events')\n#2 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/application/services/CompanyPurchases.php on line 242\n\nFatal error: Uncaught DomainException: company_purchase_invalid in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/application/services/CompanyPurchases.php:242\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/application/services/CompanyPurchasesApi.php(44): CompanyPurchases->page(2, 12, 'event', 0)\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_api_matrix.php(59): CompanyPurchasesApi->read('crmco_ab6c6c97d...', 'events')\n#2 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/application/services/CompanyPurchases.php on line 242\n",
+          "stdout_sha256": "715edb6f3b14af77e95d9424c3424cb5e02dff60b23bee9b6b6205bf951396ef"
+        }
+      ],
+      "label": "purchase-api-origin-matrix-mysql81-r2",
+      "verified_owned_subset_sha256": "8cb7c4e05112262d77a1cefe707cf356338d56badef6aadbbd869e1b4d348ab0",
+      "subset_is_git_tree": false
+    },
+    {
+      "engine": "maria",
+      "php": "php83",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "ea0263b83f220d44c62b4386e85869f390d00bf18a32bfb09092fbf4d6b8539a",
+      "time_utc": "2026-10-21T12:12:56.676667+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_api_matrix.php",
+          "sha256": "330d7ec1ed966e695796ddad0c012681ba9b038edf2886bda27c7cfcb92becf6",
+          "exit_code": 255,
+          "seconds": 160.975,
+          "source_changed_during_execution": false,
+          "stdout": "PHP Fatal error:  Uncaught DomainException: company_purchase_invalid in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/application/services/CompanyPurchases.php:242\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/application/services/CompanyPurchasesApi.php(44): CompanyPurchases->page(2, 12, 'event', 0)\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_api_matrix.php(59): CompanyPurchasesApi->read('crmco_03bb3e9a7...', 'events')\n#2 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/application/services/CompanyPurchases.php on line 242\n\nFatal error: Uncaught DomainException: company_purchase_invalid in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/application/services/CompanyPurchases.php:242\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/application/services/CompanyPurchasesApi.php(44): CompanyPurchases->page(2, 12, 'event', 0)\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_api_matrix.php(59): CompanyPurchasesApi->read('crmco_03bb3e9a7...', 'events')\n#2 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/application/services/CompanyPurchases.php on line 242\n",
+          "stdout_sha256": "ec2c7127844206aee021b8443b2edd8b95a83b563d200dbc5e5d7a204844c877"
+        }
+      ],
+      "label": "purchase-api-origin-matrix-maria83-r2",
+      "verified_owned_subset_sha256": "8cb7c4e05112262d77a1cefe707cf356338d56badef6aadbbd869e1b4d348ab0",
+      "subset_is_git_tree": false
+    },
+    {
+      "engine": "mysql8",
+      "php": "php81",
+      "database": "issuer_purchase455",
+      "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source",
+      "manifest_sha256": "3ace14ac52c0ad1bc6d557d344a02987888fa609374bd7fde19701136773220a",
+      "time_utc": "2026-10-21T12:13:34.964900+00:00",
+      "results": [
+        {
+          "test": "tests/companies/purchases_api_phantoms.php",
+          "sha256": "d76a11517bbf9e0e5c32303516292b9d4db1c57a1165162af4c350afa8949775",
+          "exit_code": 255,
+          "seconds": 3.612,
+          "source_changed_during_execution": false,
+          "stdout": "PHP Fatal error:  Uncaught RuntimeException: FAIL: event detail cannot return success when its AP event collection changes after the final API audit (actual: NULL) in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php:192\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php(198): essentialCheck(false, 'event detail ca...')\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_fixture.php(29): essentialThrows(Object(Closure), 'issuer_purchase...', 'event detail ca...')\n#2 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_api_phantoms.php(28): purchaseThrows(Object(Closure), 'issuer_purchase...', 'event detail ca...')\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php on line 192\n\nFatal error: Uncaught RuntimeException: FAIL: event detail cannot return success when its AP event collection changes after the final API audit (actual: NULL) in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php:192\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php(198): essentialCheck(false, 'event detail ca...')\n#1 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_fixture.php(29): essentialThrows(Object(Closure), 'issuer_purchase...', 'event detail ca...')\n#2 /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/companies/purchases_api_phantoms.php(28): purchaseThrows(Object(Closure), 'issuer_purchase...', 'event detail ca...')\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/runtime/purchase-candidate-454/source/tests/issuers_core_support.php on line 192\n",
+          "stdout_sha256": "fd9f46d9f1c35a04d0da63c7f4ab8f0b0a92570768c88063061a530baab628e6"
+        }
+      ],
+      "label": "purchase-events-phantom-red-mysql81",
+      "verified_owned_subset_sha256": "1e8f965bf131660b4d11cc69ec5e4396c1c6702777a91f5449b8f8abb9110da2",
+      "subset_is_git_tree": false
+    }
+  ],
+  "harness_corrections": [
+    "Real decorator shares table_exists cache with the underlying CI-compatible DB object.",
+    "Post-query injected writes preserve the original insert_id, matching native SQL AFTER-trigger behavior.",
+    "MySQL FK drift test splits DROP and ADD into separate ALTER statements; same metadata assertion retained.",
+    "HTTP_PRINCIPAL exceeded the form limit12 and was truncated by the browser. Valid test prefix HTTP_P preserves the exact comparison and product limit.",
+    "Docker mode creates /app/tests/support and /app/tests/companies before copying helpers; local mode does not certify Docker execution.",
+    "Full browser distinguishes CSRF cookie from authentication session. Complementary transport test starts each bearer request with a fresh empty cookie jar and denies cookie-only access."
+  ],
+  "browser": {
+    "label": "purchase-browser-r5",
+    "status": "PASS",
+    "product_revision": "r5: final Expense veto and mobile text wrapping",
+    "source_manifest": "The HTTP run binds its19 live product files plus test/fixture hashes before and after. The later r6 event-reader patch is separately bound to SQL and directed HTTP evidence.",
+    "proof": {
+      "result": "PASS",
+      "owners": {
+        "a": {
+          "issuer": 3,
+          "supplier": 6,
+          "request": 7,
+          "order": 7,
+          "payable": 9,
+          "second_payable": 10,
+          "expense": 9,
+          "file_id": 7,
+          "invite_id": 3
+        },
+        "b": {
+          "issuer": 2,
+          "supplier": 7,
+          "request": 8,
+          "order": 8,
+          "payable": 11,
+          "second_payable": null,
+          "expense": 11,
+          "file_id": null,
+          "invite_id": null
+        },
+        "principal": {
+          "issuer": 1,
+          "supplier": 8,
+          "request": 9,
+          "order": 9,
+          "payable": 12,
+          "second_payable": null,
+          "expense": 12,
+          "file_id": null,
+          "invite_id": null
+        }
+      },
+      "scenarios": [
+        "A/B/principal positive native GUI supplier/request/quote/order/receipt/document/AP",
+        "partial receiving with separate immutable documents and exact expense links",
+        "manual external settlement and append-only reversal without cash/AR",
+        "native/dedicated/context CSRF and real idempotency/stale-revision denial",
+        "supplier portal fragment-to-POST invitation, quote, private upload and live revocation",
+        "private bytes and PDF with company/parent denial",
+        "CSV AP report with formula escaping",
+        "ordinary-member ACL revoked after valid form issuance",
+        "bearer HTTP without authentication session; native CSRF cookie separated and full session table unchanged",
+        "bare API full chain, files/PDF/report/replay and token revocation",
+        "installation master and legacy history unchanged"
+      ],
+      "api_transport": {
+        "before": {
+          "csrf_cookie_name": "csrf_cookie_name",
+          "session_cookie_name": "sp_session",
+          "session_count": 24,
+          "session_sha256": "71e5a2002328ea886c4daf666616e15d929ed307aa8518659c40010ad8d8a4cd"
+        },
+        "after": {
+          "csrf_cookie_name": "csrf_cookie_name",
+          "session_cookie_name": "sp_session",
+          "session_count": 24,
+          "session_sha256": "71e5a2002328ea886c4daf666616e15d929ed307aa8518659c40010ad8d8a4cd"
+        },
+        "response_cookie_names": [
+          "csrf_cookie_name"
+        ]
+      },
+      "errors": [],
+      "api": {
+        "request": 10,
+        "order": 10,
+        "payable": 13,
+        "file": 8
+      }
+    },
+    "artifacts": {
+      "docs/companies/evidence/purchase-455/browser/native-http-capture.jsonl": {
+        "bytes": 8493,
+        "sha256": "eeb806077eafba9bee20458260ef59ca4dbb9a6cf7903e532a44b8e91ccd66cc",
+        "git_sha": "4db10d91bb6f194b34a634a0d04d4050d17454f1"
+      },
+      "docs/companies/evidence/purchase-455/browser/purchase-order-a.pdf": {
+        "bytes": 55733,
+        "sha256": "2e1706ada9cef1cc95a10b5d896d4523ffd0e7bf3673fc17a3f64f5ae802f57c",
+        "git_sha": "8f42e5087f80b40d92ef9288c4b769b53c794116"
+      },
+      "docs/companies/evidence/purchase-455/browser/purchases-transport-proof.json": {
+        "bytes": 798,
+        "sha256": "26d3687e9879455eb8b8bcd51390bba06f3403573ccf1dded1712859db7d12e3",
+        "git_sha": "c3fdfde7ba29f5bf58f53d8ac13b5d93b8febf6e"
+      },
+      "docs/companies/evidence/purchase-455/browser/purchase-a-ap.csv": {
+        "bytes": 1261,
+        "sha256": "39c6a25cb9a05fd1c4daa879dbe1494007863f562786d40e5e917f6c70932c31",
+        "git_sha": "c2ff62b2645aafdf6abb7939cee9996e7a5455df"
+      },
+      "docs/companies/evidence/purchase-455/browser/run.log": {
+        "bytes": 1668,
+        "sha256": "a47adbb4d7b5c1dc329957288d36878eb0a30edcb8c9901c07aad040d6648fdc",
+        "git_sha": "6990fce65d342816945371dddf28ce10c462ffe2"
+      },
+      "docs/companies/evidence/purchase-455/browser/purchase-a-mobile.png": {
+        "bytes": 348678,
+        "sha256": "b68211a2e1d132c1989d8b12aaafce7ca580668e7cdbb4f19b27db082b38da06",
+        "git_sha": "63b8e81a8bb6760d6f360eb1efac45779323641f"
+      },
+      "docs/companies/evidence/purchase-455/browser/run-manifest.json": {
+        "bytes": 6018,
+        "sha256": "e253c9a8388d4ba52bc3554def859f7d9615e710c48183fa7811cbfa9b9d3be3",
+        "git_sha": "726a78dd3a12cf947f35c23197bc308978e20db7"
+      },
+      "docs/companies/evidence/purchase-455/browser/purchase-a-chain.png": {
+        "bytes": 375571,
+        "sha256": "4f0b64f4dd67b1836502829072c8c69d28dbfc96f8afe35a85d854251f3d0a5b",
+        "git_sha": "0f29a9f81f35c2e507fa9d48ca73fa594c8e7b88"
+      },
+      "docs/companies/evidence/purchase-455/browser/purchases-proof.json": {
+        "bytes": 2177,
+        "sha256": "17ebc1bfddff594a595947f043a7e079309b71513d234bf66791e172a11bdebe",
+        "git_sha": "99bf13ee1ec2a93ba05cefecfe8dd10281fef410"
+      }
+    },
+    "prior_prefix_failure": {
+      "result": "RUNNING",
+      "owners": {
+        "a": {
+          "issuer": 3,
+          "supplier": 1,
+          "request": 1,
+          "order": 1,
+          "payable": 1,
+          "second_payable": 2,
+          "expense": 1,
+          "file_id": 2,
+          "invite_id": 1
+        },
+        "b": {
+          "issuer": 2,
+          "supplier": 2,
+          "request": 2,
+          "order": 2,
+          "payable": 3,
+          "second_payable": null,
+          "expense": 3,
+          "file_id": null,
+          "invite_id": null
+        }
+      },
+      "scenarios": [],
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'HTTP_PRINCIP'\n- 'HTTP_PRINCIPAL'\n               ^\n\n    at /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/purchases_browser.cjs:23:485",
+      "errors": []
+    },
+    "prior_mobile_failure": {
+      "result": "FAIL",
+      "owners": {
+        "a": {
+          "issuer": 3,
+          "supplier": 3,
+          "request": 3,
+          "order": 3,
+          "payable": 4,
+          "second_payable": 5,
+          "expense": 4,
+          "file_id": 4,
+          "invite_id": 2
+        },
+        "b": {
+          "issuer": 2,
+          "supplier": 4,
+          "request": 4,
+          "order": 4,
+          "payable": 6,
+          "second_payable": null,
+          "expense": 6,
+          "file_id": null,
+          "invite_id": null
+        },
+        "principal": {
+          "issuer": 1,
+          "supplier": 5,
+          "request": 5,
+          "order": 5,
+          "payable": 7,
+          "second_payable": null,
+          "expense": 7,
+          "file_id": null,
+          "invite_id": null
+        }
+      },
+      "scenarios": [],
+      "api_transport": {
+        "before": {
+          "csrf_cookie_name": "csrf_cookie_name",
+          "session_cookie_name": "sp_session",
+          "session_count": 16,
+          "session_sha256": "74b9bab5c650b3149c8d81508423823e803e7064fe104d682ac64f6e6ec0a175"
+        },
+        "after": {
+          "csrf_cookie_name": "csrf_cookie_name",
+          "session_cookie_name": "sp_session",
+          "session_count": 16,
+          "session_sha256": "74b9bab5c650b3149c8d81508423823e803e7064fe104d682ac64f6e6ec0a175"
+        },
+        "response_cookie_names": [
+          "csrf_cookie_name"
+        ]
+      },
+      "error": "AssertionError [ERR_ASSERTION]: Purchase page fits mobile viewport without horizontal overflow\n    at /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/purchases_browser.cjs:56:54",
+      "errors": []
+    }
+  },
+  "events_http_red": {
+    "result": "FAIL",
+    "before": {
+      "csrf_cookie_name": "csrf_cookie_name",
+      "session_cookie_name": "sp_session",
+      "session_count": 26,
+      "session_sha256": "402eb1a80badf49beb691ba90914ccb1d43295fc7c2eafac837e2963a8a71238"
+    },
+    "responses": [
+      {
+        "method": "GET",
+        "resource": "events",
+        "token_company": 3,
+        "status": 422,
+        "body_bytes": 38,
+        "cookie_names": [
+          "csrf_cookie_name"
+        ]
+      }
+    ],
+    "scenarios": [],
+    "error": "AssertionError [ERR_ASSERTION]: Advertised AP event list is positively usable\n\n422 !== 200\n\n    at /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/purchases_events_http.cjs:53:12",
+    "artifacts": {
+      "docs/companies/evidence/purchase-455/purchase-events-http-red/purchases-events-proof.json": {
+        "bytes": 682,
+        "sha256": "92ac3b1a29511478fd60e69149a8c12362b3c0a97fa8fce9549e4fc53ffd978b",
+        "git_sha": "1ef0f478cfdb2acfd7c9b60d67e330445e32f246"
+      },
+      "docs/companies/evidence/purchase-455/purchase-events-http-red/run.log": {
+        "bytes": 356,
+        "sha256": "4066cf4baeb50a8d1a53d014bce067549b0a655536e34d5d2f1293a37da25b19",
+        "git_sha": "1acec9581cb88da93295802bc67a238071b820b7"
+      },
+      "docs/companies/evidence/purchase-455/purchase-events-http-red/run-manifest.json": {
+        "bytes": 506,
+        "sha256": "255b72a8e21231f8949ef9dabf586d7b42741eb0180991b6c46a8f004c5906f4",
+        "git_sha": "47f73a06c76e3a84b85f02603829a837fd32095c"
+      }
+    }
+  },
+  "events_http_green": {
+    "result": "PASS",
+    "before": {
+      "csrf_cookie_name": "csrf_cookie_name",
+      "session_cookie_name": "sp_session",
+      "session_count": 26,
+      "session_sha256": "402eb1a80badf49beb691ba90914ccb1d43295fc7c2eafac837e2963a8a71238"
+    },
+    "responses": [
+      {
+        "method": "GET",
+        "resource": "events",
+        "token_company": 3,
+        "status": 200,
+        "body_bytes": 3979,
+        "cookie_names": [
+          "csrf_cookie_name"
+        ]
+      },
+      {
+        "method": "GET",
+        "resource": "events",
+        "token_company": 2,
+        "status": 200,
+        "body_bytes": 2467,
+        "cookie_names": [
+          "csrf_cookie_name"
+        ]
+      },
+      {
+        "method": "GET",
+        "resource": "events/1",
+        "token_company": 3,
+        "status": 200,
+        "body_bytes": 402,
+        "cookie_names": [
+          "csrf_cookie_name"
+        ]
+      },
+      {
+        "method": "GET",
+        "resource": "events/1",
+        "token_company": 2,
+        "status": 403,
+        "body_bytes": 21,
+        "cookie_names": [
+          "csrf_cookie_name"
+        ]
+      },
+      {
+        "method": "HEAD",
+        "resource": "events",
+        "token_company": 3,
+        "status": 200,
+        "body_bytes": 0,
+        "cookie_names": [
+          "csrf_cookie_name"
+        ]
+      },
+      {
+        "method": "HEAD",
+        "resource": "events/1",
+        "token_company": 3,
+        "status": 200,
+        "body_bytes": 0,
+        "cookie_names": [
+          "csrf_cookie_name"
+        ]
+      },
+      {
+        "method": "GET",
+        "resource": "events?after=1",
+        "token_company": 3,
+        "status": 200,
+        "body_bytes": 3601,
+        "cookie_names": [
+          "csrf_cookie_name"
+        ]
+      },
+      {
+        "method": "GET",
+        "resource": "events",
+        "token_company": null,
+        "status": 401,
+        "body_bytes": 27,
+        "cookie_names": [
+          "csrf_cookie_name"
+        ]
+      },
+      {
+        "method": "GET",
+        "resource": "events?issuer_id=2",
+        "token_company": 3,
+        "status": 422,
+        "body_bytes": 38,
+        "cookie_names": [
+          "csrf_cookie_name"
+        ]
+      }
+    ],
+    "scenarios": [
+      "nonempty event lists in A and B",
+      "owned detail and cross-company denial",
+      "HEAD without body and owned cursor pagination",
+      "missing bearer and forged issuer rejected",
+      "fresh cookie jar per request and unchanged native sessions"
+    ],
+    "after": {
+      "csrf_cookie_name": "csrf_cookie_name",
+      "session_cookie_name": "sp_session",
+      "session_count": 26,
+      "session_sha256": "402eb1a80badf49beb691ba90914ccb1d43295fc7c2eafac837e2963a8a71238"
+    },
+    "artifacts": {
+      "docs/companies/evidence/purchase-455/purchase-events-http-green/purchases-events-proof.json": {
+        "bytes": 2534,
+        "sha256": "a8243021f2caefa75547a2d4e5e8b229cc8320884a122d9f154d131704c9de7d",
+        "git_sha": "6a969b6a0b3acba57c949b466a1b8244e8451911"
+      },
+      "docs/companies/evidence/purchase-455/purchase-events-http-green/run.log": {
+        "bytes": 1389,
+        "sha256": "1149defc810906636e927042074051a61046822f4c8dea617d8d59dfe7b9a627",
+        "git_sha": "9e8bdb1d02e64635ce098560181febe85b330e1c"
+      },
+      "docs/companies/evidence/purchase-455/purchase-events-http-green/run-manifest.json": {
+        "bytes": 506,
+        "sha256": "1caf54c7cf3846c510f5b3c62695cb28d211a10f6a9de9515795787a123c36ff",
+        "git_sha": "2a22a7431baeb952d8fb3d451d59e859ecd0ff76"
+      }
+    }
+  },
+  "http_transport": {
+    "result": "PASS",
+    "scenarios": [
+      "GET/HEAD/POST/replay with independent empty jars",
+      "HEAD carries no response body",
+      "no bearer is denied with or without the native CSRF cookie",
+      "revoked token is denied without ambient cookies",
+      "all native sessions unchanged"
+    ],
+    "before": {
+      "csrf_cookie_name": "csrf_cookie_name",
+      "session_cookie_name": "sp_session",
+      "session_count": 26,
+      "session_sha256": "402eb1a80badf49beb691ba90914ccb1d43295fc7c2eafac837e2963a8a71238"
+    },
+    "cookie_names": [
+      "csrf_cookie_name"
+    ],
+    "after": {
+      "csrf_cookie_name": "csrf_cookie_name",
+      "session_cookie_name": "sp_session",
+      "session_count": 26,
+      "session_sha256": "402eb1a80badf49beb691ba90914ccb1d43295fc7c2eafac837e2963a8a71238"
+    },
+    "request_id": 11
+  },
+  "mobile_regression": {
+    "result": "PASS",
+    "source_fixture": "/workspace/scratch/2286cc0eac8b/runtime/evidence/purchase-browser-r3-2/purchases-proof.json",
+    "pages": [
+      {
+        "width": 390,
+        "query": "request=3",
+        "viewport": 390,
+        "document": 390,
+        "outside": []
+      },
+      {
+        "width": 390,
+        "query": "tab=requests",
+        "viewport": 390,
+        "document": 390,
+        "outside": []
+      },
+      {
+        "width": 390,
+        "query": "tab=suppliers",
+        "viewport": 390,
+        "document": 390,
+        "outside": []
+      },
+      {
+        "width": 390,
+        "query": "tab=orders",
+        "viewport": 390,
+        "document": 390,
+        "outside": []
+      },
+      {
+        "width": 390,
+        "query": "tab=payables",
+        "viewport": 390,
+        "document": 390,
+        "outside": []
+      },
+      {
+        "width": 390,
+        "query": "tab=report",
+        "viewport": 390,
+        "document": 390,
+        "outside": []
+      },
+      {
+        "width": 390,
+        "query": "tab=settings",
+        "viewport": 390,
+        "document": 390,
+        "outside": []
+      },
+      {
+        "width": 320,
+        "query": "request=3",
+        "viewport": 320,
+        "document": 320,
+        "outside": []
+      },
+      {
+        "width": 320,
+        "query": "tab=requests",
+        "viewport": 320,
+        "document": 320,
+        "outside": []
+      },
+      {
+        "width": 320,
+        "query": "tab=suppliers",
+        "viewport": 320,
+        "document": 320,
+        "outside": []
+      },
+      {
+        "width": 320,
+        "query": "tab=orders",
+        "viewport": 320,
+        "document": 320,
+        "outside": []
+      },
+      {
+        "width": 320,
+        "query": "tab=payables",
+        "viewport": 320,
+        "document": 320,
+        "outside": []
+      },
+      {
+        "width": 320,
+        "query": "tab=report",
+        "viewport": 320,
+        "document": 320,
+        "outside": []
+      },
+      {
+        "width": 320,
+        "query": "tab=settings",
+        "viewport": 320,
+        "document": 320,
+        "outside": []
+      }
+    ],
+    "errors": []
+  }
+}

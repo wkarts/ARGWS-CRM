@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once __DIR__ . '/../libraries/AccountingLegacyScope.php';
 
 class Accounting extends AdminController
 {
@@ -226,6 +227,7 @@ class Accounting extends AdminController
                             'LEFT JOIN ' . db_prefix() . 'invoices ON ' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid',
                             'LEFT JOIN ' . db_prefix() . 'currencies ON ' . db_prefix() . 'currencies.id = ' . db_prefix() . 'invoices.currency'
                         ];
+            $where[] = 'AND (' . AccountingLegacyScope::paymentSql($this->db, db_prefix(), db_prefix() . 'invoicepaymentrecords') . ')';
             $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, ['paymentmode', db_prefix(). 'currencies.name as currency_name'], 'GROUP BY '.db_prefix() . 'invoicepaymentrecords.id');
 
             $output  = $result['output'];
@@ -379,6 +381,7 @@ class Accounting extends AdminController
                 'LEFT JOIN ' . db_prefix() . 'acc_account_history ON ' . db_prefix() . 'acc_account_history.rel_id = ' . db_prefix() . 'invoices.id AND ' . db_prefix() . 'acc_account_history.rel_type = "invoice"',
 
                         ];
+            $where[] = 'AND (' . AccountingLegacyScope::invoiceSql($this->db, db_prefix(), db_prefix() . 'invoices') . ')';
             $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [], 'GROUP BY '.db_prefix() . 'invoices.id');
 
             $output  = $result['output'];
@@ -553,6 +556,7 @@ class Accounting extends AdminController
                 'LEFT JOIN ' . db_prefix() . 'acc_account_history ON ' . db_prefix() . 'acc_account_history.rel_id = ' . db_prefix() . 'expenses.id AND ' . db_prefix() . 'acc_account_history.rel_type = "expense"',
             ];
 
+            $where[] = 'AND (' . AccountingLegacyScope::expenseSql($this->db, db_prefix(), db_prefix() . 'expenses') . ')';
             $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [db_prefix(). 'currencies.name as currency_name', $select_purchase], 'GROUP BY '.db_prefix() . 'expenses.id');
 
             $output  = $result['output'];
@@ -6641,6 +6645,7 @@ class Accounting extends AdminController
                 $_data = '';
                 if($aRow['customer_code']){
                     $this->db->where(db_prefix() . 'clients.userid', $aRow['customer_code']);
+                    \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix().'clients');
                     $client = $this->db->get(db_prefix() . 'clients')->row();
                     if($client){
                         $_data = $client->company;
@@ -11765,6 +11770,10 @@ class Accounting extends AdminController
      */
     public function add_bill_attachment($id)
     {
+        if (!has_permission('accounting_bills', '', 'edit')
+            || !AccountingLegacyScope::permitsRecord($this->db, db_prefix(), 'expense', $id)) {
+            access_denied('accounting_bills');
+        }
         handle_expense_attachments($id);
         echo json_encode([
             'url' => admin_url('accounting/bills/' . $id),
@@ -12197,6 +12206,7 @@ class Accounting extends AdminController
                 'LEFT JOIN ' . db_prefix() . 'acc_check_details ON ' . db_prefix() . 'acc_check_details.bill = ' . db_prefix() . 'expenses.id',
                 'LEFT JOIN ' . db_prefix() . 'acc_checks ON ' . db_prefix() . 'acc_check_details.check_id = ' . db_prefix() . 'acc_checks.id',
             ];
+            $where[] = 'AND (' . AccountingLegacyScope::expenseSql($this->db, db_prefix(), db_prefix() . 'expenses') . ')';
             $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [ db_prefix() . 'expenses.id as id']);
 
             $output = $result['output'];

@@ -1,0 +1,492 @@
+{
+  "source": "/workspace/scratch/6b72446d684f/candidate443",
+  "driver": "sqlite",
+  "before": {
+    "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+    "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+    "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+    "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+    "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+    "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+    "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+    "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+  },
+  "after": {
+    "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+    "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+    "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+    "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+    "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+    "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+    "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+    "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+  },
+  "source_differences": [],
+  "rows": [
+    {
+      "suite": [
+        "/workspace/scratch/6b72446d684f/resume-sales-v4/tests/companies/sales_mutations_foreign_keys.php"
+      ],
+      "exit": 0,
+      "seconds": 0.62,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/sales_mutations_foreign_keys-sqlite.log",
+      "log_sha256": "6b42c64d5f131d5c65ad5e3a06ad11cab9b21909306c851a812a08361e42a7a3",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nCompany sales / recurrence: 108 cumulative checks passed (sqlite). No SMTP or provider operation.\nSales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.\nCanonical origin guard / sales search: 135 cumulative checks passed.\nSales/recurrence principal and legacy distinction: 139 cumulative checks passed.\nSales V4 exact foreign keys: 20 real invalid-engine variants; 227 cumulative (sqlite); both DELETE/UPDATE and NO ACTION/RESTRICT, duplicates/composites/extra/foreign parents.\n"
+    },
+    {
+      "suite": [
+        "sales_mutations_final_boundary"
+      ],
+      "exit": 0,
+      "seconds": 2.22,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/sales_mutations_final_boundary-sqlite.log",
+      "log_sha256": "aaa574f2a66a28f70657f147944eb0b7a8a7d43b3922e844691e74744d32232c",
+      "tail": "es_write_unconfirmed\nBOUNDARY copy/view issuer_sales_write_unconfirmed\nBOUNDARY copy/customers issuer_sales_write_unconfirmed\nBOUNDARY copy/receipt_source issuer_sales_mutation_unconfirmed\nBOUNDARY copy/receipt_result issuer_sales_mutation_unconfirmed\nBOUNDARY copy/receipt_reason issuer_sales_mutation_unconfirmed\nBOUNDARY copy/currency issuer_sales_write_unconfirmed\nBOUNDARY edit/source_state issuer_sales_write_unconfirmed\nBOUNDARY edit/creator issuer_sales_mutation_corrupt\nBOUNDARY edit/sequence issuer_sales_write_unconfirmed\nBOUNDARY edit/context issuer_sales_write_unconfirmed\nBOUNDARY edit/client issuer_sales_write_unconfirmed\nBOUNDARY edit/view company_sales_denied\nBOUNDARY edit/customers issuer_sales_write_unconfirmed\nBOUNDARY edit/receipt_reason issuer_sales_mutation_corrupt\nBOUNDARY decide/source_state issuer_sales_write_unconfirmed\nBOUNDARY decide/sequence issuer_sales_write_unconfirmed\nBOUNDARY decide/context issuer_sales_write_unconfirmed\nBOUNDARY decide/client issuer_sales_write_unconfirmed\nBOUNDARY decide/view issuer_sales_write_unconfirmed\nBOUNDARY claim/source_state issuer_sales_write_unconfirmed\nBOUNDARY claim/source_reference issuer_sales_write_unconfirmed\nBOUNDARY claim/context issuer_sales_write_unconfirmed\nBOUNDARY claim/sequence issuer_sales_write_unconfirmed\nBOUNDARY claim/view issuer_sales_write_unconfirmed\nBOUNDARY convert/invoice_link issuer_sales_write_unconfirmed\nBOUNDARY convert/source_number issuer_sales_mutation_corrupt\nBOUNDARY convert/sequence issuer_sales_write_unconfirmed\nBOUNDARY convert/context issuer_sales_write_unconfirmed\nBOUNDARY convert/client issuer_sales_write_unconfirmed\nBOUNDARY convert/view issuer_sales_write_unconfirmed\nBOUNDARY convert/invoice_total issuer_sales_mutation_unconfirmed\nBOUNDARY convert/invoice_receipt issuer_sales_mutation_unconfirmed\nBOUNDARY convert/invoice_snapshot issuer_sales_mutation_unconfirmed\nBOUNDARY convert/invoice_item issuer_sales_mutation_unconfirmed\nBOUNDARY convert/invoice_tax issuer_sales_mutation_unconfirmed\nBOUNDARY convert/invoice_journal issuer_sales_mutation_unconfirmed\nBOUNDARY pdf/source_state issuer_sales_write_unconfirmed\nBOUNDARY pdf/sequence issuer_sales_write_unconfirmed\nBOUNDARY pdf/context issuer_sales_write_unconfirmed\nBOUNDARY pdf/view issuer_sales_write_unconfirmed\nBOUNDARY decide/global_option issuer_sales_write_unconfirmed\nBOUNDARY pdf/global_option issuer_sales_write_unconfirmed\nSales V3 final boundary: 54 real audit-trigger variants; 517 cumulative (sqlite).\n"
+    },
+    {
+      "suite": [
+        "sales_mutations_actor"
+      ],
+      "exit": 0,
+      "seconds": 0.57,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/sales_mutations_actor-sqlite.log",
+      "log_sha256": "0df9807966de6f912e213a80a78c480b1d8c956bebe85e4cfde3c3ea768f8436",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nCompany sales / recurrence: 108 cumulative checks passed (sqlite). No SMTP or provider operation.\nSales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.\nCanonical origin guard / sales search: 135 cumulative checks passed.\nSales/recurrence principal and legacy distinction: 139 cumulative checks passed.\nSales mutations restricted current actor and creation provenance: 145 cumulative (sqlite).\n"
+    },
+    {
+      "suite": [
+        "sales_mutations_legacy"
+      ],
+      "exit": 0,
+      "seconds": 0.62,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/sales_mutations_legacy-sqlite.log",
+      "log_sha256": "c683d53b49bb13771eb2c04ca600707553f614b6f7dc3afbf393db7acd9b1741",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nCompany sales / recurrence: 108 cumulative checks passed (sqlite). No SMTP or provider operation.\nSales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.\nCanonical origin guard / sales search: 135 cumulative checks passed.\nSales/recurrence principal and legacy distinction: 139 cumulative checks passed.\nSales mutations native legacy estimates/proposals NULL boundary: 149 cumulative (sqlite).\n"
+    },
+    {
+      "suite": [
+        "sales_mutations"
+      ],
+      "exit": 0,
+      "seconds": 1.27,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/sales_mutations-sqlite.log",
+      "log_sha256": "79ad4ad80970b8185080f07aed8ff4f9b2e835f655d9824157a724b278f9d34f",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nCompany sales / recurrence: 108 cumulative checks passed (sqlite). No SMTP or provider operation.\nSales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.\nCanonical origin guard / sales search: 135 cumulative checks passed.\nSales/recurrence principal and legacy distinction: 139 cumulative checks passed.\nReviewed sales copy/edit/creation replay/A-B-principal/metadata/rollback: 246 cumulative checks (sqlite).\n"
+    },
+    {
+      "suite": [
+        "sales_mutations_guards"
+      ],
+      "exit": 0,
+      "seconds": 1.22,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/sales_mutations_guards-sqlite.log",
+      "log_sha256": "b6dc3100e714e2a7814f65e0f9f4a7554bd282562d37d711ea1fcc2d20c674dc",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nCompany sales / recurrence: 108 cumulative checks passed (sqlite). No SMTP or provider operation.\nSales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.\nCanonical origin guard / sales search: 135 cumulative checks passed.\nSales/recurrence principal and legacy distinction: 139 cumulative checks passed.\nReviewed sales copy/edit/creation replay/A-B-principal/metadata/rollback: 246 cumulative checks (sqlite).\nSales mutation source/destination revisions, old PDF, provenance and authority guards: 260 cumulative (sqlite).\n"
+    },
+    {
+      "suite": [
+        "sales_mutations_schema"
+      ],
+      "exit": 0,
+      "seconds": 1.12,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/sales_mutations_schema-sqlite.log",
+      "log_sha256": "9ae142f00f4826d39e4f7ef145cd72d07255bc39035d5a8714d4823596a8f2a1",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nCompany sales / recurrence: 108 cumulative checks passed (sqlite). No SMTP or provider operation.\nSales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.\nCanonical origin guard / sales search: 135 cumulative checks passed.\nSales/recurrence principal and legacy distinction: 139 cumulative checks passed.\nReviewed sales copy/edit/creation replay/A-B-principal/metadata/rollback: 246 cumulative checks (sqlite).\nSales mutations schema replay/defaults/FK actions/real partial DDL: 254 cumulative (sqlite). Native global tracking remains separate.\n"
+    },
+    {
+      "suite": [
+        "sales_mutations_readback"
+      ],
+      "exit": 0,
+      "seconds": 2.98,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/sales_mutations_readback-sqlite.log",
+      "log_sha256": "efdd3e6eeb100dc3ad71fa44f83ed075bb6f4aabdf782440914dae67bc5c762e",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nCompany sales / recurrence: 108 cumulative checks passed (sqlite). No SMTP or provider operation.\nSales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.\nCanonical origin guard / sales search: 135 cumulative checks passed.\nSales/recurrence principal and legacy distinction: 139 cumulative checks passed.\nReviewed sales copy/edit/creation replay/A-B-principal/metadata/rollback: 246 cumulative checks (sqlite).\nSales mutation source/destination revisions, old PDF, provenance and authority guards: 260 cumulative (sqlite).\nSales mutation full write readback and bounded archive: 266 cumulative (sqlite).\n"
+    },
+    {
+      "suite": [
+        "sales_mutations_extras"
+      ],
+      "exit": 0,
+      "seconds": 1.97,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/sales_mutations_extras-sqlite.log",
+      "log_sha256": "b6450791f479036dd4749deb142686d94e3d14c8ec35a0c4e650943844c87a69",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nCompany sales / recurrence: 108 cumulative checks passed (sqlite). No SMTP or provider operation.\nSales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.\nCanonical origin guard / sales search: 135 cumulative checks passed.\nSales/recurrence principal and legacy distinction: 139 cumulative checks passed.\nPrivate portal sales/native grants/PDF: 155 cumulative checks passed (sqlite).\nPrincipal portal sales: 158 cumulative checks passed.\nSales private files / delivery: 211 cumulative checks passed (sqlite). SMTP and bank operations not executed.\nSales extras quotas / private bytes / principal: 217 cumulative checks passed.\nSales extras batch / readback rollback: 223 cumulative checks passed.\nSales extras origin / state / transport boundaries: 228 cumulative checks passed.\nSales extras immutable recipient boundary: 230 cumulative checks passed.\nSales mutations actual PDF/files/portal/queue consumers: 263 cumulative (sqlite). No SMTP or bank calls.\n"
+    },
+    {
+      "suite": [
+        "sales_mutations_controller"
+      ],
+      "exit": 0,
+      "seconds": 2.12,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/sales_mutations_controller-sqlite.log",
+      "log_sha256": "498e6481b0cfeac06ec34710f37e502548ce24aa0310a4fc8dad872ee8a15739",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nCompany sales / recurrence: 108 cumulative checks passed (sqlite). No SMTP or provider operation.\nSales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.\nCanonical origin guard / sales search: 135 cumulative checks passed.\nSales/recurrence principal and legacy distinction: 139 cumulative checks passed.\nPrivate portal sales/native grants/PDF: 155 cumulative checks passed (sqlite).\nPrincipal portal sales: 158 cumulative checks passed.\nSales private files / delivery: 211 cumulative checks passed (sqlite). SMTP and bank operations not executed.\nSales extras quotas / private bytes / principal: 217 cumulative checks passed.\nSales extras batch / readback rollback: 223 cumulative checks passed.\nSales extras origin / state / transport boundaries: 228 cumulative checks passed.\nSales extras immutable recipient boundary: 230 cumulative checks passed.\nSales mutations actual PDF/files/portal/queue consumers: 263 cumulative (sqlite). No SMTP or bank calls.\nSales mutations actual controller/renderer/preview/CSRF/revisions/ACL: 275 cumulative (sqlite).\n"
+    },
+    {
+      "suite": [
+        "sales_pdf_preferences"
+      ],
+      "exit": 0,
+      "seconds": 3.53,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/sales_pdf_preferences-sqlite.log",
+      "log_sha256": "5b101ae3bb1a3141ef6a9f75e151faae286261fac294425ca3e45b72e5921e61",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nCompany sales / recurrence: 108 cumulative checks passed (sqlite). No SMTP or provider operation.\nSales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.\nCanonical origin guard / sales search: 135 cumulative checks passed.\nSales/recurrence principal and legacy distinction: 139 cumulative checks passed.\nPrivate portal sales/native grants/PDF: 155 cumulative checks passed (sqlite).\nPrincipal portal sales: 158 cumulative checks passed.\nSales private files / delivery: 211 cumulative checks passed (sqlite). SMTP and bank operations not executed.\nSales extras quotas / private bytes / principal: 217 cumulative checks passed.\nSales extras batch / readback rollback: 223 cumulative checks passed.\nSales extras origin / state / transport boundaries: 228 cumulative checks passed.\nSales extras immutable recipient boundary: 230 cumulative checks passed.\nSales immutable preferences: 64 added / 294 cumulative passed (sqlite). No external SMTP/provider calls.\nSales PDF source/TCPDF: 129 added / 423 cumulative checks passed (sqlite). No external transport.\n"
+    },
+    {
+      "suite": [
+        "sales_preferences"
+      ],
+      "exit": 0,
+      "seconds": 2.07,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/sales_preferences-sqlite.log",
+      "log_sha256": "d2e25961d3e60802ca548e6a398806720a901762b703377a3f12200fc8a96b4a",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nCompany sales / recurrence: 108 cumulative checks passed (sqlite). No SMTP or provider operation.\nSales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.\nCanonical origin guard / sales search: 135 cumulative checks passed.\nSales/recurrence principal and legacy distinction: 139 cumulative checks passed.\nPrivate portal sales/native grants/PDF: 155 cumulative checks passed (sqlite).\nPrincipal portal sales: 158 cumulative checks passed.\nSales private files / delivery: 211 cumulative checks passed (sqlite). SMTP and bank operations not executed.\nSales extras quotas / private bytes / principal: 217 cumulative checks passed.\nSales extras batch / readback rollback: 223 cumulative checks passed.\nSales extras origin / state / transport boundaries: 228 cumulative checks passed.\nSales extras immutable recipient boundary: 230 cumulative checks passed.\nSales immutable preferences: 64 added / 294 cumulative passed (sqlite). No external SMTP/provider calls.\n"
+    },
+    {
+      "suite": [
+        "operations_resume_439_sales_lines"
+      ],
+      "exit": 0,
+      "seconds": 1.07,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/operations_resume_439_sales_lines-sqlite.log",
+      "log_sha256": "99a7a26f093e193b0855be03c49d45161d94638651a9831964c0c242d8bdd347",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nCompany sales / recurrence: 108 cumulative checks passed (sqlite). No SMTP or provider operation.\nSales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.\nCanonical origin guard / sales search: 135 cumulative checks passed.\nSales/recurrence principal and legacy distinction: 139 cumulative checks passed.\nRebuilt recovery439 sales shared-form lines/optional totals/literal PDF/conversion/A+B/default compatibility: 192 cumulative checks passed (sqlite).\n"
+    },
+    {
+      "suite": [
+        "invoice_recurring_modes"
+      ],
+      "exit": 0,
+      "seconds": 0.67,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/invoice_recurring_modes-sqlite.log",
+      "log_sha256": "1c674111728168025d52722892edb8981a0c3477b3efb00a2a362c74dde57625",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nCompany invoice notification/queue revalidation: 85 cumulative checks passed (sqlite). No SMTP delivery.\nReconstructed prerequisite for original440 recurring-mode packet: 86 cumulative (sqlite). Native migration tracking is separate.\nInvoice recurrence paid principal/private draft/late acknowledgement: 120 cumulative (sqlite). No provider or SMTP calls.\n"
+    },
+    {
+      "suite": [
+        "expense_recurring_cli"
+      ],
+      "exit": 0,
+      "seconds": 0.87,
+      "before": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "after": {
+        "application/services/CompanySalesBase.php": "bd10873eadb41f7cddeea8841af4036a14951627e4c1e9044c8c97bf5c32d8c1",
+        "application/services/CompanySales.php": "8f4f1b3feda8e6de60fb245fda94834856e0636011d3ba50d3b6f5e68f6760c4",
+        "application/services/CompanySalesMutations.php": "e30d925e21cd3a2ee26f7cf6861748d4314fdaf8587d4c96838539a2a8df00e9",
+        "application/services/CompanySalesMutationsSchema.php": "66cdd761d7752eadc28e90f450b1b27e7a35648caf6907631c04321a3808f37d",
+        "application/controllers/admin/Company_sales.php": "ff979fa679341dd7c8091df505a2148c60c2c0eac2287d74881d04c5a6532991",
+        "application/views/admin/companies/sales.php": "bebfce540bc575bcf6cd3007ab3e3187af46abd73f88782484689cb196683bc3",
+        "application/views/admin/companies/sales_mutations.php": "b6b1264c8e2923174de8cde96204286de5f9a8242e535c810e3c9fbbd3e3c7a7",
+        "application/migrations/443_version_443.php": "4ce4bda7ad1e2a6eb6482cc0d8b6785cfd5e3cd172b1c7709b2765679b7e7672"
+      },
+      "source_differences": [],
+      "log": "/workspace/scratch/6b72446d684f/candidate443-sales-v4-proof/expense_recurring_cli-sqlite.log",
+      "log_sha256": "4000159a35e59bebb40f77fd8c06019e49fa49799752bfec7a100f68a1560315",
+      "tail": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nExpense billable/canonical invoice conversion: 94 cumulative checks passed (sqlite). No external payment, cost duplication, mail or bank calls.\nExpense billing atomic origin/actor/project/principal guards: 115 cumulative checks passed (sqlite).\nExpense native intervals/cycles/canonical children/optional billing: 144 cumulative checks passed (sqlite). No SMTP, bank calls, or recurring invoice namespace adoption.\nExpense recurrence actual CLI/capability/session isolation: 168 cumulative checks passed (sqlite). No external delivery.\n"
+    }
+  ]
+}

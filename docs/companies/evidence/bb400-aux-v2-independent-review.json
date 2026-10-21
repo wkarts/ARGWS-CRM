@@ -1,0 +1,22 @@
+{
+  "source_manifest": {
+    "docs/banco-brasil-cnab400-aux-observation.md": "d6c923b12e9ec380173699fb64eda6246de6cb361e28e3b6a06dd250940dc6bf",
+    "modules/banco_brasil/libraries/BancoBrasil/CapabilityPolicy.php": "22960200fa8283966a769008ba0d3bd8bfcbd089e8767519a813fc2aedafa674",
+    "modules/banco_brasil/libraries/BancoBrasil/Cnab400Auxiliary.php": "d69646883bbf73727a4bc4f981206321ed4407e8e9afd4cdd85b5e5ce4041d66",
+    "modules/banco_brasil/libraries/BancoBrasil/Cnab400ReturnParser.php": "77eeef3a9d594bb6047b901780ddc631e5d1055b977c5c28efd3ccc142d339b0",
+    "modules/banco_brasil/libraries/BancoBrasil/LayoutCatalog.php": "cd2f6aed3e1f4ce047295bac2b5f9f47f8a4ad31556bc331b5740da5b52b7271",
+    "modules/banco_brasil/libraries/BancoBrasil/ModuleStore.php": "2198a0d1a353c0b90da2c3e1c0bef1f3a8ce245746bd5ff18d5b94a6e56ee910",
+    "modules/banco_brasil/libraries/BancoBrasil/Reconciliation.php": "890b7b4cf39ca774b0866709169a662eec71c5cce34380a0eab243caab1f7bf6",
+    "modules/banco_brasil/views/cnab400_auxiliary.php": "4903d16914314aa4ddabd8fef5c5846db5870c6fb8f1ba468c1c09e98c16897c",
+    "modules/banco_brasil/views/index.php": "3e60b4725a61fe63ac846217873aa4f9715d81877f96fcb9d6815637145d6c48",
+    "modules/banco_brasil/views/reconciliation.php": "8ff4710f8388f49b27af46d6f381d00c1ee1f9993ee416901b11391910a721ca",
+    "tests/banco_brasil_cnab400_aux.php": "074a9b016ef826de650ff774d0e0bc5dc35cc14d9bd7655b36a5be4a10448901",
+    "tests/banco_brasil_cnab400_aux_concurrency.php": "2f61f7d2a9dfe87ab65f036daeffb5d53a60eb127d884aa0d584ba9dd1da023d",
+    "tests/banco_brasil_cnab400_aux_controller.php": "5f22af0f770dfcab7fb4ef28c04694a8e15c8f7a4d3c398977c8b95541c6796b",
+    "tests/banco_brasil_cnab400_aux_mysql.php": "40a801c68b97ff03b810eedf6e103adbfe61dc8c159262fbed862e2a24206100",
+    "tests/support/Bb400AuxFixture.php": "08dd593dcbb98f56aee4f71af899209c3c7346c07ac5f3448cb0747f8dc4ef43"
+  },
+  "unchanged_since_independent_review": true,
+  "six_review_cases_passed": true,
+  "positive_extra_link_retry_after_trigger_drop": "duplicate=false after rolled-back attempt, expected"
+}

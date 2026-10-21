@@ -6,16 +6,35 @@ class Checkout extends ClientsController
     public function __construct()
     {
         parent::__construct();
-        $this->load->library('asaas_gateway');
         $this->load->helper('general');
+    }
+
+    /** Legacy routes accept only explicit NULL ownership; named-company checkout has its own sealed flow. */
+    private function legacyInvoice($hash)
+    {
+        if (!is_string($hash) || !preg_match('/^[A-Za-z0-9_-]{1,128}$/D', $hash)) {
+            show_404();
+            return null;
+        }
+        // Filter ownership in SQL before hydrating a document, settings, totals or a provider adapter.
+        $this->db->where('hash', $hash);
+        $this->db->where('issuer_id', null);
+        $invoice = $this->db->get(db_prefix() . 'invoices')->row();
+        if (!$invoice || isset($invoice->issuer_id)) {
+            show_404();
+            return null;
+        }
+        check_invoice_restrictions($invoice->id, $hash);
+        if (!isset($this->asaas_gateway)) {
+            $this->load->library('asaas/asaas_gateway');
+        }
+        return $invoice;
     }
 
     public function index($hash)
     {
-
-        $this->db->where('hash', $hash);
-
-        $invoice = $this->db->get(db_prefix() . 'invoices')->row();
+        $invoice = $this->legacyInvoice($hash);
+        if (!$invoice) { return; }
 
         $data = [
             'billet_only' => $this->asaas_gateway->getSetting('billet_only'),
@@ -35,8 +54,8 @@ class Checkout extends ClientsController
 
     public function boleto($hash)
     {
-        $this->db->where('hash', $hash);
-        $invoice = $this->db->get(db_prefix() . 'invoices')->row();
+        $invoice = $this->legacyInvoice($hash);
+        if (!$invoice) { return; }
 
         $data = [];
         $data['invoice'] = $invoice;
@@ -56,110 +75,66 @@ class Checkout extends ClientsController
 
     public function cartao($hash)
     {
-        $status = 'NAOPAGO';
-        $mensagem_erro = '';
-        if ($this->input->post()) {
-            $this->db->where('hash', $hash);
-            $invoice1 = $this->db->get(db_prefix() . 'invoices')->row();
-            $data = [];
-            $data['invoice'] = $invoice1;
-            $post_data = $this->input->post(NULL, TRUE);
-            $data['card'] = [
-                'holderName' => $this->input->post('holderName', TRUE),
-                'number' => $this->input->post('cardNumber', TRUE),
-                'expiryMonth' => $this->input->post('expirationMonth', TRUE),
-                'expiryYear' => $this->input->post('expirationYear', TRUE),
-                'cvv' => $this->input->post('securityCode', TRUE),
-                'installmentCount' => $this->input->post('installmentCount', TRUE),
-            ];
-            $charge = $this->asaas_gateway->charge_credit_card($data);
-            $content = $charge;
-
-
-            $charge = json_decode($charge, TRUE);
-
-            if (isset($charge["errors"])) {
-                $mensagem_erro = $charge["errors"][0]["description"];
-                //set_alert('warning', $charge["errors"][0]["description"]);
-
-                //redirect(site_url('asaas/checkout/cartao/' . $invoice->hash), 'refresh');
-                //die();
-            } else {
-
-                $content = json_decode($content);
-
-                if ($content->status == "RECEIVED" || $content->status == "CONFIRMED" || $content->status == "RECEIVED_IN_CASH") {
-                    $externalReference = $content->externalReference;
-                    $status = $content->status;
-                    $billingType = $content->billingType;
-
-                    $this->db->where('hash', $externalReference);
-                    $invoice = $this->db->get(db_prefix() . 'invoices')->row();
-
-                    // check_invoice_restrictions($invoice->id, $invoiceid->hash);
-                    if ($invoice) {
-                        //echo "LINHA 103";
-                        //echo "<hr>";
-                        if ($invoice->status !== "2") {
-                            //echo "LINHA 106";
-                            //echo "<hr>";
-                            if ($status == "RECEIVED" || $status == "CONFIRMED" || $status == "RECEIVED_IN_CASH") {
-                                //echo "LINHA 109";
-                                //echo "<hr>";
-                                $this->asaas_gateway->addPayment([
-                                    'amount' => $invoice->total,
-                                    'invoiceid' => $invoice->id,
-                                    'paymentmode' => 'Asaas',
-                                    'paymentmethod' => $content->billingType,
-                                    'transactionid' => $content->id,
-                                ]);
-
-                                log_activity('Asaas: Confirmação de pagamento para a fatura ' . $invoice->id . ', com o ID: ' . $externalReference);
-                                //echo 'Asaas: Confirmação de pagamento para a fatura ' . $invoice->id . ', com o ID: ' . $externalReference;
-
-                                redirect(site_url('invoice/' . $invoice1->id . '/' . $invoice1->hash), 'refresh');
-                            } else {
-                                log_activity('Asaas: Estado do pagamento da fatura ' . $invoice->id . ', com o ID: ' . $externalReference . ', Status: ' . $status);
-                                //echo 'Asaas: Estado do pagamento da fatura ' . $invoice->id . ', com o ID: ' . $externalReference . ', Status: ' . $status;
-                            }
-                        } else {
-                            log_activity('Asaas: Falha ao receber callback para a fatura ' . $invoice->id . ', com o ID: ' . $externalReference . ' ');
-                            //echo 'Asaas: Falha ao receber callback para a fatura ' . $invoice->id . ', com o ID: ' . $externalReference;
-                        }
-                    }
+        require_once __DIR__ . '/../libraries/Asaas/HostedCardCheckout.php';
+        $invoice = $this->legacyInvoice($hash);
+        if (!$invoice) { return; }
+        if (!in_array((int) $invoice->status, [1, 4], true)
+            || $this->asaas_gateway->getSetting('active') !== '1'
+            || $this->asaas_gateway->getSetting('card_only') !== '1'
+            || !\Asaas\HostedCardCheckout::allowsInvoice($invoice->allowed_payment_modes ?? null)) {
+            show_error('Pagamento por cartão indisponível para esta fatura.', 409);
+            return;
+        }
+        $csrfKey = 'asaas_hosted_card_csrf_' . (int) $invoice->id;
+        $csrf = $this->session->userdata($csrfKey);
+        if (!is_string($csrf) || !preg_match('/^[a-f0-9]{64}$/D', $csrf)) {
+            $csrf = bin2hex(random_bytes(32));
+            $this->session->set_userdata($csrfKey, $csrf);
+        }
+        $error = '';
+        if ($this->input->method(true) === 'POST') {
+            $submitted = $this->input->post('hosted_card_csrf');
+            if (!is_string($submitted) || !hash_equals($csrf, $submitted)) {
+                show_error('Sessão inválida. Atualize a página e tente novamente.', 403);
+                return;
+            }
+            // Old raw-card forms are rejected without retaining, echoing or logging their values.
+            foreach (['holderName', 'cardNumber', 'expirationMonth', 'expirationYear', 'securityCode', 'card', 'creditCard', 'creditCardToken', 'creditCardHolderInfo'] as $field) {
+                if ($this->input->post($field) !== null) {
+                    show_error('Dados de cartão devem ser informados somente na página segura do Asaas.', 400);
+                    return;
                 }
             }
+            try {
+                \Asaas\HostedCardCheckout::installments($this->input->post('installmentCount'));
+                $result = json_decode($this->asaas_gateway->charge_credit_card(['invoice' => $invoice, 'installmentCount' => 1]), true);
+                if (!is_array($result) || isset($result['errors']) || empty($result['invoiceUrl'])) {
+                    throw new DomainException('hosted_checkout_unavailable');
+                }
+                // The origin is immutable; never validate a saved link against a newly selected environment.
+                $origin = $this->asaas_gateway->getAdapter()->originStore()->byInvoice((int) $invoice->id);
+                if (!$origin || ($origin['state'] ?? '') !== 'issued' || ($origin['remote_id'] ?? '') !== ($result['id'] ?? null)) {
+                    throw new DomainException('origin_review_required');
+                }
+                $result['externalReference'] = $invoice->hash;
+                $url = \Asaas\HostedCardCheckout::verifiedUrl($result, (string) $origin['environment'], $invoice->hash);
+                redirect($url);
+                return;
+            } catch (Throwable $failure) {
+                $error = 'Não foi possível abrir o pagamento por cartão. Se já existe boleto ou outra cobrança, solicite ao financeiro a revisão da origem antes de trocar a forma de pagamento.';
+            }
+        } elseif ($this->input->method(true) !== 'GET') {
+            show_404(); return;
         }
-
-        $installmentCount = $this->asaas_gateway->getSetting('installmentCount');
-
-        $this->db->where('hash', $hash);
-        $invoice1 = $this->db->get(db_prefix() . 'invoices')->row();
-        $invoice1->total_left_to_pay = get_invoice_total_left_to_pay($invoice1->id, $invoice1->total);
-
-        $data = [
-            'hash' => $hash,
-            'invoice' => $invoice1,
-            'installmentCount' => $installmentCount,
-            'mensagem_erro' => $mensagem_erro,
-            'title' => 'Asaas'
-        ];
-        //$this->disableNavigation();
-        //$this->disableSubMenu();
-        $this->data($data);
+        $this->data(['invoice' => $invoice, 'hash' => $hash, 'csrf_token' => $csrf, 'mensagem_erro' => $error, 'title' => 'Cartão de crédito via Asaas']);
         $this->view('asaas/cartao');
         $this->layout();
     }
 
     public function qrcode($hash)
     {
-        $this->db->where('hash', $hash);
-        $invoice = $this->db->get(db_prefix() . 'invoices')->row();
-
-        if (!$invoice) {
-            set_alert('warning', 'Fatura não encontrada.');
-            redirect(site_url('invoices'));
-        }
+        $invoice = $this->legacyInvoice($hash);
+        if (!$invoice) { return; }
 
         $invoice->total_left_to_pay = get_invoice_total_left_to_pay($invoice->id, $invoice->total);
 

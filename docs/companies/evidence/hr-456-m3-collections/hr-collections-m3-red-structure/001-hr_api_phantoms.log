@@ -1,0 +1,14 @@
+{"case":"structure","error":null,"actual_employee_count":2,"snapshot_unchanged":false,"returned_count":0,"mixed_chart_reference":true}
+PHP Fatal error:  Uncaught RuntimeException: FAIL: API structure must reject a changed original collection after its final audit trigger in /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/staff_fixture.php:42
+Stack trace:
+#0 /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/hr_fixture.php(10): staffCheck(false, 'API structure m...')
+#1 /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/hr_api_phantoms.php(20): hrCheck(false, 'API structure m...')
+#2 {main}
+  thrown in /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/staff_fixture.php on line 42
+
+Fatal error: Uncaught RuntimeException: FAIL: API structure must reject a changed original collection after its final audit trigger in /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/staff_fixture.php:42
+Stack trace:
+#0 /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/hr_fixture.php(10): staffCheck(false, 'API structure m...')
+#1 /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/hr_api_phantoms.php(20): hrCheck(false, 'API structure m...')
+#2 {main}
+  thrown in /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/staff_fixture.php on line 42

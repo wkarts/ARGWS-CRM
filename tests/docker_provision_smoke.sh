@@ -67,11 +67,14 @@ echo "Compose entrypoint storage OK: diretórios relativos e graváveis por www-
 
 docker network create "$network" >/dev/null
 docker volume create "$config_volume" >/dev/null
+# Disposable DB only: inject real rollback triggers while preserving database-only app grants.
+# Keep binary logging enabled; production image/config and application privileges are unchanged.
 docker run -d --name "$database" --network "$network" \
     -e MYSQL_ROOT_PASSWORD="$root_password" \
     -e MYSQL_DATABASE="$database_name" \
     -e MYSQL_USER="$database_user" \
-    -e MYSQL_PASSWORD="$database_password" ghcr.io/wkarts/argws-crm-mysql:8.0 >/dev/null
+    -e MYSQL_PASSWORD="$database_password" ghcr.io/wkarts/argws-crm-mysql:8.0 \
+    --log-bin-trust-function-creators=1 >/dev/null
 
 healthy=0
 for _ in $(seq 1 90); do
@@ -205,21 +208,28 @@ if [ "$admin_count" != "1" ]; then
     exit 1
 fi
 docker exec "$web" test -s /var/lib/argws-crm/config/provisioned
-# A completed controlled installation must include the native essential module.
-expected_issuer_version="$(sed -n 's/^Version: *//p' modules/issuers/issuers.php | head -n 1 | tr -d '\r')"
-issuer_state="$(docker exec -e MYSQL_PWD="$database_password" "$database" mysql \
+# Companies are core data, never an activated module in a new installation.
+issuer_module_count="$(docker exec -e MYSQL_PWD="$database_password" "$database" mysql \
     --protocol=tcp --host=127.0.0.1 --user="$database_user" "$database_name" \
     --batch --skip-column-names \
-    -e "SELECT CONCAT(installed_version, ':', active) FROM tblmodules WHERE module_name='issuers'")"
-if [ "$issuer_state" != "$expected_issuer_version:1" ]; then
-    echo "O provisionamento não confirmou Emitentes ativo na versão nativa esperada." >&2
+    -e "SELECT COUNT(*) FROM tblmodules WHERE module_name='issuers'")"
+if [ "$issuer_module_count" != "0" ]; then
+    echo "A instalação nova registrou indevidamente Empresas como módulo." >&2
+    exit 1
+fi
+issuer_identity="$(docker exec -e MYSQL_PWD="$database_password" "$database" mysql \
+    --protocol=tcp --host=127.0.0.1 --user="$database_user" "$database_name" \
+    --batch --skip-column-names \
+    -e "SELECT COUNT(*) FROM tblissuers_installation_identity i JOIN tblstaff s ON s.staffid=i.master_staff_id JOIN tblissuers_registry r ON r.id=i.primary_issuer_id WHERE i.id=1 AND i.source='installer' AND s.email='admin-ci@example.invalid' AND s.admin=1 AND s.active=1 AND r.active=1")"
+if [ "$issuer_identity" != "1" ]; then
+    echo "O provisionamento não confirmou o ID real do administrador e a empresa principal." >&2
     exit 1
 fi
 issuer_lock="$(docker exec -e MYSQL_PWD="$database_password" "$database" mysql \
     --protocol=tcp --host=127.0.0.1 --user="$database_user" "$database_name" \
     --batch --skip-column-names -e 'SELECT COUNT(*) FROM tblissuers_lock WHERE id=1')"
 if [ "$issuer_lock" != "1" ]; then
-    echo "O schema essencial de Emitentes não foi confirmado." >&2
+    echo "O núcleo de Empresas não foi confirmado." >&2
     exit 1
 fi
 
@@ -268,6 +278,16 @@ if [ "$dashboard_status" != "200" ] || [[ "$dashboard_url" == *"/authentication"
     echo "A sessão do administrador não abriu o painel (HTTP $dashboard_status, URL $dashboard_url)." >&2
     docker logs --tail 100 "$web" >&2 || true
     exit 1
+fi
+
+if [ "${ARGWS_ISSUER_BROWSER_SMOKE:-0}" = "1" ]; then
+    if ! ISSUERS_BROWSER_URL="$url" ISSUERS_BROWSER_PASSWORD="$admin_password" \
+        ISSUERS_BROWSER_DB_CONTAINER="$database" ISSUERS_BROWSER_DB_USER="$database_user" \
+        ISSUERS_BROWSER_DB_PASSWORD="$database_password" node tests/issuers_browser_smoke.cjs; then
+        # Print only the fixed-format migration category written by App::upgrade_database_silent.
+        docker logs "$web" 2>&1 | grep -F "Falha na atualização nativa [" | tail -n 8 >&2 || true
+        exit 1
+    fi
 fi
 
 setup_after_code="$(curl --connect-timeout 2 --max-time 5 -sS -o /dev/null -w '%{http_code}' "$url/setup")"
@@ -386,3 +406,9 @@ fi
 echo "Smoke OK: migration 371, modelos legados, personalização e idempotência."
 
 echo "Smoke test OK: assistente protegido, administrador autenticado e painel aberto; /setup e /install bloqueados após setup."
+
+if [ "${ARGWS_ISSUER_BROWSER_SMOKE:-0}" = "1" ]; then
+    ISSUER_SMOKE_IMAGE="$image" ISSUER_SMOKE_NETWORK="$network" ISSUER_SMOKE_DATABASE="$database" \
+    ISSUER_SMOKE_DB_USER="$database_user" ISSUER_SMOKE_DB_PASSWORD="$database_password" \
+    ISSUER_SMOKE_ROOT_PASSWORD="$root_password" bash tests/issuers_standalone_http_smoke.sh
+fi

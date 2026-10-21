@@ -48,6 +48,8 @@ class App_mailer extends CI_Email
         'dkim_passphrase'     => '',
         'dkim_identity'       => '',
 
+        'company_google_mail_provider' => null,
+        'company_microsoft_mail_provider' => null,
         'xoauth2'       => '',
         'client_id'     => '',
         'client_secret' => '',
@@ -151,9 +153,23 @@ class App_mailer extends CI_Email
         return $this;
     }
 
+    /** Close the previous account before a queue worker configures another origin. */
+    protected function reset_account_transport(): void
+    {
+        if (is_object($this->phpmailer)) { $this->phpmailer->smtpClose(); }
+        $this->phpmailer = null;
+        if (property_exists($this, '_smtp_connect') && is_resource($this->_smtp_connect)) { fclose($this->_smtp_connect); }
+        if (property_exists($this, '_smtp_connect')) { $this->_smtp_connect = ''; }
+        $this->mailer_engine = 'codeigniter';
+        $this->properties = self::$default_properties;
+    }
+
     // Initialization & Clearing -----------------------------------------------
     public function initialize(array $config = [])
     {
+        if(($this->properties['company_google_mail_provider']??null)!==null||($this->properties['company_microsoft_mail_provider']??null)!==null){$this->reset_account_transport();}
+        $this->set_company_google_mail_provider(null);
+        $this->set_company_microsoft_mail_provider(null);
         foreach ($config as $key => $value) {
             $this->{$key} = $value;
         }
@@ -495,8 +511,28 @@ class App_mailer extends CI_Email
         return $this;
     }
 
+    public function set_company_google_mail_provider($provider): void
+    {
+        if($provider!==null && (!$provider instanceof CompanyGoogleMailOAuthTokenProvider || get_class($provider)!=='CompanyGoogleMailOAuthTokenProvider'))throw new DomainException('company_google_mail_provider_invalid');
+        $this->properties['company_google_mail_provider']=$provider;
+    }
+
+    public function set_company_microsoft_mail_provider($provider):void
+    {
+        if($provider!==null&&(!$provider instanceof CompanyMicrosoftMailOAuthTokenProvider||get_class($provider)!=='CompanyMicrosoftMailOAuthTokenProvider'))throw new DomainException('company_microsoft_mail_provider_invalid');
+        $this->properties['company_microsoft_mail_provider']=$provider;
+    }
+
     public function configure_xoauth2()
     {
+        if($this->company_microsoft_mail_provider!==null){
+            if($this->company_google_mail_provider!==null||$this->mailer_engine!=='phpmailer'||$this->protocol!=='microsoft')throw new DomainException('company_microsoft_mail_provider_invalid');
+            $this->company_microsoft_mail_provider->assertReady();$this->phpmailer->SMTPAuth=true;$this->phpmailer->AuthType='XOAUTH2';$this->phpmailer->setOAuth($this->company_microsoft_mail_provider);return;
+        }
+        if($this->company_google_mail_provider!==null){
+            if($this->mailer_engine!=='phpmailer'||$this->protocol!=='google')throw new DomainException('company_google_mail_provider_invalid');
+            $this->company_google_mail_provider->assertReady();$this->phpmailer->SMTPAuth=true;$this->phpmailer->AuthType='XOAUTH2';$this->phpmailer->setOAuth($this->company_google_mail_provider);return;
+        }
         if ($this->protocol !== 'microsoft' && $this->protocol !== 'google') {
             return;
         }

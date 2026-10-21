@@ -37,8 +37,8 @@ class Authentication_model extends App_Model
                 $table = db_prefix() . 'staff';
                 $_id   = 'staffid';
             }
-            $this->db->where('email', $email);
-            $user = $this->db->get($table)->row();
+            if($staff){$this->db->where('email',$email);$user=$this->db->get($table)->row();}
+            else{$user=$this->uniqueContactByEmail($email);}
             if ($user) {
                 // Email is okey lets check the password now
                 if (! $user->password || ! app_hasher()->CheckPassword($password, $user->password)) {
@@ -103,9 +103,12 @@ class Authentication_model extends App_Model
                     'contact_user_id' => $user->{$_id},
                 ]);
 
+                require_once APPPATH . 'services/PortalClientIdentity.php';
+                $contact = \app\services\PortalClientIdentity::activeContact($this->db, db_prefix(), $user->{$_id});
+                if (!$contact || (string)$contact->userid !== (string)$user->userid) { return false; }
                 $user_data = [
-                    'client_user_id'   => $user->userid,
-                    'contact_user_id'  => $user->{$_id},
+                    'client_user_id'   => $contact->userid,
+                    'contact_user_id'  => $contact->id,
                     'client_logged_in' => true,
                 ];
             }
@@ -247,10 +250,13 @@ class Authentication_model extends App_Model
                                 'staff_logged_in' => true,
                             ];
                         } else {
-                            // Get the customer id
-                            $this->db->select('userid');
-                            $this->db->where('id', $user->id);
-                            $contact = $this->db->get(db_prefix() . 'contacts')->row();
+                            // Revalidate the authenticated cookie identity before renewing any session.
+                            require_once APPPATH . 'services/PortalClientIdentity.php';
+                            $contact = \app\services\PortalClientIdentity::activeContact($this->db, db_prefix(), $user->id);
+                            if (!$contact) {
+                                delete_cookie('autologin', 'aal');
+                                return false;
+                            }
 
                             $user_data = [
                                 'client_user_id'   => $contact->userid,
@@ -306,10 +312,28 @@ class Authentication_model extends App_Model
      *
      * @param string $email
      */
+    /** The global login/recovery URL cannot choose among equal emails from different owners. */
+    private function uniqueContactByEmail($email): ?object
+    {
+        if(!is_string($email)||strlen($email)>100)return null;
+        require_once APPPATH.'services/issuers/IssuerStorage.php';
+        $rows=IssuerStorage::query($this->db,'SELECT * FROM '.db_prefix().'contacts WHERE LOWER(email)=? ORDER BY id LIMIT 2',[strtolower(trim($email))])->result_array();
+        return count($rows)===1?(object)$rows[0]:null;
+    }
+
+    private function permitsLegacyRecoveryMail($user): bool
+    {
+        require_once APPPATH . 'services/ClientIssuerScope.php';
+        require_once APPPATH . 'services/PortalClientIdentity.php';
+        if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active() && !CompanySettingsRuntime::isPrimary()) return false;
+        $contact=\app\services\PortalClientIdentity::activeContact($this->db,db_prefix(),$user->id);
+        return $contact && (string)$contact->userid===(string)$user->userid
+            && \app\services\ClientIssuerScope::isLegacyContact($this->db,db_prefix(),$user->id);
+    }
+
     public function set_password_email($email)
     {
-        $this->db->where('email', $email);
-        $user = $this->db->get(db_prefix() . 'contacts')->row();
+        $user=$this->uniqueContactByEmail($email);
 
         if ($user) {
             if ($user->active == 0) {
@@ -318,6 +342,7 @@ class Authentication_model extends App_Model
                 ];
             }
 
+            if (!$this->permitsLegacyRecoveryMail($user)) { return false; }
             $new_pass_key = app_generate_hash();
             $this->db->where('id', $user->id);
             $this->db->update(db_prefix() . 'contacts', [
@@ -363,8 +388,8 @@ class Authentication_model extends App_Model
             $table = db_prefix() . 'staff';
             $_id   = 'staffid';
         }
-        $this->db->where('email', $email);
-        $user = $this->db->get($table)->row();
+        if($staff){$this->db->where('email',$email);$user=$this->db->get($table)->row();}
+        else{$user=$this->uniqueContactByEmail($email);}
 
         if ($user) {
             if ($user->active == 0) {
@@ -375,6 +400,7 @@ class Authentication_model extends App_Model
                 ];
             }
 
+            if (!$staff && !$this->permitsLegacyRecoveryMail($user)) { return false; }
             $new_pass_key = app_generate_hash();
             $this->db->where($_id, $user->{$_id});
             $this->db->update($table, [
@@ -412,6 +438,30 @@ class Authentication_model extends App_Model
         return false;
     }
 
+    /** Atomic native contact completion. Private origins stay closed until their full mail adapter is available. */
+    private function completeLegacyContactPassword($userid,$key,$password,string $kind)
+    {
+        $valid=$kind==='set'?$this->can_set_password(false,$userid,$key):$this->can_reset_password(false,$userid,$key);
+        if(!$valid)return ['expired'=>true];
+        $table=db_prefix().'contacts';
+        $this->db->where('id',$userid);
+        $user=$this->db->get($table)->row();
+        if(!$user || !$this->permitsLegacyRecoveryMail($user))return ['expired'=>true];
+        $hash=app_hash_password($password);
+        $this->db->where('id',$userid)->where('userid',$user->userid)->where('active',1)->where('new_pass_key',$key);
+        $this->db->where('new_pass_key_requested >=',date('Y-m-d H:i:s',time()-($kind==='set'?48:1)*3600));
+        $this->db->where('EXISTS (SELECT 1 FROM '.db_prefix().'clients recovery_parent WHERE recovery_parent.userid='.$table.'.userid AND recovery_parent.active=1)',null,false);
+        $this->db->where(\app\services\ClientIssuerScope::legacySql($this->db,db_prefix(),$table),null,false);
+        // Password and one-time token change together; a stale/concurrent key cannot win a second update.
+        $written=$this->db->update($table,['password'=>$hash,'new_pass_key'=>null,'new_pass_key_requested'=>null,'last_password_change'=>date('Y-m-d H:i:s')]);
+        if(!$written || $this->db->affected_rows()!==1)return null;
+        log_activity('Contact Password Updated [User ID: '.(int)$userid.']');
+        if($kind==='set')return true;
+        $this->db->where('id',$userid);$current=$this->db->get($table)->row();
+        if(!$current || (string)$current->userid!==(string)$user->userid || !$this->permitsLegacyRecoveryMail($current))return null;
+        return send_mail_template('customer_contact_password_resetted',$current->email,$current->userid,$current->id)?true:null;
+    }
+
     /**
      * Update user password from forgot password feature or set password
      *
@@ -422,6 +472,7 @@ class Authentication_model extends App_Model
      */
     public function set_password($staff, $userid, $new_pass_key, $password)
     {
+        if (!$staff) return $this->completeLegacyContactPassword($userid,$new_pass_key,$password,'set');
         if (! $this->can_set_password($staff, $userid, $new_pass_key)) {
             return [
                 'expired' => true,
@@ -473,6 +524,7 @@ class Authentication_model extends App_Model
      */
     public function reset_password($staff, $userid, $new_pass_key, $password)
     {
+        if (!$staff) return $this->completeLegacyContactPassword($userid,$new_pass_key,$password,'reset');
         if (! $this->can_reset_password($staff, $userid, $new_pass_key)) {
             return [
                 'expired' => true,
@@ -541,6 +593,8 @@ class Authentication_model extends App_Model
         $user = $this->db->get($table)->row();
 
         if ($user) {
+            // A token created before ownership changed must not re-enter global mail/identity paths.
+            if (!$staff && !$this->permitsLegacyRecoveryMail($user)) return false;
             $timestamp_now_minus_1_hour = time() - (60 * 60);
             $new_pass_key_requested     = strtotime($user->new_pass_key_requested);
 
@@ -573,6 +627,8 @@ class Authentication_model extends App_Model
         $this->db->where('new_pass_key', $new_pass_key);
         $user = $this->db->get($table)->row();
         if ($user) {
+            // A token created before ownership changed must not re-enter global mail/identity paths.
+            if (!$staff && !$this->permitsLegacyRecoveryMail($user)) return false;
             $timestamp_now_minus_48_hour = time() - (3600 * 48);
             $new_pass_key_requested      = strtotime($user->new_pass_key_requested);
 

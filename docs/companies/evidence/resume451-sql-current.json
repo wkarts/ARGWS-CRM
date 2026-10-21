@@ -1,0 +1,576 @@
+{
+  "core": "4.5.1/451",
+  "bb": "1.2.3/123",
+  "asaas": "1.5.3/153",
+  "production_paths": 18586,
+  "production_manifest_sha256": "ea3ea41e9697f1844273b357c70a0be22c5d7ef83d78cceb14e305e9c17952ef",
+  "php": "8.3.6; additional8.1.2 on same live MySQL server before shutdown",
+  "memory_limit": "128M",
+  "mysql": "8.0.46",
+  "mariadb": "10.11.14",
+  "binlog": true,
+  "non_super": true,
+  "results": [
+    {
+      "artifact": "timer451-final-mysql8-1792523977727275086",
+      "engine": "mysql8",
+      "production_paths": 18586,
+      "no_drift": true,
+      "test_source_sha256": {
+        "tests/settings/calendar_unassigned_portal.php": "732552b02b52b6de56796f83a29dd8f93d2b81d6c08381f0e2f04be1a9a5459b",
+        "tests/settings/calendar_read.php": "851ce55f717bc951a392e06ff12138c62287fbae92533654d8d334fef93d889e",
+        "tests/settings/calendar_controller.php": "21062dccdf15e552f1068a5ef022a5724a0bab87b76c87d04147e4165e09e791",
+        "tests/settings/calendar_boundaries.php": "6c595dcff6433323e90093b045ef6808579107c86c2bd35a2bad56473a6f2ecb",
+        "tests/settings/calendar_concurrency.php": "aedd18e19a7b724754ab29894456eeb6095a81a765dbbae226066c93c3068207",
+        "tests/settings/task_timer_stop_settings.php": "668f9c0847eb1b3edf04e431cfce96938aed9fba9d4403d217e0d2a54ca936bc",
+        "tests/settings/task_timer_auto_stop_integrity.php": "957dc4a28453c301ada3bf25c505a1b4a5efbc71267231cd25b4438793f71a68",
+        "tests/settings/task_timer_auto_stop_concurrency.php": "8cbcd537f3887e485556e1bc8b4346ac2d90cd048071d2300bd88b75ef1a9cda",
+        "tests/settings/task_timer_settings.php": "16859e316147a54ed290904002902d49478888f6bf8a7bc2415cb1e9a9b00365",
+        "tests/settings/task_timer_transitions.php": "275de9cf4a2f5b39d829e9cd234a44a4fa89550f4756ab922621911697258e83",
+        "tests/settings/task_timer_start_envelope.php": "1ab6e0a55d98b86ce7cdc78169c53c7dfff7d7df8ba89636f86ace3361ecaa25",
+        "tests/settings/task_timer_concurrency.php": "b3063b1450b4c6b33cf67ceb42810e0ab2dbc63892af600f1d95a073d0b575e7",
+        "tests/companies/native_timer_451.php": "f3251368d97052046cb5b569e1c75e257cdf54713443526ea7aa75b10b9beb12",
+        "tests/companies/task_billing_timesheets.php": "ae0b11f078755404243da2f569247463b6f4b3cd327ada9d3a4d08e2b9147916",
+        "tests/companies/task_billing_atomic.php": "8a6ee92440ab752eb3e3272d575e94d7b1c17b76fafabde4ec49e9335c03cc92",
+        "tests/companies/operations_resume_439_billing.php": "15907dcc33afb0531f2330d6ca97efb1c2069201cc4386ea48248dd71320bcde",
+        "tests/companies/project_fixed_billing_atomic.php": "71325e5436180444c3548a0be5fd6ff407703b2bea6f357e5b7048d88d378b05",
+        "tests/companies/project_timesheets_atomic.php": "092eab51c4d1c2a8ae8748305d6f289aa821ca0b06146982b36d45d508efadcd",
+        "tests/banco_brasil_local_noncash_clock_v3.php": "07ba6d6e5c79d38dbe744b3eab4be16424b24b1a9fde25c5d3d8f00e1fef2f8d",
+        "tests/banco_brasil_local_noncash_recurring_v3.php": "5f3efa25662dd22c9bdb68d4f0d6b71d5bffc35e6c44802c46249a89532982cc",
+        "tests/settings/task_timer_auto_stop.php": "42ed4935f914906c94cb21cb97ab1a7860e46a2dccb5fdd28b5363dbd3bf73ce",
+        "tests/settings/task_timer_stop_http_fixture.php": "3c069e574914b284fa74ed8f4a32157d6285ab3a9a6b8cd5f9627ba2f69ec4f7",
+        "tests/settings/task_timer_auto_stop_browser.cjs": "e54b16c834ce74b2b9d66d32763766a23f2755be3477ff12c348251eb3c1a8d7"
+      },
+      "results": [
+        {
+          "test": "tests/settings/calendar_unassigned_portal.php",
+          "exit": 0,
+          "seconds": 9.746,
+          "footer": [
+            "Owned contracts/snapshot/number/PDF/copy/cancel and support/replies/search: 59 checks passed (mysql). No external transport or signature.",
+            "Calendar canonical unassigned portal: 28 added / 87 cumulative; A/B/principal, Sunday/Monday month, actual day, assigned-only, actor/cross-company denial, immutable history."
+          ]
+        },
+        {
+          "test": "tests/settings/calendar_read.php",
+          "exit": 0,
+          "seconds": 13.223,
+          "footer": [
+            "Invoice legacy/PDF provenance: 33 cumulative checks passed.",
+            "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Calendar source privacy/readback: 75 added checks (mysql)."
+          ]
+        },
+        {
+          "test": "tests/settings/calendar_controller.php",
+          "exit": 0,
+          "seconds": 13.628,
+          "footer": [
+            "Invoice legacy/PDF provenance: 33 cumulative checks passed.",
+            "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Calendar actual native controller/grid: 26 added checks (mysql)."
+          ]
+        },
+        {
+          "test": "tests/settings/calendar_boundaries.php",
+          "exit": 0,
+          "seconds": 7.518,
+          "footer": [
+            "Invoice legacy/PDF provenance: 33 cumulative checks passed.",
+            "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Calendar committed boundaries: 11 added checks (mysql)."
+          ]
+        },
+        {
+          "test": "tests/settings/calendar_concurrency.php",
+          "exit": 0,
+          "seconds": 5.81,
+          "footer": [
+            "Invoice legacy/PDF provenance: 33 cumulative checks passed.",
+            "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Calendar native contention: 26 added checks; six races with two observed waiters."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_stop_settings.php",
+          "exit": 0,
+          "seconds": 3.434,
+          "footer": [
+            "Settings model/controller integration: 112 total checks passed (mysql).",
+            "Settings formatting controller: 127 total checks passed.",
+            "Document preferences controller: 134 cumulative checks passed.",
+            "Own auto-stop Settings actual controller/view: 43 added / 177 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_auto_stop_integrity.php",
+          "exit": 0,
+          "seconds": 26.256,
+          "footer": [
+            "Auto-stop fault {\"kind\":\"standalone\",\"fault\":\"old_priority\",\"caught\":\"issuer_task_timer_unconfirmed\",\"rollback\":true}",
+            "Auto-stop fault {\"kind\":\"standalone\",\"fault\":\"policy\",\"caught\":\"issuer_project_write_unconfirmed\",\"rollback\":true}",
+            "Own timer auto-stop: 102 added / 328 cumulative; A/B/principal, four modality pairs, exact retry, ownOFF, foreign refusal, bearer and real rollback witnesses.",
+            "Auto-stop independent source/integrity: 30 added / 358 cumulative; current old-project authority, actor separation, closed/future source, metadata/ignored SQL, parent/followers and exact rollback/retry."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_auto_stop_concurrency.php",
+          "exit": 0,
+          "seconds": 18.26,
+          "footer": [
+            "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql).",
+            "Auto-stop real contention: 74 added / 300 cumulative; ten cases, two observed waiters each: [{\"case\":\"same_settings\",\"waiters\":2,\"workers\":[{\"ok\":true},{\"ok\":false,\"error\":\"company_task_timer_stop_preferences_stale\"}],\"active_kind\":\"project\",\"active_task\":16},{\"case\":\"same_receipt\",\"waiters\":2,\"workers\":[{\"ok\":true,\"id\":13},{\"ok\":true,\"id\":13}],\"active_kind\":\"standalone\",\"active_task\":13},{\"case\":\"distinct_project\",\"waiters\":2,\"workers\":[{\"ok\":true,\"id\":19},{\"ok\":true,\"id\":20}],\"active_kind\":\"project\",\"active_task\":20},{\"case\":\"distinct_modalities\",\"waiters\":2,\"workers\":[{\"ok\":true,\"id\":22},{\"ok\":true,\"id\":14}],\"active_kind\":\"project\",\"active_task\":22},{\"case\":\"committed_off\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_timer_running\"},{\"ok\":false,\"error\":\"company_project_timer_running\"}],\"active_kind\":\"project\",\"active_task\":23},{\"case\":\"revoked_actor\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_access_denied\"},{\"ok\":false,\"error\":\"company_project_access_denied\"}],\"active_kind\":\"project\",\"active_task\":24},{\"case\":\"revoked_edit\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_access_denied\"},{\"ok\":false,\"error\":\"company_project_access_denied\"}],\"active_kind\":\"project\",\"active_task\":25},{\"case\":\"revoked_old_project\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_access_denied\"},{\"ok\":false,\"error\":\"company_project_access_denied\"}],\"active_kind\":\"project\",\"active_task\":26},{\"case\":\"closed_old_parent\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_closed\"},{\"ok\":false,\"error\":\"company_project_closed\"}],\"active_kind\":\"project\",\"active_task\":27},{\"case\":\"revoked_api\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_api_unauthenticated\"},{\"ok\":false,\"error\":\"company_api_unauthenticated\"}],\"active_kind\":\"project\",\"active_task\":28}]"
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_settings.php",
+          "exit": 0,
+          "seconds": 4.512,
+          "footer": [
+            "Settings model/controller integration: 112 total checks passed (mysql).",
+            "Settings formatting controller: 127 total checks passed.",
+            "Document preferences controller: 134 cumulative checks passed.",
+            "Own timer Settings actual controller/view: 43 added / 177 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_transitions.php",
+          "exit": 0,
+          "seconds": 18.574,
+          "footer": [
+            "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql).",
+            "Own timer-start status policy: 72 added / 298 cumulative (mysql); native tasks/standalone, A/B/principal, final-audit rollback/retry, no global inheritance."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_start_envelope.php",
+          "exit": 0,
+          "seconds": 21.045,
+          "footer": [
+            "Timer envelope observed {\"kind\":\"standalone\",\"fault\":\"extra_active\",\"phase\":\"last_audit\",\"caught\":\"issuer_task_timer_unconfirmed\",\"rollback\":true}",
+            "Timer envelope observed {\"kind\":\"standalone\",\"fault\":\"extra_closed\",\"phase\":\"last_audit\",\"caught\":\"issuer_task_timer_unconfirmed\",\"rollback\":true}",
+            "Timer envelope observed {\"kind\":\"standalone\",\"fault\":\"foreign_active\",\"phase\":\"last_audit\",\"caught\":\"issuer_task_timer_unconfirmed\",\"rollback\":true}",
+            "Timer start known envelope: 36 added / 334 cumulative, 9 actual early/final-audit witnesses."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_concurrency.php",
+          "exit": 0,
+          "seconds": 13.386,
+          "footer": [
+            "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql).",
+            "Own timer current-policy concurrency: 44 added / 270 cumulative; nine scenarios with two observed waiters each."
+          ]
+        },
+        {
+          "test": "tests/companies/native_timer_451.php",
+          "exit": 0,
+          "seconds": 23.353,
+          "footer": [
+            "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517",
+            "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517",
+            "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517",
+            "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517"
+          ]
+        },
+        {
+          "test": "tests/companies/task_billing_timesheets.php",
+          "exit": 0,
+          "seconds": 8.827,
+          "footer": [
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Native task timer billing: 90 cumulative checks passed (mysql). No external execution.",
+            "Native task billing actual controller and GUI: 102 cumulative checks passed (mysql).",
+            "Native task timesheet line layout: 120 cumulative checks passed (mysql)."
+          ]
+        },
+        {
+          "test": "tests/companies/task_billing_atomic.php",
+          "exit": 0,
+          "seconds": 10.293,
+          "footer": [
+            "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Native task timer billing: 90 cumulative checks passed (mysql). No external execution.",
+            "Native task billing atomic/provenance/portal origin: 107 cumulative checks passed (mysql)."
+          ]
+        },
+        {
+          "test": "tests/companies/operations_resume_439_billing.php",
+          "exit": 0,
+          "seconds": 14.587,
+          "footer": [
+            "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Native task timer billing: 90 cumulative checks passed (mysql). No external execution.",
+            "Rebuilt recovery439 standalone/selected-timer/batch A+B/idempotency/cancellation/ledger: 119 cumulative checks passed (mysql)."
+          ]
+        },
+        {
+          "test": "tests/companies/project_fixed_billing_atomic.php",
+          "exit": 0,
+          "seconds": 22.292,
+          "footer": [
+            "Native task billing actual controller and GUI: 102 cumulative checks passed (mysql).",
+            "Completed fixed project canonical billing: 128 cumulative checks passed (mysql).",
+            "Fixed project actual controller/GUI/principal/PDF: 141 cumulative checks passed (mysql).",
+            "Fixed project atomic/provenance/portal exclusion: 162 cumulative checks passed (mysql)."
+          ]
+        },
+        {
+          "test": "tests/companies/project_timesheets_atomic.php",
+          "exit": 0,
+          "seconds": 21.476,
+          "footer": [
+            "Owned contracts/snapshot/number/PDF/copy/cancel and support/replies/search: 59 checks passed (mysql). No external transport or signature.",
+            "Native timesheets selected temporal data/keyset/privacy: 106 cumulative checks passed (mysql). No live timer or financial mutation.",
+            "Timesheet atomic rules/audit/permission/profile/source guards: 134 cumulative checks passed (mysql)."
+          ]
+        },
+        {
+          "test": "tests/banco_brasil_local_noncash_clock_v3.php",
+          "exit": 0,
+          "seconds": 17.217,
+          "footer": [
+            "BB origination: 144 cumulative native MySQL checks; no transmission or bank homologation.",
+            "BB API native MySQL/encryption/outbox: 208 cumulative checks; simulated provider, no real tokens/charges.",
+            "NEW Noncash V3 native declaration/restoration: 222 cumulative actual SQL checks; no external operation.",
+            "LOCAL V3 real second boundary: 19 added / 241 cumulative; two SQL delay witnesses, audit equality, canonical balance and exact retry."
+          ]
+        },
+        {
+          "test": "tests/banco_brasil_local_noncash_recurring_v3.php",
+          "exit": 0,
+          "seconds": 22.047,
+          "footer": [
+            "BB API native MySQL/encryption/outbox: 208 cumulative checks; simulated provider, no real tokens/charges.",
+            "NEW Noncash V3 native declaration/restoration: 222 cumulative actual SQL checks; no external operation.",
+            "NEW Noncash V3 independent native funds: 231 cumulative SQL checks; synthetic evidence only.",
+            "NEW Noncash V3 unchanged recurring-principal contract: 241 cumulative SQL checks; no new bank or recurrence rule."
+          ]
+        }
+      ]
+    },
+    {
+      "artifact": "timer451-final-php81-mysql8-1792524274532095885",
+      "engine": "php81-mysql8",
+      "production_paths": 18586,
+      "no_drift": true,
+      "test_source_sha256": {
+        "tests/settings/task_timer_stop_settings.php": "668f9c0847eb1b3edf04e431cfce96938aed9fba9d4403d217e0d2a54ca936bc",
+        "tests/settings/task_timer_auto_stop_integrity.php": "957dc4a28453c301ada3bf25c505a1b4a5efbc71267231cd25b4438793f71a68",
+        "tests/settings/task_timer_auto_stop_concurrency.php": "8cbcd537f3887e485556e1bc8b4346ac2d90cd048071d2300bd88b75ef1a9cda",
+        "tests/companies/native_timer_451.php": "f3251368d97052046cb5b569e1c75e257cdf54713443526ea7aa75b10b9beb12",
+        "tests/settings/task_timer_auto_stop.php": "42ed4935f914906c94cb21cb97ab1a7860e46a2dccb5fdd28b5363dbd3bf73ce",
+        "tests/settings/task_timer_stop_http_fixture.php": "3c069e574914b284fa74ed8f4a32157d6285ab3a9a6b8cd5f9627ba2f69ec4f7",
+        "tests/settings/task_timer_auto_stop_browser.cjs": "e54b16c834ce74b2b9d66d32763766a23f2755be3477ff12c348251eb3c1a8d7"
+      },
+      "results": [
+        {
+          "test": "tests/settings/task_timer_stop_settings.php",
+          "exit": 0,
+          "seconds": 3.955,
+          "footer": [
+            "Settings model/controller integration: 112 total checks passed (mysql).",
+            "Settings formatting controller: 127 total checks passed.",
+            "Document preferences controller: 134 cumulative checks passed.",
+            "Own auto-stop Settings actual controller/view: 43 added / 177 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_auto_stop_integrity.php",
+          "exit": 0,
+          "seconds": 29.462,
+          "footer": [
+            "Auto-stop fault {\"kind\":\"standalone\",\"fault\":\"old_priority\",\"caught\":\"issuer_task_timer_unconfirmed\",\"rollback\":true}",
+            "Auto-stop fault {\"kind\":\"standalone\",\"fault\":\"policy\",\"caught\":\"issuer_project_write_unconfirmed\",\"rollback\":true}",
+            "Own timer auto-stop: 102 added / 328 cumulative; A/B/principal, four modality pairs, exact retry, ownOFF, foreign refusal, bearer and real rollback witnesses.",
+            "Auto-stop independent source/integrity: 30 added / 358 cumulative; current old-project authority, actor separation, closed/future source, metadata/ignored SQL, parent/followers and exact rollback/retry."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_auto_stop_concurrency.php",
+          "exit": 0,
+          "seconds": 17.99,
+          "footer": [
+            "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql).",
+            "Auto-stop real contention: 74 added / 300 cumulative; ten cases, two observed waiters each: [{\"case\":\"same_settings\",\"waiters\":2,\"workers\":[{\"ok\":true},{\"ok\":false,\"error\":\"company_task_timer_stop_preferences_stale\"}],\"active_kind\":\"project\",\"active_task\":16},{\"case\":\"same_receipt\",\"waiters\":2,\"workers\":[{\"ok\":true,\"id\":13},{\"ok\":true,\"id\":13}],\"active_kind\":\"standalone\",\"active_task\":13},{\"case\":\"distinct_project\",\"waiters\":2,\"workers\":[{\"ok\":true,\"id\":19},{\"ok\":true,\"id\":20}],\"active_kind\":\"project\",\"active_task\":19},{\"case\":\"distinct_modalities\",\"waiters\":2,\"workers\":[{\"ok\":true,\"id\":22},{\"ok\":true,\"id\":14}],\"active_kind\":\"standalone\",\"active_task\":14},{\"case\":\"committed_off\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_timer_running\"},{\"ok\":false,\"error\":\"company_project_timer_running\"}],\"active_kind\":\"project\",\"active_task\":23},{\"case\":\"revoked_actor\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_access_denied\"},{\"ok\":false,\"error\":\"company_project_access_denied\"}],\"active_kind\":\"project\",\"active_task\":24},{\"case\":\"revoked_edit\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_access_denied\"},{\"ok\":false,\"error\":\"company_project_access_denied\"}],\"active_kind\":\"project\",\"active_task\":25},{\"case\":\"revoked_old_project\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_access_denied\"},{\"ok\":false,\"error\":\"company_project_access_denied\"}],\"active_kind\":\"project\",\"active_task\":26},{\"case\":\"closed_old_parent\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_closed\"},{\"ok\":false,\"error\":\"company_project_closed\"}],\"active_kind\":\"project\",\"active_task\":27},{\"case\":\"revoked_api\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_api_unauthenticated\"},{\"ok\":false,\"error\":\"company_api_unauthenticated\"}],\"active_kind\":\"project\",\"active_task\":28}]"
+          ]
+        },
+        {
+          "test": "tests/companies/native_timer_451.php",
+          "exit": 0,
+          "seconds": 24.558,
+          "footer": [
+            "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517",
+            "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517",
+            "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517",
+            "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517"
+          ]
+        }
+      ]
+    },
+    {
+      "artifact": "timer451-final-mariadb-1792524769602806657",
+      "engine": "mariadb",
+      "production_paths": 18586,
+      "no_drift": true,
+      "test_source_sha256": {
+        "tests/settings/calendar_unassigned_portal.php": "732552b02b52b6de56796f83a29dd8f93d2b81d6c08381f0e2f04be1a9a5459b",
+        "tests/settings/calendar_read.php": "851ce55f717bc951a392e06ff12138c62287fbae92533654d8d334fef93d889e",
+        "tests/settings/calendar_controller.php": "21062dccdf15e552f1068a5ef022a5724a0bab87b76c87d04147e4165e09e791",
+        "tests/settings/calendar_boundaries.php": "6c595dcff6433323e90093b045ef6808579107c86c2bd35a2bad56473a6f2ecb",
+        "tests/settings/calendar_concurrency.php": "aedd18e19a7b724754ab29894456eeb6095a81a765dbbae226066c93c3068207",
+        "tests/settings/task_timer_stop_settings.php": "668f9c0847eb1b3edf04e431cfce96938aed9fba9d4403d217e0d2a54ca936bc",
+        "tests/settings/task_timer_auto_stop_integrity.php": "957dc4a28453c301ada3bf25c505a1b4a5efbc71267231cd25b4438793f71a68",
+        "tests/settings/task_timer_auto_stop_concurrency.php": "8cbcd537f3887e485556e1bc8b4346ac2d90cd048071d2300bd88b75ef1a9cda",
+        "tests/settings/task_timer_settings.php": "16859e316147a54ed290904002902d49478888f6bf8a7bc2415cb1e9a9b00365",
+        "tests/settings/task_timer_transitions.php": "275de9cf4a2f5b39d829e9cd234a44a4fa89550f4756ab922621911697258e83",
+        "tests/settings/task_timer_start_envelope.php": "1ab6e0a55d98b86ce7cdc78169c53c7dfff7d7df8ba89636f86ace3361ecaa25",
+        "tests/settings/task_timer_concurrency.php": "b3063b1450b4c6b33cf67ceb42810e0ab2dbc63892af600f1d95a073d0b575e7",
+        "tests/companies/native_timer_451.php": "f3251368d97052046cb5b569e1c75e257cdf54713443526ea7aa75b10b9beb12",
+        "tests/companies/task_billing_timesheets.php": "ae0b11f078755404243da2f569247463b6f4b3cd327ada9d3a4d08e2b9147916",
+        "tests/companies/task_billing_atomic.php": "8a6ee92440ab752eb3e3272d575e94d7b1c17b76fafabde4ec49e9335c03cc92",
+        "tests/companies/operations_resume_439_billing.php": "15907dcc33afb0531f2330d6ca97efb1c2069201cc4386ea48248dd71320bcde",
+        "tests/companies/project_fixed_billing_atomic.php": "71325e5436180444c3548a0be5fd6ff407703b2bea6f357e5b7048d88d378b05",
+        "tests/companies/project_timesheets_atomic.php": "092eab51c4d1c2a8ae8748305d6f289aa821ca0b06146982b36d45d508efadcd",
+        "tests/banco_brasil_local_noncash_clock_v3.php": "07ba6d6e5c79d38dbe744b3eab4be16424b24b1a9fde25c5d3d8f00e1fef2f8d",
+        "tests/banco_brasil_local_noncash_recurring_v3.php": "5f3efa25662dd22c9bdb68d4f0d6b71d5bffc35e6c44802c46249a89532982cc",
+        "tests/settings/task_timer_auto_stop.php": "42ed4935f914906c94cb21cb97ab1a7860e46a2dccb5fdd28b5363dbd3bf73ce",
+        "tests/settings/task_timer_stop_http_fixture.php": "3c069e574914b284fa74ed8f4a32157d6285ab3a9a6b8cd5f9627ba2f69ec4f7",
+        "tests/settings/task_timer_auto_stop_browser.cjs": "e54b16c834ce74b2b9d66d32763766a23f2755be3477ff12c348251eb3c1a8d7"
+      },
+      "results": [
+        {
+          "test": "tests/settings/calendar_unassigned_portal.php",
+          "exit": 0,
+          "seconds": 4.825,
+          "footer": [
+            "Owned contracts/snapshot/number/PDF/copy/cancel and support/replies/search: 59 checks passed (mysql). No external transport or signature.",
+            "Calendar canonical unassigned portal: 28 added / 87 cumulative; A/B/principal, Sunday/Monday month, actual day, assigned-only, actor/cross-company denial, immutable history."
+          ]
+        },
+        {
+          "test": "tests/settings/calendar_read.php",
+          "exit": 0,
+          "seconds": 8.786,
+          "footer": [
+            "Invoice legacy/PDF provenance: 33 cumulative checks passed.",
+            "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Calendar source privacy/readback: 75 added checks (mysql)."
+          ]
+        },
+        {
+          "test": "tests/settings/calendar_controller.php",
+          "exit": 0,
+          "seconds": 9.313,
+          "footer": [
+            "Invoice legacy/PDF provenance: 33 cumulative checks passed.",
+            "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Calendar actual native controller/grid: 26 added checks (mysql)."
+          ]
+        },
+        {
+          "test": "tests/settings/calendar_boundaries.php",
+          "exit": 0,
+          "seconds": 5.142,
+          "footer": [
+            "Invoice legacy/PDF provenance: 33 cumulative checks passed.",
+            "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Calendar committed boundaries: 11 added checks (mysql)."
+          ]
+        },
+        {
+          "test": "tests/settings/calendar_concurrency.php",
+          "exit": 0,
+          "seconds": 4.349,
+          "footer": [
+            "Invoice legacy/PDF provenance: 33 cumulative checks passed.",
+            "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Calendar native contention: 26 added checks; six races with two observed waiters."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_stop_settings.php",
+          "exit": 0,
+          "seconds": 2.647,
+          "footer": [
+            "Settings model/controller integration: 112 total checks passed (mysql).",
+            "Settings formatting controller: 127 total checks passed.",
+            "Document preferences controller: 134 cumulative checks passed.",
+            "Own auto-stop Settings actual controller/view: 43 added / 177 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_auto_stop_integrity.php",
+          "exit": 0,
+          "seconds": 16.254,
+          "footer": [
+            "Auto-stop fault {\"kind\":\"standalone\",\"fault\":\"old_priority\",\"caught\":\"issuer_task_timer_unconfirmed\",\"rollback\":true}",
+            "Auto-stop fault {\"kind\":\"standalone\",\"fault\":\"policy\",\"caught\":\"issuer_project_write_unconfirmed\",\"rollback\":true}",
+            "Own timer auto-stop: 102 added / 328 cumulative; A/B/principal, four modality pairs, exact retry, ownOFF, foreign refusal, bearer and real rollback witnesses.",
+            "Auto-stop independent source/integrity: 30 added / 358 cumulative; current old-project authority, actor separation, closed/future source, metadata/ignored SQL, parent/followers and exact rollback/retry."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_auto_stop_concurrency.php",
+          "exit": 0,
+          "seconds": 10.549,
+          "footer": [
+            "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql).",
+            "Auto-stop real contention: 74 added / 300 cumulative; ten cases, two observed waiters each: [{\"case\":\"same_settings\",\"waiters\":2,\"workers\":[{\"ok\":true},{\"ok\":false,\"error\":\"company_task_timer_stop_preferences_stale\"}],\"active_kind\":\"project\",\"active_task\":16},{\"case\":\"same_receipt\",\"waiters\":2,\"workers\":[{\"ok\":true,\"id\":13},{\"ok\":true,\"id\":13}],\"active_kind\":\"standalone\",\"active_task\":13},{\"case\":\"distinct_project\",\"waiters\":2,\"workers\":[{\"ok\":true,\"id\":19},{\"ok\":true,\"id\":20}],\"active_kind\":\"project\",\"active_task\":19},{\"case\":\"distinct_modalities\",\"waiters\":2,\"workers\":[{\"ok\":true,\"id\":22},{\"ok\":true,\"id\":14}],\"active_kind\":\"project\",\"active_task\":22},{\"case\":\"committed_off\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_timer_running\"},{\"ok\":false,\"error\":\"company_project_timer_running\"}],\"active_kind\":\"project\",\"active_task\":23},{\"case\":\"revoked_actor\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_access_denied\"},{\"ok\":false,\"error\":\"company_project_access_denied\"}],\"active_kind\":\"project\",\"active_task\":24},{\"case\":\"revoked_edit\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_access_denied\"},{\"ok\":false,\"error\":\"company_project_access_denied\"}],\"active_kind\":\"project\",\"active_task\":25},{\"case\":\"revoked_old_project\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_access_denied\"},{\"ok\":false,\"error\":\"company_project_access_denied\"}],\"active_kind\":\"project\",\"active_task\":26},{\"case\":\"closed_old_parent\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_project_closed\"},{\"ok\":false,\"error\":\"company_project_closed\"}],\"active_kind\":\"project\",\"active_task\":27},{\"case\":\"revoked_api\",\"waiters\":2,\"workers\":[{\"ok\":false,\"error\":\"company_api_unauthenticated\"},{\"ok\":false,\"error\":\"company_api_unauthenticated\"}],\"active_kind\":\"project\",\"active_task\":28}]"
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_settings.php",
+          "exit": 0,
+          "seconds": 2.555,
+          "footer": [
+            "Settings model/controller integration: 112 total checks passed (mysql).",
+            "Settings formatting controller: 127 total checks passed.",
+            "Document preferences controller: 134 cumulative checks passed.",
+            "Own timer Settings actual controller/view: 43 added / 177 cumulative (mysql)."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_transitions.php",
+          "exit": 0,
+          "seconds": 9.332,
+          "footer": [
+            "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql).",
+            "Own timer-start status policy: 72 added / 298 cumulative (mysql); native tasks/standalone, A/B/principal, final-audit rollback/retry, no global inheritance."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_start_envelope.php",
+          "exit": 0,
+          "seconds": 10.825,
+          "footer": [
+            "Timer envelope observed {\"kind\":\"standalone\",\"fault\":\"extra_active\",\"phase\":\"last_audit\",\"caught\":\"issuer_task_timer_unconfirmed\",\"rollback\":true}",
+            "Timer envelope observed {\"kind\":\"standalone\",\"fault\":\"extra_closed\",\"phase\":\"last_audit\",\"caught\":\"issuer_task_timer_unconfirmed\",\"rollback\":true}",
+            "Timer envelope observed {\"kind\":\"standalone\",\"fault\":\"foreign_active\",\"phase\":\"last_audit\",\"caught\":\"issuer_task_timer_unconfirmed\",\"rollback\":true}",
+            "Timer start known envelope: 36 added / 334 cumulative, 9 actual early/final-audit witnesses."
+          ]
+        },
+        {
+          "test": "tests/settings/task_timer_concurrency.php",
+          "exit": 0,
+          "seconds": 8.712,
+          "footer": [
+            "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+            "Operational bearer API native projects/tasks/standalone/contracts/tickets: 122 cumulative checks passed (mysql).",
+            "Own task priority/default/self-follow: 104 added / 226 cumulative (mysql).",
+            "Own timer current-policy concurrency: 44 added / 270 cumulative; nine scenarios with two observed waiters each."
+          ]
+        },
+        {
+          "test": "tests/companies/native_timer_451.php",
+          "exit": 0,
+          "seconds": 10.893,
+          "footer": [
+            "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517",
+            "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517",
+            "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517",
+            "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517"
+          ]
+        },
+        {
+          "test": "tests/companies/task_billing_timesheets.php",
+          "exit": 0,
+          "seconds": 5.355,
+          "footer": [
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Native task timer billing: 90 cumulative checks passed (mysql). No external execution.",
+            "Native task billing actual controller and GUI: 102 cumulative checks passed (mysql).",
+            "Native task timesheet line layout: 120 cumulative checks passed (mysql)."
+          ]
+        },
+        {
+          "test": "tests/companies/task_billing_atomic.php",
+          "exit": 0,
+          "seconds": 6.557,
+          "footer": [
+            "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Native task timer billing: 90 cumulative checks passed (mysql). No external execution.",
+            "Native task billing atomic/provenance/portal origin: 107 cumulative checks passed (mysql)."
+          ]
+        },
+        {
+          "test": "tests/companies/operations_resume_439_billing.php",
+          "exit": 0,
+          "seconds": 8.324,
+          "footer": [
+            "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+            "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+            "Native task timer billing: 90 cumulative checks passed (mysql). No external execution.",
+            "Rebuilt recovery439 standalone/selected-timer/batch A+B/idempotency/cancellation/ledger: 119 cumulative checks passed (mysql)."
+          ]
+        },
+        {
+          "test": "tests/companies/project_fixed_billing_atomic.php",
+          "exit": 0,
+          "seconds": 13.612,
+          "footer": [
+            "Native task billing actual controller and GUI: 102 cumulative checks passed (mysql).",
+            "Completed fixed project canonical billing: 128 cumulative checks passed (mysql).",
+            "Fixed project actual controller/GUI/principal/PDF: 141 cumulative checks passed (mysql).",
+            "Fixed project atomic/provenance/portal exclusion: 162 cumulative checks passed (mysql)."
+          ]
+        },
+        {
+          "test": "tests/companies/project_timesheets_atomic.php",
+          "exit": 0,
+          "seconds": 12.141,
+          "footer": [
+            "Owned contracts/snapshot/number/PDF/copy/cancel and support/replies/search: 59 checks passed (mysql). No external transport or signature.",
+            "Native timesheets selected temporal data/keyset/privacy: 106 cumulative checks passed (mysql). No live timer or financial mutation.",
+            "Timesheet atomic rules/audit/permission/profile/source guards: 134 cumulative checks passed (mysql)."
+          ]
+        },
+        {
+          "test": "tests/banco_brasil_local_noncash_clock_v3.php",
+          "exit": 0,
+          "seconds": 10.049,
+          "footer": [
+            "BB origination: 144 cumulative native MySQL checks; no transmission or bank homologation.",
+            "BB API native MySQL/encryption/outbox: 208 cumulative checks; simulated provider, no real tokens/charges.",
+            "NEW Noncash V3 native declaration/restoration: 222 cumulative actual SQL checks; no external operation.",
+            "LOCAL V3 real second boundary: 19 added / 241 cumulative; two SQL delay witnesses, audit equality, canonical balance and exact retry."
+          ]
+        },
+        {
+          "test": "tests/banco_brasil_local_noncash_recurring_v3.php",
+          "exit": 0,
+          "seconds": 11.469,
+          "footer": [
+            "BB API native MySQL/encryption/outbox: 208 cumulative checks; simulated provider, no real tokens/charges.",
+            "NEW Noncash V3 native declaration/restoration: 222 cumulative actual SQL checks; no external operation.",
+            "NEW Noncash V3 independent native funds: 231 cumulative SQL checks; synthetic evidence only.",
+            "NEW Noncash V3 unchanged recurring-principal contract: 241 cumulative SQL checks; no new bank or recurrence rule."
+          ]
+        }
+      ]
+    }
+  ]
+}

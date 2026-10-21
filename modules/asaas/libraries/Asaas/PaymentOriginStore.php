@@ -43,6 +43,18 @@ final class PaymentOriginStore
         return $rows[0] ?? null;
     }
 
+    public function byRemoteScope(string $remoteId, array $scope): ?array
+    {
+        if (!$this->ready()) return null;
+        $rows=$this->db->get_where($this->table,[
+            'remote_id'=>$remoteId,'provider'=>$scope['provider']??'',
+            'account_id'=>$scope['account_id']??'','environment'=>$scope['environment']??'',
+            'issuer_id'=>$scope['issuer_id']??null,
+        ])->result_array();
+        if (count($rows)>1) throw new \RuntimeException('ambiguous_payment_origin');
+        return $rows[0]??null;
+    }
+
     public function reserve(array $invoice, array $context, string $state = 'issuing', ?string $remoteId = null): array
     {
         if (!$this->ready()) {

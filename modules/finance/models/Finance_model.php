@@ -1,5 +1,6 @@
 <?php
 defined("BASEPATH") or exit("No direct script access allowed");
+require_once __DIR__ . '/../libraries/FinanceLegacyScope.php';
 
 class Finance_model extends App_Model
 {
@@ -12,15 +13,17 @@ class Finance_model extends App_Model
     public function get_transacoes_para_conciliacao()
     {
         // Faturas (entradas)
-        $this->db->select('tblinvoices.id, tblinvoices.date, tblinvoices.total as valor, CONCAT("Fatura - ", tblinvoices.id, " - ", tblclients.company) as descricao, "entrada" as tipo');
-        $this->db->from('tblinvoices');
-        $this->db->join('tblclients', 'tblclients.userid = tblinvoices.clientid', 'left');
-        $this->db->where_in('tblinvoices.status', [1, 2]); // Status 1 e 2 para conciliar
+        $this->db->from(db_prefix() . 'invoices AS finance_invoice');
+        $this->db->select('finance_invoice.id, finance_invoice.date, finance_invoice.total as valor, CONCAT("Fatura - ", finance_invoice.id, " - ", finance_client.company) as descricao, "entrada" as tipo');
+        $this->db->join(db_prefix() . 'clients AS finance_client', 'finance_client.userid = finance_invoice.clientid', 'left');
+        $this->db->where_in('finance_invoice.status', [1, 2]); // Status 1 e 2 para conciliar
+        FinanceLegacyScope::invoices($this->db, db_prefix(), 'finance_invoice');
         $faturas = $this->db->get()->result_array();
 
         // Despesas (saídas)
-        $this->db->select('tblexpenses.id, tblexpenses.date, tblexpenses.amount as valor, CONCAT(tblexpenses.expense_name, " - ", tblexpenses.note) as descricao, "saida" as tipo');
-        $this->db->from('tblexpenses');
+        $this->db->from(db_prefix() . 'expenses AS finance_expense');
+        $this->db->select('finance_expense.id, finance_expense.date, finance_expense.amount as valor, CONCAT(finance_expense.expense_name, " - ", finance_expense.note) as descricao, "saida" as tipo');
+        FinanceLegacyScope::expenses($this->db, db_prefix(), 'finance_expense');
         $despesas = $this->db->get()->result_array();
 
         // Combinar e ordenar por data
@@ -72,15 +75,17 @@ class Finance_model extends App_Model
     public function get_faturas_previsao()
 {
     $this->db->select('date, total as valor');
-    $this->db->from('tblinvoices');
+    $this->db->from(db_prefix() . 'invoices');
     $this->db->where('status', 1); // Status 1 significa fatura a receber
+    FinanceLegacyScope::invoices($this->db, db_prefix());
     return $this->db->get()->result_array();
 }
 
 public function get_despesas()
 {
     $this->db->select('date, amount as valor');
-    $this->db->from('tblexpenses');
+    $this->db->from(db_prefix() . 'expenses');
+    FinanceLegacyScope::expenses($this->db, db_prefix());
     return $this->db->get()->result_array();
 }
 
@@ -91,8 +96,9 @@ public function get_despesas()
     public function calculate_total_revenue()
     {
         $this->db->select_sum("total");
-        $this->db->from("tblinvoices");
+        $this->db->from(db_prefix() . 'invoices');
         $this->db->where("status", 2); // Assumindo que status '2' representa faturas pagas
+        FinanceLegacyScope::invoices($this->db, db_prefix());
         $query = $this->db->get();
         $result = $query->row();
         return $result ? $result->total : 0;
@@ -108,7 +114,8 @@ public function get_despesas()
     public function calculate_total_expense()
     {
         $this->db->select_sum("amount");
-        $this->db->from("tblexpenses");
+        $this->db->from(db_prefix() . 'expenses');
+        FinanceLegacyScope::expenses($this->db, db_prefix());
         $query = $this->db->get();
         $result = $query->row();
         return $result ? $result->amount : 0;
@@ -183,10 +190,11 @@ public function get_despesas()
     // Obtenha todas as faturas pagas como entradas financeiras
     public function get_all_invoices_as_entries()
     {
-        $this->db->select("tblinvoices.id, tblinvoices.date AS date, tblinvoices.clientid, tblinvoices.total AS valor, tblclients.company AS company_name");
-        $this->db->from("tblinvoices");
-        $this->db->join("tblclients", "tblclients.userid = tblinvoices.clientid", "left");
-        $this->db->where("tblinvoices.status", 2); // Status '2' significa fatura paga
+        $this->db->from(db_prefix() . 'invoices AS finance_invoice');
+        $this->db->select('finance_invoice.id, finance_invoice.date AS date, finance_invoice.clientid, finance_invoice.total AS valor, finance_client.company AS company_name');
+        $this->db->join(db_prefix() . 'clients AS finance_client', 'finance_client.userid = finance_invoice.clientid', 'left');
+        $this->db->where('finance_invoice.status', 2); // Status '2' significa fatura paga
+        FinanceLegacyScope::invoices($this->db, db_prefix(), 'finance_invoice');
         $query = $this->db->get();
 
         $entries = [];
@@ -252,8 +260,9 @@ public function get_invoice_forecast_30_days()
 
     // Busca o total de faturas pendentes nos próximos 30 dias
     $this->db->select('duedate, SUM(total) as daily_total');
-    $this->db->from('tblinvoices');
+    $this->db->from(db_prefix() . 'invoices');
     $this->db->where('status', 1); // Status 1 para faturas a receber
+    FinanceLegacyScope::invoices($this->db, db_prefix());
     $this->db->where('duedate >=', $current_date);
     $this->db->where('duedate <=', $end_date);
     $this->db->group_by('duedate');

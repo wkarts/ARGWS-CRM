@@ -11,6 +11,7 @@ use AsaasSdkProvider;
 
 require_once __DIR__ . '/PaymentOriginStore.php';
 require_once __DIR__ . '/InvoicePaymentRemoval.php';
+require_once __DIR__ . '/WebhookTransactionGuard.php';
 
 final class AsaasAdapter
 {
@@ -86,8 +87,6 @@ private function normalizePath(string $path): string
             $this->log('info', 'Asaas request concluída.', [
                 'method' => $method,
                 'path' => $path,
-                'original_path' => $originalPath,
-                'query' => $query,
                 'correlation_id' => $headers['X-Correlation-Id'] ?? null,
             ]);
 
@@ -99,10 +98,7 @@ private function normalizePath(string $path): string
             $this->log('error', 'Erro na API Asaas.', [
                 'method' => $method,
                 'path' => $path,
-                'original_path' => $originalPath,
-                'query' => $query,
                 'status' => $exception->getStatusCode(),
-                'message' => $exception->getMessage(),
                 'correlation_id' => $headers['X-Correlation-Id'] ?? null,
             ]);
 
@@ -111,9 +107,6 @@ private function normalizePath(string $path): string
             $this->log('error', 'Erro de transporte na API Asaas.', [
                 'method' => $method,
                 'path' => $path,
-                'original_path' => $originalPath,
-                'query' => $query,
-                'message' => $exception->getMessage(),
                 'correlation_id' => $headers['X-Correlation-Id'] ?? null,
             ]);
 
@@ -164,7 +157,7 @@ private function normalizePath(string $path): string
                 'error' => [
                     'type' => 'api_error',
                     'status' => $exception->getStatusCode(),
-                    'message' => $exception->getMessage(),
+                    'message' => 'Falha de comunicação com o Asaas.',
                 ],
                 'meta' => [
                     'method' => $method,
@@ -180,7 +173,7 @@ private function normalizePath(string $path): string
                 'error' => [
                     'type' => 'transport_error',
                     'status' => null,
-                    'message' => $exception->getMessage(),
+                    'message' => 'Falha de comunicação com o Asaas.',
                 ],
                 'meta' => [
                     'method' => $method,
@@ -306,7 +299,8 @@ private function normalizePath(string $path): string
             }
         }
 
-        $document = $this->normalizeDocument($client['vat'] ?? '');
+        $document = $this->normalizeIdentityDocument((string) ($client['vat'] ?? ''));
+        if ($document === null) throw new \RuntimeException('customer_document_review_required');
         $response = $this->request('GET', '/customers', ['cpfCnpj' => $document]);
         $customerId = null;
         $created = false;
@@ -453,305 +447,304 @@ public function refundPayment(string $paymentId, array $payload = []): array
         ];
     }
 
-    /**
-     * @return array{processed: bool, duplicated: bool, message: string}
-     */
-    public function handleWebhook(array $headers, string $rawBody): array
+    public function webhookIntegrations(): WebhookIntegrationStore
+    {
+        require_once __DIR__ . '/WebhookIntegrationStore.php';
+        return new WebhookIntegrationStore($this->ci->db);
+    }
+
+    public function registerWebhookIntegration(string $label, string $environment, string $expectedAccount): array
     {
         require_once __DIR__ . '/WebhookSecurity.php';
+        $client = $this->provider->clientForEnvironment($environment);
+        $scope = $this->provider->contextForClient($client, $environment);
+        if (!hash_equals($expectedAccount, $scope['account_id'])) throw new \RuntimeException('webhook_account_mismatch');
+        return $this->webhookIntegrations()->createVerified($label, $scope);
+    }
 
-        $validated = WebhookSecurity::validate(
-            (string) $this->provider->setting('webhook_secret'),
-            $headers,
-            $rawBody
-        );
+    /** Explicit administrative retry; never infer a historical origin. */
+    public function retryReviewedWebhook(int $eventRowId, int $integrationId): void
+    {
+        $debug=$this->ci->db->db_debug;$this->ci->db->db_debug=false;
+        try { $this->retryReviewedWebhookChecked($eventRowId,$integrationId); }
+        finally { $this->ci->db->db_debug=$debug; }
+    }
+
+    private function retryReviewedWebhookChecked(int $eventRowId, int $integrationId): void
+    {
+        $db=$this->ci->db;
+        $integration=$this->webhookIntegrations()->byId($integrationId);
+        if (!$integration || (int)$integration['enabled']!==1 || ($integration['issuer_id']??null)!==null) throw new \RuntimeException('invalid_review_scope');
+        $table=db_prefix().'asaas_webhook_events';
+        WebhookTransactionGuard::prepare($db);
+        $this->assertWebhookTransactionalStorage();
+        WebhookTransactionGuard::prepare($db);
+        if (!$db->trans_begin()) throw new \RuntimeException('transaction_unavailable');
+        try {
+            $row=$db->query('SELECT * FROM '.$db->protect_identifiers($table,true).' WHERE id = ? FOR UPDATE',[$eventRowId])->row_array();
+            if (!$row || !in_array($row['process_status'],['review_required','failed'],true)
+                || (!empty($row['integration_id']) && (int)$row['integration_id']!==$integrationId)) throw new \RuntimeException('event_review_not_allowed');
+            $origin=$this->originStore()->byRemoteScope((string)$row['asaas_payment_id'],$integration);
+            if (!$origin || ($origin['issuer_id']??null)!==null || $origin['provider']!=='asaas'
+                || $origin['account_id']!==$integration['account_id'] || $origin['environment']!==$integration['environment']
+                || $origin['state']!=='issued') throw new \RuntimeException('origin_reconciliation_required');
+            $this->webhookIntegrations()->audit($integrationId,'event_reviewed',$eventRowId);
+            if (!$db->where('id',$eventRowId)->update($table,[
+                'integration_id'=>$integrationId,'reviewed_by'=>get_staff_user_id()?:null,
+                'reviewed_at'=>date('Y-m-d H:i:s'),'process_status'=>'received',
+                'attempt_count'=>0,'next_attempt_at'=>null,'error_message'=>null,
+            ]) || !$db->trans_status() || !$db->trans_commit()) throw new \RuntimeException('review_not_persisted');
+        } catch (\Throwable $error) { $db->trans_rollback();throw $error; }
+    }
+
+    /** Receipt is authenticated and durable; financial reconciliation runs on CRON. */
+    public function handleWebhook(array $headers, string $rawBody, ?string $publicId = null): array
+    {
+        $debug=$this->ci->db->db_debug;
+        $this->ci->db->db_debug=false;
+        try {
+            WebhookTransactionGuard::prepare($this->ci->db);
+            return $this->receiveWebhookChecked($headers,$rawBody,$publicId);
+        }
+        finally { $this->ci->db->db_debug=$debug; }
+    }
+
+    private function receiveWebhookChecked(array $headers, string $rawBody, ?string $publicId): array
+    {
+        require_once __DIR__ . '/WebhookSecurity.php';
+        $store = $this->webhookIntegrations();
+        if (!$store->ready()) return $this->webhookResult(false, false, 'Webhook indisponível.', 503);
+        $integration = $publicId === null ? null : $store->byPublicId($publicId);
+        if ($publicId !== null && (!$integration || (int)$integration['enabled'] !== 1)) {
+            return $this->webhookResult(false, false, 'Não autorizado.', 401);
+        }
+        $validated = $integration
+            ? WebhookSecurity::validateDigest((string)$integration['token_hash'], $headers, $rawBody)
+            : WebhookSecurity::validate((string)$this->provider->setting('webhook_secret'), $headers, $rawBody);
         if (!$validated['ok']) {
+            if ($integration) $store->recordRejected((int)$integration['id']);
             return $this->webhookResult(false, false, $validated['message'], $validated['status']);
         }
-
-        $eventId = $validated['event_id'];
-        $payload = $validated['payload'];
-        $payment = isset($payload['payment']) && is_array($payload['payment']) ? $payload['payment'] : [];
-        $paymentId = isset($payment['id']) && is_string($payment['id']) ? $payment['id'] : null;
-        $table = db_prefix() . 'asaas_webhook_events';
-
-        if (!$this->ci->db->table_exists($table)) {
-            return $this->webhookResult(false, false, 'Histórico de eventos não inicializado.', 503);
+        $db = $this->ci->db;
+        $table = db_prefix().'asaas_webhook_events';
+        $scopeKey = $integration ? 'integration:'.$integration['id'] : 'legacy';
+        $debug = $db->db_debug;
+        $db->db_debug = false;
+        $owned = false;
+        try {
+            foreach ([$table,db_prefix().'asaas_webhook_integrations'] as $participant) {
+                $engine=$db->query('SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?',[$participant]);
+                if (!$engine || strtoupper((string)($engine->row_array()['ENGINE']??''))!=='INNODB') throw new \RuntimeException('webhook_transactional_storage_required');
+            }
+            WebhookTransactionGuard::prepare($db);
+            if (!$db->trans_begin()) throw new \RuntimeException('webhook_ingress_transaction_unavailable');
+            $owned = true;
+            $stored = $db->query('INSERT IGNORE INTO '.$db->protect_identifiers($table,true)
+                .' (event_id,event_type,asaas_payment_id,received_at,payload,process_status,integration_id,scope_key,payload_hash) VALUES (?,?,?,?,?,?,?,?,?)',
+                [$validated['event_id'],$validated['event'],$validated['payload']['payment']['id']??null,
+                 date('Y-m-d H:i:s'),json_encode($validated['payload']), 'received',
+                 $integration['id']??null,$scopeKey,$validated['payload_hash']]);
+            if ($stored === false) throw new \RuntimeException('webhook_storage_failed');
+            $duplicate = $db->affected_rows() === 0;
+            $row = $db->get_where($table,['scope_key'=>$scopeKey,'event_id'=>$validated['event_id']])->row_array();
+            if (!$row) throw new \RuntimeException('webhook_storage_unconfirmed');
+            if (!is_string($row['payload_hash']??null) || !hash_equals($row['payload_hash'],$validated['payload_hash'])) {
+                // Do not overwrite the original event or its settled outcome.
+                if ($integration) $store->recordRejected((int)$integration['id']);
+                if (!$db->trans_status() || !$db->trans_commit()) throw new \RuntimeException('webhook_conflict_audit_unconfirmed');
+                $owned = false;
+                return $this->webhookResult(false,false,'Identificação de evento conflitante.',409);
+            }
+            if ($integration) $store->recordAccepted((int)$integration['id']);
+            if (!$db->trans_status() || !$db->trans_commit()) throw new \RuntimeException('webhook_ingress_commit_unconfirmed');
+            $owned = false;
+            return $this->webhookResult(true,$duplicate,'Evento armazenado.',200);
+        } catch (\Throwable $error) {
+            if ($owned) $db->trans_rollback();
+            throw $error;
+        } finally {
+            $db->db_debug = $debug;
         }
-
-        $receivedAt = date('Y-m-d H:i:s');
-        $stored = $this->ci->db->query(
-            'INSERT IGNORE INTO ' . $this->ci->db->protect_identifiers($table, true)
-                . ' (event_id, event_type, asaas_payment_id, received_at, payload, process_status) '
-                . 'VALUES (?, ?, ?, ?, ?, ?)',
-            [$eventId, $validated['event'], $paymentId, $receivedAt, $rawBody, 'received']
-        );
-        if ($stored === false) {
-            return $this->webhookResult(false, false, 'Não foi possível armazenar o evento.', 503);
-        }
-
-        // Apenas confirmamos recebimento após persistir de modo durável.
-        // A conciliação financeira é executada pelo CRON, sem bloquear a
-        // conexão do Asaas ou acionar reentregas por operações demoradas.
-        return $this->webhookResult(true, $this->ci->db->affected_rows() === 0,
-            'Evento armazenado.', 200);
     }
 
-    /**
-     * Executa conciliação em pequenos lotes, sem workers adicionais.
-     * O CRON pode retomar registros recebidos/falhos após reinicializações.
-     * @return array{processed: int, failed: int, pending: int}
-     */
     public function processPendingWebhookEvents(int $limit = 20): array
     {
-        $table = db_prefix() . 'asaas_webhook_events';
-        if (!$this->ci->db->table_exists($table)) {
-            return ['processed' => 0, 'failed' => 0, 'pending' => 0];
+        if (!$this->webhookIntegrations()->ready()) return ['processed'=>0,'failed'=>0,'pending'=>0];
+        $db=$this->ci->db;
+        $table=$db->protect_identifiers(db_prefix().'asaas_webhook_events',true);
+        $limit=max(1,min($limit,50));
+        $pending=$db->query("SELECT id FROM {$table} WHERE process_status IN ('received','failed') AND (next_attempt_at IS NULL OR next_attempt_at <= ?) ORDER BY id ASC LIMIT {$limit}", [date('Y-m-d H:i:s')])->result_array();
+        $processed=0; $failed=0;
+        foreach($pending as $event) {
+            $result=$this->processStoredWebhook((int)$event['id']);
+            $result['processed'] ? $processed++ : $failed++;
         }
-        $limit = max(1, min($limit, 50));
-        $pending = $this->ci->db->select('event_id')
-            ->from($table)
-            ->where_in('process_status', ['received', 'failed'])
-            ->order_by('id', 'ASC')
-            ->limit($limit)
-            ->get()->result_array();
-        $processed = 0;
-        $failed = 0;
-        foreach ($pending as $event) {
-            $result = $this->processStoredWebhook((string) $event['event_id']);
-            if ($result['processed']) {
-                $processed++;
-            } else {
-                $failed++;
-            }
-        }
-        return ['processed' => $processed, 'failed' => $failed, 'pending' => count($pending)];
+        return ['processed'=>$processed,'failed'=>$failed,'pending'=>count($pending)];
     }
 
-    /**
-     * Reprocessamento seguro também para entregas "at least once" do Asaas.
-     * Usamos GET_LOCK para serializar eventos que alteram o mesmo pagamento.
-     * O contrato legado (processed/duplicated/message) permanece inalterado.
-     */
-    private function processStoredWebhook(string $eventId): array
+    private function processStoredWebhook(int $rowId): array
     {
-        $db = $this->ci->db;
-        $table = db_prefix() . 'asaas_webhook_events';
-        $row = $db->get_where($table, ['event_id' => $eventId])->row_array();
-        if (!$row) {
-            return $this->webhookResult(false, false, 'Evento ainda não está disponível.', 503);
-        }
-        if (in_array($row['process_status'], ['processed', 'ignored', 'review_required'], true)) {
-            return $this->webhookResult(true, true, 'Evento já recebido.', 200);
-        }
-
-        $paymentLockId = trim((string) ($row['asaas_payment_id'] ?? ''));
-        $lockKey = 'crm_asaas_' . substr(hash('sha256', $paymentLockId !== '' ? $paymentLockId : $eventId), 0, 40);
-        $lockRow = $db->query('SELECT GET_LOCK(?, 3) AS acquired', [$lockKey]);
-        if (!$lockRow || (int) ($lockRow->row_array()['acquired'] ?? 0) !== 1) {
-            return $this->webhookResult(false, false, 'Evento aguardando processamento.', 503);
-        }
-
+        $db=$this->ci->db;
+        $table=db_prefix().'asaas_webhook_events';
+        $debug=$db->db_debug; $db->db_debug=false;
+        try { WebhookTransactionGuard::prepare($db); }
+        catch (\Throwable $error) { return $this->webhookResult(false,false,'Transação indisponível para processamento.',503); }
+        finally { $db->db_debug=$debug; }
+        $row=$db->get_where($table,['id'=>$rowId])->row_array();
+        if (!$row) return $this->webhookResult(false,false,'Evento indisponível.',503);
+        $terminal=['processed','ignored','review_required','observed'];
+        if (in_array($row['process_status'],$terminal,true)) return $this->webhookResult(true,true,'Evento registrado.',200);
+        $lockKey='crm_asaas_'.substr(hash('sha256',($row['scope_key']??'legacy').':'.($row['asaas_payment_id']?:$row['event_id'])),0,40);
+        $lock=$db->query('SELECT GET_LOCK(?, 0) AS acquired',[$lockKey]);
+        if (!$lock || (int)($lock->row_array()['acquired']??0)!==1) return $this->webhookResult(false,false,'Evento aguardando processamento.',503);
+        $debug=$db->db_debug; $db->db_debug=false;
+        $owned=false;
         try {
-            $db->trans_begin();
-            $current = $db->query(
-                'SELECT * FROM ' . $db->protect_identifiers($table, true) . ' WHERE event_id = ? FOR UPDATE',
-                [$eventId]
-            )->row_array();
-            if (!$current) {
-                $db->trans_rollback();
-                return $this->webhookResult(false, false, 'Evento não encontrado.', 503);
+            $this->assertWebhookTransactionalStorage();
+            WebhookTransactionGuard::prepare($db);
+            if (!$db->trans_begin()) throw new \RuntimeException('transaction_unavailable');
+            $owned=true;
+            $current=$db->query('SELECT * FROM '.$db->protect_identifiers($table,true).' WHERE id = ? FOR UPDATE',[$rowId])->row_array();
+            if (!$current) throw new \RuntimeException('event_unavailable');
+            if (in_array($current['process_status'],$terminal,true)) {
+                if (!$db->trans_commit()) throw new \RuntimeException('commit_unconfirmed');
+                $owned=false;
+                return $this->webhookResult(true,true,'Evento registrado.',200);
             }
-            if (in_array($current['process_status'], ['processed', 'ignored', 'review_required'], true)) {
-                $db->trans_commit();
-                return $this->webhookResult(true, true, 'Evento já processado.', 200);
-            }
-
-            $payload = json_decode((string) $current['payload'], true);
-            if (!is_array($payload)) {
-                throw new \RuntimeException('Payload persistido inválido.');
-            }
-
-            $result = $this->reconcileWebhookEvent($payload);
-            $db->where('event_id', $eventId)->update($table, [
-                'process_status' => $result,
-                'processed_at' => date('Y-m-d H:i:s'),
-                'error_message' => $result === 'review_required' ? 'Conferência financeira manual necessária.' : null,
-            ]);
-            if ($db->trans_status() === false) {
-                throw new \RuntimeException('A transação de processamento falhou.');
-            }
-            $db->trans_commit();
-
-            if ($result === 'review_required') {
-                $this->log('error', 'Evento Asaas requer conferência financeira.', [
-                    'event_id' => $eventId,
-                    'event_type' => $current['event_type'] ?? null,
-                ]);
-            }
-
-            return $this->webhookResult(true, false, 'Evento recebido e registrado.', 200);
+            $payload=json_decode((string)$current['payload'],true,32);
+            if (!is_array($payload)) throw new \RuntimeException('invalid_persisted_event');
+            $integration=empty($current['integration_id']) ? null : $this->webhookIntegrations()->byId((int)$current['integration_id']);
+            $result=$this->reconcileWebhookEvent($payload,$integration,$current);
+            if (!$db->where('id',$rowId)->update($table,[
+                'process_status'=>$result['state'],'verified_status'=>$result['status']??null,
+                'invoice_id'=>$result['invoice_id']??null,'processed_at'=>date('Y-m-d H:i:s'),
+                'attempt_count'=>(int)($current['attempt_count']??0)+1,'next_attempt_at'=>null,
+                'error_message'=>$result['state']==='review_required' ? 'Conferência financeira manual necessária.' : null,
+            ]) || !$db->trans_status() || !$db->trans_commit()) throw new \RuntimeException('reconciliation_commit_failed');
+            $owned=false;
+            return $this->webhookResult(true,false,'Evento registrado.',200);
         } catch (\Throwable $error) {
-            $db->trans_rollback();
-            // Reentrega do mesmo ID pode voltar a tentar, sem registrar baixa dupla.
-            $db->where('event_id', $eventId)->update($table, [
-                'process_status' => 'failed',
-                'error_message' => mb_substr($error->getMessage(), 0, 1000),
+            if ($owned) $db->trans_rollback();
+            $attempt=(int)($row['attempt_count']??0)+1;
+            $db->where('id',$rowId)->update($table,[
+                'process_status'=>$attempt>=10?'review_required':'failed', 'attempt_count'=>$attempt,
+                'next_attempt_at'=>date('Y-m-d H:i:s',time()+min(3600,30*(2**min($attempt,7)))),
+                'error_message'=>'Falha temporária na verificação canônica.',
             ]);
-            $this->log('error', 'Não foi possível conciliar evento Asaas.', [
-                'event_id' => $eventId, 'error_type' => get_class($error),
-            ]);
-            return $this->webhookResult(false, false, 'Falha temporária no processamento.', 503);
+            // Never store provider exception text, request headers or raw payloads.
+            log_message('error','[Asaas] Falha temporária na conciliação do webhook.');
+            return $this->webhookResult(false,false,'Falha temporária no processamento.',503);
         } finally {
-            $db->query('SELECT RELEASE_LOCK(?)', [$lockKey]);
+            $db->query('SELECT RELEASE_LOCK(?)',[$lockKey]);
+            $db->db_debug=$debug;
         }
     }
 
-    /**
-     * Nunca gerar baixa a partir de um ID de cobrança não vinculado ao CRM.
-     * Eventos de estorno, chargeback e divergências são guardados para
-     * reconciliação manual, sem apagar pagamentos históricos.
-     */
-    private function reconcileWebhookEvent(array $payload): string
+    /** Every financial mutation requires explicit authenticated scope and canonical GETs. */
+    private function reconcileWebhookEvent(array $payload, ?array $integration = null, array $storedEvent = []): array
     {
-        $event = (string) ($payload['event'] ?? '');
-        if (!str_starts_with($event, 'PAYMENT_')) {
-            return 'ignored';
+        $review=['state'=>'review_required'];
+        $event=(string)($payload['event']??'');
+        if (!str_starts_with($event,'PAYMENT_')) return ['state'=>'ignored'];
+        if (!$integration || (int)$integration['enabled']!==1 || ($integration['issuer_id']??null)!==null
+            || ($integration['provider']??'')!=='asaas') return $review;
+        $paymentId=$payload['payment']['id']??null;
+        if (!is_string($paymentId) || !preg_match('/^[a-zA-Z0-9_-]{1,64}$/D',$paymentId)) return $review;
+        // No lookup by attacker-supplied invoice hash or unscoped legacy map.
+        $origin=$this->originStore()->byRemoteScope($paymentId,$integration);
+        if (!$origin || ($origin['issuer_id']??null)!==null || $origin['provider']!=='asaas' || $origin['channel']!=='api'
+            || $origin['account_id']!==$integration['account_id'] || $origin['environment']!==$integration['environment']) return $review;
+        $invoiceId=(int)$origin['invoice_id'];
+        $db=$this->ci->db;
+        $locked=$db->query('SELECT * FROM '.$db->protect_identifiers(db_prefix().'invoices',true).' WHERE id = ? FOR UPDATE',[$invoiceId]);
+        $invoice=$locked?$locked->row_array():[];
+        $lockedOrigin=$db->query('SELECT * FROM '.$db->protect_identifiers(db_prefix().'asaas_payment_origins',true).' WHERE id = ? FOR UPDATE',[(int)$origin['id']]);
+        $origin=$lockedOrigin?$lockedOrigin->row_array():[];
+        if (!$origin) return $review;
+        if (!$invoice || ($invoice['issuer_id']??null)!==null || $invoice['hash']!==$origin['invoice_hash']) return $review;
+        $currency=$db->get_where(db_prefix().'currencies',['id'=>(int)($invoice['currency']??0)])->row_array();
+        if (($currency['name']??'')!=='BRL') return $review;
+        $map=$db->get_where(db_prefix().'asaas_payments_map',['invoice_id'=>$invoiceId])->row_array();
+        if (!$map || $map['asaas_payment_id']!==$paymentId) return $review;
+        // Account/environment come from immutable origin, not current sandbox toggle.
+        $client=$this->provider->clientForOrigin($origin);
+        $verified=$this->requestWithClient($client,'GET','/payments/'.$paymentId);
+        if (!$verified['success']) throw new \RuntimeException('canonical_payment_unavailable');
+        $p=$verified['data'];
+        $status=$p['status']??null;
+        if (!is_string($status) || !preg_match('/^[A-Z_]{1,32}$/D',$status)) return $review+['status'=>'UNKNOWN','invoice_id'=>$invoiceId];
+        $meta=['status'=>$status,'invoice_id'=>$invoiceId];
+        if (!empty($p['deleted']) || ($p['id']??'')!==$paymentId || ($p['externalReference']??'')!==$origin['invoice_hash']
+            || !isset($p['value']) || !$this->equalMoney($p['value'],$origin['invoice_total'])
+            || !$this->equalMoney($p['value'],$invoice['total'])
+            || ($p['dueDate']??null)!==$origin['invoice_due_date'] || ($p['dueDate']??null)!==$invoice['duedate']) return $review+$meta;
+        $customerId=$p['customer']??null;
+        if (!is_string($customerId) || !preg_match('/^[a-zA-Z0-9_-]{1,64}$/D',$customerId)) return $review+$meta;
+        $customer=$this->requestWithClient($client,'GET','/customers/'.$customerId);
+        if (!$customer['success']) throw new \RuntimeException('canonical_customer_unavailable');
+        $local=$db->get_where(db_prefix().'clients',['userid'=>(int)($invoice['clientid']??0)])->row_array();
+        $document=$this->normalizeIdentityDocument((string)($local['vat']??''));
+        if ($document===null || ($customer['data']['id']??'')!==$customerId || !empty($customer['data']['deleted'])
+            || $this->normalizeIdentityDocument((string)($customer['data']['cpfCnpj']??''))!==$document) return $review+$meta;
+        $reviewEvents=['PAYMENT_REFUNDED','PAYMENT_PARTIALLY_REFUNDED','PAYMENT_REFUND_IN_PROGRESS',
+            'PAYMENT_RECEIVED_IN_CASH_UNDONE','PAYMENT_CHARGEBACK_REQUESTED','PAYMENT_CHARGEBACK_DISPUTE','PAYMENT_AWAITING_CHARGEBACK_REVERSAL'];
+        if (in_array($event,$reviewEvents,true) || str_contains($status,'REFUND') || str_contains($status,'CHARGEBACK')) return $review+$meta;
+        // Preserve the deployed CRM settlement policy while retaining the exact provider status.
+        // CONFIRMED is not equivalent to available funds or PIGE financial confirmation.
+        if (!in_array($event, ['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED'], true)
+            || !in_array($status, ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'], true)) return ['state'=>'observed']+$meta;
+        $records=db_prefix().'invoicepaymentrecords';
+        require_once __DIR__.'/CanonicalReceiptRecorder.php';
+        $paymentDate=CanonicalReceiptRecorder::effectiveDate($p);
+        if ($paymentDate===null || !in_array($p['billingType']??null,['PIX','BOLETO','CREDIT_CARD'],true)) return $review+$meta;
+        $registeredRows=$db->get_where($records,['transactionid'=>$paymentId])->result_array();
+        if ($registeredRows) {
+            if (count($registeredRows)!==1) return $review+$meta;
+            $registered=$registeredRows[0];
+            $proof=$db->get_where(db_prefix().'asaas_settlement_outbox',[
+                'invoice_id'=>$invoiceId,'origin_id'=>(int)$origin['id'],'receipt_id'=>(int)$registered['id'],
+                'provider'=>'asaas','account_id'=>$origin['account_id'],'environment'=>$origin['environment'],
+                'remote_id'=>$paymentId,'payment_date'=>$paymentDate,'billing_type'=>$p['billingType'],
+            ])->result_array();
+            $proven=count($proof)===1 && (int)$invoice['status']===2 && (int)$registered['invoiceid']===$invoiceId
+                && ($registered['paymentmode']??'')==='asaas' && ($registered['paymentmethod']??'')===$p['billingType']
+                && ($registered['date']??'')===$paymentDate && $this->equalMoney($registered['amount']??0,$p['value'])
+                && $db->get_where($records,['invoiceid'=>$invoiceId])->num_rows()===1;
+            return ['state'=>$proven?'processed':'review_required']+$meta;
         }
+        if (!in_array((int)$invoice['status'],[1,4],true)
+            || $db->get_where($records,['invoiceid'=>$invoiceId])->num_rows()>0
+            || $origin['state']!=='issued') return $review+$meta;
+        // A generic Payments_model::add would send staff e-mails/Pusher and run
+        // arbitrary downstream hooks. Keep those effects in a visible outbox.
+        require_once __DIR__.'/CanonicalReceiptRecorder.php';
+        if ($db->get_where(db_prefix().'credits',['invoice_id'=>$invoiceId])->num_rows()>0) return $review+$meta;
+        (new CanonicalReceiptRecorder($db))->writeLocked($invoice,$origin,$p,$storedEvent);
+        // Cache only verified nonsensitive fields, not the provider's full payment.
+        if (!$this->gateway->upsert_payment_map($invoiceId,array_intersect_key($p,array_flip(['id','status','value','dueDate','billingType','externalReference','customer'])))) throw new \RuntimeException('map_write_failed');
+        return ['state'=>'processed']+$meta;
+    }
 
-        $payment = isset($payload['payment']) && is_array($payload['payment']) ? $payload['payment'] : [];
-        $paymentId = trim((string) ($payment['id'] ?? ''));
-        if ($paymentId === '') {
-            return 'review_required';
+    private function equalMoney($a, $b): bool
+    {
+        $values=[];
+        foreach ([$a,$b] as $v) {
+            if (!is_scalar($v) || !preg_match('/^\d{1,13}(?:\.\d{1,2})?$/D',(string)$v)) return false;
+            $parts=explode('.',(string)$v);
+            $values[]=ltrim($parts[0].str_pad($parts[1]??'',2,'0'),'0')?:'0';
         }
+        return $values[0]!=='0' && $values[0]===$values[1];
+    }
 
-        // Asaas emite PAYMENT_CONFIRMED antes da disponibilização do saldo.
-        // Os dois eventos podem ser recebidos; a transactionid elimina a
-        // duplicação de baixas caso a confirmação já tenha sido contabilizada.
-        $settledEvents = ['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED'];
-        $reviewEvents = [
-            'PAYMENT_REFUNDED', 'PAYMENT_PARTIALLY_REFUNDED',
-            'PAYMENT_REFUND_IN_PROGRESS', 'PAYMENT_RECEIVED_IN_CASH_UNDONE',
-            'PAYMENT_CHARGEBACK_REQUESTED', 'PAYMENT_CHARGEBACK_DISPUTE',
-        ];
-
-        $mapTable = db_prefix() . 'asaas_payments_map';
-        $mapped = null;
-        if ($this->ci->db->table_exists($mapTable)) {
-            $mapped = $this->ci->db->get_where($mapTable, ['asaas_payment_id' => $paymentId])->row_array();
+    private function assertWebhookTransactionalStorage(): void
+    {
+        $tables=['invoices','invoicepaymentrecords','asaas_payments_map','asaas_webhook_events',
+            'sales_activity','credits','asaas_settlement_outbox','asaas_payment_origins','asaas_webhook_admin_audit'];
+        foreach ($tables as $name) {
+            $result=$this->ci->db->query('SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?', [db_prefix().$name]);
+            $row=$result?$result->row_array():[];
+            if (strtoupper((string)($row['ENGINE']??''))!=='INNODB') throw new \RuntimeException('transactional_storage_required');
         }
-
-        $externalReference = trim((string) ($payment['externalReference'] ?? ''));
-        $invoice = null;
-        if ($externalReference !== '') {
-            $invoice = $this->ci->db->get_where(db_prefix() . 'invoices',
-                ['hash' => $externalReference])->row();
-        }
-        if (!$invoice && $mapped && (int) ($mapped['invoice_id'] ?? 0) > 0) {
-            $invoice = $this->ci->db->get_where(db_prefix() . 'invoices',
-                ['id' => (int) $mapped['invoice_id']])->row();
-        }
-
-        if ($invoice && $mapped && (int) $mapped['invoice_id'] !== (int) $invoice->id) {
-            return 'review_required';
-        }
-        if (!$invoice) {
-            // Pode se tratar de conta/cobrança não vinculada a este CRM.
-            return 'review_required';
-        }
-
-        if (!empty($invoice->issuer_id)) {
-            // Multi-issuer webhook authentication/mapping is not enabled yet.
-            return 'review_required';
-        }
-        $origin = $this->originStore()->byInvoice((int) $invoice->id);
-        if ($origin && in_array($event, $settledEvents, true)) {
-            if (($origin['remote_id'] ?? '') !== $paymentId) {
-                return 'review_required';
-            }
-            try {
-                $client = $this->provider->clientForOrigin($origin);
-                $verified = $this->requestWithClient($client, 'GET', '/payments/' . $paymentId);
-            } catch (\Throwable $error) {
-                return 'review_required';
-            }
-            if (!$verified['success'] || ($verified['data']['id'] ?? '') !== $paymentId
-                || ($verified['data']['externalReference'] ?? '') !== $origin['invoice_hash']) {
-                return 'review_required';
-            }
-            $payment = $verified['data'];
-        }
-
-        // Serializa TODOS os pagamentos relativos à mesma fatura, mesmo
-        // quando chegam em eventos diferentes com IDs de cobrança distintos.
-        $invoiceTable = db_prefix() . 'invoices';
-        $lockedInvoice = $this->ci->db->query(
-            'SELECT * FROM ' . $this->ci->db->protect_identifiers($invoiceTable, true)
-                . ' WHERE id = ? FOR UPDATE', [(int) $invoice->id]
-        );
-        if (!$lockedInvoice || !$lockedInvoice->row()) {
-            return 'review_required';
-        }
-        $invoice = $lockedInvoice->row();
-
-        if ($mapped && (int) $mapped['invoice_id'] !== (int) $invoice->id) {
-            return 'review_required';
-        }
-        if ($this->ci->db->table_exists($mapTable)) {
-            $invoiceMap = $this->ci->db
-                ->get_where($mapTable, ['invoice_id' => (int) $invoice->id])
-                ->row_array();
-            if ($invoiceMap && (string) $invoiceMap['asaas_payment_id'] !== $paymentId) {
-                return 'review_required';
-            }
-        }
-
-        if (in_array($event, $reviewEvents, true)) {
-            return 'review_required';
-        }
-
-        if (!in_array($event, $settledEvents, true)) {
-            return 'processed';
-        }
-
-        if (!in_array((string) ($payment['status'] ?? ''), ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'], true)) {
-            return 'review_required';
-        }
-
-        $amount = (float) ($payment['value'] ?? 0);
-        if ($amount <= 0 || abs($amount - (float) $invoice->total) > 0.01) {
-            // Desconto, acréscimo e parcial exigem conferência; a cobrança
-            // não pode quitar o valor total de uma fatura por aproximação.
-            return 'review_required';
-        }
-
-        $records = db_prefix() . 'invoicepaymentrecords';
-        $registered = $this->ci->db->get_where($records, ['transactionid' => $paymentId])->row_array();
-        if ($registered) {
-            return (int) ($registered['invoiceid'] ?? 0) === (int) $invoice->id
-                ? 'processed' : 'review_required';
-        }
-
-        if ((int) $invoice->status === 2) {
-            // Fatura já foi quitada por outro lançamento; não criar outra baixa.
-            return 'review_required';
-        }
-        if (!$this->gateway || !$this->gateway->addPayment([
-            'amount' => (float) $invoice->total,
-            'invoiceid' => (int) $invoice->id,
-            'paymentmethod' => (string) ($payment['billingType'] ?? 'Asaas'),
-            'transactionid' => $paymentId,
-        ])) {
-            throw new \RuntimeException('O lançamento do pagamento não foi confirmado.');
-        }
-
-        if ($this->gateway && method_exists($this->gateway, 'upsert_payment_map')) {
-            if (!$this->gateway->upsert_payment_map((int) $invoice->id, $payment)) {
-                throw new \RuntimeException('Não foi possível sincronizar o vínculo da cobrança.');
-            }
-        }
-
-        return 'processed';
     }
 
     private function webhookResult(bool $processed, bool $duplicated, string $message, int $status): array
@@ -1039,7 +1032,7 @@ public function refundPayment(string $paymentId, array $payload = []): array
         $inserted = $this->ci->db->insert($table, $payload);
         if ($inserted === false) {
             $error = $this->ci->db->error();
-            log_message('error', '[Asaas] Falha ao persistir log em banco: ' . json_encode($error, JSON_UNESCAPED_UNICODE));
+            log_message('error', '[Asaas] Falha ao persistir log em banco.');
         }
     }
 

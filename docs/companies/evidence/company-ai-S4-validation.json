@@ -1,0 +1,54 @@
+{
+  "revision": "S4",
+  "overlay": "resume-ai-S4",
+  "source_sha256": "d2a56cbeccd30e3a11c9d4f449c0d4fd9f300743c54cdc613d931762f178934a",
+  "production_binding": {
+    "application/controllers/admin/Company_ai.php": "ac53fbe7c47082a8236a102ec0341a608f17cea1a6bd230b933d8ddededecdeb",
+    "application/services/CompanyAi.php": "d2a56cbeccd30e3a11c9d4f449c0d4fd9f300743c54cdc613d931762f178934a",
+    "application/services/CompanyAiClient.php": "c90b604bd73bb318717789250bb40b7ea266a08d6e9324579e25179879f9d677",
+    "application/services/CompanyAiSchema.php": "eec12713cb18e30e6c5c5ffa7b49f13ce2dde732134a72289ed4c477a376d53c",
+    "application/views/admin/companies/ai.php": "ae497934c65397da03e5dec006b790a3f8e7be0a4080a14ad2c296571b2fe99e"
+  },
+  "source_changes_after_freeze": [],
+  "matrices": {
+    "sqlite": {
+      "suites": 7,
+      "PASS": 7,
+      "source_invariant": true,
+      "tails": {
+        "tests/settings/company_ai.php": "Company AI own config/preview/consent/outbox/crypto/A+B+principal/replay/uncertain/forget: 42 added checks (sqlite). Captured provider only.",
+        "tests/settings/company_ai_boundaries.php": "Company AI boundaries/revocations/rollback/limits/receipt/privacy: 31 added checks (sqlite). No provider network.",
+        "tests/settings/company_ai_controller.php": "Company AI real controller/renderer/HTTP verbs/CSRF/preview/consent/escaping/replay: 19 added checks (sqlite). No provider network.",
+        "tests/settings/company_ai_client.php": "Company AI actual SDK/HTTP fixed endpoint/payload/credential/finish proof: 9 added checks. Captured transport only.",
+        "tests/settings/company_ai_transport.php": "{\"/plain\":{\"guard\":\"accepted_identity\",\"wire_download_max\":261},\"/identity\":{\"guard\":\"accepted_identity\",\"wire_download_max\":261},\"/gzip\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/gzip-large\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/br\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/stacked\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/declared-large\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/chunked-large\":{\"guard\":\"company_ai_response_limit\",\"wire_download_max\":100253}}",
+        "tests/settings/company_ai_schema.php": "Company AI actual standalone schema/replay/metadata: 2 added checks (sqlite). Future core migration/tracking remains separate.",
+        "tests/settings/company_ai_final_boundaries.php": "Company AI S4 final config/claim/source/grants/outbox/completion/forget/result frames: 155 checks (sqlite). Captured transport only."
+      }
+    },
+    "mariadb": {
+      "suites": 8,
+      "PASS": 8,
+      "source_invariant": true,
+      "tails": {
+        "tests/settings/company_ai.php": "Company AI own config/preview/consent/outbox/crypto/A+B+principal/replay/uncertain/forget: 42 added checks (mysql). Captured provider only.",
+        "tests/settings/company_ai_boundaries.php": "Company AI boundaries/revocations/rollback/limits/receipt/privacy: 31 added checks (mysql). No provider network.",
+        "tests/settings/company_ai_controller.php": "Company AI real controller/renderer/HTTP verbs/CSRF/preview/consent/escaping/replay: 19 added checks (mysql). No provider network.",
+        "tests/settings/company_ai_client.php": "Company AI actual SDK/HTTP fixed endpoint/payload/credential/finish proof: 9 added checks. Captured transport only.",
+        "tests/settings/company_ai_transport.php": "{\"/plain\":{\"guard\":\"accepted_identity\",\"wire_download_max\":261},\"/identity\":{\"guard\":\"accepted_identity\",\"wire_download_max\":261},\"/gzip\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/gzip-large\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/br\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/stacked\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/declared-large\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/chunked-large\":{\"guard\":\"company_ai_response_limit\",\"wire_download_max\":100253}}",
+        "tests/settings/company_ai_schema.php": "Company AI actual standalone schema/replay/metadata: 6 added checks (mysql). Future core migration/tracking remains separate.",
+        "tests/settings/company_ai_final_boundaries.php": "Company AI S4 final config/claim/source/grants/outbox/completion/forget/result frames: 157 checks (mysql). Captured transport only.",
+        "tests/settings/company_ai_concurrency.php": "Company AI native races: 34 added checks; six scenarios x two observed waiters and one independent inflight revocation. Captured provider only."
+      }
+    }
+  },
+  "delta_from_S3": [
+    "application/services/CompanyAi.php",
+    "docs/COMPANY-AI-RECOVERY.md",
+    "tests/settings/company_ai_final_boundaries.php"
+  ],
+  "limits": [
+    "Local isolated source only; native442/real HTTP/CI published SHA remain parent integration work",
+    "Provider/client/schema/controller/view/HTTPfixture/CJS unchanged from S2; those two HTTP supports owned by HTTP agent",
+    "Only reviewed own-company OpenAI gpt-4o-mini ticket summary/reply; free legacy system prompts, fine tuning, enhanceText, other models/providers, cron/bearer AI remain closed separately"
+  ]
+}

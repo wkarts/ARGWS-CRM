@@ -1,0 +1,1538 @@
+{
+  "accidental_old_fixture_cleanup": {
+    "affected": 1,
+    "authorized_cleanup": "Only exact synthetic moduleid3 inserted by accidental oldfixture retry",
+    "deleted_before_row": "3\tbanco_brasil\t0.0.0\t1",
+    "finance_unchanged": true,
+    "financial_hashes_after": {
+      "essential_052d1e9167_bb_contract_declarations": "c5cd6fe8ba53541d3660704daf397144588612ac7dfc14fe1dc217dfb627ef23",
+      "essential_0ef64756b3_bb_contract_declarations": "eb75354d6ab2bb4c1f073d485138284581e69c7eea19e3cd61286a1b91b7175d",
+      "essential_0ef696b44c_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_13189cc4b5_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_156957f1f2_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_169a8dc6ad_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_1848cc7da7_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_1a5948614b_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_1ce6305a78_bb_contract_declarations": "99c45e0fde30eee22ae3a44cd36608d6e95b3fb5517a32310d9f9e28fa288eba",
+      "essential_1d90652081_bb_contract_declarations": "b1409bb3b8e4c413dfee5f7d67b9ca1ab036b9ff111e6c91d6d070d03cf289d0",
+      "essential_2470a0a7ee_bb_contract_declarations": "bf3f2af0db9ae4dea2b30c42c5f2dad8070cf83ace10e325d328e7ca7f47c718",
+      "essential_2cd9a831f6_bb_contract_declarations": "0ce48df6aeb216861047c47edb52b29c8551cf3e401e5193d694e0816c8f1f87",
+      "essential_3d23a2e535_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_4493c49b72_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_469e108261_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_4ad56e30a9_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_545e01f498_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_5fff20808d_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_6044e58cc2_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_612c7d9670_bb_contract_declarations": "6d775af37eb38716ee1fc178d50bbb9cf6b8c0c99ef61d278383459452bb4c02",
+      "essential_631b6cecb1_bb_contract_declarations": "0ced26e657bad300dfb9abd7a710f00fe5260fc168edb935a3e17f5e7b279e57",
+      "essential_6384bedf0c_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_65ef238422_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_65ef238422_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_6c3c66a90c_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_7276b5c791_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_72fe071fd8_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_7531361d42_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_789247b599_bb_contract_declarations": "6a49768cf035209134e9073d1c94b8d1443c6198bc0c789dfdb7fba9f0d2598f",
+      "essential_7914b669b9_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_7b925a0eab_bb_contract_declarations": "e38e28bad8bf888edc665b607efd17ff9afcbb22898f14f569c597e432ff74a8",
+      "essential_7fc55a03e8_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_805ce659ce_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_87347210ba_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_8ce5e6042a_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_8fd55d5dd9_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_917f7585e0_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_917f7585e0_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_9272845fee_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_9272845fee_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_952d06ea83_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_952d06ea83_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_ab84acf975_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_c2dc986b0c_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_cee3dc465f_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_d126fea579_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_d126fea579_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_d2351516c1_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_d647e15872_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_d647e15872_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_d7b5217fac_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_d7b5217fac_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_dec622739e_bb_contract_declarations": "53fe772dd3d9f6536c0e9ad21f8b093ba31400ffa5f4fdd3a15b1013fc04e1d0",
+      "essential_e451624ca9_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_f1f1cb22ee_bb_contract_declarations": "412789275ec94c57a4a2ab6ba10b8f17f6c25160c5262830351c54c3a79c431d",
+      "essential_f3d454c883_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_f3d454c883_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_f4aa04fcf7_bb_contract_declarations": "776ef2d7c8bb222a9eb8bee9a85042b8e6e0555fbf6b093ffa358521d20a385a",
+      "essential_f5e10353d5_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_f5e10353d5_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_f89cf6b034_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "tblbb_api_cnab_contracts": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblbb_contract_declarations": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblcompany_contract_comment_requests": "f4c3de345cc1856cd8cab7e50a1f244ed11438cfa6e8ca1a8d7967f00d2a6917",
+      "tblcompany_contract_counters": "10c4507014aa276886e70db94ad51f4ed5bf900b6bb1eff1a1f5a910961d1845",
+      "tblcompany_contract_discussions": "22ede1d7903d5d4b6c5a6d8e8ab6782918aec130f13327a5b8d5d7d66bb744d4",
+      "tblcompany_contract_files": "f5cc42fb17c7572529d8b48891e5aa3329e118dba5d5a8aa430a71edc32eb984",
+      "tblcompany_contract_requests": "2746ec5077df5921d9860512c733ac133a50b725175b222d37029b20eff71673",
+      "tblcompany_contracts": "5b9a61e324e7301f1c94a7dfacc1fcd7ea60f63aa850f812258b94157ea02f1f",
+      "tblcompany_credit_documents": "0d43916e293f023c7fa55bdcd2822e6f01852433d1f800061e8609877c10e884",
+      "tblcompany_credit_entries": "3ae622042fa5018bfeb2ee0be08454b1a4916865b260a7a3c33238e2ef7db4db",
+      "tblcompany_expense_billing_links": "9e067807a29333d580bdd75e344d5192301cd4b7e66c39ffba75cedbdb0a3887",
+      "tblcompany_expense_billing_origins": "ad667526858a40934ea96a895f5257f38f36078cd6ac6595366a7b5466a7d3cd",
+      "tblcompany_expense_categories": "d871c75957198240732fbf00030ce7edfc630c8a46cb2dbc13ff44a39ca3c1c5",
+      "tblcompany_expense_files": "09f4ea82d1a42c9e1161aaed103b26daca0bf848b8c7091c97cc1a6d9ae5475a",
+      "tblcompany_expense_occurrences": "0055e542429540caacbeb4d89a46bff7b0e35b3be21f4602a9936a03cccc4cb9",
+      "tblcompany_expense_recurring": "be1e02fe86c7522288a7f6dad4e4a54d2fd4853c3f18f9e128d4fb11847e1e53",
+      "tblcompany_expense_recurring_requests": "0fff1c1f48e96b8600373fb5387c92fce429f22a3c120f63e4e2da3b7bb2e353",
+      "tblcompany_expense_requests": "fb428d08ee01e9a37de613a6843257b8ff3afc3056f657cb8294e6a57619cda8",
+      "tblcompany_expenses": "fc50b69d8a938d30012c98acfebc3b6d66a0aac9bed9f6a9ad5f30c1b82d6e8e",
+      "tblcompany_invoice_attachments": "215c85cdee599a689507b54b1948a24910964286bc9a04dae3dd69b5606957e8",
+      "tblcompany_invoice_deliveries": "c9bf4d68f54d6d76a2c4a6fc94389ace66985750c37575f0d53b8e27e843e889",
+      "tblcompany_invoice_requests": "f05aa48e8a8ae8b2ee86d13b5d2e65229c4f62563d4e794be4875acb3de29ef7",
+      "tblcompany_payment_receipts": "129199a1a2b89b1bfff84ff5b4ae328115f8afd0cdca7e8d7f8e650e4f2288a6",
+      "tblcompany_portal_contracts": "8d9accf9b499a405a8e3f8d781356b37358a0ba5150c72a8075560fbb7a2e9e9",
+      "tblcompany_portal_contracts_files": "feffe796939967299db741f1506c7b8b954cfbf7ce53f39724704d3e8bc3488c",
+      "tblcontract_comments": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblcontract_renewals": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblcontracts": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblcontracts_types": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblcreditnote_refunds": "4c20a3baa6ea588729f26d2b8f41a1b570ffaca551c860c15a644d7a9bc016f8",
+      "tblcreditnotes": "7d83837f0a1fb31e8822032978783f79d2834db243befc2208cd6383e82b9ace",
+      "tblcredits": "ac4246ecb3dc9662617bd040af72d2610e4610a5011f8e4d4158dfb743a487d7",
+      "tblestimate_request_forms": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblestimate_request_status": "69342a48973cf9e2649b5232db37945ac9c69a37ae43c47f6212146983013c74",
+      "tblestimate_requests": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblestimates": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblexpenses": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblexpenses_categories": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblinvoicepaymentrecords": "351d3f6962b365f8490848c23a1c98649f379cf11ce18fb77505c93d7fba538c",
+      "tblinvoices": "e1b247056c865752656b19f6fdbb5e96d34bfefe9301016c03c525c3fd97d65e",
+      "tblissuers_invoice_documents": "3a0310c29d9af0bcfc7c3f8127c5253c47419ee178eb54afc874d92c1a6ed86a",
+      "tblpayment_attempts": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblpayment_modes": "35088348a32a51c960d56b232010c4af1077b2e08ac50ed13366c7122a123f70",
+      "tblproposal_comments": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblproposals": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "financial_hashes_before": {
+      "essential_052d1e9167_bb_contract_declarations": "c5cd6fe8ba53541d3660704daf397144588612ac7dfc14fe1dc217dfb627ef23",
+      "essential_0ef64756b3_bb_contract_declarations": "eb75354d6ab2bb4c1f073d485138284581e69c7eea19e3cd61286a1b91b7175d",
+      "essential_0ef696b44c_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_13189cc4b5_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_156957f1f2_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_169a8dc6ad_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_1848cc7da7_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_1a5948614b_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_1ce6305a78_bb_contract_declarations": "99c45e0fde30eee22ae3a44cd36608d6e95b3fb5517a32310d9f9e28fa288eba",
+      "essential_1d90652081_bb_contract_declarations": "b1409bb3b8e4c413dfee5f7d67b9ca1ab036b9ff111e6c91d6d070d03cf289d0",
+      "essential_2470a0a7ee_bb_contract_declarations": "bf3f2af0db9ae4dea2b30c42c5f2dad8070cf83ace10e325d328e7ca7f47c718",
+      "essential_2cd9a831f6_bb_contract_declarations": "0ce48df6aeb216861047c47edb52b29c8551cf3e401e5193d694e0816c8f1f87",
+      "essential_3d23a2e535_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_4493c49b72_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_469e108261_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_4ad56e30a9_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_545e01f498_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_5fff20808d_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_6044e58cc2_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_612c7d9670_bb_contract_declarations": "6d775af37eb38716ee1fc178d50bbb9cf6b8c0c99ef61d278383459452bb4c02",
+      "essential_631b6cecb1_bb_contract_declarations": "0ced26e657bad300dfb9abd7a710f00fe5260fc168edb935a3e17f5e7b279e57",
+      "essential_6384bedf0c_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_65ef238422_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_65ef238422_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_6c3c66a90c_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_7276b5c791_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_72fe071fd8_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_7531361d42_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_789247b599_bb_contract_declarations": "6a49768cf035209134e9073d1c94b8d1443c6198bc0c789dfdb7fba9f0d2598f",
+      "essential_7914b669b9_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_7b925a0eab_bb_contract_declarations": "e38e28bad8bf888edc665b607efd17ff9afcbb22898f14f569c597e432ff74a8",
+      "essential_7fc55a03e8_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_805ce659ce_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_87347210ba_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_8ce5e6042a_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_8fd55d5dd9_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_917f7585e0_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_917f7585e0_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_9272845fee_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_9272845fee_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_952d06ea83_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_952d06ea83_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_ab84acf975_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_c2dc986b0c_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_cee3dc465f_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "essential_d126fea579_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_d126fea579_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_d2351516c1_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_d647e15872_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_d647e15872_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_d7b5217fac_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_d7b5217fac_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_dec622739e_bb_contract_declarations": "53fe772dd3d9f6536c0e9ad21f8b093ba31400ffa5f4fdd3a15b1013fc04e1d0",
+      "essential_e451624ca9_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+      "essential_f1f1cb22ee_bb_contract_declarations": "412789275ec94c57a4a2ab6ba10b8f17f6c25160c5262830351c54c3a79c431d",
+      "essential_f3d454c883_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_f3d454c883_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_f4aa04fcf7_bb_contract_declarations": "776ef2d7c8bb222a9eb8bee9a85042b8e6e0555fbf6b093ffa358521d20a385a",
+      "essential_f5e10353d5_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+      "essential_f5e10353d5_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "essential_f89cf6b034_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+      "tblbb_api_cnab_contracts": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblbb_contract_declarations": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblcompany_contract_comment_requests": "f4c3de345cc1856cd8cab7e50a1f244ed11438cfa6e8ca1a8d7967f00d2a6917",
+      "tblcompany_contract_counters": "10c4507014aa276886e70db94ad51f4ed5bf900b6bb1eff1a1f5a910961d1845",
+      "tblcompany_contract_discussions": "22ede1d7903d5d4b6c5a6d8e8ab6782918aec130f13327a5b8d5d7d66bb744d4",
+      "tblcompany_contract_files": "f5cc42fb17c7572529d8b48891e5aa3329e118dba5d5a8aa430a71edc32eb984",
+      "tblcompany_contract_requests": "2746ec5077df5921d9860512c733ac133a50b725175b222d37029b20eff71673",
+      "tblcompany_contracts": "5b9a61e324e7301f1c94a7dfacc1fcd7ea60f63aa850f812258b94157ea02f1f",
+      "tblcompany_credit_documents": "0d43916e293f023c7fa55bdcd2822e6f01852433d1f800061e8609877c10e884",
+      "tblcompany_credit_entries": "3ae622042fa5018bfeb2ee0be08454b1a4916865b260a7a3c33238e2ef7db4db",
+      "tblcompany_expense_billing_links": "9e067807a29333d580bdd75e344d5192301cd4b7e66c39ffba75cedbdb0a3887",
+      "tblcompany_expense_billing_origins": "ad667526858a40934ea96a895f5257f38f36078cd6ac6595366a7b5466a7d3cd",
+      "tblcompany_expense_categories": "d871c75957198240732fbf00030ce7edfc630c8a46cb2dbc13ff44a39ca3c1c5",
+      "tblcompany_expense_files": "09f4ea82d1a42c9e1161aaed103b26daca0bf848b8c7091c97cc1a6d9ae5475a",
+      "tblcompany_expense_occurrences": "0055e542429540caacbeb4d89a46bff7b0e35b3be21f4602a9936a03cccc4cb9",
+      "tblcompany_expense_recurring": "be1e02fe86c7522288a7f6dad4e4a54d2fd4853c3f18f9e128d4fb11847e1e53",
+      "tblcompany_expense_recurring_requests": "0fff1c1f48e96b8600373fb5387c92fce429f22a3c120f63e4e2da3b7bb2e353",
+      "tblcompany_expense_requests": "fb428d08ee01e9a37de613a6843257b8ff3afc3056f657cb8294e6a57619cda8",
+      "tblcompany_expenses": "fc50b69d8a938d30012c98acfebc3b6d66a0aac9bed9f6a9ad5f30c1b82d6e8e",
+      "tblcompany_invoice_attachments": "215c85cdee599a689507b54b1948a24910964286bc9a04dae3dd69b5606957e8",
+      "tblcompany_invoice_deliveries": "c9bf4d68f54d6d76a2c4a6fc94389ace66985750c37575f0d53b8e27e843e889",
+      "tblcompany_invoice_requests": "f05aa48e8a8ae8b2ee86d13b5d2e65229c4f62563d4e794be4875acb3de29ef7",
+      "tblcompany_payment_receipts": "129199a1a2b89b1bfff84ff5b4ae328115f8afd0cdca7e8d7f8e650e4f2288a6",
+      "tblcompany_portal_contracts": "8d9accf9b499a405a8e3f8d781356b37358a0ba5150c72a8075560fbb7a2e9e9",
+      "tblcompany_portal_contracts_files": "feffe796939967299db741f1506c7b8b954cfbf7ce53f39724704d3e8bc3488c",
+      "tblcontract_comments": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblcontract_renewals": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblcontracts": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblcontracts_types": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblcreditnote_refunds": "4c20a3baa6ea588729f26d2b8f41a1b570ffaca551c860c15a644d7a9bc016f8",
+      "tblcreditnotes": "7d83837f0a1fb31e8822032978783f79d2834db243befc2208cd6383e82b9ace",
+      "tblcredits": "ac4246ecb3dc9662617bd040af72d2610e4610a5011f8e4d4158dfb743a487d7",
+      "tblestimate_request_forms": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblestimate_request_status": "69342a48973cf9e2649b5232db37945ac9c69a37ae43c47f6212146983013c74",
+      "tblestimate_requests": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblestimates": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblexpenses": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblexpenses_categories": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblinvoicepaymentrecords": "351d3f6962b365f8490848c23a1c98649f379cf11ce18fb77505c93d7fba538c",
+      "tblinvoices": "e1b247056c865752656b19f6fdbb5e96d34bfefe9301016c03c525c3fd97d65e",
+      "tblissuers_invoice_documents": "3a0310c29d9af0bcfc7c3f8127c5253c47419ee178eb54afc874d92c1a6ed86a",
+      "tblpayment_attempts": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblpayment_modes": "35088348a32a51c960d56b232010c4af1077b2e08ac50ed13366c7122a123f70",
+      "tblproposal_comments": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tblproposals": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "financial_tables": 106,
+    "module_autoincrement_after": "4",
+    "module_autoincrement_before": "4",
+    "original_row_sha256_after": "946eb905bb122657ad28b8288984bfab7f837479085db79b36ec7a3014036061",
+    "original_row_sha256_before": "946eb905bb122657ad28b8288984bfab7f837479085db79b36ec7a3014036061",
+    "originalid2_after": "2\tbanco_brasil\t1.1.6\t1",
+    "originalid2_before": "2\tbanco_brasil\t1.1.6\t1",
+    "remaining_module_rows": "2\tbanco_brasil\t1.1.6\t1"
+  },
+  "actual_sql_cli": {
+    "calls": 1409,
+    "client": "MariaDB native CLI",
+    "delimiter_aware_calls": 11,
+    "pdo_sql_cli_fallback": false
+  },
+  "all_generated_app_files": {
+    "path": "/tmp/crm-http-qa436-final/final436-all-generated-app-files.json",
+    "sha256": "0762acff37994b01bca17fac9f392045708a6d6ceac24ec9d1dc3115edf3e452"
+  },
+  "core_native_replay": {
+    "native_body_replay_count": 2,
+    "schemas_validated": [
+      "CompanyTaskBillingSchema",
+      "CompanyProjectBillingRateSchema",
+      "CompanyProjectFixedBillingSchema",
+      "CompanyProjectMilestonesSchema",
+      "CompanyProjectTimesheetsSchema",
+      "CompanyProjectGanttSchema",
+      "CompanyProjectContactFilesSchema",
+      "CompanyGoogleMailOAuthSchema",
+      "CompanyPortalMailSchema",
+      "CompanyExpenseRecurringSchema",
+      "CompanyClientImportSchema",
+      "CompanyExpenseBillingSchema",
+      "CompanyPortalSupportFilesSchema",
+      "CompanyContractDiscussionsSchema",
+      "CompanyProjectPortalRulesSchema",
+      "CompanyPortalTaskWriteSchema",
+      "CompanyOperationalAuthorCharset",
+      "CompanyPortalSupportWriteSchema",
+      "CompanyBankReversalSchema",
+      "CompanyPortalOperationsSchema",
+      "CompanyOperationFilesSchema",
+      "CompanyBankComponentsSchema"
+    ],
+    "scope": "Native CI_Migration up body, real MariaDB via explicit PDO test adapter after genuine HTTP framework upgrade; no global tracking mutation.",
+    "tracking": "436"
+  },
+  "environment": {
+    "browser": "Chromium140 headless shell + Playwright",
+    "database": "10.11.14-MariaDB-0ubuntu0.24.04.1",
+    "docker_executed": false,
+    "native_http_application_driver": "CI3 mysqli",
+    "php": "8.3.6",
+    "php_unit_adapters": "Explicit workflow tests use native mysqli/PDO or their declared doubles; not all tests claim the same adapter",
+    "replay_adapter": "Explicit PDO domain test adapter after genuine native framework upgrade"
+  },
+  "evidence_files": [
+    "execution436.log",
+    "results436.log",
+    "http436.log",
+    "db.log",
+    "image-test-visibility.json",
+    "fixture-transport.jsonl",
+    "sql-client-transport.jsonl",
+    "final436-packaging-audit.json",
+    "evidence436/"
+  ],
+  "fixtures": {
+    "path": "/tmp/crm-http-qa436-final/final436-fixture-proof.json",
+    "sha256": "40ada0535cf534163edc0bedfdd089a404244412e5b444ef719dab6f2bb0e5c6"
+  },
+  "functional_browsers": {
+    "attempts": 62,
+    "failed_attempts": [
+      {
+        "exit": 1,
+        "test": "tests/settings_google_mail_browser.cjs"
+      },
+      {
+        "exit": 1,
+        "test": "tests/companies/expense_recurring_browser.cjs"
+      },
+      {
+        "exit": 1,
+        "test": "tests/banco_brasil_origination_browser.cjs"
+      },
+      {
+        "exit": 1,
+        "test": "tests/banco_brasil_origination_browser.cjs"
+      }
+    ],
+    "order": [
+      {
+        "exit": 0,
+        "test": "tests/issuers_browser_smoke.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/issuers_browser_smoke.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies_onboarding_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies_portal_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies_invoices_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies_credits_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/projects_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies_expenses_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies_imports_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/contracts_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/operation_files_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/portal_operations_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/projects_extras_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies_sales_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies_sales_extras_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/settings_sales_documents_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/settings_primary_sales_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/settings_sales_pdf_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/settings_document_pdf_browser.cjs"
+      },
+      {
+        "exit": 1,
+        "test": "tests/settings_google_mail_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/settings_google_mail_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/settings_google_portal_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/settings_project_files_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/settings_pdf_typography_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies_reports_api_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies_ledger_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/operations_api_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/operations_subresources_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/portal_support_write_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/portal_support_files_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/contract_discussions_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/project_portal_tasks_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/portal_task_write_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/project_milestones_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/project_timesheets_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/project_gantt_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/project_contact_files_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/task_billing_http_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/task_timesheets_http_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/project_billing_rate_http_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/project_fixed_billing_http_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/client_imports_http_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/expense_billing_browser.cjs"
+      },
+      {
+        "exit": 1,
+        "test": "tests/companies/expense_recurring_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/expense_recurring_browser.cjs"
+      },
+      {
+        "exit": 1,
+        "test": "tests/banco_brasil_origination_browser.cjs"
+      },
+      {
+        "exit": 1,
+        "test": "tests/banco_brasil_origination_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/banco_brasil_origination_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/banco_brasil_components_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/banco_brasil_external_reversal_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/banco_brasil_callback_http.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/banco_brasil_api_monthly_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/banco_brasil_api_fixed_discount_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/banco_brasil_api_percentage_discount_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/banco_brasil_api16_components_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/banco_brasil_api_origin_cnab240_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies_asaas_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies_asaas_remote_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies_asaas_checkout_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/companies/asaas_refund_browser.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "tests/asaas_checkout_legacy_scope_http.cjs"
+      },
+      {
+        "exit": 0,
+        "test": "/tmp/crm-http-qa436-final/settings-qa.cjs"
+      }
+    ],
+    "primary_and_secondary_native_feedback_regressions_in_first_case": true,
+    "successes": 58
+  },
+  "harness_incidents": {
+    "bb_native_contract_selector": {
+      "failure": "locator form[action*=declare_contract] matches native116 API-return and manualCNAB forms; strict two-buttons error before contract submission",
+      "fix_pending": false,
+      "full_retry_preserved_invoice": 424262,
+      "native_fixture_idempotency": "Existing116 row has only primaryiduniqueindex; oldfixture unconditionalbaselineINSERT not safe to repeat. Actual40 native currentrunnertrue verified canonicalrow unchanged.",
+      "proof": "bb39-selector-state-proof.json",
+      "state": "manualcontracts0/batches0/events0/payments6; alreadyissued openinvoice424262 preserved",
+      "whole_browser_retry": "PASS fromS5 after exactnativecurrentfixture,scopedoperatorform"
+    },
+    "failure": "PermissionError while adapting fixture in disposable copied tests: frozen source mode444 preserved by copy2",
+    "fix": "Grant owner write permission solely to disposable app/host copies before adaptations; immutable source bytes/modes untouched",
+    "functional_attempts_before_failure": 0,
+    "google_trusted_callback_configuration": {
+      "assertions_weakened": false,
+      "cause": "Synthetic app config missing explicit trusted HTTPS redirect; authorize form absent, empty POST rejected403. Existing save form contains both native/context/own csrf fields.",
+      "diagnostic": "google-http-diagnostic.json",
+      "expected": 303,
+      "prod_runtime_changes": false,
+      "retry_pending": false,
+      "source_fix": "Frozen S2 exact smoke configuration fragment executed against isolated app config; no browser assertions changed",
+      "source_fix_packet": "/tmp/pr45-google-smoke-config36/google-smoke-config36.patch",
+      "status": 403,
+      "test": "tests/settings_google_mail_browser.cjs",
+      "whole_browser_retry": "PASS"
+    },
+    "mariadb_global_temporary_collision": {
+      "error": "SQLSTATE[HY000] General error6 Error on delete '/tmp/#sql-temptable-6-51-206aa.MAD' Errcode2 No such file",
+      "failed_test": "tests/banco_brasil_api16_mutation_fence_mysql.php",
+      "fix": "Scratch engine startup only: own --tmpdir=/tmp/crm-http-qa436-final/db-tmp, prove@@tmpdir, keep all databases/source and assertions",
+      "native_tests_passed_before_it": 12,
+      "resume": "Failed test then remaining native list and all58browsers",
+      "root_coordinator_diagnosis": "Concurrent isolated MariaDB sessions both PID6 and shared global/tmp cause likely temporary filename collision",
+      "source_or_assertion_modified": false
+    },
+    "native_test_environment_guard_retry": {
+      "failure": "Guard requires asaas_test/callback_test/crm_tests, but MYSQL_DSN initially pointedbb_test",
+      "fix": "Dedicated asaas_test DSN with existing synthetic native-test user; no source guard relaxation",
+      "functional_browser_attempts": 0,
+      "native_php_attempts_before_retry": 1,
+      "phase": "Before test assertions and before any HTTP/browser",
+      "test": "tests/asaas_module_migrations.php"
+    },
+    "phase": "prepare only, before anyPHP/server/database/browser",
+    "recurring_mail_fixture": {
+      "before_after_counts": "expenses10/schedules0/occurrences0/invoices140/payments6 unchanged during diagnostics/probe",
+      "cause": "Fixture overwrote ownedSMTP sender while accountGoogle remains active with different verified sender",
+      "diagnostic_setup_recoveries": [
+        "Read-only diagnostic initially referenced nonexistent verified_email_hash column, changed to actual sender_email; no code under test ran at that point.",
+        "Minimal mailConfig standalone probe needed real Composer autoload for OAuthTokenProvider; included it without editing source."
+      ],
+      "failure": "Browser schedule ID missing after create; actualpost422 company_google_mail_connection_required",
+      "pending_whole_browser_retry": false,
+      "probe": "recurring38-minimal-proof.json",
+      "source_changes": "Proposed onefixture only via packet38; no frozen/appfixture edit yet",
+      "whole_browser_retry": "PASS from frozenS4"
+    },
+    "related_setup_followups": [
+      "Readonly scratch support/BbPdoDatabase.php also needed owner-write before replacement on retry.",
+      "Runner manifest guard stopped execution because preparation had not completed. No database, PHP test or HTTP started."
+    ],
+    "s2_pre_resume_snapshot": {
+      "failure": "UnicodeDecodeError in harness financial readback SELECT* because stored binary payload is not UTF8",
+      "fix": "Hash raw nativeCLI result bytes; no decoding",
+      "phase": "Before copying S2 runtime or modifying config or retrying browser",
+      "source_or_business_mutations": false
+    },
+    "s5_failed_preparation_and_accidental_old_retry": {
+      "cleanup": "bb-accidental-baseline-exact-cleanup.json",
+      "coordinator_cache_recovery": "/tmp/pr45-source-integrity-s5-cache/proof.json",
+      "failed_browser_attempt_retained": true,
+      "fix": "SinglePython prep→exec afterfullmanifest/ownfile checks and marker; resume itself independently requiresS5marker/hashmapbefore engine startup",
+      "launcher_error": "Shell lackedfailfast and continued nextseparatePythoncommand afterprep failed. Old BBfixture ran again, appended only syntheticid3baseline0.0.0 then currentrunner checkfailed. No contract/batch/event/payment change.",
+      "manifest_guard": "S5 expected19101 bytes allmatched; unlisted release_policy pycache correctly rejected preparation",
+      "source_or_assertion_changes": false
+    },
+    "source_modified": false
+  },
+  "host_test_adaptations": {
+    "path": "/tmp/crm-http-qa436-final/final436-host-test-adaptations.json",
+    "sha256": "7784fb45d5e405d7309a22e68214635099753b64c7f423e482e8833d0159782e"
+  },
+  "merge_or_deploy_performed": false,
+  "module_native_upgrade": {
+    "database_server_version": "10.11.14-MariaDB-0ubuntu0.24.04.1",
+    "modules": {
+      "asaas": {
+        "canonical_marker_preserved": "1.5.2",
+        "current_replay": true,
+        "header": "1.5.2",
+        "native_result": "152",
+        "native_up_body_replay_count": 2,
+        "temporary_baseline": "1.5.1",
+        "temporary_target": "1.5.2"
+      },
+      "banco_brasil": {
+        "canonical_marker_preserved": "1.1.6",
+        "current_replay": true,
+        "header": "1.1.6",
+        "native_result": "116",
+        "native_up_body_replay_count": 2,
+        "temporary_baseline": "1.1.5",
+        "temporary_target": "1.1.6"
+      }
+    },
+    "php_version": "8.3.6",
+    "scope": "Actual App_module_migration and real source migration/DDL on MariaDB. Only baseline fixture writes into connection-local TEMPORARY tblmodules; every target write native runner. Independent connection proves permanent app tracking unchanged. Separate native fixtures install canonical modules before this proof."
+  },
+  "native_php": {
+    "attempts": 93,
+    "derivation": "/tmp/crm-http-qa436-final/native-tests436-derivation.json",
+    "environment_recoveries": "Dedicated Asaas DB guard corrected before assertions; later native SQL temporary-file collision resolved by unique server --tmpdir. Earlier successful tests retained, affected test retried, no source/assertion changes.",
+    "failed_attempts": [
+      {
+        "failure_excerpt": "Fatal error: Uncaught RuntimeException: Disposable native fixture database required in /tmp/crm-http-qa436-final/app/tests/asaas_module_migrations.php:33\nStack trace:\n#0 /tmp/crm-http-qa436-final/app/tests/asaas_module_migrations.php(39): cleanupAsaasNativeFixture(Object(PDO))\n#1 {main}\n  thrown in /tmp/crm-http-qa436-final/app/tests/asaas_module_migrations.php on line 33\nTraceback (most recent call last):\n  File \"/tmp/crm-http-qa436-final/final436.py\", line 36, in <module>\n    print('NATIVE UNIT '+path,flush=True);run([php,path],cwd=app)\n                                          ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/crm-http-qa436-final/final436.py\", line 13, in run\n    result.check_returncode();return result\n    ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py\", line 502, in check_returncode\n    raise CalledProc",
+        "test": "tests/asaas_module_migrations.php"
+      },
+      {
+        "failure_excerpt": "Fatal error: Uncaught RuntimeException: FAIL: failed OAuth never submits a charge (actual: 'SQLSTATE[HY000]: General error: 6 Error on delete of \\'/tmp/#sql-temptable-6-51-206aa.MAD\\' (Errcode: 2 \"No such file or directory\")') in /tmp/crm-http-qa436-final/app/tests/issuers_core_support.php:192\nStack trace:\n#0 /tmp/crm-http-qa436-final/app/tests/issuers_core_support.php(198): essentialCheck(false, 'failed OAuth ne...')\n#1 /tmp/crm-http-qa436-final/app/tests/banco_brasil_api_mysql.php(79): essentialThrows(Object(Closure), 'bb_api_authenti...', 'failed OAuth ne...')\n#2 /tmp/crm-http-qa436-final/app/tests/banco_brasil_api_interest_mysql.php(3): require('/tmp/crm-http-q...')\n#3 /tmp/crm-http-qa436-final/app/tests/banco_brasil_api_monthly_interest_mysql.php(3): require('/tmp/crm-http-q...')\n#4 /tmp/crm-http-qa436-final/app/tests/banco_brasil_api_fixed_discount_mysql.php(3): require('/tmp/crm-h",
+        "test": "tests/banco_brasil_api16_mutation_fence_mysql.php"
+      }
+    ],
+    "order": [
+      "tests/asaas_module_migrations.php",
+      "tests/banco_brasil_module_version.php",
+      "tests/banco_brasil_mysql_driver.php",
+      "tests/banco_brasil_api16_components_data.php",
+      "tests/banco_brasil_api16_components_mysql.php",
+      "tests/banco_brasil_api16_components_concurrency.php",
+      "tests/banco_brasil_api16_components_portal_mysql.php",
+      "tests/banco_brasil_api16_components_cross_channel.php",
+      "tests/banco_brasil_pdf_typography_mysql.php",
+      "tests/banco_brasil_api_origin_cnab240_mysql.php",
+      "tests/banco_brasil_api_origin_cnab240_concurrency.php",
+      "tests/banco_brasil_interrupted_sending_mysql.php",
+      "tests/banco_brasil_api16_mutation_fence_mysql.php",
+      "tests/banco_brasil_api16_mutation_fence_concurrency.php",
+      "tests/banco_brasil_api_origin_mutation_fence_concurrency.php",
+      "tests/issuers_core_upgrade.php",
+      "tests/companies/admin_database_upgrade_feedback.php",
+      "tests/company_context.php",
+      "tests/companies/expense_billing_controller.php",
+      "tests/companies/task_billing.php",
+      "tests/companies/task_billing_atomic.php",
+      "tests/companies/task_billing_controller.php",
+      "tests/companies/task_billing_schema.php",
+      "tests/companies/task_billing_concurrency.php",
+      "tests/companies/task_billing_timesheets.php",
+      "tests/companies/project_billing_rate.php",
+      "tests/companies/project_billing_rate_atomic.php",
+      "tests/companies/project_billing_rate_controller.php",
+      "tests/companies/project_billing_rate_concurrency.php",
+      "tests/companies/project_milestones.php",
+      "tests/companies/project_milestones_atomic.php",
+      "tests/companies/project_milestones_controller.php",
+      "tests/companies/project_milestones_concurrency.php",
+      "tests/companies/project_timesheets.php",
+      "tests/companies/project_timesheets_atomic.php",
+      "tests/companies/project_timesheets_controller.php",
+      "tests/companies/project_timesheets_concurrency.php",
+      "tests/companies/project_gantt.php",
+      "tests/companies/project_gantt_atomic.php",
+      "tests/companies/project_gantt_controller.php",
+      "tests/companies/project_gantt_concurrency.php",
+      "tests/companies/expense_recurring.php",
+      "tests/companies/expense_recurring_atomic.php",
+      "tests/companies/expense_recurring_delivery.php",
+      "tests/companies/expense_recurring_schema.php",
+      "tests/companies/expense_recurring_controller.php",
+      "tests/companies/expense_recurring_cli.php",
+      "tests/companies/expense_recurring_mail_worker.php",
+      "tests/companies/expense_recurring_google.php",
+      "tests/companies/expense_recurring_concurrency.php",
+      "tests/settings/google_mail_oauth.php",
+      "tests/settings/google_mail_queue.php",
+      "tests/settings/google_mail_worker.php",
+      "tests/settings/google_mail_envelope.php",
+      "tests/settings/google_mail_fingerprint_portability.php",
+      "tests/settings/google_portal_mail.php",
+      "tests/settings/google_portal_refresh_worker.php",
+      "tests/settings/google_mail_concurrency.php",
+      "tests/settings/google_portal_concurrency.php",
+      "tests/companies/native_436.php",
+      "tests/settings/pdf_typography.php",
+      "tests/settings/pdf_typography_concurrency.php",
+      "tests/companies/sales_pdf_typography.php",
+      "tests/companies/invoice_credit_pdf_typography.php",
+      "tests/companies/contracts_pdf_typography.php",
+      "tests/companies/pdf_typography_fiscal_identity.php",
+      "tests/companies/asaas_pdf_typography.php",
+      "tests/companies/project_contact_files.php",
+      "tests/companies/project_contact_files_atomic.php",
+      "tests/companies/project_contact_files_controller.php",
+      "tests/companies/project_contact_files_boundaries.php",
+      "tests/companies/project_contact_files_quota.php",
+      "tests/companies/project_contact_files_concurrency.php",
+      "tests/companies/project_fixed_billing.php",
+      "tests/companies/project_fixed_billing_atomic.php",
+      "tests/companies/project_fixed_billing_controller.php",
+      "tests/companies/project_fixed_billing_concurrency.php",
+      "tests/companies/billing_invoice_lifecycle.php",
+      "tests/companies/expense_invoice_lifecycle.php",
+      "tests/companies/asaas_refunds.php",
+      "tests/companies/asaas_refund_schema.php",
+      "tests/companies/asaas_refund_boundaries.php",
+      "tests/companies/asaas_refund_controller.php",
+      "tests/companies/asaas_refund_concurrency.php",
+      "tests/companies/asaas_refund_fee_participants.php",
+      "tests/companies/asaas_early_events.php",
+      "tests/companies/asaas_early_events_concurrency.php",
+      "tests/companies/asaas_refund_observe_events.php",
+      "tests/settings/project_file_settings.php",
+      "tests/banco_brasil_origination_mysql.php",
+      "tests/issuers_admin_upgrade_gate.php"
+    ],
+    "successful_final_tests": 91
+  },
+  "native_tempdir_proof": {
+    "actual_tmpdir": "/tmp/crm-http-qa436-final/db-tmp",
+    "global_tmp_shared": false,
+    "previous_failure": "SQLSTATEHY000/6 Error on delete /tmp/#sql-temptable-6-51-206aa.MAD Errcode2",
+    "restart_preserved_database_and_source": true,
+    "server_pid": "6",
+    "server_version": "10.11.14-MariaDB-0ubuntu0.24.04.1"
+  },
+  "native_tracking": {
+    "bb_fixture": "Baseline0.0.0 synthetic module row; real runner applies through116. Final fixture source hash bound in full immutable manifest.",
+    "proof": "Readback only after actual native HTTP core upgrade and production App_module_migration runner installed modules. No ad-hoc target marker writes by harness.",
+    "tracking": {
+      "asaas": "1.5.2",
+      "banco_brasil": "1.1.6",
+      "core": "436"
+    }
+  },
+  "remaining_executed_node_hashes": [
+    {
+      "at_utc": "2026-10-20T00:36:54.491688+00:00",
+      "executed_sha256": "f6bfd1d593cd75d0383bec1e93e269dc348c0a78723154db88cd7ee9dc147f6c",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/companies/expense_recurring_browser.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:37:17.286087+00:00",
+      "authorized_S3": true,
+      "executed_sha256": "4cf7241b060c1e8143f4549a051a8e9368db7776bb6b8d1f58d58a10c83e3c10",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/banco_brasil_origination_browser.cjs",
+      "source": "/tmp/pr45-http-frozen-436-s3/tests/banco_brasil_origination_browser.cjs",
+      "source_sha256": "430189d34271f6b7a9fc31f70e0ba4fd35d0937c1ac105a5e0c8e9f7b73375a8"
+    },
+    {
+      "at_utc": "2026-10-20T00:42:52.003208+00:00",
+      "authorized_S3": true,
+      "executed_sha256": "4cf7241b060c1e8143f4549a051a8e9368db7776bb6b8d1f58d58a10c83e3c10",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/banco_brasil_origination_browser.cjs",
+      "source": "/tmp/pr45-http-frozen-436-s3/tests/banco_brasil_origination_browser.cjs",
+      "source_sha256": "430189d34271f6b7a9fc31f70e0ba4fd35d0937c1ac105a5e0c8e9f7b73375a8"
+    },
+    {
+      "at_utc": "2026-10-20T00:45:08.270565+00:00",
+      "authorized_S5": true,
+      "executed_sha256": "396f18b596b4819ac293374c918ba11c3276764001ce454f70c2dc8b8d1d76ed",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/banco_brasil_origination_browser.cjs",
+      "source": "/tmp/pr45-http-frozen-436-s5/tests/banco_brasil_origination_browser.cjs",
+      "source_sha256": "cad986e9a8fc3be62dca7ff0fed1741d297c55d22be767f05205609836da77db"
+    },
+    {
+      "at_utc": "2026-10-20T00:45:34.062674+00:00",
+      "executed_sha256": "5fa6fe221dc17bf2c0c2b4ee2fd8f01b327de1148bf4f66d68bad5dd00db7a7f",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/banco_brasil_components_browser.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:46:05.847561+00:00",
+      "executed_sha256": "0034576616c6613630e5442dfa5f4e5b80de85309bb0ceb2b5bc60f0088dfcf0",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/banco_brasil_external_reversal_browser.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:46:28.559582+00:00",
+      "executed_sha256": "7c6f054f66b6be5677d57492ac74d0b675304fb855464ece53af1a35701e2e3b",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/banco_brasil_callback_http.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:46:28.754317+00:00",
+      "executed_sha256": "fa73a4ca17ac45ff057bdeeda4bbdc931955ed847d263fd37fee0f3512d74d0d",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/banco_brasil_api_monthly_browser.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:46:40.729462+00:00",
+      "executed_sha256": "e781383debd0b552ee3598f1b5f30940dde991dfd3cdb89d9ef81dbd0617f320",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/banco_brasil_api_fixed_discount_browser.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:46:55.143956+00:00",
+      "executed_sha256": "c17086478ee6ea1c9c7c8c6207e0041a006a8a291db38ecb07b66e9dfbf7c92c",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/banco_brasil_api_percentage_discount_browser.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:47:09.236182+00:00",
+      "executed_sha256": "ab15d3201a2c66e2775f1507a8c24779f40e52d4ed3d52e49a128862869939ca",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/banco_brasil_api16_components_browser.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:47:34.688248+00:00",
+      "executed_sha256": "f9f02bbe93d01bf94d4f96253809ae2543c8e79e1c6fe6c25a67576ce04eed8f",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/banco_brasil_api_origin_cnab240_browser.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:48:11.585566+00:00",
+      "executed_sha256": "4cda537e6b0186e189475372339d051da0618ef861196cdcf85e645457a62496",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/companies_asaas_browser.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:48:25.485994+00:00",
+      "executed_sha256": "8561fcd9d819a17e557a91a92f2c28c55b8d4fa122bb6b3db0b8cf1cad0ec635",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/companies_asaas_remote_browser.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:48:32.043862+00:00",
+      "executed_sha256": "2307b0992e63c25c0ae03bc6d89d949745aef5ec08b0fe750644ec5dd4a775c5",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/companies_asaas_checkout_browser.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:48:44.511961+00:00",
+      "executed_sha256": "08cb5acf202fe30e249546f0f577307133785163f22198ea2badc63dccee16f3",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/companies/asaas_refund_browser.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:48:52.085339+00:00",
+      "executed_sha256": "5b0915b8a366bb53412051ebf230b320bb33ab8bc2af71164aa950d2f8cc0a9d",
+      "path": "/tmp/crm-http-qa436-final/browser-host/tests/asaas_checkout_legacy_scope_http.cjs"
+    },
+    {
+      "at_utc": "2026-10-20T00:48:53.003058+00:00",
+      "executed_sha256": "a5234491f06ddf2e4e5b0d546feed014882e007063b6ffbded89533908e53382",
+      "path": "/tmp/crm-http-qa436-final/settings-qa.cjs"
+    }
+  ],
+  "runtime_proof": {
+    "path": "/tmp/crm-http-qa436-final/final436-runtime-diff.json",
+    "sha256": "71b5d521c93c33876eaa120a09e0f1300b127c089c447b98af82bb6c98cee575"
+  },
+  "scope_limits": [
+    "No external bank/provider/SMTP traffic or bank homologation. Bank transports are injected/simulated where stated in actual source tests.",
+    "Local MariaDB10.11 is distinct from remote MySQL8.4/MariaDB11.4 Docker matrix.",
+    "The strict adapter models actual /tests image exclusion and explicit copies; it does not claim a full Docker image execution or every image ownership/Bash behavior.",
+    "Original CI435 missing-alert request sequence remains unknown; permanent primary+secondary scoped completion assertions now execute in this frozen source."
+  ],
+  "servers_stopped": true,
+  "source": {
+    "coordinator_manifest": "/tmp/pr45-436-s5-frozen-source-manifest.json",
+    "coordinator_manifest_sha256": "f92a42b608339a97a5ed615028ba8cf6357f7c2ea0b51d2ed6d3c0b9836e7f6b",
+    "file_count": 19101,
+    "final_manifest": {
+      "path": "/tmp/crm-http-qa436-final/final436-source-final-manifest.json",
+      "sha256": "eb532d6a9f80655252c161d103a97143fa5f7611945c072a96a665f263f07998"
+    },
+    "initial_equals_final": true,
+    "normalized_map_sha256": "9bdebb7a628bb000a384b1e6c96fbc7c5eec6af167315a161fd243d540532a0d",
+    "path": "/tmp/pr45-http-frozen-436-s5"
+  },
+  "source_integrity_cache_incident": {
+    "actual_files": 19101,
+    "expected_files": 19101,
+    "full_source_matches": true,
+    "manifest_sha256": "f92a42b608339a97a5ed615028ba8cf6357f7c2ea0b51d2ed6d3c0b9836e7f6b",
+    "records": [
+      {
+        "archive": "/tmp/pr45-source-integrity-s5-cache/pr45-http-frozen-436-s4-release_policy.cpython-312.pyc",
+        "reason": "Unlisted generated Python cache imported by coordinator dry release gates; no expected tracked source bytes modified.",
+        "sha256": "cc015689d63d16676b94daa34ac5974b4eab4a905cf1ddab2d8ab0f377e9f93f",
+        "source": "/tmp/pr45-http-frozen-436-s4/scripts/__pycache__/release_policy.cpython-312.pyc"
+      },
+      {
+        "archive": "/tmp/pr45-source-integrity-s5-cache/pr45-integration-436-s5-release_policy.cpython-312.pyc",
+        "reason": "Unlisted generated Python cache imported by coordinator dry release gates; no expected tracked source bytes modified.",
+        "sha256": "cc015689d63d16676b94daa34ac5974b4eab4a905cf1ddab2d8ab0f377e9f93f",
+        "source": "/tmp/pr45-integration-436-s5/scripts/__pycache__/release_policy.cpython-312.pyc"
+      },
+      {
+        "archive": "/tmp/pr45-source-integrity-s5-cache/pr45-http-frozen-436-s5-release_policy.cpython-312.pyc",
+        "reason": "Unlisted generated Python cache imported by coordinator dry release gates; no expected tracked source bytes modified.",
+        "sha256": "cc015689d63d16676b94daa34ac5974b4eab4a905cf1ddab2d8ab0f377e9f93f",
+        "source": "/tmp/pr45-http-frozen-436-s5/scripts/__pycache__/release_policy.cpython-312.pyc"
+      }
+    ]
+  },
+  "source_integrity_finance_doc_incident": [
+    {
+      "all_paths_and_bytes_match": true,
+      "doc_mode_after": "0o444",
+      "doc_mode_before": "0o444",
+      "expected_files": 19101,
+      "report_api_doc_sha256": "99fe458efd0939d48ca9fb5391d3dff7e8e03922e248a32fae2ee67ba6688aec",
+      "source": "/tmp/pr45-http-frozen-436-s5"
+    },
+    {
+      "all_paths_and_bytes_match": true,
+      "doc_mode_after": "0o444",
+      "doc_mode_before": "0o444",
+      "expected_files": 19208,
+      "report_api_doc_sha256": "99fe458efd0939d48ca9fb5391d3dff7e8e03922e248a32fae2ee67ba6688aec",
+      "source": "/tmp/pr45-http-frozen-437-s5"
+    }
+  ],
+  "source_integrity_incident": {
+    "independent_hooks": {
+      "/tmp/crm-http-qa436-final/app/application/hooks/InitModules.php": "e526cb09c711479e8a49eb8ff76c159b64c71d2daa15c414f7119ed0fb82dda3",
+      "/tmp/pr45-http-frozen-436-final/application/hooks/InitModules.php": "e526cb09c711479e8a49eb8ff76c159b64c71d2daa15c414f7119ed0fb82dda3"
+    },
+    "reported_incident": {
+      "byte_errors": [],
+      "frozen436_files_verified": 19099,
+      "hook437_sha256": "e526cb09c711479e8a49eb8ff76c159b64c71d2daa15c414f7119ed0fb82dda3",
+      "purpose": "Agent reported temporary sparse symlink write into integration437 hook then restored exact original; root independently verified all436bytes and resealed modes. Current QA runtime is a separate already-copied source.",
+      "writeable_paths_resealed": [
+        "application/hooks/InitModules.php"
+      ]
+    }
+  },
+  "source_phases": {
+    "S1": {
+      "browser_successes": 19,
+      "failed_browser_attempts": 1,
+      "files": 19099,
+      "final_manifest": {
+        "path": "/tmp/crm-http-qa436-final/final436-s1-source-final-manifest.json",
+        "sha256": "c3abd5c71e943e49138a1f65292518a65c8eb1cc3db046498462b4707175a999"
+      },
+      "qa_php_attempts": 93,
+      "qa_php_successes": 91,
+      "source": "/tmp/pr45-http-frozen-436-final",
+      "unchanged": true
+    },
+    "S2": {
+      "browser_successes": 23,
+      "coordinator_owned_affected_sql": {
+        "bb_version": "1.1.6/116 actual native runner",
+        "core_version": "4.3.6/436",
+        "failed_attempts": [
+          {
+            "exit": 1,
+            "path": "tests/banco_brasil_api_webhook_mysql.php",
+            "reason": "Runner requested nonexistent filename; no test code ran. Correct filename separately passed."
+          }
+        ],
+        "frozen_source": "/tmp/pr45-http-frozen-436-s2",
+        "logs": [
+          {
+            "path": "/tmp/pr45-final436-s2-bb-mariadb.log",
+            "sha256": "452c2a321ed4d099961c118d0888be6581cdb94d40674ff8a2635882ab358abe"
+          },
+          {
+            "path": "/tmp/pr45-final436-s2-webhook-mariadb.log",
+            "sha256": "9f95b5f2672355fc42677e37eadd6060c626ae885d96ebc42efdf263515c9370"
+          }
+        ],
+        "manifest_sha256": "cfc3a71784f9090d1a2c9078b6c049891063431818f11053326ad17e23b8407e",
+        "passed": [
+          "tests/banco_brasil_interrupted_read_mysql.php",
+          "tests/banco_brasil_interrupted_sending_mysql.php",
+          "tests/banco_brasil_api_amendment.php",
+          "tests/banco_brasil_api16_mutation_fence_concurrency.php",
+          "tests/banco_brasil_api_origin_mutation_fence_concurrency.php",
+          "tests/banco_brasil_api_origin_cnab240_mysql.php",
+          "tests/banco_brasil_webhook_mysql.php"
+        ],
+        "runner": "/tmp/pr45-final436-s2-mariadb.py",
+        "scope": "Coordinator-owned S2 affected SQL verification; not QA agent91 S1 suites, not external banking"
+      },
+      "delta": {
+        ".github/workflows/banco-brasil.yml": {
+          "new": "3286ee431eacfaa931e7feaf344241a72aeeb309c73ecf24d86549253987df72",
+          "old": "0733a1b3b48d7fe3b98ce4e788693e8b3f2145e2b177f6a3c3dd1b965c50d374"
+        },
+        "docs/banco-brasil-interrupted-read.md": {
+          "new": "1a1756aeacd4974cdbc47b9a3b0971fb6e7cd1e61ea6f4985c1b05b38eaa0493",
+          "old": null
+        },
+        "docs/companies/boundary-inventory.json": {
+          "new": "0f9ee65c743ec8a38d7e5a4f4adcccb5f94ad6641b9a305e9e9b1f98614b7b68",
+          "old": "bb70a2622367960db1090a1a7523acbcfdf00561275a9cf5216afe9ddf74a8e5"
+        },
+        "docs/companies/consumer-register.json": {
+          "new": "f30826e9191cb4180b85b3203dde374b4f3cf64963041b52512fa394c3ef5be4",
+          "old": "24bae778eb71e46d18bf0ee73295f830f2b628729e9e899d95813aaf96ec8a21"
+        },
+        "docs/companies/pr45-validation-436.md": {
+          "new": "ae42c868fdd4580b467184acb5646d527ae90e2d3cc4031601d157cff1928c2a",
+          "old": "e5085cd44c0097b6ecc316aeb7fe15eb156802d70abd1d1d5212012ab08c4a2d"
+        },
+        "docs/issuer-isolation-inventory.json": {
+          "new": "87fb42db48edbaf88724d27e79f8a1f282cddd918cb797372aeeab80cb305212",
+          "old": "a3cff8e7500b502a66cb11d67007567a491bbe0f251fa25516f2a4e3db45e948"
+        },
+        "modules/banco_brasil/libraries/BancoBrasil/ApiAmendments.php": {
+          "new": "3529ffcd2c479bff882879e6a646c460b9ce60fe91374e8616cf2f3bc92f0285",
+          "old": "27e70f870eea9a756aedf005e8c6ca66985f9b2854fdbb7fb589b03fb331a6dc"
+        },
+        "tests/banco_brasil_interrupted_read_mysql.php": {
+          "new": "0c9e5da1e0ad00a1c86fe952f6b32be89f464e409ae2102c7f8a0dc6a3fcd0e2",
+          "old": null
+        },
+        "tests/issuers_standalone_http_smoke.sh": {
+          "new": "f5599be05c832938fb244c83d6c2f01b5de55ef8a2f6ef0e4dc992bdbc7fe8a7",
+          "old": "a064d9c1e4b14cbcb1492318f4a0bcc82085e8fb10403dc68f87926772c971f4"
+        }
+      },
+      "failed_browser_attempts": 1,
+      "files": 19101,
+      "final_manifest": {
+        "path": "/tmp/crm-http-qa436-final/final436-s2-source-final-manifest.json",
+        "sha256": "305dc2cabeef6acca923eb05e972e087ef49610a5d1e45bda9b8e99a375ba738"
+      },
+      "qa_91_php_not_rerun_after_S2": true,
+      "runtime_transition": {
+        "copied_runtime_files": [
+          "modules/banco_brasil/libraries/BancoBrasil/ApiAmendments.php"
+        ],
+        "explicit_config_fragment": "[[ \"$upgrade\" =~ ^argws-crm-upgrade-[0-9]+$ ]]\ngrep -Fq \"define('APP_DB_NAME', 'argws_upgrade_ci');\" \"$work/app-config.php\"\nprintf '\\n%s\\n' \"define('COMPANY_GOOGLE_MAIL_REDIRECT_URI', 'https://crm.example.invalid/admin/company_google_mail_oauth');\" >> \"$work/app-config.php\"\n",
+        "finance_hashes_after": {
+          "essential_052d1e9167_bb_contract_declarations": "c5cd6fe8ba53541d3660704daf397144588612ac7dfc14fe1dc217dfb627ef23",
+          "essential_0ef64756b3_bb_contract_declarations": "eb75354d6ab2bb4c1f073d485138284581e69c7eea19e3cd61286a1b91b7175d",
+          "essential_0ef696b44c_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_13189cc4b5_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_156957f1f2_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_169a8dc6ad_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_1848cc7da7_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_1a5948614b_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_1ce6305a78_bb_contract_declarations": "99c45e0fde30eee22ae3a44cd36608d6e95b3fb5517a32310d9f9e28fa288eba",
+          "essential_1d90652081_bb_contract_declarations": "b1409bb3b8e4c413dfee5f7d67b9ca1ab036b9ff111e6c91d6d070d03cf289d0",
+          "essential_2470a0a7ee_bb_contract_declarations": "bf3f2af0db9ae4dea2b30c42c5f2dad8070cf83ace10e325d328e7ca7f47c718",
+          "essential_2cd9a831f6_bb_contract_declarations": "0ce48df6aeb216861047c47edb52b29c8551cf3e401e5193d694e0816c8f1f87",
+          "essential_3d23a2e535_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_4493c49b72_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_469e108261_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_4ad56e30a9_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_545e01f498_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_5fff20808d_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_6044e58cc2_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_612c7d9670_bb_contract_declarations": "6d775af37eb38716ee1fc178d50bbb9cf6b8c0c99ef61d278383459452bb4c02",
+          "essential_631b6cecb1_bb_contract_declarations": "0ced26e657bad300dfb9abd7a710f00fe5260fc168edb935a3e17f5e7b279e57",
+          "essential_6384bedf0c_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_65ef238422_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_65ef238422_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_6c3c66a90c_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_7276b5c791_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_72fe071fd8_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_7531361d42_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_789247b599_bb_contract_declarations": "6a49768cf035209134e9073d1c94b8d1443c6198bc0c789dfdb7fba9f0d2598f",
+          "essential_7914b669b9_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_7b925a0eab_bb_contract_declarations": "e38e28bad8bf888edc665b607efd17ff9afcbb22898f14f569c597e432ff74a8",
+          "essential_7fc55a03e8_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_805ce659ce_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_87347210ba_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_8ce5e6042a_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_8fd55d5dd9_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_917f7585e0_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_917f7585e0_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_9272845fee_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_9272845fee_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_952d06ea83_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_952d06ea83_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_ab84acf975_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_c2dc986b0c_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_cee3dc465f_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_d126fea579_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_d126fea579_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_d2351516c1_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_d647e15872_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_d647e15872_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_d7b5217fac_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_d7b5217fac_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_dec622739e_bb_contract_declarations": "53fe772dd3d9f6536c0e9ad21f8b093ba31400ffa5f4fdd3a15b1013fc04e1d0",
+          "essential_e451624ca9_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_f1f1cb22ee_bb_contract_declarations": "412789275ec94c57a4a2ab6ba10b8f17f6c25160c5262830351c54c3a79c431d",
+          "essential_f3d454c883_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_f3d454c883_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_f4aa04fcf7_bb_contract_declarations": "776ef2d7c8bb222a9eb8bee9a85042b8e6e0555fbf6b093ffa358521d20a385a",
+          "essential_f5e10353d5_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_f5e10353d5_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_f89cf6b034_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "tblcompany_contract_comment_requests": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_contract_counters": "87eac2feff39c386ca6dd551fb4ae341b36743e5ec110475597017d216214052",
+          "tblcompany_contract_discussions": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_contract_files": "127b6b9eb50ab6d74331c4206b5c8c0662b6248e453c8cab174517d966606534",
+          "tblcompany_contract_requests": "0c89a72e44476b0da9089eab4d2923f54066fc9f452020e77fd42fbb33b7f800",
+          "tblcompany_contracts": "bd73602e37d5bc5caf41dbc69be3b13bd7285b4a5465cf2f4a86d62129e44c09",
+          "tblcompany_credit_documents": "0d43916e293f023c7fa55bdcd2822e6f01852433d1f800061e8609877c10e884",
+          "tblcompany_credit_entries": "651a6bcfddcabada8c88a04a9864210bbcb8171323437f9155c78d97e738348d",
+          "tblcompany_expense_billing_links": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_expense_billing_origins": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_expense_categories": "ab344447bb656ff4bb285968dc90ae532b98edf689c52e61f4aff5124dbf7c02",
+          "tblcompany_expense_files": "09f4ea82d1a42c9e1161aaed103b26daca0bf848b8c7091c97cc1a6d9ae5475a",
+          "tblcompany_expense_occurrences": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_expense_recurring": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_expense_recurring_requests": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_expense_requests": "4185061738c9f16ba38193b22846a01423fb3c4cb4fdbd4fd6201caf13c44fb0",
+          "tblcompany_expenses": "c0bd6f2cdea665c4571ad9a6ae318d089eb7b1447b4193070f9fa39fe2485c84",
+          "tblcompany_invoice_attachments": "215c85cdee599a689507b54b1948a24910964286bc9a04dae3dd69b5606957e8",
+          "tblcompany_invoice_deliveries": "34ba200fbabe0e6b053ac229c975f9da47812805a0e83830e029ed5fcf886e7d",
+          "tblcompany_invoice_requests": "b0af462e27b4272624fd58cd8f221bb26d12390b1b4409b55703a30702fa2b2b",
+          "tblcompany_payment_receipts": "6f45ae8d4aec971d23b971c0ee4442180b70bff7271d0a4937a5f947b9175a58",
+          "tblcompany_portal_contracts": "e7e6f927bbb6aadf5036d6c582f5297cb8b61d19a5ec202034acb4ca35e2327e",
+          "tblcompany_portal_contracts_files": "feffe796939967299db741f1506c7b8b954cfbf7ce53f39724704d3e8bc3488c",
+          "tblcontract_comments": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcontract_renewals": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcontracts": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcontracts_types": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcreditnote_refunds": "4c20a3baa6ea588729f26d2b8f41a1b570ffaca551c860c15a644d7a9bc016f8",
+          "tblcreditnotes": "7d83837f0a1fb31e8822032978783f79d2834db243befc2208cd6383e82b9ace",
+          "tblcredits": "ac4246ecb3dc9662617bd040af72d2610e4610a5011f8e4d4158dfb743a487d7",
+          "tblestimate_request_forms": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblestimate_request_status": "69342a48973cf9e2649b5232db37945ac9c69a37ae43c47f6212146983013c74",
+          "tblestimate_requests": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblestimates": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblexpenses": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblexpenses_categories": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblinvoicepaymentrecords": "dba32693f60f872e888dac698757b33dc74163a1efbc0669106b31750d4a2da0",
+          "tblinvoices": "8a3e33b54daad71c2b81c78403652a0a8fc6550e28dcd4b60af15cef85e34553",
+          "tblissuers_invoice_documents": "2ef92408fc0de47525b49acdd181ff95329acbf8d133d4d76085a784003be1a7",
+          "tblpayment_attempts": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblpayment_modes": "35088348a32a51c960d56b232010c4af1077b2e08ac50ed13366c7122a123f70",
+          "tblproposal_comments": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblproposals": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "finance_hashes_before": {
+          "essential_052d1e9167_bb_contract_declarations": "c5cd6fe8ba53541d3660704daf397144588612ac7dfc14fe1dc217dfb627ef23",
+          "essential_0ef64756b3_bb_contract_declarations": "eb75354d6ab2bb4c1f073d485138284581e69c7eea19e3cd61286a1b91b7175d",
+          "essential_0ef696b44c_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_13189cc4b5_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_156957f1f2_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_169a8dc6ad_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_1848cc7da7_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_1a5948614b_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_1ce6305a78_bb_contract_declarations": "99c45e0fde30eee22ae3a44cd36608d6e95b3fb5517a32310d9f9e28fa288eba",
+          "essential_1d90652081_bb_contract_declarations": "b1409bb3b8e4c413dfee5f7d67b9ca1ab036b9ff111e6c91d6d070d03cf289d0",
+          "essential_2470a0a7ee_bb_contract_declarations": "bf3f2af0db9ae4dea2b30c42c5f2dad8070cf83ace10e325d328e7ca7f47c718",
+          "essential_2cd9a831f6_bb_contract_declarations": "0ce48df6aeb216861047c47edb52b29c8551cf3e401e5193d694e0816c8f1f87",
+          "essential_3d23a2e535_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_4493c49b72_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_469e108261_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_4ad56e30a9_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_545e01f498_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_5fff20808d_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_6044e58cc2_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_612c7d9670_bb_contract_declarations": "6d775af37eb38716ee1fc178d50bbb9cf6b8c0c99ef61d278383459452bb4c02",
+          "essential_631b6cecb1_bb_contract_declarations": "0ced26e657bad300dfb9abd7a710f00fe5260fc168edb935a3e17f5e7b279e57",
+          "essential_6384bedf0c_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_65ef238422_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_65ef238422_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_6c3c66a90c_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_7276b5c791_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_72fe071fd8_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_7531361d42_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_789247b599_bb_contract_declarations": "6a49768cf035209134e9073d1c94b8d1443c6198bc0c789dfdb7fba9f0d2598f",
+          "essential_7914b669b9_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_7b925a0eab_bb_contract_declarations": "e38e28bad8bf888edc665b607efd17ff9afcbb22898f14f569c597e432ff74a8",
+          "essential_7fc55a03e8_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_805ce659ce_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_87347210ba_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_8ce5e6042a_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_8fd55d5dd9_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_917f7585e0_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_917f7585e0_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_9272845fee_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_9272845fee_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_952d06ea83_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_952d06ea83_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_ab84acf975_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_c2dc986b0c_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_cee3dc465f_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "essential_d126fea579_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_d126fea579_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_d2351516c1_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_d647e15872_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_d647e15872_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_d7b5217fac_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_d7b5217fac_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_dec622739e_bb_contract_declarations": "53fe772dd3d9f6536c0e9ad21f8b093ba31400ffa5f4fdd3a15b1013fc04e1d0",
+          "essential_e451624ca9_expenses": "e95de36d0e8fa411cb11e88e4f0a09c9463268984e3311c54f96f0945e22987a",
+          "essential_f1f1cb22ee_bb_contract_declarations": "412789275ec94c57a4a2ab6ba10b8f17f6c25160c5262830351c54c3a79c431d",
+          "essential_f3d454c883_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_f3d454c883_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_f4aa04fcf7_bb_contract_declarations": "776ef2d7c8bb222a9eb8bee9a85042b8e6e0555fbf6b093ffa358521d20a385a",
+          "essential_f5e10353d5_invoices": "0456882f2b807fa4fa1abeb7f237ed3de8897ff02b0c69200f651b2b95ef21d6",
+          "essential_f5e10353d5_issuers_invoice_documents": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "essential_f89cf6b034_contracts": "a399e0e365bbf4e2aadd4cc8547531abe83fc3ae09f09fe8994c08e872693fce",
+          "tblcompany_contract_comment_requests": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_contract_counters": "87eac2feff39c386ca6dd551fb4ae341b36743e5ec110475597017d216214052",
+          "tblcompany_contract_discussions": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_contract_files": "127b6b9eb50ab6d74331c4206b5c8c0662b6248e453c8cab174517d966606534",
+          "tblcompany_contract_requests": "0c89a72e44476b0da9089eab4d2923f54066fc9f452020e77fd42fbb33b7f800",
+          "tblcompany_contracts": "bd73602e37d5bc5caf41dbc69be3b13bd7285b4a5465cf2f4a86d62129e44c09",
+          "tblcompany_credit_documents": "0d43916e293f023c7fa55bdcd2822e6f01852433d1f800061e8609877c10e884",
+          "tblcompany_credit_entries": "651a6bcfddcabada8c88a04a9864210bbcb8171323437f9155c78d97e738348d",
+          "tblcompany_expense_billing_links": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_expense_billing_origins": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_expense_categories": "ab344447bb656ff4bb285968dc90ae532b98edf689c52e61f4aff5124dbf7c02",
+          "tblcompany_expense_files": "09f4ea82d1a42c9e1161aaed103b26daca0bf848b8c7091c97cc1a6d9ae5475a",
+          "tblcompany_expense_occurrences": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_expense_recurring": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_expense_recurring_requests": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcompany_expense_requests": "4185061738c9f16ba38193b22846a01423fb3c4cb4fdbd4fd6201caf13c44fb0",
+          "tblcompany_expenses": "c0bd6f2cdea665c4571ad9a6ae318d089eb7b1447b4193070f9fa39fe2485c84",
+          "tblcompany_invoice_attachments": "215c85cdee599a689507b54b1948a24910964286bc9a04dae3dd69b5606957e8",
+          "tblcompany_invoice_deliveries": "34ba200fbabe0e6b053ac229c975f9da47812805a0e83830e029ed5fcf886e7d",
+          "tblcompany_invoice_requests": "b0af462e27b4272624fd58cd8f221bb26d12390b1b4409b55703a30702fa2b2b",
+          "tblcompany_payment_receipts": "6f45ae8d4aec971d23b971c0ee4442180b70bff7271d0a4937a5f947b9175a58",
+          "tblcompany_portal_contracts": "e7e6f927bbb6aadf5036d6c582f5297cb8b61d19a5ec202034acb4ca35e2327e",
+          "tblcompany_portal_contracts_files": "feffe796939967299db741f1506c7b8b954cfbf7ce53f39724704d3e8bc3488c",
+          "tblcontract_comments": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcontract_renewals": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcontracts": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcontracts_types": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblcreditnote_refunds": "4c20a3baa6ea588729f26d2b8f41a1b570ffaca551c860c15a644d7a9bc016f8",
+          "tblcreditnotes": "7d83837f0a1fb31e8822032978783f79d2834db243befc2208cd6383e82b9ace",
+          "tblcredits": "ac4246ecb3dc9662617bd040af72d2610e4610a5011f8e4d4158dfb743a487d7",
+          "tblestimate_request_forms": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblestimate_request_status": "69342a48973cf9e2649b5232db37945ac9c69a37ae43c47f6212146983013c74",
+          "tblestimate_requests": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblestimates": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblexpenses": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblexpenses_categories": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblinvoicepaymentrecords": "dba32693f60f872e888dac698757b33dc74163a1efbc0669106b31750d4a2da0",
+          "tblinvoices": "8a3e33b54daad71c2b81c78403652a0a8fc6550e28dcd4b60af15cef85e34553",
+          "tblissuers_invoice_documents": "2ef92408fc0de47525b49acdd181ff95329acbf8d133d4d76085a784003be1a7",
+          "tblpayment_attempts": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblpayment_modes": "35088348a32a51c960d56b232010c4af1077b2e08ac50ed13366c7122a123f70",
+          "tblproposal_comments": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tblproposals": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "finance_tables": 104,
+        "finance_unchanged": true,
+        "new_source": "/tmp/pr45-http-frozen-436-s2",
+        "old_source": "/tmp/pr45-http-frozen-436-final",
+        "runtime_files_physically_independent": true
+      },
+      "source": "/tmp/pr45-http-frozen-436-s2",
+      "unchanged": true
+    },
+    "S3": {
+      "files": 19101,
+      "final_manifest": {
+        "path": "/tmp/crm-http-qa436-final/final436-s3-source-final-manifest.json",
+        "sha256": "b3fbb4bee2dcbc9c527849bd45911941c9987d6621ca97bf9c519872377cb702"
+      },
+      "scope": "Only BB origination test date changed before its first execution. Those bytes executed in S4: invoice424262 has bankbusinessdate19, then unrelated selector failed. Datehunk retained in successful S5 retry; no fullS3round claimed.",
+      "source": "/tmp/pr45-http-frozen-436-s3",
+      "transition": {
+        "clock_correction": {
+          "earlier_inference": "Incorrectly treated local08:31 asUTC; corrected with explicit Node ISO/Intl and date-u before BB execution",
+          "isoUTC": "2026-10-20T00:31:54.868Z",
+          "processTimezone": "Asia/Singapore",
+          "saoPaulo": "2026-10-19"
+        },
+        "copied_host_CJS": "tests/banco_brasil_origination_browser.cjs",
+        "delta": {
+          "tests/banco_brasil_origination_browser.cjs": {
+            "new": "430189d34271f6b7a9fc31f70e0ba4fd35d0937c1ac105a5e0c8e9f7b73375a8",
+            "old": "3e9604155f1771c349340c3d04d84e0b6d7ccc1f6cddcfbddeee35c6087d9b6b"
+          }
+        },
+        "files": 19101,
+        "host_exact_source_sha256_before_execution": "430189d34271f6b7a9fc31f70e0ba4fd35d0937c1ac105a5e0c8e9f7b73375a8",
+        "manifest": "/tmp/pr45-436-s3-frozen-source-manifest.json",
+        "manifest_sha256": "d56949580b7feb70ba23aa9efa0cd3d56cb7c85c6d42dce969dda2b5693db6ca",
+        "production_or_data_changes": false,
+        "source": "/tmp/pr45-http-frozen-436-s3",
+        "test_not_yet_executed": true,
+        "unchanged_other_files": 19100
+      },
+      "unchanged": true
+    },
+    "S4": {
+      "browser_successes": 1,
+      "failed_browser_attempts": 2,
+      "files": 19101,
+      "final_manifest": {
+        "path": "/tmp/crm-http-qa436-final/final436-s4-source-final-manifest.json",
+        "sha256": "81c616904e0ca6c3866eadadf855317172870f46e48351f2a050336e11500ca8"
+      },
+      "minimal_fixture_proof": {
+        "calendar": "No schedule creation/run performed in this proof",
+        "config_after": {
+          "google": {
+            "config_revision": 2,
+            "epoch": 6,
+            "issuer_id": 3,
+            "sender_email": "google-3@example.invalid",
+            "status": "active"
+          },
+          "issuer": 3,
+          "mail_config": {
+            "built": true,
+            "protocol": "google"
+          },
+          "own_options": {
+            "email_protocol": "smtp",
+            "mail_engine": "codeigniter",
+            "smtp_email": "google-3@example.invalid",
+            "smtp_host": "smtp-a.invalid",
+            "smtp_port": "587"
+          }
+        },
+        "config_before": {
+          "google": {
+            "config_revision": 2,
+            "epoch": 6,
+            "issuer_id": 3,
+            "sender_email": "google-3@example.invalid",
+            "status": "active"
+          },
+          "issuer": 3,
+          "mail_config": {
+            "built": false,
+            "exception_class": "DomainException",
+            "reason": "company_google_mail_connection_required"
+          },
+          "own_options": {
+            "email_protocol": "smtp",
+            "mail_engine": "codeigniter",
+            "smtp_email": "a@example.invalid",
+            "smtp_host": "smtp-a.invalid",
+            "smtp_port": "587"
+          }
+        },
+        "counts_after": "10\t0\t0\t140\t6",
+        "counts_before": "10\t0\t0\t140\t6",
+        "google_account_full_rows_hash_after": "22fa44621b9d887cfdf1bf01b8a0ca65f254260cf54cbfbe60cca2f58e284244",
+        "google_account_full_rows_hash_before": "22fa44621b9d887cfdf1bf01b8a0ca65f254260cf54cbfbe60cca2f58e284244",
+        "probe_path_adaptation": "FCPATH points existing disposable application; sourcefixture and app/tests original untouched"
+      },
+      "original_failed_recurring_source_preserved": {
+        "after_sha256": "47c55b480209ee9dc2926cc68efa971e8075fb9843caa2581a275d8b34556164",
+        "before_sha256": "47c55b480209ee9dc2926cc68efa971e8075fb9843caa2581a275d8b34556164",
+        "ids": [
+          "10",
+          "11",
+          "12",
+          "13"
+        ],
+        "preserved": true
+      },
+      "source": "/tmp/pr45-http-frozen-436-s4",
+      "transition": {
+        "actual_browser_explicit_copy_required": true,
+        "app_fixture_not_manually_copied": true,
+        "copied_host_fixture": "tests/companies/expense_recurring_http_fixture.php",
+        "delta": {
+          "tests/companies/expense_recurring_http_fixture.php": {
+            "new": "bb46bef3a944d37a197011e5c3886710bba9500a7a40517635bc0dd845d5eecc",
+            "old": "c71d8994304fb9ed7fe6e0b541cb9c4b235a096a9265bbdb2bf2bcc4704993cc"
+          }
+        },
+        "files": 19101,
+        "host_source_sha256": "bb46bef3a944d37a197011e5c3886710bba9500a7a40517635bc0dd845d5eecc",
+        "manifest": "/tmp/pr45-436-s4-frozen-source-manifest.json",
+        "manifest_sha256": "5d203d2bf428fe16f31556b75ee2934713d43c30148bd7a9e1b6e5ce09a1edbd",
+        "production_or_assertion_changes": false,
+        "source": "/tmp/pr45-http-frozen-436-s4",
+        "unchanged_other_files": 19100
+      },
+      "unchanged": true
+    },
+    "S5": {
+      "bb_current_runner_proof": {
+        "after": "2\tbanco_brasil\t1.1.6\t1",
+        "before": "2\tbanco_brasil\t1.1.6\t1",
+        "preserved": true,
+        "real_runner_output": "Native Banco do Brasil116 already current; real runner and tracking confirmed.\n",
+        "scope": "Scratch path adaptation only; actual current native App_module_migration preserves existing116 row. Original first fixture already installed116 through realrunner before selectorfailure; no repeated INSERT, target UPDATE, DELETE or reset."
+      },
+      "browser_successes": 15,
+      "files": 19101,
+      "original_failed_BB_invoice_preserved": {
+        "after_sha256": "52c8878150ceced95d08b7c7207aea6acc393b95d3875e5bc1208a91eb68b05e",
+        "before_sha256": "52c8878150ceced95d08b7c7207aea6acc393b95d3875e5bc1208a91eb68b05e",
+        "id": 424262,
+        "original_receipts": 0,
+        "original_status": "open",
+        "unchanged": true
+      },
+      "source": "/tmp/pr45-http-frozen-436-s5",
+      "transition": {
+        "copied_host_files": [
+          "tests/banco_brasil_origination_browser.cjs",
+          "tests/banco_brasil_http_fixture.php",
+          "tests/companies/asaas_refund_http_fixture.php"
+        ],
+        "delta": {
+          "tests/banco_brasil_http_fixture.php": {
+            "new": "16625c35a6d5d0cb3f22990472c41faacba23cb3bc15fabf8b53214a5eac6361",
+            "old": "0af0444b1f824a7e0879e50c91ad0aaf3436919f1d7e77e5e9ee70a1050a330f"
+          },
+          "tests/banco_brasil_origination_browser.cjs": {
+            "new": "cad986e9a8fc3be62dca7ff0fed1741d297c55d22be767f05205609836da77db",
+            "old": "430189d34271f6b7a9fc31f70e0ba4fd35d0937c1ac105a5e0c8e9f7b73375a8"
+          },
+          "tests/companies/asaas_refund_http_fixture.php": {
+            "new": "6250c91928a4ab41117c14ec90f7ecbf54ee9be65701ceaa4d6ab0e58694d939",
+            "old": "15837a2484baea2dc34499bdace0550d98efc3c1010cfdfd315f971e5c5fb2e6"
+          }
+        },
+        "failfast": "This same Python process execs resume only after all assertions and preparation marker succeed.",
+        "files": 19101,
+        "financial_assertion_changes": 0,
+        "host_hashes": {
+          "tests/banco_brasil_http_fixture.php": "16625c35a6d5d0cb3f22990472c41faacba23cb3bc15fabf8b53214a5eac6361",
+          "tests/banco_brasil_origination_browser.cjs": "cad986e9a8fc3be62dca7ff0fed1741d297c55d22be767f05205609836da77db",
+          "tests/companies/asaas_refund_http_fixture.php": "6250c91928a4ab41117c14ec90f7ecbf54ee9be65701ceaa4d6ab0e58694d939"
+        },
+        "manifest": "/tmp/pr45-436-s5-frozen-source-manifest.json",
+        "manifest_sha256": "f92a42b608339a97a5ed615028ba8cf6357f7c2ea0b51d2ed6d3c0b9836e7f6b",
+        "no_appfixture_manual_copy": true,
+        "production_changes": 0,
+        "source": "/tmp/pr45-http-frozen-436-s5",
+        "unchanged_other_files": 19098
+      },
+      "unchanged": true
+    }
+  },
+  "status": "PASS_WITH_DISCLOSED_RETRIES_AND_IMMUTABLE_SOURCE_VARIANTS",
+  "coordinator_source_binding": {
+    "expected_runtime_files": 18041,
+    "all_tested_runtime_bytes_match_main": true,
+    "source_manifest_sha256": "f92a42b608339a97a5ed615028ba8cf6357f7c2ea0b51d2ed6d3c0b9836e7f6b",
+    "original_qa_report_sha256": "2e8b558d557130a70282d306a0b5d5f5db13658a93808be9b20289abf015c1f6",
+    "published_435_migrations_preserved": true,
+    "pipe_php_mode": "Retain published100644; frozen executable-bit difference is a QA preparation artifact, content identical."
+  },
+  "coordinator_affected_sql": {
+    "frozen_source": "/tmp/pr45-http-frozen-436-s2",
+    "manifest_sha256": "cfc3a71784f9090d1a2c9078b6c049891063431818f11053326ad17e23b8407e",
+    "runner": "/tmp/pr45-final436-s2-mariadb.py",
+    "core_version": "4.3.6/436",
+    "bb_version": "1.1.6/116 actual native runner",
+    "passed": [
+      "tests/banco_brasil_interrupted_read_mysql.php",
+      "tests/banco_brasil_interrupted_sending_mysql.php",
+      "tests/banco_brasil_api_amendment.php",
+      "tests/banco_brasil_api16_mutation_fence_concurrency.php",
+      "tests/banco_brasil_api_origin_mutation_fence_concurrency.php",
+      "tests/banco_brasil_api_origin_cnab240_mysql.php",
+      "tests/banco_brasil_webhook_mysql.php"
+    ],
+    "failed_attempts": [
+      {
+        "path": "tests/banco_brasil_api_webhook_mysql.php",
+        "exit": 1,
+        "reason": "Runner requested nonexistent filename; no test code ran. Correct filename separately passed."
+      }
+    ],
+    "logs": [
+      {
+        "path": "/tmp/pr45-final436-s2-bb-mariadb.log",
+        "sha256": "452c2a321ed4d099961c118d0888be6581cdb94d40674ff8a2635882ab358abe"
+      },
+      {
+        "path": "/tmp/pr45-final436-s2-webhook-mariadb.log",
+        "sha256": "9f95b5f2672355fc42677e37eadd6060c626ae885d96ebc42efdf263515c9370"
+      }
+    ],
+    "scope": "Coordinator-owned S2 affected SQL verification; not QA agent91 S1 suites, not external banking"
+  },
+  "coordinator_static_checks": {
+    "python_unittest_successes": 64,
+    "seconds": 25.924,
+    "log_sha256": "bd6fa32fb96170e901f31251f31bfdd9391ac92d1e54d9627919045ce6df6709",
+    "generated_inventories_regenerated": true,
+    "staged_diff_check": "PASS",
+    "full_sha_release_gates": "Executed separately before CAS publication"
+  }
+}

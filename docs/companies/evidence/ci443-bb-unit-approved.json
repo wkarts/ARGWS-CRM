@@ -1,0 +1,40 @@
+{
+  "head_sha": "57a80667e47e203bcb4e388fa3670824bb4bb4e1",
+  "workflow_run": 39414019049,
+  "terminal_workflow": false,
+  "checked_at": "2026-10-20T11:23:11Z",
+  "jobs": [
+    {
+      "id": 118598507965,
+      "name": "unit (8.5)",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "57a80667e47e203bcb4e388fa3670824bb4bb4e1",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39414019049/job/118598507965"
+    },
+    {
+      "id": 118598508197,
+      "name": "unit (8.1)",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "57a80667e47e203bcb4e388fa3670824bb4bb4e1",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39414019049/job/118598508197"
+    },
+    {
+      "id": 118598508311,
+      "name": "mariadb",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "57a80667e47e203bcb4e388fa3670824bb4bb4e1",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39414019049/job/118598508311"
+    },
+    {
+      "id": 118598508384,
+      "name": "mysql",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "57a80667e47e203bcb4e388fa3670824bb4bb4e1",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39414019049/job/118598508384"
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "revision": "V2",
+  "time_utc": "2026-10-20T10:00:00.524573+00:00",
+  "overlay": "/workspace/scratch/6b72446d684f/resume-next-bb-reference",
+  "publication": "isolated local component only; not integrated, committed or published by this agent",
+  "baseline": "candidate440 unmodified BB120/core440; no version/migration edits",
+  "mariadb_tests": [
+    {
+      "path": "tests/banco_brasil_own_number_mysql.php",
+      "exit": 0,
+      "seconds": 19.41,
+      "output": "Named-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nBB origination: 129 cumulative native MySQL checks; no transmission or bank homologation.\nBB API native MySQL/encryption/outbox: 193 cumulative checks; simulated provider, no real tokens/charges.\nBB own-number aliases native DB: 689 cumulative checks; synthetic provider only, no fiscal/financial rewrite.\n"
+    },
+    {
+      "path": "tests/banco_brasil_own_number_activity.php",
+      "exit": 0,
+      "seconds": 34.727,
+      "output": "Named-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nBB origination: 129 cumulative native MySQL checks; no transmission or bank homologation.\nBB API native MySQL/encryption/outbox: 193 cumulative checks; simulated provider, no real tokens/charges.\nBB own-number aliases native DB: 689 cumulative checks; synthetic provider only, no fiscal/financial rewrite.\nBB own-number/query activity guards: 359 added checks; canonical webhook and financial writer, real 300s expiry, synthetic HTTP only.\n"
+    },
+    {
+      "path": "tests/banco_brasil_own_number_controller.php",
+      "exit": 0,
+      "seconds": 20.206,
+      "output": "Named-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nBB origination: 129 cumulative native MySQL checks; no transmission or bank homologation.\nBB API native MySQL/encryption/outbox: 193 cumulative checks; simulated provider, no real tokens/charges.\nBB own-number aliases native DB: 689 cumulative checks; synthetic provider only, no fiscal/financial rewrite.\nBB operational own-number native controller: 747 cumulative DB checks; adapted request/session, synthetic bank.\n"
+    },
+    {
+      "path": "tests/banco_brasil_own_number_concurrency.php",
+      "exit": 0,
+      "seconds": 25.567,
+      "output": "Named-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nBB origination: 129 cumulative native MySQL checks; no transmission or bank homologation.\nBB API native MySQL/encryption/outbox: 193 cumulative checks; simulated provider, no real tokens/charges.\nBB own-number aliases native DB: 689 cumulative checks; synthetic provider only, no fiscal/financial rewrite.\nBB own-number alias concurrency: 737 cumulative checks, 3 scenarios with two observed waiters each; synthetic bank only.\n"
+    },
+    {
+      "path": "tests/banco_brasil_own_number_interrupted.php",
+      "exit": 0,
+      "seconds": 23.483,
+      "output": "Named-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nBB origination: 129 cumulative native MySQL checks; no transmission or bank homologation.\nBB API native MySQL/encryption/outbox: 193 cumulative checks; simulated provider, no real tokens/charges.\nBB own-number aliases native DB: 689 cumulative checks; synthetic provider only, no fiscal/financial rewrite.\nBB own-number actual SIGKILL recovery: 715 cumulative DB checks; synthetic accepted PATCH, independent query only.\n"
+    },
+    {
+      "path": "tests/banco_brasil_api_window_discount_mysql.php",
+      "exit": 0,
+      "seconds": 45.569,
+      "output": "Named-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nBB origination: 129 cumulative native MySQL checks; no transmission or bank homologation.\nBB API native MySQL/encryption/outbox: 193 cumulative checks; simulated provider, no real tokens/charges.\nBB daily interest native: 212 cumulative SQL checks; simulated provider, no bank homologation.\nBB monthly interest native: 246 cumulative actual SQL checks; simulated provider, no accrual or bank homologation.\nBB first fixed discount native: 322 cumulative SQL checks; simulated provider, publication separate from financial receipt.\nBB first percentage discount native: 402 cumulative SQL checks; simulated provider, registration separate from financial receipt.\nBB API16 component final source: 527 cumulative actual SQL checks; injected bank transport, no bank homologation.\nReconstructed119 bootstrap for unchanged440 tests: original API16 fixture and restricted actor prepared; not a recovery of missing original tests.\nBB explicit receipt window and discount lifecycle: 1008 cumulative actual SQL checks; synthetic transport, no external banking/homologation.\n"
+    },
+    {
+      "path": "tests/banco_brasil_api16_components_mysql.php",
+      "exit": 0,
+      "seconds": 30.625,
+      "output": "Named-company invoice/payment/PDF: 24 checks passed (mysql). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nBB origination: 129 cumulative native MySQL checks; no transmission or bank homologation.\nBB API native MySQL/encryption/outbox: 193 cumulative checks; simulated provider, no real tokens/charges.\nBB daily interest native: 212 cumulative SQL checks; simulated provider, no bank homologation.\nBB monthly interest native: 246 cumulative actual SQL checks; simulated provider, no accrual or bank homologation.\nBB first fixed discount native: 322 cumulative SQL checks; simulated provider, publication separate from financial receipt.\nBB first percentage discount native: 402 cumulative SQL checks; simulated provider, registration separate from financial receipt.\nBB API16 component final source: 527 cumulative actual SQL checks; injected bank transport, no bank homologation.\n"
+    }
+  ],
+  "mariadb_passed": 7,
+  "mariadb_suites": 7,
+  "pure_sqlite": [
+    {
+      "path": "tests/banco_brasil_own_number_contract.php",
+      "exit": 0,
+      "output": "BB operational own-number pure contract: 57 checks; no bank HTTP.\n"
+    },
+    {
+      "path": "tests/banco_brasil_own_number_view.php",
+      "exit": 0,
+      "output": "BB own-number server-rendered form/projection: 17 checks; no bank HTTP.\n"
+    },
+    {
+      "path": "tests/banco_brasil_own_number_sqlite.php",
+      "exit": 0,
+      "output": "Named-company invoice/payment/PDF: 24 checks passed (sqlite). No provider calls.\nFinancial origin/ACL boundaries: 30 cumulative checks passed.\nInvoice legacy/PDF provenance: 33 cumulative checks passed.\nExpanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.\nOwned branding snapshots/PDF: 63 cumulative checks passed.\nBB own-number SQLite guard: 67 cumulative actual SQLite checks; positive BB runtime remains InnoDB only.\n"
+    }
+  ],
+  "pure_sqlite_passed": 3,
+  "lint_passed": 23,
+  "lint_files": 23,
+  "warnings_in_frozen_results": [],
+  "frozen_component_files": 24,
+  "component_changes_after_freeze": [],
+  "production_binding_files": 96,
+  "production_binding_changes_since_recorded": [],
+  "delta_from_V1": {
+    "docs/banco-brasil-own-number.md": {
+      "V1": "06ba69a5faf6f7a31af898ad1c761d18e82fa2af58cc5912bd2ce756dff2e95e",
+      "V2": "caff8d89467e710be79f146db3cd431e88e4fc1f6a17ed9a18863557c1f72d48"
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ApiClient.php": {
+      "V1": "4339398faa227b6d406b444cc0a068a213f04ce3cb7adf0d786b9a26dcbc8897",
+      "V2": "bdb52ca517c8e92c50b4f41c237a8dde900fdaaef54e62bfb7085182c58f2f55"
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ApiOwnNumberAmendments.php": {
+      "V1": "a81a713da14cb2b4778205cc27f00884e419f535143081896f0d06f9f955c531",
+      "V2": "a5bdaebc08e794f9bca97ccfd1f4cde7738dd8f06cb728b9bb9d22246997cb88"
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ApiService.php": {
+      "V1": "ffaa42000bc8fa779625f4e3258d21edb29b3aba6c0620b5f7babc099bfcfbdf",
+      "V2": "3bde758b0aa4abec0277f82afc332a22c207b1b7d4b215517efedd36f3635c6a"
+    },
+    "tests/banco_brasil_own_number_activity.php": {
+      "V1": null,
+      "V2": "a351686c74f65f621cb3266a387b8750dc7bbc27294124681aabfa2dc1cfaddf"
+    }
+  },
+  "V1_preserved": "bb-own-number-packet-v1",
+  "RED_preserved": [
+    "bb-own-number-v2-evidence/review-RED.php",
+    "bb-own-number-v2-evidence/review-RED.log"
+  ],
+  "GREEN": "tests/banco_brasil_own_number_activity.php",
+  "new_mysql_entrypoint": "tests/banco_brasil_own_number_activity.php",
+  "new_schema": false,
+  "versions_migrations_workflows_changed": false,
+  "candidate440_or_root_frozen_changed": false,
+  "central_patch_byte_identical_V1": true,
+  "patch_apply_check": "PASS against candidate440",
+  "commands": [
+    "python test-runtime/run_resume_db.py --cwd resume-next-bb-reference -- python ../bb-own-number-v2-batch.py",
+    "test-runtime/resume-bin/php resume-next-bb-reference/tests/banco_brasil_own_number_contract.php",
+    "test-runtime/resume-bin/php resume-next-bb-reference/tests/banco_brasil_own_number_view.php",
+    "test-runtime/resume-bin/php resume-next-bb-reference/tests/banco_brasil_own_number_sqlite.php",
+    "git apply --check --directory=candidate440 bb-own-number-packet-v2/complete.patch"
+  ],
+  "financial_evidence": "Actual canonical ApiCreditedReceipt writer refuses stale earlier query while a newer query is in flight at each OAuth/detail/account phase; after validation the fresh query applies exactly one payment and replay returns the same. No fabricated SQL payment claimed. Existing native689 also vetoes pending/corrupt alias in the canonical financial writer.",
+  "guard_contract": "Current auth/claim/full credential, immutable profile/origin/document, canonical balance and payment/credit rows, bank observations; before/after each query/reference HTTP phase and final confirmation. Fresh NORMAL/adverse history rechecked after OAuth; no blind resend after uncertainty.",
+  "counts": "Cumulative assertions include nested baseline/fixture/transport assertions. Do not sum suite totals. Activity1048 = baseline689 +359 additional assertions.",
+  "limits": [
+    "No real banking network/authentication/homologation",
+    "Positive BB tests require InnoDB; SQLite proves no-effect refusal",
+    "Browser fixture/CJS unchanged and linted; actual HTTP/Chromium still pending integration",
+    "Future core/module numbering, native migration/tracking/install/upgrade/replay and CI for published SHA remain root integration work",
+    "Scope excludes nominal, API18/19 financial effects, CNAB400, interest/fine/protest instructions"
+  ],
+  "artifact_sha256": {
+    "component.patch": "12b314739358146353c629de6f9538433796b88ce90637e193b0bcf30658653a",
+    "PULL_REQUEST_DELTA.md": "72af03cfe98bbf7b761a71e58916a878727da425509ba89b659d047789284f3c",
+    "INTEGRATION.md": "1700cd1050f996e801b8a0d3f92fde8afecec1f81fe32fe9e3053a2746c8f4d2",
+    "complete.patch": "b938bf5622e6dde17d028eaac7b994afc145e8d7387124a4c5a57c73b571c115",
+    "central.patch": "6960d60ae7eff584f1d0c08eab4acf8eee89e40e41298ab4b734fd19954d00a5",
+    "manifest.json": "6aebb279686ff9fd01a3cd35cc5d76f8e15ed8592b34db25151a2daa01ddd401"
+  }
+}

@@ -33,6 +33,18 @@ class Staff extends AdminController
         $this->load->model('departments_model');
         if ($this->input->post()) {
             $data = $this->input->post();
+            $issuerAccess = null;
+            if (function_exists('issuers_prepare_staff_access')) {
+                try {
+                    $issuerAccess = issuers_prepare_staff_access($data, $id === '' ? null : $id);
+                    if ($id === '') { issuers_require_new_staff_access($issuerAccess); }
+                }
+                catch (Throwable $error) {
+                    set_alert('warning', _l($error instanceof DomainException ? $error->getMessage() : 'issuer_storage_failed'));
+                    redirect(admin_url('staff/member/' . $id));
+                    return;
+                }
+            }
             // Don't do XSS clean here.
             $data['email_signature'] = $this->input->post('email_signature', false);
             $data['email_signature'] = html_entity_decode($data['email_signature']);
@@ -44,6 +56,13 @@ class Staff extends AdminController
 
             $data['password'] = $this->input->post('password', false);
 
+            if($issuerAccess!==null){
+                if(staff_cant($id===''?'create':'edit','staff')){access_denied('staff');}
+                try{$result=issuers_save_staff_atomically($this->staff_model,$id===''?'add':'update',$data,$id===''?null:$id,$issuerAccess);$id=$result['staff_id'];}
+                catch(Throwable $error){issuers_staff_atomic_error($error);redirect(admin_url('staff/member/'.$id));return;}
+                issuers_staff_atomic_effects($result,$id);redirect(admin_url('staff/member/'.$id));return;
+            }
+
             if ($id == '') {
                 if (staff_cant('create', 'staff')) {
                     access_denied('staff');
@@ -52,6 +71,7 @@ class Staff extends AdminController
                 if ($id) {
                     handle_staff_profile_image_upload($id);
                     set_alert('success', _l('added_successfully', _l('staff_member')));
+                    if (function_exists('issuers_apply_staff_access')) { issuers_apply_staff_access($issuerAccess, $id); }
                     redirect(admin_url('staff/member/' . $id));
                 }
             } else {
@@ -61,7 +81,9 @@ class Staff extends AdminController
                 handle_staff_profile_image_upload($id);
                 $response = $this->staff_model->update($data, $id);
                 if (is_array($response)) {
-                    if (isset($response['cant_remove_main_admin'])) {
+                    if (isset($response['cant_remove_installation_master'])) {
+                        set_alert('warning', _l('issuer_master_protected'));
+                    } elseif (isset($response['cant_remove_main_admin'])) {
                         set_alert('warning', _l('staff_cant_remove_main_admin'));
                     } elseif (isset($response['cant_remove_yourself_from_admin'])) {
                         set_alert('warning', _l('staff_cant_remove_yourself_from_admin'));
@@ -69,6 +91,7 @@ class Staff extends AdminController
                 } elseif ($response == true) {
                     set_alert('success', _l('updated_successfully', _l('staff_member')));
                 }
+                if (!is_array($response) && function_exists('issuers_apply_staff_access')) { issuers_apply_staff_access($issuerAccess, $id); }
                 redirect(admin_url('staff/member/' . $id));
             }
         }
@@ -195,7 +218,13 @@ class Staff extends AdminController
         }
 
         if (staff_can('delete',  'staff')) {
-            $success = $this->staff_model->delete($this->input->post('id'), $this->input->post('transfer_data_to'));
+            try { $success = $this->staff_model->delete($this->input->post('id'), $this->input->post('transfer_data_to')); }
+            catch (DomainException $error) {
+                if ($error->getMessage() !== 'issuer_master_protected') { throw $error; }
+                set_alert('warning', _l('issuer_master_protected'));
+                redirect(admin_url('staff'));
+                return;
+            }
             if ($success) {
                 set_alert('success', _l('deleted', _l('staff_member')));
             }
@@ -210,8 +239,16 @@ class Staff extends AdminController
         hooks()->do_action('edit_logged_in_staff_profile');
 
         if ($this->input->post()) {
-            handle_staff_profile_image_upload();
             $data = $this->input->post();
+            $issuerAccess = null;
+            if (function_exists('issuers_prepare_staff_access')) {
+                try { $issuerAccess = issuers_prepare_staff_access($data, get_staff_user_id(), true); }
+                catch (Throwable $error) {
+                    set_alert('warning', _l($error instanceof DomainException ? $error->getMessage() : 'issuer_storage_failed'));
+                    redirect(admin_url('staff/edit_profile/' . get_staff_user_id()));
+                    return;
+                }
+            }
             // Don't do XSS clean here.
             $data['email_signature'] = $this->input->post('email_signature', false);
             $data['email_signature'] = html_entity_decode($data['email_signature']);
@@ -221,12 +258,26 @@ class Staff extends AdminController
                 $data['email_signature'] = nl2br_save_html($data['email_signature']);
             }
 
-            $success = $this->staff_model->update_profile($data, get_staff_user_id());
+            if($issuerAccess!==null){
+                try{$result=issuers_save_staff_atomically($this->staff_model,'update_profile',$data,get_staff_user_id(),$issuerAccess);}
+                catch(Throwable $error){issuers_staff_atomic_error($error);redirect(admin_url('staff/edit_profile/'.get_staff_user_id()));return;}
+                issuers_staff_atomic_effects($result,get_staff_user_id());redirect(admin_url('staff/edit_profile/'.get_staff_user_id()));return;
+            }
+            handle_staff_profile_image_upload();
+
+            try { $success = $this->staff_model->update_profile($data, get_staff_user_id()); }
+            catch (DomainException $error) {
+                if ($error->getMessage() !== 'issuer_staff_profile_field_denied') { throw $error; }
+                set_alert('warning', _l('issuer_staff_profile_field_denied'));
+                redirect(admin_url('staff/edit_profile/' . get_staff_user_id()));
+                return;
+            }
 
             if ($success) {
                 set_alert('success', _l('staff_profile_updated'));
             }
 
+            if (function_exists('issuers_apply_staff_access')) { issuers_apply_staff_access($issuerAccess, get_staff_user_id()); }
             redirect(admin_url('staff/edit_profile/' . get_staff_user_id()));
         }
         $member = $this->staff_model->get(get_staff_user_id());
@@ -313,7 +364,12 @@ class Staff extends AdminController
     {
         if (staff_can('edit',  'staff')) {
             if ($this->input->is_ajax_request()) {
-                $this->staff_model->change_staff_status($id, $status);
+                try { $this->staff_model->change_staff_status($id, $status); }
+                catch (DomainException $error) {
+                    if ($error->getMessage() !== 'issuer_master_protected') { throw $error; }
+                    show_error(_l('issuer_master_protected'), 403);
+                    return;
+                }
             }
         }
     }

@@ -1,0 +1,147 @@
+{
+  "source": "candidate439 recovered S1 production; this task changes tests only",
+  "production_changed": false,
+  "published": false,
+  "new_tests_recreated_not_recovered": true,
+  "files": [
+    {
+      "path": "tests/companies/finance_resume_439_api.php",
+      "sha256": "23bcb2469b002b81038dc9f07294b2e275ed10f548b87c78489b92f51c7f03c0"
+    },
+    {
+      "path": "tests/companies/finance_resume_439_api_concurrency.php",
+      "sha256": "839b378ecf554d6b2f431bb8c7a1865cd6c0d72cb46fbaf44deeb7d6adce8de1"
+    },
+    {
+      "path": "tests/companies/finance_resume_439_asaas.php",
+      "sha256": "5614b1c8dbc42dcdc336035ea0f0a28ea7a159ed52185e7a25d0e16162a0da97"
+    },
+    {
+      "path": "tests/companies/finance_resume_439_asaas_setup.php",
+      "sha256": "1a017bd67d8bd8c909bf917bc44b08c25de3e46193b86be1c8f941fa2a6f39be"
+    },
+    {
+      "path": "tests/companies/finance_resume_439_copies.php",
+      "sha256": "ad6584351909f8e98f126c07a3ca64df5081a10914560d797c0436ff6a63a751"
+    },
+    {
+      "path": "tests/companies/finance_resume_439_copy_concurrency.php",
+      "sha256": "8cc8855320575ca67b455f8914aa2efbe3b60c6619585ff429d8f34ba738177e"
+    },
+    {
+      "path": "tests/companies/finance_resume_439_full_refund_concurrency.php",
+      "sha256": "c941996573008fd3efbb4b101febf35709d2ab591b62271a5e6ca07f83d518f4"
+    },
+    {
+      "path": "tests/companies/finance_resume_439_refund_data.php",
+      "sha256": "4516137e61334b768baf26de2a5b54489ca211877ee6693d861857bc6e7862f6"
+    },
+    {
+      "path": "tests/companies/asaas_refunds.php",
+      "sha256": "93569a08331da6f51b8a07726f66a6b50d4b9aa4f668f44fd927f38879c85924"
+    },
+    {
+      "path": "tests/companies/asaas_refund_native_setup.php",
+      "sha256": "542821cd53b9b21bce43d8d026cbbfc4773551215329ab83cd4cfdf49bbc9011"
+    },
+    {
+      "path": "tests/asaas_module_migrations.php",
+      "sha256": "15f675291b91ebb92af2828fb2875e8ee09798a3a579dc8f372fada59d31357f"
+    }
+  ],
+  "results": [
+    {
+      "suite": "finance_resume_439_refund_data.php",
+      "environment": "PHP8.3.6 pure DTO",
+      "checks": 25,
+      "log": null
+    },
+    {
+      "suite": "finance_resume_439_copies.php",
+      "environment": "SQLite/MariaDB10.11.14",
+      "checks_cumulative": 88,
+      "log": "finance-resume439-copies-mariadb.log"
+    },
+    {
+      "suite": "finance_resume_439_copy_concurrency.php",
+      "environment": "MariaDB10.11.14 observed InnoDB two waiters",
+      "checks_cumulative": 98,
+      "log": "finance-resume439-copy-races-mariadb.log"
+    },
+    {
+      "suite": "finance_resume_439_api.php",
+      "environment": "SQLite/MariaDB10.11.14",
+      "checks_cumulative": {
+        "sqlite": 149,
+        "mariadb": 150
+      },
+      "log": "finance-resume439-api-mariadb.log"
+    },
+    {
+      "suite": "finance_resume_439_asaas.php",
+      "environment": "SQLite/MariaDB10.11.14, simulated HTTP",
+      "checks_cumulative": 191,
+      "log": "finance-resume439-asaas-final-mariadb.log"
+    },
+    {
+      "suite": "finance_resume_439_full_refund_concurrency.php",
+      "environment": "MariaDB10.11.14 observed InnoDB two waiters, simulated HTTP",
+      "checks_cumulative": 203,
+      "log": "finance-resume439-full-refund-races-final-mariadb.log"
+    },
+    {
+      "suite": "asaas_refunds.php",
+      "environment": "SQLite/MariaDB10.11.14",
+      "checks_cumulative": 169,
+      "log": "finance-resume439-published-refunds-final-mariadb.log"
+    },
+    {
+      "suite": "asaas_refund_boundaries.php",
+      "environment": "SQLite",
+      "checks_cumulative": 190,
+      "log": "finance-resume439-original-boundaries-sqlite.log"
+    },
+    {
+      "suite": "asaas_refund_schema.php",
+      "environment": "SQLite",
+      "checks_cumulative": 198,
+      "log": "finance-resume439-original-schema-sqlite.log"
+    },
+    {
+      "suite": "asaas_refund_controller.php",
+      "environment": "SQLite controller adapter",
+      "checks_cumulative": 202,
+      "log": "finance-resume439-original-controller-sqlite.log"
+    },
+    {
+      "suite": "asaas_refund_concurrency.php",
+      "environment": "MariaDB10.11.14",
+      "checks_cumulative": 210,
+      "log": "finance-resume439-original-race-mariadb.log"
+    },
+    {
+      "suite": "asaas_module_migrations.php",
+      "environment": "MariaDB10.11.14 real native module runner",
+      "checks": 76,
+      "log": "finance-resume439-module153-final-mariadb.log",
+      "allowlist": "original unchanged; runtime supplies exact asaas_test database"
+    },
+    {
+      "suite": "finance_resume_439_api_concurrency.php",
+      "environment": "MariaDB10.11.14 observed InnoDB two waiters",
+      "checks_cumulative": 160,
+      "log": "finance-resume439-api-races-mariadb.log"
+    }
+  ],
+  "lint": "all11 PHP test files lint pass",
+  "attempts_preserved": [
+    "finance-resume439-copies-first.log: wrong DTO receipt field in new test, fixed id to invoice_id",
+    "finance-resume439-asaas-second.log: new test used nonexistent get(), switched to canonical position() reader; production untouched"
+  ],
+  "limits": [
+    "No HTTP/Chromium execution of new copy/full-refund/API UI by this agent",
+    "No MySQL8.4 local execution",
+    "No production/bank operation or external provider homologation",
+    "Cumulative counters overlap; do not sum as distinct tests"
+  ]
+}

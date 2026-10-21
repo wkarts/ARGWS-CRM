@@ -1,5 +1,6 @@
 <?php
 defined("BASEPATH") or exit("No direct script access allowed");
+require_once __DIR__ . '/FinanceLegacyScope.php';
 
 class Finance_module
 {
@@ -14,26 +15,30 @@ class Finance_module
     // Obtém as entradas (faturas pagas) com nome do cliente
     public function get_invoices()
     {
+        $this->ci->db->from(db_prefix() . 'invoices AS finance_invoice');
         $this->ci->db->select(
-            "tblinvoices.date, tblinvoices.id as transacao, tblclients.company as descricao, tblinvoices.total as valor, 'entrada' as tipo"
+            "finance_invoice.date, finance_invoice.id as transacao, finance_client.company as descricao, finance_invoice.total as valor, 'entrada' as tipo"
         );
         $this->ci->db->join(
-            "tblclients",
-            "tblclients.userid = tblinvoices.clientid",
+            db_prefix() . 'clients AS finance_client',
+            'finance_client.userid = finance_invoice.clientid',
             "left"
         );
-        $this->ci->db->where("tblinvoices.status", 2); // Filtra apenas faturas pagas
-        $query = $this->ci->db->get("tblinvoices");
+        $this->ci->db->where('finance_invoice.status', 2); // Filtra apenas faturas pagas
+        FinanceLegacyScope::invoices($this->ci->db, db_prefix(), 'finance_invoice');
+        $query = $this->ci->db->get();
         return $query->result_array();
     }
 
     // Obtém as saídas (despesas) com o nome da despesa
     public function get_expenses()
     {
+        $this->ci->db->from(db_prefix() . 'expenses AS finance_expense');
         $this->ci->db->select(
-            "tblexpenses.date, tblexpenses.id as transacao, tblexpenses.expense_name as descricao, tblexpenses.amount as valor, 'saida' as tipo"
+            "finance_expense.date, finance_expense.id as transacao, finance_expense.expense_name as descricao, finance_expense.amount as valor, 'saida' as tipo"
         );
-        $query = $this->ci->db->get("tblexpenses");
+        FinanceLegacyScope::expenses($this->ci->db, db_prefix(), 'finance_expense');
+        $query = $this->ci->db->get();
         return $query->result_array();
     }
 

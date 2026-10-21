@@ -1,0 +1,31 @@
+{
+  "new_file": "tests/banco_brasil_resume_443_module_tracking.php",
+  "sha256": "00818ddeef5dc2dc107f38e28eb9a10af1018c9517a686dfab48d84df4192ac7",
+  "same_in_overlay_and_composition": true,
+  "patch_sha256": "bf10847f185bb49e0479e3687e39815aededcd39da08d5337ade2c4d47fbdf83",
+  "production_changed": false,
+  "version_migration_workflow_changed": false,
+  "V2_original15_still_intact": true,
+  "actual_composed_result": {
+    "entry": "tests/banco_brasil_resume_443_module_tracking.php",
+    "base": "/workspace/scratch/6b72446d684f/candidate443",
+    "expected_version": "1.2.2",
+    "exit": 0,
+    "seconds": 10.504665112996008,
+    "source_files": 872,
+    "changed": {},
+    "test_sha256": "00818ddeef5dc2dc107f38e28eb9a10af1018c9517a686dfab48d84df4192ac7"
+  },
+  "checks_added": {
+    "current_fresh": 50,
+    "actual_native120_child": 69,
+    "actual_native121_child": 69
+  },
+  "fixture_io": "CI request/database adapters; real MariaDB rows, actual App_modules activation, shipped install and historical migrations. Historical version selected via module catalog only for its initial native fixture installation. Current header/ModuleRelease/minimum are read and checked exactly.",
+  "command": "python test-runtime/run_resume_db.py --cwd candidate443 -- python ../bb122-module-validation/run443.py composed443-final tests/banco_brasil_resume_443_module_tracking.php",
+  "env_pin": "BB_RESUME_EXPECT_VERSION=1.2.2 (set by run443.py; forwarded to children)",
+  "pending": [
+    "final composition freeze re-run",
+    "published SHA and CI"
+  ]
+}

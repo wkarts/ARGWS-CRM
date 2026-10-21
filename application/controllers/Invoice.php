@@ -10,6 +10,7 @@ class Invoice extends ClientsController
         $invoice = $this->invoices_model->get($id);
 
         $invoice = hooks()->apply_filters('before_client_view_invoice', $invoice);
+        if (!$invoice || (string) ($invoice->id ?? '') !== (string) $id || !\app\services\InvoiceIssuerScope::legacy()->contains((array) $invoice)) { show_404(); }
 
         if (!is_client_logged_in()) {
             load_client_language($invoice->clientid);
@@ -49,7 +50,7 @@ class Invoice extends ClientsController
         if ($this->input->post('paymentpdf')) {
             $payment = $this->payments_model->get($this->input->post('paymentpdf'));
             // Confirm that the payment is related to the invoice.
-            if ($payment->invoiceid == $id) {
+            if ($payment && $payment->invoiceid == $id) {
                 $payment->invoice_data = $this->invoices_model->get($payment->invoiceid);
                 $paymentpdf            = payment_pdf($payment);
                 $paymentpdf->Output(mb_strtoupper(slug_it(_l('payment') . '-' . $payment->paymentid), 'UTF-8') . '.pdf', 'D');
@@ -72,6 +73,7 @@ class Invoice extends ClientsController
         $this->disableSubMenu();
         $data['hash']      = $hash;
         $data['invoice']   = hooks()->apply_filters('invoice_html_pdf_data', $invoice);
+        if (!$data['invoice'] || (string) ($data['invoice']->id ?? '') !== (string) $id || !\app\services\InvoiceIssuerScope::legacy()->contains((array) $data['invoice'])) { show_404(); }
         $data['bodyclass'] = 'viewinvoice';
         $this->data($data);
         $this->view('invoicehtml');

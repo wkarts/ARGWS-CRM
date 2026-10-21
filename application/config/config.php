@@ -489,7 +489,20 @@ $config['csrf_token_name']   = defined('APP_CSRF_TOKEN_NAME') ? APP_CSRF_TOKEN_N
 $config['csrf_cookie_name']  = defined('APP_CSRF_COOKIE_NAME') ? APP_CSRF_COOKIE_NAME : 'csrf_cookie_name';
 $config['csrf_expire']       = defined('APP_CSRF_EXPIRE') ? APP_CSRF_EXPIRE : 3660;
 $config['csrf_regenerate']   = false;
-$config['csrf_exclude_uris'] = ['forms/wtl/[0-9a-z]+', 'forms/ticket', 'forms/quote/[0-9a-z]+', 'admin/tasks/timer_tracking', 'api\/.+', 'razorpay/success\/.+'];
+$config['csrf_exclude_uris'] = ['company_operations_api/(hr_structure|hr_employees|hr_profiles|hr_records|hr_contracts|hr_courses|hr_assignments|hr_accesses|hr_files|hr_reports|hr_imports|hr_articles|hr_documents)(/[1-9][0-9]{0,9})?', 'company_purchases_api/index/(suppliers|requests|quotes|orders|receipts|documents|payables|events|files|file_download|settings|reports|invites|order_pdf|export)(/[1-9][0-9]{0,9})?', 'company_operations_api/project_copies/[1-9][0-9]{0,9}', 'company_operations_api/(project_files|task_files|contract_files|ticket_files)/[1-9][0-9]{0,9}(/[a-f0-9]{64})?', 'company_operations_api/(project_milestones|task_dependencies|project_follow|task_follow)/[1-9][0-9]{0,9}', 'company_operations_api/(projects|tasks|standalone_tasks|contracts|tickets)(/[1-9][0-9]{0,9})?',
+    'company_operations_api/(task_schedules|standalone_schedules)(/[1-9][0-9]{0,9})?',
+    'company_operations_api/(leads|lead_stages|lead_sources|lead_inbox)(/[1-9][0-9]{0,9})?',
+    'company_operations_api/(lead_assignees|lead_exports)',
+    'company_operations_api/lead_imports(/[a-f0-9]{32})?',
+    'company_operations_api/lead_files/[1-9][0-9]{0,9}(/[a-f0-9]{64})?', 'company_api/invoices',
+    'company_api/local_noncash/[1-9][0-9]*',
+    'company_api/expenses',
+    'company_api/expenses/[1-9][0-9]*',
+    'company_api/expense_categories',
+    'company_api/expense_categories/[1-9][0-9]*',
+    'company_api/expense_files/[1-9][0-9]*',
+    'company_api/drafts',
+    'company_api/(draft_change|draft_cancel|draft_issue)/[1-9][0-9]*', 'company_api/credits', 'company_api/(payments|payment_reverse|credit_apply|credit_unapply|credit_refund|credit_refund_reverse|credit_void)/[1-9][0-9]*', 'company_asaas_callback/integration/[a-f0-9]{32}', 'forms/wtl/[0-9a-z]+', 'forms/ticket', 'forms/quote/[0-9a-z]+', 'admin/tasks/timer_tracking', 'api\/.+', 'razorpay/success\/.+'];
 
 if (isset($app_csrf_exclude_uris)) {
     $config['csrf_exclude_uris'] = array_merge($config['csrf_exclude_uris'], $app_csrf_exclude_uris);

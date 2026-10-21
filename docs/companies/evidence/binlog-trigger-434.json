@@ -1,0 +1,22 @@
+{
+  "recorded_at_utc": "2026-10-19T20:56:45.498650+00:00",
+  "source_helper": "/tmp/pr45-http-frozen-434-final/tests/settings_primary_sales_browser.cjs",
+  "helper_sha256": "e7df3a308903072acc12b7728758a3b7aa5926fa4a9d7f7385dbdff6a5467739",
+  "engine": "MariaDB10.11.14 InnoDB, real SQL CLI, binary logging ON",
+  "database_only_user_without_super": true,
+  "red": "1419 with trustOFF",
+  "green": "trustON, create trigger, SIGNAL45000, both writes rolled back, drop and retry committed",
+  "production_config_changes": false,
+  "test_server_only": "tests/docker_provision_smoke.sh launch argument --log-bin-trust-function-creators=1",
+  "upstream_contract": "https://dev.mysql.com/doc/refman/8.0/en/stored-programs-logging.html",
+  "mysql8_runtime_validation": "pending CI of next published HEAD",
+  "files": {
+    "run.py": "fa5b4e0cdd700bbe6f52f2b6b70a58e937e8514db8ce54c4670ed3ba6d2fdc6a",
+    "verify.cjs": "9e5b1bb7a351bf7fe03502e02df7c5cea62d469687024b3324d5c55aaa12b256",
+    "result.log": "dc40a4bc4d008c9e95c39790094dd71c51d0ba0e4e8624573dc5afaac6de3742"
+  },
+  "other_checks": {
+    "docker_provisioning_python": 16,
+    "bash_syntax": true
+  }
+}

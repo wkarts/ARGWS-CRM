@@ -1,0 +1,23 @@
+{
+  "result": "FAIL",
+  "before": {
+    "csrf_cookie_name": "csrf_cookie_name",
+    "session_cookie_name": "sp_session",
+    "session_count": 26,
+    "session_sha256": "402eb1a80badf49beb691ba90914ccb1d43295fc7c2eafac837e2963a8a71238"
+  },
+  "responses": [
+    {
+      "method": "GET",
+      "resource": "events",
+      "token_company": 3,
+      "status": 422,
+      "body_bytes": 38,
+      "cookie_names": [
+        "csrf_cookie_name"
+      ]
+    }
+  ],
+  "scenarios": [],
+  "error": "AssertionError [ERR_ASSERTION]: Advertised AP event list is positively usable\n\n422 !== 200\n\n    at /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/purchases_events_http.cjs:53:12"
+}

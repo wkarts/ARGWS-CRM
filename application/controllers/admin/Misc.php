@@ -107,6 +107,8 @@ class Misc extends AdminController
     public function delete_sale_activity($id)
     {
         if (is_admin()) {
+            $activity = $this->db->where('id', $id)->get(db_prefix() . 'sales_activity')->row();
+            if (!$activity || ($activity->rel_type === 'invoice' && !\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $activity->rel_id))) { show_404(); }
             $this->db->where('id', $id);
             $this->db->delete(db_prefix() . 'sales_activity');
         }
@@ -135,6 +137,7 @@ class Misc extends AdminController
     {
         $this->db->where('id', $id);
         $row = $this->db->get(db_prefix() . 'files')->row();
+        if (!$row || ($row->rel_type === 'invoice' && !\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $row->rel_id))) { show_404(); }
         if ($row->visible_to_customer == 1) {
             $v = 0;
         } else {

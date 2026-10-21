@@ -195,12 +195,17 @@ def validate_distribution(read, version):
                 raise ValueError(f'Configuração duplicada ou divergente: {path}.')
 
 
-def target_levels(source, target):
-    """Only the reviewed 394→401 transition may skip a native release number."""
+def target_levels(source, target, *, allow_contiguous=False):
+    """Require +1 when generating; validators may inspect accumulated native steps."""
+    version_for_id(target)
     if source.get('alias'):
         if (source['version'], source['migration'], target) != ('3.11.1', 394, 401):
             raise ValueError('A única transição de alias permitida é 3.11.1/394 → 4.0.1/401, com 395–401 completas.')
         return range(395, 402)
+    if allow_contiguous:
+        if target <= source['migration']:
+            raise ValueError('Toda PR de release exige incremento nativo com novas migrations contíguas.')
+        return range(source['migration'] + 1, target + 1)
     if target != source['migration'] + 1:
         raise ValueError('Toda PR de release, inclusive docs/CI/módulos, exige exatamente o próximo ID nativo.')
     return range(target, target + 1)
@@ -225,7 +230,7 @@ def check_delta(root, base, head):
             raise ValueError('Alias da base sem ancestralidade comprovada.')
     after = validate_tree(git_reader(root, head))
     validate_distribution(git_reader(root, head), after['version'])
-    expected_new = {migration_path(level) for level in target_levels(before, after['migration'])}
+    expected_new = {migration_path(level) for level in target_levels(before, after['migration'], allow_contiguous=True)}
     previous_files = git_files(root, ancestor)
     base_files = git_files(root, base)
     current_files = git_files(root, head)

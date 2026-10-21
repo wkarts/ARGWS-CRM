@@ -1,0 +1,104 @@
+{
+  "mysql8": {
+    "published_sha": "0a10a15022ac8a93c75b3b557253ffc508f4d8a2",
+    "tree": "3903905fecb5a0ea799ed83bf84455fc40065cc6",
+    "bound_files": 19681,
+    "engine": "mysql8",
+    "changed_files": [],
+    "results": [
+      {
+        "command": [
+          "php",
+          "tests/companies/sales_mutations_foreign_keys.php"
+        ],
+        "exit": 0,
+        "passed": true,
+        "seconds": 12.9,
+        "footer": [
+          "Sales/recurrence principal and legacy distinction: 139 cumulative checks passed.",
+          "Sales V4 exact foreign keys: 22 real invalid-engine variants; 218 cumulative (mysql); both DELETE/UPDATE and NO ACTION/RESTRICT, duplicates/composites/extra/foreign parents."
+        ],
+        "log_sha256": "8c4957cb0b6066203a0bc2f10e439899362aeca250f39e1edbf88236c6398b6f"
+      },
+      {
+        "command": [
+          "php",
+          "tests/banco_brasil_own_number_sqlite.php"
+        ],
+        "exit": 0,
+        "passed": true,
+        "seconds": 0.37,
+        "footer": [
+          "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+          "BB own-number SQLite guard: 70 cumulative actual SQLite checks; positive BB runtime remains InnoDB only."
+        ],
+        "log_sha256": "e01890ce23ddef61b64ba90075af582fedadce5a06491aa4a03da631a0f94ab3"
+      },
+      {
+        "command": [
+          "php",
+          "tests/companies/native_ci_445.php"
+        ],
+        "exit": 0,
+        "passed": true,
+        "seconds": 20.03,
+        "footer": [
+          "Native445 actual executor confirmed: 1464 checks; official NOOP, failed/ignored marker SQL readback, retry/replay and exact historical metadata/settings/replies.",
+          "CI445 native NOOP/replay and actual444 history: 2349 cumulative checks; core445 only, modules unchanged."
+        ],
+        "log_sha256": "30e4cae601714f39be75844600ab98bb86a5d04c3886b87fea6fcc0a373c3679"
+      }
+    ]
+  },
+  "mariadb": {
+    "published_sha": "0a10a15022ac8a93c75b3b557253ffc508f4d8a2",
+    "tree": "3903905fecb5a0ea799ed83bf84455fc40065cc6",
+    "bound_files": 19681,
+    "engine": "mariadb",
+    "changed_files": [],
+    "results": [
+      {
+        "command": [
+          "php",
+          "tests/companies/sales_mutations_foreign_keys.php"
+        ],
+        "exit": 0,
+        "passed": true,
+        "seconds": 6.56,
+        "footer": [
+          "Sales/recurrence principal and legacy distinction: 139 cumulative checks passed.",
+          "Sales V4 exact foreign keys: 22 real invalid-engine variants; 218 cumulative (mysql); both DELETE/UPDATE and NO ACTION/RESTRICT, duplicates/composites/extra/foreign parents."
+        ],
+        "log_sha256": "8c4957cb0b6066203a0bc2f10e439899362aeca250f39e1edbf88236c6398b6f"
+      },
+      {
+        "command": [
+          "php",
+          "tests/banco_brasil_own_number_sqlite.php"
+        ],
+        "exit": 0,
+        "passed": true,
+        "seconds": 0.27,
+        "footer": [
+          "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+          "BB own-number SQLite guard: 70 cumulative actual SQLite checks; positive BB runtime remains InnoDB only."
+        ],
+        "log_sha256": "e01890ce23ddef61b64ba90075af582fedadce5a06491aa4a03da631a0f94ab3"
+      },
+      {
+        "command": [
+          "php",
+          "tests/companies/native_ci_445.php"
+        ],
+        "exit": 0,
+        "passed": true,
+        "seconds": 11.41,
+        "footer": [
+          "Native445 actual executor confirmed: 1464 checks; official NOOP, failed/ignored marker SQL readback, retry/replay and exact historical metadata/settings/replies.",
+          "CI445 native NOOP/replay and actual444 history: 2349 cumulative checks; core445 only, modules unchanged."
+        ],
+        "log_sha256": "30e4cae601714f39be75844600ab98bb86a5d04c3886b87fea6fcc0a373c3679"
+      }
+    ]
+  }
+}

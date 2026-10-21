@@ -79,8 +79,8 @@ $db->failOn='CREATE TABLE IF NOT EXISTS `'.$prefix.'issuers_registry';
 $failed=false;try { require APP_MODULES_PATH.'issuers/install.php'; } catch(RuntimeException $e) { $failed=$e->getMessage()==='issuer_migration_failed'; }
 check($failed && installedVersion()==='1.0.0','DDL failure leaves pending baseline');$db->failOn=null;
 require APP_MODULES_PATH.'issuers/install.php';check(installedVersion()===$target,'retry after partial DDL is safe');
-$db->failVersionWrite=true;$failed=false;try { require APP_MODULES_PATH.'issuers/install.php'; } catch(RuntimeException $e) { $failed=$e->getMessage()==='issuer_migration_version_unconfirmed'; }
-check($failed && installedVersion()!==$target,'activation detects native tracking write failure');$db->failVersionWrite=false;
+$db->failVersionWrite=true;$trackingFailure=null;try { require APP_MODULES_PATH.'issuers/install.php'; } catch(RuntimeException $e) { $trackingFailure=$e->getMessage(); }
+check(in_array($trackingFailure,['issuer_migration_failed','issuer_migration_version_unconfirmed'],true) && installedVersion()==='1.0.1','activation reports failed final tracking and preserves the last completed migration');$db->failVersionWrite=false;
 require APP_MODULES_PATH.'issuers/install.php';
 setInstalledVersion('9.9.9');$failed=false;try { require APP_MODULES_PATH.'issuers/install.php'; } catch(RuntimeException $e) { $failed=$e->getMessage()==='issuer_activation_version_invalid'; }
 check($failed && installedVersion()==='9.9.9','older code cannot downgrade installed module');setInstalledVersion($target);

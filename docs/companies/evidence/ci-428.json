@@ -1,0 +1,154 @@
+{
+  "head": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+  "distinct_latest_workflows": 16,
+  "success": 12,
+  "failure": 4,
+  "not_homologation": true,
+  "failures": "Asaas/BB unit/invoice scope: APPPATH bootstrap dependency; stack: four new Node commands omitted command-local environment. Both corrections prepared429, do not claim428 CI success.",
+  "workflows": [
+    {
+      "workflow_id": 388253000,
+      "id": 39315173625,
+      "name": "Versão e migrations do núcleo",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39315173625"
+    },
+    {
+      "workflow_id": 388206491,
+      "id": 39315173998,
+      "name": "Versão e migrations dos módulos",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39315173998"
+    },
+    {
+      "workflow_id": 388170866,
+      "id": 39314780606,
+      "name": "Interface CRM e catálogo de pagamentos",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314780606"
+    },
+    {
+      "workflow_id": 388673147,
+      "id": 39314782228,
+      "name": "Aviso de atualização do painel",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314782228"
+    },
+    {
+      "workflow_id": 388143028,
+      "id": 39314780989,
+      "name": "Calendario das faturas recorrentes",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314780989"
+    },
+    {
+      "workflow_id": 388673148,
+      "id": 39314780895,
+      "name": "Barreiras de privacidade de clientes",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314780895"
+    },
+    {
+      "workflow_id": 388171176,
+      "id": 39314781111,
+      "name": "Origem e remocao segura Asaas",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314781111"
+    },
+    {
+      "workflow_id": 378068319,
+      "id": 39314781014,
+      "name": "Containers ARGWS CRM",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314781014"
+    },
+    {
+      "workflow_id": 388177145,
+      "id": 39314780743,
+      "name": "Regras recorrentes independentes",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314780743"
+    },
+    {
+      "workflow_id": 388168264,
+      "id": 39314780820,
+      "name": "Ponte opcional PIGE",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314780820"
+    },
+    {
+      "workflow_id": 388217837,
+      "id": 39314780725,
+      "name": "Banco do Brasil module",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314780725"
+    },
+    {
+      "workflow_id": 388673149,
+      "id": 39314781097,
+      "name": "Barreiras de escopo de faturas",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314781097"
+    },
+    {
+      "workflow_id": 388194265,
+      "id": 39314780701,
+      "name": "Rota segura callback Asaas",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314780701"
+    },
+    {
+      "workflow_id": 378233884,
+      "id": 39314780755,
+      "name": "ARGWS CRM Deployer - binários e releases",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314780755"
+    },
+    {
+      "workflow_id": 378221763,
+      "id": 39314780698,
+      "name": "Integridade das stacks ARGWS CRM",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314780698"
+    },
+    {
+      "workflow_id": 388168608,
+      "id": 39314780702,
+      "name": "Empresas no núcleo",
+      "head_sha": "0f182e68b936fe53ab43d69cbd1157c4caa574d5",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39314780702"
+    }
+  ]
+}

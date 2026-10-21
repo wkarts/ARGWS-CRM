@@ -1,0 +1,31 @@
+PASS 1
+Recurrences completed: 0; blocked: 0
+Expense recurrences completed: 0; blocked: 0
+Native invoice schedules completed: 0; blocked: 0
+Task schedules examined: 0; completed: 0; waiting: 0; blocked: 0
+Lead internal notices scanned: 0; delivered: 0; suppressed: 0; unchanged: 0; failed and pending: 0
+HR internal notices examined: 25; published: 4; waiting: 12; blocked: 9
+
+PASS 2
+Recurrences completed: 0; blocked: 0
+Expense recurrences completed: 0; blocked: 0
+Native invoice schedules completed: 0; blocked: 0
+Task schedules examined: 0; completed: 0; waiting: 0; blocked: 0
+Lead internal notices scanned: 0; delivered: 0; suppressed: 0; unchanged: 0; failed and pending: 0
+HR internal notices examined: 21; published: 5; waiting: 5; blocked: 11
+
+PASS 3
+Recurrences completed: 0; blocked: 0
+Expense recurrences completed: 0; blocked: 0
+Native invoice schedules completed: 0; blocked: 0
+Task schedules examined: 0; completed: 0; waiting: 0; blocked: 0
+Lead internal notices scanned: 0; delivered: 0; suppressed: 0; unchanged: 0; failed and pending: 0
+HR internal notices examined: 25; published: 0; waiting: 16; blocked: 9
+
+PASS 4
+Recurrences completed: 0; blocked: 0
+Expense recurrences completed: 0; blocked: 0
+Native invoice schedules completed: 0; blocked: 0
+Task schedules examined: 0; completed: 0; waiting: 0; blocked: 0
+Lead internal notices scanned: 0; delivered: 0; suppressed: 0; unchanged: 0; failed and pending: 0
+HR internal notices examined: 21; published: 0; waiting: 10; blocked: 11

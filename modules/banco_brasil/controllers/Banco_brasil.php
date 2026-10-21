@@ -1,0 +1,411 @@
+<?php
+defined('BASEPATH') or exit('No direct script access allowed');
+require_once dirname(__DIR__).'/libraries/BancoBrasil/ModuleStore.php';
+require_once dirname(__DIR__).'/libraries/BancoBrasil/CapabilityPolicy.php';
+class Banco_brasil extends AdminController
+{
+    private $store;
+    public function __construct()
+    {
+        parent::__construct();
+        $this->store=new \BancoBrasil\ModuleStore($this->db,db_prefix());
+    }
+    public function index()
+    {
+        $companyId=$this->companyContextId();
+        $data=['title'=>'Banco do Brasil','issuers'=>[],'selected'=>null,'connections'=>[],
+            'returns'=>[],'events'=>[],'layout_bindings'=>[],'layouts'=>\BancoBrasil\LayoutCatalog::all(),'can_manage'=>false,'can_import'=>false,'resource_acl_ready'=>false,'storage_error'=>false,'isolated'=>false,'company_context_token'=>null,'api_ready'=>false,'api_webhook_ready'=>false,'api_webhook_receivers'=>[],'api_notifications'=>[],'api_profiles'=>[],'api_origins'=>[],'api_operations'=>[],'api_receipts'=>[],'can_api_charges'=>false,'can_api_discount'=>false,'can_api_amend'=>false,'can_api_amend_abatement'=>false,'can_api_amend_reference'=>false,'can_api_amend_address'=>false,'can_api_amend_discount'=>false,'can_api_amend_window'=>false,'can_api_receipt_window'=>false,'can_api_cancel_discount'=>false,'can_api_assign_discount'=>false,'can_api_issue'=>false,'can_api_query'=>false,'can_api_cancel'=>false,'reconciliations'=>[],'reconciliation_ready'=>false,'can_reconcile'=>false,'can_settle'=>false,'can_settle_components'=>false,'can_settle_tariff'=>false,'can_settle_api_components'=>false,'api_cnab_ready'=>false,'can_api_return'=>false,'can_api_return_components'=>false,'api_cnab_contracts'=>[],'can_external_reverse'=>false,'api_reversal_ready'=>false,'api_reversal_positions'=>[],'can_external_reverse_api_components'=>false,'receipt_reversal_ready'=>false,'receipt_reversal_positions'=>[],'batches'=>[],'origination_ready'=>false,'can_generate'=>false,'can_download'=>false,'request_key'=>bin2hex(random_bytes(32)),'admin_base_url'=>$this->url(''),'notice'=>$this->session->userdata('bb_notice'),'csrf'=>$this->csrfToken(),'matrix'=>\BancoBrasil\CapabilityPolicy::matrix()];
+        if(class_exists('CompanyRequestScope',false)){
+            $data['isolated']=\CompanyRequestScope::sealedFor($this);
+            $data['company_context_token']=\CompanyRequestScope::token();
+        }
+        if($this->issuerCoreReady()){
+            $data['resource_acl_ready']=true;
+            try{
+                $registry = new \IssuerRegistry($this->db, db_prefix());
+                $available=\BancoBrasil\Transaction::quiet($this->db,fn()=>$registry->available($this->staffId()));
+                $data['issuers']=array_values(array_filter($available,fn($row)=>($companyId===null||(int)((array)$row)['id']===$companyId)&&$this->allowed((int)((array)$row)['id'],'view')));
+            }catch(Throwable $e){$data['storage_error']=true;}
+            $raw=$this->input->get('issuer_id');
+            if($companyId!==null){
+                if($raw!==null&&$raw!==''&&$this->positiveId($raw)!==$companyId)$this->denied();
+                $raw=(string)$companyId;
+            }
+            if($raw!==null && $raw!==''){
+                $id=$this->positiveId($raw);$issuer=$this->issuer($id,'view');
+                $data['selected']=$issuer;
+                try{
+                $data['connections']=$this->store->connections($id);
+                $data['layout_bindings']=$this->store->layoutBindings($id);
+                $data['returns']=$this->store->recentReturns($id);$data['events']=$this->store->recentEvents($id);
+                }catch(Throwable $e){$data['storage_error']=true;$data['connections']=$data['layout_bindings']=$data['returns']=$data['events']=[];}
+                $data['can_manage']=!$data['storage_error']&&$this->allowed($id,'manage');$data['can_api_charges']=!$data['storage_error']&&$this->allowed($id,'api_charges');$data['can_api_discount']=!$data['storage_error']&&$this->allowed($id,'api_discount');$data['can_import']=!$data['storage_error']&&$this->allowed($id,'import');
+                try{$operations=$this->origination();$data['origination_ready']=$operations->ready();if($data['origination_ready'])$data['batches']=$operations->batches($id,$this->staffId());}catch(Throwable $e){$data['origination_ready']=false;}
+                try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Reconciliation.php';$data['reconciliations']=(new \BancoBrasil\Reconciliation($this->db,db_prefix()))->summaries($id,$this->staffId());$data['reconciliation_ready']=true;$access=new \IssuerResourceAccess($this->db,db_prefix());$data['can_reconcile']=$this->allowed($id,'reconcile')&&$access->can($id,$this->staffId(),'invoices','view');$data['can_settle']=$data['can_reconcile']&&$access->can($id,$this->staffId(),'payments','create');$data['can_settle_components']=$data['can_settle']&&$this->allowed($id,'reconcile_components');$data['can_settle_tariff']=$data['can_settle']&&$this->allowed($id,'reconcile_tariff');$data['can_settle_api_components']=$data['can_settle']&&$this->allowed($id,'reconcile_api_components');$data['can_external_reverse']=$data['can_reconcile']&&$this->allowed($id,'external_reverse')&&$access->can($id,$this->staffId(),'payments','delete');if($data['can_reconcile']){try{require_once dirname(__DIR__).'/libraries/BancoBrasil/ReceiptReversalOverview.php';$data['receipt_reversal_positions']=(new \BancoBrasil\ReceiptReversalOverview($this->db,db_prefix()))->forIssuer($id,$this->staffId());$data['receipt_reversal_ready']=true;}catch(Throwable $reversalError){$data['receipt_reversal_ready']=false;}}}catch(Throwable $e){$data['reconciliation_ready']=false;}
+                try{$api=$this->api();$overview=$api->overview($id,$this->staffId());$data['api_ready']=true;$data['api_profiles']=$overview['profiles'];$data['api_origins']=$overview['origins'];$data['api_operations']=$overview['operations'];$data['api_receipts']=$overview['receipts'];$access=new \IssuerResourceAccess($this->db,db_prefix());foreach(['issue','query','cancel','amend'] as $op)$data['can_api_'.$op]=$this->allowed($id,'api_'.$op)&&$access->can($id,$this->staffId(),'invoices','view')&&($op!=='amend'||$access->can($id,$this->staffId(),'invoices','edit'));$data['can_api_amend_abatement']=$this->allowed($id,'api_amend_abatement')&&$access->can($id,$this->staffId(),'invoices','view')&&$access->can($id,$this->staffId(),'invoices','edit');$data['can_api_amend_reference']=$this->allowed($id,'api_amend_reference')&&$access->can($id,$this->staffId(),'invoices','view')&&$access->can($id,$this->staffId(),'invoices','edit');$data['can_api_amend_address']=$this->allowed($id,'api_amend_address')&&$access->can($id,$this->staffId(),'invoices','view')&&$access->can($id,$this->staffId(),'invoices','edit');$data['can_api_amend_discount']=$this->allowed($id,'api_amend_discount')&&$access->can($id,$this->staffId(),'invoices','view')&&$access->can($id,$this->staffId(),'invoices','edit');foreach(['api_amend_window','api_cancel_discount','api_assign_discount']as$cap)$data['can_'.$cap]=$this->allowed($id,$cap)&&$access->can($id,$this->staffId(),'invoices','view')&&$access->can($id,$this->staffId(),'invoices','edit');$data['can_api_receipt_window']=$this->allowed($id,'api_receipt_window');}catch(Throwable $e){$data['api_ready']=false;}
+                if($data['api_ready']&&$data['can_reconcile']&&$this->allowed($id,'reconcile_api_return')){try{$data['api_cnab_contracts']=$this->apiCnab()->overview($id,$this->staffId());$data['api_cnab_ready']=true;$data['can_api_return']=true;$data['can_api_return_components']=$this->allowed($id,'reconcile_components');}catch(Throwable $error){$data['api_cnab_ready']=false;}}
+                if($data['api_ready']&&$data['can_reconcile']&&$this->allowed($id,'reconcile_api_components')){try{require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiReceiptReversalOverview.php';$data['api_reversal_positions']=(new \BancoBrasil\ApiReceiptReversalOverview($this->db,db_prefix()))->forIssuer($id,$this->staffId());$data['api_reversal_ready']=true;$data['can_external_reverse_api_components']=$this->allowed($id,'external_reverse_api_components')&&(new \IssuerResourceAccess($this->db,db_prefix()))->can($id,$this->staffId(),'payments','delete');}catch(Throwable $error){$data['api_reversal_ready']=false;}}
+                if($data['api_ready']&&$data['can_manage']){try{require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiWebhook.php';$wh=(new \BancoBrasil\ApiWebhook($this->db,db_prefix()))->overview($id,$this->staffId());$data['api_webhook_ready']=true;$data['api_webhook_receivers']=$wh['receivers'];$data['api_notifications']=$wh['events'];}catch(Throwable $error){$data['api_webhook_ready']=false;}}
+                $data['can_generate']=$data['origination_ready']&&$this->allowed($id,'generate');$data['can_download']=$data['origination_ready']&&$this->allowed($id,'download');
+            }
+        }
+        $this->output->set_header('Cache-Control: no-store');
+        $this->session->unset_userdata('bb_notice');
+        $this->load->view('banco_brasil/index',$data);
+    }
+    public function register_connection()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$issuer=$this->issuer($id,'manage');
+        if(!$this->allowed($id,'manage'))$this->denied();
+        try{
+            $posted=$this->input->post();
+            $allowed=['csrf_bb','issuer_id','account_id','environment','agreement_number','wallet','variation'];
+            if(array_diff(array_keys($posted),array_merge($allowed,[$this->security->get_csrf_token_name()])))throw new InvalidArgumentException('unexpected_fields');
+            $input=[];foreach(['account_id','environment','agreement_number','wallet','variation'] as $key)$input[$key]=$posted[$key]??null;
+            $this->store->createConnection($id,$this->staffId(),$issuer,$input);
+            $this->flash('success','Conexão cadastrada para revisão. A titularidade, o contrato e a homologação ainda precisam ser verificados.');
+        }catch(Throwable $e){$this->flash('warning','Cadastro não confirmado. Verifique campos e histórico; a conexão existente não pode ser reatribuída.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id));
+    }
+    public function register_layout()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'manage');
+        if(!$this->allowed($id,'manage'))$this->denied();
+        try{
+            $posted=$this->input->post();
+            if(array_diff(array_keys($posted),['csrf_bb','issuer_id','connection_id','layout_id',$this->security->get_csrf_token_name()]))throw new InvalidArgumentException('unexpected_fields');
+            $connection=$this->store->connection($this->positiveId($this->input->post('connection_id')),$id);
+            $layout=$this->input->post('layout_id');if(!is_string($layout))throw new InvalidArgumentException('layout_invalid');
+            $this->store->registerLayout($connection,$this->staffId(),$layout);
+            $this->flash('success','Perfil declarado e registrado. Isso não confirma homologação, ambiente remoto ou autenticidade de arquivos.');
+        }catch(Throwable $e){$this->flash('warning','Perfil não confirmado. Confira a conexão e o histórico; vínculos anteriores não serão alterados.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id));
+    }
+    public function import_return()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'import');
+        if(!$this->allowed($id,'import'))$this->denied();
+        try{
+            $connection=$this->store->connection($this->positiveId($this->input->post('connection_id')),$id);
+            $file=$_FILES['return_file']??[];
+            if(($file['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_OK||!is_uploaded_file($file['tmp_name']??'')
+                ||($file['size']??0)<1||$file['size']>16*1024*1024)throw new InvalidArgumentException('return_file_invalid');
+            $bytes=file_get_contents($file['tmp_name'],false,null,0,16*1024*1024+1);
+            if($bytes===false||strlen($bytes)>16*1024*1024)throw new InvalidArgumentException('return_file_invalid');
+            $result=$this->store->importReturn($connection,$this->staffId(),$bytes,$this->positiveId($this->input->post('layout_binding_id')));
+            $this->flash('success',$result['duplicate']?'Arquivo já recebido. Nenhum pagamento foi criado.':'Retorno validado e registrado para revisão. Nenhum pagamento foi criado.');
+        }catch(Throwable $e){$this->flash('warning','Importação não confirmada. Confira conta, ambiente, convênio, leiaute e histórico antes de tentar novamente.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id));
+    }
+    private function origination():\BancoBrasil\Origination
+    {
+        require_once dirname(__DIR__).'/libraries/BancoBrasil/Origination.php';return new \BancoBrasil\Origination($this->db,db_prefix());
+    }
+    private function apiCnab():\BancoBrasil\ApiCnabOrigin
+    {require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiCnabOrigin.php';return new \BancoBrasil\ApiCnabOrigin($this->db,db_prefix());}
+    public function declare_contract()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'manage');
+        try{
+            $input=$this->input->post('contract',false);if(!is_array($input))throw new InvalidArgumentException('invalid_contract');
+            $channel=$this->input->post('contract_channel',false);if($channel==='api_return'){$this->issuer($id,'reconcile_api_return');$this->apiCnab()->declare($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$this->positiveId($this->input->post('layout_binding_id')),$input);}else{if($channel!==null&&$channel!=='')throw new DomainException('bb_contract_channel_invalid');$this->origination()->declareContract($id,$this->staffId(),$this->positiveId($this->input->post('connection_id')),$this->positiveId($this->input->post('layout_binding_id')),$input);}
+            $this->flash('success','Declaração do operador registrada. Isso não comprova contrato ou homologação pelo banco. A faixa reservada não pode ser reiniciada.');
+        }catch(Throwable $e){$this->flash('warning','Declaração não confirmada. Confira contrato, perfil, isenção, intercâmbio de teste e faixa exclusiva já utilizada; não reduza nem reutilize números.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function generate_remittance()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'generate');
+        try{
+            $titles=$this->input->post('titles',false);$date=$this->input->post('generation_date',false);$key=$this->input->post('request_key',false);
+            if(!is_array($titles)||!is_string($date)||!is_string($key))throw new InvalidArgumentException('invalid_batch');
+            $batch=$this->origination()->generate($id,$this->staffId(),$this->positiveId($this->input->post('connection_id')),$this->positiveId($this->input->post('layout_binding_id')),$date,$titles,$key);
+            $this->flash('success','Lote #'.$batch.' gerado e armazenado. Não foi enviado ao banco; não há aceite nem pagamento confirmado.');
+        }catch(Throwable $e){$this->flash('warning','Geração não confirmada. Confira fatura, moeda BRL, identidade, endereço ASCII, perfil e contrato. Se o lote já foi reservado, retome pelo lote; os números permanecem reservados.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function retry_remittance()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'generate');
+        try{$this->origination()->finish($id,$this->staffId(),$this->positiveId($this->input->post('batch_id')));$this->flash('success','Lote retomado com a mesma origem e numeração. Nenhum envio bancário foi realizado.');}
+        catch(Throwable $e){$this->flash('warning','Não foi possível confirmar a geração. A reserva e o histórico foram preservados.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function download_remittance()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'download');
+        try{
+            $file=$this->origination()->download($id,$this->staffId(),$this->positiveId($this->input->post('batch_id')));
+            $this->output->set_header('Cache-Control: no-store');$this->output->set_header('X-Content-Type-Options: nosniff');$this->output->set_header('Content-Disposition: attachment; filename="'.$file['filename'].'"');$this->output->set_content_type('application/octet-stream')->set_output($file['content']);
+        }catch(Throwable $e){show_error('Arquivo indisponível ou download não confirmado. Nenhum envio bancário foi realizado.',403);}
+    }
+    public function report_transmission()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'generate');
+        try{$reference=$this->input->post('submission_reference',false);if(!is_string($reference))throw new InvalidArgumentException('invalid_reference');$this->origination()->reportTransmission($id,$this->staffId(),$this->positiveId($this->input->post('batch_id')),$reference);$this->flash('success','Envio manual declarado pelo operador. Aceite, rejeição e liquidação continuam sem confirmação bancária.');}
+        catch(Throwable $e){$this->flash('warning','Declaração de envio não confirmada. Confira o lote baixado e a evidência; nenhum estado bancário foi inferido.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function link_event()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'reconcile');
+        try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Reconciliation.php';$channel=$this->input->post('origin_channel',false);if($channel==='api'){$this->issuer($id,'reconcile_api_return');$this->apiCnab()->link($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$this->positiveId($this->input->post('event_id')));}else{if($channel!==null&&$channel!=='')throw new DomainException('bb_origin_channel_invalid');(new \BancoBrasil\Reconciliation($this->db,db_prefix()))->link($id,$this->staffId(),$this->positiveId($this->input->post('event_id')));}$this->flash('success','Origem vinculada por empresa, conta, ambiente, convênio, perfil, Nosso Número, controle e documento. Nenhum pagamento foi criado.');}
+        catch(Throwable $e){$this->flash('warning','Vínculo não confirmado. Confira a origem imutável; valor ou nome não permitem forçar um vínculo.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-return');
+    }
+    public function review_event()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'reconcile');
+        try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Reconciliation.php';$input=$this->input->post('review',false);if(!is_array($input))throw new InvalidArgumentException('invalid_review');(new \BancoBrasil\Reconciliation($this->db,db_prefix()))->review($id,$this->staffId(),$this->positiveId($this->input->post('event_id')),$input);$this->flash('success','Revisão e evidência registradas no histórico. A revisão não criou nem estornou pagamento.');}
+        catch(Throwable $e){$this->flash('warning','Revisão não confirmada. Confira empresa, evento, permissões, motivo e referência.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-return');
+    }
+    public function settle_event()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'reconcile');
+        try{require_once dirname(__DIR__).'/libraries/BancoBrasil/ReviewedReceipt.php';$input=$this->input->post('settlement',false);if(!is_array($input))throw new InvalidArgumentException('invalid_settlement');if($this->input->post('origin_channel',false)==='api'){$this->issuer($id,'reconcile_api_return');require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiOriginReviewedReceipt.php';$source=new \BancoBrasil\ApiOriginReviewedReceipt($this->positiveId($this->input->post('event_id')),$this->positiveId($this->input->post('origin_id')),$input);}else{if(!in_array($this->input->post('origin_channel',false),[null,''],true))throw new DomainException('bb_origin_channel_invalid');$source=new \BancoBrasil\ReviewedReceipt($this->positiveId($this->input->post('event_id')),$input);}$payment=(new \app\services\InvoicePaymentWriter($this->db))->recordCompanyProviderReceipt($id,$this->staffId(),$source);$this->flash('success','Recebimento #'.$payment.' registrado por conciliação assistida. A fonte importada não foi autenticada automaticamente; a confirmação e evidência do operador estão auditadas.');}
+        catch(Throwable $e){$this->flash('warning','Recebimento não confirmado. Exige origem vinculada, remessa com envio declarado, crédito conferido fora do arquivo, código06 T/U, BRL, datas válidas, saldo e ausência de encargos/divergências/eventos adversos. Registre revisão; não force baixa manual.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-return');
+    }
+    public function settle_components_event()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'reconcile_components');
+        try{require_once dirname(__DIR__).'/libraries/BancoBrasil/ReviewedComponentsReceipt.php';$input=$this->input->post('components_settlement',false);if(!is_array($input))throw new InvalidArgumentException('invalid_settlement');if($this->input->post('origin_channel',false)==='api'){$this->issuer($id,'reconcile_api_return');require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiOriginReviewedComponentsReceipt.php';$source=new \BancoBrasil\ApiOriginReviewedComponentsReceipt($this->positiveId($this->input->post('event_id')),$this->positiveId($this->input->post('origin_id')),$input);}else{if(!in_array($this->input->post('origin_channel',false),[null,''],true))throw new DomainException('bb_origin_channel_invalid');$source=new \BancoBrasil\ReviewedComponentsReceipt($this->positiveId($this->input->post('event_id')),$input);}$payment=(new \app\services\InvoicePaymentWriter($this->db))->recordCompanyProviderReceipt($id,$this->staffId(),$source);$this->flash('success','Recebimento #'.$payment.' registrado com composição imutável: caixa do principal, encargo agregado e extinções por desconto/abatimento separados. A equação foi declarada pelo operador; não houve autenticação ou homologação bancária automática.');}
+        catch(Throwable $e){$this->flash('warning','Composição não confirmada. Exige política local explicitamente declarada, crédito conferido, origem vinculada, código06 T/U, BRL e saldo suficiente. Tarifas, IOF, outros valores, líquido diferente do pago, caixa do principal zero e eventos adversos exigem revisão.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-return');
+    }
+    public function settle_tariff_event()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'reconcile_tariff');
+        try{if(!in_array($this->input->post('origin_channel',false),[null,''],true))throw new DomainException('bb_origin_channel_invalid');require_once dirname(__DIR__).'/libraries/BancoBrasil/ReviewedTariffReceipt.php';$input=$this->input->post('tariff_settlement',false);if(!is_array($input))throw new InvalidArgumentException('invalid_settlement');$payment=(new \app\services\InvoicePaymentWriter($this->db))->recordCompanyProviderReceipt($id,$this->staffId(),new \BancoBrasil\ReviewedTariffReceipt($this->positiveId($this->input->post('event_id')),$input));$this->flash('success','Recebimento #'.$payment.' integral nominal confirmado com tarifa separada e líquido bancário imutável. O arquivo não autentica o banco; não foi criada despesa fiscal nem executada operação bancária.');}
+        catch(Throwable $error){$this->flash('warning','Tarifa não conciliada. Exige fonte CNAB240 vinculada, crédito integral nominal conferido, tarifa positiva menor que o pago e líquido=pago−tarifa. IOF, outros ajustes, parcial, origem API e estorno deste recebimento continuam em revisão.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-return');
+    }
+    public function declare_external_reversal()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$channel=$this->input->post('reversal_channel',false);$api16=$channel==='api16_components';$this->issuer($id,$api16?'external_reverse_api_components':'external_reverse');
+        try{$input=$this->input->post('external_reversal',false);if(!is_array($input))throw new InvalidArgumentException('invalid_reversal');if($api16){require_once dirname(__DIR__).'/libraries/BancoBrasil/Api16ReviewedExternalReversal.php';$source=new \BancoBrasil\Api16ReviewedExternalReversal($this->positiveId($this->input->post('payment_id')),$input);}else{if($channel!==null&&$channel!=='')throw new DomainException('bb_reversal_channel_invalid');require_once dirname(__DIR__).'/libraries/BancoBrasil/ReviewedExternalReversal.php';$source=new \BancoBrasil\ReviewedExternalReversal($this->positiveId($this->input->post('payment_id')),$input);}(new \app\services\InvoicePaymentWriter($this->db))->recordCompanyProviderReversal($id,$this->staffId(),$source);$this->flash('success','Estorno externo integral declarado registrado. O recebimento e os componentes originais foram preservados; o principal foi reaberto. Esta ação não autenticou o banco nem executou transferência ou estorno no Banco do Brasil.');}
+        catch(Throwable $e){$this->flash('warning','Estorno externo não registrado. Exige recibo composto original íntegro da mesma empresa/conta, comprovação independente, restituição integral conferida, principal integralmente restabelecido, data válida e permissão própria. Evento adverso ou divergência exige revisão; código44 não autoriza estorno genérico.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).($api16?'#bb-billing':'#bb-return'));
+    }
+    protected function api():\BancoBrasil\ApiService
+    {
+        require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiService.php';$this->load->library('encryption');
+        return new \BancoBrasil\ApiService($this->db,db_prefix(),fn($value)=>$this->encryption->encrypt($value),fn($value)=>$this->encryption->decrypt($value));
+    }
+    public function declare_api_profile()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'manage');
+        try{$input=$this->input->post('api_profile',false);if(!is_array($input))throw new InvalidArgumentException('invalid_api_profile');$this->api()->declareProfile($id,$this->staffId(),$this->positiveId($this->input->post('connection_id')),$input);$this->flash('success','Perfil API declarado. Ambiente e origem ficam imutáveis. A declaração não comprova contrato, titularidade ou homologação.');}
+        catch(Throwable $error){$this->flash('warning','Perfil API não confirmado. Confira conexão, ambiente, contrato e faixa exclusiva compartilhada com CNAB; números não podem ser reiniciados.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-auth');
+    }
+    public function save_api_credentials()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'manage');
+        try{$input=$this->input->post('api_credentials',false);if(!is_array($input))throw new InvalidArgumentException('invalid_api_credentials');$this->api()->saveCredentials($id,$this->staffId(),$this->positiveId($this->input->post('profile_id')),$input);$this->flash('success','Nova versão de credenciais protegida para o perfil e ambiente indicados. Nenhum token ou operação bancária foi solicitado ao salvar.');}
+        catch(Throwable $error){$this->flash('warning','Credenciais não confirmadas. Confira perfil, ambiente, permissão e criptografia nativa. Nenhuma credencial será mostrada na resposta.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-auth');
+    }
+    public function issue_api()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_issue');
+        try{$input=$this->input->post('api_title',false);if(is_array($input))foreach(['daily_interest','monthly_interest_percentage','fixed_discount','discount_percentage','discount_until'] as $interestField)if(($input[$interestField]??null)==='')unset($input[$interestField]);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new InvalidArgumentException('invalid_api_title');$origin=$this->api()->issue($id,$this->staffId(),$this->positiveId($this->input->post('profile_id')),$this->positiveId($this->input->post('invoice_id')),$input,$key);$this->flash('success','Origem API #'.$origin.' registrada. Confira o estado e a resposta validada abaixo; intenção, registro, pedido de baixa e liquidação são estados distintos.');}
+        catch(Throwable $error){$this->flash('warning','Registro API não confirmado. A origem e o Nosso Número reservados são preservados. Em resultado desconhecido, consulte a origem; não crie outra cobrança para substituir um timeout.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function resume_api_issue()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_issue');
+        try{$this->api()->resumeIssue($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')));$this->flash('success','Origem conferida. Somente falha anterior ao envio permite retomar autenticação; requisição já enviada ou desconhecida não é reenviada automaticamente. Confira o estado.');}
+        catch(Throwable $error){$this->flash('warning','Retomada não confirmada. A numeração e a origem permanecem preservadas; consulte o banco pela origem antes de outra ação.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function query_api()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_query');
+        try{$key=$this->input->post('request_key',false);if(!is_string($key))throw new InvalidArgumentException('invalid_api_query');$this->api()->query($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$key);$this->flash('success','Consulta pela origem registrada. Confira a resposta validada e seus estados. Esta ação não cria pagamento financeiro.');}
+        catch(Throwable $error){$this->flash('warning','Consulta não confirmada. Nenhum estado bancário ou pagamento foi inferido. Confira perfil e credenciais da origem.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function query_api_movements()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_query');
+        try{$window=$this->input->post('movement_window',false);$key=$this->input->post('request_key',false);if(!is_array($window)||!is_string($key))throw new InvalidArgumentException('invalid_api_movements');$this->api()->movements($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$window,$key);$this->flash('success','Página de movimentos consultada pela conta da origem. Apenas registros deste título são exibidos; ausência/página limitada não prova inexistência nem cria crédito financeiro.');}
+        catch(Throwable $error){$this->flash('warning','Movimentos não confirmados. Confira janela de até31 dias, cursor explícito, conta/perfil e histórico. Nenhum pagamento ou estado final foi inferido.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function cancel_api()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_cancel');
+        try{$this->api()->cancel($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')));$this->flash('success','Solicitação processada pela origem API. Pedido de baixa não é confirmação final nem cancelamento local de fatura. Consulte novamente para confirmar o estado bancário.');}
+        catch(Throwable $error){$this->flash('warning','Pedido de baixa não confirmado. Exige consulta validada NORMAL nos últimos5 minutos. Origem CNAB, liquidação, protesto e estado desconhecido exigem o fluxo de origem; não há redirecionamento para a conta atual.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function configure_api_webhook()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'manage');
+        try{$input=$this->input->post('receiver',false);if(!is_array($input))throw new InvalidArgumentException('invalid_api_webhook');require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiWebhook.php';(new \BancoBrasil\ApiWebhook($this->db,db_prefix()))->configure($id,$this->staffId(),$this->positiveId($this->input->post('profile_id')),$input);$this->flash('success','Recebedor local atualizado para este perfil e certificado. Nenhum webhook remoto foi cadastrado. A entrega exige ingresso mTLS nativo habilitado, cadeia BB confiável e pin correspondente ao ambiente.');}
+        catch(Throwable $error){$this->flash('warning','Recebedor não confirmado. Confira perfil próprio, permissão, fingerprint SHA256 e referência contratual. Nenhum registro remoto foi solicitado.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function amend_api_due()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_amend');
+        try{$input=$this->input->post('amendment',false);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new InvalidArgumentException('invalid_api_amendment');$this->api()->amendDue($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$input,$key);$this->flash('success','Instrução de vencimento processada pela origem. A resposta PATCH confirma o pedido; consulte novamente para confirmar a nova data no título e na conta. A fatura e o snapshot original conservam sua data.');}
+        catch(Throwable $error){$this->flash('warning','Alteração não confirmada. Exige consulta NORMAL recente, permissão de edição de fatura, ausência de movimento financeiro e outra operação pendente. Em resultado incerto, consulte; não reenvie a instrução nem altere manualmente a fatura.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function amend_api_abatement()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_amend_abatement');
+        try{$input=$this->input->post('abatement',false);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new InvalidArgumentException('invalid_api_abatement');$this->api()->amendAbatement($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$input,$key);$this->flash('success','Instrução de abatimento processada pela origem. A resposta PATCH confirma somente o pedido; consulte novamente para conferir o valor registrado na mesma conta. A fatura conserva seu nominal e nenhum abatimento financeiro foi lançado.');}
+        catch(Throwable $error){$this->flash('warning','Abatimento não confirmado. Exige permissão própria e editar faturas, contrato e referência explícitos, consulta NORMAL recente com valor registrado conhecido e ausência de movimento financeiro ou instrução pendente. Em resultado incerto, consulte; não reenvie nem reduza a fatura manualmente.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function amend_api_reference()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_amend_reference');
+        try{$input=$this->input->post('reference_instruction',false);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new InvalidArgumentException('invalid_api_reference');$this->api()->amendOwnNumber($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$input,$key);$this->flash('success','Alteração do Seu Número operacional solicitada. Consulte novamente para confirmar o novo identificador na mesma conta. Fatura, Nosso Número e histórico originais foram preservados.');}
+        catch(Throwable $error){$this->flash('warning','Seu Número não confirmado. Exige permissão própria, edição de faturas, contrato explícito e consulta NORMAL recente com o identificador anterior exato. Em resultado incerto, consulte sem reenviar. Não altera o nominal nem o financeiro.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function amend_api_address()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_amend_address');
+        try{$input=$this->input->post('address_instruction',false);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new InvalidArgumentException('invalid_api_address');$this->api()->amendAddress($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$input,$key);$this->flash('success','Instrução de endereço operacional processada pela origem. Consulte novamente para conferir os cinco campos na mesma conta. A identidade e o endereço fiscal da fatura original foram preservados.');}
+        catch(Throwable $error){$this->flash('warning','Endereço não confirmado. Exige permissão própria e editar faturas, contrato e referência, consulta NORMAL recente com endereço completo conhecido e ausência de movimento financeiro ou instrução pendente. Em resultado incerto, consulte sem reenviar.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function amend_api_discount()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_amend_discount');
+        try{$input=$this->input->post('discount_instruction',false);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new InvalidArgumentException('invalid_api_discount_amendment');$this->api()->amendDiscount($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$input,$key);$this->flash('success','Alteração do primeiro desconto solicitada. Consulte novamente para confirmar tipo, valor ou percentual e data na mesma conta. Oferta não é desconto recebido e não reduz o saldo da fatura.');}
+        catch(Throwable $error){$this->flash('warning','Desconto não confirmado. Exige permissão própria e editar faturas, contrato e referência, mesmo tipo do perfil original e consulta NORMAL recente sem outro desconto, movimento financeiro ou instrução pendente. Em resultado incerto, consulte sem reenviar.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function amend_api_receipt_window()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_amend_window');
+        try{$input=$this->input->post('window_instruction',false);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new InvalidArgumentException('invalid_api_instruction');$this->api()->amendReceiptWindow($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$input,$key);$this->flash('success','Prazo de recebimento solicitado. Consulte a origem para confirmar os dias na mesma conta. O perfil original deve permitir atraso explicitamente; zero nunca herda o convênio.');}
+        catch(Throwable $error){$this->flash('warning','Instrução não confirmada. Confira permissão específica, contrato, perfil, conta e consulta NORMAL recente, sem movimento financeiro ou outro pedido pendente. Em resultado incerto, consulte sem reenviar.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function cancel_api_discount()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_cancel_discount');
+        try{$input=$this->input->post('discount_cancellation',false);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new InvalidArgumentException('invalid_api_instruction');$this->api()->cancelDiscount($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$input,$key);$this->flash('success','Cancelamento do primeiro desconto solicitado. Consulte a origem para confirmar ausência explícita dos três descontos; a fatura e o financeiro permanecem preservados.');}
+        catch(Throwable $error){$this->flash('warning','Instrução não confirmada. Confira permissão específica, contrato, perfil, conta e consulta NORMAL recente, sem movimento financeiro ou outro pedido pendente. Em resultado incerto, consulte sem reenviar.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function assign_api_discount()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'api_assign_discount');
+        try{$input=$this->input->post('discount_assignment',false);$key=$this->input->post('request_key',false);if(!is_array($input)||!is_string($key))throw new InvalidArgumentException('invalid_api_instruction');$this->api()->assignDiscount($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$input,$key);$this->flash('success','Atribuição de primeiro desconto solicitada. Consulte tipo, valor ou percentual e data na mesma conta. Não calcula ou lança redução financeira.');}
+        catch(Throwable $error){$this->flash('warning','Instrução não confirmada. Confira permissão específica, contrato, perfil, conta e consulta NORMAL recente, sem movimento financeiro ou outro pedido pendente. Em resultado incerto, consulte sem reenviar.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function settle_api()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'reconcile');
+        try{
+            if($this->input->post('credit_confirmed',false)!=='1')throw new DomainException('bb_api_credit_confirmation_required');
+            $policy=$this->input->post('receipt_policy',false);
+            if($policy==='api16_components'){
+                $this->issuer($id,'reconcile_api_components');require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiComponentsReceipt.php';
+                $source=new \BancoBrasil\ApiComponentsReceipt($this->positiveId($this->input->post('origin_id')),$this->positiveId($this->input->post('operation_id')),['credit_confirmed'=>$this->input->post('credit_confirmed',false),'component_policy_confirmed'=>$this->input->post('component_policy_confirmed',false),'reference'=>$this->input->post('reference',false),'reason'=>$this->input->post('reason',false)]);
+            }else{
+                if($policy!==null&&$policy!=='')throw new DomainException('bb_api_receipt_policy_invalid');require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiCreditedReceipt.php';
+                $source=new \BancoBrasil\ApiCreditedReceipt($this->positiveId($this->input->post('origin_id')),$this->positiveId($this->input->post('operation_id')));
+            }
+            (new \app\services\InvoicePaymentWriter($this->db))->recordCompanyProviderReceipt($id,$this->staffId(),$source);
+            $this->flash('success','Crédito API registrado pelo escritor financeiro e recibo canônico. Repetir a confirmação não duplica pagamento.');
+        }catch(Throwable $error){$this->flash('warning','Crédito não confirmado. Exige consulta recente, estado16 CREDITADO, conta e snapshot íntegros, recibo nominal ou política própria API16 integral por componentes explicitamente confirmada. Liquidação6, parcial, cheque, líquido divergente, IOF/multa/outros, consulta obsoleta ou evento adverso exigem revisão. Nenhum pagamento desta tentativa foi confirmado.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-billing');
+    }
+    public function local_noncash()
+    {
+        $this->output->set_header('Cache-Control: no-store');$verb=strtoupper($this->input->method());if(!in_array($verb,['GET','HEAD','POST'],true)){show_error('Método não permitido.',405);return;}
+        $id=$this->positiveId($verb==='POST'?$this->input->post('issuer_id',false):$this->input->get('issuer_id',false));$selected=$this->issuer($id,'view');$invoice=$this->positiveId($verb==='POST'?$this->input->post('invoice_id',false):$this->input->get('invoice_id',false));require_once dirname(__DIR__).'/libraries/BancoBrasil/LocalNoncashReview.php';require_once APPPATH.'services/InvoicePaymentWriter.php';$error=null;$detail=null;
+        if($verb==='POST')$this->post();try{if($verb==='POST'){$action=$this->input->post('local_action',false);$origin=$this->positiveId($this->input->post('origin_id',false));$query=$this->positiveId($this->input->post('operation_id',false));$input=$this->input->post('local_input',false);if(!is_array($input))throw new DomainException('company_local_noncash_invalid');$review=(new \BancoBrasil\LocalNoncashReview($this->db,db_prefix()))->read($id,$this->staffId(),$invoice);if($review['origin_id']!==$origin)throw new DomainException('company_local_noncash_denied');$writer=new \app\services\InvoicePaymentWriter($this->db);
+            if($action==='declare')$writer->declareCompanyLocalNoncash($id,$this->staffId(),new \BancoBrasil\Api16LocalNoncash($origin,$query,$input));
+            elseif($action==='restore')$writer->restoreCompanyLocalNoncash($id,$this->staffId(),$invoice,(string)$this->input->post('declaration_key',false),$input,new \BancoBrasil\Api16LocalNoncash($origin,$query,\BancoBrasil\LocalNoncashReview::placeholder()));
+            elseif(in_array($action,['manual_receipt','credit_apply','credit_unapply','manual_reverse'],true))$writer->recordCompanyRestoredLocalFunds($id,$this->staffId(),new \BancoBrasil\RestoredLocalNoncashFunds($invoice,$origin,$query,(string)$this->input->post('request_key',false),$action,$input));
+            else throw new DomainException('company_local_noncash_invalid');if(class_exists('CompanyRequestScope',false))CompanyRequestScope::invalidateCaches($this);$this->flash('success','Operação LOCAL confirmada no financeiro canônico. Revise o saldo e o histórico preservado.');redirect($this->url('banco_brasil/local_noncash?issuer_id='.$id.'&invoice_id='.$invoice),'location',303);return;}
+            $detail=(new \BancoBrasil\LocalNoncashReview($this->db,db_prefix()))->read($id,$this->staffId(),$invoice);
+        }catch(DomainException|InvalidArgumentException$e){$this->output->set_status_header(str_contains($e->getMessage(),'denied')?403:(str_contains($e->getMessage(),'stale')||str_contains($e->getMessage(),'conflict')?409:422));$error='Operação LOCAL não confirmada. Reabra a revisão e confira conta, consulta, autorização, saldo e evidência independente.';}
+        catch(Throwable$e){$this->output->set_status_header(503);log_message('error','LOCAL noncash review unavailable; private financial input omitted.');$error='Resultado LOCAL não confirmado. Preserve a chave e reabra esta mesma fatura antes de retomar.';}
+        $this->load->view('banco_brasil/local_noncash',['detail'=>$detail,'selected'=>$selected,'error'=>$error,'csrf'=>$this->csrfToken(),'company_context_token'=>class_exists('CompanyRequestScope',false)?CompanyRequestScope::token():null,'action_url'=>$this->url('banco_brasil/local_noncash'),'back_url'=>$this->url('banco_brasil?issuer_id='.$id),'request_key'=>bin2hex(random_bytes(32))]);
+    }
+    private function staffId():int
+    {
+        if(class_exists('CompanyRequestScope',false)){$context=\CompanyRequestScope::context();if(is_object($context)&&method_exists($context,'staffId'))return $context->staffId();}
+        return get_staff_user_id();
+    }
+    private function url(string $path=''):string
+    {
+        if(function_exists('admin_url'))return admin_url($path);
+        return $this->config->site_url((defined('ADMIN_URI')?ADMIN_URI:'admin').'/'.$path);
+    }
+    private function flash(string $kind,string $message):void
+    {
+        if(function_exists('set_alert'))set_alert($kind,$message);
+        $this->session->set_userdata('bb_notice',['kind'=>$kind,'message'=>$message]);
+    }
+    private function denied():void
+    {
+        if(function_exists('access_denied'))access_denied('banco_brasil');
+        show_error('Acesso negado para este recurso da empresa.',403);throw new RuntimeException('bb_access_denied');
+    }
+    private function allowed(int $issuer,string $permission):bool
+    {
+        if(!function_exists('issuer_resource_can'))return false;
+        try{return \BancoBrasil\Transaction::quiet($this->db,fn()=>issuer_resource_can($issuer,$this->staffId(),'banco_brasil',$permission))===true;}
+        catch(Throwable $e){show_error('Armazenamento indisponível. Tente novamente após verificar a instalação.',503);return false;}
+    }
+    private function issuerCoreReady():bool
+    {
+        if(!class_exists('IssuerCore',false))require_once APPPATH.'services/issuers/IssuerCore.php';
+        if(!class_exists('IssuerRegistry',false))require_once APPPATH.'services/issuers/IssuerRegistry.php';
+        if(!function_exists('issuer_resource_can'))$this->load->helper('issuers');
+        return \IssuerCore::ready($this->db,db_prefix())&&function_exists('issuer_resource_can');
+    }
+    private function companyContextId():?int
+    {
+        if(!class_exists('CompanyRequestScope',false))return null;
+        $context=\CompanyRequestScope::context();
+        if(!is_object($context)||!method_exists($context,'issuerId'))$this->denied();
+        $id=$context->issuerId();
+        if(!is_int($id)||$id<1)$this->denied();
+        return $id;
+    }
+    private function issuer(int $id,string $capability):array
+    {
+        $companyId=$this->companyContextId();
+        if(($companyId!==null&&$companyId!==$id)||!$this->issuerCoreReady()||!$this->allowed($id,$capability))$this->denied();
+        try{$row=\BancoBrasil\Transaction::quiet($this->db,fn()=>(new \IssuerRegistry($this->db,db_prefix()))->get($id,$this->staffId()));}
+        catch(Throwable $e){show_error('Armazenamento indisponível. Tente novamente após verificar a instalação.',503);return [];}
+        if(!$row)$this->denied();
+        $row=(array)$row;
+        return ['id'=>(int)$row['id'],'legal_name'=>(string)$row['legal_name'],'tax_id'=>(string)$row['tax_id']];
+    }
+    private function positiveId($raw):int
+    {
+        if(!is_scalar($raw)||!preg_match('/^[1-9][0-9]{0,9}$/D',(string)$raw))show_error('Identificador inválido.',400);
+        return (int)$raw;
+    }
+    private function csrfToken():string
+    {
+        $token=$this->session->userdata('bb_admin_csrf');
+        if(!is_string($token)||!preg_match('/^[a-f0-9]{64}$/D',$token)){
+            $token=bin2hex(random_bytes(32));$this->session->set_userdata('bb_admin_csrf',$token);
+        }
+        return $token;
+    }
+    private function post():void
+    {
+        if(strtoupper($this->input->method())!=='POST')show_error('Método não permitido.',405);
+        $expected=$this->session->userdata('bb_admin_csrf');$actual=$this->input->post('csrf_bb');
+        if(!is_string($expected)||!is_string($actual)||strlen($expected)!==64||!hash_equals($expected,$actual))show_error('Solicitação inválida. Atualize a tela.',403);
+    }
+}

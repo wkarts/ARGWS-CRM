@@ -62,9 +62,21 @@ function render_install_fragment(string $path): string
 function render_runtime_title(string $path, ?string $title = null): string
 {
     $locale = 'pt-BR';
+    $controller = new class {
+        public $load;
+        public function __construct()
+        {
+            $this->load = new class {
+                public function view(string $path, array $data = []): void {}
+            };
+        }
+    };
+    $render = function (string $relativePath): void {
+        include __DIR__ . '/../' . $relativePath;
+    };
     ob_start();
     try {
-        include __DIR__ . '/../' . $path;
+        $render->call($controller, $path);
         throw new RuntimeException('Expected interception before assets/session-dependent rendering');
     } catch (BrandingRenderComplete $complete) {
         return (string) ob_get_contents();

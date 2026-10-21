@@ -12,8 +12,12 @@ class Invoice_pdf extends App_pdf
 
     public function __construct($invoice, $tag = '')
     {
+        require_once APPPATH . 'helpers/invoice_issuer_helper.php';
+        invoice_issuer_assert_legacy_pdf_scope(invoice_issuer_snapshot($invoice));
         $this->load_language($invoice->clientid);
         $invoice                = hooks()->apply_filters('invoice_html_pdf_data', $invoice);
+        // A legacy extension cannot switch the object to a positive issuer after the initial guard.
+        invoice_issuer_assert_legacy_pdf_scope(invoice_issuer_snapshot($invoice));
         $GLOBALS['invoice_pdf'] = $invoice;
 
         parent::__construct();

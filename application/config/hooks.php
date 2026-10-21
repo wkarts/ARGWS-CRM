@@ -79,6 +79,14 @@ $hook['pre_controller_constructor'][] = [
 ];
 
 $hook['post_controller'] = function () {
+    if(class_exists('CompanyHrAccessScope',false)&&CompanyHrAccessScope::requested()){return;}
+    if(class_exists('CompanyPurchasesScope',false)&&CompanyPurchasesScope::requested()){return;}
+    if((class_exists('CompanyOperationsApiScope',false)&&CompanyOperationsApiScope::requested())||(class_exists('CompanyApiScope',false)&&CompanyApiScope::active())||(class_exists('CompanyRecurringWorkerScope',false)&&CompanyRecurringWorkerScope::active())||(class_exists('CompanyAsaasCallbackScope',false)&&CompanyAsaasCallbackScope::active())||(class_exists('CompanyBbCallbackScope',false)&&CompanyBbCallbackScope::active())){return;}
+    if(class_exists('PortalRequestScope',false)&&PortalRequestScope::active()){return;}
+    if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::isolated()) {
+        CompanyRequestScope::finish();
+        return;
+    }
     $ci = get_instance();
 
     if (! $ci->input->is_ajax_request()) {
@@ -106,6 +114,14 @@ $hook['post_controller'] = function () {
     }
 };
 
-if (file_exists(APPPATH . 'config/my_hooks.php')) {
+$hook['post_controller'] = [$hook['post_controller'], static function () {
+    if (class_exists('CompanyRequestScope', false)) { CompanyRequestScope::finish(); }
+}];
+
+// The fixed installer bootstrap must never dispatch custom hooks with the
+// original HTTP body (which contains the new administrator/DB credentials).
+$internalInstallation = class_exists('InstallationMigrationBootstrap', false)
+    && InstallationMigrationBootstrap::isRunning();
+if (!$internalInstallation && file_exists(APPPATH . 'config/my_hooks.php')) {
     include_once APPPATH . 'config/my_hooks.php';
 }

@@ -95,6 +95,7 @@
         <?php hooks()->do_action('after_pdf_signature_settings_fields'); ?>
     </div>
     <div role="tabpanel" class="tab-pane" id="formats">
+        <p>Faturas e créditos com origem própria capturam o formato na emissão; contratos, na ativação. Documentos existentes preservam seu snapshot e não são reformatados.</p>
         <label for="pdf_format_invoice" class="control-label"><?php echo _l('invoice'); ?></label>
         <select name="settings[pdf_format_invoice]" id="pdf_format_invoice" class="selectpicker" data-width="100%">
             <option value="A4-PORTRAIT" <?php if (get_option('pdf_format_invoice') == 'A4-PORTRAIT') {
@@ -112,6 +113,7 @@
 
         </select>
         <hr />
+        <p>Nos orçamentos e propostas com origem própria, o formato é capturado em novos documentos. Documentos existentes preservam a apresentação original.</p>
         <label for="pdf_format_estimate" class="control-label"><?php echo _l('estimate'); ?></label>
         <select name="settings[pdf_format_estimate]" id="pdf_format_estimate" class="selectpicker" data-width="100%">
             <option value="A4-PORTRAIT" <?php if (get_option('pdf_format_estimate') == 'A4-PORTRAIT') {
@@ -217,3 +219,4 @@
 
     </div>
 </div>
+<?php if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()&&CompanySettingsRuntime::can('view')){?><p><a href="<?= htmlspecialchars(CompanyRequestScope::adminUrl($this,'settings?group=pdf_typography'),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); ?>">Tipografia própria dos novos documentos desta empresa</a></p><p>As opções legadas acima não substituem os snapshots dos novos documentos por empresa. A política própria preserva os documentos já emitidos.</p><?php }?>

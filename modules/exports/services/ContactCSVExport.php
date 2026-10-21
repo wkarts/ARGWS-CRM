@@ -32,6 +32,7 @@ class ContactCSVExport extends CSVExport
         $this->ci->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'contacts.userid', 'left');
         $this->applyDateFilter(db_prefix() . 'contacts.datecreated');
 
+        \app\services\ClientIssuerScope::applyLegacy($this->ci->db, db_prefix(), db_prefix() . 'contacts', 'userid');
         return $this->ci->db->from(db_prefix() . 'contacts');
     }
 

@@ -9,23 +9,193 @@ class Asaas extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if (!is_admin()) {
+            access_denied('Asaas');
+            return;
+        }
         $this->load->library('asaas/asaas_gateway');
-        $this->apiKey  = $this->asaas_gateway->getApiKey();
     }
 
     public function index()
     {
+        $this->render_webhooks();
+    }
+
+    private function render_webhooks(array $generated = [])
+    {
         if (!is_admin()) {
             access_denied('Asaas');
+            return;
         }
-
+        require_once __DIR__ . '/../libraries/Asaas/WebhookAdminPresentation.php';
+        $store = $this->asaas_gateway->getAdapter()->webhookIntegrations();
+        $csrf = $this->session->userdata('asaas_webhook_admin_csrf');
+        if (!is_string($csrf) || !preg_match('/^[a-f0-9]{64}$/D', $csrf)) {
+            $csrf = bin2hex(random_bytes(32));
+            $this->session->set_userdata('asaas_webhook_admin_csrf', $csrf);
+        }
+        $base = defined('APP_BASE_URL') ? (string) APP_BASE_URL : '';
+        $indexPage = (string) $this->config->item('index_page');
         $data = [
             'title' => 'Webhooks Asaas',
-            'webhook_url' => site_url('asaas/gateways/callback'),
-            'email' => (string) get_option('smtp_email'),
-            'has_webhook_token' => strlen((string) $this->asaas_gateway->getSetting('webhook_secret')) >= 32,
+            'csrf_token' => $csrf,
+            'ready' => $store->ready(),
+            'trusted_url_ready' => \Asaas\WebhookAdminPresentation::callbackUrl($base, str_repeat('0', 32), $indexPage) !== null,
+            'integrations' => [],
+            'selected_id' => null,
+            'events' => [],
+            'review_queue' => [],
+            'pending_automations' => [],
+            'generated_token' => $generated['one_time_token'] ?? null,
+            'generated_id' => $generated['integration_id'] ?? $generated['id'] ?? null,
         ];
+        if ($data['ready']) {
+            $data['integrations'] = $store->listForAdmin();
+            $data['review_queue'] = $store->reviewQueue(50);
+            $data['pending_automations'] = $store->pendingAutomations(50);
+            $requested = $this->input->get('integration');
+            if ($requested !== null && (!is_string($requested) || !preg_match('/^[1-9][0-9]*$/D', $requested)
+                || filter_var($requested, FILTER_VALIDATE_INT) === false)) {
+                show_404();
+                return;
+            }
+            foreach ($data['integrations'] as &$integration) {
+                $integration['callback_url'] = \Asaas\WebhookAdminPresentation::callbackUrl($base, (string) $integration['public_id'], $indexPage);
+                if (($requested === null && $data['selected_id'] === null) || (string) $integration['id'] === $requested) {
+                    $data['selected_id'] = (int) $integration['id'];
+                }
+            }
+            unset($integration);
+            if ($requested !== null && $data['selected_id'] === null) {
+                show_404();
+                return;
+            }
+            if ($data['selected_id'] !== null) {
+                $data['events'] = \Asaas\WebhookAdminPresentation::eventRows($store->recentEvents($data['selected_id'], 25));
+            }
+        }
+        $this->output->set_header('Cache-Control: no-store, private, max-age=0');
+        $this->output->set_header('Pragma: no-cache');
+        $this->output->set_header('Referrer-Policy: no-referrer');
         $this->load->view('asaas/webhooks', $data);
+    }
+
+    public function register_integration()
+    {
+        if (!$this->require_webhook_management()) {
+            return;
+        }
+        try {
+            require_once __DIR__ . '/../libraries/Asaas/WebhookAdminPresentation.php';
+            $base = defined('APP_BASE_URL') ? (string) APP_BASE_URL : '';
+            if (\Asaas\WebhookAdminPresentation::callbackUrl($base, str_repeat('0', 32), (string) $this->config->item('index_page')) === null) {
+                throw new InvalidArgumentException('invalid_configured_base_url');
+            }
+            $generated = $this->asaas_gateway->getAdapter()->registerWebhookIntegration(
+                trim($this->webhook_posted_string('label', 100)),
+                $this->webhook_posted_string('environment', 16),
+                trim($this->webhook_posted_string('account_id', 128))
+            );
+            $this->session->set_userdata('asaas_webhook_admin_csrf', bin2hex(random_bytes(32)));
+            $this->render_webhooks($generated);
+            return;
+        } catch (Throwable $error) {
+            // Never render/log request bodies, tokens or provider exception details.
+            set_alert('danger', 'Cadastro local não confirmado. Confira a conta, o ambiente, a configuração HTTPS. Nenhum webhook remoto foi alterado.');
+        }
+        redirect(admin_url('asaas'));
+    }
+
+    public function rotate_integration_token()
+    {
+        if (!$this->require_webhook_management()) {
+            return;
+        }
+        try {
+            $generated = $this->asaas_gateway->getAdapter()->webhookIntegrations()->rotateToken($this->webhook_posted_id());
+            $this->session->set_userdata('asaas_webhook_admin_csrf', bin2hex(random_bytes(32)));
+            $this->render_webhooks($generated);
+            return;
+        } catch (Throwable $error) {
+            set_alert('danger', 'Rotação não confirmada. Confira o recebedor e o histórico antes de gerar outro token.');
+        }
+        redirect(admin_url('asaas'));
+    }
+
+    public function disable_integration()
+    {
+        if (!$this->require_webhook_management()) {
+            return;
+        }
+        try {
+            $this->asaas_gateway->getAdapter()->webhookIntegrations()->disable($this->webhook_posted_id());
+            set_alert('success', 'Recebedor local desativado. Histórico preservado; o webhook remoto não foi modificado.');
+        } catch (Throwable $error) {
+            set_alert('danger', 'Não foi possível desativar o recebedor local.');
+        }
+        redirect(admin_url('asaas'));
+    }
+
+    public function retry_reviewed_event()
+    {
+        if (!$this->require_webhook_management()) {
+            return;
+        }
+        try {
+            $this->asaas_gateway->getAdapter()->retryReviewedWebhook(
+                $this->webhook_posted_id('event_row_id'), $this->webhook_posted_id()
+            );
+            set_alert('success', 'Evento devolvido à fila após conferência da origem. O CRON refará a validação canônica; nenhuma baixa foi feita nesta ação.');
+        } catch (Throwable $error) {
+            set_alert('warning', 'Evento não liberado. Concilie a origem e confira o recebedor da mesma conta e ambiente.');
+        }
+        redirect(admin_url('asaas'));
+    }
+
+    private function require_webhook_management(): bool
+    {
+        if (!is_admin()) {
+            access_denied('Asaas');
+            return false;
+        }
+        if ($this->input->method(true) !== 'POST') {
+            show_404();
+            return false;
+        }
+        $stored = $this->session->userdata('asaas_webhook_admin_csrf');
+        $submitted = $this->input->post('webhook_admin_csrf');
+        if (!is_string($stored) || !preg_match('/^[a-f0-9]{64}$/D', $stored)
+            || !is_string($submitted) || !hash_equals($stored, $submitted)) {
+            show_error('Sessão inválida. Atualize a página e tente novamente.', 403);
+            return false;
+        }
+        if ($this->input->post('webhook_token') !== null || $this->input->post('one_time_token') !== null || $this->input->post('token') !== null) {
+            show_error('O token deve ser gerado pelo CRM; valores externos não são aceitos.', 400);
+            return false;
+        }
+        if (!$this->asaas_gateway->getAdapter()->webhookIntegrations()->ready()) {
+            show_error('Atualização do módulo pendente.', 503);
+            return false;
+        }
+        return true;
+    }
+
+    private function webhook_posted_string(string $name, int $maxLength): string
+    {
+        $value = $this->input->post($name);
+        if (!is_string($value) || $value === '' || strlen($value) > $maxLength) {
+            throw new InvalidArgumentException('invalid_webhook_input');
+        }
+        return $value;
+    }
+
+    private function webhook_posted_id(string $name = 'integration_id'): int
+    {
+        $value = $this->webhook_posted_string($name, 20);
+        if (!preg_match('/^[1-9][0-9]*$/D', $value) || filter_var($value, FILTER_VALIDATE_INT) === false) {
+            throw new InvalidArgumentException('invalid_integration_id');
+        }
+        return (int) $value;
     }
 
     public function get_invoice_data($invoice_hash)
@@ -42,7 +212,7 @@ class Asaas extends AdminController
 
     public function charges()
     {
-        $response = $this->asaas_gateway->charges($this->apiKey, null);
+        $response = $this->asaas_gateway->charges($this->asaas_gateway->getApiKey(), null);
 
         $response = json_decode($response, TRUE);
 
@@ -57,7 +227,7 @@ class Asaas extends AdminController
 
     public function customers()
     {
-        $response = $this->asaas_gateway->get_customers($this->apiKey, null);
+        $response = $this->asaas_gateway->get_customers($this->asaas_gateway->getApiKey(), null);
 
         natsort($response["data"]);
 
@@ -85,136 +255,14 @@ class Asaas extends AdminController
 
     public function services()
     {
-        $response = $this->invoice->services($this->apiKey, null);
+        $response = $this->invoice->services($this->asaas_gateway->getApiKey(), null);
     }
 
-    public function setup_webhook()
-    {
-        if (!is_admin()) {
-            access_denied('Asaas');
-        }
-        if ($this->input->method(true) !== 'POST') {
-            show_404();
-        }
-
-        $token = trim((string) $this->asaas_gateway->getSetting('webhook_secret'));
-        $email = trim((string) $this->input->post('notification_email'));
-        $url = site_url('asaas/gateways/callback');
-
-        if (strlen($token) < 32 || strlen($token) > 255 || preg_match('/\\s/', $token)) {
-            set_alert('danger', 'Configure primeiro um token exclusivo para o webhook, com 32 a 255 caracteres, sem espaços.');
-            redirect(admin_url('asaas'));
-            return;
-        }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !filter_var($url, FILTER_VALIDATE_URL)
-            || strtolower((string) parse_url($url, PHP_URL_SCHEME)) !== 'https') {
-            set_alert('danger', 'Informe um e-mail válido e disponibilize o webhook por HTTPS.');
-            redirect(admin_url('asaas'));
-            return;
-        }
-
-        $adapter = $this->asaas_gateway->getAdapter();
-        $list = $adapter->requestStructured('GET', '/webhooks', ['limit' => 100]);
-        if (empty($list['success'])) {
-            set_alert('danger', 'Não foi possível consultar os webhooks da conta Asaas.');
-            redirect(admin_url('asaas'));
-            return;
-        }
-        $webhooks = $list['data']['data'] ?? [];
-        if (!is_array($webhooks)) {
-            set_alert('danger', 'A listagem de webhooks retornou dados incompatíveis.');
-            redirect(admin_url('asaas'));
-            return;
-        }
-        foreach ($webhooks as $webhook) {
-            if (is_array($webhook) && (string) ($webhook['url'] ?? '') === $url) {
-                set_alert('warning', 'Este endereço já consta na conta Asaas. Confirme o token configurado antes de ativar o envio.');
-                redirect(admin_url('asaas'));
-                return;
-            }
-        }
-        if (!empty($list['data']['hasMore'])) {
-            set_alert('warning', 'A conta possui mais webhooks. Consulte as demais páginas antes de criar outro.');
-            redirect(admin_url('asaas'));
-            return;
-        }
-
-        $result = $adapter->requestStructured('POST', '/webhooks', [], [], [
-            'name' => 'CRM — eventos de pagamento',
-            'url' => $url,
-            'email' => $email,
-            'enabled' => true,
-            'interrupted' => false,
-            'apiVersion' => 3,
-            'authToken' => $token,
-            'sendType' => 'SEQUENTIALLY',
-            'events' => [
-                'PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED', 'PAYMENT_OVERDUE',
-                'PAYMENT_REFUNDED', 'PAYMENT_PARTIALLY_REFUNDED',
-                'PAYMENT_CHARGEBACK_REQUESTED',
-            ],
-        ]);
-
-        if (!empty($result['success']) && !empty($result['data']['id'])) {
-            set_alert('success', 'Webhook cadastrado. Consulte a fila de eventos no painel Asaas.');
-        } else {
-            set_alert('danger', 'Falha ao cadastrar o webhook. Confira as permissões da chave da API.');
-        }
-        redirect(admin_url('asaas'));
-    }
-
-    public function set_webhook($api_key, $api_url, $email)
-    {
-        $webhook = $this->asaas_gateway->get_webhook($api_key, $api_url);
-        if ($webhook["url"] !== site_url('asaas/gateways/callback/index')) {
-            $post_data = json_encode([
-                "url" => site_url('asaas/gateways/callback/index'),
-                "email" => $email,
-                "interrupted" => false,
-                "enabled" => true,
-                "apiVersion" => 3
-            ]);
-            $create_webhook = $this->asaas_gateway->create_webhook($api_key, $api_url, $post_data);
-            return $create_webhook;
-        }
-    }
-
-    public function set_webhook_invoice($api_key, $api_url, $email)
-    {
-        $webhook = $this->asaas_gateway->get_webhook_invoice($api_key, $api_url);
-
-        if ($webhook["url"] !== site_url('asaas_invoice/gateways/callback/index')) {
-            $post_data = json_encode([
-                "url" => site_url('asaas_invoice/gateways/callback'),
-                "email" => $email,
-                "interrupted" => false,
-                "enabled" => true,
-                "apiVersion" => 3
-
-            ]);
-
-            $create_webhook = $this->asaas_gateway->create_webhook_invoice($api_key, $api_url, $post_data);
-
-            return $create_webhook;
-        }
-    }
-
-    public function set_webhook_transfer($email)
-    {
-        $webhook = $this->asaas_gateway->get_webhook_transfer($this->apiKey, null);
-        if ($webhook["url"] !== site_url('asaas/gateways/callback/invoices')) {
-            $post_data = json_encode([
-                "url" => site_url('asaas/gateways/callback'),
-                "email" => $email,
-                "interrupted" => false,
-                "enabled" => true,
-                "apiVersion" => 3
-
-            ]);
-            $create_webhook = $this->asaas_gateway->create_webhook_transfer($this->apiKey, null, $post_data);
-            return $create_webhook;
-        }
-    }
+    /** Legacy remote mutation routes are disabled; configure provider-side delivery in Asaas. */
+    public function setup_webhook() { show_404(); }
+    public function set_webhook($api_key = null, $api_url = null, $email = null) { show_404(); }
+    public function set_webhook_invoice($api_key = null, $api_url = null, $email = null) { show_404(); }
+    public function set_webhook_transfer($email = null) { show_404(); }
 
     public function retorna_cobranca($id = 178458832)
     {

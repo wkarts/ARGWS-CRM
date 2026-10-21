@@ -1,0 +1,149 @@
+[
+  {
+    "directory": "test-runtime/resume-dbs/db-_skcr74c",
+    "bytes": 200653840,
+    "command": [
+      "php",
+      "tests/companies/post_refund_manual_cycle_boundaries.php"
+    ],
+    "exit": 0
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-4j3vsvz9",
+    "bytes": 216496666,
+    "command": [
+      "python",
+      "../settings-final440-batch.py"
+    ],
+    "exit": 0
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-51fdtwdd",
+    "bytes": 194862427,
+    "command": [
+      "php",
+      "tests/companies/native_resume_440.php"
+    ],
+    "exit": 255
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-b8fmbs2p",
+    "bytes": 204011699,
+    "command": [
+      "python",
+      "/workspace/scratch/6b72446d684f/ticket-resume440-batch.py"
+    ],
+    "exit": 1
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-xpnmmlye",
+    "bytes": 202465629,
+    "command": [
+      "php",
+      "tests/banco_brasil_api_window_discount_controller.php"
+    ],
+    "exit": 0
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-jaq1b2xw",
+    "bytes": 204224110,
+    "command": [
+      "php",
+      "tests/companies/post_refund_manual_cycle_concurrency.php"
+    ],
+    "exit": 0
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-krv26i77",
+    "bytes": 185597707,
+    "command": [
+      "php",
+      "tests/companies/resume439_controller_diagnostic.php"
+    ],
+    "exit": 255
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-2448quvz",
+    "bytes": 102304830,
+    "command": [
+      "php",
+      "tests/banco_brasil_api_window_discount_mysql.php"
+    ],
+    "exit": 0
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-ga7pesd8",
+    "bytes": 203779237,
+    "command": [
+      "php",
+      "tests/banco_brasil_api_window_discount_concurrency.php"
+    ],
+    "exit": 0
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-d7etgklh",
+    "bytes": 208087109,
+    "command": [
+      "sh",
+      "-c",
+      "for suite in invoice_recurring_modes invoice_recurring_modes_schema invoice_recurring_modes_worker invoice_recurring_modes_controller invoice_recurring_modes_concurrency invoice_recurring_discovery_concurrency_440; do php tests/companies/$suite.php > ../recurring440-final-$suite-mariadb.log 2>&1; code=$?; tail -3 ../recurring440-final-$suite-mariadb.log; if [ \"$code\" -ne 0 ]; then exit \"$code\"; fi; done"
+    ],
+    "exit": 0
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-d76wit5n",
+    "bytes": 200657097,
+    "command": [
+      "php",
+      "tests/companies/post_refund_manual_cycle.php"
+    ],
+    "exit": 0
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-2ltcwy5k",
+    "bytes": 203292855,
+    "command": [
+      "php",
+      "tests/companies/post_refund_manual_cycle_controller.php"
+    ],
+    "exit": 0
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-yw6v6sk6",
+    "bytes": 214778378,
+    "command": [
+      "python",
+      "../resume439-regression-rerun.py"
+    ],
+    "exit": 1
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-vrbv3go2",
+    "bytes": 199226410,
+    "command": [
+      "python",
+      "/workspace/scratch/6b72446d684f/ticket-resume440-batch.py"
+    ],
+    "exit": 0
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-v00m1fzz",
+    "bytes": 194863665,
+    "command": [
+      "php",
+      "tests/companies/native_resume_440.php",
+      "--tracking"
+    ],
+    "exit": 255
+  },
+  {
+    "directory": "test-runtime/resume-dbs/db-nkp4bhuy",
+    "bytes": 204710209,
+    "command": [
+      "python",
+      "/workspace/scratch/6b72446d684f/recurring440-composition-run.py",
+      "mysql"
+    ],
+    "exit": 0
+  }
+]

@@ -92,6 +92,7 @@ class Contacts extends REST_Controller {
         }
         if (!empty($contact_id) && !empty($customer_id)) {
             $data = $this->Api_model->get_table('contacts', $contact_id);
+            if ($data && (int) $data->userid !== (int) $customer_id) { $data = null; }
         }
         if (empty($contact_id) && empty($customer_id)) {
             // Set the response and exit
@@ -471,7 +472,7 @@ class Contacts extends REST_Controller {
                 $message = array('status' => FALSE, 'message' => 'Contact ID Doesn\'t Not Exist.');
                 $this->response($message, REST_Controller::HTTP_CONFLICT);
             }
-            $_current_email = $this->db->where('id', $id)->get(db_prefix() . 'contacts')->row();
+            $_current_email = $is_exist;
             if ($_current_email->email == $this->input->post('email')) {
                 $this->form_validation->set_rules('email', 'Email', 'trim|required|max_length[255]');
             } else {
@@ -512,7 +513,6 @@ class Contacts extends REST_Controller {
         if (empty($customer_id)) {
             return FALSE;
         }
-        $query = $this->db->get_where(db_prefix() . 'clients', array('userid' => $customer_id));
-        return $query->num_rows() > 0;
+        return \app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id);
     }
 }

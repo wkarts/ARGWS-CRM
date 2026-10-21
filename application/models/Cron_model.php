@@ -111,6 +111,12 @@ class Cron_model extends App_Model
             app_maybe_delete_old_temporary_files();
 
             hooks()->do_action('after_cron_run', $manually);
+            require_once APPPATH . 'services/CompanyConnectApiCron.php';
+            CompanyConnectApiCron::run($this);
+            require_once APPPATH . 'services/CompanyTicketConnectCron.php';
+            CompanyTicketConnectCron::run($this);
+            require_once APPPATH . 'services/CompanyPusherCron.php';
+            CompanyPusherCron::run($this);
 
             // For all cases try to release the lock after everything is finished
             $this->lockHandle();
@@ -749,6 +755,7 @@ class Cron_model extends App_Model
         $this->load->model('invoices_model');
         $this->db->select('id,recurring,date,last_recurring_date,number,duedate,recurring_type,custom_recurring,addedfrom,sale_agent,clientid');
         $this->db->from(db_prefix() . 'invoices');
+        \app\services\InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $this->db->where('recurring !=', 0);
         // A migrated source can never re-enter the legacy scheduler, even if an old form is resubmitted.
         $this->db->where('NOT EXISTS (SELECT 1 FROM `' . db_prefix() . 'recurring_rules` rr WHERE rr.source_invoice_id = `' . db_prefix() . 'invoices`.id)', null, false);
@@ -965,6 +972,13 @@ class Cron_model extends App_Model
     private function send_scheduled_emails()
     {
         $this->db->where('scheduled_at <=', date('Y-m-d H:i:s'));
+        $invoiceTable = db_prefix() . 'invoices';
+        if (\app\services\InvoiceIssuerScope::schemaReady($this->db, $invoiceTable)) {
+            // Keep other issuer queues untouched before hydration, delivery or deletion.
+            $this->db->where("(rel_type IS NULL OR rel_type != 'invoice' OR rel_id IN (SELECT id FROM "
+                . $invoiceTable . ' WHERE ' . \app\services\InvoiceIssuerScope::legacySql($this->db, $invoiceTable)
+                . '))', null, false);
+        }
         $emails = $this->db->get('scheduled_emails')->result_array();
 
         $this->load->model('invoices_model');
@@ -1132,6 +1146,7 @@ class Cron_model extends App_Model
         $this->load->model('invoices_model');
         $this->db->select('id,date,status,last_overdue_reminder,duedate,cancel_overdue_reminders');
         $this->db->from(db_prefix() . 'invoices');
+        \app\services\InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         $this->db->where('duedate IS NOT NULL'); // We dont need invoices with no duedate
         $this->db->where('status !=', Invoices_model::STATUS_PAID); // We dont need paid status
         $this->db->where('status !=', Invoices_model::STATUS_CANCELLED); // We dont need cancelled status
@@ -1196,6 +1211,7 @@ class Cron_model extends App_Model
 
         $this->db->select('id,date,status,last_due_reminder,duedate');
         $this->db->from(db_prefix() . 'invoices');
+        \app\services\InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
         // We dont need invoices with no duedate and where the duedate is less the current date
         // e.q. is already overdue and partially paid invoice
         $this->db->where('(duedate IS NOT NULL and duedate > "' . date('Y-m-d') . '")')

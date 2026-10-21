@@ -45,6 +45,7 @@ class CustomerCSVExport extends CSVExport
         $this->ci->db->join(db_prefix() . 'currencies', db_prefix() . 'currencies.id = ' . db_prefix() . 'clients.default_currency', 'left');
         $this->applyDateFilter(db_prefix() . 'clients.datecreated');
 
+        \app\services\ClientIssuerScope::applyLegacy($this->ci->db, db_prefix(), db_prefix() . 'clients');
         return $this->ci->db->from(db_prefix() . 'clients');
     }
 

@@ -1,0 +1,37 @@
+<?php
+/** Actual442 history -> additive443 body, complete metadata/FKs, replay and preserved rows. */
+declare(strict_types=1);
+register_shutdown_function(static function():void{
+ if(!isset($GLOBALS['db'],$GLOBALS['p'])||!preg_match('/^essential_[a-f0-9]{10}_$/D',$GLOBALS['p']))return;
+ foreach(['company_sales_copy_requests','company_sales_revisions']as$table)$GLOBALS['db']->query('DROP TABLE IF EXISTS `'.$GLOBALS['p'].$table.'`');
+ unset($GLOBALS['db']->data_cache['table_names']);
+});
+$mode443=$argv[1]??'';$argv=[__FILE__];require __DIR__.'/native_resume_442.php';
+require_once APPPATH.'services/CompanySales.php';require_once APPPATH.'services/CompanySalesMutationsSchema.php';
+essentialCheck(!$db->table_exists($p.'company_sales_revisions')&&!$db->table_exists($p.'company_sales_copy_requests'),'actual native442 has no future443 ledger');
+$oldSales443=new CompanySales($db,$p);$sales443=[];
+foreach([[$a,$ca],[$b,$cb]]as[$issuer443,$client443])foreach(['estimates','proposals']as$kind443){$payload443=array_replace($input,['client_id'=>$client443]);$sale443=$oldSales443->create($issuer443,7,$kind443,$payload443,hash('sha256','native442-before443-'.$issuer443.'-'.$kind443));$sales443[]=$sale443;essentialCheck((int)$oldSales443->document($issuer443,7,$sale443)['issuer_id']===$issuer443,'pre443 canonical private '.$kind443.' belongs to its existing company');}
+if($mode443==='--tracking'){
+ $pipes443=[];$process443=proc_open([PHP_BINARY,__DIR__.'/native_resume_443_tracking.php',$p],[0=>['pipe','r'],1=>['pipe','w'],2=>['file','php://stderr','w']],$pipes443);if(!is_resource($process443))throw new RuntimeException('native443_process_failed');
+ fclose($pipes443[0]);$output443=stream_get_contents($pipes443[1]);fclose($pipes443[1]);$status443=proc_close($process443);echo$output443;
+ essentialCheck($status443===0&&str_contains($output443,'Native443 actual executor confirmed:'),'actual443 DDL/metadata/FK/marker/readback/retry/replay');exit;
+}
+$tables443=static fn()=>array_column($db->query('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND LEFT(TABLE_NAME,?)=?',[strlen($p),$p])->result_array(),'TABLE_NAME');
+$rows443=static function(string$table)use($db):array{$rows=array_map('serialize',$db->query('SELECT * FROM `'.$table.'`')->result_array());sort($rows,SORT_STRING);return$rows;};
+$before443=[];foreach($tables443()as$table)$before443[$table]=$rows443($table);
+require_once APPPATH.'migrations/443_version_443.php';$migration443=new Migration_Version_443();$migration443->db=$db;$migration443->up();$migration443->up();
+$wanted443=[$p.'company_sales_revisions',$p.'company_sales_copy_requests'];$added443=array_values(array_diff($tables443(),array_keys($before443)));sort($added443);sort($wanted443);essentialCheck($added443===$wanted443,'actual443 creates exactly two additive sales ledgers');
+foreach($wanted443 as$table)essentialCheck((int)$db->query('SELECT COUNT(*) n FROM `'.$table.'`')->row()->n===0,'actual443 does not synthesize prior revision/copy history '.$table);
+CompanySalesMutationsSchema::ensure($db,$p,false);
+$foreign443=static fn(string$table)=>$db->query('SELECT k.COLUMN_NAME,k.REFERENCED_TABLE_NAME,k.REFERENCED_COLUMN_NAME,r.DELETE_RULE,r.UPDATE_RULE FROM information_schema.KEY_COLUMN_USAGE k JOIN information_schema.REFERENTIAL_CONSTRAINTS r ON r.CONSTRAINT_SCHEMA=k.CONSTRAINT_SCHEMA AND r.TABLE_NAME=k.TABLE_NAME AND r.CONSTRAINT_NAME=k.CONSTRAINT_NAME WHERE k.TABLE_SCHEMA=DATABASE() AND k.TABLE_NAME=? ORDER BY k.COLUMN_NAME',[$p.$table])->result_array();
+foreach(['company_sales_revisions'=>['document_id'=>[$p.'company_sales_documents','id'],'issuer_id'=>[$p.'issuers_registry','id']],'company_sales_copy_requests'=>['issuer_id'=>[$p.'issuers_registry','id'],'result_document_id'=>[$p.'company_sales_documents','id'],'source_document_id'=>[$p.'company_sales_documents','id']]]as$table=>$expected){$fks=$foreign443($table);essentialCheck(count($fks)===count($expected),'actual443 exact FK count '.$table);foreach($fks as$fk)essentialCheck(isset($expected[$fk['COLUMN_NAME']])&&$expected[$fk['COLUMN_NAME']]===[$fk['REFERENCED_TABLE_NAME'],$fk['REFERENCED_COLUMN_NAME']]&&in_array($fk['DELETE_RULE'],['RESTRICT','NO ACTION'],true)&&in_array($fk['UPDATE_RULE'],['RESTRICT','NO ACTION'],true),'actual443 exact parent and non-destructive actions '.$table.'.'.$fk['COLUMN_NAME']);}
+foreach([['company_sales_revisions','reason','varchar(2000)'],['company_sales_copy_requests','source_json','longtext']]as[$table,$column,$type]){$db->query('ALTER TABLE `'.$p.$table.'` MODIFY `'.$column.'` '.$type.' CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL');try{essentialThrows(fn()=>$migration443->up(),'issuer_sales_mutation_schema_invalid','actual443 refuses incompatible collation '.$table.'.'.$column);}finally{$db->query('ALTER TABLE `'.$p.$table.'` MODIFY `'.$column.'` '.$type.' CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL');}$migration443->up();}
+$db->query("ALTER TABLE `{$p}company_sales_revisions` ALTER COLUMN reason SET DEFAULT 'unexpected'");try{essentialThrows(fn()=>$migration443->up(),'issuer_sales_mutation_schema_invalid','actual443 refuses injected revision default');}finally{$db->query('ALTER TABLE `'.$p.'company_sales_revisions` ALTER COLUMN reason DROP DEFAULT');}
+$fk443=$db->query('SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=? AND REFERENCED_TABLE_NAME IS NOT NULL',[$p.'company_sales_revisions','document_id'])->row()->CONSTRAINT_NAME;if(!preg_match('/^[A-Za-z0-9_]+$/D',$fk443))throw new RuntimeException('unsafe_native443_fixture_fk');
+$db->query('ALTER TABLE `'.$p.'company_sales_revisions` DROP FOREIGN KEY `'.$fk443.'`');$db->query('ALTER TABLE `'.$p.'company_sales_revisions` ADD CONSTRAINT `'.$fk443.'` FOREIGN KEY(document_id) REFERENCES `'.$p.'company_sales_documents`(id) ON DELETE CASCADE');try{essentialThrows(fn()=>$migration443->up(),'issuer_sales_mutation_schema_invalid','actual443 rejects destructive action on expected parent');}finally{$db->query('ALTER TABLE `'.$p.'company_sales_revisions` DROP FOREIGN KEY `'.$fk443.'`');$db->query('ALTER TABLE `'.$p.'company_sales_revisions` ADD CONSTRAINT `'.$fk443.'` FOREIGN KEY(document_id) REFERENCES `'.$p.'company_sales_documents`(id)');}
+// An extra FK can also destroy append-only evidence, even when all expected parents remain valid.
+$extra443=$p.'sales_extra_actor';$db->query('ALTER TABLE `'.$p.'company_sales_revisions` ADD CONSTRAINT `'.$extra443.'` FOREIGN KEY(actor_id) REFERENCES `'.$p.'staff`(staffid) ON DELETE CASCADE');try{essentialThrows(fn()=>$migration443->up(),'issuer_sales_mutation_schema_invalid','actual443 rejects extra destructive FK outside the declared contract');}finally{$db->query('ALTER TABLE `'.$p.'company_sales_revisions` DROP FOREIGN KEY `'.$extra443.'`');}
+$migration443->up();CompanySalesMutationsSchema::ensure($db,$p,false);
+foreach($before443 as$table=>$rows)essentialCheck($rows===$rows443($table),'actual443 replay/metadata failures preserve every historical row '.$table);
+essentialCheck($db->query('SELECT * FROM '.$p.'invoices WHERE id=42')->result_array()===$legacyBefore,'actual443 retains NULL-owner native invoice bytes');
+echo 'Native443 actual two tables, exact metadata/FKs, failure/replay and historical A/B sales bytes: '.$GLOBALS['essentialChecks'].' cumulative checks; tracking tested separately.'.PHP_EOL;

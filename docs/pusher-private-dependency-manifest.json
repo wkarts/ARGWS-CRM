@@ -1,0 +1,52 @@
+{
+  "javascript": {
+    "version": "8.3.0",
+    "path": "assets/company_pusher/pusher-8.3.0.368a455b2523.min.js",
+    "upstream_url": "https://js.pusher.com/8.3.0/pusher.min.js",
+    "sha256": "368a455b2523fb21cfb886b4dcef7f391f1ce15815acd2d371e546c0104f61a1",
+    "bytes": 61917,
+    "license": "MIT",
+    "license_path": "assets/company_pusher/LICENSE.txt",
+    "license_sha256": "e7170db862044802ed3db75d61113e48aed5061ba5c97ec9820ff9856c4dc0f5",
+    "normalization": "none; exact official distribution bytes"
+  },
+  "php": {
+    "package": "pusher/pusher-php-server",
+    "version": "7.2.7",
+    "source_reference": "148b0b5100d000ed57195acdf548a2b1b38ee3f7",
+    "license": "MIT",
+    "changes": "none; existing installed package and all Composer manifests/lock unchanged"
+  },
+  "sources": [
+    {
+      "url": "https://js.pusher.com/8.3.0/pusher.min.js",
+      "sha256": "368a455b2523fb21cfb886b4dcef7f391f1ce15815acd2d371e546c0104f61a1",
+      "bytes": 61917,
+      "file": "pusher-8.3.0.min.js"
+    },
+    {
+      "url": "https://pusher.com/docs/channels/server_api/authorizing-users/",
+      "sha256": "0964d56c9b5a831262137814f5bf382bd60a01edbb8c64db9e63a4a30b53c161",
+      "bytes": 157708,
+      "file": "pusher-authorization.html"
+    },
+    {
+      "url": "https://pusher.com/docs/channels/library_auth_reference/rest-api/",
+      "sha256": "62368a6b1f9d8be4efee177754df1b8626c8fde2310431e041b060da7f3603bb",
+      "bytes": 98198,
+      "file": "pusher-http.html"
+    },
+    {
+      "url": "https://pusher.com/docs/channels/miscellaneous/clusters/",
+      "sha256": "20beb0b73a866be2a6cfcbb9c4f90a940773a0602502cfff4ee6dacf97d93324",
+      "bytes": 89623,
+      "file": "pusher-clusters.html"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/pusher/pusher-js/v8.3.0/LICENCE",
+      "sha256": "e7170db862044802ed3db75d61113e48aed5061ba5c97ec9820ff9856c4dc0f5",
+      "bytes": 1076,
+      "file": "assets/company_pusher/LICENSE.txt"
+    }
+  ]
+}

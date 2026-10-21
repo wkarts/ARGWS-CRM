@@ -12,9 +12,23 @@ class InitModules
         // Migration CLI runs with a short-lived internal token. Module CSRF
         // exclusions apply only to web requests, and scanning every module
         // prevents the isolated migration worker from bootstrapping.
+        if (class_exists('InstallationMigrationBootstrap', false) && InstallationMigrationBootstrap::isRunning()) {
+            return;
+        }
         if (PHP_SAPI === 'cli' && getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false) {
             return;
         }
+
+        // This only suppresses optional module metadata; exact routing and bearer
+        // authorization are independently required later by the native controller.
+        require_once APPPATH.'services/CompanyHrAccessScope.php';
+        if(CompanyHrAccessScope::earlyCandidate($_SERVER)){return;}
+        require_once APPPATH.'services/CompanyPurchasesScope.php';
+        if(CompanyPurchasesScope::earlyCandidate($_SERVER)){return;}
+        require_once APPPATH.'services/CompanyOperationsApiScope.php';
+        if(CompanyOperationsApiScope::earlyCandidate($_SERVER)){return;}
+        require_once APPPATH.'services/CompanyApiScope.php';
+        if(CompanyApiScope::earlyCandidate($_SERVER)){return;}
 
         include_once(LIBSPATH.'App_modules.php');
         // Load the directory helper so the directory_map function can be used

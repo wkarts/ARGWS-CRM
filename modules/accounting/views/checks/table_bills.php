@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once __DIR__ . '/../../libraries/AccountingLegacyScope.php';
 
 $this->ci->load->model('currencies_model');
 $this->ci->load->model('accounting/accounting_model');
@@ -43,6 +44,8 @@ $sIndexColumn = 'id';
 $sTable       = db_prefix() . 'expenses';
 
 // Fix for big queries. Some hosting have max_join_limit
+
+$where[] = 'AND (' . AccountingLegacyScope::expenseSql($this->ci->db, db_prefix(), db_prefix() . 'expenses') . ')';
 
 $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     '(SELECT GROUP_CONCAT(account SEPARATOR ",") FROM '.db_prefix().'acc_bill_mappings WHERE bill_id = '.db_prefix().'expenses.id and type = "debit") as account_ids', 'check_id', 'status', 'vendor'

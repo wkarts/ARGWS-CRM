@@ -1,0 +1,6 @@
+employee_id,employee_code,name,contract_id,number,starts_on,ends_on,state,salary_minor,currency,hours_per_week,acknowledged_at
+5,HTTP-a-f322aa0ad1f2-E,"HR Reader",1,1,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:07:11"
+10,HTTP-a-c4c5d189de16-E,"HR Reader",4,2,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:12:13"
+15,HTTP-a-67e29714717d-E,"HR Reader",7,3,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:32:44"
+20,HTTP-a-7e6a21b559a5-E,"HR Reader",10,4,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:36:20"
+25,HTTP-a-36b41beb07f5-E,"HR Reader",13,5,2026-01-01,,active,123456,BRL,40,"2026-10-21 11:49:38"

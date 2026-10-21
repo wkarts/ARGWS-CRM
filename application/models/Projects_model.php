@@ -1,5 +1,7 @@
 <?php
 
+use app\services\InvoiceIssuerScope;
+
 use app\services\projects\AllProjectsGantt;
 use app\services\projects\Gantt;
 use app\services\projects\HoursOverviewChart;
@@ -9,6 +11,23 @@ defined('BASEPATH') or exit('No direct script access allowed');
 class Projects_model extends App_Model
 {
     private $project_settings;
+
+    private array $authorizedProjectDeletion = [];
+
+    private function permitsLegacyProject($id): bool
+    {
+        if ((!is_int($id) && !is_string($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        return isset($this->authorizedProjectDeletion[(string)$id])
+            || \app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'projects', $id);
+    }
+
+    private function permitsLegacyProjectChild(string $table, $id): bool
+    {
+        if (!in_array($table, ['project_files','project_notes','project_activity','milestones','projectdiscussions'], true)
+            || (!is_int($id) && !is_string($id)) || !preg_match('/^[1-9][0-9]*$/D', (string)$id)) return false;
+        $result = $this->db->query('SELECT project_id FROM '.db_prefix().$table.' WHERE id=?', [$id]);
+        return $result!==false && ($row=$result->row()) && $this->permitsLegacyProject($row->project_id);
+    }
 
     public function __construct()
     {
@@ -107,6 +126,7 @@ class Projects_model extends App_Model
 
     public function timers_started_for_project($project_id, $where = [], $task_timers_where = [])
     {
+        if (!$this->permitsLegacyProject($project_id)) return false;
         $this->db->where($where);
         $this->db->where('end_time IS NULL');
         $this->db->where(db_prefix() . 'tasks.rel_id', $project_id);
@@ -119,6 +139,7 @@ class Projects_model extends App_Model
 
     public function pin_action($id)
     {
+        if (!$this->permitsLegacyProject($id)) return false;
         if (total_rows(db_prefix() . 'pinned_projects', [
             'staff_id'   => get_staff_user_id(),
             'project_id' => $id,
@@ -139,6 +160,7 @@ class Projects_model extends App_Model
 
     public function get_currency($id)
     {
+        if (!$this->permitsLegacyProject($id)) return false;
         $this->load->model('currencies_model');
         $customer_currency = $this->clients_model->get_customer_default_currency(get_client_id_by_project_id($id));
         if ($customer_currency != 0) {
@@ -152,6 +174,7 @@ class Projects_model extends App_Model
 
     public function calc_progress($id)
     {
+        if (!$this->permitsLegacyProject($id)) return 0;
         $this->db->select('progress_from_tasks,progress,status');
         $this->db->where('id', $id);
         $project = $this->db->get(db_prefix() . 'projects')->row();
@@ -169,6 +192,7 @@ class Projects_model extends App_Model
 
     public function calc_progress_by_tasks($id)
     {
+        if (!$this->permitsLegacyProject($id)) return 0;
         $total_project_tasks = total_rows(db_prefix() . 'tasks', [
             'rel_type' => 'project',
             'rel_id'   => $id,
@@ -211,6 +235,7 @@ class Projects_model extends App_Model
 
     public function get($id = '', $where = [])
     {
+        $this->db->where(\app\services\CustomerRelationBoundary::sql($this->db, db_prefix(), 'projects', db_prefix().'projects'), null, false);
         $this->db->where($where);
         if (is_numeric($id)) {
             $this->db->where('id', $id);
@@ -318,6 +343,7 @@ class Projects_model extends App_Model
 
     public function get_tasks($id, $where = [], $apply_restrictions = false, $count = false, $callback = null)
     {
+        if (!$this->permitsLegacyProject($id)) return $count ? 0 : [];
         $has_permission                    = staff_can('view', 'tasks');
         $show_all_tasks_for_project_member = get_option('show_all_tasks_for_project_member');
 
@@ -425,6 +451,7 @@ class Projects_model extends App_Model
 
     public function get_files($project_id)
     {
+        if (!$this->permitsLegacyProject($project_id)) return [];
         if (is_client_logged_in()) {
             $this->db->where('visible_to_customer', 1);
         }
@@ -435,6 +462,7 @@ class Projects_model extends App_Model
 
     public function get_file($id, $project_id = false)
     {
+        if (!$this->permitsLegacyProjectChild('project_files', $id)) return false;
         if (is_client_logged_in()) {
             $this->db->where('visible_to_customer', 1);
         }
@@ -452,6 +480,8 @@ class Projects_model extends App_Model
 
     public function update_file_data($data)
     {
+        if (isset($data['project_id']) && !$this->permitsLegacyProject($data['project_id'])) return false;
+        if (!$this->permitsLegacyProjectChild('project_files', $data['id'] ?? null)) return false;
         $this->db->where('id', $data['id']);
         unset($data['id']);
         $this->db->update(db_prefix() . 'project_files', $data);
@@ -459,6 +489,7 @@ class Projects_model extends App_Model
 
     public function change_file_visibility($id, $visible)
     {
+        if (!$this->permitsLegacyProjectChild('project_files', $id)) return false;
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'project_files', [
             'visible_to_customer' => $visible,
@@ -467,6 +498,7 @@ class Projects_model extends App_Model
 
     public function change_activity_visibility($id, $visible)
     {
+        if (!$this->permitsLegacyProjectChild('project_activity', $id)) return false;
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'project_activity', [
             'visible_to_customer' => $visible,
@@ -475,6 +507,7 @@ class Projects_model extends App_Model
 
     public function remove_file($id, $logActivity = true)
     {
+        if (!$this->permitsLegacyProjectChild('project_files', $id)) return false;
         hooks()->do_action('before_remove_project_file', $id);
 
         $this->db->where('id', $id);
@@ -548,6 +581,7 @@ class Projects_model extends App_Model
 
     public function get_milestones($project_id, $where = [])
     {
+        if (!$this->permitsLegacyProject($project_id)) return [];
         $this->db->select('*, (SELECT COUNT(id) FROM ' . db_prefix() . 'tasks WHERE rel_type="project" AND rel_id=' . $this->db->escape_str($project_id) . ' and milestone=' . db_prefix() . 'milestones.id) as total_tasks, (SELECT COUNT(id) FROM ' . db_prefix() . 'tasks WHERE rel_type="project" AND rel_id=' . $this->db->escape_str($project_id) . ' and milestone=' . db_prefix() . 'milestones.id AND status=5) as total_finished_tasks');
         $this->db->where('project_id', $project_id);
         $this->db->order_by('milestone_order', 'ASC');
@@ -681,6 +715,7 @@ class Projects_model extends App_Model
 
     public function add($data)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsWrite($this->db, db_prefix(), 'projects', $data)) return false;
         if (isset($data['notify_project_members_status_change'])) {
             unset($data['notify_project_members_status_change']);
         }
@@ -754,6 +789,7 @@ class Projects_model extends App_Model
         }
 
         $data = hooks()->apply_filters('before_add_project', $data);
+        if (!\app\services\CustomerRelationBoundary::permitsWrite($this->db, db_prefix(), 'projects', $data)) return false;
 
         $tags = '';
         if (isset($data['tags'])) {
@@ -862,6 +898,7 @@ class Projects_model extends App_Model
 
     public function update($data, $id)
     {
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'projects', $id, $data)) return false;
         $this->db->select('status');
         $this->db->where('id', $id);
         $old_status = $this->db->get(db_prefix() . 'projects')->row()->status;
@@ -1023,6 +1060,7 @@ class Projects_model extends App_Model
         }
 
         $data = hooks()->apply_filters('before_update_project', $data, $id);
+        if (!\app\services\CustomerRelationBoundary::permitsRecord($this->db, db_prefix(), 'projects', $id, $data)) return false;
 
         $this->db->where('id', $id);
         $this->db->update(db_prefix() . 'projects', $data);
@@ -1086,6 +1124,7 @@ class Projects_model extends App_Model
      */
     public function send_project_customer_email($id, $template)
     {
+        if (!$this->permitsLegacyProject($id)) return false;
         $sent     = false;
         $contacts = $this->clients_model->get_contacts_for_project_notifications($id, 'project_emails');
 
@@ -1205,6 +1244,7 @@ class Projects_model extends App_Model
 
     public function add_edit_members($data, $id)
     {
+        if (!$this->permitsLegacyProject($id)) return false;
         $affectedRows = 0;
         if (isset($data['project_members'])) {
             $project_members = $data['project_members'];
@@ -1337,6 +1377,7 @@ class Projects_model extends App_Model
 
     public function is_member($project_id, $staff_id = '')
     {
+        if (!$this->permitsLegacyProject($project_id)) return false;
         if (! is_numeric($staff_id)) {
             $staff_id = get_staff_user_id();
         }
@@ -1357,6 +1398,7 @@ class Projects_model extends App_Model
 
     public function get_project_settings($project_id)
     {
+        if (!$this->permitsLegacyProject($project_id)) return [];
         $this->db->where('project_id', $project_id);
 
         return $this->db->get(db_prefix() . 'project_settings')->result_array();
@@ -1364,6 +1406,7 @@ class Projects_model extends App_Model
 
     public function get_project_members($id, $with_name = false)
     {
+        if (!$this->permitsLegacyProject($id)) return [];
         if ($with_name) {
             $this->db->select('firstname,lastname,email,project_id,staff_id');
         } else {
@@ -1377,6 +1420,7 @@ class Projects_model extends App_Model
 
     public function remove_team_member($project_id, $staff_id)
     {
+        if (!$this->permitsLegacyProject($project_id)) return false;
         $this->db->where('project_id', $project_id);
         $this->db->where('staff_id', $staff_id);
         $this->db->delete(db_prefix() . 'project_members');
@@ -1396,6 +1440,7 @@ class Projects_model extends App_Model
 
     public function get_timesheets($project_id, $tasks_ids = [])
     {
+        if (!$this->permitsLegacyProject($project_id)) return [];
         if (count($tasks_ids) == 0) {
             $tasks     = $this->get_tasks($project_id);
             $tasks_ids = [];
@@ -1565,6 +1610,7 @@ class Projects_model extends App_Model
 
     public function get_discussions($project_id)
     {
+        if (!$this->permitsLegacyProject($project_id)) return [];
         $this->db->where('project_id', $project_id);
         if (is_client_logged_in()) {
             $this->db->where('show_to_customer', 1);
@@ -1875,6 +1921,7 @@ class Projects_model extends App_Model
 
     public function copy($project_id, $data)
     {
+        if (!$this->permitsLegacyProject($project_id)) return false;
         $_new_data = [];
         $project   = $this->get($project_id);
         $settings  = $this->get_project_settings($project_id);
@@ -2118,6 +2165,7 @@ class Projects_model extends App_Model
 
     public function get_staff_note($note_id, $staff_id = null)
     {
+        if (!$this->permitsLegacyProjectChild('project_notes', $note_id)) return false;
         $this->db->where('id', $note_id);
 
         if ($staff_id) {
@@ -2176,10 +2224,23 @@ class Projects_model extends App_Model
         return (bool) ($this->db->affected_rows() > 0);
     }
 
+    /** Legacy project removal must not detach an invoice outside its explicit scope. */
+    private function has_named_invoice_reference($projectId): bool
+    {
+        if (!InvoiceIssuerScope::schemaReady($this->db, db_prefix() . 'invoices')) { return false; }
+        $result = $this->db->query('SELECT id FROM ' . db_prefix() . 'invoices WHERE project_id=? AND issuer_id IS NOT NULL LIMIT 1', [$projectId]);
+        return $result === false || $result->row() !== null;
+    }
+
     public function delete($project_id)
     {
+        if (!$this->permitsLegacyProject($project_id)) return false;
+        if ($this->has_named_invoice_reference($project_id)) { return false; }
         hooks()->do_action('before_project_deleted', $project_id);
+        if ($this->has_named_invoice_reference($project_id)) { return false; }
 
+        $this->authorizedProjectDeletion[(string)$project_id] = true;
+        try {
         $project_name = get_project_name_by_id($project_id);
 
         $this->db->where('id', $project_id);
@@ -2237,36 +2298,43 @@ class Projects_model extends App_Model
             $this->db->delete(db_prefix() . 'project_activity');
 
             $this->db->where('project_id', $project_id);
+            $this->db->where(\app\services\CustomerRelationBoundary::sql($this->db, db_prefix(), 'expenses', db_prefix().'expenses'), null, false);
             $this->db->update(db_prefix() . 'expenses', [
                 'project_id' => 0,
             ]);
 
             $this->db->where('project_id', $project_id);
+            \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix().'contracts', 'client');
             $this->db->update(db_prefix() . 'contracts', [
                 'project_id' => null,
             ]);
 
+            InvoiceIssuerScope::applyLegacy($this->db, db_prefix() . 'invoices');
             $this->db->where('project_id', $project_id);
             $this->db->update(db_prefix() . 'invoices', [
                 'project_id' => 0,
             ]);
 
             $this->db->where('project_id', $project_id);
+            \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix().'creditnotes', 'clientid');
             $this->db->update(db_prefix() . 'creditnotes', [
                 'project_id' => 0,
             ]);
 
             $this->db->where('project_id', $project_id);
+            \app\services\ClientIssuerScope::applyLegacy($this->db, db_prefix(), db_prefix().'estimates', 'clientid');
             $this->db->update(db_prefix() . 'estimates', [
                 'project_id' => 0,
             ]);
 
             $this->db->where('project_id', $project_id);
+            $this->db->where(\app\services\CustomerRelationBoundary::sql($this->db, db_prefix(), 'tickets', db_prefix().'tickets'), null, false);
             $this->db->update(db_prefix() . 'tickets', [
                 'project_id' => 0,
             ]);
 
             $this->db->where('project_id', $project_id);
+            $this->db->where('('.db_prefix().'proposals.rel_type IS NULL OR LOWER('.db_prefix().'proposals.rel_type) <> \'customer\' OR '.\app\services\ClientIssuerScope::legacySql($this->db, db_prefix(), db_prefix().'proposals', 'rel_id').')', null, false);
             $this->db->update(db_prefix() . 'proposals', [
                 'project_id' => null,
             ]);
@@ -2282,6 +2350,7 @@ class Projects_model extends App_Model
         }
 
         return false;
+        } finally { unset($this->authorizedProjectDeletion[(string)$project_id]); }
     }
 
     public function get_activity($id = '', $limit = '', $only_project_members_activity = false)
@@ -2410,6 +2479,7 @@ class Projects_model extends App_Model
 
     public function add_external_file($data)
     {
+        if (!$this->permitsLegacyProject($data['project_id'] ?? null)) return false;
         $insert['dateadded']           = date('Y-m-d H:i:s');
         $insert['project_id']          = $data['project_id'];
         $insert['external']            = $data['external'];

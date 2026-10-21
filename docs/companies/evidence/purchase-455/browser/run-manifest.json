@@ -1,0 +1,67 @@
+{
+  "label": "purchase-browser-r5",
+  "started_utc": "2026-10-21T12:03:06.391493+00:00",
+  "fixture": "native454 readonly clone plus explicit Purchase13 ensure; native455 gate is separate",
+  "product_revision": "r5: final expense fence plus scoped mobile wrapping",
+  "source_before": {
+    "application/controllers/Company_purchase_portal.php": "e32a514b39789c0eccbdc85ba0c8b04d372b558ae91f5f3cd38877d5524757a4",
+    "application/controllers/Company_purchases_api.php": "a7e3e013e854ec5a1cfa4cd5f1fff10fcbffeac836ddbc1196576c9ab42bdbe5",
+    "application/controllers/admin/Company_purchases.php": "0873ddbf97c8c1acb309d4500472aca5213dc0fc2310ec1bbf806c00f6bd4ba3",
+    "application/services/CompanyExpenses.php": "0fe1846489e83558ee657a53bda09d1d197c224a33eed0fb059796dab19478d8",
+    "application/services/CompanyPurchases.php": "bd1b3408ef7e024d5001051b0bb15a2b8bf02d858f3daabfca83fb0da0e329a7",
+    "application/services/CompanyPurchasesApi.php": "81b0c85fdd96ec5d67150c4f945dd9a12154cec61e564a58eda2948cc2a66453",
+    "application/services/CompanyPurchasesFiles.php": "7873669dab4385aff6d498ff883046b0f89163da4c70d5b4556e69fce47f5610",
+    "application/services/CompanyPurchasesFinance.php": "73a4e7009e91beaf056b4e4128d42a2651faa773b705c0071aa227e4890a1a72",
+    "application/services/CompanyPurchasesPdf.php": "d666d3ebba69b2865a22b02d505a2d04e0cb73a8a27b791154e9dfa1f0c186b6",
+    "application/services/CompanyPurchasesPortal.php": "6c2bcdfc91badceba2aca07cbd4906e2c284eac506d3a5a35e44f86b72114a39",
+    "application/services/CompanyPurchasesReports.php": "dd3fd06bad4f9f1724dd1b37ab8a1cc54d6c78c78faf97aeeb1474cf9b5fd188",
+    "application/services/CompanyPurchasesSchema.php": "86a0adda73e4da5dfdadf43e95ee4d4fe6a5caa88de2cb49136c9bdf6cd523c1",
+    "application/services/CompanyPurchasesScope.php": "a3bb7afe421f4290901830cd23b1813b6de8597213679ce1f8c05306b91fa9e9",
+    "application/services/CompanyPurchasesStorage.php": "9fee523ba8bc707407fe35dbae14a722ced9f703a33b94cbfd7ee48b1d0fd680",
+    "application/services/CompanyPurchasesValues.php": "88d2eb116698757ba9d66dd179064cd172e8bfa692fe05554cc8c27122ddba2c",
+    "application/views/admin/companies/purchases.php": "85bcfe8e79100d4e9c61d721342ce1432de8784fac0665a015ca156415d90b7d",
+    "application/views/admin/companies/purchases_payable.php": "c604f55c531d43c0770e0d99f8032fe7dbe1e47487af23f288b1ede20ca6d123",
+    "application/views/admin/companies/purchases_workspace.php": "4d467f6869668d764e9430170ab7a36fcf7fc96454c08ad926229206c49c6075",
+    "application/views/companies/purchase_portal.php": "51bc51f289a389ed917c377b82b58ad70817cae8e7790976f8f66bbc9b80eb33",
+    "tests/companies/purchases_browser.cjs": "bd00c7ea8af99e1cf1feb8524b0ab4e7658e4a082de1e558517e3dd6c247ecce",
+    "tests/companies/purchases_http_transport.cjs": "def3a9adb399ea93572780a84242f81c7424cd15fe3b0c317424b6d11cce37f7",
+    "tests/companies/purchases_http_fixture.php": "171d0669389a99558cc7644f1ca3087cec27152b7bf4b7b9a159fa0fdb61bf1e"
+  },
+  "results": [
+    {
+      "test": "tests/companies/purchases_browser.cjs",
+      "exit_code": 0
+    },
+    {
+      "test": "tests/companies/purchases_http_transport.cjs",
+      "exit_code": 0
+    }
+  ],
+  "source_after": {
+    "application/controllers/Company_purchase_portal.php": "e32a514b39789c0eccbdc85ba0c8b04d372b558ae91f5f3cd38877d5524757a4",
+    "application/controllers/Company_purchases_api.php": "a7e3e013e854ec5a1cfa4cd5f1fff10fcbffeac836ddbc1196576c9ab42bdbe5",
+    "application/controllers/admin/Company_purchases.php": "0873ddbf97c8c1acb309d4500472aca5213dc0fc2310ec1bbf806c00f6bd4ba3",
+    "application/services/CompanyExpenses.php": "0fe1846489e83558ee657a53bda09d1d197c224a33eed0fb059796dab19478d8",
+    "application/services/CompanyPurchases.php": "bd1b3408ef7e024d5001051b0bb15a2b8bf02d858f3daabfca83fb0da0e329a7",
+    "application/services/CompanyPurchasesApi.php": "81b0c85fdd96ec5d67150c4f945dd9a12154cec61e564a58eda2948cc2a66453",
+    "application/services/CompanyPurchasesFiles.php": "7873669dab4385aff6d498ff883046b0f89163da4c70d5b4556e69fce47f5610",
+    "application/services/CompanyPurchasesFinance.php": "73a4e7009e91beaf056b4e4128d42a2651faa773b705c0071aa227e4890a1a72",
+    "application/services/CompanyPurchasesPdf.php": "d666d3ebba69b2865a22b02d505a2d04e0cb73a8a27b791154e9dfa1f0c186b6",
+    "application/services/CompanyPurchasesPortal.php": "6c2bcdfc91badceba2aca07cbd4906e2c284eac506d3a5a35e44f86b72114a39",
+    "application/services/CompanyPurchasesReports.php": "dd3fd06bad4f9f1724dd1b37ab8a1cc54d6c78c78faf97aeeb1474cf9b5fd188",
+    "application/services/CompanyPurchasesSchema.php": "86a0adda73e4da5dfdadf43e95ee4d4fe6a5caa88de2cb49136c9bdf6cd523c1",
+    "application/services/CompanyPurchasesScope.php": "a3bb7afe421f4290901830cd23b1813b6de8597213679ce1f8c05306b91fa9e9",
+    "application/services/CompanyPurchasesStorage.php": "9fee523ba8bc707407fe35dbae14a722ced9f703a33b94cbfd7ee48b1d0fd680",
+    "application/services/CompanyPurchasesValues.php": "88d2eb116698757ba9d66dd179064cd172e8bfa692fe05554cc8c27122ddba2c",
+    "application/views/admin/companies/purchases.php": "85bcfe8e79100d4e9c61d721342ce1432de8784fac0665a015ca156415d90b7d",
+    "application/views/admin/companies/purchases_payable.php": "c604f55c531d43c0770e0d99f8032fe7dbe1e47487af23f288b1ede20ca6d123",
+    "application/views/admin/companies/purchases_workspace.php": "4d467f6869668d764e9430170ab7a36fcf7fc96454c08ad926229206c49c6075",
+    "application/views/companies/purchase_portal.php": "51bc51f289a389ed917c377b82b58ad70817cae8e7790976f8f66bbc9b80eb33",
+    "tests/companies/purchases_browser.cjs": "bd00c7ea8af99e1cf1feb8524b0ab4e7658e4a082de1e558517e3dd6c247ecce",
+    "tests/companies/purchases_http_transport.cjs": "def3a9adb399ea93572780a84242f81c7424cd15fe3b0c317424b6d11cce37f7",
+    "tests/companies/purchases_http_fixture.php": "171d0669389a99558cc7644f1ca3087cec27152b7bf4b7b9a159fa0fdb61bf1e"
+  },
+  "source_changed": false,
+  "finished_utc": "2026-10-21T12:20:08.095706+00:00",
+  "result": "PASS"
+}

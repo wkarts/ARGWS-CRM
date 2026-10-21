@@ -1,0 +1,49 @@
+{
+  "captured_at_utc": "2026-10-19T17:04:18.519431+00:00",
+  "api": "Asaas API v3",
+  "openapi_info_version": "3.0.0",
+  "sources": [
+    {
+      "url": "https://docs.asaas.com/docs/cobrancas-via-cartao-de-credito.md",
+      "content_type": "text/markdown; charset=utf-8",
+      "sha256": "d9aa4eb18137a28afc837bb90d5ac4a41d6f2aa114fcfa92066c3841d529b469",
+      "bytes": 10576,
+      "document_updated_at": "2026-09-08T21:14:27.000Z"
+    },
+    {
+      "url": "https://docs.asaas.com/reference/criar-cobranca-com-cartao-de-credito.md",
+      "content_type": "text/markdown; charset=utf-8",
+      "sha256": "1b7c794ea8e85700b9207ab8dfc095a48bdce81a096184b2cf3cb291ddac1183",
+      "bytes": 51845,
+      "document_updated_at": "2026-09-08T20:05:50.000Z"
+    },
+    {
+      "url": "https://docs.asaas.com/reference/criar-novo-cliente.md",
+      "content_type": "text/markdown; charset=utf-8",
+      "sha256": "128677dda5803e0ef552610c7264548a854a0689f279a8ffd584553dee725262",
+      "bytes": 15290,
+      "document_updated_at": "2026-09-08T20:05:50.000Z"
+    },
+    {
+      "url": "https://docs.asaas.com/reference/listar-clientes.md",
+      "content_type": "text/markdown; charset=utf-8",
+      "sha256": "c94a3d68159a10fa2e512fc6f335005992607f061fc957a7dbc8c34cbed18925",
+      "bytes": 12849,
+      "document_updated_at": "2026-09-08T20:05:50.000Z"
+    },
+    {
+      "url": "https://docs.asaas.com/docs/criando-um-cliente.md",
+      "content_type": "text/markdown; charset=utf-8",
+      "sha256": "71516a6b9dfadc7447d72fa6a40ae71cf4416633d1c572592db9ebd87026bc07",
+      "bytes": 11626,
+      "document_updated_at": "2026-08-04T19:18:37.000Z"
+    },
+    {
+      "url": "https://docs.asaas.com/reference/recuperar-um-unico-cliente.md",
+      "content_type": "text/markdown; charset=utf-8",
+      "sha256": "492e8d39f9da6b093a398da1f057227854cb8388aa95fd923f273b7c9fd40b3c",
+      "bytes": 9907,
+      "document_updated_at": "2026-09-08T20:05:50.000Z"
+    }
+  ]
+}

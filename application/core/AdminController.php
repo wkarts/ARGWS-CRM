@@ -8,17 +8,13 @@ class AdminController extends App_Controller
     {
         parent::__construct();
 
-        if ($this->app->is_db_upgrade_required($this->current_db_version)) {
-            if ($this->input->post('upgrade_database')) {
-                hooks()->do_action('pre_upgrade_database');
-
-                $this->app->upgrade_database();
-            }
-
-            die(include_once(VIEWPATH . 'admin/includes/db_update_required.php'));
+        // Only the server bootstrap can attest this exact authenticated controller.
+        // Isolated company routes must not hydrate legacy menus, models or hooks.
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::sealedFor($this)) {
+            return;
         }
-
-        hooks()->do_action('pre_admin_init');
+        $nativeUpgradeOnly = class_exists('CompanyRequestScope', false)
+            && CompanyRequestScope::nativeUpgradeOnlyFor($this);
 
         if (!is_staff_logged_in()) {
             if (strpos(current_full_url(), get_admin_uri() . '/authentication') === false) {
@@ -26,6 +22,7 @@ class AdminController extends App_Controller
             }
 
             redirect(admin_url('authentication'));
+            return;
         }
 
         if ($this->uri->segment(3) != 'notifications_check') {
@@ -43,6 +40,52 @@ class AdminController extends App_Controller
 
         $this->load->model('staff_model');
 
+        $currentUser = $this->staff_model->get(get_staff_user_id());
+
+        // Deleted or inactive but have session
+        if (!$currentUser || $currentUser->active == 0) {
+            if (!isset($this->authentication_model)) {
+                $this->load->model('authentication_model');
+            }
+            $this->authentication_model->logout();
+            redirect(admin_url('authentication'));
+            return;
+        }
+
+        if ($this->app->is_db_upgrade_required($this->current_db_version) || $this->app->is_core_upgrade_required()) {
+            if (!is_admin() || (int) $currentUser->admin !== 1) {
+                show_error('O administrador precisa atualizar o banco de dados.', 503);
+                return;
+            }
+            require_once APPPATH . 'services/AdminDatabaseUpgrade.php';
+            if ($this->input->post('upgrade_database')) {
+                if (!AdminDatabaseUpgrade::authorize($this)) {
+                    show_error('Solicitação inválida. Atualize a página e tente novamente.', 403);
+                    return;
+                }
+                if (!$nativeUpgradeOnly) {
+                    hooks()->do_action('pre_upgrade_database');
+                }
+                $result = $this->app->upgrade_database();
+                if (!is_array($result) || !empty($result['success'])) {
+                    return;
+                }
+                $databaseUpgradeError = $result['message'];
+                $this->output->set_status_header(503);
+                $this->current_db_version = $this->app->get_current_db_version();
+            }
+            $databaseUpgradeToken = AdminDatabaseUpgrade::token($this->session);
+            $this->renderDatabaseUpgrade($databaseUpgradeToken, $databaseUpgradeError ?? null);
+            return;
+        }
+
+        if ($nativeUpgradeOnly) {
+            show_error('O núcleo de empresas continua indisponível. A área administrativa permanece bloqueada até a validação da migration.', 503);
+            return;
+        }
+
+        hooks()->do_action('pre_admin_init');
+
         // Do not check on ajax requests
         if (!$this->input->is_ajax_request()) {
             if (ENVIRONMENT == 'production' && is_admin()) {
@@ -56,25 +99,6 @@ class AdminController extends App_Controller
             _maybe_system_setup_warnings();
 
             $this->init_quick_actions_links();
-        }
-
-        $currentUser = $this->staff_model->get(get_staff_user_id());
-
-        // Deleted or inactive but have session
-        if (!$currentUser || $currentUser->active == 0) {
-            $this->authentication_model->logout();
-            redirect(admin_url('authentication'));
-        }
-
-        // Read-only gate, after authentication and live staff validation. The
-        // separate setup controller owns POST + CSRF and never runs from GET.
-        if (!$this->app_modules->essential_modules_ready()) {
-            if (is_admin()) {
-                redirect(admin_url('essential_modules'));
-            } else {
-                show_error('O administrador precisa concluir a configuração obrigatória de Emitentes antes de liberar o painel.', 503);
-            }
-            return;
         }
 
         $GLOBALS['current_user'] = $currentUser;
@@ -100,6 +124,13 @@ class AdminController extends App_Controller
         */
         $vars = hooks()->apply_filters('admin_area_auto_loaded_vars', $vars);
         $this->load->vars($vars);
+    }
+
+    /** The standard native update screen, before optional admin hooks/assets. */
+    protected function renderDatabaseUpgrade(string $databaseUpgradeToken, ?string $databaseUpgradeError): void
+    {
+        include VIEWPATH . 'admin/includes/db_update_required.php';
+        exit;
     }
 
     private function init_quick_actions_links()

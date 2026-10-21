@@ -1,0 +1,26 @@
+{
+  "result": "PASS",
+  "scenarios": [
+    "GET/HEAD/POST/replay with independent empty jars",
+    "HEAD carries no response body",
+    "no bearer is denied with or without the native CSRF cookie",
+    "revoked token is denied without ambient cookies",
+    "all native sessions unchanged"
+  ],
+  "before": {
+    "csrf_cookie_name": "csrf_cookie_name",
+    "session_cookie_name": "sp_session",
+    "session_count": 26,
+    "session_sha256": "402eb1a80badf49beb691ba90914ccb1d43295fc7c2eafac837e2963a8a71238"
+  },
+  "cookie_names": [
+    "csrf_cookie_name"
+  ],
+  "after": {
+    "csrf_cookie_name": "csrf_cookie_name",
+    "session_cookie_name": "sp_session",
+    "session_count": 26,
+    "session_sha256": "402eb1a80badf49beb691ba90914ccb1d43295fc7c2eafac837e2963a8a71238"
+  },
+  "request_id": 11
+}

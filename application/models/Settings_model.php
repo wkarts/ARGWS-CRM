@@ -1,6 +1,8 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH . 'services/CompanySettingsRuntime.php';
+require_once APPPATH . 'services/CompanySettingsCatalog.php';
 
 class Settings_model extends App_Model
 {
@@ -8,6 +10,13 @@ class Settings_model extends App_Model
 
     public function __construct()
     {
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::sealedFor(get_instance())
+            && CompanySettingsRuntime::active() && !CompanySettingsRuntime::isPrimary()) {
+            // The sealed request scope already validated staff/company/core before autoload.
+            // App_Model would dispatch global model_init hooks before this narrow renderer.
+            CI_Model::__construct();
+            return;
+        }
         parent::__construct();
         $payment_gateways = $this->payment_modes_model->get_payment_gateways(true);
 
@@ -31,13 +40,32 @@ class Settings_model extends App_Model
      */
     public function update($data)
     {
+        if (CompanySettingsRuntime::active() && !CompanySettingsRuntime::isPrimary()) { return $this->updateIsolated($data); }
+        $isolated = CompanySettingsRuntime::active() && !CompanySettingsRuntime::isPrimary();
+        if (CompanySettingsRuntime::active()) { CompanySettingsRuntime::assertCan('edit'); }
+        if ($isolated && (isset($data['tags']) || isset($data['custom_fields']))) {
+            throw new DomainException('company_settings_global_resource_unavailable');
+        }
+        // The principal uses its existing options storage; direct calls share the declared field contract.
+        $salesPreferences = array_intersect_key(is_array($data['settings'] ?? null) ? $data['settings'] : [], array_flip(CompanySettingsCatalog::fields('sales_documents')));
+        if ($salesPreferences !== []) { $data['settings'] = array_replace($data['settings'], CompanySettingsCatalog::prepare('sales_documents', $salesPreferences)); }
+        $pdfPreferences=array_intersect_key(is_array($data['settings']??null)?$data['settings']:[],array_flip(CompanySettingsCatalog::fields('sales_pdf')));
+        if($pdfPreferences!==[])$data['settings']=array_replace($data['settings'],CompanySettingsCatalog::prepare('sales_pdf',$pdfPreferences));
+        $documentPdfPreferences=array_intersect_key(is_array($data['settings']??null)?$data['settings']:[],array_flip(CompanySettingsCatalog::fields('document_pdf')));
+        if($documentPdfPreferences!==[])$data['settings']=array_replace($data['settings'],CompanySettingsCatalog::prepare('document_pdf',$documentPdfPreferences));
+        $primaryDocumentPdfPreferences = [];
+        $primaryPdfPreferences = [];
+        $primarySalesPreferences = [];
         $original_encrypted_fields = [];
 
         foreach ($this->encrypted_fields as $ef) {
-            $original_encrypted_fields[$ef] = get_option($ef);
+            $original_encrypted_fields[$ef] = $this->read_option($ef);
         }
         $affectedRows = 0;
-        $data         = hooks()->apply_filters('before_settings_updated', $data);
+        $data         = $isolated ? $data : hooks()->apply_filters('before_settings_updated', $data);
+        if (CompanySettingsRuntime::active()) {
+            $affectedRows += $this->update_company_identity($data);
+        }
 
         if (isset($data['tags'])) {
             $tagsExists = false;
@@ -71,7 +99,7 @@ class Settings_model extends App_Model
         foreach ($data['settings'] as $name => $val) {
             // Do not trim thousand separator option
             // There is an option of white space there and if will be trimmed wont work as configured
-            if (is_string($val) && $name != 'thousand_separator') {
+            if (is_string($val) && $name != 'thousand_separator' && !in_array($name, $this->encrypted_fields, true)) {
                 $val = trim($val);
             }
 
@@ -79,9 +107,14 @@ class Settings_model extends App_Model
 
             $hook_data['name']  = $name;
             $hook_data['value'] = $val;
-            $hook_data          = hooks()->apply_filters('before_single_setting_updated_in_loop', $hook_data);
+            $hook_data          = $isolated ? $hook_data : hooks()->apply_filters('before_single_setting_updated_in_loop', $hook_data);
             $name               = $hook_data['name'];
             $val                = $hook_data['value'];
+            if (CompanySettingsRuntime::active() && CompanySettingsRuntime::isPrimary() && in_array($name, CompanySettingsCatalog::fields('sales_documents'), true)) { $primarySalesPreferences[$name] = $val; continue; }
+
+            if (CompanySettingsRuntime::active() && CompanySettingsRuntime::isPrimary() && in_array($name, CompanySettingsCatalog::fields('sales_pdf'), true)) { $primaryPdfPreferences[$name] = $val; continue; }
+
+            if (CompanySettingsRuntime::active() && CompanySettingsRuntime::isPrimary() && in_array($name, CompanySettingsCatalog::fields('document_pdf'), true)) { $primaryDocumentPdfPreferences[$name] = $val; continue; }
 
             if ($name == 'default_contact_permissions') {
                 $val = serialize($val);
@@ -129,27 +162,28 @@ class Settings_model extends App_Model
                         continue;
                     }
                     $val = $this->encryption->encrypt($val);
+                    if (!is_string($val) || $val === '') { throw new DomainException('company_settings_encryption_failed'); }
                 }
             } elseif ($name == 'staff_notify_completed_but_not_billed_tasks' || $name == 'reminder_for_completed_but_not_billed_tasks_days') {
                 $val = json_encode($val);
             }
 
-            if (update_option($name, $val)) {
+            if ($this->write_option($name, $val)) {
                 $affectedRows++;
-                if ($name == 'save_last_order_for_tables') {
+                if ($name == 'save_last_order_for_tables' && !$isolated) {
                     $this->db->query('DELETE FROM ' . db_prefix() . 'user_meta where meta_key like "%-table-last-order"');
                 }
             }
         }
 
+        if ($primaryDocumentPdfPreferences !== []) { $affectedRows += CompanySettingsRuntime::updateDocumentPdfPreferences($primaryDocumentPdfPreferences); }
+        if ($primaryPdfPreferences !== []) { $affectedRows += CompanySettingsRuntime::updateSalesPdfPreferences($primaryPdfPreferences); }
+        if ($primarySalesPreferences !== []) { $affectedRows += CompanySettingsRuntime::updateSalesDocumentPreferences($primarySalesPreferences); }
+
         // Contact permission default none
         if (! in_array('default_contact_permissions', $all_settings_looped)
                 && in_array('customer_settings', $all_settings_looped)) {
-            $this->db->where('name', 'default_contact_permissions');
-            $this->db->update(db_prefix() . 'options', [
-                'value' => serialize([]),
-            ]);
-            if ($this->db->affected_rows() > 0) {
+            if ($this->write_option('default_contact_permissions', serialize([]))) {
                 $affectedRows++;
             }
         }
@@ -157,43 +191,27 @@ class Settings_model extends App_Model
         // Required register fields, nothing selected
         if (! in_array('required_register_fields', $all_settings_looped)
                 && in_array('customer_settings', $all_settings_looped)) {
-            $this->db->where('name', 'required_register_fields');
-            $this->db->update(db_prefix() . 'options', [
-                'value' => json_encode([]),
-            ]);
-            if ($this->db->affected_rows() > 0) {
+            if ($this->write_option('required_register_fields', json_encode([]))) {
                 $affectedRows++;
             }
         }
         if (! in_array('enabled_languages', $all_settings_looped)
                 && in_array('localization_settings', $all_settings_looped)) {
-            $this->db->where('name', 'enabled_languages');
-            $this->db->update(db_prefix() . 'options', [
-                'value' => json_encode([]),
-            ]);
-            if ($this->db->affected_rows() > 0) {
+            if ($this->write_option('enabled_languages', json_encode([]))) {
                 $affectedRows++;
             }
         }
 
         if (! in_array('visible_customer_profile_tabs', $all_settings_looped)
                 && in_array('customer_settings', $all_settings_looped)) {
-            $this->db->where('name', 'visible_customer_profile_tabs');
-            $this->db->update(db_prefix() . 'options', [
-                'value' => 'all',
-            ]);
-            if ($this->db->affected_rows() > 0) {
+            if ($this->write_option('visible_customer_profile_tabs', 'all')) {
                 $affectedRows++;
             }
         }
 
         if (! in_array('lead_unique_validation', $all_settings_looped)
                 && in_array('_leads_settings', $all_settings_looped)) {
-            $this->db->where('name', 'lead_unique_validation');
-            $this->db->update(db_prefix() . 'options', [
-                'value' => json_encode([]),
-            ]);
-            if ($this->db->affected_rows() > 0) {
+            if ($this->write_option('lead_unique_validation', json_encode([]))) {
                 $affectedRows++;
             }
         }
@@ -207,11 +225,72 @@ class Settings_model extends App_Model
         return $affectedRows;
     }
 
+    private function updateIsolated($data): int
+    {
+        CompanySettingsRuntime::assertCan('edit');
+        if(isset($data['tags'])||isset($data['custom_fields'])){throw new DomainException('company_settings_global_resource_unavailable');}
+        if(!is_array($data['settings']??null)){throw new DomainException('company_settings_invalid_input');}
+        // Internal callers share the same validation and HTML policy as the native form.
+        foreach (['email','email_content','documents','sales_documents','sales_pdf','document_pdf'] as $group) {
+            $known=array_intersect_key($data['settings'],array_flip(CompanySettingsCatalog::fields($group)));
+            if($known!==[])$data['settings']=array_replace($data['settings'],CompanySettingsCatalog::prepare($group,$known));
+        }
+        $identity=false;$options=false;$prepared=[];
+        foreach($data['settings'] as $name=>$value){
+            CompanySettingsStorage::name($name);
+            if(!is_string($value)){throw new DomainException('company_settings_invalid_input');}
+            if(CompanySettingsIdentity::handles($name)){$identity=true;}else{$options=true;}
+            if(in_array($name,$this->encrypted_fields,true)){
+                if($value!==''){
+                    $original=$this->read_option($name);
+                    if($this->encryption->decrypt($original)===$value){$value=$original;}
+                    else{$value=$this->encryption->encrypt($value);if(!is_string($value)||$value===''){throw new DomainException('company_settings_encryption_failed');}}
+                }
+            }else{$value=$name==='thousand_separator'?$value:trim($value);}
+            $prepared[$name]=$value;
+        }
+        if($identity&&$options){throw new DomainException('company_settings_batch_identity_separate');}
+        if($identity){$data['settings']=$prepared;return $this->update_company_identity($data);}
+        return CompanySettingsRuntime::updateBatch($prepared);
+    }
+
+    private function read_option($name)
+    {
+        return CompanySettingsRuntime::active() ? CompanySettingsRuntime::get($name) : get_option($name);
+    }
+
+    private function write_option($name, $value)
+    {
+        return CompanySettingsRuntime::active() ? CompanySettingsRuntime::update($name, $value) : update_option($name, $value);
+    }
+
+    private function update_company_identity(array &$data): int
+    {
+        $identity = [];
+        $seenAliases = [];
+        foreach ($data['settings'] ?? [] as $name => $value) {
+            if (!CompanySettingsIdentity::handles($name)) { continue; }
+            if (!is_string($value)) { throw new DomainException('company_settings_invalid_identity_field'); }
+            $value = trim($value);
+            if (isset(CompanySettingsIdentity::ALIASES[$name])) {
+                $key = CompanySettingsIdentity::ALIASES[$name];
+                if (isset($seenAliases[$key]) && $seenAliases[$key] !== $value) { throw new DomainException('company_settings_identity_alias_conflict'); }
+                $seenAliases[$key] = $value;
+                // An unchanged legacy malformed document remains pending until explicitly corrected.
+                if ($value !== trim(CompanySettingsRuntime::get($name))) { $identity[$key] = $value; }
+            } else { $identity['profile'][$name] = $value; }
+            unset($data['settings'][$name]);
+        }
+        return $identity !== [] && CompanySettingsRuntime::saveIdentity($identity) ? 1 : 0;
+    }
+
     public function add_new_company_pdf_field($data)
     {
         $field = 'custom_company_field_' . trim($data['field']);
         $field = preg_replace('/\s+/', '_', $field);
 
-        return (bool) (add_option($field, $data['value']));
+        return CompanySettingsRuntime::active()
+            ? CompanySettingsRuntime::add($field, $data['value'])
+            : (bool) add_option($field, $data['value']);
     }
 }
