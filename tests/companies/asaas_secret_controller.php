@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/asaas_language_fixture.php';
 /** Actual named-company controller with real service/cipher/SQLite and synthetic request/session. */
 require __DIR__.'/asaas_positive.php';
 require_once APPPATH.'services/CompanySettingsRuntime.php';

@@ -8,7 +8,7 @@ function asaasFreshHostedSettlement(int $issuer,string $tag,array $changes=[]):a
 {
     global $asaas,$s,$input,$ca,$customerB,$accounts,$registered,$dec,$checkoutTransport,$responses,$db,$p;
     $invoice=$s->create($issuer,7,array_replace($input,['client_id'=>$issuer===$GLOBALS['a']?$ca:$customerB,'date'=>'2026-10-01']),hash('sha256','card-settle-invoice-'.$tag));
-    $origin=$asaas->hostedCheckout($issuer,7,$invoice,$accounts[$issuer],$registered[$issuer]['customer_id'],$s->revision($issuer,7,$invoice),hash('sha256','card-settle-origin-'.$tag),$dec,$checkoutTransport);
+    $origin=asaasFixtureHosted($asaas,$issuer,7,$invoice,$accounts[$issuer],$registered[$issuer]['customer_id'],$s->revision($issuer,7,$invoice),hash('sha256','card-settle-origin-'.$tag),$dec,$checkoutTransport);
     $remote=$db->query("SELECT remote_id FROM {$p}asaas_payment_origins WHERE id=?",[$origin])->row()->remote_id;
     $responses[$remote]=array_replace($responses[$remote],['status'=>'RECEIVED','paymentDate'=>'2026-10-18','creditDate'=>'2026-10-19','netValue'=>'104.53','anticipated'=>false,'deleted'=>false],$changes);
     $proof=$asaas->query($issuer,7,$origin,$dec,$checkoutTransport);return [$invoice,$origin,$proof,$remote];

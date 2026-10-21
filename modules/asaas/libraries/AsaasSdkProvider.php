@@ -7,6 +7,14 @@ use Asaas\Sdk\Exception\ApiException;
 use Asaas\Sdk\Exception\TransportException;
 use Asaas\Sdk\Http\Client;
 use Asaas\Sdk\Http\Environment;
+use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Utils;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+require_once __DIR__ . '/Asaas/CustomerContactPolicy.php';
 
 class AsaasSdkProvider
 {
@@ -51,7 +59,8 @@ class AsaasSdkProvider
             environment: $this->environmentEnum($companyId),
             appName: $this->getUserAgent($companyId),
             timeout: $this->getTimeout($companyId),
-            connectTimeout: $this->getConnectTimeout($companyId)
+            connectTimeout: $this->getConnectTimeout($companyId),
+            httpClient: $this->httpClient($this->environmentEnum($companyId), $companyId)
         );
 
         return new AsaasSdk($config);
@@ -66,7 +75,9 @@ class AsaasSdkProvider
             $this->environmentEnum($companyId),
             $this->getUserAgent($companyId),
             $this->getTimeout($companyId),
-            $this->getConnectTimeout($companyId)
+            $this->getConnectTimeout($companyId),
+            null,
+            $this->httpClient($this->environmentEnum($companyId), $companyId)
         );
     }
 
@@ -94,8 +105,79 @@ class AsaasSdkProvider
         if (!is_string($key) || trim($key) === '') {
             throw new \RuntimeException('origin_credentials_missing');
         }
-        return new Client($key, $environment === 'sandbox' ? Environment::Sandbox : Environment::Production,
-            $this->getUserAgent(), $this->getTimeout(), $this->getConnectTimeout());
+        $environmentEnum = $environment === 'sandbox' ? Environment::Sandbox : Environment::Production;
+        return new Client($key, $environmentEnum,
+            $this->getUserAgent(), $this->getTimeout(), $this->getConnectTimeout(), null, $this->httpClient($environmentEnum));
+    }
+
+    /** Mutations may have succeeded before a timeout/5xx; never replay them. */
+    private function httpClient(Environment $environment, ?int $companyId = null): GuzzleClient
+    {
+        $stack = HandlerStack::create();
+        $profile = $environment === Environment::Sandbox ? 'sandbox' : 'production';
+        $expectedHost = parse_url($environment->value, PHP_URL_HOST);
+        $stack->push(Middleware::mapRequest(function (RequestInterface $request) use ($profile, $companyId, $expectedHost): RequestInterface {
+            $uri = $request->getUri();
+            // A raw SDK Client can receive an absolute URL or setEnvironment().
+            // Neither may send this client's credentials to a different origin.
+            if ($uri->getScheme() !== 'https' || $uri->getHost() !== $expectedHost
+                || ($uri->getPort() !== null && $uri->getPort() !== 443) || $uri->getUserInfo() !== '') {
+                throw new \DomainException('asaas_request_origin_mismatch');
+            }
+            return $this->customerRequest($request, $profile, $companyId);
+        }), 'asaas_customer_contact_policy');
+        // Redirects can replay mutations and forward credentials to another host.
+        $stack->push(Middleware::mapResponse(static function (ResponseInterface $response): ResponseInterface {
+            if ($response->getStatusCode() >= 300 && $response->getStatusCode() < 400) throw new \RuntimeException('asaas_redirect_refused');
+            return $response;
+        }), 'asaas_no_redirect_response');
+        $stack->push(Middleware::retry(
+            static function (int $retries, RequestInterface $request, ?ResponseInterface $response = null, ?\Throwable $exception = null): bool {
+                if (!in_array(strtoupper($request->getMethod()), ['GET', 'HEAD'], true) || $retries >= 3) return false;
+                return $exception !== null || ($response !== null && ($response->getStatusCode() === 429 || $response->getStatusCode() >= 500));
+            },
+            static fn(int $retries): int => (int) (200 * (2 ** $retries))
+        ), 'asaas_read_only_retry');
+        return new GuzzleClient([
+            'base_uri' => $environment->value,
+            'timeout' => $this->getTimeout($companyId),
+            'connect_timeout' => $this->getConnectTimeout($companyId),
+            'handler' => $stack,
+            'allow_redirects' => false,
+        ]);
+    }
+
+    /** Also protects public client()/sdk() compatibility callers that bypass the adapter. */
+    private function customerRequest(RequestInterface $request, string $environment, ?int $companyId): RequestInterface
+    {
+        $uri = $request->getUri();
+        if (!\Asaas\CustomerContactPolicy::isCustomerPath($uri->getPath())) return $request;
+        $stream = $request->getBody();
+        $position = $stream->isSeekable() ? $stream->tell() : null;
+        $rawBody = (string) $stream;
+        if ($position !== null) $stream->seek($position);
+        elseif ($rawBody !== '') $request = $request->withBody(Utils::streamFor($rawBody));
+        if ($rawBody === '' && $uri->getQuery() === '') return $request;
+        $payload = $rawBody === '' ? null : json_decode($rawBody, true);
+        if ($rawBody !== '' && !is_array($payload)) throw new \DomainException('asaas_customer_payload_requires_json');
+        $query = [];
+        parse_str($uri->getQuery(), $query);
+        $setting = function (string $name) use ($environment, $companyId) {
+            if ($companyId === null && method_exists($this->gateway, 'getSettingForEnvironment')) {
+                return $this->gateway->getSettingForEnvironment($name, $environment);
+            }
+            return $this->getSettingValue($name, $companyId);
+        };
+        [, $filteredQuery, $filteredPayload] = \Asaas\CustomerContactPolicy::apply($request->getMethod(), $uri->getPath(), $query, $payload,
+            (string) $setting('send_customer_email') === '1',
+            (string) $setting('send_customer_mobile') === '1',
+            (string) $setting('disable_charge_notification') === '1');
+        if ($filteredQuery !== $query) $request = $request->withUri($uri->withQuery(http_build_query($filteredQuery, '', '&', PHP_QUERY_RFC3986)));
+        if ($filteredPayload !== $payload) {
+            $body = json_encode($filteredPayload, JSON_THROW_ON_ERROR);
+            $request = $request->withBody(Utils::streamFor($body))->withoutHeader('Transfer-Encoding')->withHeader('Content-Length', (string) strlen($body));
+        }
+        return $request;
     }
 
     public function contextForClient(Client $client, string $environment, ?int $issuerId = null): array

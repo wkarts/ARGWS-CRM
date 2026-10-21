@@ -56,19 +56,41 @@ Novas emissões persistem o ambiente selecionado na origem antes de enviar o POS
 perfis globais. As APIs legadas que recebem um `companyId` explícito não foram
 removidas nem reinterpretadas por esta alteração.
 
-Na implementação nominal atual existem configurações reais por conta para chave
-criptografada, conta/ambiente, habilitação, webhook e ator da automação. A emissão
-escolhe uma conta explicitamente, exige BRL e suporta os meios que seus métodos
-específicos permitem; o cartão permanece à vista. A descrição é derivada do número
-da fatura, juros/multa/desconto são zero e a prova canônica recusa encargos ou
-descontos diferentes de zero.
+Desde a migration155, existe um subconjunto operacional nominal próprio:
+seleção única de ambiente por empresa, nome de apresentação, descrição com
+`{invoice_number}` e habilitação de Pix/boleto/cartão hospedado à vista. Não há
+herança dos 26 parâmetros globais. A nova configuração não escolhe um ambiente
+silenciosamente, não desabilita contas antigas e não altera cobranças existentes.
+O contrato de schema, autorização, snapshots e rollback está em
+[COMPANY_PREFERENCES.md](COMPANY_PREFERENCES.md).
 
-Os demais 26 parâmetros deste catálogo não ganharam consumidores nominais nem uma
-persistência nominal nesta alteração. Não apresentar estes perfis globais como
-configuração pronta para empresas secundárias. Adicionar esse suporte exigiria
-armazenamento próprio por empresa/ambiente, autorização da empresa ativa, seletor
-por empresa e revisão dos contratos de emissão e conciliação. Configurações sem
-consumidor devem continuar indisponíveis.
+A moeda nominal permanece BRL; juros, multa e desconto permanecem zero. Vencimento,
+prorrogação, atualização remota, parcelamento e sincronização por parâmetros não
+foram implementados neste lote. Não exibir configurações sem consumidor nem
+apresentar este subconjunto como paridade universal com o gateway primário.
+
+### Privacidade e transporte no gateway primário (155)
+
+`send_customer_email=0` impede `email`/`additionalEmails` e
+`send_customer_mobile=0` impede `phone`/`mobilePhone` no payload de cliente.
+Essas regras também se aplicam a update e aos clientes públicos do SDK. Uma
+consulta explicitamente filtrada por contato proibido é recusada antes do
+transporte; não se remove o filtro para produzir uma busca mais ampla.
+
+`disable_charge_notification=1` envia `notificationDisabled=true`, inclusive no
+Pix. A flag pertence ao cliente Asaas, não à cobrança individual. Salvar uma
+preferência não atualiza clientes remotos existentes. Sem essa atualização,
+notificações já configuradas no provedor não são retroativamente desabilitadas.
+
+A fábrica do SDK repete automaticamente somente GET/HEAD em falhas transitórias.
+POST/PUT/PATCH/DELETE não são repetidos após timeout, 429 ou 5xx; redirects também
+são recusados. A origem HTTPS/host/porta do cliente é fixa. Cobrança com resultado
+incerto conserva a origem reservada para consulta e conciliação, sem novo POST.
+Logs não incluem payloads de cliente, resposta integral nem credenciais.
+
+Referências oficiais: [cadastro de clientes](https://docs.asaas.com/reference/criar-novo-cliente),
+[listagem de clientes](https://docs.asaas.com/reference/listar-clientes),
+[notificações](https://docs.asaas.com/docs/notificacoes).
 
 ## Integração com a migration nativa nova
 

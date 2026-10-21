@@ -5,6 +5,7 @@ on:
     paths:
       - application/**
       - modules/issuers/**
+      - modules/asaas/**
       - modules/pige_bridge/**
       - modules/finance/**
       - modules/accounting/**
@@ -39,6 +40,7 @@ on:
     paths:
       - application/**
       - modules/issuers/**
+      - modules/asaas/**
       - modules/pige_bridge/**
       - modules/finance/**
       - modules/accounting/**
@@ -110,10 +112,10 @@ jobs:
       - uses: actions/checkout@v5
       - name: Preparar driver MySQL de teste
         run: |
-          apt-get update && apt-get install -y --no-install-recommends libpng-dev libjpeg62-turbo-dev poppler-utils
+          apt-get update && apt-get install -y --no-install-recommends libpng-dev libjpeg62-turbo-dev libonig-dev poppler-utils
           command -v pdftotext
           docker-php-ext-configure gd --with-jpeg
-          docker-php-ext-install pdo_mysql mysqli gd
+          docker-php-ext-install pdo_mysql mysqli gd mbstring
       - name: Validar sintaxe e controles HTTP
         run: |
           php scripts/company-surface-inventory.php --check
@@ -197,6 +199,9 @@ jobs:
           php tests/companies/asaas_remote_concurrency.php
           php tests/companies/asaas_currency_units.php
           php tests/companies/asaas_environments.php
+          php tests/companies/asaas_preferences.php
+          php tests/companies/asaas_preferences_recovery.php
+          php tests/companies/asaas_preferences_controller.php
           php tests/companies/asaas_checkout_payers.php
           php tests/companies/asaas_checkout_portal.php
           php tests/companies/asaas_checkout_boundaries.php

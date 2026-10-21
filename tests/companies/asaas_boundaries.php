@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/asaas_language_fixture.php';
 /** Real isolated HTML view and exact public bootstrap selection; synthetic I/O only. */
 require __DIR__.'/asaas_positive.php';
 require_once APPPATH.'services/CompanyAsaasCallbackScope.php';

@@ -5,6 +5,7 @@ if(!defined('FCPATH'))define('FCPATH',dirname(__DIR__,2).'/');
 require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyService.php';
 require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyReceivedReceipt.php';
 require_once __DIR__.'/asaas_token_fixture.php';
+require_once __DIR__.'/asaas_preferences_fixture.php';
 $start=$GLOBALS['essentialChecks'];
 $db->query("INSERT INTO {$p}modules(module_name,installed_version,active) VALUES('asaas','1.5.0',1)");
 if(!$db->table_exists($p.'asaas_payment_origins')){
@@ -49,7 +50,7 @@ $invoiceA=$s->create($a,7,$input,hash('sha256','asaas-invoice-A'));$invoiceB=$s-
 $origins=[];$proofs=[];$remote=[];
 foreach([$a=>[$invoiceA,'cus_a'],$b=>[$invoiceB,'cus_b']] as $issuer=>[$invoice,$customer]){
     $key=hash('sha256','asaas-origin-'.$issuer);$revision=$s->revision($issuer,7,$invoice);
-    $origin=$asaas->issue($issuer,7,$invoice,$accounts[$issuer],$customer,'PIX',$revision,$key,$dec,$mock);$origins[$issuer]=$origin;
+    $origin=asaasFixtureIssue($asaas,$issuer,7,$invoice,$accounts[$issuer],$customer,'PIX',$revision,$key,$dec,$mock);$origins[$issuer]=$origin;
     $oldCount=count(array_filter($calls,fn($r)=>$r[1]==='POST'));
     essentialCheck($asaas->issue($issuer,7,$invoice,$accounts[$issuer],$customer,'PIX',$revision,$key,$dec,$mock)===$origin,'same issuance submission returns reserved origin');
     essentialCheck(count(array_filter($calls,fn($r)=>$r[1]==='POST'))===$oldCount,'retry does not repeat remote POST');
@@ -87,7 +88,7 @@ essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}invoicepaymentrecords
 $invoiceTimeout=$s->create($b,7,array_replace($input,['client_id'=>$customerB]),hash('sha256','asaas-timeout-invoice'));
 $timeoutCalls=0;$uncertainPayload=null;$timeoutMock=function($environment,$method,$path,$payload,$secret)use($mock,&$timeoutCalls,&$uncertainPayload){if($method==='POST'){$timeoutCalls++;$uncertainPayload=$payload;throw new RuntimeException('synthetic ambiguous transport');}return $mock($environment,$method,$path,$payload,$secret);};
 $timeoutKey=hash('sha256','asaas-timeout-origin');$revision=$s->revision($b,7,$invoiceTimeout);
-essentialThrows(fn()=>$asaas->issue($b,7,$invoiceTimeout,$accounts[$b],'cus_b','BOLETO',$revision,$timeoutKey,$dec,$timeoutMock),'asaas_company_post_unconfirmed','ambiguous remote POST is not reported as failure to create or safe to retry');
+essentialThrows(fn()=>asaasFixtureIssue($asaas,$b,7,$invoiceTimeout,$accounts[$b],'cus_b','BOLETO',$revision,$timeoutKey,$dec,$timeoutMock),'asaas_company_post_unconfirmed','ambiguous remote POST is not reported as failure to create or safe to retry');
 $timeoutOrigin=(int)$db->query("SELECT id FROM {$p}asaas_payment_origins WHERE invoice_id=?",[$invoiceTimeout])->row()->id;
 essentialCheck($asaas->issue($b,7,$invoiceTimeout,$accounts[$b],'cus_b','BOLETO',$revision,$timeoutKey,$dec,$timeoutMock)===$timeoutOrigin&&$timeoutCalls===1,'uncertain retry returns reservation without a second POST');
 $responses['pay_recovered']=$uncertainPayload+['id'=>'pay_recovered','status'=>'PENDING','netValue'=>$uncertainPayload['value'],'paymentDate'=>'','creditDate'=>'','deleted'=>false];
@@ -97,7 +98,7 @@ function asaasFreshCredit(int $issuer,int $client,string $customer,string $tag,s
 {
     global $s,$input,$asaas,$accounts,$dec,$mock,$responses;
     $invoice=$s->create($issuer,7,array_replace($input,['client_id'=>$client]),hash('sha256','asaas-fresh-invoice-'.$tag));
-    $origin=$asaas->issue($issuer,7,$invoice,$accounts[$issuer],$customer,'PIX',$s->revision($issuer,7,$invoice),hash('sha256','asaas-fresh-origin-'.$tag),$dec,$mock);
+    $origin=asaasFixtureIssue($asaas,$issuer,7,$invoice,$accounts[$issuer],$customer,'PIX',$s->revision($issuer,7,$invoice),hash('sha256','asaas-fresh-origin-'.$tag),$dec,$mock);
     $row=$GLOBALS['db']->query('SELECT remote_id FROM '.$GLOBALS['p'].'asaas_payment_origins WHERE id=?',[$origin])->row_array();$remote=$row['remote_id'];
     $responses[$remote]['status']=$status;$responses[$remote]['paymentDate']='2026-10-19';$responses[$remote]['creditDate']='2026-10-19';
     $proof=$asaas->query($issuer,7,$origin,$dec,$mock);return [$invoice,$origin,$proof,$remote];

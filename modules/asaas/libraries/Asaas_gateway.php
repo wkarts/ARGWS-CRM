@@ -369,15 +369,6 @@ class Asaas_gateway extends App_gateway
 
         if ($row['status'] == '4') {
             $row['total'] = $this->calculate_invoice($invoice, $row, $fine, $interest);
-            if ($this->debug_enable()) {
-                echo $row['total'];
-                echo "<br>";
-                echo $ci->db->last_query();
-                echo "<br>";
-                echo "<pre>";
-                var_dump($search_charge);
-                echo "</pre>";
-            }
         }
 
         $ci->db->where('id', $invoice);
@@ -385,11 +376,7 @@ class Asaas_gateway extends App_gateway
 
         $disable_charge_notification = $this->getSetting('disable_charge_notification');
 
-        if ($disable_charge_notification == '1') {
-            $notificationDisabled = true;
-        } else {
-            $notificationDisabled = false;
-        }
+        $notificationDisabled = $disable_charge_notification === '1';
 
         $invoice_number = $row['prefix'] . str_pad($row['number'], 6, "0", STR_PAD_LEFT);
         $description = utf8_encode(str_replace("{invoice_number}", $invoice_number, $description));
@@ -416,24 +403,11 @@ class Asaas_gateway extends App_gateway
             $cliente_create = $this->create_customer($api_url, $api_key, $post_data);
             $cliente_id = $cliente_create['id'];
 
-            log_activity('Cliente cadastrado no Asaas [Cliente ID: ' . $cliente_id . ']');
+            log_activity('Cliente cadastrado no Asaas.');
 
-            if ($this->debug_enable()) {
-                echo "Campos cadastro";
-                echo "<br>";
-                echo "<pre>";
-                var_dump($post_data);
-                echo "</pre>";
-                echo "Cliente cadastrado no Asaas ID" . $cliente_id;
-                echo "<hr>";
-            }
         } else {
             // se existir recupera os dados para cobranca
             $cliente_id = $customer['data'][0]['id'];
-            if ($this->debug_enable()) {
-                echo "Cliente já existente ID " . $cliente_id;
-                echo "<hr>";
-            }
         }
 
         $discount = NULL;
@@ -470,21 +444,6 @@ class Asaas_gateway extends App_gateway
             ];
         }
 
-        if ($this->debug_enable()) {
-            echo "Tipo desconto config " . $discount_type;
-            echo "<br>";
-            echo "Tipo desconto " . $type;
-            echo "<br>";
-            echo "Campos desconto";
-            echo "<br>";
-            echo "<pre>";
-            var_dump($discount);
-            echo "</pre>";
-            echo "<hr>";
-            echo "Sem desconto " .   var_dump($sem_desconto);
-            echo "<br>";
-        }
-
         $post_data = [
             "customer" => $cliente_id,
             "billingType" => "BOLETO",
@@ -510,18 +469,6 @@ class Asaas_gateway extends App_gateway
 
         $post_data = json_encode($post_data);
 
-        if ($this->debug_enable()) {
-
-            echo "Campos cobranca asaas";
-            echo "<br>";
-            echo "<pre>";
-            var_dump($post_data);
-            echo "</pre>";
-            echo "<hr>";
-
-            //	die();
-        }
-
         // não tem cobrança no asaas
         if (!$search_charge) {
             $charge = $this->create_charge($api_url, $api_key, $post_data);
@@ -533,8 +480,6 @@ class Asaas_gateway extends App_gateway
             log_activity('Cobrança atualizada Asaas [Fatura ID: ' . $invoice . ']');
         }
 
-
-        //	echo "<hr>";
 
         //		die();
 
@@ -703,11 +648,7 @@ class Asaas_gateway extends App_gateway
         $discount_type               = $this->getSetting('discount_type');
         $disable_charge_notification = $this->getSetting('disable_charge_notification');
 
-        if ($disable_charge_notification == '1') {
-            $notificationDisabled = true;
-        } else {
-            $notificationDisabled = false;
-        }
+        $notificationDisabled = $disable_charge_notification === '1';
 
         $invoice_number = format_invoice_number($invoice->id);
         $description = mb_convert_encoding(str_replace("{invoice_number}", $invoice_number, $description), 'UTF-8', 'ISO-8859-1');
@@ -728,7 +669,7 @@ class Asaas_gateway extends App_gateway
                 "complement"           => "",
                 "phone"                => $client->phonenumber,
                 "mobilePhone"          => $client->phonenumber,
-                "externalReference"    => $invoice, // TODO: verificar essa informação
+                "externalReference"    => (string) $invoice->id,
                 "notificationDisabled" => $notificationDisabled,
             ]);
 
@@ -736,24 +677,11 @@ class Asaas_gateway extends App_gateway
 
             $cliente_id = $cliente_create['id'];
 
-            log_activity('Cliente cadastrado no Asaas [Cliente ID: ' . $cliente_id . ']');
+            log_activity('Cliente cadastrado no Asaas.');
 
-            if ($this->debug_enable()) {
-                echo "Campos cadastro";
-                echo "<br>";
-                echo "<pre>";
-                var_dump($post_data);
-                echo "</pre>";
-                echo "Cliente cadastrado no Asaas ID " . $cliente_id;
-                echo "<hr>";
-            }
         } else {
             // se existir recupera os dados para cobranca
             $cliente_id = $customer['data'][0]['id'];
-            if ($this->debug_enable()) {
-                echo "Cliente já existente ID " . $cliente_id;
-                echo "<hr>";
-            }
         }
 
         $discount = NULL;
@@ -790,23 +718,6 @@ class Asaas_gateway extends App_gateway
             ];
         }
 
-        if ($this->debug_enable()) {
-            echo "Tipo desconto" . $discount_type;
-            echo "<br>";
-            echo "Campos desconto";
-            echo "<br>";
-            echo "<pre>";
-            var_dump($discount);
-            echo "</pre>";
-            echo "<hr>";
-            echo "Sem desconto" . $sem_desconto;
-            echo "<br>";
-            echo "<pre>";
-            var_dump($discount);
-            echo "</pre>";
-            echo "<hr>";
-        }
-
         $post_data = json_encode([
             "customer"          => $cliente_id,
             "billingType"       => "BOLETO",
@@ -829,16 +740,6 @@ class Asaas_gateway extends App_gateway
         $charge = $this->safe_json_decode_array($charge);
 
         log_activity('Cobrança Boleto Criada no Asaas [Fatura ID: ' . $invoice->id . ']');
-
-        if ($this->debug_enable()) {
-
-            echo "Cobrança Boleto";
-            echo "<br>";
-            echo "<pre>";
-            var_dump($charge);
-            echo "</pre>";
-            echo "<hr>";
-        }
 
         return $charge;
     }
@@ -956,18 +857,14 @@ class Asaas_gateway extends App_gateway
 
         $disable_charge_notification = $this->getSetting('disable_charge_notification');
 
-        if ($disable_charge_notification == '1') {
-            $notificationDisabled = false;
-        } else {
-            $notificationDisabled = true;
-        }
+        $notificationDisabled = $disable_charge_notification === '1';
 
 
         $invoice_number = $row['prefix'] . str_pad($row['number'], 6, "0", STR_PAD_LEFT);
         $description = utf8_encode(str_replace("{invoice_number}", $invoice_number, $description));
         // valida cliente
         $document = str_replace('/', '', str_replace('-', '', str_replace('.', '', $client['vat'])));
-        $postalCode = str_replace('-', '', str_replace('.', '', $client->zip));
+        $postalCode = str_replace('-', '', str_replace('.', '', $client['zip']));
         $customer = $this->search_customer($api_url, $api_key, $document);
         if ($customer['totalCount'] == "0") {
 
@@ -987,24 +884,11 @@ class Asaas_gateway extends App_gateway
             $post_data = json_encode($post_data);
             $cliente_create = $this->create_customer($api_url, $api_key, $post_data);
             $cliente_id = $cliente_create['id'];
-            log_activity('Cliente cadastrado no Asaas [Cliente ID: ' . $cliente_id . ']');
+            log_activity('Cliente cadastrado no Asaas.');
 
-            if ($this->debug_enable()) {
-                echo "Campos cadastro";
-                echo "<br>";
-                echo "<pre>";
-                var_dump($post_data);
-                echo "</pre>";
-                echo "Cliente cadastrado no Asaas ID" . $cliente_id;
-                echo "<hr>";
-            }
         } else {
             // se existir recupera os dados para cobranca
             $cliente_id = $customer['data'][0]['id'];
-            if ($this->debug_enable()) {
-                echo "Cliente já existente ID" . $cliente_id;
-                echo "<hr>";
-            }
         }
 
 
@@ -1598,6 +1482,9 @@ class Asaas_gateway extends App_gateway
             $doc = $this->normalize_doc((string)$clientRow->vat);
         }
 
+        $sendEmail = ((int) $this->getSetting('send_customer_email')) === 1;
+        $sendMobile = ((int) $this->getSetting('send_customer_mobile')) === 1;
+
         // 2) Buscar no Asaas (estrito)
         $found = null;
 
@@ -1614,7 +1501,7 @@ class Asaas_gateway extends App_gateway
             }
         }
 
-        if (!$found && $email !== '') {
+        if (!$found && $sendEmail && $email !== '') {
             $list = $this->adapter->listCustomers(['email' => $email, 'limit' => 50]);
             $rows = $list['data'] ?? [];
             if (is_array($rows)) {
@@ -1634,9 +1521,7 @@ class Asaas_gateway extends App_gateway
             return ['ok' => true, 'asaas_customer_id' => $asaasCustomerId, 'source' => 'asaas_search'];
         }
 
-        // 3) Criar customer
-        $sendEmail = ((int) $this->getSetting('send_customer_email')) === 1;
-        $sendMobile = ((int) $this->getSetting('send_customer_mobile')) === 1;
+        // 3) Criar customer; the adapter enforces the same policy for all callers.
 
         $payload = [
             'name' => $name,

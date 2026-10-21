@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/asaas_language_fixture.php';
 require __DIR__.'/asaas_refund_boundaries.php';
 class CompanyRequestScope{public static bool $sealed=true;public static function sealedFor($owner){return self::$sealed;}public static function context(){return null;}public static function adminUrl($owner,$path=''){return 'https://synthetic.invalid/admin/'.$path;}public static function token(){return 'synthetic-company-scope';}}
 class CompanySettingsRuntime{public static bool $enabled=false;public static int $issuer;public static int $actor=7;public static function active(){return self::$enabled;}public static function issuerId(){return self::$issuer;}public static function staffId(){return self::$actor;}public static function canResource($f,$c){return (new IssuerResourceAccess($GLOBALS['db'],$GLOBALS['p']))->can(self::$issuer,self::$actor,$f,$c);}public static function can($c){return self::canResource('settings',$c);}}

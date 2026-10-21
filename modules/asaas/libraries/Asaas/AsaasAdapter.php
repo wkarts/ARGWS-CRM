@@ -11,6 +11,7 @@ use AsaasSdkProvider;
 
 require_once __DIR__ . '/PaymentOriginStore.php';
 require_once __DIR__ . '/EnvironmentSettings.php';
+require_once __DIR__ . '/CustomerContactPolicy.php';
 require_once __DIR__ . '/InvoicePaymentRemoval.php';
 require_once __DIR__ . '/WebhookTransactionGuard.php';
 
@@ -76,6 +77,7 @@ private function normalizePath(string $path): string
         ?int $companyId = null
     ): array {
         [$client, $requestEnvironment] = $this->resolveRequestClient($method, $path, $query, $companyId);
+        [$path, $query, $payload] = $this->applyCustomerContactPolicy($method, $path, $query, $payload, $requestEnvironment, $companyId);
         // A SDK usa base_uri com /v3. Quando o path começa com '/', o Guzzle zera o path do base_uri.
         // Portanto, no módulo, sempre enviamos path relativo (sem '/').
         $originalPath = $path;
@@ -115,6 +117,22 @@ private function normalizePath(string $path): string
         }
     }
 
+    private function applyCustomerContactPolicy(string $method, string $path, array $query, ?array $payload, string $environment, ?int $companyId): array
+    {
+        if (!CustomerContactPolicy::isCustomerPath($path)) return [$path, $query, $payload];
+        $setting = function (string $name) use ($environment, $companyId) {
+            // Never inherit legacy preferences into an explicitly selected company.
+            if ($companyId === null && $this->gateway !== null && method_exists($this->gateway, 'getSettingForEnvironment')) {
+                return $this->gateway->getSettingForEnvironment($name, $environment);
+            }
+            return $this->provider->setting($name, $companyId);
+        };
+        return CustomerContactPolicy::apply($method, $path, $query, $payload,
+            (string) $setting('send_customer_email') === '1',
+            (string) $setting('send_customer_mobile') === '1',
+            (string) $setting('disable_charge_notification') === '1');
+    }
+
     /**
      * Executa requisição com envelope padronizado para novos módulos sem quebrar legado.
      *
@@ -130,6 +148,7 @@ private function normalizePath(string $path): string
         ?int $companyId = null
     ): array {
         $client = $this->provider->client($companyId);
+        [$path, $query, $payload] = $this->applyCustomerContactPolicy($method, $path, $query, $payload, $this->provider->env($companyId), $companyId);
         // A SDK usa base_uri com /v3. Quando o path começa com '/', o Guzzle zera o path do base_uri.
         // Portanto, no módulo, sempre enviamos path relativo (sem '/').
         $originalPath = $path;
@@ -1059,25 +1078,27 @@ public function refundPayment(string $paymentId, array $payload = []): array
 
     private function sanitizeContext(array $context): array
     {
-        $sensitiveKeys = ['apiKey', 'api_key', 'access_token', 'authorization', 'token'];
-
-        foreach ($context as $key => $value) {
-            if (is_array($value)) {
-                $context[$key] = $this->sanitizeContext($value);
-                continue;
-            }
-
-            $normalizedKey = strtolower((string) $key);
-            foreach ($sensitiveKeys as $sensitiveKey) {
-                if ($normalizedKey === strtolower($sensitiveKey)) {
-                    $context[$key] = '[REDACTED]';
-                    break;
-                }
-            }
+        // Diagnostics are metadata-only. A denylist can miss nested contacts,
+        // future provider fields, query strings or credentials echoed in errors.
+        $safe = [];
+        if (isset($context['method'])) {
+            $method = strtoupper((string) $context['method']);
+            $safe['method'] = in_array($method, ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'], true) ? $method : 'OTHER';
         }
-
-        return $context;
+        if (isset($context['path'])) {
+            $path = ltrim((string) parse_url((string) $context['path'], PHP_URL_PATH), '/');
+            $path = preg_replace('#^v3/#', '', $path);
+            $resource = explode('/', $path, 2)[0];
+            $safe['path'] = in_array($resource, ['customers', 'payments', 'prefaces', 'webhooks', 'wallets'], true)
+                ? 'v3/' . $resource . (str_contains($path, '/') ? '/[resource]' : '') : '[resource]';
+        }
+        if (isset($context['status']) && is_numeric($context['status'])) $safe['status'] = (int) $context['status'];
+        if (isset($context['correlation_id']) && is_string($context['correlation_id']) && $context['correlation_id'] !== '') {
+            $safe['correlation_id'] = substr(hash('sha256', $context['correlation_id']), 0, 32);
+        }
+        return $safe;
     }
+
 
     private function getLogColumns(string $table): array
     {

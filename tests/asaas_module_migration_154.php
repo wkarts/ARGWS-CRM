@@ -38,7 +38,7 @@ $pdo=new PDO(getenv('ASAAS_TEST_MYSQL_DSN')?:'sqlite::memory:',getenv('ASAAS_TES
 $mysql=$pdo->getAttribute(PDO::ATTR_DRIVER_NAME)==='mysql';
 if($mysql&&!in_array((string)$pdo->query('SELECT DATABASE()')->fetchColumn(),['asaas_test','callback_test','crm_tests'],true))throw new RuntimeException('Disposable CI database required');
 $GLOBALS['migration154Prefix']='migration154_'.bin2hex(random_bytes(6)).'_';$p=db_prefix();$db=new Migration154Db($pdo);
-$header=file_get_contents(APP_MODULES_PATH.'asaas/asaas.php');if(!preg_match('/^Version:\s*(\S+)/m',$header,$match)||$match[1]!=='1.5.4')throw new RuntimeException('Actual154 module header required');
+$header=file_get_contents(APP_MODULES_PATH.'asaas/asaas.php');if(!preg_match('/^Version:\s*(\S+)/m',$header,$match)||version_compare($match[1],'1.5.4','<'))throw new RuntimeException('Module header supporting historical154 required');
 $GLOBALS['migration154Ci']=(object)['db'=>$db,'load'=>new class{function dbforge(){}},'lang'=>new class{function load($value){}function line($value){return $value.' %s';}},'app_modules'=>new class($match[1]){function __construct(private string $version){}function get($name){return ['headers'=>['version'=>$this->version]];}}];
 $checks=0;
 function migration154Check($condition,$message){global $checks;if(!$condition)throw new RuntimeException($message);$checks++;}
@@ -68,24 +68,24 @@ try{
     migration154Check(!$db->field_exists('token_cipher',$p.'asaas_webhook_integrations'),'historical153 checkpoint does not execute154');
 
     $db->failQuery='ALTER TABLE `'.$p.'asaas_company_accounts` ADD `token_cipher`';
-    migration154Throws(fn()=>(new App_module_migration('asaas'))->to_latest(),'issuer_storage_failed');
+    migration154Throws(fn()=>(new App_module_migration('asaas'))->version('154'),'issuer_storage_failed');
     migration154Check($version()==='1.5.3','partial token DDL never advances native153 tracking');
     migration154Check($db->field_exists('token_cipher',$p.'asaas_webhook_integrations')&&!$db->field_exists('token_cipher',$p.'asaas_company_accounts'),'late DDL failure leaves only first additive column');
     migration154Check($db->query('SELECT * FROM `'.$p.'options` ORDER BY name')->result_array()===$originalOptions,'token schemas complete before any profile seed');
     $db->failQuery=null;$db->failInsertAfter=7;
-    migration154Throws(fn()=>(new App_module_migration('asaas'))->to_latest(),'asaas_profile_initialization_unconfirmed');
+    migration154Throws(fn()=>(new App_module_migration('asaas'))->version('154'),'asaas_profile_initialization_unconfirmed');
     migration154Check($version()==='1.5.3'&&$option('paymentmethod_asaas_profile_schema')===null,'partial seed never writes completion or native version');
     migration154Check($db->field_exists('token_cipher',$p.'asaas_company_accounts'),'retry completes remaining token column before profile writes');
     $db->failInsertAfter=null;$db->failVersionWrite=true;
-    $runner=new App_module_migration('asaas');migration154Check($runner->to_latest()===false&&$runner->error_string()==='module_migration_version_write_failed','native154 reports failed tracking write after complete schema/seed');
+    $runner=new App_module_migration('asaas');migration154Check($runner->version('154')===false&&$runner->error_string()==='module_migration_version_write_failed','native154 reports failed tracking write after complete schema/seed');
     migration154Check($version()==='1.5.3'&&$option('paymentmethod_asaas_profile_schema')==='1','structural readiness is distinct from confirmed native154 tracking');
     migration154Check(!\Asaas\EnvironmentSettings::ready(),'complete schema without native154 keeps operational profiles disabled');
     migration154Throws(fn()=>\Asaas\ModuleReadiness::require154($db,$p),'asaas_module_154_required');
     $db->failVersionWrite=false;$db->ignoreVersionWrite=true;
-    $runner=new App_module_migration('asaas');migration154Check($runner->to_latest()===false&&$runner->error_string()==='module_migration_version_unconfirmed','successful update return without durable readback cannot report completion');
+    $runner=new App_module_migration('asaas');migration154Check($runner->version('154')===false&&$runner->error_string()==='module_migration_version_unconfirmed','successful update return without durable readback cannot report completion');
     migration154Check($version()==='1.5.3','unconfirmed readback keeps actual153 tracking');
     $db->ignoreVersionWrite=false;
-    migration154Check((string)(new App_module_migration('asaas'))->to_latest()==='154'&&$version()==='1.5.4','retry confirms154 through native durable readback');
+    migration154Check((string)(new App_module_migration('asaas'))->version('154')==='154'&&$version()==='1.5.4','retry confirms154 through native durable readback');
     \Asaas\WebhookTokenSchema::ensure($db,$p,false);
     migration154Check(\Asaas\EnvironmentSettings::ready(),'confirmed native154 enables initialized profiles');
     foreach(['production','sandbox'] as $environment){migration154Check($option('paymentmethod_asaas_profile_'.$environment.'_description')==='','empty legacy value preserved: '.$environment);migration154Check($option('paymentmethod_asaas_profile_'.$environment.'_active')==='1'&&$option('paymentmethod_asaas_profile_'.$environment.'_interest_value')==='2.37','legacy activation and decimal preserved: '.$environment);}
@@ -93,13 +93,13 @@ try{
     migration154Check($option('paymentmethod_asaas_api_key')==='synthetic-encrypted-unchanged','API credential storage untouched');
     foreach($before as $table=>$rows){$after=$db->get($p.$table)->result_array();migration154Check($after[0]['token_cipher']===null,'legacy hash-only receiver remains unrecoverable without explicit regeneration');foreach($after as &$row)unset($row['token_cipher']);unset($row);migration154Check($after===$rows,'154 never rotates tokens or rewrites receiver scope');}
     $saved=[];foreach($tables as $table)$saved[$table]=$db->get($p.$table)->result_array();
-    migration154Check((new App_module_migration('asaas'))->to_latest()===true,'native154 replay is no-op');
+    migration154Check((new App_module_migration('asaas'))->version('154')===true,'native154 replay is no-op');
     foreach($saved as $table=>$rows)migration154Check($db->get($p.$table)->result_array()===$rows,'native replay preserves '.$table.' bytes');
     $db->where('name','paymentmethod_asaas_profile_production_description')->update($p.'options',['value'=>'Edited production']);
     $db->where('id',1)->update($p.'asaas_company_accounts',['token_cipher'=>'synthetic-existing-cipher']);
     $updated=[];foreach(['options','asaas_webhook_integrations','asaas_company_accounts'] as $table)$updated[$table]=$db->get($p.$table)->result_array();
     migration154Check((string)(new App_module_migration('asaas'))->version('153')==='153','native down preserves data while recording explicit rollback checkpoint');
-    migration154Check((string)(new App_module_migration('asaas'))->to_latest()==='154','native replay after rollback revalidates existing additive schema');
+    migration154Check((string)(new App_module_migration('asaas'))->version('154')==='154','native replay after rollback revalidates existing additive schema');
     foreach($updated as $table=>$rows)migration154Check($db->get($p.$table)->result_array()===$rows,'down/up preserves customized profiles and ciphertext in '.$table);
     foreach(['1.5.3','1.5.40','1.5.4-preview','',null] as $invalidVersion){$db->where('module_name','asaas')->update($p.'modules',['installed_version'=>$invalidVersion]);migration154Check(!\Asaas\ModuleReadiness::ready154($db,$p),'invalid or old native module marker never enables154');}
     $db->where('module_name','asaas')->update($p.'modules',['installed_version'=>'1.5.4']);
