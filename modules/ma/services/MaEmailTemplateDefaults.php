@@ -49,6 +49,9 @@ final class MaEmailTemplateDefaults
             $designTable = $prefix.'ma_email_template_designs';
             $rows = IssuerStorage::query($db, 'SELECT * FROM '.$table.' ORDER BY id FOR UPDATE')->result_array();
             $designRows = IssuerStorage::query($db, 'SELECT * FROM '.$designTable.' ORDER BY id FOR UPDATE')->result_array();
+            // A pending installer flag can survive a later asset/tracking failure. A retry
+            // must not recreate a variant the user removed from that already seeded library.
+            if ($rows && $seedEmpty) return 0;
             if (!$rows && $seedEmpty) {
                 // Orphaned designs indicate a non-pristine library, not a fresh installation.
                 if ($designRows) throw new DomainException('ma_email_library_not_empty');

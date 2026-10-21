@@ -720,6 +720,8 @@ add_option('ma_unlayer_custom_fonts', '');
 require_once __DIR__.'/services/MaEmailTemplateDefaults.php';
 if (get_option('ma_insert_email_template_default') == 0) {
     MaEmailTemplateDefaults::install($CI->db, db_prefix());
+    require_once __DIR__.'/services/MaEmailTemplateAssets.php';
+    MaEmailTemplateAssets::upgrade($CI->db, db_prefix(), base_url());
     update_option('ma_insert_email_template_default', 1);
 }
-// Existing installations are reconciled once by migration111, not on every reactivation.
+// Existing installations use migrations111/112, never repair-on-reactivation.

@@ -12,8 +12,10 @@ on:
       - tests/purchase_mail_language.php
       - modules/ma/**
       - tests/ma_email_template_localization.php
+      - tests/ma_email_assets.php
       - tests/ma_email_interface.test.cjs
       - scripts/build-ma-email-templates-ptbr.py
+      - scripts/check-ma-email-assets.py
       - tests/issuers*.php
       - tests/company_registry_lookup*.php
       - tests/company_context.php
@@ -44,8 +46,10 @@ on:
       - tests/purchase_mail_language.php
       - modules/ma/**
       - tests/ma_email_template_localization.php
+      - tests/ma_email_assets.php
       - tests/ma_email_interface.test.cjs
       - scripts/build-ma-email-templates-ptbr.py
+      - scripts/check-ma-email-assets.py
       - tests/issuers*.php
       - tests/company_registry_lookup*.php
       - tests/company_context.php
@@ -402,7 +406,9 @@ jobs:
           php tests/settings/email_template_localization.php
           php tests/purchase_mail_language.php
           php tests/ma_email_template_localization.php
+          php tests/ma_email_assets.php
           python3 scripts/build-ma-email-templates-ptbr.py --check
+          python3 scripts/check-ma-email-assets.py
           php tests/companies/email_template_scope.php
           php tests/companies/email_template_controller.php
           php tests/companies/email_template_editor.php

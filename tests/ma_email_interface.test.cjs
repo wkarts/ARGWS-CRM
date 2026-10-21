@@ -43,6 +43,10 @@ test('fresh seed is prefix-safe and activation does not repair user-deleted vari
   assert.ok(!source.includes("query(file_get_contents(FCPATH . 'modules/ma/database/email_template_default.sql'))"));
   assert.ok(!source.includes('MaEmailTemplateDefaults::upgrade('));
   assert.ok(source.indexOf('MaEmailTemplateDefaults::install(') > source.indexOf('CREATE TABLE \' . db_prefix() . "ma_email_template_designs'));
+  const seed = source.slice(source.indexOf("if (get_option('ma_insert_email_template_default') == 0)"));
+  assert.ok(seed.indexOf('MaEmailTemplateAssets::upgrade(') > seed.indexOf('MaEmailTemplateDefaults::install('));
+  assert.ok(seed.indexOf('MaEmailTemplateAssets::upgrade(') < seed.indexOf("update_option('ma_insert_email_template_default', 1)"));
+  assert.equal((source.match(/MaEmailTemplateAssets::upgrade\(/g) || []).length, 1);
 });
 test('library defaults do not pretend to own campaign subjects or image translations', () => {
   const catalogue = JSON.parse(read('modules/ma/resources/email_templates_ptbr.json'));

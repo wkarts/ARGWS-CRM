@@ -2,9 +2,9 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 /*
-Module Name: Automação de Marketing 2024 v1.1.1
+Module Name: Automação de Marketing 2024 v1.1.2
 Description: Este módulo ajuda a identificar clientes potenciais, automatizando o processo de nutrição desses leads até que estejam prontos para a venda.
-Version: 1.1.1
+Version: 1.1.2
 Requires at least: 2.3.*
 Author: Wkarts
 Author URI: https://t.me/wkartspro

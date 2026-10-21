@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "806587709798eacbec561a2ac37363023daa7d3c75b393254eba505722465d35",
+    "source_manifest_sha256": "67b3205f139a442341a2bfeac24908b34c49bc834b34484622fdc16b8f710dd5",
     "counts": {
         "modules": 38,
-        "source_files": 4192,
+        "source_files": 4195,
         "literal_option_keys": 684,
         "dynamic_option_references": 146,
         "controllers": 254,
@@ -1468,7 +1468,7 @@
         {
             "name": "ma",
             "entry": "modules/ma/ma.php",
-            "version": "1.1.1",
+            "version": "1.1.2",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -28999,7 +28999,7 @@
         {
             "name": "issuers_lock",
             "state": "not_verified",
-            "reference_count": 8
+            "reference_count": 9
         },
         {
             "name": "issuers_master_authorizations",
@@ -29289,12 +29289,12 @@
         {
             "name": "ma_email_template_designs",
             "state": "not_verified",
-            "reference_count": 16
+            "reference_count": 17
         },
         {
             "name": "ma_email_templates",
             "state": "not_verified",
-            "reference_count": 13
+            "reference_count": 14
         },
         {
             "name": "ma_emails",

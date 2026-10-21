@@ -152,7 +152,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
     await switchCompany(primary);
     await page.goto(url + '/admin/company_clients?client=' + customer);
     assert.equal(await page.locator('#edit_company').count(), 0, 'shared identity is read only');
-    assert((await page.locator('section').innerText()).includes('Synthetic private B updated'));
+    assert((await page.locator('section[aria-labelledby="clients-title"]').innerText()).includes('Synthetic private B updated'));
     const foreignWrite = await context.request.post(url + '/admin/company_clients', { form: { ...(await formFields(page.locator('form').filter({ has: page.locator('#new_company') }))), action: 'update', client_id: customer, revision: 'a'.repeat(64), 'client[company]': 'Cross company' } });
     assert.equal(foreignWrite.status(), 403);
     await switchCompany(created);
