@@ -4198,3 +4198,10 @@ $lang['issuer_staff_company_access_required'] = 'O colaborador não foi criado: 
 
 $lang['email_template_public_ticket_url_warning'] = 'Este modelo contém o campo <strong>{ticket_public_url}</strong>, mas a URL pública do chamado está desativada nas configurações. Use <strong>{ticket_url}</strong> ou ative a URL pública do chamado.';
 $lang['email_template_other_models'] = 'Outros modelos';
+
+// Global staff identity: shared errors for native, API and company-atomic writers.
+$lang['issuer_staff_email_conflict'] = 'Este e-mail já pertence a outro colaborador. Nenhuma alteração foi aplicada.';
+$lang['issuer_staff_email_invalid'] = 'Informe um e-mail válido para o colaborador.';
+$lang['issuer_staff_extension_unreviewed'] = 'Uma extensão precisa de revisão transacional antes de salvar este perfil.';
+$lang['issuer_staff_write_unconfirmed'] = 'Não foi possível confirmar a gravação do perfil. Reabra o cadastro e tente novamente.';
+$lang['issuer_staff_native_rejected'] = 'A proteção do perfil recusou a alteração. Perfil e acessos foram preservados.';

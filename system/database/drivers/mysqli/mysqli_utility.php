@@ -137,8 +137,26 @@ class CI_DB_mysqli_utility extends CI_DB_utility {
 				continue;
 			}
 
-			// Grab all the data from the current table
-			$query = $this->db->query('SELECT * FROM '.$this->db->protect_identifiers($table));
+			// Generated values belong in the DDL, never in an INSERT value list.
+			// Explicit names also retain ordinary invisible columns omitted by SELECT *.
+			$columns = $this->_backup_writable_columns($table);
+			$selection = count($columns) === 0 ? '1 AS ci_backup_row' : implode(', ', array_map(array($this->db, 'escape_identifiers'), $columns));
+			$query = $this->db->query('SELECT '.$selection.' FROM '.$this->db->protect_identifiers($table));
+			if ($query === FALSE)
+			{
+				throw new RuntimeException('database_backup_data_failed');
+			}
+
+			// Some engines permit constant generated-only tables. Preserve row count
+			// without supplying a non-DEFAULT value for any generated column.
+			if (count($columns) === 0)
+			{
+				foreach ($query->result_array() as $row)
+				{
+					$output .= 'INSERT INTO '.$this->db->protect_identifiers($table).' () VALUES ();'.$newline;
+				}
+				continue;
+			}
 
 			if ($query->num_rows() === 0)
 			{
@@ -206,6 +224,56 @@ class CI_DB_mysqli_utility extends CI_DB_utility {
 		}
 
 		return $output;
+	}
+
+	/** Fail closed if column metadata cannot prove the writable INSERT projection. */
+	protected function _backup_writable_columns($table)
+	{
+		$flags = array();
+		foreach (array('db_debug', 'save_queries') as $flag)
+		{
+			if (property_exists($this->db, $flag))
+			{
+				$flags[$flag] = $this->db->$flag;
+				$this->db->$flag = FALSE;
+			}
+		}
+		try
+		{
+			$query = $this->db->query('SHOW FULL COLUMNS FROM '.$this->db->escape_identifiers($this->db->database.'.'.$table));
+			if ($query === FALSE) { throw new RuntimeException('metadata unavailable'); }
+			$metadata = $query->result_array();
+			if (count($metadata) === 0) { throw new RuntimeException('metadata missing'); }
+			$columns = array();
+			$seen = array();
+			foreach ($metadata as $column)
+			{
+				if (!isset($column['Field'], $column['Extra']) || !is_string($column['Field']) || $column['Field'] === ''
+					|| !is_string($column['Extra']) || isset($seen[$column['Field']]))
+				{
+					throw new RuntimeException('metadata malformed');
+				}
+				$seen[$column['Field']] = TRUE;
+				$generated = preg_match('/\b(?:VIRTUAL|STORED|PERSISTENT)\s+GENERATED\b/i', $column['Extra']);
+				if (!$generated && preg_match('/\bGENERATED\b/i', $column['Extra']))
+				{
+					throw new RuntimeException('generation metadata unsupported');
+				}
+				// DEFAULT_GENERATED denotes an ordinary expression default, not a
+				// generated column, and must remain in the INSERT projection.
+				if (!$generated) { $columns[] = $column['Field']; }
+			}
+			return $columns;
+		}
+		catch (Throwable $error)
+		{
+			// Never emit a partial dump, SQL or database error details on failure.
+			throw new RuntimeException('database_backup_metadata_failed');
+		}
+		finally
+		{
+			foreach ($flags as $flag => $value) { $this->db->$flag = $value; }
+		}
 	}
 
 }

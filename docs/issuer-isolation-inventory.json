@@ -781,7 +781,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Misc.php": {
-      "sha256": "fb26fb13f57c7fddb514eead4b23c26d7df2e71bf7b5ad91e043ba36294cf0eb",
+      "sha256": "a91c1ffc42ce6c64d7cfce003d2c9e505304d80acd903fcae50e0da39b533673",
       "categories": [
         "customer_privacy",
         "invoice_table",
@@ -790,13 +790,13 @@
       "signal_lines": [
         111,
         140,
-        629,
-        632,
-        668,
-        669
+        619,
+        622,
+        658,
+        659
       ],
-      "state": "partial",
-      "evidence": "tests/invoice_issuer_http_files.php; tests/test_invoice_attachment_storage.py; tests/docker_provision_smoke.sh; docs/invoice-issuer-core-scope.md. Invoice attachment/HTTP barrier only; other relation types remain pending."
+      "state": "unreviewed",
+      "evidence": ""
     },
     "application/controllers/admin/Payments.php": {
       "sha256": "a71ffdd5f72079b5e373b4e939536ca8aa46daed207528c5fa9ef872bd926521",
@@ -1990,21 +1990,21 @@
       "evidence": ""
     },
     "application/models/Authentication_model.php": {
-      "sha256": "3ac18ac9190832bbe1ef1a4b7d3b13d7e5dcece82f0be5b6f1ffab1617858297",
+      "sha256": "17296222516bd31883fe2dcf2973b06354ffffcb6a2461a181e7be3fcd40accf",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        106,
-        107,
-        254,
-        255,
-        326,
-        327,
-        329,
-        331,
-        453,
-        454
+        108,
+        109,
+        264,
+        265,
+        336,
+        337,
+        339,
+        341,
+        463,
+        464
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -2821,19 +2821,19 @@
       "evidence": "tests/invoice_issuer_reports.php; docs/invoice-issuer-core-scope.md. Invoice revenue/address/reference guard only; other financial domains and customer privacy remain pending."
     },
     "application/models/Staff_model.php": {
-      "sha256": "841478bd8c1139924f5f209bd8accd7b9cd348db2b7b22bc370e9037395d6aba",
+      "sha256": "736575f272d66d6b64ecc81fbe91f47b857e47b4f0c168a60418cd6669dbc430",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        36,
         37,
-        73,
-        75,
-        79,
-        81,
-        120,
-        121
+        38,
+        74,
+        76,
+        80,
+        82,
+        121,
+        122
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -6576,12 +6576,12 @@
       "evidence": "tests/invoice_issuer_scope.php and tests/api_issuer_scope.php; scope and explicit remaining gaps: docs/invoice-issuer-core-scope.md. Not complete end-to-end coverage."
     },
     "modules/api/controllers/Staffs.php": {
-      "sha256": "c0cbe609665b07fbcdb1c00c81a903f90f98208c5367fd77361da9806964cf05",
+      "sha256": "d34e7e19601f337ae20036ec2b80da02f440afbdf85c7da1d2aa829917dfe3e5",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        257
+        269
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -7654,13 +7654,13 @@
       "evidence": ""
     },
     "modules/hr_profile/models/Hr_profile_model.php": {
-      "sha256": "1ed75158739de70a9c11a965fa63f782c6aa755938ce91091c105cc47b2f8d79",
+      "sha256": "8b5ec1c567e21fa6a362c5c3201124c88726f0c7fd9a3241a9c118331316f5f2",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        3736,
-        3741
+        3749,
+        3754
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8437,7 +8437,7 @@
       "evidence": ""
     },
     "modules/purchase/purchase.php": {
-      "sha256": "ceb927d2907edbe0eb2b1332c1f306108bb3ce180ffe2cc80c08426521644d25",
+      "sha256": "b3552646ef1e9a999403dc86966232c10e68d9fdd4a7f1c655c62c4bd2a89166",
       "categories": [
         "invoice_table"
       ],
@@ -8791,12 +8791,12 @@
       "evidence": ""
     },
     "modules/timesheets/models/Timesheets_model.php": {
-      "sha256": "a7ef6ea6aae1a3624f403b693673bba439b7043b17aa3838ffa43180182c6047",
+      "sha256": "d7db3e029c80a6ddded41969354b05d099805aa819f4a4a5069a9793e0ab56ac",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        8322
+        8323
       ],
       "state": "unreviewed",
       "evidence": ""

@@ -67,7 +67,8 @@ class Staff extends AdminController
                 if (staff_cant('create', 'staff')) {
                     access_denied('staff');
                 }
-                $id = $this->staff_model->add($data);
+                try { $id = $this->staff_model->add($data); }
+                catch (Throwable $error) { set_alert('warning', StaffIdentityTransaction::publicMessage($error)); redirect(admin_url('staff/member')); return; }
                 if ($id) {
                     handle_staff_profile_image_upload($id);
                     set_alert('success', _l('added_successfully', _l('staff_member')));
@@ -78,8 +79,9 @@ class Staff extends AdminController
                 if (staff_cant('edit', 'staff')) {
                     access_denied('staff');
                 }
-                handle_staff_profile_image_upload($id);
-                $response = $this->staff_model->update($data, $id);
+                try { $response = $this->staff_model->update($data, $id); }
+                catch (Throwable $error) { set_alert('warning', StaffIdentityTransaction::publicMessage($error)); redirect(admin_url('staff/member/'.$id)); return; }
+                if (!is_array($response)) { handle_staff_profile_image_upload($id); }
                 if (is_array($response)) {
                     if (isset($response['cant_remove_installation_master'])) {
                         set_alert('warning', _l('issuer_master_protected'));
@@ -263,16 +265,14 @@ class Staff extends AdminController
                 catch(Throwable $error){issuers_staff_atomic_error($error);redirect(admin_url('staff/edit_profile/'.get_staff_user_id()));return;}
                 issuers_staff_atomic_effects($result,get_staff_user_id());redirect(admin_url('staff/edit_profile/'.get_staff_user_id()));return;
             }
-            handle_staff_profile_image_upload();
-
             try { $success = $this->staff_model->update_profile($data, get_staff_user_id()); }
-            catch (DomainException $error) {
-                if ($error->getMessage() !== 'issuer_staff_profile_field_denied') { throw $error; }
-                set_alert('warning', _l('issuer_staff_profile_field_denied'));
+            catch (Throwable $error) {
+                set_alert('warning', $error->getMessage() === 'issuer_staff_profile_field_denied' ? _l('issuer_staff_profile_field_denied') : StaffIdentityTransaction::publicMessage($error));
                 redirect(admin_url('staff/edit_profile/' . get_staff_user_id()));
                 return;
             }
 
+            handle_staff_profile_image_upload();
             if ($success) {
                 set_alert('success', _l('staff_profile_updated'));
             }

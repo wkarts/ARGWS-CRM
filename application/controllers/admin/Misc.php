@@ -439,25 +439,15 @@ class Misc extends AdminController
     {
         if ($this->input->is_ajax_request()) {
             if ($this->input->post()) {
-                // First we need to check if the email is the same
-                $member_id = $this->input->post('memberid');
-                if ($member_id != '') {
-                    $this->db->where('staffid', $member_id);
-                    $_current_email = $this->db->get(db_prefix() . 'staff')->row();
-                    if ($_current_email->email == $this->input->post('email')) {
-                        echo json_encode(true);
-
-                        exit();
-                    }
-                }
-                $this->db->where('email', $this->input->post('email'));
-                $total_rows = $this->db->count_all_results(db_prefix() . 'staff');
-                if ($total_rows > 0) {
-                    echo json_encode(false);
-                } else {
+                require_once APPPATH.'services/StaffEmailIdentity.php';
+                $member = $this->input->post('memberid');
+                $except = $member === '' || $member === null ? null : (ctype_digit((string)$member) ? (int)$member : 0);
+                try {
+                    StaffEmailIdentity::assertAvailable($this->db, db_prefix(), $this->input->post('email'), $except);
                     echo json_encode(true);
+                } catch (Throwable $error) {
+                    echo json_encode(false);
                 }
-
                 exit();
             }
         }

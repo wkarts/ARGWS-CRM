@@ -1,5 +1,6 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH . 'services/StaffEmailIdentity.php';
 
 /**
  * timesheets model
@@ -8407,7 +8408,8 @@ class timesheets_model extends app_model
 	public function login($email, $password)
 	{
 		$this->load->model('staff_model');
-		$user = $this->staff_model->get('', ['email' => $email]);
+		$identity = StaffEmailIdentity::unique($this->db, db_prefix(), $email);
+		$user = $identity ? [(array)$identity + ['full_name' => $identity->firstname . ' ' . $identity->lastname]] : [];
 		if ($user) {
 			// Email is okey lets check the password now
 			if (app_hasher()->CheckPassword($password, $user[0]['password'])) {
@@ -8425,7 +8427,7 @@ class timesheets_model extends app_model
 					$this->session->set_userdata($user_data);
 
 					$user[0]['permissions'] = $this->staff_model->get_staff_permissions($user[0]['staffid']);
-					return $user[0];
+					return StaffEmailIdentity::publicData($user[0]);
 				}
 			} else {
 				return false;

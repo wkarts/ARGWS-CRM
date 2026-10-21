@@ -4,6 +4,7 @@ declare(strict_types=1);
 defined('BASEPATH')||define('BASEPATH',dirname(__DIR__,2).'/system/');
 defined('APPPATH')||define('APPPATH',dirname(__DIR__,2).'/application/');
 require_once APPPATH.'services/CompanyStaff.php';
+require_once APPPATH.'services/StaffEmailIdentitySchema.php';
 require_once APPPATH.'services/issuers/IssuerSchema.php';
 require_once APPPATH.'services/issuers/IssuerAccessSchema.php';
 
@@ -54,6 +55,7 @@ function staffFixture():StaffTestDb
         if(!preg_match('/CREATE TABLE `tbl'.preg_quote($table,'/').'` \([\s\S]+?;/', $schema,$m)){throw new RuntimeException('Missing native table '.$table);}
         $db->query(str_replace('`tbl'.$table.'`','`'.$prefix.$table.'`',$m[0]));if($key!==null){$db->query('ALTER TABLE '.$prefix.$table.' ADD PRIMARY KEY('.$key.'), MODIFY '.$key.' int NOT NULL AUTO_INCREMENT');}
     }
+    StaffEmailIdentitySchema::ensure($db,$prefix);
     foreach(IssuerSchema::statements($prefix)as$sql){$db->query($sql);}IssuerSchema::ensureIntegrationPermissions($db,$prefix);IssuerAccessSchema::ensure($db,$prefix);CompanyStaffSchema::ensure($db,$prefix);CompanyStaffSchema::ensure($db,$prefix);
     require_once APPPATH.'third_party/phpass.php';$hash=(new PasswordHash(8,true))->HashPassword('synthetic-staff-password');
     foreach([17=>1,21=>0,22=>0,23=>1]as$id=>$admin){$db->query('INSERT INTO '.$prefix.'staff(staffid,firstname,lastname,email,password,datecreated,admin,active,role) VALUES(?,?,?,?,?,NOW(),?,1,0)',[$id,'Synthetic','Staff'.$id,'staff'.$id.'@example.invalid',$hash,$admin]);}

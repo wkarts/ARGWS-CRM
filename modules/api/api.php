@@ -6,7 +6,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 Module Name: API
 Module URI: https://github.com/wkarts/argws-crm
 Description: API de integração nativa do ARGWS CRM
-Version: 2.0.2
+Version: 2.0.3
 Author: Themesic Interactive
 Author URI: https://codecanyon.net/user/themesic/portfolio
 */

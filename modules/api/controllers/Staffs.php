@@ -5,6 +5,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 // This can be removed if you use __autoload() in config.php OR use Modular Extensions
 /** @noinspection PhpIncludeInspection */
 require __DIR__.'/REST_Controller.php';
+require_once APPPATH.'services/StaffEmailIdentity.php';
 
 /**
  * This is an example of a few basic user interaction methods you could use
@@ -18,6 +19,17 @@ require __DIR__.'/REST_Controller.php';
  * @link            https://github.com/chriskacerguis/codeigniter-restserver
  */
 class Staffs extends REST_Controller {
+    private function identity_write(callable $operation)
+    {
+        try { return $operation(); }
+        catch (Throwable $error) {
+            $status = $error->getMessage() === 'issuer_staff_email_conflict' ? 409
+                : ($error->getMessage() === 'issuer_staff_email_invalid' ? 422 : 503);
+            $this->response(['status'=>false, 'message'=>StaffIdentityTransaction::publicMessage($error)], $status);
+            return false;
+        }
+    }
+
 
     function __construct()
     {
@@ -74,7 +86,7 @@ class Staffs extends REST_Controller {
             $data = $this->Api_model->get_api_custom_data($data,"staff", $id);
 
             // Set the response and exit
-            $this->response($data, REST_Controller::HTTP_OK); // OK (200) being the HTTP response code
+            $this->response(StaffEmailIdentity::publicData($data), REST_Controller::HTTP_OK); // OK (200) being the HTTP response code
         }
         else
         {
@@ -132,7 +144,7 @@ class Staffs extends REST_Controller {
             $data = $this->Api_model->get_api_custom_data($data,"staff");
 
             // Set the response and exit
-            $this->response($data, REST_Controller::HTTP_OK); // OK (200) being the HTTP response code
+            $this->response(StaffEmailIdentity::publicData($data), REST_Controller::HTTP_OK); // OK (200) being the HTTP response code
         }
         else
         {
@@ -280,7 +292,7 @@ class Staffs extends REST_Controller {
             }
             // insert data
             $this->load->model('staff_model');
-            $output = $this->staff_model->add($insert_data);
+            $output = $this->identity_write(fn() => $this->staff_model->add($insert_data));
             if($output > 0 && !empty($output)){
                 // success
                 $message = array(
@@ -453,7 +465,7 @@ class Staffs extends REST_Controller {
             $update_data['lastname'] = '';
             // update data
             $this->load->model('staff_model');
-            $output = $this->staff_model->update($update_data, $id);
+            $output = $this->identity_write(fn() => $this->staff_model->update($update_data, $id));
 
             if($output > 0 && !empty($output)){
                 // success

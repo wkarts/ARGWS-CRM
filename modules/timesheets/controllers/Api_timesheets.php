@@ -2,6 +2,7 @@
 
 defined('BASEPATH') OR exit('No direct script access allowed');
 require __DIR__.'/API_timesheets_Controller.php';
+require_once APPPATH.'services/StaffEmailIdentity.php';
 
 class Api_timesheets extends API_timesheets_Controller {
 	function __construct()
@@ -628,7 +629,7 @@ class Api_timesheets extends API_timesheets_Controller {
 					$this->response(
 						[
 							'status' => true,
-							"result" => $data
+							"result" => StaffEmailIdentity::publicData($data)
 						],
 						200); 
 				}

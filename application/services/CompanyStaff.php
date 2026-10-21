@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__.'/CompanyStaffSchema.php';
+require_once __DIR__.'/StaffIdentityTransaction.php';
 require_once __DIR__.'/CompanyResourceCatalog.php';
 require_once __DIR__.'/issuers/IssuerStaffAccess.php';
 
@@ -72,7 +73,7 @@ final class CompanyStaff
             if(!is_string($profile[$key])||preg_match('/[\x00-\x1F\x7F]/',$profile[$key])||mb_strlen($profile[$key])>$limit){throw new DomainException('issuer_staff_invalid');}
             $out[$key]=trim($profile[$key]);if($key!=='phonenumber'&&$out[$key]===''){throw new DomainException('issuer_staff_invalid');}
         }
-        if(isset($out['email'])){$out['email']=strtolower($out['email']);if(!filter_var($out['email'],FILTER_VALIDATE_EMAIL)){throw new DomainException('issuer_staff_invalid');}}
+        if(isset($out['email'])){$out['email']=StaffEmailIdentity::normalize($out['email']);}
         if($create){$password=$profile['password']??null;if(!is_string($password)||strlen($password)<12||strlen($password)>128||str_contains($password,"\0")){throw new DomainException('issuer_staff_invalid');}$out['password']=$password;$out['phonenumber']=$out['phonenumber']??'';}
         return $out;
     }
@@ -120,14 +121,14 @@ final class CompanyStaff
             }
             $before=[];
             if($operation==='create'){
-                if($this->rows('SELECT staffid FROM '.$this->prefix.'staff WHERE email=? FOR UPDATE',[$profile['email']])){throw new DomainException('issuer_staff_email_conflict');}
+                $profile['email']=StaffEmailIdentity::assertAvailable($this->db,$this->prefix,$profile['email'],null);
                 $grants=$this->grants($issuer,$actor,$grants);$values=$profile;$values['password']=$this->hasher()->HashPassword($profile['password']);
                 $values+=['admin'=>0,'active'=>1,'role'=>0,'is_not_staff'=>0,'datecreated'=>gmdate('Y-m-d H:i:s')];
-                $this->query('INSERT INTO '.$this->prefix.'staff ('.implode(',',array_keys($values)).') VALUES ('.implode(',',array_fill(0,count($values),'?')).')',array_values($values));$staff=IssuerPolicy::id((int)$this->db->insert_id());
+                StaffIdentityTransaction::write($this->db,fn()=>$this->db->query('INSERT INTO '.$this->prefix.'staff ('.implode(',',array_keys($values)).') VALUES ('.implode(',',array_fill(0,count($values),'?')).')',array_values($values)));$staff=IssuerPolicy::id((int)$this->db->insert_id());
                 $before=$this->state($staff);$created=$before['profile'][0]??[];foreach($values as$field=>$value){if($field==='datecreated'){continue;}if((string)($created[$field]??'')!==(string)$value){throw new RuntimeException('issuer_staff_write_unconfirmed');}}
             }elseif($operation==='link'){
-                $found=$this->rows('SELECT staffid FROM '.$this->prefix.'staff WHERE email=? AND active=1 FOR UPDATE',[$profile['email']]);
-                if(count($found)!==1){throw new DomainException('issuer_staff_denied');}$staff=(int)$found[0]['staffid'];$before=$this->state($staff);
+                $found=$this->rows('SELECT staffid,active FROM '.$this->prefix.'staff WHERE '.StaffEmailIdentity::expression().'=? FOR UPDATE',[$profile['email']]);
+                if(count($found)!==1||(int)$found[0]['active']!==1){throw new DomainException('issuer_staff_denied');}$staff=(int)$found[0]['staffid'];$before=$this->state($staff);
                 if($this->acl->isInstallationMaster($staff)||(!$this->acl->isMaster($actor)&&(int)$before['profile'][0]['admin']===1)){throw new DomainException('issuer_staff_denied');}
                 if($this->linked($issuer,$staff)){throw new DomainException('issuer_staff_conflict');}$grants=$this->grants($issuer,$actor,$grants);
             }else{
@@ -136,12 +137,12 @@ final class CompanyStaff
                 if($operation==='revoke'&&($staff===$actor||$this->acl->isInstallationMaster($staff))){throw new DomainException('issuer_master_protected');}
                 if($operation==='update'){
                     if($profile&&!$this->editable($issuer,$actor,$staff,$before)){throw new DomainException('issuer_staff_shared_identity');}
-                    if(isset($profile['email'])&&$this->rows('SELECT staffid FROM '.$this->prefix.'staff WHERE email=? AND staffid<>? FOR UPDATE',[$profile['email'],$staff])){throw new DomainException('issuer_staff_email_conflict');}
+                    if(isset($profile['email'])){$profile['email']=StaffEmailIdentity::assertAvailable($this->db,$this->prefix,$profile['email'],$staff);}
                     $current=[];foreach($before['grants'] as$g){if((int)$g['issuer_id']===$issuer){$current[$g['feature']][]=$g['capability'];}}$grants=$this->grants($issuer,$actor,$grants,$current);
                 }
             }
             $expected=$before;
-            if($operation==='update'&&$profile){$this->query('UPDATE '.$this->prefix.'staff SET '.implode(',',array_map(static fn($f)=>$f.'=?',array_keys($profile))).' WHERE staffid=?',array_merge(array_values($profile),[$staff]));$expected['profile'][0]=array_replace($expected['profile'][0],$profile);}
+            if($operation==='update'&&$profile){StaffIdentityTransaction::write($this->db,fn()=>$this->db->query('UPDATE '.$this->prefix.'staff SET '.implode(',',array_map(static fn($f)=>$f.'=?',array_keys($profile))).' WHERE staffid=?',array_merge(array_values($profile),[$staff])));$expected['profile'][0]=array_replace($expected['profile'][0],$profile);}
             $master=$this->acl->isInstallationMaster($staff);
             if(!$master){
                 $expected['grants']=array_values(array_filter($before['grants'],static fn($g)=>(int)$g['issuer_id']!==$issuer));

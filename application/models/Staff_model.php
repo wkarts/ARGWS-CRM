@@ -4,6 +4,7 @@ use app\services\InvoiceIssuerScope;
 
 defined('BASEPATH') or exit('No direct script access allowed');
 require_once APPPATH.'services/CompanyNativeStaffTransaction.php';
+require_once APPPATH.'services/StaffIdentityTransaction.php';
 
 class Staff_model extends App_Model
 {
@@ -16,7 +17,7 @@ class Staff_model extends App_Model
     }
     private function issuer_staff_after_commit(callable $effect):void
     {
-        CompanyNativeStaffTransaction::afterCommit($this->db,$effect);
+        StaffIdentityTransaction::afterCommit($this->db,$effect);
     }
     private function issuer_staff_departments($id,array $departments):void
     {
@@ -437,6 +438,11 @@ class Staff_model extends App_Model
      */
     public function add($data)
     {
+        return StaffIdentityTransaction::run($this->db, db_prefix(), StaffIdentityTransaction::NATIVE_TABLES, fn() => $this->identity_add($data));
+    }
+
+    private function identity_add($data)
+    {
         if (isset($data['fakeusernameremembered'])) {
             unset($data['fakeusernameremembered']);
         }
@@ -447,13 +453,8 @@ class Staff_model extends App_Model
         // First check for all cases if the email exists.
         $data = hooks()->apply_filters('before_create_staff_member', $data);
 
-        $this->db->where('email', $data['email']);
-        $email = $this->db->get(db_prefix() . 'staff')->row();
-
-        if ($email) {
-            if(CompanyNativeStaffTransaction::active($this->db)){throw new DomainException('issuer_staff_email_conflict');}
-            die('Email already exists');
-        }
+        $data['email'] = StaffEmailIdentity::assertAvailable($this->db, db_prefix(), $data['email'] ?? null, null);
+        unset($data['staff_email_identity']);
 
         $data['admin'] = 0;
 
@@ -494,7 +495,7 @@ class Staff_model extends App_Model
             $data['is_not_staff'] = 0;
         }
 
-        $this->db->insert(db_prefix() . 'staff', $data);
+        StaffIdentityTransaction::write($this->db, fn() => $this->db->insert(db_prefix() . 'staff', $data));
         $staffid = $this->db->insert_id();
         if(CompanyNativeStaffTransaction::active($this->db)&&!$staffid){throw new RuntimeException('issuer_staff_write_unconfirmed');}
         if ($staffid) {
@@ -563,6 +564,11 @@ class Staff_model extends App_Model
      */
     public function update($data, $id)
     {
+        return StaffIdentityTransaction::run($this->db, db_prefix(), StaffIdentityTransaction::NATIVE_TABLES, fn() => $this->identity_update($data, $id));
+    }
+
+    private function identity_update($data, $id)
+    {
         if (isset($data['fakeusernameremembered'])) {
             unset($data['fakeusernameremembered']);
         }
@@ -571,6 +577,8 @@ class Staff_model extends App_Model
         }
 
         $data = hooks()->apply_filters('before_update_staff_member', $data, $id);
+        if (array_key_exists('email', $data)) { $data['email'] = StaffEmailIdentity::assertAvailable($this->db, db_prefix(), $data['email'], (int) $id); }
+        unset($data['staff_email_identity']);
 
         if (is_admin()) {
             if (isset($data['administrator'])) {
@@ -693,7 +701,7 @@ class Staff_model extends App_Model
 
 
         $this->db->where('staffid', $id);
-        $this->db->update(db_prefix() . 'staff', $data);
+        StaffIdentityTransaction::write($this->db, fn() => $this->db->update(db_prefix() . 'staff', $data));
 
         CompanyNativeStaffTransaction::profile($this->db,db_prefix(),(int)$id,$data);
         $this->issuer_staff_departments($id,$departments??[]);
@@ -744,6 +752,11 @@ class Staff_model extends App_Model
 
     public function update_profile($data, $id)
     {
+        return StaffIdentityTransaction::run($this->db, db_prefix(), StaffIdentityTransaction::NATIVE_TABLES, fn() => $this->identity_update_profile($data, $id));
+    }
+
+    private function identity_update_profile($data, $id)
+    {
         // The self-profile form is not a staff administration writer.
         $profileFields = ['firstname','lastname','email','phonenumber','default_language','direction','facebook','linkedin','skype','email_signature'];
         foreach (['admin','administrator','active','staffid','role','is_not_staff','permissions'] as $protected) {
@@ -752,6 +765,7 @@ class Staff_model extends App_Model
         $data = array_intersect_key($data, array_flip($profileFields));
         $data = hooks()->apply_filters('before_staff_update_profile', $data, $id);
         $data = array_intersect_key($data, array_flip($profileFields));
+        if (array_key_exists('email', $data)) { $data['email'] = StaffEmailIdentity::assertAvailable($this->db, db_prefix(), $data['email'], (int) $id); }
 
         if (empty($data['password'])) {
             unset($data['password']);
@@ -765,7 +779,7 @@ class Staff_model extends App_Model
 
 
         $this->db->where('staffid', $id);
-        $this->db->update(db_prefix() . 'staff', $data);
+        StaffIdentityTransaction::write($this->db, fn() => $this->db->update(db_prefix() . 'staff', $data));
         CompanyNativeStaffTransaction::profile($this->db,db_prefix(),(int)$id,$data);
         if ($this->db->affected_rows() > 0) {
             $this->issuer_staff_after_commit(fn()=>hooks()->do_action('staff_member_profile_updated', $id));

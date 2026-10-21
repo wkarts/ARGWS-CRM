@@ -4176,3 +4176,10 @@ $lang['issuer_staff_company_access_required'] = 'The employee was not created: s
 
 $lang['email_template_public_ticket_url_warning'] = 'This template contains <strong>{ticket_public_url}</strong>, but public ticket URLs are disabled. Use <strong>{ticket_url}</strong> or enable public ticket URLs.';
 $lang['email_template_other_models'] = 'Other templates';
+
+// Global staff identity: shared errors for native, API and company-atomic writers.
+$lang['issuer_staff_email_conflict'] = 'This email already belongs to another staff member. No changes were applied.';
+$lang['issuer_staff_email_invalid'] = 'Enter a valid email address for the staff member.';
+$lang['issuer_staff_extension_unreviewed'] = 'An extension requires a transaction review before this profile can be saved.';
+$lang['issuer_staff_write_unconfirmed'] = 'The profile could not be saved. Reopen the record and try again.';
+$lang['issuer_staff_native_rejected'] = 'Profile protection rejected the change. The profile and company access were preserved.';

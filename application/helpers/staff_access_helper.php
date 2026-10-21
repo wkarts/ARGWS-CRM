@@ -2,6 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 require_once APPPATH.'services/issuers/IssuerStaffAccess.php';
+require_once APPPATH.'services/StaffIdentityTransaction.php';
 
 function issuers_staff_resource_catalog(): array
 {
@@ -79,13 +80,7 @@ function issuers_save_staff_atomically($model,string $mode,array $data,$staff,ar
 function issuers_staff_atomic_error(Throwable $error):void
 {
     log_message('error','Native staff atomic write not confirmed; no profile, password or grants logged.');
-    $messages=[
-        'issuer_master_protected'=>'O master da instalação deve permanecer ativo e administrador.',
-        'issuer_staff_native_rejected'=>'A proteção do perfil recusou a alteração. Perfil e acessos foram preservados.',
-        'issuer_staff_email_conflict'=>'Este e-mail já pertence a outro colaborador. Nenhuma alteração foi aplicada.',
-        'issuer_staff_extension_unreviewed'=>'Uma extensão adicionou gravações ao perfil. É necessário revisar seus participantes transacionais antes de salvar perfil e acessos juntos.',
-    ];
-    set_alert('warning',$messages[$error->getMessage()]??'Não foi possível confirmar perfil e acessos. Reabra o cadastro para conferir o estado; não houve confirmação parcial de permissões.');
+    set_alert('warning', StaffIdentityTransaction::publicMessage($error));
 }
 function issuers_staff_atomic_effects(array $result,$staff):void
 {
