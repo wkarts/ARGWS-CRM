@@ -46,6 +46,23 @@ final class CompanyClientProfile
         self::validateStored($extra);
         return $row+$extra;
     }
+    /** Integrity-only check for native writers. No actor/session grant, private return data or writes. */
+    public function assertPersistedTaxCompatible(int $client):void
+    {
+        IssuerTransaction::assertOwned($this->db,$this->p,self::TABLES);
+        CompanyClientProfileSchema::assertValid($this->db,$this->p);
+        $owner=$this->rows('SELECT owner_issuer_id FROM '.$this->p.'issuers_clients WHERE client_id=?',[$client])[0]??null;
+        $issuer=$owner?(int)$owner['owner_issuer_id']:(new IssuerResourceAccess($this->db,$this->p))->primaryId();
+        if($issuer===null)return;
+        $stored=$this->rows('SELECT profile_json FROM '.$this->p.'company_client_profiles WHERE issuer_id=? AND client_id=?',[$issuer,$client])[0]??null;
+        if(!$stored)return;
+        $extra=json_decode($stored['profile_json'],true,16,JSON_THROW_ON_ERROR);self::validateStored($extra);
+        $tax=$this->rows('SELECT vat FROM '.$this->p.'clients WHERE userid=?',[$client])[0]['vat']??null;
+        $normalizedTax=null;
+        try{$normalizedTax=$tax?IssuerPolicy::taxId($tax,false):null;}
+        catch(DomainException $error){if(!empty($extra['person_type']))throw $error;}
+        self::normalize($extra,$normalizedTax);
+    }
     /** Caller owns the client-row transaction; failures must roll back that transaction. */
     public function write(int $issuer,int $actor,int $client,array $input,string $cap='edit'):void
     {

@@ -30,6 +30,9 @@ $edit['company']=$pj['company'];$clients->update(82,12,$pjId,$edit,$before['revi
 essentialThrows(fn()=>$clients->update(82,12,$pjId,$pj,$before['revision']),'company_client_stale','supplementary profile participates optimistic revision');
 $before=$profile->read(82,12,$pjId);$clients->update(82,12,$pjId,['company'=>'API-compatible name','vat'=>$pj['vat']]);
 essentialCheck($profile->read(82,12,$pjId)===$before,'old API update without profile preserves extras');
+$pjBefore=$clients->details(82,12,$pjId);
+essentialThrows(fn()=>$clients->update(82,12,$pjId,['company'=>'Rejected reverse transition','vat'=>'93541134780']),'company_client_invalid_input','omitted profile cannot convert persisted PJ into CPF');
+essentialCheck($clients->details(82,12,$pjId)===$pjBefore,'rejected reverse transition preserves identity and private PJ fields');
 essentialCheck(array_keys($clients->get(82,12,$pjId))===['userid','company','vat','active','owner_issuer_id'],'public identity projection remains unchanged');
 $primary=(new IssuerResourceAccess($db,$p))->primaryId();
 IssuerTransaction::run($db,$p,CompanyClientProfile::TABLES,fn()=>$profile->write($primary,7,9,['person_type'=>'pf','rg'=>'LEGACY-PRIVATE']));
@@ -44,6 +47,24 @@ essentialCheck(CompanyClientProfile::normalize(['person_type'=>'pf','rg'=>''],nu
 essentialCheck(CompanyClientProfile::normalize(['person_type'=>'pj','state_registration'=>''],null)===['person_type'=>'pj','state_registration'=>''],'IE optional without universal requirement');
 // Partial writes must validate the resulting private profile, not just submitted fields.
 $beforeTransition=$clients->details(41,12,$pfId);
+$omittedTransition=['company'=>'Rejected omitted profile','vat'=>'98989898000177'];
+$ownerBefore=$db->query('SELECT * FROM '.$p.'issuers_clients WHERE client_id=?',[$pfId])->result_array();
+$auditBefore=$db->query('SELECT * FROM '.$p.'issuers_audit')->result_array();
+essentialThrows(fn()=>$clients->update(41,12,$pfId,$omittedTransition,$beforeTransition['revision']),'company_client_invalid_input','omitted profile cannot bypass persisted PF and RG compatibility');
+essentialCheck($clients->details(41,12,$pfId)===$beforeTransition&&$db->query('SELECT * FROM '.$p.'issuers_clients WHERE client_id=?',[$pfId])->result_array()===$ownerBefore&&$db->query('SELECT * FROM '.$p.'issuers_audit')->result_array()===$auditBefore,'omitted-profile mismatch rolls back native identity, tax index, private profile and audit');
+$clients->update(41,12,$pfId,['company'=>$pf['company'],'vat'=>'390.533.447-05'],$beforeTransition['revision']);
+essentialCheck($clients->details(41,12,$pfId)===$beforeTransition,'omitted profile accepts unchanged normalized VAT without changing private data');
+// Edit permission is enough for the writer; a read grant must not be added implicitly.
+$db->query("DELETE FROM {$p}issuers_resource_permissions WHERE issuer_id=41 AND staff_id=12 AND feature='customers' AND capability='view'");
+$clients->update(41,12,$pfId,['company'=>$pf['company'],'vat'=>$pf['vat']]);
+$db->query("INSERT INTO {$p}issuers_resource_permissions VALUES(41,12,'customers','view')");
+essentialCheck($clients->details(41,12,$pfId)===$beforeTransition,'omitted-profile validation uses edit permission without requiring view');
+$clients->update(41,12,$a,['company'=>'Still no supplementary profile','vat'=>'11144477735']);
+essentialCheck($db->query('SELECT client_id FROM '.$p.'company_client_profiles WHERE client_id=?',[$a])->result_array()===[],'omitted profile never creates an empty private profile');
+$implicitId=$clients->create(41,12,['company'=>'Inferred private PF','vat'=>'','profile'=>['rg'=>'INFERRED-RG']]);
+$implicitBefore=$clients->details(41,12,$implicitId);
+essentialThrows(fn()=>$clients->update(41,12,$implicitId,$omittedTransition),'company_client_invalid_input','omitted profile also rejects incompatible persisted RG without explicit person_type');
+essentialCheck($clients->details(41,12,$implicitId)===$implicitBefore,'inferred PF mismatch leaves native and private fields intact');
 $transition=['company'=>'Synthetic converted company','vat'=>'98989898000177','profile'=>['person_type'=>'pj']];
 essentialThrows(fn()=>$clients->update(41,12,$pfId,$transition,$beforeTransition['revision']),'company_client_invalid_input','partial PF to PJ cannot silently retain an incompatible RG');
 essentialCheck($clients->details(41,12,$pfId)===$beforeTransition,'rejected merged profile rolls back native identity and private data');
@@ -51,4 +72,13 @@ $transition['profile']['rg']='';
 $clients->update(41,12,$pfId,$transition,$beforeTransition['revision']);
 $afterTransition=$clients->details(41,12,$pfId);
 essentialCheck($afterTransition['profile']['person_type']==='pj'&&$afterTransition['profile']['rg']==='','explicitly cleared incompatible field permits reviewed type transition');
+// Integrity validation follows persisted ownership, even when a foreign row exists.
+$db->query('INSERT INTO '.$p.'company_client_profiles(issuer_id,client_id,profile_json) VALUES(?,?,?)',[$primary,$pfId,'{"person_type":"pf","rg":"FOREIGN-PRIMARY"}']);
+essentialThrows(fn()=>$profile->assertPersistedTaxCompatible($pfId),'issuer_owned_transaction_required','internal integrity validator cannot be used outside its owned transaction');
+$validation=IssuerTransaction::run($db,$p,CompanyClientProfile::TABLES,fn()=>$profile->assertPersistedTaxCompatible($pfId));
+essentialCheck($validation===null,'integrity validator selects the owner profile and never returns private JSON');
+$ownerSnapshot=$db->query('SELECT * FROM '.$p.'clients WHERE userid=?',[$pfId])->result_array();
+essentialThrows(fn()=>IssuerTransaction::run($db,$p,CompanyClientProfile::TABLES,function()use($db,$p,$pfId,$profile){$db->query('UPDATE '.$p.'clients SET vat=? WHERE userid=?',['93541134780',$pfId]);$profile->assertPersistedTaxCompatible($pfId);}), 'company_client_invalid_input','owned client cannot fall back to a compatible but foreign primary profile');
+essentialCheck($db->query('SELECT * FROM '.$p.'clients WHERE userid=?',[$pfId])->result_array()===$ownerSnapshot,'internal integrity failure rolls back changed VAT');
+$db->query('DELETE FROM '.$p.'company_client_profiles WHERE issuer_id=? AND client_id=?',[$primary,$pfId]);
 echo 'Customer supplementary profiles: '.($GLOBALS['essentialChecks']-$start).' new checks ('.$db->driver().").\n";

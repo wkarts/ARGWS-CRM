@@ -124,11 +124,13 @@ async function next(page) { await navigate(page, page.locator('section form butt
     await page.goto(url + '/admin/company_clients');
     await page.locator('#new_company').fill('Synthetic private B <script>');
     const createFields = await formFields(page.locator('form').filter({ has: page.locator('#new_company') }));
+    // Replay the complete original payload: supplementary profile fields participate in its receipt hash.
+    const createPayload = await page.locator('form').filter({ has: page.locator('#new_company') }).evaluate(form => Object.fromEntries(new FormData(form).entries()));
     await navigate(page, page.locator('form').filter({ has: page.locator('#new_company') }).locator('button[type=submit]'));
     const customer = sql("SELECT userid FROM tblclients WHERE company='Synthetic private B <script>'");
     assert.match(customer, /^[1-9]\d*$/);
     const currentFields = await formFields(page.locator('form').filter({ has: page.locator('#new_company') }));
-    const retried = await context.request.post(url + '/admin/company_clients', { form: { ...createFields, ...currentFields, request_key: createFields.request_key, 'client[company]': 'Synthetic private B <script>' } });
+    const retried = await context.request.post(url + '/admin/company_clients', { form: { ...createPayload, ...currentFields, request_key: createFields.request_key } });
     assert.equal(retried.status(), 200);
     assert.equal(sql("SELECT COUNT(*) FROM tblclients WHERE company='Synthetic private B <script>'"), '1');
     assert.equal(await page.locator('section script').count(), 0, 'customer text escaped');

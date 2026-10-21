@@ -138,7 +138,11 @@ final class CompanyClients
             $this->conflict($tax,$client);
             IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'clients SET company=?,vat=? WHERE userid=?',[$name,$tax,$client]);
             IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'issuers_clients SET tax_id=? WHERE client_id=? AND owner_issuer_id=?',[$tax,$client,$issuer]);
-            if($profile!==null)(new CompanyClientProfile($this->db,$this->prefix))->write($issuer,$actor,$client,$profile);
+            // Omission preserves existing extras, but must still validate them against the new VAT.
+            // Do not create a profile (or require its schema) for pre-extension callers.
+            if($profile!==null||(CompanyClientProfileSchema::ready($this->db,$this->prefix)&&$this->rows('SELECT client_id FROM '.$this->prefix.'company_client_profiles WHERE issuer_id=? AND client_id=?',[$issuer,$client]))) {
+                (new CompanyClientProfile($this->db,$this->prefix))->write($issuer,$actor,$client,$profile??[],'edit');
+            }
             $this->confirm($issuer,$client,$name,$tax);
             $this->audit($actor,$issuer,$client,'company_client_updated');
             $this->authorize($issuer,$actor,'edit');

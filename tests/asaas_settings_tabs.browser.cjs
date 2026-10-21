@@ -20,7 +20,23 @@ const {html} = require('./support/AsaasSettingsFixture.cjs');
       const page = await context.newPage();
       page.on('pageerror', error => errors.push(error.message));
       await page.setContent(html('prepareFixture("1","1",true);'), {waitUntil: 'load'});
+      check(await page.evaluate(() => typeof window.Waypoint === 'function' && typeof window.delay === 'function'), 'native horizontal tab dependencies are loaded');
       await page.locator('#gateway-tab').click();
+      check(await page.locator('#online_payments_asaas_tab').evaluate(pane => {
+        const link = pane.querySelector('[data-asaas-webhook-admin-url]');
+        const tabs = pane.querySelector('.horizontal-scrollable-tabs');
+        return link.getBoundingClientRect().bottom <= tabs.getBoundingClientRect().top;
+      }), 'native gateway separator keeps tabs below the management link');
+      if (width === 390) {
+        const scrollable = page.locator('#online_payments_asaas_tab .nav-tabs-horizontal');
+        check(await scrollable.evaluate(el => el.scrollWidth > el.clientWidth), 'mobile tabs exercise native overflow');
+        await page.locator('#online_payments_asaas_tab .arrow-right').click();
+        await page.waitForFunction(() => document.querySelector('#online_payments_asaas_tab .nav-tabs-horizontal').scrollLeft > 0, null, {timeout: 5000});
+        check(await scrollable.evaluate(el => el.scrollLeft > 0), 'native right arrow scrolls overflowing tabs');
+        await page.locator('#online_payments_asaas_tab .arrow-left').click();
+        await page.waitForFunction(() => document.querySelector('#online_payments_asaas_tab .nav-tabs-horizontal').scrollLeft === 0, null, {timeout: 5000});
+        check(await scrollable.evaluate(el => el.scrollLeft === 0), 'native left arrow returns to first tab');
+      }
       const initial = await page.locator('#settings-form').evaluate(form => Array.from(new FormData(form).entries()));
       const order = ['authentication', 'security', 'payments', 'webhook', 'resources', 'diagnostics'];
       check(await page.locator('#online_payments_asaas_tab ul.nav-tabs > li > a[data-toggle="tab"]').count() === 6, 'six native tabs');

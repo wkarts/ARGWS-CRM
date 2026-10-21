@@ -260,15 +260,25 @@ class Clients_model extends App_Model
         $custom_fields                 = Arr::pull($data, 'custom_fields') ?? [];
         $groups_in                     = Arr::pull($data, 'groups_in') ?? false;
 
-        $updateClient=function()use($id,$data,$custom_fields,$brazilProfile){
+        // Native API/import requests may omit the private extension and have no company context.
+        // Validate an existing profile only when VAT is supplied; never hydrate it into the response.
+        $validatePersistedProfile=false;
+        if($brazilProfile===null&&array_key_exists('vat',$data)){
+            require_once APPPATH.'services/CompanyClientProfile.php';
+            $validatePersistedProfile=CompanyClientProfileSchema::ready($this->db,db_prefix());
+        }
+        $profileTransaction=$brazilProfile!==null||$validatePersistedProfile;
+        $updateClient=function()use($id,$data,$custom_fields,$brazilProfile,$validatePersistedProfile,$profileTransaction){
+            if($profileTransaction&&!ClientIssuerScope::isLegacyClient($this->db,db_prefix(),$id))throw new DomainException('company_client_access_denied');
             $changed=handle_custom_fields_post($id,$custom_fields);
             $this->db->where('userid',$id);$saved=$this->db->update(db_prefix().'clients',$data);
-            if($brazilProfile!==null&&$saved===false)throw new RuntimeException('client_profile_write_failed');
+            if($profileTransaction&&$saved===false)throw new RuntimeException('client_profile_write_failed');
             $changed=$this->db->affected_rows()>0||$changed;
             if($brazilProfile!==null){$this->writeBrazilProfile((int)$id,$brazilProfile,'edit');$changed=true;}
+            elseif($validatePersistedProfile){(new CompanyClientProfile($this->db,db_prefix()))->assertPersistedTaxCompatible((int)$id);}
             return $changed;
         };
-        $updated=$brazilProfile===null?$updateClient():$this->brazilProfileTransaction($updateClient,$custom_fields?['customfieldsvalues']:[]);
+        $updated=$profileTransaction?$this->brazilProfileTransaction($updateClient,$custom_fields?['customfieldsvalues']:[]):$updateClient();
 
         if ($update_all_other_transactions || $update_credit_notes) {
             $transactions_update = [

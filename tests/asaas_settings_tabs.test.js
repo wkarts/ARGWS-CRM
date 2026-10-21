@@ -17,10 +17,18 @@ assert.equal(policy.sectionFor('profile_sandbox_debug'), 'diagnostics');
 assert.equal(policy.sectionFor('profile_production_active'), 'authentication');
 assert.deepEqual(policy.settingParts('profile_sandbox_description'), {environment:'sandbox',key:'description'});
 assert.deepEqual(policy.settingParts('profile_untrusted_description'), {environment:null,key:'profile_untrusted_description'});
-console.log('Asaas settings JS policy: 16 checks passed');
+const fixtureHtml = require('./support/AsaasSettingsFixture.cjs').html;
+const dependencyFixture = fixtureHtml('');
+const dependencySource = name => fs.readFileSync(path.join(__dirname, '..', name), 'utf8').replace(/<\/script/gi, '<\\/script');
+const waypointOffset = dependencyFixture.indexOf(dependencySource('assets/plugins/waypoint/jquery.waypoints.min.js'));
+const scrollableOffset = dependencyFixture.indexOf(dependencySource('assets/plugins/internal/bootstrap-nav-tabs-scrollable/bootstrap-nav-tab-scrollable.js'));
+assert.ok(waypointOffset >= 0 && scrollableOffset > waypointOffset, 'native Waypoint is loaded before horizontalTabs');
+const nativeDelay = fs.readFileSync(path.join(__dirname, '../assets/js/app.js'), 'utf8').match(/var delay = \(function \(\) \{[\s\S]*?\n\}\)\(\);/);
+assert.ok(nativeDelay && dependencyFixture.includes(nativeDelay[0]), 'native delay callback dependency is included');
+assert.ok(dependencyFixture.indexOf(nativeDelay[0]) < dependencyFixture.indexOf('window.bindNativeSettings'), 'delay exists before horizontal tabs can initialize');
+console.log('Asaas settings JS policy/fixture: 19 checks passed');
 if (!process.env.CHROMIUM_BIN) { console.log('DOM smoke skipped: set CHROMIUM_BIN to a Chromium executable.'); process.exit(0); }
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'asaas-tabs-'));
-const fixtureHtml = require('./support/AsaasSettingsFixture.cjs').html;
 const tests = `
 let checks = 0;
 function check(ok, name) { checks++; if (!ok) throw new Error(name); }
