@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "4cb0af1c1983c42a2ff70fa5cb16839a673e5c9b52dfa39f33cef0ad8af4b90b",
+    "source_manifest_sha256": "8425643548a89c48697f453bdaa70fd8617b4a81363d5e17156fb7c28f9b0549",
     "counts": {
         "modules": 38,
-        "source_files": 4156,
+        "source_files": 4157,
         "literal_option_keys": 684,
         "dynamic_option_references": 145,
         "controllers": 253,
