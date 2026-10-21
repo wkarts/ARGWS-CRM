@@ -6,7 +6,24 @@ require_once __DIR__.'/CompanyApiSchema.php';require_once __DIR__.'/CompanyRepor
 /** Independent company API credentials. Never consumes a legacy module API token. */
 final class CompanyApiTokens
 {
-    public const SCOPES=['projects:copies:read'=>[['projects','view'],['projects','create'],['customers','view']],'projects:copies:write'=>[['projects','view'],['projects','create'],['customers','view']],'invoices:read'=>[['invoices','view']],'invoices:pdf'=>[['invoices','view']],'invoices:create'=>[['invoices','view'],['invoices','create'],['customers','view']],'reports:read'=>CompanyReports::CAPABILITIES,'projects:read'=>[['projects','view']],'projects:write'=>[['projects','view'],['projects','create'],['projects','edit'],['customers','view']],'tasks:read'=>[['tasks','view']],'tasks:write'=>[['tasks','view'],['tasks','create'],['tasks','edit']],'contracts:read'=>[['contracts','view']],'contracts:write'=>[['contracts','view'],['contracts','create'],['contracts','edit'],['customers','view']],'tickets:read'=>[['tickets','view']],'tickets:write'=>[['tickets','view'],['tickets','create'],['tickets','edit'],['customers','view']],
+    public const SCOPES=[
+        'hr:read'=>[['hr','view']],
+        'hr:write'=>[['hr','view'],['hr','create'],['hr','edit']],
+        'hr:configure'=>[['hr','view'],['hr','configure']],
+        'hr:sensitive:read'=>[['hr','view'],['hr_sensitive','view']],
+        'hr:sensitive:write'=>[['hr','view'],['hr_sensitive','view'],['hr_sensitive','edit']],
+        'hr:sensitive:approve'=>[['hr','view'],['hr_sensitive','view'],['hr_sensitive','approve']],
+        'hr:contracts:read'=>[['hr','view'],['hr_contracts','view'],['hr_sensitive','view']],
+        'hr:contracts:write'=>[['hr','view'],['hr_contracts','view'],['hr_contracts','create'],['hr_contracts','edit'],['hr_sensitive','view']],
+        'hr:training:read'=>[['hr','view'],['hr_training','view']],
+        'hr:training:write'=>[['hr','view'],['hr_training','view'],['hr_training','configure']],
+        'hr:training:assign'=>[['hr','view'],['hr_training','assign']],
+        'hr:files:read'=>[['hr','view'],['hr_files','view']],
+        'hr:files:write'=>[['hr','view'],['hr_files','view'],['hr_files','create'],['hr_files','delete']],
+        'hr:access:manage'=>[['hr','view'],['hr_portal','manage']],
+        'hr:import'=>[['hr','view'],['hr','import'],['hr','create']],
+        'hr:reports'=>[['hr','view'],['hr_reports','view'],['hr','export']],
+'projects:copies:read'=>[['projects','view'],['projects','create'],['customers','view']],'projects:copies:write'=>[['projects','view'],['projects','create'],['customers','view']],'invoices:read'=>[['invoices','view']],'invoices:pdf'=>[['invoices','view']],'invoices:create'=>[['invoices','view'],['invoices','create'],['customers','view']],'reports:read'=>CompanyReports::CAPABILITIES,'projects:read'=>[['projects','view']],'projects:write'=>[['projects','view'],['projects','create'],['projects','edit'],['customers','view']],'tasks:read'=>[['tasks','view']],'tasks:write'=>[['tasks','view'],['tasks','create'],['tasks','edit']],'contracts:read'=>[['contracts','view']],'contracts:write'=>[['contracts','view'],['contracts','create'],['contracts','edit'],['customers','view']],'tickets:read'=>[['tickets','view']],'tickets:write'=>[['tickets','view'],['tickets','create'],['tickets','edit'],['customers','view']],
         'projects:files:read'=>[['projects','view']],
         'projects:files:write'=>[['projects','view'],['projects','edit']],
         'tasks:files:read'=>[['tasks','view'],['projects','view']],

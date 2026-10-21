@@ -1,0 +1,3365 @@
+{
+  "schema": 1,
+  "basis": "Repository sources present at published453 base plus additive RH candidate; no production module activation is inferred",
+  "scope": "Action inventory, not a claim of multi-company completion of legacy modules",
+  "modules": {
+    "hr_profile": {
+      "version": "1.0.9",
+      "entry_path": "modules/hr_profile/hr_profile.php",
+      "entry_sha256": "34eb83aaefc3d25a87c4cb323368ffcee0078d0632e267110bb3d6646c7af039",
+      "native_module_migrations_present": [
+        "modules/hr_profile/migrations/101_version_101.php",
+        "modules/hr_profile/migrations/102_version_102.php",
+        "modules/hr_profile/migrations/103_version_103.php",
+        "modules/hr_profile/migrations/104_version_104.php",
+        "modules/hr_profile/migrations/105_version_105.php",
+        "modules/hr_profile/migrations/106_version_106.php",
+        "modules/hr_profile/migrations/107_version_107.php",
+        "modules/hr_profile/migrations/108_version_108.php",
+        "modules/hr_profile/migrations/109_version_109.php"
+      ],
+      "controllers": [
+        {
+          "path": "modules/hr_profile/controllers/Gtsverify.php",
+          "sha256": "35011798061e6b86ee27e04e74ac09cf190d1b2c848eb25143c7f0a8ce9b1186",
+          "class": "Gtsverify",
+          "base_class": "AdminController",
+          "methods": [
+            {
+              "name": "__construct",
+              "line": 7,
+              "kind": "constructor/framework",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            }
+          ]
+        },
+        {
+          "path": "modules/hr_profile/controllers/Hr_profile.php",
+          "sha256": "a2919b087d342e3045a2f5b92435246934ce74083af3bbdaa2ef660b4159d58f",
+          "class": "Hr_profile",
+          "base_class": "AdminController",
+          "methods": [
+            {
+              "name": "__construct",
+              "line": 11,
+              "kind": "constructor/framework",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "dashboard",
+              "line": 20,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "organizational_chart",
+              "line": 34,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_data_department",
+              "line": 71,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete",
+              "line": 81,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "department",
+              "line": 97,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "email_exists",
+              "line": 140,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "test_imap_connection",
+              "line": 165,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "reception_staff",
+              "line": 211,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_reception_staff",
+              "line": 240,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "setting",
+              "line": 250,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "contract_type",
+              "line": 329,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_contract_type",
+              "line": 368,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "allowance_type",
+              "line": 386,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_allowance_type",
+              "line": 421,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "insurance_type",
+              "line": 438,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_insurance_type",
+              "line": 465,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "insurance_conditions_setting",
+              "line": 482,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "salary_form",
+              "line": 496,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_salary_form",
+              "line": 533,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_procedure_retire",
+              "line": 556,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_procedure_form_manage",
+              "line": 563,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_procedure_form_manage",
+              "line": 595,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "procedure_procedure_retire_details",
+              "line": 626,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "procedure_form",
+              "line": 641,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_procedure_retire",
+              "line": 658,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "edit_procedure_retire",
+              "line": 674,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "edit_procedure_form",
+              "line": 699,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "training",
+              "line": 719,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "position_training",
+              "line": 751,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_training_question",
+              "line": 800,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "update_training_question",
+              "line": 822,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "update_training_questions_orders",
+              "line": 838,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "remove_question",
+              "line": 848,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "remove_box_description",
+              "line": 864,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_box_description",
+              "line": 880,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "update_training_question_answer",
+              "line": 896,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_training_type_child",
+              "line": 916,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "job_position_training_add_edit",
+              "line": 930,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_jobposition_fill_data",
+              "line": 991,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "job_position_manage",
+              "line": 1009,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_job",
+              "line": 1024,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "job_p",
+              "line": 1032,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_job_p_edit",
+              "line": 1072,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_job_p",
+              "line": 1092,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_job_p",
+              "line": 1112,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_job_p_excel",
+              "line": 1139,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "job_positions",
+              "line": 1302,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "job_position",
+              "line": 1320,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_job_position",
+              "line": 1393,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "job_position_delete_tag_item",
+              "line": 1402,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "preview_job_position_file",
+              "line": 1425,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_hr_profile_job_position_attachment_file",
+              "line": 1436,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "job_position_view_edit",
+              "line": 1452,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_list_job_position_tags_file",
+              "line": 1493,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_position_by_department",
+              "line": 1530,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_job_position",
+              "line": 1548,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_staff_salary_form",
+              "line": 1568,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_staff_allowance_type",
+              "line": 1587,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "job_position_salary_add_edit",
+              "line": 1605,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "save_setting_reception_staff",
+              "line": 1630,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_new_reception",
+              "line": 1648,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "send_training_staff",
+              "line": 1713,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_percent_complete",
+              "line": 1752,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_mark_staff",
+              "line": 1854,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_reception",
+              "line": 1948,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_reception",
+              "line": 1967,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "change_status_checklist",
+              "line": 2049,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_new_asset",
+              "line": 2064,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "change_status_allocation_asset",
+              "line": 2101,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_asset",
+              "line": 2118,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "staff_infor",
+              "line": 2159,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table",
+              "line": 2191,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "importxlsx",
+              "line": 2199,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_employees_excel",
+              "line": 2221,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "importxlsx2",
+              "line": 2813,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_staff",
+              "line": 3238,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "member",
+              "line": 3257,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_education_position",
+              "line": 3493,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_education",
+              "line": 3500,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "save_update_education",
+              "line": 3508,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_education",
+              "line": 3556,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_reception",
+              "line": 3578,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "general_bonus",
+              "line": 3588,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "general_discipline",
+              "line": 3663,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "records_received",
+              "line": 3737,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "upload_file",
+              "line": 3762,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "hr_profile_file",
+              "line": 3824,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_hr_profile_staff_attachment",
+              "line": 3840,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "update_staff_permission",
+              "line": 3865,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "update_staff_profile",
+              "line": 3883,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_update_staff_bonus_discipline",
+              "line": 3920,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "file_view_bonus_discipline",
+              "line": 3934,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "workplace",
+              "line": 3949,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_workplace",
+              "line": 3992,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "hr_profile_permission_table",
+              "line": 4007,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "permission_modal",
+              "line": 4076,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "hr_profile_update_permissions",
+              "line": 4113,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "staff_id_changed",
+              "line": 4183,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_hr_profile_permission",
+              "line": 4217,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "zen_unit_chart",
+              "line": 4240,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_list_job_position_training",
+              "line": 4288,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_job_position_training_process",
+              "line": 4309,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_position_training",
+              "line": 4331,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_contract",
+              "line": 4351,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "contracts",
+              "line": 4360,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "contract",
+              "line": 4397,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_contract",
+              "line": 4542,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "contract_code_exists",
+              "line": 4567,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_hrm_contract_data_ajax",
+              "line": 4598,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_staff_role",
+              "line": 4641,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_contract_type",
+              "line": 4662,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "prefix_number",
+              "line": 4676,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_code",
+              "line": 4699,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_job_position",
+              "line": 4714,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "dependent_person",
+              "line": 4742,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_dependent_person",
+              "line": 4795,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "dependent_persons",
+              "line": 4814,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "approval_status",
+              "line": 4830,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_dependent_person",
+              "line": 4857,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_xlsx_dependent_person",
+              "line": 4865,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_file_xlsx_dependent_person",
+              "line": 4893,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "admin_delete_dependent_person",
+              "line": 5129,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_error_file_day_before",
+              "line": 5148,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "dependent_person_modal",
+              "line": 5191,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "resignation_procedures",
+              "line": 5221,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_resignation_procedure",
+              "line": 5235,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_resignation_procedure",
+              "line": 5255,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_resignation_procedures",
+              "line": 5273,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_staff_info_of_resignation_procedures",
+              "line": 5282,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_procedures_for_quitting_work",
+              "line": 5331,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "set_data_detail_staff_checklist_quit_work",
+              "line": 5348,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "update_status_quit_work",
+              "line": 5419,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "update_status_option_name",
+              "line": 5442,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "preview_q_a_file",
+              "line": 5466,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_hr_profile_q_a_attachment_file",
+              "line": 5482,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_salary_allowance_value",
+              "line": 5498,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "hrm_file_contract",
+              "line": 5542,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_hrm_contract_attachment_file",
+              "line": 5558,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "member_modal",
+              "line": 5573,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "new_member",
+              "line": 5622,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_edit_member",
+              "line": 5652,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "change_staff_status",
+              "line": 5737,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "hr_code_exists",
+              "line": 5749,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "view_contract_modal",
+              "line": 5779,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "reports",
+              "line": 5799,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "report_by_leave_statistics",
+              "line": 5818,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "report_by_working_hours",
+              "line": 5826,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "report_the_employee_quitting",
+              "line": 5834,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "list_of_employees_with_salary_change",
+              "line": 5980,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_base_currency_name",
+              "line": 6136,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_chart_senior_staff",
+              "line": 6152,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "HR_is_working",
+              "line": 6295,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "qualification_department",
+              "line": 6355,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "report_by_staffs",
+              "line": 6507,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_job_position_excel",
+              "line": 6515,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "hrm_delete_bulk_action",
+              "line": 6714,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "hrm_delete_bulk_action_v2",
+              "line": 6909,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_dependent_person_excel",
+              "line": 7013,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "reset_data",
+              "line": 7255,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_training_program",
+              "line": 7336,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_training_result",
+              "line": 7344,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "training_libraries_table",
+              "line": 7352,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "type_of_training",
+              "line": 7361,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_type_of_training",
+              "line": 7399,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_training_program_by_type",
+              "line": 7423,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "view_training_program",
+              "line": 7449,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "hr_role_changed",
+              "line": 7482,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "create_staff_sample_file",
+              "line": 7490,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "view_pdf",
+              "line": 7717,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "save_hr_contract_data",
+              "line": 7726,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "hr_clear_signature",
+              "line": 7758,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "contract_pdf",
+              "line": 7771,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "contract_sign",
+              "line": 7806,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "contract_template",
+              "line": 7856,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_contract_template_",
+              "line": 7923,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "preview_training_program_file",
+              "line": 7944,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_training_program_attachment_file",
+              "line": 7960,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            }
+          ]
+        },
+        {
+          "path": "modules/hr_profile/controllers/Knowledge_base_q_a.php",
+          "sha256": "47afcda8aea7823dc2d94e6ca222d09d5155271515f6b4d3ce145af95e360983",
+          "class": "Knowledge_base_q_a",
+          "base_class": "AdminController",
+          "methods": [
+            {
+              "name": "__construct",
+              "line": 7,
+              "kind": "constructor/framework",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "index",
+              "line": 15,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "article",
+              "line": 31,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "view",
+              "line": 91,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_kb_answer",
+              "line": 117,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "change_article_status",
+              "line": 127,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "update_kan_ban",
+              "line": 141,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "change_group_color",
+              "line": 164,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_article",
+              "line": 174,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "manage_groups",
+              "line": 192,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "group",
+              "line": 203,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "change_group_status",
+              "line": 245,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "update_groups_order",
+              "line": 259,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_group",
+              "line": 269,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_article_by_id_ajax",
+              "line": 294,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "send_mail_support",
+              "line": 306,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            }
+          ]
+        },
+        {
+          "path": "modules/hr_profile/controllers/Participate.php",
+          "sha256": "fd03cecf3c115e31c293e17cef9b964b6e238ad67451db9dd72ceb7d62086a48",
+          "class": "Participate",
+          "base_class": "ClientsController",
+          "methods": [
+            {
+              "name": "index",
+              "line": 12,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "view_staff_training_result",
+              "line": 49,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            }
+          ]
+        },
+        {
+          "path": "modules/hr_profile/controllers/index.php",
+          "sha256": "0ee6dff170c38f66cc1e9ef00cfb927bba75b30379af3281c026647c068a4709",
+          "class": null,
+          "base_class": null,
+          "methods": []
+        }
+      ],
+      "public_method_count": 197,
+      "hooks": [
+        {
+          "line": 29,
+          "declaration": "hooks()->add_filter('other_merge_fields_available_for', 'hr_contract_register_other_merge_fields');"
+        },
+        {
+          "line": 31,
+          "declaration": "hooks()->add_action('admin_init', 'hr_profile_permissions');"
+        },
+        {
+          "line": 32,
+          "declaration": "hooks()->add_action('app_admin_head', 'hr_profile_add_head_components');"
+        },
+        {
+          "line": 33,
+          "declaration": "hooks()->add_action('app_admin_footer', 'hr_profile_load_js');"
+        },
+        {
+          "line": 34,
+          "declaration": "hooks()->add_action('app_search', 'hr_profile_load_search');"
+        },
+        {
+          "line": 35,
+          "declaration": "hooks()->add_action('admin_init', 'hr_profile_module_init_menu_items');"
+        },
+        {
+          "line": 37,
+          "declaration": "hooks()->add_action('admin_navbar_start', 'render_my_profile_icon');"
+        },
+        {
+          "line": 43,
+          "declaration": "register_activation_hook(HR_PROFILE_MODULE_NAME, 'hr_profile_module_activation_hook');"
+        }
+      ]
+    },
+    "timesheets": {
+      "version": "1.2.0",
+      "entry_path": "modules/timesheets/timesheets.php",
+      "entry_sha256": "327c9f5febf4549aef823c9c96e6a2595297a3a4c23f637ae909926096608526",
+      "native_module_migrations_present": [
+        "modules/timesheets/migrations/101_version_101.php",
+        "modules/timesheets/migrations/102_version_102.php",
+        "modules/timesheets/migrations/103_version_103.php",
+        "modules/timesheets/migrations/104_version_104.php",
+        "modules/timesheets/migrations/105_version_105.php",
+        "modules/timesheets/migrations/106_version_106.php",
+        "modules/timesheets/migrations/107_version_107.php",
+        "modules/timesheets/migrations/108_version_108.php",
+        "modules/timesheets/migrations/109_version_109.php",
+        "modules/timesheets/migrations/110_version_110.php",
+        "modules/timesheets/migrations/111_version_111.php",
+        "modules/timesheets/migrations/112_version_112.php",
+        "modules/timesheets/migrations/113_version_113.php",
+        "modules/timesheets/migrations/114_version_114.php",
+        "modules/timesheets/migrations/115_version_115.php",
+        "modules/timesheets/migrations/116_version_116.php",
+        "modules/timesheets/migrations/117_version_117.php",
+        "modules/timesheets/migrations/118_version_118.php",
+        "modules/timesheets/migrations/119_version_119.php",
+        "modules/timesheets/migrations/120_version_120.php"
+      ],
+      "controllers": [
+        {
+          "path": "modules/timesheets/controllers/API_timesheets_Controller.php",
+          "sha256": "95e2612a8dfbf8e75a6022f4375fa6f6f6fb8e1fdc633905242c933cc15d0930",
+          "class": "API_timesheets_Controller",
+          "base_class": "CI_Controller",
+          "methods": [
+            {
+              "name": "__construct",
+              "line": 389,
+              "kind": "constructor/framework",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "__destruct",
+              "line": 625,
+              "kind": "constructor/framework",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "_remap",
+              "line": 669,
+              "kind": "constructor/framework",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "response",
+              "line": 821,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "set_response",
+              "line": 910,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get",
+              "line": 1638,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "options",
+              "line": 1657,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "head",
+              "line": 1676,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "post",
+              "line": 1695,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "put",
+              "line": 1714,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete",
+              "line": 1733,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "patch",
+              "line": 1752,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "query",
+              "line": 1771,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "validation_errors",
+              "line": 1803,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            }
+          ]
+        },
+        {
+          "path": "modules/timesheets/controllers/Api_timesheets.php",
+          "sha256": "d96741fd6d16c0546b094139cc38e5c928a3c4992612b2a0a1e8072ec47cf2ed",
+          "class": "Api_timesheets",
+          "base_class": "API_timesheets_Controller",
+          "methods": [
+            {
+              "name": "login_post",
+              "line": 44,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "logout_post",
+              "line": 104,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "check_in_out_post",
+              "line": 179,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_leave_application_post",
+              "line": 336,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "staff_get",
+              "line": 595,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "type_of_leave_custom_get",
+              "line": 680,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "calculate_number_days_off_post",
+              "line": 756,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_date_leave_post",
+              "line": 831,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_history_check_in_out_post",
+              "line": 945,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_timesheets_option_get",
+              "line": 995,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_route_point_check_in_out_post",
+              "line": 1075,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "server_time_get",
+              "line": 1144,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            }
+          ]
+        },
+        {
+          "path": "modules/timesheets/controllers/Gtsverify.php",
+          "sha256": "35011798061e6b86ee27e04e74ac09cf190d1b2c848eb25143c7f0a8ce9b1186",
+          "class": "Gtsverify",
+          "base_class": "AdminController",
+          "methods": [
+            {
+              "name": "__construct",
+              "line": 7,
+              "kind": "constructor/framework",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            }
+          ]
+        },
+        {
+          "path": "modules/timesheets/controllers/Login.php",
+          "sha256": "cb79e598861be3247cf9a9cd5d764a6e2e3d473b188ec6c231b88b0378cd8411",
+          "class": "Login",
+          "base_class": "API_Controller",
+          "methods": [
+            {
+              "name": "__construct",
+              "line": 5,
+              "kind": "constructor/framework",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "login_api",
+              "line": 9,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "view",
+              "line": 49,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "api_key",
+              "line": 70,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            }
+          ]
+        },
+        {
+          "path": "modules/timesheets/controllers/Timesheets.php",
+          "sha256": "c21fba64f49dfe0c558eb253d55ea86d5056b2ca8ce0f1a90e637f0ea06aa2f2",
+          "class": "timesheets",
+          "base_class": "AdminController",
+          "methods": [
+            {
+              "name": "__construct",
+              "line": 8,
+              "kind": "constructor/framework",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "index",
+              "line": 19,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "setting",
+              "line": 33,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "leave",
+              "line": 134,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_leave",
+              "line": 151,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "timesheets_file",
+              "line": 162,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_staff_role",
+              "line": 177,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "timekeeping",
+              "line": 196,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "day_off",
+              "line": 253,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_day_off",
+              "line": 279,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "shifts",
+              "line": 296,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_data_edit_shift",
+              "line": 320,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_shift",
+              "line": 353,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "manage_timesheets",
+              "line": 370,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "approval_status",
+              "line": 477,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "reload_timesheets_byfilter",
+              "line": 504,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_requisition_ajax",
+              "line": 665,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_registration_leave",
+              "line": 796,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_additional_timesheets",
+              "line": 804,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_request_leave_data_ajax",
+              "line": 812,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "requisition_detail",
+              "line": 821,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_requisition",
+              "line": 896,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "infor_staff",
+              "line": 913,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "approve_request_leave",
+              "line": 931,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "file",
+              "line": 949,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "requisition_manage",
+              "line": 964,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "automatic_timekeeping",
+              "line": 1001,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "setting_timekeeper",
+              "line": 1021,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "edit_timesheets",
+              "line": 1036,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "send_additional_timesheets",
+              "line": 1051,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "approve_additional_timesheets",
+              "line": 1082,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "show_detail_timesheets",
+              "line": 1150,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "approval_process",
+              "line": 1333,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_approval_process",
+              "line": 1357,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_html_approval_setting",
+              "line": 1368,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "new_approval_setting",
+              "line": 1504,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "edit_approval_setting",
+              "line": 1520,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_approval_setting",
+              "line": 1537,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "send_request_approve",
+              "line": 1556,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "send_request_approve_requisition",
+              "line": 1612,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "approve_request",
+              "line": 1638,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "send_mail",
+              "line": 1709,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "choose_approver",
+              "line": 1726,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_data_additional_timesheets",
+              "line": 1754,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "reports",
+              "line": 1952,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "report_by_leave_statistics",
+              "line": 1975,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "report_by_working_hours",
+              "line": 1983,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "HR_is_working",
+              "line": 1990,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "file_view_requisition",
+              "line": 2044,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "leave_reports",
+              "line": 2058,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "general_summation",
+              "line": 2177,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "general_public_report",
+              "line": 2204,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "timesheets_delete_bulk_action",
+              "line": 2443,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_rest_time",
+              "line": 2505,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_additional_timesheets",
+              "line": 2516,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_shiftwork",
+              "line": 2532,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "reload_shift_work_byfilter",
+              "line": 2604,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "show_detail_timesheets_mem",
+              "line": 2748,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "calculate_number_days_off",
+              "line": 2932,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_registration_leave_by_staff",
+              "line": 2958,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_data_date_leave",
+              "line": 2967,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "shifts_sc",
+              "line": 2985,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_shift_sc",
+              "line": 3013,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "setting_shift",
+              "line": 3030,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "shiftwork_sc",
+              "line": 3046,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "reload_shiftwork_sc_byfilter",
+              "line": 3060,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "cancel_request",
+              "line": 3201,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_allocate_shiftwork",
+              "line": 3222,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_date_leave",
+              "line": 3383,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_shift_type",
+              "line": 3430,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "manage_shift_type",
+              "line": 3484,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "shift_management",
+              "line": 3511,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "set_col_tk",
+              "line": 3519,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_allocation_shiftwork",
+              "line": 3671,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_shift_type",
+              "line": 3747,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "check_in_ts",
+              "line": 3949,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_leave_setting",
+              "line": 3994,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "requisition_report",
+              "line": 4046,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_timesheets",
+              "line": 4222,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "set_leave",
+              "line": 4271,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "send_notifi_handover_recipients",
+              "line": 4294,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "send_notification_recipient",
+              "line": 4312,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_timesheets_attachment_file",
+              "line": 4331,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "reload_shiftwork_byfilter",
+              "line": 4342,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "advance_payment_update",
+              "line": 4436,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_expense_category",
+              "line": 4469,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "default_settings",
+              "line": 4489,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_data_attendance",
+              "line": 4503,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "workplace_mgt",
+              "line": 4541,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_workplace",
+              "line": 4565,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_workplace",
+              "line": 4588,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_workplace_assign",
+              "line": 4603,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_workplace_assign",
+              "line": 4621,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_workplace_assign",
+              "line": 4637,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "timekeeping_data",
+              "line": 4644,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "timesheets_task_by_staff",
+              "line": 5042,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_layout_timesheets",
+              "line": 5069,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "route_management",
+              "line": 5100,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_route_map_data",
+              "line": 5178,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_route_point",
+              "line": 5246,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_route_point",
+              "line": 5276,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_route_point",
+              "line": 5283,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_route",
+              "line": 5296,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_route",
+              "line": 5302,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_new_root",
+              "line": 5319,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_ui_create_root",
+              "line": 5353,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_coordinate",
+              "line": 5427,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_data_relate",
+              "line": 5437,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_data_map",
+              "line": 5471,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_route_point_combobox",
+              "line": 5566,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "check_route_point_name",
+              "line": 5614,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_default_lat_long",
+              "line": 5636,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_check_in_out_history",
+              "line": 5654,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "export_attendance_excel",
+              "line": 5689,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "history_check_in_out_report",
+              "line": 5764,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "check_in_out_progress_according_to_the_route_report",
+              "line": 5975,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "report_of_leave",
+              "line": 6089,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "leave_by_department",
+              "line": 6096,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "ratio_check_in_out_by_workplace",
+              "line": 6103,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_header_report_check_in_out",
+              "line": 6110,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "check_in_out_progress_report",
+              "line": 6145,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_remain_day_of",
+              "line": 6263,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "calendar_leave_application",
+              "line": 6282,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_calendar_data",
+              "line": 6322,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "timesheet_permission_table",
+              "line": 6334,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "permission_modal",
+              "line": 6396,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "staff_id_changed",
+              "line": 6433,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "update_permissions",
+              "line": 6455,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_permission",
+              "line": 6514,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "reset_data",
+              "line": 6529,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_setting_annual_leave",
+              "line": 6580,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_type_of_leave",
+              "line": 6599,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_type_of_leave",
+              "line": 6689,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_holiday",
+              "line": 6703,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "set_valid_ip",
+              "line": 6809,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_setting_valid_ip",
+              "line": 6829,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_norms_of_leave_staff",
+              "line": 6848,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "api_document",
+              "line": 6888,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_staff_qr_code",
+              "line": 6898,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_scan_qr_code_content",
+              "line": 6930,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "checkin_from_qr_code",
+              "line": 6941,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            }
+          ]
+        }
+      ],
+      "public_method_count": 172,
+      "hooks": [
+        {
+          "line": 25,
+          "declaration": "hooks()->add_action('admin_init', 'timesheets_permissions');"
+        },
+        {
+          "line": 26,
+          "declaration": "hooks()->add_action('admin_init', 'timesheets_module_init_menu_items');"
+        },
+        {
+          "line": 27,
+          "declaration": "hooks()->add_action('app_admin_head', 'timesheets_add_head_components');"
+        },
+        {
+          "line": 28,
+          "declaration": "hooks()->add_action('app_admin_footer', 'timesheets_load_js');"
+        },
+        {
+          "line": 29,
+          "declaration": "hooks()->add_action('app_search', 'timesheets_load_search');"
+        },
+        {
+          "line": 30,
+          "declaration": "hooks()->add_action('before_cron_run', 'timesheets_cron_approval');"
+        },
+        {
+          "line": 31,
+          "declaration": "hooks()->add_action('before_cron_run', 'auto_checkout_cron');"
+        },
+        {
+          "line": 32,
+          "declaration": "hooks()->add_action('before_cron_run', 'auto_remider_checkin');"
+        },
+        {
+          "line": 33,
+          "declaration": "hooks()->add_action('before_cron_run', 'auto_notification_of_approval_expiration');"
+        },
+        {
+          "line": 34,
+          "declaration": "hooks()->add_action('admin_navbar_start', 'after_render_top_search_timesheets');"
+        },
+        {
+          "line": 46,
+          "declaration": "register_activation_hook(TIMESHEETS_MODULE_NAME, 'timesheets_module_activation_hook');"
+        }
+      ]
+    },
+    "hr_payroll": {
+      "version": "1.0.9",
+      "entry_path": "modules/hr_payroll/hr_payroll.php",
+      "entry_sha256": "2522bc30121f8cf5d1505b63cc23ce1cd0a0979609580ca876bf1042e43e0686",
+      "native_module_migrations_present": [
+        "modules/hr_payroll/migrations/101_version_101.php",
+        "modules/hr_payroll/migrations/102_version_102.php",
+        "modules/hr_payroll/migrations/103_version_103.php",
+        "modules/hr_payroll/migrations/104_version_104.php",
+        "modules/hr_payroll/migrations/105_version_105.php",
+        "modules/hr_payroll/migrations/106_version_106.php",
+        "modules/hr_payroll/migrations/107_version_107.php",
+        "modules/hr_payroll/migrations/108_version_108.php",
+        "modules/hr_payroll/migrations/109_version_109.php"
+      ],
+      "controllers": [
+        {
+          "path": "modules/hr_payroll/controllers/Gtsverify.php",
+          "sha256": "35011798061e6b86ee27e04e74ac09cf190d1b2c848eb25143c7f0a8ce9b1186",
+          "class": "Gtsverify",
+          "base_class": "AdminController",
+          "methods": [
+            {
+              "name": "__construct",
+              "line": 7,
+              "kind": "constructor/framework",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            }
+          ]
+        },
+        {
+          "path": "modules/hr_payroll/controllers/Hr_payroll.php",
+          "sha256": "89712afcbbc1f25e7efacda28bbe64fe35a5a6f2f51515d95ed6e53c2d58923f",
+          "class": "hr_payroll",
+          "base_class": "AdminController",
+          "methods": [
+            {
+              "name": "__construct",
+              "line": 10,
+              "kind": "constructor/framework",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "setting",
+              "line": 20,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "setting_incometax_rates",
+              "line": 251,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "setting_incometax_rebates",
+              "line": 276,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "setting_earnings_list",
+              "line": 301,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "setting_salary_deductions_list",
+              "line": 326,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "setting_insurance_list",
+              "line": 351,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "setting_company_contributions_list",
+              "line": 376,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "data_integration",
+              "line": 401,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "timesheet_integration_type_change",
+              "line": 424,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "setting_earnings_list_hr_records",
+              "line": 443,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "hr_payroll_permission_table",
+              "line": 467,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "permission_modal",
+              "line": 536,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "hr_payroll_update_permissions",
+              "line": 573,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "staff_id_changed",
+              "line": 643,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_hr_payroll_permission",
+              "line": 677,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "manage_employees",
+              "line": 699,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "employees_filter",
+              "line": 863,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_manage_employees",
+              "line": 1033,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "render_filter_query",
+              "line": 1069,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "manage_attendance",
+              "line": 1138,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_attendance",
+              "line": 1263,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_xlsx_employees",
+              "line": 1295,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "create_employees_sample_file",
+              "line": 1321,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_employees_excel",
+              "line": 1508,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "attendance_filter",
+              "line": 1659,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_xlsx_attendance",
+              "line": 1842,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "create_attendance_sample_file",
+              "line": 1864,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_attendance_excel",
+              "line": 2035,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "attendance_calculation",
+              "line": 2201,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "manage_deductions",
+              "line": 2218,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_manage_deductions",
+              "line": 2328,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "deductions_filter",
+              "line": 2358,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "manage_commissions",
+              "line": 2478,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_manage_commissions",
+              "line": 2581,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "commissions_filter",
+              "line": 2615,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_xlsx_commissions",
+              "line": 2728,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "create_commissions_sample_file",
+              "line": 2750,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "import_commissions_excel",
+              "line": 2895,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "income_taxs_manage",
+              "line": 3061,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "income_taxs_filter",
+              "line": 3167,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "manage_insurances",
+              "line": 3283,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_manage_insurances",
+              "line": 3392,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "insurances_filter",
+              "line": 3422,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_error_file_day_before",
+              "line": 3542,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip_manage",
+              "line": 3586,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip_table",
+              "line": 3608,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_payslip",
+              "line": 3617,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip_templates_manage",
+              "line": 3641,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip_template_table",
+              "line": 3663,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_payroll_column_method_html_add",
+              "line": 3671,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_payroll_column_function_name_html",
+              "line": 3686,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payroll_column",
+              "line": 3699,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_payroll_column",
+              "line": 3738,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_payroll_column_setting",
+              "line": 3768,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_payslip_template",
+              "line": 3792,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip_template",
+              "line": 3820,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_payslip_template",
+              "line": 3880,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "view_payslip_templates_detail",
+              "line": 3904,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "view_payslip_detail",
+              "line": 3962,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "view_payslip_detail_v2",
+              "line": 4029,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "manage_bonus",
+              "line": 4094,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_bonus_kpi",
+              "line": 4203,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "bonus_kpi_filter",
+              "line": 4229,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip",
+              "line": 4390,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip_closing",
+              "line": 4416,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip_update_status",
+              "line": 4463,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "table_staff_payslip",
+              "line": 4481,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "view_staff_payslip_modal",
+              "line": 4489,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "reports",
+              "line": 4540,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip_report",
+              "line": 4562,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "income_summary_report",
+              "line": 4709,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "insurance_cost_summary_report",
+              "line": 4973,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip_chart",
+              "line": 5116,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "department_payslip_chart",
+              "line": 5133,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip_template_checked",
+              "line": 5220,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip_checked",
+              "line": 5242,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "create_payslip_file",
+              "line": 5267,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "employees_copy",
+              "line": 5344,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "reset_data",
+              "line": 5371,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "employee_export_pdf",
+              "line": 5489,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip_manage_export_pdf",
+              "line": 5561,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "manage_attendance_timesheet_leaves",
+              "line": 5692,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "add_timesheets_leave",
+              "line": 5852,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "timesheets_leave_filter",
+              "line": 5886,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "timesheet_leave_calculation",
+              "line": 6099,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "payslip_pdf_template",
+              "line": 6118,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_payslip_pdf_template_",
+              "line": 6183,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "save_pdf_payslip_data",
+              "line": 6202,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_pdf_payslip_template",
+              "line": 6235,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "edit_payslip",
+              "line": 6295,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "new_employee_export_pdf",
+              "line": 6337,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "currency_rate_table",
+              "line": 6367,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "update_setting_currency_rate",
+              "line": 6374,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_all_currency_rate_online",
+              "line": 6387,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "update_currency_rate",
+              "line": 6404,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_currency_rate_online",
+              "line": 6426,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete_currency_rate",
+              "line": 6439,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "currency_rate_modal",
+              "line": 6456,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "currency_rate_logs_table",
+              "line": 6474,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "get_currency_rate",
+              "line": 6483,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            }
+          ]
+        }
+      ],
+      "public_method_count": 102,
+      "hooks": [
+        {
+          "line": 35,
+          "declaration": "hooks()->add_action('admin_init', 'hr_payroll_permissions');"
+        },
+        {
+          "line": 36,
+          "declaration": "hooks()->add_action('app_admin_head', 'hr_payroll_add_head_components');"
+        },
+        {
+          "line": 37,
+          "declaration": "hooks()->add_action('app_admin_footer', 'hr_payroll_load_js');"
+        },
+        {
+          "line": 38,
+          "declaration": "hooks()->add_action('admin_init', 'hr_payroll_module_init_menu_items');"
+        },
+        {
+          "line": 41,
+          "declaration": "hooks()->add_filter('hr_profile_tab_name', 'hr_payroll_add_tab_name', 10);"
+        },
+        {
+          "line": 42,
+          "declaration": "hooks()->add_filter('hr_profile_tab_content', 'hr_payroll_add_tab_content', 10);"
+        },
+        {
+          "line": 43,
+          "declaration": "hooks()->add_action('hr_profile_load_js_file', 'hr_payroll_load_js_file');"
+        },
+        {
+          "line": 46,
+          "declaration": "hooks()->add_filter('other_merge_fields_available_for', 'hrp_pdf_payslip_register_other_merge_fields');"
+        },
+        {
+          "line": 48,
+          "declaration": "hooks()->add_action('after_cron_run', 'hrp_cronjob_currency_rates');"
+        },
+        {
+          "line": 52,
+          "declaration": "register_activation_hook(HR_PAYROLL_MODULE_NAME, 'hr_payroll_module_activation_hook');"
+        }
+      ]
+    },
+    "goals": {
+      "version": "2.3.1",
+      "entry_path": "modules/goals/goals.php",
+      "entry_sha256": "fdbd2935df22bb5990bd333ac1006304aedb7b96c284e03a30d2c28fcf76aa50",
+      "native_module_migrations_present": [
+        "modules/goals/migrations/231_version_231.php"
+      ],
+      "controllers": [
+        {
+          "path": "modules/goals/controllers/Goals.php",
+          "sha256": "b3c35e8129b9bba04571ccd2a9bdb17c88802f300337b3b5b3f7fb2f5a5ea386",
+          "class": "Goals",
+          "base_class": "AdminController",
+          "methods": [
+            {
+              "name": "__construct",
+              "line": 7,
+              "kind": "constructor/framework",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "index",
+              "line": 14,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "goal",
+              "line": 27,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "delete",
+              "line": 73,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            },
+            {
+              "name": "notify",
+              "line": 90,
+              "kind": "public_surface",
+              "status": "legacy surface remains outside this additive native HR delivery"
+            }
+          ]
+        }
+      ],
+      "public_method_count": 5,
+      "hooks": [
+        {
+          "line": 14,
+          "declaration": "hooks()->add_action('after_cron_run', 'goals_notification');"
+        },
+        {
+          "line": 15,
+          "declaration": "hooks()->add_action('admin_init', 'goals_module_init_menu_items');"
+        },
+        {
+          "line": 16,
+          "declaration": "hooks()->add_action('staff_member_deleted', 'goals_staff_member_deleted');"
+        },
+        {
+          "line": 17,
+          "declaration": "hooks()->add_action('admin_init', 'goals_permissions');"
+        },
+        {
+          "line": 19,
+          "declaration": "hooks()->add_filter('migration_tables_to_replace_old_links', 'goals_migration_tables_to_replace_old_links');"
+        },
+        {
+          "line": 20,
+          "declaration": "hooks()->add_filter('global_search_result_query', 'goals_global_search_result_query', 10, 3);"
+        },
+        {
+          "line": 21,
+          "declaration": "hooks()->add_filter('global_search_result_output', 'goals_global_search_result_output', 10, 2);"
+        },
+        {
+          "line": 22,
+          "declaration": "hooks()->add_filter('get_dashboard_widgets', 'goals_add_dashboard_widget');"
+        },
+        {
+          "line": 127,
+          "declaration": "register_activation_hook(GOALS_MODULE_NAME, 'goals_module_activation_hook');"
+        }
+      ]
+    }
+  },
+  "next_order": [
+    "company worktime: shifts, local attendance and reviewed leave with explicit minute arithmetic",
+    "company payroll: reviewed inputs, explicit formula versions and immutable closing/payslip",
+    "company goals: owned definitions, bounded calculations and current-authority notices"
+  ],
+  "action_matrix": [
+    {
+      "module": "hr_profile",
+      "action": "company units, positions, workplaces and actual management hierarchy",
+      "native": "CompanyHrStructure + CompanyHrEmployment + Company_hr GUI",
+      "status": "positive native456; fresh install, genuine455 upgrade, GUI/API/portal/CLI passed",
+      "historical_candidate_status": "positive candidate; native456 composition pending",
+      "evidence": "evidence/resume456-current.json"
+    },
+    {
+      "module": "hr_profile",
+      "action": "separate identity and employment, private profile, education, dependent decision, award/discipline, onboarding/offboarding checklist, equipment and remuneration-change records",
+      "native": "CompanyHrEmployment + CompanyHrRecords",
+      "status": "positive native456; no automatic adoption of shared legacy private rows",
+      "historical_candidate_status": "positive candidate; no automatic adoption of shared legacy private rows",
+      "evidence": "evidence/resume456-current.json"
+    },
+    {
+      "module": "hr_profile",
+      "action": "contracts, immutable activation, PDF and internal recipient acknowledgment",
+      "native": "CompanyHrContracts + CompanyHrPdf + CompanyHrAccess",
+      "status": "positive native456; does not implement legal digital signature or legacy free HTML template editor",
+      "historical_candidate_status": "positive candidate; does not implement legal digital signature or legacy free HTML template editor",
+      "evidence": "evidence/resume456-current.json"
+    },
+    {
+      "module": "hr_profile",
+      "action": "training editor, immutable assignment, materials, grade, attempts, self-service/public recipient, local inbox",
+      "native": "CompanyHrTraining + CompanyHrFiles + CompanyHrAccess + CompanyHrNotices",
+      "status": "positive native456; no job-role bulk training campaign or SMTP delivery claimed",
+      "historical_candidate_status": "positive candidate; no job-role bulk training campaign or SMTP delivery claimed",
+      "evidence": "evidence/resume456-current.json"
+    },
+    {
+      "module": "hr_profile",
+      "action": "private files, exact ACL/API/import/report/export/configuration",
+      "native": "CompanyHrFiles + CompanyHrApi + CompanyHrReports + finite native controllers",
+      "status": "positive native456; CSV employment import, not legacy XLSX imports for all object types",
+      "historical_candidate_status": "positive candidate; CSV employment import, not legacy XLSX imports for all object types",
+      "evidence": "evidence/resume456-current.json"
+    },
+    {
+      "module": "hr_profile",
+      "action": "allowance/insurance/salary form catalogs, insurance conditions and calculation integration",
+      "native": null,
+      "status": "internal implementation remaining; belongs to explicit payroll increment"
+    },
+    {
+      "module": "hr_profile",
+      "action": "Q&A groups, kanban/status/reorder, replies and mail support",
+      "native": "CompanyHrStructure articles cover only owned published guidance",
+      "status": "thread/group/mail parity remaining; native articles are not claimed as full Q&A"
+    },
+    {
+      "module": "hr_profile",
+      "action": "job tags/attachments and hierarchy, job-position bulk imports, staff/dependent XLSX import, role-based reception/training procedure automation",
+      "native": null,
+      "status": "internal implementation remaining beyond the reviewed native employment CSV/checklists"
+    },
+    {
+      "module": "hr_profile",
+      "action": "dashboard charts, work-hour and leave statistics derived from attendance",
+      "native": null,
+      "status": "internal implementation remaining; native8reports do not synthesize attendance"
+    },
+    {
+      "module": "timesheets",
+      "action": "shift types/templates/allocations, calendars/holidays, permitted workplaces and leave limits",
+      "native": null,
+      "status": "internal implementation remaining"
+    },
+    {
+      "module": "timesheets",
+      "action": "local check-in/out, edit/correct attendance and overtime, approval routes, leave requests/cancellation/handover",
+      "native": null,
+      "status": "internal implementation remaining; task timers are a different existing domain"
+    },
+    {
+      "module": "timesheets",
+      "action": "employee self-service, files, API, reports and CSV/Excel import/export",
+      "native": null,
+      "status": "internal implementation remaining; no legacy JWT identity adoption"
+    },
+    {
+      "module": "timesheets",
+      "action": "GPS/routes/maps/IP/QR/device-assisted attendance",
+      "native": null,
+      "status": "internal implementation and explicit origin/privacy contract remaining; not blocked solely by credentials"
+    },
+    {
+      "module": "timesheets",
+      "action": "approval cron, automatic checkout/check-in reminder, expiration notification",
+      "native": null,
+      "status": "internal implementation remaining; original owner/actor/source must be persisted"
+    },
+    {
+      "module": "hr_payroll",
+      "action": "earnings, deductions, tax bands/rebates, insurance, contributions, formula columns and templates",
+      "native": null,
+      "status": "internal implementation remaining; no unverified statutory payroll claim"
+    },
+    {
+      "module": "hr_payroll",
+      "action": "employee/month inputs, attendance/leave import, commissions/KPI/bonuses and source copies",
+      "native": null,
+      "status": "internal implementation remaining; requires owned input provenance and reviewed version"
+    },
+    {
+      "module": "hr_payroll",
+      "action": "calculation, preview, immutable closing/status, individual and batch payslip PDF, reports and exports",
+      "native": null,
+      "status": "internal implementation remaining; exact rounding, components and supported formulas must be explicit"
+    },
+    {
+      "module": "hr_payroll",
+      "action": "currency rates with history and scheduled online updates",
+      "native": null,
+      "status": "internal implementation remaining; legacy Google Finance scrape is not a verified provider contract"
+    },
+    {
+      "module": "goals",
+      "action": "owned goal definitions, staff assignment, time window/target and achievement calculation",
+      "native": null,
+      "status": "internal implementation remaining; current financial/project/contract readers must remain issuer-scoped"
+    },
+    {
+      "module": "goals",
+      "action": "manual/scheduled achieved/failed notices, search/widget and deletion lifecycle",
+      "native": null,
+      "status": "internal implementation remaining; notification must persist original company/actor and recipient authority"
+    }
+  ],
+  "external_boundaries": [
+    {
+      "source": "modules/hr_payroll/models/Hr_payroll_model.php:7605-7644",
+      "finding": "Legacy online currency reader scrapes Google Finance and disables TLS verification. It is not used by the new HR delivery. Local explicit currency values need no network. A future online adapter needs a separately verified finite provider contract."
+    },
+    {
+      "source": "modules/timesheets/models/Timesheets_model.php:5804",
+      "finding": "Legacy IP geolocation fetches ipinfo over HTTP. It is not used by the new HR delivery. Manual attendance/shift/leave flows do not depend on this service."
+    },
+    {
+      "source": "modules/hr_profile/controllers/Hr_profile.php:test_imap_connection / Knowledge_base_q_a.php:send_mail_support",
+      "finding": "Legacy mailbox/mail-support transports are outside the native internal article/inbox delivery. Local records/training do not require credentials."
+    }
+  ],
+  "integration_456": {
+    "native_version": 456,
+    "runtime_tree_sha": "fa76d0b285de678b1c1e3eea618d4029874548dc",
+    "fresh_and_upgrade_passed": true,
+    "report": "pr45-validation-456.md",
+    "evidence": "evidence/resume456-current.json",
+    "legacy_module_activation_in_production_verified": false,
+    "legacy_method_inventory_preserved": true
+  }
+}

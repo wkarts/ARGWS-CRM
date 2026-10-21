@@ -193,6 +193,16 @@ ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=ar
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/issuers_browser_smoke.cjs
 
+#456: run all six genuine CLI processors on this new installation before adding
+# historical upgrade scenarios; HR jobs retain their own actor/company/token.
+docker exec "$legacy" mkdir -p /app/tests/companies /app/tests/support
+ISSUERS_BROWSER_URL="$url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$legacy" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_legacy_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+ISSUERS_HR_EXPECTED_VERSION="$(tr -d '.\r\n' < VERSION)" \
+ISSUERS_BROWSER_ARTIFACTS="${ISSUERS_BROWSER_ARTIFACTS:-/tmp/issuer-browser-evidence}/hr-cli-456" \
+node tests/companies/hr_cli_http.cjs
+
 # Import the genuinely older bundled schema, not only an older migration marker.
 mysql_root argws_upgrade_ci < install/database.sql
 mysql_root -e "INSERT INTO argws_upgrade_ci.tblstaff (staffid,firstname,lastname,email,password,admin,active,datecreated) SELECT staffid,firstname,lastname,email,password,admin,active,datecreated FROM argws_legacy_ci.tblstaff WHERE staffid=17;"
@@ -788,3 +798,15 @@ ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_S
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 ISSUERS_BROWSER_ARTIFACTS="${ISSUERS_BROWSER_ARTIFACTS:-/tmp/issuer-browser-evidence}/purchases-455" \
 node tests/companies/purchases_events_http.cjs
+
+#456: owned employment, private records, contracts, training and native credentials.
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+ISSUERS_BROWSER_ARTIFACTS="${ISSUERS_BROWSER_ARTIFACTS:-/tmp/issuer-browser-evidence}/hr-456" \
+node tests/companies/hr_browser.cjs
+ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
+ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
+ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
+ISSUERS_BROWSER_ARTIFACTS="${ISSUERS_BROWSER_ARTIFACTS:-/tmp/issuer-browser-evidence}/hr-credentials-456" \
+node tests/companies/hr_tokens_browser.cjs

@@ -1,0 +1,9 @@
+{
+  "m2_base_zip_sha256": "de4cec3d232407e44a398e028525d412663f0efe09c4790d439718cb9ee5d468",
+  "before_sources": {
+    "application/services/CompanyHrStorage.php": "3bb276f76ad89e4253fd431e31ffef2ccbefee5d32a477251b6a76f50a599128",
+    "application/services/CompanyHrStructure.php": "e6bd7bc8ad6807cca63265edd009795ddab45295cc14b7bb5836f5a721c546b2",
+    "application/services/CompanyHrApi.php": "2474f13c29a2e81d338e8594e5e2d4affdf4ab678803299e93f930dbd45e65e9"
+  },
+  "test_sha256": "adf3bc5847813541f109e47a2462d2344163e8413be4f226dad81d5362541bda"
+}

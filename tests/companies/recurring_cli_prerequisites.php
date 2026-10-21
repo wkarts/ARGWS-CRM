@@ -1,12 +1,13 @@
 <?php
-/** Schema-only prerequisites of the complete native CLI as of454.
- * The expense fixture predates task schedules and the internal Leads inbox.
+/** Schema-only prerequisites of the complete native CLI as of456.
+ * The expense fixture predates task schedules and the internal Leads and RH inboxes.
  * Install their real empty schemas; never mock or skip a worker to test costs.
  * Native migration/installer behavior has its own dedicated acceptance suites.
  */
 if($db->driver()!=='mysql')throw new RuntimeException('The complete recurring CLI requires a real MySQL/MariaDB fixture.');
 require_once APPPATH.'services/CompanyTaskRecurringSchema.php';
 require_once APPPATH.'services/CompanyLeadsSchema.php';
+require_once APPPATH.'services/CompanyHrSchema.php';
 require_once APPPATH.'services/CompanyApiSchema.php';
 require_once APPPATH.'services/CompanyClientRequestSchema.php';
 require_once APPPATH.'services/CompanyPortalSchema.php';
@@ -21,6 +22,7 @@ CompanyPortalSchema::ensure($db,$p);
 CompanyApiSchema::ensure($db,$p);
 CompanyTaskRecurringSchema::ensure($db,$p);
 CompanyLeadsSchema::ensure($db,$p);
+CompanyHrSchema::ensure($db,$p);
 unset($db->data_cache['table_names']);
-$sharedCliBusinessTables=array_values(array_diff(array_merge(array_keys(CompanyTaskRecurringSchema::definitions($p)),array_keys(CompanyLeadsSchema::definitions($p))),['company_task_schedule_cursor','company_lead_notice_cursor']));
-foreach($sharedCliBusinessTables as$table)essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.$table)->row()->n===0,'complete native CLI schema starts with no operational task/lead records '.$table);
+$sharedCliBusinessTables=array_values(array_diff(array_merge(array_keys(CompanyTaskRecurringSchema::definitions($p)),array_keys(CompanyLeadsSchema::definitions($p)),array_keys(CompanyHrSchema::definitions($p))),['company_task_schedule_cursor','company_lead_notice_cursor','company_hr_cursor']));
+foreach($sharedCliBusinessTables as$table)essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.$table)->row()->n===0,'complete native CLI schema starts with no operational task/lead/HR records '.$table);

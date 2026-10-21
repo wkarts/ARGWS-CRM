@@ -172,6 +172,8 @@ jobs:
           php tests/companies/purchases_bootstrap.php
           php tests/companies/purchases_scope.php
           php tests/companies/purchases_route_catalog.php
+          php tests/companies/hr_bootstrap.php
+          php tests/companies/hr_access_scope.php
           php tests/companies/asaas_concurrency.php
           php tests/companies/asaas_job_fee_concurrency.php
           php tests/companies/asaas_remote_concurrency.php
@@ -555,6 +557,7 @@ jobs:
           php tests/companies/native_core_453.php
           php tests/companies/native_core_454.php
           php tests/companies/native_core_455.php
+          php tests/companies/native_core_456.php
           php tests/companies/task_recurring.php
           php tests/companies/task_recurring_api.php
           php tests/companies/task_recurring_integrity.php
@@ -579,6 +582,14 @@ jobs:
           php tests/companies/purchases_api_phantoms.php
           php tests/companies/purchases_api_matrix.php
           php tests/companies/purchases_expense_fence.php
+          php tests/companies/hr.php
+          php tests/companies/hr_training.php
+          php tests/companies/hr_integrity.php
+          php tests/companies/hr_api.php
+          php tests/companies/hr_api_phantoms.php
+          php tests/companies/hr_api_read_locks.php
+          php tests/companies/hr_concurrency.php
+          php tests/companies/hr_seed_readback.php
           php tests/banco_brasil_local_noncash_clock_v3.php
       - name: Testar entradas legadas Finance e Accounting em banco exclusivo
         env:

@@ -228,3 +228,31 @@ if (file_exists(APPPATH . 'config/my_routes.php')) {
 
 // Finite reviewed private expense-copy route.
 $route['admin/company_expense_copies'] = 'admin/company_expense_copies/index';
+
+// Finite native HR endpoints; the independent scope checks canonical IDs again.
+$route['company_operations_api/hr_structure'] = 'company_operations_api/hr_structure';
+$route['company_operations_api/hr_structure/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_structure/$1';
+$route['company_operations_api/hr_employees'] = 'company_operations_api/hr_employees';
+$route['company_operations_api/hr_employees/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_employees/$1';
+$route['company_operations_api/hr_profiles'] = 'company_operations_api/hr_profiles';
+$route['company_operations_api/hr_profiles/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_profiles/$1';
+$route['company_operations_api/hr_records'] = 'company_operations_api/hr_records';
+$route['company_operations_api/hr_records/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_records/$1';
+$route['company_operations_api/hr_contracts'] = 'company_operations_api/hr_contracts';
+$route['company_operations_api/hr_contracts/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_contracts/$1';
+$route['company_operations_api/hr_courses'] = 'company_operations_api/hr_courses';
+$route['company_operations_api/hr_courses/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_courses/$1';
+$route['company_operations_api/hr_assignments'] = 'company_operations_api/hr_assignments';
+$route['company_operations_api/hr_assignments/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_assignments/$1';
+$route['company_operations_api/hr_accesses'] = 'company_operations_api/hr_accesses';
+$route['company_operations_api/hr_accesses/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_accesses/$1';
+$route['company_operations_api/hr_files'] = 'company_operations_api/hr_files';
+$route['company_operations_api/hr_files/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_files/$1';
+$route['company_operations_api/hr_reports'] = 'company_operations_api/hr_reports';
+$route['company_operations_api/hr_reports/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_reports/$1';
+$route['company_operations_api/hr_imports'] = 'company_operations_api/hr_imports';
+$route['company_operations_api/hr_imports/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_imports/$1';
+$route['company_operations_api/hr_articles'] = 'company_operations_api/hr_articles';
+$route['company_operations_api/hr_articles/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_articles/$1';
+$route['company_operations_api/hr_documents'] = 'company_operations_api/hr_documents';
+$route['company_operations_api/hr_documents/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_documents/$1';

@@ -53,6 +53,12 @@ $machineModule=strtolower((string)$companyInboxBootstrap->router->fetch_module()
 if(in_array($machineClass,['company_api','company_operations_api','company_asaas_callback','company_recurring_worker'],true)||($machineModule==='banco_brasil'&&$machineClass==='notifications')){show_404();return;}
 
 // Public owner-bound portal must not hydrate legacy models, providers or optional modules.
+require_once APPPATH.'services/CompanyHrAccessScope.php';
+if(CompanyHrAccessScope::prepare($companyInboxBootstrap)){
+    $autoload=['packages'=>[],'config'=>[],'helper'=>['url','form'],'language'=>[],'drivers'=>['session'],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+if(CompanyHrAccessScope::requested()||CompanyHrAccessScope::earlyCandidate($_SERVER)){show_404();return;}
 require_once APPPATH.'services/PortalRequestScope.php';
 $portalBootstrap=&get_instance();
 if(PortalRequestScope::prepare($portalBootstrap)){

@@ -10,17 +10,17 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "7d16151691b422aa96652baef47b05b4ab1b6691e5ed459c929c59cc83d0c759",
+    "source_manifest_sha256": "4cb0af1c1983c42a2ff70fa5cb16839a673e5c9b52dfa39f33cef0ad8af4b90b",
     "counts": {
         "modules": 38,
-        "source_files": 4133,
+        "source_files": 4156,
         "literal_option_keys": 684,
         "dynamic_option_references": 145,
-        "controllers": 251,
+        "controllers": 253,
         "hook_candidates": 553,
         "job_file_candidates": 64,
-        "report_file_candidates": 291,
-        "table_name_candidates": 814,
+        "report_file_candidates": 293,
+        "table_name_candidates": 828,
         "database_call_candidates": 12531
     },
     "infrastructure_options": [
@@ -8102,95 +8102,114 @@
             "operational_ready": false
         },
         {
+            "path": "application/controllers/Company_hr_access.php",
+            "source_sha256": "fd700f435da9c59f94e73e3141c96515fc4165690198a135aec457ed9ef7fded",
+            "module": null,
+            "base_class": "CI_Controller",
+            "surface": "public_or_api_or_job",
+            "method_candidates": [
+                {
+                    "method": "index",
+                    "line": 7,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
             "path": "application/controllers/Company_operations_api.php",
-            "source_sha256": "54bd39641ebd9e64dc5ebe4c650c9066b1d3f0fa9d93bde66b74d73d2c374790",
+            "source_sha256": "99b8e482be239ca59ca0dedc5ee200700976ed3cc08eae223ed0815348fc985c",
             "module": null,
             "base_class": "CI_Controller",
             "surface": "public_or_api_or_job",
             "method_candidates": [
                 {
                     "method": "__construct",
-                    "line": 9,
+                    "line": 11,
                     "visibility": "public"
                 },
                 {
                     "method": "projects",
-                    "line": 19,
-                    "visibility": "public"
-                },
-                {
-                    "method": "tasks",
-                    "line": 19,
-                    "visibility": "public"
-                },
-                {
-                    "method": "standalone_tasks",
-                    "line": 19,
-                    "visibility": "public"
-                },
-                {
-                    "method": "contracts",
-                    "line": 19,
-                    "visibility": "public"
-                },
-                {
-                    "method": "tickets",
-                    "line": 19,
-                    "visibility": "public"
-                },
-                {
-                    "method": "task_schedules",
-                    "line": 20,
-                    "visibility": "public"
-                },
-                {
-                    "method": "standalone_schedules",
                     "line": 21,
                     "visibility": "public"
                 },
                 {
+                    "method": "tasks",
+                    "line": 21,
+                    "visibility": "public"
+                },
+                {
+                    "method": "standalone_tasks",
+                    "line": 21,
+                    "visibility": "public"
+                },
+                {
+                    "method": "contracts",
+                    "line": 21,
+                    "visibility": "public"
+                },
+                {
+                    "method": "tickets",
+                    "line": 21,
+                    "visibility": "public"
+                },
+                {
+                    "method": "task_schedules",
+                    "line": 22,
+                    "visibility": "public"
+                },
+                {
+                    "method": "standalone_schedules",
+                    "line": 23,
+                    "visibility": "public"
+                },
+                {
                     "method": "project_files",
-                    "line": 35,
-                    "visibility": "public"
-                },
-                {
-                    "method": "task_files",
-                    "line": 36,
-                    "visibility": "public"
-                },
-                {
-                    "method": "contract_files",
                     "line": 37,
                     "visibility": "public"
                 },
                 {
-                    "method": "ticket_files",
+                    "method": "task_files",
                     "line": 38,
                     "visibility": "public"
                 },
                 {
-                    "method": "project_copies",
+                    "method": "contract_files",
                     "line": 39,
                     "visibility": "public"
                 },
                 {
-                    "method": "project_milestones",
+                    "method": "ticket_files",
                     "line": 40,
                     "visibility": "public"
                 },
                 {
-                    "method": "task_dependencies",
+                    "method": "project_copies",
                     "line": 41,
                     "visibility": "public"
                 },
                 {
-                    "method": "project_follow",
+                    "method": "project_milestones",
                     "line": 42,
                     "visibility": "public"
                 },
                 {
-                    "method": "task_follow",
+                    "method": "task_dependencies",
                     "line": 43,
+                    "visibility": "public"
+                },
+                {
+                    "method": "project_follow",
+                    "line": 44,
+                    "visibility": "public"
+                },
+                {
+                    "method": "task_follow",
+                    "line": 45,
                     "visibility": "public"
                 }
             ],
@@ -8259,7 +8278,7 @@
         },
         {
             "path": "application/controllers/Company_recurring_worker.php",
-            "source_sha256": "87bfe6c989d4f32df78f0a35f42a7487937bb87cd4668605224fc736731fb9e3",
+            "source_sha256": "93e20da57a052311d8b2b1c4aba4f8b33eaaec8b1297a41f61d260f35f82da7f",
             "module": null,
             "base_class": "CI_Controller",
             "surface": "public_or_api_or_job",
@@ -9377,6 +9396,50 @@
                 {
                     "method": "index",
                     "line": 8,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/admin/Company_hr.php",
+            "source_sha256": "0646da5603ce3a6739c5263986af957398a1fcae71ba2a659eaa54deb088e776",
+            "module": null,
+            "base_class": "AdminController",
+            "surface": "admin",
+            "method_candidates": [
+                {
+                    "method": "index",
+                    "line": 32,
+                    "visibility": "public"
+                },
+                {
+                    "method": "file",
+                    "line": 81,
+                    "visibility": "public"
+                },
+                {
+                    "method": "pdf",
+                    "line": 85,
+                    "visibility": "public"
+                },
+                {
+                    "method": "export",
+                    "line": 89,
+                    "visibility": "public"
+                },
+                {
+                    "method": "mine",
+                    "line": 93,
+                    "visibility": "public"
+                },
+                {
+                    "method": "mine_file",
+                    "line": 100,
                     "visibility": "public"
                 }
             ],
@@ -27043,6 +27106,76 @@
             "reference_count": 8
         },
         {
+            "name": "company_hr_access",
+            "state": "not_verified",
+            "reference_count": 3
+        },
+        {
+            "name": "company_hr_articles",
+            "state": "not_verified",
+            "reference_count": 1
+        },
+        {
+            "name": "company_hr_assignments",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
+            "name": "company_hr_attempts",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
+            "name": "company_hr_contract_counters",
+            "state": "not_verified",
+            "reference_count": 1
+        },
+        {
+            "name": "company_hr_contracts",
+            "state": "not_verified",
+            "reference_count": 4
+        },
+        {
+            "name": "company_hr_courses",
+            "state": "not_verified",
+            "reference_count": 1
+        },
+        {
+            "name": "company_hr_cursor",
+            "state": "not_verified",
+            "reference_count": 4
+        },
+        {
+            "name": "company_hr_employees",
+            "state": "not_verified",
+            "reference_count": 8
+        },
+        {
+            "name": "company_hr_files",
+            "state": "not_verified",
+            "reference_count": 4
+        },
+        {
+            "name": "company_hr_notices",
+            "state": "not_verified",
+            "reference_count": 3
+        },
+        {
+            "name": "company_hr_profiles",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
+            "name": "company_hr_records",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
+            "name": "company_hr_requests",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
             "name": "company_import_batches",
             "state": "not_verified",
             "reference_count": 7
@@ -28775,7 +28908,7 @@
         {
             "name": "issuers_audit",
             "state": "not_verified",
-            "reference_count": 132
+            "reference_count": 133
         },
         {
             "name": "issuers_client_links",
@@ -28790,7 +28923,7 @@
         {
             "name": "issuers_installation_identity",
             "state": "not_verified",
-            "reference_count": 24
+            "reference_count": 26
         },
         {
             "name": "issuers_invoice_documents",
@@ -28810,12 +28943,12 @@
         {
             "name": "issuers_registry",
             "state": "not_verified",
-            "reference_count": 135
+            "reference_count": 137
         },
         {
             "name": "issuers_resource_permissions",
             "state": "not_verified",
-            "reference_count": 11
+            "reference_count": 12
         },
         {
             "name": "issuers_sequences",
@@ -28825,7 +28958,7 @@
         {
             "name": "issuers_staff",
             "state": "not_verified",
-            "reference_count": 21
+            "reference_count": 23
         },
         {
             "name": "issuers_staff_defaults",
@@ -29855,7 +29988,7 @@
         {
             "name": "staff",
             "state": "not_verified",
-            "reference_count": 379
+            "reference_count": 383
         },
         {
             "name": "staff_contract",

@@ -92,6 +92,7 @@ setImmediate(()=>{if(!reachedBrowser||fixtureRuns!==1){console.error('fixture se
 url=http://127.0.0.1:48111
 upgrade_url=http://127.0.0.1:48222
 upgrade=argws-crm-upgrade-999
+legacy=argws-crm-legacy-999
 ISSUER_SMOKE_DATABASE=argws-crm-provision-db-999
 ISSUER_SMOKE_DB_USER=synthetic_user
 ISSUER_SMOKE_DB_PASSWORD=synthetic_password
@@ -102,14 +103,15 @@ work="{directory}"
                     result = subprocess.run(["bash", "-c", setup + block], env=environment,
                                             text=True, capture_output=True, check=True)
                     actual = json.loads(result.stdout)
-                    self.assertEqual(actual["URL"], "http://127.0.0.1:" + ("48111" if index == 0 else "48222"))
+                    fresh = index == 0 or path == "tests/companies/hr_cli_http.cjs"
+                    self.assertEqual(actual["URL"], "http://127.0.0.1:" + ("48111" if fresh else "48222"))
                     self.assertEqual(actual["PASSWORD"], "synthetic-browser-17")
                     self.assertEqual(actual["DB_CONTAINER"], "argws-crm-provision-db-999")
-                    self.assertEqual(actual["DB_NAME"], "argws_legacy_ci" if index == 0 else "argws_upgrade_ci")
+                    self.assertEqual(actual["DB_NAME"], "argws_legacy_ci" if fresh else "argws_upgrade_ci")
                     self.assertEqual(actual["DB_USER"], "synthetic_user")
                     self.assertEqual(actual["DB_PASSWORD"], "synthetic_password")
                     if path != "tests/issuers_browser_smoke.cjs":
-                        self.assertEqual(actual["APP_CONTAINER"], "argws-crm-upgrade-999")
+                        self.assertEqual(actual["APP_CONTAINER"], "argws-crm-legacy-999" if fresh else "argws-crm-upgrade-999")
 
 
 if __name__ == "__main__":

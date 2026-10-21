@@ -38,6 +38,9 @@ body.company-context-shell{background:#f3f4f6;margin:0;color:#334155}
 <nav id="menu" aria-label="Menu do CRM">
 <?php if ($companyLayoutPrimary) { ?><a class="company-dashboard" href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this)); ?>">Painel</a><?php } ?>
 <a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'issuers')); ?>">Empresas</a>
+<?php if($companyLayoutHasSettings&&CompanySettingsRuntime::canResource('hr','view')){?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'company_hr')); ?>">RH da empresa</a><?php }?>
+<a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'company_hr/mine')); ?>">Meu RH</a>
+
 <?php if($companyLayoutHasSettings&&CompanySettingsRuntime::canResource('staff','view')){?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'company_staff')); ?>">Equipe da empresa</a><?php }?>
 <?php if($companyLayoutHasSettings&&CompanySettingsRuntime::canResource('purchases','view')){?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'company_purchases')); ?>">Compras da empresa</a><?php }?>
 <?php if($companyLayoutHasSettings&&CompanySettingsRuntime::canResource('leads','view')){?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'company_leads')); ?>">Leads da empresa</a><?php }?>

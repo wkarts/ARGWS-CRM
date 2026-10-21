@@ -2,9 +2,11 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');require_once APPPATH.'services/CompanyOperationsApi.php';
 require_once APPPATH.'services/CompanyLeadsHttpApi.php';
+require_once APPPATH.'services/CompanyHrHttpApi.php';
 class Company_operations_api extends CI_Controller
 {
     use CompanyLeadsHttpApi;
+    use CompanyHrHttpApi;
     private bool $ready=false;
     public function __construct(){parent::__construct();$this->ready=class_exists('CompanyOperationsApiScope',false)&&CompanyOperationsApiScope::active();}
     private function execute(string $domain,$id=''):void

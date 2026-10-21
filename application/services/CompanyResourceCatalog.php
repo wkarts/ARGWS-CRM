@@ -22,6 +22,13 @@ final class CompanyResourceCatalog
         $result['connect-api-connector']=['name'=>'Connect|API próprio da empresa','capabilities'=>['view'=>'Consultar perfil e fluxo próprio','configure'=>'Configurar token e conferir instância','send'=>'Enfileirar e tentar avisos privados','reconnect'=>'Parear por QR e reservar, tentar e consultar reinício próprio']];
         $result['pusher']=['name'=>'Pusher privado da empresa','capabilities'=>['view'=>'Receber e consultar avisos próprios','configure'=>'Configurar e revogar aplicativo próprio','publish'=>'Enfileirar e tentar aviso de tarefa própria']];
         $result['company-ai']=['name'=>'Assistente privado da empresa','capabilities'=>['view'=>'Consultar configuração própria','configure'=>'Configurar e revogar credenciais próprias','use'=>'Revisar e solicitar assistência de chamados próprios']];
+        $result['hr']=['name'=>'RH da empresa','capabilities'=>['view'=>'Consultar vínculos','create'=>'Criar vínculos','edit'=>'Editar vínculos','configure'=>'Configurar estrutura e orientações','import'=>'Importar vínculos revisados','export'=>'Exportar conteúdo autorizado']];
+        $result['hr_sensitive']=['name'=>'RH — dados privados','capabilities'=>['view'=>'Consultar dados privados','edit'=>'Editar dados privados','approve'=>'Decidir dependentes']];
+        $result['hr_contracts']=['name'=>'RH — contratos','capabilities'=>['view'=>'Consultar contratos','create'=>'Criar contratos','edit'=>'Alterar e confirmar contratos']];
+        $result['hr_training']=['name'=>'RH — treinamentos','capabilities'=>['view'=>'Consultar treinamentos','configure'=>'Configurar cursos e questões','assign'=>'Atribuir e cancelar treinamentos']];
+        $result['hr_files']=['name'=>'RH — arquivos','capabilities'=>['view'=>'Consultar arquivos do domínio autorizado','create'=>'Adicionar arquivos','delete'=>'Ocultar arquivos']];
+        $result['hr_portal']=['name'=>'RH — participantes','capabilities'=>['manage'=>'Emitir e revogar acessos de participante']];
+        $result['hr_reports']=['name'=>'RH — relatórios','capabilities'=>['view'=>'Consultar relatórios autorizados']];
         return $result;
     }
 }
