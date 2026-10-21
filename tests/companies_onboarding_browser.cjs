@@ -77,7 +77,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
     const draftUrl = page.url();
     await page.locator('#legal_name').fill('Synthetic company B');
     await page.locator('#tax_id').fill('52998224725');
-    await page.locator('#profile_invoice_company_city').fill('Synthetic B');
+    await page.locator('a[href="#company-address"]').click(); await page.locator('#profile_invoice_company_city').fill('Synthetic B');
     await next(page);
     const stale = await hidden(page);
     const denied = await context.request.post(draftUrl, { form: { ...stale, action: 'advance', revision: '0', step: '1', 'wizard[legal_name]': 'Stale overwrite', 'wizard[tax_id]': '52998224725' } });

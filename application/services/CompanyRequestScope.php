@@ -60,7 +60,8 @@ final class CompanyRequestScope
         $admin = trim((string) $ci->router->fetch_directory(), '/') === 'admin';
         $native = $admin && !$module;
         $companyScopedBbRoute = self::companyBbRoute($ci);
-        self::$isolated = ($native && $class === 'company_context' && in_array($method, ['index', 'select'], true))
+        self::$isolated = ($native && $class === 'issuers' && $method === 'lookup')
+            || ($native && $class === 'company_context' && in_array($method, ['index', 'select'], true))
             || ($native && $class === 'company_onboarding' && $method === 'index')
             || ($native && $class === 'company_clients' && $method === 'index')
             || ($native && in_array($class,['company_staff','company_task_recurring'],true) && $method === 'index')

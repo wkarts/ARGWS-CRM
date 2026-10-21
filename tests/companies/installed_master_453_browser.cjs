@@ -18,7 +18,7 @@ async function submit(page,button) { await Promise.all([page.waitForNavigation({
    let id=sql("SELECT id FROM tblissuers_registry WHERE tax_id='"+tax+"'");
    if (!id) {
     await page.goto(url+'/admin/company_onboarding'); await submit(page,page.locator('section form button[type=submit]'));
-    await page.locator('#legal_name').fill('Synthetic native453 '+label.toUpperCase()); await page.locator('#tax_id').fill(tax); await page.locator('#profile_invoice_company_city').fill('Own city '+label);
+    await page.locator('#legal_name').fill('Synthetic native453 '+label.toUpperCase()); await page.locator('#tax_id').fill(tax); await page.locator('a[href="#company-address"]').click(); await page.locator('#profile_invoice_company_city').fill('Own city '+label);
     for (let step=1;step<=5;step++) { await submit(page,page.locator('section form button[type=submit]')); }
     assert.match(await page.locator('[role=status]').innerText(),/Empresa criada/); id=sql("SELECT id FROM tblissuers_registry WHERE tax_id='"+tax+"'");
     assert.match(id,/^[1-9]\d*$/); assert.equal(sql("SELECT COUNT(*) FROM tblissuers_registry WHERE tax_id='"+tax+"'"),'1');

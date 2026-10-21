@@ -106,6 +106,39 @@ class Issuers extends AdminController
         }
         redirect(admin_url('issuers' . ($issuer ? '/index/' . $issuer : '')));
     }
+    /** Explicit preview only: no registry writes or provider-controlled destinations. */
+    public function lookup(): void
+    {
+        $this->output->set_header('Cache-Control: no-store');
+        $reply=function(int $status,array $body):void{$body['csrf']=['name'=>$this->security->get_csrf_token_name(),'hash'=>$this->security->get_csrf_hash()];$this->output->set_status_header($status)->set_content_type('application/json')->set_output(json_encode($body));};
+        if($this->input->method(true)!=='POST'){$reply(405,['error'=>'Use POST para consultar.']);return;}
+        $mode=$this->input->post('lookup_mode',false);
+        $key=$mode==='onboarding'?'company_onboarding_csrf':'issuers_csrf';
+        $token=$this->session->userdata($key);$submitted=$this->input->post('lookup_csrf',false);
+        if(!is_string($token)||strlen($token)!==64||!is_string($submitted)||!hash_equals($token,$submitted)){$reply(403,['error'=>'Recarregue o formulário antes de consultar.']);return;}
+        try{
+            $actor=$this->isolated()?CompanyRequestScope::context()->staffId():get_staff_user_id();
+            $id=$this->input->post('issuer_id',false);
+            if($mode==='onboarding'||$id===''){$allowed=$this->registry->canCreate($actor);}
+            else{$allowed=$this->registry->canManage(IssuerPolicy::id($id),$actor);}
+            if(!$allowed){$reply(403,['error'=>'Você não tem permissão para consultar neste cadastro.']);return;}
+            $last=$this->session->userdata('company_registry_lookup_at');
+            if(is_numeric($last)&&time()-(int)$last<3){$reply(429,['error'=>'Aguarde alguns segundos antes de consultar novamente.']);return;}
+            require_once APPPATH.'services/CompanyRegistryLookup.php';
+            $kind=$this->input->post('kind',false);$value=$this->input->post('value',false);
+            if(!is_string($kind)||!in_array($kind,['cnpj','cep'],true)){throw new DomainException('Consulta inválida.');}
+            CompanyRegistryLookup::request($kind,$value);
+            $this->session->set_userdata('company_registry_lookup_at',time());
+            $reply(200,$this->queryRegistry($kind,$value));
+        }catch(DomainException $error){$reply(422,['error'=>'Confira o CNPJ numérico (14 dígitos) ou CEP (8 dígitos). Você pode preencher os dados manualmente.']);}
+        catch(Throwable $error){$reply(503,['error'=>'Consulta indisponível ou cadastro não encontrado. Tente depois ou preencha manualmente. Nenhum dado foi alterado.']);}
+    }
+
+    protected function queryRegistry(string $kind,string $value): array
+    {
+        return CompanyRegistryLookup::lookup($kind,$value);
+    }
+
     private function isolated(): bool
     {
         return class_exists('CompanyRequestScope', false) && CompanyRequestScope::sealedFor($this);

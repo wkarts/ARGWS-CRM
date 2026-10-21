@@ -10,12 +10,12 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "8425643548a89c48697f453bdaa70fd8617b4a81363d5e17156fb7c28f9b0549",
+    "source_manifest_sha256": "b5b201a870f947bfed67dd8f24aa504e5cc4f1964d8a18abda4fbf7cc7ccce1d",
     "counts": {
         "modules": 38,
-        "source_files": 4157,
+        "source_files": 4161,
         "literal_option_keys": 684,
-        "dynamic_option_references": 145,
+        "dynamic_option_references": 146,
         "controllers": 253,
         "hook_candidates": 553,
         "job_file_candidates": 64,
@@ -6805,6 +6805,14 @@
             "state": "requires_call_site_review"
         },
         {
+            "path": "application/views/admin/settings/includes/company.php",
+            "line": 7,
+            "source_sha256": "373de038a51873f09af089c9db04fd99eb0ccef4fd17ad1db41e00ed383e85cf",
+            "call": "get_option",
+            "expression": "$field",
+            "state": "requires_call_site_review"
+        },
+        {
             "path": "application/views/admin/settings/includes/payment_gateways.php",
             "line": 40,
             "source_sha256": "9690d673c79c4d06ddc73c764ba89e3733f86536be464f82f085d943fdfac461",
@@ -11367,7 +11375,7 @@
         },
         {
             "path": "application/controllers/admin/Issuers.php",
-            "source_sha256": "10730d81b6e9252208e10aa8245d9dd70f399c21ba07daa4a95fea47926d10e1",
+            "source_sha256": "a2d16fec82b5d191b5ba9292c3f3b708cab2a2768fbfef88b1f50e45153347a8",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -11385,6 +11393,11 @@
                 {
                     "method": "save",
                     "line": 74,
+                    "visibility": "public"
+                },
+                {
+                    "method": "lookup",
+                    "line": 110,
                     "visibility": "public"
                 }
             ],
@@ -29403,7 +29416,7 @@
         {
             "name": "options",
             "state": "not_verified",
-            "reference_count": 107
+            "reference_count": 108
         },
         {
             "name": "order_items",

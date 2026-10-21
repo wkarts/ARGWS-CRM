@@ -9,6 +9,7 @@ on:
       - modules/finance/**
       - modules/accounting/**
       - tests/issuers*.php
+      - tests/company_registry_lookup*.php
       - tests/company_context.php
       - tests/company_email_catalog.test.cjs
       - scripts/generate-company-email-catalog.cjs
@@ -34,6 +35,7 @@ on:
       - modules/finance/**
       - modules/accounting/**
       - tests/issuers*.php
+      - tests/company_registry_lookup*.php
       - tests/company_context.php
       - tests/company_email_catalog.test.cjs
       - scripts/generate-company-email-catalog.cjs
@@ -365,6 +367,10 @@ jobs:
           php tests/settings/settings_commit_fencing.php
           php tests/settings/settings_audit_integrity.php
           php tests/settings/company_registry_identity.php
+          php tests/settings/company_registry_profile.php
+          php tests/companies/company_identity_documents.php
+          php tests/company_registry_lookup.php
+          php tests/company_registry_lookup_controller.php
           php tests/settings/company_mail_config.php
           php tests/settings/company_mail_queue.php
           php tests/settings/company_mail_schema.php

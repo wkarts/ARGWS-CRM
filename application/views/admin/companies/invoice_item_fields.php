@@ -14,5 +14,5 @@ $itemPrefix=($editing?'edit-item-':'invoice-item-').$index.'-';
 <div data-tax-row>
 <label for="<?= $itemPrefix.'tax-'.$taxIndex.'-name'; ?>">Nome do tributo</label><input class="form-control" id="<?= $itemPrefix.'tax-'.$taxIndex.'-name'; ?>" name="invoice[items][<?= (int)$index; ?>][taxes][<?= (int)$taxIndex; ?>][name]" value="<?= $esc($tax['name']); ?>" maxlength="100">
 <label for="<?= $itemPrefix.'tax-'.$taxIndex.'-rate'; ?>">Alíquota % (0 para remover)</label><input class="form-control" id="<?= $itemPrefix.'tax-'.$taxIndex.'-rate'; ?>" name="invoice[items][<?= (int)$index; ?>][taxes][<?= (int)$taxIndex; ?>][rate]" value="<?= $esc($tax['rate']); ?>" inputmode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" required>
-</div><?php } ?></div><button type="button" data-add-tax>Adicionar tributo</button>
+</div><?php } ?></div><button class="btn btn-default" type="button" data-add-tax>Adicionar tributo</button>
 </fieldset>
