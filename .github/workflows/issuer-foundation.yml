@@ -195,6 +195,7 @@ jobs:
           php tests/companies/hr_bootstrap.php
           php tests/companies/hr_access_scope.php
           php tests/companies/asaas_concurrency.php
+          php tests/companies/asaas_job_transport.php
           php tests/companies/asaas_job_fee_concurrency.php
           php tests/companies/asaas_remote_concurrency.php
           php tests/companies/asaas_currency_units.php

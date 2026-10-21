@@ -27,7 +27,7 @@ jobs:
       - name: Validar tradução dos modelos HTML
         run: node --test tests/email_templates_ptbr.test.cjs
       - name: Validar contratos das integrações financeiras e SMS
-        run: node --test tests/crm_integrations_contract.test.cjs tests/asaas_settings_real_browser.test.cjs
+        run: node --test tests/crm_integrations_contract.test.cjs tests/asaas_settings_real_browser.test.cjs tests/companies_asaas_browser.test.cjs
       - name: Validar modelos PT-BR e gatilhos individuais
         run: node --test tests/crm_ptbr_sms_modules.test.cjs
       - name: Testar exclusão dos artefatos operacionais dos ZIPs

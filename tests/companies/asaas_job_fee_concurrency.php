@@ -1,6 +1,7 @@
 <?php
 /** Actual independent workers contend for leased reconciliation and canonical fee/expense posting. */
 require_once dirname(__DIR__).'/issuers_core_support.php';require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyReconciliation.php';require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyFeeExpense.php';
+require_once __DIR__.'/asaas_job_transport_fixture.php';
 if(!str_starts_with(getenv('ISSUERS_TEST_DSN')?:'','mysql:'))exit(2);
 function asaasJobConnection(string $p):EssentialTestDb{return new EssentialTestDb(new PDO(getenv('ISSUERS_TEST_DSN'),getenv('ISSUERS_TEST_USER'),getenv('ISSUERS_TEST_PASSWORD')),$p);}
 if(($argv[1]??'')==='worker'){
@@ -8,12 +9,7 @@ if(($argv[1]??'')==='worker'){
     try{
         if(($argv[3]??'fee')==='fee')echo (new \Asaas\CompanyFeeExpense($db,$p))->post($in['issuer'],7,$in['origin'],$in['proof'],$in['category']);
         else{
-            $mock=function($environment,$method,$path,$payload,$secret)use($db,$p){if($db->pdo->inTransaction())throw new LogicException('fixture HTTP under transaction');$letter=str_contains($secret,'key-A')?'A':'B';
-                if($path==='wallets/')return ['data'=>[['id'=>'wallet-'.$letter]],'hasMore'=>false];
-                if(str_starts_with($path,'customers/'))return ['id'=>substr($path,10),'cpfCnpj'=>$letter==='A'?'11144477735':'12345678909','deleted'=>false];
-                $remote=substr($path,9);$row=$db->query('SELECT o.*,m.customer_id,m.billing_type FROM '.$p.'asaas_payment_origins o JOIN '.$p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.remote_id=? AND o.account_id=? AND o.environment=?',[$remote,'wallet-'.$letter,$environment])->row_array();
-                return ['id'=>$remote,'customer'=>$row['customer_id'],'billingType'=>$row['billing_type'],'externalReference'=>$row['invoice_hash'],'value'=>$row['invoice_total'],'dueDate'=>$row['invoice_due_date'],'status'=>'RECEIVED','netValue'=>'104.53','paymentDate'=>'2026-10-19','creditDate'=>'2026-10-19','deleted'=>false];
-            };
+            $mock=asaasJobTransportFixture($db,$p);
             echo json_encode((new \Asaas\CompanyReconciliation($db,$p))->runOnce(fn($v)=>str_starts_with($v,'synthetic:')?base64_decode(substr($v,10),true):false,$mock,1),JSON_THROW_ON_ERROR);
         }
     }catch(DomainException $e){if(!in_array($e->getMessage(),['company_expense_denied','asaas_company_access_denied'],true))throw $e;echo 'denied';}exit(0);
