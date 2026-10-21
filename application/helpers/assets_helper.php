@@ -48,7 +48,7 @@ function _init_admin_assets()
     // Mask CPF, CNPJ, CEP & Phone
     $CI->app_scripts->add('sweetalert2', 'assets/plugins/masks-cnpj-cep/sweetalert2@9.js');
     $CI->app_scripts->add('jquery.mask', 'assets/plugins/masks-cnpj-cep/jquery.mask.js');
-    $CI->app_scripts->add('masks-cnpj-cep', 'assets/plugins/masks-cnpj-cep/masks-cnpj-cep.min.js');
+    $CI->app_scripts->add('masks-cnpj-cep', 'assets/js/client-masks.js');
 
     add_datatables_js_assets();
     add_moment_js_assets();

@@ -33,6 +33,7 @@
             <div class="form-group"><label for="active">Situação</label><select class="form-control" id="active" name="active"><option value="1" <?= !$selected||(int)$selected['active']===1?'selected':''; ?>>Ativa</option><option value="0" <?= $selected&&(int)$selected['active']===0?'selected':''; ?>>Inativa</option></select></div>
             <button class="btn btn-primary" type="submit"><?php echo _l('issuer_save'); ?></button>
             <?php echo form_close(); ?>
+<?php require APPPATH.'views/admin/issuers/certificate_link.php'; ?>
         </div></div>
     <?php } ?>
     <?php if ($selected) { $id = (int) $selected['id']; ?>

@@ -128,6 +128,7 @@ class Clients_model extends App_Model
      */
     public function add($data, $withContact = false)
     {
+        $brazilProfile=$this->prepareBrazilProfile($data);
         $contact_data = [];
         // From Lead Convert to client
         if (isset($data['send_set_password_email'])) {
@@ -164,12 +165,16 @@ class Clients_model extends App_Model
             unset($data['contact_phonenumber']);
         }
 
-        $this->db->insert(db_prefix() . 'clients', array_merge($data, [
-            'datecreated' => date('Y-m-d H:i:s'),
-            'addedfrom'   => is_staff_logged_in() ? get_staff_user_id() : 0,
-        ]));
-
-        $client_id = $this->db->insert_id();
+        $insertClient=function()use($data,$brazilProfile){
+            $inserted=$this->db->insert(db_prefix() . 'clients', array_merge($data, [
+                'datecreated' => date('Y-m-d H:i:s'),
+                'addedfrom' => is_staff_logged_in() ? get_staff_user_id() : 0,
+            ]));
+            $clientId=$this->db->insert_id();
+            if($brazilProfile!==null){if($inserted===false||!$clientId)throw new RuntimeException('client_profile_write_failed');$this->writeBrazilProfile((int)$clientId,$brazilProfile,'create');}
+            return $clientId;
+        };
+        $client_id=$brazilProfile===null?$insertClient():$this->brazilProfileTransaction($insertClient);
 
         if ($client_id) {
             if (count($custom_fields) > 0) {
@@ -242,6 +247,7 @@ class Clients_model extends App_Model
     public function update($data, $id, $client_request = false)
     {
         if (!ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { return false; }
+        $brazilProfile=$this->prepareBrazilProfile($data);
         $updated = false;
         $data    = $this->check_zero_columns($data);
 
@@ -254,16 +260,15 @@ class Clients_model extends App_Model
         $custom_fields                 = Arr::pull($data, 'custom_fields') ?? [];
         $groups_in                     = Arr::pull($data, 'groups_in') ?? false;
 
-        if (handle_custom_fields_post($id, $custom_fields)) {
-            $updated = true;
-        }
-
-        $this->db->where('userid', $id);
-        $this->db->update(db_prefix() . 'clients', $data);
-
-        if ($this->db->affected_rows() > 0) {
-            $updated = true;
-        }
+        $updateClient=function()use($id,$data,$custom_fields,$brazilProfile){
+            $changed=handle_custom_fields_post($id,$custom_fields);
+            $this->db->where('userid',$id);$saved=$this->db->update(db_prefix().'clients',$data);
+            if($brazilProfile!==null&&$saved===false)throw new RuntimeException('client_profile_write_failed');
+            $changed=$this->db->affected_rows()>0||$changed;
+            if($brazilProfile!==null){$this->writeBrazilProfile((int)$id,$brazilProfile,'edit');$changed=true;}
+            return $changed;
+        };
+        $updated=$brazilProfile===null?$updateClient():$this->brazilProfileTransaction($updateClient,$custom_fields?['customfieldsvalues']:[]);
 
         if ($update_all_other_transactions || $update_credit_notes) {
             $transactions_update = [
@@ -1710,6 +1715,29 @@ class Clients_model extends App_Model
                     OR staffid IN(SELECT staff_id FROM " . db_prefix() . 'staff_permissions WHERE feature = "customers" AND capability="view")
                 )
             AND active=1')->result_array();
+    }
+
+    /** Only explicit admin profile fields use this extension; imports and portal payloads stay unchanged. */
+    private function prepareBrazilProfile(array &$data): ?array
+    {
+        if(!array_key_exists('brazil_profile',$data))return null;
+        require_once APPPATH.'services/CompanyClientProfile.php';
+        $profile=$data['brazil_profile'];unset($data['brazil_profile']);
+        if(!is_array($profile)||!class_exists('CompanyRequestScope',false)||!CompanyRequestScope::context()||!CompanyRequestScope::context()->isPrimary()||!is_staff_logged_in())throw new DomainException('company_client_access_denied');
+        if(!CompanyClientProfileSchema::ready($this->db,db_prefix()))throw new DomainException('company_client_profile_upgrade_required');
+        // Existing international VAT stays valid when PF/PJ classification is not requested.
+        $tax=null;try{$tax=IssuerPolicy::taxId($data['vat']??'',false);}catch(DomainException $error){if(!empty($profile['person_type']))throw $error;}
+        return CompanyClientProfile::normalize($profile,$tax);
+    }
+    private function brazilProfileTransaction(callable $operation,array $extra=[])
+    {
+        require_once APPPATH.'services/issuers/IssuerTransaction.php';
+        return IssuerTransaction::run($this->db,db_prefix(),array_merge(CompanyClientProfile::TABLES,$extra),$operation);
+    }
+    private function writeBrazilProfile(int $id,array $profile,string $cap):void
+    {
+        $context=CompanyRequestScope::context();
+        (new CompanyClientProfile($this->db,db_prefix()))->write($context->issuerId(),$context->staffId(),$id,$profile,$cap);
     }
 
     private function check_zero_columns($data)

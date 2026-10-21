@@ -14,8 +14,7 @@ $hidden=function()use($esc,$company_clients_csrf){echo '<input type="hidden" nam
 <?php if($owned&&$capabilities['edit']){?>
 <?= form_open($url());$hidden(); ?>
 <input type="hidden" name="action" value="update"><input type="hidden" name="client_id" value="<?= $client['userid']; ?>"><input type="hidden" name="revision" value="<?= $esc($details['revision']); ?>">
-<div class="form-group"><label for="edit_company">Nome / razão social</label><input class="form-control" id="edit_company" name="client[company]" required maxlength="191" value="<?= $esc($client['company']); ?>"></div>
-<div class="form-group"><label for="edit_vat">CPF / CNPJ (opcional)</label><input class="form-control" id="edit_vat" name="client[vat]" maxlength="20" value="<?= $esc($client['vat']); ?>"></div>
+<?php $clientMode='owned';$clientPrefix='edit';$clientData=$client;$clientProfile=$details['profile']??[];require __DIR__.'/client_identity_fields.php'; ?>
 <button type="submit" class="btn btn-primary">Salvar cliente</button><?= form_close(); ?>
 <?php }else{?><dl><dt>CPF / CNPJ</dt><dd><?= $esc($client['vat']?:'Não informado'); ?></dd></dl><?php } ?>
 <?php if($owned){?>
@@ -56,8 +55,7 @@ $hidden=function()use($esc,$company_clients_csrf){echo '<input type="hidden" nam
 <h2>Novo cliente privado</h2><p>CPF/CNPJ repetido é recusado, inclusive quando já existe no legado. O conflito não identifica o proprietário.</p>
 <?= form_open($url());$hidden(); ?>
 <input type="hidden" name="action" value="create"><input type="hidden" name="request_key" value="<?= $esc($request_key); ?>">
-<div class="form-group"><label for="new_company">Nome / razão social</label><input class="form-control" id="new_company" name="client[company]" required maxlength="191" autocomplete="organization"></div>
-<div class="form-group"><label for="new_vat">CPF / CNPJ (opcional)</label><input class="form-control" id="new_vat" name="client[vat]" maxlength="20"></div>
+<?php $clientMode='owned';$clientPrefix='new';$clientData=[];$clientProfile=[];require __DIR__.'/client_identity_fields.php'; ?>
 <button type="submit" class="btn btn-primary">Criar cliente privado</button><?= form_close(); ?>
 <?php } ?>
 <p>Este diretório administra identidade. Operações financeiras e demais recursos ficam disponíveis conforme a conclusão e autorização de cada fluxo.</p>

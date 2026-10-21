@@ -72,6 +72,17 @@ jobs:
           name: company-identity-presentation
           path: /tmp/company-identity-evidence
           if-no-files-found: warn
+      - name: Testar cadastro PF/PJ e consultas revisadas de clientes
+        env:
+          SCREENSHOT_DIR: /tmp/client-identity-evidence
+        run: node tests/companies/client_identity_browser.cjs
+      - name: Preservar capturas sintéticas do cadastro de clientes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-identity-presentation
+          path: /tmp/client-identity-evidence
+          if-no-files-found: error
       - name: Provisionar schema e primeiro administrador em MySQL limpo
         env:
           ARGWS_ISSUER_BROWSER_SMOKE: '1'

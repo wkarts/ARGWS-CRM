@@ -6,11 +6,15 @@ class Migration_Version_458 extends CI_Migration
 {
     public function up(): void
     {
-        // Release marker: this version does not require a schema change.
+        require_once APPPATH.'services/CompanyClientProfileSchema.php';
+        require_once APPPATH.'services/issuers/IssuerCertificateSchema.php';
+        $ci = &get_instance();
+        CompanyClientProfileSchema::ensure($ci->db, db_prefix());
+        IssuerCertificateSchema::ensure($ci->db, db_prefix());
     }
 
     public function down(): void
     {
-        // No schema changes were made by this release marker.
+        // Preserve private customer profiles, encrypted certificates and audit history.
     }
 }

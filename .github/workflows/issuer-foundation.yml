@@ -368,6 +368,9 @@ jobs:
           php tests/settings/settings_audit_integrity.php
           php tests/settings/company_registry_identity.php
           php tests/settings/company_registry_profile.php
+          php tests/companies/client_profiles.php
+          php tests/companies/client_profiles_legacy_model.php
+          php tests/companies/client_lookup_controller.php
           php tests/companies/company_identity_documents.php
           php tests/company_registry_lookup.php
           php tests/company_registry_lookup_controller.php

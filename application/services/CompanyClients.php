@@ -3,6 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/issuers/IssuerResourceAccess.php';
 require_once __DIR__.'/issuers/IssuerTransaction.php';
+require_once __DIR__.'/CompanyClientProfile.php';
 
 /** Native private customer operations. No session, hooks, mail, contacts or finance hydration.
  * The isolated directory exposes only this projection; legacy readers remain closed.
@@ -58,10 +59,11 @@ final class CompanyClients
     }
     private function input(array $input): array
     {
-        if (array_diff(array_keys($input),['company','vat'])) throw new DomainException('company_client_invalid_input');
+        if (array_diff(array_keys($input),['company','vat','profile'])) throw new DomainException('company_client_invalid_input');
         $name=$input['company']??null;
         if(!is_string($name)||trim($name)===''||strlen(trim($name))>191||preg_match('/[\x00-\x1f]/',$name)) throw new DomainException('company_client_invalid_input');
-        return [trim($name),IssuerPolicy::taxId($input['vat']??'',false)];
+        $tax=IssuerPolicy::taxId($input['vat']??'',false);$profile=null;if(array_key_exists('profile',$input)){if(!is_array($input['profile']))throw new DomainException('company_client_invalid_input');$profile=CompanyClientProfile::normalize($input['profile'],$tax);}
+        return [trim($name),$tax,$profile];
     }
     private function conflict(?string $tax,?int $except): void
     {
@@ -77,7 +79,7 @@ final class CompanyClients
     /** Participants for the same native writer, including durable create receipts when requested. */
     public function tables(bool $receipts=true):array
     {
-        return array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_clients','issuers_client_links','issuers_audit','staff','clients'],$receipts?['company_client_requests']:[]);
+        return array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_clients','issuers_client_links','issuers_audit','staff','clients'],$receipts?['company_client_requests']:[],CompanyClientProfileSchema::ready($this->db,$this->prefix)?['company_client_profiles']:[]);
     }
     private function transaction(callable $operation,bool $receipts=false)
     {
@@ -86,22 +88,22 @@ final class CompanyClients
     /** Veto-only preview: uses exactly the writer's name/VAT policy, without adopting existing identities. */
     public function previewInOwnedTransaction($issuer,$actor,array $input):array
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);IssuerTransaction::assertOwned($this->db,$this->prefix,$this->tables(false));$this->authorize($issuer,$actor,'create');[$name,$tax]=$this->input($input);$this->conflict($tax,null);$this->authorize($issuer,$actor,'create');return ['company'=>$name,'vat'=>$tax??''];
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);IssuerTransaction::assertOwned($this->db,$this->prefix,$this->tables(false));$this->authorize($issuer,$actor,'create');[$name,$tax,$profile]=$this->input($input);$this->conflict($tax,null);$this->authorize($issuer,$actor,'create');return ['company'=>$name,'vat'=>$tax??'']+($profile===null?[]:['profile'=>$profile]);
     }
     public function create($issuer,$actor,array $input,?string $requestKey=null): int
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);[$name,$tax]=$this->input($input);
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);[$name,$tax,$profile]=$this->input($input);
         if($requestKey!==null&&!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new DomainException('company_client_invalid_input');
-        return $this->transaction(fn():int=>$this->createPreparedInOwned($issuer,$actor,$name,$tax,$requestKey),$requestKey!==null);
+        return $this->transaction(fn():int=>$this->createPreparedInOwned($issuer,$actor,$name,$tax,$requestKey,$profile),$requestKey!==null);
     }
     /** A bounded import composes this exact writer; raw outer transactions remain forbidden. */
     public function createInOwnedTransaction($issuer,$actor,array $input,string $requestKey):int
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);[$name,$tax]=$this->input($input);if(!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new DomainException('company_client_invalid_input');return $this->createPreparedInOwned($issuer,$actor,$name,$tax,$requestKey);
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);[$name,$tax,$profile]=$this->input($input);if(!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new DomainException('company_client_invalid_input');return $this->createPreparedInOwned($issuer,$actor,$name,$tax,$requestKey,$profile);
     }
-    private function createPreparedInOwned(int $issuer,int $actor,string $name,?string $tax,?string $requestKey):int
+    private function createPreparedInOwned(int $issuer,int $actor,string $name,?string $tax,?string $requestKey,?array $profile=null):int
     {
-        IssuerTransaction::assertOwned($this->db,$this->prefix,$this->tables($requestKey!==null));$hash=hash('sha256',json_encode([$name,$tax],JSON_THROW_ON_ERROR));
+        IssuerTransaction::assertOwned($this->db,$this->prefix,$this->tables($requestKey!==null));$hash=hash('sha256',json_encode($profile===null?[$name,$tax]:[$name,$tax,$profile],JSON_THROW_ON_ERROR));
             $this->authorize($issuer,$actor,'create');
             if($requestKey!==null){
                 $receipt=$this->rows('SELECT issuer_id,actor_id,input_hash,client_id FROM '.$this->prefix.'company_client_requests WHERE request_key=? FOR UPDATE',[$requestKey])[0]??null;
@@ -115,6 +117,7 @@ final class CompanyClients
             IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'clients(company,vat,datecreated,addedfrom,active) VALUES(?,?,?,?,1)',[$name,$tax,$now,$actor]);
             $id=(int)$this->db->insert_id();if($id<1)throw new RuntimeException('issuer_client_write_unconfirmed');
             IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'issuers_clients(client_id,owner_issuer_id,tax_id,created_by,created_at) VALUES(?,?,?,?,?)',[$id,$issuer,$tax,$actor,$now]);
+            if($profile!==null)(new CompanyClientProfile($this->db,$this->prefix))->write($issuer,$actor,$id,$profile,'create');
             $this->confirm($issuer,$id,$name,$tax);
             $this->audit($actor,$issuer,$id,'company_client_created');
             if($requestKey!==null){
@@ -127,14 +130,15 @@ final class CompanyClients
     }
     public function update($issuer,$actor,$client,array $input,?string $revision=null): void
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$client=IssuerPolicy::id($client);[$name,$tax]=$this->input($input);
-        $this->transaction(function()use($issuer,$actor,$client,$name,$tax,$revision):void{
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$client=IssuerPolicy::id($client);[$name,$tax,$profile]=$this->input($input);
+        $this->transaction(function()use($issuer,$actor,$client,$name,$tax,$revision,$profile):void{
             $this->authorize($issuer,$actor,'edit');
             if(!$this->rows('SELECT client_id FROM '.$this->prefix.'issuers_clients WHERE client_id=? AND owner_issuer_id=? FOR UPDATE',[$client,$issuer]))throw new DomainException('company_client_access_denied');
             $this->assertRevision($issuer,$client,$revision);
             $this->conflict($tax,$client);
             IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'clients SET company=?,vat=? WHERE userid=?',[$name,$tax,$client]);
             IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'issuers_clients SET tax_id=? WHERE client_id=? AND owner_issuer_id=?',[$tax,$client,$issuer]);
+            if($profile!==null)(new CompanyClientProfile($this->db,$this->prefix))->write($issuer,$actor,$client,$profile);
             $this->confirm($issuer,$client,$name,$tax);
             $this->audit($actor,$issuer,$client,'company_client_updated');
             $this->authorize($issuer,$actor,'edit');
@@ -171,7 +175,7 @@ final class CompanyClients
         $owner=$row['owner_issuer_id']===(int)$issuer;
         $links=$owner?$this->links((int)$client):[];
         $this->authorize((int)$issuer,(int)$actor,'view');
-        return ['client'=>$row,'targets'=>$links,'revision'=>$owner?$this->revision($row,$links):null];
+        return ['client'=>$row,'targets'=>$links,'revision'=>$owner?$this->revision($row,$links):null,'profile'=>$owner?(new CompanyClientProfile($this->db,$this->prefix))->read((int)$issuer,(int)$actor,(int)$client):[]];
     }
     public function sharingOptions($issuer,$actor): array
     {
@@ -188,7 +192,9 @@ final class CompanyClients
     }
     private function revision(array $row,array $links): string
     {
-        return hash('sha256',json_encode([$this->project($row),$links],JSON_THROW_ON_ERROR));
+        $parts=[$this->project($row),$links];
+        if(CompanyClientProfileSchema::ready($this->db,$this->prefix)){$parts[]=$this->rows('SELECT '.implode(',',array_keys(CompanyClientProfile::NATIVE)).' FROM '.$this->prefix.'clients WHERE userid=?',[$row['userid']]);$parts[]=$this->rows('SELECT profile_json FROM '.$this->prefix.'company_client_profiles WHERE issuer_id=? AND client_id=?',[$row['owner_issuer_id'],$row['userid']]);}
+        return hash('sha256',json_encode($parts,JSON_THROW_ON_ERROR));
     }
     private function assertRevision(int $issuer,int $client,?string $revision): void
     {

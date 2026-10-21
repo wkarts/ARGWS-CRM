@@ -21,7 +21,7 @@ if (process.env.STATIC_ONLY) { console.log('PASS actual shared partial: canonica
     await page.route('**/*', async route => {
       const url = new URL(route.request().url());
       if (url.hostname !== 'fixture.test') return route.abort();
-      if (url.pathname === '/') return route.fulfill({ body: render('registry'), contentType: 'text/html' });
+      if (url.pathname === '/') return route.fulfill({ body: render('registry'), contentType: 'text/html; charset=utf-8' });
       if (url.pathname === '/admin/issuers/lookup') {
         requests++; const data = new URLSearchParams(route.request().postData());
         assert.equal(data.get('_company_context'), 'synthetic-context'); assert.equal(data.get('lookup_csrf'), 'a'.repeat(64));
@@ -33,6 +33,7 @@ if (process.env.STATIC_ONLY) { console.log('PASS actual shared partial: canonica
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: 900 }); await page.goto('https://fixture.test/', { waitUntil: 'load' });
       await page.waitForFunction(() => document.querySelector('[data-company-identity]').dataset.ready);
+      assert((await page.locator('body').textContent()).includes('Identificação'));
       assert.equal(await page.locator('#company-address').isVisible(), false);
       await page.locator('[data-company-lookup=cnpj]').click(); await page.locator('[data-lookup-preview]').waitFor({ state: 'visible' });
       assert.equal(await page.locator('#legal_name').inputValue(), 'Nome existente');

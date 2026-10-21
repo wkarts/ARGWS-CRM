@@ -10,17 +10,17 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "b5b201a870f947bfed67dd8f24aa504e5cc4f1964d8a18abda4fbf7cc7ccce1d",
+    "source_manifest_sha256": "76e13f72824864a37be04049a0b3448492bfeb0e3c5cdf998868141f8b26bbb0",
     "counts": {
         "modules": 38,
-        "source_files": 4161,
+        "source_files": 4171,
         "literal_option_keys": 684,
         "dynamic_option_references": 146,
-        "controllers": 253,
+        "controllers": 254,
         "hook_candidates": 553,
         "job_file_candidates": 64,
         "report_file_candidates": 293,
-        "table_name_candidates": 828,
+        "table_name_candidates": 831,
         "database_call_candidates": 12531
     },
     "infrastructure_options": [
@@ -8905,7 +8905,7 @@
         },
         {
             "path": "application/controllers/admin/Clients.php",
-            "source_sha256": "115faca3028f2078ca2294575e2512dea54a362570ab7da0a2fb0db77f987d92",
+            "source_sha256": "e1eecf589cd90bfba111228f2bd1ed59240da58dcbbce1aa0dd0a75180339e00",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -8932,197 +8932,197 @@
                 },
                 {
                     "method": "export",
-                    "line": 264,
+                    "line": 268,
                     "visibility": "public"
                 },
                 {
                     "method": "check_duplicate_customer_name",
-                    "line": 274,
+                    "line": 278,
                     "visibility": "public"
                 },
                 {
                     "method": "save_longitude_and_latitude",
-                    "line": 286,
+                    "line": 290,
                     "visibility": "public"
                 },
                 {
                     "method": "form_contact",
-                    "line": 307,
+                    "line": 311,
                     "visibility": "public"
                 },
                 {
                     "method": "confirm_registration",
-                    "line": 452,
+                    "line": 456,
                     "visibility": "public"
                 },
                 {
                     "method": "update_file_share_visibility",
-                    "line": 462,
+                    "line": 466,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_contact_profile_image",
-                    "line": 494,
+                    "line": 498,
                     "visibility": "public"
                 },
                 {
                     "method": "mark_as_active",
-                    "line": 499,
+                    "line": 503,
                     "visibility": "public"
                 },
                 {
                     "method": "consents",
-                    "line": 509,
+                    "line": 513,
                     "visibility": "public"
                 },
                 {
                     "method": "update_all_proposal_emails_linked_to_customer",
-                    "line": 526,
+                    "line": 530,
                     "visibility": "public"
                 },
                 {
                     "method": "assign_admins",
-                    "line": 568,
+                    "line": 572,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_customer_admin",
-                    "line": 581,
+                    "line": 585,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_contact",
-                    "line": 594,
+                    "line": 598,
                     "visibility": "public"
                 },
                 {
                     "method": "contacts",
-                    "line": 616,
+                    "line": 620,
                     "visibility": "public"
                 },
                 {
                     "method": "upload_attachment",
-                    "line": 623,
+                    "line": 627,
                     "visibility": "public"
                 },
                 {
                     "method": "add_external_attachment",
-                    "line": 628,
+                    "line": 632,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 635,
+                    "line": 639,
                     "visibility": "public"
                 },
                 {
                     "method": "delete",
-                    "line": 644,
+                    "line": 648,
                     "visibility": "public"
                 },
                 {
                     "method": "login_as_client",
-                    "line": 664,
+                    "line": 668,
                     "visibility": "public"
                 },
                 {
                     "method": "get_customer_billing_and_shipping_details",
-                    "line": 673,
+                    "line": 677,
                     "visibility": "public"
                 },
                 {
                     "method": "change_contact_status",
-                    "line": 679,
+                    "line": 683,
                     "visibility": "public"
                 },
                 {
                     "method": "change_client_status",
-                    "line": 689,
+                    "line": 693,
                     "visibility": "public"
                 },
                 {
                     "method": "zip_credit_notes",
-                    "line": 701,
+                    "line": 705,
                     "visibility": "public"
                 },
                 {
                     "method": "zip_invoices",
-                    "line": 724,
+                    "line": 728,
                     "visibility": "public"
                 },
                 {
                     "method": "zip_estimates",
-                    "line": 748,
+                    "line": 752,
                     "visibility": "public"
                 },
                 {
                     "method": "zip_payments",
-                    "line": 771,
+                    "line": 775,
                     "visibility": "public"
                 },
                 {
                     "method": "import",
-                    "line": 794,
+                    "line": 798,
                     "visibility": "public"
                 },
                 {
                     "method": "groups",
-                    "line": 839,
+                    "line": 843,
                     "visibility": "public"
                 },
                 {
                     "method": "group",
-                    "line": 851,
+                    "line": 855,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_group",
-                    "line": 882,
+                    "line": 886,
                     "visibility": "public"
                 },
                 {
                     "method": "bulk_action",
-                    "line": 899,
+                    "line": 903,
                     "visibility": "public"
                 },
                 {
                     "method": "vault_entry_create",
-                    "line": 928,
+                    "line": 932,
                     "visibility": "public"
                 },
                 {
                     "method": "vault_entry_update",
-                    "line": 956,
+                    "line": 960,
                     "visibility": "public"
                 },
                 {
                     "method": "vault_entry_delete",
-                    "line": 990,
+                    "line": 994,
                     "visibility": "public"
                 },
                 {
                     "method": "vault_encrypt_password",
-                    "line": 1000,
+                    "line": 1004,
                     "visibility": "public"
                 },
                 {
                     "method": "get_vault_entry",
-                    "line": 1028,
+                    "line": 1032,
                     "visibility": "public"
                 },
                 {
                     "method": "statement_pdf",
-                    "line": 1037,
+                    "line": 1041,
                     "visibility": "public"
                 },
                 {
                     "method": "send_statement",
-                    "line": 1071,
+                    "line": 1075,
                     "visibility": "public"
                 },
                 {
                     "method": "statement",
-                    "line": 1099,
+                    "line": 1103,
                     "visibility": "public"
                 }
             ],
@@ -9233,6 +9233,25 @@
             "operational_ready": false
         },
         {
+            "path": "application/controllers/admin/Company_certificates.php",
+            "source_sha256": "0e41808236a38c58f9d309b6567a49d6d8798809e3a33e28c889f6024f034b86",
+            "module": null,
+            "base_class": "AdminController",
+            "surface": "admin",
+            "method_candidates": [
+                {
+                    "method": "index",
+                    "line": 8,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
             "path": "application/controllers/admin/Company_client_imports.php",
             "source_sha256": "184db64f68d2129cd3fab5ec4f90578721f34bb6cfd8a6925b80948baa4a91cf",
             "module": null,
@@ -9253,7 +9272,7 @@
         },
         {
             "path": "application/controllers/admin/Company_clients.php",
-            "source_sha256": "9dbb1c94cf93c6b6e13babdfaf4551ab988a0dc761f849f61c376ee2370d81e1",
+            "source_sha256": "60fe38d0ed64b3eddcf51a503b3764df22306c6de86b548babe59d1f1d1b2f34",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -9261,6 +9280,11 @@
                 {
                     "method": "index",
                     "line": 8,
+                    "visibility": "public"
+                },
+                {
+                    "method": "lookup",
+                    "line": 89,
                     "visibility": "public"
                 }
             ],
@@ -26891,7 +26915,7 @@
         {
             "name": "clients",
             "state": "not_verified",
-            "reference_count": 285
+            "reference_count": 292
         },
         {
             "name": "color",
@@ -26952,6 +26976,11 @@
             "name": "company_client_import_batches",
             "state": "not_verified",
             "reference_count": 7
+        },
+        {
+            "name": "company_client_profiles",
+            "state": "not_verified",
+            "reference_count": 11
         },
         {
             "name": "company_client_requests",
@@ -28056,7 +28085,7 @@
         {
             "name": "countries",
             "state": "not_verified",
-            "reference_count": 23
+            "reference_count": 24
         },
         {
             "name": "coupons",
@@ -28914,6 +28943,16 @@
             "reference_count": 537
         },
         {
+            "name": "issuer_certificate_audit",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
+            "name": "issuer_certificate_credentials",
+            "state": "not_verified",
+            "reference_count": 3
+        },
+        {
             "name": "issuers_",
             "state": "not_verified",
             "reference_count": 19
@@ -28931,12 +28970,12 @@
         {
             "name": "issuers_clients",
             "state": "not_verified",
-            "reference_count": 66
+            "reference_count": 67
         },
         {
             "name": "issuers_installation_identity",
             "state": "not_verified",
-            "reference_count": 26
+            "reference_count": 27
         },
         {
             "name": "issuers_invoice_documents",
@@ -28956,7 +28995,7 @@
         {
             "name": "issuers_registry",
             "state": "not_verified",
-            "reference_count": 137
+            "reference_count": 144
         },
         {
             "name": "issuers_resource_permissions",

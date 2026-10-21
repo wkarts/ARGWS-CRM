@@ -92,7 +92,9 @@ class Clients extends AdminController
                     unset($data['save_and_add_contact']);
                     $save_and_add_contact = true;
                 }
-                $id = $this->clients_model->add($data);
+                try { $id = $this->clients_model->add($data); }
+                catch (DomainException $error) { set_alert('danger','Confira o tipo de pessoa, CPF/CNPJ e dados complementares. O cadastro não foi salvo.'); redirect(admin_url('clients/client')); return; }
+                catch (RuntimeException $error) { if(!array_key_exists('brazil_profile',$data))throw $error; log_message('error','Client profile save failed; no submitted data logged.'); set_alert('danger','Não foi possível confirmar o cadastro. Recarregue e tente novamente.'); redirect(admin_url('clients/client')); return; }
                 if (staff_cant('view', 'customers')) {
                     $assign['customer_admins']   = [];
                     $assign['customer_admins'][] = get_staff_user_id();
@@ -112,7 +114,9 @@ class Clients extends AdminController
                         access_denied('customers');
                     }
                 }
-                $success = $this->clients_model->update($this->input->post(), $id);
+                try { $success = $this->clients_model->update($this->input->post(), $id); }
+                catch (DomainException $error) { set_alert('danger','Confira o tipo de pessoa, CPF/CNPJ e dados complementares. A alteração não foi salva.'); redirect(admin_url('clients/client/' . $id)); return; }
+                catch (RuntimeException $error) { if(!$this->input->post('brazil_profile'))throw $error; log_message('error','Client profile update failed; no submitted data logged.'); set_alert('danger','Não foi possível confirmar a alteração. Recarregue e tente novamente.'); redirect(admin_url('clients/client/' . $id)); return; }
                 if ($success == true) {
                     set_alert('success', _l('updated_successfully', _l('client')));
                 }

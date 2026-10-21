@@ -90,10 +90,24 @@ if (total_rows(db_prefix() . 'customfields', ['fieldto' => 'customers', 'active'
                         <?= render_input('company', 'client_company', $value, 'text', $attrs); ?>
                         <div id="company_exists_info" class="hide"></div>
                         <?php hooks()->do_action('after_customer_profile_company_field', $client ?? null); ?>
-                        <?php if (get_option('company_requires_vat_number_field') == 1) {
+                        <?php if (get_option('company_requires_vat_number_field') == 1 || (class_exists('CompanyRequestScope',false)&&CompanyRequestScope::context())) {
                             $value = (isset($client) ? $client->vat : '');
                             echo render_input('vat', 'client_vat_number', $value);
                         } ?>
+                        <?php
+                        require_once APPPATH.'services/CompanyClientProfile.php';
+                        $clientProfileAllowed=false;
+                        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::context()&&CompanyRequestScope::context()->isPrimary()&&CompanyClientProfileSchema::ready($this->db,db_prefix())){
+                            $profileContext=CompanyRequestScope::context();$privateProfile=new CompanyClientProfile($this->db,db_prefix());
+                            $clientProfileAllowed=isset($client)?($privateProfile->allowed($profileContext->issuerId(),$profileContext->staffId(),(int)$client->userid,'view')&&$privateProfile->allowed($profileContext->issuerId(),$profileContext->staffId(),(int)$client->userid,'edit')):(new IssuerResourceAccess($this->db,db_prefix()))->can($profileContext->issuerId(),$profileContext->staffId(),'customers','create');
+                        }
+                        if($clientProfileAllowed){
+                            $clientMode='legacy';$clientPrefix='brazil';$clientData=isset($client)?(array)$client:[];$clientProfile=[];
+                            if(isset($client)){try{$clientProfile=(new CompanyClientProfile($this->db,db_prefix()))->read(CompanyRequestScope::context()->issuerId(),CompanyRequestScope::context()->staffId(),(int)$client->userid);}catch(DomainException $error){$clientProfile=[];}}
+                            $company_clients_csrf=$this->session->userdata('company_clients_csrf');if(!is_string($company_clients_csrf)||strlen($company_clients_csrf)!==64){$company_clients_csrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_clients_csrf',$company_clients_csrf);}
+                            require APPPATH.'views/admin/companies/client_identity_fields.php';
+                        }
+                        ?>
                         <?php hooks()->do_action('before_customer_profile_phone_field', $client ?? null); ?>
                         <?php $value = (isset($client) ? $client->phonenumber : ''); ?>
                         <?= render_input('phonenumber', 'client_phonenumber', $value); ?>
