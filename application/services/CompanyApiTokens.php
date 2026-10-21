@@ -87,6 +87,18 @@ final class CompanyApiTokens
     {
         $row=$this->resolve($secret,$scope,true);if($row['issuer_id']!==$issuer||$row['actor_id']!==$actor)throw new DomainException('company_api_scope_denied');
     }
+    /** Persisted job origin is a veto, never bearer authentication or actor impersonation. */
+    public function guardOriginInOwnedTransaction(string $tokenId,string $scope,int $issuer,int $actor):void
+    {
+        IssuerTransaction::assertOwned($this->db,$this->p,['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_audit','company_api_tokens','company_api_token_requests']);
+        CompanyApiSchema::assertValid($this->db,$this->p);
+        if(!preg_match('/^[a-f0-9]{32}$/D',$tokenId))throw new DomainException('company_api_scope_denied');
+        $r=$this->rows('SELECT token_id,issuer_id,actor_id,active,expires_at,scopes_json FROM '.$this->p.'company_api_tokens WHERE token_id=? FOR UPDATE',[$tokenId])[0]??null;
+        if(!$r||(int)$r['issuer_id']!==$issuer||(int)$r['actor_id']!==$actor||(int)$r['active']!==1||$r['expires_at']<=self::now())throw new DomainException('company_api_scope_denied');
+        $scopes=json_decode($r['scopes_json'],true,16,JSON_THROW_ON_ERROR);
+        if(!is_array($scopes)||!array_is_list($scopes)||!in_array($scope,$scopes,true))throw new DomainException('company_api_scope_denied');
+        $this->authorize($issuer,$actor);$this->scope($issuer,$actor,$scope);
+    }
     public function usedInOwnedTransaction(string $secret,string $scope,int $issuer,int $actor,string $action,?string $requestKey=null,array $context=[]):void
     {
         IssuerTransaction::assertOwned($this->db,$this->p,['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_audit','company_api_tokens','company_api_token_requests']);$row=$this->resolve($secret,$scope,true);if($row['issuer_id']!==$issuer||$row['actor_id']!==$actor)throw new DomainException('company_api_scope_denied');$now=self::now();IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_api_tokens SET last_used_at=? WHERE token_id=? AND active=1',[$now,$row['token_id']]);if(!$this->rows('SELECT token_id FROM '.$this->p.'company_api_tokens WHERE token_id=? AND issuer_id=? AND actor_id=? AND active=1 AND last_used_at=?',[$row['token_id'],$issuer,$actor,$now]))throw new RuntimeException('issuer_api_write_unconfirmed');$this->audit($issuer,$actor,$row['token_id'],'company_api_request_authorized',['action'=>$action,'request_key'=>$requestKey,'context'=>$context]);

@@ -16,6 +16,7 @@ on:
       - tests/companies*.cjs
       - tests/issuers_standalone_http_smoke.sh
       - scripts/inventory-company-boundaries.py
+      - scripts/company-surface-inventory.php
       - tests/test_company_boundary_inventory.py
       - docs/companies/**
       - tests/test_module_migration_convention.py
@@ -38,6 +39,7 @@ on:
       - tests/companies*.cjs
       - tests/issuers_standalone_http_smoke.sh
       - scripts/inventory-company-boundaries.py
+      - scripts/company-surface-inventory.php
       - tests/test_company_boundary_inventory.py
       - docs/companies/**
       - tests/test_module_migration_convention.py
@@ -89,9 +91,11 @@ jobs:
           apt-get update && apt-get install -y --no-install-recommends libpng-dev libjpeg62-turbo-dev poppler-utils
           command -v pdftotext
           docker-php-ext-configure gd --with-jpeg
-          docker-php-ext-install pdo_mysql gd
+          docker-php-ext-install pdo_mysql mysqli gd
       - name: Validar sintaxe e controles HTTP
         run: |
+          php scripts/company-surface-inventory.php --check
+          php scripts/company-surface-inventory.php --full --output /tmp/company-operational-surfaces-full.json
           find tests -name 'issuers*.php' -exec php -l '{}' \;
           php -l application/config/argws_resources.php
           php -l application/libraries/App_modules.php
@@ -103,6 +107,10 @@ jobs:
           find modules/issuers -name '*.php' -exec php -l '{}' \;
           php tests/issuers_controller.php
           php tests/issuers_admin_upgrade_gate.php
+      - uses: actions/upload-artifact@v4
+        with:
+          name: company-operational-surfaces-php-${{ matrix.php }}
+          path: /tmp/company-operational-surfaces-full.json
       - name: Testar schema, transações, ACL e concorrência em MySQL isolado
         env:
           ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_tests;charset=utf8mb4
@@ -154,6 +162,7 @@ jobs:
           php tests/companies/operations_api_controller.php
           php tests/companies/operations_api_concurrency.php
           php tests/companies/operations_api_bootstrap.php
+          php tests/companies/task_recurring_bootstrap.php
           php tests/companies/asaas_concurrency.php
           php tests/companies/asaas_job_fee_concurrency.php
           php tests/companies/asaas_remote_concurrency.php
@@ -342,6 +351,8 @@ jobs:
           php tests/settings/company_presentation_delivery.php
           php tests/settings/company_options_helpers.php
           php tests/settings/company_identity_transaction.php
+          php tests/settings/settings_commit_fencing.php
+          php tests/settings/settings_audit_integrity.php
           php tests/settings/company_registry_identity.php
           php tests/settings/company_mail_config.php
           php tests/settings/company_mail_queue.php
@@ -532,4 +543,15 @@ jobs:
           php tests/companies/native_timer_450.php
           php tests/companies/native_timer_451.php
           php tests/companies/native_diagnostics_452.php
+          php tests/companies/native_core_453.php
+          php tests/companies/task_recurring.php
+          php tests/companies/task_recurring_api.php
+          php tests/companies/task_recurring_integrity.php
+          php tests/companies/task_recurring_worker.php
+          php tests/companies/task_recurring_concurrency.php
+          php tests/companies/task_recurring_controller.php
+          php tests/companies/staff_management.php
+          php tests/companies/staff_native_atomic.php
+          php tests/companies/staff_native_controller.php
+          php tests/companies/staff_concurrency.php
           php tests/banco_brasil_local_noncash_clock_v3.php

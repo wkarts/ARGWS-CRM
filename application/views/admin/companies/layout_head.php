@@ -38,6 +38,8 @@ body.company-context-shell{background:#f3f4f6;margin:0;color:#334155}
 <nav id="menu" aria-label="Menu do CRM">
 <?php if ($companyLayoutPrimary) { ?><a class="company-dashboard" href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this)); ?>">Painel</a><?php } ?>
 <a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'issuers')); ?>">Empresas</a>
+<?php if($companyLayoutHasSettings&&CompanySettingsRuntime::canResource('staff','view')){?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'company_staff')); ?>">Equipe da empresa</a><?php }?>
+<?php if($companyLayoutHasSettings&&CompanySettingsRuntime::canResource('tasks','view')){?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'company_task_recurring')); ?>">Recorrência de tarefas</a><?php }?>
 <?php if($companyLayoutHasSettings&&CompanySettingsRuntime::canResource('calendar','view')){?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'company_calendar')); ?>">Calendário da empresa</a><?php }?>
 <?php if($companyLayoutHasSettings&&CompanySettingsRuntime::canResource('company-ai','view')){?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'company_ai')); ?>">Assistente privado</a><?php }?>
 <?php if($companyLayoutHasSettings&&CompanySettingsRuntime::canResource('pusher','view')&&CompanySettingsRuntime::canResource('tasks','view')&&CompanySettingsRuntime::canResource('projects','view')){?><a href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this,'company_pusher')); ?>">Avisos privados</a><?php }?>

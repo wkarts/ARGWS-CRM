@@ -57,7 +57,7 @@ $route['translate_uri_dashes'] = false;
 
 // Native operational bearer endpoints only. The controller scope independently
 // attests raw URI, router method, canonical ID and persisted token origin.
-foreach(['projects','tasks','standalone_tasks','contracts','tickets'] as $companyOperationRoute){
+foreach(['projects','tasks','standalone_tasks','contracts','tickets','task_schedules','standalone_schedules'] as $companyOperationRoute){
     $route['company_operations_api/'.$companyOperationRoute]='company_operations_api/'.$companyOperationRoute;
     $route['company_operations_api/'.$companyOperationRoute.'/([1-9][0-9]{0,9})']='company_operations_api/'.$companyOperationRoute.'/$1';
 }

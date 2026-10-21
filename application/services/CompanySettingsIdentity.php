@@ -5,6 +5,7 @@ require_once __DIR__ . '/issuers/IssuerPolicy.php';
 require_once __DIR__ . '/issuers/IssuerStorage.php';
 require_once __DIR__ . '/issuers/IssuerTransaction.php';
 require_once __DIR__ . '/issuers/IssuerResourceAccess.php';
+require_once __DIR__ . '/CompanySettingsCommitGuard.php';
 
 /** Canonical adapter shared by the company registry/wizard and Settings. */
 final class CompanySettingsIdentity
@@ -95,15 +96,14 @@ final class CompanySettingsIdentity
         $tables = ['issuers_lock', 'issuers_registry', 'issuers_staff', 'issuers_resource_permissions', 'issuers_installation_identity', 'issuers_audit', 'staff'];
         if ($this->primary($issuerId)) { $tables[] = 'options'; }
         IssuerTransaction::assertOwned($this->db, $this->prefix, $tables);
-        if (!(new IssuerResourceAccess($this->db, $this->prefix))->can($issuerId, $staffId, 'settings', 'edit')) {
-            throw new DomainException('company_settings_access_denied');
-        }
-        $changed = $this->apply($issuerId, $input);
-        if ($changed) { IssuerStorage::query($this->db, "INSERT INTO {$this->prefix}issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,'company_identity_updated',?,NULL,?)", [$staffId, $issuerId, date('Y-m-d H:i:s')]); }
+        $guard=new CompanySettingsCommitGuard($this->db,$this->prefix,$issuerId,$staffId,'edit');
+        $changed = $this->apply($issuerId, $input,$guard);
+        if ($changed) { $guard->audit('company_identity_updated'); }
+        $guard->confirm();
         return $changed;
     }
     /** Internal operation used only inside the owning serialized transaction. */
-    private function apply($issuerId, array $input): bool
+    private function apply($issuerId, array $input,CompanySettingsCommitGuard $guard): bool
     {
         foreach ($input as $key => $unused) { if (!in_array($key, ['legal_name', 'tax_id', 'profile'], true)) { throw new DomainException('company_settings_invalid_identity_field'); } }
         $record = $this->record($issuerId); $doc = $this->document($record); $primary = $this->primary($issuerId);
@@ -126,8 +126,7 @@ final class CompanySettingsIdentity
             if ($primary) {
                 $row = $this->rows("SELECT value FROM {$this->prefix}options WHERE name=?", [$key])[0] ?? null;
                 if ($row !== null && (string) $row['value'] === $value) { continue; }
-                if ($row === null) { IssuerStorage::query($this->db, "INSERT INTO {$this->prefix}options(name,value) VALUES(?,?)", [$key, $value]); }
-                else { IssuerStorage::query($this->db, "UPDATE {$this->prefix}options SET value=? WHERE name=?", [$value, $key]); }
+                $guard->writeOption('update',$key,$value);
                 $confirmed = $this->rows("SELECT value FROM {$this->prefix}options WHERE name=?", [$key])[0] ?? null;
                 if ($confirmed === null || (string) $confirmed['value'] !== $value) { throw new DomainException('company_settings_write_unconfirmed'); }
                 $changed = true;
@@ -145,6 +144,7 @@ final class CompanySettingsIdentity
         $json = json_encode($doc, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         $changed = $changed || $status !== ($record['identity_status'] ?? 'complete') || $json !== $record['settings_json'];
         if (!$changed) { return false; }
+        $guard->issuerFields(['legal_name'=>$name,'tax_id'=>$tax,'identity_status'=>$status,'settings_json'=>$json]);
         IssuerStorage::query($this->db, "UPDATE {$this->prefix}issuers_registry SET legal_name=?,tax_id=?,identity_status=?,settings_json=? WHERE id=?", [$name, $tax, $status, $json, $issuerId]);
         $confirmed = $this->record($issuerId);
         if ($confirmed['legal_name'] !== $name || $confirmed['tax_id'] !== $tax || $confirmed['identity_status'] !== $status || $confirmed['settings_json'] !== $json) { throw new DomainException('company_settings_write_unconfirmed'); }

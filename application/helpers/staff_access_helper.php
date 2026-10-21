@@ -70,6 +70,30 @@ function issuers_require_new_staff_access(?array $prepared): void
         throw new DomainException('issuer_staff_company_access_required');
     }
 }
+/** Native Staff_model owns profile, related rows, grants and audit as a single unit. */
+function issuers_save_staff_atomically($model,string $mode,array $data,$staff,array $prepared):array
+{
+    $resources=array_map(static fn($definition)=>array_keys($definition['capabilities']),issuers_staff_resource_catalog());
+    return $model->save_with_company_access($mode,$data,$staff,$prepared,$resources);
+}
+function issuers_staff_atomic_error(Throwable $error):void
+{
+    log_message('error','Native staff atomic write not confirmed; no profile, password or grants logged.');
+    $messages=[
+        'issuer_master_protected'=>'O master da instalação deve permanecer ativo e administrador.',
+        'issuer_staff_native_rejected'=>'A proteção do perfil recusou a alteração. Perfil e acessos foram preservados.',
+        'issuer_staff_email_conflict'=>'Este e-mail já pertence a outro colaborador. Nenhuma alteração foi aplicada.',
+        'issuer_staff_extension_unreviewed'=>'Uma extensão adicionou gravações ao perfil. É necessário revisar seus participantes transacionais antes de salvar perfil e acessos juntos.',
+    ];
+    set_alert('warning',$messages[$error->getMessage()]??'Não foi possível confirmar perfil e acessos. Reabra o cadastro para conferir o estado; não houve confirmação parcial de permissões.');
+}
+function issuers_staff_atomic_effects(array $result,$staff):void
+{
+    $failed=(int)$result['post_commit_failures'];
+    try{handle_staff_profile_image_upload($staff);}catch(Throwable $error){$failed++;}
+    set_alert('success','Perfil e acessos da equipe foram salvos juntos.');
+    if($failed){set_alert('warning','Perfil e acessos estão salvos, mas uma notificação, callback ou avatar não foi confirmado. Confira o efeito antes de solicitar novo envio.');}
+}
 /** Staff profile and issuer access are separate units; never report grants saved after a failure. */
 function issuers_apply_staff_access(?array $prepared,$staff): bool
 {

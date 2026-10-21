@@ -3,9 +3,27 @@
 use app\services\InvoiceIssuerScope;
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH.'services/CompanyNativeStaffTransaction.php';
 
 class Staff_model extends App_Model
 {
+    /** Called only when the native form contains validated company assignments/default. */
+    public function save_with_company_access(string $mode,array $data,$id,array $prepared,array $resources):array
+    {
+        if(array_key_exists('role',$data)&&$data['role']===''){$data['role']=0;}
+        return CompanyNativeStaffTransaction::run($this->db,db_prefix(),(int)get_staff_user_id(),$mode,$id,$prepared,$resources,
+            fn()=>$mode==='add'?$this->add($data):($mode==='update'?$this->update($data,$id):$this->update_profile($data,$id)));
+    }
+    private function issuer_staff_after_commit(callable $effect):void
+    {
+        CompanyNativeStaffTransaction::afterCommit($this->db,$effect);
+    }
+    private function issuer_staff_departments($id,array $departments):void
+    {
+        $expected=array_map(static fn($value)=>['departmentid'=>$value],$departments);
+        usort($expected,static fn($a,$b)=>(int)$a['departmentid']<=>(int)$b['departmentid']);
+        CompanyNativeStaffTransaction::expect($this->db,'departments:'.$id,'SELECT departmentid FROM '.db_prefix().'staff_departments WHERE staffid=? ORDER BY departmentid',[$id],$expected);
+    }
     private function issuer_installation_master($id): bool
     {
         require_once APPPATH . 'services/issuers/IssuerResourceAccess.php';
@@ -433,6 +451,7 @@ class Staff_model extends App_Model
         $email = $this->db->get(db_prefix() . 'staff')->row();
 
         if ($email) {
+            if(CompanyNativeStaffTransaction::active($this->db)){throw new DomainException('issuer_staff_email_conflict');}
             die('Email already exists');
         }
 
@@ -477,7 +496,9 @@ class Staff_model extends App_Model
 
         $this->db->insert(db_prefix() . 'staff', $data);
         $staffid = $this->db->insert_id();
+        if(CompanyNativeStaffTransaction::active($this->db)&&!$staffid){throw new RuntimeException('issuer_staff_write_unconfirmed');}
         if ($staffid) {
+            CompanyNativeStaffTransaction::profile($this->db,db_prefix(),(int)$staffid,$data);
             $slug = $data['firstname'] . ' ' . $data['lastname'];
 
             if ($slug == ' ') {
@@ -485,13 +506,14 @@ class Staff_model extends App_Model
             }
 
             if ($send_welcome_email == true) {
-                send_mail_template('staff_created', $data['email'], $staffid, $original_password);
+                $this->issuer_staff_after_commit(fn()=>send_mail_template('staff_created', $data['email'], $staffid, $original_password));
             }
 
             $this->db->where('staffid', $staffid);
             $this->db->update(db_prefix() . 'staff', [
                 'media_path_slug' => slug_it($slug),
             ]);
+            CompanyNativeStaffTransaction::profile($this->db,db_prefix(),(int)$staffid,['media_path_slug'=>slug_it($slug)]);
 
             if (isset($custom_fields)) {
                 handle_custom_fields_post($staffid, $custom_fields);
@@ -504,11 +526,12 @@ class Staff_model extends App_Model
                     ]);
                 }
             }
+            $this->issuer_staff_departments($staffid,$departments??[]);
 
             // Delete all staff permission if is admin we dont need permissions stored in database (in case admin check some permissions)
             $this->update_permissions($data['admin'] == 1 ? [] : $permissions, $staffid);
 
-            log_activity('New Staff Member Added [ID: ' . $staffid . ', ' . $data['firstname'] . ' ' . $data['lastname'] . ']');
+            $this->issuer_staff_after_commit(fn()=>log_activity('New Staff Member Added [ID: ' . $staffid . ', ' . $data['firstname'] . ' ' . $data['lastname'] . ']'));
 
             // Get all announcements and set it to read.
             $this->db->select('announcementid');
@@ -522,7 +545,9 @@ class Staff_model extends App_Model
                     'userid'         => $staffid,
                 ]);
             }
-            hooks()->do_action('staff_member_created', $staffid);
+            $expected=array_map(static fn($row)=>['announcementid'=>$row['announcementid']],$announcements);usort($expected,static fn($a,$b)=>(int)$a['announcementid']<=>(int)$b['announcementid']);
+            CompanyNativeStaffTransaction::expect($this->db,'announcements:'.$staffid,'SELECT announcementid FROM '.db_prefix().'dismissed_announcements WHERE staff=1 AND userid=? ORDER BY announcementid',[$staffid],$expected);
+            $this->issuer_staff_after_commit(fn()=>hooks()->do_action('staff_member_created', $staffid));
 
             return $staffid;
         }
@@ -670,6 +695,9 @@ class Staff_model extends App_Model
         $this->db->where('staffid', $id);
         $this->db->update(db_prefix() . 'staff', $data);
 
+        CompanyNativeStaffTransaction::profile($this->db,db_prefix(),(int)$id,$data);
+        $this->issuer_staff_departments($id,$departments??[]);
+
         if ($this->db->affected_rows() > 0) {
             $affectedRows++;
         }
@@ -679,8 +707,8 @@ class Staff_model extends App_Model
         }
 
         if ($affectedRows > 0) {
-            hooks()->do_action('staff_member_updated', $id);
-            log_activity('Staff Member Updated [ID: ' . $id . ', ' . $data['firstname'] . ' ' . $data['lastname'] . ']');
+            $this->issuer_staff_after_commit(fn()=>hooks()->do_action('staff_member_updated', $id));
+            $this->issuer_staff_after_commit(fn()=>log_activity('Staff Member Updated [ID: ' . $id . ', ' . $data['firstname'] . ' ' . $data['lastname'] . ']'));
 
             return true;
         }
@@ -694,6 +722,7 @@ class Staff_model extends App_Model
         $this->db->delete('staff_permissions');
 
         $is_staff_member = is_staff_member($id);
+        $expected=[];
 
         foreach ($permissions as $feature => $capabilities) {
             foreach ($capabilities as $capability) {
@@ -704,8 +733,11 @@ class Staff_model extends App_Model
                 }
 
                 $this->db->insert('staff_permissions', ['staff_id' => $id, 'feature' => $feature, 'capability' => $capability]);
+                $expected[]=['feature'=>$feature,'capability'=>$capability];
             }
         }
+        usort($expected,static fn($a,$b)=>[$a['feature'],$a['capability']]<=>[$b['feature'],$b['capability']]);
+        CompanyNativeStaffTransaction::expect($this->db,'permissions:'.$id,'SELECT feature,capability FROM '.db_prefix().'staff_permissions WHERE staff_id=? ORDER BY feature,capability',[$id],$expected);
 
         return true;
     }
@@ -734,9 +766,10 @@ class Staff_model extends App_Model
 
         $this->db->where('staffid', $id);
         $this->db->update(db_prefix() . 'staff', $data);
+        CompanyNativeStaffTransaction::profile($this->db,db_prefix(),(int)$id,$data);
         if ($this->db->affected_rows() > 0) {
-            hooks()->do_action('staff_member_profile_updated', $id);
-            log_activity('Staff Profile Updated [Staff: ' . get_staff_full_name($id) . ']');
+            $this->issuer_staff_after_commit(fn()=>hooks()->do_action('staff_member_profile_updated', $id));
+            $this->issuer_staff_after_commit(fn()=>log_activity('Staff Profile Updated [Staff: ' . get_staff_full_name($id) . ']'));
 
             return true;
         }

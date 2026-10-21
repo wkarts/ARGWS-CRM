@@ -1,3 +1,7 @@
+## Incremento453 — equipe, Settings e recorrência (contrato integral aberto)
+
+A composição453 acrescenta operação própria de equipe e composição atômica do Staff nativo, reconferência final de Settings e recorrência de tarefas de projeto/avulsas com GUI/API/worker. A prova e os limites estão em [pr45-validation-453.md](pr45-validation-453.md). O inventário de38 módulos continua bloqueado: negações de rotas e aprovaçãoCI não equivalem a módulos concluídos. Leads, Purchase, RH, demais consumidores e pendências bancárias continuam na sequência do documento integral.
+
 ## Atualização452 — cópia com participantes completos e diagnóstico conferido
 
 Núcleo **4.5.2/452** NOOP; BB **1.2.3/123** e Asaas **1.5.3/153** preservados. O compositor de cópia de projeto passa a incluir todos os participantes financeiros exigidos pelo writer de tarefas após451, conservando o veto transacional. Corrigido também o auxiliar449 que encerrava no guard do app-config antes de ativar logs. O452 executa o bloco exato em subprocessos e exige códigos seguros do controller real no smoke. Causas, evidências e limites em `pr45-validation-452.md`; SHA e CI atuais na PR45. O450 teve16/16 workflows aprovados;451 revelou a regressão de composição agora corrigida. Aprovação histórica não certifica o próximo SHA.

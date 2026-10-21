@@ -56,6 +56,13 @@ class Staff extends AdminController
 
             $data['password'] = $this->input->post('password', false);
 
+            if($issuerAccess!==null){
+                if(staff_cant($id===''?'create':'edit','staff')){access_denied('staff');}
+                try{$result=issuers_save_staff_atomically($this->staff_model,$id===''?'add':'update',$data,$id===''?null:$id,$issuerAccess);$id=$result['staff_id'];}
+                catch(Throwable $error){issuers_staff_atomic_error($error);redirect(admin_url('staff/member/'.$id));return;}
+                issuers_staff_atomic_effects($result,$id);redirect(admin_url('staff/member/'.$id));return;
+            }
+
             if ($id == '') {
                 if (staff_cant('create', 'staff')) {
                     access_denied('staff');
@@ -242,7 +249,6 @@ class Staff extends AdminController
                     return;
                 }
             }
-            handle_staff_profile_image_upload();
             // Don't do XSS clean here.
             $data['email_signature'] = $this->input->post('email_signature', false);
             $data['email_signature'] = html_entity_decode($data['email_signature']);
@@ -251,6 +257,13 @@ class Staff extends AdminController
                 // not contains HTML, add break lines
                 $data['email_signature'] = nl2br_save_html($data['email_signature']);
             }
+
+            if($issuerAccess!==null){
+                try{$result=issuers_save_staff_atomically($this->staff_model,'update_profile',$data,get_staff_user_id(),$issuerAccess);}
+                catch(Throwable $error){issuers_staff_atomic_error($error);redirect(admin_url('staff/edit_profile/'.get_staff_user_id()));return;}
+                issuers_staff_atomic_effects($result,get_staff_user_id());redirect(admin_url('staff/edit_profile/'.get_staff_user_id()));return;
+            }
+            handle_staff_profile_image_upload();
 
             try { $success = $this->staff_model->update_profile($data, get_staff_user_id()); }
             catch (DomainException $error) {

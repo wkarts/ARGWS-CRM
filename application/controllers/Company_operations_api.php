@@ -15,6 +15,8 @@ class Company_operations_api extends CI_Controller
         catch(Throwable $e){log_message('error','Company operations API unavailable; no authorization header body or resource data logged.');$this->output->set_status_header(503)->set_output('{"error":"temporarily_unavailable"}');}
     }
     public function projects($id=''){$this->execute('projects',$id);}public function tasks($id=''){$this->execute('tasks',$id);}public function standalone_tasks($id=''){$this->execute('standalone_tasks',$id);}public function contracts($id=''){$this->execute('contracts',$id);}public function tickets($id=''){$this->execute('tickets',$id);}
+    public function task_schedules($id=''){$this->execute('task_schedules',$id);}
+    public function standalone_schedules($id=''){$this->execute('standalone_schedules',$id);}
     /** Dedicated finite routes; byte delivery occurs only after the canonical guarded reader commits. */
     private function subresource(string $endpoint,$id,$file=''):void
     {

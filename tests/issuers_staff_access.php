@@ -22,7 +22,9 @@ same(false,$acl->can($a,3,'banco_brasil','import'),'resource capabilities indepe
 same(false,$acl->can($b,3,'banco_brasil','manage'),'permission never crosses companies');
 same(false,$acl->can($a,3,'pige_bridge','edit'),'permission never crosses resources');
 same($a,$r->defaultForStaff(3),'default is authorized membership');
-same(0,(int)$db->query("SELECT can_manage_integrations FROM {$p}staff WHERE issuer_id=? AND staff_id=3",[$a])->result_array()[0]['can_manage_integrations'],'native resource assignment adds no generic integration grant');
+//453 preserves the existing historical flag1; it remains data, never integration authority.
+// The452 reference is companies/fixtures/staff_access_452.php.txt; all ACL negatives remain.
+same(1,(int)$db->query("SELECT can_manage_integrations FROM {$p}staff WHERE issuer_id=? AND staff_id=3",[$a])->result_array()[0]['can_manage_integrations'],'native assignment preserves historical flags without granting authority');
 foreach([
  fn()=>$admin->prepare(3,[$a=>'1'],$b,[]),
  fn()=>$admin->prepare(3,[$a=>'1'],$a,[$b=>['banco_brasil'=>['view']]]),

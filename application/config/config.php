@@ -489,7 +489,8 @@ $config['csrf_token_name']   = defined('APP_CSRF_TOKEN_NAME') ? APP_CSRF_TOKEN_N
 $config['csrf_cookie_name']  = defined('APP_CSRF_COOKIE_NAME') ? APP_CSRF_COOKIE_NAME : 'csrf_cookie_name';
 $config['csrf_expire']       = defined('APP_CSRF_EXPIRE') ? APP_CSRF_EXPIRE : 3660;
 $config['csrf_regenerate']   = false;
-$config['csrf_exclude_uris'] = ['company_operations_api/project_copies/[1-9][0-9]{0,9}', 'company_operations_api/(project_files|task_files|contract_files|ticket_files)/[1-9][0-9]{0,9}(/[a-f0-9]{64})?', 'company_operations_api/(project_milestones|task_dependencies|project_follow|task_follow)/[1-9][0-9]{0,9}', 'company_operations_api/(projects|tasks|standalone_tasks|contracts|tickets)(/[1-9][0-9]{0,9})?', 'company_api/invoices',
+$config['csrf_exclude_uris'] = ['company_operations_api/project_copies/[1-9][0-9]{0,9}', 'company_operations_api/(project_files|task_files|contract_files|ticket_files)/[1-9][0-9]{0,9}(/[a-f0-9]{64})?', 'company_operations_api/(project_milestones|task_dependencies|project_follow|task_follow)/[1-9][0-9]{0,9}', 'company_operations_api/(projects|tasks|standalone_tasks|contracts|tickets)(/[1-9][0-9]{0,9})?',
+    'company_operations_api/(task_schedules|standalone_schedules)(/[1-9][0-9]{0,9})?', 'company_api/invoices',
     'company_api/local_noncash/[1-9][0-9]*',
     'company_api/expenses',
     'company_api/expenses/[1-9][0-9]*',

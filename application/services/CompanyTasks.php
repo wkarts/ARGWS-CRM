@@ -5,10 +5,12 @@ require_once __DIR__.'/CompanyProjectsStorage.php';
 require_once __DIR__.'/CompanyTaskBillingSourceLocks.php';
 require_once __DIR__.'/CompanyTaskCreationDefaults.php';
 require_once __DIR__.'/CompanyTaskPriorityOperations.php';
+require_once __DIR__.'/CompanyTaskRecurrenceOperations.php';
 final class CompanyTasks extends CompanyProjectsStorage
 {
     use CompanyTaskCreationDefaults;
     use CompanyTaskPriorityOperations;
+    use CompanyTaskRecurrenceOperations;
     protected function taskKind():string{return 'project';}
     use CompanyTaskBillingSourceLocks { apiTables as private taskBillingApiTables; }
     protected function apiTables():array{return array_values(array_unique(array_merge($this->taskBillingApiTables(),CompanyTaskAutoStop::tables($this->db,$this->p))));}

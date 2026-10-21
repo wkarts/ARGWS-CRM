@@ -2,10 +2,10 @@
   "format": 1,
   "scope": "Line-anchored named PHP function candidates and top-level blocks in first-party application/modules, excluding translations and migration history. Lexical candidates may include false positives. Anonymous closures belong to their enclosing segment. Not an exhaustive runtime call graph.",
   "meaning": "boundary_tested means only the outcomes in evidence were exercised with synthetic local fixtures. It never means the whole consumer is isolated or secondary-company operation is ready. All full_operation_ready values remain false pending cross-consumer, MySQL, concurrency and HTTP proof.",
-  "frozen_candidate": "b8a5cec7286edc88191a1b1d07813ea40ed79bce",
+  "source_identity": "Exact per-file SHA-256 and source_manifest_sha256 below; no historical commit is asserted for a regenerated working tree.",
   "counts": {
     "company_core_and_settings": {
-      "pending": 1645,
+      "pending": 1696,
       "boundary_tested": 5
     },
     "customer_portal": {
@@ -25,7 +25,7 @@
       "boundary_tested": 13
     },
     "other_core": {
-      "pending": 2232,
+      "pending": 2236,
       "boundary_tested": 9
     },
     "sales_documents": {
@@ -2507,7 +2507,7 @@
       "full_operation_ready": false
     }
   ],
-  "source_manifest_sha256": "8d4510c4908248dee45016b961095728a91e765eac3fc283ef918917d32d1002",
-  "total_consumers": 11783,
+  "source_manifest_sha256": "50f4f155f1339a2a8c21acce7cb8f3fd79c4ebc04f41f31dca09c3123c28fa59",
+  "total_consumers": 11838,
   "full_register_command": "python3 scripts/register-company-consumers.py --full-output /tmp/company-consumers-full.json"
 }

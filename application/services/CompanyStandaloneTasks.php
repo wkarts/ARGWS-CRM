@@ -4,10 +4,12 @@ declare(strict_types=1);
 require_once __DIR__.'/CompanyProjectsStorage.php';require_once __DIR__.'/CompanyStandaloneTasksSchema.php';require_once __DIR__.'/CompanyStandaloneBillingFence.php';
 require_once __DIR__.'/CompanyTaskCreationDefaults.php';
 require_once __DIR__.'/CompanyTaskPriorityOperations.php';
+require_once __DIR__.'/CompanyTaskRecurrenceOperations.php';
 final class CompanyStandaloneTasks extends CompanyProjectsStorage
 {
     use CompanyTaskCreationDefaults;
     use CompanyTaskPriorityOperations;
+    use CompanyTaskRecurrenceOperations;
     protected function taskKind():string{return 'standalone';}
     protected string $feature='tasks';
     protected function apiTables():array{return array_values(array_unique(array_merge(parent::apiTables(),CompanyStandaloneBillingFence::tables($this->db,$this->p),CompanyTaskAutoStop::tables($this->db,$this->p))));}

@@ -420,6 +420,8 @@ function handle_custom_fields_post($rel_id, $custom_fields, $is_cf_items = false
 
     foreach ($custom_fields as $key => $fields) {
         foreach ($fields as $field_id => $field_value) {
+            $issuerNative=class_exists('CompanyNativeStaffTransaction',false)&&CompanyNativeStaffTransaction::active($CI->db);
+            if($issuerNative&&($is_cf_items||$key!=='staff'||!is_array($fields))){throw new DomainException('issuer_staff_profile_field_denied');}
             $CI->db->where('relid', $rel_id);
             $CI->db->where('fieldid', $field_id);
             $CI->db->where('fieldto', ($is_cf_items ? 'items_pr' : $key));
@@ -431,6 +433,7 @@ function handle_custom_fields_post($rel_id, $custom_fields, $is_cf_items = false
             if (!defined('COPY_CUSTOM_FIELDS_LIKE_HANDLE_POST')) {
                 $CI->db->where('id', $field_id);
                 $field_checker = $CI->db->get(db_prefix() . 'customfields')->row();
+                if($issuerNative&&(!$field_checker||($field_checker->fieldto??null)!=='staff')){throw new DomainException('issuer_staff_profile_field_denied');}
                 if ($field_checker->type == 'date_picker') {
                     $field_value = to_sql_date($field_value);
                 } elseif ($field_checker->type == 'date_picker_time') {
@@ -474,6 +477,11 @@ function handle_custom_fields_post($rel_id, $custom_fields, $is_cf_items = false
                         $affectedRows++;
                     }
                 }
+            }
+            if($issuerNative){
+                $expected=($row||$field_value!=='')?[['value'=>$field_value]]:[];
+                CompanyNativeStaffTransaction::expect($CI->db,'custom-field:'.$rel_id.':'.$field_id,
+                    'SELECT value FROM '.db_prefix().'customfieldsvalues WHERE relid=? AND fieldid=? AND fieldto=? ORDER BY id',[$rel_id,$field_id,'staff'],$expected);
             }
         }
     }

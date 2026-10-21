@@ -14,9 +14,9 @@ $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',
 <?php if($step===6){?>
 <p class="alert alert-success" role="status">Empresa criada com as informações, preferências e permissões revisadas. Reenviar a conclusão não cria outra empresa.</p>
 <p>O responsável da instalação já tem acesso a esta empresa e às futuras, sem copiar permissões ou credenciais.</p>
-<h2>Recursos disponíveis</h2><ul><li>Cadastro e seleção da empresa.</li><li>Informações da empresa, formato de datas/horas, SMTP próprio e modelos de e-mail.</li><li>Configuração Banco do Brasil e importação observacional de retorno, se o módulo estiver ativo e as permissões concedidas.</li></ul>
+<h2>Recursos da empresa</h2><ul><li>Cadastro, seleção e gestão autorizada da equipe.</li><li>Informações da empresa, formato de datas/horas, SMTP próprio e modelos de e-mail.</li><li>Clientes privados e compartilhamento opcional de identidade; operações próprias de projetos, tarefas, documentos financeiros e relatórios conforme as permissões concedidas.</li><li>Configuração Banco do Brasil e operações específicas disponíveis para o perfil autorizado, se o módulo estiver ativo.</li></ul>
 <p>SMTP, integrações e contas bancárias começam sem credenciais de outras empresas. Configure-os dentro da empresa selecionada.</p>
-<p class="alert alert-warning">Operações financeiras por empresa, compartilhamento de clientes e emissão/transmissão bancária ainda dependem da conclusão dos respectivos fluxos e validações. Criar a empresa não libera esses recursos.</p>
+<p class="alert alert-warning">Módulos e ações ainda sem operação isolada permanecem indisponíveis. Cada integração exige configuração própria; operações bancárias dependem do perfil contratado, dos documentos e da autorização aplicável.</p>
 <p><a class="btn btn-primary" href="<?= $esc($url('issuers/index/'.(int)$draft['issuer_id'])); ?>">Consultar empresa</a> <a class="btn btn-default" href="<?= $esc($url('company_context')); ?>">Selecionar empresa</a> <a href="<?= $esc($url('company_onboarding')); ?>">Cadastrar outra</a></p>
 <?php }else{?>
 <?= form_open($url($base)); ?>
@@ -48,7 +48,7 @@ $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',
 <?php foreach($resources as $feature=>$definition){?><fieldset><legend><?= $esc($definition['name']); ?></legend><?php foreach($definition['capabilities'] as $capability=>$label){?><div class="checkbox"><label><input type="checkbox" name="wizard[staff][<?= $id; ?>][resources][<?= $esc($feature); ?>][]" value="<?= $esc($capability); ?>" <?= in_array($capability,$assignment['resources'][$feature]??[],true)?'checked':''; ?>> <?= $esc($label); ?></label></div><?php } ?></fieldset><?php } ?></fieldset>
 <?php } ?>
 <?php }elseif($step===4){?>
-<h2>Clientes privados por padrão</h2><p>Uma nova empresa não recebe clientes, contatos, arquivos nem histórico financeiro de outras empresas. O compartilhamento explícito de identidade aguarda a liberação dos consumidores e permanece indisponível neste cadastro.</p>
+<h2>Clientes privados por padrão</h2><p>Uma nova empresa não recebe clientes, contatos, arquivos nem histórico financeiro de outras empresas. Após o cadastro, o compartilhamento opcional e autorizado de identidade pode ser gerenciado em Clientes da empresa. Ele não compartilha documentos financeiros, caixa, arquivos restritos ou credenciais.</p>
 <input type="hidden" name="wizard[client_visibility]" value="private">
 <?php }elseif($step===5){?>
 <h2>Confira antes de criar</h2><dl><dt>Empresa</dt><dd><?= $esc($payload[1]['legal_name']??''); ?></dd><dt>CPF / CNPJ</dt><dd><?= $esc($payload[1]['tax_id']??''); ?></dd><dt>Preferências</dt><dd><?= $esc($payload[2]['dateformat']??''); ?> · <?= $esc($payload[2]['time_format']??''); ?> horas</dd><dt>Colaboradores autorizados</dt><dd><?= count($payload[3]['staff']??[]); ?>, além do responsável da instalação</dd><dt>Clientes</dt><dd>Privados; sem transferência de histórico financeiro.</dd></dl>
