@@ -1,0 +1,5 @@
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+1 !== 0
+
+    at /workspace/scratch/2286cc0eac8b/runtime/frozen/final454-r2/source/tests/companies/task_recurring_http_browser.cjs:33:457

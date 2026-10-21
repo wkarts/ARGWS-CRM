@@ -1,0 +1,15 @@
+{
+  "results": [
+    {
+      "test": "/workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/task_recurring_http_browser.cjs",
+      "sha256": "ba277365d270bd3b6964a7abe4720412a1ff8045ee7d63defe9466f04cc034de",
+      "unchanged": true,
+      "exit_code": 0,
+      "seconds": 53.347
+    }
+  ],
+  "fixture_native_marker": 455,
+  "compared_product": "Task services unchanged from published454",
+  "local_adapter_is_not_docker": true,
+  "completed_utc": "2026-10-21T12:21:05.489030+00:00"
+}

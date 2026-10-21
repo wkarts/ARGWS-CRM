@@ -5,11 +5,11 @@
   "source_identity": "Exact per-file SHA-256 and source_manifest_sha256 below; no historical commit is asserted for a regenerated working tree.",
   "counts": {
     "company_core_and_settings": {
-      "pending": 1749,
+      "pending": 1808,
       "boundary_tested": 5
     },
     "customer_portal": {
-      "pending": 231,
+      "pending": 232,
       "boundary_tested": 3
     },
     "files_and_reports": {
@@ -25,7 +25,7 @@
       "boundary_tested": 13
     },
     "other_core": {
-      "pending": 2238,
+      "pending": 2241,
       "boundary_tested": 9
     },
     "sales_documents": {
@@ -2507,7 +2507,7 @@
       "full_operation_ready": false
     }
   ],
-  "source_manifest_sha256": "ac1849f07b2929df10fd1a17625def1af13f7b45261fe04350556cb836db0791",
-  "total_consumers": 11908,
+  "source_manifest_sha256": "ed116d77eda4fdab64c94b4dc58575e82d516d34705c7f129460ce78ac724268",
+  "total_consumers": 11971,
   "full_register_command": "python3 scripts/register-company-consumers.py --full-output /tmp/company-consumers-full.json"
 }

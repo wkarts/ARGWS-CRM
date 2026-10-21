@@ -55,6 +55,16 @@ $route['default_controller']   = 'clients';
 $route['404_override']         = '';
 $route['translate_uri_dashes'] = false;
 
+// Exact purchase namespace; the scope guard also checks the original native URI.
+$route['company_purchase_portal']='company_purchase_portal/index';
+$route['company_purchase_portal/index']='company_purchase_portal/index';
+foreach(['suppliers','requests','quotes','orders','receipts','documents','payables','events','files','file_download','settings','reports','invites','order_pdf','export'] as $purchaseRoute){
+    $route['company_purchases_api/index/'.$purchaseRoute]='company_purchases_api/index/'.$purchaseRoute;
+    $route['company_purchases_api/index/'.$purchaseRoute.'/([1-9][0-9]{0,9})']='company_purchases_api/index/'.$purchaseRoute.'/$1';
+}
+unset($purchaseRoute);
+
+
 // Native operational bearer endpoints only. The controller scope independently
 // attests raw URI, router method, canonical ID and persisted token origin.
 foreach(['projects','tasks','standalone_tasks','contracts','tickets','task_schedules','standalone_schedules'] as $companyOperationRoute){

@@ -8,28 +8,28 @@
   ],
   "files": {
     "application/config/autoload.php": {
-      "sha256": "44a180cc7fed22ff0cbaafc96da9499e10d3714acfb0d01bce97a449d402bbd9",
+      "sha256": "b9986006f3c7861ceabb68a8f4177df65c7940ff6483c726b7165854aae8abec",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
-        67,
-        222,
-        236,
-        298
+        75,
+        230,
+        244,
+        306
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "application/config/routes.php": {
-      "sha256": "71de9746cac9dc75f306bf7c71eb7dc1613a335a3c97d81123851cbac80bc7e2",
+      "sha256": "e01039f67882d5848b83d10c5de8a70df11d16e943a67b8a9cc4e95b95a9cbf0",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
         54,
-        112
+        122
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -3047,7 +3047,7 @@
       "evidence": ""
     },
     "application/services/CompanyApiTokens.php": {
-      "sha256": "6d984f65c179a90e6398cd1d00b397aeb4f1ce46cb8b1db397c2d997829c7dd1",
+      "sha256": "2c1b6fa20d33e1543c06a51e7f8437d5ddf36e1290bbb3274e7c8e13e2420f75",
       "categories": [
         "invoice_table"
       ],
@@ -3497,7 +3497,7 @@
       "evidence": ""
     },
     "application/services/CompanyExpenses.php": {
-      "sha256": "f4856b1f8e244a0df17ece430a3d55754217695c213aa40a6d6b89d6a4c289d0",
+      "sha256": "0fe1846489e83558ee657a53bda09d1d197c224a33eed0fb059796dab19478d8",
       "categories": [
         "customer_privacy"
       ],
@@ -4243,7 +4243,7 @@
       "evidence": ""
     },
     "application/services/CompanyResourceCatalog.php": {
-      "sha256": "185f5af58c22bdf792442a64aab4099798e7166325ec7c79720d5c9cbfdc5311",
+      "sha256": "e8e51b61bf6454c5244b108fd0510b06f4877874dc5be240247316902122ba76",
       "categories": [
         "invoice_table"
       ],
@@ -4772,7 +4772,7 @@
       "evidence": ""
     },
     "application/views/admin/companies/api_tokens.php": {
-      "sha256": "420c1a36e24453f84826fabacf37ed0e0f885231fa1762c313faae35eea57d5c",
+      "sha256": "2492e1338abde8a9eac8f6f404379c2872270155f4ea08ff85bdd312f121475f",
       "categories": [
         "documents_numbering"
       ],
@@ -4805,13 +4805,13 @@
       "evidence": ""
     },
     "application/views/admin/companies/layout_head.php": {
-      "sha256": "9474f6b9d96b1c147b78b588ca77438ae638a05a5b1342f897e33095513f9cb2",
+      "sha256": "21d09f66adc855c118155f8256b5f02ba46df8526ee14bbc401ccfff179b168c",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        51,
-        52
+        52,
+        53
       ],
       "state": "unreviewed",
       "evidence": ""

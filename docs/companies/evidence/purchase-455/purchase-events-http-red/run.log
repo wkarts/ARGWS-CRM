@@ -1,0 +1,6 @@
+{"result":"FAIL","scenarios":[],"responses":[{"method":"GET","resource":"events","token_company":3,"status":422,"body_bytes":38,"cookie_names":["csrf_cookie_name"]}]}
+AssertionError [ERR_ASSERTION]: Advertised AP event list is positively usable
+
+422 !== 200
+
+    at /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/purchases_events_http.cjs:53:12

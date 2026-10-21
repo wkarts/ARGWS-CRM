@@ -10,17 +10,17 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "8b76e9d92a1d34e49be60009a1e2daf1a577669eacc52a92e53eba4d49ec5a55",
+    "source_manifest_sha256": "7d16151691b422aa96652baef47b05b4ab1b6691e5ed459c929c59cc83d0c759",
     "counts": {
         "modules": 38,
-        "source_files": 4114,
+        "source_files": 4133,
         "literal_option_keys": 684,
         "dynamic_option_references": 145,
-        "controllers": 248,
+        "controllers": 251,
         "hook_candidates": 553,
         "job_file_candidates": 64,
-        "report_file_candidates": 289,
-        "table_name_candidates": 801,
+        "report_file_candidates": 291,
+        "table_name_candidates": 814,
         "database_call_candidates": 12531
     },
     "infrastructure_options": [
@@ -8220,6 +8220,44 @@
             "operational_ready": false
         },
         {
+            "path": "application/controllers/Company_purchase_portal.php",
+            "source_sha256": "e32a514b39789c0eccbdc85ba0c8b04d372b558ae91f5f3cd38877d5524757a4",
+            "module": null,
+            "base_class": "CI_Controller",
+            "surface": "public_or_api_or_job",
+            "method_candidates": [
+                {
+                    "method": "index",
+                    "line": 7,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/Company_purchases_api.php",
+            "source_sha256": "a7e3e013e854ec5a1cfa4cd5f1fff10fcbffeac836ddbc1196576c9ab42bdbe5",
+            "module": null,
+            "base_class": "CI_Controller",
+            "surface": "public_or_api_or_job",
+            "method_candidates": [
+                {
+                    "method": "index",
+                    "line": 7,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
             "path": "application/controllers/Company_recurring_worker.php",
             "source_sha256": "87bfe6c989d4f32df78f0a35f42a7487937bb87cd4668605224fc736731fb9e3",
             "module": null,
@@ -9665,6 +9703,25 @@
         {
             "path": "application/controllers/admin/Company_projects.php",
             "source_sha256": "9ea9ef6bea3493a4cf70cb4428334c3d36a59701f226d18c449b06e7257777b6",
+            "module": null,
+            "base_class": "AdminController",
+            "surface": "admin",
+            "method_candidates": [
+                {
+                    "method": "index",
+                    "line": 6,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/admin/Company_purchases.php",
+            "source_sha256": "0873ddbf97c8c1acb309d4500472aca5213dc0fc2310ec1bbf806c00f6bd4ba3",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -26923,7 +26980,7 @@
         {
             "name": "company_expense_categories",
             "state": "not_verified",
-            "reference_count": 14
+            "reference_count": 15
         },
         {
             "name": "company_expense_copies",
@@ -26953,12 +27010,12 @@
         {
             "name": "company_expense_requests",
             "state": "not_verified",
-            "reference_count": 9
+            "reference_count": 10
         },
         {
             "name": "company_expenses",
             "state": "not_verified",
-            "reference_count": 29
+            "reference_count": 32
         },
         {
             "name": "company_financial_api_requests",
@@ -26968,7 +27025,7 @@
         {
             "name": "company_financial_events",
             "state": "not_verified",
-            "reference_count": 17
+            "reference_count": 18
         },
         {
             "name": "company_google_mail_accounts",
@@ -27404,6 +27461,71 @@
             "name": "company_projects",
             "state": "not_verified",
             "reference_count": 49
+        },
+        {
+            "name": "company_purchase_allocations",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
+            "name": "company_purchase_commands",
+            "state": "not_verified",
+            "reference_count": 1
+        },
+        {
+            "name": "company_purchase_documents",
+            "state": "not_verified",
+            "reference_count": 3
+        },
+        {
+            "name": "company_purchase_events",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
+            "name": "company_purchase_files",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
+            "name": "company_purchase_invites",
+            "state": "not_verified",
+            "reference_count": 4
+        },
+        {
+            "name": "company_purchase_orders",
+            "state": "not_verified",
+            "reference_count": 3
+        },
+        {
+            "name": "company_purchase_payables",
+            "state": "not_verified",
+            "reference_count": 5
+        },
+        {
+            "name": "company_purchase_quotes",
+            "state": "not_verified",
+            "reference_count": 3
+        },
+        {
+            "name": "company_purchase_receipts",
+            "state": "not_verified",
+            "reference_count": 1
+        },
+        {
+            "name": "company_purchase_requests",
+            "state": "not_verified",
+            "reference_count": 1
+        },
+        {
+            "name": "company_purchase_settings",
+            "state": "not_verified",
+            "reference_count": 3
+        },
+        {
+            "name": "company_purchase_suppliers",
+            "state": "not_verified",
+            "reference_count": 1
         },
         {
             "name": "company_pusher_profiles",
@@ -28653,7 +28775,7 @@
         {
             "name": "issuers_audit",
             "state": "not_verified",
-            "reference_count": 130
+            "reference_count": 132
         },
         {
             "name": "issuers_client_links",
@@ -28688,7 +28810,7 @@
         {
             "name": "issuers_registry",
             "state": "not_verified",
-            "reference_count": 133
+            "reference_count": 135
         },
         {
             "name": "issuers_resource_permissions",

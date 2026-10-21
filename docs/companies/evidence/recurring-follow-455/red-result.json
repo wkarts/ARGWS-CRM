@@ -1,0 +1,22 @@
+{
+  "results": [
+    {
+      "test": "/workspace/scratch/2286cc0eac8b/runtime/frozen/final454-r2/source/tests/settings/task_operations_browser.cjs",
+      "sha256": "1ce3cf5c5167cb7ecd9ac71c1e96a814f64450aa0a3b627ac8f60103c2a8e585",
+      "unchanged": true,
+      "exit_code": 0,
+      "seconds": 35.869
+    },
+    {
+      "test": "/workspace/scratch/2286cc0eac8b/runtime/frozen/final454-r2/source/tests/companies/task_recurring_http_browser.cjs",
+      "sha256": "6931597d1aa80c741f0f52a0f7f1ccfaa62d6cc7552aa230318016cf82bad730",
+      "unchanged": true,
+      "exit_code": 1,
+      "seconds": 43.891
+    }
+  ],
+  "fixture_native_marker": 455,
+  "compared_product": "Task services unchanged from published454",
+  "local_adapter_is_not_docker": true,
+  "completed_utc": "2026-10-21T12:19:58.734954+00:00"
+}

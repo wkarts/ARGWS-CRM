@@ -1,0 +1,15 @@
+{
+  "result": "FAIL",
+  "source_fixture": "/workspace/scratch/2286cc0eac8b/runtime/evidence/purchase-browser-r3-2/purchases-proof.json",
+  "pages": [
+    {
+      "width": 390,
+      "query": "request=3",
+      "viewport": 390,
+      "document": 392,
+      "outside": []
+    }
+  ],
+  "errors": [],
+  "error": "AssertionError [ERR_ASSERTION]: Purchase page fits mobile viewport without horizontal overflow\n    at /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/purchases_mobile.cjs:57:9"
+}

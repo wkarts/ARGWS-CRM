@@ -21,6 +21,8 @@ class InitModules
 
         // This only suppresses optional module metadata; exact routing and bearer
         // authorization are independently required later by the native controller.
+        require_once APPPATH.'services/CompanyPurchasesScope.php';
+        if(CompanyPurchasesScope::earlyCandidate($_SERVER)){return;}
         require_once APPPATH.'services/CompanyOperationsApiScope.php';
         if(CompanyOperationsApiScope::earlyCandidate($_SERVER)){return;}
         require_once APPPATH.'services/CompanyApiScope.php';

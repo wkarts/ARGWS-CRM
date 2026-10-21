@@ -21,6 +21,14 @@ if(CompanyBbCallbackScope::prepare($companyInboxBootstrap)){
     return;
 }
 
+require_once APPPATH.'services/CompanyPurchasesScope.php';
+if(CompanyPurchasesScope::prepare($companyInboxBootstrap)){
+    $portal=CompanyPurchasesScope::activePortal();
+    $autoload=['packages'=>[],'config'=>[],'helper'=>$portal?['url','form']:[],'language'=>[],'drivers'=>$portal?['session']:[],'libraries'=>['database'],'model'=>[]];
+    return;
+}
+if(CompanyPurchasesScope::requested()||CompanyPurchasesScope::earlyCandidate($_SERVER)){show_404();return;}
+
 require_once APPPATH.'services/CompanyOperationsApiScope.php';
 if(CompanyOperationsApiScope::prepare($companyInboxBootstrap)){
     $autoload=['packages'=>[],'config'=>[],'helper'=>[],'language'=>[],'drivers'=>[],'libraries'=>['database'],'model'=>[]];

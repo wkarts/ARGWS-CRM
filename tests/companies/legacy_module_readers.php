@@ -1,4 +1,6 @@
 <?php
+// Native module services resolve their production dependencies while models load.
+define('APPPATH',dirname(__DIR__,2).'/application/');
 require dirname(__DIR__).'/support/client_issuer_test_support.php';
 require __DIR__.'/../../modules/custom_links/models/Custom_links_model.php';
 require __DIR__.'/../../modules/connect_api_chat/models/Connect_api_chat_model.php';
@@ -68,7 +70,6 @@ foreach(['get_client_by_group'=>10,'get_client_by_segment'=>5,'get_client_by_cam
     $audience=$db->query('SELECT userid FROM q_clients WHERE '.$predicate)->result_array();
     check(count($audience)===1 && (int)$audience[0]['userid']===1,'marketing returned predicate stays private');
 }
-define('APPPATH',dirname(__DIR__,2).'/application/');
 require __DIR__.'/../../modules/multiple_companies/services/LegacyContactIdentity.php';
 class CI_Model extends App_Model {}
 require __DIR__.'/../../modules/multiple_companies/models/Multiple_companies_model.php';

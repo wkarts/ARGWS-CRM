@@ -1,0 +1,14 @@
+[
+  {
+    "target": "/workspace/scratch/2286cc0eac8b/ARGWS-CRM",
+    "path": "application/services/CompanyPurchases.php",
+    "before_sha256": "bd1b3408ef7e024d5001051b0bb15a2b8bf02d858f3daabfca83fb0da0e329a7",
+    "after_sha256": "d51609da360bee38526c499310ca1cd878da508fa8cc4d2ff6d020b4c2429c0e"
+  },
+  {
+    "target": "/tmp/argws-purchase455-http-candidate/app",
+    "path": "application/services/CompanyPurchases.php",
+    "before_sha256": "bd1b3408ef7e024d5001051b0bb15a2b8bf02d858f3daabfca83fb0da0e329a7",
+    "after_sha256": "d51609da360bee38526c499310ca1cd878da508fa8cc4d2ff6d020b4c2429c0e"
+  }
+]
