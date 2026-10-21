@@ -11,6 +11,7 @@ on:
       - tests/payment_gateway_catalog.php
       - tests/ideal_management_forms.php
       - tests/ideal_module_migrations.php
+      - tests/module_maintenance.php
       - tests/brand_assets_smoke.php
       - .github/workflows/crm-ui-policy.yml
   push:
@@ -22,6 +23,7 @@ on:
       - tests/payment_gateway_catalog.php
       - tests/ideal_management_forms.php
       - tests/ideal_module_migrations.php
+      - tests/module_maintenance.php
       - .github/workflows/crm-ui-policy.yml
 permissions:
   contents: read
@@ -34,7 +36,12 @@ jobs:
     container: php:${{ matrix.php }}-cli
     steps:
       - uses: actions/checkout@v5
-      - name: Validar política sem banco ou chamadas aos provedores
+      - name: Preparar SQLite para fixtures descartáveis
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends libsqlite3-dev
+          docker-php-ext-install pdo_sqlite
+      - name: Validar política sem banco externo ou chamadas aos provedores
         run: |
           php -v
           php tests/crm_ui_language.php
@@ -43,6 +50,8 @@ jobs:
           php tests/payment_gateway_catalog.php
           php tests/ideal_management_forms.php
           php tests/ideal_module_migrations.php
+          php tests/module_maintenance.php
+          php -l application/views/admin/modules/maintenance.php
           php -l application/views/admin/modules/list.php
           php tests/brand_assets_smoke.php
   contracts:

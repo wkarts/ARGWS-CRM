@@ -12,7 +12,9 @@ test('O painel mantém nomes funcionais e os slugs internos', () => {
   const modules = read('application/libraries/App_modules.php');
   assert.match(list, />Recursos<\/h4>/);
   assert.doesNotMatch(list, /Recursos ARGWS|html_escape\(\$systemName\)/);
-  assert.match(controller, /CRM_HIDDEN_RESOURCES/);
+  assert.doesNotMatch(controller, /CRM_HIDDEN_RESOURCES|hidden_resources/);
+  assert.match(controller, /\$definitions\[\$name\] \?\? \[/);
+  assert.match(controller, /can_manage_availability/);
   assert.match(controller, /try \{[\s\S]*app_modules->activate/);
   assert.match(controller, /app_modules->activate\(\$name\)/);
   assert.match(modules, /'active'\s*=>\s*0/);

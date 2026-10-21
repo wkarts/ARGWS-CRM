@@ -7,18 +7,9 @@
                 <div class="panel_s">
                     <div class="panel-body">
                         <h4 class="no-margin">Recursos</h4>
-                        <p class="text-muted mtop10">Gerencie os recursos opcionais. Emitentes é obrigatório e permanece ativo. Desativar um recurso não exclui tabelas nem dados salvos.</p>
+                        <p class="text-muted mtop10">Gerencie os recursos opcionais. A administração de empresas faz parte do núcleo. Desativar um recurso não exclui tabelas nem dados salvos.</p>
                         <hr />
-                        <?php if (!empty($ideal_maintenance)) { ?>
-                        <div class="alert alert-warning">
-                            <strong>Manutenção de versão do iDEAL instalado</strong>
-                            <p>Este recurso continua oculto. A atualização local registra a versão do código, sem ativar o módulo, alterar o ambiente ou modificar webhooks e cobranças.</p>
-                            <?= form_open(admin_url('modules/upgrade_database/ideal')); ?>
-                                <input type="hidden" name="ideal_module_migration_csrf" value="<?= html_escape($ideal_migration_csrf); ?>">
-                                <button type="submit" class="btn btn-warning btn-sm">Atualizar versão local do iDEAL</button>
-                            <?= form_close(); ?>
-                        </div>
-                        <?php } ?>
+                        <p><a class="btn btn-default" href="<?= admin_url('modules/maintenance'); ?>">Manutenção de recursos instalados (<?= (int) $maintenance_count; ?>)</a></p>
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -70,18 +61,16 @@
                                                 <?php } ?>
                                             </td>
                                             <td class="text-right">
-                                                <?php if ($isEssential) { ?>
+                                                <?php if (empty($resource['can_manage_availability'])) { ?>
+                                                    <a class="btn btn-default btn-sm" href="<?= admin_url('modules/maintenance'); ?>">Revisar manutenção</a>
+                                                    <span class="text-muted">Disponibilidade operacional preservada</span>
+                                                <?php } elseif ($isEssential) { ?>
                                                     <span class="label label-info">Essencial — obrigatório</span>
                                                     <?php if (!$isActive || $needsDb) { ?>
                                                         <a class="btn btn-warning btn-sm" href="<?= admin_url('essential_modules'); ?>">Concluir configuração</a>
                                                     <?php } ?>
                                                 <?php } elseif ($needsDb) { ?>
-                                                    <?= form_open(admin_url('modules/upgrade_database/' . rawurlencode($systemName)), ['class' => 'tw-inline-block']); ?>
-                                                        <?php if ($systemName === 'ideal') { ?>
-                                                        <input type="hidden" name="ideal_module_migration_csrf" value="<?= html_escape($ideal_migration_csrf); ?>">
-                                                        <?php } ?>
-                                                        <button type="submit" class="btn btn-warning btn-sm">Atualizar banco</button>
-                                                    <?= form_close(); ?>
+                                                    <a class="btn btn-warning btn-sm" href="<?= admin_url('modules/maintenance'); ?>">Revisar atualização</a>
                                                 <?php } elseif ($isActive) { ?>
                                                     <?= form_open(admin_url('modules/deactivate/' . rawurlencode($systemName)), ['class' => 'tw-inline-block']); ?>
                                                         <button type="submit" class="btn btn-default btn-sm">Desativar</button>

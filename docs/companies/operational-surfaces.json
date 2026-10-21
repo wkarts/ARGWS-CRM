@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "76e13f72824864a37be04049a0b3448492bfeb0e3c5cdf998868141f8b26bbb0",
+    "source_manifest_sha256": "54e0fcc0aa8cf93da309e628f82d8fbd4536c5ea445e4b0d453b75d783c5f0f9",
     "counts": {
         "modules": 38,
-        "source_files": 4171,
+        "source_files": 4173,
         "literal_option_keys": 684,
         "dynamic_option_references": 146,
         "controllers": 254,
@@ -21,7 +21,7 @@
         "job_file_candidates": 64,
         "report_file_candidates": 293,
         "table_name_candidates": 831,
-        "database_call_candidates": 12531
+        "database_call_candidates": 12533
     },
     "infrastructure_options": [
         "cron_has_run_from_cli",
@@ -11995,7 +11995,7 @@
         },
         {
             "path": "application/controllers/admin/Mods.php",
-            "source_sha256": "d56b423f01a1255fd3d711123a26e43863a4730ed1f00328c7479ef853e365ee",
+            "source_sha256": "c7f37529a56e7994a91026294982e7c1d3f7fc3c5774673870209a22697c20f6",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -12012,32 +12012,37 @@
                 },
                 {
                     "method": "activate",
-                    "line": 55,
+                    "line": 43,
                     "visibility": "public"
                 },
                 {
                     "method": "deactivate",
-                    "line": 88,
+                    "line": 76,
                     "visibility": "public"
                 },
                 {
                     "method": "uninstall",
-                    "line": 129,
+                    "line": 117,
                     "visibility": "public"
                 },
                 {
                     "method": "upload",
-                    "line": 134,
+                    "line": 122,
+                    "visibility": "public"
+                },
+                {
+                    "method": "maintenance",
+                    "line": 127,
                     "visibility": "public"
                 },
                 {
                     "method": "upgrade_database",
-                    "line": 139,
+                    "line": 142,
                     "visibility": "public"
                 },
                 {
                     "method": "update_version",
-                    "line": 187,
+                    "line": 201,
                     "visibility": "public"
                 }
             ],

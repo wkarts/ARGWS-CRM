@@ -461,20 +461,92 @@ class App_modules
      */
     public function number_of_modules_that_require_database_upgrade()
     {
-        $CI       = &get_instance();
-        $cacheKey = 'no-of-modules-require-database-upgrade';
-        $total    = $CI->app_object_cache->get($cacheKey);
-        if ($total === false) {
-            $total = 0;
-            foreach ($this->modules as $module) {
-                if ($this->is_database_upgrade_required($module['system_name'])) {
-                    $total++;
+        return count($this->database_maintenance_inventory());
+    }
+
+    /** Installed resources requiring attention, independent of commercial visibility. */
+    public function database_maintenance_inventory()
+    {
+        $inventory = [];
+        $names = array_unique(array_merge(array_keys($this->db_modules), array_keys($this->modules)));
+        foreach ($names as $name) {
+            if ($name === 'issuers') { continue; } // Retired into core; never run its module history.
+            $module = $this->modules[$name] ?? null;
+            $row = $this->db_modules[$name] ?? null;
+            $installed = $row ? $row->installed_version : ($module['installed_version'] ?? false);
+            if ($installed === false || $installed === null) { continue; }
+            $code = $module['headers']['version'] ?? null;
+            $status = 'missing_files';
+            if ($module) {
+                // The native runner maps 1.2.3 to 123 and writes back one digit per component.
+                if (!preg_match('/^[0-9]\.[0-9]\.[0-9]$/D', (string) $installed)
+                    || !preg_match('/^[0-9]\.[0-9]\.[0-9]$/D', (string) $code)) {
+                    $status = 'invalid_version';
+                } elseif (version_compare($installed, $code, '=')) {
+                    continue;
+                } else {
+                    $status = version_compare($installed, $code, '<') ? 'upgrade' : 'downgrade';
                 }
             }
-            $CI->app_object_cache->add($cacheKey, $total);
+            if ($status === 'upgrade') {
+                foreach (self::maintenance_native_steps($name, $installed, $code) as $step) {
+                    $files = glob(APP_MODULES_PATH . $name . '/migrations/' . sprintf('%03d', $step) . '_*.php');
+                    if (!$files || count($files) !== 1 || !preg_match('/^\d{3}_(\w+)$/', basename($files[0], '.php'))) {
+                        $status = 'missing_migration';
+                        break;
+                    }
+                }
+            }
+            if ($status === 'upgrade' && self::maintenance_missing_dependencies($name, $installed, $code)) {
+                $status = 'missing_runtime';
+            }
+            $inventory[$name] = [
+                'system_name' => $name,
+                'installed_version' => (string) $installed,
+                'code_version' => $code,
+                'activated' => (int) ($row ? $row->active : ($module['activated'] ?? 0)),
+                'status' => $status,
+                'can_upgrade' => $status === 'upgrade',
+            ];
         }
+        ksort($inventory);
+        return $inventory;
+    }
 
-        return $total;
+    /** Exact, documented legacy bridge; never synthesize historical migrations. */
+    public static function maintenance_native_steps($name, $installed, $target)
+    {
+        $start = (int) str_replace('.', '', $installed) + 1;
+        $end = (int) str_replace('.', '', $target);
+        if ($name === 'api' && (string) $installed === '1.0.3' && (string) $target === '2.0.2') {
+            $start = 200; // Existing immutable 103 -> 200/201/202 history, CONTRIBUTING.md.
+        }
+        return $start <= $end ? range($start, $end) : [];
+    }
+
+    /** Known legacy migration dependencies; never bootstrap an inactive module's init/hooks. */
+    public static function maintenance_missing_dependencies($name, $installed, $target)
+    {
+        $dependencies = [
+            'page_builder' => ['page_builder_install', 'page_builder_get_dir_html_files', 'page_builder_get_theme_path_url', 'page_builder_import_default_templates'],
+            'accounting' => ['acc_account_exists'],
+            'hr_profile' => ['hr_profile_type_of_training_exists'],
+            'timesheets' => ['row_timesheets_options_exist'],
+            'purchase' => ['row_purchase_options_exist'],
+            'hr_payroll' => ['hr_payroll_payroll_column_exist', 'row_hr_payroll_options_exist'],
+        ];
+        $missing = [];
+        for ($step = (int) str_replace('.', '', $installed) + 1; $step <= (int) str_replace('.', '', $target); $step++) {
+            foreach (glob(APP_MODULES_PATH . $name . '/migrations/' . sprintf('%03d', $step) . '_*.php') ?: [] as $file) {
+                $source = file_get_contents($file);
+                foreach ($dependencies[$name] ?? [] as $function) {
+                    if (!function_exists($function) && preg_match('/\b' . preg_quote($function, '/') . '\s*\(/', $source)) {
+                        $missing[] = $function;
+                    }
+                }
+            }
+        }
+        return array_values(array_unique($missing));
     }
 
     /**
