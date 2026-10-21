@@ -12,7 +12,7 @@ const styles = ['assets/css/reset.min.css', 'assets/plugins/inter/inter.css', 'a
   'assets/plugins/font-awesome/css/solid.min.css', 'assets/plugins/font-awesome/css/regular.min.css',
   'assets/builds/tailwind.css', 'assets/css/style.min.css'];
 const scripts = ['assets/plugins/jquery/jquery.js', 'assets/plugins/bootstrap/js/bootstrap.js', 'assets/plugins/bootstrap-select/js/bootstrap-select.js'];
-function render(name) { return execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'support', name)], {encoding: 'utf8'}); }
+function render(name, args = []) { return execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'support', name), ...args], {encoding: 'utf8'}); }
 function html(header, summary) {
   // Parent grid matches admin/settings/all.php. The tested header/selector and URL controls are rendered from their real PHP views.
   const content = summary ? '<div id="wrapper"><div class="content"><div class="row"><div class="col-xs-12 col-md-12 col-lg-10"><div class="row"><div class="col-md-4 col-lg-3"><h4>Configurações</h4></div><div class="col-md-8 col-lg-9"><h4>Meios de Pagamento</h4><form id="settings-form"><div class="panel_s"><div class="panel-body"><div id="online_payments_asaas_tab">' + summary + '</div></div></div></form></div></div></div></div></div></div>' : '';
@@ -22,13 +22,15 @@ async function run() {
   const {chromium} = require(process.env.ASAAS_PLAYWRIGHT_MODULE || 'playwright');
   const output = path.resolve(process.env.NATIVE_HEADER_ARTIFACTS || '/tmp/native-header-layout-evidence');
   fs.mkdirSync(output, {recursive: true});
-  const header = render('NativeHeaderFixture.php'), summary = render('AsaasUrlsFixture.php');
+  const header = render('NativeHeaderFixture.php', ['--full-shell']), summary = render('AsaasUrlsFixture.php');
+  const mobileHeader = render('NativeHeaderFixture.php', ['--full-shell', '--long-name', '--mobile-user']);
   const browser = await chromium.launch({headless: true, ...(process.env.CHROMIUM_BIN ? {executablePath: process.env.CHROMIUM_BIN} : {})});
   const results = [], failures = [];
   let pageerrors = 0, blockedRequests = 0;
   try {
-    for (const width of [1280, 390]) {
+    for (const width of [1280, 1200, 1199, 1024, 769, 768, 640, 390, 320]) {
       const context = await browser.newContext({viewport: {width, height: 900}});
+      context.setDefaultTimeout(10000);
       try {
         await context.route('**/*', route => {
           const url = new URL(route.request().url()), rel = decodeURIComponent(url.pathname).replace(/^\//, ''), file = path.resolve(root, rel);
@@ -39,18 +41,86 @@ async function run() {
         });
         const page = await context.newPage();
         page.on('pageerror', () => { pageerrors++; });
-        for (const mode of ['header', 'urls', 'combined']) {
-          await page.setContent(html(mode === 'urls' ? '' : header, mode === 'header' ? '' : summary), {waitUntil: 'load'});
-          if (mode !== 'urls') await page.locator('.company-selector .bootstrap-select').waitFor({state: 'visible', timeout: 10000});
-          if (width <= 768) await page.waitForFunction(() => document.body.classList.contains('page-small'), null, {timeout: 10000});
-          await page.evaluate(() => document.fonts.ready);
-          const layout = await page.evaluate('(' + overflowGeometry.toString() + ')(document, window)');
-          const fontLoaded = await page.evaluate(() => Array.from(document.fonts).some(font => font.family.includes('Inter') && font.status === 'loaded'));
-          const result = {mode, width, fontLoaded, ...layout};
-          results.push(result);
-          fs.writeFileSync(path.join(output, width + '-' + mode + '.json'), JSON.stringify(result, null, 2));
-          await page.screenshot({path: path.join(output, width + '-' + mode + '.png'), fullPage: true});
-          if (!fontLoaded || layout.pageWidth > width + 1) failures.push({mode, width, pageWidth: layout.pageWidth, fontLoaded});
+        for (const mode of ['header', 'urls', 'combined', 'mobile-long-name']) {
+          let phase = 'render actual views';
+          try {
+            await page.setContent(html(mode === 'urls' ? '' : mode === 'mobile-long-name' ? mobileHeader : header, mode === 'urls' || mode === 'combined' ? summary : ''), {waitUntil: 'load'});
+            if (mode !== 'urls') await page.locator('.company-selector .bootstrap-select').waitFor({state: 'visible', timeout: 10000});
+            if (width <= 768) await page.waitForFunction(() => document.body.classList.contains('page-small'), null, {timeout: 10000});
+            await page.evaluate(() => document.fonts.ready);
+            const layout = await page.evaluate('(' + overflowGeometry.toString() + ')(document, window)');
+            const fontLoaded = await page.evaluate(() => Array.from(document.fonts).some(font => font.family.includes('Inter') && font.status === 'loaded'));
+            const controls = mode === 'urls' ? null : await page.evaluate(() => {
+              const box = selector => document.querySelector(selector).getBoundingClientRect();
+              const header = box('#header'), selector = box('.company-selector'), search = box('#search_input');
+              const visibleControls = ['#header > .hide-menu', '.company-selector .dropdown-toggle', '.company-selector button[type=submit]', '#search_input', '.mobile-menu-toggle'].map(selector => box(selector)).filter(rect => rect.width > 0 && rect.height > 0);
+              return {contained: visibleControls.every(rect => rect.left >= -1 && rect.right <= innerWidth + 1 && rect.bottom <= header.bottom + 1),
+                separate: selector.bottom <= search.top + 1 || search.bottom <= selector.top + 1 || selector.right <= search.left + 1 || search.right <= selector.left + 1,
+                sidebarBelow: box('#menu .sidebar-user-profile').top >= header.bottom,
+                setupOffset: parseFloat(getComputedStyle(document.querySelector('#setup-menu')).marginTop) === header.height,
+                headerHeight: header.height, searchWidth: search.width};
+            });
+            const result = {mode, width, fontLoaded, controls, ...layout};
+            results.push(result);
+            fs.writeFileSync(path.join(output, width + '-' + mode + '.json'), JSON.stringify(result, null, 2));
+            await page.screenshot({path: path.join(output, width + '-' + mode + '.png'), fullPage: true});
+            if (!fontLoaded || layout.pageWidth > width + 1 || (controls && (!controls.contained || !controls.separate || !controls.sidebarBelow || !controls.setupOffset || controls.searchWidth < 100))) failures.push({mode, width, pageWidth: layout.pageWidth, fontLoaded, controls});
+            if (mode === 'mobile-long-name') {
+              const formBefore = await page.locator('.company-selector form').evaluate(form => JSON.stringify(Array.from(new FormData(form).entries())));
+              phase = 'toggle company dropdown';
+              await page.locator('.company-selector .dropdown-toggle').click();
+              await page.locator('.bs-container.company-context-select .dropdown-menu').first().waitFor({state: 'visible'});
+              const dropdownFits = await page.locator('.bs-container.company-context-select .dropdown-menu').first().evaluate(element => { const r = element.getBoundingClientRect(); return r.left >= -1 && r.right <= innerWidth + 1 && element.scrollWidth <= element.clientWidth + 1; });
+              await page.screenshot({path: path.join(output, width + '-company-dropdown.png'), fullPage: true});
+              phase = 'toggle company dropdown';
+              await page.locator('.company-selector .dropdown-toggle').click();
+              const portalClosed = await page.locator('.bs-container.company-context-select .dropdown-menu').first().isVisible().then(visible => !visible);
+              let mobileMenuBelow = true;
+              if (width <= 768) {
+                phase = 'toggle mobile menu';
+                await page.locator('.mobile-menu-toggle').click();
+                await page.locator('#mobile-collapse.in').waitFor({state: 'visible'});
+                mobileMenuBelow = await page.locator('#mobile-collapse').evaluate(element => element.getBoundingClientRect().top >= document.querySelector('#header').getBoundingClientRect().bottom - 1);
+                await page.screenshot({path: path.join(output, width + '-mobile-menu.png'), fullPage: true});
+                phase = 'toggle mobile menu';
+                await page.locator('.mobile-menu-toggle').click();
+                await page.locator('#mobile-collapse').waitFor({state: 'hidden'});
+              }
+              // Only synthetic presentation state is toggled; no CRM request or event handler is replaced.
+              phase = 'measure opened sidebar and setup';
+              const openedOffsets = await page.evaluate(() => {
+                document.body.classList.add('show-sidebar');
+                document.querySelector('#setup-menu-wrapper').classList.add('display-block');
+                const headerBottom = document.querySelector('#header').getBoundingClientRect().bottom;
+                const okay = document.querySelector('#menu .sidebar-user-profile').getBoundingClientRect().top >= headerBottom && document.querySelector('#setup-menu').getBoundingClientRect().top >= headerBottom;
+                document.body.classList.remove('show-sidebar');
+                document.querySelector('#setup-menu-wrapper').classList.remove('display-block');
+                return okay;
+              });
+              phase = 'measure synthetic search history';
+              const searchHistoryFits = await page.evaluate(() => {
+                const parent = document.querySelector('#top_search'), menu = document.querySelector('#search-history');
+                const item = document.createElement('li'), link = document.createElement('a');
+                link.textContent = 'Resultado sintético ' + 'PesquisaMuitoLongaSemEspacos'.repeat(10); item.append(link); menu.append(item);
+                parent.classList.add('open');
+                const rect = menu.getBoundingClientRect();
+                const okay = rect.left >= -1 && rect.right <= innerWidth + 1 && menu.scrollWidth <= menu.clientWidth + 1;
+                parent.classList.remove('open'); menu.replaceChildren();
+                return okay;
+              });
+              const formAfter = await page.locator('.company-selector form').evaluate(form => JSON.stringify(Array.from(new FormData(form).entries())));
+              const interaction = {dropdownFits, portalClosed, mobileMenuBelow, openedOffsets, searchHistoryFits, formUnchanged: formBefore === formAfter};
+              fs.writeFileSync(path.join(output, width + '-interactions.json'), JSON.stringify(interaction, null, 2));
+              if (Object.values(interaction).some(value => value !== true)) failures.push({mode, width, interaction});
+            }
+          } catch (error) {
+            let geometry = null;
+            try { geometry = await page.evaluate('(' + overflowGeometry.toString() + ')(document, window)'); } catch {}
+            fs.writeFileSync(path.join(output, width + '-' + mode + '-failure.json'), JSON.stringify({phase, mode, width, geometry, pageerrors, blockedRequests}, null, 2));
+            fs.writeFileSync(path.join(output, 'coverage.json'), JSON.stringify({surface: 'synthetic actual native views', results, failures, phase, mode, width, pageerrors, blockedRequests}, null, 2));
+            try { await page.screenshot({path: path.join(output, width + '-' + mode + '-failure.png'), fullPage: true}); } catch {}
+            throw error;
+          }
         }
       } finally { await context.close(); }
     }

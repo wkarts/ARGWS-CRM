@@ -5029,3 +5029,27 @@ div[contenteditable]:focus {
   width: -webkit-fill-available;
   width: fill-available;
 }
+/* A scoped company selector needs its own row below the native toolbar on compact screens.
+   Keep the original 57px toolbar, and reserve a second 57px row in normal page geometry. */
+@media (max-width: 1199px) {
+  #header.native-company-header { height: 114px; }
+  #header.native-company-header .company-selector {
+    position: absolute;
+    top: 57px;
+    left: 0;
+    right: 0;
+    min-height: 57px;
+  }
+  #header.native-company-header .native-header-search { flex: 1 1 0%; min-width: 0; }
+  #header.native-company-header #top_search { min-width: 0; }
+  #header.native-company-header #search_input { min-width: 0; width: 100%; }
+  #header.native-company-header .mobile-navbar { top: 100%; }
+  #header.native-company-header ~ #setup-menu-wrapper #setup-menu { margin-top: 114px; }
+  #header.native-company-header ~ #menu .sidebar-user-profile { margin-top: 137px; }
+}
+#header.native-company-header #top_search_dropdown,
+#header.native-company-header ul.search-results { max-width: 100%; }
+#header.native-company-header ul.search-results li a { white-space: normal; overflow-wrap: anywhere; }
+/* selectpicker portals this menu into body; its stable class preserves scoped sizing. */
+.bootstrap-select.company-context-select .dropdown-menu { max-width: calc(100vw - 16px); }
+.bootstrap-select.company-context-select .dropdown-menu li a { white-space: normal; overflow-wrap: anywhere; }

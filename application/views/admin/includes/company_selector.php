@@ -9,7 +9,7 @@
 <div class="company-selector" style="display:flex;align-items:center;gap:.5rem;padding:.5rem" aria-label="Empresa atual">
     <?= form_open(CompanyRequestScope::adminUrl($this, 'company_context/select'), ['class' => 'company-selector-form', 'style' => 'display:flex;align-items:center;gap:.5rem;margin:0']); ?>
     <label for="company-context-select" class="sr-only">Selecionar empresa</label>
-    <select id="company-context-select" name="company_id" class="selectpicker" data-width="230px" data-container="body" data-none-selected-text="Selecione uma empresa" data-style="btn-default" required aria-label="Selecionar empresa">
+    <select id="company-context-select" name="company_id" class="selectpicker company-context-select" data-width="230px" data-container="body" data-none-selected-text="Selecione uma empresa" data-style="btn-default" required aria-label="Selecionar empresa">
         <?php if ($selectedCompanyId === null) { ?><option value="">Selecione uma empresa</option><?php } ?>
         <?php foreach ($companies as $company) {
             $companyDisplayName = (string) $company['legal_name'];
