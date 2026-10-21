@@ -74,7 +74,8 @@
     "purchase_statement": "Extrato de compras",
     "purchase_quotation": "Cotação de compra",
     "order": "Pedido",
-    "invoice_built": "Fatura gerada"
+    "invoice_built": "Fatura gerada",
+    "invoice_builder": "Gerador de faturas"
   },
   "fields": {
     "{unbilled_tasks_list}": {

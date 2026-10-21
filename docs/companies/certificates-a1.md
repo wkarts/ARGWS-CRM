@@ -121,6 +121,26 @@ leitura; não copia nem altera suas migrations. SQLite não comprova MySQL/InnoD
 `schema_cache.php` cobre separadamente os métodos reais de cache do CI e reproduz
 o falso negativo de table_exists após CREATE antes da invalidação corrigida.
 
+## Verificação nativa até o passo 460
+
+`tests/certificates/native_460_mysql.php` usa o mesmo adaptador de I/O de teste
+(`native_upgrade_support.php`) e os arquivos reais 457, 458, 459 e 460. O teste
+458 continua separado e não depende do reconciliador novo. A fixture mínima 456
+contém variantes English/PT-BR de fábrica, PT-BR personalizado e terceiro idioma,
+com remetente próprio, ordem, plaintext e desativação deliberados. São dados
+sintéticos; não há envio de e-mail. O SQL e as transações passam pelo adaptador
+PDO do teste, não pelo CI_DB_mysqli_driver completo de produção.
+
+O teste 460 exige todos os marcadores contíguos, tradução dos valores exatos de
+fábrica, preservação literal de customizações, HTML, merge fields, propriedade e
+configurações de envio, incluindo active=0 na variante criada. Injeta falha na
+segunda escrita do reconciliador real para exigir rollback da primeira e nenhuma
+gravação do marcador 460. Falhas de tracking e readback após commit do helper
+exigem retry idempotente, sem reativação, duplicação ou alteração adicional.
+Também verifica que replay da 460 preserva perfis privados, certificados cifrados
+e auditoria previamente gravados. A execução MySQL 8 é exigida pelo workflow;
+smoke SQLite local continua explicitamente sem provar semântica InnoDB.
+
 ## Rollback
 
 Desabilitar acesso à rota até resolver problemas; não rebaixar o marcador nativo.

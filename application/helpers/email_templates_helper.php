@@ -21,7 +21,7 @@ function prepare_mail_preview_data($template, $customer_id_or_email, $mailClassP
 
     $CI->load->model('emails_model');
 
-    $data['template'] = $CI->app_mail_template->prepare($email, $template);
+    $data['template'] = $CI->app_mail_template->prepare($email, $template, $mailClassParams);
     $slug             = $CI->app_mail_template->get_default_property_value('slug', $template, $mailClassParams);
 
     $data['template_name'] = $slug;

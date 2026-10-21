@@ -1265,7 +1265,7 @@
       "evidence": ""
     },
     "application/helpers/email_templates_helper.php": {
-      "sha256": "0f911365443450520c9503ebb190f45c358e9e924a2fdbae4698f91e0cf6a9cf",
+      "sha256": "a11940bf0452ebbeb417493690e43aa08d4e9584d60dbb550aaa58c8a5c00a68",
       "categories": [
         "customer_privacy"
       ],
@@ -3232,7 +3232,7 @@
       "evidence": ""
     },
     "application/services/CompanyClientProfile.php": {
-      "sha256": "e511404d939d21289cecf7d856eb4cd5af5a24428711adce86311b539d163e00",
+      "sha256": "2f7b6437367c737db5bef7cbe53779fbd69b71d6885e8ce17079097f5af172b6",
       "categories": [
         "customer_privacy"
       ],
@@ -8436,7 +8436,7 @@
       "evidence": ""
     },
     "modules/purchase/purchase.php": {
-      "sha256": "bc840dbdb6cd09bdf20455f28e46511095f825b398a4de88b5e53d4ba68af484",
+      "sha256": "ceb927d2907edbe0eb2b1332c1f306108bb3ce180ffe2cc80c08426521644d25",
       "categories": [
         "invoice_table"
       ],

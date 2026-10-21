@@ -42,4 +42,13 @@ essentialThrows(fn()=>$profile->read(82,12,$pfId),'company_client_access_denied'
 $db->query('DELETE FROM '.$p.'company_client_profiles WHERE issuer_id=? AND client_id=?',[82,$pfId]);
 essentialCheck(CompanyClientProfile::normalize(['person_type'=>'pf','rg'=>''],null)===['person_type'=>'pf','rg'=>''],'RG optional without document');
 essentialCheck(CompanyClientProfile::normalize(['person_type'=>'pj','state_registration'=>''],null)===['person_type'=>'pj','state_registration'=>''],'IE optional without universal requirement');
+// Partial writes must validate the resulting private profile, not just submitted fields.
+$beforeTransition=$clients->details(41,12,$pfId);
+$transition=['company'=>'Synthetic converted company','vat'=>'98989898000177','profile'=>['person_type'=>'pj']];
+essentialThrows(fn()=>$clients->update(41,12,$pfId,$transition,$beforeTransition['revision']),'company_client_invalid_input','partial PF to PJ cannot silently retain an incompatible RG');
+essentialCheck($clients->details(41,12,$pfId)===$beforeTransition,'rejected merged profile rolls back native identity and private data');
+$transition['profile']['rg']='';
+$clients->update(41,12,$pfId,$transition,$beforeTransition['revision']);
+$afterTransition=$clients->details(41,12,$pfId);
+essentialCheck($afterTransition['profile']['person_type']==='pj'&&$afterTransition['profile']['rg']==='','explicitly cleared incompatible field permits reviewed type transition');
 echo 'Customer supplementary profiles: '.($GLOBALS['essentialChecks']-$start).' new checks ('.$db->driver().").\n";

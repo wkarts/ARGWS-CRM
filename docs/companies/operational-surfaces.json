@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "df393228900792adbb31e222ae6eee45a50260149fcaf01c051c0090843a5579",
+    "source_manifest_sha256": "64aac19bc5c68c51f57d77e7d4aac107fae8c1e06646509e554771b827a17bfd",
     "counts": {
         "modules": 38,
-        "source_files": 4184,
+        "source_files": 4187,
         "literal_option_keys": 684,
         "dynamic_option_references": 146,
         "controllers": 254,
@@ -1763,7 +1763,7 @@
         {
             "name": "purchase",
             "entry": "modules/purchase/purchase.php",
-            "version": "1.5.0",
+            "version": "1.5.1",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -3207,7 +3207,7 @@
             "name": "active_language",
             "classification": "company_private_by_storage_policy",
             "consumer_validation": "not_verified",
-            "reference_count": 51
+            "reference_count": 52
         },
         {
             "name": "after_subscription_payment_captured",
@@ -7130,7 +7130,7 @@
         {
             "path": "modules/purchase/purchase.php",
             "line": 1256,
-            "source_sha256": "bc840dbdb6cd09bdf20455f28e46511095f825b398a4de88b5e53d4ba68af484",
+            "source_sha256": "ceb927d2907edbe0eb2b1332c1f306108bb3ce180ffe2cc80c08426521644d25",
             "call": "get_option",
             "expression": "$main_area",
             "state": "requires_call_site_review"
@@ -29683,7 +29683,7 @@
         {
             "name": "pur_contacts",
             "state": "not_verified",
-            "reference_count": 55
+            "reference_count": 56
         },
         {
             "name": "pur_contracts",
@@ -29763,7 +29763,7 @@
         {
             "name": "pur_vendor",
             "state": "not_verified",
-            "reference_count": 137
+            "reference_count": 138
         },
         {
             "name": "pur_vendor_admin",

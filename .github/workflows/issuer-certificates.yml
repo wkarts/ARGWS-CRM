@@ -5,6 +5,11 @@ on:
     paths:
       - application/services/issuers/IssuerCertificate*.php
       - application/migrations/458_version_458.php
+      - application/migrations/459_version_459.php
+      - application/migrations/460_version_460.php
+      - application/services/EmailTemplateReconciler.php
+      - application/services/EmailTemplatesPtBr.php
+      - application/services/CompanyEmailTemplates.php
       - application/services/CompanyClientProfileSchema.php
       - application/services/email_templates_ptbr/**
       - application/libraries/App.php
@@ -22,6 +27,11 @@ on:
     paths:
       - application/services/issuers/IssuerCertificate*.php
       - application/migrations/458_version_458.php
+      - application/migrations/459_version_459.php
+      - application/migrations/460_version_460.php
+      - application/services/EmailTemplateReconciler.php
+      - application/services/EmailTemplatesPtBr.php
+      - application/services/CompanyEmailTemplates.php
       - application/services/CompanyClientProfileSchema.php
       - application/services/email_templates_ptbr/**
       - application/libraries/App.php
@@ -69,3 +79,4 @@ jobs:
           php tests/certificates/manager.php
           php tests/certificates/mysql_concurrency.php
           php tests/certificates/native_458_mysql.php
+          php tests/certificates/native_460_mysql.php

@@ -497,7 +497,12 @@ class App_mail_template
             $language = $lead->default_language;
         }
 
-        return hooks()->apply_filters('email_template_language', $language, ['template' => $this, 'email' => $email]);
+        return hooks()->apply_filters('email_template_language', $language, [
+            'template' => $this, 'email' => $email,
+            // Preview prepares through a generic instance; expose the actual reflected mail contract.
+            'template_class' => $template ?: get_class($this),
+            'template_slug' => $template ? $this->get_default_property_value('slug', $template, $params) : $this->slug,
+        ]);
     }
 
     /**

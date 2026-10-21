@@ -62,7 +62,11 @@ test('Configuração Asaas separa recebedor local do webhook remoto', () => {
   assert.match(view, /form_open\(admin_url\('asaas\/register_integration'\)/);
   assert.match(view, /webhook_admin_csrf/);
   assert.ok(view.includes('Cadastro remoto:'));
-  assert.ok(view.includes('não pode ser recuperado'));
+  assert.ok(view.includes('Recuperação cifrada disponível'));
+  assert.ok(view.includes('Legado somente hash: regenere explicitamente para permitir recuperação'));
+  assert.match(view, /if \(!empty\(\$integration\['token_recoverable'\]\)\)/);
+  assert.match(view, /form_open\(admin_url\('asaas\/reveal_integration_token'\)/);
+  assert.ok(view.includes('Nenhum segredo existente será rotacionado automaticamente'));
   assert.doesNotMatch(view, /name=["'](?:api_key|webhook_token|token)["']/);
   assert.doesNotMatch(controller, /var_dump|suporte@wwsoftwares\.com\.br/);
 });

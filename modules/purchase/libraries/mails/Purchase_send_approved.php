@@ -5,6 +5,8 @@ defined('BASEPATH') or exit('No direct script access allowed');
 class Purchase_send_approved extends App_mail_template
 {
 
+    protected $for = 'staff';
+
     protected $data;
 
     public $slug = 'purchase-send-approved';

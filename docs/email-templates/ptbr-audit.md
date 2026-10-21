@@ -41,8 +41,8 @@ Envio nativo/legado: idioma solicitado → idioma configurado da empresa → PT-
 
 ## Limitações independentes identificadas
 
-- `modules/purchase/purchase.php` registra um filtro global que força `portuguese_br`. A correção core preserva o idioma recebido, mas não pode recuperar preferência que esse filtro já descartou. Exige alteração própria/versionamento do módulo Purchase.
-- `purchase-send-approved` e `purchase-send-rejected` usam `{staff_name}`; `Purchase_approve_merge_fields::format()` não fornece esse valor. Exige correção própria do módulo, sem traduzir/remover a chave.
+- Resolvido no incremento Purchase 1.5.1: o filtro global deixou de forçar `portuguese_br`; somente os oito modelos nativos de fornecedor consultam preferência inequívoca. Prévia e envio seguem o mesmo contrato. Veja [detalhes e testes](../../modules/purchase/docs/email-language-151.md).
+- Resolvido no incremento Purchase 1.5.1: `{staff_name}` recebe o destinatário já fornecido pelo model, separado do ator; três avisos internos declaram `for=staff` para respeitar sua preferência.
 - As telas e os corpos de campanha de Marketing Automation possuem contrato separado.
 - Browser/Chromium e MySQL locais indisponíveis neste ambiente. Não houve envio real, teste SMTP, acesso a tokens ou produção.
 
