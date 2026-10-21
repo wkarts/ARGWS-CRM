@@ -10,18 +10,18 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "5e007c823591a406b94a6148a113d3720057b102c15e81d201622d7801f31d80",
+    "source_manifest_sha256": "8b76e9d92a1d34e49be60009a1e2daf1a577669eacc52a92e53eba4d49ec5a55",
     "counts": {
         "modules": 38,
-        "source_files": 4099,
+        "source_files": 4114,
         "literal_option_keys": 684,
         "dynamic_option_references": 145,
-        "controllers": 247,
+        "controllers": 248,
         "hook_candidates": 553,
         "job_file_candidates": 64,
         "report_file_candidates": 289,
-        "table_name_candidates": 792,
-        "database_call_candidates": 12530
+        "table_name_candidates": 801,
+        "database_call_candidates": 12531
     },
     "infrastructure_options": [
         "cron_has_run_from_cli",
@@ -33,7 +33,7 @@
         {
             "name": "accounting",
             "entry": "modules/accounting/accounting.php",
-            "version": "1.3.5",
+            "version": "1.3.6",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -883,7 +883,7 @@
         {
             "name": "finance",
             "entry": "modules/finance/finance.php",
-            "version": "1.0.0",
+            "version": "1.0.1",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -904,7 +904,10 @@
             "table_candidates": [
                 "banks",
                 "categories",
-                "conciliacoes"
+                "clients",
+                "conciliacoes",
+                "expenses",
+                "invoices"
             ]
         },
         {
@@ -6843,8 +6846,8 @@
         },
         {
             "path": "modules/accounting/models/Accounting_model.php",
-            "line": 22136,
-            "source_sha256": "b28f1278b40c836646cee83f6f6b89a7aa77b2913b6f01a70bf4d44a3ce98b8a",
+            "line": 22158,
+            "source_sha256": "2c56a043e52de7ae49a3d3f5b14dfbc4b8a57b7ae87cb1331e0cd26d5a10a50a",
             "call": "update_option",
             "expression": "$key",
             "state": "requires_call_site_review"
@@ -8100,94 +8103,94 @@
         },
         {
             "path": "application/controllers/Company_operations_api.php",
-            "source_sha256": "4ec63c519380ce0864da558b16281f0e4aded05f0b465b25813e3312df7dfe89",
+            "source_sha256": "54bd39641ebd9e64dc5ebe4c650c9066b1d3f0fa9d93bde66b74d73d2c374790",
             "module": null,
             "base_class": "CI_Controller",
             "surface": "public_or_api_or_job",
             "method_candidates": [
                 {
                     "method": "__construct",
-                    "line": 7,
+                    "line": 9,
                     "visibility": "public"
                 },
                 {
                     "method": "projects",
-                    "line": 17,
-                    "visibility": "public"
-                },
-                {
-                    "method": "tasks",
-                    "line": 17,
-                    "visibility": "public"
-                },
-                {
-                    "method": "standalone_tasks",
-                    "line": 17,
-                    "visibility": "public"
-                },
-                {
-                    "method": "contracts",
-                    "line": 17,
-                    "visibility": "public"
-                },
-                {
-                    "method": "tickets",
-                    "line": 17,
-                    "visibility": "public"
-                },
-                {
-                    "method": "task_schedules",
-                    "line": 18,
-                    "visibility": "public"
-                },
-                {
-                    "method": "standalone_schedules",
                     "line": 19,
                     "visibility": "public"
                 },
                 {
+                    "method": "tasks",
+                    "line": 19,
+                    "visibility": "public"
+                },
+                {
+                    "method": "standalone_tasks",
+                    "line": 19,
+                    "visibility": "public"
+                },
+                {
+                    "method": "contracts",
+                    "line": 19,
+                    "visibility": "public"
+                },
+                {
+                    "method": "tickets",
+                    "line": 19,
+                    "visibility": "public"
+                },
+                {
+                    "method": "task_schedules",
+                    "line": 20,
+                    "visibility": "public"
+                },
+                {
+                    "method": "standalone_schedules",
+                    "line": 21,
+                    "visibility": "public"
+                },
+                {
                     "method": "project_files",
-                    "line": 33,
-                    "visibility": "public"
-                },
-                {
-                    "method": "task_files",
-                    "line": 34,
-                    "visibility": "public"
-                },
-                {
-                    "method": "contract_files",
                     "line": 35,
                     "visibility": "public"
                 },
                 {
-                    "method": "ticket_files",
+                    "method": "task_files",
                     "line": 36,
                     "visibility": "public"
                 },
                 {
-                    "method": "project_copies",
+                    "method": "contract_files",
                     "line": 37,
                     "visibility": "public"
                 },
                 {
-                    "method": "project_milestones",
+                    "method": "ticket_files",
                     "line": 38,
                     "visibility": "public"
                 },
                 {
-                    "method": "task_dependencies",
+                    "method": "project_copies",
                     "line": 39,
                     "visibility": "public"
                 },
                 {
-                    "method": "project_follow",
+                    "method": "project_milestones",
                     "line": 40,
                     "visibility": "public"
                 },
                 {
-                    "method": "task_follow",
+                    "method": "task_dependencies",
                     "line": 41,
+                    "visibility": "public"
+                },
+                {
+                    "method": "project_follow",
+                    "line": 42,
+                    "visibility": "public"
+                },
+                {
+                    "method": "task_follow",
+                    "line": 43,
                     "visibility": "public"
                 }
             ],
@@ -8218,7 +8221,7 @@
         },
         {
             "path": "application/controllers/Company_recurring_worker.php",
-            "source_sha256": "a3cfccffa072d590056b5629f1d56b18612687992e9ac908a1c5bbdb42447078",
+            "source_sha256": "87bfe6c989d4f32df78f0a35f42a7487937bb87cd4668605224fc736731fb9e3",
             "module": null,
             "base_class": "CI_Controller",
             "surface": "public_or_api_or_job",
@@ -9431,6 +9434,35 @@
                 {
                     "method": "index",
                     "line": 6,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/admin/Company_leads.php",
+            "source_sha256": "01de0589744ce522110d7ebc0aaba11ea09d54cd7af2b738529d76a4a0237cb6",
+            "module": null,
+            "base_class": "AdminController",
+            "surface": "admin",
+            "method_candidates": [
+                {
+                    "method": "index",
+                    "line": 16,
+                    "visibility": "public"
+                },
+                {
+                    "method": "file",
+                    "line": 44,
+                    "visibility": "public"
+                },
+                {
+                    "method": "export",
+                    "line": 51,
                     "visibility": "public"
                 }
             ],
@@ -13980,1329 +14012,1329 @@
         },
         {
             "path": "modules/accounting/controllers/Accounting.php",
-            "source_sha256": "9b6f3fd22fc63b706a79a33f112f17e3db8722c4e3e089e881d595c0e0213470",
+            "source_sha256": "54860b1675a4f785fd115c912fdd50be79cc866e287a8b94f4192e26c83cfdff",
             "module": "accounting",
             "base_class": "AdminController",
             "surface": "admin",
             "method_candidates": [
                 {
                     "method": "__construct",
-                    "line": 7,
+                    "line": 8,
                     "visibility": "public"
                 },
                 {
                     "method": "transaction",
-                    "line": 25,
+                    "line": 26,
                     "visibility": "public"
                 },
                 {
                     "method": "sales_table",
-                    "line": 142,
+                    "line": 143,
                     "visibility": "public"
                 },
                 {
                     "method": "sales_invoice_table",
-                    "line": 299,
+                    "line": 301,
                     "visibility": "public"
                 },
                 {
                     "method": "expenses_table",
-                    "line": 454,
+                    "line": 457,
                     "visibility": "public"
                 },
                 {
                     "method": "banking_table",
-                    "line": 633,
+                    "line": 637,
                     "visibility": "public"
                 },
                 {
                     "method": "chart_of_accounts",
-                    "line": 776,
+                    "line": 780,
                     "visibility": "public"
                 },
                 {
                     "method": "setting",
-                    "line": 806,
+                    "line": 810,
                     "visibility": "public"
                 },
                 {
                     "method": "update_general_setting",
-                    "line": 878,
+                    "line": 882,
                     "visibility": "public"
                 },
                 {
                     "method": "update_automatic_conversion",
-                    "line": 894,
+                    "line": 898,
                     "visibility": "public"
                 },
                 {
                     "method": "accounts_table",
-                    "line": 911,
+                    "line": 915,
                     "visibility": "public"
                 },
                 {
                     "method": "account",
-                    "line": 1111,
+                    "line": 1115,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_convert",
-                    "line": 1156,
+                    "line": 1160,
                     "visibility": "public"
                 },
                 {
                     "method": "convert",
-                    "line": 2929,
+                    "line": 2933,
                     "visibility": "public"
                 },
                 {
                     "method": "transfer",
-                    "line": 2948,
+                    "line": 2952,
                     "visibility": "public"
                 },
                 {
                     "method": "transfer_table",
-                    "line": 2963,
+                    "line": 2967,
                     "visibility": "public"
                 },
                 {
                     "method": "add_transfer",
-                    "line": 3060,
+                    "line": 3064,
                     "visibility": "public"
                 },
                 {
                     "method": "journal_entry",
-                    "line": 3096,
+                    "line": 3100,
                     "visibility": "public"
                 },
                 {
                     "method": "journal_entry_table",
-                    "line": 3110,
+                    "line": 3114,
                     "visibility": "public"
                 },
                 {
                     "method": "new_journal_entry",
-                    "line": 3200,
+                    "line": 3204,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_journal_entry",
-                    "line": 3247,
+                    "line": 3251,
                     "visibility": "public"
                 },
                 {
                     "method": "report",
-                    "line": 3268,
+                    "line": 3272,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_balance_sheet",
-                    "line": 3281,
+                    "line": 3285,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_balance_sheet_comparison",
-                    "line": 3302,
+                    "line": 3306,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_balance_sheet_detail",
-                    "line": 3323,
+                    "line": 3327,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_balance_sheet_summary",
-                    "line": 3344,
+                    "line": 3348,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_business_snapshot",
-                    "line": 3364,
+                    "line": 3368,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_custom_summary_report",
-                    "line": 3376,
+                    "line": 3380,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_profit_and_loss_as_of_total_income",
-                    "line": 3392,
+                    "line": 3396,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_profit_and_loss_comparison",
-                    "line": 3413,
+                    "line": 3417,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_profit_and_loss_detail",
-                    "line": 3434,
+                    "line": 3438,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_profit_and_loss_year_to_date_comparison",
-                    "line": 3455,
+                    "line": 3459,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_profit_and_loss",
-                    "line": 3476,
+                    "line": 3480,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_statement_of_cash_flows",
-                    "line": 3497,
+                    "line": 3501,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_statement_of_changes_in_equity",
-                    "line": 3510,
+                    "line": 3514,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_deposit_detail",
-                    "line": 3524,
+                    "line": 3528,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_income_by_customer_summary",
-                    "line": 3537,
+                    "line": 3541,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_check_detail",
-                    "line": 3551,
+                    "line": 3555,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_account_list",
-                    "line": 3564,
+                    "line": 3568,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_account_history",
-                    "line": 3577,
+                    "line": 3581,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_general_ledger",
-                    "line": 3592,
+                    "line": 3596,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_journal",
-                    "line": 3606,
+                    "line": 3610,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_recent_transactions",
-                    "line": 3619,
+                    "line": 3623,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_transaction_detail_by_account",
-                    "line": 3632,
+                    "line": 3636,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_transaction_list_by_date",
-                    "line": 3646,
+                    "line": 3650,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_trial_balance",
-                    "line": 3659,
+                    "line": 3663,
                     "visibility": "public"
                 },
                 {
                     "method": "dashboard",
-                    "line": 3673,
+                    "line": 3677,
                     "visibility": "public"
                 },
                 {
                     "method": "import_xlsx_banking",
-                    "line": 3692,
+                    "line": 3696,
                     "visibility": "public"
                 },
                 {
                     "method": "import_file_xlsx_banking",
-                    "line": 3722,
+                    "line": 3726,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_transfer",
-                    "line": 3923,
+                    "line": 3927,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_transfer",
-                    "line": 3934,
+                    "line": 3938,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_account",
-                    "line": 3957,
+                    "line": 3961,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_account",
-                    "line": 3982,
+                    "line": 3986,
                     "visibility": "public"
                 },
                 {
                     "method": "new_rule",
-                    "line": 4008,
+                    "line": 4012,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_convert",
-                    "line": 4047,
+                    "line": 4051,
                     "visibility": "public"
                 },
                 {
                     "method": "reconcile",
-                    "line": 4067,
+                    "line": 4071,
                     "visibility": "public"
                 },
                 {
                     "method": "reconcile_account",
-                    "line": 4123,
+                    "line": 4127,
                     "visibility": "public"
                 },
                 {
                     "method": "get_info_reconcile",
-                    "line": 4142,
+                    "line": 4146,
                     "visibility": "public"
                 },
                 {
                     "method": "reconcile_history_table",
-                    "line": 4175,
+                    "line": 4179,
                     "visibility": "public"
                 },
                 {
                     "method": "adjustment",
-                    "line": 4276,
+                    "line": 4280,
                     "visibility": "public"
                 },
                 {
                     "method": "finish_reconcile_account",
-                    "line": 4305,
+                    "line": 4309,
                     "visibility": "public"
                 },
                 {
                     "method": "edit_reconcile",
-                    "line": 4331,
+                    "line": 4335,
                     "visibility": "public"
                 },
                 {
                     "method": "banking_rules_table",
-                    "line": 4357,
+                    "line": 4361,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_rule",
-                    "line": 4412,
+                    "line": 4416,
                     "visibility": "public"
                 },
                 {
                     "method": "view_report",
-                    "line": 4434,
+                    "line": 4438,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_dashboard",
-                    "line": 4608,
+                    "line": 4612,
                     "visibility": "public"
                 },
                 {
                     "method": "reset_data",
-                    "line": 4624,
+                    "line": 4628,
                     "visibility": "public"
                 },
                 {
                     "method": "change_account_status",
-                    "line": 4638,
+                    "line": 4642,
                     "visibility": "public"
                 },
                 {
                     "method": "item_automatic_table",
-                    "line": 4651,
+                    "line": 4655,
                     "visibility": "public"
                 },
                 {
                     "method": "item_automatic",
-                    "line": 4708,
+                    "line": 4712,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_item_automatic",
-                    "line": 4742,
+                    "line": 4746,
                     "visibility": "public"
                 },
                 {
                     "method": "transaction_bulk_action",
-                    "line": 4763,
+                    "line": 4767,
                     "visibility": "public"
                 },
                 {
                     "method": "journal_entry_bulk_action",
-                    "line": 5154,
+                    "line": 5158,
                     "visibility": "public"
                 },
                 {
                     "method": "transfer_bulk_action",
-                    "line": 5181,
+                    "line": 5185,
                     "visibility": "public"
                 },
                 {
                     "method": "tax_mapping_table",
-                    "line": 5209,
+                    "line": 5213,
                     "visibility": "public"
                 },
                 {
                     "method": "tax_mapping",
-                    "line": 5263,
+                    "line": 5267,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_tax_mapping",
-                    "line": 5297,
+                    "line": 5301,
                     "visibility": "public"
                 },
                 {
                     "method": "accounts_bulk_action",
-                    "line": 5318,
+                    "line": 5322,
                     "visibility": "public"
                 },
                 {
                     "method": "expense_category_mapping_table",
-                    "line": 5366,
+                    "line": 5370,
                     "visibility": "public"
                 },
                 {
                     "method": "expense_category_mapping",
-                    "line": 5435,
+                    "line": 5439,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_expense_category_mapping",
-                    "line": 5469,
+                    "line": 5473,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_tax_detail_report",
-                    "line": 5491,
+                    "line": 5495,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_tax_summary_report",
-                    "line": 5505,
+                    "line": 5509,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_tax_liability_report",
-                    "line": 5523,
+                    "line": 5527,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_convert_status_dashboard",
-                    "line": 5542,
+                    "line": 5546,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_income_chart",
-                    "line": 5554,
+                    "line": 5558,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_sales_chart",
-                    "line": 5566,
+                    "line": 5570,
                     "visibility": "public"
                 },
                 {
                     "method": "payment_mode_mapping_table",
-                    "line": 5578,
+                    "line": 5582,
                     "visibility": "public"
                 },
                 {
                     "method": "payment_mode_mapping",
-                    "line": 5630,
+                    "line": 5634,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_payment_mode_mapping",
-                    "line": 5664,
+                    "line": 5668,
                     "visibility": "public"
                 },
                 {
                     "method": "change_active_payment_mode_mapping",
-                    "line": 5683,
+                    "line": 5687,
                     "visibility": "public"
                 },
                 {
                     "method": "change_active_expense_category_mapping",
-                    "line": 5693,
+                    "line": 5697,
                     "visibility": "public"
                 },
                 {
                     "method": "account_type_details_table",
-                    "line": 5706,
+                    "line": 5710,
                     "visibility": "public"
                 },
                 {
                     "method": "account_type_detail",
-                    "line": 5769,
+                    "line": 5773,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_account_type_detail",
-                    "line": 5813,
+                    "line": 5817,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_account_type_detail",
-                    "line": 5839,
+                    "line": 5843,
                     "visibility": "public"
                 },
                 {
                     "method": "journal_entry_export",
-                    "line": 5849,
+                    "line": 5853,
                     "visibility": "public"
                 },
                 {
                     "method": "download_xlsx_file",
-                    "line": 5929,
+                    "line": 5933,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_error_file_day_before",
-                    "line": 5952,
+                    "line": 5956,
                     "visibility": "public"
                 },
                 {
                     "method": "change_preferred_payment_method",
-                    "line": 5993,
+                    "line": 5997,
                     "visibility": "public"
                 },
                 {
                     "method": "payslips_table",
-                    "line": 6006,
+                    "line": 6010,
                     "visibility": "public"
                 },
                 {
                     "method": "purchase_order_table",
-                    "line": 6172,
+                    "line": 6176,
                     "visibility": "public"
                 },
                 {
                     "method": "stock_import_table",
-                    "line": 6370,
+                    "line": 6374,
                     "visibility": "public"
                 },
                 {
                     "method": "stock_export_table",
-                    "line": 6532,
+                    "line": 6536,
                     "visibility": "public"
                 },
                 {
                     "method": "loss_adjustment_table",
-                    "line": 6705,
+                    "line": 6709,
                     "visibility": "public"
                 },
                 {
                     "method": "update_payslip_automatic_conversion",
-                    "line": 6861,
+                    "line": 6865,
                     "visibility": "public"
                 },
                 {
                     "method": "opening_stock_table",
-                    "line": 6878,
+                    "line": 6882,
                     "visibility": "public"
                 },
                 {
                     "method": "update_warehouse_automatic_conversion",
-                    "line": 7012,
+                    "line": 7016,
                     "visibility": "public"
                 },
                 {
                     "method": "purchase_payment_table",
-                    "line": 7029,
+                    "line": 7033,
                     "visibility": "public"
                 },
                 {
                     "method": "update_purchase_automatic_conversion",
-                    "line": 7182,
+                    "line": 7186,
                     "visibility": "public"
                 },
                 {
                     "method": "budget",
-                    "line": 7199,
+                    "line": 7203,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_budget",
-                    "line": 7248,
+                    "line": 7252,
                     "visibility": "public"
                 },
                 {
                     "method": "add_budget",
-                    "line": 7266,
+                    "line": 7270,
                     "visibility": "public"
                 },
                 {
                     "method": "check_budget",
-                    "line": 7293,
+                    "line": 7297,
                     "visibility": "public"
                 },
                 {
                     "method": "update_budget",
-                    "line": 7308,
+                    "line": 7312,
                     "visibility": "public"
                 },
                 {
                     "method": "reconcile_restored",
-                    "line": 7330,
+                    "line": 7334,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_accounts_receivable_ageing_detail",
-                    "line": 7370,
+                    "line": 7374,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_accounts_payable_ageing_detail",
-                    "line": 7386,
+                    "line": 7390,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_accounts_receivable_ageing_summary",
-                    "line": 7400,
+                    "line": 7404,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_accounts_payable_ageing_summary",
-                    "line": 7416,
+                    "line": 7420,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_profit_and_loss_12_months",
-                    "line": 7430,
+                    "line": 7434,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_budget_overview",
-                    "line": 7454,
+                    "line": 7458,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_profit_and_loss_budget_performance",
-                    "line": 7471,
+                    "line": 7475,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_profit_and_loss_budget_vs_actual",
-                    "line": 7486,
+                    "line": 7490,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_budget",
-                    "line": 7503,
+                    "line": 7507,
                     "visibility": "public"
                 },
                 {
                     "method": "accounts_import",
-                    "line": 7523,
+                    "line": 7527,
                     "visibility": "public"
                 },
                 {
                     "method": "import_file_xlsx_account",
-                    "line": 7553,
+                    "line": 7557,
                     "visibility": "public"
                 },
                 {
                     "method": "budget_import",
-                    "line": 7798,
+                    "line": 7802,
                     "visibility": "public"
                 },
                 {
                     "method": "import_file_xlsx_budget",
-                    "line": 7828,
+                    "line": 7832,
                     "visibility": "public"
                 },
                 {
                     "method": "reset_account_detail_types",
-                    "line": 8431,
+                    "line": 8435,
                     "visibility": "public"
                 },
                 {
                     "method": "banking",
-                    "line": 8448,
+                    "line": 8452,
                     "visibility": "public"
                 },
                 {
                     "method": "banking_register_table",
-                    "line": 8586,
+                    "line": 8590,
                     "visibility": "public"
                 },
                 {
                     "method": "check_plaid_connect",
-                    "line": 8751,
+                    "line": 8755,
                     "visibility": "public"
                 },
                 {
                     "method": "posted_bank_transactions_table",
-                    "line": 8768,
+                    "line": 8772,
                     "visibility": "public"
                 },
                 {
                     "method": "plaid_bank_new_transactions",
-                    "line": 8909,
+                    "line": 8913,
                     "visibility": "public"
                 },
                 {
                     "method": "create_plaid_token",
-                    "line": 8934,
+                    "line": 8938,
                     "visibility": "public"
                 },
                 {
                     "method": "update_plaid_environment",
-                    "line": 8948,
+                    "line": 8952,
                     "visibility": "public"
                 },
                 {
                     "method": "update_plaid_bank_accounts",
-                    "line": 8963,
+                    "line": 8967,
                     "visibility": "public"
                 },
                 {
                     "method": "import_banking_table",
-                    "line": 8993,
+                    "line": 8997,
                     "visibility": "public"
                 },
                 {
                     "method": "update_plaid_transaction",
-                    "line": 9098,
+                    "line": 9102,
                     "visibility": "public"
                 },
                 {
                     "method": "update_plaid_status",
-                    "line": 9132,
+                    "line": 9136,
                     "visibility": "public"
                 },
                 {
                     "method": "transactionData",
-                    "line": 9149,
+                    "line": 9153,
                     "visibility": "public"
                 },
                 {
                     "method": "insertTransactionRecord",
-                    "line": 9193,
+                    "line": 9197,
                     "visibility": "public"
                 },
                 {
                     "method": "match_transactions",
-                    "line": 9537,
+                    "line": 9541,
                     "visibility": "public"
                 },
                 {
                     "method": "unmatch_transactions",
-                    "line": 9558,
+                    "line": 9562,
                     "visibility": "public"
                 },
                 {
                     "method": "reconcile_transactions_table",
-                    "line": 9576,
+                    "line": 9580,
                     "visibility": "public"
                 },
                 {
                     "method": "reconcile_posted_bank_table",
-                    "line": 9701,
+                    "line": 9705,
                     "visibility": "public"
                 },
                 {
                     "method": "get_transaction_uncleared",
-                    "line": 9810,
+                    "line": 9814,
                     "visibility": "public"
                 },
                 {
                     "method": "get_make_adjusting_entry",
-                    "line": 9834,
+                    "line": 9838,
                     "visibility": "public"
                 },
                 {
                     "method": "make_adjusting_entry_save",
-                    "line": 9909,
+                    "line": 9913,
                     "visibility": "public"
                 },
                 {
                     "method": "leave_it_uncleared",
-                    "line": 9921,
+                    "line": 9925,
                     "visibility": "public"
                 },
                 {
                     "method": "check_complete_reconcile",
-                    "line": 9932,
+                    "line": 9936,
                     "visibility": "public"
                 },
                 {
                     "method": "bank_account_adjustment",
-                    "line": 9994,
+                    "line": 9998,
                     "visibility": "public"
                 },
                 {
                     "method": "finish_reconcile_bank_account",
-                    "line": 10021,
+                    "line": 10025,
                     "visibility": "public"
                 },
                 {
                     "method": "reconcile_bank_account_restored",
-                    "line": 10049,
+                    "line": 10053,
                     "visibility": "public"
                 },
                 {
                     "method": "get_info_reconcile_bank_account",
-                    "line": 10080,
+                    "line": 10084,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_bank_reconciliation_summary",
-                    "line": 10131,
+                    "line": 10135,
                     "visibility": "public"
                 },
                 {
                     "method": "rp_bank_reconciliation_detail",
-                    "line": 10163,
+                    "line": 10167,
                     "visibility": "public"
                 },
                 {
                     "method": "reconcile_account_change",
-                    "line": 10197,
+                    "line": 10201,
                     "visibility": "public"
                 },
                 {
                     "method": "import_xlsx_posted_bank_transactions",
-                    "line": 10221,
+                    "line": 10225,
                     "visibility": "public"
                 },
                 {
                     "method": "import_file_xlsx_posted_bank_transactions",
-                    "line": 10253,
+                    "line": 10257,
                     "visibility": "public"
                 },
                 {
                     "method": "update_bank_reconcile",
-                    "line": 10465,
+                    "line": 10469,
                     "visibility": "public"
                 },
                 {
                     "method": "remove_invalid_entries",
-                    "line": 10499,
+                    "line": 10503,
                     "visibility": "public"
                 },
                 {
                     "method": "manufacturing_order_table",
-                    "line": 10519,
+                    "line": 10523,
                     "visibility": "public"
                 },
                 {
                     "method": "purchase_return_order_table",
-                    "line": 10684,
+                    "line": 10688,
                     "visibility": "public"
                 },
                 {
                     "method": "purchase_refund_table",
-                    "line": 10849,
+                    "line": 10853,
                     "visibility": "public"
                 },
                 {
                     "method": "update_manufacturing_automatic_conversion",
-                    "line": 11007,
+                    "line": 11011,
                     "visibility": "public"
                 },
                 {
                     "method": "purchase_invoice_table",
-                    "line": 11024,
+                    "line": 11028,
                     "visibility": "public"
                 },
                 {
                     "method": "omni_sales_return_order_table",
-                    "line": 11214,
+                    "line": 11218,
                     "visibility": "public"
                 },
                 {
                     "method": "omni_sales_refund_table",
-                    "line": 11410,
+                    "line": 11414,
                     "visibility": "public"
                 },
                 {
                     "method": "update_omni_sales_automatic_conversion",
-                    "line": 11567,
+                    "line": 11571,
                     "visibility": "public"
                 },
                 {
                     "method": "bills",
-                    "line": 11583,
+                    "line": 11587,
                     "visibility": "public"
                 },
                 {
                     "method": "bills_table",
-                    "line": 11609,
+                    "line": 11613,
                     "visibility": "public"
                 },
                 {
                     "method": "bill",
-                    "line": 11626,
+                    "line": 11630,
                     "visibility": "public"
                 },
                 {
                     "method": "get_bill_data_ajax",
-                    "line": 11729,
+                    "line": 11733,
                     "visibility": "public"
                 },
                 {
                     "method": "add_bill_attachment",
-                    "line": 11767,
+                    "line": 11771,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_bill",
-                    "line": 11780,
+                    "line": 11788,
                     "visibility": "public"
                 },
                 {
                     "method": "bill_appove_payable",
-                    "line": 11801,
+                    "line": 11809,
                     "visibility": "public"
                 },
                 {
                     "method": "pay_bill",
-                    "line": 11836,
+                    "line": 11844,
                     "visibility": "public"
                 },
                 {
                     "method": "pay_bill_items_change",
-                    "line": 11996,
+                    "line": 12004,
                     "visibility": "public"
                 },
                 {
                     "method": "add_pay_bill_attachment",
-                    "line": 12060,
+                    "line": 12068,
                     "visibility": "public"
                 },
                 {
                     "method": "checks",
-                    "line": 12069,
+                    "line": 12077,
                     "visibility": "public"
                 },
                 {
                     "method": "get_check_data_ajax",
-                    "line": 12090,
+                    "line": 12098,
                     "visibility": "public"
                 },
                 {
                     "method": "checks_table",
-                    "line": 12123,
+                    "line": 12131,
                     "visibility": "public"
                 },
                 {
                     "method": "bills_in_check_table",
-                    "line": 12134,
+                    "line": 12142,
                     "visibility": "public"
                 },
                 {
                     "method": "bill_payment_information_table",
-                    "line": 12143,
+                    "line": 12151,
                     "visibility": "public"
                 },
                 {
                     "method": "select_checks_to_print_table",
-                    "line": 12242,
+                    "line": 12251,
                     "visibility": "public"
                 },
                 {
                     "method": "download_checks",
-                    "line": 12332,
+                    "line": 12341,
                     "visibility": "public"
                 },
                 {
                     "method": "check_register_table",
-                    "line": 12360,
+                    "line": 12369,
                     "visibility": "public"
                 },
                 {
                     "method": "get_next_check_number",
-                    "line": 12368,
+                    "line": 12377,
                     "visibility": "public"
                 },
                 {
                     "method": "check",
-                    "line": 12375,
+                    "line": 12384,
                     "visibility": "public"
                 },
                 {
                     "method": "get_bank_account_data",
-                    "line": 12565,
+                    "line": 12574,
                     "visibility": "public"
                 },
                 {
                     "method": "get_number_to_text",
-                    "line": 12619,
+                    "line": 12628,
                     "visibility": "public"
                 },
                 {
                     "method": "sign_check",
-                    "line": 12632,
+                    "line": 12641,
                     "visibility": "public"
                 },
                 {
                     "method": "sign_check_ajax",
-                    "line": 12667,
+                    "line": 12676,
                     "visibility": "public"
                 },
                 {
                     "method": "get_ending_balance_check",
-                    "line": 12711,
+                    "line": 12720,
                     "visibility": "public"
                 },
                 {
                     "method": "print_check",
-                    "line": 12723,
+                    "line": 12732,
                     "visibility": "public"
                 },
                 {
                     "method": "print_later",
-                    "line": 12735,
-                    "visibility": "public"
-                },
-                {
-                    "method": "clear_print_later",
                     "line": 12744,
                     "visibility": "public"
                 },
                 {
-                    "method": "print_a_check",
+                    "method": "clear_print_later",
                     "line": 12753,
                     "visibility": "public"
                 },
                 {
+                    "method": "print_a_check",
+                    "line": 12762,
+                    "visibility": "public"
+                },
+                {
                     "method": "configure_checks",
-                    "line": 12763,
+                    "line": 12772,
                     "visibility": "public"
                 },
                 {
                     "method": "get_vendor_address",
-                    "line": 12773,
+                    "line": 12782,
                     "visibility": "public"
                 },
                 {
                     "method": "get_balance_check",
-                    "line": 12785,
+                    "line": 12794,
                     "visibility": "public"
                 },
                 {
                     "method": "check_register",
-                    "line": 12796,
+                    "line": 12805,
                     "visibility": "public"
                 },
                 {
                     "method": "reprint_check",
-                    "line": 12811,
+                    "line": 12820,
                     "visibility": "public"
                 },
                 {
                     "method": "import_signature",
-                    "line": 12836,
+                    "line": 12845,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_signature_available_attachment",
-                    "line": 12853,
+                    "line": 12862,
                     "visibility": "public"
                 },
                 {
                     "method": "void_check",
-                    "line": 12872,
+                    "line": 12881,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_bill_ajax",
-                    "line": 12899,
+                    "line": 12908,
                     "visibility": "public"
                 },
                 {
                     "method": "fe_assets_table",
-                    "line": 12928,
+                    "line": 12937,
                     "visibility": "public"
                 },
                 {
                     "method": "fe_licenses_table",
-                    "line": 13125,
+                    "line": 13134,
                     "visibility": "public"
                 },
                 {
                     "method": "fe_components_table",
-                    "line": 13310,
+                    "line": 13319,
                     "visibility": "public"
                 },
                 {
                     "method": "fe_consumables_table",
-                    "line": 13503,
+                    "line": 13512,
                     "visibility": "public"
                 },
                 {
                     "method": "fe_maintenances_table",
-                    "line": 13696,
+                    "line": 13705,
                     "visibility": "public"
                 },
                 {
                     "method": "fe_depreciations_table",
-                    "line": 13860,
+                    "line": 13869,
                     "visibility": "public"
                 },
                 {
                     "method": "update_configure_checks",
-                    "line": 14014,
+                    "line": 14023,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_bill_attachment",
-                    "line": 14033,
+                    "line": 14042,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_pay_bill_attachment",
-                    "line": 14063,
+                    "line": 14072,
                     "visibility": "public"
                 },
                 {
                     "method": "download_file",
-                    "line": 14085,
+                    "line": 14094,
                     "visibility": "public"
                 },
                 {
                     "method": "update_fixed_equipment_automatic_conversion",
-                    "line": 14111,
+                    "line": 14120,
                     "visibility": "public"
                 },
                 {
                     "method": "vendors",
-                    "line": 14127,
+                    "line": 14136,
                     "visibility": "public"
                 },
                 {
                     "method": "table_vendor",
-                    "line": 14137,
+                    "line": 14146,
                     "visibility": "public"
                 },
                 {
                     "method": "vendor",
-                    "line": 14147,
+                    "line": 14156,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_vendor",
-                    "line": 14280,
+                    "line": 14289,
                     "visibility": "public"
                 },
                 {
                     "method": "vendor_code_exists",
-                    "line": 14299,
+                    "line": 14308,
                     "visibility": "public"
                 },
                 {
                     "method": "vendor_import",
-                    "line": 14328,
+                    "line": 14337,
                     "visibility": "public"
                 },
                 {
                     "method": "import_file_xlsx_vendor",
-                    "line": 14358,
+                    "line": 14367,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_pay_bill",
-                    "line": 14576,
+                    "line": 14585,
                     "visibility": "public"
                 },
                 {
                     "method": "vendor_bulk_action",
-                    "line": 14600,
+                    "line": 14609,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_bank_account",
-                    "line": 14627,
+                    "line": 14636,
                     "visibility": "public"
                 },
                 {
                     "method": "registers",
-                    "line": 14653,
+                    "line": 14662,
                     "visibility": "public"
                 },
                 {
                     "method": "registers_table",
-                    "line": 14672,
+                    "line": 14681,
                     "visibility": "public"
                 },
                 {
                     "method": "user_register_view",
-                    "line": 14842,
+                    "line": 14851,
                     "visibility": "public"
                 },
                 {
                     "method": "check_user_register_transaction",
-                    "line": 14895,
+                    "line": 14904,
                     "visibility": "public"
                 },
                 {
                     "method": "register_add_edit_transaction",
-                    "line": 14927,
+                    "line": 14936,
                     "visibility": "public"
                 },
                 {
                     "method": "transaction_filter",
-                    "line": 14960,
+                    "line": 14969,
                     "visibility": "public"
                 },
                 {
                     "method": "get_list_payment_method_mapping",
-                    "line": 15095,
+                    "line": 15104,
                     "visibility": "public"
                 },
                 {
                     "method": "make_adjusting_transaction_change",
-                    "line": 15162,
+                    "line": 15171,
                     "visibility": "public"
                 },
                 {
                     "method": "remove_wrong_mapping",
-                    "line": 15174,
+                    "line": 15183,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_bank_transaction",
-                    "line": 15190,
+                    "line": 15199,
                     "visibility": "public"
                 },
                 {
                     "method": "update_bank_transaction",
-                    "line": 15210,
+                    "line": 15219,
                     "visibility": "public"
                 },
                 {
                     "method": "income_statement_modifications_table",
-                    "line": 15236,
+                    "line": 15245,
                     "visibility": "public"
                 },
                 {
                     "method": "income_statement_modification",
-                    "line": 15317,
+                    "line": 15326,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_income_statement_modification",
-                    "line": 15360,
+                    "line": 15369,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_income_statement_modification",
-                    "line": 15383,
+                    "line": 15392,
                     "visibility": "public"
                 },
                 {
                     "method": "reset_income_statement_modifications",
-                    "line": 15399,
+                    "line": 15408,
                     "visibility": "public"
                 },
                 {
                     "method": "change_income_statement_modification_status",
-                    "line": 15413,
+                    "line": 15422,
                     "visibility": "public"
                 },
                 {
                     "method": "apply_income_statement_modification",
-                    "line": 15421,
+                    "line": 15430,
                     "visibility": "public"
                 },
                 {
                     "method": "undo_banking_rule",
-                    "line": 15435,
+                    "line": 15444,
                     "visibility": "public"
                 },
                 {
                     "method": "currency_rate_table",
-                    "line": 15455,
+                    "line": 15464,
                     "visibility": "public"
                 },
                 {
                     "method": "update_setting_currency_rate",
-                    "line": 15462,
+                    "line": 15471,
                     "visibility": "public"
                 },
                 {
                     "method": "get_all_currency_rate_online",
-                    "line": 15475,
+                    "line": 15484,
                     "visibility": "public"
                 },
                 {
                     "method": "update_currency_rate",
-                    "line": 15492,
+                    "line": 15501,
                     "visibility": "public"
                 },
                 {
                     "method": "get_currency_rate_online",
-                    "line": 15514,
+                    "line": 15523,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_currency_rate",
-                    "line": 15527,
+                    "line": 15536,
                     "visibility": "public"
                 },
                 {
                     "method": "currency_rate_modal",
-                    "line": 15544,
+                    "line": 15553,
                     "visibility": "public"
                 },
                 {
                     "method": "currency_rate_logs_table",
-                    "line": 15562,
+                    "line": 15571,
                     "visibility": "public"
                 },
                 {
                     "method": "reset_accounts",
-                    "line": 15566,
+                    "line": 15575,
                     "visibility": "public"
                 },
                 {
                     "method": "table_paybill",
-                    "line": 15610,
-                    "visibility": "public"
-                },
-                {
-                    "method": "pay_bills",
                     "line": 15619,
                     "visibility": "public"
                 },
                 {
+                    "method": "pay_bills",
+                    "line": 15628,
+                    "visibility": "public"
+                },
+                {
                     "method": "add_transaction_save",
-                    "line": 15626,
+                    "line": 15635,
                     "visibility": "public"
                 },
                 {
                     "method": "match_transaction_save",
-                    "line": 15638,
+                    "line": 15647,
                     "visibility": "public"
                 },
                 {
                     "method": "unmatch_transaction",
-                    "line": 15650,
+                    "line": 15659,
                     "visibility": "public"
                 },
                 {
                     "method": "get_item_data",
-                    "line": 15665,
+                    "line": 15674,
                     "visibility": "public"
                 }
             ],
@@ -26281,7 +26313,7 @@
         {
             "name": "acc_bill_mappings",
             "state": "not_verified",
-            "reference_count": 16
+            "reference_count": 17
         },
         {
             "name": "acc_budget_details",
@@ -26726,7 +26758,7 @@
         {
             "name": "clients",
             "state": "not_verified",
-            "reference_count": 281
+            "reference_count": 285
         },
         {
             "name": "color",
@@ -26766,7 +26798,7 @@
         {
             "name": "company_api_tokens",
             "state": "not_verified",
-            "reference_count": 12
+            "reference_count": 13
         },
         {
             "name": "company_asaas_refund_postings",
@@ -26791,7 +26823,7 @@
         {
             "name": "company_client_requests",
             "state": "not_verified",
-            "reference_count": 4
+            "reference_count": 5
         },
         {
             "name": "company_connect_api_accounts",
@@ -27019,6 +27051,51 @@
             "reference_count": 12
         },
         {
+            "name": "company_lead_files",
+            "state": "not_verified",
+            "reference_count": 4
+        },
+        {
+            "name": "company_lead_imports",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
+            "name": "company_lead_notes",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
+            "name": "company_lead_notice_cursor",
+            "state": "not_verified",
+            "reference_count": 3
+        },
+        {
+            "name": "company_lead_notices",
+            "state": "not_verified",
+            "reference_count": 6
+        },
+        {
+            "name": "company_lead_requests",
+            "state": "not_verified",
+            "reference_count": 1
+        },
+        {
+            "name": "company_lead_sources",
+            "state": "not_verified",
+            "reference_count": 1
+        },
+        {
+            "name": "company_lead_stages",
+            "state": "not_verified",
+            "reference_count": 1
+        },
+        {
+            "name": "company_leads",
+            "state": "not_verified",
+            "reference_count": 5
+        },
+        {
             "name": "company_local_noncash_declarations",
             "state": "not_verified",
             "reference_count": 5
@@ -27181,7 +27258,7 @@
         {
             "name": "company_portal_tokens",
             "state": "not_verified",
-            "reference_count": 10
+            "reference_count": 11
         },
         {
             "name": "company_post_refund_cancellations",
@@ -27666,7 +27743,7 @@
         {
             "name": "contacts",
             "state": "not_verified",
-            "reference_count": 214
+            "reference_count": 217
         },
         {
             "name": "contract_comments",
@@ -27906,7 +27983,7 @@
         {
             "name": "expenses",
             "state": "not_verified",
-            "reference_count": 155
+            "reference_count": 169
         },
         {
             "name": "expenses_categories",
@@ -28556,7 +28633,7 @@
         {
             "name": "invoicepaymentrecords",
             "state": "not_verified",
-            "reference_count": 113
+            "reference_count": 115
         },
         {
             "name": "invoicepaymentsmodes",
@@ -28566,7 +28643,7 @@
         {
             "name": "invoices",
             "state": "not_verified",
-            "reference_count": 520
+            "reference_count": 537
         },
         {
             "name": "issuers_",
@@ -28576,22 +28653,22 @@
         {
             "name": "issuers_audit",
             "state": "not_verified",
-            "reference_count": 128
+            "reference_count": 130
         },
         {
             "name": "issuers_client_links",
             "state": "not_verified",
-            "reference_count": 18
+            "reference_count": 19
         },
         {
             "name": "issuers_clients",
             "state": "not_verified",
-            "reference_count": 65
+            "reference_count": 66
         },
         {
             "name": "issuers_installation_identity",
             "state": "not_verified",
-            "reference_count": 23
+            "reference_count": 24
         },
         {
             "name": "issuers_invoice_documents",
@@ -28611,7 +28688,7 @@
         {
             "name": "issuers_registry",
             "state": "not_verified",
-            "reference_count": 132
+            "reference_count": 133
         },
         {
             "name": "issuers_resource_permissions",
@@ -29656,7 +29733,7 @@
         {
             "name": "staff",
             "state": "not_verified",
-            "reference_count": 378
+            "reference_count": 379
         },
         {
             "name": "staff_contract",

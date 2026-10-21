@@ -4,7 +4,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: Gestão Contábil e Escrituração 2024 v1.3.4
 Description: Contabilidade é o processo de registrar e monitorar transações e demonstrações financeiras para avaliar a saúde financeira de uma pessoa física ou jurídica, proporcionando uma visão clara de sua situação econômica.
-Version: 1.3.5
+Version: 1.3.6
 Requires at least: 2.3.*
 Author: Wkarts
 Author URI: https://t.me/wkartspro

@@ -6,6 +6,8 @@ on:
       - application/**
       - modules/issuers/**
       - modules/pige_bridge/**
+      - modules/finance/**
+      - modules/accounting/**
       - tests/issuers*.php
       - tests/company_context.php
       - tests/company_email_catalog.test.cjs
@@ -29,6 +31,8 @@ on:
       - application/**
       - modules/issuers/**
       - modules/pige_bridge/**
+      - modules/finance/**
+      - modules/accounting/**
       - tests/issuers*.php
       - tests/company_context.php
       - tests/company_email_catalog.test.cjs
@@ -163,6 +167,8 @@ jobs:
           php tests/companies/operations_api_concurrency.php
           php tests/companies/operations_api_bootstrap.php
           php tests/companies/task_recurring_bootstrap.php
+          php tests/companies/leads_bootstrap.php
+          php tests/companies/leads_http_methods.php
           php tests/companies/asaas_concurrency.php
           php tests/companies/asaas_job_fee_concurrency.php
           php tests/companies/asaas_remote_concurrency.php
@@ -544,6 +550,7 @@ jobs:
           php tests/companies/native_timer_451.php
           php tests/companies/native_diagnostics_452.php
           php tests/companies/native_core_453.php
+          php tests/companies/native_core_454.php
           php tests/companies/task_recurring.php
           php tests/companies/task_recurring_api.php
           php tests/companies/task_recurring_integrity.php
@@ -554,4 +561,19 @@ jobs:
           php tests/companies/staff_native_atomic.php
           php tests/companies/staff_native_controller.php
           php tests/companies/staff_concurrency.php
+          php tests/companies/leads.php
+          php tests/companies/leads_api.php
+          php tests/companies/leads_worker.php
+          php tests/companies/leads_integrity.php
+          php tests/companies/leads_concurrency.php
           php tests/banco_brasil_local_noncash_clock_v3.php
+      - name: Testar entradas legadas Finance e Accounting em banco exclusivo
+        env:
+          ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_module_audit;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: synthetic-test-password
+        run: |
+          php -r '$db=new PDO("mysql:host=mysql;charset=utf8mb4",getenv("ISSUERS_TEST_USER"),getenv("ISSUERS_TEST_PASSWORD")); $db->exec("CREATE DATABASE issuer_module_audit CHARACTER SET utf8mb4 COLLATE utf8mb4_bin");'
+          php tests/companies/legacy_financial_module_readers.php
+          php tests/companies/legacy_financial_module_tables.php
+          php tests/companies/legacy_financial_module_migrations.php

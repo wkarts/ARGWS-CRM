@@ -71,6 +71,17 @@ $route['company_operations_api/project_copies/([1-9][0-9]{0,9})']='company_opera
 foreach(['project_milestones','task_dependencies','project_follow','task_follow'] as $companyOperationRoute)$route['company_operations_api/'.$companyOperationRoute.'/([1-9][0-9]{0,9})']='company_operations_api/'.$companyOperationRoute.'/$1';
 unset($companyOperationRoute);
 
+// Lead endpoints remain finite; import batches and file keys have distinct formats.
+foreach(['leads','lead_stages','lead_sources','lead_inbox'] as $companyLeadRoute){
+    $route['company_operations_api/'.$companyLeadRoute]='company_operations_api/'.$companyLeadRoute;
+    $route['company_operations_api/'.$companyLeadRoute.'/([1-9][0-9]{0,9})']='company_operations_api/'.$companyLeadRoute.'/$1';
+}
+foreach(['lead_assignees','lead_exports','lead_imports'] as $companyLeadRoute)$route['company_operations_api/'.$companyLeadRoute]='company_operations_api/'.$companyLeadRoute;
+$route['company_operations_api/lead_imports/([a-f0-9]{32})']='company_operations_api/lead_imports/$1';
+$route['company_operations_api/lead_files/([1-9][0-9]{0,9})']='company_operations_api/lead_files/$1';
+$route['company_operations_api/lead_files/([1-9][0-9]{0,9})/([a-f0-9]{64})']='company_operations_api/lead_files/$1/$2';
+unset($companyLeadRoute);
+
 
 /**
  * Dashboard clean route

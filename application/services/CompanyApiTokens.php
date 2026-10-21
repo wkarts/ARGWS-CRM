@@ -42,7 +42,16 @@ final class CompanyApiTokens
         'credits:unapply'=>[['credit_notes','view'],['credit_notes','edit'],['payments','delete'],['invoices','view']],
         'credits:refund'=>[['credit_notes','view'],['credit_notes','edit'],['payments','create']],
         'credits:refund_reverse'=>[['credit_notes','view'],['credit_notes','edit'],['payments','delete']],
-        'credits:void'=>[['credit_notes','view'],['credit_notes','delete']]
+        'credits:void'=>[['credit_notes','view'],['credit_notes','delete']],
+        'leads:read'=>[['leads','view']],
+        'leads:write'=>[['leads','view'],['leads','create'],['leads','edit']],
+        'leads:archive'=>[['leads','view'],['leads','delete']],
+        'leads:convert'=>[['leads','view'],['leads','edit'],['customers','view'],['customers','create']],
+        'leads:configure'=>[['leads','view'],['leads','edit']],
+        'leads:files:read'=>[['leads','view']],
+        'leads:files:write'=>[['leads','view'],['leads','edit']],
+        'leads:import'=>[['leads','view'],['leads','create']],
+        'leads:notices'=>[['leads','view']]
     ];
     private IssuerResourceAccess $acl;
     public function __construct(private $db,private string $p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid table prefix');$this->acl=new IssuerResourceAccess($db,$p);}

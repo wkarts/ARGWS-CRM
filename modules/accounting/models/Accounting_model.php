@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once __DIR__ . '/../libraries/AccountingLegacyScope.php';
 
 class Accounting_model extends App_Model
 {
@@ -7537,6 +7538,7 @@ class Accounting_model extends App_Model
      */
     public function get_data_invoices_for_select($where = []){
         $this->db->where($where);
+        AccountingLegacyScope::invoices($this->db, db_prefix());
         $invoices = $this->db->get(db_prefix() . 'invoices')->result_array();
 
         $invoice_return = [];
@@ -8062,6 +8064,7 @@ class Accounting_model extends App_Model
             $this->db->where($where);
         }
         $this->db->where('((select count(*) from ' . db_prefix() . 'acc_account_history where ' . db_prefix() . 'acc_account_history.rel_id = ' . db_prefix() . 'invoices.id and ' . db_prefix() . 'acc_account_history.rel_type = "invoice") = 0) and currency = '.$data_currency);
+        AccountingLegacyScope::invoices($this->db, db_prefix());
         $invoice = $this->db->get(db_prefix().'invoices')->row();
 
         $this->db->select_sum('amount');
@@ -8070,6 +8073,7 @@ class Accounting_model extends App_Model
         }
         $this->db->where('((select count(*) from ' . db_prefix() . 'acc_account_history where ' . db_prefix() . 'acc_account_history.rel_id = ' . db_prefix() . 'expenses.id and ' . db_prefix() . 'acc_account_history.rel_type = "expense") = 0) and currency = '.$data_currency);
         $this->db->join(db_prefix().'expenses_categories', db_prefix() . 'expenses_categories.id = ' . db_prefix() . 'expenses.category');
+        AccountingLegacyScope::expenses($this->db, db_prefix());
         $expense = $this->db->get(db_prefix().'expenses')->row();
 
         $where_payment = $this->get_where_report_period(db_prefix() . 'invoicepaymentrecords.date');
@@ -8079,6 +8083,7 @@ class Accounting_model extends App_Model
         }
         $this->db->where('((select count(*) from ' . db_prefix() . 'acc_account_history where ' . db_prefix() . 'acc_account_history.rel_id = ' . db_prefix() . 'invoicepaymentrecords.id and ' . db_prefix() . 'acc_account_history.rel_type = "payment") = 0) and currency = '.$data_currency);
         $this->db->join(db_prefix() . 'invoices', db_prefix() . 'invoices.id=' . db_prefix() . 'invoicepaymentrecords.invoiceid', 'left');
+        AccountingLegacyScope::payments($this->db, db_prefix());
         $payment = $this->db->get(db_prefix().'invoicepaymentrecords')->row();
 
 
@@ -8275,6 +8280,7 @@ class Accounting_model extends App_Model
         }
         $this->db->select('*, (SELECT sum(amount) as amount FROM '.db_prefix().'invoicepaymentrecords where invoiceid = '.db_prefix().'invoices.id and date >= "'.$last_30_days.'") as amount');
         $this->db->where('currency', $data_currency);
+        AccountingLegacyScope::invoices($this->db, db_prefix());
         $invoices = $this->db->get(db_prefix().'invoices')->result_array();
         $mapped = 0;
         $open_invoice = 0;
@@ -8389,12 +8395,14 @@ class Accounting_model extends App_Model
         }
 
         $this->db->where('currency', $data_currency);
+        AccountingLegacyScope::invoices($this->db, db_prefix());
         $invoices = $this->db->get(db_prefix().'invoices')->result_array();
 
         if($where != ''){
             $this->db->where($where);
         }
         $this->db->where('currency', $data_currency);
+        AccountingLegacyScope::expenses($this->db, db_prefix());
         $expenses = $this->db->get(db_prefix().'expenses')->result_array();
 
         $data_return = [];
@@ -9557,6 +9565,7 @@ class Accounting_model extends App_Model
      * @return boolean
      */
     public function automatic_invoice_conversion($invoice_id){
+        if (!AccountingLegacyScope::permitsRecord($this->db, db_prefix(), 'invoice', $invoice_id)) return false;
         if(get_option('acc_invoice_automatic_conversion') == 0){
             return false;
         }
@@ -9815,6 +9824,7 @@ class Accounting_model extends App_Model
      * @return boolean
      */
     public function automatic_payment_conversion($payment_id){
+        if (!AccountingLegacyScope::permitsRecord($this->db, db_prefix(), 'payment', $payment_id)) return false;
         $this->delete_convert($payment_id, 'payment');
 
         $this->load->model('payments_model');
@@ -9970,6 +9980,7 @@ class Accounting_model extends App_Model
      * @return boolean
      */
     public function automatic_expense_conversion($expense_id){
+        if (!AccountingLegacyScope::permitsRecord($this->db, db_prefix(), 'expense', $expense_id)) return false;
         if(get_option('acc_expense_automatic_conversion') == 0){
             return false;
         }
@@ -10361,6 +10372,7 @@ class Accounting_model extends App_Model
             $this->db->where($where);
         }
         $this->db->where('((select count(*) from ' . db_prefix() . 'acc_account_history where ' . db_prefix() . 'acc_account_history.rel_id = ' . db_prefix() . 'invoices.id and ' . db_prefix() . 'acc_account_history.rel_type = "invoice") = 0) '.$where_currency);
+        AccountingLegacyScope::invoices($this->db, db_prefix());
         return $this->db->count_all_results(db_prefix().'invoices');
     }
 
@@ -10381,6 +10393,7 @@ class Accounting_model extends App_Model
         }
         $this->db->where('((select count(*) from ' . db_prefix() . 'acc_account_history where ' . db_prefix() . 'acc_account_history.rel_id = ' . db_prefix() . 'invoicepaymentrecords.id and ' . db_prefix() . 'acc_account_history.rel_type = "payment") = 0) '.$where_currency);
         $this->db->join(db_prefix() . 'invoices', db_prefix() . 'invoices.id=' . db_prefix() . 'invoicepaymentrecords.invoiceid', 'left');
+        AccountingLegacyScope::payments($this->db, db_prefix());
         return $this->db->count_all_results(db_prefix().'invoicepaymentrecords');
     }
 
@@ -10404,6 +10417,7 @@ class Accounting_model extends App_Model
         $this->db->join(db_prefix().'expenses_categories', db_prefix() . 'expenses_categories.id = ' . db_prefix() . 'expenses.category');
 
         $this->db->select('count(*) as count_ex');
+        AccountingLegacyScope::expenses($this->db, db_prefix());
         $ex = $this->db->get(db_prefix().'expenses')->row();
         return $ex->count_ex; //$this->db->count_all_results(db_prefix().'expenses');
     }
@@ -10444,6 +10458,7 @@ class Accounting_model extends App_Model
      * @return boolean       
      */
     public function invoice_status_changed($data){
+        if (!AccountingLegacyScope::permitsRecord($this->db, db_prefix(), 'invoice', $data['invoice_id'] ?? null)) return false;
         if(isset($data['invoice_id']) && isset($data['status'])){
             if($data['status'] == 2){
                 $this->db->where('rel_id', $data['invoice_id']);
@@ -16507,6 +16522,7 @@ class Accounting_model extends App_Model
 
         $this->db->order_by('date', 'asc');
         
+        AccountingLegacyScope::invoices($this->db, db_prefix());
         $invoices = $this->db->get(db_prefix().'invoices')->result_array();
         
         $i = 0;
@@ -16571,6 +16587,7 @@ class Accounting_model extends App_Model
 
 
         $this->db->where('paymentmode', '');
+        AccountingLegacyScope::expenses($this->db, db_prefix());
         $expenses = $this->db->get(db_prefix().'expenses')->result_array();
 
         $list_expenses = [];
@@ -16601,6 +16618,7 @@ class Accounting_model extends App_Model
         $this->db->join(db_prefix() . 'taxes', '' . db_prefix() . 'taxes.id = ' . db_prefix() . 'expenses.tax', 'left');
         $this->db->join('' . db_prefix() . 'taxes as ' . db_prefix() . 'taxes_2', '' . db_prefix() . 'taxes_2.id = ' . db_prefix() . 'expenses.tax2', 'left');
         $this->db->order_by('date', 'asc');
+        AccountingLegacyScope::expenses($this->db, db_prefix());
         $expenses = $this->db->get(db_prefix().'expenses')->result_array();
 
         foreach ($expenses as $v) {
@@ -16646,6 +16664,7 @@ class Accounting_model extends App_Model
         $this->db->where('status != 2');
         $this->db->where('is_bill', 1);
         $this->db->order_by('date', 'asc');
+        AccountingLegacyScope::expenses($this->db, db_prefix());
         $expenses = $this->db->get(db_prefix().'expenses')->result_array();
         
         foreach ($expenses as $v) {
@@ -16766,6 +16785,7 @@ class Accounting_model extends App_Model
 
         $this->db->order_by('date', 'asc');
         
+        AccountingLegacyScope::invoices($this->db, db_prefix());
         $invoices = $this->db->get(db_prefix().'invoices')->result_array();
         $data_report = [];
 
@@ -16833,6 +16853,7 @@ class Accounting_model extends App_Model
         $this->db->join(db_prefix() . 'taxes', '' . db_prefix() . 'taxes.id = ' . db_prefix() . 'expenses.tax', 'left');
         $this->db->join('' . db_prefix() . 'taxes as ' . db_prefix() . 'taxes_2', '' . db_prefix() . 'taxes_2.id = ' . db_prefix() . 'expenses.tax2', 'left');
         $this->db->order_by('date', 'asc');
+        AccountingLegacyScope::expenses($this->db, db_prefix());
         $expenses = $this->db->get(db_prefix().'expenses')->result_array();
         
         foreach ($expenses as $v) {
@@ -16884,6 +16905,7 @@ class Accounting_model extends App_Model
         $this->db->where('status != 2');
         $this->db->where('is_bill', 1);
         $this->db->order_by('date', 'asc');
+        AccountingLegacyScope::expenses($this->db, db_prefix());
         $expenses = $this->db->get(db_prefix().'expenses')->result_array();
         
         foreach ($expenses as $v) {
@@ -25384,6 +25406,7 @@ class Accounting_model extends App_Model
      * @param        $id     The identifier
      */
     public function get_bill($id = '', $where = []){
+        AccountingLegacyScope::expenses($this->db, db_prefix());
         $this->db->from(db_prefix() . 'expenses');
         $this->db->where($where);
 
@@ -25424,6 +25447,7 @@ class Accounting_model extends App_Model
      * @return array                 
      */
     public function get_bill_mapping_details($bill_id, $type){
+        if (!AccountingLegacyScope::permitsRecord($this->db, db_prefix(), 'expense', $bill_id)) return [];
         $this->db->where('bill_id', $bill_id);
         $this->db->where('type', $type);
         $mapping_details = $this->db->get(db_prefix().'acc_bill_mappings')->result_array();
@@ -25431,6 +25455,7 @@ class Accounting_model extends App_Model
     }
 
     public function bill_appove_payable($bill_id){
+        if (!AccountingLegacyScope::permitsRecord($this->db, db_prefix(), 'expense', $bill_id)) return false;
         $bill = $this->get_bill($bill_id);
 
         $closing_date = strtotime(get_option('acc_closing_date'));
@@ -25536,6 +25561,7 @@ class Accounting_model extends App_Model
     }
 
     public function bill_status_change($bill_id, $status, $date_paid = ''){
+        if (!AccountingLegacyScope::permitsRecord($this->db, db_prefix(), 'expense', $bill_id)) return false;
 
         $data_update = [];
         $data_update['status'] = $status;
@@ -25561,6 +25587,7 @@ class Accounting_model extends App_Model
     }
 
     public function void_bill($bill_id, $data){
+        if (!AccountingLegacyScope::permitsRecord($this->db, db_prefix(), 'expense', $bill_id)) return false;
         $bill = $this->get_bill($bill_id);
 
         $closing_date = strtotime(get_option('acc_closing_date'));
@@ -25614,6 +25641,7 @@ class Accounting_model extends App_Model
     }
 
     public function get_list_pay_bill($bill_id){
+        if (!AccountingLegacyScope::permitsRecord($this->db, db_prefix(), 'expense', $bill_id)) return [];
         $this->db->where('bill_id', $bill_id);
         return $this->db->get(db_prefix().'acc_pay_bill_details')->result_array();
     }
@@ -26009,6 +26037,7 @@ class Accounting_model extends App_Model
      * Gets the bills.
      */
     public function get_bills(){
+        AccountingLegacyScope::expenses($this->db, db_prefix());
         return $this->db->get(db_prefix().'expenses')->result_array();
     }
 
@@ -26018,6 +26047,7 @@ class Accounting_model extends App_Model
      * @param        $data   The data
      */
     public function add_bill($data){
+        if (!AccountingLegacyScope::permitsExpenseWrite($this->db, db_prefix(), $data)) return false;
         $debit_account = [];
         $debit_amount = [];
         $credit_account = [];
@@ -26156,6 +26186,8 @@ class Accounting_model extends App_Model
      * @return     bool    
      */
     public function update_bill($data, $id){
+        if (!AccountingLegacyScope::permitsRecord($this->db, db_prefix(), 'expense', $id)
+            || !AccountingLegacyScope::permitsExpenseWrite($this->db, db_prefix(), $data)) return false;
         $debit_account = [];
         $debit_amount = [];
         $credit_account = [];
@@ -26288,6 +26320,7 @@ class Accounting_model extends App_Model
      * @param        $id     The identifier
      */
     public function delete_bill($id){
+        if (!AccountingLegacyScope::permitsRecord($this->db, db_prefix(), 'expense', $id)) return false;
         $affectedRows = 0;
 
         $this->db->where('bill_id', $id);
@@ -26338,6 +26371,7 @@ class Accounting_model extends App_Model
      */
     public function get_bill_mapping($id = '', $where = [])
     {
+        $this->db->where(AccountingLegacyScope::billMappingSql($this->db, db_prefix(), db_prefix() . 'acc_bill_mappings'), null, false);
         if (is_numeric($id)) {
             $this->db->where('id', $id);
             return $this->db->get(db_prefix() . 'acc_bill_mappings')->row();
@@ -28004,6 +28038,7 @@ class Accounting_model extends App_Model
      */
     public function delete_bill_attachment($id)
     {
+        if (!AccountingLegacyScope::permitsRecord($this->db, db_prefix(), 'expense', $id)) return false;
         if (is_dir(ACCOUTING_MODULE_UPLOAD_FOLDER .'/expenses/'. $id)) {
             if (delete_dir(ACCOUTING_MODULE_UPLOAD_FOLDER .'/expenses/'. $id)) {
                 $this->db->where('rel_id', $id);

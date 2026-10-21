@@ -18,9 +18,11 @@ final class CompanyOperationsApiScope
     public static function prepare($ci):bool
     {
         self::$active=false;self::$requested=false;if($ci->input->is_cli_request()||defined('API')||trim((string)$ci->router->fetch_directory(),'/')!==''||$ci->router->fetch_module()||strtolower((string)$ci->router->fetch_class())!=='company_operations_api')return false;
-        self::$requested=true;$regular=['projects','tasks','standalone_tasks','contracts','tickets','task_schedules','standalone_schedules'];$files=['project_files','task_files','contract_files','ticket_files'];$extras=['project_copies','project_milestones','task_dependencies','project_follow','task_follow'];$method=strtolower((string)$ci->router->fetch_method());if(!in_array($method,array_merge($regular,$files,$extras),true)||!isset($ci->uri)||!method_exists($ci->uri,'segment'))return false;
+        self::$requested=true;$regular=['projects','tasks','standalone_tasks','contracts','tickets','task_schedules','standalone_schedules','leads','lead_stages','lead_sources','lead_inbox'];$files=['project_files','task_files','contract_files','ticket_files','lead_files'];$extras=['project_copies','project_milestones','task_dependencies','project_follow','task_follow'];$collections=['lead_assignees','lead_exports'];$method=strtolower((string)$ci->router->fetch_method());if(!in_array($method,array_merge($regular,$files,$extras,$collections,['lead_imports']),true)||!isset($ci->uri)||!method_exists($ci->uri,'segment'))return false;
         $segments=[];for($i=1;$i<=6;$i++){$v=$ci->uri->segment($i);if($v===null||$v===false||$v==='')break;$segments[]=(string)$v;}
         if(($segments[0]??null)!=='company_operations_api'||($segments[1]??null)!==$method)return false;
+        if(in_array($method,$collections,true)){if(count($segments)!==2)return false;self::$active=true;return true;}
+        if($method==='lead_imports'){if(!in_array(count($segments),[2,3],true)||(isset($segments[2])&&!preg_match('/^[a-f0-9]{32}$/D',$segments[2])))return false;self::$active=true;return true;}
         if(in_array($method,$regular,true)){if(!in_array(count($segments),[2,3],true))return false;}
         elseif(in_array($method,$files,true)){if(!in_array(count($segments),[3,4],true)||(count($segments)===4&&!preg_match('/^[a-f0-9]{64}$/D',$segments[3])))return false;}
         elseif(count($segments)!==3)return false;
