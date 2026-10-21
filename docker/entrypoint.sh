@@ -6,10 +6,47 @@ config_file="$config_dir/app-config.php"
 provisioned_file="$config_dir/provisioned"
 app_config="/app/application/config/app-config.php"
 
+# Only declared writable directories are repaired; never traverse symlinks or
+# recursively change ownership of uploaded data or application source files.
+prepare_storage_directory() {
+    directory="$1"
+    parent="$directory"
+    while [ "$parent" != / ]; do
+        if [ -L "$parent" ]; then
+            echo "Link simbólico não permitido no armazenamento gravável: $directory" >&2
+            return 1
+        fi
+        parent="$(dirname "$parent")"
+    done
+    if [ -e "$directory" ] && [ ! -d "$directory" ]; then
+        echo "O caminho de armazenamento não é um diretório: $directory" >&2
+        return 1
+    fi
+    mkdir -p -m 0755 "$directory" || return 1
+    chown 33:33 "$directory" || return 1
+    chmod u+rwx "$directory" || return 1
+}
+
 prepare_storage_directories() {
     for directory in \
         "$config_dir" \
         /app/uploads \
+        /app/uploads/estimates \
+        /app/uploads/proposals \
+        /app/uploads/ticket_attachments \
+        /app/uploads/tasks \
+        /app/uploads/staff_profile_images \
+        /app/uploads/projects \
+        /app/uploads/newsfeed \
+        /app/uploads/leads \
+        /app/uploads/invoices \
+        /app/uploads/expenses \
+        /app/uploads/discussions \
+        /app/uploads/contracts \
+        /app/uploads/company \
+        /app/uploads/clients \
+        /app/uploads/credit_notes \
+        /app/uploads/client_profile_images \
         /app/temp \
         /app/application/cache \
         /app/application/logs \
@@ -28,8 +65,10 @@ prepare_storage_directories() {
         /data \
         /config
     do
-        mkdir -p "$directory"
-        chown 33:33 "$directory"
+        prepare_storage_directory "$directory" || {
+            echo "Não foi possível preparar o armazenamento; confira proprietário e volumes somente leitura: $directory" >&2
+            return 1
+        }
     done
 }
 

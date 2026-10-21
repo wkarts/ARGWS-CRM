@@ -1,4 +1,7 @@
 import unittest
+import os
+import subprocess
+import tempfile
 from pathlib import Path
 
 
@@ -10,6 +13,41 @@ def read(path):
 
 
 class DockerProvisioningContractTest(unittest.TestCase):
+    def test_upload_subdirectories_match_server_info(self):
+        import re
+        paths = set(re.findall(r"is_writable\(FCPATH \. 'uploads/([^']+)'", read("application/views/admin/settings/includes/info.php")))
+        self.assertEqual(len(paths), 16)
+        source = read("docker/entrypoint.sh")
+        for name in paths:
+            self.assertIn("/app/uploads/" + name + " \\\n", source)
+        self.assertNotIn("chown -R", source)
+        self.assertNotIn("chmod 777", source)
+
+    def test_storage_helper_preserves_files_and_rejects_symlinks(self):
+        prelude = read("docker/entrypoint.sh").split("prepare_storage_directories()", 1)[0]
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "uploads" / "clients"
+            target.mkdir(parents=True)
+            data = target / "existing.txt"
+            data.write_text("preserve")
+            os.chmod(data, 0o600)
+            os.chmod(target, 0o500)
+            def run(path, chown="return 0"):
+                code = prelude + '\nchown() { ' + chown + '; }\nprepare_storage_directory "$1"\n'
+                return subprocess.run(["sh", "-c", code, "fixture", str(path)], capture_output=True, text=True)
+            self.assertEqual(run(target).returncode, 0)
+            self.assertEqual(data.read_text(), "preserve")
+            self.assertEqual(data.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(target.stat().st_mode & 0o700, 0o700)
+            link = root / "alias"
+            link.symlink_to(target, target_is_directory=True)
+            self.assertNotEqual(run(link / "nested").returncode, 0)
+            self.assertFalse((target / "nested").exists())
+            self.assertNotEqual(run(data).returncode, 0)
+            self.assertNotEqual(run(target, "return 1").returncode, 0)
+            self.assertEqual(data.read_text(), "preserve")
+
     def test_runtime_image_excludes_web_installer(self):
         dockerfile = read("Dockerfile")
         ignore = read(".dockerignore")
@@ -111,7 +149,7 @@ class DockerProvisioningContractTest(unittest.TestCase):
 
         entrypoint = read("docker/entrypoint.sh")
         self.assertIn("prepare_storage_directories", entrypoint)
-        self.assertIn('mkdir -p "$directory"', entrypoint)
+        self.assertIn('mkdir -p -m 0755 "$directory"', entrypoint)
         self.assertIn('chown 33:33 "$directory"', entrypoint)
         self.assertIn("run_as_web_user", entrypoint)
         self.assertNotIn("storage-init", entrypoint)
