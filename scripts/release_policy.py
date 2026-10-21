@@ -247,7 +247,7 @@ def check_delta(root, base, head):
     return after
 
 
-def validate_archive(path, base_read=None, expected_version=None):
+def validate_archive(path, base_read=None, expected_version=None, *, allow_legacy=False):
     import zipfile
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
@@ -262,7 +262,7 @@ def validate_archive(path, base_read=None, expected_version=None):
             if base_read:
                 return base_read(name)
             raise ValueError(f'Arquivo ausente no pacote: {name}.')
-        info = validate_tree(read)
+        info = validate_tree(read, allow_legacy=allow_legacy)
         if expected_version is not None and info['version'] != expected_version:
             raise ValueError('Versão do ZIP diverge do nome/contrato do pacote.')
         return info

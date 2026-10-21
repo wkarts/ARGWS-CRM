@@ -33,6 +33,12 @@ A release publica `ARGWS-CRM-X.Y.Z-full.zip`, `ARGWS-CRM-X.Y.Z-update.zip`, chec
 
 Na primeira release, sem tag-base anterior, o incremental compara com o commit legado registrado em `.github/first-release-base.txt`, que é a base do PR inicial de migração para ARGWS. Nas releases seguintes, compara com a tag estável imediatamente anterior. `.github/workflows/repair-release-assets.yml` permite reconstruir os pacotes de uma tag já publicada e substituir os anexos validados sem criar outra versão.
 
+O reparo executa o empacotador e suas dependências do checkout atual, passando a fonte histórica por `--source-dir` e `--repair-tag`; não injeta ferramentas novas dentro da tag arquivada. A seleção de base segue o ID nativo verificado, com ancestralidade e evidências exatas dos aliases. Fontes e bases devem corresponder aos caminhos, bytes e bits executáveis da árvore Git selecionada.
+
+A exceção bootstrap é limitada a `v3.4.2`: commit `47a4517978880eebb92f6c6d128b4f151b3a324b`, árvore `4c2ae53535072fb407b35c9d42a7f15aca689728`, objeto da tag `7abf9e6ebf3cefb45de60012e9d5918bec8ef237` e base `6a8803b6f4f18f3462f738a3ca1e78c24c12e5f8`. Essa base antecede o CRM e não contém metadados de versão; somente essa combinação comprovada pode dispensar a validação de versão da base. Ambos os ZIPs continuam sendo produzidos e validados, inclusive o estado reconstruído do overlay. O manifesto explica a natureza bootstrap, sem inventar uma versão de CRM instalada. Nenhuma outra base sem metadados recebe essa exceção.
+
+Os gatilhos automáticos/manuais e a substituição dos anexos por `--clobber` permanecem como no workflow existente. Testar a correção localmente não autoriza reexecutar esse workflow: uma execução autorizada substituirá os anexos e poderá atualizar as notas da release alvo.
+
 Antes de atualizar, faça backup do banco, da configuração local e dos uploads. Preserve `application/config/app-config.php` e os dados enviados pelos clientes. Aplique o incremental sobre os arquivos existentes e execute a migration informada no painel; instale a imagem FrankenPHP com ARGWS_VERSION=X.Y.Z e Compose quando usar container.
 
 Os pacotes não incluem credenciais, .env, configuração local, logs, cache ou uploads de clientes. Amostras genéricas e imagens de placeholder necessárias ao produto permanecem na distribuição.

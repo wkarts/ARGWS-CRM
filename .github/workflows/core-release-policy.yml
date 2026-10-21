@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Testar contrato canônico, aliases, artefatos e histórico
-        run: python3 -m unittest tests/test_release_version.py tests/test_package_release.py
+        run: python3 -m unittest tests/test_release_version.py tests/test_package_release.py tests/test_release_repair.py
       - name: Validar original head contra merge-base sem escrever arquivos
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}

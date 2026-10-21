@@ -12,7 +12,7 @@ import stat
 import zipfile
 from pathlib import Path, PurePosixPath
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from release_policy import file_reader, validate_tree, validate_archive, migration_path, METADATA_PATHS
+from release_policy import file_reader, validate_tree, validate_archive, migration_path, METADATA_PATHS, git_files
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -110,15 +110,34 @@ def base_hashes(base_dir: Path | None, base_zip: Path | None) -> dict[str, str]:
     return hashes
 
 
-def current_files() -> dict[str, Path]:
+def current_files(root: Path = ROOT) -> dict[str, Path]:
     files: dict[str, Path] = {}
-    for path in ROOT.rglob("*"):
+    for path in root.rglob("*"):
         if not path.is_file():
             continue
-        relative = path.relative_to(ROOT).as_posix()
+        relative = path.relative_to(root).as_posix()
         if should_include(relative):
             files[relative] = path
     return files
+
+
+def verify_repair_tree(root: Path, commit: str, files: dict[str, Path]) -> None:
+    """Prove packaged bytes and executable bits against the immutable Git tree."""
+    expected = {name: entry for name, entry in git_files(ROOT, commit, '.').items()
+                if should_include(name)}
+    if set(expected) != set(files):
+        raise ValueError('A fonte do reparo difere dos caminhos da tag verificada.')
+    for name, (mode, kind, oid) in expected.items():
+        path = files[name]
+        if kind != 'blob' or mode not in ('100644', '100755') or path.is_symlink():
+            raise ValueError(f'Arquivo regular obrigatório no reparo: {name}.')
+        digest = hashlib.sha1(b'blob ' + str(path.stat().st_size).encode() + b'\0')
+        with path.open('rb') as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                digest.update(chunk)
+        executable = bool(path.stat().st_mode & 0o111)
+        if digest.hexdigest() != oid or executable != (mode == '100755'):
+            raise ValueError(f'Conteúdo/modo divergente da tag no reparo: {name}.')
 
 
 def add_file(archive: zipfile.ZipFile, path: Path, relative: str) -> None:
@@ -150,11 +169,25 @@ def main() -> None:
     source = parser.add_mutually_exclusive_group()
     source.add_argument("--base-dir", type=Path)
     source.add_argument("--base-zip", type=Path)
+    parser.add_argument("--source-dir", type=Path, default=ROOT)
+    parser.add_argument("--repair-tag", help="Tag histórica exata, verificada no checkout das ferramentas")
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
 
-    release = validate_tree(file_reader(ROOT))
+    plan = None
+    if args.repair_tag:
+        from release_repair import plan_repair
+        plan = plan_repair(ROOT, args.repair_tag)
+    current = current_files(args.source_dir)
+    if plan:
+        verify_repair_tree(args.source_dir, plan['source_sha'], current)
+        if not args.base_dir or args.base_zip:
+            parser.error('Reparo exige --base-dir da base histórica verificada.')
+        verify_repair_tree(args.base_dir, plan['base_sha'], current_files(args.base_dir))
+    release = validate_tree(file_reader(args.source_dir), allow_legacy=bool(plan))
     version = release['version']
+    if plan and (version, release['migration']) != (plan['version'], plan['migration']):
+        raise ValueError('Metadados da fonte divergem da tag de reparo.')
     base_read = None
     base_archive = None
     if args.base_dir:
@@ -162,11 +195,12 @@ def main() -> None:
     elif args.base_zip:
         base_archive = zipfile.ZipFile(args.base_zip)
         base_read = base_archive.read
-    baseline = validate_tree(base_read, allow_legacy=True) if base_read else None
+    bootstrap = bool(plan and plan['base_kind'] == 'bootstrap')
+    # Only the exact Git-proven first-release bootstrap lacks CRM metadata.
+    baseline = validate_tree(base_read, allow_legacy=True) if base_read and not bootstrap else None
     if baseline and baseline['migration'] >= release['migration']:
         raise SystemExit("A base incremental deve ter migration anterior à release alvo.")
 
-    current = current_files()
     base = base_hashes(args.base_dir, args.base_zip)
     changed = [
         (relative, path)
@@ -198,6 +232,13 @@ def main() -> None:
         "Arquivos de uploads da fonte foram excluídos dos pacotes por conterem dados de instalação. Os arquivos de uploads existentes na instalação permanecem intactos.",
         "",
     ]
+    if bootstrap:
+        instructions.extend([
+            f"Base bootstrap histórica: {plan['base_sha']}.",
+            "Esta base é anterior ao CRM distribuído e não comprova uma versão de CRM instalada.",
+            "O overlay reconstrói os arquivos da primeira release a partir dessa fonte histórica.",
+            "",
+        ])
     with zipfile.ZipFile(update_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6, allowZip64=True) as archive:
         for relative, path in sorted(changed):
             add_file(archive, path, relative)
@@ -217,8 +258,8 @@ def main() -> None:
         if archive.testzip() is not None:
             raise SystemExit("ZIP de atualização inválido.")
 
-    validate_archive(full_path, expected_version=version)
-    validate_archive(update_path, base_read=base_read, expected_version=version)
+    validate_archive(full_path, expected_version=version, allow_legacy=bool(plan))
+    validate_archive(update_path, base_read=base_read, expected_version=version, allow_legacy=bool(plan))
     if base_archive:
         base_archive.close()
 

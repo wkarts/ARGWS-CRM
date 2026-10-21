@@ -53,27 +53,10 @@ jobs:
 
           git fetch --tags origin
           gh release view "$RELEASE_TAG" >/dev/null
-          source_sha="$(git rev-parse --verify "refs/tags/$RELEASE_TAG^{commit}")"
-          version="${RELEASE_TAG#v}"
-          source_version="$(git show "$source_sha:VERSION" | tr -d '[:space:]')"
-          [[ "$source_version" == "$version" ]] || {
-            echo "A versão gravada no commit da tag não corresponde à tag." >&2
-            exit 1
-          }
-
-          previous_tag=""
-          while IFS= read -r tag; do
-            [[ "$tag" == "$RELEASE_TAG" ]] && break
-            previous_tag="$tag"
-          done < <(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V)
-
-          if [[ -n "$previous_tag" ]]; then
-            base_ref="$previous_tag"
-          else
-            base_ref="$(tr -d '[:space:]' < .github/first-release-base.txt)"
-          fi
-          git cat-file -e "${base_ref}^{commit}"
-          git merge-base --is-ancestor "$base_ref" "$source_sha"
+          python3 scripts/plan-release-repair.py --tag "$RELEASE_TAG" > "$RUNNER_TEMP/repair-plan.json"
+          source_sha="$(jq -r .source_sha "$RUNNER_TEMP/repair-plan.json")"
+          version="$(jq -r .version "$RUNNER_TEMP/repair-plan.json")"
+          base_ref="$(jq -r .base_sha "$RUNNER_TEMP/repair-plan.json")"
 
           {
             echo "tag=$RELEASE_TAG"
@@ -98,16 +81,18 @@ jobs:
           mkdir -p "$RUNNER_TEMP/argws-release-source" "$RUNNER_TEMP/argws-release-base"
           git archive "$SOURCE_SHA" | tar -x -C "$RUNNER_TEMP/argws-release-source"
           git archive "$BASE_REF" | tar -x -C "$RUNNER_TEMP/argws-release-base"
-          install -D scripts/package-release.py "$RUNNER_TEMP/argws-release-source/scripts/package-release.py"
 
       - name: Recriar e validar ZIPs e checksums
         env:
           RELEASE_VERSION: ${{ steps.source.outputs.version }}
-        working-directory: ${{ runner.temp }}/argws-release-source
+          RELEASE_TAG: ${{ steps.source.outputs.tag }}
+          PYTHONDONTWRITEBYTECODE: '1'
         shell: bash
         run: |
           set -euo pipefail
           python3 scripts/package-release.py \
+            --source-dir "$RUNNER_TEMP/argws-release-source" \
+            --repair-tag "$RELEASE_TAG" \
             --base-dir "$RUNNER_TEMP/argws-release-base" \
             --output-dir "$GITHUB_WORKSPACE/dist"
           test -s "$GITHUB_WORKSPACE/dist/ARGWS-CRM-$RELEASE_VERSION-full.zip"
