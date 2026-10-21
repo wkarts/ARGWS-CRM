@@ -1,6 +1,21 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
+// Shared presentation dictionary; persisted language identifiers and merge-field keys stay unchanged.
+require_once APPPATH.'services/EmailTemplateLocale.php';
+
+/** Select the configured company's language visually; never reorder or mutate persisted designs. */
+function ma_email_preview_key(array $designs)
+{
+    $language = (string) get_option('active_language');
+    foreach ($designs as $key => $design) {
+        if (($design['language'] ?? null) === $language) return $key;
+    }
+    return array_key_first($designs);
+}
+
+
+
 /**
  * Handles upload for expenses receipt
  * @param  mixed $id expense id

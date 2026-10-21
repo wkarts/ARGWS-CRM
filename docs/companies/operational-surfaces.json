@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "d64688a80ccbb3d9b4e1ce50a03c8e2290fa31d4a3c32c828c9a22ff83c9a289",
+    "source_manifest_sha256": "c4d81b6692e47d7048e0829dfaea6e4e015157204cdb0794a9eb9c3b0e0a0f2a",
     "counts": {
         "modules": 38,
-        "source_files": 4188,
+        "source_files": 4191,
         "literal_option_keys": 684,
         "dynamic_option_references": 146,
         "controllers": 254,
@@ -1468,7 +1468,7 @@
         {
             "name": "ma",
             "entry": "modules/ma/ma.php",
-            "version": "1.1.0",
+            "version": "1.1.1",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -1550,6 +1550,7 @@
                 "customfieldsvalues",
                 "estimate_requests",
                 "files",
+                "issuers_lock",
                 "leads",
                 "leads_sources",
                 "leads_status",
@@ -3207,7 +3208,7 @@
             "name": "active_language",
             "classification": "company_private_by_storage_policy",
             "consumer_validation": "not_verified",
-            "reference_count": 52
+            "reference_count": 53
         },
         {
             "name": "after_subscription_payment_captured",
@@ -20923,7 +20924,7 @@
         },
         {
             "path": "modules/ma/controllers/Ma.php",
-            "source_sha256": "e802d181bcccc29e29622651cae5fbc82fea0b4d91c78642537c4ce9bd51d4ab",
+            "source_sha256": "5712cbada4fe7bdcd314390b09411456656e56beeab27337337a82416fcf6e37",
             "module": "ma",
             "base_class": "AdminController",
             "surface": "admin",
@@ -21435,212 +21436,212 @@
                 },
                 {
                     "method": "email_design",
-                    "line": 3352,
+                    "line": 3353,
                     "visibility": "public"
                 },
                 {
                     "method": "email_detail",
-                    "line": 3367,
+                    "line": 3368,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_email_chart",
-                    "line": 3386,
+                    "line": 3387,
                     "visibility": "public"
                 },
                 {
                     "method": "email_design_save",
-                    "line": 3405,
+                    "line": 3406,
                     "visibility": "public"
                 },
                 {
                     "method": "sms",
-                    "line": 3441,
+                    "line": 3442,
                     "visibility": "public"
                 },
                 {
                     "method": "get_sms_template_preview",
-                    "line": 3480,
+                    "line": 3481,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_sms",
-                    "line": 3525,
+                    "line": 3526,
                     "visibility": "public"
                 },
                 {
                     "method": "sms_detail",
-                    "line": 3548,
+                    "line": 3549,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_sms_chart",
-                    "line": 3568,
+                    "line": 3569,
                     "visibility": "public"
                 },
                 {
                     "method": "sms_table",
-                    "line": 3587,
+                    "line": 3588,
                     "visibility": "public"
                 },
                 {
                     "method": "send_example_email",
-                    "line": 3655,
+                    "line": 3656,
                     "visibility": "public"
                 },
                 {
                     "method": "clone_email_template",
-                    "line": 3674,
+                    "line": 3675,
                     "visibility": "public"
                 },
                 {
                     "method": "ma_run_campaign",
-                    "line": 3687,
+                    "line": 3688,
                     "visibility": "public"
                 },
                 {
                     "method": "add_email_template_language",
-                    "line": 3696,
+                    "line": 3697,
                     "visibility": "public"
                 },
                 {
                     "method": "clone_email_template_design",
-                    "line": 3711,
+                    "line": 3712,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_email_template_design",
-                    "line": 3727,
+                    "line": 3728,
                     "visibility": "public"
                 },
                 {
                     "method": "add_email_language",
-                    "line": 3750,
+                    "line": 3751,
                     "visibility": "public"
                 },
                 {
                     "method": "clone_email_design",
-                    "line": 3765,
+                    "line": 3766,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_email_design",
-                    "line": 3781,
+                    "line": 3782,
                     "visibility": "public"
                 },
                 {
                     "method": "add_sms_language",
-                    "line": 3804,
+                    "line": 3805,
                     "visibility": "public"
                 },
                 {
                     "method": "clone_sms_design",
-                    "line": 3819,
+                    "line": 3820,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_sms_design",
-                    "line": 3835,
+                    "line": 3836,
                     "visibility": "public"
                 },
                 {
                     "method": "sms_design_save",
-                    "line": 3858,
+                    "line": 3859,
                     "visibility": "public"
                 },
                 {
                     "method": "add_sms_template_language",
-                    "line": 3875,
+                    "line": 3876,
                     "visibility": "public"
                 },
                 {
                     "method": "clone_sms_template_design",
-                    "line": 3890,
+                    "line": 3891,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_sms_template_design",
-                    "line": 3906,
+                    "line": 3907,
                     "visibility": "public"
                 },
                 {
                     "method": "sms_template_design_save",
-                    "line": 3929,
+                    "line": 3930,
                     "visibility": "public"
                 },
                 {
                     "method": "clients_table",
-                    "line": 3945,
+                    "line": 3946,
                     "visibility": "public"
                 },
                 {
                     "method": "save_smtp_setting",
-                    "line": 4098,
+                    "line": 4099,
                     "visibility": "public"
                 },
                 {
                     "method": "sent_smtp_test_email",
-                    "line": 4112,
+                    "line": 4113,
                     "visibility": "public"
                 },
                 {
                     "method": "update_form_style",
-                    "line": 4186,
+                    "line": 4187,
                     "visibility": "public"
                 },
                 {
                     "method": "convert_email_template_v104",
-                    "line": 4200,
+                    "line": 4201,
                     "visibility": "public"
                 },
                 {
                     "method": "save_gereral_setting",
-                    "line": 4214,
+                    "line": 4215,
                     "visibility": "public"
                 },
                 {
                     "method": "clone_campaign",
-                    "line": 4229,
+                    "line": 4230,
                     "visibility": "public"
                 },
                 {
                     "method": "ma_cron_email_limit",
-                    "line": 4242,
+                    "line": 4243,
                     "visibility": "public"
                 },
                 {
                     "method": "email_sending_limit_table",
-                    "line": 4251,
+                    "line": 4252,
                     "visibility": "public"
                 },
                 {
                     "method": "save_email_limit_setting",
-                    "line": 4314,
+                    "line": 4315,
                     "visibility": "public"
                 },
                 {
                     "method": "add_test_campaign",
-                    "line": 4324,
+                    "line": 4325,
                     "visibility": "public"
                 },
                 {
                     "method": "run_campaign_test",
-                    "line": 4335,
+                    "line": 4336,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_test_campaign",
-                    "line": 4340,
+                    "line": 4341,
                     "visibility": "public"
                 },
                 {
                     "method": "refresh_test_campaign",
-                    "line": 4345,
+                    "line": 4346,
                     "visibility": "public"
                 },
                 {
                     "method": "update_unlayer_custom_fonts",
-                    "line": 4353,
+                    "line": 4354,
                     "visibility": "public"
                 }
             ],
@@ -28998,7 +28999,7 @@
         {
             "name": "issuers_lock",
             "state": "not_verified",
-            "reference_count": 7
+            "reference_count": 8
         },
         {
             "name": "issuers_master_authorizations",
@@ -29288,12 +29289,12 @@
         {
             "name": "ma_email_template_designs",
             "state": "not_verified",
-            "reference_count": 15
+            "reference_count": 16
         },
         {
             "name": "ma_email_templates",
             "state": "not_verified",
-            "reference_count": 12
+            "reference_count": 13
         },
         {
             "name": "ma_emails",

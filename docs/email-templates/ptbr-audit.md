@@ -43,7 +43,7 @@ Envio nativo/legado: idioma solicitado → idioma configurado da empresa → PT-
 
 - Resolvido no incremento Purchase 1.5.1: o filtro global deixou de forçar `portuguese_br`; somente os oito modelos nativos de fornecedor consultam preferência inequívoca. Prévia e envio seguem o mesmo contrato. Veja [detalhes e testes](../../modules/purchase/docs/email-language-151.md).
 - Resolvido no incremento Purchase 1.5.1: `{staff_name}` recebe o destinatário já fornecido pelo model, separado do ator; três avisos internos declaram `for=staff` para respeitar sua preferência.
-- As telas e os corpos de campanha de Marketing Automation possuem contrato separado.
+- A biblioteca separada de Marketing Automation é tratada no incremento MA1.1.1: sete defaults textuais EN/PTBR, designs e interface localizados, sem reescrever cópias de campanhas/customizações. [Detalhes e limites de imagens](../../modules/ma/docs/email-templates-111.md). Assets raster ainda contêm inglês e têm plano de revisão separado.
 - Browser/Chromium e MySQL locais indisponíveis neste ambiente. Não houve envio real, teste SMTP, acesso a tokens ou produção.
 
 ## Verificação

@@ -5,6 +5,8 @@ loadEditor = () => {
       ...options,
       id: 'EmailEditor',
       displayMode: 'email',
+      // Editor interface only; stored design languages are not changed.
+      locale: 'pt-BR',
     });
     if($("input[name=data_design]").val() != ''){
       this.editor.loadDesign(JSON.parse(JSON.parse($("input[name=data_design]").val())));

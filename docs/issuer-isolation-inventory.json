@@ -8011,7 +8011,7 @@
       "evidence": "tests/issuers_controller.php and client_issuer_controllers.php: trusted actor, POST/CSRF/input shape and adoption gate; registry-only scope."
     },
     "modules/ma/controllers/Ma.php": {
-      "sha256": "e802d181bcccc29e29622651cae5fbc82fea0b4d91c78642537c4ce9bd51d4ab",
+      "sha256": "5712cbada4fe7bdcd314390b09411456656e56beeab27337337a82416fcf6e37",
       "categories": [
         "customer_privacy"
       ],
@@ -8027,16 +8027,16 @@
         3251,
         3252,
         3255,
-        3950,
-        3954,
+        3951,
         3955,
         3956,
         3957,
-        3961,
-        3968,
-        3996,
-        4053,
-        4058
+        3958,
+        3962,
+        3969,
+        3997,
+        4054,
+        4059
       ],
       "state": "unreviewed",
       "evidence": ""

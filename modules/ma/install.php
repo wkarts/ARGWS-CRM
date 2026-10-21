@@ -449,11 +449,7 @@ if (!$CI->db->table_exists(db_prefix() . 'ma_email_click_logs')) {
 
 add_option('ma_insert_email_template_default', 0);
 
-if(get_option('ma_insert_email_template_default') == 0){
-
-    $CI->db->query(file_get_contents(FCPATH . 'modules/ma/database/email_template_default.sql'));
-    update_option('ma_insert_email_template_default', 1);
-}
+// Default library seeding is deferred until both legacy and v104 design tables exist.
 
 if (!$CI->db->field_exists('failed' ,db_prefix() . 'ma_email_logs')) {
     $CI->db->query('ALTER TABLE `' . db_prefix() . 'ma_email_logs`
@@ -719,3 +715,11 @@ if (!$CI->db->field_exists('confirm' ,db_prefix() . 'ma_email_logs')) {
 }
 
 add_option('ma_unlayer_custom_fonts', '');
+
+// One catalogue for new installs and upgrades; no hardcoded tbl prefix or campaign rewrites.
+require_once __DIR__.'/services/MaEmailTemplateDefaults.php';
+if (get_option('ma_insert_email_template_default') == 0) {
+    MaEmailTemplateDefaults::install($CI->db, db_prefix());
+    update_option('ma_insert_email_template_default', 1);
+}
+// Existing installations are reconciled once by migration111, not on every reactivation.

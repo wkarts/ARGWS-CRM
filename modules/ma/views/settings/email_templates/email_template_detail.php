@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php init_head(); ?>
+<?php init_head(); $previewDesignKey = ma_email_preview_key($email_template->data_design); ?>
 <div id="wrapper" class="customer_profile">
    <div class="content">
       <div class="row">
@@ -84,9 +84,9 @@
                             <div class="horizontal-tabs">
                               <ul class="nav nav-tabs nav-tabs-horizontal mbot15" role="tablist">
                                 <?php foreach($email_template->data_design as $key => $design){ ?>
-                                  <li role="presentation" class="<?php echo ($key == 0 ? 'active' : '') ?>">
-                                     <a href="#<?php echo html_entity_decode($design['language']) ?>" aria-controls="<?php echo html_entity_decode($design['language']) ?>" role="tab" id="tab_out_of_stock" data-toggle="tab">
-                                        <?php echo ucfirst($design['language']) ?>
+                                  <li role="presentation" class="<?php echo ($key === $previewDesignKey ? 'active' : '') ?>">
+                                     <a href="#<?php echo html_escape($design['language']) ?>" aria-controls="<?php echo html_escape($design['language']) ?>" role="tab" id="tab_out_of_stock" data-toggle="tab">
+                                        <?php echo html_escape(EmailTemplateLocale::languageLabel((string) $design['language'])) ?>
                                      </a>
                                   </li>
                                 <?php } ?>
@@ -95,7 +95,7 @@
                           </div>
                           <div class="tab-content mtop15">
                               <?php foreach($email_template->data_design as $key => $design){ ?>
-                                <div role="tabpanel" class="tab-pane <?php echo ($key == 0 ? 'active' : '') ?>" id="<?php echo html_entity_decode($design['language']); ?>">
+                                <div role="tabpanel" class="tab-pane <?php echo ($key === $previewDesignKey ? 'active' : '') ?>" id="<?php echo html_escape($design['language']); ?>">
                                     <div class="wrapper">
                                       <div class="col-md-12">
                                         <a class="btn btn-sm btn-primary tw-font-semibold tw-tracking-tight tw-bg-white tw-text-primary-700 mbot20 tw-rounded-full tw-px-3" href="<?php echo admin_url('ma/email_template_design/'.$design['id']); ?>"><?php echo _l('design'); ?></a>
@@ -220,7 +220,7 @@
                  <option value=""></option>
                  <?php foreach ($languages as $availableLanguage) {
                   ?>
-                 <option value="<?php echo html_entity_decode($availableLanguage); ?>"><?php echo ucfirst($availableLanguage); ?></option>
+                 <option value="<?php echo html_escape($availableLanguage); ?>"><?php echo html_escape(EmailTemplateLocale::languageLabel((string) $availableLanguage)); ?></option>
                  <?php } ?>
               </select>
             </div>
@@ -250,7 +250,7 @@
               <select name="from_language" id="from_language" class="form-control selectpicker" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
                  <option value=""></option>
                   <?php foreach($email_template->data_design as $key => $design){ ?>
-                    <option value="<?php echo html_entity_decode($design['id']); ?>"><?php echo ucfirst($design['language']); ?></option>
+                    <option value="<?php echo html_entity_decode($design['id']); ?>"><?php echo html_escape(EmailTemplateLocale::languageLabel((string) $design['language'])); ?></option>
                  <?php } ?>
               </select>
             </div>
@@ -260,7 +260,7 @@
                  <option value=""></option>
                  <?php foreach ($languages as $availableLanguage) {
                   ?>
-                 <option value="<?php echo html_entity_decode($availableLanguage); ?>"><?php echo ucfirst($availableLanguage); ?></option>
+                 <option value="<?php echo html_escape($availableLanguage); ?>"><?php echo html_escape(EmailTemplateLocale::languageLabel((string) $availableLanguage)); ?></option>
                  <?php } ?>
               </select>
             </div>

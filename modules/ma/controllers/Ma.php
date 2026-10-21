@@ -3308,6 +3308,7 @@ class Ma extends AdminController
         if($id != ''){
             $email_template = $this->ma_model->get_email_template($id);
             if($email_template){
+                $previewDesignKey = ma_email_preview_key($email_template->data_design);
                 $html .= '<div class="panel_s">
                     <div class="panel-body">
                     <div class="horizontal-scrollable-tabs preview-tabs-top">
@@ -3316,9 +3317,9 @@ class Ma extends AdminController
                         <div class="horizontal-tabs">
                           <ul class="nav nav-tabs nav-tabs-horizontal mbot15" role="tablist">';
                             foreach($email_template->data_design as $key => $design){
-                    $html .= '<li role="presentation" class="'.($key == 0 ? 'active' : '') .'">
-                                 <a href="#'.$design['language'].'" aria-controls="'.$design['language'].'" role="tab" id="tab_out_of_stock" data-toggle="tab">
-                                    '.ucfirst($design['language']).'
+                    $html .= '<li role="presentation" class="'.($key === $previewDesignKey ? 'active' : '') .'">
+                                 <a href="#'.html_escape($design['language']).'" aria-controls="'.html_escape($design['language']).'" role="tab" id="tab_out_of_stock" data-toggle="tab">
+                                    '.html_escape(EmailTemplateLocale::languageLabel((string) $design['language'])).'
                                  </a>
                               </li>';
                             }
@@ -3327,7 +3328,7 @@ class Ma extends AdminController
                       </div>
                       <div class="tab-content mtop15">';
                           foreach($email_template->data_design as $key => $design){
-                    $html .= '<div role="tabpanel" class="tab-pane '.($key == 0 ? 'active' : '').'" id="'.$design['language'].'">
+                    $html .= '<div role="tabpanel" class="tab-pane '.($key === $previewDesignKey ? 'active' : '').'" id="'.html_escape($design['language']).'">
                                 <div class="wrapper">
                                   <div class="col-md-12">
                                     <div id="EmailEditor">'.json_decode($design['data_html'] ?? '').'</div>
@@ -3341,7 +3342,7 @@ class Ma extends AdminController
             }
         }
         
-        echo html_entity_decode($html);
+        echo $html;
         die;
     }
 
@@ -3492,7 +3493,7 @@ class Ma extends AdminController
                             foreach($text_message->data_design as $key => $design){
                     $html .= '<li role="presentation" class="'.($key == 0 ? 'active' : '') .'">
                                  <a href="#'.$design['language'].'" aria-controls="'.$design['language'].'" role="tab" id="tab_out_of_stock" data-toggle="tab">
-                                    '.ucfirst($design['language']).'
+                                    '.html_escape(EmailTemplateLocale::languageLabel((string) $design['language'])).'
                                  </a>
                               </li>';
                             }

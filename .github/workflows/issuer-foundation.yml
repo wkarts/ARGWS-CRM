@@ -10,6 +10,10 @@ on:
       - modules/accounting/**
       - modules/purchase/**
       - tests/purchase_mail_language.php
+      - modules/ma/**
+      - tests/ma_email_template_localization.php
+      - tests/ma_email_interface.test.cjs
+      - scripts/build-ma-email-templates-ptbr.py
       - tests/issuers*.php
       - tests/company_registry_lookup*.php
       - tests/company_context.php
@@ -38,6 +42,10 @@ on:
       - modules/accounting/**
       - modules/purchase/**
       - tests/purchase_mail_language.php
+      - modules/ma/**
+      - tests/ma_email_template_localization.php
+      - tests/ma_email_interface.test.cjs
+      - scripts/build-ma-email-templates-ptbr.py
       - tests/issuers*.php
       - tests/company_registry_lookup*.php
       - tests/company_context.php
@@ -67,7 +75,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test tests/company_email_catalog.test.cjs tests/email_templates_ptbr.test.cjs tests/email_template_interface.test.cjs
+      - run: node --test tests/company_email_catalog.test.cjs tests/email_templates_ptbr.test.cjs tests/email_template_interface.test.cjs tests/ma_email_interface.test.cjs
   boundary-inventory:
     runs-on: ubuntu-latest
     steps:
@@ -393,6 +401,8 @@ jobs:
           php tests/settings/company_email_templates.php
           php tests/settings/email_template_localization.php
           php tests/purchase_mail_language.php
+          php tests/ma_email_template_localization.php
+          python3 scripts/build-ma-email-templates-ptbr.py --check
           php tests/companies/email_template_scope.php
           php tests/companies/email_template_controller.php
           php tests/companies/email_template_editor.php
