@@ -30,3 +30,15 @@ $count=count($GLOBALS['recoveryDeliveries']);
 check($auth->forgot_password('same@example.invalid')===false && $auth->set_password_email('same@example.invalid')===false,'global recovery refuses duplicate email without rotating arbitrary owner');
 check(count($GLOBALS['recoveryDeliveries'])===$count,'ambiguous recovery sends no global template');
 $pdo->exec("UPDATE q_contacts SET email='l@example.test' WHERE id=10; UPDATE q_contacts SET email='x@example.test' WHERE id=20");
+
+// The shared SQLite adapter must execute canonical staff lookup without bypassing
+// the production exactly-one rule (including an inactive duplicate identity).
+$pdo->exec("INSERT INTO q_staff VALUES(8,' STAFF@EXAMPLE.INVALID ',0,'duplicate-old','')");
+$staffBefore=$pdo->query('SELECT * FROM q_staff ORDER BY staffid')->fetchAll(PDO::FETCH_ASSOC);
+$sent=count($GLOBALS['recoveryDeliveries']);
+foreach(['forgot_password','set_password_email'] as $method){
+ check($auth->$method(' Staff@Example.Invalid ',true)===false,'ambiguous staff '.$method.' fails closed');
+}
+check($pdo->query('SELECT * FROM q_staff ORDER BY staffid')->fetchAll(PDO::FETCH_ASSOC)===$staffBefore,'ambiguous staff recovery preserves every reset key');
+check(count($GLOBALS['recoveryDeliveries'])===$sent,'ambiguous staff recovery dispatches no template');
+echo "Portal recovery canonical staff: $n synthetic checks passed (ASCII SQLite adapter only)\n";

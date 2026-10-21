@@ -83,6 +83,9 @@ if ($moduleName === 'api') {
     $ci = scopeFixture($target, false);
     scopeThrows(static fn() => $ci->app_modules->activate($moduleName), 'api_legacy_install_unconfirmed', 'finalizer cannot attest missing API schema');
     scopeCheck((int) scopeRow()->active === 0, 'unconfirmed legacy API schema never activates');
-    scopeCheck(count(glob($modulePath . 'migrations/*.php')) === 6, 'API historical gap remains unfilled');
+    $migrationIds = array_map(static fn($path) => (int) substr(basename($path), 0, 3), glob($modulePath . 'migrations/*.php'));
+    scopeCheck(array_values(array_filter($migrationIds, static fn($id) => $id > 103 && $id < 200)) === [], 'API historical gap 104–199 remains unfilled');
+    scopeCheck(array_diff([101, 102, 103, 200, 201, 202], $migrationIds) === [], 'API historical migration set is preserved');
+    scopeCheck(in_array(203, $migrationIds, true), 'approved API identity migration 203 is present');
 }
 echo $moduleName . ': ' . $GLOBALS['scopeChecks'] . " lifecycle checks passed (real App_modules and native runner; SQLite; SDK autoload adapter).\n";

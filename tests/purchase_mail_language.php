@@ -57,7 +57,8 @@ checkPurchase($fields['{staff_name}']==='Destinatário correto' && $fields['{by_
 $fields=$formatter->format((object)['by_staff_name'=>'Actor','type'=>'Pedido','link'=>'https://example.invalid']);
 checkPurchase($fields['{staff_name}']==='','missing recipient name does not guess actor or logged-in user');
 $main=file_get_contents(dirname(__DIR__).'/modules/purchase/purchase.php');
-checkPurchase(str_contains($main,'Version: 1.5.1') && str_contains($main,'PurchaseMailLanguage::resolve'),'module wires tested resolver with new version');
+preg_match('/^Version:\s*([0-9]+\.[0-9]+\.[0-9]+)\s*$/m', $main, $version);
+checkPurchase(isset($version[1]) && version_compare($version[1], '1.5.1', '>=') && str_contains($main,'PurchaseMailLanguage::resolve'),'module retains tested resolver from version 1.5.1 onward');
 checkPurchase(str_contains($main,"->where('c.active', 1)->where('v.active', 1)") && str_contains($main,'->limit(2)'),'live query excludes inactive contacts and rejects ambiguous rows');
 $before=$GLOBALS['lookups'];
 class App_module_migration{}
