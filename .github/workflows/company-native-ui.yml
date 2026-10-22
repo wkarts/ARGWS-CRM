@@ -44,7 +44,7 @@ jobs:
           mkdir -p artifacts/company-native-ui
           node tests/company_shell_browser.cjs
           node tests/company_workspace_browser.cjs
-          node tests/company_registry_modal_browser.cjs
+          for attempt in 1 2 3; do node tests/company_registry_modal_browser.cjs; done
           node tests/company_settings_native_browser.cjs
       - name: Evidências sintéticas de apresentação
         if: always()
