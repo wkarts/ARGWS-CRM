@@ -131,6 +131,7 @@ jobs:
           find modules/issuers -name '*.php' -exec php -l '{}' \;
           php tests/issuers_controller.php
           php tests/issuers_admin_upgrade_gate.php
+          php tests/issuers_integration_view.php
       - uses: actions/upload-artifact@v4
         with:
           name: company-operational-surfaces-php-${{ matrix.php }}
@@ -375,7 +376,6 @@ jobs:
           php tests/banco_brasil_api_receipt_concurrency.php
           php tests/banco_brasil_webhook_mysql.php
           php tests/banco_brasil_amendment_concurrency.php
-          php tests/issuers_integration_view.php
           php tests/companies/module_tracking.php
           php tests/settings/company_assets.php
           php tests/companies/asset_concurrency.php
