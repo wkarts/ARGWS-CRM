@@ -16,7 +16,7 @@ function render(name, args = []) { return execFileSync(process.env.PHP_BIN || 'p
 function html(header, summary) {
   // Parent grid matches admin/settings/all.php. The tested header/selector and URL controls are rendered from their real PHP views.
   const content = summary ? '<div id="wrapper"><div class="content"><div class="row"><div class="col-xs-12 col-md-12 col-lg-10"><div class="row"><div class="col-md-4 col-lg-3"><h4>Configurações</h4></div><div class="col-md-8 col-lg-9"><h4>Meios de Pagamento</h4><form id="settings-form"><div class="panel_s"><div class="panel-body"><div id="online_payments_asaas_tab">' + summary + '</div></div></div></form></div></div></div></div></div></div>' : '';
-  return '<!doctype html><html lang="pt-BR" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="http://fixture.test/">' + styles.map(file => '<link rel="stylesheet" href="' + file + '">').join('') + '</head><body class="admin">' + header + content + scripts.map(file => '<script src="' + file + '"></script>').join('') + '<script>$(function(){ $(".selectpicker").selectpicker(); if(innerWidth <= 768)document.body.classList.add("page-small"); });document.addEventListener("submit",function(event){event.preventDefault();});</script></body></html>';
+  return '<!doctype html><html lang="pt-BR" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="http://fixture.test/">' + styles.map(file => '<link rel="stylesheet" href="' + file + '">').join('') + '</head><body class="admin">' + header + content + scripts.map(file => '<script src="' + file + '"></script>').join('') + '<script>$(function(){ $(".selectpicker").selectpicker(); if(innerWidth <= 768)document.body.classList.add("page-small"); $(".hide-menu").on("click",function(){document.body.classList.toggle("show-sidebar");}); });document.addEventListener("submit",function(event){event.preventDefault();});</script></body></html>';
 }
 async function run() {
   const {chromium} = require(process.env.ASAAS_PLAYWRIGHT_MODULE || 'playwright');
@@ -45,7 +45,11 @@ async function run() {
           let phase = 'render actual views';
           try {
             await page.setContent(html(mode === 'urls' ? '' : mode === 'mobile-long-name' ? mobileHeader : header, mode === 'urls' || mode === 'combined' ? summary : ''), {waitUntil: 'load'});
-            if (mode !== 'urls') await page.locator('.company-selector .bootstrap-select').waitFor({state: 'visible', timeout: 10000});
+            if (mode !== 'urls') {
+              await page.locator('.company-selector .bootstrap-select').waitFor({state: 'attached', timeout: 10000});
+              if (width <= 768) await page.locator('#header > .hide-menu').click();
+              await page.locator('.company-selector .bootstrap-select').waitFor({state: 'visible', timeout: 10000});
+            }
             if (width <= 768) await page.waitForFunction(() => document.body.classList.contains('page-small'), null, {timeout: 10000});
             await page.evaluate(() => document.fonts.ready);
             const layout = await page.evaluate('(' + overflowGeometry.toString() + ')(document, window)');
@@ -53,9 +57,9 @@ async function run() {
             const controls = mode === 'urls' ? null : await page.evaluate(() => {
               const box = selector => document.querySelector(selector).getBoundingClientRect();
               const header = box('#header'), selector = box('.company-selector'), search = box('#search_input');
-              const visibleControls = ['#header > .hide-menu', '.company-selector .dropdown-toggle', '.company-selector button[type=submit]', '#search_input', '.mobile-menu-toggle'].map(selector => box(selector)).filter(rect => rect.width > 0 && rect.height > 0);
+              const visibleControls = ['#header > .hide-menu', '#search_input', '.mobile-menu-toggle'].map(selector => box(selector)).filter(rect => rect.width > 0 && rect.height > 0);
               return {contained: visibleControls.every(rect => rect.left >= -1 && rect.right <= innerWidth + 1 && rect.bottom <= header.bottom + 1),
-                separate: selector.bottom <= search.top + 1 || search.bottom <= selector.top + 1 || selector.right <= search.left + 1 || search.right <= selector.left + 1,
+                separate: selector.bottom <= box('#menu .sidebar-user-profile').top + 1 && selector.left >= -1 && selector.right <= innerWidth + 1,
                 sidebarBelow: box('#menu .sidebar-user-profile').top >= header.bottom,
                 setupOffset: parseFloat(getComputedStyle(document.querySelector('#setup-menu')).marginTop) === header.height,
                 headerHeight: header.height, searchWidth: search.width};

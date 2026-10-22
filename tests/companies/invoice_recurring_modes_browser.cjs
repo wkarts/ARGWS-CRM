@@ -1,3 +1,4 @@
+const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 // Reconstructed HTTP440 runner. Original recovered440 assertions retained; native schema must preexist.
 'use strict';
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{createHash}=require('node:crypto'),fs=require('node:fs'),{chromium}=require('playwright');
@@ -15,7 +16,7 @@ async function submit(p,b){await Promise.all([p.waitForNavigation({waitUntil:'do
  assert.ok(Number.isInteger(fixture.expected_marker)&&fixture.expected_marker>=440);assert.equal(fixture.native_marker,fixture.expected_marker);assert.equal(fixture.read_only,true);assert.equal(fixture.schemas.length,5);
  const browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})});let context;
  try{
-  context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await workspacePage(context),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await submit(page,page.locator('button[type=submit]'));
   const form=action=>page.locator('form').filter({has:page.locator('input[name=action][value="'+action+'"]')});
   async function select(issuer){await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(String(issuer));await submit(page,page.locator('.company-selector-form button[type=submit]'));}

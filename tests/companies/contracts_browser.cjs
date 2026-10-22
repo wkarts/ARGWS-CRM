@@ -1,10 +1,11 @@
 'use strict';
+const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 const assert=require('node:assert/strict');const{execFileSync}=require('node:child_process');const{chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;assert.match(url||'',/^http:\/\/127\.0\.0\.1:\d+$/);assert.match(app||'',/^argws-crm-upgrade-\d+$/);assert.match(db||'',/^argws-crm-provision-db-\d+$/);assert.equal(process.env.ISSUERS_BROWSER_DB_NAME,'argws_upgrade_ci');
 function sql(q){return execFileSync('docker',['exec','-e','MYSQL_PWD',db,'mysql','--protocol=tcp','--host=127.0.0.1','--user='+process.env.ISSUERS_BROWSER_DB_USER,'argws_upgrade_ci','--batch','--skip-column-names','-e',q],{env:{...process.env,MYSQL_PWD:process.env.ISSUERS_BROWSER_DB_PASSWORD},encoding:'utf8'}).trim();}
 async function nav(page,button){await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),button.click()]);}
 async function hidden(form){return form.locator('input[type=hidden]').evaluateAll(xs=>Object.fromEntries(xs.filter(x=>x.name).map(x=>[x.name,x.value])));}
-(async()=>{const browser=await chromium.launch({headless:true});const ctx=await browser.newContext();await ctx.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));try{
+(async()=>{const browser=await chromium.launch({headless:true});const ctx=await browser.newContext();await ctx.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await workspacePage(ctx),errors=[];page.on('pageerror',e=>errors.push(e.message));try{
  await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));
  const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'"),contracts={},tickets={};
  async function select(id){await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(id);await nav(page,page.locator('.company-selector-form button[type=submit]'));}

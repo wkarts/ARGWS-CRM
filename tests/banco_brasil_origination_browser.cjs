@@ -1,4 +1,5 @@
 'use strict';
+const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
 const assert = require('node:assert/strict');
 const { execFileSync, spawnSync } = require('node:child_process');
@@ -33,7 +34,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
 
 
 (async()=>{
- const browser=await chromium.launch({headless:true});const context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const browser=await chromium.launch({headless:true});const context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await workspacePage(context),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await login(page,'admin-ci@example.invalid',process.env.ISSUERS_BROWSER_PASSWORD);
   const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");

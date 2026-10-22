@@ -190,13 +190,16 @@ async function waitForUpgradeForm(page) {
       const primaryCompany = sql('SELECT primary_issuer_id FROM tblissuers_installation_identity WHERE id=1');
       if (sql("SELECT COUNT(*) FROM tblissuers_registry WHERE tax_id='52998224725'") === '0') {
         await page.goto(url + '/admin/company_onboarding');
-        async function nextSecondaryStep() { await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('section form button[type=submit]').click()]); }
+        await page.locator('#company-create-modal').waitFor({state:'visible'});
+        const wizard = page.frame({name:'company-create-frame'});
+        await wizard.locator('section form button[type=submit]').waitFor();
+        async function nextSecondaryStep() { await Promise.all([wizard.waitForNavigation({ waitUntil: 'domcontentloaded' }), wizard.locator('section form button[type=submit]').click()]); }
         await nextSecondaryStep();
-        await page.locator('#legal_name').fill('Synthetic secondary native recovery');
-        await page.locator('#tax_id').fill('52998224725');
-        await page.locator('a[href="#company-address"]').click(); await page.locator('#profile_invoice_company_city').fill('Synthetic secondary');
+        await wizard.locator('#legal_name').fill('Synthetic secondary native recovery');
+        await wizard.locator('#tax_id').fill('52998224725');
+        await wizard.locator('a[href="#company-address"]').click(); await wizard.locator('#profile_invoice_company_city').fill('Synthetic secondary');
         for (let step = 0; step < 5; step++) await nextSecondaryStep();
-        assert((await page.locator('[role=status]').innerText()).includes('Empresa criada'));
+        assert((await wizard.locator('[role=status]').innerText()).includes('Empresa criada'));
       }
       const secondaryCompany = sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
       await page.goto(url + '/admin/company_context');

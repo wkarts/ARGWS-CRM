@@ -1,11 +1,15 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
-$company_page_title='Nova empresa';require APPPATH.'views/admin/companies/layout_head.php';
+// Compact same-origin modal document; never hydrate the legacy admin shell.
 $esc=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
-$url=fn($path)=>CompanyRequestScope::adminUrl($this,$path);
+$url=fn($path)=>CompanyRequestScope::adminUrl($this,$path.(str_starts_with($path,'company_onboarding')?(str_contains($path,'?')?'&':'?').'modal=1':''));
 $base='company_onboarding'.($draft?'/index/'.$draft['draft_key']:'');
 $payload=$draft['payload']??[];
 $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',5=>'Revisão',6=>'Conclusão'];
 ?>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nova empresa</title>
+<?php foreach(['assets/plugins/bootstrap/css/bootstrap.min.css','assets/css/style.min.css','assets/css/company-registry.css'] as $asset){ ?><link rel="stylesheet" href="<?= $esc(base_url($asset)); ?>"><?php } ?>
+<?php require APPPATH.'views/admin/includes/company_context_script.php'; ?>
+</head><body class="company-onboarding-modal-body">
 <link rel="stylesheet" href="<?= $esc(base_url('assets/css/company-identity.css')); ?>">
 <section class="company-settings-card" aria-labelledby="wizard-title">
 <?php if($step>0&&$step<6){?><p class="text-muted">Etapa <?= $step; ?> de 5 · O rascunho é salvo ao continuar.</p><?php } ?>
@@ -19,7 +23,9 @@ $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',
 <h2>Recursos da empresa</h2><ul><li>Cadastro, seleção e gestão autorizada da equipe.</li><li>Informações da empresa, formato de datas/horas, SMTP próprio e modelos de e-mail.</li><li>Clientes privados e compartilhamento opcional de identidade; operações próprias de projetos, tarefas, documentos financeiros e relatórios conforme as permissões concedidas.</li><li>Configuração Banco do Brasil e operações específicas disponíveis para o perfil autorizado, se o módulo estiver ativo.</li></ul>
 <p>SMTP, integrações e contas bancárias começam sem credenciais de outras empresas. Configure-os dentro da empresa selecionada.</p>
 <p class="alert alert-warning">Módulos e ações ainda sem operação isolada permanecem indisponíveis. Cada integração exige configuração própria; operações bancárias dependem do perfil contratado, dos documentos e da autorização aplicável.</p>
-<p><a class="btn btn-primary" href="<?= $esc($url('issuers/index/'.(int)$draft['issuer_id'])); ?>">Consultar empresa</a> <a class="btn btn-default" href="<?= $esc($url('company_context')); ?>">Selecionar empresa</a> <a href="<?= $esc($url('company_onboarding')); ?>">Cadastrar outra</a></p>
+<p>Para configurar, feche este cadastro, selecione a empresa na barra lateral e use as Definições do CRM.</p>
+<button class="btn btn-primary" type="button" data-wizard-close>Concluir</button>
+<script>window.parent.postMessage({type:'company-onboarding-complete'},window.location.origin);</script>
 <?php }else{?>
 <?= form_open($url($base)); ?>
 <input type="hidden" name="company_onboarding_csrf" value="<?= $esc($company_onboarding_csrf); ?>">
@@ -53,8 +59,10 @@ $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',
 <ul><?php foreach($payload[3]['staff']??[] as $staff=>$assignment){?><li>Colaborador <?= (int)$staff; ?><?= $assignment['default']==='1'?' — nova empresa como padrão':''; ?><ul><?php foreach($assignment['resources'] as $feature=>$caps){foreach($caps as $cap){?><li><?= $esc($resources[$feature]['name']??$feature); ?>: <?= $esc($resources[$feature]['capabilities'][$cap]??$cap); ?></li><?php }} ?></ul></li><?php } ?></ul>
 <p>A criação e as concessões são confirmadas juntas. Uma falha preserva o rascunho e permite tentar novamente.</p>
 <?php } ?>
-<?php if($step>0){?><div class="company-settings-actions"><?php if($step>1){?><a class="btn btn-default" href="<?= $esc($url($base.'?step='.($step-1))); ?>">Voltar</a> <?php } ?><button class="btn btn-primary" type="submit"><?= $step===5?'Criar empresa e aplicar permissões':'Salvar e continuar'; ?></button> <a href="<?= $esc($url('issuers')); ?>">Sair e retomar depois</a></div><?php } ?>
+<?php if($step>0){?><div class="company-settings-actions"><?php if($step>1){?><a class="btn btn-default" href="<?= $esc($url($base.'?step='.($step-1))); ?>">Voltar</a> <?php } ?><button class="btn btn-primary" type="submit"><?= $step===5?'Criar empresa e aplicar permissões':'Salvar e continuar'; ?></button> <button class="btn btn-default" type="button" data-wizard-close>Sair e retomar depois</button></div><?php } ?>
 <?= form_close(); ?>
 <?php } ?>
 </section>
-<?php require APPPATH.'views/admin/companies/layout_tail.php'; ?>
+<script>
+window.parent.postMessage({type:'company-onboarding-csrf',name:<?= json_encode($this->security->get_csrf_token_name()); ?>,hash:<?= json_encode($this->security->get_csrf_hash()); ?>},window.location.origin);
+</script><script src="<?= $esc(base_url('assets/js/company-onboarding-modal.js')); ?>"></script></body></html>

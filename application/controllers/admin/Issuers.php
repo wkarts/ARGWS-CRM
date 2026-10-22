@@ -59,6 +59,8 @@ class Issuers extends AdminController
             }
             $this->load->view('admin/issuers/manage', [
                 'title' => _l('issuers_title'), 'catalog' => $catalog, 'available' => $available,
+                'status_permissions' => $this->statusPermissions($catalog, $actor),
+                'company_notice' => $this->session->flashdata('company_registry_notice'),
                 'selected' => $selected,
                 'can_create' => $this->registry->canCreate($actor),
                 'can_manage' => $selected ? $this->registry->canManage($selected['id'], $actor) : $this->registry->canCreate($actor),
@@ -73,6 +75,7 @@ class Issuers extends AdminController
     /** No mutation has a GET route; token is required even when the legacy app disables global CSRF. */
     public function save()
     {
+        if ($this->input->post('action', false) === 'issuer_status') { return $this->saveStatus(); }
         if ($this->isolated()) { return $this->scopedSave(); }
         if ($this->input->method(true) !== 'POST') {
             show_error(_l('issuer_post_required'), 405);
@@ -139,6 +142,44 @@ class Issuers extends AdminController
         return CompanyRegistryLookup::lookup($kind,$value);
     }
 
+    private function statusPermissions(array $catalog, int $actor): array
+    {
+        $primary = (new IssuerResourceAccess($this->db, db_prefix()))->primaryId();
+        $permissions = [];
+        foreach ($catalog as $entry) {
+            $permissions[(int)$entry['id']] = (int)$entry['id'] !== $primary && $this->registry->canManage($entry['id'], $actor);
+        }
+        return $permissions;
+    }
+
+    private function saveStatus(): void
+    {
+        if ($this->input->method(true) !== 'POST') { show_error('A alteração exige POST.', 405); return; }
+        $token = $this->session->userdata('issuers_csrf');
+        $submitted = $this->input->post('issuers_csrf', false);
+        if (!is_string($token) || strlen($token) !== 64 || !is_string($submitted) || !hash_equals($token, $submitted)) {
+            show_error('Recarregue o formulário antes de salvar.', 403); return;
+        }
+        $destination = 'issuers';
+        try {
+            $context = CompanyRequestScope::context();
+            $actor = $context ? $context->staffId() : get_staff_user_id();
+            $id = IssuerPolicy::id($this->input->post('issuer_id', false));
+            $active = $this->input->post('active', false);
+            $this->registry->setActive($actor, $id, $active);
+            CompanyRequestScope::invalidateCaches($this);
+            if ($context && $context->issuerId() === $id && (int)$active === 0) { $destination = 'company_context'; }
+            $notice = ['type'=>'success', 'text'=>'Situação da empresa atualizada.'];
+        } catch (DomainException $error) {
+            $notice = ['type'=>'danger', 'text'=>'Não foi possível alterar a situação. Confira a empresa e suas permissões.'];
+        } catch (Throwable $error) {
+            log_message('error', 'Company status write failed; no submitted data logged.');
+            $notice = ['type'=>'danger', 'text'=>'Não foi possível confirmar a alteração. Recarregue antes de tentar novamente.'];
+        }
+        $this->session->set_flashdata('company_registry_notice', $notice);
+        redirect(CompanyRequestScope::adminUrl($this, $destination), 'location', 303);
+    }
+
     private function isolated(): bool
     {
         return class_exists('CompanyRequestScope', false) && CompanyRequestScope::sealedFor($this);
@@ -165,6 +206,7 @@ class Issuers extends AdminController
             if(!is_string($token)||strlen($token)!==64){$token=bin2hex(random_bytes(32));$this->session->set_userdata('issuers_csrf',$token);}
             $this->load->view('admin/companies/registry',[
                 'catalog'=>$catalog,'selected'=>$selected,'profile'=>$profile,'issuers_csrf'=>$token,
+                'status_permissions'=>$this->statusPermissions($catalog,$actor),
                 'can_create'=>$this->registry->canCreate($actor),
                 'can_manage'=>$selected?$this->registry->canManage($selected['id'],$actor):$this->registry->canCreate($actor),
                 'company_notice'=>$this->session->flashdata('company_registry_notice'),

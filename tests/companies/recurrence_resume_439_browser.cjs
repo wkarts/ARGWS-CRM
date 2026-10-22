@@ -1,4 +1,5 @@
 'use strict';
+const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 // Newly reconstructed439 browser proof. Real forms, HTTP/SQL and Chromium; no hidden setup writes.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL,db=process.env.ISSUERS_BROWSER_DB_CONTAINER,output=process.env.ISSUERS_BROWSER_ARTIFACTS||'/tmp/issuer-browser-evidence';
@@ -7,7 +8,7 @@ function sql(q){return execFileSync('docker',['exec','-e','MYSQL_PWD',db,'mysql'
 async function submit(page,button){await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),button.click()]);}
 async function fields(form){return form.evaluate(f=>Object.fromEntries([...f.elements].filter(e=>e.name&&!e.disabled&&(!['checkbox','radio'].includes(e.type)||e.checked)&&!['submit','button'].includes(e.type)).map(e=>[e.name,e.value])));}
 (async()=>{
- const browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})}),context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})}),context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await workspacePage(context),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await submit(page,page.locator('button[type=submit]'));
   const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");for(const owner of[a,b])assert.match(owner,/^[1-9]\d*$/);

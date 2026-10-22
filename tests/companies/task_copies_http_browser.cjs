@@ -1,4 +1,5 @@
 'use strict';
+const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright'),fs=require('node:fs'),path=require('node:path');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;
 assert.match(url||'',/^http:\/\/127\.0\.0\.1:\d+$/);assert.match(app||'',/^argws-crm-upgrade-\d+$/);assert.equal(process.env.ISSUERS_BROWSER_DB_NAME,'argws_upgrade_ci');
@@ -8,7 +9,7 @@ async function go(page,button){await Promise.all([page.waitForNavigation({waitUn
 async function fields(form){return form.evaluate(el=>Object.fromEntries(new FormData(el)));}
 (async()=>{
  execFileSync('docker',['exec',app,'mkdir','-p','/app/tests/companies','/app/tests/support']);for(const f of ['tests/support/BbPdoDatabase.php','tests/companies/task_copies_http_fixture.php'])execFileSync('docker',['cp',path.join(process.env.ISSUERS_BROWSER_SOURCE_ROOT||process.cwd(),f),app+':/app/'+f]);
- const setup=fixture('prepare'),financial=fixture('financial'),browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})}),context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await context.newPage(),errors=[],own={};page.on('pageerror',e=>errors.push(e.message));
+ const setup=fixture('prepare'),financial=fixture('financial'),browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})}),context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await workspacePage(context),errors=[],own={};page.on('pageerror',e=>errors.push(e.message));
  let lastFinancialBefore=financial;
  try{
   await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await go(page,page.locator('button[type=submit]'));

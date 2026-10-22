@@ -135,4 +135,17 @@ catch(RuntimeException $error){same('issuer_storage_failed',$error->getMessage()
 $db->failOn=null;same(3,count($r->catalog(1)),'failed audit rolls back registry');
 try {new IssuerRegistry($db,'x; DROP TABLE clients;');throw new LogicException('prefix accepted');}
 catch(InvalidArgumentException $error){same(true,true,'prefix guarded');}
+// The grid's status-only action must preserve the full identity/settings projection.
+$beforeStatus=$db->query("SELECT * FROM {$p}registry WHERE id=?",[$b])->result_array()[0];
+rejects(fn()=>$r->setActive(2,$b,'0'),'issuer_access_denied');
+rejects(fn()=>$r->setActive(1,$b,'yes'),'issuer_invalid_status');
+$r->setActive(1,$b,'0');
+$afterStatus=$db->query("SELECT * FROM {$p}registry WHERE id=?",[$b])->result_array()[0];
+same(0,(int)$afterStatus['active'],'status action deactivates');
+unset($beforeStatus['active'],$afterStatus['active']);same($beforeStatus,$afterStatus,'status preserves identity and settings');
+$r->setActive(1,$b,'1');same(1,(int)$db->query("SELECT active FROM {$p}registry WHERE id=?",[$b])->result_array()[0]['active'],'inactive company reactivated');
+$db->failOn="INSERT INTO {$p}audit";
+try {$r->setActive(1,$b,'0');throw new LogicException('audit failure missing');}
+catch(RuntimeException $error){same('issuer_storage_failed',$error->getMessage(),'status audit failure sanitized');}
+$db->failOn=null;same(1,(int)$db->query("SELECT active FROM {$p}registry WHERE id=?",[$b])->result_array()[0]['active'],'status audit failure rolls back');
 echo "Core company registry: {$checks} checks passed ({$db->driver}); synthetic data only.\n";

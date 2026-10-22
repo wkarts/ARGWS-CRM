@@ -4,4 +4,6 @@ foreach (['assets/plugins/jquery/jquery.min.js', 'assets/plugins/bootstrap/js/bo
 <script src="<?= $companyLayoutEscape(base_url($companyLayoutScript).'?v='.$companyLayoutVersion); ?>"></script>
 <?php } ?>
 <script src="<?= $companyLayoutEscape(base_url('assets/js/company-context-tabs.js').'?v='.$companyLayoutVersion); ?>"></script>
+<script src="<?= $companyLayoutEscape(base_url('assets/js/company-shell.js').'?v='.$companyLayoutVersion); ?>"></script>
+<script src="<?= $companyLayoutEscape(base_url('assets/js/company-workspace.js').'?v='.$companyLayoutVersion); ?>"></script>
 </main></div></body></html>

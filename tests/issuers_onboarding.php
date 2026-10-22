@@ -60,6 +60,14 @@ essentialCheck($settings->get($new,'invoice_company_city')==='Private B','identi
 foreach(['smtp_password','smtp_host','payment_account','connect_token'] as $key){essentialCheck($settings->get($new,$key)==='','new company inherits no secret');}
 essentialCheck(essentialLegacy($f)===$before,'legacy financial/config/client rows unchanged');
 essentialCheck($s->pending(7)===null,'completed draft not resumed as open');
+$registry=new IssuerRegistry($db,$p);
+essentialThrows(fn()=>$registry->setActive(7,$primary,'0'),'issuer_primary_deactivation_denied','grid never deactivates principal');
+essentialThrows(fn()=>$registry->setActive(19,$new,'0'),'issuer_access_denied','read-only member cannot deactivate');
+$registry->setActive(7,$new,'0');
+essentialCheck($registry->defaultForStaff(19)===null,'deactivation clears stale default');
+$registry->setActive(7,$new,'1');
+essentialCheck($acl->member($new,19),'reactivation preserves authorized membership');
+essentialCheck($settings->get($new,'invoice_company_city')==='Private B','status actions preserve canonical identity');
 $db->query("UPDATE {$p}staff SET admin=0 WHERE staffid=7");
 essentialThrows(fn()=>$s->read(7,$d['draft_key']),'issuer_access_denied','master demotion immediately revokes draft access');
 if($db->driver()==='mysql'){

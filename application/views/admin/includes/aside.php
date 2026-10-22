@@ -3,7 +3,10 @@
     <?php $isSidebarDark = function_exists('is_admin_sidebar_background_light') ?
             is_admin_sidebar_background_light() :
             false; ?>
-    <div class="dropdown sidebar-user-profile tw-mt-[80px] tw-mx-1.5 ">
+    <div class="tw-mt-[80px] tw-mx-1.5 company-sidebar-account">
+        <?php $this->load->view('admin/includes/company_selector'); ?>
+    </div>
+    <div class="dropdown sidebar-user-profile tw-mt-2 tw-mx-1.5 ">
         <a href="#"
             class="dropdown-toggle profile -tw-mt-1 tw-font-medium tw-border tw-border-solid tw-rounded-lg tw-bg-white tw-py-2 tw-px-2.5 tw-block tw-shadow-xs <?= $isSidebarDark ? 'tw-text-white tw-border-white/10 hover:tw-border-white/30 focus:tw-border-white/30 hover:tw-text-white focus:tw-text-white hover:tw-bg-neutral-900/10 focus:tw-bg-neutral-900/10' : 'tw-border-neutral-300 tw-text-neutral-700 hover:tw-text-neutral-800 focus:tw-text-neutral-800 hover:tw-bg-neutral-900/5 focus:tw-bg-neutral-900/5'; ?>"
             data-toggle="dropdown" aria-expanded="false">

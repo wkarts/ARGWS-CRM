@@ -1,4 +1,5 @@
 'use strict';
+const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 // New recovery regression: actual shared form, cloned fields, optional flags, PDF and conversion.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),fs=require('node:fs'),{chromium}=require('playwright');
 const base=process.env.ISSUERS_BROWSER_URL,db=process.env.ISSUERS_BROWSER_DB_CONTAINER,output=process.env.ISSUERS_BROWSER_ARTIFACTS||'/tmp/issuer-browser-evidence';
@@ -8,7 +9,7 @@ async function nav(page,button){await Promise.all([page.waitForNavigation({waitU
 (async()=>{
  const browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})});const context=await browser.newContext();
  await context.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
- const page=await context.newPage(),errors=[],results=[],stamp=Date.now();page.on('pageerror',error=>errors.push(error.message));
+ const page=await workspacePage(context),errors=[],results=[],stamp=Date.now();page.on('pageerror',error=>errors.push(error.message));
  try{
   await page.goto(base+'/admin/authentication');await page.locator('[name=email]').fill('admin-ci@example.invalid');await page.locator('[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));
   const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");assert.match(a,/^[1-9]\d*$/);assert.match(b,/^[1-9]\d*$/);

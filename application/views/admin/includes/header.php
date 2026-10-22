@@ -9,7 +9,6 @@
     </button>
     <nav>
         <div class="tw-flex tw-justify-between">
-            <?php $this->load->view('admin/includes/company_selector'); ?>
             <div class="tw-overflow-hidden tw-shrink-0">
                 <div id="logo"
                     class="tw-h-[57px] tw-hidden md:tw-flex tw-items-center [&_img]:tw-h-9 [&_img]:tw-w-auto">

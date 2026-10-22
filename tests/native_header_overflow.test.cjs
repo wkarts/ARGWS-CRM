@@ -6,12 +6,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {html, styles, scripts} = require('./native_header_overflow.browser.cjs');
 const render = file => execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'support', file)], {encoding: 'utf8'});
-test('native header fixture renders actual translated controls and fixed-width selector', () => {
+test('native header renders actual translated controls without a company selector', () => {
   const header = render('NativeHeaderFixture.php');
   assert.equal((header.match(/id="header"/g) || []).length, 1);
-  assert.equal((header.match(/id="company-context-select"/g) || []).length, 1);
-  assert.match(header, /data-width="230px"/);
-  assert.match(header, /Empresa sintética CI/);
+  assert.equal((header.match(/id="company-context-select"/g) || []).length, 0);
+  assert.doesNotMatch(header, /company-selector/);
   assert.match(header, /id="top_search"/);
   assert.match(header, /id="search_input"/);
   assert.match(header, /class="mobile-menu /);
@@ -64,7 +63,7 @@ test('native source and shipped bundle use the measured header height for wrappe
 test('responsive header rules are scoped and source/built styles remain aligned', () => {
   const source = fs.readFileSync(__dirname + '/../assets/css/style.css', 'utf8');
   const bundled = fs.readFileSync(__dirname + '/../assets/css/style.min.css', 'utf8');
-  const rules = source.slice(source.indexOf('/* A scoped company selector'));
+  const rules = source.slice(source.indexOf('/* Company selection lives'));
   assert.ok(bundled.endsWith(rules));
   assert.match(rules, /max-width: 1199px/);
   assert.match(rules, /#header\.native-company-header ~ #setup-menu-wrapper/);
@@ -75,7 +74,8 @@ test('responsive header rules are scoped and source/built styles remain aligned'
 test('optional full shell, long names and mobile controls render without changing the default fixture', () => {
   const shell = execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'support', 'NativeHeaderFixture.php'), '--full-shell', '--long-name', '--mobile-user'], {encoding: 'utf8'});
   for (const id of ['header', 'company-context-select', 'menu', 'setup-menu-wrapper', 'setup-menu']) assert.equal((shell.match(new RegExp('id="' + id + '"', 'g')) || []).length, 1);
-  assert.match(shell, /company-context-select/);
+  assert.match(shell, /data-width="100%"/);
+  assert.ok(shell.indexOf('company-context-select') < shell.indexOf('sidebar-user-profile'));
   assert.match(shell, /native-company-header/);
   assert.match(shell, /sidebar-user-profile/);
   assert.match(shell, /selectpicker company-context-select/);

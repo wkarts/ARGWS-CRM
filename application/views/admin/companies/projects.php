@@ -3,7 +3,7 @@ $company_page_title='Projetos da empresa';require APPPATH.'views/admin/companies
 $esc=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');$url=fn($q='')=>CompanyRequestScope::adminUrl($this,'company_projects'.$q);$labels=['active'=>'Em andamento','completed'=>'Concluído','cancelled'=>'Cancelado'];
 $hidden=function($action)use($esc,$company_projects_csrf,$request_key){echo '<input type="hidden" name="action" value="'.$esc($action).'"><input type="hidden" name="company_projects_csrf" value="'.$esc($company_projects_csrf).'"><input type="hidden" name="request_key" value="'.$esc($request_key).'">';};
 ?>
-<section class="company-settings-card"><h1>Projetos da empresa</h1>
+<section data-company-workspace class="company-settings-card"><h1>Projetos da empresa</h1>
 <?php if($error){?><p class="alert alert-danger" role="alert"><?= $esc($error); ?></p><a href="<?= $esc($url()); ?>">Reabrir projetos</a><?php } ?>
 <?php if($project){ ?><h2><?= $esc($project['name']); ?></h2><p><?= $esc($labels[$project['status']]); ?> · <?= $esc($project['start_date'].' até '.$project['due_date']); ?></p><p><?= nl2br($esc($project['description'])); ?></p>
 <p><a href="<?= $esc(CompanyRequestScope::adminUrl($this,'company_project_extras?kind=project&id='.(int)$project['id'])); ?>">Marcos, seguidores, quadro e anexos do projeto</a></p>

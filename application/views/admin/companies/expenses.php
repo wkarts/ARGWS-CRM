@@ -3,7 +3,7 @@ $company_page_title='Despesas da empresa';require APPPATH.'views/admin/companies
 $esc=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');$url=fn($q='')=>CompanyRequestScope::adminUrl($this,'company_expenses'.$q);
 $hidden=function(string $action)use($esc,$company_expenses_csrf){echo '<input type="hidden" name="action" value="'.$esc($action).'"><input type="hidden" name="company_expenses_csrf" value="'.$esc($company_expenses_csrf).'"><input type="hidden" name="request_key" value="'.bin2hex(random_bytes(32)).'">';};
 ?>
-<section class="company-settings-card"><h1>Despesas da empresa</h1><p>Registros privados da empresa ativa. Registrar uma despesa não executa pagamento, boleto ou transferência.</p>
+<section data-company-workspace class="company-settings-card"><h1>Despesas da empresa</h1><p>Registros privados da empresa ativa. Registrar uma despesa não executa pagamento, boleto ou transferência.</p>
 <?php if($error){?><p role="alert" class="alert alert-danger"><?= $esc($error); ?></p><p><a href="<?= $esc($url()); ?>">Reabrir a lista</a></p><?php } ?>
 <?php if($detail){?><h2>DES-<?= str_pad((string)$detail['number'],6,'0',STR_PAD_LEFT); ?> — <?= $detail['state']==='recorded'?'Registrada':'Cancelada'; ?></h2>
 <p><?= $esc($detail['description']); ?> · <?= $esc($detail['expense_date']); ?> · <?= $esc($detail['category_name']); ?></p><p><?= $esc($detail['currency']); ?> <?= $esc(CompanyExpenses::money((int)$detail['total_cents'])); ?> (base <?= $esc(CompanyExpenses::money((int)$detail['amount_cents'])); ?> + tributo <?= $esc(CompanyExpenses::money((int)$detail['tax_cents'])); ?>)</p>

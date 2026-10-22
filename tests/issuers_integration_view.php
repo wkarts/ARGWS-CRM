@@ -18,13 +18,15 @@ function form_close(){return '</form>';}
 function issuers_can_access(...$args){return true;}
 final class IssuerIntegrationViewFixture {
  public object $config;
+ public object $input;
  public function __construct(){
+  $this->input=new class {public function get($key,$x=false){return null;}};
   $this->config=new class {public function site_url($path){return '/'.ltrim($path,'/');}};
  }
  public function render($admin){
   $GLOBALS['view_admin']=$admin;
   $selected=['id'=>11,'legal_name'=>'Synthetic <Issuer>','tax_id'=>'12345678000195','active'=>1];
-  $can_create=$admin;$can_manage=$admin;$profile=[];
+  $can_create=$admin;$can_manage=$admin;$profile=[];$status_permissions=[11=>$admin];
   $catalog=$available=[$selected];$default_issuer=null;$issuers_csrf=str_repeat('a',64);$clients=$targets=[];
   // The framework renders these real partials with an application object as $this.
   ob_start();
@@ -38,13 +40,16 @@ $html=renderIntegrationView(true);
 foreach(['member','remove_member','default'] as$action){viewCheck(!str_contains($html,'name="action" value="'.$action.'"'),'parallel assignment/default route removed: '.$action);}
 viewCheck(!str_contains($html,'name="permissions[]"'),'generic company capability panel removed');
 viewCheck(!str_contains($html,'value="manage_integrations"'),'generic integration capability not displayed');
-viewCheck(str_contains($html,'href="/admin/staff"'),'assignment points to native Staff');
+viewCheck(str_contains($html,'data-company-registry'),'native authorized registry grid rendered');
+viewCheck(str_contains($html,'data-new-company'),'creation entry is a modal button');
+viewCheck(str_contains($html,'name="company-create-frame"'),'wizard is contained in modal');
 viewCheck(str_contains($html,'name="issuers_csrf" value="'.str_repeat('a',64).'"'),'company form retains CSRF');
 viewCheck(str_contains($html,'name="issuer_id" value="11"'),'company target explicit');
 viewCheck(str_contains($html,'Synthetic &lt;Issuer&gt;'),'issuer label escaped');
-viewCheck(str_contains($html,'data-lookup-url="/admin/issuers/lookup"'),'actual shared identity fields rendered');
-viewCheck(str_contains($html,'src="/assets/js/company-identity.js"'),'shared identity asset uses the URL helper');
-viewCheck(str_contains($html,'href="/admin/company_context"'),'certificate link requires company selection without a resolved context');
+viewCheck(!str_contains($html,'data-company-identity'),'grid has no parallel company editor');
+viewCheck(str_contains($html,'src="/assets/js/company-registry.js"'),'grid asset uses URL helper');
+viewCheck(str_contains($html,'name="action" value="issuer_status"'),'status retained without identity editor');
+viewCheck(str_contains($html,'name="action" value="show"'),'wizard initial request is explicit read-only POST');
 $staffView=renderIntegrationView(false);viewCheck(!str_contains($staffView,'href="/admin/staff"'),'ordinary user is not offered staff assignment');
 viewCheck(!str_contains($staffView,'data-company-identity'),'ordinary user is not offered the identity editor');
 echo "Issuer registry GUI: $n checks passed (actual view; local HTML helpers).\n";

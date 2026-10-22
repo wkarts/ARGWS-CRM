@@ -1,0 +1,51 @@
+name: Interface nativa multiempresa
+on:
+  pull_request:
+    branches: [main, develop]
+    paths: ['application/**', 'assets/**', 'tests/company_*', 'tests/helpers/**', '.github/workflows/company-native-ui.yml']
+permissions:
+  contents: read
+jobs:
+  native-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: pdo_sqlite, mbstring, dom
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Sintaxe PHP e contratos estáticos
+        run: |
+          find application/views/admin/companies application/views/admin/includes application/views/admin/settings application/views/admin/issuers -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -l application/controllers/admin/Company_onboarding.php
+          php -l application/controllers/admin/Issuers.php
+          node --check assets/js/company-workspace.js
+          node --check assets/js/company-registry.js
+          node --check assets/js/company-shell.js
+          node --check assets/js/company-onboarding-modal.js
+          node --test tests/company_settings_native.test.cjs tests/company_workspace_driver.test.cjs tests/native_header_overflow.test.cjs
+          php tests/company_settings_native.php
+          php tests/company_settings_certificate_link.php
+      - name: Navegador isolado
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.1
+          npx playwright install --with-deps chromium
+      - name: Fluxos desktop/mobile, grid e modal
+        env:
+          SCREENSHOT_DIR: artifacts/company-native-ui
+        run: |
+          mkdir -p artifacts/company-native-ui
+          node tests/company_shell_browser.cjs
+          node tests/company_workspace_browser.cjs
+          node tests/company_registry_modal_browser.cjs
+          node tests/company_settings_native_browser.cjs
+      - name: Evidências sintéticas de apresentação
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-native-ui
+          path: artifacts/company-native-ui
+          if-no-files-found: ignore

@@ -13,13 +13,13 @@ class Company_onboarding extends AdminController
         $resources=CompanyResourceCatalog::definitions();
         $service=new CompanyOnboarding($this->db,db_prefix(),array_map(static fn($r)=>array_keys($r['capabilities']),$resources));
         $actor=CompanyRequestScope::context()->staffId();$error=null;$draft=null;
-        $this->output->set_header('Cache-Control: no-store');
+        $this->output->set_header('Cache-Control: no-store')->set_header('X-Frame-Options: SAMEORIGIN');
         $token=$this->session->userdata('company_onboarding_csrf');
         if(!is_string($token)||strlen($token)!==64){$token=bin2hex(random_bytes(32));$this->session->set_userdata('company_onboarding_csrf',$token);}
         try{
             // Even GET requires a live installation-master identity, never an administrator flag alone.
             $draft=$key===null?$service->pending($actor):$service->read($actor,$key);
-            if($this->input->method(true)==='POST'){
+            if($this->input->method(true)==='POST' && $this->input->post('action',false)!=='show'){
                 $submitted=$this->input->post('company_onboarding_csrf',false);
                 if(!is_string($submitted)||!hash_equals($token,$submitted)){show_error('Recarregue o formulário antes de salvar.',403);return;}
                 $action=$this->input->post('action',false);
@@ -44,8 +44,8 @@ class Company_onboarding extends AdminController
                     $draft=$service->read($actor,$draft['draft_key']);
                 }else{throw new DomainException('issuer_wizard_invalid_input');}
                 CompanyRequestScope::invalidateCaches($this);
-                redirect(CompanyRequestScope::adminUrl($this,'company_onboarding/index/'.$draft['draft_key']),'location',303);return;
-            }elseif(!in_array($this->input->method(true),['GET','HEAD'],true)){show_error('Método não permitido.',405);return;}
+                redirect(CompanyRequestScope::adminUrl($this,'company_onboarding/index/'.$draft['draft_key'].'?modal=1'),'location',303);return;
+            }elseif(!in_array($this->input->method(true),['GET','HEAD'],true) && !($this->input->method(true)==='POST' && $this->input->post('action',false)==='show')){show_error('Método não permitido.',405);return;}
         }catch(DomainException $exception){
             if($exception->getMessage()==='issuer_access_denied'){show_error('Somente o responsável ativo da instalação pode criar empresas.',403);return;}
             if($exception->getMessage()==='issuer_wizard_stale'){$this->output->set_status_header(409);$error='Este rascunho mudou em outra aba. Recarregue antes de salvar. Nenhum dado desta tentativa foi aplicado.';}
@@ -53,6 +53,9 @@ class Company_onboarding extends AdminController
         }catch(Throwable $exception){
             log_message('error','Company onboarding failed; no draft values logged.');
             $this->output->set_status_header(503);$error='Não foi possível confirmar a gravação. Recarregue e tente novamente; a empresa só é criada quando toda a transação é confirmada.';
+        }
+        if($error===null && $this->input->get('modal',false)!=='1' && in_array($this->input->method(true),['GET','HEAD'],true)){
+            redirect(CompanyRequestScope::adminUrl($this,'issuers?new_company=1'.($draft?'&draft='.rawurlencode($draft['draft_key']):'')),'location',303);return;
         }
         $step=$draft?(int)$draft['step']:0;
         $requested=$this->input->get('step',false);

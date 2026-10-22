@@ -1,4 +1,5 @@
 'use strict';
+const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 // Rebuilt recovery proof. Business objects and declarations are created through the CRM UI.
 // The only SQL mutation adjusts a synthetic running timer's start, avoiding a real one-hour wait.
 const assert=require('node:assert/strict');
@@ -18,7 +19,7 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
  const browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})});
  const context=await browser.newContext();
  await context.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
- const page=await context.newPage(),errors=[],results=[];
+ const page=await workspacePage(context),errors=[],results=[];
  page.on('pageerror',error=>errors.push(error.message));
  const stamp=Date.now();let staleA;
  try{
