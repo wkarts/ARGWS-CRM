@@ -28,6 +28,8 @@ assert.doesNotMatch(head + tail, /init_head\(|init_tail\(|app_admin_head\(|app_c
 assert.ok(head.indexOf('admin/includes/company_selector.php') < head.indexOf('sidebar-user-profile'), 'isolated selector precedes user profile');
 const nativeHeader = fs.readFileSync(path.join(root, 'application/views/admin/includes/header.php'), 'utf8');
 const nativeAside = fs.readFileSync(path.join(root, 'application/views/admin/includes/aside.php'), 'utf8');
+const nativeAccountClasses = nativeAside.match(/<div class="([^"]*company-sidebar-account[^"]*)">/)?.[1];
+assert.ok(nativeAccountClasses, 'native sidebar account wrapper is preserved in the focused fixture');
 assert.doesNotMatch(nativeHeader, /includes\/company_selector/);
 assert.ok(nativeAside.indexOf('includes/company_selector') < nativeAside.indexOf('sidebar-user-profile'));
 const assets = [...head.matchAll(/'(assets\/[^']+\.css)'/g)].map(m => m[1]);
@@ -106,13 +108,14 @@ if (process.env.STATIC_ONLY) { console.log('PASS: selector semantics, preserved 
     assert.ok(handlerStart >= 0 && handlerEnd > handlerStart, 'real native sidebar handler is available');
     const nativeHandler = mainSource.slice(handlerStart, handlerEnd);
     await page.setViewportSize({width:390,height:844});
-    await page.setContent(`<!doctype html><html><head><base href="http://fixture.test/">${assets.filter(asset => !asset.endsWith('company-shell.css')).map(asset => `<link rel="stylesheet" href="${asset}">`).join('')}</head><body class="admin page-small"><div id="header"><button class="hide-menu">Menu</button></div><aside id="menu" class="sidebar">${selectMarkup}</aside><div id="wrapper"><main class="content">Synthetic native content</main></div>${scripts.filter(script => !script.endsWith('company-shell.js')).map(script => `<script src="${script}"></script>`).join('')}<script>$(function(){const setup_menu=$('#setup-menu');$('.selectpicker').selectpicker();${nativeHandler}});</script></body></html>`, {waitUntil:'load'});
+    await page.setContent(`<!doctype html><html><head><base href="http://fixture.test/">${assets.filter(asset => !asset.endsWith('company-shell.css')).map(asset => `<link rel="stylesheet" href="${asset}">`).join('')}</head><body class="admin page-small"><div id="header"><button class="hide-menu">Menu</button></div><aside id="menu" class="sidebar"><div class="${nativeAccountClasses}">${selectMarkup}</div></aside><div id="wrapper"><main class="content">Synthetic native content</main></div>${scripts.filter(script => !script.endsWith('company-shell.js')).map(script => `<script src="${script}"></script>`).join('')}<script>$(function(){const setup_menu=$('#setup-menu');$('.selectpicker').selectpicker();${nativeHandler}});</script></body></html>`, {waitUntil:'load'});
     assert.equal(await page.locator('body').evaluate(body => body.classList.contains('hide-sidebar')), false);
     assert.ok((await page.locator('.company-selector .dropdown-toggle').boundingBox()).x < 0, 'actual native sidebar starts offscreen');
     let nativeClicks = 0;
     await page.exposeFunction('recordNativeSidebarClick', () => { nativeClicks++; });
     await page.locator('#header > .hide-menu').evaluate(button => button.addEventListener('click', () => window.recordNativeSidebarClick()));
     await ensureCompanySidebar(page);
+    assert.ok(await page.locator('.company-selector').evaluate(element => element.getBoundingClientRect().top >= document.querySelector('#header').getBoundingClientRect().bottom), 'real native account spacing keeps selector below the header');
     assert.equal(await page.locator('#header > .hide-menu').evaluate(button => document.activeElement === button), true, 'native opening retains focus on the triggering button');
     assert.equal(await page.locator('#wrapper').evaluate(element => getComputedStyle(element, '::after').display), 'block', 'native mobile overlay remains available');
     await selectCompanyOption(page, '2');
