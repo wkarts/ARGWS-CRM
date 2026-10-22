@@ -72,6 +72,9 @@ class BrowserEnvironmentTest(unittest.TestCase):
         node = r"""
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const browser=process.argv[1],omitCopy=process.argv[2]==='omit';
+// Resolve real local helpers relative to the browser fixture, not node -e.
+// Docker and Playwright remain intercepted below to preserve this isolation test.
+const fixtureRequire=require('node:module').createRequire(path.resolve(browser));
 const directories=new Set(['/app']),files=new Set();let reachedBrowser=false,fixtureRuns=0;
 function docker(binary,args){
   if(binary!=='docker')throw Error('unexpected binary');
@@ -105,7 +108,7 @@ const context={process:localProcess,console:{error(){}},Buffer,URL,
  require(name){
   if(name==='node:child_process')return {execFileSync:docker};
   if(name==='playwright')return {chromium:{async launch(){reachedBrowser=true;throw Error('stop after fixture');}}};
-  return require(name);
+  return fixtureRequire(name);
  }};
 vm.runInNewContext(fs.readFileSync(browser,'utf8'),context,{filename:browser});
 setImmediate(()=>{if(!reachedBrowser||fixtureRuns!==1){console.error('fixture setup failed before browser');process.exitCode=1;}});

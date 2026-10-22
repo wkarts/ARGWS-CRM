@@ -17,6 +17,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Validar inventário operacional e mostrar diferenças
+        run: |
+          php scripts/company-surface-inventory.php --output /tmp/company-operational-surfaces.json
+          diff -u --label a/docs/companies/operational-surfaces.json --label b/docs/companies/operational-surfaces.json docs/companies/operational-surfaces.json /tmp/company-operational-surfaces.json
       - name: Sintaxe PHP e contratos estáticos
         run: |
           find application/views/admin/companies application/views/admin/includes application/views/admin/settings application/views/admin/issuers -name '*.php' -print0 | xargs -0 -n1 php -l
