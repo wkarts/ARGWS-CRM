@@ -4882,7 +4882,7 @@
       "evidence": "PR49 presentation review: native static assets and ACL-filtered navigation replace the parallel shell; invoice signals are menu entries. Staff identity projection is limited to the authenticated actor. No legacy financial hooks were enabled. This is not a complete authorization/runtime review."
     },
     "application/views/admin/companies/onboarding.php": {
-      "sha256": "72e09221f9334a17c44ed1a08af46bd93ac4592b54eeef72beeea7e76b130378",
+      "sha256": "6ead540229afea8af5a3f2321be1215ca0a974481ae2d4f41fc439a585621a5f",
       "categories": [
         "documents_numbering"
       ],
@@ -4890,7 +4890,7 @@
         58
       ],
       "state": "unreviewed",
-      "evidence": "PR49 presentation review: wizard moved into a same-origin modal frame; numbering signals remain company identity/address fields. Draft revision, actor scope and creation payload remain server controlled. Modal message validation is covered by tests/company_registry_modal_browser.cjs; full isolation remains unreviewed."
+      "evidence": "PR49 presentation review: wizard moved into a same-origin modal frame; numbering signals remain company identity/address fields. Draft revision, actor scope and creation payload remain server controlled. Modal message validation is covered by tests/company_registry_modal_browser.cjs; full isolation remains unreviewed. Native reset/Inter/Tailwind assets and horizontally scrollable mobile step navigation now match the CRM shell; these presentation changes do not close authorization or operational review."
     },
     "application/views/admin/contracts/send_to_client.php": {
       "sha256": "13c4b7b073575df2d5a8ae1654b74298c5465fa80817647da535c39d7598fd78",

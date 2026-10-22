@@ -16,9 +16,13 @@
             $companyDisplayName = (string) $company['legal_name'];
             // Only the already-authorized catalog is consulted. Older adapters retain the canonical name.
             if (method_exists($companyDisplayIdentity, 'displayName')) {
-                try { $companyDisplayName = $companyDisplayIdentity->displayName($company['id']); }
+                try {
+                    $displayName = $companyDisplayIdentity->displayName($company['id']);
+                    if (trim($displayName) !== '') { $companyDisplayName = $displayName; }
+                }
                 catch (DomainException $exception) { /* A temporarily unavailable profile must not hide company selection. */ }
             }
+            if (trim($companyDisplayName) === '') { $companyDisplayName = 'Empresa ' . (int) $company['id']; }
         ?>
         <option value="<?= e($company['id']); ?>" <?= (int) $company['id'] === $selectedCompanyId ? 'selected' : ''; ?>><?= e($companyDisplayName); ?><?= (int) $company['id'] === $primaryId ? ' (principal)' : ''; ?></option>
         <?php } ?>

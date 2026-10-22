@@ -269,6 +269,9 @@ async function captureRealScreens(page, routes) {
       await selectCompanyOption(page, primaryCompany);
       await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('.company-selector-form button[type=submit]').click()]);
       await shell(page);
+      await page.goto(url + '/admin/issuers');
+      const selectedCompanyLabel = (await page.locator('#company-context-select option:checked').textContent()).trim();
+      assert.ok(selectedCompanyLabel.replace(/\(principal\)/g, '').trim(), 'empty optional display identity retains the authorized canonical company name');
       await captureRealScreens(page, [['companies-grid',url + '/admin/issuers'], ['company-settings',url + '/admin/settings?group=company']]);
     }
     assert.deepEqual(errors, [], 'no uncaught JavaScript errors in native shell');

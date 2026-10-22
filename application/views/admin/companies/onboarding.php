@@ -7,7 +7,7 @@ $payload=$draft['payload']??[];
 $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',5=>'Revisão',6=>'Conclusão'];
 ?>
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nova empresa</title>
-<?php foreach(['assets/plugins/bootstrap/css/bootstrap.min.css','assets/css/style.min.css','assets/css/company-registry.css'] as $asset){ ?><link rel="stylesheet" href="<?= $esc(base_url($asset)); ?>"><?php } ?>
+<?php foreach(['assets/css/reset.min.css','assets/plugins/inter/inter.css','assets/plugins/bootstrap/css/bootstrap.min.css','assets/builds/tailwind.css','assets/css/style.min.css','assets/css/company-registry.css'] as $asset){ ?><link rel="stylesheet" href="<?= $esc(base_url($asset)); ?>"><?php } ?>
 <?php require APPPATH.'views/admin/includes/company_context_script.php'; ?>
 </head><body class="company-onboarding-modal-body">
 <link rel="stylesheet" href="<?= $esc(base_url('assets/css/company-identity.css')); ?>">
@@ -15,7 +15,7 @@ $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',
 <?php if($step>0&&$step<6){?><p class="text-muted">Etapa <?= $step; ?> de 5 · O rascunho é salvo ao continuar.</p><?php } ?>
 <h1 id="wizard-title" tabindex="-1">Nova empresa<?php if($step){ ?> — <?= $esc($labels[$step]); ?><?php } ?></h1>
 <?php if($error){?><p class="alert alert-danger" role="alert"><?= $esc($error); ?></p><?php } ?>
-<nav aria-label="Etapas do cadastro"><ol class="company-onboarding-steps">
+<nav aria-label="Etapas do cadastro"><ol class="company-onboarding-steps" tabindex="0">
 <?php foreach($labels as $number=>$label){?><li><?php if($number<=min((int)($draft['step']??0),5)&&(int)($draft['step']??0)<6&&$number!==$step){?><a href="<?= $esc($url($base.'?step='.$number)); ?>"><?= $number; ?>. <?= $esc($label); ?></a><?php }else{?><span <?= $number===$step?'aria-current="step"':''; ?>><?= $number; ?>. <?= $esc($label); ?></span><?php } ?></li><?php } ?></ol></nav>
 <?php if($step===6){?>
 <p class="alert alert-success" role="status">Empresa criada com as informações, preferências e permissões revisadas. Reenviar a conclusão não cria outra empresa.</p>
