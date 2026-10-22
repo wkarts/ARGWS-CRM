@@ -144,6 +144,7 @@ jobs:
         run: |
           php tests/issuers_migration.php
           php tests/issuers_core.php
+          php tests/issuers_staff_master.php
           php tests/issuers_master_resolution.php
           php tests/issuers_onboarding.php
           php tests/issuers_onboarding_concurrency.php
@@ -404,7 +405,6 @@ jobs:
           php tests/settings/company_mail_schema.php
           php tests/issuers_staff_access.php
           php tests/issuers_staff_native.php
-          php tests/issuers_staff_master.php
           php tests/settings/settings_model_controller.php
           php tests/settings/company_formatting.php
           php tests/settings/portal_mail_config.php

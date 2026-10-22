@@ -16,14 +16,31 @@ $masterHooks=new class{public $filter=null;public array $actions=[];function app
 require __DIR__.'/../application/models/Staff_model.php';
 class MasterStaffDb {
  public bool $db_debug=true;public bool $save_queries=true;private array $where=[];private int $affected=0;
- public function __construct(public $inner){}
+ public PDO $pdo;
+ public function __construct(public $inner){$this->pdo=$inner->pdo;}
  public function field_exists($field,$table){return $this->inner->field_exists($field,$table);}
  public function query($sql,$params=[]){return $this->inner->query($sql,$params);}
+ public function trans_begin():bool{return $this->inner->trans_begin();}
+ public function trans_status():bool{return $this->inner->trans_status();}
+ public function trans_commit():bool{return $this->inner->trans_commit();}
+ public function trans_rollback():bool{return $this->inner->trans_rollback();}
  public function where($field,$value){$this->where[$field]=$value;return $this;}
  public function update($table,$data){$where=$this->where;$this->where=[];if(!$data)return false;$sql='UPDATE '.$table.' SET '.implode(',',array_map(fn($key)=>$key.'=?',array_keys($data))).' WHERE '.implode(' AND ',array_map(fn($key)=>$key.'=?',array_keys($where)));$this->query($sql,array_merge(array_values($data),array_values($where)));$this->affected=1;return true;}
  public function affected_rows(){return $this->affected;}
 }
 class MasterStaffModel extends Staff_model { public function update_permissions($permissions,$id){return false;} }
+// Reuse the native participant DDL, as in companies/staff_fixture.php; MySQL checks real InnoDB tables.
+$nativeSchema=file_get_contents(dirname(__DIR__).'/install/database.sql');
+foreach(['staff_departments'=>'staffdepartmentid','staff_permissions'=>null,'customfields'=>'id','customfieldsvalues'=>'id','announcements'=>'announcementid','dismissed_announcements'=>'dismissedannouncementid','departments'=>'departmentid','roles'=>'roleid'] as $table=>$key){
+ if(!preg_match('/CREATE TABLE `tbl'.preg_quote($table,'/').'` \([\s\S]+?;/', $nativeSchema,$match)){throw new RuntimeException('Missing native table '.$table);}
+ $sql=str_replace('`tbl'.$table.'`','`'.$prefix.$table.'`',$match[0]);
+ if($db->driver==='sqlite'){
+  $sql=str_replace(' CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci','',$sql);
+  if($key!==null){$sql=str_replace('`'.$key.'` int NOT NULL','`'.$key.'` INTEGER PRIMARY KEY AUTOINCREMENT',$sql);}
+ }
+ $db->query($sql);
+ if($key!==null&&$db->driver!=='sqlite'){$db->query('ALTER TABLE '.$prefix.$table.' ADD PRIMARY KEY('.$key.'), MODIFY '.$key.' int NOT NULL AUTO_INCREMENT');}
+}
 $db->query("ALTER TABLE {$prefix}staff ADD is_not_staff INT DEFAULT 0");$db->query("ALTER TABLE {$prefix}staff ADD phonenumber VARCHAR(40)");$db->query("ALTER TABLE {$prefix}staff ADD email VARCHAR(100)");
 $db->query("INSERT INTO {$prefix}staff(staffid,admin,active,firstname,lastname) VALUES(17,1,1,'Synthetic','Master')");$db->query("UPDATE {$p}installation_identity SET master_staff_id=17 WHERE id=1");
 $model=new MasterStaffModel();$model->db=new MasterStaffDb($db);$model->load=new class{function model($name){}};$model->departments_model=new class{function get_staff_departments($id){return [];}};
