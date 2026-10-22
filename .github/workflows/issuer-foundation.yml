@@ -112,8 +112,9 @@ jobs:
       - uses: actions/checkout@v5
       - name: Preparar driver MySQL de teste
         run: |
-          apt-get update && apt-get install -y --no-install-recommends libpng-dev libjpeg62-turbo-dev libonig-dev poppler-utils
+          apt-get update && apt-get install -y --no-install-recommends libpng-dev libjpeg62-turbo-dev libonig-dev poppler-utils python3
           command -v pdftotext
+          command -v python3
           docker-php-ext-configure gd --with-jpeg
           docker-php-ext-install pdo_mysql mysqli gd mbstring
       - name: Validar sintaxe e controles HTTP
@@ -132,6 +133,9 @@ jobs:
           php tests/issuers_controller.php
           php tests/issuers_admin_upgrade_gate.php
           php tests/issuers_integration_view.php
+          php tests/companies/email_template_editor.php
+          php tests/companies/portal_recovery_tokens.php
+          php tests/companies/portal_recovery_atomic.php
       - uses: actions/upload-artifact@v4
         with:
           name: company-operational-surfaces-php-${{ matrix.php }}
@@ -418,10 +422,7 @@ jobs:
           python3 scripts/check-ma-email-assets.py
           php tests/companies/email_template_scope.php
           php tests/companies/email_template_controller.php
-          php tests/companies/email_template_editor.php
           php tests/companies/email_template_bootstrap.php
-          php tests/companies/portal_recovery_tokens.php
-          php tests/companies/portal_recovery_atomic.php
           php tests/issuers_registry.php
           php tests/issuers_concurrency.php
           # Recreated recovery439 proofs; every published command above remains.
