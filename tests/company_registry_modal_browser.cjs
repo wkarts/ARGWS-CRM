@@ -8,6 +8,17 @@ const {chromium} = require('playwright');
 const root = path.resolve(__dirname,'..');
 const rows = Array.from({length:27},(_,i)=>`<tr><td>Empresa ${i+1}</td><td>Documento ${i+1}</td><td>Ativa</td><td>—</td></tr>`).join('');
 const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><link rel="stylesheet" href="/assets/plugins/bootstrap/css/bootstrap.min.css"><link rel="stylesheet" href="/assets/css/company-registry.css"></head><body><div data-company-registry class="company-registry"><button data-new-company>Nova empresa</button><label>Buscar<input id="company-grid-search"></label><select data-page-size><option>10</option><option>25</option></select><table><thead><tr>${['Empresa','Documento','Situação','Contexto'].map((x,i)=>`<th><button data-sort="${i}">${x}</button></th>`).join('')}</tr></thead><tbody>${rows}</tbody></table><p data-company-empty hidden>Vazio</p><p data-company-count></p><button data-page-prev>Anterior</button><button data-page-next>Próxima</button><div class="modal fade" id="company-create-modal" data-open-on-load="0" tabindex="-1" role="dialog" aria-modal="true"><div class="modal-dialog"><div class="modal-content"><button data-dismiss="modal">Fechar</button><iframe name="company-create-frame" src="about:blank"></iframe></div></div></div><form id="company-wizard-open" method="post" target="company-create-frame" action="/wizard" hidden><input name="action" value="show"><input name="_company_context" value="old-tab-token"><input name="csrf_test_name" value="first-csrf"></form></div><script src="/assets/plugins/jquery/jquery.min.js"></script><script src="/assets/plugins/bootstrap/js/bootstrap.min.js"></script><script src="/assets/js/company-registry.js"></script></body></html>`;
+// Bootstrap hides the element before finishing its backdrop transition. Focus is restored
+// by the application's hidden.bs.modal handler, not at the earlier display:none point.
+async function dismissWizard(page, action) {
+ await page.evaluate(() => {
+  window.registryModalHidden = false;
+  window.jQuery('#company-create-modal').one('hidden.bs.modal', () => { window.registryModalHidden = true; });
+ });
+ await action();
+ await page.waitForFunction(() => window.registryModalHidden === true);
+ await page.locator('#company-create-modal').waitFor({state:'hidden'});
+}
 let posts=[];
 const server=http.createServer((req,res)=>{
  if(req.url==='/'){res.setHeader('Content-Type','text/html; charset=utf-8');res.end(html);return;}
@@ -29,13 +40,14 @@ const server=http.createServer((req,res)=>{
   await page.locator('#company-grid-search').fill('');await page.locator('[data-sort="0"]').click();assert.equal(await page.locator('tbody tr:visible').first().locator('td').first().innerText(),'Empresa 27');
   await page.locator('[data-new-company]').click();let frame=page.frame({name:'company-create-frame'});await frame.locator('h1').waitFor();
   assert.deepEqual(posts[0],{action:'show',_company_context:'old-tab-token',csrf_test_name:'first-csrf'});
-  await frame.getByText('Sair',{exact:true}).click();await page.locator('#company-create-modal').waitFor({state:'hidden'});
+  await dismissWizard(page, () => frame.getByText('Sair',{exact:true}).click());
   assert.equal(await page.locator('[data-new-company]').evaluate(el=>el===document.activeElement),true);
   await page.locator('[data-new-company]').click();frame=page.frame({name:'company-create-frame'});await frame.locator('h1').waitFor();
   assert.equal(posts[1].csrf_test_name,'next-csrf');assert.equal(posts[1]._company_context,'old-tab-token','CSRF refresh must never replace captured company token');
   await page.evaluate(()=>window.postMessage({type:'company-onboarding-close'},location.origin));assert.equal(await page.locator('#company-create-modal').isVisible(),true,'messages outside the iframe are ignored');
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
-  await frame.locator('#wizard-field').focus();await frame.locator('#wizard-field').press('Escape');await page.locator('#company-create-modal').waitFor({state:'hidden'});
+  await frame.locator('#wizard-field').focus();await dismissWizard(page, () => frame.locator('#wizard-field').press('Escape'));
+  assert.equal(await page.locator('[data-new-company]').evaluate(el=>el===document.activeElement),true,'Escape returns focus after Bootstrap dismissal completes');
   assert.deepEqual(errors,[]);console.log('company registry/modal browser fixture passed: pagination, search, sort, cancel/reopen, context preservation, CSRF refresh, message isolation, mobile');
  }finally{await browser.close();server.close();}
 })().catch(error=>{console.error(error);server.close();process.exitCode=1;});
