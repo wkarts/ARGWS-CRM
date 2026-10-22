@@ -1,4 +1,4 @@
-const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
+const { selectCompanyOption, ensureCompanySidebar } = require('./helpers/company_selector_driver.cjs');
 // Synthetic UI contract: no application login, database, or production requests.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -98,6 +98,33 @@ if (process.env.STATIC_ONLY) { console.log('PASS: selector semantics, preserved 
         if (process.env.SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, `company-shell-${mode}-${width}.png`), fullPage: true });
       }
     }
+    // Regression: use the real native toggle handler, not the isolated shell toggle.
+    // Native page-small starts offscreen without hide-sidebar; one click must open it. The helper must never force the hidden select.
+    const mainSource = fs.readFileSync(path.join(root, 'assets/js/main.js'), 'utf8');
+    const handlerStart = mainSource.indexOf('  $(".hide-menu").click(function (e) {');
+    const handlerEnd = mainSource.indexOf('  // Hide sidebar on content click on mobile', handlerStart);
+    assert.ok(handlerStart >= 0 && handlerEnd > handlerStart, 'real native sidebar handler is available');
+    const nativeHandler = mainSource.slice(handlerStart, handlerEnd);
+    await page.setViewportSize({width:390,height:844});
+    await page.setContent(`<!doctype html><html><head><base href="http://fixture.test/">${assets.filter(asset => !asset.endsWith('company-shell.css')).map(asset => `<link rel="stylesheet" href="${asset}">`).join('')}</head><body class="admin page-small"><div id="header"><button class="hide-menu">Menu</button></div><aside id="menu" class="sidebar">${selectMarkup}</aside><div id="wrapper"><main class="content">Synthetic native content</main></div>${scripts.filter(script => !script.endsWith('company-shell.js')).map(script => `<script src="${script}"></script>`).join('')}<script>$(function(){const setup_menu=$('#setup-menu');$('.selectpicker').selectpicker();${nativeHandler}});</script></body></html>`, {waitUntil:'load'});
+    assert.equal(await page.locator('body').evaluate(body => body.classList.contains('hide-sidebar')), false);
+    assert.ok((await page.locator('.company-selector .dropdown-toggle').boundingBox()).x < 0, 'actual native sidebar starts offscreen');
+    let nativeClicks = 0;
+    await page.exposeFunction('recordNativeSidebarClick', () => { nativeClicks++; });
+    await page.locator('#header > .hide-menu').evaluate(button => button.addEventListener('click', () => window.recordNativeSidebarClick()));
+    await ensureCompanySidebar(page);
+    assert.equal(await page.locator('#header > .hide-menu').evaluate(button => document.activeElement === button), true, 'native opening retains focus on the triggering button');
+    assert.equal(await page.locator('#wrapper').evaluate(element => getComputedStyle(element, '::after').display), 'block', 'native mobile overlay remains available');
+    await selectCompanyOption(page, '2');
+    assert.equal(nativeClicks, 1, 'one user click opens the native mobile sidebar');
+    assert.equal(await page.locator('body').evaluate(body => body.classList.contains('show-sidebar')), true);
+    assert.equal(await page.locator('#company-context-select').inputValue(), '2');
+    await page.locator('#header > .hide-menu').focus();
+    await page.locator('#header > .hide-menu').press('Enter');
+    assert.equal(await page.locator('body').evaluate(body => body.classList.contains('hide-sidebar')), true, 'keyboard activation closes sidebar');
+    await page.locator('#header > .hide-menu').press('Enter');
+    assert.equal(await page.locator('body').evaluate(body => body.classList.contains('show-sidebar')), true, 'keyboard activation reopens sidebar');
+    if (process.env.SCREENSHOT_DIR) await page.screenshot({path:path.join(process.env.SCREENSHOT_DIR,'company-native-selector-mobile.png'),fullPage:true});
     assert.deepEqual(errors, []);
     console.log('PASS: isolated/native sidebar, desktop/mobile, explicit company POST, asset order and scroll contracts');
   } finally { await browser.close(); }

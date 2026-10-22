@@ -30,7 +30,7 @@ jobs:
           node --check assets/js/company-registry.js
           node --check assets/js/company-shell.js
           node --check assets/js/company-onboarding-modal.js
-          node --test tests/company_settings_native.test.cjs tests/company_workspace_driver.test.cjs tests/company_selector_driver.test.cjs tests/native_header_overflow.test.cjs
+          node --test tests/company_settings_native.test.cjs tests/company_workspace_driver.test.cjs tests/company_selector_driver.test.cjs tests/native_header_overflow.test.cjs tests/native_sidebar_toggle.test.cjs
           php tests/company_settings_native.php
           php tests/company_settings_certificate_link.php
       - name: Navegador isolado
@@ -53,3 +53,4 @@ jobs:
           name: company-native-ui
           path: artifacts/company-native-ui
           if-no-files-found: ignore
+          retention-days: 1

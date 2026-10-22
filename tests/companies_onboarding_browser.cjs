@@ -74,11 +74,36 @@ async function next(page) { await navigate(page, page.locator('section form butt
     assert.match(employee, /^[1-9]\d*$/);
     assert.equal(sql('SELECT issuer_id FROM tblissuers_staff_defaults WHERE staff_id=' + employee), primary);
 
+    // Real authenticated pages, not HTML fixtures or presentation overrides.
+    // A temporary mobile tab preserves the main workflow's viewport and draft state.
+    async function captureMobileCompanyPage(path, filename, showWizard = false) {
+      const mobilePage = await context.newPage();
+      mobilePage.on('pageerror', error => errors.push(error.message));
+      try {
+        await mobilePage.setViewportSize({ width: 390, height: 844 });
+        await mobilePage.goto(url + path);
+        await mobilePage.waitForFunction(() => document.body.classList.contains('page-small'));
+        if (showWizard) {
+          await mobilePage.locator('#company-create-modal').waitFor({ state: 'visible' });
+          await mobilePage.frameLocator('iframe[name="company-create-frame"]').locator('#legal_name').waitFor();
+        } else {
+          await mobilePage.locator('[data-company-registry]').waitFor();
+        }
+        await mobilePage.screenshot({ path: output + '/' + filename, fullPage: true });
+      } finally { await mobilePage.close(); }
+    }
+    await page.goto(url + '/admin/issuers');
+    await page.locator('[data-company-registry]').waitFor();
+    await page.screenshot({ path: output + '/company-registry-desktop.png', fullPage: true });
+    await captureMobileCompanyPage('/admin/issuers', 'company-registry-mobile.png');
     await page.goto(url + '/admin/company_onboarding');
     await page.locator('#company-create-modal').waitFor({state:'visible'});
     let wizard = page.frame({name:'company-create-frame'});
     await wizard.locator('section form button[type=submit]').waitFor();
     await next(wizard);
+    await wizard.locator('#legal_name').waitFor();
+    await page.screenshot({ path: output + '/company-onboarding-identity-desktop.png', fullPage: true });
+    await captureMobileCompanyPage('/admin/company_onboarding', 'company-onboarding-identity-mobile.png', true);
     const draftUrl = wizard.url();
     await wizard.locator('#legal_name').fill('Synthetic company B');
     await wizard.locator('#tax_id').fill('52998224725');
@@ -160,6 +185,8 @@ async function next(page) { await navigate(page, page.locator('section form butt
       return form.locator('input[type=hidden]').evaluateAll(inputs => Object.fromEntries(inputs.filter(x => x.name).map(x => [x.name, x.value])));
     }
     await page.goto(url + '/admin/company_clients');
+    // Directory is the default workspace; creation is opened through its real toolbar action.
+    await page.locator('.company-workspace-actions').getByRole('button', { name: 'Novo cliente privado', exact: true }).click();
     await page.locator('#new_company').fill('Synthetic private B <script>');
     const createFields = await formFields(page.locator('form').filter({ has: page.locator('#new_company') }));
     // Replay the complete original payload: supplementary profile fields participate in its receipt hash.
@@ -213,6 +240,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
     const regular = await browser.newContext();
     await regular.route('**/*', route => new URL(route.request().url()).origin === url ? route.continue() : route.abort());
     const employeePage = await regular.newPage();
+    employeePage.on('pageerror', error => errors.push(error.message));
     await login(employeePage, 'onboarding-ci@example.invalid', 'synthetic-staff-onboarding');
     assert.equal((await regular.request.get(draftUrl)).status(), 403, 'employee cannot access master draft by URL');
     assert.equal((await employeePage.goto(url + '/admin/settings?group=company')).status(), 200, 'positive secondary settings access');

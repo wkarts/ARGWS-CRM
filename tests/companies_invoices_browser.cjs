@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
+const { selectCompanyOption, ensureCompanySidebar } = require('./helpers/company_selector_driver.cjs');
 const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
 const assert = require('node:assert/strict');
@@ -33,6 +33,39 @@ async function hidden(page) {
 }
 async function next(page) { await navigate(page, page.locator('section form button[type=submit]')); }
 
+
+// Read-only evidence from the authenticated disposable CRM, not a synthetic DOM.
+// Each route is reloaded at its target viewport so native responsive initialization runs.
+async function captureRealScreens(page, routes) {
+  const originalUrl = page.url(), originalViewport = page.viewportSize();
+  try {
+    for (const [name, route] of routes) for (const [size, viewport] of [['desktop', {width:1440,height:960}], ['mobile', {width:390,height:844}]]) {
+      await page.setViewportSize(viewport);
+      const response = await page.goto(route, {waitUntil:'load'});
+      assert.equal(response.status(), 200, name + ' evidence uses an authorized real document');
+      await page.locator('#wrapper').waitFor({state:'visible'});
+      if (size === 'mobile') await page.waitForFunction(() => document.body.classList.contains('company-context-shell') || document.body.classList.contains('page-small'));
+      await page.evaluate(async () => { await document.fonts.ready; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
+      const geometry = await page.evaluate(() => ({viewport:{width:innerWidth,height:innerHeight}, pageWidth:document.documentElement.scrollWidth,
+        fitsViewport:document.documentElement.scrollWidth <= innerWidth + 1, bodyClasses:document.body.className,
+        elements:Array.from(document.querySelectorAll('#header,#menu,#wrapper,.company-registry,.company-native-settings,[data-company-workspace]')).map(element => {
+          const box=element.getBoundingClientRect();return {id:element.id, classes:element.className, left:box.left,right:box.right,width:box.width,scrollWidth:element.scrollWidth};
+        })}));
+      const prefix = output + '/real-' + name + '-' + size;
+      fs.writeFileSync(prefix + '.json', JSON.stringify(geometry,null,2));
+      await page.screenshot({path:prefix + '.png',fullPage:true});
+      if (name === 'invoice-detail' && size === 'desktop') await page.screenshot({path:output + '/company-invoices.png',fullPage:true});
+      if (size === 'mobile' && name === 'companies-grid') {
+        await ensureCompanySidebar(page);
+        await page.locator('.company-selector .dropdown-toggle').waitFor({state:'visible'});
+        await page.screenshot({path:output + '/real-companies-sidebar-mobile.png',fullPage:true});
+      }
+    }
+  } finally {
+    await page.setViewportSize(originalViewport);
+    await page.goto(originalUrl, {waitUntil:'load'});
+  }
+}
 
 (async()=>{
  const browser=await chromium.launch({headless:true});const context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await workspacePage(context),errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -179,7 +212,10 @@ async function next(page) { await navigate(page, page.locator('section form butt
    const obsolete=await context.request.post(url+'/admin/company_invoices',{form:{...prior,action:'cancel'}});assert.equal(obsolete.status(),409);
    assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+expandedId),'1');
   }
-  await page.screenshot({path:output+'/company-invoices.png',fullPage:true});assert.deepEqual(errors,[]);
+  const visualIssuer = await page.locator('#company-context-select').inputValue();
+  assert.ok(ids[visualIssuer], 'invoice evidence belongs to the currently selected company');
+  await captureRealScreens(page, [['company-settings-isolated',url + '/admin/settings?group=company'], ['invoices-grid',url + '/admin/company_invoices'], ['invoice-detail',url + '/admin/company_invoices?invoice=' + ids[visualIssuer]]]);
+  assert.deepEqual(errors,[]);
   console.log('Named-company invoice CRUD/numbering/PDF/manual partial+final receipts/private portal grant+PDF+revocation: real HTTP/MySQL/Chromium passed, including owner-bound notifications and private attachment upload/preview/download/portal revocation; no SMTP or bank/provider operations.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e.message);process.exitCode=1;});

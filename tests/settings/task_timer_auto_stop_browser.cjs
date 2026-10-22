@@ -1,4 +1,5 @@
 'use strict';
+const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 // Native settings and task actions; the PHP fixture only inspects the isolated database.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright');
@@ -8,7 +9,7 @@ function fixture(...args){return JSON.parse(execFileSync(php,[fixturePath,...arg
 async function nav(page,button){await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),button.click()]);}
 async function fields(form){return form.evaluate(el=>Object.fromEntries(new FormData(el)));}
 (async()=>{
- const setup=fixture('inspect');assert(setup.native_marker>=451&&setup.read_only);const browser=await chromium.launch({headless:true,...(env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})}),context=await browser.newContext(),page=await context.newPage(),errors=[],results=[],projects={};
+ const setup=fixture('inspect');assert(setup.native_marker>=451&&setup.read_only);const browser=await chromium.launch({headless:true,...(env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})}),context=await browser.newContext(),page=await workspacePage(context),errors=[],results=[],projects={};
  await context.route('**/*',r=>new URL(r.request().url()).origin===base?r.continue():r.abort());page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.goto(base+'/admin/authentication');await page.locator('[name=email]').fill(env.ISSUERS_BROWSER_USERNAME||'admin-ci@example.invalid');await page.locator('[name=password]').fill(env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));

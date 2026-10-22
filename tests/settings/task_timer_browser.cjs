@@ -1,4 +1,5 @@
 'use strict';
+const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 // Native settings/tasks/timer actions only; the fixture reads the isolated DB in READ ONLY mode.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright');
@@ -7,7 +8,7 @@ assert.match(base||'',/^http:\/\/127\.0\.0\.1:\d+$/);assert(fixturePath&&path.is
 function fixture(...args){return JSON.parse(execFileSync(php,[fixturePath,...args.map(String)],{encoding:'utf8',env:process.env}));}
 async function nav(page,button){await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),button.click()]);}
 async function fields(form){return form.evaluate(el=>Object.fromEntries(new FormData(el)));}
-(async()=>{const setup=fixture('inspect');assert(setup.native_marker>=449&&setup.read_only);const browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})}),context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===base?r.continue():r.abort());const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+(async()=>{const setup=fixture('inspect');assert(setup.native_marker>=449&&setup.read_only);const browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})}),context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===base?r.continue():r.abort());const page=await workspacePage(context),errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.goto(base+'/admin/authentication');await page.locator('[name=email]').fill(process.env.ISSUERS_BROWSER_USERNAME||'admin-ci@example.invalid');await page.locator('[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));
  async function select(owner){await page.goto(base+'/admin/company_context');await selectCompanyOption(page, String(owner));await nav(page,page.locator('.company-selector-form button[type=submit]'));}

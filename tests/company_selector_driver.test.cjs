@@ -3,16 +3,16 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
-function fixture(collapsed) {
-    const events = []; let value = '1';
+function fixture(collapsed, nativeInitial = false) {
+    const events = []; let value = '1'; let clicks = 0;
     const select = {waitFor: async () => {}, inputValue: async () => value,
         locator: () => ({evaluateAll: async () => [{value: '1', label: 'Primary', disabled: false}, {value: '2', label: 'Authorized company', disabled: false}]})};
     const toggle = {waitFor: async () => {}, boundingBox: async () => collapsed ? null : {x: 10},
         click: async () => events.push('open dropdown'), getAttribute: async () => 'bs-select-1'};
-    const page = {locator: selector => {
+    const page = {waitForLoadState: async () => {}, waitForFunction: async () => {}, evaluate: async () => nativeInitial && clicks === 1, locator: selector => {
         if (selector === '#company-context-select') return select;
         if (selector.includes('.bootstrap-select >')) return toggle;
-        if (selector.includes('#header')) return {click: async () => events.push('open sidebar')};
+        if (selector.includes('#header')) return {click: async () => {clicks++;events.push('open sidebar');}};
         if (selector.includes('.bs-container')) return {locator: () => ({fill: async text => events.push('search ' + text)})};
         if (selector === '[id="bs-select-1"]') return {getByRole: (role, options) => {
             assert.equal(role, 'option'); assert.deepEqual(options, {name: 'Authorized company', exact: true});
@@ -36,4 +36,9 @@ test('unauthorized company fails before any UI action', async () => {
 test('driver never writes DOM values, forces hidden selects or sends a request', () => {
     const source = fs.readFileSync(__dirname + '/helpers/company_selector_driver.cjs', 'utf8');
     assert.doesNotMatch(source, /\.value\s*=(?!=)|\.hidden\s*=(?!=)|\.style\s*[.=]|force:\s*true|selectOption\(|dispatchEvent|\.request\.|fetch\(|\.submit\(/);
+});
+
+test('native page-small initial state opens through one real toggle click', async () => {
+    const f = fixture(true, true); await selectCompanyOption(f.page, 2);
+    assert.deepEqual(f.events, ['open sidebar', 'open dropdown', 'search Authorized company', 'click option']);
 });

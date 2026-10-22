@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
+const { selectCompanyOption, ensureCompanySidebar } = require('./helpers/company_selector_driver.cjs');
 // Real browser + real isolated CRM. This script refuses a public/production URL.
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
@@ -74,6 +74,38 @@ async function waitForUpgradeForm(page) {
     };
     console.error('Upgrade browser diagnostic: ' + JSON.stringify(diagnostic));
     throw error;
+  }
+}
+
+// Read-only evidence from the authenticated disposable CRM, not a synthetic DOM.
+// Each route is reloaded at its target viewport so native responsive initialization runs.
+async function captureRealScreens(page, routes) {
+  const originalUrl = page.url(), originalViewport = page.viewportSize();
+  try {
+    for (const [name, route] of routes) for (const [size, viewport] of [['desktop', {width:1440,height:960}], ['mobile', {width:390,height:844}]]) {
+      await page.setViewportSize(viewport);
+      const response = await page.goto(route, {waitUntil:'load'});
+      assert.equal(response.status(), 200, name + ' evidence uses an authorized real document');
+      await page.locator('#wrapper').waitFor({state:'visible'});
+      if (size === 'mobile') await page.waitForFunction(() => document.body.classList.contains('company-context-shell') || document.body.classList.contains('page-small'));
+      await page.evaluate(async () => { await document.fonts.ready; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
+      const geometry = await page.evaluate(() => ({viewport:{width:innerWidth,height:innerHeight}, pageWidth:document.documentElement.scrollWidth,
+        fitsViewport:document.documentElement.scrollWidth <= innerWidth + 1, bodyClasses:document.body.className,
+        elements:Array.from(document.querySelectorAll('#header,#menu,#wrapper,.company-registry,.company-native-settings,[data-company-workspace]')).map(element => {
+          const box=element.getBoundingClientRect();return {id:element.id, classes:element.className, left:box.left,right:box.right,width:box.width,scrollWidth:element.scrollWidth};
+        })}));
+      const prefix = output + '/real-' + name + '-' + size;
+      fs.writeFileSync(prefix + '.json', JSON.stringify(geometry,null,2));
+      await page.screenshot({path:prefix + '.png',fullPage:true});
+      if (size === 'mobile' && name === 'companies-grid') {
+        await ensureCompanySidebar(page);
+        await page.locator('.company-selector .dropdown-toggle').waitFor({state:'visible'});
+        await page.screenshot({path:output + '/real-companies-sidebar-mobile.png',fullPage:true});
+      }
+    }
+  } finally {
+    await page.setViewportSize(originalViewport);
+    await page.goto(originalUrl, {waitUntil:'load'});
   }
 }
 
@@ -237,6 +269,7 @@ async function waitForUpgradeForm(page) {
       await selectCompanyOption(page, primaryCompany);
       await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('.company-selector-form button[type=submit]').click()]);
       await shell(page);
+      await captureRealScreens(page, [['companies-grid',url + '/admin/issuers'], ['company-settings',url + '/admin/settings?group=company']]);
     }
     assert.deepEqual(errors, [], 'no uncaught JavaScript errors in native shell');
     console.log('Issuer browser smoke passed: native shell/menu, installation/upgrade, errors/retry, desktop/mobile.');

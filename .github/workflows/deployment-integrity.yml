@@ -60,6 +60,7 @@ jobs:
           name: company-shell-synthetic-ui
           path: /tmp/company-shell-evidence
           if-no-files-found: ignore
+          retention-days: 1
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
@@ -75,6 +76,7 @@ jobs:
           name: company-identity-presentation
           path: /tmp/company-identity-evidence
           if-no-files-found: warn
+          retention-days: 1
       - name: Testar cadastro PF/PJ e consultas revisadas de clientes
         id: client_identity_browser
         env:
@@ -87,6 +89,7 @@ jobs:
           name: client-identity-presentation
           path: /tmp/client-identity-evidence
           if-no-files-found: error
+          retention-days: 1
       - name: Testar abas nativas e perfis de ambientes Asaas
         id: asaas_settings_browser
         env:
@@ -99,6 +102,7 @@ jobs:
           name: asaas-native-settings-presentation
           path: /tmp/asaas-settings-evidence
           if-no-files-found: error
+          retention-days: 1
       - name: Provisionar schema e primeiro administrador em MySQL limpo
         id: issuer_browser
         env:
@@ -111,6 +115,7 @@ jobs:
           name: issuer-native-browser
           path: /tmp/issuer-browser-evidence
           if-no-files-found: ignore
+          retention-days: 1
       - name: Testar política segura de cache Actions
         run: python3 -m unittest tests/test_actions_cache_cleanup.py
       - name: Testar contrato dos assets na mesma release

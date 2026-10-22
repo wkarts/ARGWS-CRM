@@ -107,10 +107,8 @@ $("body").on("loaded.bs.select", "._select_input_group", function (e) {
 });
 
 $(window).on("load resize", function (e) {
-  if (!$("body").hasClass("page-small")) {
-    // Add special class to minimalize page elements when screen is less than 768px
-    set_body_small();
-  }
+  // Reconcile both directions: resizing back to desktop must clear page-small.
+  set_body_small();
   // Wait until metsiMenu, collapse and other effect finish and set wrapper height
   setTimeout(
     function () {
@@ -500,7 +498,7 @@ $(function () {
   // Handle minimalize sidebar menu
   $(".hide-menu").click(function (e) {
     e.preventDefault();
-    if ($("body").hasClass("hide-sidebar")) {
+    if (!$("body").hasClass("show-sidebar") && ($("body").hasClass("hide-sidebar") || $("body").hasClass("page-small"))) {
       $("body").removeClass("hide-sidebar").addClass("show-sidebar");
     } else {
       $("body").removeClass("show-sidebar").addClass("hide-sidebar");
