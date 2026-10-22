@@ -26,6 +26,7 @@ async function login(page, email, password) {
   await navigate(page, page.locator('button[type=submit]'));
 }
 async function navigate(page, button) {
+  await button.waitFor({state:'attached'});
   await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), button.click()]);
 }
 async function hidden(page) {
@@ -79,7 +80,7 @@ async function captureRealScreens(page, routes) {
   for(const [issuer,letter]of[[a,'a'],[b,'b']]){
    await select(issuer);await page.goto(url+'/admin/settings?group=company');
    for(const [field,value]of Object.entries({invoice_company_address:'Synthetic '+letter+' street',invoice_company_city:'Synthetic city',company_state:'BA',invoice_company_country_code:'BR',invoice_company_postal_code:'00000-000'}))await page.locator('#company-setting-'+field).fill(value);
-   await navigate(page,page.locator('section form button[type=submit]'));
+   await navigate(page,page.locator('#company-settings-form button[type=submit]'));
    await page.goto(url+'/admin/company_invoices');await page.locator('#invoice-client').selectOption(clients[issuer]);await page.locator('#invoice-currency').selectOption({label:'BRL'});
    await page.locator('#invoice-item-0-description').fill('Synthetic invoice '+letter);await page.locator('#invoice-item-0-qty').fill('2.00');await page.locator('#invoice-item-0-rate').fill('50.25');await page.locator('#invoice-item-0-tax-0-name').fill('Synthetic tax');await page.locator('#invoice-item-0-tax-0-rate').fill('5.00');
    const form=page.locator('form').filter({has:page.locator('#invoice-client')});const creation=await fields(form);
@@ -144,7 +145,7 @@ async function captureRealScreens(page, routes) {
    assert.equal((await context.request.post(url+'/admin/company_assets',{form:{...assetFields,action:'remove'}})).status(),409,'image mutation from obsolete company tab denied before effects');
    await select(issuer);await page.goto(url+'/admin/settings?group=documents');
    await page.locator('#company-setting-invoice_prefix').fill('SYN-'+letter+'-');await page.locator('#company-setting-predefined_terms_invoice').fill('Synthetic terms '+letter);
-   await navigate(page,page.locator('section form button[type=submit]'));
+   await navigate(page,page.locator('#company-settings-form button[type=submit]'));
    await page.goto(url+'/admin/company_invoices');
    await page.locator('#invoice-client').selectOption(clients[issuer]);await page.locator('#invoice-currency').selectOption({label:'BRL'});
    await page.locator('#invoice-item-0-description').fill('Expanded '+letter);await page.locator('#invoice-item-0-rate').fill('100.00');

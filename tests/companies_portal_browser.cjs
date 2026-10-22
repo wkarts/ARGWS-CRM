@@ -26,6 +26,9 @@ async function login(page, email, password) {
   await navigate(page, page.locator('button[type=submit]'));
 }
 async function navigate(page, button) {
+  // Diagnose a missing control before starting a navigation that cannot occur.
+  // The workspace driver still reveals hidden panels through their real buttons on click.
+  await button.waitFor({ state: 'attached' });
   await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), button.click()]);
 }
 async function hidden(page) {
@@ -59,7 +62,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
       await page.locator('#company-setting-smtp_email').fill(letter+'@example.invalid');
       await page.locator('#company-setting-smtp_username').fill('synthetic-'+letter);
       await page.locator('#company-smtp-password').fill('synthetic-secret-'+letter);
-      await navigate(page,page.locator('section form button[type=submit]'));
+      await navigate(page,page.locator('#company-settings-form button[type=submit]'));
       assert((await page.locator('[role=status]').innerText()).includes('Definições salvas'));
       assert.equal(await page.locator('#company-smtp-password').inputValue(),'','GUI never echoes SMTP password');
     }
