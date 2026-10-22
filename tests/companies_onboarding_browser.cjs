@@ -111,7 +111,23 @@ async function next(page) { await navigate(page, page.locator('section form butt
     assert.equal(sql('SELECT COUNT(*) FROM tblissuers_staff WHERE staff_id=' + employee + ' AND issuer_id IN (' + primary + ',' + created + ')'), '2', 'existing company membership retained');
     await page.screenshot({ path: output + '/company-onboarding-completed.png', fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
-    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'wizard fits mobile');
+    const beforeMobileResize = await page.evaluate(() => ({ bodyClass: document.body.className, width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
+    // The native primary-company shell moves #wrapper only after its resize handler
+    // adds page-small. Viewport emulation alone does not await that browser event.
+    await page.waitForFunction(() => document.body.classList.contains('page-small'));
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const mobileLayout = await page.evaluate(() => ({
+      bodyClass: document.body.className, width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+      overflowing: Array.from(document.querySelectorAll('body *')).map(element => {
+        const rect = element.getBoundingClientRect();
+        return { tag: element.tagName, id: element.id, classes: element.getAttribute('class'), left: rect.left, right: rect.right, width: rect.width, height: rect.height };
+      }).filter(rect => rect.width > 0 && rect.height > 0 && rect.right > innerWidth + 1).slice(0, 20),
+    }));
+    const wizardMobileLayout = await wizard.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
+    fs.writeFileSync(output + '/company-onboarding-mobile-layout.json', JSON.stringify({ beforeMobileResize, mobileLayout, wizardMobileLayout }, null, 2));
+    await page.screenshot({ path: output + '/company-onboarding-completed-mobile.png', fullPage: true });
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'wizard fits mobile: ' + JSON.stringify(mobileLayout));
+    assert(wizardMobileLayout.scrollWidth <= wizardMobileLayout.width + 1, 'wizard document fits its mobile iframe');
     // Closing first cleans the URL with replaceState, then reloads the registry.
     // Wait for the real main-document response, not that same-document URL change.
     const [registryResponse] = await Promise.all([
