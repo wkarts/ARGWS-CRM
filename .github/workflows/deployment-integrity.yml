@@ -46,13 +46,15 @@ jobs:
       - name: Testar navegação das abas no shell isolado de Empresas
         run: node tests/company_context_tabs_browser.cjs
       - name: Testar apresentação e confirmação explícita no shell de Empresas
+        id: company_shell_browser
         env:
           SCREENSHOT_DIR: /tmp/company-shell-evidence
         run: |
           mkdir -p "$SCREENSHOT_DIR"
           node tests/company_shell_browser.cjs
       - name: Preservar capturas dos fixtures de apresentação de Empresas
-        if: always()
+        # Retain partial captures after a test failure, but do not collect a skipped test.
+        if: always() && (steps.company_shell_browser.outcome == 'success' || steps.company_shell_browser.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
           name: company-shell-synthetic-ui
@@ -62,44 +64,48 @@ jobs:
         with:
           php-version: '8.1'
       - name: Testar cadastro de empresa e consultas sintéticas CNPJ/CEP
+        id: company_identity_browser
         env:
           SCREENSHOT_DIR: /tmp/company-identity-evidence
         run: node tests/company_identity_browser.cjs
       - name: Preservar capturas sintéticas do cadastro de empresa
-        if: always()
+        if: always() && (steps.company_identity_browser.outcome == 'success' || steps.company_identity_browser.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
           name: company-identity-presentation
           path: /tmp/company-identity-evidence
           if-no-files-found: warn
       - name: Testar cadastro PF/PJ e consultas revisadas de clientes
+        id: client_identity_browser
         env:
           SCREENSHOT_DIR: /tmp/client-identity-evidence
         run: node tests/companies/client_identity_browser.cjs
       - name: Preservar capturas sintéticas do cadastro de clientes
-        if: always()
+        if: always() && (steps.client_identity_browser.outcome == 'success' || steps.client_identity_browser.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
           name: client-identity-presentation
           path: /tmp/client-identity-evidence
           if-no-files-found: error
       - name: Testar abas nativas e perfis de ambientes Asaas
+        id: asaas_settings_browser
         env:
           ASAAS_UI_ARTIFACTS: /tmp/asaas-settings-evidence
         run: node tests/asaas_settings_tabs.browser.cjs
       - name: Preservar capturas sintéticas das abas Asaas
-        if: always()
+        if: always() && (steps.asaas_settings_browser.outcome == 'success' || steps.asaas_settings_browser.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
           name: asaas-native-settings-presentation
           path: /tmp/asaas-settings-evidence
           if-no-files-found: error
       - name: Provisionar schema e primeiro administrador em MySQL limpo
+        id: issuer_browser
         env:
           ARGWS_ISSUER_BROWSER_SMOKE: '1'
         run: bash tests/docker_provision_smoke.sh
       - name: Preservar evidências visuais sintéticas
-        if: always()
+        if: always() && (steps.issuer_browser.outcome == 'success' || steps.issuer_browser.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
           name: issuer-native-browser

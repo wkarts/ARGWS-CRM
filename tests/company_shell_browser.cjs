@@ -8,7 +8,12 @@ const selector = fs.readFileSync(path.join(root, 'application/views/admin/includ
 const head = fs.readFileSync(path.join(root, 'application/views/admin/companies/layout_head.php'), 'utf8');
 const tail = fs.readFileSync(path.join(root, 'application/views/admin/companies/layout_tail.php'), 'utf8');
 assert.match(selector, /class="sr-only">Selecionar empresa/);
-assert.match(selector, /name="company_id" class="selectpicker"/);
+// Responsive classes may be added without changing the native widget contract.
+const companySelect = (selector.match(/<select(?=\s|>)[^>]*>/g) || [])
+  .find(tag => /\sname="company_id"/.test(tag));
+assert.ok(companySelect, 'company_id must remain a select element');
+const companySelectClasses = companySelect.match(/\sclass="([^"]*)"/)?.[1].split(/\s+/) || [];
+assert.ok(companySelectClasses.includes('selectpicker'), 'company selector must retain the native selectpicker class');
 assert.match(selector, /name="_company_switch_csrf"/);
 assert.match(selector, /company_context\/select/);
 assert.match(selector, /form_open/);

@@ -8,6 +8,62 @@ import tempfile
 import unittest
 
 
+class BrowserArtifactCollectionTest(unittest.TestCase):
+    """Exercise upload predicates against producer outcomes, including prior failure."""
+
+    def test_uploads_follow_their_producers_and_keep_partial_failure_evidence(self):
+        root = Path(__file__).resolve().parents[1]
+        workflow = (root / ".github/workflows/deployment-integrity.yml").read_text()
+        steps = re.split(r"(?m)^      - ", workflow)[1:]
+        evaluate = r"""
+const vm = require('node:vm');
+const {expression, id} = JSON.parse(process.argv[1]);
+const outcomes = ['success', 'failure', 'skipped', 'cancelled', ''];
+const results = Object.fromEntries(outcomes.map(outcome => {
+  const jobSucceeded = outcome === 'success';
+  const explicitStatus = /\b(?:always|success|failure|cancelled)\s*\(/.test(expression);
+  const condition = vm.runInNewContext(expression, {
+    steps: {[id]: {outcome}}, always: () => true,
+    success: () => jobSucceeded, failure: () => !jobSucceeded,
+    cancelled: () => outcome === 'cancelled',
+  }, {timeout: 1000});
+  return [outcome, Boolean((explicitStatus || jobSucceeded) && condition)];
+}));
+process.stdout.write(JSON.stringify(results));
+"""
+        cases = {
+            "company-shell-synthetic-ui": ("node tests/company_shell_browser.cjs", "ignore"),
+            "company-identity-presentation": ("node tests/company_identity_browser.cjs", "warn"),
+            "client-identity-presentation": ("node tests/companies/client_identity_browser.cjs", "error"),
+            "asaas-native-settings-presentation": ("node tests/asaas_settings_tabs.browser.cjs", "error"),
+            "issuer-native-browser": ("bash tests/docker_provision_smoke.sh", "ignore"),
+        }
+        for artifact, (command, missing_policy) in cases.items():
+            with self.subTest(artifact=artifact):
+                uploads = [step for step in steps
+                           if re.search(r"(?m)^          name: " + re.escape(artifact) + r"$", step)]
+                self.assertEqual(len(uploads), 1, "each artifact needs exactly one upload")
+                upload = uploads[0]
+                expression = re.search(r"(?m)^        if: (.+)$", upload).group(1)
+                ids = set(re.findall(r"steps\.([A-Za-z0-9_]+)\.outcome", expression))
+                self.assertEqual(len(ids), 1, "upload must depend on its own producer")
+                producer_id = ids.pop()
+                producers = [step for step in steps
+                             if re.search(r"(?m)^        id: " + re.escape(producer_id) + r"$", step)]
+                self.assertEqual(len(producers), 1)
+                self.assertIn(command, producers[0])
+                self.assertLess(steps.index(producers[0]), steps.index(upload))
+                result = subprocess.run(
+                    ["node", "-e", evaluate, json.dumps({"expression": expression, "id": producer_id})],
+                    cwd=root, text=True, capture_output=True, check=True,
+                )
+                self.assertEqual(json.loads(result.stdout), {
+                    "success": True, "failure": True, "skipped": False,
+                    "cancelled": False, "": False,
+                })
+                self.assertRegex(upload, r"(?m)^          if-no-files-found: " + missing_policy + r"$")
+
+
 class BrowserEnvironmentTest(unittest.TestCase):
     def test_fixtures_are_copied_into_a_test_free_runtime_before_php(self):
         # Execute the actual browser prelude. The model starts with no /app/tests,
