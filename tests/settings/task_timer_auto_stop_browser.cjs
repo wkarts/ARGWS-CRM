@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 // Native settings and task actions; the PHP fixture only inspects the isolated database.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright');
 const env=process.env,base=env.ISSUERS_BROWSER_URL,php=env.ISSUERS_BROWSER_PHP_BINARY||'php',fixturePath=env.TASK_TIMER_STOP_BROWSER_FIXTURE_PHP,output=env.ISSUERS_BROWSER_ARTIFACTS;
@@ -11,7 +12,7 @@ async function fields(form){return form.evaluate(el=>Object.fromEntries(new Form
  await context.route('**/*',r=>new URL(r.request().url()).origin===base?r.continue():r.abort());page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.goto(base+'/admin/authentication');await page.locator('[name=email]').fill(env.ISSUERS_BROWSER_USERNAME||'admin-ci@example.invalid');await page.locator('[name=password]').fill(env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));
-  async function select(owner){await page.goto(base+'/admin/company_context');await page.locator('#company-context-select').selectOption(String(owner));await nav(page,page.locator('.company-selector-form button[type=submit]'));}
+  async function select(owner){await page.goto(base+'/admin/company_context');await selectCompanyOption(page, String(owner));await nav(page,page.locator('.company-selector-form button[type=submit]'));}
   const route=base+'/admin/settings?group=task_timer_stop',setting='#company-setting-auto_stop_tasks_timers_on_new_timer';
   async function policy(value){await page.goto(route);await page.locator(setting).selectOption(value);await nav(page,page.locator('form').filter({has:page.locator(setting)}).locator('button[type=submit]'));assert.match(await page.locator('body').innerText(),/Definições salvas/);}
   function detail(kind,id){return base+'/admin/'+(kind==='tasks'?'company_tasks':'company_standalone_tasks')+'?task='+id;}

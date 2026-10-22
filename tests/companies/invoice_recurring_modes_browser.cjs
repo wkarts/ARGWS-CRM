@@ -1,3 +1,4 @@
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 // Reconstructed HTTP440 runner. Original recovered440 assertions retained; native schema must preexist.
 'use strict';
@@ -19,7 +20,7 @@ async function submit(p,b){await Promise.all([p.waitForNavigation({waitUntil:'do
   context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await workspacePage(context),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await submit(page,page.locator('button[type=submit]'));
   const form=action=>page.locator('form').filter({has:page.locator('input[name=action][value="'+action+'"]')});
-  async function select(issuer){await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(String(issuer));await submit(page,page.locator('.company-selector-form button[type=submit]'));}
+  async function select(issuer){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, String(issuer));await submit(page,page.locator('.company-selector-form button[type=submit]'));}
   async function schedule(owner,mode,principal,cycles,notificationProbed=false){await page.goto(url+'/admin/company_invoice_recurring');const f=form('create');await f.locator('select[name="invoice[client_id]"]').selectOption(String(owner.client));await f.locator('select[name="invoice[currency]"]').selectOption({label:'BRL'});await f.locator('input[name="invoice[date]"]').fill('2026-01-01');await f.locator('input[name="invoice[due_date]"]').fill('2026-01-10');await f.locator('input[name="invoice[items][0][description]"]').fill('Private recurring mode '+mode);await f.locator('input[name="invoice[items][0][rate]"]').fill('10.10');await f.locator('input[name=cycles]').fill(String(cycles));await f.locator('select[name=mode]').selectOption(mode);await f.locator('input[name=principal_invoice_id]').fill(String(principal));assert.equal(await f.locator('#schedule-send[name=send][type=checkbox]').count(),1,'actual notification checkbox is a valid named form control');assert.equal(await f.locator('#schedule-send').isChecked(),false,'notifications are opt-in');
    if(mode==='draft'&&!notificationProbed){
     const before=sql('SELECT CONCAT((SELECT COUNT(*) FROM tblcompany_invoice_schedules),"/",(SELECT COUNT(*) FROM tblinvoices),"/",(SELECT COALESCE(SUM(next_number),0) FROM tblissuers_sequences),"/",(SELECT COUNT(*) FROM tblmail_queue))');

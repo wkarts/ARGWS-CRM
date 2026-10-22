@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
 // Real controller, multipart upload, CRM context middleware, MySQL and browser.
 // Run after companies_onboarding_browser in the disposable native-upgrade fixture.
 const assert = require('node:assert/strict');
@@ -29,7 +30,7 @@ async function upload(page, file, password = file.password) {
 }
 async function select(page, issuer) {
   await page.goto(url + '/admin/company_context');
-  await page.locator('#company-context-select').selectOption(issuer);
+  await selectCompanyOption(page, issuer);
   await navigate(page, page.locator('.company-selector-form button[type=submit]'));
   await page.goto(url + '/admin/company_certificates/index/' + issuer);
 }

@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 // Real HTTP/Chromium forms, native login and a deliberately isolated upgraded database.
 const assert = require('node:assert/strict');
@@ -31,7 +32,7 @@ async function values(form) { return form.evaluate(node=>Object.fromEntries(new 
 async function hidden(form) { return form.locator('input[type=hidden][name]').evaluateAll(nodes=>Object.fromEntries(nodes.map(node=>[node.name,node.value]))); }
 async function selectCompany(page,id) {
   await page.goto(url+'/admin/company_context');
-  await page.locator('#company-context-select').selectOption(String(id));
+  await selectCompanyOption(page, String(id));
   await submit(page,page.locator('.company-selector-form button[type=submit]'));
   // The primary native dashboard starts its task-table XHR after DOMContentLoaded.
   // Finish that real render before navigating again; do not abort its JSON response.

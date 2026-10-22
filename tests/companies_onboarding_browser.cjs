@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
@@ -111,10 +112,22 @@ async function next(page) { await navigate(page, page.locator('section form butt
     await page.screenshot({ path: output + '/company-onboarding-completed.png', fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'wizard fits mobile');
-    await wizard.locator('[data-wizard-close]').click();
-    await page.waitForURL(url + '/admin/issuers');
+    // Closing first cleans the URL with replaceState, then reloads the registry.
+    // Wait for the real main-document response, not that same-document URL change.
+    const [registryResponse] = await Promise.all([
+      page.waitForResponse(response => response.request().isNavigationRequest()
+        && response.request().frame() === page.mainFrame()
+        && response.request().resourceType() === 'document'
+        && response.url() === url + '/admin/issuers'),
+      wizard.locator('[data-wizard-close]').click(),
+    ]);
+    assert.equal(registryResponse.status(), 200, 'completion reloads the authorized registry');
+    await registryResponse.finished();
+    await page.locator('#company-context-select option[value="' + created + '"]').waitFor({ state: 'attached' });
+    await page.waitForLoadState('load');
+    assert.equal(page.url(), url + '/admin/issuers');
     const oldContext = completion._company_context;
-    await page.locator('#company-context-select').selectOption(created);
+    await selectCompanyOption(page, created);
     await navigate(page, page.locator('.company-selector-form button[type=submit]'));
     const switched = await hidden(page);
     const staleCompany = await context.request.post(draftUrl, { form: { ...completion, ...switched, action: 'complete', _company_context: oldContext } });
@@ -124,7 +137,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
     // Positive isolated customer directory, with actual HTTP/CSRF and durable receipts.
     async function switchCompany(id) {
       await page.goto(url + '/admin/company_context');
-      await page.locator('#company-context-select').selectOption(id);
+      await selectCompanyOption(page, id);
       await navigate(page, page.locator('.company-selector-form button[type=submit]'));
     }
     async function formFields(form) {

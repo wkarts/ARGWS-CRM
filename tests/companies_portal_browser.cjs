@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
 const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
 const assert = require('node:assert/strict');
@@ -50,7 +51,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
     await wizard.locator('#legal_name').fill('Synthetic portal A');await wizard.locator('#tax_id').fill('11222333000181');
     await next(wizard);await next(wizard);await next(wizard);await next(wizard);await next(wizard);
     const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'");assert.match(a,/^[1-9]\d*$/);
-    async function select(id){await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(id);await navigate(page,page.locator('.company-selector-form button[type=submit]'));}
+    async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);await navigate(page,page.locator('.company-selector-form button[type=submit]'));}
     async function configure(id,letter){
       await select(id);await page.goto(url+'/admin/settings?group=email');
       await page.locator('#company-setting-smtp_host').fill('smtp-'+letter+'.example.invalid');

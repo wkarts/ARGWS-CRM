@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 // Existing installer master creates companies through the normal wizard, with no new designation.
 const assert=require('node:assert/strict'), {execFileSync}=require('node:child_process'), fs=require('node:fs'), {chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL, db=process.env.ISSUERS_BROWSER_DB_CONTAINER;
@@ -28,7 +29,7 @@ async function submit(page,button) { await Promise.all([page.waitForNavigation({
     assert.match(id,/^[1-9]\d*$/); assert.equal(sql("SELECT COUNT(*) FROM tblissuers_registry WHERE tax_id='"+tax+"'"),'1');
    }
    created[label]=Number(id);
-   await page.goto(url+'/admin/company_context'); await page.locator('#company-context-select').selectOption(id); await submit(page,page.locator('.company-selector-form button[type=submit]'));
+   await page.goto(url+'/admin/company_context'); await selectCompanyOption(page, id); await submit(page,page.locator('.company-selector-form button[type=submit]'));
    for (const route of ['company_staff','company_task_recurring?kind=project','company_task_recurring?kind=standalone']) { assert.equal((await page.goto(url+'/admin/'+route)).status(),200,route+' usable for existing master'); }
   }
   assert.equal(sql("SELECT CONCAT(master_staff_id,':',primary_issuer_id,':',source) FROM tblissuers_installation_identity WHERE id=1"),identity); assert.deepEqual(errors,[]);

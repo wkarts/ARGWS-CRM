@@ -1,3 +1,4 @@
+const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
 // Synthetic UI contract: no application login, database, or production requests.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -69,8 +70,14 @@ if (process.env.STATIC_ONLY) { console.log('PASS: selector semantics, preserved 
         assert.equal(await page.locator('.company-selector button[type="submit"]').innerText(), '');
         assert.equal(await page.locator('.company-selector .filter-option').innerText(), 'Empresa de teste');
         await page.evaluate(() => { window.submissions = []; document.querySelector('.company-selector form').addEventListener('submit', e => { e.preventDefault(); window.submissions.push(Object.fromEntries(new FormData(e.target))); }); });
-        await page.locator('.company-selector .dropdown-toggle').click();
-        await page.locator('.bs-container .dropdown-menu a').filter({ hasText: 'Outra empresa de teste' }).click();
+        if (mode === 'isolated' && width < 768) {
+          await page.locator('.company-menu-toggle').click();
+          assert.equal(await page.locator('.company-menu-toggle').getAttribute('aria-expanded'), 'false');
+        }
+        await assert.rejects(() => selectCompanyOption(page, '999'), /authorized enabled catalog/);
+        assert.equal(await page.locator('#company-context-select').inputValue(), '1', 'absent company never changes current selection');
+        await selectCompanyOption(page, '2');
+        if (mode === 'isolated' && width < 768) assert.equal(await page.locator('.company-menu-toggle').getAttribute('aria-expanded'), 'true', 'driver opens collapsed sidebar through its real button');
         assert.deepEqual(await page.evaluate(() => window.submissions), [], 'changing selected company must not submit');
         await page.getByRole('button', { name: 'Confirmar empresa selecionada' }).click();
         const submitted = await page.evaluate(() => window.submissions);

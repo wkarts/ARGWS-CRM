@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 // Real native application and GUI only. Fixture validates prerequisite schemas read-only.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{createHash}=require('node:crypto'),fs=require('node:fs'),{chromium}=require('playwright');
@@ -16,7 +17,7 @@ function security(values){return Object.fromEntries(Object.entries(values).filte
 (async()=>{const browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})});let context;try{
  context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await workspacePage(context),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await submit(page,page.locator('button[type=submit]'));
  const form=action=>page.locator('form').filter({has:page.locator('input[name=action][value="'+action+'"]')});const own={};
- async function select(id){await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(String(id));await submit(page,page.locator('.company-selector-form button[type=submit]'));}
+ async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, String(id));await submit(page,page.locator('.company-selector-form button[type=submit]'));}
  const legacy=sql('SELECT * FROM tblinvoices WHERE issuer_id IS NULL ORDER BY id'),cash=sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords'),queue=sql('SELECT COUNT(*) FROM tblmail_queue');
  for(const letter of['a','b']){const owner=fixture.owners[letter];await select(owner.issuer);own[letter]=[];
   for(const kind of['estimates','proposals']){

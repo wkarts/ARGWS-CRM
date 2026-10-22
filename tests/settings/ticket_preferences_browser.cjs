@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 // Genuine Settings/ticket/publication forms; fixture only inspects the disposable DB.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright'),path=require('node:path'),fs=require('node:fs');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;const output=process.env.ISSUERS_BROWSER_ARTIFACTS||'/tmp/issuer-browser-evidence';fs.mkdirSync(output,{recursive:true});assert.match(url||'',/^http:\/\/127\.0\.0\.1:\d+$/);assert.match(app||'',/^argws-crm-upgrade-\d+$/);assert.equal(process.env.ISSUERS_BROWSER_DB_NAME,'argws_upgrade_ci');
@@ -8,7 +9,7 @@ async function nav(p,b){await Promise.all([p.waitForNavigation({waitUntil:'domco
 (async()=>{execFileSync('docker',['exec',app,'mkdir','-p','/app/tests/settings']);execFileSync('docker',['cp',path.join(process.env.ISSUERS_BROWSER_SOURCE_ROOT||process.cwd(),'tests/settings/ticket_preferences_http_fixture.php'),app+':/app/tests/settings/ticket_preferences_http_fixture.php']);const setup=fixture('inspect'),launch={headless:true};if(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH)launch.executablePath=process.env.ISSUERS_BROWSER_EXECUTABLE_PATH;assert.equal(setup.read_only,true);assert.equal(setup.native_marker,setup.expected_marker);assert(setup.native_marker>=444);assert.equal(setup.legacy_order,'desc','trusted legacy defaultdesc contrasts with native owndefaultasc');const browser=await chromium.launch(launch),contexts=[],errors=[],tickets={},portals={};
  async function context(){const c=await browser.newContext();contexts.push(c);await c.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));return{c,p};}
  try{const{c,p}=await context();await p.goto(url+'/admin/authentication');await p.locator('input[name=email]').fill('admin-ci@example.invalid');await p.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await nav(p,p.locator('button[type=submit]'));
- async function select(id){await p.goto(url+'/admin/company_context');await p.locator('#company-context-select').selectOption(String(id));await nav(p,p.locator('.company-selector-form button[type=submit]'));}
+ async function select(id){await p.goto(url+'/admin/company_context');await selectCompanyOption(p, String(id));await nav(p,p.locator('.company-selector-form button[type=submit]'));}
  const settings=url+'/admin/settings?group=ticket_preferences';
  // The primary legacy GET initializes native payment gateway defaults once (App_gateway::initMode).
  // Warm that genuine GUI lifecycle before the strict ALL-options/financial snapshot; no rows are omitted.

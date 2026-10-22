@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
 // Future overlay suite, after existing native sales/browser fixtures. No external providers or mail dispatch.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;
@@ -8,7 +9,7 @@ async function nav(page,button){await Promise.all([page.waitForNavigation({waitU
 (async()=>{const browser=await chromium.launch({headless:true}),context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await context.newPage(),second=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));try{
  await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));
  const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'"),docs={};let stale;
- async function select(owner){await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(owner);await nav(page,page.locator('.company-selector-form button[type=submit]'));}
+ async function select(owner){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, owner);await nav(page,page.locator('.company-selector-form button[type=submit]'));}
  for(const [owner,letter] of [[a,'A'],[b,'B']]){
   await select(owner);await page.goto(url+'/admin/settings?group=sales_documents');const form=page.locator('form').filter({has:page.locator('input[name="settings[estimate_prefix]"]')});await form.locator('input[name="settings[estimate_prefix]"]').fill(letter+'-ORC-');await form.locator('input[name="settings[proposal_number_prefix]"]').fill(letter+'-PROP-');await form.locator('textarea[name="settings[predefined_terms_estimate]"]').fill('Quote terms '+letter+' <script>literal only</script>');await form.locator('textarea[name="settings[predefined_terms_proposal]"]').fill('Proposal terms '+letter);await nav(page,form.locator('button[type=submit]'));assert.equal(await page.locator('input[name="settings[estimate_prefix]"]').inputValue(),letter+'-ORC-');assert.equal(await page.locator('script').filter({hasText:'literal only'}).count(),0);
   if(owner===a){await second.goto(url+'/admin/settings?group=sales_documents');stale=await fields(second.locator('form').filter({has:second.locator('input[name="settings[estimate_prefix]"]')}));}

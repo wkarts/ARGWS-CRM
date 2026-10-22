@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 // Real authenticated CRM/MySQL/native assets only. No HTML, provider or response fixtures.
 // Run unselected immediately after the existing native installer, before A/B account fixtures;
 // run selected after companies_asaas_browser.cjs. Both reuse existing A/B invoices and never seed.
@@ -189,7 +190,7 @@ async function run(env = process.env) {
           phase = 'select real company context: ' + owner.letter;
           observePageErrors = false;
           await navigate(config.url + '/admin/company_context');
-          await page.locator('#company-context-select').selectOption(owner.issuer);
+          await selectCompanyOption(page, owner.issuer);
           await submitSession(page.locator('.company-selector-form'));
           check(await page.locator('#company-context-select').inputValue() === owner.issuer, 'native context selection is confirmed before Asaas navigation');
           observePageErrors = true;

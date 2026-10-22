@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 // Real forms, trusted redirect inspection and canonical signed protocol double. Never follows external authorization.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright'),path=require('node:path');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER;assert.match(url||'',/^http:\/\/127\.0\.0\.1:\d+$/);assert.match(app||'',/^argws-crm-upgrade-\d+$/);assert.equal(process.env.ISSUERS_BROWSER_DB_NAME,'argws_upgrade_ci');
@@ -11,7 +12,7 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
  async function login(email,password){const context=await browser.newContext();contexts.push(context);await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto(url+'/admin/authentication');await page.locator('[name=email]').fill(email);await page.locator('[name=password]').fill(password);await nav(page,page.locator('button[type=submit]'));return{context,page};}
  try{
   const master=await login('admin-ci@example.invalid',process.env.ISSUERS_BROWSER_PASSWORD),oldTab=await master.context.newPage();let stale;
-  async function select(issuer){await master.page.goto(url+'/admin/company_context');await master.page.locator('#company-context-select').selectOption(String(issuer));await nav(master.page,master.page.locator('.company-selector-form button[type=submit]'));}
+  async function select(issuer){await master.page.goto(url+'/admin/company_context');await selectCompanyOption(master.page, String(issuer));await nav(master.page,master.page.locator('.company-selector-form button[type=submit]'));}
   for(const issuer of [setup.a,setup.b]){
    await select(issuer);assert.equal((await master.page.goto(own)).status(),200);assert.equal(await master.page.locator('#microsoft-sender').innerText(),'ms-'+issuer+'@example.invalid');
    const save=master.page.locator('form').filter({has:master.page.locator('#microsoft-tenant-id')});await save.locator('#microsoft-tenant-id').fill('11111111-1111-4111-8111-111111111111');await save.locator('#microsoft-client-id').fill('22222222-2222-4222-8222-'+String(issuer).padStart(12,'0'));await save.locator('#microsoft-client-secret').fill('synthetic-own-ms-'+issuer);await nav(master.page,save.locator('button[type=submit]'));assert.equal(await master.page.locator('#microsoft-client-secret').inputValue(),'');assert.ok(!(await master.page.content()).includes('synthetic-own-ms-'+issuer));assert.equal(await master.page.locator('#microsoft-status').innerText(),'Credenciais cadastradas');

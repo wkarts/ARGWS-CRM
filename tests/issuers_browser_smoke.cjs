@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
 // Real browser + real isolated CRM. This script refuses a public/production URL.
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
@@ -203,7 +204,7 @@ async function waitForUpgradeForm(page) {
       }
       const secondaryCompany = sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
       await page.goto(url + '/admin/company_context');
-      await page.locator('#company-context-select').selectOption(secondaryCompany);
+      await selectCompanyOption(page, secondaryCompany);
       await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('.company-selector-form button[type=submit]').click()]);
       assert.equal(await page.locator('#company-context-select').inputValue(), secondaryCompany);
       sql('DELETE FROM tblissuers_lock WHERE id=1');
@@ -233,7 +234,7 @@ async function waitForUpgradeForm(page) {
       assert.equal((await context.request.get(url + '/admin/settings?group=update')).status(), 403, 'native feedback never opens global Settings to a secondary company');
       await page.reload();
       assert(!(await page.content()).includes('O CRM foi atualizado com sucesso.'), 'secondary native success is one-shot');
-      await page.locator('#company-context-select').selectOption(primaryCompany);
+      await selectCompanyOption(page, primaryCompany);
       await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('.company-selector-form button[type=submit]').click()]);
       await shell(page);
     }

@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
 // Existing disposable native HTTP DB only. Google authorization redirect is inspected, never followed.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright'),fs=require('node:fs');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;
@@ -10,7 +11,7 @@ async function nav(page,button){await Promise.all([page.waitForNavigation({waitU
  execFileSync('docker',['exec',app,'mkdir','-p','/app/tests/settings','/app/tests/support']);
  for(const file of ['tests/settings/google_mail_http_fixture.php','tests/support/BbPdoDatabase.php'])execFileSync('docker',['cp',file,app+':/app/'+file]);
  const initial=JSON.parse(fixture('prepare'));await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));
- async function select(owner){await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(String(owner));await nav(page,page.locator('.company-selector-form button[type=submit]'));}
+ async function select(owner){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, String(owner));await nav(page,page.locator('.company-selector-form button[type=submit]'));}
  const own='/admin/company_google_mail_oauth';let stale;
  for(const owner of [initial.a,initial.b,initial.primary]){
   await select(owner);const response=await page.goto(url+own);assert.equal(response.status(),200);assert.equal(await page.locator('#google-sender').innerText(),'google-'+owner+'@example.invalid');

@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 // New recovery regression: actual shared form, cloned fields, optional flags, PDF and conversion.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),fs=require('node:fs'),{chromium}=require('playwright');
@@ -14,7 +15,7 @@ async function nav(page,button){await Promise.all([page.waitForNavigation({waitU
   await page.goto(base+'/admin/authentication');await page.locator('[name=email]').fill('admin-ci@example.invalid');await page.locator('[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));
   const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");assert.match(a,/^[1-9]\d*$/);assert.match(b,/^[1-9]\d*$/);
   const cashBefore=sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords');
-  async function select(issuer){await page.goto(base+'/admin/company_context');await page.locator('#company-context-select').selectOption(issuer);await nav(page,page.locator('.company-selector-form button[type=submit]'));}
+  async function select(issuer){await page.goto(base+'/admin/company_context');await selectCompanyOption(page, issuer);await nav(page,page.locator('.company-selector-form button[type=submit]'));}
   for(const [issuer,letter] of [[a,'a'],[b,'b']])for(const kind of ['estimates','proposals']){
    await select(issuer);const client=sql("SELECT c.userid FROM tblclients c JOIN tblissuers_clients o ON o.client_id=c.userid WHERE o.owner_issuer_id="+issuer+" AND c.company='Synthetic portal client "+letter+"' ORDER BY c.userid LIMIT 1");assert.match(client,/^[1-9]\d*$/);
    await page.goto(base+'/admin/company_sales?kind='+kind);await page.locator('#invoice-client').selectOption(client);await page.locator('#invoice-date').fill('2026-10-19');await page.locator('#invoice-due').fill('2026-11-19');

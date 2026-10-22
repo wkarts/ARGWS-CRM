@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
 const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
 // Real CRM HTTP + MySQL + Chromium. Restricted to the disposable standalone-upgrade stack.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright');
@@ -12,7 +13,7 @@ try{
  await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));
  const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'"),docs={},recurring={};
  const legacyBefore=sql('SELECT COALESCE(GROUP_CONCAT(CONCAT(id,":",clientid,":",total) ORDER BY id),"") FROM tblinvoices WHERE issuer_id IS NULL');
- async function select(id){await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(id);await nav(page,page.locator('.company-selector-form button[type=submit]'));}
+ async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);await nav(page,page.locator('.company-selector-form button[type=submit]'));}
  async function input(client,description){await page.locator('#invoice-client').selectOption(client);await page.locator('#invoice-currency').selectOption({label:'BRL'});await page.locator('#invoice-item-0-description').fill(description);await page.locator('#invoice-item-0-rate').fill('100.00');await page.locator('#invoice-item-0-tax-0-name').fill('ISS');await page.locator('#invoice-item-0-tax-0-rate').fill('5.00');await page.locator('#sales-discount-mode').selectOption('percent');await page.locator('#sales-discount-value').fill('10.00');await page.locator('#sales-discount-type').selectOption('before_tax');await page.locator('#sales-adjustment').fill('-0.01');}
  for(const[issuer,letter]of[[a,'a'],[b,'b']]){
   await select(issuer);const client=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client "+letter+"'");await page.goto(url+'/admin/company_sales?kind=estimates');await input(client,'Sales browser '+letter+' <script>');const form=page.locator('form').filter({has:page.locator('#invoice-client')});const oldCreate=await hidden(form);await nav(page,form.locator('button[type=submit]'));
