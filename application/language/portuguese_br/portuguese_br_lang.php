@@ -156,10 +156,10 @@ $lang['template_name']                = 'Nome do Modelo';
 $lang['template_subject']             = 'Assunto';
 $lang['template_fromname']            = 'Remetente';
 $lang['template_fromemail']           = 'Do E-mail';
-$lang['send_as_plain_text']           = 'Enviar como Plaintext';
+$lang['send_as_plain_text']           = 'Enviar como texto simples';
 $lang['email_template_disabled']      = 'Desabilitar';
 $lang['email_template_email_message'] = 'Mensagem do e-mail';
-$lang['available_merge_fields']       = 'Disponibilizar mesclagem dos campos';
+$lang['available_merge_fields']       = 'Campos de mesclagem disponíveis';
 # Home
 $lang['dashboard_string']                          = 'Painel';
 $lang['home_latest_todos']                         = 'Últimas tarefas';
@@ -2465,7 +2465,7 @@ $lang['task_filter_detailed_all_months']     = 'Todos os meses';
 $lang['kb_article_slug']                     = 'Slug';
 
 # Version 1.1.7
-$lang['email_template_ticket_warning']          = 'Se o ticket for importado com o direcionamento de email e o contato não existir no CRM os campos não serão substituidos.';
+$lang['email_template_ticket_warning']          = 'Se o chamado for importado por encaminhamento de e-mail e o contato não existir no CRM, os campos do contato não serão substituídos.';
 $lang['auto_stop_tasks_timers_on_new_timer']    = 'Parar todos os outros cronometros, quando começar um novo?';
 $lang['notification_when_customer_pay_invoice'] = 'Receber notificação quando cliente efetuar um pagamento (embutido)';
 $lang['not_invoice_payment_recorded']           = 'Novo pagamento de fatura - %s';
@@ -4195,3 +4195,41 @@ $lang['issuer_client_adoption_blocked'] = 'O cadastro e o compartilhamento priva
 
 $lang['permission_share_customer_companies'] = 'Compartilhar cadastro com outras empresas';
 $lang['issuer_staff_company_access_required'] = 'O colaborador não foi criado: selecione pelo menos uma empresa autorizada e uma empresa padrão. Se a instalação legada ainda não tem responsável definido, resolva a responsabilidade em Configurações > Empresas antes de cadastrar novos colaboradores.';
+
+$lang['email_template_public_ticket_url_warning'] = 'Este modelo contém o campo <strong>{ticket_public_url}</strong>, mas a URL pública do chamado está desativada nas configurações. Use <strong>{ticket_url}</strong> ou ative a URL pública do chamado.';
+$lang['email_template_other_models'] = 'Outros modelos';
+
+// Global staff identity: shared errors for native, API and company-atomic writers.
+$lang['issuer_staff_email_conflict'] = 'Este e-mail já pertence a outro colaborador. Nenhuma alteração foi aplicada.';
+$lang['issuer_staff_email_invalid'] = 'Informe um e-mail válido para o colaborador.';
+$lang['issuer_staff_extension_unreviewed'] = 'Uma extensão precisa de revisão transacional antes de salvar este perfil.';
+$lang['issuer_staff_write_unconfirmed'] = 'Não foi possível confirmar a gravação do perfil. Reabra o cadastro e tente novamente.';
+$lang['issuer_staff_native_rejected'] = 'A proteção do perfil recusou a alteração. Perfil e acessos foram preservados.';
+// Asaas155: company-scoped operational preferences.
+$lang['asaas_company_preferences_title'] = 'Preferências por ambiente';
+$lang['asaas_company_preferences_help'] = 'Somente novas cobranças usam o ambiente selecionado e seus meios habilitados. Alterar estas preferências não desabilita a outra conta, não altera credenciais e não modifica cobranças ou conciliações existentes.';
+$lang['asaas_company_preferences_upgrade'] = 'Atualize o módulo Asaas pela migration nativa 155 antes de configurar ou emitir novas cobranças. O histórico permanece disponível.';
+$lang['asaas_company_preferences_active'] = 'Ambiente para novas cobranças';
+$lang['asaas_company_preferences_none'] = 'Nenhum selecionado';
+$lang['asaas_company_preferences_tabs'] = 'Perfis Asaas da empresa';
+$lang['asaas_company_preferences_label'] = 'Nome de apresentação';
+$lang['asaas_company_preferences_description'] = 'Descrição de novas cobranças';
+$lang['asaas_company_preferences_description_help'] = 'Use {invoice_number} para incluir o número da fatura. A descrição enviada fica preservada na origem.';
+$lang['asaas_company_preferences_methods'] = 'Meios de pagamento para novas cobranças';
+$lang['asaas_company_preferences_limits'] = 'Moeda: BRL. Cartão: somente à vista. Juros, multa, desconto, prorrogação, atualização remota e parcelamento não estão disponíveis neste perfil.';
+$lang['asaas_company_preferences_save'] = 'Salvar preferências de %s';
+$lang['asaas_company_preferences_selected'] = 'Ambiente selecionado';
+$lang['asaas_company_preferences_select'] = 'Usar %s para novas cobranças';
+$lang['asaas_company_preferences_account_required'] = 'Cadastre, habilite e verifique a conta deste ambiente antes de selecioná-lo para emissão.';
+$lang['asaas_company_preferences_edit_required'] = 'É necessária a permissão de edição das definições desta empresa para alterar preferências.';
+$lang['asaas_company_preferences_saved'] = 'Preferências deste ambiente salvas. Cobranças existentes mantêm sua configuração original.';
+$lang['asaas_company_preferences_environment_saved'] = 'Ambiente selecionado para novas cobranças. As duas contas e o histórico foram preservados.';
+$lang['asaas_company_preferences_capabilities'] = 'Este fluxo por empresa usa BRL, cobranças integrais à vista e descrição vinculada à fatura. Os perfis abaixo configuram apresentação, descrição e meios de novas cobranças. Juros, multa, desconto, prorrogação e parcelamento continuam indisponíveis e não são herdados do gateway legado.';
+$lang['asaas_company_preferences_nav'] = 'Preferências';
+$lang['asaas_company_preferences_selection_required'] = 'Selecione explicitamente um ambiente com conta verificada nas preferências para emitir novas cobranças.';
+$lang['asaas_company_environment_production'] = 'Produção';
+$lang['asaas_company_environment_sandbox'] = 'Homologação';
+$lang['asaas_company_environment_invalid'] = 'Ambiente inválido';
+$lang['asaas_company_method_pix'] = 'Pix';
+$lang['asaas_company_method_boleto'] = 'Boleto';
+$lang['asaas_company_method_card'] = 'Cartão hospedado à vista';

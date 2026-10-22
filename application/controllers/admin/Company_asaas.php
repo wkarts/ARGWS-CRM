@@ -9,6 +9,9 @@ require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyPayers.php';
 require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyHostedLinks.php';
 require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyRefunds.php';
 require_once FCPATH.'modules/asaas/libraries/Asaas/ConfirmedFullRefund.php';
+require_once FCPATH.'modules/asaas/libraries/Asaas/WebhookAdminPresentation.php';
+require_once FCPATH.'modules/asaas/libraries/Asaas/SettingsPresentation.php';
+require_once APPPATH.'services/CompanyUiTranslation.php';
 
 /** Named-company UI only. The legacy gateway and its six tabs remain intact. */
 class Company_asaas extends AdminController
@@ -22,19 +25,39 @@ class Company_asaas extends AdminController
     public function index()
     {
         if(!class_exists('CompanyRequestScope',false)||!CompanyRequestScope::sealedFor($this)||!CompanySettingsRuntime::active()){show_error('Acesso negado.',403);return;}
-        $this->output->set_header('Cache-Control: no-store');
-        $issuer=CompanySettingsRuntime::issuerId();$actor=CompanySettingsRuntime::staffId();$service=new \Asaas\CompanyService($this->db,db_prefix());$error=null;$saved=null;$oneTime=null;
+        $translate=CompanyUiTranslation::translator();
+        $this->output->set_header('Cache-Control: no-store, private, max-age=0');
+        $this->output->set_header('Pragma: no-cache');
+        $this->output->set_header('Referrer-Policy: no-referrer');
+        $issuer=CompanySettingsRuntime::issuerId();$actor=CompanySettingsRuntime::staffId();$service=new \Asaas\CompanyService($this->db,db_prefix());$error=null;$saved=null;$oneTime=null;$revealedApiKey=null;
         try{$service->authorize($issuer,$actor,'view');}catch(Throwable $e){show_error('Integração indisponível ou acesso negado.',403);return;}
+        $webhookCsrf=$this->session->userdata('company_asaas_webhook_csrf');if(!is_string($webhookCsrf)||!preg_match('/^[a-f0-9]{64}$/D',$webhookCsrf)){$webhookCsrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_asaas_webhook_csrf',$webhookCsrf);}
+        $preferencesCsrf=$this->session->userdata('company_asaas_preferences_csrf');if(!is_string($preferencesCsrf)||!preg_match('/^[a-f0-9]{64}$/D',$preferencesCsrf)){$preferencesCsrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_asaas_preferences_csrf',$preferencesCsrf);}
         $refundCsrf=$this->session->userdata('company_asaas_refund_csrf');if(!is_string($refundCsrf)||!preg_match('/^[a-f0-9]{64}$/D',$refundCsrf)){$refundCsrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_asaas_refund_csrf',$refundCsrf);}
         try{
             if($this->input->method(true)==='POST'){
                 $post=$this->input->post(null,false);$action=$post['action']??'';
                 if(!is_string($action))throw new DomainException('asaas_company_invalid_input');
+                if(in_array($action,['rotate','reveal_webhook','reveal_api_key'],true)){
+                    if(!is_string($post['company_asaas_webhook_csrf']??null)||!hash_equals($webhookCsrf,$post['company_asaas_webhook_csrf'])){show_error('Reabra o formulário antes de acessar o token.',403);return;}
+                    if($action==='rotate'&&($post['confirm']??null)!=='1'){show_error('Confirme a substituição do token desta conta.',403);return;}
+                    foreach(['token','webhook_token','one_time_token','api_key'] as $field)if(array_key_exists($field,$post)){show_error('O token é gerado exclusivamente pelo CRM.',400);return;}
+                }
+                if(in_array($action,['save_profile','select_environment','issue'],true)&&(!is_string($post['company_asaas_preferences_csrf']??null)||!hash_equals($preferencesCsrf,$post['company_asaas_preferences_csrf'])))throw new DomainException('asaas_company_preferences_stale');
                 if(str_starts_with($action,'refund_')){if(($post['confirm']??null)!=='1'||!is_string($post['company_asaas_refund_csrf']??null)||!hash_equals($refundCsrf,$post['company_asaas_refund_csrf'])){show_error('Reabra o formulário e confirme esta ação no reembolso.',403);return;}}
                 $decrypt=fn($value)=>$this->encryption->decrypt($value);
                 switch($action){
+                    case 'save_profile':
+                        if(!is_array($post['profile']??null))throw new DomainException('asaas_company_profile_invalid');
+                        foreach(['environment','profile_revision','account_revision'] as $field)if(!is_string($post[$field]??null))throw new DomainException('asaas_company_profile_invalid');
+                        (new \Asaas\CompanyPreferences($this->db,db_prefix()))->saveProfile($issuer,$actor,(string)($post['environment']??''),$post['profile'],(string)($post['profile_revision']??''),(string)($post['account_revision']??''));$saved=$translate('asaas_company_preferences_saved');break;
+                    case 'select_environment':
+                        foreach(['environment','selection_revision','account_revision'] as $field)if(!is_string($post[$field]??null))throw new DomainException('asaas_company_profile_invalid');
+                        (new \Asaas\CompanyPreferences($this->db,db_prefix()))->selectEnvironment($issuer,$actor,(string)($post['environment']??''),(string)($post['selection_revision']??''),(string)($post['account_revision']??''));$saved=$translate('asaas_company_preferences_environment_saved');break;
                     case 'save_account':$service->saveAccount($issuer,$actor,(string)($post['environment']??''),(string)($post['account_id']??''),(string)($post['api_key']??''),(string)($post['revision']??''),fn($value)=>$this->encryption->encrypt($value));$saved='Credencial protegida. Confira a conta por API antes de emitir.';break;
                     case 'verify':$service->verifyAccount($issuer,$actor,$post['account_row']??null,(string)($post['revision']??''),$decrypt);$saved='A credencial confirmou a carteira configurada para este ambiente.';break;
+                    case 'reveal_api_key':$revealedApiKey=$service->revealApiKey($issuer,$actor,$post['account_row']??null,(string)($post['revision']??''),$decrypt);$saved='Chave API recuperada desta conta e ambiente; a credencial não foi alterada.';break;
+                    case 'reveal_webhook':$oneTime=$service->revealWebhook($issuer,$actor,$post['account_row']??null,(string)($post['revision']??''));$saved='Token recuperado desta conta e ambiente. Nenhum token foi alterado.';break;
                     case 'rotate':$oneTime=$service->rotateWebhook($issuer,$actor,$post['account_row']??null,(string)($post['revision']??''));$saved='Token local gerado. Cadastre o webhook manualmente no Asaas; nenhuma chamada de cadastro remoto foi executada.';break;
                     case 'disable':$service->disableAccount($issuer,$actor,$post['account_row']??null,(string)($post['revision']??''));$saved='Conta desabilitada. O token anterior foi revogado.';break;
                     case 'enable':$service->enableAccount($issuer,$actor,$post['account_row']??null,(string)($post['revision']??''));$saved='Conta habilitada para nova verificação; gere outro token após conferir a carteira.';break;
@@ -66,7 +89,9 @@ class Company_asaas extends AdminController
                         if($action==='refund_cancel'){$refundService->cancelReserved($issuer,$actor,$key);$saved='Somente a intenção local ainda não enviada foi cancelada. Histórico preservado.';}
                         else{$result=$action==='refund_dispatch'?$refundService->dispatch($issuer,$actor,$key,$decrypt):$refundService->refresh($issuer,$actor,$key,$decrypt);$saved='Estado observado: '.$result['state'].'. POST enviado não será repetido. Consulta não comprova reflexo financeiro local.';}break;
                     case 'fee':if(($post['confirm']??null)!=='1')throw new DomainException('asaas_company_confirmation_required');(new \Asaas\CompanyFeeExpense($this->db,db_prefix()))->post($issuer,$actor,$post['origin_id']??null,$post['proof_id']??null,$post['category_id']??null);$saved='Tarifa registrada como despesa da empresa com evidência canônica e vínculo imutável.';break;
-                    case 'issue':if(($post['billing_type']??null)==='CREDIT_CARD')$service->hostedCheckout($issuer,$actor,$post['invoice_id']??null,$post['account_row']??null,(string)($post['customer_id']??''),(string)($post['invoice_revision']??''),(string)($post['request_key']??''),$decrypt);else $service->issue($issuer,$actor,$post['invoice_id']??null,$post['account_row']??null,(string)($post['customer_id']??''),(string)($post['billing_type']??''),(string)($post['invoice_revision']??''),(string)($post['request_key']??''),$decrypt);$saved='Emissão observada. A criação da cobrança não comprova pagamento.';break;
+                    case 'issue':
+                        $preferences=['selection_revision'=>$post['selection_revision']??null,'profile_revision'=>$post['profile_revision']??null,'account_revision'=>$post['account_revision']??null];
+                        if(($post['billing_type']??null)==='CREDIT_CARD')$service->hostedCheckout($issuer,$actor,$post['invoice_id']??null,$post['account_row']??null,(string)($post['customer_id']??''),(string)($post['invoice_revision']??''),(string)($post['request_key']??''),$decrypt,null,1,$preferences);else $service->issue($issuer,$actor,$post['invoice_id']??null,$post['account_row']??null,(string)($post['customer_id']??''),(string)($post['billing_type']??''),(string)($post['invoice_revision']??''),(string)($post['request_key']??''),$decrypt,null,$preferences);$saved='Emissão observada. A criação da cobrança não comprova pagamento.';break;
                     case 'query':$service->query($issuer,$actor,$post['origin_id']??null,$decrypt,null,(string)($post['recovery_id']??''));$saved='Consulta canônica persistida; nenhum pagamento foi lançado por esta ação.';break;
                     case 'settle':
                         if(($post['confirm']??null)!=='1')throw new DomainException('asaas_company_confirmation_required');
@@ -74,6 +99,7 @@ class Company_asaas extends AdminController
                     default:throw new DomainException('asaas_company_invalid_input');
                 }
             }
+            if($oneTime!==null||$revealedApiKey!==null){$webhookCsrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_asaas_webhook_csrf',$webhookCsrf);}
             $data=$service->overview($issuer,$actor);
         }catch(DomainException $e){$this->output->set_status_header(str_contains($e->getMessage(),'stale')?409:422);$error='Não foi possível concluir. Confira a empresa, permissões, ambiente, revisão e estado da operação. Recarregue antes de repetir.';$data=$service->overview($issuer,$actor);}
         catch(Throwable $e){$this->output->set_status_header(503);$error='Operação não confirmada. Uma operação remota incerta não deve ser repetida: consulte a cobrança para confirmar seu estado.';try{$data=$service->overview($issuer,$actor);}catch(Throwable $ignored){show_error('Integração indisponível. Confira a ativação e as migrations do módulo.',503);return;}}
@@ -85,7 +111,10 @@ class Company_asaas extends AdminController
             if($refundReady&&$selectedRefund!==null){$refundService=new \Asaas\CompanyRefunds($this->db,db_prefix());$refundPanel=$refundService->page($issuer,$actor,$selectedRefund);if($canRefund){try{$refundGrant=$refundService->grantForActor($issuer,$actor,$refundPanel['source']['account_row']);}catch(DomainException $unavailable){$refundGrant=null;}}}
         }catch(DomainException $denied){show_error('Reembolso indisponível nesta empresa ou sem permissão.',403);return;}
         catch(Throwable $unavailable){$this->output->set_status_header(503);$error='Histórico de reembolso indisponível para conferência. Nenhum envio adicional deve ser iniciado.';}
-        $base=(string)config_item('base_url');$parts=parse_url($base);$trusted=is_array($parts)&&($parts['scheme']??'')==='https'&&!isset($parts['user'])&&!isset($parts['pass'])&&!isset($parts['query'])&&!isset($parts['fragment']);
-        $this->load->view('admin/companies/asaas',$data+['full_refund_ready'=>$fullRefundReady,'refund_ready'=>$refundReady,'refund_panel'=>$refundPanel,'refund_grant'=>$refundGrant,'can_refund'=>$canRefund,'refund_actor'=>$actor,'refund_csrf'=>$refundCsrf,'refund_request_key'=>bin2hex(random_bytes(32)),'checkout_ready'=>$checkoutReady,'can_payer'=>$canPayer,'payers'=>$payers,'error'=>$error,'saved'=>$saved,'one_time'=>$oneTime,'invoice'=>$invoice,'can_configure'=>CompanySettingsRuntime::canResource('settings','edit'),'can_remove'=>CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('invoices','edit')&&CompanySettingsRuntime::canResource('invoices','delete')&&CompanySettingsRuntime::canResource('settings','edit'),'can_fee'=>CompanySettingsRuntime::canResource('expenses','view')&&CompanySettingsRuntime::canResource('expenses','create')&&CompanySettingsRuntime::canResource('payments','create'),'can_settle'=>CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('payments','create'),'can_issue'=>CompanySettingsRuntime::canResource('invoices','edit')&&CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('customers','view'),'context_token'=>CompanyRequestScope::token(),'action_url'=>CompanyRequestScope::adminUrl($this,'company_asaas'),'callback_base'=>$trusted?rtrim($base,'/').'/company_asaas_callback/integration/':null]);
+        $preferences=(new \Asaas\CompanyPreferences($this->db,db_prefix()))->page($issuer,$actor);
+        $base=defined('APP_BASE_URL')?(string)APP_BASE_URL:'';$indexPage=(string)$this->config->item('index_page');
+        $callbackUrls=[];foreach($data['accounts'] as $account)$callbackUrls[(int)$account['id']]=\Asaas\WebhookAdminPresentation::companyCallbackUrl($base,$account['webhook_public_id'],$indexPage);
+        $canWebhook=false;try{$service->authorizeWebhook($issuer,$actor);$canWebhook=true;}catch(DomainException $denied){}
+        $this->load->view('admin/companies/asaas',$data+['translate'=>$translate,'preferences'=>$preferences,'preferences_active_tab'=>$post['environment']??null,'preferences_csrf'=>$preferencesCsrf,'revealed_api_key'=>$revealedApiKey,'api_urls'=>\Asaas\SettingsPresentation::apiUrls(),'webhook_csrf'=>$webhookCsrf,'can_webhook'=>$canWebhook,'callback_urls'=>$callbackUrls,'full_refund_ready'=>$fullRefundReady,'refund_ready'=>$refundReady,'refund_panel'=>$refundPanel,'refund_grant'=>$refundGrant,'can_refund'=>$canRefund,'refund_actor'=>$actor,'refund_csrf'=>$refundCsrf,'refund_request_key'=>bin2hex(random_bytes(32)),'checkout_ready'=>$checkoutReady,'can_payer'=>$canPayer,'payers'=>$payers,'error'=>$error,'saved'=>$saved,'one_time'=>$oneTime,'invoice'=>$invoice,'can_configure'=>CompanySettingsRuntime::canResource('settings','edit'),'can_remove'=>CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('invoices','edit')&&CompanySettingsRuntime::canResource('invoices','delete')&&CompanySettingsRuntime::canResource('settings','edit'),'can_fee'=>CompanySettingsRuntime::canResource('expenses','view')&&CompanySettingsRuntime::canResource('expenses','create')&&CompanySettingsRuntime::canResource('payments','create'),'can_settle'=>CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('payments','create'),'can_issue'=>CompanySettingsRuntime::canResource('invoices','edit')&&CompanySettingsRuntime::canResource('invoices','view')&&CompanySettingsRuntime::canResource('customers','view'),'context_token'=>CompanyRequestScope::token(),'action_url'=>CompanyRequestScope::adminUrl($this,'company_asaas')]);
     }
 }

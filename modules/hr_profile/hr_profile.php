@@ -5,7 +5,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: Registros de RH (Recursos Humanos) 2024 v1.0.9
 Description: A função principal dos Registros de RH é fornecer um banco de dados central contendo os registros de todos os funcionários, tanto atuais quanto antigos.
-Version: 1.0.9
+Version: 1.1.0
 Requires at least: 2.3.*
 Author: Wkarts
 Author URI: https://t.me/wkartspro

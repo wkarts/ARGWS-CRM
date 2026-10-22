@@ -11,6 +11,7 @@ on:
       - application/services/CompanyBankReversalSchema.php
       - tests/asaas_*.php
       - tests/asaas_*.test.js
+      - tests/asaas_*.test.cjs
       - .github/workflows/asaas-payment-origin.yml
   push:
     branches: [main, develop, fix/asaas-webhook-scope-auth]
@@ -23,6 +24,7 @@ on:
       - application/services/CompanyBankReversalSchema.php
       - tests/asaas_*.php
       - tests/asaas_*.test.js
+      - tests/asaas_*.test.cjs
       - .github/workflows/asaas-payment-origin.yml
 permissions:
   contents: read
@@ -55,7 +57,12 @@ jobs:
           php tests/asaas_webhook_admin.php
           php tests/asaas_hosted_card.php
           php tests/asaas_hosted_card_gateway.php
+          php tests/asaas_customer_contact_policy.php
+          php tests/asaas_mutation_no_retry.php
           php tests/asaas_settings_policy.php
+          php tests/asaas_environment_profiles.php
+          php tests/asaas_settings_presentation.php
+          php tests/asaas_webhook_tokens.php
           php tests/asaas_payment_writer.php
           php tests/asaas_payment_writer_entrypoints.php
   mysql:
@@ -82,6 +89,9 @@ jobs:
         run: |
           php tests/asaas_payment_origin_schema.php
           php tests/asaas_webhook_schema.php
+          php tests/asaas_webhook_token_schema.php
+          php tests/asaas_module_migration_154.php
+          php tests/asaas_module_migration_155.php
           php tests/asaas_module_migrations.php
           php tests/asaas_callback_migration.php
           php tests/asaas_payment_writer_mysql.php
@@ -93,6 +103,8 @@ jobs:
       - name: Validar abas em JavaScript e DOM Chromium local
         run: |
           node --check modules/asaas/assets/js/settings-tabs.js
+          node --check tests/companies/asaas_preferences_real_browser.cjs
+          node --test tests/asaas_preferences_real_browser.test.cjs
           chrome="$(command -v google-chrome)"
           test -n "$chrome"
           CHROMIUM_BIN="$chrome" ASAAS_UI_SCREENSHOT=artifacts/asaas-settings.png node tests/asaas_settings_tabs.test.js

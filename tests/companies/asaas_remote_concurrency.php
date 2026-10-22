@@ -1,6 +1,7 @@
 <?php
 /** Two independent native DB sessions contend for one durable remote mutation. Provider is simulated. */
 require_once dirname(__DIR__).'/issuers_core_support.php';require_once APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyRemoteOperations.php';
+require_once __DIR__.'/asaas_job_transport_fixture.php';
 if(!str_starts_with(getenv('ISSUERS_TEST_DSN')?:'','mysql:'))exit(2);
 function asaasRemoteConnection(string $p):EssentialTestDb{return new EssentialTestDb(new PDO(getenv('ISSUERS_TEST_DSN'),getenv('ISSUERS_TEST_USER'),getenv('ISSUERS_TEST_PASSWORD')),$p);}
 if(($argv[1]??'')==='worker'){
@@ -9,10 +10,10 @@ if(($argv[1]??'')==='worker'){
         if($db->pdo->inTransaction())throw new LogicException('fixture HTTP under transaction');$letter=str_contains($secret,'key-A')?'A':'B';
         if($path==='wallets/')return ['data'=>[['id'=>'wallet-'.$letter]],'hasMore'=>false];
         if(str_starts_with($path,'customers/'))return ['id'=>substr($path,10),'cpfCnpj'=>$letter==='A'?'11144477735':'12345678909','deleted'=>false];
-        $remote=substr($path,9);$row=$db->query('SELECT o.*,m.customer_id,m.billing_type FROM '.$p.'asaas_payment_origins o JOIN '.$p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.remote_id=? AND o.account_id=? AND o.environment=?',[$remote,'wallet-'.$letter,$environment])->row_array();if(!$row)throw new LogicException('fixture identity missing');
+        $remote=substr($path,9);$row=$db->query('SELECT o.*,m.customer_id,m.billing_type,m.account_row,m.snapshot_json AS invoice_snapshot_json FROM '.$p.'asaas_payment_origins o JOIN '.$p.'asaas_company_origin_meta m ON m.origin_id=o.id WHERE o.remote_id=? AND o.account_id=? AND o.environment=?',[$remote,'wallet-'.$letter,$environment])->row_array();if(!$row)throw new LogicException('fixture identity missing');
         if($method==='DELETE'){$state=$db->query('SELECT state FROM '.$p.'asaas_company_remote_operations WHERE origin_id=?',[$row['id']])->row()->state;if($state!=='sending')throw new LogicException('delete without durable sending intention');file_put_contents($in['evidence'],$remote."\n",FILE_APPEND|LOCK_EX);return ['id'=>$remote,'deleted'=>true];}
         $deleted=in_array($remote,is_file($in['evidence'])?file($in['evidence'],FILE_IGNORE_NEW_LINES):[],true);
-        return ['id'=>$remote,'customer'=>$row['customer_id'],'billingType'=>$row['billing_type'],'externalReference'=>$row['invoice_hash'],'value'=>$row['invoice_total'],'dueDate'=>$row['invoice_due_date'],'status'=>'PENDING','netValue'=>$row['invoice_total'],'paymentDate'=>'','creditDate'=>'','deleted'=>$deleted];
+        return asaasOriginDescriptionFixture($db,$p,$row)+['id'=>$remote,'customer'=>$row['customer_id'],'billingType'=>$row['billing_type'],'externalReference'=>$row['invoice_hash'],'value'=>$row['invoice_total'],'dueDate'=>$row['invoice_due_date'],'status'=>'PENDING','netValue'=>$row['invoice_total'],'paymentDate'=>'','creditDate'=>'','deleted'=>$deleted];
     };
     try{echo json_encode((new \Asaas\CompanyRemoteOperations($db,$p))->remove($in['issuer'],7,$in['origin'],$in['key'],fn($v)=>str_starts_with($v,'synthetic:')?base64_decode(substr($v,10),true):false,$transport),JSON_THROW_ON_ERROR);}catch(DomainException $e){if($e->getMessage()!=='asaas_company_access_denied')throw $e;echo 'denied';}exit(0);
 }

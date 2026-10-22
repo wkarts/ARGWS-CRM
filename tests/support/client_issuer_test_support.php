@@ -123,6 +123,9 @@ $GLOBALS['hooks'] = new class {
     public function do_action($name, ...$args) { $GLOBALS['effects'][] = $name; }
 };
 $pdo = new PDO('sqlite::memory:'); $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+// Synthetic staff emails are ASCII. This adapter enables the real identity SQL;
+// it is not a proof of MySQL/MariaDB Unicode collation semantics.
+$pdo->sqliteCreateCollation('utf8mb4_unicode_ci', static fn($a, $b) => strcasecmp($a, $b));
 $concat = fn(...$parts) => implode('', $parts);
 if (method_exists($pdo, 'createFunction')) { $pdo->createFunction('CONCAT', $concat); } else { @$pdo->sqliteCreateFunction('CONCAT', $concat); }
 $pdo->exec("CREATE TABLE q_clients(userid INTEGER PRIMARY KEY,company TEXT,vat TEXT,country INT,active INT DEFAULT 1,default_currency INT DEFAULT 1,show_primary_contact INT DEFAULT 0,billing_country INT DEFAULT 0,shipping_country INT DEFAULT 0,address TEXT DEFAULT '',billing_street TEXT DEFAULT '',billing_city TEXT DEFAULT '',billing_state TEXT DEFAULT '',billing_zip TEXT DEFAULT '',shipping_street TEXT DEFAULT '',shipping_city TEXT DEFAULT '',shipping_state TEXT DEFAULT '',shipping_zip TEXT DEFAULT '');

@@ -1,0 +1,752 @@
+{
+  "task-added-attachment-to-contacts": [
+    {
+      "name": "Anexo incluído na tarefa — cliente",
+      "subject": "Novo anexo na tarefa — {task_name}",
+      "source_name": "New Attachment on Task (Sent to Customer Contacts)",
+      "source_subject": "New Attachment on Task - {task_name}",
+      "source_message": "<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Hi {contact_firstname} {contact_lastname}</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">{task_user_take_action} added an attachment on the following task:</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\"><span style=\"background-color: inherit;\">Name: </span>{task_name}</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\"><span style=\"background-color: inherit;\">Description: </span><span style=\"background-color: inherit;\">{task_description}</span></span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Please click on the following link to view: <span style=\"background-color: inherit;\">{task_link}</span></span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Kind regards,</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">{email_signature}</span></div>",
+      "type": "tasks",
+      "module": null,
+      "source_file": "application/migrations/129_version_129.php",
+      "source_line": 258
+    }
+  ],
+  "task-commented-to-contacts": [
+    {
+      "name": "Comentário em tarefa — cliente",
+      "subject": "Novo comentário na tarefa — {task_name}",
+      "source_name": "New Comment on Task (Sent to Customer Contacts)",
+      "source_subject": "New Comment on Task - {task_name}",
+      "source_message": "<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Dear {contact_firstname} {contact_lastname}</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">A comment has been made on the following task:</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Name: &nbsp;{task_name}</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Description: &nbsp;{task_description}<br />Comment: {task_comment}</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Click on the following link to view: {task_link}</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Kind regards,</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">{email_signature}</span></div>",
+      "type": "tasks",
+      "module": null,
+      "source_file": "application/migrations/129_version_129.php",
+      "source_line": 263
+    }
+  ],
+  "send-contract": [
+    {
+      "name": "Envio de contrato ao cliente",
+      "subject": "Contrato — {contract_subject}",
+      "source_name": "Send contract to customer",
+      "source_subject": "Contract - {contract_subject}",
+      "source_message": "<p>Hi&nbsp;{client_company}</p>\r\n<p>Please find the {contract_subject}&nbsp;attached.</p>\r\n<p>&nbsp;</p>\r\n<p>Regards,</p>\r\n<p>{email_signature}</p>",
+      "type": "contract",
+      "module": null,
+      "source_file": "application/migrations/112_version_112.php",
+      "source_line": 16
+    }
+  ],
+  "two-factor-authentication": [
+    {
+      "name": "Confirmação de autenticação em dois fatores",
+      "subject": "Confirme seu acesso",
+      "source_name": "Two Factor Authentication",
+      "source_subject": "Confirm Your Login",
+      "source_message": "<p>Hello {staff_firstname}</p>\r\n<p style=\"text-align: left;\">You received this email because you have enabled two factor authentication in your account.<br />Use the following code to confirm your login:</p>\r\n<p style=\"text-align: left;\"><span style=\"font-size: 18pt;\"><strong>{two_factor_auth_code}<br /><br /></strong><span style=\"font-size: 12pt;\">{email_signature}</span><strong><br /><br /><br /><br /></strong></span></p>",
+      "type": "staff",
+      "module": null,
+      "source_file": "application/migrations/190_version_190.php",
+      "source_line": 50
+    }
+  ],
+  "client-statement": [
+    {
+      "name": "Extrato de conta do cliente",
+      "subject": "Extrato de conta de {statement_from} a {statement_to}",
+      "source_name": "Statement - Account Summary",
+      "source_subject": "Account Statement from {statement_from} to {statement_to}",
+      "source_message": "Dear {contact_firstname} {contact_lastname}, <br /><br />Its been a great experience working with you.<br /><br />Attached with this email is a list of all transactions for the period between {statement_from} to {statement_to}<br /><br />For your information your account balance due is total:&nbsp;{statement_balance_due}<br /><br />Please contact us if you need more information.<br /> <br />Kind regards,<br /> <br />{email_signature}",
+      "type": "client",
+      "module": null,
+      "source_file": "application/migrations/180_version_180.php",
+      "source_line": 52
+    }
+  ],
+  "ticket-assigned-to-admin": [
+    {
+      "name": "Novo chamado atribuído — equipe",
+      "subject": "Um chamado de suporte foi atribuído a você",
+      "source_name": "New Ticket Assigned (Sent to Staff)",
+      "source_subject": "New support ticket has been assigned to you",
+      "source_message": "<p><span style=\"font-size: 12pt;\">Hi.</span></p>\r\n<p><span style=\"font-size: 12pt;\">A new support ticket&nbsp;has been assigned to you.</span><br /> <br /><span style=\"font-size: 12pt;\"><strong>Subject</strong>: {ticket_subject}</span><br /><span style=\"font-size: 12pt;\"><strong>Department</strong>: {ticket_department}</span><br /><span style=\"font-size: 12pt;\"><strong>Priority</strong>: {ticket_priority}</span><br /> <br /><span style=\"font-size: 12pt;\"><strong>Ticket message:</strong></span><br /><span style=\"font-size: 12pt;\">{ticket_message}</span><br /> <br /><span style=\"font-size: 12pt;\">You can view the ticket on the following link: <a href=\"{ticket_url}\">#{ticket_id}</a></span><br /> <br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span></p>",
+      "type": "ticket",
+      "module": null,
+      "source_file": "application/migrations/180_version_180.php",
+      "source_line": 55
+    }
+  ],
+  "contract-signed-to-staff": [
+    {
+      "name": "Contrato assinado — equipe",
+      "subject": "O cliente assinou o contrato",
+      "source_name": "Contract Signed (Sent to Staff)",
+      "source_subject": "Customer Signed a Contract",
+      "source_message": "Hello&nbsp;{staff_firstname}&nbsp;{staff_lastname}<br /><br />A contract with subject&nbsp;<strong>{contract_subject} </strong>has been successfully signed by the customer.<br /><br />You can view and reply to the comment on the following link: <a href=\"{contract_link}\">{contract_subject}</a>&nbsp;or from the admin area.<br /><br />{email_signature}",
+      "type": "contract",
+      "module": null,
+      "source_file": "application/migrations/210_version_210.php",
+      "source_line": 17
+    }
+  ],
+  "new-staff-created": [
+    {
+      "name": "Boas-vindas ao novo colaborador",
+      "subject": "Seu acesso como colaborador foi criado",
+      "source_name": "New Staff Created (Welcome Email)",
+      "source_subject": "You are added as staff member",
+      "source_message": "Hello&nbsp;{staff_firstname}&nbsp;{staff_lastname}<br /><br />You are added as member on our CRM.<br />You can login at {admin_url}<br /><br />Please use the following&nbsp;logic credentials:<br /><br />Email:&nbsp;{staff_email}<br />Password:&nbsp;{password}<br /><br />Best Regards,<br />{email_signature}",
+      "type": "staff",
+      "module": null,
+      "source_file": "application/migrations/127_version_127.php",
+      "source_line": 357
+    }
+  ],
+  "contact-forgot-password": [
+    {
+      "name": "Recuperação de senha — contato",
+      "subject": "Crie uma nova senha",
+      "source_name": "Forgot Password",
+      "source_subject": "Create New Password",
+      "source_message": "<h2>Create a new password</h2>\r\nForgot your password?<br /> To create a new password, just follow this link:<br /> <br /> <big><strong>{reset_password_url}</strong></big><br /> <br /> You received this email, because it was requested by a {companyname}&nbsp;user. This is part of the procedure to create a new password on the system. If you DID NOT request a new password then please ignore this email and your password will remain the same. <br /><br /> {email_signature}",
+      "type": "client",
+      "module": null,
+      "source_file": "application/migrations/127_version_127.php",
+      "source_line": 445
+    }
+  ],
+  "contact-password-reseted": [
+    {
+      "name": "Confirmação de redefinição de senha — contato",
+      "subject": "Sua senha foi alterada",
+      "source_name": "Password Reset - Confirmation",
+      "source_subject": "Your password has been changed",
+      "source_message": "<strong>You have changed your password.<br /></strong><br /> Please, keep it in your records so you don't forget it.<br /> <br /> Your email address for login is: {contact_email}<br />If this wasnt you, please contact us.<br /><br />{email_signature}",
+      "type": "client",
+      "module": null,
+      "source_file": "application/migrations/127_version_127.php",
+      "source_line": 446
+    }
+  ],
+  "contact-set-password": [
+    {
+      "name": "Definição de senha — contato",
+      "subject": "Defina sua senha em {companyname}",
+      "source_name": "Set New Password",
+      "source_subject": "Set new password on {companyname} ",
+      "source_message": "<h2>Setup your new password on {companyname}</h2>\r\nPlease use the following link to setup your new password.<br /><br />Keep it in your records so you don't forget it.<br /><br /> Please set your new password in 48 hours. After that you wont be able to set your password. <br /><br />You can login at: {crm_url}<br /> Your email address for login: {contact_email}<br /> <br /><big><strong>{set_password_url}</strong></big><br /> <br />{email_signature}",
+      "type": "client",
+      "module": null,
+      "source_file": "application/migrations/127_version_127.php",
+      "source_line": 447
+    }
+  ],
+  "staff-forgot-password": [
+    {
+      "name": "Recuperação de senha — colaborador",
+      "subject": "Crie uma nova senha",
+      "source_name": "Forgot Password",
+      "source_subject": "Create New Password",
+      "source_message": "<h2>Create a new password</h2>\r\nForgot your password?<br /> To create a new password, just follow this link:<br /> <br /> <big><strong>{reset_password_url}</strong></big><br /> <br /> You received this email, because it was requested by a {companyname}&nbsp;user. This is part of the procedure to create a new password on the system. If you DID NOT request a new password then please ignore this email and your password will remain the same. <br /><br /> {email_signature}",
+      "type": "staff",
+      "module": null,
+      "source_file": "application/migrations/127_version_127.php",
+      "source_line": 448
+    }
+  ],
+  "staff-password-reseted": [
+    {
+      "name": "Confirmação de redefinição de senha — colaborador",
+      "subject": "Sua senha foi alterada",
+      "source_name": "Password Reset - Confirmation",
+      "source_subject": "Your password has been changed",
+      "source_message": "<strong>You have changed your password.<br /></strong><br /> Please, keep it in your records so you don't forget it.<br /> <br /> Your email address for login is: {staff_email}<br /> If this wasnt you, please contact us.<br /><br />{email_signature}",
+      "type": "staff",
+      "module": null,
+      "source_file": "application/migrations/127_version_127.php",
+      "source_line": 449
+    }
+  ],
+  "assigned-to-project": [
+    {
+      "name": "Novo projeto criado — cliente",
+      "subject": "Novo projeto criado",
+      "source_name": "New Project Created (Sent to Customer Contacts)",
+      "source_subject": "New Project Created",
+      "source_message": "<p>Hello&nbsp;{contact_firstname}</p>\r\n<p>New project is assigned to your company.<br />Project Name:&nbsp;{project_name}</p>\r\n<p>You can view the project on the following link:{project_link}</p>\r\n<p>We are looking forward hearing from you.</p>\r\n<p>{email_signature}</p>",
+      "type": "project",
+      "module": null,
+      "source_file": "application/migrations/127_version_127.php",
+      "source_line": 452
+    }
+  ],
+  "task-deadline-notification": [
+    {
+      "name": "Lembrete de prazo de tarefa",
+      "subject": "Lembrete de prazo da tarefa",
+      "source_name": "Task Deadline Reminder - Sent to assignees",
+      "source_subject": "Task Deadline Reminder",
+      "source_message": "<div>Hi {staff_firstname}</div><div><br></div><div>This is an automated email from <span style=\"font-family: Helvetica, Arial, sans-serif;\">{companyname}.</span></div><div>The task <span style=\"font-family: Helvetica, Arial, sans-serif;\">{task_name} deadline is on {task_duedate}. This task is still not finished.</span></div><div><br></div><div><span style=\"font-family: Helvetica, Arial, sans-serif;\">Please click on the following link to view: </span><span style=\"font-family: Helvetica, Arial, sans-serif; background-color: inherit;\">{task_link}</span></div><div><br></div><div>{email_signature}</div>",
+      "type": "tasks",
+      "module": null,
+      "source_file": "application/migrations/109_version_109.php",
+      "source_line": 180
+    }
+  ],
+  "estimate-send-to-client": [
+    {
+      "name": "Envio de orçamento ao cliente",
+      "subject": "{estimate_number} - {companyname}",
+      "source_name": "When sending estimate to client",
+      "source_subject": "{estimate_number} - {companyname}",
+      "source_message": "<p>Dear {client_firstname}&nbsp;{client_lastname}<br /><br />Find the estimate with number {estimate_number} on attach.<br />This estimate&nbsp;is with status:&nbsp;<strong>{estimate_status}</strong><br /><br />We look forward to doing more business with you.<br />Best Regards</p>\r\n<p>{email_signature}</p>",
+      "type": "estimate",
+      "module": null,
+      "source_file": "application/migrations/102_version_102.php",
+      "source_line": 106
+    },
+    {
+      "name": "Envio de orçamento ao cliente",
+      "subject": "{estimate_number} - {companyname}",
+      "source_name": "When sending estimate to client",
+      "source_subject": "{estimate_number} - {companyname}",
+      "source_message": "<p>Dear {contact_firstname}&nbsp;{contact_lastname}<br /><br />Find the estimate with number {estimate_number} on attach.<br />This estimate&nbsp;is with status:&nbsp;<strong>{estimate_status}</strong><br /><br />We look forward to doing more business with you.<br />Best Regards</p>\r\n<p>{email_signature}</p>",
+      "type": "estimate",
+      "module": null,
+      "source_file": "application/migrations/102_version_102.php",
+      "source_line": 106,
+      "derived_by": "application/migrations/111_version_111.php:165-167"
+    }
+  ],
+  "estimate-already-send": [
+    {
+      "name": "Reenvio de orçamento ao cliente",
+      "subject": "Segue o orçamento solicitado",
+      "source_name": "Estimate Already Send to Client",
+      "source_subject": "On your command here is the estimate",
+      "source_message": "<p>On your command here is the estimate you asked for.<br />{estimate_number}<br />{email_signature}</p>",
+      "type": "estimate",
+      "module": null,
+      "source_file": "application/migrations/102_version_102.php",
+      "source_line": 107
+    }
+  ],
+  "ticket-reply-to-admin": [
+    {
+      "name": "Resposta ao chamado — equipe",
+      "subject": "Nova resposta ao chamado",
+      "source_name": "Ticket Reply (To admin)",
+      "source_subject": "New Ticket Reply",
+      "source_message": "{signature}",
+      "type": "ticket",
+      "module": null,
+      "source_file": "application/migrations/102_version_102.php",
+      "source_line": 108
+    }
+  ],
+  "estimate-declined-to-staff": [
+    {
+      "name": "Orçamento recusado — equipe",
+      "subject": "Cliente recusou o orçamento",
+      "source_name": "Estimate Declined (Sent to Staff)",
+      "source_subject": "Customer Declined Estimate",
+      "source_message": "<div>Hello.</div><div><br></div><div>Customer (<span style=\"font-family: Helvetica, Arial, sans-serif; background-color: inherit;\">{client_firstname} {client_lastname}</span>) declined estimate with number <span style=\"font-family: Helvetica, Arial, sans-serif; background-color: inherit;\">{estimate_number}</span></div><div><br></div><div>You can view the estimate on the following link <span style=\"font-family: Helvetica, Arial, sans-serif; background-color: inherit;\">{estimate_link}</span></div><div><br></div><div>{email_signature}</div><div><br></div>",
+      "type": "estimate",
+      "module": null,
+      "source_file": "application/migrations/107_version_107.php",
+      "source_line": 118
+    },
+    {
+      "name": "Orçamento recusado — equipe",
+      "subject": "Cliente recusou o orçamento",
+      "source_name": "Estimate Declined (Sent to Staff)",
+      "source_subject": "Customer Declined Estimate",
+      "source_message": "<div>Hello.</div><div><br></div><div>Customer (<span style=\"font-family: Helvetica, Arial, sans-serif; background-color: inherit;\">{contact_firstname} {contact_lastname}</span>) declined estimate with number <span style=\"font-family: Helvetica, Arial, sans-serif; background-color: inherit;\">{estimate_number}</span></div><div><br></div><div>You can view the estimate on the following link <span style=\"font-family: Helvetica, Arial, sans-serif; background-color: inherit;\">{estimate_link}</span></div><div><br></div><div>{email_signature}</div><div><br></div>",
+      "type": "estimate",
+      "module": null,
+      "source_file": "application/migrations/107_version_107.php",
+      "source_line": 118,
+      "derived_by": "application/migrations/111_version_111.php:165-167"
+    }
+  ],
+  "estimate-accepted-to-staff": [
+    {
+      "name": "Orçamento aprovado — equipe",
+      "subject": "Cliente aprovou o orçamento",
+      "source_name": "Estimate Accepted (Sent to Staff)",
+      "source_subject": "Customer Accepted Estimate",
+      "source_message": "<div>Hello.</div><div><br></div><div>Customer (<span style=\"font-family: Helvetica, Arial, sans-serif; background-color: inherit;\">{client_firstname} {client_lastname}</span>) accepted estimate with number <span style=\"font-family: Helvetica, Arial, sans-serif; background-color: inherit;\">{estimate_number}</span></div><div><br></div><div>You can view the estimate on the following link <span style=\"font-family: Helvetica, Arial, sans-serif; background-color: inherit;\">{estimate_link}</span></div><div><br></div><div>{email_signature}</div>",
+      "type": "estimate",
+      "module": null,
+      "source_file": "application/migrations/107_version_107.php",
+      "source_line": 119
+    },
+    {
+      "name": "Orçamento aprovado — equipe",
+      "subject": "Cliente aprovou o orçamento",
+      "source_name": "Estimate Accepted (Sent to Staff)",
+      "source_subject": "Customer Accepted Estimate",
+      "source_message": "<div>Hello.</div><div><br></div><div>Customer (<span style=\"font-family: Helvetica, Arial, sans-serif; background-color: inherit;\">{contact_firstname} {contact_lastname}</span>) accepted estimate with number <span style=\"font-family: Helvetica, Arial, sans-serif; background-color: inherit;\">{estimate_number}</span></div><div><br></div><div>You can view the estimate on the following link <span style=\"font-family: Helvetica, Arial, sans-serif; background-color: inherit;\">{estimate_link}</span></div><div><br></div><div>{email_signature}</div>",
+      "type": "estimate",
+      "module": null,
+      "source_file": "application/migrations/107_version_107.php",
+      "source_line": 119,
+      "derived_by": "application/migrations/111_version_111.php:165-167"
+    }
+  ],
+  "proposal-client-accepted": [
+    {
+      "name": "Proposta aprovada — equipe",
+      "subject": "Cliente aprovou a proposta",
+      "source_name": "Customer Action - Accepted (Sent to Staff)",
+      "source_subject": "Customer Accepted Proposal",
+      "source_message": "<div>Customer <span style=\"font-family: Helvetica, Arial, sans-serif;\">{proposal_proposal_to}</span> Accepted Proposal</div><div><br></div><div>View the proposal on the following link: {proposal_link}</div><div><br></div><div>{email_signature}</div><div><br></div>",
+      "type": "proposals",
+      "module": null,
+      "source_file": "application/migrations/107_version_107.php",
+      "source_line": 120
+    }
+  ],
+  "proposal-send-to-customer": [
+    {
+      "name": "Envio de proposta ao cliente",
+      "subject": "Proposta",
+      "source_name": "Proposal Send to Customer",
+      "source_subject": "Proposal",
+      "source_message": "",
+      "type": "proposals",
+      "module": null,
+      "source_file": "application/migrations/107_version_107.php",
+      "source_line": 121
+    }
+  ],
+  "proposal-client-declined": [
+    {
+      "name": "Proposta recusada — equipe",
+      "subject": "Cliente recusou a proposta",
+      "source_name": "Customer Action - Declined (Sent to Staff)",
+      "source_subject": "Client Declined Proposal",
+      "source_message": "<div>Client Declined proposal</div>",
+      "type": "proposals",
+      "module": null,
+      "source_file": "application/migrations/107_version_107.php",
+      "source_line": 122
+    }
+  ],
+  "proposal-client-thank-you": [
+    {
+      "name": "Agradecimento por aprovação de proposta",
+      "subject": "Agradecemos por aprovar nossa proposta",
+      "source_name": "Customer Thank You Email (After Accept)",
+      "source_subject": "Thank for you accepting proposal",
+      "source_message": "<div>Hello <span style=\"font-family: Helvetica, Arial, sans-serif;\">{proposal_proposal_to}</span></div><div><br></div><div>Thank for for accepting the proposal.</div><div><br></div><div>We look forward doing business with you.</div><div><br></div><div>Our staff will call you asap.</div><div><br></div><div>{email_signature}</div>",
+      "type": "proposals",
+      "module": null,
+      "source_file": "application/migrations/107_version_107.php",
+      "source_line": 123
+    }
+  ],
+  "proposal-comment-to-client": [
+    {
+      "name": "Comentário em proposta — cliente",
+      "subject": "Novo comentário na proposta",
+      "source_name": "New Comment (Customer)",
+      "source_subject": "New Proposal Comment",
+      "source_message": "<div>New Proposal Comment</div>",
+      "type": "proposals",
+      "module": null,
+      "source_file": "application/migrations/107_version_107.php",
+      "source_line": 124
+    }
+  ],
+  "proposal-comment-to-admin": [
+    {
+      "name": "Comentário em proposta — equipe",
+      "subject": "Novo comentário na proposta",
+      "source_name": "New Comment (Sent to Staff) ",
+      "source_subject": "New Proposal Comment",
+      "source_message": "<div>New Proposal Comment</div>",
+      "type": "proposals",
+      "module": null,
+      "source_file": "application/migrations/107_version_107.php",
+      "source_line": 125
+    }
+  ],
+  "estimate-thank-you-to-customer": [
+    {
+      "name": "Agradecimento por aprovação de orçamento",
+      "subject": "Agradecemos por aprovar nosso orçamento",
+      "source_name": "Customer Thank You Email (After Accept)",
+      "source_subject": "Thank for you accepting estimate",
+      "source_message": "<div>Hello <span style=\"font-family: Helvetica, Arial, sans-serif;\">{client_firstname} {client_lastname}</span></div><div><br></div><div>Thank for for accepting the estimate.</div><div><br></div><div>We look forward doing business with you.</div><div><br></div><div>Our staff will call you asap.</div><div><br></div><div>{email_signature}</div><div><br></div><div><br></div><div><br></div>",
+      "type": "estimate",
+      "module": null,
+      "source_file": "application/migrations/107_version_107.php",
+      "source_line": 126
+    },
+    {
+      "name": "Agradecimento por aprovação de orçamento",
+      "subject": "Agradecemos por aprovar nosso orçamento",
+      "source_name": "Customer Thank You Email (After Accept)",
+      "source_subject": "Thank for you accepting estimate",
+      "source_message": "<div>Hello <span style=\"font-family: Helvetica, Arial, sans-serif;\">{contact_firstname} {contact_lastname}</span></div><div><br></div><div>Thank for for accepting the estimate.</div><div><br></div><div>We look forward doing business with you.</div><div><br></div><div>Our staff will call you asap.</div><div><br></div><div>{email_signature}</div><div><br></div><div><br></div><div><br></div>",
+      "type": "estimate",
+      "module": null,
+      "source_file": "application/migrations/107_version_107.php",
+      "source_line": 126,
+      "derived_by": "application/migrations/111_version_111.php:165-167"
+    }
+  ],
+  "task-status-change-to-contacts": [
+    {
+      "name": "Alteração de situação da tarefa — cliente",
+      "subject": "Situação da tarefa alterada",
+      "source_name": "Task Status Changed (Sent to Customer Contacts)",
+      "source_subject": "Task Status Changed",
+      "source_message": "<span style=\"font-size: 12pt;\">Hi {contact_firstname} {contact_lastname}</span><br /> <br /><span style=\"font-size: 12pt;\"><strong>{task_user_take_action}</strong> marked task as <strong>{task_status}</strong></span><br /> <br /><span style=\"font-size: 12pt;\"><strong>Name:</strong> {task_name}</span><br /><span style=\"font-size: 12pt;\"><strong>Due date:</strong> {task_duedate}</span><br /> <br /><span style=\"font-size: 12pt;\">You can view the task on the following link: <a href=\"{task_link}\">{task_name}</a></span><br /> <br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>",
+      "type": "tasks",
+      "module": null,
+      "source_file": "application/migrations/197_version_197.php",
+      "source_line": 67
+    }
+  ],
+  "task-status-change-to-staff": [
+    {
+      "name": "Alteração de situação da tarefa — equipe",
+      "subject": "Situação da tarefa alterada",
+      "source_name": "Task Status Changed (Sent to Staff)",
+      "source_subject": "Task Status Changed",
+      "source_message": "<span style=\"font-size: 12pt;\">Hi {staff_firstname} {staff_lastname}</span><br /> <br /><span style=\"font-size: 12pt;\"><strong>{task_user_take_action}</strong> marked task as <strong>{task_status}</strong></span><br /> <br /><span style=\"font-size: 12pt;\"><strong>Name:</strong> {task_name}</span><br /><span style=\"font-size: 12pt;\"><strong>Due date:</strong> {task_duedate}</span><br /> <br /><span style=\"font-size: 12pt;\">You can view the task on the following link: <a href=\"{task_link}\">{task_name}</a></span><br /> <br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>",
+      "type": "tasks",
+      "module": null,
+      "source_file": "application/migrations/197_version_197.php",
+      "source_line": 68
+    }
+  ],
+  "contract-expiration-to-staff": [
+    {
+      "name": "Lembrete de vencimento de contrato — equipe",
+      "subject": "Lembrete de vencimento do contrato",
+      "source_name": "Contract Expiration Reminder (Sent to staff members)",
+      "source_subject": "Contract Expiration Reminder",
+      "source_message": "Hello&nbsp;{staff_firstname}&nbsp;{staff_lastname}<br /><br /><span style=\"font-size: 12pt;\">This is a reminder that the following contract will expire soon:</span><br /><br /><span style=\"font-size: 12pt;\"><strong>Subject:</strong> {contract_subject}</span><br /><span style=\"font-size: 12pt;\"><strong>Description:</strong> {contract_description}</span><br /><span style=\"font-size: 12pt;\"><strong>Date Start:</strong> {contract_datestart}</span><br /><span style=\"font-size: 12pt;\"><strong>Date End:</strong> {contract_dateend}</span><br /><br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>",
+      "type": "contract",
+      "module": null,
+      "source_file": "application/migrations/200_version_200.php",
+      "source_line": 274
+    }
+  ],
+  "subscription-payment-failed": [
+    {
+      "name": "Falha no pagamento da assinatura",
+      "subject": "Não foi possível processar o último pagamento",
+      "source_name": "Subscription Payment Failed",
+      "source_subject": "Your most recent invoice payment failed",
+      "source_message": "Hello&nbsp;{contact_firstname}&nbsp;{contact_lastname}<br /><br br=\"\" />Unfortunately, your most recent invoice payment for&nbsp;<strong>{subscription_name}</strong> was declined.<br /><br /> This could be due to a change in your card number, your card expiring,<br /> cancellation of your credit card, or the card issuer not recognizing the<br /> payment and therefore taking action to prevent it.<br /><br /> Please update your payment information as soon as possible by logging in here:<br /><a href=\"{crm_url}\">{crm_url}</a><br /><br />Best Regards,<br />{email_signature}",
+      "type": "subscriptions",
+      "module": null,
+      "source_file": "application/migrations/200_version_200.php",
+      "source_line": 279
+    }
+  ],
+  "contract-comment-to-admin": [
+    {
+      "name": "Comentário em contrato — equipe",
+      "subject": "Novo comentário no contrato",
+      "source_name": "New Comment (Sent to Staff) ",
+      "source_subject": "New Contract Comment",
+      "source_message": "Hi<br /> <br />A new comment has been made to the proposal <strong>{contract_subject}</strong><br /> <br />You can view and reply to the comment on the following link: <a href=\"{contract_link}\">{contract_subject}</a>&nbsp;or from the admin area.<br /> <br />{email_signature}",
+      "type": "contract",
+      "module": null,
+      "source_file": "application/migrations/200_version_200.php",
+      "source_line": 285
+    }
+  ],
+  "new-lead-assigned": [
+    {
+      "name": "Nova oportunidade atribuída — equipe",
+      "subject": "Uma nova oportunidade foi atribuída a você",
+      "source_name": "New Lead Assigned to Staff Member",
+      "source_subject": "New lead assigned to you",
+      "source_message": "<p>Hello {lead_assigned}</p>\r\n<p>New&nbsp;lead is assigned to you.<br /><br />You can view the lead on the following link: <a href=\"{lead_link}\">{lead_name}<br /><br /></a>Kind Regards,<br />{email_signature}</p>",
+      "type": "leads",
+      "module": null,
+      "source_file": "application/migrations/140_version_140.php",
+      "source_line": 113
+    }
+  ],
+  "contract-expiration": [
+    {
+      "name": "Lembrete de vencimento de contrato — cliente",
+      "subject": "Lembrete de vencimento do contrato",
+      "source_name": "Contract Expiration",
+      "source_subject": "Contract Expiration Reminder",
+      "source_message": "",
+      "type": "contract",
+      "module": null,
+      "source_file": "application/migrations/105_version_105.php",
+      "source_line": 53
+    }
+  ],
+  "invoice-payment-recorded-to-staff": [
+    {
+      "name": "Pagamento de fatura registrado — equipe",
+      "subject": "Novo pagamento de fatura",
+      "source_name": "Invoice Payment Recorded (Sent to staff)",
+      "source_subject": "New Invoice Payment",
+      "source_message": "<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Customer recorded payment for invoice # {invoice_number}</span></div>\r\n<div>&nbsp;</div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">You can view the invoice on the following link:</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">{invoice_link}</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Kind regards,</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">{email_signature}</span></div>",
+      "type": "invoice",
+      "module": null,
+      "source_file": "application/migrations/117_version_117.php",
+      "source_line": 179
+    }
+  ],
+  "auto-close-ticket": [
+    {
+      "name": "Encerramento automático de chamado",
+      "subject": "Chamado encerrado automaticamente",
+      "source_name": "Auto Close Ticket",
+      "source_subject": "Ticket Auto Closed",
+      "source_message": "<p><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Hi&nbsp;{contact_firstname}&nbsp;{contact_lastname}</span></p>\r\n<p><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Ticket&nbsp;{ticket_subject} has been auto close due to inactivity.</span></p>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Ticket #: <span style=\"background-color: inherit;\">{ticket_id}</span></span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt; background-color: inherit;\">Department: {ticket_department}</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Priority: <span style=\"background-color: inherit;\">{ticket_priority}</span></span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt; background-color: inherit;\">Ticket message:</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt; background-color: inherit;\">{ticket_message}</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">&nbsp;</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">Kind regards,</span></div>\r\n<div><span style=\"font-family: arial, helvetica, sans-serif; font-size: 12pt;\">{email_signature}</span></div>",
+      "type": "ticket",
+      "module": null,
+      "source_file": "application/migrations/117_version_117.php",
+      "source_line": 182
+    }
+  ],
+  "task-assigned": [
+    {
+      "name": "Nova tarefa atribuída à equipe",
+      "subject": "Nova tarefa atribuída a você",
+      "source_name": "Task Assigned",
+      "source_subject": "New Task Assigned to You",
+      "source_message": "Hello {staff_firstname} a new task is assigned to you.",
+      "type": "tasks",
+      "module": null,
+      "source_file": "application/migrations/106_version_106.php",
+      "source_line": 42
+    }
+  ],
+  "task-added-as-follower": [
+    {
+      "name": "Novo acompanhamento de tarefa — equipe",
+      "subject": "Você foi adicionado para acompanhar a tarefa",
+      "source_name": "Added as follower",
+      "source_subject": "You are added as follower on task",
+      "source_message": "Hello {staff_firstname} you are added as follower on task",
+      "type": "tasks",
+      "module": null,
+      "source_file": "application/migrations/106_version_106.php",
+      "source_line": 43
+    }
+  ],
+  "task-commented": [
+    {
+      "name": "Comentário em tarefa — equipe",
+      "subject": "Novo comentário na tarefa",
+      "source_name": "Commented on task",
+      "source_subject": "Someone commented on task",
+      "source_message": "New task comment",
+      "type": "tasks",
+      "module": null,
+      "source_file": "application/migrations/106_version_106.php",
+      "source_line": 44
+    }
+  ],
+  "task-added-attachment": [
+    {
+      "name": "Anexo incluído na tarefa — equipe",
+      "subject": "Novo anexo na tarefa",
+      "source_name": "Added attachment",
+      "source_subject": "New attachment on task",
+      "source_message": "{staff_firstname} added attachment on task",
+      "type": "tasks",
+      "module": null,
+      "source_file": "application/migrations/106_version_106.php",
+      "source_line": 46
+    }
+  ],
+  "new-project-discussion-created-to-staff": [
+    {
+      "name": "Nova discussão de projeto — equipe",
+      "subject": "Nova discussão no projeto",
+      "source_name": "New Project Discussion (Sent to project members)",
+      "source_subject": "New Project Discussion Created",
+      "source_message": "<p>Hello&nbsp;{staff_firstname}&nbsp;{staff_lastname}</p>\r\n<p>New project discussion created from&nbsp;{discussion_creator}</p>\r\n<p>Subject:&nbsp;{discussion_subject}</p>\r\n<p>Description:&nbsp;{discussion_description}</p>\r\n<p>You can view the discussion on the following link:&nbsp;{discussion_link}</p>\r\n<p>Kind Regards,</p>\r\n<p>{email_signature}</p>",
+      "type": "project",
+      "module": null,
+      "source_file": "application/migrations/118_version_118.php",
+      "source_line": 165
+    }
+  ],
+  "new-project-discussion-created-to-customer": [
+    {
+      "name": "Nova discussão de projeto — cliente",
+      "subject": "Nova discussão no projeto",
+      "source_name": "New Project Discussion (Sent to customer contacts)",
+      "source_subject": "New Project Discussion Created",
+      "source_message": "<p>Hello&nbsp;{contact_firstname}&nbsp;{contact_lastname}</p>\r\n<p>New project discussion created from&nbsp;{discussion_creator}</p>\r\n<p>Subject:&nbsp;{discussion_subject}</p>\r\n<p>Description:&nbsp;{discussion_description}</p>\r\n<p>You can view the discussion on the following link:&nbsp;{discussion_link}</p>\r\n<p>Kind Regards,</p>\r\n<p>{email_signature}</p>",
+      "type": "project",
+      "module": null,
+      "source_file": "application/migrations/118_version_118.php",
+      "source_line": 166
+    }
+  ],
+  "new-project-file-uploaded-to-customer": [
+    {
+      "name": "Novo arquivo no projeto — cliente",
+      "subject": "Novo arquivo no projeto",
+      "source_name": "New Project File Uploaded (Sent to customer contacts)",
+      "source_subject": "New Project File Uploaded",
+      "source_message": "<p>Hello&nbsp;{contact_firstname}&nbsp;{contact_lastname}</p>\r\n<p>New project&nbsp;file is uploaded on&nbsp;{project_name} from&nbsp;{file_creator}</p>\r\n<p>You can view the project on the following link:&nbsp;{project_link}</p>\r\n<p>Kind Regards,</p>\r\n<p>{email_signature}</p>",
+      "type": "project",
+      "module": null,
+      "source_file": "application/migrations/118_version_118.php",
+      "source_line": 167
+    }
+  ],
+  "new-project-file-uploaded-to-staff": [
+    {
+      "name": "Novo arquivo no projeto — equipe",
+      "subject": "Novo arquivo no projeto",
+      "source_name": "New Project File Uploaded (Sent to project members)",
+      "source_subject": "New Project File Uploaded",
+      "source_message": "<p>Hello&nbsp;{staff_firstname}&nbsp;{staff_lastname}</p>\r\n<p>New project&nbsp;file is uploaded on&nbsp;{project_name} from&nbsp;{file_creator}</p>\r\n<p>You can view the project on the following link:&nbsp;{project_link}</p>\r\n<p>Kind Regards,</p>\r\n<p>{email_signature}</p>",
+      "type": "project",
+      "module": null,
+      "source_file": "application/migrations/118_version_118.php",
+      "source_line": 168
+    }
+  ],
+  "new-project-discussion-comment-to-customer": [
+    {
+      "name": "Comentário em discussão — cliente",
+      "subject": "Novo comentário na discussão",
+      "source_name": "New Discussion Comment (Sent to customer contacts)",
+      "source_subject": "New Discussion Comment",
+      "source_message": "<p>Hello&nbsp;{contact_firstname}&nbsp;{contact_lastname}</p>\r\n<p>New discussion comment has been made on {discussion_subject} from&nbsp;{comment_creator}</p>\r\n<p>Discussion subject:&nbsp;{discussion_subject}</p>\r\n<p>Comment:&nbsp;{discussion_comment}</p>\r\n<p>You can view the discussion on the following link:&nbsp;{discussion_link}</p>\r\n<p>Kind Regards,</p>\r\n<p>{email_signature}</p>",
+      "type": "project",
+      "module": null,
+      "source_file": "application/migrations/118_version_118.php",
+      "source_line": 169
+    }
+  ],
+  "new-project-discussion-comment-to-staff": [
+    {
+      "name": "Comentário em discussão — equipe",
+      "subject": "Novo comentário na discussão",
+      "source_name": "New Discussion Comment (Sent to project members)",
+      "source_subject": "New Discussion Comment",
+      "source_message": "<p>Hello&nbsp;{staff_firstname}&nbsp;{staff_lastname}</p>\r\n<p>New discussion comment has been made on {discussion_subject} from&nbsp;{comment_creator}</p>\r\n<p>Discussion subject:&nbsp;{discussion_subject}</p>\r\n<p>Comment:&nbsp;{discussion_comment}</p>\r\n<p>You can view the discussion on the following link:&nbsp;{discussion_link}</p>\r\n<p>Kind Regards,</p>\r\n<p>{email_signature}</p>",
+      "type": "project",
+      "module": null,
+      "source_file": "application/migrations/118_version_118.php",
+      "source_line": 170
+    }
+  ],
+  "staff-added-as-project-member": [
+    {
+      "name": "Novo participante na equipe do projeto",
+      "subject": "Um projeto foi atribuído a você",
+      "source_name": "Staff added as project member",
+      "source_subject": "New project assigned to you",
+      "source_message": "<p>Hello&nbsp;{staff_firstname}&nbsp;{staff_lastname}</p>\r\n<p>New project has been assigned to you.</p>\r\n<p>You can view the project on the following link&nbsp;{project_link}</p>\r\n<p>Project name:&nbsp;{project_name}</p>\r\n<p>&nbsp;</p>\r\n<p>{email_signature}</p>",
+      "type": "project",
+      "module": null,
+      "source_file": "application/migrations/118_version_118.php",
+      "source_line": 171
+    }
+  ],
+  "estimate-expiry-reminder": [
+    {
+      "name": "Lembrete de vencimento de orçamento",
+      "subject": "Lembrete de vencimento do orçamento",
+      "source_name": "Estimate Expiration Reminder",
+      "source_subject": "Estimate Expiration Reminder",
+      "source_message": "<p>Hello&nbsp;{client_company}</p>\r\n<p>The estimate with&nbsp;{estimate_number} will expire on&nbsp;{estimate_expirydate}</p>\r\n<p>You can view the estimate on the following link:&nbsp;{estimate_link}</p>\r\n<p>Regards,</p>\r\n<p>{email_signature}</p>",
+      "type": "estimate",
+      "module": null,
+      "source_file": "application/migrations/118_version_118.php",
+      "source_line": 172
+    }
+  ],
+  "proposal-expiry-reminder": [
+    {
+      "name": "Lembrete de vencimento de proposta",
+      "subject": "Lembrete de vencimento da proposta",
+      "source_name": "Proposal Expiration Reminder",
+      "source_subject": "Proposal Expiration Reminder",
+      "source_message": "<p>Hello&nbsp;{proposal_proposal_to}</p>\r\n<p>The proposal {proposal_subject} will expire on&nbsp;{proposal_open_till}</p>\r\n<p>You can view the proposal on the following link:&nbsp;{proposal_link}</p>\r\n<p>Regards,</p>\r\n<p>{email_signature}</p>",
+      "type": "proposals",
+      "module": null,
+      "source_file": "application/migrations/118_version_118.php",
+      "source_line": 173
+    }
+  ],
+  "remind_user_check_in": [
+    {
+      "name": "Lembrete de registro de ponto",
+      "subject": "Apontamento de horas — registre sua entrada",
+      "source_name": "Remind user check in",
+      "source_subject": "Timesheets - Remind user check in",
+      "source_message": "Remind you to check in to record the start time of the shift",
+      "type": "timesheets_attendance_mgt",
+      "module": "timesheets",
+      "source_file": "modules/timesheets/migrations/112_version_112.php",
+      "source_line": 32
+    }
+  ],
+  "new_leave_application_send_to_notification_recipients": [
+    {
+      "name": "Nova solicitação de ausência",
+      "subject": "Apontamento de horas — nova solicitação",
+      "source_name": "New application (Send to notification recipient)",
+      "source_subject": "Timesheets - New application - Send to notification recipient",
+      "source_message": "{staff_name} created a new application {link} at {date_time}",
+      "type": "timesheets_attendance_mgt",
+      "module": "timesheets",
+      "source_file": "modules/timesheets/migrations/114_version_114.php",
+      "source_line": 5
+    }
+  ],
+  "vendor-registration-confirmed": [
+    {
+      "name": "Confirmação de cadastro do fornecedor",
+      "subject": "Seu cadastro foi confirmado",
+      "source_name": "Vendor Registration Confirmed",
+      "source_subject": "Your registration is confirmed",
+      "source_message": "<p>Dear {contact_firstname} {contact_lastname}<br /><br />We just wanted to let you know that your registration at&nbsp;{companyname} is successfully confirmed and your account is now active.<br /><br />You can login at&nbsp;<a href=\"{vendor_portal_url}\">{vendor_portal_url}</a> with the email and password you provided during registration.<br /><br />Please contact us if you need any help.<br /><br />Kind Regards, <br />{email_signature}</p>\n\t\t <p><br />(This is an automated email, so please dont reply to this email address)</p>",
+      "type": "purchase_order",
+      "module": "purchase",
+      "source_file": "modules/purchase/migrations/134_version_134.php",
+      "source_line": 11
+    }
+  ],
+  "purchase-order-to-contact": [
+    {
+      "name": "Pedido de compra (enviado ao contato)",
+      "subject": "Pedido de compra",
+      "source_name": "Purchase Order (Sent to contact)",
+      "source_subject": "Purchase Order",
+      "source_message": "<span style=\\\"font-size: 12pt;\\\"> Hello !. </span><br /><br /><span style=\\\"font-size: 12pt;\\\"> We would like to share with you a link of Purchase Order information with the number {po_number} </span><br /><br /><span style=\\\"font-size: 12pt;\\\"><br />Please click on the link to view information: {public_link}\n\t\t  </span><br /><br />",
+      "type": "purchase_order",
+      "module": "purchase",
+      "source_file": "modules/purchase/migrations/107_version_107.php",
+      "source_line": 274
+    }
+  ],
+  "debit-note-to-contact": [
+    {
+      "name": "Nota de débito (enviada ao contato)",
+      "subject": "Nota de débito",
+      "source_name": "Debit Note (Sent to contact)",
+      "source_subject": "Debit Note",
+      "source_message": "<span style=\\\"font-size: 12pt;\\\"> Hello !. </span><br /><br /><span style=\\\"font-size: 12pt;\\\"> We would like to share with you a link of Debit Note information with the number {dn_number} </span><br /><br /><span style=\\\"font-size: 12pt;\\\"><br />{additional_content}\n\t\t  </span><br /><br />",
+      "type": "purchase_order",
+      "module": "purchase",
+      "source_file": "modules/purchase/migrations/117_version_117.php",
+      "source_line": 84
+    }
+  ]
+}

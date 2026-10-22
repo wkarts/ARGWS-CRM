@@ -39,6 +39,9 @@ final class CompanyNativeStaffTransaction
         $key = 'profile:'.$id;
         $previous = self::$active[spl_object_id($db)]['profiles'][$id] ?? $row;
         $expected = array_replace($previous, $values);
+        if (array_key_exists('staff_email_identity', $row) && array_key_exists('email', $values)) {
+            $expected['staff_email_identity'] = StaffEmailIdentity::normalize($values['email']);
+        }
         self::expect($db, $key, 'SELECT * FROM '.$prefix.'staff WHERE staffid=?', [$id], [$expected]);
         self::$active[spl_object_id($db)]['profiles'][$id] = $expected;
     }

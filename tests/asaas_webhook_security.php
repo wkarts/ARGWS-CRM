@@ -6,6 +6,8 @@ require_once FCPATH.'modules/asaas/libraries/Asaas/WebhookSecurity.php';
 require_once FCPATH.'modules/asaas/libraries/Asaas/WebhookIntegrationStore.php';
 use Asaas\Sdk\Http\Client;
 use Asaas\WebhookSecurity;
+require_once FCPATH.'system/libraries/Encryption.php';
+$admin=true;
 class WebhookDB extends FakeDB
 {
     private ?array $snapshot=null;
@@ -31,6 +33,8 @@ class WebhookDB extends FakeDB
     public function trans_commit(){if($this->failCommit)return false; $this->snapshot=null;$this->_trans_depth=0;return true;}
     public function trans_rollback(){++$this->rollbackCalls;if($this->snapshot!==null)$this->tables=$this->snapshot;$this->snapshot=null;$this->_trans_depth=0;return true;}
     public function query($sql,$args=[]){
+        if($sql==='SELECT installed_version FROM tblmodules WHERE module_name=?')return parent::query($sql,$args);
+        if(str_starts_with($sql,'SELECT COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT,COLLATION_NAME'))return new FakeResult([['COLUMN_TYPE'=>'text','IS_NULLABLE'=>'YES','COLUMN_DEFAULT'=>null,'COLLATION_NAME'=>'utf8mb4_bin']]);
         if(str_starts_with($sql,'SELECT @@SESSION.autocommit'))return new FakeResult([['autocommit'=>$this->autocommit?1:0,'completion_type'=>$this->completionType]]);
         if(str_starts_with($sql,'SET TRANSACTION'))return !$this->rawTransaction;
         if(str_starts_with($sql,'SELECT ENGINE FROM'))return new FakeResult([['ENGINE'=>$this->nonTransactional?'MyISAM':'InnoDB']]);
@@ -59,8 +63,10 @@ class WebhookGateway extends Asaas_gateway
 }
 function webhookFixture(): array {
     global $ci;
-    fixture();$original=$ci->db->tables;$db=new WebhookDB();$db->tables=array_replace($db->tables,$original);$db->tables['tblinvoices'][0]['currency']=1;$db->tables['tblcurrencies']=[['id'=>1,'name'=>'BRL']];$ci->db=$db;
-    $gw=new WebhookGateway();$ci->asaas_gateway=$gw;$gw->settings['webhook_secret']=str_repeat('l',40);$adapter=$gw->getAdapter();known($adapter,$db);
+    fixture();$ci->encryption=new CI_Encryption(['driver'=>'openssl','key'=>str_repeat('fixture-encryption-key',2)]);
+    foreach (['api_key', 'api_key_sandbox'] as $key) $GLOBALS['options']['paymentmethod_asaas_' . $key] = $ci->encryption->encrypt($GLOBALS['options']['paymentmethod_asaas_' . $key]);
+    $original=$ci->db->tables;$db=new WebhookDB();$db->tables=array_replace($db->tables,$original);$db->tables['tblinvoices'][0]['currency']=1;$db->tables['tblcurrencies']=[['id'=>1,'name'=>'BRL']];$ci->db=$db;
+    $gw=new WebhookGateway();$ci->asaas_gateway=$gw;$GLOBALS['options']['paymentmethod_asaas_webhook_secret']=str_repeat('l',40);$adapter=$gw->getAdapter();known($adapter,$db);
     $scope=['issuer_id'=>null,'provider'=>'asaas','account_id'=>'wallet_original','environment'=>'sandbox'];
     $i=$adapter->webhookIntegrations()->createVerified('Fixture', $scope);$GLOBALS['fixtureToken']=$i['one_time_token'];
     return [$gw,$adapter,$db,$i];
@@ -203,7 +209,7 @@ foreach(['tblasaas_settlement_outbox','tblsales_activity'] as $table){
 check($db->tables['tblinvoicepaymentrecords']===[]&&$db->tables['tblasaas_webhook_events'][0]['process_status']==='review_required','applied credits prevent full auto-receipt');
 [$gw,$a,$db,$i]=webhookFixture();receive($a,$i);$db->tables['tblcurrencies'][0]['name']='USD';Client::$responses=[wallet(),canonicalPayment('RECEIVED'),customer()];processOne($a);
 check($db->tables['tblinvoicepaymentrecords']===[],'unsupported invoice currency cannot settle as BRL');
-check(strlen($i['one_time_token'])===64&&!str_contains(json_encode($db->tables),$i['one_time_token']),'generated token shown once and never stored');
+check(strlen($i['one_time_token'])===64&&!str_contains(json_encode($db->tables),$i['one_time_token']),'generated token never stored in plaintext');
 $oldHash=$db->tables['tblasaas_webhook_integrations'][0]['token_hash'];$rotated=$a->webhookIntegrations()->rotateToken(1);
 check(strlen($rotated['one_time_token'])===64&&$oldHash!==$db->tables['tblasaas_webhook_integrations'][0]['token_hash'],'regeneration creates fresh CSPRNG token');
 check($db->tables['tblasaas_webhook_integrations'][0]['rotated_by']===7,'rotation actor recorded');

@@ -6,11 +6,13 @@ $base='company_onboarding'.($draft?'/index/'.$draft['draft_key']:'');
 $payload=$draft['payload']??[];
 $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',5=>'Revisão',6=>'Conclusão'];
 ?>
+<link rel="stylesheet" href="<?= $esc(base_url('assets/css/company-identity.css')); ?>">
 <section class="company-settings-card" aria-labelledby="wizard-title">
+<?php if($step>0&&$step<6){?><p class="text-muted">Etapa <?= $step; ?> de 5 · O rascunho é salvo ao continuar.</p><?php } ?>
 <h1 id="wizard-title" tabindex="-1">Nova empresa<?php if($step){ ?> — <?= $esc($labels[$step]); ?><?php } ?></h1>
 <?php if($error){?><p class="alert alert-danger" role="alert"><?= $esc($error); ?></p><?php } ?>
-<?php if($step>0){?><nav aria-label="Etapas do cadastro"><ol class="company-settings-nav">
-<?php foreach($labels as $number=>$label){?><li><?php if($number<=min((int)$draft['step'],5)&&(int)$draft['step']<6&&$number!==$step){?><a href="<?= $esc($url($base.'?step='.$number)); ?>"><?= $esc($label); ?></a><?php }else{?><span <?= $number===$step?'aria-current="step"':''; ?>><?= $esc($label); ?></span><?php } ?></li><?php } ?></ol></nav><?php } ?>
+<nav aria-label="Etapas do cadastro"><ol class="company-onboarding-steps">
+<?php foreach($labels as $number=>$label){?><li><?php if($number<=min((int)($draft['step']??0),5)&&(int)($draft['step']??0)<6&&$number!==$step){?><a href="<?= $esc($url($base.'?step='.$number)); ?>"><?= $number; ?>. <?= $esc($label); ?></a><?php }else{?><span <?= $number===$step?'aria-current="step"':''; ?>><?= $number; ?>. <?= $esc($label); ?></span><?php } ?></li><?php } ?></ol></nav>
 <?php if($step===6){?>
 <p class="alert alert-success" role="status">Empresa criada com as informações, preferências e permissões revisadas. Reenviar a conclusão não cria outra empresa.</p>
 <p>O responsável da instalação já tem acesso a esta empresa e às futuras, sem copiar permissões ou credenciais.</p>
@@ -27,12 +29,7 @@ $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',
 <p>Cadastre a nova empresa dentro do CRM. O rascunho é salvo a cada etapa e pode ser retomado por você. A empresa principal existente será preservada.</p>
 <button type="submit" class="btn btn-primary">Iniciar cadastro</button>
 <?php }elseif($step===1){$identity=$payload[1]??[];?>
-<div class="form-group"><label for="legal_name">Nome / razão social</label><input class="form-control" id="legal_name" name="wizard[legal_name]" required maxlength="191" value="<?= $esc($identity['legal_name']??''); ?>" autocomplete="organization"></div>
-<div class="form-group"><label for="tax_id">CPF / CNPJ</label><input class="form-control" id="tax_id" name="wizard[tax_id]" required maxlength="20" value="<?= $esc($identity['tax_id']??''); ?>"></div>
-<fieldset><legend>Endereço e contato</legend>
-<?php foreach(['invoice_company_address'=>'Endereço','invoice_company_city'=>'Cidade','company_state'=>'Estado','invoice_company_country_code'=>'País','invoice_company_postal_code'=>'CEP','invoice_company_phonenumber'=>'Telefone'] as $name=>$label){?>
-<div class="form-group"><label for="profile_<?= $esc($name); ?>"><?= $esc($label); ?></label><input class="form-control" id="profile_<?= $esc($name); ?>" name="wizard[profile][<?= $esc($name); ?>]" maxlength="2000" value="<?= $esc($identity['profile'][$name]??''); ?>"></div>
-<?php } ?></fieldset>
+<?php $identity_mode='onboarding';$identity_values=$identity;$lookup_url=$url('issuers/lookup');$lookup_token=$company_onboarding_csrf;$identity_profile_disabled=false;require __DIR__.'/identity_fields.php'; ?>
 <?php }elseif($step===2){$preferences=$payload[2]??[];?>
 <div class="form-group"><label for="dateformat">Formato de data</label><select class="form-control" id="dateformat" name="wizard[dateformat]">
 <?php foreach(CompanySettingsFormats::dates() as $value=>$label){?><option value="<?= $esc($value); ?>" <?= ($preferences['dateformat']??'d/m/Y|%d/%m/%Y')===$value?'selected':''; ?>><?= $esc($label); ?></option><?php } ?></select></div>
@@ -52,7 +49,7 @@ $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',
 <input type="hidden" name="wizard[client_visibility]" value="private">
 <?php }elseif($step===5){?>
 <h2>Confira antes de criar</h2><dl><dt>Empresa</dt><dd><?= $esc($payload[1]['legal_name']??''); ?></dd><dt>CPF / CNPJ</dt><dd><?= $esc($payload[1]['tax_id']??''); ?></dd><dt>Preferências</dt><dd><?= $esc($payload[2]['dateformat']??''); ?> · <?= $esc($payload[2]['time_format']??''); ?> horas</dd><dt>Colaboradores autorizados</dt><dd><?= count($payload[3]['staff']??[]); ?>, além do responsável da instalação</dd><dt>Clientes</dt><dd>Privados; sem transferência de histórico financeiro.</dd></dl>
-<?php foreach($payload[1]['profile']??[] as $field=>$value){if($value!==''){?><p><?= $esc($value); ?></p><?php }} ?>
+<?php $reviewLabels=['company_trade_name'=>'Nome fantasia','company_state_registration'=>'Inscrição estadual','invoice_company_address'=>'Logradouro / endereço','company_address_number'=>'Número','company_address_complement'=>'Complemento','company_address_district'=>'Bairro','invoice_company_city'=>'Cidade','company_state'=>'UF / estado','invoice_company_postal_code'=>'CEP','invoice_company_country_code'=>'País','invoice_company_phonenumber'=>'Telefone']; ?><dl><?php foreach($reviewLabels as $field=>$label){$value=$payload[1]['profile'][$field]??'';if($value!==''){?><dt><?= $esc($label); ?></dt><dd><?= $esc($value); ?></dd><?php }} ?></dl>
 <ul><?php foreach($payload[3]['staff']??[] as $staff=>$assignment){?><li>Colaborador <?= (int)$staff; ?><?= $assignment['default']==='1'?' — nova empresa como padrão':''; ?><ul><?php foreach($assignment['resources'] as $feature=>$caps){foreach($caps as $cap){?><li><?= $esc($resources[$feature]['name']??$feature); ?>: <?= $esc($resources[$feature]['capabilities'][$cap]??$cap); ?></li><?php }} ?></ul></li><?php } ?></ul>
 <p>A criação e as concessões são confirmadas juntas. Uma falha preserva o rascunho e permite tentar novamente.</p>
 <?php } ?>

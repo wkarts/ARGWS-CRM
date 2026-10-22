@@ -22,5 +22,11 @@ check($pdo->query('SELECT * FROM q_contacts WHERE id=20')->fetch(PDO::FETCH_ASSO
 $pdo->prepare('UPDATE q_contacts SET new_pass_key_requested=? WHERE id=10')->execute([date('Y-m-d H:i:s',time()-49*3600)]);
 check(!$auth->can_set_password(false,10,'synthetic-legacy-token') && !$auth->can_reset_password(false,10,'synthetic-legacy-token'),'native expiry windows preserved');
 $pdo->prepare('UPDATE q_staff SET new_pass_key=?,new_pass_key_requested=? WHERE staffid=7')->execute(['synthetic-staff-token',$now]);
+$staffBeforeTokenValidation=$pdo->query('SELECT * FROM q_staff ORDER BY staffid')->fetchAll(PDO::FETCH_ASSOC);$staffDeliveries=count($GLOBALS['recoveryDeliveries']);
+foreach(['can_set_password','can_reset_password'] as $method){
+ check($auth->$method(true,7,'synthetic-staff-token')===false,'ambiguous staff token validation fails closed: '.$method);
+}
+check($pdo->query('SELECT * FROM q_staff ORDER BY staffid')->fetchAll(PDO::FETCH_ASSOC)===$staffBeforeTokenValidation && count($GLOBALS['recoveryDeliveries'])===$staffDeliveries,'ambiguous staff token validation preserves identities, keys and deliveries');
+$pdo->exec("UPDATE q_staff SET email='other-staff@example.invalid' WHERE staffid=8");
 check($auth->can_set_password(true,7,'synthetic-staff-token') && $auth->can_reset_password(true,7,'synthetic-staff-token'),'staff token validation remains separate');
 echo "Native recovery token boundaries passed; private end-to-end recovery and atomic completion remain pending.\n";

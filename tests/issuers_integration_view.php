@@ -1,24 +1,38 @@
 <?php
 /** Render the actual native registry view: assignment controls now belong to Staff. */
 define('BASEPATH',__DIR__);
+define('APPPATH',dirname(__DIR__).'/application/');
 require __DIR__.'/../application/services/issuers/IssuerPolicy.php';
+// Load the real presentation helpers without starting a request or resolving a company.
+require_once APPPATH.'services/CompanyRequestScope.php';
 require __DIR__.'/../application/language/portuguese_br/portuguese_br_lang.php';
 function _l($key){return $GLOBALS['lang'][$key]??$key;}
 function init_head(){} function init_tail(){}
 function is_admin(){return $GLOBALS['view_admin'];}
 function get_staff_user_id(){return 7;}
 function admin_url($path){return '/admin/'.$path;}
+function base_url($path){return '/'.ltrim($path,'/');}
 function html_escape($value){return htmlspecialchars((string)$value,ENT_QUOTES,'UTF-8');}
 function form_open($path){return '<form method="post" action="'.html_escape($path).'">';}
 function form_close(){return '</form>';}
 function issuers_can_access(...$args){return true;}
-function renderIntegrationView($admin){
- $GLOBALS['view_admin']=$admin;
- $selected=['id'=>11,'legal_name'=>'Synthetic <Issuer>','tax_id'=>'12345678000195','active'=>1];
- $can_create=$admin;$can_manage=$admin;$profile=[];
- $catalog=$available=[$selected];$default_issuer=null;$issuers_csrf=str_repeat('a',64);$clients=$targets=[];
- ob_start();require __DIR__.'/../application/views/admin/issuers/manage.php';return ob_get_clean();
+final class IssuerIntegrationViewFixture {
+ public object $config;
+ public function __construct(){
+  $this->config=new class {public function site_url($path){return '/'.ltrim($path,'/');}};
+ }
+ public function render($admin){
+  $GLOBALS['view_admin']=$admin;
+  $selected=['id'=>11,'legal_name'=>'Synthetic <Issuer>','tax_id'=>'12345678000195','active'=>1];
+  $can_create=$admin;$can_manage=$admin;$profile=[];
+  $catalog=$available=[$selected];$default_issuer=null;$issuers_csrf=str_repeat('a',64);$clients=$targets=[];
+  // The framework renders these real partials with an application object as $this.
+  ob_start();
+  try {require APPPATH.'views/admin/issuers/manage.php';return ob_get_contents();}
+  finally {ob_end_clean();}
+ }
 }
+function renderIntegrationView($admin){return (new IssuerIntegrationViewFixture())->render($admin);}
 $n=0;function viewCheck($yes,$label){global$n;$n++;if(!$yes)throw new RuntimeException($label);}
 $html=renderIntegrationView(true);
 foreach(['member','remove_member','default'] as$action){viewCheck(!str_contains($html,'name="action" value="'.$action.'"'),'parallel assignment/default route removed: '.$action);}
@@ -28,5 +42,9 @@ viewCheck(str_contains($html,'href="/admin/staff"'),'assignment points to native
 viewCheck(str_contains($html,'name="issuers_csrf" value="'.str_repeat('a',64).'"'),'company form retains CSRF');
 viewCheck(str_contains($html,'name="issuer_id" value="11"'),'company target explicit');
 viewCheck(str_contains($html,'Synthetic &lt;Issuer&gt;'),'issuer label escaped');
+viewCheck(str_contains($html,'data-lookup-url="/admin/issuers/lookup"'),'actual shared identity fields rendered');
+viewCheck(str_contains($html,'src="/assets/js/company-identity.js"'),'shared identity asset uses the URL helper');
+viewCheck(str_contains($html,'href="/admin/company_context"'),'certificate link requires company selection without a resolved context');
 $staffView=renderIntegrationView(false);viewCheck(!str_contains($staffView,'href="/admin/staff"'),'ordinary user is not offered staff assignment');
+viewCheck(!str_contains($staffView,'data-company-identity'),'ordinary user is not offered the identity editor');
 echo "Issuer registry GUI: $n checks passed (actual view; local HTML helpers).\n";

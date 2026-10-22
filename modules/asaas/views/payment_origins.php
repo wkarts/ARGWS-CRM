@@ -30,7 +30,7 @@
 <div class="col-md-2"><label for="invoice_id">ID da fatura</label><input id="invoice_id" name="invoice_id" class="form-control" type="number" min="1" required></div>
 <div class="col-md-3"><label for="remote_id">ID da cobrança no Asaas</label><input id="remote_id" name="remote_id" class="form-control" maxlength="64" required></div>
 <div class="col-md-4"><label for="account_id">Wallet ID da conta verificada</label><input id="account_id" name="account_id" class="form-control" maxlength="128" required></div>
-<div class="col-md-3"><label for="environment">Ambiente</label><select id="environment" name="environment" class="form-control" required><option value="">Selecione</option><option value="sandbox">Sandbox</option><option value="production">Produção</option></select></div>
+<div class="col-md-3"><label for="environment">Ambiente</label><select id="environment" name="environment" class="form-control" required><option value="">Selecione</option><option value="sandbox">Homologação</option><option value="production">Produção</option></select></div>
 </div><p class="mtop15"><button type="submit" class="btn btn-primary">Verificar e registrar origem</button></p>
 <?php echo form_close(); ?>
 <?php } ?>

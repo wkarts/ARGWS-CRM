@@ -7,9 +7,10 @@ $company_page_title='Modelos de e-mail';require APPPATH.'views/admin/companies/l
 <?php if ($error!==null) { ?><div role="alert" class="alert alert-danger"><?= $escape($error); ?></div><?php } ?>
 <?php if ($saved) { ?><div role="status" class="alert alert-success">Modelo salvo para esta empresa.</div><?php } ?>
 <?php if (!$selected) { ?>
-<ul><?php foreach($templates as $item) { ?><li><a href="<?= $escape($edit_url.(int)$item['emailtemplateid']); ?>"><?= $escape($item['name']); ?></a> (<?= !empty($item['active'])?'Ativo':'Inativo'; ?>)</li><?php } ?></ul>
+<ul><?php foreach($templates as $item) { ?><li><a href="<?= $escape($edit_url.(int)$item['emailtemplateid']); ?>"><?= $escape(EmailTemplateLocale::templateName($item)); ?></a> (<?= !empty($item['active'])?'Ativo':'Inativo'; ?>)</li><?php } ?></ul>
 <?php } else { ?>
-<a href="<?= $escape($list_url); ?>">Voltar aos modelos</a><h2><?= $escape($selected->name); ?></h2>
+<a href="<?= $escape($list_url); ?>">Voltar aos modelos</a><h2><?= $escape(EmailTemplateLocale::templateName($selected)); ?></h2>
+<p>Idioma: <?= $escape(EmailTemplateLocale::languageLabel((string) $selected->language)); ?></p>
 <p>Use os campos entre chaves do modelo original. O conteúdo HTML é editado como texto e não executado nesta página.</p>
 <form method="post" action="<?= $escape($edit_url.(int)$selected->emailtemplateid); ?>" autocomplete="off">
 <input type="hidden" name="_company_context" value="<?= $escape($context_token); ?>">

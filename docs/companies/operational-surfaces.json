@@ -10,18 +10,18 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "8425643548a89c48697f453bdaa70fd8617b4a81363d5e17156fb7c28f9b0549",
+    "source_manifest_sha256": "d80a8f41ca7672c6139de020b44bb874544abbe5f2d5cf1c6d1215257068834d",
     "counts": {
         "modules": 38,
-        "source_files": 4157,
+        "source_files": 4213,
         "literal_option_keys": 684,
-        "dynamic_option_references": 145,
-        "controllers": 253,
+        "dynamic_option_references": 146,
+        "controllers": 254,
         "hook_candidates": 553,
-        "job_file_candidates": 64,
+        "job_file_candidates": 66,
         "report_file_candidates": 293,
-        "table_name_candidates": 828,
-        "database_call_candidates": 12531
+        "table_name_candidates": 834,
+        "database_call_candidates": 12519
     },
     "infrastructure_options": [
         "cron_has_run_from_cli",
@@ -372,7 +372,7 @@
         {
             "name": "api",
             "entry": "modules/api/api.php",
-            "version": "2.0.2",
+            "version": "2.0.3",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.5.3",
+            "version": "1.5.5",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -480,13 +480,15 @@
                 "modules/asaas/libraries/Asaas/WebhookIntegrationSchema.php",
                 "modules/asaas/libraries/Asaas/WebhookIntegrationStore.php",
                 "modules/asaas/libraries/Asaas/WebhookSecurity.php",
+                "modules/asaas/libraries/Asaas/WebhookTokenCipher.php",
+                "modules/asaas/libraries/Asaas/WebhookTokenSchema.php",
                 "modules/asaas/libraries/Asaas/WebhookTransactionGuard.php",
                 "modules/asaas/scripts/assert-webhook-security.php",
                 "modules/asaas/views/webhooks.php"
             ],
             "report_candidates": [],
             "option_keys": [
-                "paymentmethod_asaas_billet_only",
+                "paymentmethod_asaas_profile_schema",
                 "paymentmethod_asaas_sandbox",
                 "show_amount_due_on_invoice",
                 "show_credits_applied_on_invoice",
@@ -500,7 +502,10 @@
                 "asaas_company_hosted_links",
                 "asaas_company_jobs",
                 "asaas_company_origin_meta",
+                "asaas_company_origin_profiles",
                 "asaas_company_payers",
+                "asaas_company_preferences",
+                "asaas_company_profiles",
                 "asaas_company_proofs",
                 "asaas_company_receipts",
                 "asaas_company_refund_grants",
@@ -536,7 +541,8 @@
                 "modules",
                 "options",
                 "paymentmodes",
-                "sales_activity"
+                "sales_activity",
+                "staff"
             ]
         },
         {
@@ -1187,7 +1193,7 @@
         {
             "name": "hr_profile",
             "entry": "modules/hr_profile/hr_profile.php",
-            "version": "1.0.9",
+            "version": "1.1.0",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -1465,7 +1471,7 @@
         {
             "name": "ma",
             "entry": "modules/ma/ma.php",
-            "version": "1.1.0",
+            "version": "1.1.2",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -1547,6 +1553,7 @@
                 "customfieldsvalues",
                 "estimate_requests",
                 "files",
+                "issuers_lock",
                 "leads",
                 "leads_sources",
                 "leads_status",
@@ -1760,7 +1767,7 @@
         {
             "name": "purchase",
             "entry": "modules/purchase/purchase.php",
-            "version": "1.5.0",
+            "version": "1.5.2",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -2114,7 +2121,7 @@
         {
             "name": "timesheets",
             "entry": "modules/timesheets/timesheets.php",
-            "version": "1.2.0",
+            "version": "1.2.1",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -3204,7 +3211,7 @@
             "name": "active_language",
             "classification": "company_private_by_storage_policy",
             "consumer_validation": "not_verified",
-            "reference_count": 51
+            "reference_count": 53
         },
         {
             "name": "after_subscription_payment_captured",
@@ -5133,7 +5140,7 @@
             "reference_count": 5
         },
         {
-            "name": "paymentmethod_asaas_billet_only",
+            "name": "paymentmethod_asaas_profile_schema",
             "classification": "company_private_by_storage_policy",
             "consumer_validation": "not_verified",
             "reference_count": 1
@@ -5142,7 +5149,7 @@
             "name": "paymentmethod_asaas_sandbox",
             "classification": "company_private_by_storage_policy",
             "consumer_validation": "not_verified",
-            "reference_count": 1
+            "reference_count": 3
         },
         {
             "name": "paymentmethod_authorize_aim_description_dashboard",
@@ -6805,6 +6812,14 @@
             "state": "requires_call_site_review"
         },
         {
+            "path": "application/views/admin/settings/includes/company.php",
+            "line": 7,
+            "source_sha256": "373de038a51873f09af089c9db04fd99eb0ccef4fd17ad1db41e00ed383e85cf",
+            "call": "get_option",
+            "expression": "$field",
+            "state": "requires_call_site_review"
+        },
+        {
             "path": "application/views/admin/settings/includes/payment_gateways.php",
             "line": 40,
             "source_sha256": "9690d673c79c4d06ddc73c764ba89e3733f86536be464f82f085d943fdfac461",
@@ -6854,16 +6869,16 @@
         },
         {
             "path": "modules/asaas/libraries/AsaasSdkProvider.php",
-            "line": 86,
-            "source_sha256": "2cdabd66a47b684981f01f6aede575ff75d588a98233d25e5f50af00571eb050",
+            "line": 97,
+            "source_sha256": "83a968372d819cc6df6d6cafc6cf09dc5f066854b990bf585a0db3753ad25797",
             "call": "get_option",
             "expression": "'paymentmethod_asaas_' . $name . '_issuer_' . $issuerId",
             "state": "requires_call_site_review"
         },
         {
             "path": "modules/asaas/libraries/AsaasSdkProvider.php",
-            "line": 291,
-            "source_sha256": "2cdabd66a47b684981f01f6aede575ff75d588a98233d25e5f50af00571eb050",
+            "line": 373,
+            "source_sha256": "83a968372d819cc6df6d6cafc6cf09dc5f066854b990bf585a0db3753ad25797",
             "call": "get_option",
             "expression": "$optionKey",
             "state": "requires_call_site_review"
@@ -7119,7 +7134,7 @@
         {
             "path": "modules/purchase/purchase.php",
             "line": 1256,
-            "source_sha256": "bc840dbdb6cd09bdf20455f28e46511095f825b398a4de88b5e53d4ba68af484",
+            "source_sha256": "b3552646ef1e9a999403dc86966232c10e68d9fdd4a7f1c655c62c4bd2a89166",
             "call": "get_option",
             "expression": "$main_area",
             "state": "requires_call_site_review"
@@ -8804,7 +8819,7 @@
         },
         {
             "path": "application/controllers/admin/Authentication.php",
-            "source_sha256": "c8b3eb65a5e3b2441f37d871bc2879aa4b5a950f52a126a245569d99eb55dbb7",
+            "source_sha256": "5044e76b4167c7d7d51a643ec0a470019571637e56c519502688830b34f768c1",
             "module": null,
             "base_class": "App_Controller",
             "surface": "admin",
@@ -8856,12 +8871,12 @@
                 },
                 {
                     "method": "recaptcha",
-                    "line": 254,
+                    "line": 251,
                     "visibility": "public"
                 },
                 {
                     "method": "get_qr",
-                    "line": 259,
+                    "line": 256,
                     "visibility": "public"
                 }
             ],
@@ -8897,7 +8912,7 @@
         },
         {
             "path": "application/controllers/admin/Clients.php",
-            "source_sha256": "115faca3028f2078ca2294575e2512dea54a362570ab7da0a2fb0db77f987d92",
+            "source_sha256": "e1eecf589cd90bfba111228f2bd1ed59240da58dcbbce1aa0dd0a75180339e00",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -8924,197 +8939,197 @@
                 },
                 {
                     "method": "export",
-                    "line": 264,
+                    "line": 268,
                     "visibility": "public"
                 },
                 {
                     "method": "check_duplicate_customer_name",
-                    "line": 274,
+                    "line": 278,
                     "visibility": "public"
                 },
                 {
                     "method": "save_longitude_and_latitude",
-                    "line": 286,
+                    "line": 290,
                     "visibility": "public"
                 },
                 {
                     "method": "form_contact",
-                    "line": 307,
+                    "line": 311,
                     "visibility": "public"
                 },
                 {
                     "method": "confirm_registration",
-                    "line": 452,
+                    "line": 456,
                     "visibility": "public"
                 },
                 {
                     "method": "update_file_share_visibility",
-                    "line": 462,
+                    "line": 466,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_contact_profile_image",
-                    "line": 494,
+                    "line": 498,
                     "visibility": "public"
                 },
                 {
                     "method": "mark_as_active",
-                    "line": 499,
+                    "line": 503,
                     "visibility": "public"
                 },
                 {
                     "method": "consents",
-                    "line": 509,
+                    "line": 513,
                     "visibility": "public"
                 },
                 {
                     "method": "update_all_proposal_emails_linked_to_customer",
-                    "line": 526,
+                    "line": 530,
                     "visibility": "public"
                 },
                 {
                     "method": "assign_admins",
-                    "line": 568,
+                    "line": 572,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_customer_admin",
-                    "line": 581,
+                    "line": 585,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_contact",
-                    "line": 594,
+                    "line": 598,
                     "visibility": "public"
                 },
                 {
                     "method": "contacts",
-                    "line": 616,
+                    "line": 620,
                     "visibility": "public"
                 },
                 {
                     "method": "upload_attachment",
-                    "line": 623,
+                    "line": 627,
                     "visibility": "public"
                 },
                 {
                     "method": "add_external_attachment",
-                    "line": 628,
+                    "line": 632,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 635,
+                    "line": 639,
                     "visibility": "public"
                 },
                 {
                     "method": "delete",
-                    "line": 644,
+                    "line": 648,
                     "visibility": "public"
                 },
                 {
                     "method": "login_as_client",
-                    "line": 664,
+                    "line": 668,
                     "visibility": "public"
                 },
                 {
                     "method": "get_customer_billing_and_shipping_details",
-                    "line": 673,
+                    "line": 677,
                     "visibility": "public"
                 },
                 {
                     "method": "change_contact_status",
-                    "line": 679,
+                    "line": 683,
                     "visibility": "public"
                 },
                 {
                     "method": "change_client_status",
-                    "line": 689,
+                    "line": 693,
                     "visibility": "public"
                 },
                 {
                     "method": "zip_credit_notes",
-                    "line": 701,
+                    "line": 705,
                     "visibility": "public"
                 },
                 {
                     "method": "zip_invoices",
-                    "line": 724,
+                    "line": 728,
                     "visibility": "public"
                 },
                 {
                     "method": "zip_estimates",
-                    "line": 748,
+                    "line": 752,
                     "visibility": "public"
                 },
                 {
                     "method": "zip_payments",
-                    "line": 771,
+                    "line": 775,
                     "visibility": "public"
                 },
                 {
                     "method": "import",
-                    "line": 794,
+                    "line": 798,
                     "visibility": "public"
                 },
                 {
                     "method": "groups",
-                    "line": 839,
+                    "line": 843,
                     "visibility": "public"
                 },
                 {
                     "method": "group",
-                    "line": 851,
+                    "line": 855,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_group",
-                    "line": 882,
+                    "line": 886,
                     "visibility": "public"
                 },
                 {
                     "method": "bulk_action",
-                    "line": 899,
+                    "line": 903,
                     "visibility": "public"
                 },
                 {
                     "method": "vault_entry_create",
-                    "line": 928,
+                    "line": 932,
                     "visibility": "public"
                 },
                 {
                     "method": "vault_entry_update",
-                    "line": 956,
+                    "line": 960,
                     "visibility": "public"
                 },
                 {
                     "method": "vault_entry_delete",
-                    "line": 990,
+                    "line": 994,
                     "visibility": "public"
                 },
                 {
                     "method": "vault_encrypt_password",
-                    "line": 1000,
+                    "line": 1004,
                     "visibility": "public"
                 },
                 {
                     "method": "get_vault_entry",
-                    "line": 1028,
+                    "line": 1032,
                     "visibility": "public"
                 },
                 {
                     "method": "statement_pdf",
-                    "line": 1037,
+                    "line": 1041,
                     "visibility": "public"
                 },
                 {
                     "method": "send_statement",
-                    "line": 1071,
+                    "line": 1075,
                     "visibility": "public"
                 },
                 {
                     "method": "statement",
-                    "line": 1099,
+                    "line": 1103,
                     "visibility": "public"
                 }
             ],
@@ -9164,19 +9179,19 @@
         },
         {
             "path": "application/controllers/admin/Company_asaas.php",
-            "source_sha256": "1ca82971bf06c3f3f5920a4cf5e596d08a011f2dfa7114cf611cc6ab22dffb1d",
+            "source_sha256": "5d24e0723eba4bba3077e14f85033862565183993db908560b48e5945dd68d48",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
             "method_candidates": [
                 {
                     "method": "__construct",
-                    "line": 16,
+                    "line": 19,
                     "visibility": "public"
                 },
                 {
                     "method": "index",
-                    "line": 22,
+                    "line": 25,
                     "visibility": "public"
                 }
             ],
@@ -9225,6 +9240,25 @@
             "operational_ready": false
         },
         {
+            "path": "application/controllers/admin/Company_certificates.php",
+            "source_sha256": "0e41808236a38c58f9d309b6567a49d6d8798809e3a33e28c889f6024f034b86",
+            "module": null,
+            "base_class": "AdminController",
+            "surface": "admin",
+            "method_candidates": [
+                {
+                    "method": "index",
+                    "line": 8,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
             "path": "application/controllers/admin/Company_client_imports.php",
             "source_sha256": "184db64f68d2129cd3fab5ec4f90578721f34bb6cfd8a6925b80948baa4a91cf",
             "module": null,
@@ -9245,7 +9279,7 @@
         },
         {
             "path": "application/controllers/admin/Company_clients.php",
-            "source_sha256": "9dbb1c94cf93c6b6e13babdfaf4551ab988a0dc761f849f61c376ee2370d81e1",
+            "source_sha256": "60fe38d0ed64b3eddcf51a503b3764df22306c6de86b548babe59d1f1d1b2f34",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -9253,6 +9287,11 @@
                 {
                     "method": "index",
                     "line": 8,
+                    "visibility": "public"
+                },
+                {
+                    "method": "lookup",
+                    "line": 89,
                     "visibility": "public"
                 }
             ],
@@ -10595,7 +10634,7 @@
         },
         {
             "path": "application/controllers/admin/Emails.php",
-            "source_sha256": "f586b66a44c66cf7b7505740ccf5d306dee880e3cfb3b2b02454261837ecbfd3",
+            "source_sha256": "72b7d6f2822dfb49ff231446366764e0595a7989ce9becc65c62d54a852d4aad",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -10612,42 +10651,42 @@
                 },
                 {
                     "method": "email_template",
-                    "line": 111,
+                    "line": 107,
                     "visibility": "public"
                 },
                 {
                     "method": "enable_by_type",
-                    "line": 166,
+                    "line": 163,
                     "visibility": "public"
                 },
                 {
                     "method": "disable_by_type",
-                    "line": 174,
+                    "line": 171,
                     "visibility": "public"
                 },
                 {
                     "method": "enable",
-                    "line": 182,
+                    "line": 179,
                     "visibility": "public"
                 },
                 {
                     "method": "disable",
-                    "line": 192,
+                    "line": 189,
                     "visibility": "public"
                 },
                 {
                     "method": "sent_smtp_test_email",
-                    "line": 244,
+                    "line": 242,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_queued_email",
-                    "line": 297,
+                    "line": 295,
                     "visibility": "public"
                 },
                 {
                     "method": "clear_queued_emails",
-                    "line": 307,
+                    "line": 305,
                     "visibility": "public"
                 }
             ],
@@ -11367,7 +11406,7 @@
         },
         {
             "path": "application/controllers/admin/Issuers.php",
-            "source_sha256": "10730d81b6e9252208e10aa8245d9dd70f399c21ba07daa4a95fea47926d10e1",
+            "source_sha256": "a2d16fec82b5d191b5ba9292c3f3b708cab2a2768fbfef88b1f50e45153347a8",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -11385,6 +11424,11 @@
                 {
                     "method": "save",
                     "line": 74,
+                    "visibility": "public"
+                },
+                {
+                    "method": "lookup",
+                    "line": 110,
                     "visibility": "public"
                 }
             ],
@@ -11709,7 +11753,7 @@
         },
         {
             "path": "application/controllers/admin/Misc.php",
-            "source_sha256": "fb26fb13f57c7fddb514eead4b23c26d7df2e71bf7b5ad91e043ba36294cf0eb",
+            "source_sha256": "a91c1ffc42ce6c64d7cfce003d2c9e505304d80acd903fcae50e0da39b533673",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -11916,37 +11960,37 @@
                 },
                 {
                     "method": "contact_email_exists",
-                    "line": 467,
+                    "line": 457,
                     "visibility": "public"
                 },
                 {
                     "method": "access_denied",
-                    "line": 496,
+                    "line": 486,
                     "visibility": "public"
                 },
                 {
                     "method": "not_found",
-                    "line": 502,
+                    "line": 492,
                     "visibility": "public"
                 },
                 {
                     "method": "change_maximum_number_of_digits_to_decimal_fields",
-                    "line": 507,
+                    "line": 497,
                     "visibility": "public"
                 },
                 {
                     "method": "change_decimal_places",
-                    "line": 548,
+                    "line": 538,
                     "visibility": "public"
                 },
                 {
                     "method": "convert_tables_to_innodb_engine",
-                    "line": 591,
+                    "line": 581,
                     "visibility": "public"
                 },
                 {
                     "method": "upgrade_232_database",
-                    "line": 614,
+                    "line": 604,
                     "visibility": "public"
                 }
             ],
@@ -11958,7 +12002,7 @@
         },
         {
             "path": "application/controllers/admin/Mods.php",
-            "source_sha256": "d56b423f01a1255fd3d711123a26e43863a4730ed1f00328c7479ef853e365ee",
+            "source_sha256": "c7f37529a56e7994a91026294982e7c1d3f7fc3c5774673870209a22697c20f6",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -11975,32 +12019,37 @@
                 },
                 {
                     "method": "activate",
-                    "line": 55,
+                    "line": 43,
                     "visibility": "public"
                 },
                 {
                     "method": "deactivate",
-                    "line": 88,
+                    "line": 76,
                     "visibility": "public"
                 },
                 {
                     "method": "uninstall",
-                    "line": 129,
+                    "line": 117,
                     "visibility": "public"
                 },
                 {
                     "method": "upload",
-                    "line": 134,
+                    "line": 122,
+                    "visibility": "public"
+                },
+                {
+                    "method": "maintenance",
+                    "line": 127,
                     "visibility": "public"
                 },
                 {
                     "method": "upgrade_database",
-                    "line": 139,
+                    "line": 142,
                     "visibility": "public"
                 },
                 {
                     "method": "update_version",
-                    "line": 187,
+                    "line": 201,
                     "visibility": "public"
                 }
             ],
@@ -13010,7 +13059,7 @@
         },
         {
             "path": "application/controllers/admin/Staff.php",
-            "source_sha256": "28691a3105864148170035699ba47cecd0e0b1406fb1b284bf8acc2299177a03",
+            "source_sha256": "7058a6d49aff835b77665fa13fda92527f0330f9f01dc694046d9785e2d92b0a",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -13027,47 +13076,47 @@
                 },
                 {
                     "method": "role_changed",
-                    "line": 135,
+                    "line": 137,
                     "visibility": "public"
                 },
                 {
                     "method": "save_dashboard_widgets_order",
-                    "line": 144,
+                    "line": 146,
                     "visibility": "public"
                 },
                 {
                     "method": "save_dashboard_widgets_visibility",
-                    "line": 157,
+                    "line": 159,
                     "visibility": "public"
                 },
                 {
                     "method": "reset_dashboard",
-                    "line": 165,
+                    "line": 167,
                     "visibility": "public"
                 },
                 {
                     "method": "save_hidden_table_columns",
-                    "line": 173,
+                    "line": 175,
                     "visibility": "public"
                 },
                 {
                     "method": "change_language",
-                    "line": 182,
+                    "line": 184,
                     "visibility": "public"
                 },
                 {
                     "method": "timesheets",
-                    "line": 193,
+                    "line": 195,
                     "visibility": "public"
                 },
                 {
                     "method": "delete",
-                    "line": 214,
+                    "line": 216,
                     "visibility": "public"
                 },
                 {
                     "method": "edit_profile",
-                    "line": 237,
+                    "line": 239,
                     "visibility": "public"
                 },
                 {
@@ -16379,39 +16428,39 @@
         },
         {
             "path": "modules/api/controllers/Staffs.php",
-            "source_sha256": "c0cbe609665b07fbcdb1c00c81a903f90f98208c5367fd77361da9806964cf05",
+            "source_sha256": "d34e7e19601f337ae20036ec2b80da02f440afbdf85c7da1d2aa829917dfe3e5",
             "module": "api",
             "base_class": "REST_Controller",
             "surface": "public_or_api_or_job",
             "method_candidates": [
                 {
                     "method": "__construct",
-                    "line": 22,
+                    "line": 34,
                     "visibility": "public"
                 },
                 {
                     "method": "data_get",
-                    "line": 66,
+                    "line": 78,
                     "visibility": "public"
                 },
                 {
                     "method": "data_search_get",
-                    "line": 126,
+                    "line": 138,
                     "visibility": "public"
                 },
                 {
                     "method": "data_post",
-                    "line": 215,
+                    "line": 227,
                     "visibility": "public"
                 },
                 {
                     "method": "data_delete",
-                    "line": 333,
+                    "line": 345,
                     "visibility": "public"
                 },
                 {
                     "method": "data_put",
-                    "line": 428,
+                    "line": 440,
                     "visibility": "public"
                 }
             ],
@@ -16511,7 +16560,7 @@
         },
         {
             "path": "modules/asaas/controllers/Asaas.php",
-            "source_sha256": "048dbd6258e149e505e7c977f96ef7309a838bffca4d0043d7e1a79ad630d725",
+            "source_sha256": "0fca9dd80093159f8b877b47981ecaa392262f843e63efda9272011820662055",
             "module": "asaas",
             "base_class": "AdminController",
             "surface": "admin",
@@ -16528,82 +16577,87 @@
                 },
                 {
                     "method": "register_integration",
-                    "line": 83,
+                    "line": 84,
                     "visibility": "public"
                 },
                 {
                     "method": "rotate_integration_token",
-                    "line": 109,
+                    "line": 110,
+                    "visibility": "public"
+                },
+                {
+                    "method": "reveal_integration_token",
+                    "line": 126,
                     "visibility": "public"
                 },
                 {
                     "method": "disable_integration",
-                    "line": 125,
+                    "line": 140,
                     "visibility": "public"
                 },
                 {
                     "method": "retry_reviewed_event",
-                    "line": 139,
+                    "line": 154,
                     "visibility": "public"
                 },
                 {
                     "method": "get_invoice_data",
-                    "line": 201,
+                    "line": 216,
                     "visibility": "public"
                 },
                 {
                     "method": "charges",
-                    "line": 213,
-                    "visibility": "public"
-                },
-                {
-                    "method": "customers",
                     "line": 228,
                     "visibility": "public"
                 },
                 {
+                    "method": "customers",
+                    "line": 243,
+                    "visibility": "public"
+                },
+                {
                     "method": "health",
-                    "line": 241,
-                    "visibility": "public"
-                },
-                {
-                    "method": "merge",
-                    "line": 249,
-                    "visibility": "public"
-                },
-                {
-                    "method": "services",
                     "line": 256,
                     "visibility": "public"
                 },
                 {
-                    "method": "setup_webhook",
-                    "line": 262,
-                    "visibility": "public"
-                },
-                {
-                    "method": "set_webhook",
-                    "line": 263,
-                    "visibility": "public"
-                },
-                {
-                    "method": "set_webhook_invoice",
+                    "method": "merge",
                     "line": 264,
                     "visibility": "public"
                 },
                 {
+                    "method": "services",
+                    "line": 271,
+                    "visibility": "public"
+                },
+                {
+                    "method": "setup_webhook",
+                    "line": 277,
+                    "visibility": "public"
+                },
+                {
+                    "method": "set_webhook",
+                    "line": 278,
+                    "visibility": "public"
+                },
+                {
+                    "method": "set_webhook_invoice",
+                    "line": 279,
+                    "visibility": "public"
+                },
+                {
                     "method": "set_webhook_transfer",
-                    "line": 265,
+                    "line": 280,
                     "visibility": "public"
                 },
                 {
                     "method": "retorna_cobranca",
-                    "line": 267,
+                    "line": 282,
                     "visibility": "public"
                 },
                 {
                     "method": "retorna_cobrancas",
-                    "line": 274,
+                    "line": 289,
                     "visibility": "public"
                 }
             ],
@@ -16615,7 +16669,7 @@
         },
         {
             "path": "modules/asaas/controllers/Checkout.php",
-            "source_sha256": "c3491bc2b34495084c88b53117a3460ef4362f5995af96f8385f5bb57595528b",
+            "source_sha256": "2f70b5df27932a9be5ca74f760d4117a6df3c264d64239c2284ed048e420e7d0",
             "module": "asaas",
             "base_class": "ClientsController",
             "surface": "public_or_api_or_job",
@@ -16627,27 +16681,27 @@
                 },
                 {
                     "method": "index",
-                    "line": 34,
+                    "line": 51,
                     "visibility": "public"
                 },
                 {
                     "method": "boleto",
-                    "line": 55,
+                    "line": 72,
                     "visibility": "public"
                 },
                 {
                     "method": "cartao",
-                    "line": 76,
+                    "line": 93,
                     "visibility": "public"
                 },
                 {
                     "method": "qrcode",
-                    "line": 134,
+                    "line": 151,
                     "visibility": "public"
                 },
                 {
                     "method": "error",
-                    "line": 169,
+                    "line": 186,
                     "visibility": "public"
                 }
             ],
@@ -19550,899 +19604,899 @@
         },
         {
             "path": "modules/hr_profile/controllers/Hr_profile.php",
-            "source_sha256": "a2919b087d342e3045a2f5b92435246934ce74083af3bbdaa2ef660b4159d58f",
+            "source_sha256": "389bc23f4c8fbe5fd41245fb0e0af0b7aee2192ae18b9a3127c985994fecc5f0",
             "module": "hr_profile",
             "base_class": "AdminController",
             "surface": "admin",
             "method_candidates": [
                 {
                     "method": "__construct",
-                    "line": 11,
+                    "line": 25,
                     "visibility": "public"
                 },
                 {
                     "method": "dashboard",
-                    "line": 20,
-                    "visibility": "public"
-                },
-                {
-                    "method": "organizational_chart",
                     "line": 34,
                     "visibility": "public"
                 },
                 {
+                    "method": "organizational_chart",
+                    "line": 48,
+                    "visibility": "public"
+                },
+                {
                     "method": "get_data_department",
-                    "line": 71,
+                    "line": 85,
                     "visibility": "public"
                 },
                 {
                     "method": "delete",
-                    "line": 81,
+                    "line": 95,
                     "visibility": "public"
                 },
                 {
                     "method": "department",
-                    "line": 97,
+                    "line": 111,
                     "visibility": "public"
                 },
                 {
                     "method": "email_exists",
-                    "line": 140,
+                    "line": 154,
                     "visibility": "public"
                 },
                 {
                     "method": "test_imap_connection",
-                    "line": 165,
+                    "line": 179,
                     "visibility": "public"
                 },
                 {
                     "method": "reception_staff",
-                    "line": 211,
+                    "line": 225,
                     "visibility": "public"
                 },
                 {
                     "method": "table_reception_staff",
-                    "line": 240,
+                    "line": 254,
                     "visibility": "public"
                 },
                 {
                     "method": "setting",
-                    "line": 250,
+                    "line": 264,
                     "visibility": "public"
                 },
                 {
                     "method": "contract_type",
-                    "line": 329,
+                    "line": 343,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_contract_type",
-                    "line": 368,
+                    "line": 382,
                     "visibility": "public"
                 },
                 {
                     "method": "allowance_type",
-                    "line": 386,
+                    "line": 400,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_allowance_type",
-                    "line": 421,
+                    "line": 435,
                     "visibility": "public"
                 },
                 {
                     "method": "insurance_type",
-                    "line": 438,
+                    "line": 452,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_insurance_type",
-                    "line": 465,
+                    "line": 479,
                     "visibility": "public"
                 },
                 {
                     "method": "insurance_conditions_setting",
-                    "line": 482,
-                    "visibility": "public"
-                },
-                {
-                    "method": "salary_form",
                     "line": 496,
                     "visibility": "public"
                 },
                 {
+                    "method": "salary_form",
+                    "line": 510,
+                    "visibility": "public"
+                },
+                {
                     "method": "delete_salary_form",
-                    "line": 533,
+                    "line": 547,
                     "visibility": "public"
                 },
                 {
                     "method": "table_procedure_retire",
-                    "line": 556,
+                    "line": 570,
                     "visibility": "public"
                 },
                 {
                     "method": "add_procedure_form_manage",
-                    "line": 563,
+                    "line": 577,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_procedure_form_manage",
-                    "line": 595,
+                    "line": 609,
                     "visibility": "public"
                 },
                 {
                     "method": "procedure_procedure_retire_details",
-                    "line": 626,
+                    "line": 640,
                     "visibility": "public"
                 },
                 {
                     "method": "procedure_form",
-                    "line": 641,
+                    "line": 655,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_procedure_retire",
-                    "line": 658,
+                    "line": 672,
                     "visibility": "public"
                 },
                 {
                     "method": "edit_procedure_retire",
-                    "line": 674,
+                    "line": 688,
                     "visibility": "public"
                 },
                 {
                     "method": "edit_procedure_form",
-                    "line": 699,
+                    "line": 713,
                     "visibility": "public"
                 },
                 {
                     "method": "training",
-                    "line": 719,
+                    "line": 733,
                     "visibility": "public"
                 },
                 {
                     "method": "position_training",
-                    "line": 751,
+                    "line": 765,
                     "visibility": "public"
                 },
                 {
                     "method": "add_training_question",
-                    "line": 800,
+                    "line": 814,
                     "visibility": "public"
                 },
                 {
                     "method": "update_training_question",
-                    "line": 822,
+                    "line": 836,
                     "visibility": "public"
                 },
                 {
                     "method": "update_training_questions_orders",
-                    "line": 838,
+                    "line": 852,
                     "visibility": "public"
                 },
                 {
                     "method": "remove_question",
-                    "line": 848,
+                    "line": 862,
                     "visibility": "public"
                 },
                 {
                     "method": "remove_box_description",
-                    "line": 864,
+                    "line": 878,
                     "visibility": "public"
                 },
                 {
                     "method": "add_box_description",
-                    "line": 880,
+                    "line": 894,
                     "visibility": "public"
                 },
                 {
                     "method": "update_training_question_answer",
-                    "line": 896,
+                    "line": 910,
                     "visibility": "public"
                 },
                 {
                     "method": "get_training_type_child",
-                    "line": 916,
-                    "visibility": "public"
-                },
-                {
-                    "method": "job_position_training_add_edit",
                     "line": 930,
                     "visibility": "public"
                 },
                 {
+                    "method": "job_position_training_add_edit",
+                    "line": 944,
+                    "visibility": "public"
+                },
+                {
                     "method": "get_jobposition_fill_data",
-                    "line": 991,
+                    "line": 1005,
                     "visibility": "public"
                 },
                 {
                     "method": "job_position_manage",
-                    "line": 1009,
+                    "line": 1023,
                     "visibility": "public"
                 },
                 {
                     "method": "table_job",
-                    "line": 1024,
+                    "line": 1038,
                     "visibility": "public"
                 },
                 {
                     "method": "job_p",
-                    "line": 1032,
+                    "line": 1046,
                     "visibility": "public"
                 },
                 {
                     "method": "get_job_p_edit",
-                    "line": 1072,
+                    "line": 1086,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_job_p",
-                    "line": 1092,
+                    "line": 1106,
                     "visibility": "public"
                 },
                 {
                     "method": "import_job_p",
-                    "line": 1112,
+                    "line": 1126,
                     "visibility": "public"
                 },
                 {
                     "method": "import_job_p_excel",
-                    "line": 1139,
+                    "line": 1153,
                     "visibility": "public"
                 },
                 {
                     "method": "job_positions",
-                    "line": 1302,
+                    "line": 1316,
                     "visibility": "public"
                 },
                 {
                     "method": "job_position",
-                    "line": 1320,
+                    "line": 1334,
                     "visibility": "public"
                 },
                 {
                     "method": "table_job_position",
-                    "line": 1393,
+                    "line": 1407,
                     "visibility": "public"
                 },
                 {
                     "method": "job_position_delete_tag_item",
-                    "line": 1402,
+                    "line": 1416,
                     "visibility": "public"
                 },
                 {
                     "method": "preview_job_position_file",
-                    "line": 1425,
+                    "line": 1439,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_hr_profile_job_position_attachment_file",
-                    "line": 1436,
+                    "line": 1450,
                     "visibility": "public"
                 },
                 {
                     "method": "job_position_view_edit",
-                    "line": 1452,
+                    "line": 1466,
                     "visibility": "public"
                 },
                 {
                     "method": "get_list_job_position_tags_file",
-                    "line": 1493,
+                    "line": 1507,
                     "visibility": "public"
                 },
                 {
                     "method": "get_position_by_department",
-                    "line": 1530,
+                    "line": 1544,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_job_position",
-                    "line": 1548,
+                    "line": 1562,
                     "visibility": "public"
                 },
                 {
                     "method": "get_staff_salary_form",
-                    "line": 1568,
+                    "line": 1582,
                     "visibility": "public"
                 },
                 {
                     "method": "get_staff_allowance_type",
-                    "line": 1587,
+                    "line": 1601,
                     "visibility": "public"
                 },
                 {
                     "method": "job_position_salary_add_edit",
-                    "line": 1605,
+                    "line": 1619,
                     "visibility": "public"
                 },
                 {
                     "method": "save_setting_reception_staff",
-                    "line": 1630,
+                    "line": 1644,
                     "visibility": "public"
                 },
                 {
                     "method": "add_new_reception",
-                    "line": 1648,
+                    "line": 1662,
                     "visibility": "public"
                 },
                 {
                     "method": "send_training_staff",
-                    "line": 1713,
+                    "line": 1727,
                     "visibility": "public"
                 },
                 {
                     "method": "get_percent_complete",
-                    "line": 1752,
+                    "line": 1766,
                     "visibility": "public"
                 },
                 {
                     "method": "get_mark_staff",
-                    "line": 1854,
+                    "line": 1868,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_reception",
-                    "line": 1948,
+                    "line": 1962,
                     "visibility": "public"
                 },
                 {
                     "method": "get_reception",
-                    "line": 1967,
+                    "line": 1981,
                     "visibility": "public"
                 },
                 {
                     "method": "change_status_checklist",
-                    "line": 2049,
+                    "line": 2063,
                     "visibility": "public"
                 },
                 {
                     "method": "add_new_asset",
-                    "line": 2064,
+                    "line": 2078,
                     "visibility": "public"
                 },
                 {
                     "method": "change_status_allocation_asset",
-                    "line": 2101,
+                    "line": 2115,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_asset",
-                    "line": 2118,
+                    "line": 2132,
                     "visibility": "public"
                 },
                 {
                     "method": "staff_infor",
-                    "line": 2159,
+                    "line": 2173,
                     "visibility": "public"
                 },
                 {
                     "method": "table",
-                    "line": 2191,
+                    "line": 2205,
                     "visibility": "public"
                 },
                 {
                     "method": "importxlsx",
-                    "line": 2199,
+                    "line": 2213,
                     "visibility": "public"
                 },
                 {
                     "method": "import_employees_excel",
-                    "line": 2221,
+                    "line": 2235,
                     "visibility": "public"
                 },
                 {
                     "method": "importxlsx2",
-                    "line": 2813,
+                    "line": 2827,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_staff",
-                    "line": 3238,
+                    "line": 3259,
                     "visibility": "public"
                 },
                 {
                     "method": "member",
-                    "line": 3257,
+                    "line": 3278,
                     "visibility": "public"
                 },
                 {
                     "method": "table_education_position",
-                    "line": 3493,
+                    "line": 3514,
                     "visibility": "public"
                 },
                 {
                     "method": "table_education",
-                    "line": 3500,
+                    "line": 3521,
                     "visibility": "public"
                 },
                 {
                     "method": "save_update_education",
-                    "line": 3508,
+                    "line": 3529,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_education",
-                    "line": 3556,
+                    "line": 3577,
                     "visibility": "public"
                 },
                 {
                     "method": "table_reception",
-                    "line": 3578,
+                    "line": 3599,
                     "visibility": "public"
                 },
                 {
                     "method": "general_bonus",
-                    "line": 3588,
+                    "line": 3609,
                     "visibility": "public"
                 },
                 {
                     "method": "general_discipline",
-                    "line": 3663,
+                    "line": 3684,
                     "visibility": "public"
                 },
                 {
                     "method": "records_received",
-                    "line": 3737,
+                    "line": 3758,
                     "visibility": "public"
                 },
                 {
                     "method": "upload_file",
-                    "line": 3762,
+                    "line": 3783,
                     "visibility": "public"
                 },
                 {
                     "method": "hr_profile_file",
-                    "line": 3824,
+                    "line": 3845,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_hr_profile_staff_attachment",
-                    "line": 3840,
+                    "line": 3861,
                     "visibility": "public"
                 },
                 {
                     "method": "update_staff_permission",
-                    "line": 3865,
+                    "line": 3886,
                     "visibility": "public"
                 },
                 {
                     "method": "update_staff_profile",
-                    "line": 3883,
+                    "line": 3904,
                     "visibility": "public"
                 },
                 {
                     "method": "add_update_staff_bonus_discipline",
-                    "line": 3920,
+                    "line": 3941,
                     "visibility": "public"
                 },
                 {
                     "method": "file_view_bonus_discipline",
-                    "line": 3934,
+                    "line": 3955,
                     "visibility": "public"
                 },
                 {
                     "method": "workplace",
-                    "line": 3949,
+                    "line": 3970,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_workplace",
-                    "line": 3992,
+                    "line": 4013,
                     "visibility": "public"
                 },
                 {
                     "method": "hr_profile_permission_table",
-                    "line": 4007,
+                    "line": 4028,
                     "visibility": "public"
                 },
                 {
                     "method": "permission_modal",
-                    "line": 4076,
+                    "line": 4097,
                     "visibility": "public"
                 },
                 {
                     "method": "hr_profile_update_permissions",
-                    "line": 4113,
+                    "line": 4134,
                     "visibility": "public"
                 },
                 {
                     "method": "staff_id_changed",
-                    "line": 4183,
+                    "line": 4204,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_hr_profile_permission",
-                    "line": 4217,
+                    "line": 4238,
                     "visibility": "public"
                 },
                 {
                     "method": "zen_unit_chart",
-                    "line": 4240,
+                    "line": 4261,
                     "visibility": "public"
                 },
                 {
                     "method": "get_list_job_position_training",
-                    "line": 4288,
-                    "visibility": "public"
-                },
-                {
-                    "method": "delete_job_position_training_process",
                     "line": 4309,
                     "visibility": "public"
                 },
                 {
+                    "method": "delete_job_position_training_process",
+                    "line": 4330,
+                    "visibility": "public"
+                },
+                {
                     "method": "delete_position_training",
-                    "line": 4331,
+                    "line": 4352,
                     "visibility": "public"
                 },
                 {
                     "method": "table_contract",
-                    "line": 4351,
+                    "line": 4372,
                     "visibility": "public"
                 },
                 {
                     "method": "contracts",
-                    "line": 4360,
+                    "line": 4381,
                     "visibility": "public"
                 },
                 {
                     "method": "contract",
-                    "line": 4397,
+                    "line": 4418,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_contract",
-                    "line": 4542,
+                    "line": 4563,
                     "visibility": "public"
                 },
                 {
                     "method": "contract_code_exists",
-                    "line": 4567,
+                    "line": 4588,
                     "visibility": "public"
                 },
                 {
                     "method": "get_hrm_contract_data_ajax",
-                    "line": 4598,
+                    "line": 4619,
                     "visibility": "public"
                 },
                 {
                     "method": "get_staff_role",
-                    "line": 4641,
-                    "visibility": "public"
-                },
-                {
-                    "method": "get_contract_type",
                     "line": 4662,
                     "visibility": "public"
                 },
                 {
+                    "method": "get_contract_type",
+                    "line": 4683,
+                    "visibility": "public"
+                },
+                {
                     "method": "prefix_number",
-                    "line": 4676,
+                    "line": 4697,
                     "visibility": "public"
                 },
                 {
                     "method": "get_code",
-                    "line": 4699,
+                    "line": 4720,
                     "visibility": "public"
                 },
                 {
                     "method": "import_job_position",
-                    "line": 4714,
+                    "line": 4735,
                     "visibility": "public"
                 },
                 {
                     "method": "dependent_person",
-                    "line": 4742,
+                    "line": 4763,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_dependent_person",
-                    "line": 4795,
+                    "line": 4816,
                     "visibility": "public"
                 },
                 {
                     "method": "dependent_persons",
-                    "line": 4814,
+                    "line": 4835,
                     "visibility": "public"
                 },
                 {
                     "method": "approval_status",
-                    "line": 4830,
+                    "line": 4851,
                     "visibility": "public"
                 },
                 {
                     "method": "table_dependent_person",
-                    "line": 4857,
+                    "line": 4878,
                     "visibility": "public"
                 },
                 {
                     "method": "import_xlsx_dependent_person",
-                    "line": 4865,
+                    "line": 4886,
                     "visibility": "public"
                 },
                 {
                     "method": "import_file_xlsx_dependent_person",
-                    "line": 4893,
+                    "line": 4914,
                     "visibility": "public"
                 },
                 {
                     "method": "admin_delete_dependent_person",
-                    "line": 5129,
+                    "line": 5150,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_error_file_day_before",
-                    "line": 5148,
+                    "line": 5169,
                     "visibility": "public"
                 },
                 {
                     "method": "dependent_person_modal",
-                    "line": 5191,
+                    "line": 5212,
                     "visibility": "public"
                 },
                 {
                     "method": "resignation_procedures",
-                    "line": 5221,
+                    "line": 5242,
                     "visibility": "public"
                 },
                 {
                     "method": "add_resignation_procedure",
-                    "line": 5235,
+                    "line": 5256,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_resignation_procedure",
-                    "line": 5255,
+                    "line": 5276,
                     "visibility": "public"
                 },
                 {
                     "method": "table_resignation_procedures",
-                    "line": 5273,
+                    "line": 5294,
                     "visibility": "public"
                 },
                 {
                     "method": "get_staff_info_of_resignation_procedures",
-                    "line": 5282,
+                    "line": 5303,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_procedures_for_quitting_work",
-                    "line": 5331,
+                    "line": 5352,
                     "visibility": "public"
                 },
                 {
                     "method": "set_data_detail_staff_checklist_quit_work",
-                    "line": 5348,
+                    "line": 5369,
                     "visibility": "public"
                 },
                 {
                     "method": "update_status_quit_work",
-                    "line": 5419,
+                    "line": 5440,
                     "visibility": "public"
                 },
                 {
                     "method": "update_status_option_name",
-                    "line": 5442,
+                    "line": 5463,
                     "visibility": "public"
                 },
                 {
                     "method": "preview_q_a_file",
-                    "line": 5466,
+                    "line": 5487,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_hr_profile_q_a_attachment_file",
-                    "line": 5482,
+                    "line": 5503,
                     "visibility": "public"
                 },
                 {
                     "method": "get_salary_allowance_value",
-                    "line": 5498,
+                    "line": 5519,
                     "visibility": "public"
                 },
                 {
                     "method": "hrm_file_contract",
-                    "line": 5542,
+                    "line": 5563,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_hrm_contract_attachment_file",
-                    "line": 5558,
+                    "line": 5579,
                     "visibility": "public"
                 },
                 {
                     "method": "member_modal",
-                    "line": 5573,
+                    "line": 5594,
                     "visibility": "public"
                 },
                 {
                     "method": "new_member",
-                    "line": 5622,
+                    "line": 5643,
                     "visibility": "public"
                 },
                 {
                     "method": "add_edit_member",
-                    "line": 5652,
+                    "line": 5673,
                     "visibility": "public"
                 },
                 {
                     "method": "change_staff_status",
-                    "line": 5737,
+                    "line": 5758,
                     "visibility": "public"
                 },
                 {
                     "method": "hr_code_exists",
-                    "line": 5749,
+                    "line": 5770,
                     "visibility": "public"
                 },
                 {
                     "method": "view_contract_modal",
-                    "line": 5779,
+                    "line": 5800,
                     "visibility": "public"
                 },
                 {
                     "method": "reports",
-                    "line": 5799,
+                    "line": 5820,
                     "visibility": "public"
                 },
                 {
                     "method": "report_by_leave_statistics",
-                    "line": 5818,
+                    "line": 5839,
                     "visibility": "public"
                 },
                 {
                     "method": "report_by_working_hours",
-                    "line": 5826,
+                    "line": 5847,
                     "visibility": "public"
                 },
                 {
                     "method": "report_the_employee_quitting",
-                    "line": 5834,
+                    "line": 5855,
                     "visibility": "public"
                 },
                 {
                     "method": "list_of_employees_with_salary_change",
-                    "line": 5980,
+                    "line": 6001,
                     "visibility": "public"
                 },
                 {
                     "method": "get_base_currency_name",
-                    "line": 6136,
+                    "line": 6157,
                     "visibility": "public"
                 },
                 {
                     "method": "get_chart_senior_staff",
-                    "line": 6152,
+                    "line": 6173,
                     "visibility": "public"
                 },
                 {
                     "method": "HR_is_working",
-                    "line": 6295,
+                    "line": 6316,
                     "visibility": "public"
                 },
                 {
                     "method": "qualification_department",
-                    "line": 6355,
+                    "line": 6376,
                     "visibility": "public"
                 },
                 {
                     "method": "report_by_staffs",
-                    "line": 6507,
+                    "line": 6528,
                     "visibility": "public"
                 },
                 {
                     "method": "import_job_position_excel",
-                    "line": 6515,
+                    "line": 6536,
                     "visibility": "public"
                 },
                 {
                     "method": "hrm_delete_bulk_action",
-                    "line": 6714,
+                    "line": 6735,
                     "visibility": "public"
                 },
                 {
                     "method": "hrm_delete_bulk_action_v2",
-                    "line": 6909,
+                    "line": 6930,
                     "visibility": "public"
                 },
                 {
                     "method": "import_dependent_person_excel",
-                    "line": 7013,
+                    "line": 7034,
                     "visibility": "public"
                 },
                 {
                     "method": "reset_data",
-                    "line": 7255,
+                    "line": 7276,
                     "visibility": "public"
                 },
                 {
                     "method": "table_training_program",
-                    "line": 7336,
+                    "line": 7357,
                     "visibility": "public"
                 },
                 {
                     "method": "table_training_result",
-                    "line": 7344,
+                    "line": 7365,
                     "visibility": "public"
                 },
                 {
                     "method": "training_libraries_table",
-                    "line": 7352,
+                    "line": 7373,
                     "visibility": "public"
                 },
                 {
                     "method": "type_of_training",
-                    "line": 7361,
+                    "line": 7382,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_type_of_training",
-                    "line": 7399,
+                    "line": 7420,
                     "visibility": "public"
                 },
                 {
                     "method": "get_training_program_by_type",
-                    "line": 7423,
+                    "line": 7444,
                     "visibility": "public"
                 },
                 {
                     "method": "view_training_program",
-                    "line": 7449,
+                    "line": 7470,
                     "visibility": "public"
                 },
                 {
                     "method": "hr_role_changed",
-                    "line": 7482,
+                    "line": 7503,
                     "visibility": "public"
                 },
                 {
                     "method": "create_staff_sample_file",
-                    "line": 7490,
+                    "line": 7511,
                     "visibility": "public"
                 },
                 {
                     "method": "view_pdf",
-                    "line": 7717,
+                    "line": 7738,
                     "visibility": "public"
                 },
                 {
                     "method": "save_hr_contract_data",
-                    "line": 7726,
+                    "line": 7747,
                     "visibility": "public"
                 },
                 {
                     "method": "hr_clear_signature",
-                    "line": 7758,
+                    "line": 7779,
                     "visibility": "public"
                 },
                 {
                     "method": "contract_pdf",
-                    "line": 7771,
+                    "line": 7792,
                     "visibility": "public"
                 },
                 {
                     "method": "contract_sign",
-                    "line": 7806,
+                    "line": 7827,
                     "visibility": "public"
                 },
                 {
                     "method": "contract_template",
-                    "line": 7856,
+                    "line": 7877,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_contract_template_",
-                    "line": 7923,
-                    "visibility": "public"
-                },
-                {
-                    "method": "preview_training_program_file",
                     "line": 7944,
                     "visibility": "public"
                 },
                 {
+                    "method": "preview_training_program_file",
+                    "line": 7965,
+                    "visibility": "public"
+                },
+                {
                     "method": "delete_training_program_attachment_file",
-                    "line": 7960,
+                    "line": 7981,
                     "visibility": "public"
                 }
             ],
@@ -20873,7 +20927,7 @@
         },
         {
             "path": "modules/ma/controllers/Ma.php",
-            "source_sha256": "e802d181bcccc29e29622651cae5fbc82fea0b4d91c78642537c4ce9bd51d4ab",
+            "source_sha256": "5712cbada4fe7bdcd314390b09411456656e56beeab27337337a82416fcf6e37",
             "module": "ma",
             "base_class": "AdminController",
             "surface": "admin",
@@ -21385,212 +21439,212 @@
                 },
                 {
                     "method": "email_design",
-                    "line": 3352,
+                    "line": 3353,
                     "visibility": "public"
                 },
                 {
                     "method": "email_detail",
-                    "line": 3367,
+                    "line": 3368,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_email_chart",
-                    "line": 3386,
+                    "line": 3387,
                     "visibility": "public"
                 },
                 {
                     "method": "email_design_save",
-                    "line": 3405,
+                    "line": 3406,
                     "visibility": "public"
                 },
                 {
                     "method": "sms",
-                    "line": 3441,
+                    "line": 3442,
                     "visibility": "public"
                 },
                 {
                     "method": "get_sms_template_preview",
-                    "line": 3480,
+                    "line": 3481,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_sms",
-                    "line": 3525,
+                    "line": 3526,
                     "visibility": "public"
                 },
                 {
                     "method": "sms_detail",
-                    "line": 3548,
+                    "line": 3549,
                     "visibility": "public"
                 },
                 {
                     "method": "get_data_sms_chart",
-                    "line": 3568,
+                    "line": 3569,
                     "visibility": "public"
                 },
                 {
                     "method": "sms_table",
-                    "line": 3587,
+                    "line": 3588,
                     "visibility": "public"
                 },
                 {
                     "method": "send_example_email",
-                    "line": 3655,
+                    "line": 3656,
                     "visibility": "public"
                 },
                 {
                     "method": "clone_email_template",
-                    "line": 3674,
+                    "line": 3675,
                     "visibility": "public"
                 },
                 {
                     "method": "ma_run_campaign",
-                    "line": 3687,
+                    "line": 3688,
                     "visibility": "public"
                 },
                 {
                     "method": "add_email_template_language",
-                    "line": 3696,
+                    "line": 3697,
                     "visibility": "public"
                 },
                 {
                     "method": "clone_email_template_design",
-                    "line": 3711,
+                    "line": 3712,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_email_template_design",
-                    "line": 3727,
+                    "line": 3728,
                     "visibility": "public"
                 },
                 {
                     "method": "add_email_language",
-                    "line": 3750,
+                    "line": 3751,
                     "visibility": "public"
                 },
                 {
                     "method": "clone_email_design",
-                    "line": 3765,
+                    "line": 3766,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_email_design",
-                    "line": 3781,
+                    "line": 3782,
                     "visibility": "public"
                 },
                 {
                     "method": "add_sms_language",
-                    "line": 3804,
+                    "line": 3805,
                     "visibility": "public"
                 },
                 {
                     "method": "clone_sms_design",
-                    "line": 3819,
+                    "line": 3820,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_sms_design",
-                    "line": 3835,
+                    "line": 3836,
                     "visibility": "public"
                 },
                 {
                     "method": "sms_design_save",
-                    "line": 3858,
+                    "line": 3859,
                     "visibility": "public"
                 },
                 {
                     "method": "add_sms_template_language",
-                    "line": 3875,
+                    "line": 3876,
                     "visibility": "public"
                 },
                 {
                     "method": "clone_sms_template_design",
-                    "line": 3890,
+                    "line": 3891,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_sms_template_design",
-                    "line": 3906,
+                    "line": 3907,
                     "visibility": "public"
                 },
                 {
                     "method": "sms_template_design_save",
-                    "line": 3929,
+                    "line": 3930,
                     "visibility": "public"
                 },
                 {
                     "method": "clients_table",
-                    "line": 3945,
+                    "line": 3946,
                     "visibility": "public"
                 },
                 {
                     "method": "save_smtp_setting",
-                    "line": 4098,
+                    "line": 4099,
                     "visibility": "public"
                 },
                 {
                     "method": "sent_smtp_test_email",
-                    "line": 4112,
+                    "line": 4113,
                     "visibility": "public"
                 },
                 {
                     "method": "update_form_style",
-                    "line": 4186,
+                    "line": 4187,
                     "visibility": "public"
                 },
                 {
                     "method": "convert_email_template_v104",
-                    "line": 4200,
+                    "line": 4201,
                     "visibility": "public"
                 },
                 {
                     "method": "save_gereral_setting",
-                    "line": 4214,
+                    "line": 4215,
                     "visibility": "public"
                 },
                 {
                     "method": "clone_campaign",
-                    "line": 4229,
+                    "line": 4230,
                     "visibility": "public"
                 },
                 {
                     "method": "ma_cron_email_limit",
-                    "line": 4242,
+                    "line": 4243,
                     "visibility": "public"
                 },
                 {
                     "method": "email_sending_limit_table",
-                    "line": 4251,
+                    "line": 4252,
                     "visibility": "public"
                 },
                 {
                     "method": "save_email_limit_setting",
-                    "line": 4314,
+                    "line": 4315,
                     "visibility": "public"
                 },
                 {
                     "method": "add_test_campaign",
-                    "line": 4324,
+                    "line": 4325,
                     "visibility": "public"
                 },
                 {
                     "method": "run_campaign_test",
-                    "line": 4335,
+                    "line": 4336,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_test_campaign",
-                    "line": 4340,
+                    "line": 4341,
                     "visibility": "public"
                 },
                 {
                     "method": "refresh_test_campaign",
-                    "line": 4345,
+                    "line": 4346,
                     "visibility": "public"
                 },
                 {
                     "method": "update_unlayer_custom_fonts",
-                    "line": 4353,
+                    "line": 4354,
                     "visibility": "public"
                 }
             ],
@@ -24942,74 +24996,74 @@
         },
         {
             "path": "modules/timesheets/controllers/Api_timesheets.php",
-            "source_sha256": "d96741fd6d16c0546b094139cc38e5c928a3c4992612b2a0a1e8072ec47cf2ed",
+            "source_sha256": "ecc7cef9c3c2496ce437415d7b41b98839fffd84ff78ee4dcc07e0827231a0a8",
             "module": "timesheets",
             "base_class": "API_timesheets_Controller",
             "surface": "public_or_api_or_job",
             "method_candidates": [
                 {
                     "method": "__construct",
-                    "line": 7,
+                    "line": 8,
                     "visibility": "public"
                 },
                 {
                     "method": "login_post",
-                    "line": 44,
+                    "line": 45,
                     "visibility": "public"
                 },
                 {
                     "method": "logout_post",
-                    "line": 104,
+                    "line": 105,
                     "visibility": "public"
                 },
                 {
                     "method": "check_in_out_post",
-                    "line": 179,
+                    "line": 180,
                     "visibility": "public"
                 },
                 {
                     "method": "add_leave_application_post",
-                    "line": 336,
+                    "line": 337,
                     "visibility": "public"
                 },
                 {
                     "method": "staff_get",
-                    "line": 595,
+                    "line": 596,
                     "visibility": "public"
                 },
                 {
                     "method": "type_of_leave_custom_get",
-                    "line": 680,
+                    "line": 681,
                     "visibility": "public"
                 },
                 {
                     "method": "calculate_number_days_off_post",
-                    "line": 756,
+                    "line": 757,
                     "visibility": "public"
                 },
                 {
                     "method": "get_date_leave_post",
-                    "line": 831,
+                    "line": 832,
                     "visibility": "public"
                 },
                 {
                     "method": "get_history_check_in_out_post",
-                    "line": 945,
+                    "line": 946,
                     "visibility": "public"
                 },
                 {
                     "method": "get_timesheets_option_get",
-                    "line": 995,
+                    "line": 996,
                     "visibility": "public"
                 },
                 {
                     "method": "get_route_point_check_in_out_post",
-                    "line": 1075,
+                    "line": 1076,
                     "visibility": "public"
                 },
                 {
                     "method": "server_time_get",
-                    "line": 1144,
+                    "line": 1145,
                     "visibility": "public"
                 }
             ],
@@ -26578,12 +26632,12 @@
         {
             "name": "asaas_company_",
             "state": "not_verified",
-            "reference_count": 2
+            "reference_count": 3
         },
         {
             "name": "asaas_company_accounts",
             "state": "not_verified",
-            "reference_count": 19
+            "reference_count": 21
         },
         {
             "name": "asaas_company_events",
@@ -26611,9 +26665,24 @@
             "reference_count": 11
         },
         {
+            "name": "asaas_company_origin_profiles",
+            "state": "not_verified",
+            "reference_count": 3
+        },
+        {
             "name": "asaas_company_payers",
             "state": "not_verified",
             "reference_count": 7
+        },
+        {
+            "name": "asaas_company_preferences",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
+            "name": "asaas_company_profiles",
+            "state": "not_verified",
+            "reference_count": 2
         },
         {
             "name": "asaas_company_proofs",
@@ -26688,7 +26757,7 @@
         {
             "name": "asaas_webhook_integrations",
             "state": "not_verified",
-            "reference_count": 3
+            "reference_count": 4
         },
         {
             "name": "audit",
@@ -26878,7 +26947,7 @@
         {
             "name": "clients",
             "state": "not_verified",
-            "reference_count": 285
+            "reference_count": 292
         },
         {
             "name": "color",
@@ -26939,6 +27008,11 @@
             "name": "company_client_import_batches",
             "state": "not_verified",
             "reference_count": 7
+        },
+        {
+            "name": "company_client_profiles",
+            "state": "not_verified",
+            "reference_count": 13
         },
         {
             "name": "company_client_requests",
@@ -28043,7 +28117,7 @@
         {
             "name": "countries",
             "state": "not_verified",
-            "reference_count": 23
+            "reference_count": 24
         },
         {
             "name": "coupons",
@@ -28073,7 +28147,7 @@
         {
             "name": "currencies",
             "state": "not_verified",
-            "reference_count": 73
+            "reference_count": 74
         },
         {
             "name": "currency_rate_logs",
@@ -28183,7 +28257,7 @@
         {
             "name": "emailtemplates",
             "state": "not_verified",
-            "reference_count": 58
+            "reference_count": 59
         },
         {
             "name": "estimate_request_forms",
@@ -28663,7 +28737,7 @@
         {
             "name": "hr_profile_option",
             "state": "not_verified",
-            "reference_count": 11
+            "reference_count": 12
         },
         {
             "name": "hr_rec_transfer_records",
@@ -28901,6 +28975,16 @@
             "reference_count": 537
         },
         {
+            "name": "issuer_certificate_audit",
+            "state": "not_verified",
+            "reference_count": 2
+        },
+        {
+            "name": "issuer_certificate_credentials",
+            "state": "not_verified",
+            "reference_count": 3
+        },
+        {
             "name": "issuers_",
             "state": "not_verified",
             "reference_count": 19
@@ -28908,7 +28992,7 @@
         {
             "name": "issuers_audit",
             "state": "not_verified",
-            "reference_count": 133
+            "reference_count": 134
         },
         {
             "name": "issuers_client_links",
@@ -28918,12 +29002,12 @@
         {
             "name": "issuers_clients",
             "state": "not_verified",
-            "reference_count": 66
+            "reference_count": 68
         },
         {
             "name": "issuers_installation_identity",
             "state": "not_verified",
-            "reference_count": 26
+            "reference_count": 27
         },
         {
             "name": "issuers_invoice_documents",
@@ -28933,7 +29017,7 @@
         {
             "name": "issuers_lock",
             "state": "not_verified",
-            "reference_count": 6
+            "reference_count": 9
         },
         {
             "name": "issuers_master_authorizations",
@@ -28943,7 +29027,7 @@
         {
             "name": "issuers_registry",
             "state": "not_verified",
-            "reference_count": 137
+            "reference_count": 144
         },
         {
             "name": "issuers_resource_permissions",
@@ -29223,12 +29307,12 @@
         {
             "name": "ma_email_template_designs",
             "state": "not_verified",
-            "reference_count": 15
+            "reference_count": 17
         },
         {
             "name": "ma_email_templates",
             "state": "not_verified",
-            "reference_count": 12
+            "reference_count": 14
         },
         {
             "name": "ma_emails",
@@ -29348,7 +29432,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 81
+            "reference_count": 84
         },
         {
             "name": "mrp_manufacturing_orders",
@@ -29403,7 +29487,7 @@
         {
             "name": "options",
             "state": "not_verified",
-            "reference_count": 107
+            "reference_count": 110
         },
         {
             "name": "order_items",
@@ -29618,7 +29702,7 @@
         {
             "name": "pur_contacts",
             "state": "not_verified",
-            "reference_count": 55
+            "reference_count": 56
         },
         {
             "name": "pur_contracts",
@@ -29698,7 +29782,7 @@
         {
             "name": "pur_vendor",
             "state": "not_verified",
-            "reference_count": 137
+            "reference_count": 138
         },
         {
             "name": "pur_vendor_admin",
@@ -29988,7 +30072,7 @@
         {
             "name": "staff",
             "state": "not_verified",
-            "reference_count": 383
+            "reference_count": 374
         },
         {
             "name": "staff_contract",

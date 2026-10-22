@@ -1,5 +1,6 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH.'services/StaffIdentityTransaction.php';
 /**
  * Hr profile model
  */
@@ -3332,18 +3333,19 @@ public function get_job_position_arrayid()
 	 */
 	public function add_staff($data)
 	{
+        return StaffIdentityTransaction::run($this->db, db_prefix(), array_merge(StaffIdentityTransaction::NATIVE_TABLES, ['hr_profile_option']), fn() => $this->identity_add_staff($data));
+    }
+
+    private function identity_add_staff($data)
+    {
 		if (isset($data['fakeusernameremembered'])) {
 			unset($data['fakeusernameremembered']);
 		}
 		if (isset($data['fakepasswordremembered'])) {
 			unset($data['fakepasswordremembered']);
 		}
-		// First check for all cases if the email exists.
-		$this->db->where('email', $data['email']);
-		$email = $this->db->get(db_prefix() . 'staff')->row();
-		if ($email) {
-			die('Email already exists');
-		}
+        $data['email'] = StaffEmailIdentity::assertAvailable($this->db, db_prefix(), $data['email'] ?? null, null);
+        unset($data['staff_email_identity']);
 		$data['admin'] = 0;
 		if (is_admin()) {
 			if (isset($data['administrator'])) {
@@ -3399,11 +3401,15 @@ public function get_job_position_arrayid()
 			$data['days_for_identity'] = null;
 		}
 
-		$this->db->insert(db_prefix() . 'staff', $data);
+		StaffIdentityTransaction::write($this->db, fn() => $this->db->insert(db_prefix() . 'staff', $data));
 		$staffid = $this->db->insert_id();
 		if ($staffid) {
-			/*update next number setting*/
-			$this->update_prefix_number(['staff_code_number' =>  get_hr_profile_option('staff_code_number')+1]);
+            // Staff creation only advances its HR counter. The general settings helper
+            // also resets the menu option and enters CompanySettingsRuntime, which would
+            // attempt an unrelated nested issuer transaction inside this identity write.
+            $nextStaffCode = get_hr_profile_option('staff_code_number') + 1;
+            $this->db->where('option_name', 'staff_code_number');
+            StaffIdentityTransaction::write($this->db, fn() => $this->db->update(db_prefix() . 'hr_profile_option', ['option_val' => $nextStaffCode]));
 			
 			$slug = $data['firstname'] . ' ' . $data['lastname'];
 
@@ -3412,7 +3418,7 @@ public function get_job_position_arrayid()
 			}
 
 			if ($send_welcome_email == true) {
-				send_mail_template('staff_created', $data['email'], $staffid, $original_password);
+				StaffIdentityTransaction::afterCommit($this->db, fn() => send_mail_template('staff_created', $data['email'], $staffid, $original_password));
 			}
 
 			$this->db->where('staffid', $staffid);
@@ -3435,7 +3441,7 @@ public function get_job_position_arrayid()
 			// Delete all staff permission if is admin we dont need permissions stored in database (in case admin check some permissions)
             $this->update_permissions($data['admin'] == 1 ? [] : $permissions, $staffid);
 
-			log_activity('New Staff Member Added [ID: ' . $staffid . ', ' . $data['firstname'] . ' ' . $data['lastname'] . ']');
+			StaffIdentityTransaction::afterCommit($this->db, fn() => log_activity('New Staff Member Added [ID: ' . $staffid . ', ' . $data['firstname'] . ' ' . $data['lastname'] . ']'));
 
 			// Get all announcements and set it to read.
 			$this->db->select('announcementid');
@@ -3449,7 +3455,7 @@ public function get_job_position_arrayid()
 					'userid'         => $staffid,
 				]);
 			}
-			hooks()->do_action('staff_member_created', $staffid);
+			StaffIdentityTransaction::afterCommit($this->db, fn() => hooks()->do_action('staff_member_created', $staffid));
 
 			return $staffid;
 		}
@@ -3466,6 +3472,11 @@ public function get_job_position_arrayid()
 	 */
 	public function update_staff($data, $id)
 	{
+        return StaffIdentityTransaction::run($this->db, db_prefix(), array_merge(StaffIdentityTransaction::NATIVE_TABLES, ['hr_profile_option']), fn() => $this->identity_update_staff($data, $id));
+    }
+
+    private function identity_update_staff($data, $id)
+    {
 		if (isset($data['fakeusernameremembered'])) {
 			unset($data['fakeusernameremembered']);
 		}
@@ -3474,6 +3485,8 @@ public function get_job_position_arrayid()
 		}
 
 		$data = hooks()->apply_filters('before_update_staff_member', $data, $id);
+        if (array_key_exists('email', $data)) { $data['email'] = StaffEmailIdentity::assertAvailable($this->db, db_prefix(), $data['email'], (int) $id); }
+        unset($data['staff_email_identity']);
 		if($this->get_staff($id)->admin == '1') {
 			$data['administrator'] = 1;
 		}
@@ -3618,7 +3631,7 @@ public function get_job_position_arrayid()
 
 
 		$this->db->where('staffid', $id);
-		$this->db->update(db_prefix() . 'staff', $data);
+		StaffIdentityTransaction::write($this->db, fn() => $this->db->update(db_prefix() . 'staff', $data));
 
 		if ($this->db->affected_rows() > 0) {
 			$affectedRows++;
@@ -3629,8 +3642,8 @@ public function get_job_position_arrayid()
         }
 
 		if ($affectedRows > 0) {
-			hooks()->do_action('staff_member_updated', $id);
-			log_activity('Staff Member Updated [ID: ' . $id . ', ' . $data['firstname'] . ' ' . $data['lastname'] . ']');
+			StaffIdentityTransaction::afterCommit($this->db, fn() => hooks()->do_action('staff_member_updated', $id));
+			StaffIdentityTransaction::afterCommit($this->db, fn() => log_activity('Staff Member Updated [ID: ' . $id . ', ' . $data['firstname'] . ' ' . $data['lastname'] . ']'));
 
 			return true;
 		}
@@ -4418,6 +4431,10 @@ public function add_attachment_to_database($rel_id, $rel_type, $attachment, $ext
 	* @return boolean       
 	*/
    public function update_staff_profile($data){
+        return StaffIdentityTransaction::run($this->db, db_prefix(), StaffIdentityTransaction::NATIVE_TABLES, fn() => $this->identity_update_staff_profile($data));
+    }
+
+    private function identity_update_staff_profile($data){
 	$id = $data['id'];
 	unset($data['id']);
 	$data['date_update']          = date('Y-m-d');
@@ -4433,6 +4450,8 @@ public function add_attachment_to_database($rel_id, $rel_type, $attachment, $ext
 		unset($data['nationality']);
 	}
 	$data = hooks()->apply_filters('before_update_staff_member', $data, $id);
+        if (array_key_exists('email', $data)) { $data['email'] = StaffEmailIdentity::assertAvailable($this->db, db_prefix(), $data['email'], (int) $id); }
+        unset($data['staff_email_identity']);
 	if (is_admin()) {
 		if (isset($data['administrator'])) {
 			$data['admin'] = 1;
@@ -4500,14 +4519,6 @@ public function add_attachment_to_database($rel_id, $rel_type, $attachment, $ext
 		unset($data['year_requisition']);
 	}
 
-
-   // First check for all cases if the email exists.
-   
-		$this->db->where('email', $data['email']);
-		$email = $this->db->get(db_prefix() . 'staff')->row();
-		if ($email) {
-			// sdie('Email already exists');
-		}
 
 		$data['admin'] = 0;
 		if (is_admin()) {
@@ -4581,7 +4592,7 @@ public function add_attachment_to_database($rel_id, $rel_type, $attachment, $ext
 		}
 	}
 	$this->db->where('staffid', $id);
-	$this->db->update(db_prefix() . 'staff', $data);
+	StaffIdentityTransaction::write($this->db, fn() => $this->db->update(db_prefix() . 'staff', $data));
 	if ($this->db->affected_rows() > 0) {
 		$affectedRows++;
 	}
@@ -4590,8 +4601,8 @@ public function add_attachment_to_database($rel_id, $rel_type, $attachment, $ext
 		$affectedRows++;
 	}
 	if ($affectedRows > 0) {
-		hooks()->do_action('staff_member_updated', $id);
-		log_activity('Staff Member Updated [ID: ' . $id . ', ' . $data['firstname'] . ' ' . $data['lastname'] . ']');
+		StaffIdentityTransaction::afterCommit($this->db, fn() => hooks()->do_action('staff_member_updated', $id));
+		StaffIdentityTransaction::afterCommit($this->db, fn() => log_activity('Staff Member Updated [ID: ' . $id . ', ' . $data['firstname'] . ' ' . $data['lastname'] . ']'));
 		return true;
 	}
 	return false;

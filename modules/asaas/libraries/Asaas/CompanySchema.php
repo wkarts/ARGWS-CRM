@@ -55,7 +55,7 @@ final class CompanySchema
                 \IssuerStorage::query($db,'CREATE TABLE IF NOT EXISTS `'.$table.'` ('.implode(',',$parts).')'.($sqlite?'':' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin'));
                 if($sqlite)foreach(self::INDEXES[$suffix] as $name=>[$columns,$nonUnique])if($name!=='PRIMARY')\IssuerStorage::query($db,'CREATE '.($nonUnique?'':'UNIQUE ').'INDEX IF NOT EXISTS `'.$table.'_'.$name.'` ON `'.$table.'` (`'.implode('`,`',$columns).'`)');
             }
-            if($sqlite){$meta=\IssuerStorage::query($db,'PRAGMA table_info(`'.$table.'`)')->result_array();if(count($meta)!==count($fields))throw new \RuntimeException('asaas_company_schema_invalid');continue;}
+            if($sqlite){$meta=\IssuerStorage::query($db,'PRAGMA table_info(`'.$table.'`)')->result_array();if($suffix==='accounts')$meta=array_values(array_filter($meta,static fn($column)=>$column['name']!=='token_cipher'));if(count($meta)!==count($fields))throw new \RuntimeException('asaas_company_schema_invalid');continue;}
             $meta=\IssuerStorage::query($db,'SELECT ENGINE,TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$table])->row_array();
             if(strtoupper($meta['ENGINE']??'')!=='INNODB'||($meta['TABLE_COLLATION']??'')!=='utf8mb4_bin')throw new \RuntimeException('asaas_company_schema_invalid');
             $columns=[];foreach(\IssuerStorage::query($db,'SELECT COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT,COLLATION_NAME,EXTRA FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$table])->result_array() as $row)$columns[$row['COLUMN_NAME']]=$row;

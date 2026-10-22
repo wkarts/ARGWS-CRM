@@ -1,0 +1,864 @@
+{
+  "languages": {
+    "bulgarian": "Búlgaro",
+    "catalan": "Catalão",
+    "chinese": "Chinês",
+    "czech": "Tcheco",
+    "dutch": "Holandês",
+    "english": "Inglês",
+    "finnish": "Finlandês",
+    "francais_canada": "Francês (Canadá)",
+    "french": "Francês",
+    "german": "Alemão",
+    "greek": "Grego",
+    "indonesia": "Indonésio",
+    "italian": "Italiano",
+    "japanese": "Japonês",
+    "norwegian": "Norueguês",
+    "persian": "Persa",
+    "polish": "Polonês",
+    "portuguese": "Português (Portugal)",
+    "portuguese_br": "Português (Brasil)",
+    "romanian": "Romeno",
+    "russian": "Russo",
+    "slovak": "Eslovaco",
+    "spanish": "Espanhol",
+    "swedish": "Sueco",
+    "turkish": "Turco",
+    "ukrainian": "Ucraniano",
+    "vietnamese": "Vietnamita"
+  },
+  "groups": {
+    "client": "Cliente",
+    "ticket": "Chamado",
+    "invoice": "Fatura",
+    "estimate": "Orçamento",
+    "proposals": "Propostas",
+    "project": "Projeto",
+    "projects": "Projetos",
+    "contract": "Contrato",
+    "credit_note": "Nota de crédito",
+    "subscriptions": "Assinaturas",
+    "tasks": "Tarefas",
+    "staff": "Colaborador",
+    "leads": "Leads",
+    "other": "Outros",
+    "notifications": "Notificações",
+    "estimate_request": "Solicitação de orçamento",
+    "event": "Evento",
+    "invoice_batch_payments": "Pagamentos de faturas em lote",
+    "products": "Produtos",
+    "purchase_order": "Pedido de compra",
+    "timesheets_attendance_mgt": "Controle de ponto",
+    "webhooks": "Webhooks",
+    "invoices_builder": "Gerador de faturas",
+    "hr_profile": "Perfil do colaborador",
+    "hr_contract": "Contrato de trabalho",
+    "hr_contract_addendum": "Aditivo contratual",
+    "hr_payslip": "Holerite",
+    "timesheets": "Apontamentos",
+    "purchase": "Compras",
+    "products_order": "Pedido de produtos",
+    "sm_contract": "Contrato de serviço",
+    "sm_contract_addendum": "Aditivo do contrato de serviço",
+    "send_request_approval": "Solicitação de aprovação",
+    "new_leave_application_send_to_notification_recipient": "Nova solicitação de ausência",
+    "remind_user_check_in": "Lembrete de registro de entrada",
+    "attendance_notice": "Aviso de ponto",
+    "vendor": "Fornecedor",
+    "purchase_request": "Requisição de compra",
+    "purchase_request_approval": "Aprovação da requisição de compra",
+    "purchase_contract": "Contrato de compra",
+    "purchase_approve": "Aprovação de compra",
+    "debit_note": "Nota de débito",
+    "purchase_statement": "Extrato de compras",
+    "purchase_quotation": "Cotação de compra",
+    "order": "Pedido",
+    "invoice_built": "Fatura gerada",
+    "invoice_builder": "Gerador de faturas"
+  },
+  "fields": {
+    "{unbilled_tasks_list}": {
+      "Unbilled task list": "Lista de tarefas não faturadas"
+    },
+    "{estimate_request_id}": {
+      "Estimate Request ID": "ID da solicitação de orçamento"
+    },
+    "{estimate_request_form_name}": {
+      "Estimate Request Form Name": "Nome do formulário de solicitação de orçamento"
+    },
+    "{estimate_request_email}": {
+      "Estimate Request Email": "E-mail da solicitação de orçamento"
+    },
+    "{estimate_request_link}": {
+      "Estimate Request Link": "Link da solicitação de orçamento"
+    },
+    "{estimate_request_assigned}": {
+      "Staff Assigned": "Colaborador responsável"
+    },
+    "{estimate_request_status}": {
+      "Estimate Request Status": "Status da solicitação de orçamento"
+    },
+    "{estimate_request_date_submitted}": {
+      "Date Submitted": "Data de envio"
+    },
+    "{estimate_request_submitted_data}": {
+      "Submitted Data": "Dados enviados"
+    },
+    "{subscription_id}": {
+      "Subscription ID": "ID da assinatura"
+    },
+    "{subscription_name}": {
+      "Subscription Name": "Nome da assinatura"
+    },
+    "{subscription_description}": {
+      "Subscription Description": "Descrição da assinatura"
+    },
+    "{subscription_link}": {
+      "Subscription Subscribe Link": "Link para assinar"
+    },
+    "{subscription_authorize_payment_link}": {
+      "Subscription Authorization Link": "Link de autorização da assinatura"
+    },
+    "{estimate_subtotal}": {
+      "Estimate Subtotal": "Subtotal do orçamento"
+    },
+    "{batch_payments_list}": {
+      "Batch Payments list": "Lista de pagamentos em lote"
+    },
+    "{task_user_take_action}": {
+      "Staff/Contact who take action on task": "Colaborador ou contato que realizou a ação na tarefa"
+    },
+    "{task_link}": {
+      "Task Link": "Link da tarefa"
+    },
+    "{comment_link}": {
+      "Comment Link": "Link do comentário"
+    },
+    "{task_name}": {
+      "Task Name": "Nome da tarefa"
+    },
+    "{task_description}": {
+      "Task Description": "Descrição da tarefa"
+    },
+    "{task_status}": {
+      "Task Status": "Status da tarefa"
+    },
+    "{task_comment}": {
+      "Task Comment": "Comentário da tarefa"
+    },
+    "{task_priority}": {
+      "Task Priority": "Prioridade da tarefa"
+    },
+    "{task_startdate}": {
+      "Task Start Date": "Data de início da tarefa"
+    },
+    "{task_duedate}": {
+      "Task Due Date": "Prazo da tarefa"
+    },
+    "{task_related}": {
+      "Related to": "Relacionado a"
+    },
+    "{project_name}": {
+      "Project Name": "Nome do projeto",
+      "Project name": "Nome do projeto"
+    },
+    "{project_description}": {
+      "Project Description": "Descrição do projeto"
+    },
+    "{project_start_date}": {
+      "Project Start Date": "Data de início do projeto"
+    },
+    "{project_deadline}": {
+      "Project Deadline": "Prazo do projeto"
+    },
+    "{project_status}": {
+      "Project Status": "Status do projeto"
+    },
+    "{project_link}": {
+      "Project Link": "Link do projeto"
+    },
+    "{file_creator}": {
+      "File Creator": "Autor do arquivo"
+    },
+    "{comment_creator}": {
+      "Comment Creator": "Autor do comentário"
+    },
+    "{discussion_link}": {
+      "Discussion Link": "Link da discussão"
+    },
+    "{discussion_subject}": {
+      "Discussion Subject": "Assunto da discussão"
+    },
+    "{discussion_description}": {
+      "Discussion Description": "Descrição da discussão"
+    },
+    "{discussion_creator}": {
+      "Discussion Creator": "Autor da discussão"
+    },
+    "{discussion_comment}": {
+      "Discussion Comment": "Comentário da discussão"
+    },
+    "{event_title}": {
+      "Event Title": "Título do evento"
+    },
+    "{event_description}": {
+      "Event Description": "Descrição do evento"
+    },
+    "{event_start_date}": {
+      "Start Date": "Data de início"
+    },
+    "{event_end_date}": {
+      "End Date": "Data de término"
+    },
+    "{event_link}": {
+      "Event Link": "Link do evento"
+    },
+    "{invoice_link}": {
+      "Invoice Link": "Link da fatura"
+    },
+    "{invoice_number}": {
+      "Invoice Number": "Número da fatura",
+      "Invoice number": "Número da fatura"
+    },
+    "{invoice_duedate}": {
+      "Invoice Duedate": "Vencimento da fatura"
+    },
+    "{invoice_date}": {
+      "Invoice Date": "Data da fatura"
+    },
+    "{invoice_status}": {
+      "Invoice Status": "Status da fatura"
+    },
+    "{invoice_sale_agent}": {
+      "Invoice Sale Agent": "Responsável pela venda da fatura"
+    },
+    "{invoice_total}": {
+      "Invoice Total": "Total da fatura"
+    },
+    "{invoice_subtotal}": {
+      "Invoice Subtotal": "Subtotal da fatura"
+    },
+    "{invoice_amount_due}": {
+      "Invoice Amount Due": "Saldo a pagar da fatura"
+    },
+    "{total_days_overdue}": {
+      "Invoice Days Overdue": "Dias de atraso da fatura"
+    },
+    "{payment_total}": {
+      "Payment Recorded Total": "Total do pagamento registrado"
+    },
+    "{payment_date}": {
+      "Payment Recorded Date": "Data do pagamento registrado"
+    },
+    "{lead_name}": {
+      "Lead Name": "Nome do lead"
+    },
+    "{lead_email}": {
+      "Lead Email": "E-mail do lead"
+    },
+    "{lead_position}": {
+      "Lead Position": "Cargo do lead"
+    },
+    "{lead_website}": {
+      "Lead Website": "Site do lead"
+    },
+    "{lead_description}": {
+      "Lead Description": "Descrição do lead"
+    },
+    "{lead_phonenumber}": {
+      "Lead Phone Number": "Telefone do lead"
+    },
+    "{lead_company}": {
+      "Lead Company": "Empresa do lead"
+    },
+    "{lead_country}": {
+      "Lead Country": "País do lead"
+    },
+    "{lead_zip}": {
+      "Lead Zip": "CEP do lead"
+    },
+    "{lead_city}": {
+      "Lead City": "Cidade do lead"
+    },
+    "{lead_state}": {
+      "Lead State": "Estado do lead"
+    },
+    "{lead_address}": {
+      "Lead Address": "Endereço do lead"
+    },
+    "{lead_assigned}": {
+      "Lead Assigned": "Responsável pelo lead"
+    },
+    "{lead_status}": {
+      "Lead Status": "Status do lead"
+    },
+    "{lead_source}": {
+      "Lead Souce": "Origem do lead"
+    },
+    "{lead_link}": {
+      "Lead Link": "Link do lead"
+    },
+    "{staff_firstname}": {
+      "Staff Firstname": "Nome do colaborador",
+      "Staff First Name": "Nome do colaborador"
+    },
+    "{staff_lastname}": {
+      "Staff Lastname": "Sobrenome do colaborador",
+      "Staff Last Name": "Sobrenome do colaborador"
+    },
+    "{staff_email}": {
+      "Staff Email": "E-mail do colaborador"
+    },
+    "{staff_datecreated}": {
+      "Staff Date Created": "Data de cadastro do colaborador"
+    },
+    "{reset_password_url}": {
+      "Reset Password Url": "URL de redefinição de senha",
+      "Reset Password URL": "URL de redefinição de senha"
+    },
+    "{staff_reminder_description}": {
+      "Reminder Text": "Texto do lembrete"
+    },
+    "{staff_reminder_date}": {
+      "Reminder Date": "Data do lembrete"
+    },
+    "{staff_reminder_relation_name}": {
+      "Reminder Relation Name": "Nome do registro relacionado ao lembrete"
+    },
+    "{staff_reminder_relation_link}": {
+      "Reminder Relation Link": "Link do registro relacionado ao lembrete"
+    },
+    "{two_factor_auth_code}": {
+      "Two Factor Authentication Code": "Código de autenticação de dois fatores"
+    },
+    "{password}": {
+      "Password": "Senha"
+    },
+    "{proposal_id}": {
+      "Proposal ID": "ID da proposta"
+    },
+    "{proposal_number}": {
+      "Proposal Number": "Número da proposta"
+    },
+    "{proposal_subject}": {
+      "Subject": "Assunto"
+    },
+    "{proposal_total}": {
+      "Proposal Total": "Total da proposta"
+    },
+    "{proposal_subtotal}": {
+      "Proposal Subtotal": "Subtotal da proposta"
+    },
+    "{proposal_open_till}": {
+      "Open Till": "Válida até"
+    },
+    "{proposal_assigned}": {
+      "Proposal Assigned": "Responsável pela proposta"
+    },
+    "{proposal_proposal_to}": {
+      "Proposal To": "Destinatário da proposta"
+    },
+    "{proposal_address}": {
+      "Address": "Endereço"
+    },
+    "{proposal_city}": {
+      "City": "Cidade"
+    },
+    "{proposal_state}": {
+      "State": "Estado"
+    },
+    "{proposal_zip}": {
+      "Zip Code": "CEP"
+    },
+    "{proposal_country}": {
+      "Country": "País"
+    },
+    "{proposal_email}": {
+      "Email": "E-mail"
+    },
+    "{proposal_phone}": {
+      "Phone": "Telefone"
+    },
+    "{proposal_link}": {
+      "Proposal Link": "Link da proposta"
+    },
+    "{proposal_created_at}": {
+      "Created At": "Criado em"
+    },
+    "{proposal_date}": {
+      "Proposal Date": "Data da proposta"
+    },
+    "{ticket_id}": {
+      "Ticket ID": "ID do chamado"
+    },
+    "{ticket_url}": {
+      "Ticket URL": "URL do chamado"
+    },
+    "{ticket_public_url}": {
+      "Ticket Public URL": "URL pública do chamado"
+    },
+    "{ticket_department}": {
+      "Department": "Departamento"
+    },
+    "{ticket_department_email}": {
+      "Department Email": "E-mail do departamento"
+    },
+    "{ticket_date}": {
+      "Date Opened": "Data de abertura"
+    },
+    "{ticket_subject}": {
+      "Ticket Subject": "Assunto do chamado"
+    },
+    "{ticket_message}": {
+      "Ticket Message": "Mensagem do chamado"
+    },
+    "{ticket_status}": {
+      "Ticket Status": "Status do chamado"
+    },
+    "{ticket_priority}": {
+      "Ticket Priority": "Prioridade do chamado"
+    },
+    "{ticket_service}": {
+      "Ticket Service": "Serviço do chamado"
+    },
+    "{contact_firstname}": {
+      "Contact Firstname": "Nome do contato",
+      "Contact first name": "Nome do contato"
+    },
+    "{contact_lastname}": {
+      "Contact Lastname": "Sobrenome do contato",
+      "Contact last name": "Sobrenome do contato"
+    },
+    "{contact_phonenumber}": {
+      "Contact Phone Number": "Telefone do contato"
+    },
+    "{contact_title}": {
+      "Contact Title": "Cargo do contato"
+    },
+    "{contact_email}": {
+      "Contact Email": "E-mail do contato"
+    },
+    "{set_password_url}": {
+      "Set New Password URL": "URL para definir uma nova senha"
+    },
+    "{email_verification_url}": {
+      "Email Verification URL": "URL de verificação do e-mail"
+    },
+    "{client_company}": {
+      "Client Company": "Empresa do cliente"
+    },
+    "{client_phonenumber}": {
+      "Client Phone Number": "Telefone do cliente"
+    },
+    "{client_country}": {
+      "Client Country": "País do cliente"
+    },
+    "{client_city}": {
+      "Client City": "Cidade do cliente"
+    },
+    "{client_zip}": {
+      "Client Zip": "CEP do cliente"
+    },
+    "{client_state}": {
+      "Client State": "Estado do cliente"
+    },
+    "{client_address}": {
+      "Client Address": "Endereço do cliente"
+    },
+    "{client_vat_number}": {
+      "Client Vat Number": "Documento fiscal do cliente"
+    },
+    "{client_id}": {
+      "Client ID": "ID do cliente"
+    },
+    "{statement_from}": {
+      "Statement From": "Início do período do extrato"
+    },
+    "{statement_to}": {
+      "Statement To": "Fim do período do extrato"
+    },
+    "{statement_balance_due}": {
+      "Statement Balance Due": "Saldo a pagar do extrato"
+    },
+    "{statement_amount_paid}": {
+      "Statement Amount Paid": "Valor pago no extrato"
+    },
+    "{statement_invoiced_amount}": {
+      "Statement Invoiced Amount": "Valor faturado no extrato"
+    },
+    "{statement_beginning_balance}": {
+      "Statement Beginning Balance": "Saldo inicial do extrato"
+    },
+    "{customer_profile_files_admin_link}": {
+      "Customer Files Admin Link": "Link administrativo dos arquivos do cliente"
+    },
+    "{client_website}": {
+      "Client Website": "Site do cliente"
+    },
+    "{logo_url}": {
+      "Logo URL": "URL do logotipo"
+    },
+    "{logo_image_with_url}": {
+      "Logo image with URL": "Imagem do logotipo com link"
+    },
+    "{dark_logo_image_with_url}": {
+      "Dark logo image with URL": "Imagem do logotipo escuro com link"
+    },
+    "{crm_url}": {
+      "CRM URL": "URL do CRM"
+    },
+    "{admin_url}": {
+      "Admin URL": "URL administrativa"
+    },
+    "{main_domain}": {
+      "Main Domain": "Domínio principal"
+    },
+    "{companyname}": {
+      "Company Name": "Nome da empresa",
+      "Vendor Name": "Nome do fornecedor"
+    },
+    "{email_signature}": {
+      "Email Signature": "Assinatura do e-mail"
+    },
+    "{terms_and_conditions_url}": {
+      "(GDPR) Terms & Conditions URL": "(LGPD) URL dos termos e condições"
+    },
+    "{privacy_policy_url}": {
+      "(GDPR) Privacy Policy URL": "(LGPD) URL da política de privacidade"
+    },
+    "{credit_note_number}": {
+      "Credit Note Number": "Número da nota de crédito"
+    },
+    "{credit_note_date}": {
+      "Date": "Data"
+    },
+    "{credit_note_status}": {
+      "Status": "Status"
+    },
+    "{credit_note_total}": {
+      "Total": "Total"
+    },
+    "{credit_note_subtotal}": {
+      "Subtotal": "Subtotal"
+    },
+    "{credit_note_credits_used}": {
+      "Credits Used": "Créditos utilizados"
+    },
+    "{credit_note_credits_remaining}": {
+      "Credits Remaining": "Créditos restantes"
+    },
+    "{estimate_link}": {
+      "Estimate Link": "Link do orçamento"
+    },
+    "{estimate_number}": {
+      "Estimate Number": "Número do orçamento"
+    },
+    "{estimate_reference_no}": {
+      "Reference no.": "Número de referência"
+    },
+    "{estimate_expirydate}": {
+      "Estimate Expiry Date": "Validade do orçamento"
+    },
+    "{estimate_date}": {
+      "Estimate Date": "Data do orçamento"
+    },
+    "{estimate_status}": {
+      "Estimate Status": "Status do orçamento"
+    },
+    "{estimate_sale_agent}": {
+      "Estimate Sale Agent": "Responsável pela venda do orçamento"
+    },
+    "{estimate_total}": {
+      "Estimate Total": "Total do orçamento"
+    },
+    "{contract_id}": {
+      "Contract ID": "ID do contrato"
+    },
+    "{contract_subject}": {
+      "Contract Subject": "Assunto do contrato"
+    },
+    "{contract_description}": {
+      "Contract Description": "Descrição do contrato"
+    },
+    "{contract_datestart}": {
+      "Contract Date Start": "Data de início do contrato"
+    },
+    "{contract_dateend}": {
+      "Contract Date End": "Data de término do contrato"
+    },
+    "{contract_contract_value}": {
+      "Contract Value": "Valor do contrato"
+    },
+    "{contract_link}": {
+      "Contract Link": "Link do contrato",
+      "Contract link": "Link do contrato"
+    },
+    "{contract_type}": {
+      "Contract Type": "Tipo de contrato"
+    },
+    "{contract_created_at}": {
+      "Created At": "Criado em"
+    },
+    "{order_id}": {
+      "Order Id": "ID do pedido"
+    },
+    "{order_date}": {
+      "Order Date": "Data do pedido"
+    },
+    "{status}": {
+      "Order Status": "Status do pedido"
+    },
+    "{total}": {
+      "Total": "Total"
+    },
+    "{datecreated}": {
+      "Order Created Time": "Horário de criação do pedido"
+    },
+    "{order_items}": {
+      "Order Items Table with Product and quantity": "Tabela de itens do pedido com produto e quantidade"
+    },
+    "{currency}": {
+      "Base Currency": "Moeda-base"
+    },
+    "{contract_addendum_id}": {
+      "Contract Addendum ID": "ID do aditivo contratual"
+    },
+    "{contract_addendum_subject}": {
+      "Contract Addendum Subject": "Assunto do aditivo contratual"
+    },
+    "{contract_addendum_description}": {
+      "Contract Addendum Description": "Descrição do aditivo contratual"
+    },
+    "{contract_addendum_datestart}": {
+      "Contract Addendum Datestart": "Data de início do aditivo contratual"
+    },
+    "{staff_code}": {
+      "Staff Code": "Código do colaborador"
+    },
+    "{staff_gender}": {
+      "Staff Gender": "Gênero do colaborador"
+    },
+    "{staff_birthday}": {
+      "Staff Birthday": "Data de nascimento do colaborador"
+    },
+    "{staff_phone}": {
+      "Staff Phone": "Telefone do colaborador"
+    },
+    "{staff_workplace}": {
+      "Staff workplace": "Local de trabalho do colaborador"
+    },
+    "{team_manage}": {
+      "Staff Direct manager": "Gestor direto do colaborador"
+    },
+    "{staff_jobposition}": {
+      "Staff Job Position": "Cargo do colaborador"
+    },
+    "{staff_role}": {
+      "Staff Role": "Função do colaborador"
+    },
+    "{literacy}": {
+      "Staff Academic level": "Escolaridade do colaborador"
+    },
+    "{hourly_rate}": {
+      "Staff Hourly Rate": "Valor por hora do colaborador"
+    },
+    "{default_language}": {
+      "Staff Default Language": "Idioma padrão do colaborador"
+    },
+    "{direction}": {
+      "Staff Direction": "Direção do texto do colaborador"
+    },
+    "{orther_infor}": {
+      "Staff Other information": "Outras informações do colaborador"
+    },
+    "{staff_deparment_name}": {
+      "Department Name": "Nome do departamento"
+    },
+    "{staff_Domicile}": {
+      "Staff Domicile": "Domicílio do colaborador"
+    },
+    "{marital_status}": {
+      "Staff Marital status": "Estado civil do colaborador"
+    },
+    "{staff_current_address}": {
+      "Staff Current Address": "Endereço atual do colaborador"
+    },
+    "{staff_nation}": {
+      "Staff Nation": "Nacionalidade do colaborador"
+    },
+    "{staff_place_of_birth}": {
+      "Staff Place of Birth": "Local de nascimento do colaborador"
+    },
+    "{staff_religion}": {
+      "Staff Religion": "Religião do colaborador"
+    },
+    "{staff_citizen_identification}": {
+      "Staff Citizen Identification": "Documento de identificação do colaborador"
+    },
+    "{staff_date_of_issue}": {
+      "Staff Date of Issue": "Data de emissão do documento do colaborador"
+    },
+    "{place_of_issue}": {
+      "Staff Place of issue": "Local de emissão do documento do colaborador"
+    },
+    "{staff_resident}": {
+      "Staff Resident": "Residência do colaborador"
+    },
+    "{account_number}": {
+      "Staff Bank Account Number": "Número da conta bancária do colaborador"
+    },
+    "{name_account}": {
+      "Staff Bank Account Name": "Titular da conta bancária do colaborador"
+    },
+    "{issue_bank}": {
+      "Staff Bank Name": "Banco do colaborador"
+    },
+    "{staff_personal_tax_code}": {
+      "Staff Personal Tax Code": "CPF do colaborador"
+    },
+    "{facebook}": {
+      "Staff facebook": "Facebook do colaborador"
+    },
+    "{linkedin}": {
+      "Staff linkedin": "LinkedIn do colaborador"
+    },
+    "{skype}": {
+      "Staff skype": "Skype do colaborador"
+    },
+    "{contract_code}": {
+      "Contract Code": "Código do contrato"
+    },
+    "{contract_status}": {
+      "Contract Status": "Status do contrato"
+    },
+    "{contract_effective_date}": {
+      "Contract Effective Date": "Data de vigência do contrato"
+    },
+    "{contract_expiration_date}": {
+      "Contract Expiration date": "Data de vencimento do contrato"
+    },
+    "{hourly_or_month}": {
+      "Salary and allowance by hourly rate or month": "Salário e adicionais por hora ou mês"
+    },
+    "{salary_and_allowance}": {
+      "Salary and Allowance": "Salário e adicionais"
+    },
+    "{approver}": {
+      "Approver": "Aprovador"
+    },
+    "{staff_name}": {
+      "Staff name": "Nome do colaborador"
+    },
+    "{link}": {
+      "Link": "Link"
+    },
+    "{staff_id}": {
+      "Staff id": "ID do colaborador"
+    },
+    "{date_time}": {
+      "Date time": "Data e hora"
+    },
+    "{type_check}": {
+      "Check-in/Check-out": "Registro de entrada/saída"
+    },
+    "{po_number}": {
+      "PO number": "Número do pedido de compra"
+    },
+    "{public_link}": {
+      "Public link": "Link público",
+      "PR Public link": "Link público da requisição de compra"
+    },
+    "{po_name}": {
+      "PO name": "Nome do pedido de compra"
+    },
+    "{po_tax_value}": {
+      "PO tax value": "Impostos do pedido de compra",
+      "DN tax value": "Impostos da nota de débito"
+    },
+    "{po_subtotal}": {
+      "PO subtotal": "Subtotal do pedido de compra"
+    },
+    "{po_value}": {
+      "PO value": "Valor do pedido de compra"
+    },
+    "{additional_content}": {
+      "Additional content": "Conteúdo adicional"
+    },
+    "{vendor_portal_link}": {
+      "Vendor Portal Link": "Link do portal do fornecedor"
+    },
+    "{pr_number}": {
+      "PR number": "Número da requisição de compra"
+    },
+    "{pr_name}": {
+      "PR name": "Nome da requisição de compra"
+    },
+    "{pr_tax_value}": {
+      "PR tax value": "Impostos da requisição de compra"
+    },
+    "{pr_subtotal}": {
+      "PR subtotal": "Subtotal da requisição de compra"
+    },
+    "{pr_value}": {
+      "PR value": "Valor da requisição de compra"
+    },
+    "{from_staff_name}": {
+      "From staff": "Colaborador solicitante"
+    },
+    "{type}": {
+      "Purchase Request/Pruchase Order/Quotation/Payment Request": "Requisição de compra / pedido de compra / cotação / solicitação de pagamento"
+    },
+    "{contract_number}": {
+      "Contract number": "Número do contrato"
+    },
+    "{contract_name}": {
+      "Contract name": "Nome do contrato"
+    },
+    "{contract_value}": {
+      "Contract value": "Valor do contrato"
+    },
+    "{by_staff_name}": {
+      "By staff": "Colaborador responsável pela ação"
+    },
+    "{dn_number}": {
+      "Debit Note number": "Número da nota de débito"
+    },
+    "{dn_subtotal}": {
+      "DN subtotal": "Subtotal da nota de débito"
+    },
+    "{dn_value}": {
+      "DN value": "Valor da nota de débito"
+    },
+    "{pq_number}": {
+      "PQ number": "Número da cotação de compra"
+    },
+    "{quotation_link}": {
+      "Quotation link": "Link da cotação"
+    },
+    "{pq_tax_value}": {
+      "PQ tax value": "Impostos da cotação de compra"
+    },
+    "{pq_subtotal}": {
+      "PQ subtotal": "Subtotal da cotação de compra"
+    },
+    "{pq_value}": {
+      "PQ value": "Valor da cotação de compra"
+    },
+    "{webhook_response_code}": {
+      "Webhook response code": "Código de resposta do webhook"
+    },
+    "{lead_public_form_url}": {
+      "Lead Public Form URL": "URL do formulário público do lead"
+    },
+    "{lead_public_consent_url}": {
+      "Lead Consent Link": "Link de consentimento do lead"
+    },
+    "{contact_public_consent_url}": {
+      "Contact Public Consent URL": "URL pública de consentimento do contato"
+    },
+    "{staff_phonenumber}": {
+      "Staff Phone": "Telefone do colaborador"
+    }
+  }
+}

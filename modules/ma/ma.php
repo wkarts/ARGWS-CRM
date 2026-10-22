@@ -2,9 +2,9 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 /*
-Module Name: Automação de Marketing 2024 v1.0.9
+Module Name: Automação de Marketing 2024 v1.1.2
 Description: Este módulo ajuda a identificar clientes potenciais, automatizando o processo de nutrição desses leads até que estejam prontos para a venda.
-Version: 1.1.0
+Version: 1.1.2
 Requires at least: 2.3.*
 Author: Wkarts
 Author URI: https://t.me/wkartspro
@@ -20,7 +20,7 @@ hooks()->add_action('app_admin_footer', 'ma_add_footer_components');
 hooks()->add_action('after_cron_run', 'ma_run_campaign');
 hooks()->add_action('after_lead_lead_tabs', 'ma_add_lead_tab');
 hooks()->add_action('after_lead_tabs_content', 'ma_add_lead_tabs_content');
-define('MA_REVISION', 109);
+define('MA_REVISION', 111);
 
 $CI = &get_instance();
 

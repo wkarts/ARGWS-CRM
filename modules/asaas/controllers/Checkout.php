@@ -31,16 +31,33 @@ class Checkout extends ClientsController
         return $invoice;
     }
 
+    /** Resolve presentation and access flags from an existing immutable origin first. */
+    private function invoiceProfileSetting($invoice, string $name): string
+    {
+        $origin = $this->asaas_gateway->getAdapter()->originStore()->byInvoice((int) $invoice->id);
+        return $origin ? $this->asaas_gateway->getSettingForOrigin($name, $origin) : $this->asaas_gateway->getSetting($name);
+    }
+
+    private function invoiceEnvironmentLabel($invoice): string
+    {
+        $origin = $this->asaas_gateway->getAdapter()->originStore()->byInvoice((int) $invoice->id);
+        if ($origin) {
+            require_once __DIR__ . '/../libraries/Asaas/EnvironmentSettings.php';
+            return strtoupper(\Asaas\EnvironmentSettings::originEnvironment($origin));
+        }
+        return $this->asaas_gateway->getEnvironmentLabel();
+    }
+
     public function index($hash)
     {
         $invoice = $this->legacyInvoice($hash);
         if (!$invoice) { return; }
 
         $data = [
-            'billet_only' => $this->asaas_gateway->getSetting('billet_only'),
-            'card_only'   => $this->asaas_gateway->getSetting('card_only'),
-            'pix_only'    => $this->asaas_gateway->getSetting('pix_only'),
-            'environment' => $this->asaas_gateway->getEnvironmentLabel(),
+            'billet_only' => $this->invoiceProfileSetting($invoice, 'billet_only'),
+            'card_only'   => $this->invoiceProfileSetting($invoice, 'card_only'),
+            'pix_only'    => $this->invoiceProfileSetting($invoice, 'pix_only'),
+            'environment' => $this->invoiceEnvironmentLabel($invoice),
             'invoice'     => $invoice,
             'hash'        => $hash,
             'title'       => 'Asaas'
@@ -79,8 +96,8 @@ class Checkout extends ClientsController
         $invoice = $this->legacyInvoice($hash);
         if (!$invoice) { return; }
         if (!in_array((int) $invoice->status, [1, 4], true)
-            || $this->asaas_gateway->getSetting('active') !== '1'
-            || $this->asaas_gateway->getSetting('card_only') !== '1'
+            || $this->invoiceProfileSetting($invoice, 'active') !== '1'
+            || $this->invoiceProfileSetting($invoice, 'card_only') !== '1'
             || !\Asaas\HostedCardCheckout::allowsInvoice($invoice->allowed_payment_modes ?? null)) {
             show_error('Pagamento por cartão indisponível para esta fatura.', 409);
             return;
@@ -150,7 +167,7 @@ class Checkout extends ClientsController
             $data = [
                 'invoice' => $invoice,
                 'response' => json_decode($qrcode),
-                'environment' => $this->asaas_gateway->getEnvironmentLabel(),
+                'environment' => $this->invoiceEnvironmentLabel($invoice),
             ];
         } else {
             set_alert('warning', 'Não foi possível gerar o QR code. Verifique a cobrança.');

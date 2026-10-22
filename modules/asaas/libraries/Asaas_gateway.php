@@ -4,12 +4,14 @@ defined('BASEPATH') or exit('No direct script access allowed');
 require FCPATH . 'modules/asaas/traits/BaseApi.php';
 require_once __DIR__ . '/AsaasSdkProvider.php';
 require_once __DIR__ . '/Asaas/AsaasAdapter.php';
+require_once __DIR__ . '/Asaas/EnvironmentSettings.php';
 
 class Asaas_gateway extends App_gateway
 {
     use BaseApi;
     private \Asaas\AsaasAdapter $adapter;
     private AsaasSdkProvider $provider;
+    private ?string $operationEnvironment = null;
 
     public function __construct()
     {
@@ -30,7 +32,7 @@ class Asaas_gateway extends App_gateway
                 'name' => 'api_key_sandbox',
                 'encrypted' => true,
                 'input_type' => 'password',
-                'label' => 'Chave da API — Homologação [sandbox]',
+                'label' => 'Chave da API — Homologação',
                 'type' => 'input',
             ),
             array(
@@ -189,8 +191,77 @@ class Asaas_gateway extends App_gateway
 
         ));
 
+        $this->settings = \Asaas\EnvironmentSettings::expandDefinitions($this->settings);
+
         $this->provider = new AsaasSdkProvider($this);
         $this->adapter = new \Asaas\AsaasAdapter($this->provider, $this);
+    }
+
+    public function initMode($modes)
+    {
+        if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()
+            && !CompanySettingsRuntime::isPrimary()) return $modes;
+        // Only the tracked native migration may seed profiles; GET registration never migrates data.
+        if (!\Asaas\EnvironmentSettings::ready()) return $modes;
+        return parent::initMode($modes);
+    }
+
+    public function selectedEnvironment(): string
+    {
+        \Asaas\EnvironmentSettings::assertLegacyScope();
+        \Asaas\EnvironmentSettings::requireReady();
+        return \Asaas\EnvironmentSettings::fromSelector(get_option('paymentmethod_asaas_sandbox'));
+    }
+
+    public function getSetting($name)
+    {
+        \Asaas\EnvironmentSettings::assertLegacyScope();
+        if ($name === 'sandbox') {
+            \Asaas\EnvironmentSettings::requireReady();
+            return $this->operationEnvironment === null ? get_option('paymentmethod_asaas_sandbox')
+                : ($this->operationEnvironment === 'sandbox' ? '1' : '0');
+        }
+        if (!array_key_exists($name, \Asaas\EnvironmentSettings::DEFAULTS)) return parent::getSetting($name);
+        if (!\Asaas\EnvironmentSettings::ready()) {
+            if (in_array($name, ['active', 'default_selected'], true)) return '0';
+            if ($name === 'label') return 'Asaas';
+            \Asaas\EnvironmentSettings::requireReady();
+        }
+        try { $environment = $this->operationEnvironment ?? $this->selectedEnvironment(); }
+        catch (\InvalidArgumentException $error) {
+            // Allow administrators to repair an invalid selector; never enable a mode implicitly.
+            if (in_array($name, ['active', 'default_selected'], true)) return '0';
+            if ($name === 'label') return 'Asaas';
+            throw $error;
+        }
+        return $this->getSettingForEnvironment($name, $environment);
+    }
+
+    public function getSettingForEnvironment(string $name, string $environment): string
+    {
+        \Asaas\EnvironmentSettings::assertLegacyScope();
+        \Asaas\EnvironmentSettings::requireReady();
+        return \Asaas\EnvironmentSettings::read($name, $environment, function (string $key) {
+            // Query the row to distinguish an intentionally empty value from an absent one.
+            $row = $this->ci->db->get_where(db_prefix() . 'options', ['name' => $key])->row_array() ?? [];
+            return array_key_exists('value', $row) ? $row['value'] : null;
+        });
+    }
+
+    public function getSettingForOrigin(string $name, array $origin): string
+    {
+        return $this->getSettingForEnvironment($name, \Asaas\EnvironmentSettings::originEnvironment($origin));
+    }
+
+    private function withInvoiceProfile(int $invoiceId, callable $operation)
+    {
+        if ($invoiceId <= 0) throw new \InvalidArgumentException('asaas_invoice_required');
+        $origin = $this->adapter->originStore()->byInvoice($invoiceId);
+        $environment = $origin ? \Asaas\EnvironmentSettings::originEnvironment($origin) : $this->selectedEnvironment();
+        $previous = $this->operationEnvironment;
+        $this->operationEnvironment = $environment;
+        try { return $operation(); }
+        finally { $this->operationEnvironment = $previous; }
     }
 
     public function getProvider(): AsaasSdkProvider
@@ -210,9 +281,9 @@ class Asaas_gateway extends App_gateway
         return $this->provider->environmentLabel();
     }
 
-    public function isFileLogEnabled(): bool
+    public function isFileLogEnabled(?string $environment = null): bool
     {
-        $value = $this->getSetting('file_log_enabled');
+        $value = $environment === null ? $this->getSetting('file_log_enabled') : $this->getSettingForEnvironment('file_log_enabled', $environment);
 
         return $value === '1' || $value === 1 || $value === true;
     }
@@ -247,7 +318,7 @@ class Asaas_gateway extends App_gateway
     public function process_payment($data)
     {
         try {
-            return $this->process_payment_checked($data);
+            return $this->withInvoiceProfile((int) ($data['invoice']->id ?? 0), fn() => $this->process_payment_checked($data));
         } catch (\Throwable $error) {
             log_message('error', '[Asaas] Operação de cobrança não confirmada: process_payment.');
             if (function_exists('set_alert')) {
@@ -298,15 +369,6 @@ class Asaas_gateway extends App_gateway
 
         if ($row['status'] == '4') {
             $row['total'] = $this->calculate_invoice($invoice, $row, $fine, $interest);
-            if ($this->debug_enable()) {
-                echo $row['total'];
-                echo "<br>";
-                echo $ci->db->last_query();
-                echo "<br>";
-                echo "<pre>";
-                var_dump($search_charge);
-                echo "</pre>";
-            }
         }
 
         $ci->db->where('id', $invoice);
@@ -314,11 +376,7 @@ class Asaas_gateway extends App_gateway
 
         $disable_charge_notification = $this->getSetting('disable_charge_notification');
 
-        if ($disable_charge_notification == '1') {
-            $notificationDisabled = true;
-        } else {
-            $notificationDisabled = false;
-        }
+        $notificationDisabled = $disable_charge_notification === '1';
 
         $invoice_number = $row['prefix'] . str_pad($row['number'], 6, "0", STR_PAD_LEFT);
         $description = utf8_encode(str_replace("{invoice_number}", $invoice_number, $description));
@@ -345,24 +403,11 @@ class Asaas_gateway extends App_gateway
             $cliente_create = $this->create_customer($api_url, $api_key, $post_data);
             $cliente_id = $cliente_create['id'];
 
-            log_activity('Cliente cadastrado no Asaas [Cliente ID: ' . $cliente_id . ']');
+            log_activity('Cliente cadastrado no Asaas.');
 
-            if ($this->debug_enable()) {
-                echo "Campos cadastro";
-                echo "<br>";
-                echo "<pre>";
-                var_dump($post_data);
-                echo "</pre>";
-                echo "Cliente cadastrado no Asaas ID" . $cliente_id;
-                echo "<hr>";
-            }
         } else {
             // se existir recupera os dados para cobranca
             $cliente_id = $customer['data'][0]['id'];
-            if ($this->debug_enable()) {
-                echo "Cliente já existente ID " . $cliente_id;
-                echo "<hr>";
-            }
         }
 
         $discount = NULL;
@@ -399,21 +444,6 @@ class Asaas_gateway extends App_gateway
             ];
         }
 
-        if ($this->debug_enable()) {
-            echo "Tipo desconto config " . $discount_type;
-            echo "<br>";
-            echo "Tipo desconto " . $type;
-            echo "<br>";
-            echo "Campos desconto";
-            echo "<br>";
-            echo "<pre>";
-            var_dump($discount);
-            echo "</pre>";
-            echo "<hr>";
-            echo "Sem desconto " .   var_dump($sem_desconto);
-            echo "<br>";
-        }
-
         $post_data = [
             "customer" => $cliente_id,
             "billingType" => "BOLETO",
@@ -439,18 +469,6 @@ class Asaas_gateway extends App_gateway
 
         $post_data = json_encode($post_data);
 
-        if ($this->debug_enable()) {
-
-            echo "Campos cobranca asaas";
-            echo "<br>";
-            echo "<pre>";
-            var_dump($post_data);
-            echo "</pre>";
-            echo "<hr>";
-
-            //	die();
-        }
-
         // não tem cobrança no asaas
         if (!$search_charge) {
             $charge = $this->create_charge($api_url, $api_key, $post_data);
@@ -462,8 +480,6 @@ class Asaas_gateway extends App_gateway
             log_activity('Cobrança atualizada Asaas [Fatura ID: ' . $invoice . ']');
         }
 
-
-        //	echo "<hr>";
 
         //		die();
 
@@ -606,7 +622,7 @@ class Asaas_gateway extends App_gateway
     public function charge_billet($invoice)
     {
         try {
-            return $this->charge_billet_checked($invoice);
+            return $this->withInvoiceProfile((int) ($invoice->id ?? 0), fn() => $this->charge_billet_checked($invoice));
         } catch (\Throwable $error) {
             log_message('error', '[Asaas] Operação de cobrança não confirmada: charge_billet.');
             if (function_exists('set_alert')) {
@@ -632,11 +648,7 @@ class Asaas_gateway extends App_gateway
         $discount_type               = $this->getSetting('discount_type');
         $disable_charge_notification = $this->getSetting('disable_charge_notification');
 
-        if ($disable_charge_notification == '1') {
-            $notificationDisabled = true;
-        } else {
-            $notificationDisabled = false;
-        }
+        $notificationDisabled = $disable_charge_notification === '1';
 
         $invoice_number = format_invoice_number($invoice->id);
         $description = mb_convert_encoding(str_replace("{invoice_number}", $invoice_number, $description), 'UTF-8', 'ISO-8859-1');
@@ -657,7 +669,7 @@ class Asaas_gateway extends App_gateway
                 "complement"           => "",
                 "phone"                => $client->phonenumber,
                 "mobilePhone"          => $client->phonenumber,
-                "externalReference"    => $invoice, // TODO: verificar essa informação
+                "externalReference"    => (string) $invoice->id,
                 "notificationDisabled" => $notificationDisabled,
             ]);
 
@@ -665,24 +677,11 @@ class Asaas_gateway extends App_gateway
 
             $cliente_id = $cliente_create['id'];
 
-            log_activity('Cliente cadastrado no Asaas [Cliente ID: ' . $cliente_id . ']');
+            log_activity('Cliente cadastrado no Asaas.');
 
-            if ($this->debug_enable()) {
-                echo "Campos cadastro";
-                echo "<br>";
-                echo "<pre>";
-                var_dump($post_data);
-                echo "</pre>";
-                echo "Cliente cadastrado no Asaas ID " . $cliente_id;
-                echo "<hr>";
-            }
         } else {
             // se existir recupera os dados para cobranca
             $cliente_id = $customer['data'][0]['id'];
-            if ($this->debug_enable()) {
-                echo "Cliente já existente ID " . $cliente_id;
-                echo "<hr>";
-            }
         }
 
         $discount = NULL;
@@ -719,23 +718,6 @@ class Asaas_gateway extends App_gateway
             ];
         }
 
-        if ($this->debug_enable()) {
-            echo "Tipo desconto" . $discount_type;
-            echo "<br>";
-            echo "Campos desconto";
-            echo "<br>";
-            echo "<pre>";
-            var_dump($discount);
-            echo "</pre>";
-            echo "<hr>";
-            echo "Sem desconto" . $sem_desconto;
-            echo "<br>";
-            echo "<pre>";
-            var_dump($discount);
-            echo "</pre>";
-            echo "<hr>";
-        }
-
         $post_data = json_encode([
             "customer"          => $cliente_id,
             "billingType"       => "BOLETO",
@@ -759,23 +741,13 @@ class Asaas_gateway extends App_gateway
 
         log_activity('Cobrança Boleto Criada no Asaas [Fatura ID: ' . $invoice->id . ']');
 
-        if ($this->debug_enable()) {
-
-            echo "Cobrança Boleto";
-            echo "<br>";
-            echo "<pre>";
-            var_dump($charge);
-            echo "</pre>";
-            echo "<hr>";
-        }
-
         return $charge;
     }
 
     public function charge_credit_card($data)
     {
         try {
-            return $this->charge_credit_card_checked($data);
+            return $this->withInvoiceProfile((int) ($data['invoice']->id ?? 0), fn() => $this->charge_credit_card_checked($data));
         } catch (\Throwable $error) {
             log_message('error', '[Asaas] Operação de cobrança não confirmada: charge_credit_card.');
             if (function_exists('set_alert')) {
@@ -795,8 +767,12 @@ class Asaas_gateway extends App_gateway
         \Asaas\HostedCardCheckout::installments($data['installmentCount'] ?? 1);
         $ci = &get_instance();
         $invoice = $ci->db->get_where(db_prefix() . 'invoices', ['id' => (int) $data['invoice']->id])->row_array();
+        $store = $this->adapter->originStore();
+        $origin = $invoice ? $store->byInvoice((int) $invoice['id']) : null;
+        $active = $origin ? $this->getSettingForOrigin('active', $origin) : $this->getSetting('active');
+        $card = $origin ? $this->getSettingForOrigin('card_only', $origin) : $this->getSetting('card_only');
         if (!$invoice || !in_array((int) $invoice['status'], [1, 4], true)
-            || $this->getSetting('active') !== '1' || $this->getSetting('card_only') !== '1'
+            || $active !== '1' || $card !== '1'
             || !\Asaas\HostedCardCheckout::allowsInvoice($invoice['allowed_payment_modes'] ?? null)) {
             throw new \DomainException('hosted_card_invoice_unavailable');
         }
@@ -805,8 +781,6 @@ class Asaas_gateway extends App_gateway
         if (!$currency || strtoupper((string) $currency->name) !== 'BRL') {
             throw new \DomainException('hosted_card_requires_brl');
         }
-        $store = $this->adapter->originStore();
-        $origin = $store->byInvoice((int) $invoice['id']);
         if ($origin) {
             if (($origin['state'] ?? '') !== 'issued' || empty($origin['remote_id'])) {
                 throw new \DomainException('card_origin_review_required');
@@ -843,7 +817,7 @@ class Asaas_gateway extends App_gateway
     public function charge_pix($data)
     {
         try {
-            return $this->charge_pix_checked($data);
+            return $this->withInvoiceProfile((int) ($data['invoice']->id ?? 0), fn() => $this->charge_pix_checked($data));
         } catch (\Throwable $error) {
             log_message('error', '[Asaas] Operação de cobrança não confirmada: charge_pix.');
             if (function_exists('set_alert')) {
@@ -883,18 +857,14 @@ class Asaas_gateway extends App_gateway
 
         $disable_charge_notification = $this->getSetting('disable_charge_notification');
 
-        if ($disable_charge_notification == '1') {
-            $notificationDisabled = false;
-        } else {
-            $notificationDisabled = true;
-        }
+        $notificationDisabled = $disable_charge_notification === '1';
 
 
         $invoice_number = $row['prefix'] . str_pad($row['number'], 6, "0", STR_PAD_LEFT);
         $description = utf8_encode(str_replace("{invoice_number}", $invoice_number, $description));
         // valida cliente
         $document = str_replace('/', '', str_replace('-', '', str_replace('.', '', $client['vat'])));
-        $postalCode = str_replace('-', '', str_replace('.', '', $client->zip));
+        $postalCode = str_replace('-', '', str_replace('.', '', $client['zip']));
         $customer = $this->search_customer($api_url, $api_key, $document);
         if ($customer['totalCount'] == "0") {
 
@@ -914,24 +884,11 @@ class Asaas_gateway extends App_gateway
             $post_data = json_encode($post_data);
             $cliente_create = $this->create_customer($api_url, $api_key, $post_data);
             $cliente_id = $cliente_create['id'];
-            log_activity('Cliente cadastrado no Asaas [Cliente ID: ' . $cliente_id . ']');
+            log_activity('Cliente cadastrado no Asaas.');
 
-            if ($this->debug_enable()) {
-                echo "Campos cadastro";
-                echo "<br>";
-                echo "<pre>";
-                var_dump($post_data);
-                echo "</pre>";
-                echo "Cliente cadastrado no Asaas ID" . $cliente_id;
-                echo "<hr>";
-            }
         } else {
             // se existir recupera os dados para cobranca
             $cliente_id = $customer['data'][0]['id'];
-            if ($this->debug_enable()) {
-                echo "Cliente já existente ID" . $cliente_id;
-                echo "<hr>";
-            }
         }
 
 
@@ -1525,6 +1482,9 @@ class Asaas_gateway extends App_gateway
             $doc = $this->normalize_doc((string)$clientRow->vat);
         }
 
+        $sendEmail = ((int) $this->getSetting('send_customer_email')) === 1;
+        $sendMobile = ((int) $this->getSetting('send_customer_mobile')) === 1;
+
         // 2) Buscar no Asaas (estrito)
         $found = null;
 
@@ -1541,7 +1501,7 @@ class Asaas_gateway extends App_gateway
             }
         }
 
-        if (!$found && $email !== '') {
+        if (!$found && $sendEmail && $email !== '') {
             $list = $this->adapter->listCustomers(['email' => $email, 'limit' => 50]);
             $rows = $list['data'] ?? [];
             if (is_array($rows)) {
@@ -1561,9 +1521,7 @@ class Asaas_gateway extends App_gateway
             return ['ok' => true, 'asaas_customer_id' => $asaasCustomerId, 'source' => 'asaas_search'];
         }
 
-        // 3) Criar customer
-        $sendEmail = ((int) $this->getSetting('send_customer_email')) === 1;
-        $sendMobile = ((int) $this->getSetting('send_customer_mobile')) === 1;
+        // 3) Criar customer; the adapter enforces the same policy for all callers.
 
         $payload = [
             'name' => $name,

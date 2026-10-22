@@ -77,7 +77,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
     const draftUrl = page.url();
     await page.locator('#legal_name').fill('Synthetic company B');
     await page.locator('#tax_id').fill('52998224725');
-    await page.locator('#profile_invoice_company_city').fill('Synthetic B');
+    await page.locator('a[href="#company-address"]').click(); await page.locator('#profile_invoice_company_city').fill('Synthetic B');
     await next(page);
     const stale = await hidden(page);
     const denied = await context.request.post(draftUrl, { form: { ...stale, action: 'advance', revision: '0', step: '1', 'wizard[legal_name]': 'Stale overwrite', 'wizard[tax_id]': '52998224725' } });
@@ -124,14 +124,23 @@ async function next(page) { await navigate(page, page.locator('section form butt
     await page.goto(url + '/admin/company_clients');
     await page.locator('#new_company').fill('Synthetic private B <script>');
     const createFields = await formFields(page.locator('form').filter({ has: page.locator('#new_company') }));
+    // Replay the complete original payload: supplementary profile fields participate in its receipt hash.
+    const createPayload = await page.locator('form').filter({ has: page.locator('#new_company') }).evaluate(form => Object.fromEntries(new FormData(form).entries()));
     await navigate(page, page.locator('form').filter({ has: page.locator('#new_company') }).locator('button[type=submit]'));
     const customer = sql("SELECT userid FROM tblclients WHERE company='Synthetic private B <script>'");
     assert.match(customer, /^[1-9]\d*$/);
     const currentFields = await formFields(page.locator('form').filter({ has: page.locator('#new_company') }));
-    const retried = await context.request.post(url + '/admin/company_clients', { form: { ...createFields, ...currentFields, request_key: createFields.request_key, 'client[company]': 'Synthetic private B <script>' } });
+    const retried = await context.request.post(url + '/admin/company_clients', { form: { ...createPayload, ...currentFields, request_key: createFields.request_key } });
     assert.equal(retried.status(), 200);
     assert.equal(sql("SELECT COUNT(*) FROM tblclients WHERE company='Synthetic private B <script>'"), '1');
-    assert.equal(await page.locator('section script').count(), 0, 'customer text escaped');
+    // Lookup fields legitimately load scripts inside this section. Check the user-owned
+    // identity itself, so executable markup cannot hide behind a global script count.
+    const customerNameLink = page.locator('table tbody a').filter({ hasText: 'Synthetic private B <script>' });
+    assert.equal(await customerNameLink.count(), 1, 'created customer appears exactly once');
+    assert.equal(await customerNameLink.textContent(), 'Synthetic private B <script>', 'customer identity remains literal text');
+    assert.equal(await customerNameLink.locator('script').count(), 0, 'customer name creates no executable node');
+    assert.match(await customerNameLink.innerHTML(), /&lt;script&gt;/, 'customer markup is escaped');
+    assert.equal(await page.locator('#edit_company').inputValue(), 'Synthetic private B <script>', 'edit field preserves the literal identity');
     const beforeEdit = await formFields(page.locator('form').filter({ has: page.locator('#edit_company') }));
     await page.locator('#edit_company').fill('Synthetic private B updated');
     await navigate(page, page.locator('form').filter({ has: page.locator('#edit_company') }).locator('button[type=submit]'));
@@ -143,7 +152,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
     await switchCompany(primary);
     await page.goto(url + '/admin/company_clients?client=' + customer);
     assert.equal(await page.locator('#edit_company').count(), 0, 'shared identity is read only');
-    assert((await page.locator('section').innerText()).includes('Synthetic private B updated'));
+    assert((await page.locator('section[aria-labelledby="clients-title"]').innerText()).includes('Synthetic private B updated'));
     const foreignWrite = await context.request.post(url + '/admin/company_clients', { form: { ...(await formFields(page.locator('form').filter({ has: page.locator('#new_company') }))), action: 'update', client_id: customer, revision: 'a'.repeat(64), 'client[company]': 'Cross company' } });
     assert.equal(foreignWrite.status(), 403);
     await switchCompany(created);

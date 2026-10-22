@@ -3,7 +3,7 @@
 require __DIR__.'/asaas_card_settlement.php';$anticipationStart=$GLOBALS['essentialChecks'];
 $legacyAnticipationBefore=$db->query("SELECT * FROM {$p}invoices WHERE id=42")->result_array();
 foreach(['before-receipt','after-receipt'] as $mode){
- $config=$asaas->accounts($b,7)[0];$hook=$asaas->rotateWebhook($b,7,$accounts[$b],$config['revision']);[$invoice,$origin,$proof,$remote]=asaasFreshHostedSettlement($b,'anticipated-history-'.$mode);$payment=null;$receiptBefore=null;$paymentBefore=null;
+ $config=$asaas->accounts($b,7)[0];$hook=asaasFixtureRotateWebhook($asaas,$b,7,$accounts[$b],$config['revision']);[$invoice,$origin,$proof,$remote]=asaasFreshHostedSettlement($b,'anticipated-history-'.$mode);$payment=null;$receiptBefore=null;$paymentBefore=null;
  if($mode==='after-receipt'){$payment=$writer->recordCompanyProviderReceipt($b,7,new \Asaas\CompanyReceivedReceipt($origin,$proof));$receiptBefore=$db->query("SELECT * FROM {$p}asaas_company_receipts WHERE origin_id=?",[$origin])->row_array();$paymentBefore=$db->query("SELECT * FROM {$p}invoicepaymentrecords WHERE id=?",[$payment])->row_array();}
  $otherOriginsBefore=$db->query("SELECT id,state FROM {$p}asaas_payment_origins WHERE id<>? ORDER BY id",[$origin])->result_array();
  $headers=['Content-Type'=>'application/json','asaas-access-token'=>$hook['one_time_token']];$event='evt_anticipated_sticky_'.str_replace('-','_',$mode);$body=json_encode(['id'=>$event,'event'=>'PAYMENT_ANTICIPATED','payment'=>['id'=>$remote,'anticipated'=>true]],JSON_THROW_ON_ERROR);

@@ -11,7 +11,7 @@ require_once __DIR__ . '/CompanySettingsCommitGuard.php';
 final class CompanySettingsIdentity
 {
     public const ALIASES = ['companyname' => 'legal_name', 'invoice_company_name' => 'legal_name', 'company_vat' => 'tax_id'];
-    public const PROFILE_OPTIONS = ['invoice_company_address', 'invoice_company_city', 'company_state', 'invoice_company_country_code', 'invoice_company_postal_code', 'invoice_company_phonenumber'];
+    public const PROFILE_OPTIONS = ['company_trade_name', 'company_state_registration', 'company_address_number', 'company_address_complement', 'company_address_district', 'invoice_company_address', 'invoice_company_city', 'company_state', 'invoice_company_country_code', 'invoice_company_postal_code', 'invoice_company_phonenumber'];
     private $db;
     private string $prefix;
     public function __construct($db, string $prefix)
@@ -71,6 +71,26 @@ final class CompanySettingsIdentity
             }
         }
         return $result;
+    }
+    /** Display labels never replace the legal identity used by fiscal documents. */
+    public function displayName($issuerId): string
+    {
+        $record=$this->record($issuerId);$doc=$this->document($record);
+        $name=$this->primary($issuerId)
+            ? ($this->rows("SELECT value FROM {$this->prefix}options WHERE name=?",['company_trade_name'])[0]['value']??'')
+            : ($doc->company_profile->company_trade_name??'');
+        if(!is_string($name)){throw new DomainException('company_settings_corrupt_storage');}
+        if(trim($name)!==''){return trim($name);}
+        return ($record['identity_status']??'complete')==='pending'?$this->read($issuerId)['legal_name']:(string)$record['legal_name'];
+    }
+    /** Snapshot mapper: older aggregate addresses remain unchanged when no components exist. */
+    public static function documentAddress(callable $get): string
+    {
+        $address=$get('invoice_company_address');
+        foreach(['company_address_number','company_address_complement','company_address_district'] as $key){
+            $value=trim($get($key));if($value!==''){$address.=($address!==''?', ':'').$value;}
+        }
+        return $address;
     }
     public function get($issuerId, string $name): string
     {

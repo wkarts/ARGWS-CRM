@@ -19,6 +19,7 @@ $controller->index();
 check(array_column($controller->load->data['templates'],'emailtemplateid')===[4],'actual isolated editor lists A PT-BR templates only');
 $controller->email_template(4);
 check($controller->load->data['selected']->subject==='A pt edited','actual isolated editor opens own template');
+$independentTemplateBefore=$pdo->query("SELECT * FROM q_emailtemplates WHERE issuer_id=41 AND slug='foreign-only'")->fetch(PDO::FETCH_ASSOC);
 $controller->input->payload=['subject'=>'A visual edit','message'=>'A body','fromname'=>'A sender','fromemail'=>'','active'=>'1'];
 $m->db->beforeBegin=fn()=>$pdo->exec("UPDATE q_emailtemplates SET subject='Fresh fallback edit' WHERE emailtemplateid=2");
 $controller->email_template(4);
@@ -26,7 +27,9 @@ check($pdo->query('SELECT subject FROM q_emailtemplates WHERE emailtemplateid=2'
 check($controller->load->data['saved'] && $m->get_email_template_by_id(4)->subject==='A visual edit','actual isolated editor saves A template');
 check($pdo->query('SELECT issuer_id FROM q_issuers_audit')->fetchColumn()==41,'editor audit records company origin without template body');
 unset($controller->input->payload['active']);$controller->email_template(4);
-check((int)$pdo->query('SELECT SUM(active) FROM q_emailtemplates WHERE issuer_id=41')->fetchColumn()===0,'disabling template also disables its English fallback without touching B');
+check((int)$pdo->query("SELECT SUM(active) FROM q_emailtemplates WHERE issuer_id=41 AND slug='reset'")->fetchColumn()===0,'disabling template also disables its English fallback without touching B');
+$independentTemplateAfter=$pdo->query("SELECT * FROM q_emailtemplates WHERE issuer_id=41 AND slug='foreign-only'")->fetch(PDO::FETCH_ASSOC);
+check($independentTemplateAfter===$independentTemplateBefore && (int)$independentTemplateAfter['active']===1,'editing and disabling reset preserves the independent French template unchanged and active');
 check((int)$pdo->query('SELECT active FROM q_emailtemplates WHERE emailtemplateid=3')->fetchColumn()===1,'B activation unchanged');
 try{$controller->email_template(3);check(false,'foreign ID expected');}catch(RuntimeException $e){check($e->getMessage()==='not_found','A editor cannot address B template');}
 $controller->input->payload['issuer_id']='82';$controller->email_template(4);

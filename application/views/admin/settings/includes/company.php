@@ -4,6 +4,7 @@
         <?php echo _l('settings_sales_company_info_note'); ?>
     </div>
     <?php echo render_input('settings[invoice_company_name]', 'settings_sales_company_name', get_option('invoice_company_name')); ?>
+    <?php foreach(['company_trade_name'=>'Nome fantasia','company_state_registration'=>'Inscrição estadual (ou ISENTO, quando aplicável)','company_address_number'=>'Número','company_address_complement'=>'Complemento','company_address_district'=>'Bairro'] as $field=>$label){echo render_input('settings['.$field.']',$label,get_option($field));} ?>
     <?php echo render_input('settings[invoice_company_address]', 'settings_sales_address', get_option('invoice_company_address')); ?>
     <?php echo render_input('settings[invoice_company_city]', 'settings_sales_city', get_option('invoice_company_city')); ?>
     <?php echo render_input('settings[company_state]', 'billing_state', get_option('company_state')); ?>

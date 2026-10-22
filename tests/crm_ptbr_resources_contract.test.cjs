@@ -12,14 +12,16 @@ test('O painel mantém nomes funcionais e os slugs internos', () => {
   const modules = read('application/libraries/App_modules.php');
   assert.match(list, />Recursos<\/h4>/);
   assert.doesNotMatch(list, /Recursos ARGWS|html_escape\(\$systemName\)/);
-  assert.match(controller, /CRM_HIDDEN_RESOURCES/);
+  assert.doesNotMatch(controller, /CRM_HIDDEN_RESOURCES|hidden_resources/);
+  assert.match(controller, /\$definitions\[\$name\] \?\? \[/);
+  assert.match(controller, /can_manage_availability/);
   assert.match(controller, /try \{[\s\S]*app_modules->activate/);
   assert.match(controller, /app_modules->activate\(\$name\)/);
   assert.match(modules, /'active'\s*=>\s*0/);
   assert.match(modules, /\$this->modules\[\$name\]\['activated'\] = 1/);
 });
 
-test('PT-BR é fixo na interface, nos e-mails e na REST API', () => {
+test('interface/API priorizam PT-BR e e-mails preservam idiomas legítimos', () => {
   const localization = read('application/views/admin/settings/includes/localization.php');
   const controller = read('application/controllers/admin/Settings.php');
   const helpers = read('application/helpers/email_templates_helper.php');
@@ -27,7 +29,8 @@ test('PT-BR é fixo na interface, nos e-mails e na REST API', () => {
   assert.doesNotMatch(localization, /<select name="settings\[(active_language|enabled_languages)/);
   assert.match(localization, /Português \(Brasil\)/);
   assert.match(controller, /\['disable_language'\]\s*=\s*'1'/);
-  assert.match(helpers, /'language' => 'portuguese_br'/);
+  assert.match(helpers, /EmailTemplateReconciler::create/);
+  assert.match(read('application/services/EmailTemplateLocale.php'), /\[\$requested, \$active, 'portuguese_br', 'english'\]/);
   assert.match(rest, /\$config\['rest_language'\]\s*=\s*'portuguese_br'/);
 });
 

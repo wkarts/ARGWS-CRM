@@ -4173,3 +4173,41 @@ $lang['issuer_client_adoption_blocked'] = 'Private client creation and sharing a
 
 $lang['permission_share_customer_companies'] = 'Share customer identity with other companies';
 $lang['issuer_staff_company_access_required'] = 'The employee was not created: select at least one authorized company and a default company. If the legacy installation has no designated owner, resolve installation responsibility under Settings > Companies before creating employees.';
+
+$lang['email_template_public_ticket_url_warning'] = 'This template contains <strong>{ticket_public_url}</strong>, but public ticket URLs are disabled. Use <strong>{ticket_url}</strong> or enable public ticket URLs.';
+$lang['email_template_other_models'] = 'Other templates';
+
+// Global staff identity: shared errors for native, API and company-atomic writers.
+$lang['issuer_staff_email_conflict'] = 'This email already belongs to another staff member. No changes were applied.';
+$lang['issuer_staff_email_invalid'] = 'Enter a valid email address for the staff member.';
+$lang['issuer_staff_extension_unreviewed'] = 'An extension requires a transaction review before this profile can be saved.';
+$lang['issuer_staff_write_unconfirmed'] = 'The profile could not be saved. Reopen the record and try again.';
+$lang['issuer_staff_native_rejected'] = 'Profile protection rejected the change. The profile and company access were preserved.';
+// Asaas155: company-scoped operational preferences.
+$lang['asaas_company_preferences_title'] = 'Preferences by environment';
+$lang['asaas_company_preferences_help'] = 'Only new charges use the selected environment and its enabled payment methods. Changing these preferences does not disable the other account, change credentials or modify existing charges or reconciliations.';
+$lang['asaas_company_preferences_upgrade'] = 'Upgrade the Asaas module through native migration 155 before configuring or issuing new charges. Existing history remains available.';
+$lang['asaas_company_preferences_active'] = 'Environment for new charges';
+$lang['asaas_company_preferences_none'] = 'None selected';
+$lang['asaas_company_preferences_tabs'] = 'Company Asaas profiles';
+$lang['asaas_company_preferences_label'] = 'Display name';
+$lang['asaas_company_preferences_description'] = 'Description for new charges';
+$lang['asaas_company_preferences_description_help'] = 'Use {invoice_number} to include the invoice number. The submitted description is preserved with the payment origin.';
+$lang['asaas_company_preferences_methods'] = 'Payment methods for new charges';
+$lang['asaas_company_preferences_limits'] = 'Currency: BRL. Card: single payment only. Interest, fines, discounts, due-date extensions, remote updates and installments are not available in this profile.';
+$lang['asaas_company_preferences_save'] = 'Save %s preferences';
+$lang['asaas_company_preferences_selected'] = 'Selected environment';
+$lang['asaas_company_preferences_select'] = 'Use %s for new charges';
+$lang['asaas_company_preferences_account_required'] = 'Register, enable and verify the account for this environment before selecting it for new charges.';
+$lang['asaas_company_preferences_edit_required'] = 'Permission to edit this company’s settings is required to change preferences.';
+$lang['asaas_company_preferences_saved'] = 'Preferences for this environment were saved. Existing charges retain their original configuration.';
+$lang['asaas_company_preferences_environment_saved'] = 'Environment selected for new charges. Both accounts and existing history were preserved.';
+$lang['asaas_company_preferences_capabilities'] = 'This company-scoped flow uses BRL, full single payments and invoice-linked descriptions. The profiles below configure the display name, description and methods for new charges. Interest, fines, discounts, due-date extensions and installments remain unavailable and are not inherited from the legacy gateway.';
+$lang['asaas_company_preferences_nav'] = 'Preferences';
+$lang['asaas_company_preferences_selection_required'] = 'Explicitly select an environment with a verified account in preferences before issuing new charges.';
+$lang['asaas_company_environment_production'] = 'Production';
+$lang['asaas_company_environment_sandbox'] = 'Sandbox';
+$lang['asaas_company_environment_invalid'] = 'Invalid environment';
+$lang['asaas_company_method_pix'] = 'Pix';
+$lang['asaas_company_method_boleto'] = 'Bank slip';
+$lang['asaas_company_method_card'] = 'Hosted card, single payment';

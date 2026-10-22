@@ -10,6 +10,8 @@ use Asaas\Sdk\Exception\TransportException;
 use AsaasSdkProvider;
 
 require_once __DIR__ . '/PaymentOriginStore.php';
+require_once __DIR__ . '/EnvironmentSettings.php';
+require_once __DIR__ . '/CustomerContactPolicy.php';
 require_once __DIR__ . '/InvoicePaymentRemoval.php';
 require_once __DIR__ . '/WebhookTransactionGuard.php';
 
@@ -74,7 +76,8 @@ private function normalizePath(string $path): string
         bool $expectsBinary = false,
         ?int $companyId = null
     ): array {
-        $client = $this->resolveRequestClient($method, $path, $query, $companyId);
+        [$client, $requestEnvironment] = $this->resolveRequestClient($method, $path, $query, $companyId);
+        [$path, $query, $payload] = $this->applyCustomerContactPolicy($method, $path, $query, $payload, $requestEnvironment, $companyId);
         // A SDK usa base_uri com /v3. Quando o path começa com '/', o Guzzle zera o path do base_uri.
         // Portanto, no módulo, sempre enviamos path relativo (sem '/').
         $originalPath = $path;
@@ -88,7 +91,7 @@ private function normalizePath(string $path): string
                 'method' => $method,
                 'path' => $path,
                 'correlation_id' => $headers['X-Correlation-Id'] ?? null,
-            ]);
+            ], $requestEnvironment);
 
             if (!is_array($response)) {
                 throw new \RuntimeException('invalid_asaas_response');
@@ -100,7 +103,7 @@ private function normalizePath(string $path): string
                 'path' => $path,
                 'status' => $exception->getStatusCode(),
                 'correlation_id' => $headers['X-Correlation-Id'] ?? null,
-            ]);
+            ], $requestEnvironment);
 
             throw $exception;
         } catch (TransportException $exception) {
@@ -108,10 +111,26 @@ private function normalizePath(string $path): string
                 'method' => $method,
                 'path' => $path,
                 'correlation_id' => $headers['X-Correlation-Id'] ?? null,
-            ]);
+            ], $requestEnvironment);
 
             throw $exception;
         }
+    }
+
+    private function applyCustomerContactPolicy(string $method, string $path, array $query, ?array $payload, string $environment, ?int $companyId): array
+    {
+        if (!CustomerContactPolicy::isCustomerPath($path)) return [$path, $query, $payload];
+        $setting = function (string $name) use ($environment, $companyId) {
+            // Never inherit legacy preferences into an explicitly selected company.
+            if ($companyId === null && $this->gateway !== null && method_exists($this->gateway, 'getSettingForEnvironment')) {
+                return $this->gateway->getSettingForEnvironment($name, $environment);
+            }
+            return $this->provider->setting($name, $companyId);
+        };
+        return CustomerContactPolicy::apply($method, $path, $query, $payload,
+            (string) $setting('send_customer_email') === '1',
+            (string) $setting('send_customer_mobile') === '1',
+            (string) $setting('disable_charge_notification') === '1');
     }
 
     /**
@@ -129,6 +148,7 @@ private function normalizePath(string $path): string
         ?int $companyId = null
     ): array {
         $client = $this->provider->client($companyId);
+        [$path, $query, $payload] = $this->applyCustomerContactPolicy($method, $path, $query, $payload, $this->provider->env($companyId), $companyId);
         // A SDK usa base_uri com /v3. Quando o path começa com '/', o Guzzle zera o path do base_uri.
         // Portanto, no módulo, sempre enviamos path relativo (sem '/').
         $originalPath = $path;
@@ -456,6 +476,7 @@ public function refundPayment(string $paymentId, array $payload = []): array
     public function registerWebhookIntegration(string $label, string $environment, string $expectedAccount): array
     {
         require_once __DIR__ . '/WebhookSecurity.php';
+        ModuleReadiness::require154($this->ci->db, db_prefix());
         $client = $this->provider->clientForEnvironment($environment);
         $scope = $this->provider->contextForClient($client, $environment);
         if (!hash_equals($expectedAccount, $scope['account_id'])) throw new \RuntimeException('webhook_account_mismatch');
@@ -781,7 +802,8 @@ public function refundPayment(string $paymentId, array $payload = []): array
                 }
             }
         }
-        return $origin ? $this->provider->clientForOrigin($origin) : $this->provider->client($companyId);
+        $environment = $origin ? EnvironmentSettings::environment((string) $origin['environment']) : $this->provider->env($companyId);
+        return [$origin ? $this->provider->clientForOrigin($origin) : $this->provider->client($companyId), $environment];
     }
 
     public function assertInvoiceScope(array $invoice): void
@@ -822,6 +844,14 @@ public function refundPayment(string $paymentId, array $payload = []): array
             throw new \RuntimeException('legacy_origin_review_required');
         }
         $environment = $this->provider->env();
+        $currency = $this->ci->db->get_where(db_prefix() . 'currencies', ['id' => (int) ($invoice['currency'] ?? 0)])->row_array();
+        if (($currency['name'] ?? '') !== 'BRL' || $this->provider->setting('currencies') !== 'BRL') {
+            throw new \DomainException('asaas_profile_requires_brl');
+        }
+        // Keep the legacy combined boleto/Pix issuance contract: billingType is not a UI toggle.
+        if ($this->provider->setting('active') !== '1') {
+            throw new \DomainException('asaas_profile_payment_disabled');
+        }
         $client = $this->provider->clientForEnvironment($environment);
         $context = $this->provider->contextForClient($client, $environment);
         // A legacy customer map is not account-scoped. Verify the candidate in
@@ -995,14 +1025,14 @@ public function refundPayment(string $paymentId, array $payload = []): array
         return preg_replace('/[^0-9]/', '', $postalCode);
     }
 
-    private function log(string $level, string $message, array $context = []): void
+    private function log(string $level, string $message, array $context = [], ?string $environment = null): void
     {
         $sanitized = $this->sanitizeContext($context);
         $sanitizedContext = json_encode($sanitized, JSON_UNESCAPED_UNICODE);
 
         if ($level === 'error') {
             log_message('error', '[Asaas] ' . $message . ' | context=' . $sanitizedContext);
-        } elseif ($this->shouldWriteFileLog()) {
+        } elseif ($this->shouldWriteFileLog($environment)) {
             log_message('info', '[Asaas] ' . $message . ' | context=' . $sanitizedContext);
         }
 
@@ -1037,36 +1067,38 @@ public function refundPayment(string $paymentId, array $payload = []): array
     }
 
 
-    private function shouldWriteFileLog(): bool
+    private function shouldWriteFileLog(?string $environment = null): bool
     {
         if ($this->gateway === null || !method_exists($this->gateway, 'isFileLogEnabled')) {
             return false;
         }
 
-        return (bool) $this->gateway->isFileLogEnabled();
+        return (bool) $this->gateway->isFileLogEnabled($environment);
     }
 
     private function sanitizeContext(array $context): array
     {
-        $sensitiveKeys = ['apiKey', 'api_key', 'access_token', 'authorization', 'token'];
-
-        foreach ($context as $key => $value) {
-            if (is_array($value)) {
-                $context[$key] = $this->sanitizeContext($value);
-                continue;
-            }
-
-            $normalizedKey = strtolower((string) $key);
-            foreach ($sensitiveKeys as $sensitiveKey) {
-                if ($normalizedKey === strtolower($sensitiveKey)) {
-                    $context[$key] = '[REDACTED]';
-                    break;
-                }
-            }
+        // Diagnostics are metadata-only. A denylist can miss nested contacts,
+        // future provider fields, query strings or credentials echoed in errors.
+        $safe = [];
+        if (isset($context['method'])) {
+            $method = strtoupper((string) $context['method']);
+            $safe['method'] = in_array($method, ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'], true) ? $method : 'OTHER';
         }
-
-        return $context;
+        if (isset($context['path'])) {
+            $path = ltrim((string) parse_url((string) $context['path'], PHP_URL_PATH), '/');
+            $path = preg_replace('#^v3/#', '', $path);
+            $resource = explode('/', $path, 2)[0];
+            $safe['path'] = in_array($resource, ['customers', 'payments', 'prefaces', 'webhooks', 'wallets'], true)
+                ? 'v3/' . $resource . (str_contains($path, '/') ? '/[resource]' : '') : '[resource]';
+        }
+        if (isset($context['status']) && is_numeric($context['status'])) $safe['status'] = (int) $context['status'];
+        if (isset($context['correlation_id']) && is_string($context['correlation_id']) && $context['correlation_id'] !== '') {
+            $safe['correlation_id'] = substr(hash('sha256', $context['correlation_id']), 0, 32);
+        }
+        return $safe;
     }
+
 
     private function getLogColumns(string $table): array
     {

@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH . 'services/StaffEmailIdentity.php';
 
 class Authentication_vendor_model extends App_Model
 {
@@ -20,6 +21,10 @@ class Authentication_vendor_model extends App_Model
      */
     public function login($email, $password, $remember, $staff)
     {
+        if ($staff) {
+            $this->load->model('Authentication_model');
+            return $this->Authentication_model->login($email, $password, $remember, $staff);
+        }
         if ((!empty($email)) and (!empty($password))) {
             $table = db_prefix() . 'pur_contacts';
             $_id   = 'id';
@@ -195,6 +200,13 @@ class Authentication_vendor_model extends App_Model
                     if (!is_null($user = $this->user_autologin->get($data['user_id'], md5($data['key'])))) {
                         // Login user
                         if ($user->staff == 1) {
+                            $this->db->where('staffid', $user->id);
+                            $staffIdentity = $this->db->get(db_prefix() . 'staff')->row();
+                            $unique = $staffIdentity ? StaffEmailIdentity::unique($this->db, db_prefix(), $staffIdentity->email) : null;
+                            if (!$unique || (string)$unique->staffid !== (string)$user->id || (int)$unique->active !== 1) {
+                                delete_cookie('autologin', 'aal');
+                                return false;
+                            }
                             $user_data = [
                                 'staff_user_id'   => $user->id,
                                 'staff_logged_in' => true,
@@ -301,6 +313,10 @@ class Authentication_vendor_model extends App_Model
      */
     public function forgot_password($email, $staff = false)
     {
+        if ($staff) {
+            $this->load->model('Authentication_model');
+            return $this->Authentication_model->forgot_password($email, $staff);
+        }
         $table = db_prefix() . 'pur_contacts';
         $_id   = 'id';
         if ($staff == true) {
@@ -360,6 +376,10 @@ class Authentication_vendor_model extends App_Model
      */
     public function set_password($staff, $userid, $new_pass_key, $password)
     {
+        if ($staff) {
+            $this->load->model('Authentication_model');
+            return $this->Authentication_model->set_password($staff, $userid, $new_pass_key, $password);
+        }
         if (!$this->can_set_password($staff, $userid, $new_pass_key)) {
             return [
                 'expired' => true,
@@ -403,6 +423,10 @@ class Authentication_vendor_model extends App_Model
      */
     public function reset_password($staff, $userid, $new_pass_key, $password)
     {
+        if ($staff) {
+            $this->load->model('Authentication_model');
+            return $this->Authentication_model->reset_password($staff, $userid, $new_pass_key, $password);
+        }
         if (!$this->can_reset_password($staff, $userid, $new_pass_key)) {
             return [
                 'expired' => true,
@@ -456,6 +480,10 @@ class Authentication_vendor_model extends App_Model
      */
     public function can_reset_password($staff, $userid, $new_pass_key)
     {
+        if ($staff) {
+            $this->load->model('Authentication_model');
+            return $this->Authentication_model->can_reset_password($staff, $userid, $new_pass_key);
+        }
         $table = db_prefix() . 'pur_contacts';
         $_id   = 'id';
         if ($staff == true) {
@@ -489,6 +517,10 @@ class Authentication_vendor_model extends App_Model
      */
     public function can_set_password($staff, $userid, $new_pass_key)
     {
+        if ($staff) {
+            $this->load->model('Authentication_model');
+            return $this->Authentication_model->can_set_password($staff, $userid, $new_pass_key);
+        }
         $table = db_prefix() . 'pur_contacts';
         $_id   = 'id';
         if ($staff == true) {
@@ -518,9 +550,8 @@ class Authentication_vendor_model extends App_Model
      */
     public function get_user_by_two_factor_auth_code($code)
     {
-        $this->db->where('two_factor_auth_code', $code);
-
-        return $this->db->get(db_prefix() . 'staff')->row();
+        $this->load->model('Authentication_model');
+        return $this->Authentication_model->get_user_by_two_factor_auth_code($code);
     }
 
     /**
@@ -530,31 +561,8 @@ class Authentication_vendor_model extends App_Model
      */
     public function two_factor_auth_login($user)
     {
-        hooks()->do_action('before_staff_login', [
-            'email'  => $user->email,
-            'userid' => $user->staffid,
-        ]);
-
-        $this->session->set_userdata(
-            [
-                'staff_user_id'   => $user->staffid,
-                'staff_logged_in' => true,
-            ]
-        );
-
-        $remember = null;
-        if ($this->session->has_userdata('tfa_remember')) {
-            $remember = true;
-            $this->session->unset_userdata('tfa_remember');
-        }
-
-        if ($remember) {
-            $this->create_autologin($user->staffid, true);
-        }
-
-        $this->update_login_info($user->staffid, true);
-
-        return true;
+        $this->load->model('Authentication_model');
+        return $this->Authentication_model->two_factor_auth_login($user);
     }
 
     /**
@@ -564,23 +572,8 @@ class Authentication_vendor_model extends App_Model
      */
     public function is_two_factor_code_valid($code)
     {
-        $this->db->select('two_factor_auth_code_requested');
-        $this->db->where('two_factor_auth_code', $code);
-        $user = $this->db->get(db_prefix() . 'staff')->row();
-
-        // Code not exists because no user is found
-        if (!$user) {
-            return false;
-        }
-
-        $timestamp_minus_1_hour = time() - (60 * 60);
-        $new_code_key_requested = strtotime($user->two_factor_auth_code_requested);
-        // The code is older then 1 hour and its not valid
-        if ($timestamp_minus_1_hour > $new_code_key_requested) {
-            return false;
-        }
-        // Code is valid
-        return true;
+        $this->load->model('Authentication_model');
+        return $this->Authentication_model->is_two_factor_code_valid($code, $this->session->userdata('_two_factor_auth_staff_email'));
     }
 
     /**

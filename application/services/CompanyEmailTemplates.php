@@ -2,6 +2,8 @@
 declare(strict_types=1);
 require_once __DIR__.'/CompanyEmailTemplateSchema.php';
 require_once __DIR__.'/EmailTemplatesPtBr.php';
+require_once __DIR__.'/EmailTemplateLocale.php';
+require_once __DIR__.'/CompanySettingsStorage.php';
 require_once __DIR__.'/issuers/IssuerTransaction.php';
 require_once __DIR__.'/issuers/IssuerResourceAccess.php';
 /** Factory defaults only; never copies primary-company customizations or settings. */
@@ -34,12 +36,13 @@ final class CompanyEmailTemplates
     {
         if (!preg_match('/^[a-zA-Z0-9_-]+$/D',$slug) || !preg_match('/^[a-zA-Z0-9_-]+$/D',$language)) throw new InvalidArgumentException('company_email_template_selector_invalid');
         $scope=self::scopeSql($db,$prefix,'t',$issuer);
-        foreach(array_unique([$language,'english']) as $candidate) {
+        // Read the persisted origin's configured language, never the interactive company's options.
+        $activeLanguage = (new CompanySettingsStorage($db, $prefix))->get($issuer, 'active_language');
+        return EmailTemplateLocale::select(static function ($candidate) use ($db, $prefix, $slug, $scope) {
             $rows=IssuerStorage::query($db,'SELECT t.* FROM '.$prefix.'emailtemplates t WHERE t.slug=? AND t.language=? AND '.$scope,[$slug,$candidate])->result_array();
             if(count($rows)>1)throw new DomainException('company_email_template_ambiguous');
-            if($rows && trim((string)$rows[0]['message'])!=='')return (object)$rows[0];
-        }
-        return null;
+            return $rows ? (object) $rows[0] : null;
+        }, $language, $activeLanguage);
     }
 
     public static function defaults(): array

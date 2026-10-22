@@ -68,7 +68,12 @@ test('flag iDEAL é propagada, desabilitada por padrão e não substitui RBAC', 
     assert.match(read(file), /^CRM_ENABLE_IDEAL=false$/m, file);
   }
   assert.match(read('application/controllers/admin/Mods.php'), /if \(!is_admin\(\)\)/);
-  assert.match(read('application/controllers/admin/Mods.php'), /\$hidden\['ideal'\] = true/);
+  const mods = read('application/controllers/admin/Mods.php');
+  const index = mods.slice(mods.indexOf('public function index()'), mods.indexOf('public function activate('));
+  assert.match(index, /foreach \(\$this->app_modules->get\(\) as \$module\)/);
+  assert.doesNotMatch(index, /hidden_resources|CRM_HIDDEN_RESOURCES|idealEnabled/);
+  assert.match(mods, /\$name === 'ideal' && !\\app\\services\\PaymentGatewayCatalog::idealEnabled\(\)/);
+  assert.match(index, /can_manage_availability/);
   assert.match(read('application/libraries/App_modules.php'), /\$name === 'ideal' && !\\app\\services\\PaymentGatewayCatalog::idealEnabled\(\)/);
   assert.match(read('modules/ideal/controllers/Ideal.php'), /hash_equals\(\$expected, \$provided\)/);
   assert.match(read('modules/ideal/controllers/Ideal.php'), /method\(true\) !== 'POST'/);

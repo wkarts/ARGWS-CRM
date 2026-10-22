@@ -37,7 +37,7 @@ require APPPATH.'libraries/mails/App_mail_template.php';
 class ScopedTemplateFixture extends App_mail_template {
  public function __construct($model){$this->ci=(object)['emails_model'=>$model];$this->slug='reset';$this->for='fixture';$this->rel_type='fixture';}
 }
-$GLOBALS['hooks']=new class {function apply_filters($name,$value,...$args){return $name==='email_template_language'?'portuguese_br':$value;}};
+$GLOBALS['hooks']=new class {public $language='portuguese_br';function apply_filters($name,$value,...$args){return $name==='email_template_language'?$this->language:$value;}};
 $mail=new ScopedTemplateFixture($m);
 CompanySettingsRuntime::$issuer=41;
 check($mail->prepare('synthetic@example.invalid')->subject==='A pt edited','actual native preparation selects A translation');
@@ -47,4 +47,16 @@ $pdo->exec("DELETE FROM q_emailtemplates WHERE issuer_id=82");
 check($mail->prepare('synthetic@example.invalid')===null,'actual native preparation has no global fallback when B template missing');
 CompanySettingsRuntime::$issuer=null;
 check($mail->prepare('synthetic@example.invalid')->subject==='Legacy subject','actual legacy preparation preserves primary fallback');
+CompanySettingsRuntime::$issuer=41;
+$GLOBALS['hooks']->language='english';
+check($mail->prepare('synthetic@example.invalid')->language==='english','explicit English preference is retained');
+$GLOBALS['hooks']->language='portuguese_br';
+$pdo->exec("UPDATE q_emailtemplates SET message='',active=0 WHERE emailtemplateid=4");
+check($mail->prepare('synthetic@example.invalid')->emailtemplateid==4 && $mail->prepare('synthetic@example.invalid')->active==0,'native disabled blank translation stops fallback');
+$pdo->exec("UPDATE q_emailtemplates SET active=1 WHERE emailtemplateid=4");
+check($mail->prepare('synthetic@example.invalid')->emailtemplateid==2,'native enabled blank translation falls back only in A');
+$pdo->exec("INSERT INTO q_emailtemplates VALUES(5,41,'foreign-only','french','client','French custom','Objet','Corps','','',1,0)");
+check(count($m->get_catalogue())===2 && $m->get_catalogue()[1]['language']==='french','listing retains a custom foreign-language-only template');
+CompanySettingsRuntime::$issuer=82;
+check($m->get_catalogue()===[],'catalogue never borrows A templates for B');
 echo "Native email template scope: $n synthetic checks passed\n";

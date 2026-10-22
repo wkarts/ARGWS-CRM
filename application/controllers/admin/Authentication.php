@@ -64,7 +64,7 @@ class Authentication extends App_Controller
                             set_alert('danger', _l('two_factor_auth_failed_to_send_code'));
                             redirect(admin_url('authentication'));
                         } else {
-                            $this->session->set_userdata('_two_factor_auth_staff_email', $email);
+                            $this->session->set_userdata('_two_factor_auth_staff_email', $data['user']->email);
                             set_alert('success', _l('two_factor_auth_code_sent_successfully', $email));
                             redirect(admin_url('authentication/two_factor'));
                         }
@@ -105,12 +105,12 @@ class Authentication extends App_Controller
                 $code  = $this->input->post('code');
                 $code  = trim($code);
                 $email = $this->session->userdata('_two_factor_auth_staff_email');
-                if ($this->Authentication_model->is_two_factor_code_valid($code, $email) && $type = 'email') {
+                if ($type === 'email' && $this->Authentication_model->is_two_factor_code_valid($code, $email)
+                    && ($user = $this->Authentication_model->pending_staff_identity())
+                    && $this->Authentication_model->two_factor_auth_login($user)) {
                     $this->session->unset_userdata('_two_factor_auth_staff_email');
 
-                    $user = $this->Authentication_model->get_user_by_two_factor_auth_code($code);
                     $this->Authentication_model->clear_two_factor_auth_code($user->staffid);
-                    $this->Authentication_model->two_factor_auth_login($user);
                     $this->session->unset_userdata('_two_factor_auth_established');
                     $this->load->model('announcements_model');
                     $this->announcements_model->set_announcements_as_read_except_last_one(get_staff_user_id(), true);
@@ -119,9 +119,9 @@ class Authentication extends App_Controller
 
                     hooks()->do_action('after_staff_login');
                     redirect(admin_url());
-                } elseif ($this->Authentication_model->is_google_two_factor_code_valid($code) && $type = 'app') {
-                    $user = get_staff($this->session->userdata('tfa_staffid'));
-                    $this->Authentication_model->two_factor_auth_login($user);
+                } elseif ($type === 'app' && $this->Authentication_model->is_google_two_factor_code_valid($code)
+                    && ($user = $this->Authentication_model->pending_staff_identity())
+                    && $this->Authentication_model->two_factor_auth_login($user)) {
                     $this->session->unset_userdata('_two_factor_auth_established');
                     $this->load->model('announcements_model');
                     $this->announcements_model->set_announcements_as_read_except_last_one(get_staff_user_id(), true);
@@ -239,10 +239,7 @@ class Authentication extends App_Controller
 
     public function email_exists($email)
     {
-        $total_rows = total_rows(db_prefix() . 'staff', [
-            'email' => $email,
-        ]);
-        if ($total_rows == 0) {
+        if (!StaffEmailIdentity::unique($this->db, db_prefix(), $email)) {
             $this->form_validation->set_message('email_exists', _l('auth_reset_pass_email_not_found'));
 
             return false;

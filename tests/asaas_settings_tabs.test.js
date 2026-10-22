@@ -12,33 +12,41 @@ assert.equal(policy.sectionFor('debug'), 'diagnostics');
 assert.equal(policy.sectionFor('file_log_enabled'), 'diagnostics');
 assert.equal(policy.sectionFor('sandbox'), 'authentication');
 assert.equal(policy.sectionFor('unknown_future_field'), 'resources');
-console.log('Asaas settings JS policy: 11 checks passed');
+assert.equal(policy.sectionFor('profile_production_interest_value'), 'payments');
+assert.equal(policy.sectionFor('profile_sandbox_debug'), 'diagnostics');
+assert.equal(policy.sectionFor('profile_production_active'), 'authentication');
+assert.deepEqual(policy.settingParts('profile_sandbox_description'), {environment:'sandbox',key:'description'});
+assert.deepEqual(policy.settingParts('profile_untrusted_description'), {environment:null,key:'profile_untrusted_description'});
+const fixtureHtml = require('./support/AsaasSettingsFixture.cjs').html;
+const dependencyFixture = fixtureHtml('');
+const dependencySource = name => fs.readFileSync(path.join(__dirname, '..', name), 'utf8').replace(/<\/script/gi, '<\\/script');
+const waypointOffset = dependencyFixture.indexOf(dependencySource('assets/plugins/waypoint/jquery.waypoints.min.js'));
+const scrollableOffset = dependencyFixture.indexOf(dependencySource('assets/plugins/internal/bootstrap-nav-tabs-scrollable/bootstrap-nav-tab-scrollable.js'));
+assert.ok(waypointOffset >= 0 && scrollableOffset > waypointOffset, 'native Waypoint is loaded before horizontalTabs');
+const nativeDelay = fs.readFileSync(path.join(__dirname, '../assets/js/app.js'), 'utf8').match(/var delay = \(function \(\) \{[\s\S]*?\n\}\)\(\);/);
+assert.ok(nativeDelay && dependencyFixture.includes(nativeDelay[0]), 'native delay callback dependency is included');
+assert.ok(dependencyFixture.indexOf(nativeDelay[0]) < dependencyFixture.indexOf('window.bindNativeSettings'), 'delay exists before horizontal tabs can initialize');
+console.log('Asaas settings JS policy/fixture: 19 checks passed');
 if (!process.env.CHROMIUM_BIN) { console.log('DOM smoke skipped: set CHROMIUM_BIN to a Chromium executable.'); process.exit(0); }
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'asaas-tabs-'));
-const script = fs.readFileSync(path.join(__dirname, '../modules/asaas/assets/js/settings-tabs.js'), 'utf8');
 const tests = `
 let checks = 0;
 function check(ok, name) { checks++; if (!ok) throw new Error(name); }
 const api = module.exports;
-function fixture(valid, value) {
- document.body.innerHTML = '<div id="online_payments_asaas_tab"><a href="https://crm.example.test/admin/asaas" data-asaas-webhook-admin-url data-asaas-environment-valid="'+valid+'" data-asaas-environment-value="'+value+'">Webhook</a></div>';
- const pane = document.getElementById('online_payments_asaas_tab');
- ['sandbox','debug','file_log_enabled','api_key','card_only','sync_limit','unknown_future_field','installmentCount'].forEach(key => {
-  const group = document.createElement('div'); group.className='form-group';
-  group.innerHTML='<label>'+key+'</label><input name="settings[paymentmethod_asaas_'+key+']" value="0" '+(key==='sandbox'?'type="radio" checked':'')+'>';
-  pane.appendChild(group);
- });
- return pane;
-}
 try {
  const pane=fixture('1','1');const original=pane.querySelector('[name="settings[paymentmethod_asaas_api_key]"]');
  api.initialize(document);
+ bindNativeSettings();
  check(pane.querySelectorAll('[role="tab"]').length===6,'six tabs');
  check(pane.querySelectorAll('[role="tabpanel"]').length===6,'six panels');
+ check(pane.querySelectorAll('ul.nav-tabs > li[role="presentation"] > a[data-toggle="tab"]').length===6,'native tab markup');
+ check(pane.querySelectorAll('button[role="tab"],a[role="tab"].btn').length===0,'tabs are not action buttons');
+ check(Array.from(pane.querySelectorAll('[role="tab"]')).map(tab=>tab.textContent).join('|')==='Autenticação|Segurança|Pagamentos|Webhook|Recursos|Diagnóstico','original order preserved');
+ document.getElementById('gateway-tab').click();
  const env=pane.querySelector('[name="settings[paymentmethod_asaas_sandbox]"]');
  check(env.tagName==='SELECT' && env.value==='1','server exact metadata wins over loose radio');
  check(pane.querySelectorAll('[name="settings[paymentmethod_asaas_sandbox]"]').length===1,'single environment field');
- check(env.options.length===3 && env.options[1].textContent==='Homologação [sandbox]' && env.options[2].textContent==='Produção','correct labels');
+ check(env.options.length===3 && env.options[1].textContent==='Homologação' && env.options[2].textContent==='Produção','correct labels');
  check(env.required,'explicit selection required');
  check(original===pane.querySelector('[name="settings[paymentmethod_asaas_api_key]"]'),'existing field moved not copied');
  check(pane.querySelector('#asaas-settings-panel-diagnostics [name="settings[paymentmethod_asaas_debug]"]'),'debug separate');
@@ -48,19 +56,49 @@ try {
  document.getElementById('asaas-settings-tab-webhook').click();
  check(!document.getElementById('asaas-settings-panel-webhook').hidden && document.getElementById('asaas-settings-panel-authentication').hidden,'tab selection');
  check(document.getElementById('asaas-settings-tab-webhook').getAttribute('aria-selected')==='true','aria selected');
+ check(document.getElementById('settings-form').action.endsWith('&active_tab=online_payments_asaas_tab'),'save retains parent gateway');
+ check(pane.classList.contains('active'),'nested tab leaves parent active');
+ check(pane.querySelectorAll('.tab-pane.active').length===1 && pane.querySelectorAll('li.active').length===1,'single native active tab and panel');
  document.getElementById('asaas-settings-tab-webhook').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight'}));
  check(!document.getElementById('asaas-settings-panel-resources').hidden,'keyboard navigation');
+ check(document.activeElement.id==='asaas-settings-tab-resources','keyboard moves focus');
+ document.getElementById('asaas-settings-tab-resources').dispatchEvent(new KeyboardEvent('keydown',{key:'End'}));
+ check(document.activeElement.id==='asaas-settings-tab-diagnostics','End reaches last tab');
+ document.getElementById('asaas-settings-tab-diagnostics').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight'}));
+ check(document.activeElement.id==='asaas-settings-tab-authentication','right arrow wraps');
+ document.getElementById('asaas-settings-tab-authentication').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft'}));
+ check(document.activeElement.id==='asaas-settings-tab-diagnostics','left arrow wraps');
+ document.getElementById('asaas-settings-tab-diagnostics').dispatchEvent(new KeyboardEvent('keydown',{key:'Home'}));
+ check(document.activeElement.id==='asaas-settings-tab-authentication','Home reaches first tab');
+ const data=Array.from(new FormData(document.getElementById('settings-form')).entries());
+ document.getElementById('asaas-settings-tab-payments').click();
+ check(JSON.stringify(data)===JSON.stringify(Array.from(new FormData(document.getElementById('settings-form')).entries())),'tab navigation preserves POST payload including hidden fields and other gateways');
+ env.value='';document.getElementById('general-tab').click();
+ check(!document.getElementById('settings-form').reportValidity(),'invalid environment blocked');
+ check(pane.classList.contains('active') && !document.getElementById('asaas-settings-panel-authentication').hidden,'invalid field activates outer and inner tab');
+ check(document.activeElement===env,'native validation focuses visible environment');env.value='1';
  check(pane.querySelector('#asaas-settings-panel-security a').href==='https://crm.example.test/admin/asaas','dedicated admin link');
+ check(pane.querySelector('#asaas-settings-panel-webhook #fixture-callback'),'URL fragment moved to webhook tab');
+ check(pane.querySelector('#asaas-settings-panel-authentication #fixture-api-sandbox'),'API URLs in authentication tab');
+ original.value='synthetic-key';const reveal=pane.querySelector('[data-asaas-reveal="'+original.id+'"]');
+ reveal.click();check(original.type==='text'&&reveal.getAttribute('aria-pressed')==='true','explicit admin reveal');
+ document.getElementById('asaas-settings-tab-webhook').click();check(original.type==='password','leaving tab conceals key');
  api.initialize(document);check(pane.querySelectorAll('[role="tab"]').length===6,'idempotent init');
  fixture('0','0.0');api.initialize(document);check(document.querySelector('select').value==='','invalid legacy not production');
  fixture('1','0');api.initialize(document);check(document.querySelector('select').value==='0','valid production explicit');
  fixture('1','invalid');api.initialize(document);check(document.querySelector('select').value==='','invalid metadata still rejected');
- fixture('1','1'); api.initialize(document);
+ prepareFixture('1','1',true);document.getElementById('gateway-tab').click();
+ check(document.querySelectorAll('#asaas-settings-panel-payments [data-asaas-profile]').length===2,'independent payment profile groups');
+ const production=document.querySelector('[name="settings[paymentmethod_asaas_profile_production_description]"]'),sandbox=document.querySelector('[name="settings[paymentmethod_asaas_profile_sandbox_description]"]');
+ production.value='Production description';sandbox.value='Homologation description';document.getElementById('asaas-operation-environment').value='0';
+ check(production.value==='Production description'&&sandbox.value==='Homologation description','changing active environment never overwrites profile fields');
+ check(production.closest('[data-asaas-profile]').getAttribute('data-asaas-profile')==='production'&&sandbox.closest('[data-asaas-profile]').getAttribute('data-asaas-profile')==='sandbox','profiles correctly scoped');
+ check(document.querySelector('[name="settings[paymentmethod_asaas_profile_sandbox_sync_enabled]"]').disabled,'unsupported sync cannot imply operation');
  const result=document.createElement('pre');result.id='result';result.textContent='PASS '+checks;document.body.appendChild(result);
 } catch (error) { document.body.innerHTML='<pre id="result">FAIL '+error.message+'</pre>'; }
 `;
 try {
- const file=path.join(dir,'fixture.html');fs.writeFileSync(file,'<!doctype html><html><body><script>var module={exports:{}};</script><script>'+script+'</script><script>'+tests+'</script></body></html>');
+ const file=path.join(dir,'fixture.html');fs.writeFileSync(file,fixtureHtml(tests));
  const screenshot=process.env.ASAAS_UI_SCREENSHOT?path.resolve(process.env.ASAAS_UI_SCREENSHOT):null;
  if(screenshot)fs.mkdirSync(path.dirname(screenshot),{recursive:true});
  const result=cp.spawnSync(process.env.CHROMIUM_BIN,[...(screenshot?['--screenshot='+screenshot,'--window-size=1280,900']:[]),'--headless','--user-data-dir='+path.join(dir,'profile'),'--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--dump-dom','file://'+file],{encoding:'utf8',timeout:30000});

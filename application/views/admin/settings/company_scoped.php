@@ -1,6 +1,8 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
 $escape = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $labels = [
+    'company_trade_name'=>'Nome fantasia','company_state_registration'=>'Inscrição estadual (ou ISENTO, quando aplicável)',
+    'company_address_number'=>'Número','company_address_complement'=>'Complemento','company_address_district'=>'Bairro',
     'auto_stop_tasks_timers_on_new_timer'=>'Ao iniciar meu cronômetro, parar o anterior desta empresa',
     'timer_started_change_status_in_progress'=>'Ao iniciar meu cronômetro, mover a tarefa para Em andamento',
     'default_task_priority'=>'Prioridade padrão das novas tarefas','new_task_auto_follower_current_member'=>'Seguir automaticamente minhas novas tarefas de projeto',

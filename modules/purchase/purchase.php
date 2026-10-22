@@ -3,9 +3,9 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 /*
-Module Name: Gestão de Compras 2024 v1.5.0
+Module Name: Gestão de Compras 2024 v1.5.1
 Description: O Módulo de Gerenciamento de Compras é uma ferramenta para gerenciar as compras diárias. Ele é equipado com todos os recursos necessários para qualquer empresa que precise adquirir matéria-prima para fabricação ou produtos acabados para comercialização.
-Version: 1.5.0
+Version: 1.5.2
 Requires at least: 2.3.*
 Author:Wkarts
 Author URI: https://t.me/wkartspro
@@ -1679,9 +1679,17 @@ function init_po_project_tabs($tabs){
  * { update email language for vendor }
  */
 function update_email_lang_for_vendor($language, $data){
-    // O CRM opera somente em PT-BR. Preserva os identificadores de modelos e
-    // as preferências históricas dos fornecedores sem oferecer outros idiomas.
-    return 'portuguese_br';
+    require_once __DIR__ . '/services/PurchaseMailLanguage.php';
+    return PurchaseMailLanguage::resolve((string) $language, (array) $data, (string) get_option('active_language'),
+        static function (string $email): array {
+            $CI = &get_instance();
+            // Ambiguous addresses never choose the first vendor or change the incoming language.
+            return $CI->db->select('c.id, v.default_language')
+                ->from(db_prefix().'pur_contacts c')
+                ->join(db_prefix().'pur_vendor v', 'v.userid=c.userid')
+                ->where('c.email', $email)->where('c.active', 1)->where('v.active', 1)
+                ->limit(2)->get()->result_array();
+        });
 }
 
 /**

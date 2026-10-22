@@ -3157,7 +3157,7 @@ function _init_tasks_billable_select(tasks, project_id) {
 // Fix for height on the wrapper
 function mainWrapperHeightFix() {
   // Get and set current height
-  var headerH = 57;
+  var headerH = $("#header").outerHeight() || 57;
   var navigationH = side_bar.height();
   var contentH = $("#wrapper").find(".content").height();
   setup_menu.css(

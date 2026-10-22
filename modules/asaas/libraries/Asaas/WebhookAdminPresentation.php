@@ -30,6 +30,13 @@ final class WebhookAdminPresentation
             . 'asaas/gateways/callback/integration/' . $publicId;
     }
 
+    public static function companyCallbackUrl(string $configuredBase, string $publicId, string $indexPage = ''): ?string
+    {
+        $legacy = self::callbackUrl($configuredBase, $publicId, $indexPage);
+        return $legacy === null ? null : substr($legacy, 0, -strlen('asaas/gateways/callback/integration/'.$publicId))
+            .'company_asaas_callback/integration/'.$publicId;
+    }
+
     public static function statusLabel(string $status): string
     {
         return ['received'=>'Recebido', 'pending'=>'Pendente', 'processing'=>'Em processamento',

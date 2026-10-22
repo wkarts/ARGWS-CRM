@@ -14,8 +14,7 @@ $hidden=function()use($esc,$company_clients_csrf){echo '<input type="hidden" nam
 <?php if($owned&&$capabilities['edit']){?>
 <?= form_open($url());$hidden(); ?>
 <input type="hidden" name="action" value="update"><input type="hidden" name="client_id" value="<?= $client['userid']; ?>"><input type="hidden" name="revision" value="<?= $esc($details['revision']); ?>">
-<div class="form-group"><label for="edit_company">Nome / razão social</label><input class="form-control" id="edit_company" name="client[company]" required maxlength="191" value="<?= $esc($client['company']); ?>"></div>
-<div class="form-group"><label for="edit_vat">CPF / CNPJ (opcional)</label><input class="form-control" id="edit_vat" name="client[vat]" maxlength="20" value="<?= $esc($client['vat']); ?>"></div>
+<?php $clientMode='owned';$clientPrefix='edit';$clientData=$client;$clientProfile=$details['profile']??[];require __DIR__.'/client_identity_fields.php'; ?>
 <button type="submit" class="btn btn-primary">Salvar cliente</button><?= form_close(); ?>
 <?php }else{?><dl><dt>CPF / CNPJ</dt><dd><?= $esc($client['vat']?:'Não informado'); ?></dd></dl><?php } ?>
 <?php if($owned){?>
@@ -24,15 +23,15 @@ $hidden=function()use($esc,$company_clients_csrf){echo '<input type="hidden" nam
 <?php foreach($contacts as $contact){?>
 <?php if($capabilities['edit']){echo form_open($url());$hidden(); ?>
 <input type="hidden" name="action" value="contact"><input type="hidden" name="client_id" value="<?= $client['userid']; ?>"><input type="hidden" name="revision" value="<?= $esc($details['revision']); ?>"><input type="hidden" name="contact_id" value="<?= $contact['id']; ?>"><input type="hidden" name="contact_revision" value="<?= $esc($contact['revision']); ?>">
-<?php foreach(['firstname'=>'Nome','lastname'=>'Sobrenome','email'=>'E-mail'] as $field=>$label){?><label for="contact-<?= $contact['id'].'-'.$field; ?>"><?= $esc($label); ?></label><input class="form-control" id="contact-<?= $contact['id'].'-'.$field; ?>" name="contact[<?= $field; ?>]" value="<?= $esc($contact[$field]); ?>" maxlength="<?= $field==='email'?100:191; ?>" <?= $field==='email'?'type="email"':'type="text"'; ?> <?= $field!=='lastname'?'required':''; ?>><?php } ?><button type="submit">Salvar contato</button><?= form_close(); ?>
+<?php foreach(['firstname'=>'Nome','lastname'=>'Sobrenome','email'=>'E-mail'] as $field=>$label){?><label for="contact-<?= $contact['id'].'-'.$field; ?>"><?= $esc($label); ?></label><input class="form-control" id="contact-<?= $contact['id'].'-'.$field; ?>" name="contact[<?= $field; ?>]" value="<?= $esc($contact[$field]); ?>" maxlength="<?= $field==='email'?100:191; ?>" <?= $field==='email'?'type="email"':'type="text"'; ?> <?= $field!=='lastname'?'required':''; ?>><?php } ?><button class="btn btn-default" type="submit">Salvar contato</button><?= form_close(); ?>
 <?php }else{?><p><?= $esc($contact['firstname'].' '.$contact['lastname'].' · '.$contact['email']); ?></p><?php } ?>
 <?php if(isset($invoice_access[$contact['id']])){$grant=$invoice_access[$contact['id']];?><p>Acesso a faturas desta empresa no portal: <?= $grant['allowed']?'permitido':'não permitido'; ?>.</p><?php if($capabilities['edit']){echo form_open($url());$hidden(); ?>
-<input type="hidden" name="action" value="contact_invoice_access"><input type="hidden" name="client_id" value="<?= $client['userid']; ?>"><input type="hidden" name="revision" value="<?= $esc($details['revision']); ?>"><input type="hidden" name="contact_id" value="<?= $contact['id']; ?>"><input type="hidden" name="grant_revision" value="<?= $esc($grant['revision']); ?>"><input type="hidden" name="invoice_access" value="<?= $grant['allowed']?'0':'1'; ?>"><button type="submit"><?= $grant['allowed']?'Revogar acesso a faturas no portal':'Permitir acesso a faturas no portal'; ?></button><?= form_close(); } } ?>
+<input type="hidden" name="action" value="contact_invoice_access"><input type="hidden" name="client_id" value="<?= $client['userid']; ?>"><input type="hidden" name="revision" value="<?= $esc($details['revision']); ?>"><input type="hidden" name="contact_id" value="<?= $contact['id']; ?>"><input type="hidden" name="grant_revision" value="<?= $esc($grant['revision']); ?>"><input type="hidden" name="invoice_access" value="<?= $grant['allowed']?'0':'1'; ?>"><button class="btn btn-default" type="submit"><?= $grant['allowed']?'Revogar acesso a faturas no portal':'Permitir acesso a faturas no portal'; ?></button><?= form_close(); } } ?>
 <?php } ?>
 <?php if($capabilities['edit']){?>
 <h4>Novo contato privado</h4><?= form_open($url());$hidden(); ?>
 <input type="hidden" name="action" value="contact"><input type="hidden" name="client_id" value="<?= $client['userid']; ?>"><input type="hidden" name="revision" value="<?= $esc($details['revision']); ?>">
-<label for="contact-firstname">Nome</label><input class="form-control" id="contact-firstname" name="contact[firstname]" required maxlength="191"><label for="contact-lastname">Sobrenome</label><input class="form-control" id="contact-lastname" name="contact[lastname]" maxlength="191"><label for="contact-email">E-mail</label><input class="form-control" id="contact-email" name="contact[email]" type="email" required maxlength="100"><button type="submit">Criar contato</button><?= form_close(); ?>
+<label for="contact-firstname">Nome</label><input class="form-control" id="contact-firstname" name="contact[firstname]" required maxlength="191"><label for="contact-lastname">Sobrenome</label><input class="form-control" id="contact-lastname" name="contact[lastname]" maxlength="191"><label for="contact-email">E-mail</label><input class="form-control" id="contact-email" name="contact[email]" type="email" required maxlength="100"><button class="btn btn-default" type="submit">Criar contato</button><?= form_close(); ?>
 <?php } ?>
 <?php } ?>
 <?php if($owned&&$capabilities['share']){?>
@@ -46,7 +45,7 @@ $hidden=function()use($esc,$company_clients_csrf){echo '<input type="hidden" nam
 <?php } ?><p><a href="<?= $esc($url()); ?>">Voltar à lista</a></p>
 <?php } ?>
 <h2>Lista de clientes</h2>
-<form method="get" action="<?= $esc($url()); ?>"><label for="client-search">Buscar nome ou documento</label><input id="client-search" name="search" maxlength="191" value="<?= $esc($search); ?>"><button type="submit">Buscar</button></form>
+<form method="get" action="<?= $esc($url()); ?>"><label for="client-search">Buscar nome ou documento</label><input class="form-control" id="client-search" name="search" maxlength="191" value="<?= $esc($search); ?>"><button type="submit" class="btn btn-default">Buscar</button></form>
 <div class="table-responsive"><table class="table"><thead><tr><th scope="col">Nome</th><th scope="col">CPF / CNPJ</th><th scope="col">Acesso</th></tr></thead><tbody>
 <?php foreach($directory['items'] as $client){?><tr><td><a href="<?= $esc($url('?client='.$client['userid'])); ?>"><?= $esc($client['company']); ?></a></td><td><?= $esc($client['vat']); ?></td><td><?= $client['owner_issuer_id']===$issuer?'Próprio':'Compartilhado (consulta)'; ?></td></tr><?php } ?>
 </tbody></table></div>
@@ -56,8 +55,7 @@ $hidden=function()use($esc,$company_clients_csrf){echo '<input type="hidden" nam
 <h2>Novo cliente privado</h2><p>CPF/CNPJ repetido é recusado, inclusive quando já existe no legado. O conflito não identifica o proprietário.</p>
 <?= form_open($url());$hidden(); ?>
 <input type="hidden" name="action" value="create"><input type="hidden" name="request_key" value="<?= $esc($request_key); ?>">
-<div class="form-group"><label for="new_company">Nome / razão social</label><input class="form-control" id="new_company" name="client[company]" required maxlength="191" autocomplete="organization"></div>
-<div class="form-group"><label for="new_vat">CPF / CNPJ (opcional)</label><input class="form-control" id="new_vat" name="client[vat]" maxlength="20"></div>
+<?php $clientMode='owned';$clientPrefix='new';$clientData=[];$clientProfile=[];require __DIR__.'/client_identity_fields.php'; ?>
 <button type="submit" class="btn btn-primary">Criar cliente privado</button><?= form_close(); ?>
 <?php } ?>
 <p>Este diretório administra identidade. Operações financeiras e demais recursos ficam disponíveis conforme a conclusão e autorização de cada fluxo.</p>

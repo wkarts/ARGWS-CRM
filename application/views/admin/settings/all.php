@@ -131,7 +131,8 @@ echo form_open_multipart($actionUrl, $formAttributes);
                 return;
             }
 
-            var tab = $(this).attr('href').slice(1);
+            // Nested settings tabs retain their gateway when the form redirects after saving.
+            var tab = $(this).attr('data-settings-parent-tab') || $(this).attr('href').slice(1);
             settingsForm.attr('action',
                 '<?= site_url($this->uri->uri_string()); ?>?group=' +
                 slug +

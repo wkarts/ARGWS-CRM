@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<div id="header">
+<div id="header"<?= class_exists('CompanyRequestScope', false) && CompanyRequestScope::context() ? ' class="native-company-header"' : ''; ?>>
     <button type="button"
         class="hide-menu tw-inline-flex tw-bg-transparent tw-border-0 tw-p-1 tw-mt-4 hover:tw-bg-neutral-600/10 tw-text-neutral-600 hover:tw-text-neutral-800 focus:tw-text-neutral-800 focus:tw-outline-none tw-rounded-md tw-mx-4 ltr:md:tw-ml-4 rtl:md:tw-mr-4 ltr:tw-float-left  rtl:tw-float-right">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="tw-h-4 tw-w-4 tw-text-current">
@@ -29,7 +29,7 @@
                     <?php } ?>
                 </div>
             </div>
-            <div class="tw-flex tw-flex-1 sm:tw-flex-initial">
+            <div class="native-header-search tw-flex tw-flex-1 sm:tw-flex-initial">
                 <div id="top_search"
                     class="tw-inline-flex tw-relative dropdown sm:tw-ml-1.5 sm:tw-mr-3 tw-max-w-xl tw-flex-auto tw-group/top-search"
                     data-toggle="tooltip" data-placement="bottom"

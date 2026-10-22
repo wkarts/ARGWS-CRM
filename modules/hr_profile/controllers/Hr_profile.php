@@ -5,6 +5,20 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * Class Hr profile
  */
 class Hr_profile extends AdminController {
+    private ?string $staffIdentityError = null;
+    /** Imports report a failed row; interactive writers show a bounded, non-sensitive error. */
+    private function staff_identity_write(callable $operation)
+    {
+        $this->staffIdentityError = null;
+        try { return $operation(); }
+        catch (Throwable $error) {
+            $this->staffIdentityError = StaffIdentityTransaction::publicMessage($error);
+            set_alert('warning', $this->staffIdentityError);
+            log_message('error', 'HR staff identity write was not confirmed.');
+            return false;
+        }
+    }
+
 	/**
 	 * __construct
 	 */
@@ -2756,7 +2770,7 @@ class Hr_profile extends AdminController {
 
 									$rd['email_signature'] = '';
 									//insert staff
-									$response = $this->hr_profile_model->add_staff($rd);
+									$response = $this->staff_identity_write(fn() => $this->hr_profile_model->add_staff($rd));
 									if ($response) {
 										$total_row_success++;
 									}
@@ -2766,7 +2780,7 @@ class Hr_profile extends AdminController {
 									unset($data['password']);
 
 									$rd['email_signature'] = '';
-									$response = $this->hr_profile_model->update_staff($rd, $rd['staffid']);
+									$response = $this->staff_identity_write(fn() => $this->hr_profile_model->update_staff($rd, $rd['staffid']));
 									if ($response) {
 										$total_row_success++;
 									}
@@ -3191,8 +3205,15 @@ class Hr_profile extends AdminController {
 								}
 
 								if (get_staff_user_id() != '' && $flag == 0 && $flag2 == 0) {
-									$rows[] = $rd;
-									$this->hr_profile_model->add_staff($rd);
+                                    $created = $this->staff_identity_write(fn() => $this->hr_profile_model->add_staff($rd));
+                                    if (is_numeric($created) && (int)$created > 0) {
+                                        $rows[] = $rd;
+                                    } else {
+                                        // Identify the source row without copying its password or other personal fields.
+                                        $dataError->getActiveSheet()->setCellValue('A' . $numRow, 'Linha ' . $rowIndex);
+                                        $dataError->getActiveSheet()->setCellValue('AC' . $numRow, $this->staffIdentityError ?? 'Não foi possível confirmar o cadastro.')->getStyle('AC' . $numRow)->applyFromArray($styleArray);
+                                        $numRow++;
+                                    }
 								}
 								$total_rows++;
 							}
@@ -3887,7 +3908,7 @@ class Hr_profile extends AdminController {
 			if (!has_permission('hrm_hr_records', '', 'create') && !has_permission('hrm_hr_records', '', 'edit') && !is_admin()) {
 				access_denied('member');
 			}
-			$id = $this->hr_profile_model->add_staff($data);
+			$id = $this->staff_identity_write(fn() => $this->hr_profile_model->add_staff($data));
 			if ($id) {
 				hr_profile_handle_staff_profile_image_upload($id);
 				set_alert('success', _l('added_successfully', _l('staff_member')));
@@ -3897,7 +3918,7 @@ class Hr_profile extends AdminController {
 			if (!$data['id'] == get_staff_user_id() && !is_admin() && !hr_profile_permissions('hr_profile', '', 'edit')) {
 				access_denied('hr_profile');
 			}
-			$response = $this->hr_profile_model->update_staff_profile($data);
+			$response = $this->staff_identity_write(fn() => $this->hr_profile_model->update_staff_profile($data));
 			if ($response == true) {
 				hr_profile_handle_staff_profile_image_upload($data['id']);
 			}
@@ -5673,7 +5694,7 @@ class Hr_profile extends AdminController {
 				if (!has_permission('hrm_hr_records', '', 'create')) {
 					access_denied('staff');
 				}
-				$id = $this->hr_profile_model->add_staff($data);
+				$id = $this->staff_identity_write(fn() => $this->hr_profile_model->add_staff($data));
 
 				if ($id) {
 					hr_profile_handle_staff_profile_image_upload($id);
@@ -5690,8 +5711,8 @@ class Hr_profile extends AdminController {
 					$manage_staff = true;
 					unset($data['manage_staff']);
 				}
-				hr_profile_handle_staff_profile_image_upload($id);
-				$response = $this->hr_profile_model->update_staff($data, $id);
+				$response = $this->staff_identity_write(fn() => $this->hr_profile_model->update_staff($data, $id));
+                if ($this->staffIdentityError === null && !is_array($response)) { hr_profile_handle_staff_profile_image_upload($id); }
 				if (is_array($response)) {
 					if (isset($response['cant_remove_main_admin'])) {
 						set_alert('warning', _l('staff_cant_remove_main_admin'));

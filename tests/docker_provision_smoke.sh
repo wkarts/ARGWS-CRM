@@ -34,6 +34,7 @@ cleanup() {
 trap cleanup EXIT
 
 docker build --tag "$image" --build-arg ARGWS_VERSION=ci .
+docker run --rm --entrypoint /bin/sh "$image" -ec 'test "$(id -u www-data):$(id -g www-data)" = "33:33"'
 docker run --rm --volume "$PWD:/source:ro" --entrypoint php "$image" /source/tests/brand_assets_smoke.php
 docker run --rm --volume "$PWD:/source:ro" --entrypoint php "$image" /source/tests/email_templates_php_smoke.php
 docker tag "$image" ghcr.io/wkarts/argws-crm:ci
@@ -63,6 +64,15 @@ do
         exit 1
     fi
 done
+docker compose --project-directory "$storage_compose_dir" --env-file "$storage_compose_dir/.env" \
+    -f "$storage_compose_dir/compose.yaml" run --rm web /bin/sh -ec '
+    test "$(id -u):$(id -g)" = "33:33"
+    test "$(readlink /app/application/config/app-config.php)" = /var/lib/argws-crm/config/app-config.php
+    for name in estimates proposals ticket_attachments tasks staff_profile_images projects newsfeed leads invoices expenses discussions contracts company clients credit_notes client_profile_images; do
+        test -d "/app/uploads/$name"
+        test -w "/app/uploads/$name"
+        test ! -L "/app/uploads/$name"
+    done'
 echo "Compose entrypoint storage OK: diretórios relativos e graváveis por www-data."
 
 docker network create "$network" >/dev/null

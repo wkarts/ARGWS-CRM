@@ -14,6 +14,7 @@ class BbPdoDatabase
     private function clause(){return $this->where?' WHERE '.implode(' AND ',array_map(fn($k)=>"`$k`=?",array_keys($this->where))):'';}
     private function reset(){ $this->where=[];$this->columns='*';$this->order='';$this->limit=''; }
     public function get($table){$sql="SELECT {$this->columns} FROM `$table`".$this->clause().$this->order.$this->limit;$b=array_values($this->where);$this->reset();return $this->query($sql,$b);}
+    public function get_where($table,$where){foreach($where as $key=>$value)$this->where($key,$value);return $this->get($table);}
     public function update($table,$values){$sql="UPDATE `$table` SET ".implode(',',array_map(fn($k)=>"`$k`=?",array_keys($values))).$this->clause();$b=array_merge(array_values($values),array_values($this->where));$this->reset();return $this->query($sql,$b)!==false;}
     public function insert($table,$values){$keys=array_keys($values);return $this->query("INSERT INTO `$table` (`".implode('`,`',$keys)."`) VALUES (".implode(',',array_fill(0,count($keys),'?')).")",array_values($values))!==false;}
     public function table_exists($table){return $this->query('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$table])->row_array()!==[];}

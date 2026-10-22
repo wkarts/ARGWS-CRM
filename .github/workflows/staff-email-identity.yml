@@ -1,0 +1,55 @@
+name: Identidade global de equipe
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-database-identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        database: ['mysql:8.0', 'mysql:8.4', 'mariadb:10.11', 'mariadb:11.4']
+    container: php:8.2-cli
+    services:
+      database:
+        image: ${{ matrix.database }}
+        env:
+          MYSQL_ROOT_PASSWORD: synthetic-test-only
+          MYSQL_DATABASE: staff_identity_test
+        options: >-
+          --health-cmd="$(command -v mariadb-admin || command -v mysqladmin) ping -h 127.0.0.1 -uroot -psynthetic-test-only"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    env:
+      STAFF_IDENTITY_TEST_DSN: mysql:host=database;dbname=staff_identity_test;charset=utf8mb4
+      STAFF_IDENTITY_TEST_USER: root
+      STAFF_IDENTITY_TEST_PASSWORD: synthetic-test-only
+      ISSUERS_TEST_DSN: mysql:host=database;dbname=staff_identity_test;charset=utf8mb4
+      ISSUERS_TEST_USER: root
+      ISSUERS_TEST_PASSWORD: synthetic-test-only
+    steps:
+      - uses: actions/checkout@v5
+      - name: Preparar PHP sem credenciais de produção
+        run: apt-get update && apt-get install -y --no-install-recommends libsqlite3-dev libonig-dev && docker-php-ext-install mysqli pdo_mysql pdo_sqlite mbstring
+      - name: Validar sintaxe
+        run: |
+          php -l application/services/StaffEmailIdentity.php
+          php -l application/services/StaffEmailIdentitySchema.php
+          php -l tests/staff_email_identity_mysql.php
+          php -l tests/staff_email_identity_unit.php
+      - name: Provar índice gerado, preflight, replay e concorrência real
+        run: |
+          php tests/staff_email_identity_unit.php
+          php tests/staff_email_public_data.php
+          php tests/staff_email_authentication.php
+          php tests/staff_identity_transaction_unit.php
+          php tests/staff_identity_messages.php
+          php tests/staff_email_identity_mysql.php
+          php tests/companies/staff_management.php
+          php tests/issuers_staff_native.php
+          php tests/staff_email_identity_writers.php
+          php tests/staff_email_identity_hr.php
+          php tests/staff_email_core_migration.php
+          php tests/staff_email_backup_restore.php

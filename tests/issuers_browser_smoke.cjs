@@ -194,7 +194,7 @@ async function waitForUpgradeForm(page) {
         await nextSecondaryStep();
         await page.locator('#legal_name').fill('Synthetic secondary native recovery');
         await page.locator('#tax_id').fill('52998224725');
-        await page.locator('#profile_invoice_company_city').fill('Synthetic secondary');
+        await page.locator('a[href="#company-address"]').click(); await page.locator('#profile_invoice_company_city').fill('Synthetic secondary');
         for (let step = 0; step < 5; step++) await nextSecondaryStep();
         assert((await page.locator('[role=status]').innerText()).includes('Empresa criada'));
       }

@@ -2,10 +2,10 @@ name: Integridade das stacks ARGWS CRM
 on:
   pull_request:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
-    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/company_context_tabs_browser.cjs, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/company_context_tabs_browser.cjs, tests/asaas_settings*, tests/company_shell_browser.cjs, tests/company_identity_browser.cjs, tests/company_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
   push:
     branches: [develop, main]
-    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/company_context_tabs_browser.cjs, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/company_context_tabs_browser.cjs, tests/asaas_settings*, tests/company_shell_browser.cjs, tests/company_identity_browser.cjs, tests/company_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -27,7 +27,7 @@ jobs:
       - name: Validar tradução dos modelos HTML
         run: node --test tests/email_templates_ptbr.test.cjs
       - name: Validar contratos das integrações financeiras e SMS
-        run: node --test tests/crm_integrations_contract.test.cjs
+        run: node --test tests/crm_integrations_contract.test.cjs tests/asaas_settings_real_browser.test.cjs tests/companies_asaas_browser.test.cjs
       - name: Validar modelos PT-BR e gatilhos individuais
         run: node --test tests/crm_ptbr_sms_modules.test.cjs
       - name: Testar exclusão dos artefatos operacionais dos ZIPs
@@ -45,12 +45,67 @@ jobs:
           sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
       - name: Testar navegação das abas no shell isolado de Empresas
         run: node tests/company_context_tabs_browser.cjs
+      - name: Testar apresentação e confirmação explícita no shell de Empresas
+        id: company_shell_browser
+        env:
+          SCREENSHOT_DIR: /tmp/company-shell-evidence
+        run: |
+          mkdir -p "$SCREENSHOT_DIR"
+          node tests/company_shell_browser.cjs
+      - name: Preservar capturas dos fixtures de apresentação de Empresas
+        # Retain partial captures after a test failure, but do not collect a skipped test.
+        if: always() && (steps.company_shell_browser.outcome == 'success' || steps.company_shell_browser.outcome == 'failure')
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-shell-synthetic-ui
+          path: /tmp/company-shell-evidence
+          if-no-files-found: ignore
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+      - name: Testar cadastro de empresa e consultas sintéticas CNPJ/CEP
+        id: company_identity_browser
+        env:
+          SCREENSHOT_DIR: /tmp/company-identity-evidence
+        run: node tests/company_identity_browser.cjs
+      - name: Preservar capturas sintéticas do cadastro de empresa
+        if: always() && (steps.company_identity_browser.outcome == 'success' || steps.company_identity_browser.outcome == 'failure')
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-identity-presentation
+          path: /tmp/company-identity-evidence
+          if-no-files-found: warn
+      - name: Testar cadastro PF/PJ e consultas revisadas de clientes
+        id: client_identity_browser
+        env:
+          SCREENSHOT_DIR: /tmp/client-identity-evidence
+        run: node tests/companies/client_identity_browser.cjs
+      - name: Preservar capturas sintéticas do cadastro de clientes
+        if: always() && (steps.client_identity_browser.outcome == 'success' || steps.client_identity_browser.outcome == 'failure')
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-identity-presentation
+          path: /tmp/client-identity-evidence
+          if-no-files-found: error
+      - name: Testar abas nativas e perfis de ambientes Asaas
+        id: asaas_settings_browser
+        env:
+          ASAAS_UI_ARTIFACTS: /tmp/asaas-settings-evidence
+        run: node tests/asaas_settings_tabs.browser.cjs
+      - name: Preservar capturas sintéticas das abas Asaas
+        if: always() && (steps.asaas_settings_browser.outcome == 'success' || steps.asaas_settings_browser.outcome == 'failure')
+        uses: actions/upload-artifact@v4
+        with:
+          name: asaas-native-settings-presentation
+          path: /tmp/asaas-settings-evidence
+          if-no-files-found: error
       - name: Provisionar schema e primeiro administrador em MySQL limpo
+        id: issuer_browser
         env:
           ARGWS_ISSUER_BROWSER_SMOKE: '1'
         run: bash tests/docker_provision_smoke.sh
       - name: Preservar evidências visuais sintéticas
-        if: always()
+        if: always() && (steps.issuer_browser.outcome == 'success' || steps.issuer_browser.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
           name: issuer-native-browser

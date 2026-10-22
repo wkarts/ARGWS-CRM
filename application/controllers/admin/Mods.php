@@ -20,34 +20,22 @@ class Mods extends AdminController
     {
         $this->config->load('argws_resources');
         $definitions = $this->config->item('argws_resources');
-        $installed   = [];
-        $hidden      = $this->hidden_resources();
-
-        foreach ($this->app_modules->get() as $module) {
-            $installed[$module['system_name']] = $module;
-        }
-
         $data['resources'] = [];
-        foreach ($definitions as $name => $definition) {
-            if (isset($installed[$name]) && (!isset($hidden[$name]) || $this->app_modules->is_essential($name))) {
-                // Os nomes funcionais do catálogo prevalecem sobre os cabeçalhos legados.
-                $data['resources'][] = array_merge($installed[$name], $definition);
-            }
+        // Visibility is not activation or authorization. Show every available module,
+        // including those absent from the commercial catalog or hidden by environment.
+        foreach ($this->app_modules->get() as $module) {
+            $name = $module['system_name'];
+            $definition = $definitions[$name] ?? [
+                'name' => $module['headers']['module_name'] ?? $name,
+                'description' => $module['headers']['description'] ?? '',
+                'requires' => [],
+                'optional' => [],
+            ];
+            $resource = array_merge($module, $definition);
+            $resource['can_manage_availability'] = (bool) $this->get_resource_definition($name);
+            $data['resources'][] = $resource;
         }
-        $data['ideal_maintenance'] = null;
-        $data['ideal_migration_csrf'] = '';
-        if (isset($installed['ideal']) && $installed['ideal']['installed_version'] !== false) {
-            $token = $this->session->userdata('ideal_module_migration_csrf');
-            if (!is_string($token) || !preg_match('/^[a-f0-9]{64}$/D', $token)) {
-                $token = bin2hex(random_bytes(32));
-                $this->session->set_userdata('ideal_module_migration_csrf', $token);
-            }
-            $data['ideal_migration_csrf'] = $token;
-            if (isset($hidden['ideal']) && version_compare($installed['ideal']['installed_version'], $installed['ideal']['headers']['version'], '<')) {
-                // Maintenance is separate from activation, settings and checkout availability.
-                $data['ideal_maintenance'] = $installed['ideal'];
-            }
-        }
+        $data['maintenance_count'] = $this->app_modules->number_of_modules_that_require_database_upgrade();
         $data['title'] = 'Recursos';
         $this->load->view('admin/modules/list', $data);
     }
@@ -136,78 +124,83 @@ class Mods extends AdminController
         show_404();
     }
 
+    public function maintenance()
+    {
+        if (!is_admin()) { access_denied('modules'); return; }
+        $token = $this->session->userdata('module_migration_csrf');
+        if (!is_string($token) || !preg_match('/^[a-f0-9]{64}$/D', $token)) {
+            $token = bin2hex(random_bytes(32));
+            $this->session->set_userdata('module_migration_csrf', $token);
+        }
+        $this->load->view('admin/modules/maintenance', [
+            'title' => 'Manutenção de recursos instalados',
+            'pending' => $this->app_modules->database_maintenance_inventory(),
+            'module_migration_csrf' => $token,
+        ]);
+    }
+
     public function upgrade_database($name)
     {
-        if (!is_admin()) {
-            access_denied('modules');
-            return;
-        }
+        if (!is_admin()) { access_denied('modules'); return; }
         $module = $this->app_modules->get($name);
-        $idealMaintenance = $name === 'ideal' && $module && $module['installed_version'] !== false;
-        if ($this->input->method(true) !== 'POST'
-            || (!$idealMaintenance && (!$this->get_resource_definition($name) || !$module || (int) $module['activated'] !== 1))) {
-            show_404();
-            return;
+        if ($this->input->method(true) !== 'POST' || !$module || $name === 'issuers'
+            || !preg_match('/^[a-z0-9_]+$/D', (string) $name) || $module['installed_version'] === false) {
+            show_404(); return;
         }
-        if ($idealMaintenance) {
-            $expected = $this->session->userdata('ideal_module_migration_csrf');
-            $provided = $this->input->post('ideal_module_migration_csrf');
-            if (!is_string($expected) || !preg_match('/^[a-f0-9]{64}$/D', $expected)
-                || !is_string($provided) || !hash_equals($expected, $provided)) {
-                show_error('Solicitação inválida. Atualize a página e tente novamente.', 403);
-                return;
-            }
-            $current = $this->db->where('module_name', 'ideal')->get(db_prefix() . 'modules')->row();
-            if (!$current || version_compare((string) $current->installed_version, $module['headers']['version'], '>')) {
-                show_error('A versão instalada exige revisão; downgrade não é permitido nesta manutenção.', 409);
-                return;
-            }
+        $expected = $this->session->userdata('module_migration_csrf');
+        $provided = $this->input->post('module_migration_csrf');
+        if (!is_string($expected) || !preg_match('/^[a-f0-9]{64}$/D', $expected)
+            || !is_string($provided) || !hash_equals($expected, $provided)) {
+            show_error('Solicitação inválida. Atualize a página e tente novamente.', 403); return;
         }
+        // DDL can commit implicitly: use a connection lock rather than a misleading transaction.
+        $key = 'module-upgrade:' . substr(hash('sha256', ($this->db->database ?? '') . ':' . db_prefix() . ':' . $name), 0, 48);
+        $locked = false;
         try {
-            $result = $this->app_modules->upgrade_database($name);
-            if ($idealMaintenance) {
-                // Native migration versions must be confirmed in storage, not inferred from its return value.
-                $row = $this->db->where('module_name', 'ideal')->get(db_prefix() . 'modules')->row();
-                if ($result !== true || !$row || $row->installed_version !== $module['headers']['version']) {
-                    throw new RuntimeException('ideal_migration_version_unconfirmed');
+            $lock = $this->db->query('SELECT GET_LOCK(?, 0) AS acquired', [$key]);
+            if (!$lock || (int) $lock->row()->acquired !== 1) {
+                throw new RuntimeException('module_migration_busy');
+            }
+            $locked = true;
+            $row = $this->db->where('module_name', $name)->get(db_prefix() . 'modules')->row();
+            $target = (string) $module['headers']['version'];
+            if (!$row || !preg_match('/^[0-9]\.[0-9]\.[0-9]$/D', (string) $row->installed_version)
+                || !preg_match('/^[0-9]\.[0-9]\.[0-9]$/D', $target)
+                || version_compare($row->installed_version, $target, '>')) {
+                throw new RuntimeException('module_migration_version_invalid');
+            }
+            // Validate every pending native step before any migration runs. The legacy runner
+            // checks internal gaps but does not reject a missing first pending step.
+            foreach (App_modules::maintenance_native_steps($name, $row->installed_version, $target) as $step) {
+                $files = glob(APP_MODULES_PATH . $name . '/migrations/' . sprintf('%03d', $step) . '_*.php');
+                if (!$files || count($files) !== 1 || !preg_match('/^\d{3}_(\w+)$/', basename($files[0], '.php'))) {
+                    throw new RuntimeException('module_migration_sequence_invalid');
                 }
             }
+            if (App_modules::maintenance_missing_dependencies($name, $row->installed_version, $target)) {
+                throw new RuntimeException('module_migration_runtime_unavailable');
+            }
+            $active = (int) $row->active;
+            $result = $this->app_modules->upgrade_database($name);
+            $after = $this->db->where('module_name', $name)->get(db_prefix() . 'modules')->row();
+            if ($result !== true || !$after || (string) $after->installed_version !== $target
+                || (int) $after->active !== $active) {
+                throw new RuntimeException('module_migration_unconfirmed');
+            }
+            set_alert('success', 'Banco de dados do recurso atualizado e versão confirmada.');
         } catch (Throwable $error) {
-            if (!$idealMaintenance) { throw $error; }
-            $result = 'Atualização de versão do iDEAL não confirmada. Confira o histórico antes de tentar novamente.';
+            $reason = preg_match('/^module_migration_[a-z_]+$/D', $error->getMessage()) ? $error->getMessage() : get_class($error);
+            log_message('error', 'Module maintenance failed: ' . $name . ' [' . $reason . ']');
+            set_alert('danger', 'Atualização não confirmada. Confira as versões, arquivos e logs antes de tentar novamente. Não ative o recurso para corrigir esta pendência.');
+        } finally {
+            if ($locked) { $this->db->query('SELECT RELEASE_LOCK(?)', [$key]); }
         }
-        if (is_string($result)) {
-            set_alert('danger', $result);
-        } else {
-            set_alert('success', 'Banco de dados do recurso atualizado.');
-        }
-        $this->to_modules();
+        redirect(admin_url('modules/maintenance'));
     }
 
     public function update_version($name)
     {
         show_404();
-    }
-
-    /**
-     * CRM_HIDDEN_RESOURCES oculta entradas do painel sem desinstalar ou
-     * desativar funcionalidades. Não é uma restrição de autorização.
-     * Exemplo: CRM_HIDDEN_RESOURCES=wiki,zillapage,products
-     */
-    private function hidden_resources()
-    {
-        $value = strtolower((string) (getenv('CRM_HIDDEN_RESOURCES') ?: ''));
-        $hidden = [];
-        if (!\app\services\PaymentGatewayCatalog::idealEnabled()) {
-            $hidden['ideal'] = true;
-        }
-        foreach (explode(',', $value) as $name) {
-            $name = trim($name);
-            if ($name !== '' && preg_match('/^[a-z0-9_]+$/', $name)) {
-                $hidden[$name] = true;
-            }
-        }
-        return $hidden;
     }
 
     private function get_resource_definition($name)

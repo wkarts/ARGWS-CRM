@@ -1,0 +1,169 @@
+{
+  "reviewed_at": "2026-10-21",
+  "content_assets_visually_inspected": 40,
+  "youtube_video_not_played": true,
+  "social_icons_not_translated": true,
+  "assets": [
+    {
+      "source_url": "https://cdn.templates.unlayer.com/assets/1606998390425-logo.png",
+      "source_sha256": "88bd20988dca897b438ff8236de9c41c7b0c83077402d79153712bf446fa0a08",
+      "dimensions": [
+        473,
+        282
+      ],
+      "format": "PNG",
+      "text_observed": "Fitness / Logo",
+      "proposed_text": "Fitness / Logotipo",
+      "proposed_asset": "modules/ma/assets/email-templates/ptbr/fitness-logo-ptbr.png",
+      "design_references": [
+        {
+          "template": "Fitness",
+          "path": "body.rows.0.columns.0.contents.0.values.src.url"
+        }
+      ],
+      "status": "proposal_only_not_generated",
+      "license": "No asset-specific license or explicit restriction found in repository; provenance is the existing MA seed reference. Preserve notices, credits and watermarks."
+    },
+    {
+      "source_url": "https://cdn.templates.unlayer.com/assets/1612261885054-V.jpg",
+      "source_sha256": "395a17b34ab912195152426c692f60bfef72d7633406d73fc593938a789d4b9a",
+      "dimensions": [
+        626,
+        626
+      ],
+      "format": "JPEG",
+      "text_observed": "For You",
+      "proposed_text": "Para você",
+      "proposed_asset": "modules/ma/assets/email-templates/ptbr/valentine-for-you-ptbr.png",
+      "design_references": [
+        {
+          "template": "Valentine Day Sale",
+          "path": "body.rows.1.columns.0.contents.0.values.src.url"
+        }
+      ],
+      "status": "proposal_only_not_generated",
+      "license": "No asset-specific license or explicit restriction found in repository; provenance is the existing MA seed reference. Preserve notices, credits and watermarks."
+    },
+    {
+      "source_url": "https://a.mailmunch.co/user_data/landing_pages/1502399458599-adada_36.png",
+      "source_sha256": "50d322a311afd36d01985e2cdff097aa1e1d27bfc32ed116147b130ecbdab0d7",
+      "dimensions": [
+        146,
+        105
+      ],
+      "format": "PNG",
+      "text_observed": "Company Logo",
+      "proposed_text": "Logotipo da empresa",
+      "proposed_asset": "modules/ma/assets/email-templates/ptbr/black-friday-company-logo-ptbr.png",
+      "design_references": [
+        {
+          "template": "Black Friday Deal",
+          "path": "body.rows.0.columns.0.contents.0.values.src.url"
+        }
+      ],
+      "status": "proposal_only_not_generated",
+      "license": "No asset-specific license or explicit restriction found in repository; provenance is the existing MA seed reference. Preserve notices, credits and watermarks."
+    },
+    {
+      "source_url": "https://a.mailmunch.co/user_data/landing_pages/1502396368642-s2ss_31.png",
+      "source_sha256": "873f40c90572a9c021ba88bb990114528aa77559fd9eea6bca65850c03d75837",
+      "dimensions": [
+        247,
+        30
+      ],
+      "format": "PNG",
+      "text_observed": "Super Sale",
+      "proposed_text": "Superpromoção",
+      "proposed_asset": "modules/ma/assets/email-templates/ptbr/black-friday-super-sale-ptbr.png",
+      "design_references": [
+        {
+          "template": "Black Friday Deal",
+          "path": "body.rows.1.columns.0.contents.1.values.src.url"
+        }
+      ],
+      "status": "proposal_only_not_generated",
+      "license": "No asset-specific license or explicit restriction found in repository; provenance is the existing MA seed reference. Preserve notices, credits and watermarks."
+    },
+    {
+      "source_url": "https://cdn.templates.unlayer.com/assets/1595748338131-FWsY1nA.png",
+      "source_sha256": "249f197cc67896120edb17f657ea67d98a9272094f67478d0333fbf6fc1bfcc3",
+      "dimensions": [
+        240,
+        110
+      ],
+      "format": "PNG",
+      "text_observed": "Google / Your opinion matters",
+      "proposed_text": "Google / Sua opinião importa",
+      "proposed_asset": "modules/ma/assets/email-templates/ptbr/google-opinion-ptbr.png",
+      "design_references": [
+        {
+          "template": "Thanks Subscriber",
+          "path": "body.rows.2.columns.0.contents.1.values.src.url"
+        }
+      ],
+      "status": "proposal_only_not_generated",
+      "license": "No asset-specific license or explicit restriction found in repository; provenance is the existing MA seed reference. Preserve notices, credits and watermarks."
+    },
+    {
+      "source_url": "https://a.mailmunch.co/user_data/landing_pages/1502084290319-loskjo_03.png",
+      "source_sha256": "17c711f4027207bcd3acac76022071d7be24032ee4abb1c7968de6cd661a4e4a",
+      "dimensions": [
+        227,
+        55
+      ],
+      "format": "PNG",
+      "text_observed": "Your Logo",
+      "proposed_text": "Seu logotipo",
+      "proposed_asset": "modules/ma/assets/email-templates/ptbr/birthday-your-logo-ptbr.png",
+      "design_references": [
+        {
+          "template": "Happy Birthday",
+          "path": "body.rows.0.columns.0.contents.0.values.src.url"
+        }
+      ],
+      "status": "proposal_only_not_generated",
+      "license": "No asset-specific license or explicit restriction found in repository; provenance is the existing MA seed reference. Preserve notices, credits and watermarks."
+    },
+    {
+      "source_url": "https://cdn.templates.unlayer.com/assets/1596365663073-rr.png",
+      "source_sha256": "994c462ffe9c6eead551ee686caf8eaf71acd8532bec8fe64858b5c76b151eed",
+      "dimensions": [
+        426,
+        36
+      ],
+      "format": "PNG",
+      "text_observed": "Brand Specialist",
+      "proposed_text": "Manter Brand Specialist como marca; somente traduzir após confirmar que é placeholder",
+      "proposed_asset": "modules/ma/assets/email-templates/ptbr/branding-logo-review.png",
+      "design_references": [
+        {
+          "template": "Branding",
+          "path": "body.rows.0.columns.0.contents.0.values.src.url"
+        }
+      ],
+      "status": "proposal_only_not_generated",
+      "license": "No asset-specific license or explicit restriction found in repository; provenance is the existing MA seed reference. Preserve notices, credits and watermarks."
+    },
+    {
+      "source_url": "https://cdn.templates.unlayer.com/assets/1596365748468-L5FmjEU.jpg",
+      "source_sha256": "e2624332a63dfdcf9cbe239ae45b76a67759ee681611f64a5c7a1a09bd5bb818",
+      "dimensions": [
+        650,
+        230
+      ],
+      "format": "JPEG",
+      "text_observed": "Analysis",
+      "proposed_text": "Análise",
+      "proposed_asset": "modules/ma/assets/email-templates/ptbr/branding-analysis-ptbr.jpg",
+      "design_references": [
+        {
+          "template": "Branding",
+          "path": "body.rows.1.values.backgroundImage.url"
+        }
+      ],
+      "status": "proposal_only_not_generated",
+      "license": "No asset-specific license or explicit restriction found in repository; provenance is the existing MA seed reference. Preserve notices, credits and watermarks."
+    }
+  ],
+  "authorization": "Requested translation of existing software assets authorized; preserve notices, credits and watermarks; report any explicit restriction before proceeding."
+}

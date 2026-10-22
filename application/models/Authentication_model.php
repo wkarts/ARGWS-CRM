@@ -6,6 +6,7 @@ use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH . 'services/StaffEmailIdentity.php';
 
 class Authentication_model extends App_Model
 {
@@ -37,7 +38,7 @@ class Authentication_model extends App_Model
                 $table = db_prefix() . 'staff';
                 $_id   = 'staffid';
             }
-            if($staff){$this->db->where('email',$email);$user=$this->db->get($table)->row();}
+            if($staff){$user=StaffEmailIdentity::unique($this->db,db_prefix(),$email);}
             else{$user=$this->uniqueContactByEmail($email);}
             if ($user) {
                 // Email is okey lets check the password now
@@ -92,6 +93,7 @@ class Authentication_model extends App_Model
                 } else {
                     $user_data                = [];
                     $user_data['tfa_staffid'] = $user->staffid;
+                    $user_data['_two_factor_auth_staff_email'] = $user->email;
                     if ($remember) {
                         $user_data['tfa_remember'] = true;
                     }
@@ -112,6 +114,7 @@ class Authentication_model extends App_Model
                     'client_logged_in' => true,
                 ];
             }
+            if ($staff && !$this->is_current_unique_staff($user)) { return false; }
             $this->session->set_userdata($user_data);
 
             if (! $twoFactorAuth) {
@@ -245,6 +248,13 @@ class Authentication_model extends App_Model
                     if (! is_null($user = $this->user_autologin->get($data['user_id'], hash('sha256', $data['key'])))) {
                         // Login user
                         if ($user->staff == 1) {
+                            $this->db->where('staffid', $user->id);
+                            $staffIdentity = $this->db->get(db_prefix() . 'staff')->row();
+                            $unique = $staffIdentity ? StaffEmailIdentity::unique($this->db, db_prefix(), $staffIdentity->email) : null;
+                            if (!$unique || (string)$unique->staffid !== (string)$user->id || (int)$unique->active !== 1) {
+                                delete_cookie('autologin', 'aal');
+                                return false;
+                            }
                             $user_data = [
                                 'staff_user_id'   => $user->id,
                                 'staff_logged_in' => true,
@@ -388,7 +398,7 @@ class Authentication_model extends App_Model
             $table = db_prefix() . 'staff';
             $_id   = 'staffid';
         }
-        if($staff){$this->db->where('email',$email);$user=$this->db->get($table)->row();}
+        if($staff){$user=StaffEmailIdentity::unique($this->db,db_prefix(),$email);}
         else{$user=$this->uniqueContactByEmail($email);}
 
         if ($user) {
@@ -595,6 +605,7 @@ class Authentication_model extends App_Model
         if ($user) {
             // A token created before ownership changed must not re-enter global mail/identity paths.
             if (!$staff && !$this->permitsLegacyRecoveryMail($user)) return false;
+            if ($staff && !$this->is_current_unique_staff($user)) return false;
             $timestamp_now_minus_1_hour = time() - (60 * 60);
             $new_pass_key_requested     = strtotime($user->new_pass_key_requested);
 
@@ -629,6 +640,7 @@ class Authentication_model extends App_Model
         if ($user) {
             // A token created before ownership changed must not re-enter global mail/identity paths.
             if (!$staff && !$this->permitsLegacyRecoveryMail($user)) return false;
+            if ($staff && !$this->is_current_unique_staff($user)) return false;
             $timestamp_now_minus_48_hour = time() - (3600 * 48);
             $new_pass_key_requested      = strtotime($user->new_pass_key_requested);
 
@@ -647,9 +659,9 @@ class Authentication_model extends App_Model
      */
     public function get_user_by_two_factor_auth_code($code)
     {
-        $this->db->where('two_factor_auth_code', $code);
-
-        return $this->db->get(db_prefix() . 'staff')->row();
+        $user = $this->pending_staff_identity();
+        return $user && is_string($code) && $code !== '' && is_string($user->two_factor_auth_code)
+            && hash_equals($user->two_factor_auth_code, $code) ? $user : null;
     }
 
     /**
@@ -661,11 +673,15 @@ class Authentication_model extends App_Model
      */
     public function two_factor_auth_login($user)
     {
+        $pending = $this->pending_staff_identity();
+        if (!$user || !$pending || (string)$user->staffid !== (string)$pending->staffid) { return false; }
+        $user = $pending;
         hooks()->do_action('before_staff_login', [
             'email'  => $user->email,
             'userid' => $user->staffid,
         ]);
 
+        if (!$this->is_current_unique_staff($user)) { return false; }
         $this->session->set_userdata(
             [
                 'staff_user_id'   => $user->staffid,
@@ -684,6 +700,7 @@ class Authentication_model extends App_Model
         }
 
         $this->update_login_info($user->staffid, true);
+        $this->session->unset_userdata(['tfa_staffid', '_two_factor_auth_staff_email', '_two_factor_auth_established']);
 
         return true;
     }
@@ -698,15 +715,9 @@ class Authentication_model extends App_Model
      */
     public function is_two_factor_code_valid($code, $email)
     {
-        $this->db->select('two_factor_auth_code_requested');
-        $this->db->where('two_factor_auth_code', $code);
-        $this->db->where('email', $email);
-        $user = $this->db->get(db_prefix() . 'staff')->row();
-
-        // Code not exists because no user is found
-        if (! $user) {
-            return false;
-        }
+        $user = $this->get_user_by_two_factor_auth_code($code);
+        $emailUser = StaffEmailIdentity::unique($this->db, db_prefix(), $email);
+        if (!$user || !$emailUser || (string)$emailUser->staffid !== (string)$user->staffid) { return false; }
 
         $timestamp_minus_1_hour = time() - (60 * 60);
         $new_code_key_requested = strtotime($user->two_factor_auth_code_requested);
@@ -782,6 +793,22 @@ class Authentication_model extends App_Model
         return (bool) ($success);
     }
 
+    /** Resolve a challenge to the same globally unique, active identity that began it. */
+    public function pending_staff_identity()
+    {
+        $id = $this->session->userdata('tfa_staffid');
+        $email = $this->session->userdata('_two_factor_auth_staff_email');
+        $user = StaffEmailIdentity::unique($this->db, db_prefix(), $email);
+        return $user && (string)$user->staffid === (string)$id && (int)$user->active === 1 ? $user : null;
+    }
+
+    private function is_current_unique_staff($user): bool
+    {
+        if (!$user || (int)$user->active !== 1) { return false; }
+        $current = StaffEmailIdentity::unique($this->db, db_prefix(), $user->email);
+        return $current && (string)$current->staffid === (string)$user->staffid && (int)$current->active === 1;
+    }
+
     public function is_google_two_factor_code_valid($code, $secret = null)
     {
         $g = new PragmaRX\Google2FA\Google2FA();
@@ -790,12 +817,7 @@ class Authentication_model extends App_Model
             return $g->verifyKey($secret, $code, 0);
         }
 
-        $staffid = $this->session->userdata('tfa_staffid');
-
-        $this->db->select('google_auth_secret')
-            ->where('staffid', $staffid);
-
-        if ($staff = $this->db->get('staff')->row()) {
+        if ($staff = $this->pending_staff_identity()) {
             return $g->verifyKey(
                 $this->decrypt($staff->google_auth_secret),
                 $code,

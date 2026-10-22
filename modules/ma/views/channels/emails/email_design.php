@@ -23,7 +23,7 @@
                               }
                               
                               echo '<div class="col-md-6 merge_fields_col">';
-                              echo '<h5 class="bold">'.ucfirst($key).'</h5>';
+                              echo '<h5 class="bold">'.html_escape(EmailTemplateLocale::groupLabel((string) $key)).'</h5>';
 
                               if($key == 'leads'){
                                  echo '<p>'._l('lead_first_name');
@@ -50,9 +50,9 @@
 
                                  if(!in_array($_field['name'], $mergeLooped)){
                                     $mergeLooped[] = $_field['name'];
-                                    echo '<p>'.$_field['name'];
+                                    echo '<p>'.html_escape(EmailTemplateLocale::fieldLabel($_field));
                                     echo '<span class="pull-right">';
-                                    echo html_entity_decode($_field['key']);
+                                    echo html_escape($_field['key']);
                                     echo '&nbsp;&nbsp;&nbsp;</span>';
                                     echo '</p>';
                                  }

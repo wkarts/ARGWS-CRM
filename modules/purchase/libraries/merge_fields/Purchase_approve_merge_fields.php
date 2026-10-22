@@ -64,6 +64,8 @@ class Purchase_approve_merge_fields extends App_merge_fields
        
         $fields['{link}']                  = $data->link;
         $fields['{by_staff_name}']                  =  $data->by_staff_name;
+        // The model supplies the intended recipient, separately from the staff member approving.
+        $fields['{staff_name}'] = isset($data->staff_name) && is_string($data->staff_name) ? $data->staff_name : '';
         $fields['{type}']                   =  $data->type;
        
 
