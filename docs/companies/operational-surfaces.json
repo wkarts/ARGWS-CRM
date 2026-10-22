@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "d80a8f41ca7672c6139de020b44bb874544abbe5f2d5cf1c6d1215257068834d",
+    "source_manifest_sha256": "68e4dd60001685019d930c2abbf6d1b0cd676b044fb62b4dd9d6d10d80fe9f5b",
     "counts": {
         "modules": 38,
-        "source_files": 4213,
+        "source_files": 4215,
         "literal_option_keys": 684,
         "dynamic_option_references": 146,
         "controllers": 254,
@@ -6813,8 +6813,8 @@
         },
         {
             "path": "application/views/admin/settings/includes/company.php",
-            "line": 7,
-            "source_sha256": "373de038a51873f09af089c9db04fd99eb0ccef4fd17ad1db41e00ed383e85cf",
+            "line": 14,
+            "source_sha256": "a86acbf05e1a6117638a02ba6d58c2f540350678553a1b2db47770f893de370d",
             "call": "get_option",
             "expression": "$field",
             "state": "requires_call_site_review"
@@ -9652,7 +9652,7 @@
         },
         {
             "path": "application/controllers/admin/Company_onboarding.php",
-            "source_sha256": "cfe3d59906d236d3e7a0b42d63b65b0c192ff372bb359656c88a6a412edc184c",
+            "source_sha256": "4f2753592fe4fd39e818172323c51a2159cba4f57d09dd084062eb3abb5b7f4f",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -11406,7 +11406,7 @@
         },
         {
             "path": "application/controllers/admin/Issuers.php",
-            "source_sha256": "a2d16fec82b5d191b5ba9292c3f3b708cab2a2768fbfef88b1f50e45153347a8",
+            "source_sha256": "6693b092d46a0896122902cba2f93c497e4fd64aa222767f068ed214158cc345",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -11423,12 +11423,12 @@
                 },
                 {
                     "method": "save",
-                    "line": 74,
+                    "line": 76,
                     "visibility": "public"
                 },
                 {
                     "method": "lookup",
-                    "line": 110,
+                    "line": 113,
                     "visibility": "public"
                 }
             ],
@@ -30072,7 +30072,7 @@
         {
             "name": "staff",
             "state": "not_verified",
-            "reference_count": 374
+            "reference_count": 376
         },
         {
             "name": "staff_contract",
