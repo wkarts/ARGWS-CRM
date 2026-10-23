@@ -72,3 +72,12 @@ test('mobile scrim dismissal consumes only the open mobile gesture and restores 
  assert.match(css,/#wrapper \{[^}]*min-height: 100%/);
  assert.match(css,/#wrapper::after \{[^}]*top: -42px;[^}]*height: calc\(100% \+ 42px\)/);
 });
+
+test('native comparison fixture retains real document direction, encoding and viewport contract',()=>{
+ const fixture=fs.readFileSync(path.join(__dirname,'company_shell_fidelity.browser.cjs'),'utf8');
+ const nativeHead=fs.readFileSync(path.join(__dirname,'../application/views/admin/includes/head.php'),'utf8');
+ assert.match(nativeHead,/dir=/);
+ assert.match(nativeHead,/charset=utf-8/i);
+ assert.match(fixture,/<html lang="pt-BR" dir="ltr"><head><meta charset="utf-8"><meta name="viewport"/);
+ assert.match(fixture,/assertHeaderContents\(page\)/);
+});

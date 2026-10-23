@@ -7,8 +7,9 @@ const {html}=require('./support/AsaasSettingsFixture.cjs');
  const output=path.resolve(process.env.ASAAS_UI_ARTIFACTS||'artifacts/asaas-settings');fs.mkdirSync(output,{recursive:true});
  try{
   const context=await browser.newContext({viewport:{width:1280,height:900}});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await context.route('**/*',route=>route.request().isNavigationRequest()?route.fulfill({contentType:'text/html',body:html('prepareFixture("1","0",true);')}):route.abort());
-  await page.goto('https://crm.example.test/admin/settings?group=payment_gateways');
+  const fixtureUrl='https://crm.example.test/admin/settings?group=payment_gateways';
+  await context.route('**/*',route=>route.request().isNavigationRequest() && route.request().url()===fixtureUrl?route.fulfill({contentType:'text/html',body:html('prepareFixture("1","0",true);')}):route.abort());
+  await page.goto(fixtureUrl);
   await page.evaluate(()=>{
    window.panelRequests=[];
    window.fetch=async(url,options)=>{
@@ -23,12 +24,12 @@ const {html}=require('./support/AsaasSettingsFixture.cjs');
   assert.equal(await page.locator('#settings-form form').count(),0,'no nested forms');
   assert.equal(await page.locator('#synthetic-recover').evaluate(el=>el.form.id.startsWith('asaas-operation-form-')&&!el.form.closest('#settings-form')),true,'explicit separate form owner');
   assert.deepEqual(await page.locator('#settings-form').evaluate(f=>Array.from(new FormData(f).entries())),settingsBefore,'operation data never leaks into settings POST');
-  await page.locator('#synthetic-recover').click();await page.waitForFunction(()=>panelRequests.length===2);
+  await page.locator('#synthetic-recover').click();await page.waitForFunction(()=>panelRequests.length===2&&!document.getElementById('asaas-settings-panel-operations').hasAttribute('aria-busy'));
   const request=await page.evaluate(()=>panelRequests[1]);assert.equal(request.method,'POST');assert.deepEqual(request.values,[['csrf_test','synthetic-csrf'],['webhook_admin_csrf','synthetic-admin-csrf'],['integration_id','7']]);
   await page.locator('.js-reveal-webhook-token').click();assert.equal(await page.locator('#generated-webhook-token').getAttribute('type'),'text');
   await page.locator('#asaas-settings-tab-general').click();assert.equal(await page.locator('#generated-webhook-token').getAttribute('type'),'password','leaving operations masks token');
   await page.locator('#asaas-settings-tab-operations').click();assert.equal(await page.evaluate(()=>panelRequests.length),2,'reopening does not repeat POST or GET');
-  await page.locator('#synthetic-origins').click();await page.waitForFunction(()=>panelRequests.length===3);assert.equal(await page.evaluate(()=>panelRequests[2].method),'GET');
+  await page.locator('#synthetic-origins').click();await page.waitForFunction(()=>panelRequests.length===3&&!document.getElementById('asaas-settings-panel-operations').hasAttribute('aria-busy'));assert.equal(await page.evaluate(()=>panelRequests[2].method),'GET');
   assert.equal(await page.locator('body > form[id^=asaas-operation-form-]').count(),1,'old form owners removed');
   // A blocked/missing session must never inject a login page into the panel.
   await page.evaluate(()=>{window.fetch=async()=>new Response('<h1 id="injected-login">Login</h1>',{status:403});});

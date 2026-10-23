@@ -32,3 +32,13 @@ for(const scenario of ['pass','assertion-failed','missing-marker','page-error'])
   } finally {fs.rmSync(dir,{recursive:true,force:true});}
  });
 }
+test('interactive fixtures use an intercepted same-origin document, not about:blank',()=>{
+ for(const name of ['asaas_settings_tabs.browser.cjs','asaas_operations_panel.browser.cjs']) {
+  const source=fs.readFileSync(path.join(__dirname,name),'utf8');
+  assert.match(source,/fixtureUrl='https:\/\/crm\.example\.test\/admin\/settings\?group=payment_gateways'/,name);
+  assert.match(source,/route\.request\(\)\.url\(\)===fixtureUrl/,name+' only exact fixture navigation admitted');
+  assert.match(source,/page\.goto\(fixtureUrl\)/,name);
+  assert.doesNotMatch(source,/page\.setContent\(/,name+' must not bypass document origin');
+  assert.match(source,/route\.abort\(\)/,name+' all other network blocked');
+ }
+});

@@ -11,7 +11,18 @@ const render = (...flags) => execFileSync(process.env.PHP_BIN || 'php', [path.jo
 const company = { google: render('--company-google'), microsoft: render('--company-microsoft') };
 const head = fs.readFileSync(path.join(root, 'application/views/admin/companies/layout_head.php'), 'utf8');
 const assets = [...head.matchAll(/'(assets\/[^']+\.css)'/g)].map(m => m[1]).filter(a => !a.includes('company-shell') && !a.includes('company-workspace'));
-const native = '<!doctype html><html><head>' + assets.map(a => `<link rel="stylesheet" href="/${a}">`).join('') + '<style>.btn-primary{background-color:#32c977;border-color:#32c977}</style></head><body class="admin">' + render('--full-shell') + '<div id="wrapper"><main class="content"><div class="panel_s"><div class="panel-body"><button class="btn btn-primary" id="native-save">Salvar Configurações</button></div></div></main></div></body></html>';
+const native = '<!doctype html><html lang="pt-BR" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + assets.map(a => `<link rel="stylesheet" href="/${a}">`).join('') + '<style>.btn-primary{background-color:#32c977;border-color:#32c977}</style></head><body class="admin">' + render('--full-shell') + '<div id="wrapper"><main class="content"><div class="panel_s"><div class="panel-body"><button class="btn btn-primary" id="native-save">Salvar Configurações</button></div></div></main></div></body></html>';
+const assertHeaderContents = async page => {
+ const result=await page.evaluate(() => {
+  const header=document.querySelector('#header').getBoundingClientRect();
+  const selectors='#header > .hide-menu, #header > .company-menu-toggle, #logo img, .company-installation-logo img, #search_input, [data-company-menu-search], #header .navbar-right > li > a, .company-header-actions > a';
+  const visible=[...document.querySelectorAll(selectors)].filter(el=>el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+  return {charset:document.characterSet,checked:visible.length,outside:visible.filter(el=>{const r=el.getBoundingClientRect();return r.top<header.top-1 || r.bottom>header.bottom+1 || r.left<header.left-1 || r.right>header.right+1;}).map(el=>el.id || el.className)};
+ });
+ assert.equal(result.charset,'UTF-8','native and isolated envelopes decode Portuguese correctly');
+ assert.ok(result.checked>0,'header containment checks visible controls');
+ assert.deepEqual(result.outside,[],'visible logo, search and header actions stay inside the header');
+};
 const geometry = page => page.evaluate(() => {
  const read = selector => {const el=document.querySelector(selector),s=getComputedStyle(el),r=el.getBoundingClientRect();return {position:s.position,top:s.top,left:r.left,width:s.width,height:r.height,background:s.backgroundColor,overflowX:s.overflowX,overflowY:s.overflowY,border:s.borderRightColor};};
  const h=read('#header'),m=read('#menu'),w=read('#wrapper');
@@ -51,12 +62,14 @@ const snapshot = page => page.locator('.company-settings-card form').evaluateAll
   await page.setViewportSize({width:1440,height:1000});await page.goto('http://fixture.test/fixture');await page.evaluate(()=>document.fonts.ready);
   const nativeStyle=await page.locator('#native-save').evaluate(el=>{const s=getComputedStyle(el);return {background:s.backgroundColor,border:s.borderColor,font:s.fontFamily,size:s.fontSize,padding:s.padding,borderRadius:s.borderRadius};});
   const nativeLogo=await page.locator('#logo img').boundingBox();assert.ok(nativeLogo&&nativeLogo.height>0);
+  await assertHeaderContents(page);
   const nativeDesktop=await geometry(page);assert.equal(nativeDesktop.header.position,'relative');assert.equal(nativeDesktop.menu.position,'absolute');
   await assertDocumentScroll(page);
   await page.screenshot({path:path.join(output,'native-desktop.png'),fullPage:true});
   await page.setViewportSize({width:390,height:900});
   // Native mobile state class is normally applied by app.js; set only presentation state, never bootstrap that global runtime.
   await page.evaluate(()=>document.body.classList.add('page-small'));
+  await assertHeaderContents(page);
   const nativeMobile=await geometry(page);
   await page.screenshot({path:path.join(output,'native-mobile.png'),fullPage:true});
   await page.evaluate(()=>document.body.classList.add('show-sidebar'));
@@ -76,6 +89,7 @@ const snapshot = page => page.locator('.company-settings-card form').evaluateAll
    const button=page.locator('.company-settings-card button').filter({hasText:'Salvar credenciais próprias'}).first();
    const style=await button.evaluate(el=>{const s=getComputedStyle(el);return {background:s.backgroundColor,border:s.borderColor,font:s.fontFamily,size:s.fontSize,padding:s.padding,borderRadius:s.borderRadius};});
    assert.deepEqual(style,nativeStyle,'native save control computed styles match');
+   await assertHeaderContents(page);
    assert.deepEqual(await geometry(page),nativeDesktop,'desktop header/sidebar placement, colors, scroll and content geometry match native');
    await assertDocumentScroll(page);
    assert.equal(await page.locator('.company-settings-card button.btn-danger').filter({hasText:'Revogar'}).count(),1,'destructive operation not promoted to primary');
@@ -84,6 +98,7 @@ const snapshot = page => page.locator('.company-settings-card form').evaluateAll
    await page.locator('[data-company-menu-search]').fill('Clientes');assert.ok(await page.locator('#side-menu > li:not([hidden])').count()>0);await page.locator('[data-company-menu-search]').fill('');
    await page.screenshot({path:path.join(output,`${name}-desktop.png`),fullPage:true});
    await page.setViewportSize({width:390,height:900});await page.reload();
+   await assertHeaderContents(page);
    assert.deepEqual(await geometry(page),nativeMobile,'mobile closed header/sidebar metrics and content geometry match native');
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'mobile has no horizontal overflow');
    await page.locator('.company-menu-toggle').click();

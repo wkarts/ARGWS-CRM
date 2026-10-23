@@ -51,3 +51,15 @@ its dynamic content-height reconciliation is not claimed by this CSS fixture.
 The browser fixture compares native/isolated scrim computed styles and wrapper
 minimum height, then dismisses the scrim and checks form/CSRF invariants. Scrim
 height follows each page's own content rather than comparing unlike form heights.
+
+### Baseline envelope correction
+
+The first CI screenshots exposed an invalid native fixture envelope: it omitted
+`dir="ltr"`, so the native toggle's directional Tailwind float did not apply and
+the following navigation dropped below the header. It also omitted UTF-8 metadata,
+producing mojibake. The comparison now mirrors the real native `head.php` document
+direction, charset and viewport, without executing that head or its global hooks.
+Assertions require visible logo/search/actions to remain inside the header on
+both desktop and mobile, and verify UTF-8 decoding. Earlier malformed baseline
+captures must not be used as evidence of visual equivalence; regenerated captures
+still require inspection. This correction changes test fixtures only.
