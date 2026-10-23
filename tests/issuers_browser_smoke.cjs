@@ -133,8 +133,12 @@ async function captureRealScreens(page, routes) {
       await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('#submit_btn').click()]);
       assert(!page.url().includes('/essential_modules'), 'same native POST finishes company core');
       assert.notEqual(sql('SELECT version FROM tblmigrations LIMIT 1'), before, 'real old schema migrated');
-      const expectedUpgradePath = existingMaster !== null && existingMaster !== 'NULL' ? '/admin' : '/admin/company_context';
-      assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), expectedUpgradePath, 'proven primary context returns directly to CRM; unresolved legacy still uses isolated selection');
+      // Legacy access migration preserves the actor's principal membership/default.
+      // That authorizes its dashboard, NOT installation-master/company-creation rights.
+      assert.equal(sql("SELECT COUNT(*) FROM tblstaff s JOIN tblissuers_staff_defaults d ON d.staff_id=s.staffid JOIN tblissuers_installation_identity i ON i.id=1 AND i.primary_issuer_id=d.issuer_id JOIN tblissuers_registry r ON r.id=d.issuer_id AND r.active=1 JOIN tblissuers_staff m ON m.issuer_id=d.issuer_id AND m.staff_id=s.staffid AND m.can_view=1 WHERE s.email='admin-ci@example.invalid' AND s.active=1"), '1', 'legacy upgrade preserves a valid principal default and membership for this actor');
+      const upgradedPrimary = sql('SELECT primary_issuer_id FROM tblissuers_installation_identity WHERE id=1');
+      assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), '/admin', 'persisted authorized principal context returns directly to CRM even without master designation');
+      assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), upgradedPrimary, 'dashboard actually retains the authorized principal context');
       await page.getByText('O CRM foi atualizado com sucesso.', { exact: true }).waitFor({ state: 'visible' });
       await page.goto(url + '/admin');
       await shell(page);
