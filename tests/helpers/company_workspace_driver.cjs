@@ -64,4 +64,10 @@ function installCompanyWorkspaceDriver(page) {
 async function workspacePage(context, options) {
     return installCompanyWorkspaceDriver(await context.newPage(options));
 }
-module.exports = { workspacePage, installCompanyWorkspaceDriver, revealWorkspaceControl };
+// Open exactly one scoped disclosure through its native summary, never by DOM mutation.
+async function openDisclosure(details) {
+    if (await details.count() !== 1) throw new Error('Disclosure must resolve to exactly one scoped details element');
+    if (await details.getAttribute('open') === null) await details.locator(':scope > summary').click();
+    if (await details.getAttribute('open') === null) throw new Error('Native summary did not open the disclosure');
+}
+module.exports = { workspacePage, installCompanyWorkspaceDriver, revealWorkspaceControl, openDisclosure };

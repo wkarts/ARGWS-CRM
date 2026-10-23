@@ -35,7 +35,9 @@ test('workspace browser suites do not omit admin page aliases and keep public/ne
     // operational workspace panels. Portal contact page must not inherit admin navigation.
     const rawExceptions = new Map([
         ['companies_onboarding_browser.cjs', ['mobilePage:context', 'employeePage:regular']],
-        ['companies/portal_operations_browser.cjs', ['page:publicCtx']]
+        ['companies/portal_operations_browser.cjs', ['page:publicCtx']],
+        // This suite imports only openDisclosure; selected task billing has one visible record panel.
+        ['companies/task_timesheets_http_browser.cjs', ['p:context']]
     ]);
     const audited = [];
     for (const file of browserFiles(__dirname)) {
@@ -92,4 +94,21 @@ test('nested role-filter audit stays explicit, including dotted page aliases', (
     const row=selected.indexOf("const row=page.locator('li').filter({has:page.getByRole");
     assert.ok(tab>=0&&visible>tab&&row>visible,'open actual panel and prove PDF visible before nested role lookup');
     assert.doesNotMatch(selected,/includeHidden:\s*true|force:\s*true/);
+});
+test('scoped native disclosure opens once and rejects ambiguous sidebar matches', async () => {
+    const {openDisclosure}=require('./helpers/company_workspace_driver.cjs');
+    let open=null, clicks=0;
+    const details={count:async()=>1,getAttribute:async name=>{assert.equal(name,'open');return open;},locator:selector=>{assert.equal(selector,':scope > summary');return{click:async()=>{clicks++;open='';}};}};
+    await openDisclosure(details); await openDisclosure(details); assert.equal(clicks,1,'already-open disclosure is not toggled closed');
+    for(const count of [0,15]) await assert.rejects(()=>openDisclosure({count:async()=>count}),/exactly one scoped/);
+    await assert.rejects(()=>openDisclosure({count:async()=>1,getAttribute:async()=>null,locator:()=>({click:async()=>{}})}),/did not open/);
+});
+test('manual task billing disclosures and taxes are scoped away from sidebar and project-rate forms', () => {
+    for(const file of ['task_billing_http_browser.cjs','task_timesheets_http_browser.cjs']) {
+        const source=fs.readFileSync(__dirname+'/companies/'+file,'utf8');
+        assert.match(source,/const manualForm=p\.locator\('form'\)\.filter\(\{has:p\.locator\('#task-billing-prepare'\)\}\)/);
+        assert.match(source,/const details=manualForm\.locator\('details'\);await openDisclosure\(details\)/);
+        assert.doesNotMatch(source,/p\.locator\('details'\)|p\.locator\('\[name="billing\[taxes\]/);
+        assert.match(source,/manualForm\.locator\('\[name="billing\[taxes\]/);
+    }
 });
