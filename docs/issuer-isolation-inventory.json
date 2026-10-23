@@ -4869,7 +4869,7 @@
       "evidence": ""
     },
     "application/views/admin/companies/layout_head.php": {
-      "sha256": "9a0c63b5bd853bfe138cb7173a84a94a10c6a72b5121027c2ba674cafbe73590",
+      "sha256": "ac46fcd015a4a8fb64753f36403f89f483869ce0c42ef9921e76829970dec23e",
       "categories": [
         "invoice_table"
       ],
@@ -4879,7 +4879,7 @@
         28
       ],
       "state": "unreviewed",
-      "evidence": "PR49 presentation review: native static assets and ACL-filtered navigation replace the parallel shell; invoice signals are menu entries. Staff identity projection is limited to the authenticated actor. No legacy financial hooks were enabled. This is not a complete authorization/runtime review."
+      "evidence": "PR49 presentation review: native static assets and ACL-filtered navigation replace the parallel shell; invoice signals are menu entries. Staff identity projection is limited to the authenticated actor. No legacy financial hooks were enabled. This is not a complete authorization/runtime review. Active navigation now resolves the router through the real MX_Loader getter; no authorization or data hydration changes."
     },
     "application/views/admin/companies/onboarding.php": {
       "sha256": "59a2a64333f843b549e26e7f521befff5a9b1f0d113506f3965c1ac4734a2bd4",

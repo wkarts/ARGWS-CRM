@@ -39,7 +39,9 @@ if ($companyLayoutCan('pusher') && $companyLayoutCan('tasks') && $companyLayoutC
 if ($companyLayoutHasSettings && CompanySettingsRuntime::can('view') && $companyLayoutCan('connect-api-connector','send') && $companyLayoutCan('tickets') && $companyLayoutCan('tickets','edit') && $companyLayoutCan('customers')) {
     $companyLayoutMenus['Suporte'][1][] = [null,'company_ticket_connect','Avisos de chamados'];
 }
-$companyLayoutRoute = isset($this->router) ? strtolower((string) $this->router->fetch_class()) : '';
+// MX_Loader exposes controller services through __get, not __isset.
+$companyLayoutRouter = $this->router;
+$companyLayoutRoute = is_object($companyLayoutRouter) && method_exists($companyLayoutRouter, 'fetch_class') ? strtolower((string) $companyLayoutRouter->fetch_class()) : '';
 ?>
 <!doctype html><html lang="pt-BR"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">

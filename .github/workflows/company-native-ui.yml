@@ -17,6 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Validar rota ativa com o loader nativo real
+        run: php tests/support/CompanyShellRouteFixture.php
       - name: Validar inventário operacional e mostrar diferenças
         run: |
           php scripts/company-surface-inventory.php --output /tmp/company-operational-surfaces.json

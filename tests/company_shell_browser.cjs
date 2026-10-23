@@ -34,6 +34,7 @@ assert.deepEqual(assets, ['assets/css/reset.min.css', 'assets/plugins/inter/inte
 const scripts = [...tail.matchAll(/'(assets\/[^']+\.js)'/g)].map(m => m[1]);
 if (process.env.STATIC_ONLY) { console.log('PASS: selector semantics, preserved POST/CSRF markup, isolated assets and no legacy hooks'); process.exit(0); }
 const {execFileSync} = require('node:child_process');
+execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'support/CompanyShellRouteFixture.php')], {stdio:'inherit'});
 const renderSelector = selected => execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'support/NativeHeaderFixture.php'), '--selector-only', ...(selected === '2' ? ['--selected-two'] : [])], {encoding:'utf8'});
 const markup = {'1': renderSelector('1'), '2': renderSelector('2')};
 let currentHtml = '', selected = '1';
