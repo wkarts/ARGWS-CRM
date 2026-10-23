@@ -112,3 +112,21 @@ test('manual task billing disclosures and taxes are scoped away from sidebar and
         assert.match(source,/manualForm\.locator\('\[name="billing\[taxes\]/);
     }
 });
+test('sales review navigation finishes native DOM initialization before editor actions', async () => {
+    const source=fs.readFileSync(__dirname+'/companies/sales_mutations_browser.cjs','utf8');
+    const helper=source.slice(source.indexOf('async function openReview('),source.indexOf('\nfunction mutationSnapshot'));
+    assert.ok(helper.startsWith('async function openReview('));
+    const openReview=require('node:vm').runInNewContext('('+helper+')',{assert,URL});
+    for(const mode of ['edit','copy']) {
+        let listening=false, loaded=false, resolveNavigation;
+        const page={
+            waitForNavigation:options=>{assert.equal(options.waitUntil,'domcontentloaded');listening=true;return new Promise(resolve=>{resolveNavigation=resolve;});},
+            url:()=> 'http://127.0.0.1:1234/admin/company_sales?document=17&review='+mode,
+            locator:selector=>selector==='#sales-'+mode+'-link'?{click:async()=>{assert.ok(listening);setImmediate(()=>{loaded=true;resolveNavigation({status:()=>200});});}}:{count:async()=>{assert.equal(selector,'#sales-mutation-editor');assert.ok(loaded,'editor lookup must follow native DOMContentLoaded');return 1;}}
+        };
+        await openReview(page,mode);assert.ok(loaded);
+    }
+    assert.equal((source.match(/await openReview\(page,'edit'\)/g)||[]).length,2);
+    assert.equal((source.match(/await openReview\(page,'copy'\)/g)||[]).length,1);
+    assert.doesNotMatch(source,/locator\('#sales-(?:edit|copy)-link'\)\.click\(/);
+});
