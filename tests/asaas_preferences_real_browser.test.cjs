@@ -174,3 +174,48 @@ test('blocked request evidence is bounded, deduplicated and cannot disclose arbi
   assert.equal(blocked.evidence.length, 12);
   assert.throws(() => blocked.record('allow', url('/admin'), 'GET', url('/admin'), origin), /invalid request decision/);
 });
+
+test('direct company choice is preauthorized once before its native POST and cleared after navigation', async () => {
+  const {withNativeSessionPermit,consumeSessionDecision}=require('./companies/asaas_preferences_real_browser.cjs');
+  const permit={path:null}, events=[];
+  const form={count:async()=>1,getAttribute:async name=>name==='action'?url('/admin/company_context/select'):'post'};
+  assert.equal(consumeSessionDecision(url('/admin/company_context/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation');
+  const result=await withNativeSessionPermit(form,fixture.ISSUERS_BROWSER_URL,permit,async()=>{
+    events.push('genuine choice click');
+    assert.equal(permit.path,'/admin/company_context/select','permit precedes submitter click');
+    assert.equal(consumeSessionDecision(url('/admin/company_asaas'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation');
+    assert.equal(consumeSessionDecision('https://outside.invalid/admin/company_context/select','POST',fixture.ISSUERS_BROWSER_URL,permit),'external');
+    assert.equal(consumeSessionDecision(url('/admin/company_context/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'allow');
+    assert.equal(consumeSessionDecision(url('/admin/company_context/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation','second POST is refused before navigation completes');
+    events.push('GET navigation'); return 'response';
+  });
+  assert.equal(result,'response');assert.equal(permit.path,null);assert.deepEqual(events,['genuine choice click','GET navigation']);
+  const source=fs.readFileSync(__dirname+'/companies/asaas_preferences_real_browser.cjs','utf8');
+  assert.match(source,/submitSession\(page\.locator\('\.company-selector-form'\), \(\) => selectCompanyOption\(page, owner\.issuer\)\)/);
+  assert.doesNotMatch(source,/await selectCompanyOption\(page, owner\.issuer\);\s*await submitSession/);
+});
+test('session permit rejects wrong forms and is revoked when actual interaction fails', async () => {
+  const {withNativeSessionPermit}=require('./companies/asaas_preferences_real_browser.cjs');
+  for(const [action,method,count] of [[url('/admin/company_asaas'),'post',1],['https://outside.invalid/admin/company_context/select','post',1],[url('/admin/company_context/select?override=1'),'post',1],[url('/admin/company_context/select'),'get',1],[url('/admin/company_context/select'),'post',2]]) {
+    const permit={path:null},form={count:async()=>count,getAttribute:async name=>name==='action'?action:method};
+    await assert.rejects(()=>withNativeSessionPermit(form,fixture.ISSUERS_BROWSER_URL,permit,async()=>{throw Error('must not click');}));
+    assert.equal(permit.path,null);
+  }
+  const permit={path:null},form={count:async()=>1,getAttribute:async name=>name==='action'?url('/admin/company_context/select'):'post'};
+  await assert.rejects(()=>withNativeSessionPermit(form,fixture.ISSUERS_BROWSER_URL,permit,async()=>{throw Error('native choice failed');}),/native choice failed/);
+  assert.equal(permit.path,null);
+});
+test('all executable browser suites use immediate choice without a second helper submission', () => {
+  const path=require('node:path');
+  const files=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?files(path.join(dir,entry.name)):[path.join(dir,entry.name)]);
+  const formSubmissions=[];
+  for(const file of files(__dirname).filter(file=>file.endsWith('.cjs')&&!file.endsWith('.test.cjs'))) {
+    const source=fs.readFileSync(file,'utf8');
+    for(const match of source.matchAll(/await\s+\w+\([^;\n]*\.locator\(['"]\.company-selector-form['"]\)[^;\n]*\);/g)) {
+      formSubmissions.push([path.relative(__dirname,file).split(path.sep).join('/'),match[0]]);
+    }
+  }
+  assert.deepEqual(formSubmissions,[['companies/asaas_preferences_real_browser.cjs',"await submitSession(page.locator('.company-selector-form'), () => selectCompanyOption(page, owner.issuer));"]], 'the only form helper is the permit wrapper around the genuine choice, never a second confirmation');
+  const purchases=fs.readFileSync(__dirname+'/companies/purchases_browser.cjs','utf8');
+  assert.match(purchases,/await selectCompanyOption\(p, String\(issuer\)\);await p\.waitForLoadState\('networkidle'\)/,'existing post-navigation settling is preserved');
+});

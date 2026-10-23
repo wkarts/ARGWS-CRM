@@ -38,6 +38,23 @@ function requestDecision(requestUrl, method, origin, permittedPost = null) {
   return 'navigation';
 }
 
+// Arm only around a genuine native form interaction; never issue a request here.
+async function withNativeSessionPermit(form, origin, permit, interact) {
+  assert.equal(await form.count(), 1, 'one native session form is required');
+  const target = new URL(await form.getAttribute('action'), origin);
+  assert.ok(target.origin === origin && !target.username && !target.password && !target.search && !target.hash &&
+    ['/admin/authentication', '/admin/authentication/admin', '/admin/company_context/select'].includes(target.pathname), 'only exact native login/context forms may be submitted');
+  assert.equal((await form.getAttribute('method') || '').toLowerCase(), 'post', 'native session form must use POST');
+  assert.equal(permit.path, null, 'session permits cannot overlap');
+  permit.path = target.pathname;
+  try { return await interact(); } finally { permit.path = null; }
+}
+function consumeSessionDecision(requestUrl, method, origin, permit) {
+  const decision = requestDecision(requestUrl, method, origin, permit.path);
+  if (decision === 'allow' && method === 'POST') permit.path = null;
+  return decision;
+}
+
 function safePath(value, origin) {
   try {
     const url = new URL(value, origin);
@@ -153,10 +170,11 @@ async function run(env = process.env) {
       phase = 'launch isolated browser context';
       const context = await browser.newContext({viewport: {width, height: 900}, locale: 'pt-BR', serviceWorkers: 'block'});
       context.setDefaultTimeout(10000);
-      let permittedPost = null, observePageErrors = false;
+      const sessionPermit = {path: null};
+      let observePageErrors = false;
       await context.route('**/*', route => {
         const request = route.request();
-        const decision = requestDecision(request.url(), request.method(), config.url, permittedPost);
+        const decision = consumeSessionDecision(request.url(), request.method(), config.url, sessionPermit);
         if (decision !== 'allow') {
           let documentUrl = ''; try { documentUrl = request.frame().url(); } catch {}
           blocked.record(decision, request.url(), request.method(), documentUrl, config.url);
@@ -168,16 +186,14 @@ async function run(env = process.env) {
         const page = await context.newPage();
         async function navigate(target) { const response = await page.goto(target); lastNavigation = await responseFacts(response, config.url); return response; }
         page.on('pageerror', () => { if (observePageErrors) counts.pageerrors++; });
-        async function submitSession(form) {
-          const target = new URL(await form.getAttribute('action'), config.url);
-          check(target.origin === config.url && ['/admin/authentication', '/admin/authentication/admin', '/admin/company_context/select'].includes(target.pathname), 'only native login/context forms may be submitted');
-          permittedPost = target.pathname;
-          try {
+        async function submitSession(form, interaction = null) {
+          const response = await withNativeSessionPermit(form, config.url, sessionPermit, async () => {
+            if (interaction) return interaction();
             const [response] = await Promise.all([page.waitForNavigation({waitUntil: 'domcontentloaded'}), form.locator('button[type=submit]').click()]);
-            lastNavigation = await responseFacts(response, config.url);
-            check(response && response.status() === 200 && response.request().method() === 'GET', 'native session form reaches a successful GET response');
-          }
-          finally { permittedPost = null; }
+            return response;
+          });
+          lastNavigation = await responseFacts(response, config.url);
+          check(response && response.status() === 200 && response.request().method() === 'GET', 'native session form reaches a successful GET response');
         }
         phase = 'authenticate synthetic administrator';
         check((await navigate(config.url + '/admin/authentication')).status() === 200, 'real login renders');
@@ -190,8 +206,7 @@ async function run(env = process.env) {
           phase = 'select real company context: ' + owner.letter;
           observePageErrors = false;
           await navigate(config.url + '/admin/company_context');
-          await selectCompanyOption(page, owner.issuer);
-          await submitSession(page.locator('.company-selector-form'));
+          await submitSession(page.locator('.company-selector-form'), () => selectCompanyOption(page, owner.issuer));
           check(await page.locator('.company-selector').getAttribute('data-company-current') === owner.issuer, 'native context selection is confirmed before Asaas navigation');
           observePageErrors = true;
           const response = await navigate(config.url + '/admin/company_asaas');
@@ -306,5 +321,5 @@ async function run(env = process.env) {
   } finally { if (browser) await browser.close(); }
 }
 
-module.exports = {environment, requestDecision, readOnlyQuery, safePath, requestScope, bodyCategory, responseFacts, blockedRequests, run};
+module.exports = {environment, requestDecision, withNativeSessionPermit, consumeSessionDecision, readOnlyQuery, safePath, requestScope, bodyCategory, responseFacts, blockedRequests, run};
 if (require.main === module) run().catch(() => { process.exitCode = 1; });
