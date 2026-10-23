@@ -42,3 +42,12 @@ test('interactive fixtures use an intercepted same-origin document, not about:bl
   assert.match(source,/route\.abort\(\)/,name+' all other network blocked');
  }
 });
+test('synthetic labels come from native display definitions, not storage keys',()=>{
+ const fixture=require('./support/AsaasSettingsFixture.cjs');
+ assert.equal(fixture.labels.ultima_atualizacao_servicos_municipais,'Última atualização de serviços municipais');
+ assert.equal(fixture.labels.api_key_sandbox,'Chave da API — Homologação');
+ assert.ok(!fixture.labels.description.startsWith('settings_'),'native language key resolved');
+ const source=fs.readFileSync(path.join(__dirname,'support/AsaasSettingsFixture.cjs'),'utf8');
+ assert.match(source,/displayLabels\[key\.replace\(/,'profile prefix stripped only for display');
+ assert.match(source,/name="settings\[paymentmethod_asaas_'\+key/,'persisted field names unchanged');
+});

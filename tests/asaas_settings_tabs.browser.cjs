@@ -22,6 +22,14 @@ const {html} = require('./support/AsaasSettingsFixture.cjs');
    await page.goto(fixtureUrl);await page.locator('#gateway-tab').click();
    assert.deepEqual(await page.locator('.nav-tabs-horizontal > li > a').allTextContents(),['Geral','Autenticação','Webhook e operações']);checks++;
    const initial=await page.locator('#settings-form').evaluate(f=>Array.from(new FormData(f).entries()));
+   async function assertNoOverflow(stage) {
+    const geometry=await page.evaluate(()=>({viewport:innerWidth,width:document.documentElement.scrollWidth,
+     offenders:Array.from(document.querySelectorAll('body *')).filter(el=>{
+      const box=el.getBoundingClientRect();return box.width>0&&(box.right>innerWidth+1||box.left < -1);
+     }).slice(0,12).map(el=>({tag:el.tagName,id:el.id,className:el.className,right:el.getBoundingClientRect().right}))}));
+    check(geometry.width<=geometry.viewport+1,'no horizontal overflow '+stage+': '+JSON.stringify(geometry));
+   }
+
    for(const id of ['general','authentication','operations']) {
     await page.locator('#asaas-settings-tab-'+id).click();check(await page.locator('#asaas-settings-panel-'+id).isVisible(),id+' visible');
     if(id==='operations') {
@@ -31,6 +39,7 @@ const {html} = require('./support/AsaasSettingsFixture.cjs');
     }
     check((await page.locator('#settings-form').getAttribute('action')).endsWith('&active_tab=online_payments_asaas_tab'),'native save target preserved');
     await page.screenshot({path:path.join(output,width+'-'+id+'.png'),fullPage:true});
+    await assertNoOverflow(id);
    }
    assert.deepEqual(await page.locator('#settings-form').evaluate(f=>Array.from(new FormData(f).entries())),initial);checks++;
    await page.locator('#asaas-settings-tab-authentication').click();
@@ -51,7 +60,7 @@ const {html} = require('./support/AsaasSettingsFixture.cjs');
    await hidden.fill('synthetic-label');await selector.selectOption('');await page.locator('#other-tab').click();await page.locator('button[type=submit]').click();
    check(await selector.isVisible(),'invalid selector restores gateway and auth');check(await selector.evaluate(el=>el===document.activeElement),'invalid selector focused');
    await selector.selectOption('1');await page.evaluate(()=>module.exports.initialize(document));check(await page.locator('.nav-tabs-horizontal > li').count()===3,'idempotent init');
-   check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no horizontal overflow');
+   await assertNoOverflow('after validation and profile navigation');
    await context.close();
   }
   assert.deepEqual(errors,[]);console.log('Asaas settings browser: '+checks+' checks passed; '+output);
