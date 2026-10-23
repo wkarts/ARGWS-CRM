@@ -1,4 +1,6 @@
 'use strict';
+const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
+
 const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
 const assert = require('node:assert/strict');
@@ -36,7 +38,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 1280, height: 960 } });
   await context.route('**/*', route => new URL(route.request().url()).origin === url ? route.continue() : route.abort());
-  const page = await context.newPage();
+  const page = await workspacePage(context);
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   try {
     await login(page, 'admin-ci@example.invalid', process.env.ISSUERS_BROWSER_PASSWORD);

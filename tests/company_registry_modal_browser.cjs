@@ -34,6 +34,7 @@ $view=new class {
 echo $view->render((int)$argv[2]);`;
 const renderWizard = step => execFileSync(process.env.PHP_BINARY || 'php', ['-r',renderCode,root,String(step)], {encoding:'utf8'});
 const wizardHtml = renderWizard(1), completedHtml = renderWizard(6);
+assert.match(wizardHtml, /data-wizard-progress>Etapa 1 de 6 /, 'progress counts all six stages shown in navigation');
 const nativeAssets = ['assets/css/reset.min.css','assets/plugins/inter/inter.css','assets/plugins/bootstrap/css/bootstrap.min.css','assets/builds/tailwind.css','assets/css/style.min.css','assets/css/company-registry.css'];
 for (const rendered of [wizardHtml, completedHtml]) {
  const assets = Array.from(rendered.matchAll(/<link rel="stylesheet" href="([^"]+)"/g), match=>match[1]);
@@ -117,6 +118,7 @@ const server=http.createServer((req,res)=>{
   const wizardSkin = await frame.locator('button[type="submit"]').evaluate(button=>({font:getComputedStyle(document.body).fontFamily,color:getComputedStyle(document.body).color,background:getComputedStyle(button).backgroundColor,border:getComputedStyle(button).borderColor,radius:getComputedStyle(button).borderRadius}));
   assert.deepEqual(wizardSkin,nativeSkin,'iframe uses the actual native typography, foreground and primary button skin');
   assert.equal(await frame.locator('.company-onboarding-steps li').count(),6,'all six steps remain present');
+  assert.match(await frame.locator('[data-wizard-progress]').innerText(), /^Etapa 1 de 6 /, 'visible progress agrees with navigation');
   const compact = await frame.evaluate(() => {
    const steps=document.querySelector('.company-onboarding-steps'), sections=document.querySelector('.company-identity-sections');
    const row=element=>Array.from(element.children).every(item=>Math.abs(item.getBoundingClientRect().top-element.firstElementChild.getBoundingClientRect().top)<1);

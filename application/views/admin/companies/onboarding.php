@@ -12,7 +12,7 @@ $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',
 </head><body class="company-onboarding-modal-body">
 <link rel="stylesheet" href="<?= $esc(base_url('assets/css/company-identity.css')); ?>">
 <section class="company-settings-card" aria-labelledby="wizard-title">
-<?php if($step>0&&$step<6){?><p class="text-muted">Etapa <?= $step; ?> de 5 · O rascunho é salvo ao continuar.</p><?php } ?>
+<?php if($step>0&&$step<6){?><p class="text-muted" data-wizard-progress>Etapa <?= $step; ?> de <?= count($labels); ?> · O rascunho é salvo ao continuar.</p><?php } ?>
 <h1 id="wizard-title" tabindex="-1">Nova empresa<?php if($step){ ?> — <?= $esc($labels[$step]); ?><?php } ?></h1>
 <?php if($error){?><p class="alert alert-danger" role="alert"><?= $esc($error); ?></p><?php } ?>
 <nav aria-label="Etapas do cadastro"><ol class="company-onboarding-steps" tabindex="0">
