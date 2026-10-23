@@ -194,7 +194,7 @@ essentialCheck(CompanySettingsRuntime::get('smtp_host') === 'b.example.invalid',
 essentialCheck($db->query("SELECT value FROM {$p}options WHERE name='smtp_password'")->row()->value === 'synthetic-test-only', 'B settings POST leaves primary SMTP unchanged');
 $view = end($settings->load->views); $settingsHtml = (new ContextViewRenderer())->render($view[0], $view[1]);
 essentialCheck(str_contains($settingsHtml, 'id="header"') && str_contains($settingsHtml, 'id="menu"') && str_contains($settingsHtml, 'id="wrapper"'), 'selected company settings retain CRM header sidebar and wrapper');
-essentialCheck(str_contains($settingsHtml, 'bootstrap.min.css') && str_contains($settingsHtml, 'style.min.css'), 'scoped layout loads native public styles');
+essentialCheck(str_contains($settingsHtml, 'assets/builds/vendor-admin.css') && str_contains($settingsHtml, 'assets/css/style.min.css') && str_contains($settingsHtml, 'assets/css/company-shell.css'), 'scoped layout loads native public bundle and isolated shell styles');
 essentialCheck(!str_contains($settingsHtml, 'synthetic-private') && !str_contains($settingsHtml, 'synthetic-cipher:'), 'composed B view never discloses password/ciphertext');
 $ci = contextEnvironment($f, $s, 'issuers', 'index');$companies=new Issuers();$companies->index(54);
 $companyView=end($companies->load->views);
