@@ -52,3 +52,44 @@ test('workspace browser suites do not omit admin page aliases and keep public/ne
     assert.match(portal, /page\s*=\s*await publicCtx\.newPage\(\)/);
     assert.doesNotMatch(portal, /workspacePage\(publicCtx\)/);
 });
+test('role-filtered hidden rows require explicit visible-tab navigation, not a relaxed helper', async () => {
+    let open = false, tabClicks = 0, actions = 0;
+    const rowAction = {count:async()=>open?1:0,evaluate:async()=>[],click:async()=>{assert.ok(open,'role-filtered row cannot resolve while its panel is hidden');actions++;}};
+    const tab = {count:async()=>1,evaluate:async()=>[],click:async()=>{tabClicks++;open=true;}};
+    const page = await workspacePage({newPage:async()=>({locator:selector=>selector==='tab'?tab:rowAction})});
+    await assert.rejects(()=>page.locator('role-filtered row').click(), /cannot resolve/);
+    assert.equal(tabClicks,0,'driver cannot guess a tab from an empty role locator');
+    await page.locator('tab').click();
+    await page.locator('role-filtered row').click();
+    assert.equal(tabClicks,1); assert.equal(actions,1);
+});
+test('nested role-filter audit stays explicit, including dotted page aliases', () => {
+    const path = require('node:path');
+    const walk = dir => fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(path.join(dir,entry.name)):[path.join(dir,entry.name)]);
+    const found = {}, aliases = {};
+    for (const file of walk(__dirname).filter(file=>/browser.*\.cjs$/.test(file)&&!file.endsWith('.test.cjs'))) {
+        const source=fs.readFileSync(file,'utf8');
+        const count=Array.from(source.matchAll(/filter\(\s*\{\s*has:\s*[\w.]+\.getByRole\(/g)).length;
+        if(count) found[path.relative(__dirname,file).split(path.sep).join('/')]=count;
+        const indirect=Array.from(source.matchAll(/filter\(\s*\{\s*has:\s*([\w.]+)\s*\}/g),match=>match[1]);
+        if(indirect.length) aliases[path.relative(__dirname,file).split(path.sep).join('/')]=indirect;
+    }
+    // Operational attachments/timers belong to the first selected-record panel.
+    // Microsoft/Connect use ordinary settings, without generated workspace panels.
+    // Sales attachments alone need the explicitly opened portal-access panel below.
+    assert.deepEqual(found, {
+        'companies/operation_files_browser.cjs':1,
+        'companies_sales_extras_browser.cjs':1,
+        'settings/resume_439_connect_browser.cjs':1,
+        'settings/resume_439_microsoft_browser.cjs':2,
+        'settings/task_timer_auto_stop_browser.cjs':1
+    }, 'new nested role filters require a visibility audit; constructor coverage is not visibility proof');
+    assert.deepEqual(aliases, {'settings/task_timer_auto_stop_browser.cjs':['button','button','button','button'],'settings/task_timer_browser.cjs':['start']}, 'indirect role locators also require review; both timer aliases are in the selected-record default panel');
+    const sales=fs.readFileSync(__dirname+'/companies_sales_extras_browser.cjs','utf8');
+    const selected=sales.slice(sales.indexOf("await page.goto(url+'/admin/company_sales?kind=estimates&document='+sources[a])"));
+    const tab=selected.indexOf("getByRole('tab',{name:'Acesso no portal por contato',exact:true}).click()");
+    const visible=selected.indexOf("getByRole('link',{name:'sales-browser-a.pdf',exact:true}).isVisible()");
+    const row=selected.indexOf("const row=page.locator('li').filter({has:page.getByRole");
+    assert.ok(tab>=0&&visible>tab&&row>visible,'open actual panel and prove PDF visible before nested role lookup');
+    assert.doesNotMatch(selected,/includeHidden:\s*true|force:\s*true/);
+});
