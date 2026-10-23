@@ -1,9 +1,7 @@
 'use strict';
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const os = require('node:os');
 const path = require('node:path');
-const cp = require('node:child_process');
 const policy = require('../modules/asaas/assets/js/settings-tabs.js');
 assert.equal(policy.environmentValue(['0']), '0');
 assert.equal(policy.environmentValue(['1']), '1');
@@ -28,7 +26,6 @@ assert.ok(nativeDelay && dependencyFixture.includes(nativeDelay[0]), 'native del
 assert.ok(dependencyFixture.indexOf(nativeDelay[0]) < dependencyFixture.indexOf('window.bindNativeSettings'), 'delay exists before horizontal tabs can initialize');
 console.log('Asaas settings JS policy/fixture: 19 checks passed');
 if (!process.env.CHROMIUM_BIN) { console.log('DOM smoke skipped: set CHROMIUM_BIN to a Chromium executable.'); process.exit(0); }
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'asaas-tabs-'));
 const tests = `
 let checks = 0;
 function check(ok, name) { checks++; if (!ok) throw new Error(name); }
@@ -92,10 +89,33 @@ try {
  const result=document.createElement('pre');result.id='result';result.textContent='PASS '+checks;document.body.appendChild(result);
 } catch (error) { document.body.innerHTML='<pre id="result">FAIL '+error.message+'</pre>'; }
 `;
-try {
- const file=path.join(dir,'fixture.html');fs.writeFileSync(file,fixtureHtml(tests));
- const screenshot=process.env.ASAAS_UI_SCREENSHOT?path.resolve(process.env.ASAAS_UI_SCREENSHOT):null;
- if(screenshot)fs.mkdirSync(path.dirname(screenshot),{recursive:true});
- const result=cp.spawnSync(process.env.CHROMIUM_BIN,[...(screenshot?['--screenshot='+screenshot,'--window-size=1280,900']:[]),'--headless','--user-data-dir='+path.join(dir,'profile'),'--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--dump-dom','file://'+file],{encoding:'utf8',timeout:30000});
- assert.equal(result.status,0,result.stderr);const match=result.stdout.match(/<pre id="result">([^<]+)<\/pre>/);assert.ok(match,result.stdout);assert.match(match[1],/^PASS /);console.log('Asaas settings browser DOM: '+match[1]);
-} finally {fs.rmSync(dir,{recursive:true,force:true});}
+// The Chrome CLI may exit successfully without emitting --dump-dom when combined
+// with --screenshot. Drive the browser protocol and await our assertion marker,
+// not process exit or network idle (the fixture deliberately attempts no live API).
+(async () => {
+ const {chromium} = require(process.env.ASAAS_PLAYWRIGHT_MODULE || 'playwright');
+ const browser = await chromium.launch({headless:true, executablePath:process.env.CHROMIUM_BIN, timeout:30000});
+ const errors=[];
+ try {
+  const context=await browser.newContext({viewport:{width:1280,height:900}});
+  await context.route('**/*', route=>route.abort());
+  const page=await context.newPage();
+  page.on('pageerror', error=>errors.push(error.message));
+  page.setDefaultTimeout(30000);
+  await page.setContent(fixtureHtml(tests),{waitUntil:'domcontentloaded',timeout:30000});
+  try {
+   await page.locator('#result').waitFor({state:'attached'});
+  } catch (error) {
+   throw new Error('Asaas fixture did not finish its DOM assertions; page errors: '+JSON.stringify(errors),{cause:error});
+  }
+  const result=await page.locator('#result').textContent();
+  assert.match(result,/^PASS [1-9][0-9]*$/, 'browser DOM assertions: '+result);
+  assert.deepEqual(errors,[], 'uncaught browser errors');
+  const screenshot=process.env.ASAAS_UI_SCREENSHOT?path.resolve(process.env.ASAAS_UI_SCREENSHOT):null;
+  if(screenshot) {
+   fs.mkdirSync(path.dirname(screenshot),{recursive:true});
+   await page.screenshot({path:screenshot,timeout:30000});
+  }
+  console.log('Asaas settings browser DOM: '+result);
+ } finally {await browser.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});

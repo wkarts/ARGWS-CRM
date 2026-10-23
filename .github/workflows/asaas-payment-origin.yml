@@ -100,8 +100,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Instalar driver do Chromium local
+        run: npm install --no-save --no-package-lock playwright@1.55.1
       - name: Validar abas em JavaScript e DOM Chromium local
         run: |
+          node --test tests/asaas_settings_dom_harness.test.cjs
           node --check modules/asaas/assets/js/settings-tabs.js
           node --check tests/companies/asaas_preferences_real_browser.cjs
           node --test tests/asaas_preferences_real_browser.test.cjs
