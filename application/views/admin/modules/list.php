@@ -62,8 +62,19 @@
                                             </td>
                                             <td class="text-right">
                                                 <?php if (empty($resource['can_manage_availability'])) { ?>
-                                                    <a class="btn btn-default btn-sm" href="<?= admin_url('modules/maintenance'); ?>">Revisar manutenção</a>
-                                                    <span class="text-muted">Disponibilidade operacional preservada</span>
+                                                    <?php if (!empty($resource['can_deactivate'])) { ?>
+                                                        <?= form_open(admin_url('modules/deactivate/' . rawurlencode($systemName)), ['class' => 'tw-inline-block']); ?>
+                                                        <button type="submit" class="btn btn-default btn-sm">Desativar</button>
+                                                        <?= form_close(); ?>
+                                                    <?php } elseif ($systemName === 'ideal') { ?>
+                                                        <button type="button" class="btn btn-primary btn-sm" disabled aria-disabled="true">Ativar</button>
+                                                    <?php } ?>
+                                                    <?php if (!empty($resource['maintenance_pending'])) { ?>
+                                                        <a class="btn btn-default btn-sm" href="<?= admin_url('modules/maintenance'); ?>">Revisar manutenção</a>
+                                                    <?php } else { ?>
+                                                        <span class="text-muted">Sem pendência de manutenção.</span>
+                                                    <?php } ?>
+                                                    <span class="text-muted"><?= html_escape($resource['availability_reason']); ?></span>
                                                 <?php } elseif ($isEssential) { ?>
                                                     <span class="label label-info">Essencial — obrigatório</span>
                                                     <?php if (!$isActive || $needsDb) { ?>

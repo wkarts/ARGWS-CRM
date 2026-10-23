@@ -11,6 +11,15 @@ class IssuerCore {
  public static function reconcile($db,$prefix):void { ++self::$calls; if(self::$mode==='throw')throw new RuntimeException('synthetic schema failure'); }
  public static function ready($db,$prefix):bool { return self::$mode==='ok'; }
 }
+// Explicit context collaborator. Real membership/default resolution is covered by
+// tests/company_context.php; here we assert fresh post-migration orchestration.
+class CompanyContext {
+ public static string $mode='empty';
+ public static int $instances=0;
+ public function __construct($db,$prefix,$session,$staff){++self::$instances;check(IssuerCore::$calls>0,'context constructed only after core reconciliation');check($staff===7,'context uses authenticated actor');}
+ public function resolve($recovery,$allowEmpty){check($recovery===false && $allowEmpty===true,'upgrade never silently recovers revoked selection');if(self::$mode==='revoked')throw new DomainException('company_context_membership_revoked');return self::$mode==='empty'?null:12;}
+ public function isPrimary(){return self::$mode==='primary';}
+}
 class UpgradeStop extends RuntimeException {}
 function db_prefix(){return 'test_';}
 function is_cli(){return $GLOBALS['cli'];}
@@ -52,7 +61,7 @@ function fixture(){
  $ci->migration=new class($ci) {public bool $fail=false;function __construct(public $ci){} function current(){++$GLOBALS['coreCalls'];check(!$this->ci->db->db_debug && !$this->ci->db->save_queries,'native migration suppresses SQL diagnostics');return !$this->fail;} function error_string(){return 'synthetic core failure';}};
 
  $reflection=new ReflectionClass(App::class);$app=$reflection->newInstanceWithoutConstructor();$reflection->getProperty('ci')->setValue($app,$ci);
- IssuerCore::$calls=0;IssuerCore::$mode='ok';$GLOBALS['loggedIn']=true;$GLOBALS['isAdmin']=true;$GLOBALS['alerts']=[];$GLOBALS['cli']=true;$GLOBALS['events']=[];$GLOBALS['loads']=[];$GLOBALS['coreCalls']=0;return [$app,$ci];
+ CompanyContext::$mode='empty';CompanyContext::$instances=0;IssuerCore::$calls=0;IssuerCore::$mode='ok';$GLOBALS['loggedIn']=true;$GLOBALS['isAdmin']=true;$GLOBALS['alerts']=[];$GLOBALS['cli']=true;$GLOBALS['events']=[];$GLOBALS['loads']=[];$GLOBALS['coreCalls']=0;return [$app,$ci];
 }
 [$app,$ci]=fixture();$result=$app->apply_pending_migrations_for_provisioning();
 check($result['success']===true,'controlled provisioning confirms success');check(IssuerCore::$calls===1,'core schema reconciliation follows native migration');
@@ -64,6 +73,13 @@ foreach(['false','throw'] as $mode){[$app,$ci]=fixture();IssuerCore::$mode=$mode
 [$app,$ci]=fixture();$ci->db->version=392;$result=$app->upgrade_database();check($result['success']===false,'unpersisted native migration marker cannot report web success');check(IssuerCore::$calls===0 && !in_array('database_updated',$GLOBALS['events'],true),'tracking failure stops before reconciliation/completion');check(isset($ci->session->data['admin_database_upgrade_csrf']),'tracking failure preserves retry token');
 [$app,$ci]=fixture();$GLOBALS['cli']=false;$result=$app->apply_pending_migrations_for_provisioning();check($result['success']===false,'HTTP cannot invoke provisioning path');check($GLOBALS['coreCalls']===0 && IssuerCore::$calls===0,'HTTP rejection before any migration');
 [$app,$ci]=fixture();$GLOBALS['cli']=false;try{$app->upgrade_database();}catch(UpgradeStop $e){check($e->getMessage()==='/admin/company_context','web native upgrade returns to isolated company selector without wizard');}check($GLOBALS['coreCalls']===1,'native core upgrade remains functional');check(IssuerCore::$calls===1,'web upgrade completes company core in the same action');check(!isset($ci->session->data['admin_database_upgrade_csrf']),'success consumes upgrade token');check($GLOBALS['redirect']===['/admin/company_context','location',303],'successful POST has an explicit303 Location redirect');check($GLOBALS['alerts']===[],'success is not exposed before the authorized destination');$receipt=$ci->session->data['admin_database_upgrade_success'];check($receipt['actor']===7 && $receipt['version']==='393','native success receipt belongs to the actual actor and persisted version');check($receipt['expires_at']>time() && $receipt['expires_at']<=time()+300,'native feedback has a short finite TTL');check(AdminDatabaseUpgrade::consumeSuccess($ci->session,7,'393'),'authorized native destination can consume native success');set_alert('success','O CRM foi atualizado com sucesso.');check($GLOBALS['alerts'][0]===['success','O CRM foi atualizado com sucesso.'],'success has native destination feedback');check(!AdminDatabaseUpgrade::consumeSuccess($ci->session,7,'393'),'native feedback cannot repeat');
+foreach (['primary'=>'/admin/','named'=>'/admin/company_context','empty'=>'/admin/company_context','revoked'=>'/admin/company_context'] as $mode=>$destination) {
+ [$app,$ci]=fixture();$GLOBALS['cli']=false;CompanyContext::$mode=$mode;
+ try{$app->upgrade_database();}catch(UpgradeStop $e){check($e->getMessage()===$destination,'fresh '.$mode.' scope returns to safe destination');}
+ check(CompanyContext::$instances===1,'one fresh context after successful upgrade');
+ check($GLOBALS['redirect']===[$destination,'location',303],'post-upgrade '.$mode.' uses explicit303');
+}
+
 foreach(['GET','guest','staff','inactive','deleted','revoked','csrf_missing','csrf_array','csrf_wrong','stored_array'] as $case){
  [$app,$ci]=fixture();$GLOBALS['cli']=false;
  if($case==='GET')$ci->input->verb='GET';

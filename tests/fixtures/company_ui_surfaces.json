@@ -1,0 +1,3686 @@
+{
+  "baseline": "5ebcd8da",
+  "scope": "administrative company surfaces; includes OAuth, certificates, context, shared fragments and PIGE bridge",
+  "views": [
+    {
+      "path": "application/views/admin/companies/ai.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_ai.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 6,
+          "classless_presentation_candidates": 6
+        },
+        "input": {
+          "literal_tags": 12,
+          "classless_presentation_candidates": 2
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/api_tokens.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_api_tokens.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        },
+        "input": {
+          "literal_tags": 9,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/asaas.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_asaas.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "button": {
+          "literal_tags": 24,
+          "classless_presentation_candidates": 18
+        },
+        "input": {
+          "literal_tags": 23,
+          "classless_presentation_candidates": 12
+        },
+        "select": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 4
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/asaas_preferences.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/asaas.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/asaas_refunds.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/asaas.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        },
+        "button": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 5
+        },
+        "input": {
+          "literal_tags": 13,
+          "classless_presentation_candidates": 6
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/assets.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_assets.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "input": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/billing_invoice_current.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/time_batches.php",
+        "application/views/admin/companies/expense_billing.php",
+        "application/views/admin/companies/standalone_billing.php",
+        "application/views/admin/companies/time_billing.php",
+        "application/views/admin/companies/task_billing.php",
+        "application/views/admin/companies/project_fixed_billing.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/calendar.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_calendar.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 9,
+          "classless_presentation_candidates": 4
+        },
+        "select": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 5
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/certificates.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_certificates.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/client_identity_fields.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/clients.php",
+        "application/views/admin/clients/groups/profile.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/client_imports.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_client_imports.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/clients.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_clients.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 7,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 29,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/connect_api.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_connect_api.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 14,
+          "classless_presentation_candidates": 14
+        },
+        "input": {
+          "literal_tags": 17,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/context.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_context.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/contract_discussion.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/contracts.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "input": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/contracts.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_contracts.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 7,
+          "classless_presentation_candidates": 7
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/contracts_fields.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/contracts.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/credit_movement_fields.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/credits.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/credits.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_credits.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 9,
+          "classless_presentation_candidates": 9
+        },
+        "input": {
+          "literal_tags": 14,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/expense_billing.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/expenses.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        },
+        "input": {
+          "literal_tags": 9,
+          "classless_presentation_candidates": 2
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/expense_copies.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_expense_copies.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "input": {
+          "literal_tags": 9,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/expense_fields.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/expenses.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/expense_recurring.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/expenses.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 5
+        },
+        "input": {
+          "literal_tags": 12,
+          "classless_presentation_candidates": 3
+        },
+        "select": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 4
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/expenses.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_expenses.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 8,
+          "classless_presentation_candidates": 8
+        },
+        "input": {
+          "literal_tags": 16,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/google_mail_oauth.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_google_mail_oauth.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 4
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/hr.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_hr.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 6,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 19,
+          "classless_presentation_candidates": 19
+        },
+        "input": {
+          "literal_tags": 14,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/hr_mine.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_hr.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "input": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/hr_records.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/hr.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 4
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/identity_fields.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/onboarding.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/identity_input.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/identity_fields.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/imports.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_imports.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/invoice_adjustment_fields.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/sales_form_fields.php",
+        "application/views/admin/companies/invoice_drafts.php",
+        "application/views/admin/companies/invoices.php",
+        "application/views/admin/companies/sales_mutations.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/invoice_copies.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_invoice_copies.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        },
+        "input": {
+          "literal_tags": 8,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/invoice_drafts.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_invoice_drafts.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 5
+        },
+        "input": {
+          "literal_tags": 14,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/invoice_drafts_editor_script.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/invoice_drafts.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/invoice_item_fields.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/sales_form_fields.php",
+        "application/views/admin/companies/invoice_drafts.php",
+        "application/views/admin/companies/invoices.php",
+        "application/views/admin/companies/sales_mutations.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 6,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/invoice_recurring.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_invoice_recurring.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        },
+        "input": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 3
+        },
+        "select": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/invoices.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_invoices.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 10,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 33,
+          "classless_presentation_candidates": 4
+        },
+        "select": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/layout_head.php",
+      "kind": "shell-part",
+      "reason": "Componente pareado do shell isolado; não é página independente.",
+      "owners": [
+        "application/views/admin/emails/company_scoped.php",
+        "application/views/admin/companies/microsoft_mail_oauth.php",
+        "application/views/admin/companies/project_billing_rates.php",
+        "application/views/admin/companies/standalone_tasks.php",
+        "application/views/admin/companies/ai.php",
+        "application/views/admin/companies/time_batches.php",
+        "application/views/admin/companies/client_imports.php",
+        "application/views/admin/companies/tasks.php",
+        "application/views/admin/companies/clients.php",
+        "application/views/admin/companies/reports.php",
+        "application/views/admin/companies/task_copies.php",
+        "application/views/admin/companies/assets.php",
+        "application/views/admin/companies/task_recurring.php",
+        "application/views/admin/companies/ticket_connect.php",
+        "application/views/admin/companies/calendar.php",
+        "application/views/admin/companies/connect_api.php",
+        "application/views/admin/companies/expense_copies.php",
+        "application/views/admin/companies/hr_mine.php",
+        "application/views/admin/companies/contracts.php",
+        "application/views/admin/companies/sales.php",
+        "application/views/admin/companies/api_tokens.php",
+        "application/views/admin/companies/invoice_drafts.php",
+        "application/views/admin/companies/expenses.php",
+        "application/views/admin/companies/invoices.php",
+        "application/views/admin/companies/imports.php",
+        "application/views/admin/companies/project_portal_rules.php",
+        "application/views/admin/companies/standalone_billing.php",
+        "application/views/admin/companies/post_refund.php",
+        "application/views/admin/companies/pusher.php",
+        "application/views/admin/companies/asaas.php",
+        "application/views/admin/companies/registry.php",
+        "application/views/admin/companies/time_billing.php",
+        "application/views/admin/companies/purchases.php",
+        "application/views/admin/companies/invoice_copies.php",
+        "application/views/admin/companies/post_refund_manual.php",
+        "application/views/admin/companies/context.php",
+        "application/views/admin/companies/project_extras.php",
+        "application/views/admin/companies/project_copies.php",
+        "application/views/admin/companies/leads.php",
+        "application/views/admin/companies/credits.php",
+        "application/views/admin/companies/invoice_recurring.php",
+        "application/views/admin/companies/projects.php",
+        "application/views/admin/companies/ledger.php",
+        "application/views/admin/companies/task_billing.php",
+        "application/views/admin/companies/certificates.php",
+        "application/views/admin/companies/hr.php",
+        "application/views/admin/companies/google_mail_oauth.php",
+        "application/views/admin/companies/project_fixed_billing.php",
+        "application/views/admin/companies/tickets.php",
+        "application/views/admin/companies/staff.php",
+        "application/views/admin/companies/recurring.php",
+        "application/views/admin/settings/company_scoped.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/layout_tail.php",
+      "kind": "shell-part",
+      "reason": "Componente pareado do shell isolado; não é página independente.",
+      "owners": [
+        "application/views/admin/emails/company_scoped.php",
+        "application/views/admin/companies/microsoft_mail_oauth.php",
+        "application/views/admin/companies/project_billing_rates.php",
+        "application/views/admin/companies/standalone_tasks.php",
+        "application/views/admin/companies/ai.php",
+        "application/views/admin/companies/time_batches.php",
+        "application/views/admin/companies/client_imports.php",
+        "application/views/admin/companies/tasks.php",
+        "application/views/admin/companies/clients.php",
+        "application/views/admin/companies/reports.php",
+        "application/views/admin/companies/task_copies.php",
+        "application/views/admin/companies/assets.php",
+        "application/views/admin/companies/task_recurring.php",
+        "application/views/admin/companies/ticket_connect.php",
+        "application/views/admin/companies/calendar.php",
+        "application/views/admin/companies/connect_api.php",
+        "application/views/admin/companies/expense_copies.php",
+        "application/views/admin/companies/hr_mine.php",
+        "application/views/admin/companies/contracts.php",
+        "application/views/admin/companies/sales.php",
+        "application/views/admin/companies/api_tokens.php",
+        "application/views/admin/companies/invoice_drafts.php",
+        "application/views/admin/companies/expenses.php",
+        "application/views/admin/companies/invoices.php",
+        "application/views/admin/companies/imports.php",
+        "application/views/admin/companies/project_portal_rules.php",
+        "application/views/admin/companies/standalone_billing.php",
+        "application/views/admin/companies/post_refund.php",
+        "application/views/admin/companies/pusher.php",
+        "application/views/admin/companies/asaas.php",
+        "application/views/admin/companies/registry.php",
+        "application/views/admin/companies/time_billing.php",
+        "application/views/admin/companies/purchases.php",
+        "application/views/admin/companies/invoice_copies.php",
+        "application/views/admin/companies/post_refund_manual.php",
+        "application/views/admin/companies/context.php",
+        "application/views/admin/companies/project_extras.php",
+        "application/views/admin/companies/project_copies.php",
+        "application/views/admin/companies/leads.php",
+        "application/views/admin/companies/credits.php",
+        "application/views/admin/companies/invoice_recurring.php",
+        "application/views/admin/companies/projects.php",
+        "application/views/admin/companies/ledger.php",
+        "application/views/admin/companies/task_billing.php",
+        "application/views/admin/companies/certificates.php",
+        "application/views/admin/companies/hr.php",
+        "application/views/admin/companies/google_mail_oauth.php",
+        "application/views/admin/companies/project_fixed_billing.php",
+        "application/views/admin/companies/tickets.php",
+        "application/views/admin/companies/staff.php",
+        "application/views/admin/companies/recurring.php",
+        "application/views/admin/settings/company_scoped.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/leads.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_leads.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 14,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 16,
+          "classless_presentation_candidates": 2
+        },
+        "select": {
+          "literal_tags": 7,
+          "classless_presentation_candidates": 1
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/leads_fields.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/leads.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/ledger.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_reports.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        },
+        "input": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/microsoft_mail_oauth.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_microsoft_mail_oauth.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 5
+        },
+        "input": {
+          "literal_tags": 6,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/onboarding.php",
+      "kind": "modal-document",
+      "reason": "Documento same-origin do modal de cadastro; shell completo duplicaria navegação. Carrega CSS público nativo e script de contexto explicitamente.",
+      "owners": [
+        "application/controllers/admin/Company_onboarding.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 8,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/operation_files.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/contracts.php",
+        "application/views/admin/companies/tickets.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "input": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/portal_operation_admin.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/contracts.php",
+        "application/views/admin/companies/projects.php",
+        "application/views/admin/companies/tickets.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 4
+        },
+        "input": {
+          "literal_tags": 7,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/post_refund.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_post_refund.php",
+        "application/controllers/admin/Company_post_refund_manual.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "input": {
+          "literal_tags": 7,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/post_refund_manual.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_post_refund_manual.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        },
+        "input": {
+          "literal_tags": 18,
+          "classless_presentation_candidates": 8
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/project_billing_rates.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_project_billing_rates.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        },
+        "input": {
+          "literal_tags": 6,
+          "classless_presentation_candidates": 1
+        },
+        "select": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/project_contact_file_rules.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/project_portal_rules.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/project_copies.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_project_copies.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        },
+        "input": {
+          "literal_tags": 14,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/project_discussion_extras.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/company_portal/project_discussions.php",
+        "application/views/admin/companies/project_discussions.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 5
+        },
+        "input": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/project_discussions.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/project_portal_rules.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 5
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 1
+        },
+        "select": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        },
+        "textarea": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/project_extras.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_project_extras.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 7,
+          "classless_presentation_candidates": 7
+        },
+        "input": {
+          "literal_tags": 12,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/project_fixed_billing.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_project_fixed_billing.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        },
+        "input": {
+          "literal_tags": 23,
+          "classless_presentation_candidates": 7
+        },
+        "select": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/project_gantt_rules.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/project_portal_rules.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "input": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 1
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/project_milestone_rules.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/project_portal_rules.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 4
+        },
+        "input": {
+          "literal_tags": 7,
+          "classless_presentation_candidates": 2
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/project_portal_rules.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_project_portal_rules.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "input": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/project_task_authorship.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/tasks.php",
+        "application/views/admin/companies/project_portal_rules.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/project_task_write_rules.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/project_portal_rules.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        },
+        "input": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/project_timesheet_rules.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/project_portal_rules.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/projects.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_projects.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        },
+        "input": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/projects_fields.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/projects.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/purchases.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_purchases.php",
+        "application/views/admin/companies/purchases_workspace.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 6,
+          "classless_presentation_candidates": 5
+        },
+        "input": {
+          "literal_tags": 12,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/purchases_payable.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/purchases_workspace.php",
+        "application/views/admin/companies/purchases.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "input": {
+          "literal_tags": 6,
+          "classless_presentation_candidates": 1
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 1
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/purchases_workspace.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/purchases.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 6,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 11,
+          "classless_presentation_candidates": 11
+        },
+        "input": {
+          "literal_tags": 24,
+          "classless_presentation_candidates": 5
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/pusher.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_pusher.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 7,
+          "classless_presentation_candidates": 7
+        },
+        "input": {
+          "literal_tags": 7,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/recurring.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_recurring.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        },
+        "input": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/registry.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Issuers.php",
+        "application/views/admin/issuers/manage.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/registry_grid.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/registry.php",
+        "application/views/admin/issuers/manage.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 7,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 8,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/reports.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_reports.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/sales.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_sales.php",
+        "application/views/admin/companies/invoice_recurring.php",
+        "application/views/admin/companies/recurring.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 5
+        },
+        "input": {
+          "literal_tags": 10,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/sales_extras.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/sales.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        },
+        "input": {
+          "literal_tags": 8,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/sales_form_fields.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/sales.php",
+        "application/views/admin/companies/invoice_recurring.php",
+        "application/views/admin/companies/recurring.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        },
+        "input": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/sales_form_script.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/sales.php",
+        "application/views/admin/companies/invoice_recurring.php",
+        "application/views/admin/companies/recurring.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/sales_mutations.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/sales.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 3
+        },
+        "input": {
+          "literal_tags": 13,
+          "classless_presentation_candidates": 4
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/staff.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_staff.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 5
+        },
+        "input": {
+          "literal_tags": 12,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/standalone_billing.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_standalone_billing.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 4
+        },
+        "input": {
+          "literal_tags": 10,
+          "classless_presentation_candidates": 8
+        },
+        "select": {
+          "literal_tags": 7,
+          "classless_presentation_candidates": 7
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/standalone_tasks.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_standalone_tasks.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 4
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/task_billing.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_task_billing.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 4
+        },
+        "input": {
+          "literal_tags": 14,
+          "classless_presentation_candidates": 9
+        },
+        "select": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 5
+        },
+        "textarea": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 2
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/task_copies.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_task_copies.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        },
+        "input": {
+          "literal_tags": 10,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/task_recurring.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_task_recurring.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 5
+        },
+        "input": {
+          "literal_tags": 7,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/tasks.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_tasks.php",
+        "application/views/admin/companies/standalone_tasks.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 4
+        },
+        "input": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/tasks_fields.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/standalone_tasks.php",
+        "application/views/admin/companies/tasks.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/ticket_connect.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_ticket_connect.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 6,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/tickets.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_tickets.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 5
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 6,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/time_batches.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_time_batches.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 5
+        },
+        "input": {
+          "literal_tags": 16,
+          "classless_presentation_candidates": 10
+        },
+        "select": {
+          "literal_tags": 7,
+          "classless_presentation_candidates": 7
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/time_billing.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Company_time_billing.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 4
+        },
+        "input": {
+          "literal_tags": 15,
+          "classless_presentation_candidates": 9
+        },
+        "select": {
+          "literal_tags": 8,
+          "classless_presentation_candidates": 8
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 1
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/emails/company_scoped.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Emails.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 5,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/includes/company_context_script.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/layout_head.php",
+        "application/views/admin/companies/onboarding.php",
+        "application/views/admin/includes/head.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/includes/company_selector.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/views/admin/companies/layout_head.php",
+        "application/views/admin/includes/aside.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 1
+        },
+        "input": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/issuers/certificate_link.php",
+      "kind": "unresolved-fragment",
+      "reason": "GAP: fragmento legado sem chamador literal localizado no código. Não afirmar cobertura visual; rota ativa company_certificates é inventariada separadamente. Investigar antes de reativar/remover.",
+      "owners": [],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/issuers/manage.php",
+      "kind": "native-shell",
+      "reason": "Página administrativa legada usa init_head/init_tail nativos.",
+      "owners": [
+        "application/controllers/admin/Issuers.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/issuers/master_resolution.php",
+      "kind": "native-shell",
+      "reason": "Página administrativa legada usa init_head/init_tail nativos.",
+      "owners": [
+        "application/controllers/admin/Company_master.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/issuers/staff_access.php",
+      "kind": "partial",
+      "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
+      "owners": [
+        "application/helpers/staff_access_helper.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 4,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/settings/company_scoped.php",
+      "kind": "company-shell",
+      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
+      "owners": [
+        "application/controllers/admin/Settings.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 13,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 10,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/settings/includes/company.php",
+      "kind": "partial",
+      "reason": "Fragmento selecionado pelo catálogo nativo de settings e carregado via $group[view]; não é página independente.",
+      "owners": [
+        "application/views/admin/settings/all.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    }
+  ],
+  "controllers": [
+    {
+      "path": "application/controllers/Argws_provisioning.php",
+      "public_methods": [
+        "complete_installation",
+        "apply_migrations",
+        "authorize_company_master"
+      ],
+      "view_refs": [],
+      "presentation": "non-view endpoint",
+      "reason": "Fluxo de callback/redirecionamento/API/provisionamento, sem view literal. Não é excluído: mudanças que introduzam view falham no inventário."
+    },
+    {
+      "path": "application/controllers/admin/Company_ai.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/ai"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_api_tokens.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/api_tokens"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_asaas.php",
+      "public_methods": [
+        "__construct",
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/asaas"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_assets.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/assets"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_calendar.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/calendar"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_certificates.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/certificates"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_client_imports.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/client_imports"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_clients.php",
+      "public_methods": [
+        "index",
+        "lookup"
+      ],
+      "view_refs": [
+        "admin/companies/clients"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_connect_api.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/connect_api"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_context.php",
+      "public_methods": [
+        "__construct",
+        "index",
+        "select"
+      ],
+      "view_refs": [
+        "admin/companies/context"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_contracts.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/contracts"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_credits.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/credits"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_expense_copies.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/expense_copies"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_expenses.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/expenses"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_google_mail_oauth.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/google_mail_oauth"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_hr.php",
+      "public_methods": [
+        "index",
+        "file",
+        "pdf",
+        "export",
+        "mine",
+        "mine_file"
+      ],
+      "view_refs": [
+        "admin/companies/hr",
+        "admin/companies/hr_mine"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_imports.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/imports"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_invoice_copies.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/invoice_copies"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_invoice_drafts.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/invoice_drafts"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_invoice_recurring.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/invoice_recurring"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_invoices.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/invoices"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_leads.php",
+      "public_methods": [
+        "index",
+        "file",
+        "export"
+      ],
+      "view_refs": [
+        "admin/companies/leads"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_master.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/issuers/master_resolution"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_microsoft_mail_oauth.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/microsoft_mail_oauth"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_onboarding.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/onboarding"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_post_refund.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/post_refund"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_post_refund_manual.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/post_refund_manual"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_project_billing_rates.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/project_billing_rates"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_project_copies.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/project_copies"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_project_extras.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/project_extras"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_project_fixed_billing.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/project_fixed_billing"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_project_portal_rules.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/project_portal_rules"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_projects.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/projects"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_purchases.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/purchases"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_pusher.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/pusher"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_recurring.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/recurring"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_reports.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/ledger",
+        "admin/companies/reports"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_sales.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/sales"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_staff.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/staff"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_standalone_billing.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/standalone_billing"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_standalone_tasks.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/standalone_tasks"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_task_billing.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/task_billing"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_task_copies.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/task_copies"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_task_recurring.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/task_recurring"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_tasks.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/tasks"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_ticket_connect.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/ticket_connect"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_tickets.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/tickets"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_time_batches.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/time_batches"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_time_billing.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/time_billing"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Issuers.php",
+      "public_methods": [
+        "__construct",
+        "index",
+        "save",
+        "lookup"
+      ],
+      "view_refs": [
+        "admin/companies/registry",
+        "admin/issuers/manage"
+      ],
+      "presentation": "views",
+      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Smtp_oauth_google.php",
+      "public_methods": [
+        "token"
+      ],
+      "view_refs": [],
+      "presentation": "non-view endpoint",
+      "reason": "Fluxo de callback/redirecionamento/API/provisionamento, sem view literal. Não é excluído: mudanças que introduzam view falham no inventário."
+    },
+    {
+      "path": "application/controllers/admin/Smtp_oauth_microsoft.php",
+      "public_methods": [
+        "token"
+      ],
+      "view_refs": [],
+      "presentation": "non-view endpoint",
+      "reason": "Fluxo de callback/redirecionamento/API/provisionamento, sem view literal. Não é excluído: mudanças que introduzam view falham no inventário."
+    },
+    {
+      "path": "modules/pige_bridge/controllers/Bridge.php",
+      "public_methods": [
+        "requests"
+      ],
+      "view_refs": [],
+      "presentation": "non-view endpoint",
+      "reason": "Fluxo de callback/redirecionamento/API/provisionamento, sem view literal. Não é excluído: mudanças que introduzam view falham no inventário."
+    }
+  ]
+}

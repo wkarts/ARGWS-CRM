@@ -94,7 +94,9 @@ jobs:
         id: asaas_settings_browser
         env:
           ASAAS_UI_ARTIFACTS: /tmp/asaas-settings-evidence
-        run: node tests/asaas_settings_tabs.browser.cjs
+        run: |
+          node tests/asaas_settings_tabs.browser.cjs
+          node tests/asaas_operations_panel.browser.cjs
       - name: Preservar capturas sintéticas das abas Asaas
         if: always() && (steps.asaas_settings_browser.outcome == 'success' || steps.asaas_settings_browser.outcome == 'failure')
         uses: actions/upload-artifact@v4

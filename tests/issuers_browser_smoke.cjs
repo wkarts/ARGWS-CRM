@@ -133,7 +133,8 @@ async function captureRealScreens(page, routes) {
       await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('#submit_btn').click()]);
       assert(!page.url().includes('/essential_modules'), 'same native POST finishes company core');
       assert.notEqual(sql('SELECT version FROM tblmigrations LIMIT 1'), before, 'real old schema migrated');
-      assert.equal(new URL(page.url()).pathname, '/admin/company_context', 'native upgrade finishes in the existing isolated company selector');
+      const expectedUpgradePath = existingMaster !== null && existingMaster !== 'NULL' ? '/admin' : '/admin/company_context';
+      assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), expectedUpgradePath, 'proven primary context returns directly to CRM; unresolved legacy still uses isolated selection');
       await page.getByText('O CRM foi atualizado com sucesso.', { exact: true }).waitFor({ state: 'visible' });
       await page.goto(url + '/admin');
       await shell(page);
@@ -153,6 +154,15 @@ async function captureRealScreens(page, routes) {
       await page.goto(url + '/admin/modules');
       const row = page.locator('tr').filter({ has: page.locator('td strong').filter({ hasText: /^Emitentes$|^Empresas(?: emitentes)?$/ }) });
       assert.equal(await row.count(), 0, 'company core is absent from the module catalog');
+      const bbRow = page.locator('tr').filter({has: page.locator('td strong').filter({hasText: /^Banco do Brasil - Cobrança e CNAB 240\/400$/})});
+      assert.equal(await bbRow.count(), 1, 'Banco do Brasil is visible in the actual native catalog');
+      assert.equal(await bbRow.locator('form[action*="modules/activate/banco_brasil"], form[action*="modules/deactivate/banco_brasil"]').count(), 1, 'BB exposes one native availability control without clicking it');
+      const idealRow = page.locator('tr').filter({has: page.locator('td strong').filter({hasText: /^iDEAL$/})});
+      assert.equal(await idealRow.count(), 1, 'iDEAL remains visible in the actual native catalog');
+      const moduleState = () => sql('SELECT CONCAT(module_name,CHAR(58),installed_version,CHAR(58),active) FROM tblmodules ORDER BY module_name');
+      const beforeCatalogEvidence = moduleState();
+      await captureRealScreens(page, [['module-catalog',url + '/admin/modules'], ['module-maintenance',url + '/admin/modules/maintenance']]);
+      assert.equal(moduleState(), beforeCatalogEvidence, 'read-only catalog evidence never activates modules or updates version tracking');
       assert.equal((await context.request.get(url + '/admin/essential_modules')).status(), 404, 'old wizard route removed');
       // Synthetic isolated schema incompatibility. The original table and all
       // its rows remain intact under a temporary name, restored in finally.

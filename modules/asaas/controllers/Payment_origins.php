@@ -30,6 +30,8 @@ class Payment_origins extends AdminController
                 ->join(db_prefix() . 'asaas_payment_origins o', 'o.invoice_id = m.invoice_id', 'left')
                 ->where('o.id IS NULL', null, false)->order_by('m.invoice_id', 'DESC')->limit(250)->get()->result_array();
         }
+        $data['embedded_panel'] = $this->input->get('panel') === '1';
+        $this->output->set_header('Cache-Control: no-store, private, max-age=0');
         $this->load->view('asaas/payment_origins', $data);
     }
 
@@ -58,6 +60,6 @@ class Payment_origins extends AdminController
             // Do not expose provider messages, credentials or customer payloads.
             set_alert('warning', 'Associação não confirmada. Confira conta, ambiente, ID remoto, referência, valor e vencimento. O vínculo existente foi preservado.');
         }
-        redirect(admin_url('asaas/payment_origins'));
+        redirect(admin_url('asaas/payment_origins' . ($this->input->get('panel') === '1' ? '?panel=1' : '')));
     }
 }

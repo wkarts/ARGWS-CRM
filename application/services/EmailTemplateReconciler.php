@@ -66,6 +66,51 @@ final class EmailTemplateReconciler
         });
     }
 
+    /** Explicit Webhooks 1.2.7 repair: never overrides customized or disabled groups. */
+    public static function repairWebhookDefaults($db, string $prefix): int
+    {
+        if (!preg_match('/^[a-zA-Z_][A-Za-z0-9_]*$/D', $prefix)) throw new InvalidArgumentException('email_template_prefix_invalid');
+        $table = $prefix.'emailtemplates';
+        if (!$db->table_exists($table)) return 0;
+        $definition = EmailTemplatesPtBr::moduleTemplates()['webhook-failed'];
+        $sources = EmailTemplatesPtBr::sourceDefinitions()['webhook-failed'];
+        return self::transaction($db, $prefix, static function () use ($db, $table, $definition, $sources): int {
+            $groups = [];
+            foreach (IssuerStorage::query($db, 'SELECT * FROM '.$table.' WHERE slug=? FOR UPDATE', ['webhook-failed'])->result_array() as $row) {
+                $owner = $row['issuer_id'] ?? 'primary';
+                if (isset($groups[$owner][$row['language']])) throw new DomainException('company_email_template_ambiguous');
+                $groups[$owner][$row['language']] = $row;
+            }
+            $count = 0;
+            foreach ($groups as $variants) {
+                // A disabled/customized/foreign variant owns fallback policy for the whole group.
+                foreach ($variants as $row) {
+                    if (!in_array($row['language'], ['english', 'portuguese_br'], true)
+                        || (int) $row['active'] !== 1 || $row['type'] !== 'webhooks'
+                        || !self::isFactoryContent($row, $sources)) continue 2;
+                }
+                foreach (['english', 'portuguese_br'] as $language) {
+                    $message = $language === 'english' ? $definition['source_message'] : EmailTemplatesPtBr::translateMessage($definition['source_message']);
+                    if (isset($variants[$language])) {
+                        $row = $variants[$language];
+                        if ($row['message'] !== '') continue;
+                        IssuerStorage::query($db, 'UPDATE '.$table.' SET message=? WHERE emailtemplateid=?', [$message, $row['emailtemplateid']]);
+                    } else {
+                        $row = reset($variants);
+                        unset($row['emailtemplateid']);
+                        $row['language'] = $language;
+                        $row['name'] = $language === 'english' ? $definition['source_name'] : $definition['name'];
+                        $row['subject'] = $language === 'english' ? $definition['source_subject'] : $definition['subject'];
+                        $row['message'] = $message;
+                        self::insert($db, $table, $row);
+                    }
+                    ++$count;
+                }
+            }
+            return $count;
+        });
+    }
+
     public static function defaultOnlyChanges(array $row, array $sources): array
     {
         $changes = [];

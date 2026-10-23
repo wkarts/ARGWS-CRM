@@ -78,6 +78,7 @@ class Asaas extends AdminController
         $this->output->set_header('Cache-Control: no-store, private, max-age=0');
         $this->output->set_header('Pragma: no-cache');
         $this->output->set_header('Referrer-Policy: no-referrer');
+        $data['embedded_panel'] = $this->input->get('panel') === '1';
         $this->load->view('asaas/webhooks', $data);
     }
 
@@ -104,7 +105,7 @@ class Asaas extends AdminController
             // Never render/log request bodies, tokens or provider exception details.
             set_alert('danger', 'Cadastro local não confirmado. Confira a conta, o ambiente, a configuração HTTPS. Nenhum webhook remoto foi alterado.');
         }
-        redirect(admin_url('asaas'));
+        redirect(admin_url('asaas' . ($this->input->get('panel') === '1' ? '?panel=1' : '')));
     }
 
     public function rotate_integration_token()
@@ -120,7 +121,7 @@ class Asaas extends AdminController
         } catch (Throwable $error) {
             set_alert('danger', 'Rotação não confirmada. Confira o recebedor e o histórico antes de gerar outro token.');
         }
-        redirect(admin_url('asaas'));
+        redirect(admin_url('asaas' . ($this->input->get('panel') === '1' ? '?panel=1' : '')));
     }
 
     public function reveal_integration_token()
@@ -134,7 +135,7 @@ class Asaas extends AdminController
         } catch (Throwable $error) {
             set_alert('warning', 'Token indisponível para recuperação. Registros antigos guardam somente o hash; use a regeneração explícita para criar um novo token.');
         }
-        redirect(admin_url('asaas'));
+        redirect(admin_url('asaas' . ($this->input->get('panel') === '1' ? '?panel=1' : '')));
     }
 
     public function disable_integration()
@@ -148,7 +149,7 @@ class Asaas extends AdminController
         } catch (Throwable $error) {
             set_alert('danger', 'Não foi possível desativar o recebedor local.');
         }
-        redirect(admin_url('asaas'));
+        redirect(admin_url('asaas' . ($this->input->get('panel') === '1' ? '?panel=1' : '')));
     }
 
     public function retry_reviewed_event()
@@ -164,7 +165,7 @@ class Asaas extends AdminController
         } catch (Throwable $error) {
             set_alert('warning', 'Evento não liberado. Concilie a origem e confira o recebedor da mesma conta e ambiente.');
         }
-        redirect(admin_url('asaas'));
+        redirect(admin_url('asaas' . ($this->input->get('panel') === '1' ? '?panel=1' : '')));
     }
 
     private function require_webhook_management(): bool

@@ -1,8 +1,7 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div data-asaas-settings-section="authentication">
-    <h4>URLs da API por ambiente</h4>
     <?php foreach ($asaas_summary['api_urls'] as $environment => $url) { ?>
-    <div class="form-group">
+    <div class="form-group" data-asaas-profile-fragment="<?= html_escape($environment); ?>">
         <label for="asaas-api-url-<?= html_escape($environment); ?>"><?= $environment === 'production' ? 'Produção' : 'Homologação'; ?></label>
         <div class="input-group">
             <input id="asaas-api-url-<?= html_escape($environment); ?>" class="form-control" type="url" readonly value="<?= html_escape($url); ?>">
@@ -11,7 +10,7 @@
         <span role="status" class="help-block" data-asaas-copy-status></span>
     </div>
     <?php } ?>
-    <p class="help-block">As URLs e as credenciais de ambos os ambientes permanecem independentes. O seletor de novas operações não altera recebedores nem cobranças existentes.</p>
+    <p class="help-block">As URLs e as credenciais de ambos os ambientes permanecem independentes. O seletor de ambiente ativo não altera recebedores nem cobranças existentes.</p>
 </div>
 <div data-asaas-settings-section="webhook">
     <h4>URLs de recebimento por conta e ambiente</h4>
@@ -24,9 +23,11 @@
     ]; ?>
     <?php if (isset($states[$asaas_summary['state']])) { ?><p role="status"><?= html_escape($states[$asaas_summary['state']]); ?></p><?php } ?>
     <?php foreach ($asaas_summary['integrations'] as $integration) { $fieldId = 'asaas-settings-webhook-url-' . $integration['id']; ?>
-    <section class="well">
+    <section class="well" data-asaas-profile-fragment="<?= html_escape($integration['environment']); ?>">
         <h5><?= html_escape($integration['label']); ?></h5>
         <p>Conta: <?= html_escape($integration['account_id']); ?> · <?= $integration['environment'] === 'production' ? 'Produção' : 'Homologação'; ?> · <?= $integration['enabled'] ? 'Recebedor habilitado' : 'Recebedor desativado'; ?></p>
+        <p>Token: <span aria-label="Token protegido">••••••••</span> — recuperação e troca somente por ação explícita.</p>
+        <p><a data-asaas-open-operations href="<?= html_escape(admin_url('asaas?integration=' . (int) $integration['id'])); ?>">Gerenciar token, eventos e recebimento</a></p>
         <div class="form-group">
             <label for="<?= html_escape($fieldId); ?>">URL do webhook</label>
             <div class="input-group">
@@ -37,5 +38,6 @@
         </div>
     </section>
     <?php } ?>
+    <?php if (!empty($asaas_summary['authorized'])) { ?><p><a data-asaas-open-operations href="<?= html_escape(admin_url('asaas')); ?>">Configurar recebimento e consultar operações</a></p><?php } ?>
     <p class="help-block">A URL identifica o recebedor; o token é separado. Exibir o endereço não comprova cadastro remoto ou conectividade pública. Credenciais e tokens são administrados pela empresa e pelo ambiente correspondentes.</p>
 </div>

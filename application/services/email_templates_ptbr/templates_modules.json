@@ -166,7 +166,7 @@
     "subject": "Falha na entrega de um webhook",
     "source_name": "Webhook failed",
     "source_subject": "Webhook failed",
-    "source_message": "",
+    "source_message": "<p>A webhook delivery failed. Review the webhook logs in the CRM.</p>",
     "module": "webhooks",
     "type": "webhooks"
   }

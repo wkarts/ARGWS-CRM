@@ -81,7 +81,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test tests/company_email_catalog.test.cjs tests/email_templates_ptbr.test.cjs tests/email_template_interface.test.cjs tests/ma_email_interface.test.cjs
+      - run: node --test tests/company_email_catalog.test.cjs tests/email_templates_ptbr.test.cjs tests/email_template_interface.test.cjs tests/email_template_completeness.test.cjs tests/ma_email_interface.test.cjs
   boundary-inventory:
     runs-on: ubuntu-latest
     steps:
@@ -642,3 +642,4 @@ jobs:
           php tests/companies/legacy_financial_module_readers.php
           php tests/companies/legacy_financial_module_tables.php
           php tests/companies/legacy_financial_module_migrations.php
+          php tests/companies/module_version_column_mysql.php

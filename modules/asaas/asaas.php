@@ -16,7 +16,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 Module Name: Asaas - Módulo de Pagamento
 Description: Integração com Sistema Financeiro Asaas com a função de recebimento via catão de crédito, Boleto e Pix.
 Author: WWSoft -> Wallace Kleiton - argws/asaas-sdk-php v0.2.61
-Version: 1.5.5
+Version: 1.5.6
 Requires at least: 4.5.8
 Author URI: https://t.me/wkartspro
 */
@@ -125,7 +125,7 @@ function asaas_before_render_payment_gateway_settings($gateway)
     if (is_array($gateway) && ($gateway['id'] ?? '') === 'asaas') {
         $environment = get_option('paymentmethod_asaas_sandbox');
         $valid = in_array($environment, ['0', '1'], true);
-        echo '<a data-asaas-webhook-admin-url="' . html_escape(admin_url('asaas'))
+        echo '<a data-asaas-open-operations data-asaas-webhook-admin-url="' . html_escape(admin_url('asaas'))
             . '" data-asaas-environment-valid="' . ($valid ? '1' : '0')
             . '" data-asaas-environment-value="' . ($valid ? $environment : '')
             . '" data-asaas-settings-admin="' . (is_admin() ? '1' : '0')
@@ -151,6 +151,7 @@ function asaas_validate_admin_settings($data)
 
 function asaas_settings_tab_footer()
 {
+    echo '<script src="' . html_escape(module_dir_url('asaas', 'assets/js/operations-panel.js')) . '"></script>';
     echo '<script src="' . html_escape(module_dir_url('asaas', 'assets/js/settings-tabs.js')) . '"></script>';
 }
 

@@ -21,7 +21,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
     Module Name: Webhooks
     Module URI: https://github.com/wkarts/argws-crm/releases
     Description: Integração ARGWS CRM com serviços que oferecem suporte a webhooks.
-    Version: 1.2.6
+    Version: 1.2.7
     Requires at least: 3.0.*
 */
 
@@ -90,7 +90,8 @@ function add_other_merge_fields_for_webhook($available_for)
     return $available_for;
 }
 
-create_email_template('Webhook failed', '', 'webhooks', 'Webhook failed', 'webhook-failed');
+// New installations receive a usable body; existing custom/blank variants remain owned by the user.
+create_email_template('Webhook failed', '<p>A webhook delivery failed. Review the webhook logs in the CRM.</p>', 'webhooks', 'Webhook failed', 'webhook-failed');
 
 register_merge_fields(WEBHOOKS_MODULE . '/merge_fields/webhooks_merge_fields');
 

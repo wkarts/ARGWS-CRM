@@ -211,6 +211,14 @@ try {
     foreach (['hidden', 'outside_catalog', 'ideal', 'uninstalled', 'visible'] as $visibleName) {
         maintenanceCheck(in_array($visibleName, $visibleNames, true), 'all available modules visible: ' . $visibleName);
     }
+    $resourcesByName = array_column($fixture->ci->load->views[0][1]['resources'], null, 'system_name');
+    maintenanceCheck($resourcesByName['ideal']['maintenance_pending'] === true && str_contains($resourcesByName['ideal']['availability_reason'], 'CRM_ENABLE_IDEAL'), 'iDEAL configuration restriction distinguished from maintenance');
+    maintenanceCheck($resourcesByName['aligned']['maintenance_pending'] === false && str_contains($resourcesByName['aligned']['availability_reason'], 'fora do catálogo'), 'aligned uncatalogued module has no invented maintenance');
+    maintenanceCheck($resourcesByName['outside_catalog']['maintenance_pending'] === true, 'uncatalogued pending upgrade retains maintenance link');
+    $renderList = function ($resources, $maintenance_count) { ob_start(); require APPPATH . 'views/admin/modules/list.php'; return ob_get_clean(); };
+    $listHtml = $renderList->call($fixture->controller, [$resourcesByName['aligned'], $resourcesByName['ideal']], 1);
+    maintenanceCheck(substr_count($listHtml, 'Revisar manutenção') === 1 && str_contains($listHtml, 'Sem pendência de manutenção.'), 'list renders maintenance only for an actual pending resource');
+    maintenanceCheck(!str_contains($listHtml, '<form ') && str_contains($listHtml, 'CRM_ENABLE_IDEAL'), 'restricted resources never gain activation actions');
     maintenanceNoMutation($fixture, $before, 'resource visibility never activates or migrates');
     $fixture->ci->load->views = [];
     $inventory = $fixture->modules->database_maintenance_inventory();

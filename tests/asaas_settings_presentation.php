@@ -6,6 +6,7 @@ use Asaas\SettingsPresentation;
 
 $admin = true;
 function is_admin(): bool { return $GLOBALS['admin']; }
+function admin_url($path): string { return 'https://crm.example.test/admin/' . $path; }
 function db_prefix(): string { return 'test_'; }
 function html_escape($value): string { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); }
 final class CompanySettingsRuntime

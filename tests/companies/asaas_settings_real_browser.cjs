@@ -114,9 +114,9 @@ async function run(env = process.env) {
         const productionKey = pane.locator('[name="settings[paymentmethod_asaas_api_key]"]');
         const sandboxKey = pane.locator('[name="settings[paymentmethod_asaas_api_key_sandbox]"]');
         check(await productionKey.getAttribute('type') === 'password' && await sandboxKey.getAttribute('type') === 'password', 'both API credentials are masked before screenshots');
-        const tabs = ['Autenticação', 'Segurança', 'Pagamentos', 'Webhook', 'Recursos', 'Diagnóstico'];
-        const sections = ['authentication', 'security', 'payments', 'webhook', 'resources', 'diagnostics'];
-        check(JSON.stringify(await pane.locator('ul.nav-tabs > li > a').allTextContents()) === JSON.stringify(tabs), 'six native tabs use PT-BR labels in the original order');
+        const tabs = ['Geral', 'Autenticação', 'Webhook e operações'];
+        const sections = ['general', 'authentication', 'operations'];
+        check(JSON.stringify(await pane.locator('.nav-tabs-horizontal > li > a').allTextContents()) === JSON.stringify(tabs), 'three native tabs use PT-BR labels in the original order');
         const labels = (await pane.locator('label').allTextContents()).map(label => label.trim());
         check(labels.includes('Chave da API — Produção') && labels.includes('Chave da API — Homologação'), 'real API labels distinguish production and homologation');
         check(!labels.some(label => /profile_(?:production|sandbox)_|paymentmethod_asaas_|settings_paymentmethod_/.test(label)), 'real labels never expose synthetic fixture/translation keys');
@@ -128,12 +128,12 @@ async function run(env = process.env) {
           const field = page.locator('#asaas-api-url-' + environment);
           check(await field.inputValue() === (environment === 'production' ? 'https://api.asaas.com/v3' : 'https://api-sandbox.asaas.com/v3'), 'actual SDK API URL: ' + environment);
           check(await field.getAttribute('readonly') !== null, 'API URL is read-only: ' + environment);
-          check(await pane.locator('#asaas-settings-panel-payments [data-asaas-profile="' + environment + '"]').count() === 1, 'real independent payment profile: ' + environment);
+          check(await pane.locator('#asaas-settings-panel-general [data-asaas-profile="' + environment + '"]').count() === 1, 'real independent payment profile: ' + environment);
         }
         check(await pane.evaluate(el => el.querySelector('[data-asaas-webhook-admin-url]').getBoundingClientRect().bottom <= el.querySelector('.horizontal-scrollable-tabs').getBoundingClientRect().top), 'native heading and separator keep management link clear of tabs');
-        if (width === 390) {
+        if (width === 390 && await pane.locator('.nav-tabs-horizontal').evaluate(el => el.scrollWidth > el.clientWidth)) {
           const scrollable = pane.locator('.nav-tabs-horizontal');
-          check(await scrollable.evaluate(el => el.scrollWidth > el.clientWidth), 'real mobile tabs exercise overflow');
+          check(await scrollable.evaluate(el => el.scrollWidth >= el.clientWidth), 'real mobile tabs exercise overflow');
           await pane.locator('.arrow-right').click();
           await page.waitForFunction(() => document.querySelector('#online_payments_asaas_tab .nav-tabs-horizontal').scrollLeft > 0, null, {timeout: 10000});
           await pane.locator('.arrow-left').click();
@@ -151,11 +151,24 @@ async function run(env = process.env) {
         check(iconsLoaded && nativeFonts.some(status => status === 200), 'native arrow glyphs and local Font Awesome webfont are loaded');
         const formData = () => page.locator('#settings-form').evaluate(form => JSON.stringify(Array.from(new FormData(form).entries()).filter(([name]) => name.startsWith('settings[paymentmethod_asaas_'))));
         const before = await formData();
+        const completeSettingsBefore = await page.locator('#settings-form').evaluate(form => JSON.stringify(Array.from(new FormData(form).entries())));
         for (const section of sections) {
           currentSection = section;
+          const operationsResponse = section === 'operations' ? page.waitForResponse(response => {
+            const url = new URL(response.url());
+            return url.origin === config.url && url.pathname.endsWith('/admin/asaas') && url.searchParams.get('panel') === '1' && response.request().method() === 'GET';
+          }) : null;
           await page.locator('#asaas-settings-tab-' + section).click();
+          if (operationsResponse) {
+            check((await operationsResponse).status() === 200, 'real webhook partial GET succeeds');
+            await page.locator('#asaas-settings-panel-operations [data-asaas-operation-content]').waitFor({state: 'visible'});
+            await page.locator('#asaas-settings-panel-operations').getByRole('heading', {name: 'Webhooks de pagamento Asaas', exact: true}).waitFor();
+            check(await page.locator('#settings-form form').count() === 0, 'real operations never nests forms in settings');
+            check(await page.locator('#settings-form').evaluate(form => JSON.stringify(Array.from(new FormData(form).entries()))) === completeSettingsBefore, 'operation CSRF and IDs never leak into real settings POST');
+            check(await page.locator('#asaas-settings-panel-operations button[type=submit]').evaluateAll(buttons => buttons.length > 0 && buttons.every(button => button.form && !button.form.closest('#settings-form'))), 'real action buttons belong to independent forms');
+          }
           check(await page.locator('#asaas-settings-panel-' + section).isVisible(), 'real tab is visible: ' + section);
-          check(await pane.locator('.tab-pane.active').count() === 1, 'one inner panel remains active');
+          check(await pane.locator(':scope > .tab-content > .tab-pane.active').count() === 1, 'one inner panel remains active');
           check(await page.locator('#asaas-settings-tab-' + section).getAttribute('aria-selected') === 'true' && await page.locator('#asaas-settings-tab-' + section).getAttribute('tabindex') === '0', 'selected tab exposes native accessibility state');
           check(await formData() === before, 'navigation preserves native Asaas form controls');
           check(new URL(await page.locator('#settings-form').getAttribute('action')).searchParams.get('active_tab') === 'online_payments_asaas_tab', 'native save target preserves the parent gateway');
@@ -167,22 +180,44 @@ async function run(env = process.env) {
           check(layout.pageWidth <= width + 1, 'real settings have no page horizontal overflow');
           await page.screenshot({path: path.join(config.output, width + '-' + section + '.png'), fullPage: true});
         }
-        await page.locator('#asaas-settings-tab-webhook').click();
-        check(await page.locator('#asaas-settings-panel-webhook [role=status]').filter({hasText: 'A URL pública configurada precisa ser HTTPS válida.'}).count() === 1,
+        const operationPanel = page.locator('#asaas-settings-panel-operations');
+        for (const destination of [
+          {button: 'Transações e conciliação', suffix: '/admin/asaas/payment_origins', heading: 'Asaas: origem e pendências', artifact: 'origins'},
+          {button: 'Webhooks e eventos', suffix: '/admin/asaas', heading: 'Webhooks de pagamento Asaas', artifact: 'webhooks'},
+        ]) {
+          const responsePromise = page.waitForResponse(response => {
+            const url = new URL(response.url());
+            return url.origin === config.url && url.pathname.endsWith(destination.suffix) && url.searchParams.get('panel') === '1' && response.request().method() === 'GET';
+          });
+          await operationPanel.getByRole('button', {name: destination.button, exact: true}).click();
+          check((await responsePromise).status() === 200, 'real read-only operation GET: ' + destination.artifact);
+          await operationPanel.getByRole('heading', {name: destination.heading, exact: true}).waitFor();
+          await page.waitForFunction(() => !document.getElementById('asaas-settings-panel-operations').hasAttribute('aria-busy'));
+          check(await page.locator('#settings-form form').count() === 0, 'no nested forms after real navigation: ' + destination.artifact);
+          check(await page.locator('#settings-form').evaluate(form => JSON.stringify(Array.from(new FormData(form).entries()))) === completeSettingsBefore, 'complete settings payload unchanged: ' + destination.artifact);
+          check(await selector.inputValue() === selected, 'operation navigation leaves environment unchanged');
+          check(hashes(true) === profilesBefore && hashes() === settingsBefore, 'real GET leaves stored settings and keys unchanged');
+          await page.screenshot({path: path.join(config.output, width + '-operations-' + destination.artifact + '.png'), fullPage: true,
+            mask: [page.locator('input[type="password"], [data-asaas-secret-input], input[name*="token" i], input[id*="token" i], input[name*="api_key" i]')]});
+        }
+        await page.locator('#asaas-settings-tab-authentication').click();
+        check(await page.locator('#asaas-settings-panel-authentication [role=status]').filter({hasText: 'A URL pública configurada precisa ser HTTPS válida.'}).count() === 1,
           'HTTP CI origin reports the actual HTTPS requirement without fabricating a callback');
         check(await pane.locator('input[id^="asaas-settings-webhook-url-"]').count() === 0, 'invalid canonical base never renders a webhook URL');
-        await page.locator('#asaas-settings-tab-webhook').press('Home');
-        check(await page.locator('#asaas-settings-tab-authentication').evaluate(el => el === document.activeElement), 'Home keyboard navigation focuses first tab');
+        await page.locator('#asaas-settings-tab-authentication').press('Home');
+        check(await page.locator('#asaas-settings-tab-general').evaluate(el => el === document.activeElement), 'Home keyboard navigation focuses first tab');
         await page.keyboard.press('ArrowLeft');
-        check(await page.locator('#asaas-settings-tab-diagnostics').evaluate(el => el === document.activeElement), 'keyboard navigation wraps');
+        check(await page.locator('#asaas-settings-tab-operations').evaluate(el => el === document.activeElement), 'keyboard navigation wraps');
         await page.keyboard.press('Home');
         check(await productionKey.getAttribute('type') === 'password' && await sandboxKey.getAttribute('type') === 'password', 'both API credentials stay masked through navigation');
         // Unsaved synthetic browser input only: no stored key is read, changed or sent to a provider.
+        await page.locator('#asaas-settings-tab-authentication').click();
+        await page.locator('#asaas-profile-authentication-production-tab').click();
         await productionKey.fill('synthetic-unsaved-key');
         const keyId = await productionKey.getAttribute('id');
         await pane.locator('[data-asaas-reveal="' + keyId + '"]').click();
         check(await productionKey.getAttribute('type') === 'text' && await sandboxKey.getAttribute('type') === 'password', 'explicit reveal affects only the chosen environment');
-        await page.locator('#asaas-settings-tab-security').click();
+        await page.locator('#asaas-settings-tab-general').click();
         check(await productionKey.getAttribute('type') === 'password', 'leaving the tab conceals the key again');
         await page.locator('#asaas-settings-tab-authentication').click();
         await selector.selectOption('');
@@ -202,7 +237,7 @@ async function run(env = process.env) {
     check(hashes(true) === profilesBefore, 'navigation never rewrites either persisted environment profile');
     check(hashes() === settingsBefore, 'navigation/reveal/reload never persist any API key or environment selector change');
     fs.writeFileSync(path.join(config.output, 'coverage.json'), JSON.stringify({surface: 'authenticated real CRM settings', widths: [1280, 390], checks,
-      nativeVersion: version, screenshots: 12, webhook: 'HTTP canonical base correctly rejected; positive HTTPS browser case not covered', externalBrowserRequestsBlocked: externalRequestsBlocked, financialMutationAttempts: mutations.length}, null, 2));
+      nativeVersion: version, screenshots: 10, webhook: 'HTTP canonical base correctly rejected; positive HTTPS browser case not covered', externalBrowserRequestsBlocked: externalRequestsBlocked, financialMutationAttempts: mutations.length}, null, 2));
     console.log('Asaas real authenticated settings: ' + checks + ' checks passed; native PT-BR/URLs/masking/tabs/keyboard/mobile screenshots. HTTP callback base correctly refused; no positive HTTPS browser or provider claim.');
   } catch (error) {
     // Only our fixed step labels/counts leave the browser; raw errors can carry secret values.

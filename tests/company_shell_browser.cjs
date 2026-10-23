@@ -30,7 +30,7 @@ assert.ok(nativeAccountClasses, 'native sidebar account wrapper is preserved in 
 assert.doesNotMatch(nativeHeader, /includes\/company_selector/);
 assert.ok(nativeAside.indexOf('includes/company_selector') < nativeAside.indexOf('sidebar-user-profile'));
 const assets = [...head.matchAll(/'(assets\/[^']+\.css)'/g)].map(m => m[1]);
-assert.deepEqual(assets, ['assets/css/reset.min.css', 'assets/plugins/inter/inter.css', 'assets/plugins/bootstrap/css/bootstrap.min.css', 'assets/plugins/bootstrap-select/css/bootstrap-select.min.css', 'assets/plugins/font-awesome/css/all.min.css', 'assets/builds/tailwind.css', 'assets/css/style.min.css', 'assets/css/company-shell.css', 'assets/css/company-workspace.css']);
+assert.deepEqual(assets, ['assets/css/reset.min.css', 'assets/plugins/inter/inter.css', 'assets/builds/vendor-admin.css', 'assets/plugins/font-awesome/css/fontawesome.min.css', 'assets/plugins/font-awesome/css/brands.min.css', 'assets/plugins/font-awesome/css/solid.min.css', 'assets/plugins/font-awesome/css/regular.min.css', 'assets/builds/tailwind.css', 'assets/css/style.min.css', 'assets/css/company-shell.css', 'assets/css/company-workspace.css']);
 const scripts = [...tail.matchAll(/'(assets\/[^']+\.js)'/g)].map(m => m[1]);
 if (process.env.STATIC_ONLY) { console.log('PASS: selector semantics, preserved POST/CSRF markup, isolated assets and no legacy hooks'); process.exit(0); }
 const {execFileSync} = require('node:child_process');
@@ -100,12 +100,13 @@ const pageHtml = () => currentHtml.replace('<!--ACTUAL_SELECTOR-->', markup[sele
         if (mode === 'isolated') {
           assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'no horizontal overflow');
           const menu = await page.locator('#menu').evaluate(el => ({ scroll: el.scrollHeight, client: el.clientHeight, overflow: getComputedStyle(el).overflowY }));
-          assert.equal(menu.overflow, 'auto');
-          assert.ok(menu.scroll > menu.client, 'long menu scrolls separately');
+          assert.equal(menu.overflow, 'visible');
+          assert.ok(menu.scroll > menu.client, 'long menu extends document instead of owning a fixed scrollport');
           await page.locator('#menu a').last().scrollIntoViewIfNeeded();
+          assert.ok(await page.evaluate(() => window.scrollY > 0), 'long menu uses document scrolling');
           assert.equal(await page.locator('h1').evaluate(el => getComputedStyle(el).fontSize), '20px');
           await page.locator('.installation-name').evaluate(el => { el.textContent = 'Nome muito longo da instalação para verificar quebra de linha sem sobreposição'; el.style.fontSize = '32px'; });
-          assert.ok(await page.evaluate(() => document.querySelector('#menu').getBoundingClientRect().top >= document.querySelector('#header').getBoundingClientRect().bottom - 1), 'menu follows dynamically sized header without overlap');
+          assert.ok(await page.evaluate(() => document.querySelector('.company-selector').getBoundingClientRect().top >= document.querySelector('#header').getBoundingClientRect().bottom - 1), 'selector clears the in-flow native header');
           assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'long header has no horizontal overflow');
         }
         if (process.env.SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.SCREENSHOT_DIR, `company-shell-${mode}-${width}.png`), fullPage: true });
