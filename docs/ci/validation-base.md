@@ -51,8 +51,12 @@ Os recibos autênticos estão em [validation-images.json](validation-images.json
 
 A interface do [package](https://github.com/users/wkarts/packages/container/package/argws-crm-ci-php)
 foi conferida pelo integrador e informa que ele é **público**. Isso não substitui
-um pull anônimo: esse teste de consumo continua pendente no CI. Os recibos originais
-mantêm `visibility: must-verify-anonymous-pull` para não inventar essa evidência.
+um pull anônimo. Esse consumo foi confirmado em 23/10/2026:
+- PHP8.1: [job120692803311](https://github.com/wkarts/ARGWS-CRM/actions/runs/40035190781/job/120692803311), pull às22:41:30 UTC e smoke/suíte settings concluídos com sucesso.
+- PHP8.5: [job120693113111](https://github.com/wkarts/ARGWS-CRM/actions/runs/40035190900/job/120693113111), pull às22:42:55 UTC e smoke concluído às22:43:31 UTC; suíte posterior cancelada por fail-fast de outra verificação.
+Ambos usam digest e nenhuma credencial de registry. Os recibos originais mantêm
+`visibility: must-verify-anonymous-pull`, o estado verdadeiro no momento da publicação;
+a evidência de consumo posterior está registrada separadamente acima.
 
 A exceção temporária da branch e a autorização por mensagem de commit foram
 removidas. Fluxo permanente: main/pull_request só compilam/testam os inputs;
@@ -79,5 +83,5 @@ os comandos/cenários. Não prometer divisão linear do tempo antes da medição
 
 Local: Docker/PHP indisponíveis. Build/smoke/publicação foram executados pelo CI
 no run documentado acima; testes estáticos locais não substituem essa evidência.
-Consumo anônimo e a suíte completa com os digests fixados ainda precisam passar.
+Consumo anônimo e smoke de ambas versões passaram. A suíte completa final ainda precisa passar; a rodada d0075beb revelou overflow em uma fixture Settings e foi cancelada para diagnóstico, sem ocultar o erro.
 Nenhum deploy, release do produto ou merge foi executado.

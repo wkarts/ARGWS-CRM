@@ -61,9 +61,10 @@ checks extensions, GD JPEG, Python, Poppler, Git, Node and the paired browser.
 No apt install or extension compilation remains in the consuming job. An image
 pull failure fails the job; there is no authenticated or mutable-tag fallback.
 
-Publishing the images is established by the build receipt above. Public visibility
-must be configured before consumer publication; successful anonymous pull and
-consumer smoke are only established by the subsequent CI run, not by this change.
+Publishing the images is established by the build receipt above. Public visibility, anonymous pulls and consumer smoke for both versions are now
+verified; exact jobs/timestamps are recorded in [validation-base.md](../ci/validation-base.md).
+The subsequent full suite was cancelled after a separate UI overflow assertion;
+its partial timings are not a completed validation duration.
 Updating `docker/ci/**` triggers the original PR and push validations; new image
 digests must be explicitly reviewed and updated after successful builds. No
 production image, assertion, lock behavior, or database isolation is changed.

@@ -52,3 +52,14 @@ test('certificate entry uses only active company and settings edit permission', 
   }
   assert.match(view, /\$settingsCanCertificate = \$can_edit &&/);
 });
+
+test('settings browser records sanitized geometry and screenshots before retaining strict overflow assertion',()=>{
+ const browser=fs.readFileSync(path.join(root,'tests/company_settings_native_browser.cjs'),'utf8');
+ assert.ok(browser.indexOf('const evidence=await recordLayout')<browser.indexOf("'no horizontal overflow:"));
+ assert.match(browser,/document\.fonts\.ready/);
+ assert.match(browser,/settings-\$\{width\}-geometry\.json/);
+ assert.match(browser,/settings-\$\{width\}\.png/);
+ assert.match(browser,/evidence\.geometry\.documentWidth <= evidence\.geometry\.viewport/);
+ const diagnostics=browser.slice(browser.indexOf('async function recordLayout'),browser.indexOf('const rendered'));
+ assert.doesNotMatch(diagnostics,/\.value\b|textContent|innerHTML|outerHTML/,'diagnostics must not capture form values or document contents');
+});
