@@ -8,15 +8,17 @@ permissions:
 jobs:
   native-ui:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+      options: --shm-size=1g
     steps:
       - uses: actions/checkout@v5
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.1'
-          extensions: pdo_sqlite, mbstring, dom
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - name: Verificar ferramentas incorporadas
+        run: |
+          php -r 'foreach (["pdo_sqlite", "mbstring", "dom"] as $extension) { if (!extension_loaded($extension)) { throw new RuntimeException("Missing extension: " . $extension); } }'
+          php --version
+          node --version
+          node -e 'console.log("Playwright " + require("playwright/package.json").version); console.log("Chromium executable: " + require("playwright").chromium.executablePath())'
       - name: Validar rota ativa com o loader nativo real
         run: php tests/support/CompanyShellRouteFixture.php
       - name: Validar inventário operacional e mostrar diferenças
@@ -38,10 +40,6 @@ jobs:
           php tests/company_shell_presentation.php
           node --test tests/company_shell_controls.test.cjs
           php tests/company_settings_certificate_link.php
-      - name: Navegador isolado
-        run: |
-          npm install --no-save --no-package-lock playwright@1.55.1
-          npx playwright install --with-deps chromium
       - name: Fluxos desktop/mobile, grid e modal
         env:
           SCREENSHOT_DIR: artifacts/company-native-ui

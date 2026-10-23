@@ -3,7 +3,7 @@ on:
   pull_request:
     paths: ['docker/ci/**', '.github/workflows/ci-validation-base.yml', 'tests/test_ci_validation_base.py']
   push:
-    branches: [main, fix/crm-post-call-integration]
+    branches: [main]
     paths: ['docker/ci/**', '.github/workflows/ci-validation-base.yml', 'tests/test_ci_validation_base.py']
   workflow_dispatch:
     inputs:
@@ -56,14 +56,13 @@ jobs:
           path: artifacts/
           if-no-files-found: error
           retention-days: 7
-      # TEMPORARY bootstrap: remove branch push admission after receipts are pinned.
       - name: Exportar o mesmo artefato já testado para publicação autorizada
         if: >-
-          github.repository == 'wkarts/ARGWS-CRM' && ((github.event_name == 'workflow_dispatch' && inputs.publish == true) || (github.event_name == 'push' && github.ref == 'refs/heads/fix/crm-post-call-integration' && github.event.head_commit.message == 'ci: publish approved validation bases'))
+          github.repository == 'wkarts/ARGWS-CRM' && github.event_name == 'workflow_dispatch' && inputs.publish == true
         run: docker save argws-crm-ci-php:test-${{ matrix.php }} -o /tmp/ci-base-image.tar
       - uses: actions/upload-artifact@v4
         if: >-
-          github.repository == 'wkarts/ARGWS-CRM' && ((github.event_name == 'workflow_dispatch' && inputs.publish == true) || (github.event_name == 'push' && github.ref == 'refs/heads/fix/crm-post-call-integration' && github.event.head_commit.message == 'ci: publish approved validation bases'))
+          github.repository == 'wkarts/ARGWS-CRM' && github.event_name == 'workflow_dispatch' && inputs.publish == true
         with:
           name: ci-base-image-php-${{ matrix.php }}
           path: /tmp/ci-base-image.tar
@@ -73,7 +72,7 @@ jobs:
   publish:
     # No PR event, arbitrary branch or ordinary push can obtain package-write permission.
     if: >-
-      github.repository == 'wkarts/ARGWS-CRM' && ((github.event_name == 'workflow_dispatch' && inputs.publish == true) || (github.event_name == 'push' && github.ref == 'refs/heads/fix/crm-post-call-integration' && github.event.head_commit.message == 'ci: publish approved validation bases'))
+      github.repository == 'wkarts/ARGWS-CRM' && github.event_name == 'workflow_dispatch' && inputs.publish == true
     needs: build
     runs-on: ubuntu-latest
     permissions:

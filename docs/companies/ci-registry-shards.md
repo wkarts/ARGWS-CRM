@@ -45,6 +45,25 @@ uploaded even on failure (where available). No environment/credentials are logge
 The first new full run must establish actual shard balance and wall-clock savings;
 118 commands each does not imply equal runtime or a guaranteed fourfold speedup.
 
-Future pinned CI images can replace setup after their build and digest are
-verified. This change keeps the existing PHP images and extension setup and does
-not publish an image, weaken assertions, or alter production behavior.
+## Validation images (not application images)
+
+The registry shards now consume immutable images built successfully in
+[run 40033441190](https://github.com/wkarts/ARGWS-CRM/actions/runs/40033441190)
+from source `b6c023be` and build-input fingerprint
+`aba4c4a89d17021677d25778b11417413370cbd84318c63d79392221751b9885`:
+
+- PHP 8.1: `ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14`
+- PHP 8.5: `ghcr.io/wkarts/argws-crm-ci-php@sha256:d050af83a621363bdc79e5868f85d7203e8b5fb03be6cd37fbb7c41500894677`
+
+Each of the eight jobs pulls the public package without registry credentials and
+runs `argws-ci-smoke` with its expected PHP version before any suite. The smoke
+checks extensions, GD JPEG, Python, Poppler, Git, Node and the paired browser.
+No apt install or extension compilation remains in the consuming job. An image
+pull failure fails the job; there is no authenticated or mutable-tag fallback.
+
+Publishing the images is established by the build receipt above. Public visibility
+must be configured before consumer publication; successful anonymous pull and
+consumer smoke are only established by the subsequent CI run, not by this change.
+Updating `docker/ci/**` triggers the original PR and push validations; new image
+digests must be explicitly reviewed and updated after successful builds. No
+production image, assertion, lock behavior, or database isolation is changed.

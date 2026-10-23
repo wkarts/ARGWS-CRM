@@ -36,6 +36,7 @@ on:
       - docs/issuer-essential-module.md
       - scripts/ci/run-company-registry-shard.py
       - tests/ci/**
+      - docker/ci/**
       - .github/workflows/issuer-foundation.yml
   push:
     branches: [main, develop]
@@ -73,6 +74,7 @@ on:
       - docs/issuer-essential-module.md
       - scripts/ci/run-company-registry-shard.py
       - tests/ci/**
+      - docker/ci/**
       - .github/workflows/issuer-foundation.yml
 permissions:
   contents: read
@@ -109,7 +111,14 @@ jobs:
       matrix:
         php: ['8.1', '8.5']
         shard: [1, 2, 3, 4]
-    container: php:${{ matrix.php }}-cli
+        include:
+          - php: '8.1'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+          - php: '8.5'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:d050af83a621363bdc79e5868f85d7203e8b5fb03be6cd37fbb7c41500894677
+    container:
+      image: ${{ matrix.image }}
+      options: --shm-size=1g
     services:
       mysql:
         image: mysql:8.0
@@ -121,13 +130,10 @@ jobs:
           --health-interval=10s --health-timeout=5s --health-retries=10
     steps:
       - uses: actions/checkout@v5
-      - name: Preparar driver MySQL de teste
-        run: |
-          apt-get update && apt-get install -y --no-install-recommends libpng-dev libjpeg62-turbo-dev libonig-dev poppler-utils python3
-          command -v pdftotext
-          command -v python3
-          docker-php-ext-configure gd --with-jpeg
-          docker-php-ext-install pdo_mysql mysqli gd mbstring
+      - name: Validar ferramentas da imagem CI por digest
+        env:
+          EXPECTED_PHP: ${{ matrix.php }}
+        run: argws-ci-smoke
       - name: Validar sintaxe e controles HTTP
         if: matrix.shard == 1
         run: |

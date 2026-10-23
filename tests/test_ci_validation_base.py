@@ -46,8 +46,11 @@ class ValidationBaseTests(unittest.TestCase):
         self.assertIn('packages: write', publish)
         self.assertIn('needs: build', publish)
         self.assertIn("github.repository == 'wkarts/ARGWS-CRM'", publish)
-        self.assertIn("github.event.head_commit.message == 'ci: publish approved validation bases'", publish)
-        self.assertIn("github.ref == 'refs/heads/fix/crm-post-call-integration'", publish)
+        self.assertNotIn('head_commit.message', workflow)
+        self.assertNotIn('fix/crm-post-call-integration', workflow)
+        self.assertIn("github.event_name == 'workflow_dispatch'", publish)
+        self.assertIn('branches: [main]', workflow)
+        self.assertIn('default: false', workflow)
         self.assertIn("inputs.publish == true", publish)
         self.assertLess(publish.index('argws-ci-smoke'), publish.index('docker login'))
         self.assertIn('docker load -i', publish)
@@ -58,6 +61,28 @@ class ValidationBaseTests(unittest.TestCase):
         self.assertNotIn('docker/login-action', workflow)
         self.assertIn('--network none', workflow)
         self.assertIn('argws-ci-smoke', workflow)
+
+    def test_published_receipts_keep_real_digest_and_provenance(self):
+        receipts = json.loads(self.read('docs/ci/validation-images.json'))
+        self.assertEqual({r['php'] for r in receipts}, {'8.1', '8.5'})
+        self.assertEqual(len(receipts), 2)
+        self.assertEqual(len({r['digest_reference'] for r in receipts}), 2)
+        for receipt in receipts:
+            self.assertRegex(receipt['digest_reference'], r'^ghcr\.io/wkarts/argws-crm-ci-php@sha256:[a-f0-9]{64}$')
+            self.assertRegex(receipt['inputs_sha256'], r'^[a-f0-9]{64}$')
+            self.assertRegex(receipt['source_sha'], r'^[a-f0-9]{40}$')
+            self.assertRegex(receipt['run_id'], r'^[0-9]+$')
+            self.assertEqual(receipt['platform'], 'linux/amd64')
+            self.assertEqual(receipt['smoke'], 'passed-before-login')
+            self.assertEqual(receipt['visibility'], 'must-verify-anonymous-pull')
+
+    def test_no_bootstrap_publish_path_survives(self):
+        workflow = self.read('.github/workflows/ci-validation-base.yml')
+        gate = "github.repository == 'wkarts/ARGWS-CRM' && github.event_name == 'workflow_dispatch' && inputs.publish == true"
+        self.assertEqual(workflow.count(gate), 3)
+        self.assertNotIn('publish approved validation bases', workflow)
+        self.assertNotIn('TEMPORARY bootstrap', workflow)
+        self.assertEqual(workflow.count('packages: write'), 1)
 
     def test_smoke_remains_fail_closed(self):
         smoke = self.read('docker/ci/smoke.sh')

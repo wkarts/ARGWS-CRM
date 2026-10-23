@@ -102,17 +102,12 @@ jobs:
 
   settings-ui:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+      options: --shm-size=1g
     steps:
       - uses: actions/checkout@v5
-      - name: Instalar driver e Chromium pareados em diretório isolado
-        run: |
-          mkdir -p "$RUNNER_TEMP/asaas-settings-ui"
-          cp docker/ci/package.json docker/ci/package-lock.json "$RUNNER_TEMP/asaas-settings-ui/"
-          npm ci --prefix "$RUNNER_TEMP/asaas-settings-ui" --ignore-scripts
-          "$RUNNER_TEMP/asaas-settings-ui/node_modules/.bin/playwright" install --with-deps chromium
       - name: Validar abas em JavaScript e DOM Chromium pareado
-        env:
-          NODE_PATH: ${{ runner.temp }}/asaas-settings-ui/node_modules
         run: |
           node --test tests/asaas_settings_browser_runtime.test.cjs
           node --test tests/asaas_settings_dom_harness.test.cjs

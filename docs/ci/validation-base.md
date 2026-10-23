@@ -26,31 +26,40 @@ Ele registra SHA do código, hashes dos inputs e ID da imagem realmente constru�
 **ID local de imagem não é digest GHCR de manifest**, portanto não deve ser usado
 como se fosse referência remota publicada.
 
-Proposta de package: `ghcr.io/wkarts/argws-crm-ci-php`, separado de
-`argws-crm`. Proposta de tags: `php8.1-<hash-inputs>-<run-id>` e
-`php8.5-<hash-inputs>-<run-id>`. O sufixo de execução evita sobrescrever uma tag
+Package publicado: `ghcr.io/wkarts/argws-crm-ci-php`, separado de
+`argws-crm`. Formato das tags: `php8.1-<hash-inputs>-<run-id>-<attempt>` e
+`php8.5-<hash-inputs>-<run-id>-<attempt>`. O sufixo de execução evita sobrescrever uma tag
 quando a base/pacotes de segurança mudarem com os mesmos inputs de texto.
 Após publicação autorizada e smoke do artefato publicado, registrar os **digests
 remotos reais** e consumir `ghcr.io/wkarts/argws-crm-ci-php@sha256:...` nos jobs.
 Não consumir `latest` nem inventar digest antes do build/push.
 
-A visibilidade **pública** é proposta para permitir pull em PRs sem credenciais.
+A visibilidade **pública** foi autorizada para permitir pull em PRs sem credenciais.
 O GitHub pode criar packages privados por padrão; é preciso verificar/configurar
 visibilidade explicitamente antes de depender disso. O workflow não configura visibilidade automaticamente; confirmar pull anônimo depois
 do push. A publicação foi autorizada para este package público de ferramentas,
 mas não foi executada localmente. Não há `pull_request_target`.
 
-Bootstrap temporário sem merge: somente push no repo `wkarts/ARGWS-CRM`, branch
-`fix/crm-post-call-integration`, com mensagem de commit **exatamente**
-`ci: publish approved validation bases`. O job `publish` depende de todos builds,
-carrega o mesmo tar testado do run atual e repete smoke antes do login. Somente esse
-job tem `packages: write`; GITHUB_TOKEN entra apenas no step de login. Nenhum segredo
-é passado ao build. Tag inclui hash dos inputs, run-id e tentativa para não
-sobrescrever. Recibo inclui digest GHCR real, SHA fonte e versão PHP.
-**Remover o trigger da branch e a condição bootstrap após obter/pinar recibos.**
-Fluxo permanente: main/pull_request só compilam/testam inputs; publicação exige
-workflow_dispatch com `publish=true`. Não alterar branch protection nem fazer merge
-para contornar a autorização. Não há deploy ou publicação da imagem do produto.
+## Publicação concluída e bootstrap removido
+
+O run [40033441190](https://github.com/wkarts/ARGWS-CRM/actions/runs/40033441190)
+publicou as duas imagens a partir de `b6c023bec16a1289c0f658b9eb4e6cbc486dbd6d`.
+Os recibos autênticos estão em [validation-images.json](validation-images.json):
+
+- PHP8.1: `sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14`
+- PHP8.5: `sha256:d050af83a621363bdc79e5868f85d7203e8b5fb03be6cd37fbb7c41500894677`
+
+A interface do [package](https://github.com/users/wkarts/packages/container/package/argws-crm-ci-php)
+foi conferida pelo integrador e informa que ele é **público**. Isso não substitui
+um pull anônimo: esse teste de consumo continua pendente no CI. Os recibos originais
+mantêm `visibility: must-verify-anonymous-pull` para não inventar essa evidência.
+
+A exceção temporária da branch e a autorização por mensagem de commit foram
+removidas. Fluxo permanente: main/pull_request só compilam/testam os inputs;
+publicação exige `workflow_dispatch` com `publish=true` (padrão false), no repositório
+exato. O job publish depende de todos builds, carrega o mesmo tar testado do run e
+repete smoke antes de login. Somente esse job possui `packages: write`. Não existe
+publicação por push, nem `pull_request_target`, deploy ou alteração de produção.
 
 ## Atualização e rollback
 
@@ -68,6 +77,7 @@ No run39996938632, setup levou aproximadamente um minuto, enquanto MySQL levou
 Sharding isolado e observabilidade da suíte são alterações separadas que conservam
 os comandos/cenários. Não prometer divisão linear do tempo antes da medição.
 
-Local: Docker/PHP indisponíveis; build/smoke reais dependem do CI. Testes estáticos
-não comprovam disponibilidade das tags base, bibliotecas ou funcionamento browser.
-Nenhum push GHCR, deploy, release ou merge foi executado.
+Local: Docker/PHP indisponíveis. Build/smoke/publicação foram executados pelo CI
+no run documentado acima; testes estáticos locais não substituem essa evidência.
+Consumo anônimo e a suíte completa com os digests fixados ainda precisam passar.
+Nenhum deploy, release do produto ou merge foi executado.

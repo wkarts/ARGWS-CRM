@@ -97,11 +97,35 @@ class RegistryShardsTest(unittest.TestCase):
         self.assertEqual(len(combined), 480)
         self.assertEqual(len(set(map(tuple, combined))), 480)
 
+    def test_pinned_images_match_php_and_smoke_is_mandatory(self):
+        source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
+        shards = source.split('  registry-shards:\n')[1].split('  registry:\n')[0]
+        images = re.findall(r"- php: '(8\.[15])'\n +image: (ghcr\.io/wkarts/argws-crm-ci-php@sha256:[a-f0-9]{64})", shards)
+        self.assertEqual([php for php, image in images], ['8.1', '8.5'])
+        # Verified build receipt: run40033441190; prevent swapped PHP images.
+        self.assertEqual(dict(images), {
+            '8.1': 'ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14',
+            '8.5': 'ghcr.io/wkarts/argws-crm-ci-php@sha256:d050af83a621363bdc79e5868f85d7203e8b5fb03be6cd37fbb7c41500894677',
+        })
+        self.assertEqual(len(set(image for php, image in images)), 2)
+        self.assertEqual(len(re.findall(r'^ +image: ghcr', shards, re.M)), 2)
+        self.assertIn('      image: ${{ matrix.image }}', shards)
+        self.assertIn('      options: --shm-size=1g', shards)
+        self.assertIn('          EXPECTED_PHP: ${{ matrix.php }}', shards)
+        smoke = shards.split('      - name: Validar ferramentas da imagem CI por digest\n')[1].split('      - ')[0]
+        self.assertIn('        run: argws-ci-smoke', smoke)
+        self.assertNotIn('        if:', smoke)
+        self.assertNotIn('apt-get', shards)
+        self.assertNotIn('docker-php-ext-install', shards)
+        self.assertEqual(source.count('      - docker/ci/**'), 2)
+        self.assertNotIn('credentials:', shards, 'public CI image must be pulled anonymously')
+        self.assertNotIn('packages:', source, 'consumer needs no registry credential permission')
+
     def test_workflow_preserves_matrix_and_fail_closed_required_names(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
         self.assertIn('  registry-shards:\n    needs: registry-plan', source)
         self.assertIn('        shard: [1, 2, 3, 4]', source)
-        self.assertIn('    container: php:${{ matrix.php }}-cli', source)
+        self.assertIn('      image: ${{ matrix.image }}', source)
         self.assertEqual(source.count("php: ['8.1', '8.5']"), 2)
         self.assertIn('  registry:\n    if: always()\n    needs: [registry-plan, registry-shards]', source)
         self.assertIn('test "$PLAN_RESULT" = success && test "$SHARDS_RESULT" = success', source)
