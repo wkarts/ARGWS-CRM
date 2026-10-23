@@ -1,6 +1,7 @@
 <?php
 /** Executes real Settings model/controller against synthetic PDO storage and isolated framework I/O. */
 require __DIR__ . '/company_settings.php';
+require_once dirname(__DIR__).'/support/StrictViewFixture.php';
 
 class CompanyRequestScope { public static function context() { return null; } public static function sealedFor($owner): bool { return $GLOBALS['settingsSealEnabled']; } public static function token(): string { return 'synthetic-context-token'; } public static function adminUrl($owner,string $path = ''): string { return admin_url($path); } }
 $GLOBALS['settingsSealEnabled'] = true;
@@ -126,12 +127,14 @@ CompanySettingsRuntime::run($db,$p,41,12,function () {
     $GLOBALS['settingsSealEnabled'] = true;
 });
 $viewHarness = new class {
-    public $config; public $security;
+    public $config; public $security; public $db; public $router;
     public function __construct() {
+        $this->db = $GLOBALS['CI']->db;
+        $this->router = new class { public function fetch_class(): string { return 'settings'; } };
         $this->config = new class { public function item($key) { return $key === 'csrf_protection'; } };
         $this->security = new class { public function get_csrf_token_name() { return 'synthetic_csrf'; } public function get_csrf_hash() { return 'synthetic-csrf-hash'; } };
     }
-    public function render(array $data): string { extract($data); ob_start(); include APPPATH . 'views/admin/settings/company_scoped.php'; return ob_get_clean(); }
+    public function render(array $data): string { return strictFixtureRender(function () use ($data): void { extract($data); include APPPATH . 'views/admin/settings/company_scoped.php'; }); }
 };
 $emailViews = array_values(array_filter($GLOBALS['CI']->load->views, static fn($view) => $view[1]['group'] === 'email'));
 $renderData = end($emailViews)[1];

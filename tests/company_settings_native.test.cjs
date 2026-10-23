@@ -63,3 +63,19 @@ test('settings browser records sanitized geometry and screenshots before retaini
  const diagnostics=browser.slice(browser.indexOf('async function recordLayout'),browser.indexOf('const rendered'));
  assert.doesNotMatch(diagnostics,/\.value\b|textContent|innerHTML|outerHTML/,'diagnostics must not capture form values or document contents');
 });
+
+test('standalone shared-shell fixtures declare framework dependencies and fail before emitting warning HTML',()=>{
+ for(const file of ['tests/settings/settings_model_controller.php','tests/companies/asaas_boundaries.php','tests/companies/asaas_checkout_views.php']) {
+  const source=fs.readFileSync(path.join(root,file),'utf8');
+  assert.match(source,/public(?: object)? \$db;/,file);
+  assert.match(source,/public(?: object)? \$router;/,file);
+  assert.match(source,/strictFixtureRender\(/,file);
+ }
+ const guard=fs.readFileSync(path.join(root,'tests/support/StrictViewFixture.php'),'utf8');
+ assert.match(guard,/throw \$error/);
+ assert.match(guard,/restore_error_handler\(\)/);
+ assert.match(guard,/ob_get_level\(\) > \$level/);
+ assert.doesNotMatch(guard,/error_reporting\(|ini_set\(/,'never suppress renderer diagnostics');
+ const common=fs.readFileSync(path.join(root,'tests/issuers_core_support.php'),'utf8');
+ assert.match(common,/'router' => new class \{ public function fetch_class\(\)/);
+});

@@ -216,6 +216,8 @@ function essentialFixture(?string $version = null, int $active = 0, bool $availa
     if ($version !== null) { $db->insert($prefix . 'modules', ['module_name' => 'issuers', 'installed_version' => $version, 'active' => $active]); }
     $ci = (object) [
         'db' => $db,
+        // Neutral presentation router; route-specific controller fixtures override explicitly.
+        'router' => new class { public function fetch_class(): string { return ''; } },
         'load' => new EssentialTestLoader(),
         'lang' => new class { public function load($name) {} public function line($name) { return $name; } },
     ];
