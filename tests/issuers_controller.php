@@ -3,6 +3,12 @@
 declare(strict_types=1);
 define('BASEPATH', __DIR__);
 class AdminController { public $input; public $session; }
+class CompanyRequestScope {
+    public static function sealedFor($ci){return false;}
+    public static function context(){return null;}
+    public static function invalidateCaches($ci){}
+    public static function adminUrl($ci,$path=''){return '/admin/'.$path;}
+}
 class HttpStop extends RuntimeException {}
 class RedirectStop extends RuntimeException {}
 function _l($message) { return $message; }
@@ -26,6 +32,7 @@ class ControllerSession
 {
     public ?string $token;
     public function userdata($key) { return $this->token; }
+    public function set_flashdata($key,$value) {$GLOBALS['flash'][$key]=$value;}
 }
 class ControllerRegistry
 {
@@ -71,4 +78,12 @@ foreach ([['action'=>'register_client','client_id'=>'101'],['action'=>'share_cli
 $registry->failure = 'issuer_access_denied';
 try { $controller->save(); } catch (RedirectStop $stop) {}
 check(['danger','issuer_access_denied'],$GLOBALS['alert'],'service authorization honored');
+foreach ([['GET',$token,405],['POST','invalid',403]] as [$method,$submitted,$code]) {
+    [$controller,$registry]=controller(['action'=>'issuer_status','issuer_id'=>'11','active'=>'0','issuers_csrf'=>$submitted],$method,$token);
+    try {$controller->save();throw new LogicException('status guard bypassed');}catch(HttpStop $error){check($code,$error->getCode(),'status HTTP/CSRF guard');}
+    check([],$registry->calls,'status blocked before mutation');
+}
+[$controller,$registry]=controller(array_merge($base,['action'=>'issuer_status','actor_id'=>'999','active'=>'0']),'POST',$token);
+try {$controller->save();}catch(RedirectStop $stop){check('/admin/issuers',$stop->getMessage(),'status returns to grid');}
+check([['setActive',[7,11,'0']]],$registry->calls,'status uses trusted actor and no identity/profile payload');
 echo "Issuer controller: {$checks} checks passed; POST, CSRF, input shape and trusted actor.\n";

@@ -199,16 +199,25 @@ essentialCheck(!str_contains($settingsHtml, 'synthetic-private') && !str_contain
 $ci = contextEnvironment($f, $s, 'issuers', 'index');$companies=new Issuers();$companies->index(54);
 $companyView=end($companies->load->views);
 essentialCheck($companyView[0]==='admin/companies/registry','secondary company registry uses isolated native renderer');
-essentialCheck($companyView[1]['can_manage'] && !$companyView[1]['can_create'],'company editor cannot create companies as implicit global administrator');
+essentialCheck($companyView[1]['can_manage'] && !$companyView[1]['can_create'],'company settings editor cannot create companies as implicit global administrator');
 $companyHtml=(new ContextViewRenderer())->render($companyView[0],$companyView[1]);
 essentialCheck(str_contains($companyHtml,'id="header"') && str_contains($companyHtml,'name="issuers_csrf"'),'company form retains layout and dedicated CSRF');
 essentialCheck(!str_contains($companyHtml,'Forbidden synthetic'),'company catalog does not expose unauthorized company');
 $dom=new DOMDocument();$previous=libxml_use_internal_errors(true);$dom->loadHTML($companyHtml);libxml_clear_errors();libxml_use_internal_errors($previous);$xpath=new DOMXPath($dom);
-essentialCheck($xpath->query('//form')->length===2 && $xpath->query('//form//form')->length===0,'company selector and edit form are independent balanced forms');
-essentialCheck($xpath->query('//*[@id="wrapper"]//main//form')->length===1,'company edit form remains inside CRM content wrapper');
-$escapedData=$companyView[1];$escapedData['selected']['legal_name']='Synthetic <img src=x onerror=alert(1)>';$escapedData['profile']['invoice_company_city']='" autofocus onfocus=alert(1)';
+essentialCheck($xpath->query('//form')->length===2 && $xpath->query('//form//form')->length===0,'company selector and status form are independent balanced forms');
+essentialCheck($xpath->query('//*[@id="wrapper"]//main//form')->length===1,'company status form remains inside CRM content wrapper');
+essentialCheck($xpath->query('//form[input[@name="action" and @value="issuer_status"] and input[@name="issuer_id" and @value="54"] and input[@name="issuers_csrf"]]')->length===1,'authorized secondary has dedicated CSRF-protected status action');
+essentialCheck($xpath->query('//form[input[@name="action" and @value="issuer_status"]]/input[@name="_company_context" and @value="'.CompanyRequestScope::token().'"]')->length>=1,'status action retains original company context token');
+essentialCheck($xpath->query('//form/input[@name="issuer_id" and (@value="41" or @value="55")]')->length===0,'principal and unauthorized company have no status mutation control');
+essentialCheck($xpath->query('//*[@data-company-identity or @data-new-company]')->length===0,'grid exposes neither parallel identity editor nor creation to non-master');
+// The grid renders the authorized catalog projection, not the former selected/profile editor.
+// Inject malicious stored values into the real rendering inputs so this remains an XSS regression test.
+$escapedData=$companyView[1];
+$escapedData['catalog'][0]['legal_name']='Synthetic <img src=x onerror=alert(1)>';
+$escapedData['catalog'][0]['tax_id']='" autofocus onfocus=alert(1)';
 $escapedHtml=(new ContextViewRenderer())->render($companyView[0],$escapedData);
 essentialCheck(!str_contains($escapedHtml,'<img src=x') && str_contains($escapedHtml,'&lt;img'),'company registry escapes stored company name');
+essentialCheck(str_contains($escapedHtml,'&quot; autofocus onfocus=alert(1)'),'company registry escapes stored tax identifier quotes');
 $previous=libxml_use_internal_errors(true);$dom->loadHTML($escapedHtml);libxml_clear_errors();libxml_use_internal_errors($previous);$xpath=new DOMXPath($dom);
 essentialCheck($xpath->query('//*[@onerror or @onfocus or @autofocus]')->length===0,'company registry field values cannot inject event attributes');
 

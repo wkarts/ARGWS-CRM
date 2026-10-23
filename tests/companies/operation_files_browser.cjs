@@ -1,14 +1,16 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 // Actual multipart/UI/HTTP/MySQL; disposable fixture only, with every request kept on localhost.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;assert.match(url||'',/^http:\/\/127\.0\.0\.1:\d+$/);assert.match(db||'',/^argws-crm-provision-db-\d+$/);assert.equal(process.env.ISSUERS_BROWSER_DB_NAME,'argws_upgrade_ci');
 function sql(q){return execFileSync('docker',['exec','-e','MYSQL_PWD',db,'mysql','--protocol=tcp','--host=127.0.0.1','--user='+process.env.ISSUERS_BROWSER_DB_USER,'argws_upgrade_ci','--batch','--skip-column-names','-e',q],{env:{...process.env,MYSQL_PWD:process.env.ISSUERS_BROWSER_DB_PASSWORD},encoding:'utf8'}).trim();}
 async function go(p,b){await Promise.all([p.waitForNavigation({waitUntil:'domcontentloaded'}),b.click()]);}async function hidden(form){return form.locator('input[type=hidden]').evaluateAll(xs=>Object.fromEntries(xs.filter(x=>x.name).map(x=>[x.name,x.value])));}
-(async()=>{const browser=await chromium.launch({headless:true}),ctx=await browser.newContext();await ctx.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await ctx.newPage(),errors=[],proofs={},parents={};page.on('pageerror',e=>errors.push(e.message));try{
+(async()=>{const browser=await chromium.launch({headless:true}),ctx=await browser.newContext();await ctx.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await workspacePage(ctx),errors=[],proofs={},parents={};page.on('pageerror',e=>errors.push(e.message));try{
  await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await go(page,page.locator('button[type=submit]'));
  const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'"),actor=sql('SELECT master_staff_id FROM tblissuers_installation_identity WHERE id=1');let old;
  const pdf=Buffer.from('%PDF-1.4\nPrivate operational browser proof\n%%EOF\n'),png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAIAAAASFvFNAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAC0lEQVQImWNgwAQAABQAAWX1h1kAAAAASUVORK5CYII=','base64');
- async function select(id){await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(id);await go(page,page.locator('.company-selector-form button[type=submit]'));}
+ async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);}
  for(const[issuer,letter]of[[a,'a'],[b,'b']]){await select(issuer);const client=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client "+letter+"'");proofs[issuer]={};parents[issuer]={};
   for(const kind of['contract','ticket']){const route='/admin/company_'+(kind==='contract'?'contracts':'tickets');await page.goto(url+route);
    if(kind==='contract'){await page.locator('#contract-client').selectOption(client);await page.locator('#contract-new-name').fill('Operational private files '+letter);await page.locator('#contract-new-body').fill('Synthetic internal private contract');await go(page,page.getByRole('button',{name:'Criar rascunho de contrato',exact:true}));await go(page,page.getByRole('button',{name:'Ativar contrato e preservar texto',exact:true}));}

@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Presentation-only CLI fixture. Outputs the actual native header fragment.
  *
- * The consumer supplies native CSS/JS and initializes selectpicker. No database,
+ * The consumer supplies native CSS/JS. The selector loads its shipped assets. No database,
  * HTTP server, authenticated session, provider request or CRM bootstrap is used.
  * CompanySettingsIdentity and IssuerResourceAccess are the shipped classes;
  * their read-only I/O is an exact synthetic query whitelist. Framework globals,
@@ -16,6 +16,7 @@ declare(strict_types=1);
  * staff identity. The caller can request the server's mobile header branch.
  *
  * Usage: php tests/support/NativeHeaderFixture.php [--full-shell] [--long-name] [--mobile-user]
+ * Selector-only POST fixture: --selector-only [--selected-two]
  */
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
@@ -23,12 +24,14 @@ if (PHP_SAPI !== 'cli') {
 }
 
 $fixtureFlags = array_slice($argv, 1);
-if (array_diff($fixtureFlags, ['--full-shell', '--long-name', '--mobile-user'])) {
+if (array_diff($fixtureFlags, ['--full-shell', '--long-name', '--mobile-user', '--selector-only', '--selected-two'])) {
     throw new InvalidArgumentException('Unknown native-header fixture flag');
 }
 define('NATIVE_HEADER_FIXTURE_FULL_SHELL', in_array('--full-shell', $fixtureFlags, true));
 define('NATIVE_HEADER_FIXTURE_LONG_NAME', in_array('--long-name', $fixtureFlags, true));
 define('NATIVE_HEADER_FIXTURE_MOBILE_USER', in_array('--mobile-user', $fixtureFlags, true));
+define('NATIVE_HEADER_FIXTURE_SELECTOR_ONLY', in_array('--selector-only', $fixtureFlags, true));
+define('NATIVE_HEADER_FIXTURE_SELECTED_TWO', in_array('--selected-two', $fixtureFlags, true));
 const NATIVE_HEADER_FIXTURE_ROOT = __DIR__ . '/../..';
 define('BASEPATH', NATIVE_HEADER_FIXTURE_ROOT . '/system/');
 define('APPPATH', NATIVE_HEADER_FIXTURE_ROOT . '/application/');
@@ -51,11 +54,11 @@ final class NativeHeaderFixtureDatabase
             && $parameters === []) {
             $rows = [['primary_issuer_id' => 1]];
         } elseif ($sql === 'SELECT * FROM fixture_issuers_registry WHERE id=? AND active=1'
-            && $parameters === [1]) {
+            && ($parameters === [1] || (NATIVE_HEADER_FIXTURE_SELECTOR_ONLY && $parameters === [2]))) {
             $rows = [[
-                'id' => 1,
+                'id' => $parameters[0],
                 'active' => 1,
-                'legal_name' => native_header_fixture_company_name(),
+                'legal_name' => $parameters[0] === 1 ? native_header_fixture_company_name() : 'Outra empresa de teste',
                 'identity_status' => 'complete',
                 'settings_json' => '{}',
             ]];
@@ -82,10 +85,11 @@ function native_header_fixture_company_name(): string
 function e($value): string { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); }
 function _l(string $key, ...$arguments): string { global $lang; return $lang[$key] ?? $key; }
 function db_prefix(): string { return 'fixture_'; }
-function admin_url(string $path = ''): string { return '#fixture-' . rawurlencode($path); }
+function base_url(string $path = ''): string { return '/' . ltrim($path, '/'); }
+function admin_url(string $path = ''): string { return NATIVE_HEADER_FIXTURE_SELECTOR_ONLY ? '/admin/' . $path : '#fixture-' . rawurlencode($path); }
 function form_open(string $url, array $attributes = []): string
 {
-    $html = '<form action="#" method="post"';
+    $html = '<form action="' . e(NATIVE_HEADER_FIXTURE_SELECTOR_ONLY ? $url : '#') . '" method="post"';
     foreach ($attributes as $key => $value) { $html .= ' ' . e($key) . '="' . e($value) . '"'; }
     return $html . '>';
 }
@@ -132,8 +136,12 @@ final class CompanyRequestScope
     public static function context()
     {
         return new class {
-            public function available(): array { return [['id' => 1, 'legal_name' => native_header_fixture_company_name()]]; }
-            public function issuerId(): int { return 1; }
+            public function available(): array {
+                $companies = [['id' => 1, 'legal_name' => native_header_fixture_company_name()]];
+                if (NATIVE_HEADER_FIXTURE_SELECTOR_ONLY) { $companies[] = ['id' => 2, 'legal_name' => 'Outra empresa de teste']; }
+                return $companies;
+            }
+            public function issuerId(): int { return NATIVE_HEADER_FIXTURE_SELECTED_TWO ? 2 : 1; }
             public function csrf(): string { return 'synthetic-fixture-only'; }
         };
     }
@@ -207,6 +215,10 @@ final class NativeHeaderFixtureApplication
 }
 
 $fixtureApplication = new NativeHeaderFixtureApplication();
+if (NATIVE_HEADER_FIXTURE_SELECTOR_ONLY) {
+    $fixtureApplication->load->view('admin/includes/company_selector');
+    exit;
+}
 $fixtureApplication->load->view('admin/includes/header');
 if (NATIVE_HEADER_FIXTURE_FULL_SHELL) {
     $fixtureApplication->load->view('admin/includes/setup_menu');

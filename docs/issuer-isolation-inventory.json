@@ -4,7 +4,8 @@
   "limitations": [
     "Conservative lexical inventory, not complete call-graph or SQL authorization proof.",
     "Vendor/assets/language/historical migrations and install scripts excluded from runtime inventory.",
-    "Dynamic tables, aliases and extensions require additional manual/runtime coverage."
+    "Dynamic tables, aliases and extensions require additional manual/runtime coverage.",
+    "PR49 reviewed lexical removal: application/views/admin/issuers/manage.php now delegates to application/views/admin/companies/registry_grid.php; its old invoice navigation signal is gone. The new grid projects the authorized company catalog and posts status/onboarding actions with context tokens, but neither wrapper nor grid currently matches this invoice/customer lexical scanner. Removal is not isolation closure; controller/service and transitive-view authorization still require separate coverage."
   ],
   "files": {
     "application/config/autoload.php": {
@@ -4868,27 +4869,28 @@
       "evidence": ""
     },
     "application/views/admin/companies/layout_head.php": {
-      "sha256": "1b8d70f34b897bf4f1ffda3ed058686f436957b2deb5d42ddcfec5eb68ac77ee",
+      "sha256": "ac46fcd015a4a8fb64753f36403f89f483869ce0c42ef9921e76829970dec23e",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        39,
-        40
+        23,
+        26,
+        28
       ],
       "state": "unreviewed",
-      "evidence": ""
+      "evidence": "PR49 presentation review: native static assets and ACL-filtered navigation replace the parallel shell; invoice signals are menu entries. Staff identity projection is limited to the authenticated actor. No legacy financial hooks were enabled. This is not a complete authorization/runtime review. Active navigation now resolves the router through the real MX_Loader getter; no authorization or data hydration changes."
     },
     "application/views/admin/companies/onboarding.php": {
-      "sha256": "74823df07a8e4535451b5a56a7e9419df48bcd26c813fa250ed8c4c461cf67a9",
+      "sha256": "59a2a64333f843b549e26e7f521befff5a9b1f0d113506f3965c1ac4734a2bd4",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        52
+        58
       ],
       "state": "unreviewed",
-      "evidence": ""
+      "evidence": "PR49 presentation review: wizard moved into a same-origin modal frame; numbering signals remain company identity/address fields. Draft revision, actor scope and creation payload remain server controlled. Modal message validation is covered by tests/company_registry_modal_browser.cjs; full isolation remains unreviewed. Native reset/Inter/Tailwind assets and horizontally scrollable mobile step navigation now match the CRM shell; these presentation changes do not close authorization or operational review. Progress label now counts the same six navigation stages; no payload or controller change. Boundary remains unreviewed."
     },
     "application/views/admin/contracts/send_to_client.php": {
       "sha256": "13c4b7b073575df2d5a8ae1654b74298c5465fa80817647da535c39d7598fd78",
@@ -5310,17 +5312,6 @@
       "state": "unreviewed",
       "evidence": ""
     },
-    "application/views/admin/issuers/manage.php": {
-      "sha256": "021534532c8621f4429a5d5f2182e825bcfdd695b0342d7954975bce8fd5b388",
-      "categories": [
-        "invoice_table"
-      ],
-      "signal_lines": [
-        10
-      ],
-      "state": "unreviewed",
-      "evidence": ""
-    },
     "application/views/admin/leads/convert_to_customer.php": {
       "sha256": "950ec183e4024d5f966f10a72a4e2cab0fb7bbe6cf22778726c92439ae87bdbc",
       "categories": [
@@ -5489,7 +5480,7 @@
       "evidence": ""
     },
     "application/views/admin/settings/company_scoped.php": {
-      "sha256": "ca31eb57f1dc682d1014de92e456e617c8be1fcbb460589fb5d269719fa194f7",
+      "sha256": "7febf52475dda14462be82da9069663fbe0d72408138ed279d504b4bff1bd7b1",
       "categories": [
         "documents_numbering"
       ],
@@ -5497,10 +5488,10 @@
         13,
         14,
         15,
-        90
+        135
       ],
       "state": "unreviewed",
-      "evidence": ""
+      "evidence": "PR49 presentation review: grouped native-style settings navigation and certificate link retain the selected-company form, revision and CSRF fields. Certificate visibility requires settings edit; backend checks remain authoritative. No claim of complete settings/document isolation."
     },
     "application/views/admin/settings/includes/clients.php": {
       "sha256": "b424b4cb29e3cdb2abcf321423b77e2d9fe418c92b682c771d44da9da976e1f7",
@@ -5514,20 +5505,20 @@
       "evidence": ""
     },
     "application/views/admin/settings/includes/company.php": {
-      "sha256": "373de038a51873f09af089c9db04fd99eb0ccef4fd17ad1db41e00ed383e85cf",
+      "sha256": "a86acbf05e1a6117638a02ba6d58c2f540350678553a1b2db47770f893de370d",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        6,
-        8,
-        9,
-        11,
-        12,
-        13
+        13,
+        15,
+        16,
+        18,
+        19,
+        20
       ],
       "state": "unreviewed",
-      "evidence": ""
+      "evidence": "PR49 presentation review: certificate navigation added only with an active company settings runtime and edit capability. Existing invoice identity settings inputs remain present. Native settings boundary remains unreviewed."
     },
     "application/views/admin/settings/includes/credit_notes.php": {
       "sha256": "31ac65398272a9b3aba8217de6cdde55f9aeffd4468c691689ade98bb1bdd10d",

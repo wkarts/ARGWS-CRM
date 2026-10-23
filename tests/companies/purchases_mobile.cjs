@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 
 const assert = require('node:assert/strict');
 const {chromium} = require('playwright');
@@ -33,8 +34,7 @@ fs.mkdirSync(artifacts, {recursive: true});
     await submit(page.locator('form').filter({has: page.locator('input[name=email]')}));
     assert(!new URL(page.url()).pathname.includes('authentication'));
     await page.goto(url + '/admin/company_context');
-    await page.locator('#company-context-select').selectOption(String(owner.issuer));
-    await submit(page.locator('.company-selector-form'));
+    await selectCompanyOption(page, String(owner.issuer));
     for (const width of [390, 320]) {
       await page.setViewportSize({width, height: 844});
       for (const query of ['request=' + owner.request, 'tab=requests', 'tab=suppliers', 'tab=orders', 'tab=payables', 'tab=report', 'tab=settings']) {

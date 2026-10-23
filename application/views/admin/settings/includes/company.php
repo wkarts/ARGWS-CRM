@@ -1,5 +1,12 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div role="tabpanel" class="tab-pane" id="company_info">
+    <?php
+    $settingsCertificateContext = class_exists('CompanyRequestScope', false) ? CompanyRequestScope::context() : null;
+    if ($settingsCertificateContext && $settingsCertificateContext->issuerId() !== null
+        && class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active() && CompanySettingsRuntime::can('edit')) {
+    ?>
+    <p><a class="btn btn-default" href="<?= htmlspecialchars(CompanyRequestScope::adminUrl($this, 'company_certificates'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>">Certificado A1</a></p>
+    <?php } ?>
     <div class="alert alert-info">
         <?php echo _l('settings_sales_company_info_note'); ?>
     </div>

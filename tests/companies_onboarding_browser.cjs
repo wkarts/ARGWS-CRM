@@ -1,4 +1,7 @@
 'use strict';
+const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
+
+const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
@@ -35,7 +38,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 1280, height: 960 } });
   await context.route('**/*', route => new URL(route.request().url()).origin === url ? route.continue() : route.abort());
-  const page = await context.newPage();
+  const page = await workspacePage(context);
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   try {
     await login(page, 'admin-ci@example.invalid', process.env.ISSUERS_BROWSER_PASSWORD);
@@ -73,40 +76,116 @@ async function next(page) { await navigate(page, page.locator('section form butt
     assert.match(employee, /^[1-9]\d*$/);
     assert.equal(sql('SELECT issuer_id FROM tblissuers_staff_defaults WHERE staff_id=' + employee), primary);
 
-    await page.goto(url + '/admin/company_onboarding'); await next(page);
-    const draftUrl = page.url();
-    await page.locator('#legal_name').fill('Synthetic company B');
-    await page.locator('#tax_id').fill('52998224725');
-    await page.locator('a[href="#company-address"]').click(); await page.locator('#profile_invoice_company_city').fill('Synthetic B');
-    await next(page);
-    const stale = await hidden(page);
+    // Real authenticated pages, not HTML fixtures or presentation overrides.
+    // A temporary mobile tab preserves the main workflow's viewport and draft state.
+    async function captureWizardActions(host, frame, filename) {
+      // Real keyboard traversal must reveal the form actions within the scrollable iframe.
+      await frame.locator('#profile_company_state_registration').press('Tab');
+      const submit = frame.locator('button[type=submit]');
+      assert.equal(await submit.evaluate(el => el === document.activeElement), true, 'Tab reaches Save and continue');
+      await submit.press('Tab');
+      assert.equal(await frame.locator('[data-wizard-close]').evaluate(el => el === document.activeElement), true, 'Tab reaches Exit without submitting');
+      for (const control of [submit, frame.locator('[data-wizard-close]')]) {
+        assert.equal(await control.evaluate(el => { const r=el.getBoundingClientRect();return r.top>=0 && r.bottom<=innerHeight+1 && r.left>=0 && r.right<=innerWidth+1; }), true, 'wizard actions are fully reachable inside the iframe');
+      }
+      await host.screenshot({ path: output + '/' + filename, fullPage: true });
+    }
+    async function captureMobileCompanyPage(path, filename, showWizard = false) {
+      const mobilePage = await context.newPage();
+      mobilePage.on('pageerror', error => errors.push(error.message));
+      try {
+        await mobilePage.setViewportSize({ width: 390, height: 844 });
+        await mobilePage.goto(url + path);
+        await mobilePage.waitForFunction(() => document.body.classList.contains('page-small'));
+        if (showWizard) {
+          await mobilePage.locator('#company-create-modal').waitFor({ state: 'visible' });
+          await mobilePage.frameLocator('iframe[name="company-create-frame"]').locator('#legal_name').waitFor();
+        } else {
+          await mobilePage.locator('[data-company-registry]').waitFor();
+        }
+        await mobilePage.screenshot({ path: output + '/' + filename, fullPage: true });
+        if (showWizard) await captureWizardActions(mobilePage, mobilePage.frameLocator('iframe[name="company-create-frame"]'), 'company-onboarding-actions-mobile.png');
+      } finally { await mobilePage.close(); }
+    }
+    await page.goto(url + '/admin/issuers');
+    await page.locator('[data-company-registry]').waitFor();
+    await page.screenshot({ path: output + '/company-registry-desktop.png', fullPage: true });
+    await captureMobileCompanyPage('/admin/issuers', 'company-registry-mobile.png');
+    await page.goto(url + '/admin/company_onboarding');
+    await page.locator('#company-create-modal').waitFor({state:'visible'});
+    let wizard = page.frame({name:'company-create-frame'});
+    await wizard.locator('section form button[type=submit]').waitFor();
+    await next(wizard);
+    await wizard.locator('#legal_name').waitFor();
+    await page.screenshot({ path: output + '/company-onboarding-identity-desktop.png', fullPage: true });
+    await captureWizardActions(page, wizard, 'company-onboarding-actions-desktop.png');
+    await captureMobileCompanyPage('/admin/company_onboarding', 'company-onboarding-identity-mobile.png', true);
+    const draftUrl = wizard.url();
+    await wizard.locator('#legal_name').fill('Synthetic company B');
+    await wizard.locator('#tax_id').fill('52998224725');
+    await wizard.locator('a[href="#company-address"]').click(); await wizard.locator('#profile_invoice_company_city').fill('Synthetic B');
+    await next(wizard);
+    const stale = await hidden(wizard);
     const denied = await context.request.post(draftUrl, { form: { ...stale, action: 'advance', revision: '0', step: '1', 'wizard[legal_name]': 'Stale overwrite', 'wizard[tax_id]': '52998224725' } });
     assert.equal(denied.status(), 409, 'stale draft cannot overwrite newer revision');
     await page.goto(url + '/admin/issuers');
     await page.goto(url + '/admin/company_onboarding');
-    assert.equal(await page.locator('#dateformat').count(), 1, 'interrupted wizard resumes saved step');
-    await next(page);
-    await page.locator('[name="wizard[selected_staff][' + employee + ']"]').check();
-    await page.locator('#default_' + employee).selectOption('1');
-    await page.locator('[name="wizard[staff][' + employee + '][resources][settings][]"][value=view]').check();
-    await next(page); await next(page);
-    assert((await page.locator('section').innerText()).includes('Synthetic company B'));
-    const completion = await hidden(page);
-    await next(page);
-    assert((await page.locator('[role=status]').innerText()).includes('Empresa criada'));
+    await page.locator('#company-create-modal').waitFor({state:'visible'});
+    wizard = page.frame({name:'company-create-frame'});
+    await wizard.locator('#dateformat').waitFor();
+    assert.equal(await wizard.locator('#dateformat').count(), 1, 'interrupted wizard resumes saved step');
+    await next(wizard);
+    await wizard.locator('[name="wizard[selected_staff][' + employee + ']"]').check();
+    await wizard.locator('#default_' + employee).selectOption('1');
+    await wizard.locator('[name="wizard[staff][' + employee + '][resources][settings][]"][value=view]').check();
+    await next(wizard); await next(wizard);
+    assert((await wizard.locator('section').innerText()).includes('Synthetic company B'));
+    const completion = await hidden(wizard);
+    await next(wizard);
+    assert((await wizard.locator('[role=status]').innerText()).includes('Empresa criada'));
     const created = sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
     assert.match(created, /^[1-9]\d*$/);
-    const repeat = await context.request.post(draftUrl, { form: { ...completion, ...(await hidden(page)), action: 'complete', revision: completion.revision } });
+    const repeat = await context.request.post(draftUrl, { form: { ...completion, ...(await hidden(wizard)), action: 'complete', revision: completion.revision } });
     assert.equal(repeat.status(), 200, 'completion retry returns existing company');
     assert.equal(sql("SELECT COUNT(*) FROM tblissuers_registry WHERE tax_id='52998224725'"), '1');
     assert.equal(sql('SELECT issuer_id FROM tblissuers_staff_defaults WHERE staff_id=' + employee), created);
     assert.equal(sql('SELECT COUNT(*) FROM tblissuers_staff WHERE staff_id=' + employee + ' AND issuer_id IN (' + primary + ',' + created + ')'), '2', 'existing company membership retained');
     await page.screenshot({ path: output + '/company-onboarding-completed.png', fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
-    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'wizard fits mobile');
+    const beforeMobileResize = await page.evaluate(() => ({ bodyClass: document.body.className, width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
+    // The native primary-company shell moves #wrapper only after its resize handler
+    // adds page-small. Viewport emulation alone does not await that browser event.
+    await page.waitForFunction(() => document.body.classList.contains('page-small'));
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const mobileLayout = await page.evaluate(() => ({
+      bodyClass: document.body.className, width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+      overflowing: Array.from(document.querySelectorAll('body *')).map(element => {
+        const rect = element.getBoundingClientRect();
+        return { tag: element.tagName, id: element.id, classes: element.getAttribute('class'), left: rect.left, right: rect.right, width: rect.width, height: rect.height };
+      }).filter(rect => rect.width > 0 && rect.height > 0 && rect.right > innerWidth + 1).slice(0, 20),
+    }));
+    const wizardMobileLayout = await wizard.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
+    fs.writeFileSync(output + '/company-onboarding-mobile-layout.json', JSON.stringify({ beforeMobileResize, mobileLayout, wizardMobileLayout }, null, 2));
+    await page.screenshot({ path: output + '/company-onboarding-completed-mobile.png', fullPage: true });
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'wizard fits mobile: ' + JSON.stringify(mobileLayout));
+    assert(wizardMobileLayout.scrollWidth <= wizardMobileLayout.width + 1, 'wizard document fits its mobile iframe');
+    // Closing first cleans the URL with replaceState, then reloads the registry.
+    // Wait for the real main-document response, not that same-document URL change.
+    const [registryResponse] = await Promise.all([
+      page.waitForResponse(response => response.request().isNavigationRequest()
+        && response.request().frame() === page.mainFrame()
+        && response.request().resourceType() === 'document'
+        && response.url() === url + '/admin/issuers'),
+      wizard.locator('[data-wizard-close]').click(),
+    ]);
+    assert.equal(registryResponse.status(), 200, 'completion reloads the authorized registry');
+    await registryResponse.finished();
+    await page.locator('.company-selector [data-company-choice="' + created + '"]').waitFor({ state: 'attached' });
+    await page.waitForLoadState('load');
+    assert.equal(page.url(), url + '/admin/issuers');
     const oldContext = completion._company_context;
-    await page.locator('#company-context-select').selectOption(created);
-    await navigate(page, page.locator('.company-selector-form button[type=submit]'));
+    await selectCompanyOption(page, created);
+
     const switched = await hidden(page);
     const staleCompany = await context.request.post(draftUrl, { form: { ...completion, ...switched, action: 'complete', _company_context: oldContext } });
     assert.equal(staleCompany.status(), 409, 'company switch refuses old-tab submission before mutation');
@@ -115,13 +194,15 @@ async function next(page) { await navigate(page, page.locator('section form butt
     // Positive isolated customer directory, with actual HTTP/CSRF and durable receipts.
     async function switchCompany(id) {
       await page.goto(url + '/admin/company_context');
-      await page.locator('#company-context-select').selectOption(id);
-      await navigate(page, page.locator('.company-selector-form button[type=submit]'));
+      await selectCompanyOption(page, id);
+
     }
     async function formFields(form) {
       return form.locator('input[type=hidden]').evaluateAll(inputs => Object.fromEntries(inputs.filter(x => x.name).map(x => [x.name, x.value])));
     }
     await page.goto(url + '/admin/company_clients');
+    // Directory is the default workspace; creation is opened through its real toolbar action.
+    await page.locator('.company-workspace-actions').getByRole('button', { name: 'Novo cliente privado', exact: true }).click();
     await page.locator('#new_company').fill('Synthetic private B <script>');
     const createFields = await formFields(page.locator('form').filter({ has: page.locator('#new_company') }));
     // Replay the complete original payload: supplementary profile fields participate in its receipt hash.
@@ -175,6 +256,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
     const regular = await browser.newContext();
     await regular.route('**/*', route => new URL(route.request().url()).origin === url ? route.continue() : route.abort());
     const employeePage = await regular.newPage();
+    employeePage.on('pageerror', error => errors.push(error.message));
     await login(employeePage, 'onboarding-ci@example.invalid', 'synthetic-staff-onboarding');
     assert.equal((await regular.request.get(draftUrl)).status(), 403, 'employee cannot access master draft by URL');
     assert.equal((await employeePage.goto(url + '/admin/settings?group=company')).status(), 200, 'positive secondary settings access');

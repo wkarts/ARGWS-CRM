@@ -1,0 +1,11 @@
+/* Native CRM panel/tabs vocabulary; no application bootstrap or transport. */
+.company-workspace-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.company-workspace-actions:empty { display: none; }
+.company-workspace-tabs { display: flex; flex-wrap: wrap; gap: 0; margin-bottom: 20px; padding: 0; }
+.company-workspace-tabs > li > button { border: 0; border-bottom: 2px solid transparent; background: transparent; color: #475569; padding: 12px 16px; font-weight: 500; text-align: left; }
+.company-workspace-tabs > li.active > button { border-bottom-color: #2563eb; color: #1d4ed8; }
+.company-workspace-tabs > li > button:focus-visible, .company-workspace-panel:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.company-workspace-panel[hidden] { display: none !important; }
+.company-workspace-panel > h2:first-child, .company-workspace-panel > h3:first-child { margin-top: 0; }
+.company-workspace-panel { min-width: 0; }
+@media(max-width:767px) { .company-workspace-actions { justify-content: flex-start; } .company-workspace-tabs > li > button { padding: 10px 12px; } }

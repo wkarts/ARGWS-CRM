@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption, ensureCompanySidebar } = require('./helpers/company_selector_driver.cjs');
 // Real browser + real isolated CRM. This script refuses a public/production URL.
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
@@ -73,6 +74,38 @@ async function waitForUpgradeForm(page) {
     };
     console.error('Upgrade browser diagnostic: ' + JSON.stringify(diagnostic));
     throw error;
+  }
+}
+
+// Read-only evidence from the authenticated disposable CRM, not a synthetic DOM.
+// Each route is reloaded at its target viewport so native responsive initialization runs.
+async function captureRealScreens(page, routes) {
+  const originalUrl = page.url(), originalViewport = page.viewportSize();
+  try {
+    for (const [name, route] of routes) for (const [size, viewport] of [['desktop', {width:1440,height:960}], ['mobile', {width:390,height:844}]]) {
+      await page.setViewportSize(viewport);
+      const response = await page.goto(route, {waitUntil:'load'});
+      assert.equal(response.status(), 200, name + ' evidence uses an authorized real document');
+      await page.locator('#wrapper').waitFor({state:'visible'});
+      if (size === 'mobile') await page.waitForFunction(() => document.body.classList.contains('company-context-shell') || document.body.classList.contains('page-small'));
+      await page.evaluate(async () => { await document.fonts.ready; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
+      const geometry = await page.evaluate(() => ({viewport:{width:innerWidth,height:innerHeight}, pageWidth:document.documentElement.scrollWidth,
+        fitsViewport:document.documentElement.scrollWidth <= innerWidth + 1, bodyClasses:document.body.className,
+        elements:Array.from(document.querySelectorAll('#header,#menu,#wrapper,.company-registry,.company-native-settings,[data-company-workspace]')).map(element => {
+          const box=element.getBoundingClientRect();return {id:element.id, classes:element.className, left:box.left,right:box.right,width:box.width,scrollWidth:element.scrollWidth};
+        })}));
+      const prefix = output + '/real-' + name + '-' + size;
+      fs.writeFileSync(prefix + '.json', JSON.stringify(geometry,null,2));
+      await page.screenshot({path:prefix + '.png',fullPage:true});
+      if (size === 'mobile' && name === 'companies-grid') {
+        await ensureCompanySidebar(page);
+        await page.locator('.company-selector .dropdown-toggle').waitFor({state:'visible'});
+        await page.screenshot({path:output + '/real-companies-sidebar-mobile.png',fullPage:true});
+      }
+    }
+  } finally {
+    await page.setViewportSize(originalViewport);
+    await page.goto(originalUrl, {waitUntil:'load'});
   }
 }
 
@@ -190,19 +223,22 @@ async function waitForUpgradeForm(page) {
       const primaryCompany = sql('SELECT primary_issuer_id FROM tblissuers_installation_identity WHERE id=1');
       if (sql("SELECT COUNT(*) FROM tblissuers_registry WHERE tax_id='52998224725'") === '0') {
         await page.goto(url + '/admin/company_onboarding');
-        async function nextSecondaryStep() { await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('section form button[type=submit]').click()]); }
+        await page.locator('#company-create-modal').waitFor({state:'visible'});
+        const wizard = page.frame({name:'company-create-frame'});
+        await wizard.locator('section form button[type=submit]').waitFor();
+        async function nextSecondaryStep() { await Promise.all([wizard.waitForNavigation({ waitUntil: 'domcontentloaded' }), wizard.locator('section form button[type=submit]').click()]); }
         await nextSecondaryStep();
-        await page.locator('#legal_name').fill('Synthetic secondary native recovery');
-        await page.locator('#tax_id').fill('52998224725');
-        await page.locator('a[href="#company-address"]').click(); await page.locator('#profile_invoice_company_city').fill('Synthetic secondary');
+        await wizard.locator('#legal_name').fill('Synthetic secondary native recovery');
+        await wizard.locator('#tax_id').fill('52998224725');
+        await wizard.locator('a[href="#company-address"]').click(); await wizard.locator('#profile_invoice_company_city').fill('Synthetic secondary');
         for (let step = 0; step < 5; step++) await nextSecondaryStep();
-        assert((await page.locator('[role=status]').innerText()).includes('Empresa criada'));
+        assert((await wizard.locator('[role=status]').innerText()).includes('Empresa criada'));
       }
       const secondaryCompany = sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
       await page.goto(url + '/admin/company_context');
-      await page.locator('#company-context-select').selectOption(secondaryCompany);
-      await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('.company-selector-form button[type=submit]').click()]);
-      assert.equal(await page.locator('#company-context-select').inputValue(), secondaryCompany);
+      await selectCompanyOption(page, secondaryCompany);
+
+      assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany);
       sql('DELETE FROM tblissuers_lock WHERE id=1');
       await page.goto(url + '/admin');
       await waitForUpgradeForm(page);
@@ -226,13 +262,17 @@ async function waitForUpgradeForm(page) {
       await page.locator('[role=status].alert-success').waitFor({ state: 'visible' });
       assert.equal(sql('SELECT COUNT(*) FROM tblissuers_lock WHERE id=1'), '1');
       assert.equal(sql("SELECT CONCAT(master_staff_id,':',primary_issuer_id,':',source) FROM tblissuers_installation_identity WHERE id=1"), identityBeforeSecondary, 'native upgrade preserves the already identified master without new CLI authorization');
-      assert.equal(await page.locator('#company-context-select').inputValue(), secondaryCompany, 'secondary company selection is preserved');
+      assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany, 'secondary company selection is preserved');
       assert.equal((await context.request.get(url + '/admin/settings?group=update')).status(), 403, 'native feedback never opens global Settings to a secondary company');
       await page.reload();
       assert(!(await page.content()).includes('O CRM foi atualizado com sucesso.'), 'secondary native success is one-shot');
-      await page.locator('#company-context-select').selectOption(primaryCompany);
-      await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('.company-selector-form button[type=submit]').click()]);
+      await selectCompanyOption(page, primaryCompany);
+
       await shell(page);
+      await page.goto(url + '/admin/issuers');
+      const selectedCompanyLabel = (await page.locator('.company-selector [data-company-current-label]').textContent()).trim();
+      assert.ok(selectedCompanyLabel.replace(/\(principal\)/g, '').trim(), 'empty optional display identity retains the authorized canonical company name');
+      await captureRealScreens(page, [['companies-grid',url + '/admin/issuers'], ['company-settings',url + '/admin/settings?group=company']]);
     }
     assert.deepEqual(errors, [], 'no uncaught JavaScript errors in native shell');
     console.log('Issuer browser smoke passed: native shell/menu, installation/upgrade, errors/retry, desktop/mobile.');

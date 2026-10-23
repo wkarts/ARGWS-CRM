@@ -26,15 +26,61 @@ $labels = [
 ];
 ?>
 <?php $company_page_title='Definições'; require APPPATH.'views/admin/companies/layout_head.php'; ?>
-    <a href="<?= $escape($company_urls['companies']); ?>">Empresas</a>
-    <h1>Definições</h1>
-    <p>Empresa selecionada: <strong><?= $escape($company_identity['legal_name']); ?></strong></p>
-    <nav class="company-settings-nav" aria-label="Seções de definições">
-        <a href="<?= $escape(CompanyRequestScope::adminUrl($this,'company_assets')); ?>">Logotipo e assinatura</a>
-        <?php foreach ($groups as $key=>$label) { ?><a href="<?= $escape($company_urls[$key]); ?>" <?= $group === $key ? 'aria-current="page"' : ''; ?>><?= $escape($label); ?></a><?php } ?>
-    </nav>
-    <section class="company-settings-card">
-        <h2><?= $escape($groups[$group]); ?></h2>
+<?php
+// Presentation groups only. The controller's admitted catalog remains the source of links.
+$settingsCertificateContext = CompanyRequestScope::context();
+$settingsCanCertificate = $can_edit && $settingsCertificateContext && $settingsCertificateContext->issuerId() !== null
+    && class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active() && CompanySettingsRuntime::can('edit');
+$settingsSections = [
+    'Geral' => ['company', 'localization'],
+    'E-mail' => ['email', 'email_content'],
+    'Vendas e documentos' => ['documents', 'sales_documents', 'document_pdf', 'sales_pdf', 'pdf_typography'],
+    'Tarefas' => ['task_defaults', 'task_operations', 'task_timers', 'task_timer_stop'],
+    'Projetos' => ['project_files'],
+    'Atendimento' => ['ticket_preferences'],
+];
+$listedGroups = array_merge(...array_values($settingsSections));
+$otherGroups = array_values(array_diff(array_keys($groups), $listedGroups));
+if ($otherGroups) { $settingsSections['Outras definições'] = $otherGroups; }
+?>
+<link rel="stylesheet" href="<?= $escape(base_url('assets/css/company-settings-native.css').'?v='.(defined('ARGWS_VERSION') ? ARGWS_VERSION : 'core')); ?>">
+<div class="row company-native-settings">
+    <div class="col-xs-12 col-lg-10">
+        <div class="row">
+            <div class="col-md-4 col-lg-3">
+                <h1 class="tw-font-bold tw-mt-0 tw-text-neutral-800 company-settings-title">Definições</h1>
+                <nav class="panel_s" aria-label="Seções de definições">
+                    <div class="panel-body">
+                        <?php foreach ($settingsSections as $sectionLabel => $sectionGroups) {
+                            $sectionGroups = array_values(array_filter($sectionGroups, static fn($key) => isset($groups[$key], $company_urls[$key])));
+                            if (!$sectionGroups) { continue; }
+                        ?>
+                        <section class="company-settings-section">
+                            <h2 class="tw-text-sm tw-text-neutral-500 tw-font-medium"><?= $escape($sectionLabel); ?></h2>
+                            <ul class="list-unstyled">
+                                <?php foreach ($sectionGroups as $key) { ?>
+                                <li class="settings-group-<?= $escape($key); ?>">
+                                    <a href="<?= $escape($company_urls[$key]); ?>" class="company-settings-link<?= $group === $key ? ' active' : ''; ?>" <?= $group === $key ? 'aria-current="page"' : ''; ?>><?= $escape($groups[$key]); ?></a>
+                                </li>
+                                <?php } ?>
+                                <?php if ($sectionLabel === 'Geral') { ?>
+                                <li><a class="company-settings-link" href="<?= $escape(CompanyRequestScope::adminUrl($this,'company_assets')); ?>">Logotipo e assinatura</a></li>
+                                <?php if ($settingsCanCertificate) { ?>
+                                <li><a class="company-settings-link" href="<?= $escape(CompanyRequestScope::adminUrl($this,'company_certificates')); ?>">Certificado A1</a></li>
+                                <?php } ?>
+                                <?php } ?>
+                            </ul>
+                        </section>
+                        <?php } ?>
+                    </div>
+                </nav>
+            </div>
+            <div class="col-md-8 col-lg-9">
+                <h2 class="tw-font-bold tw-mt-0 tw-text-neutral-800 company-settings-title"><?= $escape($groups[$group]); ?></h2>
+                <p class="text-muted company-settings-context">Empresa selecionada: <strong><?= $escape($company_identity['legal_name']); ?></strong></p>
+        <form id="company-settings-form" method="post" action="<?= $escape($company_urls[$group]); ?>" autocomplete="off">
+                <section class="panel_s">
+                    <div class="panel-body">
         <?php if ($error !== null) { ?><div role="alert" class="alert alert-danger"><?= $escape($error); ?></div><?php } ?>
         <?php if ($saved) { ?><div role="status" class="alert alert-success">Definições salvas para esta empresa.</div><?php } ?>
         <?php if ($company_identity['identity_status'] === 'pending') { ?><div class="alert alert-warning">A identidade fiscal desta empresa precisa ser conferida.</div><?php } ?>
@@ -50,7 +96,6 @@ $labels = [
         <?php if($group==='task_defaults'){?><p>Padrões próprios para tarefas novas de projeto e avulsas. Valores escolhidos explicitamente prevalecem. Em andamento não inicia cronômetro nem gera cobrança. A criação nunca conclui a tarefa. Desativar a sugestão de responsável exige escolher um funcionário autorizado.</p><?php }?>
         <?php if($group==='ticket_preferences'){?><p>Ordem das respostas no suporte desta empresa e no portal. Somente mensagens publicadas individualmente aparecem para o contato. A preferência não altera conteúdo, autoria ou permissões de acesso.</p><?php }?>
         <?php if($group==='project_files'){?><p>Desativado por padrão em cada empresa, inclusive a principal. Permite ao contato ocultar somente arquivos próprios, quando o projeto e suas permissões atuais também autorizarem. Compartilhamento não concede exclusão. Ocultar preserva o conteúdo e os recibos; esta opção não remove arquivos de outras pessoas.</p><?php }?>
-        <form method="post" action="<?= $escape($company_urls[$group]); ?>" autocomplete="off">
             <input type="hidden" name="_company_context" value="<?= $escape($context_token); ?>">
             <?php if ($this->config->item('csrf_protection')) { ?><input type="hidden" name="<?= $escape($this->security->get_csrf_token_name()); ?>" value="<?= $escape($this->security->get_csrf_hash()); ?>"><?php } ?>
             <?php if($group==='pdf_typography'){?><input type="hidden" name="pdf_typography_revision" value="<?= (int)$pdf_typography_revision; ?>"><?php }?>
@@ -94,10 +139,15 @@ $labels = [
                     <div class="form-group"><label for="company-smtp-password">Senha SMTP</label><input class="form-control" id="company-smtp-password" name="settings[smtp_password]" type="password" value="" autocomplete="new-password"><small><?= $password_configured ? 'Senha já configurada. Deixe em branco para manter.' : 'Nenhuma senha configurada para esta empresa.'; ?></small><div class="checkbox"><label><input type="checkbox" name="clear_smtp_password" value="1">Apagar a senha configurada</label></div></div>
                 <?php } ?>
                 </div>
-                <?php if ($can_edit) { ?><div class="company-settings-actions"><button class="btn btn-primary" type="submit">Salvar definições</button></div><?php } ?>
             </fieldset>
+                    </div>
+                    <?php if ($can_edit) { ?>
+                    <div class="panel-footer text-right">
+                        <button class="btn btn-primary" type="submit">Salvar definições</button>
+                    </div>
+                    <?php } ?>
+                </section>
         </form>
-    </section>
 
 <?php if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()&&CompanySettingsRuntime::can('view')&&$group==='email'){?><p><a href="<?= htmlspecialchars(CompanyRequestScope::adminUrl($this,'company_google_mail_oauth'),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); ?>">Google SMTP próprio para notificações de documentos</a></p><?php } ?>
 
@@ -105,4 +155,8 @@ $labels = [
 
 <?php if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()&&CompanySettingsRuntime::can('view')&&$group==='email'&&(new IssuerResourceAccess($this->db,db_prefix()))->can(CompanyRequestScope::context()->issuerId(),CompanyRequestScope::context()->staffId(),'connect-api-connector','view')){?><p><a href="<?= htmlspecialchars(CompanyRequestScope::adminUrl($this,'company_connect_api'),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); ?>">Connect|API WhatsApp próprio para avisos privados</a></p><?php } ?>
 
+            </div>
+        </div>
+    </div>
+</div>
 <?php require APPPATH.'views/admin/companies/layout_tail.php'; ?>

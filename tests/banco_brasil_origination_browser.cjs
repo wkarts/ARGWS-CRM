@@ -1,4 +1,6 @@
 'use strict';
+const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
+const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
 const assert = require('node:assert/strict');
 const { execFileSync, spawnSync } = require('node:child_process');
@@ -33,7 +35,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
 
 
 (async()=>{
- const browser=await chromium.launch({headless:true});const context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const browser=await chromium.launch({headless:true});const context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await workspacePage(context),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await login(page,'admin-ci@example.invalid',process.env.ISSUERS_BROWSER_PASSWORD);
   const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
@@ -42,7 +44,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   execFileSync('docker',['cp','tests/banco_brasil_http_fixture.php',app+':/app/tests/banco_brasil_http_fixture.php']);
   execFileSync('docker',['cp','tests/support/BbPdoDatabase.php',app+':/app/tests/support/BbPdoDatabase.php']);
   execFileSync('docker',['exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',app,'php','tests/banco_brasil_http_fixture.php'],{stdio:'pipe'});
-  async function select(id){await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(id);await navigate(page,page.locator('.company-selector-form button[type=submit]'));}
+  async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);}
   await select(a);
   // CPF is a source field of the invoice snapshot, never a remittance form override.
   const client=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client a'");

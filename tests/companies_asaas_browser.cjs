@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
 // Actual CRM/HTTP/MySQL/Chromium; protocol responses are injected only by the CLI service fixture.
 const assert=require('node:assert/strict');const {execFileSync}=require('node:child_process');const fs=require('node:fs');
 
@@ -63,7 +64,7 @@ try{
  trace.stage('authenticate');
  await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await go(page,page.locator('form').filter({has:page.locator('input[name=password]')}).locator('button[type=submit]'),trace,'authenticate');
  const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");const prepared={};let oldForm;
- async function select(id,letter){trace.stage(letter+':select-company');await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(id);await go(page,page.locator('.company-selector-form button[type=submit]'),trace,letter+':select-company');}
+ async function select(id,letter){trace.stage(letter+':select-company');await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);}
  for(const [issuer,letter]of[[a,'a'],[b,'b']]){
   await select(issuer,letter);await openCompany(page,url,trace,letter+':open-company');
   await page.locator('#asaas-new-environment').selectOption('sandbox');await page.locator('#asaas-new-account').fill('wallet-browser-'+letter);await page.locator('#asaas-new-key').fill('synthetic-browser-key-'+letter);

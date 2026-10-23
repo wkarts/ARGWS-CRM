@@ -1,4 +1,6 @@
 'use strict';
+const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
+const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
@@ -24,6 +26,9 @@ async function login(page, email, password) {
   await navigate(page, page.locator('button[type=submit]'));
 }
 async function navigate(page, button) {
+  // Diagnose a missing control before starting a navigation that cannot occur.
+  // The workspace driver still reveals hidden panels through their real buttons on click.
+  await button.waitFor({ state: 'attached' });
   await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), button.click()]);
 }
 async function hidden(page) {
@@ -36,16 +41,20 @@ async function next(page) { await navigate(page, page.locator('section form butt
   const browser = await chromium.launch({headless:true});
   const admin = await browser.newContext();
   await admin.route('**/*', r => new URL(r.request().url()).origin === url ? r.continue() : r.abort());
-  const page = await admin.newPage();
+  const page = await workspacePage(admin);
   const errors=[]; page.on('pageerror', e=>errors.push(e.message));
   try {
     await login(page,'admin-ci@example.invalid',process.env.ISSUERS_BROWSER_PASSWORD);
     const b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
-    await page.goto(url+'/admin/company_onboarding');await next(page);
-    await page.locator('#legal_name').fill('Synthetic portal A');await page.locator('#tax_id').fill('11222333000181');
-    await next(page);await next(page);await next(page);await next(page);await next(page);
+    await page.goto(url+'/admin/company_onboarding');
+    await page.locator('#company-create-modal').waitFor({state:'visible'});
+    const wizard = page.frame({name:'company-create-frame'});
+    await wizard.locator('section form button[type=submit]').waitFor();
+    await next(wizard);
+    await wizard.locator('#legal_name').fill('Synthetic portal A');await wizard.locator('#tax_id').fill('11222333000181');
+    await next(wizard);await next(wizard);await next(wizard);await next(wizard);await next(wizard);
     const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'");assert.match(a,/^[1-9]\d*$/);
-    async function select(id){await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(id);await navigate(page,page.locator('.company-selector-form button[type=submit]'));}
+    async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);}
     async function configure(id,letter){
       await select(id);await page.goto(url+'/admin/settings?group=email');
       await page.locator('#company-setting-smtp_host').fill('smtp-'+letter+'.example.invalid');
@@ -53,7 +62,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
       await page.locator('#company-setting-smtp_email').fill(letter+'@example.invalid');
       await page.locator('#company-setting-smtp_username').fill('synthetic-'+letter);
       await page.locator('#company-smtp-password').fill('synthetic-secret-'+letter);
-      await navigate(page,page.locator('section form button[type=submit]'));
+      await navigate(page,page.locator('#company-settings-form button[type=submit]'));
       assert((await page.locator('[role=status]').innerText()).includes('Definições salvas'));
       assert.equal(await page.locator('#company-smtp-password').inputValue(),'','GUI never echoes SMTP password');
     }
@@ -72,9 +81,9 @@ async function next(page) { await navigate(page, page.locator('section form butt
     for(const [id,letter] of [[a,'a'],[b,'b']]){
       const ctx=await browser.newContext();publicContexts[id]=ctx;
       await ctx.route('**/*', r=>new URL(r.request().url()).origin===url?r.continue():r.abort());
-      const p=await ctx.newPage();sessions[id]=p;p.on('pageerror',e=>errors.push(e.message));
+      const p=await workspacePage(ctx);sessions[id]=p;p.on('pageerror',e=>errors.push(e.message));
       const response=await p.goto(url+'/company_portal/index/'+id);assert.equal(response.status(),200);
-      assert.equal(await p.locator('#company-context-select').count(),0,'public portal has no administrative context');
+      assert.equal(await p.locator('.company-selector').count(),0,'public portal has no administrative context');
       const invalid=await ctx.request.post(url+'/company_portal/index/'+id,{form:{action:'recovery',email:'same-portal@example.invalid',portal_csrf:'invalid'}});assert.equal(invalid.status(),403);
       await p.locator('#recovery-email').fill('same-portal@example.invalid');await navigate(p,p.locator('#portal-recovery button[type=submit]'));
       assert((await p.locator('[role=status]').innerText()).includes('Se houver uma conta ativa'));

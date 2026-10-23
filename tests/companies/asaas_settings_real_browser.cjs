@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 // Actual authenticated CRM/HTTP/MySQL and native assets. No HTML fixture or provider calls.
 const assert = require('node:assert/strict');
 const {execFileSync} = require('node:child_process');
@@ -96,12 +97,12 @@ async function run(env = process.env) {
         await submit(page, page.locator('button[type=submit]'));
         check(!page.url().includes('/authentication'), 'synthetic administrator authenticated');
         await page.goto(config.url + '/admin/company_context');
-        await page.locator('#company-context-select').selectOption(primary);
-        await submit(page, page.locator('.company-selector-form button[type=submit]'));
+        await selectCompanyOption(page, primary);
+
         const response = await page.goto(config.url + '/admin/settings?group=payment_gateways');
         check(response.status() === 200, 'actual primary payment settings render');
         await page.locator('#header').waitFor();
-        check(await page.locator('#company-context-select').inputValue() === primary, 'native header confirms the selected primary company');
+        check(await page.locator('.company-selector').getAttribute('data-company-current') === primary, 'native header confirms the selected primary company');
         check(await page.locator('script[src*="assets/builds/common"]').count() > 0, 'real common asset bundle is loaded');
         const pane = page.locator('#online_payments_asaas_tab');
         await page.waitForFunction(() => document.getElementById('online_payments_asaas_tab')?.getAttribute('data-asaas-tabs') === 'ready', null, {timeout: 10000});

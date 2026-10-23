@@ -1,4 +1,6 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright'),fs=require('node:fs'),path=require('node:path');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;
 assert.match(url||'',/^http:\/\/127\.0\.0\.1:\d+$/);assert.match(app||'',/^argws-crm-upgrade-\d+$/);assert.equal(process.env.ISSUERS_BROWSER_DB_NAME,'argws_upgrade_ci');
@@ -8,11 +10,11 @@ async function go(page,button){await Promise.all([page.waitForNavigation({waitUn
 (async()=>{
  execFileSync('docker',['exec',app,'mkdir','-p','/app/tests/companies','/app/tests/support']);
  for(const f of ['tests/support/BbPdoDatabase.php','tests/companies/task_copies_http_fixture.php','tests/companies/task_recurring_http_fixture.php'])execFileSync('docker',['cp',path.join(process.env.ISSUERS_BROWSER_SOURCE_ROOT||process.cwd(),f),app+':/app/'+f]);
- const setup=fixture('task_copies','prepare'),browser=await chromium.launch({headless:true}),context=await browser.newContext({viewport:{width:1280,height:960}}),page=await context.newPage(),errors=[],own={},followProofs=[];
+ const setup=fixture('task_copies','prepare'),browser=await chromium.launch({headless:true}),context=await browser.newContext({viewport:{width:1280,height:960}}),page=await workspacePage(context),errors=[],own={},followProofs=[];
  await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.goto(url+'/admin/authentication');if(await page.locator('input[name=email]').count()!==1)throw new Error('Native login page missing: '+(await page.locator('body').innerText()).slice(0,1000));await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await go(page,page.locator('button[type=submit]'));
-  async function select(issuer){await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(String(issuer));await go(page,page.locator('.company-selector-form button[type=submit]'));}
+  async function select(issuer){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, String(issuer));}
   for(const[label,o]of Object.entries(setup.owners)){
    const ownSettings=sql('SELECT settings_json FROM tblissuers_registry WHERE id='+Number(o.issuer)),operationPreferences=JSON.parse(ownSettings).task_operation_preferences,follow=operationPreferences?.new_task_auto_follower_current_member??'0';assert(['0','1'].includes(follow),'own auto-follow policy must be explicit or the documented OFF default');
    await select(o.issuer);await page.goto(url+'/admin/company_projects');await page.locator('#project-client').selectOption(String(o.client));await page.locator('#project-new-name').fill('Recurrence native '+label);await page.locator('#project-new-start').fill('2000-01-01');await page.locator('#project-new-due').fill('2099-12-31');await go(page,page.getByRole('button',{name:'Criar projeto',exact:true}));const project=Number(new URL(page.url()).searchParams.get('project'));

@@ -49,3 +49,4 @@ jobs:
           name: native-header-layout
           path: /tmp/native-header-layout-evidence
           if-no-files-found: warn
+          retention-days: 1

@@ -172,6 +172,26 @@ final class IssuerRegistry
         return $this->issuer($issuer);
     }
 
+    /** Status-only grid action: never rewrites identity, profiles, settings or financial data. */
+    public function setActive($actor, $issuer, $active): void
+    {
+        $actor = IssuerPolicy::id($actor);
+        $issuer = IssuerPolicy::id($issuer);
+        if (!in_array($active, [0, 1, '0', '1'], true)) { throw new DomainException('issuer_invalid_status'); }
+        $this->requireCompanyMutation($actor, $issuer);
+        $this->transaction(function () use ($actor, $issuer, $active) {
+            $this->staff($actor);
+            $this->requireCompanyMutation($actor, $issuer);
+            $this->issuer($issuer, false);
+            if ((int)$active === 0 && (new IssuerResourceAccess($this->db, $this->prefix))->primaryId() === $issuer) {
+                throw new DomainException('issuer_primary_deactivation_denied');
+            }
+            $this->write("UPDATE {$this->tables}registry SET active=? WHERE id=?", [(int)$active, $issuer]);
+            if ((int)$active === 0) { $this->write("DELETE FROM {$this->tables}staff_defaults WHERE issuer_id=?", [$issuer]); }
+            $this->audit($actor, 'issuer_status_changed', $issuer);
+        }, $this->nativeCompanies() ? ['issuers_resource_permissions', 'issuers_installation_identity'] : []);
+    }
+
     public function saveIssuer($actor, array $input, $issuer = null): int
     {
         return $this->persistIssuer($actor,$input,$issuer,false);

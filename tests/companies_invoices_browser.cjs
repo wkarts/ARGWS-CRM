@@ -1,4 +1,6 @@
 'use strict';
+const { selectCompanyOption, ensureCompanySidebar } = require('./helpers/company_selector_driver.cjs');
+const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
@@ -24,6 +26,7 @@ async function login(page, email, password) {
   await navigate(page, page.locator('button[type=submit]'));
 }
 async function navigate(page, button) {
+  await button.waitFor({state:'attached'});
   await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), button.click()]);
 }
 async function hidden(page) {
@@ -32,19 +35,52 @@ async function hidden(page) {
 async function next(page) { await navigate(page, page.locator('section form button[type=submit]')); }
 
 
+// Read-only evidence from the authenticated disposable CRM, not a synthetic DOM.
+// Each route is reloaded at its target viewport so native responsive initialization runs.
+async function captureRealScreens(page, routes) {
+  const originalUrl = page.url(), originalViewport = page.viewportSize();
+  try {
+    for (const [name, route] of routes) for (const [size, viewport] of [['desktop', {width:1440,height:960}], ['mobile', {width:390,height:844}]]) {
+      await page.setViewportSize(viewport);
+      const response = await page.goto(route, {waitUntil:'load'});
+      assert.equal(response.status(), 200, name + ' evidence uses an authorized real document');
+      await page.locator('#wrapper').waitFor({state:'visible'});
+      if (size === 'mobile') await page.waitForFunction(() => document.body.classList.contains('company-context-shell') || document.body.classList.contains('page-small'));
+      await page.evaluate(async () => { await document.fonts.ready; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
+      const geometry = await page.evaluate(() => ({viewport:{width:innerWidth,height:innerHeight}, pageWidth:document.documentElement.scrollWidth,
+        fitsViewport:document.documentElement.scrollWidth <= innerWidth + 1, bodyClasses:document.body.className,
+        elements:Array.from(document.querySelectorAll('#header,#menu,#wrapper,.company-registry,.company-native-settings,[data-company-workspace]')).map(element => {
+          const box=element.getBoundingClientRect();return {id:element.id, classes:element.className, left:box.left,right:box.right,width:box.width,scrollWidth:element.scrollWidth};
+        })}));
+      const prefix = output + '/real-' + name + '-' + size;
+      fs.writeFileSync(prefix + '.json', JSON.stringify(geometry,null,2));
+      await page.screenshot({path:prefix + '.png',fullPage:true});
+      if (name === 'invoice-detail' && size === 'desktop') await page.screenshot({path:output + '/company-invoices.png',fullPage:true});
+      if (size === 'mobile' && name === 'companies-grid') {
+        await ensureCompanySidebar(page);
+        await page.locator('.company-selector .dropdown-toggle').waitFor({state:'visible'});
+        await page.screenshot({path:output + '/real-companies-sidebar-mobile.png',fullPage:true});
+      }
+    }
+  } finally {
+    await page.setViewportSize(originalViewport);
+    await page.goto(originalUrl, {waitUntil:'load'});
+  }
+}
+
 (async()=>{
- const browser=await chromium.launch({headless:true});const context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const browser=await chromium.launch({headless:true});const context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await workspacePage(context),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await login(page,'admin-ci@example.invalid',process.env.ISSUERS_BROWSER_PASSWORD);
   const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
   const clients={};clients[a]=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client a'");clients[b]=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client b'");
-  async function select(id){await page.goto(url+'/admin/company_context');await page.locator('#company-context-select').selectOption(id);await navigate(page,page.locator('.company-selector-form button[type=submit]'));}
+  async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);}
   async function fields(form){return form.locator('input[type=hidden]').evaluateAll(xs=>Object.fromEntries(xs.filter(x=>x.name).map(x=>[x.name,x.value])));}
   const ids={};
   for(const [issuer,letter]of[[a,'a'],[b,'b']]){
    await select(issuer);await page.goto(url+'/admin/settings?group=company');
    for(const [field,value]of Object.entries({invoice_company_address:'Synthetic '+letter+' street',invoice_company_city:'Synthetic city',company_state:'BA',invoice_company_country_code:'BR',invoice_company_postal_code:'00000-000'}))await page.locator('#company-setting-'+field).fill(value);
-   await navigate(page,page.locator('section form button[type=submit]'));
+   await navigate(page,page.locator('#company-settings-form button[type=submit]'));
    await page.goto(url+'/admin/company_invoices');await page.locator('#invoice-client').selectOption(clients[issuer]);await page.locator('#invoice-currency').selectOption({label:'BRL'});
    await page.locator('#invoice-item-0-description').fill('Synthetic invoice '+letter);await page.locator('#invoice-item-0-qty').fill('2.00');await page.locator('#invoice-item-0-rate').fill('50.25');await page.locator('#invoice-item-0-tax-0-name').fill('Synthetic tax');await page.locator('#invoice-item-0-tax-0-rate').fill('5.00');
    const form=page.locator('form').filter({has:page.locator('#invoice-client')});const creation=await fields(form);
@@ -77,7 +113,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   const publicContexts=[];
   try{
    await select(a);await page.goto(url+'/admin/company_clients?client='+clients[a]);
-   const publicA=await browser.newContext();publicContexts.push(publicA);await publicA.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const portalA=await publicA.newPage();portalA.on('pageerror',e=>errors.push(e.message));
+   const publicA=await browser.newContext();publicContexts.push(publicA);await publicA.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const portalA=await workspacePage(publicA);portalA.on('pageerror',e=>errors.push(e.message));
    async function portalLogin(p,issuer,email,password){await p.goto(url+'/company_portal/index/'+issuer);await p.locator('#login-email').fill(email);await p.locator('#login-password').fill(password);await navigate(p,p.locator('#portal-login button[type=submit]'));}
    async function portalPdf(ctx,p,issuer,invoice){await p.reload();const csrf=await fields(p.locator('form').filter({has:p.locator('input[name=action][value=logout]')}));return ctx.request.post(url+'/company_portal/index/'+issuer,{form:{...csrf,action:'invoice_pdf',invoice_id:invoice}});}
    await portalLogin(portalA,a,'changed-portal@example.invalid','synthetic-password-a');assert.equal(await portalA.locator('#portal-identity').count(),1);assert.equal(await portalA.locator('#portal-invoices').count(),0,'identity login does not implicitly grant financial access');
@@ -87,7 +123,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
    const portalDownload=await portalPdf(publicA,portalA,a,ids[a]);assert.equal(portalDownload.status(),200);assert.equal((await portalDownload.body()).subarray(0,5).toString(),'%PDF-','authorized portal PDF uses actual TCPDF');
    assert.equal((await portalPdf(publicA,portalA,a,ids[b])).status(),404,'A cannot download direct B invoice ID');
    // Earlier recovery test deactivated B; reactivate only this disposable synthetic contact.
-   sql('UPDATE tblcontacts SET active=1 WHERE userid='+clients[b]);const publicB=await browser.newContext();publicContexts.push(publicB);await publicB.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const portalB=await publicB.newPage();portalB.on('pageerror',e=>errors.push(e.message));
+   sql('UPDATE tblcontacts SET active=1 WHERE userid='+clients[b]);const publicB=await browser.newContext();publicContexts.push(publicB);await publicB.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const portalB=await workspacePage(publicB);portalB.on('pageerror',e=>errors.push(e.message));
    await portalLogin(portalB,b,'same-portal@example.invalid','synthetic-password-b');assert.equal(await portalB.locator('#portal-invoices').count(),0,'A grant is not inherited by same-email B contact');
    await select(b);await page.goto(url+'/admin/company_clients?client='+clients[b]);await navigate(page,page.getByRole('button',{name:'Permitir acesso a faturas no portal',exact:true}));await portalB.reload();assert.equal(await portalB.locator('#portal-invoices article').count(),1);assert.equal((await portalPdf(publicB,portalB,b,ids[a])).status(),404,'B grant cannot authorize A PDF');
    await select(a);await page.goto(url+'/admin/company_clients?client='+clients[a]);await navigate(page,page.getByRole('button',{name:'Revogar acesso a faturas no portal',exact:true}));await portalA.reload();assert.equal(await portalA.locator('#portal-invoices').count(),0,'native revocation takes effect in existing session');assert.equal((await portalPdf(publicA,portalA,a,ids[a])).status(),404,'revoked session cannot download PDF');
@@ -109,7 +145,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
    assert.equal((await context.request.post(url+'/admin/company_assets',{form:{...assetFields,action:'remove'}})).status(),409,'image mutation from obsolete company tab denied before effects');
    await select(issuer);await page.goto(url+'/admin/settings?group=documents');
    await page.locator('#company-setting-invoice_prefix').fill('SYN-'+letter+'-');await page.locator('#company-setting-predefined_terms_invoice').fill('Synthetic terms '+letter);
-   await navigate(page,page.locator('section form button[type=submit]'));
+   await navigate(page,page.locator('#company-settings-form button[type=submit]'));
    await page.goto(url+'/admin/company_invoices');
    await page.locator('#invoice-client').selectOption(clients[issuer]);await page.locator('#invoice-currency').selectOption({label:'BRL'});
    await page.locator('#invoice-item-0-description').fill('Expanded '+letter);await page.locator('#invoice-item-0-rate').fill('100.00');
@@ -159,7 +195,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
    // Real private portal lists only the published blob, and hiding revokes its existing download form.
    const filePortalContext=await browser.newContext();await filePortalContext.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());
    try{
-    const filePortal=await filePortalContext.newPage();filePortal.on('pageerror',e=>errors.push(e.message));
+    const filePortal=await workspacePage(filePortalContext);filePortal.on('pageerror',e=>errors.push(e.message));
     await filePortal.goto(url+'/company_portal/index/'+issuer);await filePortal.locator('#login-email').fill(letter==='a'?'changed-portal@example.invalid':'same-portal@example.invalid');await filePortal.locator('#login-password').fill('synthetic-password-'+letter);await navigate(filePortal,filePortal.locator('#portal-login button[type=submit]'));
     const publishedForm=filePortal.locator('form').filter({has:filePortal.locator('input[name=file_key][value="'+publicFile+'"]')});assert.equal(await publishedForm.count(),1);assert.equal(await filePortal.locator('input[name=file_key][value="'+privateFile+'"]').count(),0,'default-private attachment metadata never reaches contact HTML');
     const portalFileFields=await fields(publishedForm);const publicDownload=await filePortalContext.request.post(url+'/company_portal/index/'+issuer,{form:portalFileFields});assert.equal(publicDownload.status(),200);assert.equal((await publicDownload.body()).subarray(0,5).toString(),'%PDF-');assert.match(publicDownload.headers()['content-disposition'],/^attachment;/);
@@ -177,7 +213,10 @@ async function next(page) { await navigate(page, page.locator('section form butt
    const obsolete=await context.request.post(url+'/admin/company_invoices',{form:{...prior,action:'cancel'}});assert.equal(obsolete.status(),409);
    assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+expandedId),'1');
   }
-  await page.screenshot({path:output+'/company-invoices.png',fullPage:true});assert.deepEqual(errors,[]);
+  const visualIssuer = await page.locator('.company-selector').getAttribute('data-company-current');
+  assert.ok(ids[visualIssuer], 'invoice evidence belongs to the currently selected company');
+  await captureRealScreens(page, [['company-settings-isolated',url + '/admin/settings?group=company'], ['invoices-grid',url + '/admin/company_invoices'], ['invoice-detail',url + '/admin/company_invoices?invoice=' + ids[visualIssuer]]]);
+  assert.deepEqual(errors,[]);
   console.log('Named-company invoice CRUD/numbering/PDF/manual partial+final receipts/private portal grant+PDF+revocation: real HTTP/MySQL/Chromium passed, including owner-bound notifications and private attachment upload/preview/download/portal revocation; no SMTP or bank/provider operations.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e.message);process.exitCode=1;});

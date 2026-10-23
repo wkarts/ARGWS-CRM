@@ -1,4 +1,6 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 // Real HTTP/Chromium forms, native login and a deliberately isolated upgraded database.
 const assert = require('node:assert/strict');
 const {execFileSync} = require('node:child_process');
@@ -30,12 +32,12 @@ async function values(form) { return form.evaluate(node=>Object.fromEntries(new 
 async function hidden(form) { return form.locator('input[type=hidden][name]').evaluateAll(nodes=>Object.fromEntries(nodes.map(node=>[node.name,node.value]))); }
 async function selectCompany(page,id) {
   await page.goto(url+'/admin/company_context');
-  await page.locator('#company-context-select').selectOption(String(id));
-  await submit(page,page.locator('.company-selector-form button[type=submit]'));
+  await selectCompanyOption(page, String(id));
+
   // The primary native dashboard starts its task-table XHR after DOMContentLoaded.
   // Finish that real render before navigating again; do not abort its JSON response.
   await page.waitForLoadState('networkidle');
-  assert.equal(await page.locator('#company-context-select').inputValue(),String(id));
+  assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'),String(id));
 }
 async function login(page,email,password) {
   assert.equal((await page.goto(url+'/admin/authentication')).status(),200);
@@ -56,7 +58,7 @@ async function login(page,email,password) {
   async function surface() {
     const ctx=await browser.newContext({viewport:{width:1440,height:960}});contexts.push(ctx);
     await ctx.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());
-    const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));return{ctx,page};
+    const page=await workspacePage(ctx);page.on('pageerror',e=>errors.push(e.message));return{ctx,page};
   }
   const master=await surface();let manager;
   const staff={},emails={};let originalAForm;

@@ -4,7 +4,7 @@ $esc=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8
 $url=fn($query='')=>CompanyRequestScope::adminUrl($this,'company_clients'.$query);
 $hidden=function()use($esc,$company_clients_csrf){echo '<input type="hidden" name="company_clients_csrf" value="'.$esc($company_clients_csrf).'">';};
 ?>
-<section class="company-settings-card" aria-labelledby="clients-title">
+<section data-company-workspace class="company-settings-card" aria-labelledby="clients-title">
 <h1 id="clients-title">Clientes da empresa</h1>
 <p>Clientes novos são privados. Compartilhar permite consultar somente nome e documento fiscal. Contatos, anexos e histórico financeiro não são compartilhados.</p>
 <?php if($error){?><p role="alert" class="alert alert-danger"><?= $esc($error); ?></p><a href="<?= $esc($url()); ?>">Reabrir lista e formulário</a><?php } ?>

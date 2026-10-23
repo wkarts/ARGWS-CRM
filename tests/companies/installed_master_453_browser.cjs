@@ -1,4 +1,5 @@
 'use strict';
+const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
 // Existing installer master creates companies through the normal wizard, with no new designation.
 const assert=require('node:assert/strict'), {execFileSync}=require('node:child_process'), fs=require('node:fs'), {chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL, db=process.env.ISSUERS_BROWSER_DB_CONTAINER;
@@ -17,14 +18,18 @@ async function submit(page,button) { await Promise.all([page.waitForNavigation({
   for (const [label,tax] of [['a','11222333000181'],['b','52998224725']]) {
    let id=sql("SELECT id FROM tblissuers_registry WHERE tax_id='"+tax+"'");
    if (!id) {
-    await page.goto(url+'/admin/company_onboarding'); await submit(page,page.locator('section form button[type=submit]'));
-    await page.locator('#legal_name').fill('Synthetic native453 '+label.toUpperCase()); await page.locator('#tax_id').fill(tax); await page.locator('a[href="#company-address"]').click(); await page.locator('#profile_invoice_company_city').fill('Own city '+label);
-    for (let step=1;step<=5;step++) { await submit(page,page.locator('section form button[type=submit]')); }
-    assert.match(await page.locator('[role=status]').innerText(),/Empresa criada/); id=sql("SELECT id FROM tblissuers_registry WHERE tax_id='"+tax+"'");
+    await page.goto(url+'/admin/company_onboarding');
+    await page.locator('#company-create-modal').waitFor({state:'visible'});
+    const wizard = page.frame({name:'company-create-frame'});
+    await wizard.locator('section form button[type=submit]').waitFor();
+    await submit(wizard,wizard.locator('section form button[type=submit]'));
+    await wizard.locator('#legal_name').fill('Synthetic native453 '+label.toUpperCase()); await wizard.locator('#tax_id').fill(tax); await wizard.locator('a[href="#company-address"]').click(); await wizard.locator('#profile_invoice_company_city').fill('Own city '+label);
+    for (let step=1;step<=5;step++) { await submit(wizard,wizard.locator('section form button[type=submit]')); }
+    assert.match(await wizard.locator('[role=status]').innerText(),/Empresa criada/); id=sql("SELECT id FROM tblissuers_registry WHERE tax_id='"+tax+"'");
     assert.match(id,/^[1-9]\d*$/); assert.equal(sql("SELECT COUNT(*) FROM tblissuers_registry WHERE tax_id='"+tax+"'"),'1');
    }
    created[label]=Number(id);
-   await page.goto(url+'/admin/company_context'); await page.locator('#company-context-select').selectOption(id); await submit(page,page.locator('.company-selector-form button[type=submit]'));
+   await page.goto(url+'/admin/company_context'); await selectCompanyOption(page, id);
    for (const route of ['company_staff','company_task_recurring?kind=project','company_task_recurring?kind=standalone']) { assert.equal((await page.goto(url+'/admin/'+route)).status(),200,route+' usable for existing master'); }
   }
   assert.equal(sql("SELECT CONCAT(master_staff_id,':',primary_issuer_id,':',source) FROM tblissuers_installation_identity WHERE id=1"),identity); assert.deepEqual(errors,[]);

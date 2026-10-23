@@ -1,16 +1,33 @@
-/* Presentation only. Company routes retain their isolated controllers and ACL-filtered links. */
-body.company-context-shell { display: grid; grid-template-columns: 230px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); height: 100vh; height: 100dvh; overflow: hidden; background: #f3f4f6; color: #334155; margin: 0; }
-.company-context-shell #header { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 0 16px; background: #fff; min-height: 57px; height: auto; position: relative; z-index: 1000; }
-.company-context-shell .installation-name { font-size: 22px; font-weight: 600; color: #334155; overflow-wrap: anywhere; min-width: 0; }
-.company-context-shell #menu { grid-column: 1; grid-row: 2; position: relative; min-height: 0; width: 230px; background: #f9fafb; padding: 16px 8px; overflow-y: auto; border-right: 1px solid #d1d5db; }
-.company-context-shell #menu a { display: block; padding: 9px 12px; border-radius: 6px; color: #334155; text-decoration: none; font-weight: 500; }
-.company-context-shell #menu a:focus-visible { outline: 2px solid #2563eb; outline-offset: -2px; }
-.company-context-shell #menu a:hover { background: #e5e7eb; }
-.company-context-shell #wrapper { grid-column: 2; grid-row: 2; margin-left: 0; min-height: 0; overflow-y: auto; padding: 25px; background: #f3f4f6; }
+/* Native CRM presentation. Never enables a route or hydrates legacy hooks/models. */
+body.company-context-shell { background: #f3f4f6; color: #334155; margin: 0; min-height: 100vh; }
+.company-context-shell #header { display: flex; align-items: center; gap: 18px; padding: 0 16px; background: #fff; height: 57px; position: fixed; inset: 0 0 auto; z-index: 1000; border-bottom: 1px solid #e5e7eb; }
+.company-context-shell .installation-name { font-size: 24px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.company-context-shell .company-menu-toggle { padding: 6px 8px; border: 0; background: transparent; }
+.company-context-shell #menu { position: fixed; top: 57px; bottom: 0; left: 0; width: 230px; margin: 0; min-height: 0; background: #f9fafb; overflow-y: auto; z-index: 999; border-right: 1px solid #e5e7eb; }
+.company-context-shell .company-sidebar-account { margin: 20px 8px 14px; }
+.company-context-shell .company-user-profile { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04); }
+.company-context-shell .company-user-avatar { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border-radius: 50%; background: #f3f4f6; }
+.company-context-shell .company-user-identity { min-width: 0; }
+.company-context-shell .company-user-identity strong, .company-context-shell .company-user-identity small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.company-context-shell .company-user-identity small { color: #64748b; font-size: 12px; }
+.company-context-shell #side-menu { padding: 0 8px 24px; }
+.company-context-shell #side-menu > li { margin-bottom: 2px; }
+.company-context-shell #side-menu summary, .company-context-shell #side-menu > li > a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; cursor: pointer; color: #334155; font-weight: 500; list-style: none; }
+.company-context-shell #side-menu summary::-webkit-details-marker { display: none; }
+.company-context-shell #side-menu summary:hover, .company-context-shell #side-menu a:hover { background: #e5e7eb; }
+.company-context-shell #side-menu details[open] > summary { background: #e5e7eb; }
+.company-context-shell #side-menu .menu-icon { width: 16px; margin: 0; text-align: center; }
+.company-context-shell .company-menu-arrow { margin-left: auto; font-size: 10px; }
+.company-context-shell details[open] > summary .company-menu-arrow { transform: rotate(180deg); }
+.company-context-shell #side-menu .nav-second-level { padding: 4px 0; }
+.company-context-shell #side-menu .nav-second-level a { padding: 8px 12px 8px 38px; color: #475569; border-radius: 6px; font-size: 13px; }
+.company-context-shell #side-menu a:focus-visible, .company-context-shell summary:focus-visible { outline: 2px solid #2563eb; outline-offset: -2px; }
+.company-context-shell #wrapper { margin: 57px 0 0 230px; padding: 25px; min-height: calc(100vh - 57px); background: #f3f4f6; }
 .company-context-shell #wrapper .content { padding: 0; min-width: 0; max-width: none; margin: 0; }
-.company-context-shell .company-selector-form { flex-wrap: wrap; }
-.company-context-shell .company-settings-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgb(0 0 0 / 0.1); }
-.company-context-shell .company-settings-card h1 { font-size: 20px; font-weight: 600; margin: 0 0 16px; }
+.company-context-shell.company-menu-collapsed #menu { display: none; }
+.company-context-shell.company-menu-collapsed #wrapper { margin-left: 0; }
+.company-context-shell .company-settings-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgb(0 0 0 / 0.08); margin-bottom: 20px; }
+.company-context-shell h1 { font-size: 20px; font-weight: 600; margin: 0 0 20px; }
 .company-context-shell .company-settings-card h2 { font-size: 17px; font-weight: 500; margin: 24px 0 12px; }
 .company-context-shell .company-settings-card h3 { font-size: 15px; margin: 20px 0 12px; }
 .company-context-shell .company-settings-card form > .form-control,
@@ -26,10 +43,8 @@ body.company-context-shell { display: grid; grid-template-columns: 230px minmax(
 .company-context-shell .company-settings-actions { margin-top: 24px; }
 .company-context-shell fieldset[disabled] { opacity: .8; }
 @media (max-width: 767px) {
-  body.company-context-shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 180px) minmax(0, 1fr); }
-  .company-context-shell #header { position: relative; align-items: flex-start; flex-direction: column; padding: 12px; }
-  .company-context-shell #menu { position: static; width: auto; max-height: 220px; padding: 8px 12px; border-right: 0; border-bottom: 1px solid #d1d5db; }
-  .company-context-shell #menu a { padding: 8px; }
-  .company-context-shell #wrapper { grid-column: 1; grid-row: 3; margin-left: 0; padding: 12px; }
+  .company-context-shell #menu { width: 230px; box-shadow: 4px 0 16px rgb(0 0 0 / .12); }
+  .company-context-shell #wrapper { margin-left: 0; padding: 15px; }
   .company-context-shell .company-settings-card { padding: 16px; }
+  .company-context-shell .installation-name { font-size: 20px; }
 }

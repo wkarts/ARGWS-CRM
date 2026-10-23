@@ -38,6 +38,9 @@ jobs:
         run: python3 -m unittest tests/test_docker_provisioning.py
       - name: Testar ambiente isolado de cada comando do smoke
         run: python3 -m unittest tests/test_issuer_browser_environment.py
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
       - name: Preparar navegador para validar o shell nativo
         run: |
           npm install --no-save --no-package-lock playwright@1.55.1
@@ -45,7 +48,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
       - name: Testar navegação das abas no shell isolado de Empresas
         run: node tests/company_context_tabs_browser.cjs
-      - name: Testar apresentação e confirmação explícita no shell de Empresas
+      - name: Testar apresentação e escolha com POST no shell de Empresas
         id: company_shell_browser
         env:
           SCREENSHOT_DIR: /tmp/company-shell-evidence
@@ -60,9 +63,7 @@ jobs:
           name: company-shell-synthetic-ui
           path: /tmp/company-shell-evidence
           if-no-files-found: ignore
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.1'
+          retention-days: 1
       - name: Testar cadastro de empresa e consultas sintéticas CNPJ/CEP
         id: company_identity_browser
         env:
@@ -75,6 +76,7 @@ jobs:
           name: company-identity-presentation
           path: /tmp/company-identity-evidence
           if-no-files-found: warn
+          retention-days: 1
       - name: Testar cadastro PF/PJ e consultas revisadas de clientes
         id: client_identity_browser
         env:
@@ -87,6 +89,7 @@ jobs:
           name: client-identity-presentation
           path: /tmp/client-identity-evidence
           if-no-files-found: error
+          retention-days: 1
       - name: Testar abas nativas e perfis de ambientes Asaas
         id: asaas_settings_browser
         env:
@@ -99,6 +102,7 @@ jobs:
           name: asaas-native-settings-presentation
           path: /tmp/asaas-settings-evidence
           if-no-files-found: error
+          retention-days: 1
       - name: Provisionar schema e primeiro administrador em MySQL limpo
         id: issuer_browser
         env:
@@ -111,6 +115,7 @@ jobs:
           name: issuer-native-browser
           path: /tmp/issuer-browser-evidence
           if-no-files-found: ignore
+          retention-days: 1
       - name: Testar política segura de cache Actions
         run: python3 -m unittest tests/test_actions_cache_cleanup.py
       - name: Testar contrato dos assets na mesma release

@@ -1,0 +1,22 @@
+/* Native settings composition; no routing, runtime or permission changes. */
+.company-native-settings .company-settings-title { font-size: 18px; line-height: 1.4; margin: 0 0 16px; }
+.company-native-settings .company-settings-context { margin: -8px 0 16px; overflow-wrap: anywhere; }
+.company-native-settings .company-settings-section + .company-settings-section { margin-top: 24px; }
+.company-native-settings .company-settings-section h2 { font-size: 13px; line-height: 1.4; margin: 0 0 12px; color: #64748b; }
+.company-native-settings .company-settings-section ul { margin: 0; }
+.company-native-settings .company-settings-section li + li { margin-top: 8px; }
+.company-native-settings .company-settings-link { display: block; color: #475569; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.company-native-settings .company-settings-link:hover,
+.company-native-settings .company-settings-link:focus,
+.company-native-settings .company-settings-link.active { color: #1e293b; }
+.company-native-settings .company-settings-link.active { font-weight: 600; }
+.company-native-settings .company-settings-link:focus-visible { outline: 2px solid #2563eb; outline-offset: 3px; }
+.company-native-settings #company-settings-form { margin-bottom: 0; }
+.company-native-settings #company-settings-form fieldset { margin: 0; min-width: 0; }
+.company-native-settings .company-settings-grid { display: block; }
+.company-native-settings .company-settings-grid .form-group { margin-bottom: 20px; }
+.company-native-settings .company-settings-grid .form-group:last-child { margin-bottom: 0; }
+.company-native-settings .panel-footer { border-top: 1px solid #e2e8f0; }
+@media (max-width: 991px) {
+  .company-native-settings nav.panel_s { margin-bottom: 24px; }
+}
