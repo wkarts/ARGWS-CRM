@@ -1,0 +1,52 @@
+name: Base isolada de validação CRM
+on:
+  pull_request:
+    paths: ['docker/ci/**', '.github/workflows/ci-validation-base.yml', 'tests/test_ci_validation_base.py']
+  push:
+    branches: [main]
+    paths: ['docker/ci/**', '.github/workflows/ci-validation-base.yml', 'tests/test_ci_validation_base.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        php: ['8.1', '8.5']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Validar contrato da imagem isolada
+        run: python3 -m unittest tests/test_ci_validation_base.py
+      - uses: docker/setup-buildx-action@v3
+      - name: Compilar somente ferramentas de validação
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/ci
+          file: docker/ci/Dockerfile
+          build-args: PHP_IMAGE=php:${{ matrix.php }}-cli-bookworm
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: argws-crm-ci-php:test-${{ matrix.php }}
+          cache-from: type=gha,scope=crm-ci-php-${{ matrix.php }}
+          cache-to: type=gha,mode=max,scope=crm-ci-php-${{ matrix.php }}
+      - name: Verificar PHP, extensões, PDF e Chromium pareado
+        run: docker run --rm --network none --shm-size=1g -e EXPECTED_PHP='${{ matrix.php }}' argws-crm-ci-php:test-${{ matrix.php }} argws-ci-smoke
+      - name: Registrar proveniência local sem publicar pacote
+        env:
+          PHP_MINOR: ${{ matrix.php }}
+        run: |
+          mkdir -p artifacts
+          docker image inspect "argws-crm-ci-php:test-$PHP_MINOR" > "artifacts/ci-php-$PHP_MINOR-image.json"
+          sha256sum docker/ci/Dockerfile docker/ci/package.json docker/ci/package-lock.json docker/ci/smoke.sh docker/ci/smoke.cjs > "artifacts/ci-php-$PHP_MINOR-inputs.sha256"
+          printf '%s\n' "$GITHUB_SHA" > "artifacts/ci-php-$PHP_MINOR-source.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ci-base-php-${{ matrix.php }}-provenance
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 7

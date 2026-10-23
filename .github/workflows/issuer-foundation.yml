@@ -34,6 +34,8 @@ on:
       - tests/test_module_migration_convention.py
       - docs/module-migrations.md
       - docs/issuer-essential-module.md
+      - scripts/ci/run-company-registry-shard.py
+      - tests/ci/**
       - .github/workflows/issuer-foundation.yml
   push:
     branches: [main, develop]
@@ -69,6 +71,8 @@ on:
       - tests/test_module_migration_convention.py
       - docs/module-migrations.md
       - docs/issuer-essential-module.md
+      - scripts/ci/run-company-registry-shard.py
+      - tests/ci/**
       - .github/workflows/issuer-foundation.yml
 permissions:
   contents: read
@@ -93,11 +97,18 @@ jobs:
         with:
           name: company-boundaries-full
           path: /tmp/company-boundaries-full.json
-  registry:
+  registry-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: python3 -m unittest discover -s tests/ci -p 'test_company_registry_shards.py'
+  registry-shards:
+    needs: registry-plan
     runs-on: ubuntu-latest
     strategy:
       matrix:
         php: ['8.1', '8.5']
+        shard: [1, 2, 3, 4]
     container: php:${{ matrix.php }}-cli
     services:
       mysql:
@@ -118,6 +129,7 @@ jobs:
           docker-php-ext-configure gd --with-jpeg
           docker-php-ext-install pdo_mysql mysqli gd mbstring
       - name: Validar sintaxe e controles HTTP
+        if: matrix.shard == 1
         run: |
           php scripts/company-surface-inventory.php --check
           php scripts/company-surface-inventory.php --full --output /tmp/company-operational-surfaces-full.json
@@ -137,6 +149,7 @@ jobs:
           php tests/companies/portal_recovery_tokens.php
           php tests/companies/portal_recovery_atomic.php
       - uses: actions/upload-artifact@v4
+        if: matrix.shard == 1
         with:
           name: company-operational-surfaces-php-${{ matrix.php }}
           path: /tmp/company-operational-surfaces-full.json
@@ -146,493 +159,9 @@ jobs:
           ISSUERS_TEST_USER: root
           ISSUERS_TEST_PASSWORD: synthetic-test-password
         run: |
-          php tests/issuers_migration.php
-          php tests/issuers_core.php
-          php tests/issuers_staff_master.php
-          php tests/issuers_master_resolution.php
-          php tests/issuers_onboarding.php
-          php tests/issuers_onboarding_concurrency.php
-          php tests/issuers_core_retirement.php
-          php tests/issuers_core_upgrade.php
-          php tests/companies/admin_database_upgrade_feedback.php
-          php tests/issuers_installation_bootstrap.php
-          php tests/issuers_installation_abort.php
-          php tests/issuers_legacy_access.php
-          php tests/company_context.php
-          php tests/companies/clients.php
-          php tests/companies/client_concurrency.php
-          php tests/companies/portal_positive.php
-          php tests/companies/portal_concurrency.php
-          php tests/companies/invoice_amounts.php
-          php tests/companies/invoices.php
-          php tests/companies/credits_concurrency.php
-          php tests/companies/credits_reader.php
-          php tests/companies/projects_concurrency.php
-          php tests/companies/projects_controller.php
-          php tests/companies/expenses_concurrency.php
-          php tests/companies/imports_concurrency.php
-          php tests/companies/expenses_journal.php
-          php tests/companies/projects_extras_concurrency.php
-          php tests/companies/projects_extras_controller.php
-          php tests/companies/standalone_tasks_concurrency.php
-          php tests/companies/standalone_tasks_controller.php
-          php tests/companies/contracts_concurrency.php
-          php tests/companies/contracts_controller.php
-          php tests/companies/portal_sales.php
-          php tests/companies/sales_concurrency.php
-          php tests/companies/sales_extras_concurrency.php
-          php tests/companies/sales_extras_worker.php
-          php tests/companies/recurring_worker_scope.php
-          php tests/companies/api_concurrency.php
-          php tests/companies/api_invoice_output_guard.php
-          php tests/companies/api_scope.php
-          php tests/asaas_checkout_legacy_scope.php
-          php tests/asaas_checkout_preflight.php
-          php tests/companies/operations_api_scope.php
-          php tests/companies/operations_api_controller.php
-          php tests/companies/operations_api_concurrency.php
-          php tests/companies/operations_api_bootstrap.php
-          php tests/companies/task_recurring_bootstrap.php
-          php tests/companies/leads_bootstrap.php
-          php tests/companies/leads_http_methods.php
-          php tests/companies/purchases_bootstrap.php
-          php tests/companies/purchases_scope.php
-          php tests/companies/purchases_route_catalog.php
-          php tests/companies/hr_bootstrap.php
-          php tests/companies/hr_access_scope.php
-          php tests/companies/asaas_concurrency.php
-          php tests/companies/asaas_job_transport.php
-          php tests/companies/asaas_job_fee_concurrency.php
-          php tests/companies/asaas_remote_concurrency.php
-          php tests/companies/asaas_currency_units.php
-          php tests/companies/asaas_environments.php
-          php tests/companies/asaas_preferences.php
-          php tests/companies/asaas_preferences_recovery.php
-          php tests/companies/asaas_preferences_controller.php
-          php tests/companies/asaas_isolated_translation.php
-          php tests/companies/asaas_checkout_payers.php
-          php tests/companies/asaas_checkout_portal.php
-          php tests/companies/asaas_checkout_boundaries.php
-          php tests/companies/asaas_checkout_views.php
-          php tests/companies/asaas_checkout_concurrency.php
-          php tests/companies/asaas_card_settlement_concurrency.php
-          php tests/companies/asaas_card_anticipation.php
-          php tests/companies/bank_components_writer_core.php
-          php tests/companies/bank_receipt_parent_integrity.php
-          php tests/companies/bank_components.php
-          php tests/companies/provider_balance_guards.php
-          php tests/companies/operation_files.php
-          php tests/companies/operation_files_controller.php
-          php tests/companies/operation_files_concurrency.php
-          php tests/companies/portal_operations.php
-          php tests/companies/portal_operations_controller.php
-          php tests/companies/portal_operations_concurrency.php
-          php tests/companies/operations_subresources.php
-          php tests/companies/operations_subresources_controller.php
-          php tests/companies/operations_subresources_bootstrap.php
-          php tests/companies/operations_subresources_concurrency.php
-          php tests/companies/bank_reversal_amounts.php
-          php tests/companies/bank_reversal_readers.php
-          php tests/companies/bank_reversal_provider_guards.php
-          php tests/companies/bank_reversal_report_views.php
-          php tests/companies/currency_units.php
-          php tests/companies/currency_concurrency.php
-          php tests/companies/financial_journal.php
-          php tests/companies/journal_writers.php
-          php tests/companies/ledger_controller.php
-          php tests/companies/native_427.php
-          php tests/companies/native_428.php
-          php tests/companies/native_429.php
-          php tests/companies/portal_support_write.php
-          php tests/companies/portal_support_write_controller.php
-          php tests/companies/portal_support_write_concurrency.php
-          php tests/companies/native_430.php
-          php tests/companies/portal_support_files.php
-          php tests/companies/portal_support_files_controller.php
-          php tests/companies/portal_support_files_concurrency.php
-          php tests/companies/native_431.php
-          php tests/companies/contract_discussions.php
-          php tests/companies/contract_discussions_controller.php
-          php tests/companies/contract_discussions_concurrency.php
-          php tests/companies/native_432.php
-          php tests/companies/project_portal_rules.php
-          php tests/companies/project_portal_rules_schema.php
-          php tests/companies/project_portal_rules_controller.php
-          php tests/companies/project_portal_rules_atomic.php
-          php tests/companies/project_portal_adapter_controller.php
-          php tests/companies/project_portal_rules_concurrency.php
-          php tests/companies/native_433.php
-          php tests/companies/portal_task_write.php
-          php tests/companies/portal_task_receipts.php
-          php tests/companies/portal_task_write_rules.php
-          php tests/companies/portal_task_write_controller.php
-          php tests/companies/portal_task_write_concurrency.php
-          php tests/companies/portal_task_receipts_concurrency.php
-          php tests/companies/native_434.php
-          php tests/companies/operational_author_charset.php
-          php tests/companies/client_imports.php
-          php tests/companies/client_imports_controller.php
-          php tests/companies/client_imports_concurrency.php
-          php tests/companies/expense_export_cursor.php
-          php tests/companies/expense_billing.php
-          php tests/companies/expense_billing_atomic.php
-          php tests/companies/expense_billing_controller.php
-          php tests/companies/expense_billing_schema.php
-          php tests/companies/expense_billing_concurrency.php
-          php tests/settings/sales_pdf.php
-          php tests/settings/primary_sales_pdf.php
-          php tests/companies/sales_pdf_preferences.php
-          php tests/settings/sales_pdf_concurrency.php
-          php tests/settings/document_pdf.php
-          php tests/settings/primary_document_pdf.php
-          php tests/companies/invoice_credit_pdf_preferences.php
-          php tests/companies/contracts_pdf_preferences.php
-          php tests/companies/pdf_fiscal_identity.php
-          php tests/companies/credit_pdf_revalidation.php
-          php tests/settings/document_pdf_concurrency.php
-          php tests/companies/native_435.php
-          php tests/companies/task_billing.php
-          php tests/companies/task_billing_atomic.php
-          php tests/companies/task_billing_controller.php
-          php tests/companies/task_billing_schema.php
-          php tests/companies/task_billing_concurrency.php
-          php tests/companies/task_billing_timesheets.php
-          php tests/companies/project_billing_rate.php
-          php tests/companies/project_billing_rate_atomic.php
-          php tests/companies/project_billing_rate_controller.php
-          php tests/companies/project_billing_rate_concurrency.php
-          php tests/companies/project_milestones.php
-          php tests/companies/project_milestones_atomic.php
-          php tests/companies/project_milestones_controller.php
-          php tests/companies/project_milestones_concurrency.php
-          php tests/companies/project_timesheets.php
-          php tests/companies/project_timesheets_atomic.php
-          php tests/companies/project_timesheets_controller.php
-          php tests/companies/project_timesheets_concurrency.php
-          php tests/companies/project_gantt.php
-          php tests/companies/project_gantt_atomic.php
-          php tests/companies/project_gantt_controller.php
-          php tests/companies/project_gantt_concurrency.php
-          php tests/companies/expense_recurring.php
-          php tests/companies/expense_recurring_atomic.php
-          php tests/companies/expense_recurring_delivery.php
-          php tests/companies/expense_recurring_schema.php
-          php tests/companies/expense_recurring_controller.php
-          php tests/companies/expense_recurring_cli.php
-          php tests/companies/expense_recurring_mail_worker.php
-          php tests/companies/expense_recurring_google.php
-          php tests/companies/expense_recurring_concurrency.php
-          php tests/settings/google_mail_oauth.php
-          php tests/settings/google_mail_queue.php
-          php tests/settings/google_mail_worker.php
-          php tests/settings/google_mail_envelope.php
-          php tests/settings/google_mail_fingerprint_portability.php
-          php tests/settings/google_portal_mail.php
-          php tests/settings/google_portal_refresh_worker.php
-          php tests/settings/google_mail_concurrency.php
-          php tests/settings/google_portal_concurrency.php
-          php tests/companies/invoice_delivery_worker.php
-          php tests/companies/native_436.php
-          php tests/settings/pdf_typography.php
-          php tests/settings/pdf_typography_concurrency.php
-          php tests/companies/sales_pdf_typography.php
-          php tests/companies/invoice_credit_pdf_typography.php
-          php tests/companies/contracts_pdf_typography.php
-          php tests/companies/pdf_typography_fiscal_identity.php
-          php tests/companies/asaas_pdf_typography.php
-          php tests/companies/project_contact_files.php
-          php tests/companies/project_contact_files_atomic.php
-          php tests/companies/project_contact_files_controller.php
-          php tests/companies/project_contact_files_boundaries.php
-          php tests/companies/project_contact_files_quota.php
-          php tests/companies/project_contact_files_concurrency.php
-          php tests/companies/project_fixed_billing.php
-          php tests/companies/project_fixed_billing_atomic.php
-          php tests/companies/project_fixed_billing_controller.php
-          php tests/companies/project_fixed_billing_concurrency.php
-          php tests/companies/billing_invoice_lifecycle.php
-          php tests/companies/expense_invoice_lifecycle.php
-          php tests/companies/asaas_refunds.php
-          php tests/companies/asaas_refund_schema.php
-          php tests/companies/asaas_refund_boundaries.php
-          php tests/companies/asaas_refund_controller.php
-          php tests/companies/asaas_refund_concurrency.php
-          php tests/companies/asaas_refund_fee_participants.php
-          php tests/companies/asaas_early_events.php
-          php tests/companies/asaas_early_events_concurrency.php
-          php tests/companies/asaas_refund_observe_events.php
-          php tests/settings/project_file_settings.php
-          php tests/companies/asaas_boundaries.php
-          php tests/companies/asaas_secret_controller.php
-          php tests/companies/asaas_webhook_tokens.php
-          php tests/companies/asaas_exact_json.php
-          php tests/companies/invoice_delivery_concurrency.php
-          php tests/companies/invoice_concurrency.php
-          php tests/companies/portal_invoice_concurrency.php
-          php tests/companies/invoice_attachment_concurrency.php
-          php tests/banco_brasil_origination_mysql.php
-          php tests/banco_brasil_origination_concurrency.php
-          php tests/banco_brasil_reconciliation_mysql.php
-          php tests/banco_brasil_reconciliation_concurrency.php
-          php tests/banco_brasil_api_concurrency.php
-          php tests/banco_brasil_api_movements_mysql.php
-          php tests/banco_brasil_components_concurrency.php
-          php tests/banco_brasil_external_reversal_concurrency.php
-          php tests/banco_brasil_api_receipt_concurrency.php
-          php tests/banco_brasil_webhook_mysql.php
-          php tests/banco_brasil_amendment_concurrency.php
-          php tests/companies/module_tracking.php
-          php tests/settings/company_assets.php
-          php tests/companies/asset_concurrency.php
-          php tests/settings/company_settings.php
-          php tests/settings/sales_documents.php
-          php tests/companies/sales_preferences.php
-          php tests/companies/sales_preferences_concurrency.php
-          php tests/settings/primary_sales_documents.php
-          php tests/settings/primary_sales_preferences_concurrency.php
-          php tests/settings/company_presentation.php
-          php tests/settings/company_presentation_delivery.php
-          php tests/settings/company_options_helpers.php
-          php tests/settings/company_identity_transaction.php
-          php tests/settings/settings_commit_fencing.php
-          php tests/settings/settings_audit_integrity.php
-          php tests/settings/company_registry_identity.php
-          php tests/settings/company_registry_profile.php
-          php tests/companies/client_profiles.php
-          php tests/companies/client_profiles_legacy_model.php
-          php tests/companies/client_lookup_controller.php
-          php tests/companies/company_identity_documents.php
-          php tests/company_registry_lookup.php
-          php tests/company_registry_lookup_controller.php
-          php tests/settings/company_mail_config.php
-          php tests/settings/company_mail_queue.php
-          php tests/settings/company_mail_schema.php
-          php tests/issuers_staff_access.php
-          php tests/issuers_staff_native.php
-          php tests/settings/settings_model_controller.php
-          php tests/settings/company_formatting.php
-          php tests/settings/portal_mail_config.php
-          php tests/settings/portal_mail_templates.php
-          php tests/settings/company_email_templates.php
-          php tests/settings/email_template_localization.php
-          php tests/purchase_mail_language.php
-          php tests/ma_email_template_localization.php
-          php tests/ma_email_assets.php
-          python3 scripts/build-ma-email-templates-ptbr.py --check
-          python3 scripts/check-ma-email-assets.py
-          php tests/companies/email_template_scope.php
-          php tests/companies/email_template_controller.php
-          php tests/companies/email_template_bootstrap.php
-          php tests/issuers_registry.php
-          php tests/issuers_concurrency.php
-          # Recreated recovery439 proofs; every published command above remains.
-          php tests/companies/finance_resume_439_api.php
-          php tests/companies/finance_resume_439_asaas.php
-          php tests/companies/finance_resume_439_copies.php
-          php tests/companies/finance_resume_439_copy_concurrency.php
-          php tests/companies/finance_resume_439_full_refund_concurrency.php
-          php tests/companies/finance_resume_439_refund_data.php
-          php tests/companies/native_resume_439.php
-          php tests/companies/operations_resume_439_billing.php
-          php tests/companies/operations_resume_439_concurrency.php
-          php tests/companies/operations_resume_439_discussion_concurrency.php
-          php tests/companies/operations_resume_439_discussions.php
-          php tests/companies/recurrence_resume_439.php
-          php tests/companies/recurrence_resume_439_concurrency.php
-          php tests/companies/recurrence_resume_439_dates.php
-          php tests/settings/resume_439_config_concurrency.php
-          php tests/settings/resume_439_connect.php
-          php tests/settings/resume_439_connect_encryption.php
-          php tests/settings/resume_439_connect_queue.php
-          php tests/settings/resume_439_microsoft.php
-          php tests/settings/resume_439_microsoft_queue.php
-          php tests/settings/resume_439_pusher.php
-          php tests/companies/native_resume_439.php --tracking
-          php tests/companies/finance_resume_439_api_concurrency.php
-          php tests/companies/operations_resume_439_sales_lines.php
-          php tests/settings/resume_439_connect_pairing.php
-          php tests/settings/resume_439_pusher_recovery_controller.php
-          # Rascunhos privados 440; fixtures e suporte executam pelas suites.
-          php tests/companies/invoice_drafts.php
-          php tests/companies/invoice_drafts_atomic.php
-          php tests/companies/invoice_drafts_api.php
-          php tests/companies/invoice_drafts_api_controller.php
-          php tests/companies/invoice_drafts_controller.php
-          php tests/companies/invoice_drafts_native.php
-          php tests/companies/invoice_drafts_concurrency.php
-          # Modos e descoberta de recorrencia 440; fixtures e suporte executam pelas suites.
-          php tests/companies/invoice_recurring_modes.php
-          php tests/companies/invoice_recurring_modes_schema.php
-          php tests/companies/invoice_recurring_modes_worker.php
-          php tests/companies/invoice_recurring_modes_controller.php
-          php tests/companies/invoice_recurring_modes_markup_440.php
-          php tests/companies/invoice_recurring_discovery_440.php
-          php tests/companies/invoice_recurring_modes_concurrency.php
-          php tests/companies/invoice_recurring_discovery_concurrency_440.php
-          # Copias de projetos e tarefas 440; fixtures e suporte executam pelas suites.
-          php tests/companies/project_copies.php
-          php tests/companies/project_copies_api.php
-          php tests/companies/project_copies_controller.php
-          php tests/companies/project_copy_api_bootstrap.php
-          php tests/companies/project_copy_concurrency.php
-          php tests/companies/task_copies.php
-          php tests/companies/task_copies_controller.php
-          php tests/companies/task_copy_concurrency.php
-          php tests/companies/project_copy_native_billing_participants.php
-          php tests/companies/task_copy_native_billing_participants.php
-          php tests/companies/project_copy_native_billing_participants_440.php
-          php tests/companies/task_copy_native_billing_participants_440.php
-          # Reversao manual e encerramento de ciclo 440; fixtures e suporte executam pelas suites.
-          php tests/companies/post_refund_manual_reversal.php
-          php tests/companies/post_refund_manual_reversal_controller.php
-          php tests/companies/post_refund_manual_reversal_readers.php
-          php tests/companies/post_refund_manual_reversal_concurrency.php
-          php tests/companies/post_refund_manual_cycle.php
-          php tests/companies/post_refund_manual_cycle_boundaries.php
-          php tests/companies/post_refund_manual_cycle_controller.php
-          php tests/companies/post_refund_manual_cycle_readers.php
-          php tests/companies/post_refund_manual_cycle_reader_integrity.php
-          php tests/companies/post_refund_manual_cycle_principal.php
-          php tests/companies/post_refund_manual_cycle_concurrency.php
-          # Avisos privados de chamados Connect 440; fixtures e suporte executam pelas suites.
-          php tests/settings/ticket_connect.php
-          php tests/settings/ticket_connect_controller.php
-          php tests/settings/ticket_connect_discovery.php
-          php tests/settings/ticket_connect_schema.php
-          php tests/settings/ticket_connect_concurrency.php
-          # Migration nativa 440 completa e tracking; fixtures e suporte executam pelas suites.
-          php tests/companies/native_resume_440.php
-          php tests/companies/native_resume_440.php --tracking
-          # API privada de despesas 441; fixture HTTP e suporte somente pelas suites.
-          php tests/companies/expense_api.php
-          php tests/companies/expense_api_controller.php
-          php tests/companies/expense_api_atomic.php
-          php tests/companies/expense_api_billing.php
-          php tests/companies/expense_api_concurrency.php
-          php tests/companies/expense_api_resume_441_native_file.php
-          # NOOP nativo 441 real e tracking persistido, sem chamar o helper isoladamente.
-          php tests/companies/native_resume_441.php
-          php tests/companies/native_resume_441.php --tracking
-          # Reviewed expense copies, private company AI and actual native442 integration.
-          php tests/companies/expense_copies_resume_442.php
-          php tests/companies/expense_copies_resume_442_atomic.php
-          php tests/companies/expense_copies_resume_442_effects.php
-          php tests/companies/expense_copies_resume_442_native_types.php
-          php tests/companies/expense_copies_resume_442_controller.php
-          php tests/companies/expense_copies_resume_442_schema.php
-          php tests/companies/expense_copies_resume_442_billing.php
-          php tests/companies/expense_copies_resume_442_provider.php
-          php tests/companies/expense_copies_resume_442_concurrency.php
-          php tests/companies/expense_copies_resume_442_native_schema.php
-          php tests/settings/company_ai.php
-          php tests/settings/company_ai_boundaries.php
-          php tests/settings/company_ai_final_boundaries.php
-          php tests/settings/company_ai_client.php
-          php tests/settings/company_ai_concurrency.php
-          php tests/settings/company_ai_controller.php
-          php tests/settings/company_ai_schema.php
-          php tests/settings/company_ai_transport.php
-          php tests/companies/native_resume_442.php
-          php tests/companies/native_resume_442.php --tracking
-          # Reviewed sales draft revisions and copies443; support/HTTP fixtures execute only through suites.
-          php tests/companies/sales_mutations.php
-          php tests/companies/sales_mutations_actor.php
-          php tests/companies/sales_mutations_controller.php
-          php tests/companies/sales_mutations_extras.php
-          php tests/companies/sales_mutations_final_boundary.php
-          php tests/companies/sales_mutations_guards.php
-          php tests/companies/sales_mutations_legacy.php
-          php tests/companies/sales_mutations_readback.php
-          php tests/companies/sales_mutations_schema.php
-          php tests/companies/sales_mutations_foreign_keys.php
-          php tests/companies/sales_mutations_concurrency.php
-          php tests/companies/native_resume_443.php
-          php tests/companies/native_resume_443.php --tracking
-          # Own ticket reply-order preferences444; historical schemas and settings preserved.
-          php tests/settings/ticket_preferences.php
-          php tests/settings/ticket_preferences_readers.php
-          php tests/settings/ticket_preferences_concurrency.php
-          php tests/companies/native_resume_444.php
-          php tests/companies/native_resume_444.php --tracking
-          php tests/companies/native_ci_445.php
-          # Recovered own task defaults/calendar, reconciled after test-only445.
-          php tests/settings/task_preferences.php
-          php tests/settings/task_preferences_consumers.php
-          php tests/settings/task_preferences_controller.php
-          php tests/settings/task_preferences_copies.php
-          php tests/settings/task_preferences_concurrency.php
-          php tests/settings/calendar_preferences.php
-          php tests/settings/calendar_smoke_logging_guard.php
-          php tests/settings/calendar_read.php
-          php tests/settings/calendar_unassigned_portal.php
-          php tests/settings/calendar_controller.php
-          php tests/settings/calendar_boundaries.php
-          php tests/settings/calendar_concurrency.php
-          php tests/companies/native_resume_446.php
-          php tests/companies/native_resume_446.php --tracking
-          php tests/issuers_native_routing.php
-          php tests/companies/native_resume_447.php
-          php tests/companies/native_resume_447.php --tracking
-          php tests/banco_brasil_local_noncash_restored_pdf_v3.php
-          #448: own priority/follow, strict additive schema and actual native runner.
-          php tests/settings/task_operations_schema.php
-          php tests/settings/task_operations_settings.php
-          php tests/settings/task_operations.php
-          php tests/settings/task_operations_faults.php
-          php tests/settings/task_operations_copies.php
-          php tests/settings/task_operations_project_copies.php
-          php tests/settings/task_operations_controller.php
-          php tests/settings/task_operations_concurrency.php
-          php tests/companies/native_resume_448.php
-          php tests/settings/task_timer_settings.php
-          php tests/settings/task_timer_transitions.php
-          php tests/settings/task_timer_concurrency.php
-          php tests/settings/task_timer_start_envelope.php
-          php tests/settings/task_timer_stop_settings.php
-          php tests/settings/task_timer_auto_stop_integrity.php
-          php tests/settings/task_timer_auto_stop_concurrency.php
-          php tests/companies/native_resume_449.php
-          php tests/companies/native_timer_450.php
-          php tests/companies/native_timer_451.php
-          php tests/companies/native_diagnostics_452.php
-          php tests/companies/native_core_453.php
-          php tests/companies/native_core_454.php
-          php tests/companies/native_core_455.php
-          php tests/companies/native_core_456.php
-          php tests/companies/task_recurring.php
-          php tests/companies/task_recurring_api.php
-          php tests/companies/task_recurring_integrity.php
-          php tests/companies/task_recurring_worker.php
-          php tests/companies/task_recurring_concurrency.php
-          php tests/companies/task_recurring_controller.php
-          php tests/companies/staff_management.php
-          php tests/companies/staff_native_atomic.php
-          php tests/companies/staff_native_controller.php
-          php tests/companies/staff_concurrency.php
-          php tests/companies/leads.php
-          php tests/companies/leads_api.php
-          php tests/companies/leads_worker.php
-          php tests/companies/leads_integrity.php
-          php tests/companies/leads_concurrency.php
-          php tests/companies/purchases.php
-          php tests/companies/purchases_surfaces.php
-          php tests/companies/purchases_schema.php
-          php tests/companies/purchases_integrity.php
-          php tests/companies/purchases_concurrency.php
-          php tests/companies/purchases_api.php
-          php tests/companies/purchases_api_phantoms.php
-          php tests/companies/purchases_api_matrix.php
-          php tests/companies/purchases_expense_fence.php
-          php tests/companies/hr.php
-          php tests/companies/hr_training.php
-          php tests/companies/hr_integrity.php
-          php tests/companies/hr_api.php
-          php tests/companies/hr_api_phantoms.php
-          php tests/companies/hr_api_read_locks.php
-          php tests/companies/hr_concurrency.php
-          php tests/companies/hr_seed_readback.php
-          php tests/banco_brasil_local_noncash_clock_v3.php
+          python3 scripts/ci/run-company-registry-shard.py --shard ${{ matrix.shard }} --timings /tmp/registry-timings.jsonl
       - name: Testar entradas legadas Finance e Accounting em banco exclusivo
+        if: matrix.shard == 1
         env:
           ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_module_audit;charset=utf8mb4
           ISSUERS_TEST_USER: root
@@ -643,3 +172,26 @@ jobs:
           php tests/companies/legacy_financial_module_tables.php
           php tests/companies/legacy_financial_module_migrations.php
           php tests/companies/module_version_column_mysql.php
+      - name: Preservar tempos por comando (inclui falhas)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-registry-timings-php-${{ matrix.php }}-shard-${{ matrix.shard }}
+          path: /tmp/registry-timings.jsonl
+          if-no-files-found: warn
+          retention-days: 7
+  # Preserve existing branch-protection check names. A skipped/cancelled shard
+  # cannot satisfy either gate, even if the other PHP version succeeded.
+  registry:
+    if: always()
+    needs: [registry-plan, registry-shards]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.5']
+    steps:
+      - name: Exigir todos os shards e o inventário exato
+        env:
+          PLAN_RESULT: ${{ needs.registry-plan.result }}
+          SHARDS_RESULT: ${{ needs.registry-shards.result }}
+        run: test "$PLAN_RESULT" = success && test "$SHARDS_RESULT" = success

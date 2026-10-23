@@ -12,6 +12,8 @@ on:
       - tests/asaas_*.php
       - tests/asaas_*.test.js
       - tests/asaas_*.test.cjs
+      - docker/ci/**
+      - tests/support/AsaasSettingsFixture.cjs
       - .github/workflows/asaas-payment-origin.yml
   push:
     branches: [main, develop, fix/asaas-webhook-scope-auth]
@@ -25,6 +27,8 @@ on:
       - tests/asaas_*.php
       - tests/asaas_*.test.js
       - tests/asaas_*.test.cjs
+      - docker/ci/**
+      - tests/support/AsaasSettingsFixture.cjs
       - .github/workflows/asaas-payment-origin.yml
 permissions:
   contents: read
@@ -100,16 +104,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Instalar driver do Chromium local
-        run: npm install --no-save --no-package-lock playwright@1.55.1
-      - name: Validar abas em JavaScript e DOM Chromium local
+      - name: Instalar driver e Chromium pareados em diretório isolado
         run: |
+          mkdir -p "$RUNNER_TEMP/asaas-settings-ui"
+          cp docker/ci/package.json docker/ci/package-lock.json "$RUNNER_TEMP/asaas-settings-ui/"
+          npm ci --prefix "$RUNNER_TEMP/asaas-settings-ui" --ignore-scripts
+          "$RUNNER_TEMP/asaas-settings-ui/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Validar abas em JavaScript e DOM Chromium pareado
+        env:
+          NODE_PATH: ${{ runner.temp }}/asaas-settings-ui/node_modules
+        run: |
+          node --test tests/asaas_settings_browser_runtime.test.cjs
           node --test tests/asaas_settings_dom_harness.test.cjs
           node --check modules/asaas/assets/js/settings-tabs.js
           node --check tests/companies/asaas_preferences_real_browser.cjs
           node --test tests/asaas_preferences_real_browser.test.cjs
-          chrome="$(command -v google-chrome)"
-          test -n "$chrome"
+          chrome="$(node -e 'process.stdout.write(require("playwright").chromium.executablePath())')"
+          test -n "$chrome" && test -x "$chrome"
+          node --version
+          node -e 'console.log("Playwright " + require("playwright/package.json").version)'
+          printf 'Chromium executable: %s\n' "$chrome"
+          timeout 10s "$chrome" --version
           CHROMIUM_BIN="$chrome" ASAAS_UI_SCREENSHOT=artifacts/asaas-settings.png node tests/asaas_settings_tabs.test.js
       - uses: actions/upload-artifact@v4
         with:
