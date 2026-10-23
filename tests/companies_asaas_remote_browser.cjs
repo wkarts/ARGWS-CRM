@@ -13,7 +13,7 @@ try{
  execFileSync('docker',['exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',app,'php','tests/companies/asaas_install_remote_http_fixture.php'],{stdio:'pipe'});
  await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await go(page,page.locator('button[type=submit]'));
  const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");let oldForm,originA;
- async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);await go(page,page.locator('.company-selector-form button[type=submit]'));}
+ async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);}
  for(const [issuer,letter]of[[a,'a'],[b,'b']]){
   await select(issuer);const x=fixture(letter,'prepare_unpaid');await page.goto(url+'/admin/company_asaas');const before=sql('SELECT status FROM tblinvoices WHERE id='+x.invoice);
   const form=page.locator('#asaas-origin-'+x.origin+' form').filter({has:page.locator('input[name=action][value=remote_remove]')});assert.equal(await form.count(),1,'actual pending origin offers scoped removal form');assert.equal(await form.locator('input[name=confirm][required]').count(),1);

@@ -73,10 +73,10 @@ test('responsive header rules are scoped and source/built styles remain aligned'
 });
 test('optional full shell, long names and mobile controls render without changing the default fixture', () => {
   const shell = execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'support', 'NativeHeaderFixture.php'), '--full-shell', '--long-name', '--mobile-user'], {encoding: 'utf8'});
-  for (const id of ['header', 'company-context-select', 'menu', 'setup-menu-wrapper', 'setup-menu']) assert.equal((shell.match(new RegExp('id="' + id + '"', 'g')) || []).length, 1);
-  assert.match(shell, /data-width="100%"/);
-  assert.ok(shell.indexOf('company-context-select') < shell.indexOf('sidebar-user-profile'));
+  for (const id of ['header', 'company-selector-toggle', 'menu', 'setup-menu-wrapper', 'setup-menu']) assert.equal((shell.match(new RegExp('id="' + id + '"', 'g')) || []).length, 1);
+  assert.match(shell, /data-company-current="1"/);
+  assert.ok(shell.indexOf('data-company-selector-toggle') < shell.lastIndexOf('sidebar-user-profile'));
   assert.match(shell, /native-company-header/);
   assert.match(shell, /sidebar-user-profile/);
-  assert.match(shell, /selectpicker company-context-select/);
+  assert.match(shell, /data-company-choice="1"/);
 });

@@ -1,3 +1,11 @@
+.company-registry-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px; }
+.company-registry-header h1 { margin-bottom:0; }
+.company-registry .company-grid-name { min-width:220px; font-weight:500; }
+.company-registry .company-grid-document, .company-registry .table-companies .label, .company-registry .company-status-form { white-space:nowrap; }
+.company-registry .table-companies td { vertical-align:middle; }
+.company-registry .company-status-form { display:inline-block; margin:0; }
+.company-registry #company-grid-search { width:240px; max-width:100%; }
+@media(max-width:767px) { .company-registry #company-grid-search { flex:1; width:auto; min-width:0; } }
 .company-grid-toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:12px 15px; }
 .company-grid-toolbar label { display:flex; align-items:center; gap:8px; margin:0; font-weight:400; }
 .company-grid-toolbar select { width:auto; }

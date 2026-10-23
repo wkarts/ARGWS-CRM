@@ -11,7 +11,7 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
 (async()=>{const browser=await chromium.launch({headless:true}),ctx=await browser.newContext();await ctx.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await workspacePage(ctx),errors=[],publicContexts=[];page.on('pageerror',e=>errors.push(e.message));try{
  await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));
  const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'"),proofs={},sources={};
- async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);await nav(page,page.locator('.company-selector-form button[type=submit]'));}
+ async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);}
  const pdf=Buffer.from('%PDF-1.4\nSynthetic private sales browser proof\n%%EOF\n'),png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAIAAAASFvFNAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAC0lEQVQImWNgwAQAABQAAWX1h1kAAAAASUVORK5CYII=','base64');
  for(const[issuer,letter]of[[a,'a'],[b,'b']]){
   await select(issuer);const doc=sql("SELECT id FROM tblcompany_sales_documents WHERE issuer_id="+issuer+" AND kind='estimates' AND state='converted' AND payload_json LIKE '%Sales browser "+letter+"%' ORDER BY id DESC LIMIT 1");assert.match(doc,/^[1-9]\d*$/);sources[issuer]=doc;await page.goto(url+'/admin/company_sales?kind=estimates&document='+doc);

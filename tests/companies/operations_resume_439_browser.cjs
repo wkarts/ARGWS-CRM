@@ -32,7 +32,7 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
   const b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
   assert.match(a,/^[1-9]\d*$/);assert.match(b,/^[1-9]\d*$/);
   const cashBefore=sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords');
-  async function select(issuer){await page.goto(base+'/admin/company_context');await selectCompanyOption(page, issuer);await submit(page,page.locator('.company-selector-form button[type=submit]'));}
+  async function select(issuer){await page.goto(base+'/admin/company_context');await selectCompanyOption(page, issuer);}
   async function makeTimer(table,task,seconds){
    await submit(page,page.getByRole('button',{name:'Iniciar meu cronômetro',exact:true}));
    assert.equal(sql('SELECT COUNT(*) FROM '+table+' WHERE task_id='+task+' AND stopped_at IS NULL'),'1');
@@ -42,6 +42,7 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
   }
   async function cancelAndRetain(invoice,sourceUrl,table,field,source){
    await page.goto(base+'/admin/company_invoices?invoice='+invoice);
+   await page.getByRole('tab',{name:'Editar fatura sem movimento',exact:true}).click();
    await submit(page,page.getByRole('button',{name:'Cancelar fatura sem movimento',exact:true}));
    assert.equal(sql('SELECT status FROM tblinvoices WHERE id='+invoice),'5');
    await page.goto(sourceUrl);

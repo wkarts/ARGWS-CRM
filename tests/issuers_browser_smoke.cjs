@@ -237,8 +237,8 @@ async function captureRealScreens(page, routes) {
       const secondaryCompany = sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
       await page.goto(url + '/admin/company_context');
       await selectCompanyOption(page, secondaryCompany);
-      await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('.company-selector-form button[type=submit]').click()]);
-      assert.equal(await page.locator('#company-context-select').inputValue(), secondaryCompany);
+
+      assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany);
       sql('DELETE FROM tblissuers_lock WHERE id=1');
       await page.goto(url + '/admin');
       await waitForUpgradeForm(page);
@@ -262,15 +262,15 @@ async function captureRealScreens(page, routes) {
       await page.locator('[role=status].alert-success').waitFor({ state: 'visible' });
       assert.equal(sql('SELECT COUNT(*) FROM tblissuers_lock WHERE id=1'), '1');
       assert.equal(sql("SELECT CONCAT(master_staff_id,':',primary_issuer_id,':',source) FROM tblissuers_installation_identity WHERE id=1"), identityBeforeSecondary, 'native upgrade preserves the already identified master without new CLI authorization');
-      assert.equal(await page.locator('#company-context-select').inputValue(), secondaryCompany, 'secondary company selection is preserved');
+      assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany, 'secondary company selection is preserved');
       assert.equal((await context.request.get(url + '/admin/settings?group=update')).status(), 403, 'native feedback never opens global Settings to a secondary company');
       await page.reload();
       assert(!(await page.content()).includes('O CRM foi atualizado com sucesso.'), 'secondary native success is one-shot');
       await selectCompanyOption(page, primaryCompany);
-      await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('.company-selector-form button[type=submit]').click()]);
+
       await shell(page);
       await page.goto(url + '/admin/issuers');
-      const selectedCompanyLabel = (await page.locator('#company-context-select option:checked').textContent()).trim();
+      const selectedCompanyLabel = (await page.locator('.company-selector [data-company-current-label]').textContent()).trim();
       assert.ok(selectedCompanyLabel.replace(/\(principal\)/g, '').trim(), 'empty optional display identity retains the authorized canonical company name');
       await captureRealScreens(page, [['companies-grid',url + '/admin/issuers'], ['company-settings',url + '/admin/settings?group=company']]);
     }

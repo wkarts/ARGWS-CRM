@@ -5,8 +5,6 @@ body.company-context-shell { background: #f3f4f6; color: #334155; margin: 0; min
 .company-context-shell .company-menu-toggle { padding: 6px 8px; border: 0; background: transparent; }
 .company-context-shell #menu { position: fixed; top: 57px; bottom: 0; left: 0; width: 230px; margin: 0; min-height: 0; background: #f9fafb; overflow-y: auto; z-index: 999; border-right: 1px solid #e5e7eb; }
 .company-context-shell .company-sidebar-account { margin: 20px 8px 14px; }
-.company-selector-form .bootstrap-select { flex: 1 1 auto; min-width: 0; }
-.company-selector-form > button[type=submit] { flex: 0 0 auto; padding: 8px; }
 .company-context-shell .company-user-profile { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04); }
 .company-context-shell .company-user-avatar { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border-radius: 50%; background: #f3f4f6; }
 .company-context-shell .company-user-identity { min-width: 0; }

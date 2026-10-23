@@ -15,7 +15,4 @@
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape' && narrow.matches) { setCollapsed(true); toggle.focus(); }
     });
-    if (window.jQuery && window.jQuery.fn.selectpicker) {
-        window.jQuery('.company-context-select').selectpicker();
-    }
 }());

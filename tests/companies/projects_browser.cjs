@@ -10,7 +10,7 @@ async function nav(page,button){await Promise.all([page.waitForNavigation({waitU
 (async()=>{const browser=await chromium.launch({headless:true});const context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await workspacePage(context),errors=[];page.on('pageerror',e=>errors.push(e.message));try{
  await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));
  const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");const projects={},tasks={};
- async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);await nav(page,page.locator('.company-selector-form button[type=submit]'));}
+ async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);}
  for(const [issuer,letter]of[[a,'a'],[b,'b']]){
   await select(issuer);await page.goto(url+'/admin/company_projects');
   const client=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client "+letter+"'");await page.locator('#project-client').selectOption(client);await page.locator('#project-new-name').fill('Browser project '+letter+' <script>');await page.locator('#project-new-description').fill('Private project '+letter);await page.locator('#project-new-start').fill('2026-10-19');await page.locator('#project-new-due').fill('2026-11-19');

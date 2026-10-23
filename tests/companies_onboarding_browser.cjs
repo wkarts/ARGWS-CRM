@@ -76,6 +76,18 @@ async function next(page) { await navigate(page, page.locator('section form butt
 
     // Real authenticated pages, not HTML fixtures or presentation overrides.
     // A temporary mobile tab preserves the main workflow's viewport and draft state.
+    async function captureWizardActions(host, frame, filename) {
+      // Real keyboard traversal must reveal the form actions within the scrollable iframe.
+      await frame.locator('#profile_company_state_registration').press('Tab');
+      const submit = frame.locator('button[type=submit]');
+      assert.equal(await submit.evaluate(el => el === document.activeElement), true, 'Tab reaches Save and continue');
+      await submit.press('Tab');
+      assert.equal(await frame.locator('[data-wizard-close]').evaluate(el => el === document.activeElement), true, 'Tab reaches Exit without submitting');
+      for (const control of [submit, frame.locator('[data-wizard-close]')]) {
+        assert.equal(await control.evaluate(el => { const r=el.getBoundingClientRect();return r.top>=0 && r.bottom<=innerHeight+1 && r.left>=0 && r.right<=innerWidth+1; }), true, 'wizard actions are fully reachable inside the iframe');
+      }
+      await host.screenshot({ path: output + '/' + filename, fullPage: true });
+    }
     async function captureMobileCompanyPage(path, filename, showWizard = false) {
       const mobilePage = await context.newPage();
       mobilePage.on('pageerror', error => errors.push(error.message));
@@ -90,6 +102,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
           await mobilePage.locator('[data-company-registry]').waitFor();
         }
         await mobilePage.screenshot({ path: output + '/' + filename, fullPage: true });
+        if (showWizard) await captureWizardActions(mobilePage, mobilePage.frameLocator('iframe[name="company-create-frame"]'), 'company-onboarding-actions-mobile.png');
       } finally { await mobilePage.close(); }
     }
     await page.goto(url + '/admin/issuers');
@@ -103,6 +116,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
     await next(wizard);
     await wizard.locator('#legal_name').waitFor();
     await page.screenshot({ path: output + '/company-onboarding-identity-desktop.png', fullPage: true });
+    await captureWizardActions(page, wizard, 'company-onboarding-actions-desktop.png');
     await captureMobileCompanyPage('/admin/company_onboarding', 'company-onboarding-identity-mobile.png', true);
     const draftUrl = wizard.url();
     await wizard.locator('#legal_name').fill('Synthetic company B');
@@ -164,12 +178,12 @@ async function next(page) { await navigate(page, page.locator('section form butt
     ]);
     assert.equal(registryResponse.status(), 200, 'completion reloads the authorized registry');
     await registryResponse.finished();
-    await page.locator('#company-context-select option[value="' + created + '"]').waitFor({ state: 'attached' });
+    await page.locator('.company-selector [data-company-choice="' + created + '"]').waitFor({ state: 'attached' });
     await page.waitForLoadState('load');
     assert.equal(page.url(), url + '/admin/issuers');
     const oldContext = completion._company_context;
     await selectCompanyOption(page, created);
-    await navigate(page, page.locator('.company-selector-form button[type=submit]'));
+
     const switched = await hidden(page);
     const staleCompany = await context.request.post(draftUrl, { form: { ...completion, ...switched, action: 'complete', _company_context: oldContext } });
     assert.equal(staleCompany.status(), 409, 'company switch refuses old-tab submission before mutation');
@@ -179,7 +193,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
     async function switchCompany(id) {
       await page.goto(url + '/admin/company_context');
       await selectCompanyOption(page, id);
-      await navigate(page, page.locator('.company-selector-form button[type=submit]'));
+
     }
     async function formFields(form) {
       return form.locator('input[type=hidden]').evaluateAll(inputs => Object.fromEntries(inputs.filter(x => x.name).map(x => [x.name, x.value])));

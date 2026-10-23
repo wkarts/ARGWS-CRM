@@ -46,9 +46,9 @@ async function run() {
           try {
             await page.setContent(html(mode === 'urls' ? '' : mode === 'mobile-long-name' ? mobileHeader : header, mode === 'urls' || mode === 'combined' ? summary : ''), {waitUntil: 'load'});
             if (mode !== 'urls') {
-              await page.locator('.company-selector .bootstrap-select').waitFor({state: 'attached', timeout: 10000});
+              await page.locator('.company-selector [data-company-selector-toggle]').waitFor({state: 'attached', timeout: 10000});
               if (width <= 768) await page.locator('#header > .hide-menu').click();
-              await page.locator('.company-selector .bootstrap-select').waitFor({state: 'visible', timeout: 10000});
+              await page.locator('.company-selector [data-company-selector-toggle]').waitFor({state: 'visible', timeout: 10000});
             }
             if (width <= 768) await page.waitForFunction(() => document.body.classList.contains('page-small'), null, {timeout: 10000});
             await page.evaluate(() => document.fonts.ready);
@@ -59,8 +59,8 @@ async function run() {
               const header = box('#header'), selector = box('.company-selector'), search = box('#search_input');
               const visibleControls = ['#header > .hide-menu', '#search_input', '.mobile-menu-toggle'].map(selector => box(selector)).filter(rect => rect.width > 0 && rect.height > 0);
               return {contained: visibleControls.every(rect => rect.left >= -1 && rect.right <= innerWidth + 1 && rect.bottom <= header.bottom + 1),
-                separate: selector.bottom <= box('#menu .sidebar-user-profile').top + 1 && selector.left >= -1 && selector.right <= innerWidth + 1,
-                sidebarBelow: box('#menu .sidebar-user-profile').top >= header.bottom,
+                separate: selector.bottom <= box('#menu .sidebar-user-profile:not(.company-selector)').top + 1 && selector.left >= -1 && selector.right <= innerWidth + 1,
+                sidebarBelow: box('#menu .sidebar-user-profile:not(.company-selector)').top >= header.bottom,
                 setupOffset: parseFloat(getComputedStyle(document.querySelector('#setup-menu')).marginTop) === header.height,
                 headerHeight: header.height, searchWidth: search.width};
             });
@@ -72,13 +72,13 @@ async function run() {
             if (mode === 'mobile-long-name') {
               const formBefore = await page.locator('.company-selector form').evaluate(form => JSON.stringify(Array.from(new FormData(form).entries())));
               phase = 'toggle company dropdown';
-              await page.locator('.company-selector .dropdown-toggle').click();
-              await page.locator('.bs-container.company-context-select .dropdown-menu').first().waitFor({state: 'visible'});
-              const dropdownFits = await page.locator('.bs-container.company-context-select .dropdown-menu').first().evaluate(element => { const r = element.getBoundingClientRect(); return r.left >= -1 && r.right <= innerWidth + 1 && element.scrollWidth <= element.clientWidth + 1; });
+              await page.locator('.company-selector [data-company-selector-toggle]').click();
+              await page.locator('.company-selector [data-company-selector-menu]').first().waitFor({state: 'visible'});
+              const dropdownFits = await page.locator('.company-selector [data-company-selector-menu]').first().evaluate(element => { const r = element.getBoundingClientRect(); return r.left >= -1 && r.right <= innerWidth + 1 && element.scrollWidth <= element.clientWidth + 1; });
               await page.screenshot({path: path.join(output, width + '-company-dropdown.png'), fullPage: true});
               phase = 'toggle company dropdown';
-              await page.locator('.company-selector .dropdown-toggle').click();
-              const portalClosed = await page.locator('.bs-container.company-context-select .dropdown-menu').first().isVisible().then(visible => !visible);
+              await page.locator('.company-selector [data-company-selector-toggle]').click();
+              const portalClosed = await page.locator('.company-selector [data-company-selector-menu]').first().isVisible().then(visible => !visible);
               let mobileMenuBelow = true;
               if (width <= 768) {
                 phase = 'toggle mobile menu';
@@ -96,7 +96,7 @@ async function run() {
                 document.body.classList.add('show-sidebar');
                 document.querySelector('#setup-menu-wrapper').classList.add('display-block');
                 const headerBottom = document.querySelector('#header').getBoundingClientRect().bottom;
-                const okay = document.querySelector('#menu .sidebar-user-profile').getBoundingClientRect().top >= headerBottom && document.querySelector('#setup-menu').getBoundingClientRect().top >= headerBottom;
+                const okay = document.querySelector('#menu .sidebar-user-profile:not(.company-selector)').getBoundingClientRect().top >= headerBottom && document.querySelector('#setup-menu').getBoundingClientRect().top >= headerBottom;
                 document.body.classList.remove('show-sidebar');
                 document.querySelector('#setup-menu-wrapper').classList.remove('display-block');
                 return okay;

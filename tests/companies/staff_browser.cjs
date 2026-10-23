@@ -33,11 +33,11 @@ async function hidden(form) { return form.locator('input[type=hidden][name]').ev
 async function selectCompany(page,id) {
   await page.goto(url+'/admin/company_context');
   await selectCompanyOption(page, String(id));
-  await submit(page,page.locator('.company-selector-form button[type=submit]'));
+
   // The primary native dashboard starts its task-table XHR after DOMContentLoaded.
   // Finish that real render before navigating again; do not abort its JSON response.
   await page.waitForLoadState('networkidle');
-  assert.equal(await page.locator('#company-context-select').inputValue(),String(id));
+  assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'),String(id));
 }
 async function login(page,email,password) {
   assert.equal((await page.goto(url+'/admin/authentication')).status(),200);

@@ -14,7 +14,7 @@ async function nav(page,button){await Promise.all([page.waitForNavigation({waitU
 async function values(form){return form.evaluate(el=>Object.fromEntries(new FormData(el).entries()));}
 (async()=>{
  const browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})}),ctx=await browser.newContext();await ctx.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());const page=await ctx.newPage(),errors=[],created=[],done=[];page.on('pageerror',e=>errors.push(e.message));
- async function select(i){await page.goto(base+'/admin/company_context');await selectCompanyOption(page, String(i));await nav(page,page.locator('.company-selector-form button[type=submit]'));}
+ async function select(i){await page.goto(base+'/admin/company_context');await selectCompanyOption(page, String(i));}
  async function api(secret,id){const r=await ctx.request.get(base+'/company_api/local_noncash/'+id,{headers:{Authorization:'Bearer '+secret}});assert.equal(r.status(),200);return(await r.json()).data;}
  async function write(secret,id,body,key){return ctx.request.post(base+'/company_api/local_noncash/'+id,{headers:{Authorization:'Bearer '+secret,'Content-Type':'application/json','Idempotency-Key':key},data:body});}
  async function review(f){await page.goto(base+'/admin/banco_brasil/local_noncash?issuer_id='+f.issuer+'&invoice_id='+f.invoice);assert.equal(await page.locator('h1').innerText(),'Revisão financeira LOCAL');}

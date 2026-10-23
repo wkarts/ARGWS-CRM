@@ -4,7 +4,7 @@
             is_admin_sidebar_background_light() :
             false; ?>
     <div class="tw-mt-[80px] tw-mx-1.5 company-sidebar-account">
-        <?php $this->load->view('admin/includes/company_selector'); ?>
+        <?php $this->load->view('admin/includes/company_selector', ['companySelectorSidebarDark' => $isSidebarDark]); ?>
     </div>
     <div class="dropdown sidebar-user-profile tw-mt-2 tw-mx-1.5 ">
         <a href="#"

@@ -31,7 +31,7 @@ async function upload(page, file, password = file.password) {
 async function select(page, issuer) {
   await page.goto(url + '/admin/company_context');
   await selectCompanyOption(page, issuer);
-  await navigate(page, page.locator('.company-selector-form button[type=submit]'));
+
   await page.goto(url + '/admin/company_certificates/index/' + issuer);
 }
 (async () => {

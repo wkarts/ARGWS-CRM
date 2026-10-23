@@ -7,11 +7,9 @@ $draftPath = is_string($requestedDraft) && preg_match('/^[a-f0-9]{64}$/D', $requ
 ?>
 <link rel="stylesheet" href="<?= $esc(base_url('assets/css/company-registry.css')); ?>">
 <div class="company-registry" data-company-registry>
-<h1 class="tw-mt-0 tw-font-semibold tw-text-xl">Empresas</h1>
+<div class="company-registry-header"><h1 class="tw-mt-0 tw-font-semibold tw-text-xl">Empresas</h1>
+<?php if($can_create){ ?><button class="btn btn-primary" type="button" data-new-company><i class="fa fa-plus" aria-hidden="true"></i> Nova empresa</button><?php } ?></div>
 <?php if(is_array($company_notice??null)){ ?><div class="alert <?= ($company_notice['type']??'')==='success'?'alert-success':'alert-danger'; ?>" role="status"><?= $esc($company_notice['text']??''); ?></div><?php } ?>
-<div class="tw-mb-2">
-<?php if($can_create){ ?><button class="btn btn-primary" type="button" data-new-company><span aria-hidden="true">＋</span> Nova empresa</button><?php } ?>
-</div>
 <p class="text-muted">Para configurar uma empresa, selecione-a acima do seu usuário na barra lateral e use as Definições do CRM.</p>
 <?php if(!$can_create){ ?><p class="text-muted">Somente o responsável ativo da instalação pode cadastrar uma nova empresa.</p><?php } ?>
 <div class="panel_s"><div class="panel-body panel-table-full">
@@ -20,13 +18,13 @@ $draftPath = is_string($requestedDraft) && preg_match('/^[a-f0-9]{64}$/D', $requ
 <label for="company-grid-search">Buscar <input type="search" id="company-grid-search" class="form-control input-sm" autocomplete="off"></label>
 </div>
 <div class="table-responsive"><table class="table table-striped table-companies" aria-label="Empresas autorizadas">
-<thead><tr><?php foreach(['Empresa','CPF / CNPJ','Situação','Contexto'] as $column=>$label){ ?><th scope="col" aria-sort="<?= $column===0?'ascending':'none'; ?>"><button type="button" class="company-grid-sort" data-sort="<?= $column; ?>"><?= $esc($label); ?> <span aria-hidden="true">↕</span></button></th><?php } ?><th scope="col">Ações</th></tr></thead>
+<thead><tr><?php foreach(['Empresa','CPF / CNPJ','Situação','Contexto'] as $column=>$label){ ?><th scope="col" aria-sort="<?= $column===0?'ascending':'none'; ?>"><button type="button" class="company-grid-sort" data-sort="<?= $column; ?>"><?= $esc($label); ?> <span aria-hidden="true">↕</span></button></th><?php } ?><th scope="col" class="text-right">Ações</th></tr></thead>
 <tbody>
 <?php foreach($catalog as $entry){ ?><tr>
-<td><?= $esc($entry['legal_name']); ?></td><td><?= $esc($entry['tax_id']); ?></td>
+<td class="company-grid-name"><?= $esc($entry['legal_name']); ?></td><td class="company-grid-document"><?= $esc($entry['tax_id']); ?></td>
 <td><span class="label <?= (int)$entry['active']===1?'label-success':'label-default'; ?>"><?= (int)$entry['active']===1?'Ativa':'Inativa'; ?></span></td>
-<td><?= (int)$entry['id']===$activeCompany?'Empresa selecionada':'—'; ?></td>
-<td><?php if(!empty($status_permissions[(int)$entry['id']])){ ?>
+<td><?php if((int)$entry['id']===$activeCompany){ ?><span class="label label-info">Empresa selecionada</span><?php }else{ ?><span class="text-muted">—</span><?php } ?></td>
+<td class="text-right"><?php if(!empty($status_permissions[(int)$entry['id']])){ ?>
 <?= form_open($url('issuers/save'), ['class'=>'company-status-form']); ?>
 <input type="hidden" name="_company_context" value="<?= $esc(CompanyRequestScope::token()); ?>"><input type="hidden" name="issuers_csrf" value="<?= $esc($issuers_csrf); ?>">
 <input type="hidden" name="action" value="issuer_status"><input type="hidden" name="issuer_id" value="<?= (int)$entry['id']; ?>"><input type="hidden" name="active" value="<?= (int)$entry['active']===1?'0':'1'; ?>">

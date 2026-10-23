@@ -192,12 +192,12 @@ async function run(env = process.env) {
           await navigate(config.url + '/admin/company_context');
           await selectCompanyOption(page, owner.issuer);
           await submitSession(page.locator('.company-selector-form'));
-          check(await page.locator('#company-context-select').inputValue() === owner.issuer, 'native context selection is confirmed before Asaas navigation');
+          check(await page.locator('.company-selector').getAttribute('data-company-current') === owner.issuer, 'native context selection is confirmed before Asaas navigation');
           observePageErrors = true;
           const response = await navigate(config.url + '/admin/company_asaas');
           check(response.status() === 200, 'actual nominal preferences render: ' + owner.letter);
           check((response.headers()['cache-control'] || '').includes('no-store'), 'real nominal view prevents cached account/preferences recovery');
-          check(await page.locator('#company-context-select').inputValue() === owner.issuer, 'header confirms the actual active owner');
+          check(await page.locator('.company-selector').getAttribute('data-company-current') === owner.issuer, 'header confirms the actual active owner');
           check(await page.locator('body.company-context-shell').count() === 1 && await page.locator('script[src*="assets/js/company-context-tabs.js"]').count() === 1, 'real company shell and native tabs asset are present');
           check(await page.locator('link[href*="assets/plugins/bootstrap/css/bootstrap.min.css"]').count() === 1 && await page.evaluate(() => typeof window.jQuery?.fn?.tab === 'function'), 'actual Bootstrap stylesheet and plugin load');
           const preferences = page.locator('#preferences');
@@ -282,7 +282,7 @@ async function run(env = process.env) {
           check((await navigate(config.url + '/admin/company_asaas?invoice=' + foreign.invoice)).status() === 403, 'foreign invoice hydration is rejected within the current owner');
           check(await page.locator('#preferences, #asaas-issue-account').count() === 0, 'denied foreign invoice response exposes no preference or issuance form');
           await page.goBack({waitUntil: 'domcontentloaded'});
-          check(await page.locator('#company-context-select').inputValue() === owner.issuer && await page.locator('#preferences').count() === 1, 'Back recovers the owned view without changing company');
+          check(await page.locator('.company-selector').getAttribute('data-company-current') === owner.issuer && await page.locator('#preferences').count() === 1, 'Back recovers the owned view without changing company');
           await page.goForward({waitUntil: 'domcontentloaded'});
           check(await page.locator('#preferences').count() === 0, 'Forward cannot recover a foreign preference view');
         }

@@ -14,7 +14,7 @@ async function fields(form){return form.evaluate(el=>Object.fromEntries(new Form
  let lastFinancialBefore=financial;
  try{
   await page.goto(url+'/admin/authentication');await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await go(page,page.locator('button[type=submit]'));
-  async function select(issuer){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, String(issuer));await go(page,page.locator('.company-selector-form button[type=submit]'));}
+  async function select(issuer){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, String(issuer));}
   async function newProject(o,name){await page.goto(url+'/admin/company_projects');await page.locator('#project-client').selectOption(String(o.client));await page.locator('#project-new-name').fill(name);await page.locator('#project-new-start').fill('2026-10-19');await page.locator('#project-new-due').fill('2026-11-19');await go(page,page.getByRole('button',{name:'Criar projeto',exact:true}));return Number(new URL(page.url()).searchParams.get('project'));}
   for(const[label,o]of Object.entries(setup.owners)){
    await select(o.issuer);const project=await newProject(o,'Individual source '+label),target=await newProject(o,'Individual explicit target '+label);

@@ -100,6 +100,14 @@ const server=http.createServer((req,res)=>{
   frame=await openWizard(page);
   assert.equal(posts[1].csrf_test_name,'next-csrf');assert.equal(posts[1]._company_context,'old-tab-token','CSRF refresh must never replace captured company token');
   await page.evaluate(()=>window.postMessage({type:'company-onboarding-close'},location.origin));assert.equal(await page.locator('#company-create-modal').isVisible(),true,'messages outside the iframe are ignored');
+  const assertKeyboardActions = async () => {
+   await frame.locator('#profile_company_state_registration').press('Tab');
+   const submit=frame.locator('button[type="submit"]'), close=frame.locator('[data-wizard-close]');
+   assert.equal(await submit.evaluate(el=>el===document.activeElement),true,'keyboard reaches submit inside iframe');
+   await submit.press('Tab');assert.equal(await close.evaluate(el=>el===document.activeElement),true,'keyboard reaches exit without submitting');
+   for(const control of [submit,close])assert.equal(await control.evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight+1&&r.left>=0&&r.right<=innerWidth+1;}),true,'iframe scroll reveals whole action controls');
+  };
+  await assertKeyboardActions();
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
   await frame.waitForFunction(() => innerWidth < 768);
   await frame.evaluate(() => new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
@@ -126,6 +134,7 @@ const server=http.createServer((req,res)=>{
   await frame.getByRole('link',{name:'1. Identificação',exact:true}).click();
   assert.equal(await frame.getByLabel('CPF / CNPJ',{exact:true}).isVisible(),true);
   assert.equal(await frame.getByLabel('Razão social / nome',{exact:true}).isVisible(),true);
+  await assertKeyboardActions();
   await frame.locator('#legal_name').focus();await dismissWizard(page, () => frame.locator('#legal_name').press('Escape'));
   assert.equal(await page.locator('[data-new-company]').evaluate(el=>el===document.activeElement),true,'Escape returns focus after Bootstrap dismissal completes');
   const completed=await browser.newPage({viewport:{width:368,height:550}});
