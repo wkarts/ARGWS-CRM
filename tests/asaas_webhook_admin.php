@@ -23,7 +23,7 @@ check(!str_contains(json_encode($safe),'secret'),'only event metadata whiteliste
 
 class AdminController { public $load,$input,$session,$config,$asaas_gateway,$output; public function __construct() {} }
 class InputStub { public $method='GET',$post=[],$get=[]; function method($upper=false){return $upper?$this->method:strtolower($this->method);} function post($key=null){return $key===null?$this->post:($this->post[$key]??null);} function get($key){return $this->get[$key]??null;} }
-class SessionStub { public $values=[]; function userdata($key){return $this->values[$key]??null;} function set_userdata($key,$value){$this->values[$key]=$value;} }
+class SessionStub { public $values=[],$flash=[]; function flashdata($key){return $this->flash[$key]??null;} function userdata($key){return $this->values[$key]??null;} function set_userdata($key,$value){$this->values[$key]=$value;} }
 class OutputStub { public $headers=[]; function set_header($header){$this->headers[]=$header;return $this;} }
 class ConfigStub { function item($key){return '';} }
 class LoadStub { public $data=[]; function view($name,$data){$this->data=$data;} }
@@ -76,7 +76,7 @@ foreach (['webhook_token','one_time_token','token'] as $field) {
 }
 foreach (['setup_webhook','set_webhook','set_webhook_invoice','set_webhook_transfer'] as $method) {fails(fn()=>$c->$method(),'404');}
 
-function init_head(){} function init_tail(){} function html_escape($value){return htmlspecialchars((string)$value,ENT_QUOTES,'UTF-8');} function form_open($url,$attrs=[]){return '<form method="post" action="'.html_escape($url).'">';} function form_close(){return '</form>';}
+function init_head(){$GLOBALS['headCalls']=($GLOBALS['headCalls']??0)+1;} function init_tail(){$GLOBALS['tailCalls']=($GLOBALS['tailCalls']??0)+1;} function html_escape($value){return htmlspecialchars((string)$value,ENT_QUOTES,'UTF-8');} function form_open($url,$attrs=[]){return '<form method="post" action="'.html_escape($url).'">';} function form_close(){return '</form>';}
 $c=controller();$c->index();extract($c->load->data);ob_start();require __DIR__.'/../modules/asaas/views/webhooks.php';$html=ob_get_clean();
 check(str_contains($html,'&lt;script&gt;name&lt;/script&gt;') && !str_contains($html,'<script>name</script>'),'untrusted label escaped');
 check(!str_contains($html,'NEVER_RENDER_TOKEN_HASH') && !str_contains($html,'NEVER_RENDER_PAYLOAD'),'view never renders secrets/payload');
@@ -95,4 +95,16 @@ check(str_contains($postHtml,'cópia cifrada'),'encrypted recovery storage discl
 check(!str_contains($html,'setup_webhook'),'no old remote mutation button');
 check(\Asaas\WebhookAdminPresentation::statusLabel('observed')==='Observado, sem baixa','observation status localized without implying receipt');
 check(str_contains($html,'Homologação')&&!str_contains($html,'Homologação [sandbox]')&&!str_contains($html,'>Sandbox<'),'consistent environment labels');
+// Partial rendering must preserve admin checks/CSRF while omitting the duplicated shell.
+function get_instance(){return $GLOBALS['webhookPanelCi'];}
+$c=controller();$c->input->get=['panel'=>'1'];$c->index();
+check($c->load->data['embedded_panel']===true&&$c->load->data['generated_token']===null,'explicit panel GET renders no recovered token');
+$GLOBALS['webhookPanelCi']=(object)['session'=>$c->session];$c->session->flash['message-warning']='<script>synthetic-alert</script>';
+extract($c->load->data);$headBefore=$GLOBALS['headCalls'];$tailBefore=$GLOBALS['tailCalls'];
+ob_start();require __DIR__.'/../modules/asaas/views/webhooks.php';$panelHtml=ob_get_clean();
+check($GLOBALS['headCalls']===$headBefore&&$GLOBALS['tailCalls']===$tailBefore,'embedded view never initializes a second shell');
+check(str_contains($panelHtml,'data-asaas-operation-content')&&!str_contains($panelHtml,'<script>'),'embedded marker present and no inline scripts execute');
+check(str_contains($panelHtml,'&lt;script&gt;synthetic-alert&lt;/script&gt;'),'partial alerts are escaped');
+check(str_contains($panelHtml,'webhook_admin_csrf')&&!str_contains($panelHtml,'id="generated-webhook-token"'),'partial retains action CSRF without hydrating a token');
+$c->input->get=['panel'=>'unexpected'];$c->index();check($c->load->data['embedded_panel']===false,'only explicit panel1 suppresses shell');
 echo "Asaas webhook admin: {$checks} checks passed\n";

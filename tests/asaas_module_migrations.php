@@ -157,22 +157,32 @@ $profiles154=$pdo->query('SELECT * FROM module_test_options ORDER BY name')->fet
 verify((new App_module_migration('asaas'))->version('154')===true,'154 replay is native no-op');
 verify($pdo->query('SELECT * FROM module_test_options ORDER BY name')->fetchAll(PDO::FETCH_ASSOC)===$profiles154,'154 replay preserves all operational values');
 foreach($before153 as $table=>$rows){$after=$pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC);if($table==='asaas_company_accounts')$after=array_map(static function($row){unset($row['token_cipher']);return $row;},$after);verify($after===$rows,'154 failures/retry/replay preserve existing '.$table);}
-// Current155 is reached only after preserving every explicit historical154 checkpoint.
+// Historical155 is reached only after preserving every explicit historical154 checkpoint.
 $before155=[];
 foreach(array_merge(array_keys($before153),['options']) as $table)$before155[$table]=$pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC);
 $db->failQuery='CREATE TABLE IF NOT EXISTS `module_test_asaas_company_origin_profiles`';
-try{(new App_module_migration('asaas'))->to_latest();verify(false,'155 late DDL failure incorrectly accepted');}catch(RuntimeException $error){verify($error->getMessage()==='issuer_storage_failed','155 late DDL failure propagates sanitized');}
+try{(new App_module_migration('asaas'))->version('155');verify(false,'155 late DDL failure incorrectly accepted');}catch(RuntimeException $error){verify($error->getMessage()==='issuer_storage_failed','155 late DDL failure propagates sanitized');}
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.5.4','155 partial DDL preserves confirmed historical154 tracking');
 verify($db->table_exists('module_test_asaas_company_preferences')&&!$db->table_exists('module_test_asaas_company_origin_profiles'),'155 late DDL fixture actually leaves a partial additive schema');
 $db->failQuery='UPDATE `module_test_modules`';
-$native155=new App_module_migration('asaas');verify($native155->to_latest()===false,'155 tracking failure cannot report a completed upgrade');
+$native155=new App_module_migration('asaas');verify($native155->version('155')===false,'155 tracking failure cannot report a completed upgrade');
 verify($native155->error_string()==='module_migration_version_write_failed','155 tracking failure reason remains available');
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.5.4','155 failed tracking preserves154 after complete schema');
 \Asaas\CompanyPreferencesSchema::ensure($db,db_prefix(),false);
 $db->failQuery=null;
-verify((string)(new App_module_migration('asaas'))->to_latest()==='155','current native target retries and completes155');
+verify((string)(new App_module_migration('asaas'))->version('155')==='155','historical native target retries and completes155');
 verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.5.5','155 native tracking readback confirmed');
 foreach(\Asaas\CompanyPreferencesSchema::tables() as $table)verify((int)$pdo->query('SELECT COUNT(*) FROM `'.db_prefix().$table.'`')->fetchColumn()===0,'155 creates empty default-off ledger without adoption: '.$table);
-verify((new App_module_migration('asaas'))->to_latest()===true,'current155 replay is native no-op');
+verify((new App_module_migration('asaas'))->version('155')===true,'historical155 replay is native no-op');
 foreach($before155 as $table=>$rows)verify($pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC)===$rows,'155 failures/retry/replay preserve existing '.$table);
+$before156=[];
+foreach(array_unique(array_merge(array_keys($before155),\Asaas\CompanyPreferencesSchema::tables())) as $table)$before156[$table]=$pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC);
+$db->failQuery='UPDATE `module_test_modules`';
+$native156=new App_module_migration('asaas');verify($native156->to_latest()===false,'156 cannot hide a native tracking failure');
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.5.5','failed156 tracking preserves confirmed155');
+$db->failQuery=null;
+verify((string)(new App_module_migration('asaas'))->to_latest()==='156','current native target executes156');
+verify($pdo->query("SELECT installed_version FROM module_test_modules WHERE module_name='asaas'")->fetchColumn()==='1.5.6','156 native tracking readback confirmed');
+verify((new App_module_migration('asaas'))->to_latest()===true,'156 replay is native no-op');
+foreach($before156 as $table=>$rows)verify($pdo->query('SELECT * FROM `'.db_prefix().$table.'`')->fetchAll(PDO::FETCH_ASSOC)===$rows,'156 preserves existing data: '.$table);
 echo "OK: {$n} native module migration MySQL assertions.\n";

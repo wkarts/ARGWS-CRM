@@ -19,7 +19,12 @@ test('native header renders actual translated controls without a company selecto
 test('URL fixture renders real Asaas groups and no credential field', () => {
   const summary = render('AsaasUrlsFixture.php');
   assert.equal((summary.match(/class="input-group"/g) || []).length, 2);
-  assert.match(summary, /URLs da API por ambiente/);
+  assert.match(summary, /data-asaas-settings-section="authentication"/);
+  for (const [profile, endpoint] of [['production', 'https://api.asaas.com/v3'], ['sandbox', 'https://api-sandbox.asaas.com/v3']]) {
+    assert.ok(summary.includes('data-asaas-profile-fragment="' + profile + '"'));
+    assert.ok(summary.includes('id="asaas-api-url-' + profile + '" class="form-control" type="url" readonly value="' + endpoint + '"'));
+    assert.ok(summary.includes('data-asaas-copy="asaas-api-url-' + profile + '"'));
+  }
   assert.match(summary, /Homologação/);
   assert.match(summary, /type="url" readonly/);
   assert.doesNotMatch(summary, /type="password"|access_token|api_key/);
