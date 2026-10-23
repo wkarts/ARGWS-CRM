@@ -20,7 +20,7 @@ Chromium pareado; não instala as centenas de dependências frontend da aplicaç
 ## Build, teste e publicação
 
 O workflow `ci-validation-base.yml` compila/testa ambos PHP em mudanças dos inputs
-relevantes. Tem apenas `contents: read`, `push: false`, nenhum login ou secret.
+relevantes. O job build tem apenas `contents: read`, `push: false`, nenhum login ou secret.
 Também aceita dispatch para atualizar bases/pacotes de sistema por segurança.
 Ele registra SHA do código, hashes dos inputs e ID da imagem realmente construída.
 **ID local de imagem não é digest GHCR de manifest**, portanto não deve ser usado
@@ -36,16 +36,21 @@ Não consumir `latest` nem inventar digest antes do build/push.
 
 A visibilidade **pública** é proposta para permitir pull em PRs sem credenciais.
 O GitHub pode criar packages privados por padrão; é preciso verificar/configurar
-visibilidade explicitamente antes de depender disso. Nenhum package ou permissão
-foi criado/modificado por estes arquivos. A etapa de publicação autenticada fica
-pendente de autorização/coordenação do integrador; não há publicação automática
-por push da PR nem uso de `pull_request_target` com código não confiável.
+visibilidade explicitamente antes de depender disso. O workflow não configura visibilidade automaticamente; confirmar pull anônimo depois
+do push. A publicação foi autorizada para este package público de ferramentas,
+mas não foi executada localmente. Não há `pull_request_target`.
 
-Bootstrap sem merge: executar o build de leitura desta PR; revisar o resultado;
-autorizar um fluxo estritamente limitado à branch/commit revisado para publicar o
-mesmo artefato com `packages: write` só nessa etapa. O fluxo de publicação deve
-registrar proveniência e digest e não executar código arbitrário de outra PR com
-essa permissão. Não alterar branch protection ou fazer merge para contornar isso.
+Bootstrap temporário sem merge: somente push no repo `wkarts/ARGWS-CRM`, branch
+`fix/crm-post-call-integration`, com mensagem de commit **exatamente**
+`ci: publish approved validation bases`. O job `publish` depende de todos builds,
+carrega o mesmo tar testado do run atual e repete smoke antes do login. Somente esse
+job tem `packages: write`; GITHUB_TOKEN entra apenas no step de login. Nenhum segredo
+é passado ao build. Tag inclui hash dos inputs, run-id e tentativa para não
+sobrescrever. Recibo inclui digest GHCR real, SHA fonte e versão PHP.
+**Remover o trigger da branch e a condição bootstrap após obter/pinar recibos.**
+Fluxo permanente: main/pull_request só compilam/testam inputs; publicação exige
+workflow_dispatch com `publish=true`. Não alterar branch protection nem fazer merge
+para contornar a autorização. Não há deploy ou publicação da imagem do produto.
 
 ## Atualização e rollback
 
