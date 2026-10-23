@@ -22,6 +22,12 @@
             choices.forEach(function (choice) { choice.removeAttribute('aria-disabled'); });
         });
         root.addEventListener('keydown', function (event) {
+            // Bootstrap 3's delegated menu handler cancels Space for anchors.
+            // These are native buttons: retain their keyup activation and submitter.
+            if (event.key === ' ' && (event.target === toggle || choices.indexOf(event.target) !== -1)) {
+                event.stopPropagation();
+                return;
+            }
             var keys = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'Escape'];
             if (keys.indexOf(event.key) === -1 || submitting) return;
             var open = toggle.getAttribute('aria-expanded') === 'true';

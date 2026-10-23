@@ -56,6 +56,12 @@ test('shipped selector script guards duplicate submits, retains submitter and re
         document:{querySelectorAll:()=>[root]},window:{addEventListener:(name,handler)=>{windowListeners[name]=handler;}}
     });
     let prevented=0;
+    for (const target of [toggle, ...choices]) {
+        let stopped=0;
+        listeners.keydown({key:' ',target,stopPropagation:()=>stopped++,preventDefault:()=>prevented++});
+        assert.equal(stopped,1,'Space does not reach Bootstrap anchor-only handler');
+        assert.equal(prevented,0,'native button Space activation is not cancelled');
+    }
     const event={submitter:choices[1],preventDefault:()=>prevented++};
     listeners.submit(event);
     assert.equal(prevented,0,'first native submission proceeds');
