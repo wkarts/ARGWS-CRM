@@ -25,6 +25,14 @@ jobs:
         run: |
           php scripts/company-surface-inventory.php --output /tmp/company-operational-surfaces.json
           diff -u --label a/docs/companies/operational-surfaces.json --label b/docs/companies/operational-surfaces.json docs/companies/operational-surfaces.json /tmp/company-operational-surfaces.json
+      - name: Preservar inventário gerado para reconciliação
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-operational-surfaces-generated
+          path: /tmp/company-operational-surfaces.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Sintaxe PHP e contratos estáticos
         run: |
           find application/views/admin/companies application/views/admin/includes application/views/admin/settings application/views/admin/issuers -name '*.php' -print0 | xargs -0 -n1 php -l
