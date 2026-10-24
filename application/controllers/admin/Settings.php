@@ -248,6 +248,7 @@ class Settings extends AdminController
         $groups = CompanySettingsCatalog::groups();
         if (!isset($groups[$group])) { show_error('Esta seção ainda não está disponível para a empresa selecionada.', 403); return; }
         $fields = CompanySettingsCatalog::fields($group);
+        if($group==='company'){$this->load->helper(['fields','form']);}
         $error = null;
         $saved = false;
         if ($this->input->post()) {

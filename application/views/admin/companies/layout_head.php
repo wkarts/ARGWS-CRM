@@ -33,7 +33,7 @@ $companyLayoutMenus = [
     'Calendário' => ['fa-regular fa-calendar', [['calendar','company_calendar','Calendário']]],
     'Relatórios' => ['fa-solid fa-chart-line', [['reports','company_reports','Relatórios']]],
     'Equipe' => ['fa-solid fa-user-group', [['staff','company_staff','Colaboradores'],['hr','company_hr','Recursos humanos'],[null,'company_hr/mine','Meu RH']]],
-    'Definições' => ['fa fa-cog', [[null,'issuers','Empresas'],['settings','settings?group=company','Configurações'],['settings','company_assets','Logotipo e assinatura'],['settings','company_certificates','Certificado A1','edit'],['email_templates','emails','Modelos de e-mail'],['settings','company_asaas','Asaas'],['company_api','company_api_tokens','Credenciais da API','manage'],['company-ai','company_ai','Assistente privado']]],
+    'Definições' => ['fa fa-cog', [[null,'issuers','Empresas'],['settings','settings?group=company','Configurações'],['settings','company_assets','Logotipo e assinatura'],['settings','company_certificates','Certificado A1','edit'],['email_templates','emails','Modelos de e-mail'],['settings','company_asaas','Asaas'],['settings','company_efi','Efí'],['company_api','company_api_tokens','Credenciais da API','manage'],['company-ai','company_ai','Assistente privado']]],
 ];
 if ($companyLayoutCan('pusher') && $companyLayoutCan('tasks') && $companyLayoutCan('projects')) {
     $companyLayoutMenus['Projetos'][1][] = [null,'company_pusher','Avisos privados'];

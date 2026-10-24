@@ -24,6 +24,7 @@ class Issuers extends AdminController
 
     public function index($issuerId = null)
     {
+        if ($this->input->get('edit_modal', false) === '1') { return $this->editIdentity($issuerId); }
         if ($this->isolated()) { return $this->scopedIndex($issuerId); }
         $actor = get_staff_user_id();
         try {
@@ -60,6 +61,7 @@ class Issuers extends AdminController
             $this->load->view('admin/issuers/manage', [
                 'title' => _l('issuers_title'), 'catalog' => $catalog, 'available' => $available,
                 'status_permissions' => $this->statusPermissions($catalog, $actor),
+                'edit_permissions' => $this->editPermissions($catalog, $actor),
                 'company_notice' => $this->session->flashdata('company_registry_notice'),
                 'selected' => $selected,
                 'can_create' => $this->registry->canCreate($actor),
@@ -75,6 +77,7 @@ class Issuers extends AdminController
     /** No mutation has a GET route; token is required even when the legacy app disables global CSRF. */
     public function save()
     {
+        if ($this->input->post('action', false) === 'edit_identity') { return $this->saveIdentity(); }
         if ($this->input->post('action', false) === 'issuer_status') { return $this->saveStatus(); }
         if ($this->isolated()) { return $this->scopedSave(); }
         if ($this->input->method(true) !== 'POST') {
@@ -142,6 +145,56 @@ class Issuers extends AdminController
         return CompanyRegistryLookup::lookup($kind,$value);
     }
 
+    private function editPermissions(array $catalog, int $actor): array
+    {
+        $permissions=[];
+        foreach($catalog as $entry){$permissions[(int)$entry['id']]=(int)$entry['active']===1&&$this->registry->canManage($entry['id'],$actor);}
+        return $permissions;
+    }
+
+    private function editIdentity($issuerId): void
+    {
+        if(!in_array($this->input->method(true),['GET','HEAD'],true)){show_error('Use GET para editar a empresa.',405);return;}
+        $this->output->set_header('Cache-Control: no-store');
+        try {
+            $id=IssuerPolicy::id($issuerId);
+            $actor=$this->isolated()?CompanyRequestScope::context()->staffId():get_staff_user_id();
+            $selected=null;
+            foreach($this->registry->catalog($actor) as $entry){if((int)$entry['id']===$id&&(int)$entry['active']===1){$selected=$entry;break;}}
+            if(!$selected||!$this->registry->canManage($id,$actor)){throw new DomainException('issuer_access_denied');}
+            $revision=$this->registry->identityRevision($actor,$id);
+            $identity=(new CompanySettingsIdentity($this->db,db_prefix()))->read($id);
+            $token=$this->session->userdata('issuers_csrf');
+            if(!is_string($token)||strlen($token)!==64){$token=bin2hex(random_bytes(32));$this->session->set_userdata('issuers_csrf',$token);}
+            $this->load->view('admin/companies/identity_modal',[
+                'selected'=>$selected,'identity_values'=>$identity,'identity_revision'=>$revision,
+                'issuers_csrf'=>$token,'notice'=>$this->session->flashdata('company_identity_notice'),
+            ]);
+        } catch(DomainException $error){show_error('Empresa indisponível ou sem permissão para edição.',403);}
+    }
+
+    private function saveIdentity(): void
+    {
+        if($this->input->method(true)!=='POST'){show_error('A alteração exige POST.',405);return;}
+        $token=$this->session->userdata('issuers_csrf');$submitted=$this->input->post('issuers_csrf',false);
+        if(!is_string($token)||strlen($token)!==64||!is_string($submitted)||!hash_equals($token,$submitted)){show_error('Recarregue o formulário antes de salvar.',403);return;}
+        try {
+            $id=IssuerPolicy::id($this->input->post('issuer_id',false));
+            $actor=$this->isolated()?CompanyRequestScope::context()->staffId():get_staff_user_id();
+            $revision=$this->input->post('identity_revision',false);
+            if(!is_string($revision)){throw new DomainException('company_identity_revision_invalid');}
+            $this->registry->updateExistingIdentity($actor,[
+                'legal_name'=>$this->input->post('legal_name',false),'tax_id'=>$this->input->post('tax_id',false),
+                'profile'=>$this->input->post('company_profile',false)??[],
+            ],$id,$revision);
+            CompanyRequestScope::invalidateCaches($this);
+            $this->session->set_flashdata('company_identity_notice','Identificação da empresa atualizada.');
+        } catch(DomainException $error){
+            show_error($error->getMessage()==='company_identity_revision_stale'?'A empresa mudou em outra sessão. Feche e reabra a edição para revisar os dados atuais. Nenhum dado deste formulário foi salvo.':'Não foi possível salvar. Confira seus dados e permissões; feche e reabra a edição.',409);return;
+        } catch(Throwable $error){log_message('error','Company identity edit failed; no submitted data logged.');show_error('Não foi possível confirmar a alteração. Feche e reabra antes de tentar novamente.',500);return;}
+        redirect(CompanyRequestScope::adminUrl($this,'issuers/index/'.$id.'?edit_modal=1'),'location',303);
+    }
+
     private function statusPermissions(array $catalog, int $actor): array
     {
         $primary = (new IssuerResourceAccess($this->db, db_prefix()))->primaryId();
@@ -207,6 +260,7 @@ class Issuers extends AdminController
             $this->load->view('admin/companies/registry',[
                 'catalog'=>$catalog,'selected'=>$selected,'profile'=>$profile,'issuers_csrf'=>$token,
                 'status_permissions'=>$this->statusPermissions($catalog,$actor),
+                'edit_permissions'=>$this->editPermissions($catalog,$actor),
                 'can_create'=>$this->registry->canCreate($actor),
                 'can_manage'=>$selected?$this->registry->canManage($selected['id'],$actor):$this->registry->canCreate($actor),
                 'company_notice'=>$this->session->flashdata('company_registry_notice'),

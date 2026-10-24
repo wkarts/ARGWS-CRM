@@ -30,11 +30,24 @@ if (process.env.STATIC_ONLY) { console.log('PASS actual shared partial: canonica
       if (url.pathname.startsWith('/assets/')) return route.fulfill({ body: fs.readFileSync(path.join(root, url.pathname)), contentType: url.pathname.endsWith('.js') ? 'application/javascript' : 'text/css' });
       return route.abort();
     });
-    for (const width of [1440, 390]) {
+    for (const width of [1440, 768, 390]) {
       await page.setViewportSize({ width, height: 900 }); await page.goto('https://fixture.test/', { waitUntil: 'load' });
       await page.waitForFunction(() => document.querySelector('[data-company-identity]').dataset.ready);
       assert((await page.locator('body').textContent()).includes('Identificação'));
       assert.equal(await page.locator('#company-address').isVisible(), false);
+      const formBeforeTabs=await page.locator('form').evaluate(form=>JSON.stringify(Array.from(new FormData(form).entries())));
+      const requestsBeforeTabs=requests;
+      assert.equal(await page.getByRole('tab').count(),3,'all native sub-tabs remain reachable');
+      await page.getByRole('tab',{name:'1. Identificação',exact:true}).press('ArrowRight');
+      assert.equal(await page.getByRole('tab',{name:'2. Endereço',exact:true}).getAttribute('aria-selected'),'true');
+      assert.equal(new URL(page.url()).hash,'#company-address','deep link tracks selected tab');
+      await page.getByRole('tab',{name:'2. Endereço',exact:true}).press('End');
+      assert.equal(await page.locator('#company-contact').isVisible(),true);
+      await page.goBack();assert.equal(await page.locator('#company-address').isVisible(),true,'Back restores previous sub-tab');
+      await page.goBack();assert.equal(await page.locator('#company-identification').isVisible(),true);
+      assert.equal(await page.locator('form').evaluate(form=>JSON.stringify(Array.from(new FormData(form).entries()))),formBeforeTabs,'tab navigation does not mutate inputs');
+      assert.equal(requests,requestsBeforeTabs,'navigation never calls provider');
+
       await page.locator('[data-company-lookup=cnpj]').click(); await page.locator('[data-lookup-preview]').waitFor({ state: 'visible' });
       assert.equal(await page.locator('#legal_name').inputValue(), 'Nome existente');
       assert.equal(await page.locator('[data-lookup-fields] input[type=checkbox]').first().isChecked(), false);
@@ -58,7 +71,7 @@ if (process.env.STATIC_ONLY) { console.log('PASS actual shared partial: canonica
       const out = process.env.SCREENSHOT_DIR || '/tmp/company-identity-screenshots'; fs.mkdirSync(out, { recursive: true });
       await page.screenshot({ path: path.join(out, `company-identity-${width}.png`), fullPage: true });
     }
-    assert.deepEqual(errors, []); assert.equal(requests, 6);
+    assert.deepEqual(errors, []); assert.equal(requests, 9);
     console.log('PASS lookup preview, selective apply, changed-fields protection, cancel, failure, native CSRF refresh, responsive form');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -45,15 +45,17 @@ async function next(page) { await navigate(page, page.locator('section form butt
     assert.equal(sql('SELECT COUNT(*) FROM tblissuers_installation_identity WHERE master_staff_id IS NULL'), '1');
     await page.goto(url + '/admin/company_master');
     assert.equal((await context.request.get(url + '/argws_provisioning/authorize_company_master/17')).status(), 404, 'console authorization has no HTTP entry point');
-    const consoleOutput = execFileSync('docker', ['exec', '-i', app, 'php', 'index.php', 'argws_provisioning', 'authorize_company_master', '17'],
-      { input: 'Authorized synthetic legacy installation designation\n', encoding: 'utf8' });
-    const code = consoleOutput.match(/^[a-f0-9]{64}$/m)?.[0];
-    assert(code, 'console returns a temporary authorization (never logged by this test)');
-    await page.locator('#authorization_code').fill(code);
-    await page.locator('#current_password').fill(process.env.ISSUERS_BROWSER_PASSWORD);
-    await navigate(page, page.locator('form').filter({ has: page.locator('#authorization_code') }).locator('button[type=submit]'));
-    assert.equal(sql("SELECT CONCAT(master_staff_id,':',source) FROM tblissuers_installation_identity WHERE id=1"), '17:legacy_designation');
-    assert.equal(await page.locator('#authorization_code').count(), 0, 'no code echoed after success');
+    assert.equal(await page.locator('#authorization_code, #current_password').count(), 0, 'retired wizard has no hosting code/password fields');
+    assert.equal((await context.request.get(url + '/argws_provisioning/original_administrator/17/apply')).status(), 404, 'maintenance has no HTTP entry point');
+    const inspect = JSON.parse(execFileSync('docker', ['exec', app, 'php', 'index.php', 'argws_provisioning', 'original_administrator', '17', 'inspect'], {encoding:'utf8'}));
+    assert.equal(inspect.status, 'unresolved');
+    const applyArgs = ['exec', app, 'php', 'index.php', 'argws_provisioning', 'original_administrator', '17', 'apply', String(inspect.primary_issuer_id), 'test:explicit-owner-confirmation'];
+    execFileSync('docker', applyArgs, {encoding:'utf8'});
+    execFileSync('docker', applyArgs, {encoding:'utf8'});
+    assert.equal(sql("SELECT CONCAT(master_staff_id,':',source) FROM tblissuers_installation_identity WHERE id=1"), '17:owner_attestation');
+    assert.equal(sql("SELECT COUNT(*) FROM tblissuers_audit WHERE event='original_admin_attested'"), '1', 'maintenance replay is idempotent');
+    await page.goto(url + '/admin/issuers');
+    assert.equal(await page.locator('[data-new-company]').count(), 1, 'confirmed original administrator can create companies without legacy wizard');
 
     // Native Staff GUI first rejects missing company access, then creates a usable employee.
     async function fillStaff() {

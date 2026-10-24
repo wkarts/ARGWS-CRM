@@ -151,3 +151,35 @@ Do not attribute the full5m49s observed reduction to balancing, retrain from thi
 - 8.5/3: `12549119908` — `1c86b816a20e7689f85a526062d49918fcd97725fc20197edb04dbdb20c20c6f`
 - 8.1/1: `12549079161` — `9e884eed1dbf344eb292e65e56a7a59b6f620ef92b5173f7331df2b0a65d3eb2`
 - 8.1/2: `12548973524` — `5979012121be9a93b2eb8d33ca2a5a958c7bcabd312ed5096eb1268c1d0040f0`
+
+## Explicit extension after original-administrator coverage (4.7.3)
+
+Commit `aa01d59e` prepends `php tests/issuers_original_administrator.php` to the
+manifest. It has **no paired timing observation** in the frozen evidence. The
+explicit `company-registry-unmeasured.json` ledger keeps this fact visible; the
+planner assigns unmeasured additions by lowest command count, then shard number,
+without a fabricated zero duration or retraining the LPT model. With the original
+118/118/118/118 counts, this command goes to shard1 on both PHP versions.
+
+The historical 472-command manifest hash and all 472 original assignments remain
+verified unchanged (the command indices shift by one). The new manifest contains
+473 argv = 471 PHP + 2 Python, split 119/118/118/118. Together with the ten existing
+external PHP preflight/audit commands, this is **481 PHP commands per version**,
+retaining all 480 previous ones. Any additional short Efí audit commands must be
+accounted for separately, not silently included in these frozen counts.
+
+New canonical manifest hash:
+`c016827e69a73fe5a1f09aa14b4f24bcb74d9df40e6d5b5db697e013c25bb413`.
+The original baseline JSON is untouched; artifact verification still compares its
+944 historical records against the exact historical manifest. Replay output is
+explicitly partial and excludes the unmeasured command: it is **not** a predicted
+new total. All previous measured-run receipts above remain historical evidence,
+not claims that the newly expanded suite has already run.
+
+`--check` reconstructs the extension and fails closed on an undeclared command,
+missing addition, changed argv/order, altered baseline, or stale assignment.
+Runner capacity validation now permits the necessary one-command remainder while
+requiring all four shards to remain count-balanced. The eight isolated databases,
+PHP versions, execution order within each shard, and required aggregate gates are
+unchanged. Local validation: eleven Python tests and planner `--check`; actual
+execution of the expanded PHP suite remains a CI responsibility.

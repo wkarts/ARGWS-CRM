@@ -42,42 +42,28 @@ $settingsSections = [
 $listedGroups = array_merge(...array_values($settingsSections));
 $otherGroups = array_values(array_diff(array_keys($groups), $listedGroups));
 if ($otherGroups) { $settingsSections['Outras definições'] = $otherGroups; }
+$settingsNavigation=[];
+$settingsIcons=['company'=>'fa-solid fa-bars-staggered','localization'=>'fa-solid fa-globe','email'=>'fa-regular fa-envelope',
+    'email_content'=>'fa-regular fa-envelope','documents'=>'fa fa-file-invoice','sales_documents'=>'fa-regular fa-file-lines',
+    'document_pdf'=>'fa-regular fa-file-pdf','sales_pdf'=>'fa-regular fa-file-pdf','pdf_typography'=>'fa fa-font',
+    'task_defaults'=>'fa fa-tasks','task_operations'=>'fa fa-tasks','task_timers'=>'fa fa-clock','task_timer_stop'=>'fa fa-clock',
+    'project_files'=>'fa fa-folder','ticket_preferences'=>'fa fa-ticket'];
+foreach($settingsSections as $sectionLabel=>$sectionGroups) {
+    $children=[];
+    foreach($sectionGroups as $key) {
+        if(!isset($groups[$key], $company_urls[$key]))continue;
+        $children[]=['id'=>$key,'name'=>$groups[$key],'url'=>$company_urls[$key],'icon'=>$settingsIcons[$key]??'fa-regular fa-circle-question'];
+    }
+    if(!$children)continue;
+    if($sectionLabel==='Geral') {
+        $children[]=['id'=>'company_assets','name'=>'Logotipo e assinatura','url'=>CompanyRequestScope::adminUrl($this,'company_assets'),'icon'=>'fa-regular fa-image'];
+        if($settingsCanCertificate)$children[]=['id'=>'company_certificates','name'=>'Certificado A1','url'=>CompanyRequestScope::adminUrl($this,'company_certificates'),'icon'=>'fa fa-certificate'];
+    }
+    $settingsNavigation[]=['title'=>$sectionLabel,'children'=>$children];
+}
+ob_start();
 ?>
-<link rel="stylesheet" href="<?= $escape(base_url('assets/css/company-settings-native.css').'?v='.(defined('ARGWS_VERSION') ? ARGWS_VERSION : 'core')); ?>">
-<div class="row company-native-settings">
-    <div class="col-xs-12 col-lg-10">
-        <div class="row">
-            <div class="col-md-4 col-lg-3">
-                <h1 class="tw-font-bold tw-mt-0 tw-text-neutral-800 company-settings-title">Definições</h1>
-                <nav class="panel_s" aria-label="Seções de definições">
-                    <div class="panel-body">
-                        <?php foreach ($settingsSections as $sectionLabel => $sectionGroups) {
-                            $sectionGroups = array_values(array_filter($sectionGroups, static fn($key) => isset($groups[$key], $company_urls[$key])));
-                            if (!$sectionGroups) { continue; }
-                        ?>
-                        <section class="company-settings-section">
-                            <h2 class="tw-text-sm tw-text-neutral-500 tw-font-medium"><?= $escape($sectionLabel); ?></h2>
-                            <ul class="list-unstyled">
-                                <?php foreach ($sectionGroups as $key) { ?>
-                                <li class="settings-group-<?= $escape($key); ?>">
-                                    <a href="<?= $escape($company_urls[$key]); ?>" class="company-settings-link<?= $group === $key ? ' active' : ''; ?>" <?= $group === $key ? 'aria-current="page"' : ''; ?>><?= $escape($groups[$key]); ?></a>
-                                </li>
-                                <?php } ?>
-                                <?php if ($sectionLabel === 'Geral') { ?>
-                                <li><a class="company-settings-link" href="<?= $escape(CompanyRequestScope::adminUrl($this,'company_assets')); ?>">Logotipo e assinatura</a></li>
-                                <?php if ($settingsCanCertificate) { ?>
-                                <li><a class="company-settings-link" href="<?= $escape(CompanyRequestScope::adminUrl($this,'company_certificates')); ?>">Certificado A1</a></li>
-                                <?php } ?>
-                                <?php } ?>
-                            </ul>
-                        </section>
-                        <?php } ?>
-                    </div>
-                </nav>
-            </div>
-            <div class="col-md-8 col-lg-9">
-                <h2 class="tw-font-bold tw-mt-0 tw-text-neutral-800 company-settings-title"><?= $escape($groups[$group]); ?></h2>
-                <p class="text-muted company-settings-context">Empresa selecionada: <strong><?= $escape($company_identity['legal_name']); ?></strong></p>
+<p class="text-muted">Empresa selecionada: <strong><?= $escape($company_identity['legal_name']); ?></strong></p>
         <form id="company-settings-form" method="post" action="<?= $escape($company_urls[$group]); ?>" autocomplete="off">
                 <section class="panel_s">
                     <div class="panel-body">
@@ -106,6 +92,15 @@ if ($otherGroups) { $settingsSections['Outras definições'] = $otherGroups; }
             <?php if($group==='ticket_preferences'){?><input type="hidden" name="ticket_preferences_revision" value="<?= (int)$ticket_preferences_revision; ?>"><?php }?>
             <?php if($group==='project_files'){?><input type="hidden" name="project_files_revision" value="<?= (int)$project_files_revision; ?>"><?php }?>
             <fieldset <?= !$can_edit ? 'disabled' : ''; ?>>
+                <?php if($group==='company'){
+                    // Native field markup and labels; data remains the controller's
+                    // exact scoped projection, never a callback into global options.
+                    $companyIdentityOption=static function($name)use($values){if(!array_key_exists($name,$values)){throw new LogicException('Missing scoped company field');}return $values[$name];};
+                    ?><div class="alert alert-info"><?= _l('settings_sales_company_info_note'); ?></div><?php
+                    require APPPATH.'views/admin/settings/includes/company_identity_fields.php';
+                    unset($companyIdentityOption);
+                    ?><p class="text-muted">Campos personalizados globais e o formato livre de apresentação ainda não têm configuração isolada por empresa. Nenhum valor de outra empresa é carregado ou alterado aqui.</p><?php
+                }else{ ?>
                 <div class="company-settings-grid">
                 <?php foreach ($values as $name => $value) { ?>
                     <div class="form-group"><label for="company-setting-<?= $escape($name); ?>"><?= $escape($labels[$name] ?? $name); ?></label>
@@ -139,6 +134,7 @@ if ($otherGroups) { $settingsSections['Outras definições'] = $otherGroups; }
                     <div class="form-group"><label for="company-smtp-password">Senha SMTP</label><input class="form-control" id="company-smtp-password" name="settings[smtp_password]" type="password" value="" autocomplete="new-password"><small><?= $password_configured ? 'Senha já configurada. Deixe em branco para manter.' : 'Nenhuma senha configurada para esta empresa.'; ?></small><div class="checkbox"><label><input type="checkbox" name="clear_smtp_password" value="1">Apagar a senha configurada</label></div></div>
                 <?php } ?>
                 </div>
+                <?php } ?>
             </fieldset>
                     </div>
                     <?php if ($can_edit) { ?>
@@ -155,8 +151,9 @@ if ($otherGroups) { $settingsSections['Outras definições'] = $otherGroups; }
 
 <?php if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()&&CompanySettingsRuntime::can('view')&&$group==='email'&&(new IssuerResourceAccess($this->db,db_prefix()))->can(CompanyRequestScope::context()->issuerId(),CompanyRequestScope::context()->staffId(),'connect-api-connector','view')){?><p><a href="<?= htmlspecialchars(CompanyRequestScope::adminUrl($this,'company_connect_api'),ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); ?>">Connect|API WhatsApp próprio para avisos privados</a></p><?php } ?>
 
-            </div>
-        </div>
-    </div>
-</div>
+<?php
+$settingsPresentation=['title'=>'Definições','heading'=>$groups[$group],'active'=>$group,'sections'=>$settingsNavigation,'content'=>ob_get_clean()];
+require __DIR__.'/presentation_layout.php';
+unset($settingsPresentation,$settingsNavigation,$settingsIcons);
+?>
 <?php require APPPATH.'views/admin/companies/layout_tail.php'; ?>

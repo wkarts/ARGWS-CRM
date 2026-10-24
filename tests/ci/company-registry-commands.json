@@ -1,6 +1,10 @@
 [
   [
     "php",
+    "tests/issuers_original_administrator.php"
+  ],
+  [
+    "php",
     "tests/issuers_migration.php"
   ],
   [

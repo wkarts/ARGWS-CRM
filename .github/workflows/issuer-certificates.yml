@@ -61,12 +61,14 @@ jobs:
       - uses: actions/checkout@v5
       - name: Preparar extensões de teste
         run: |
-          apt-get update && apt-get install -y --no-install-recommends libonig-dev libsqlite3-dev
+          apt-get update && apt-get install -y --no-install-recommends libonig-dev libsqlite3-dev openssl util-linux
           docker-php-ext-install pdo_mysql pdo_sqlite mbstring pcntl
       - name: Sintaxe, parser offline, cifra autenticada, SQLite e controller
         run: |
           for path in application/services/issuers/IssuerCertificate*.php application/controllers/admin/Company_certificates.php application/views/admin/companies/certificates.php tests/certificates/*.php; do php -l "$path"; done
           php tests/certificates/parser.php
+          php tests/certificates/openssl_compatibility.php
+          php tests/certificates/legacy_process_limits.php
           php tests/certificates/manager.php
           php tests/certificates/controller.php
           php tests/certificates/schema_cache.php

@@ -504,13 +504,25 @@ $config['csrf_exclude_uris'] = ['company_operations_api/(hr_structure|hr_employe
     'company_api/drafts',
     'company_api/(draft_change|draft_cancel|draft_issue)/[1-9][0-9]*', 'company_api/credits', 'company_api/(payments|payment_reverse|credit_apply|credit_unapply|credit_refund|credit_refund_reverse|credit_void)/[1-9][0-9]*', 'company_asaas_callback/integration/[a-f0-9]{32}', 'forms/wtl/[0-9a-z]+', 'forms/ticket', 'forms/quote/[0-9a-z]+', 'admin/tasks/timer_tracking', 'api\/.+', 'razorpay/success\/.+'];
 
+// Efí provider notifications query authenticated charge state; only these finite
+// inboxes omit browser CSRF. Creation, polling and certificate operations do not.
+$config['csrf_exclude_uris'] = array_merge($config['csrf_exclude_uris'], [
+    'gateways/gerencia_net/callback_boleto',
+    'gateways/gerencia_net/callback_cartao',
+    'gerencianet_gateway/gerencia_net/callback_boleto',
+    'gerencianet_gateway/gerencia_net/callback_cartao',
+]);
+
 if (isset($app_csrf_exclude_uris)) {
     $config['csrf_exclude_uris'] = array_merge($config['csrf_exclude_uris'], $app_csrf_exclude_uris);
     $config['csrf_exclude_uris'] = array_unique($config['csrf_exclude_uris']);
 }
 
+$efiRequestPath = isset($_SERVER['REQUEST_URI']) ? rawurldecode((string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)) : '';
+$efiScopedRequest = preg_match('~(?:^|/)(?:gateways|gerencianet_gateway)/gerencia_net(?:/|$)~i', $efiRequestPath) === 1;
 if ($config['csrf_protection'] == true
     && isset($_SERVER['REQUEST_URI'])
+    && !$efiScopedRequest
     && strpos($_SERVER['REQUEST_URI'], 'gateways/') !== false) {
     $config['csrf_protection'] = false;
 }

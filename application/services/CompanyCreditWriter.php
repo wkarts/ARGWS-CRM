@@ -22,7 +22,7 @@ trait CompanyCreditWriter
     {
         $this->creditAuth($issuer,$actor,$caps);\CompanyCreditSchema::assertValid($this->db,db_prefix());
         $tables=['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','issuers_client_links','clients','invoices','issuers_invoice_documents','creditnotes','creditnote_refunds','credits','currencies','options','itemable','item_tax','issuers_sequences','invoicepaymentrecords','company_payment_receipts','company_credit_documents','company_credit_entries','issuers_audit'];
-        foreach(['bb_origins','asaas_payment_origins'] as $table)if($this->db->table_exists(db_prefix().$table))$tables[]=$table;
+        foreach(['bb_origins','asaas_payment_origins','efi_company_origins'] as $table)if($this->db->table_exists(db_prefix().$table))$tables[]=$table;
         $journal=new \CompanyFinancialJournal($this->db,db_prefix());$tables=array_values(array_unique(array_merge($tables,(new \CompanyCurrencyUnits($this->db,db_prefix()))->tables(),$journal->tables('credit'),$journal->tables('credit_entry'),$journal->tables('payment'),(new \CompanyInvoiceBalance($this->db,db_prefix()))->tables())));
         if($apiGuard!==null)$tables=array_values(array_unique(array_merge($tables,$apiGuard->tables())));
         if($manualSource!==null){$manualSource->assertStorage($this->db,db_prefix());$tables=array_values(array_unique(array_merge($tables,$manualSource->tables())));}
@@ -97,7 +97,7 @@ trait CompanyCreditWriter
     private function creditInvoice(int $issuer,int $invoice):array
     {
         $p=db_prefix();$row=$this->creditRows('SELECT i.* FROM '.$p.'invoices i JOIN '.$p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE i.id=? AND i.issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;if(!$row)throw new \DomainException('company_credit_access_denied');(new \CompanyCurrencyUnits($this->db,$p))->resolveRead($row['currency']);
-        foreach(['bb_origins','asaas_payment_origins'] as $table)if($this->db->table_exists($p.$table)&&$this->creditRows('SELECT id FROM '.$p.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('company_credit_provider_review_required');if(!in_array((int)$row['status'],[1,2,3,4],true))throw new \DomainException('company_credit_invalid_state');return $row;
+        foreach(['bb_origins','asaas_payment_origins','efi_company_origins'] as $table)if($this->db->table_exists($p.$table)&&$this->creditRows('SELECT id FROM '.$p.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('company_credit_provider_review_required');if(!in_array((int)$row['status'],[1,2,3,4],true))throw new \DomainException('company_credit_invalid_state');return $row;
     }
     private function invoiceRemainder(array $invoice,int $actor):int
     {

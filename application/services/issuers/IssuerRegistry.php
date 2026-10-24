@@ -203,7 +203,25 @@ final class IssuerRegistry
         return $this->persistIssuer($actor,$input,null,true);
     }
 
-    private function persistIssuer($actor, array $input, $issuer, bool $owned): int
+    /** Existing-company editor: never create an issuer or accept a client status change. */
+    public function identityRevision($actor, $issuer): string
+    {
+        $actor=IssuerPolicy::id($actor);$issuer=IssuerPolicy::id($issuer);
+        $this->requireCompanyMutation($actor,$issuer);
+        if(!$this->nativeCompanies()){throw new DomainException('company_settings_issuer_unavailable');}
+        require_once dirname(__DIR__).'/CompanySettingsIdentity.php';
+        return hash('sha256',json_encode([$issuer,(new CompanySettingsIdentity($this->db,$this->prefix))->read($issuer)],JSON_THROW_ON_ERROR));
+    }
+
+    public function updateExistingIdentity($actor, array $input, $issuer, string $revision): int
+    {
+        $issuer=IssuerPolicy::id($issuer);
+        if(!preg_match('/^[a-f0-9]{64}$/D',$revision)){throw new DomainException('company_identity_revision_invalid');}
+        $input['active']=1;
+        return $this->persistIssuer($actor,$input,$issuer,false,$revision);
+    }
+
+    private function persistIssuer($actor, array $input, $issuer, bool $owned, ?string $expectedIdentity=null): int
     {
         $actor = IssuerPolicy::id($actor);
         $id = $issuer === null ? null : IssuerPolicy::id($issuer);
@@ -222,8 +240,9 @@ final class IssuerRegistry
             throw new DomainException('issuer_invalid_status');
         }
         $seedTemplates=$native && $id===null && $this->db->table_exists($this->prefix.'emailtemplates');
-        $operation = function () use ($actor, $id, $name, $tax, $active, $native, $profile, $seedTemplates) {
+        $operation = function () use ($actor, $id, $name, $tax, $active, $native, $profile, $seedTemplates, $expectedIdentity) {
             $this->requireCompanyMutation($actor, $id);
+            if($expectedIdentity!==null&&!hash_equals($expectedIdentity,$this->identityRevision($actor,$id))){throw new DomainException('company_identity_revision_stale');}
             if($id!==null&&(int)$active!==1&&(new IssuerResourceAccess($this->db,$this->prefix))->primaryId()===$id){throw new DomainException('issuer_primary_deactivation_denied');}
             $duplicate = $this->one("SELECT id FROM {$this->tables}registry WHERE tax_id=?", [$tax]);
             if ($duplicate && (int) $duplicate['id'] !== $id) {

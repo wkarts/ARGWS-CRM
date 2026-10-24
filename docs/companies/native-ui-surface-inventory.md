@@ -240,3 +240,85 @@ Métodos listados não significam GET autorizado: conferir guardas, verbs e runt
 | `application/controllers/admin/Smtp_oauth_google.php` | Sem view literal; endpoint não visual | `token` |
 | `application/controllers/admin/Smtp_oauth_microsoft.php` | Sem view literal; endpoint não visual | `token` |
 | `modules/pige_bridge/controllers/Bridge.php` | Sem view literal; endpoint não visual | `requests` |
+
+## Incremento 4.7.3 — navegação e editor existente
+
+Evidência de escopo: imagens do usuário exibem `/admin/issuers`, modal de criação,
+e destacam as etapas e subnavegação. As etapas agora usam `nav nav-tabs`; as três
+subguias compartilhadas são Identificação, Endereço e Contato. São mantidas as
+restrições das etapas futuras e o POST/revision do wizard. Não são botões de ação
+substituídos: Consultar CNPJ/CEP, Salvar, Criar e Fechar continuam ações explícitas.
+
+Novo documento inventariado: `admin/companies/identity_modal.php`, proprietário
+`Issuers::index`, seletor GET `edit_modal=1`, ID existente na rota. Sem shell global,
+com os mesmos assets públicos e `identity_fields.php` da criação. Não reutiliza
+`begin`, `advance` ou `complete`; o POST `issuers/save`, ação `edit_identity`, usa
+CSRF, actor autenticado, ACL de gestão e revisão canônica comparada dentro da
+transação existente antes de escrever. ID inválido nunca vira criação. O editor
+não altera situação, empresa selecionada, credenciais nem vínculos financeiros.
+
+A revisão é um hash da identidade canônica e ID, não um número novo de schema;
+nenhuma migração ou armazenamento paralelo foi introduzido. Uma edição stale é
+recusada com409, sem gravar; deve ser reaberta para revisar os dados atuais.
+Preferências, equipe e privacidade permanecem nas áreas existentes autorizadas,
+não são falsamente apresentadas como seis etapas editáveis.
+
+Manifesto atualizado:100 views/55 controllers. A grade possui região de tabela
+com foco por teclado/scroll interno; editor e wizard mantêm foco/retorno do modal.
+Testes de browser usam a view PHP real com dados sintéticos em1280/768/390 e
+verificam campos preenchidos, navegação sem POST, ação/ID/revision e Escape/foco.
+A fixture de identidade cobre teclado, hash e Voltar em1440/768/390. Testes PHP
+existentes ganharam CSRF/ACL/stale, rollback e contagem sem duplicação. Validação
+local: contratos Node e inventário estático. PHP e browser não executados neste
+ambiente; carregamento/renderização real dependem de CI. Nenhum screenshot real
+ou dado do usuário foi incluído nos artefatos da fixture.
+
+### Settings da empresa secundária — componente nativo compartilhado
+
+O terceiro print mostra `/admin/settings?group=company`, não uma rota inexistente.
+URL e dispatch autorizado permanecem iguais. O grupo `company` deixa de repetir
+inputs numa implementação paralela e passa a usar
+`settings/includes/company_identity_fields.php`, extraído do formulário nativo
+`settings/includes/company.php`. Principal e secundária usam o mesmo `render_input`,
+labels, ordem e nomes `settings[...]`; só o adaptador de valores muda. A secundária
+recebe exclusivamente `$values` já projetado pelo controller e falha se faltar
+campo; a partial não acessa `get_option`, hooks ou custom fields globais.
+
+Mapa incremental de contratos (não alegação de equivalência completa):
+
+| Grupo | Campos/ação scoped atuais | Reuso nesta entrega / limite |
+|---|---|---|
+| company | nome fiscal, CPF/CNPJ e11campos de perfil; salvar identidade canônica |13inputs nativos compartilhados; formato livre `company_info_format` e custom fields globais continuam apenas no principal, explicitamente sinalizados na secundária |
+| localization | dateformat/time_format | catálogo/validação scoped preservados; renderer ainda específico |
+| email | host/porta/criptografia/remetente/usuário/senha; limpar senha explícito | contrato de segredo preservado; não reutilizar formulário legado sem adapter de preservação/limpeza |
+| email_content | cabeçalho/assinatura/rodapé HTML sanitizados | renderer scoped preservado; helper legado exige compatibilidade com sanitização |
+| documents / sales_documents | prefixos e termos por tipo | renderer scoped preservado; não misturar opções globais de numeração/financeiro |
+| document_pdf / sales_pdf | formato de papel por tipo | renderer scoped preservado; catálogo de formatos existente |
+| pdf_typography | fonte/tamanho comrevision | manter revisão e whitelist de fontes antes extrair componente |
+| project_files | permissão de ocultar arquivos próprios comrevision | contrato específico; sem ampliar permissões |
+| ticket_preferences | ordem das respostas comrevision | contrato específico preservado |
+| task_defaults / task_operations | status/responsável sugerido/prioridade/seguidor comrevision | controles existentes; não chamar callbacks globais |
+| task_timers / task_timer_stop | mudanças explícitas de estado/parada comrevision | comportamento operacional existente, não implementar via aparência |
+
+Não se renderiza `settings/all.php` em contexto secundário, pois seu `init_head`
+e catálogo de callbacks globais não são componentes seguros para hidratação.
+Esse limite não impede reuso de partials de campo: o grupo visível no print agora
+comprova esse reuso, e os próximos grupos exigem seu próprio adapter contratual.
+Manifesto incrementado para101views/55controllers. Teste PHP A/B usa o helper
+nativo real, `get_option` global que lança erro, cobertura exata dos13names,
+escape e ausência de mutação durante render. Execução PHP permanece pendenteCI;
+contrato estático/inventário e sintaxe JS passaram localmente.
+
+
+## Envelope compartilhado de Settings — 102 views / 55 controllers
+
+A descoberta agora inclui `admin/settings/presentation*.php`, não apenas
+`company_scoped.php` e `includes/company*.php`. Um teste negativo cria nomes
+sintéticos `presentation_layout.php` e `presentation_future.php` e exige ambos
+no censo: novos componentes não podem ficar silenciosamente fora do manifesto.
+
+`admin/settings/presentation_layout.php` é `partial`, com owners reais
+`admin/settings/all.php` e `admin/settings/company_scoped.php`. Seus controles
+literais table/button/input/select/textarea são 0/0/0/0/0: os formulários continuam
+pertencendo aos parents. A contagem efetiva após inclusão é **102 views e 55
+controllers**. Esses números são cobertura estática, não prova visual ou PHP.

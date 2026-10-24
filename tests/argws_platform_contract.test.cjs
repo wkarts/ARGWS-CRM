@@ -132,6 +132,10 @@ test('ZIP da primeira release usa a base legado e permite reparar os anexos exis
   assert.ok(repairWorkflow.includes('git archive "$SOURCE_SHA"'));
   assert.ok(repairWorkflow.includes('gh release upload "$RELEASE_TAG"'));
   assert.ok(repairWorkflow.includes('--clobber'));
-  assert.ok(repairWorkflow.includes('branches: [main]'));
-  assert.ok(repairWorkflow.includes('.github/workflows/repair-release-assets.yml'));
+  assert.ok(!repairWorkflow.includes('  push:'), 'reparo não pode ser disparado implicitamente por push');
+  assert.ok(repairWorkflow.includes('  workflow_dispatch:'));
+  assert.ok(repairWorkflow.includes('required: true'));
+  assert.ok(repairWorkflow.includes("github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'"));
+  assert.ok(repairWorkflow.includes('[[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]'));
+  assert.ok(repairWorkflow.includes('[[ "$GITHUB_REF" == "refs/heads/main" ]]'));
 });

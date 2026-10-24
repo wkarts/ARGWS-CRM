@@ -42,6 +42,7 @@ final class Origination
         OriginationSchema::assertValid($this->db,$this->prefix);
         $tables=['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','modules','invoices','issuers_invoice_documents','currencies','company_currency_units','company_financial_events','invoicepaymentrecords','credits','bb_connections','bb_layout_bindings','bb_origins','bb_batches','bb_audit','bb_number_reservations','bb_contract_declarations','bb_origin_snapshots','bb_batch_origins','bb_batch_actions'];
         if($this->db->table_exists($this->prefix.'asaas_payment_origins'))$tables[]='asaas_payment_origins';
+        if($this->db->table_exists($this->prefix.'efi_company_origins'))$tables[]='efi_company_origins';
         return \IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge($tables,(new \CompanyInvoiceBalance($this->db,$this->prefix))->tables()))),$work);
     }
     private function connection(int $issuer,int $id,int $binding):array
@@ -127,6 +128,7 @@ final class Origination
                 foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT amount FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice]))throw new \DomainException('bb_invoice_not_eligible');
                 if($this->rows('SELECT id FROM '.$this->prefix.'bb_origins WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('bb_invoice_already_bound');
                 if($this->db->table_exists($this->prefix.'asaas_payment_origins')&&$this->rows('SELECT id FROM '.$this->prefix.'asaas_payment_origins WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('bb_invoice_already_bound');
+                if($this->db->table_exists($this->prefix.'efi_company_origins')&&$this->rows('SELECT id FROM '.$this->prefix.'efi_company_origins WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('bb_invoice_already_bound');
                 $doc=$docs->get($invoice,$issuer);if($doc['identity']['tax_id']!==$a->taxId)throw new \DomainException('bb_beneficiary_identity_mismatch');
                 $t=$payer+['sequence'=>(string)$number,'document'=>'CRM'.$invoice,'control'=>'CRM'.$invoice,'issue_date'=>$record['date'],'due_date'=>$record['duedate'],'amount'=>self::money($record['total']),'payer_tax_id'=>$doc['recipient']['tax_id'],'payer_name'=>$doc['recipient']['name']];
                 $snapshots[]=['invoice_document'=>$doc['formatted_number'],'invoice'=>$record,'title'=>$t,'connection'=>$c,'beneficiary_name'=>$wireName,'layout_binding_id'=>$binding,'contract_id'=>(int)$contract['id'],'scope_key'=>$a->scope->key()];$wire[]=$t;$number++;

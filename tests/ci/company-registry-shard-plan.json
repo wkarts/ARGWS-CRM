@@ -1,8 +1,9 @@
 {
-  "model": "paired-geometric-ms-capacity-lpt-v1",
-  "manifest_sha256": "1565aaa69234abd5ab9d7eec11fbbd912a93fdb75e0dfd919de0b913e408c835",
+  "model": "frozen-paired-lpt-plus-unmeasured-count-v1",
+  "manifest_sha256": "c016827e69a73fe5a1f09aa14b4f24bcb74d9df40e6d5b5db697e013c25bb413",
   "baseline_sha256": "d4e854b3ac541573672fa4ca5e2e45071bfc14672ecf618e2e1314936a7f5625",
   "assignments": [
+    1,
     4,
     3,
     1,
@@ -475,5 +476,15 @@
     4,
     1,
     2
+  ],
+  "measured_manifest_sha256": "1565aaa69234abd5ab9d7eec11fbbd912a93fdb75e0dfd919de0b913e408c835",
+  "unmeasured": [
+    {
+      "argv": [
+        "php",
+        "tests/issuers_original_administrator.php"
+      ],
+      "reason": "Added by aa01d59e; no paired timing evidence. Preserve historical assignments; place by lowest count, then shard number."
+    }
   ]
 }
