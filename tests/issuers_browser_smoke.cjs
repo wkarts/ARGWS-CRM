@@ -203,10 +203,14 @@ async function captureRealScreens(page, routes) {
         // genuine incompatibility has been corrected by the administrator.
         // A normal authenticated notification poll must not consume upgrade feedback
         // before the authorized destination document renders it.
+        let successTransportStatus = null;
+        let successTransportHeaders = null;
         await page.route(url + '/admin', async route => {
           // Fetch the real authenticated POST without following its redirect.
           // Delay delivery to Chromium until a genuine background poll completes.
           const post = await route.fetch({ maxRedirects: 0 });
+          successTransportStatus = post.status();
+          successTransportHeaders = post.headers();
           if (post.status() === 303) {
             const poll = await context.request.get(url + '/admin/misc/notifications_check', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             assert.equal(poll.status(), 200, 'real intermediate notification request remains available');
@@ -216,23 +220,9 @@ async function captureRealScreens(page, routes) {
         const successPost = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === '/admin');
         await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('#submit_btn').click()]);
         const successResponse = await successPost;
-        if (successResponse.status() !== 303) {
-          const schemaDiagnostic = {
-            responseStatus: successResponse.status(),
-            responseBody: (await successResponse.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 600),
-            pageBody: (await page.locator('body').innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 600),
-            permissionColumns: sql("SELECT GROUP_CONCAT(CONCAT(COLUMN_NAME,':',COLUMN_TYPE,':',IS_NULLABLE,':',COALESCE(COLLATION_NAME,'NULL')) ORDER BY ORDINAL_POSITION) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_resource_permissions'"),
-            permissionPrimary: sql("SELECT GROUP_CONCAT(CONCAT(SEQ_IN_INDEX,':',COLUMN_NAME) ORDER BY SEQ_IN_INDEX) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_resource_permissions' AND INDEX_NAME='PRIMARY'"),
-            permissionForeignKeys: sql("SELECT GROUP_CONCAT(CONCAT(CONSTRAINT_NAME,':',COLUMN_NAME,'->',REFERENCED_TABLE_NAME,'.',REFERENCED_COLUMN_NAME,':',ORDINAL_POSITION) ORDER BY CONSTRAINT_NAME,ORDINAL_POSITION) FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_resource_permissions' AND REFERENCED_TABLE_SCHEMA=DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL"),
-            identityColumns: sql("SELECT GROUP_CONCAT(CONCAT(COLUMN_NAME,':',COLUMN_TYPE,':',IS_NULLABLE) ORDER BY ORDINAL_POSITION) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_installation_identity'"),
-            identityForeignKeys: sql("SELECT GROUP_CONCAT(CONCAT(CONSTRAINT_NAME,':',COLUMN_NAME,'->',REFERENCED_TABLE_NAME,'.',REFERENCED_COLUMN_NAME,':',ORDINAL_POSITION) ORDER BY CONSTRAINT_NAME,ORDINAL_POSITION) FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_installation_identity' AND REFERENCED_TABLE_SCHEMA=DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL"),
-            auditMetadata: sql("SELECT GROUP_CONCAT(CONCAT(COLUMN_TYPE,':',IS_NULLABLE) ORDER BY ORDINAL_POSITION) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_audit' AND COLUMN_NAME='metadata_json'"),
-            lockRows: sql('SELECT COUNT(*) FROM tblissuers_lock WHERE id=1'),
-          };
-          console.error('Native repair diagnostic: ' + JSON.stringify(schemaDiagnostic));
-        }
-        assert.equal(successResponse.status(), 303, 'native successful POST redirects with See Other');
-        assert.equal(successResponse.headers().refresh, undefined, 'native success does not return an empty Refresh document');
+        assert.equal(successResponse.request().method(), 'POST', 'native repair was submitted through the real form');
+        assert.equal(successTransportStatus, 303, 'native successful POST redirects with See Other');
+        assert.equal(successTransportHeaders.refresh, undefined, 'native success does not return an empty Refresh document');
         assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), '/admin', 'valid principal context returns to the native CRM dashboard');
         assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), recoveryPrimary, 'successful repair preserves the principal context');
         assert.equal(sql("SELECT CONCAT(master_staff_id,':',primary_issuer_id,':',source) FROM tblissuers_installation_identity WHERE id=1"), recoveryIdentity, 'repair never changes persisted master or principal identity');
@@ -278,8 +268,12 @@ async function captureRealScreens(page, routes) {
       sql('DELETE FROM tblissuers_lock WHERE id=1');
       await page.goto(url + '/admin');
       await waitForUpgradeForm(page);
+      let secondaryTransportStatus = null;
+      let secondaryTransportHeaders = null;
       await page.route(url + '/admin', async route => {
         const post = await route.fetch({ maxRedirects: 0 });
+        secondaryTransportStatus = post.status();
+        secondaryTransportHeaders = post.headers();
         if (post.status() === 303) {
           const poll = await context.request.get(url + '/admin/company_context', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
           assert.equal(poll.status(), 200, 'secondary isolated background poll remains available');
@@ -291,8 +285,9 @@ async function captureRealScreens(page, routes) {
       const secondaryPost = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === '/admin');
       await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('#submit_btn').click()]);
       const secondaryResponse = await secondaryPost;
-      assert.equal(secondaryResponse.status(), 303);
-      assert.equal(secondaryResponse.headers().refresh, undefined);
+      assert.equal(secondaryResponse.request().method(), 'POST');
+      assert.equal(secondaryTransportStatus, 303);
+      assert.equal(secondaryTransportHeaders.refresh, undefined);
       assert.equal(new URL(page.url()).pathname, '/admin/company_context');
       assert((await page.content()).includes('atualizado com sucesso'), 'native success alert is delivered');
       await page.locator('[role=status].alert-success').waitFor({ state: 'visible' });
