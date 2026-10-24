@@ -31,6 +31,7 @@ class ModuleFixture {
     public int $upgrades=0;public string $header='1.0.1';
     function __construct(public MigrationDb $db){}
     function get($name=null){$row=['system_name'=>'ideal','headers'=>['version'=>$this->header], 'installed_version'=>$this->db->exists?$this->db->version:false,'activated'=>$this->db->active];return $name===null?[$row]:($name==='ideal'?$row:null);}
+    function deactivate($name){if($name!=='ideal')throw new RuntimeException('unexpected_module');$this->db->active=0;return true;}
     function upgrade_database($name){$this->upgrades++;$migration=new App_module_migration($name);return $migration->to_latest()===false?$migration->error_string():true;}
     function is_essential($name){return $name==='issuers';}
     function is_database_upgrade_required($name){return $this->db->version!==$this->header;}
@@ -51,10 +52,12 @@ function setup(){
     $GLOBALS['ci']=(object)['db'=>$db,'load'=>$loader,'app_modules'=>$modules,'lang'=>new class{function load($name){}function line($name){return $name.' %s';}}];
     $GLOBALS['admin']=true;$GLOBALS['alerts']=[];$GLOBALS['redirect']=null;
     $controller=new Mods();$controller->db=$db;$controller->load=$loader;$controller->app_modules=$modules;$controller->session=new MigrationSession();$controller->input=new MigrationInput();
-    $controller->config=new class{function load($name){}function item($key){return ['ideal'=>['name'=>'iDEAL','description'=>'Fixture','requires'=>[]]];}};
+    $controller->config=new class{function load($name){}function item($key){require APPPATH.'config/argws_resources.php';return $config['argws_resources'];}};
     return [$db,$controller];
 }
 check(preg_match('/^Version: 1\.0\.1$/m',file_get_contents(APP_MODULES_PATH.'ideal/ideal.php'))===1,'header increments to1.0.1');
+[$catalogDb,$catalogController]=setup();$catalogDefinition=new ReflectionMethod(Mods::class,'get_resource_definition');
+check(is_array($catalogDefinition->invoke($catalogController,'banco_brasil')),'Banco do Brasil is admitted to administrative availability catalog');
 check($GLOBALS['registeredGateway']===['Ideal_gateway','ideal'],'legacy gateway remains registered with flag false');
 [$db,$controller]=setup();$db->version='1.0.1';$GLOBALS['options']=['ideal_module_stripe_webhook_signing_secret'=>'fixture-existing'];
 idealModuleActivation();check($db->version==='1.0.1'&&$db->writes===['1.0.0','1.0.1'],'fresh native activation replays 101 from real baseline');
@@ -100,6 +103,10 @@ check($db->version==='1.0.0'&&$GLOBALS['alerts'][0][0]==='danger','upgrade route
 check($db->active===0,'failure does not activate module');
 [$db,$controller]=setup();$db->version='1.0.1';$controller->maintenance();check($controller->load->data['pending']===[],'completed hidden migration has no maintenance prompt');
 $definition=new ReflectionMethod(Mods::class,'get_resource_definition');check($definition->invoke($controller,'ideal')===false,'maintenance does not unlock activation/configuration');
+[$db,$controller]=setup();$db->active=1;$controller->index();
+check($controller->load->data['resources'][0]['can_deactivate']===true,'active iDEAL can be disabled with environment flag false');
+$controller->deactivate('ideal');check($db->active===0&&getenv('CRM_ENABLE_IDEAL')==='false'&&$db->writes===[],'explicit deactivation preserves flag and installed version');
+[$db,$controller]=setup();fails(fn()=>$controller->activate('ideal'),'404');check($db->active===0,'activation remains blocked by environment policy');
 $install=file_get_contents(APP_MODULES_PATH.'ideal/install.php');check(!preg_match('/\b(CREATE|ALTER|DROP|TRUNCATE)\s+TABLE\b/i',$install),'install owns no DDL');
 $source=file_get_contents(APP_MODULES_PATH.'ideal/controllers/Ideal.php');$webhook=substr($source,strpos($source,'    public function webhook(): void'));
 check(!str_contains($webhook,'idealEnabled()'),'legacy callback not blocked by availability flag');

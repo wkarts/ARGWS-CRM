@@ -11,6 +11,7 @@ $config['argws_resources'] = [
     'accounting' => ['name' => 'Contabilidade', 'description' => 'Rotinas contábeis integradas ao CRM.', 'requires' => []],
     'api' => ['name' => 'API', 'description' => 'Endpoints e autenticação de integrações.', 'requires' => []],
     'asaas' => ['name' => 'Asaas', 'description' => 'Integração de pagamentos com Asaas.', 'requires' => []],
+    'banco_brasil' => ['name' => 'Banco do Brasil - Cobrança e CNAB 240/400', 'description' => 'Gestão local de conexões e arquivos; operações bancárias exigem contrato validado e homologação.', 'requires' => []],
     'backup' => ['name' => 'Backup', 'description' => 'Rotinas locais de cópia e restauração.', 'requires' => []],
     'connect_api_chat' => ['name' => 'Connect API Chat', 'description' => 'Chat e comunicação pelo Connect API.', 'requires' => ['connect_api_connector']],
     'connect_api_connector' => ['name' => 'Connect API Connector', 'description' => 'Conexão operacional com instâncias Connect API.', 'requires' => [], 'optional' => ['connect_api_manager']],

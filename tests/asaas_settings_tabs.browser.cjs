@@ -1,102 +1,68 @@
 'use strict';
-// Synthetic native-CSS/Bootstrap browser coverage. No account, API or production data.
+// Browser fixture only: all network requests blocked; no provider, credentials or real accounts.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const {chromium} = require(process.env.ASAAS_PLAYWRIGHT_MODULE || 'playwright');
 const {html} = require('./support/AsaasSettingsFixture.cjs');
-
 (async () => {
-  const browser = await chromium.launch({headless: true, ...(process.env.CHROMIUM_BIN ? {executablePath: process.env.CHROMIUM_BIN} : {})});
-  const output = path.resolve(process.env.ASAAS_UI_ARTIFACTS || 'artifacts/asaas-settings');
-  fs.mkdirSync(output, {recursive: true});
-  const errors = [];
-  let checks = 0;
-  function check(condition, label) { assert.ok(condition, label); checks++; }
-  try {
-    for (const width of [1280, 390]) {
-      const context = await browser.newContext({viewport: {width, height: 900}});
-      await context.route('**/*', route => route.abort());
-      const page = await context.newPage();
-      page.on('pageerror', error => errors.push(error.message));
-      await page.setContent(html('prepareFixture("1","1",true);'), {waitUntil: 'load'});
-      check(await page.evaluate(() => typeof window.Waypoint === 'function' && typeof window.delay === 'function'), 'native horizontal tab dependencies are loaded');
-      await page.locator('#gateway-tab').click();
-      check(await page.locator('#online_payments_asaas_tab').evaluate(pane => {
-        const link = pane.querySelector('[data-asaas-webhook-admin-url]');
-        const tabs = pane.querySelector('.horizontal-scrollable-tabs');
-        return link.getBoundingClientRect().bottom <= tabs.getBoundingClientRect().top;
-      }), 'native gateway separator keeps tabs below the management link');
-      if (width === 390) {
-        const scrollable = page.locator('#online_payments_asaas_tab .nav-tabs-horizontal');
-        check(await scrollable.evaluate(el => el.scrollWidth > el.clientWidth), 'mobile tabs exercise native overflow');
-        await page.locator('#online_payments_asaas_tab .arrow-right').click();
-        await page.waitForFunction(() => document.querySelector('#online_payments_asaas_tab .nav-tabs-horizontal').scrollLeft > 0, null, {timeout: 5000});
-        check(await scrollable.evaluate(el => el.scrollLeft > 0), 'native right arrow scrolls overflowing tabs');
-        await page.locator('#online_payments_asaas_tab .arrow-left').click();
-        await page.waitForFunction(() => document.querySelector('#online_payments_asaas_tab .nav-tabs-horizontal').scrollLeft === 0, null, {timeout: 5000});
-        check(await scrollable.evaluate(el => el.scrollLeft === 0), 'native left arrow returns to first tab');
-      }
-      const initial = await page.locator('#settings-form').evaluate(form => Array.from(new FormData(form).entries()));
-      const order = ['authentication', 'security', 'payments', 'webhook', 'resources', 'diagnostics'];
-      check(await page.locator('#online_payments_asaas_tab ul.nav-tabs > li > a[data-toggle="tab"]').count() === 6, 'six native tabs');
-      for (const id of order) {
-        await page.locator('#asaas-settings-tab-' + id).click();
-        check(await page.locator('#asaas-settings-panel-' + id).isVisible(), 'selected panel visible: ' + id);
-        check(await page.locator('#online_payments_asaas_tab .tab-pane.active').count() === 1, 'one active subpanel');
-        check(await page.locator('#asaas-settings-tab-' + id).getAttribute('aria-selected') === 'true', 'selected aria');
-        check((await page.locator('#settings-form').getAttribute('action')).endsWith('&active_tab=online_payments_asaas_tab'), 'save retains Asaas');
-        await page.screenshot({path: path.join(output, width + '-' + id + '.png'), fullPage: true});
-      }
-      assert.deepEqual(await page.locator('#settings-form').evaluate(form => Array.from(new FormData(form).entries())), initial); checks++;
-      check(await page.locator('#asaas-settings-panel-payments [data-asaas-profile]').count() === 2, 'production and homologation profiles remain separate');
-      check(await page.locator('#asaas-settings-panel-webhook #fixture-callback').count() === 1, 'real receiver URL is in webhook panel');
-      check(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'no page horizontal overflow');
-      await page.locator('#asaas-settings-tab-diagnostics').press('Home');
-      check(await page.locator('#asaas-settings-tab-authentication').evaluate(el => el === document.activeElement), 'Home moves focus');
-      await page.keyboard.press('ArrowLeft');
-      check(await page.locator('#asaas-settings-tab-diagnostics').evaluate(el => el === document.activeElement), 'left wraps');
-      await page.keyboard.press('ArrowRight');
-      check(await page.locator('#asaas-settings-tab-authentication').evaluate(el => el === document.activeElement), 'right wraps');
-      await page.keyboard.press('End');
-      check(await page.locator('#asaas-settings-tab-diagnostics').evaluate(el => el === document.activeElement), 'End moves focus');
-      await page.locator('#asaas-settings-tab-security').focus();
-      await page.keyboard.press('Space');
-      check(await page.locator('#asaas-settings-panel-security').isVisible(), 'Space activates');
-      await page.locator('#asaas-settings-tab-authentication').click();
-      const key = page.locator('[name="settings[paymentmethod_asaas_api_key]"]');
-      await key.fill('synthetic-key');
-      await page.locator('[data-asaas-reveal="asaas-settings-api_key"]').click();
-      check(await key.getAttribute('type') === 'text', 'admin action reveals only selected API key');
-      check(await page.locator('[name="settings[paymentmethod_asaas_api_key_sandbox]"]').getAttribute('type') === 'password', 'other environment key stays masked');
-      await page.locator('#other-tab').click(); await page.locator('#gateway-tab').click();
-      check(await key.getAttribute('type') === 'password', 'switching gateways conceals the revealed key');
-      await page.locator('#asaas-settings-tab-security').click(); await page.locator('#asaas-settings-tab-authentication').click();
-      check(await key.getAttribute('type') === 'password', 'key is concealed when leaving tab');
-      await page.locator('#asaas-operation-environment').selectOption('');
-      await page.locator('[name="settings[paymentmethod_asaas_profile_production_description]"]').evaluate(input => { input.required = true; input.value = ''; });
-      await page.locator('#other-tab').click();
-      await page.locator('button[type=submit]').click();
-      check(await page.locator('#asaas-settings-panel-authentication').isVisible(), 'invalid field reveals both tab levels');
-      check(await page.locator('#asaas-operation-environment').evaluate(el => el === document.activeElement), 'invalid field receives focus');
-      await page.locator('[name="settings[paymentmethod_asaas_profile_production_description]"]').evaluate(input => { input.required = false; });
-      await page.locator('#asaas-operation-environment').selectOption('1');
-      await page.locator('#asaas-settings-tab-webhook').click();
-      await page.evaluate(() => {
-        const parent = new URL(document.getElementById('settings-form').action).searchParams.get('active_tab');
-        prepareFixture('1', '1', true);
-        document.querySelector('a[href="#' + parent + '"]').click();
-      });
-      check(await page.locator('#online_payments_asaas_tab').isVisible(), 'native save-return target restores gateway');
-      await page.locator('#other-tab').click(); await page.locator('#gateway-tab').click();
-      check(await page.locator('#asaas-settings-panel-authentication').isVisible(), 'switching gateways preserves selected inner pane');
-      await page.evaluate(() => module.exports.initialize(document));
-      check(await page.locator('#online_payments_asaas_tab ul.nav-tabs > li').count() === 6, 'repeated initialization remains idempotent');
-      await page.evaluate(() => prepareFixture('1', '1', true, false)); await page.locator('#gateway-tab').click();
-      check(await page.locator('[data-asaas-reveal]').count() === 0, 'new reveal controls do not broaden non-admin access');
-      await context.close();
+ const browser = await chromium.launch({headless:true,...(process.env.CHROMIUM_BIN ? {executablePath:process.env.CHROMIUM_BIN}:{})});
+ const output=path.resolve(process.env.ASAAS_UI_ARTIFACTS || 'artifacts/asaas-settings');fs.mkdirSync(output,{recursive:true});
+ let checks=0; const check=(ok,label)=>{assert.ok(ok,label);checks++;};const errors=[];
+ try {
+  for(const width of [1280,390]) {
+   const context=await browser.newContext({viewport:{width,height:900}});
+   // about:blank/setContent has a null origin. Exercise the same-origin guard
+   // with a synthetic document at the configured CRM origin, never live network.
+   const fixtureUrl='https://crm.example.test/admin/settings?group=payment_gateways';
+   await context.route('**/*',route=>route.request().isNavigationRequest() && route.request().url()===fixtureUrl
+    ? route.fulfill({contentType:'text/html',body:html('prepareFixture("1","1",true);')})
+    : route.abort());
+   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+   await page.goto(fixtureUrl);await page.locator('#gateway-tab').click();
+   assert.deepEqual(await page.locator('.nav-tabs-horizontal > li > a').allTextContents(),['Geral','Autenticação','Webhook e operações']);checks++;
+   const initial=await page.locator('#settings-form').evaluate(f=>Array.from(new FormData(f).entries()));
+   async function assertNoOverflow(stage) {
+    const geometry=await page.evaluate(()=>({viewport:innerWidth,width:document.documentElement.scrollWidth,
+     offenders:Array.from(document.querySelectorAll('body *')).filter(el=>{
+      const box=el.getBoundingClientRect();return box.width>0&&(box.right>innerWidth+1||box.left < -1);
+     }).slice(0,12).map(el=>({tag:el.tagName,id:el.id,className:el.className,right:el.getBoundingClientRect().right}))}));
+    check(geometry.width<=geometry.viewport+1,'no horizontal overflow '+stage+': '+JSON.stringify(geometry));
+   }
+
+   for(const id of ['general','authentication','operations']) {
+    await page.locator('#asaas-settings-tab-'+id).click();check(await page.locator('#asaas-settings-panel-'+id).isVisible(),id+' visible');
+    if(id==='operations') {
+     check(await page.getByRole('button',{name:'Webhooks e eventos',exact:true}).isVisible(),'same-origin operation navigation initialized');
+     await page.waitForFunction(()=>!document.getElementById('asaas-settings-panel-operations').hasAttribute('aria-busy'));
+     assert.match(await page.locator('#asaas-settings-panel-operations > [role=status]').textContent(),/Não foi possível carregar/);checks++;
     }
-    assert.deepEqual(errors, []);
-    console.log('Asaas native tabs Playwright: ' + checks + ' checks passed; desktop/mobile screenshots: ' + output);
-  } finally { await browser.close(); }
-})().catch(error => { console.error(error); process.exitCode = 1; });
+    check((await page.locator('#settings-form').getAttribute('action')).endsWith('&active_tab=online_payments_asaas_tab'),'native save target preserved');
+    await page.screenshot({path:path.join(output,width+'-'+id+'.png'),fullPage:true});
+    await assertNoOverflow(id);
+   }
+   assert.deepEqual(await page.locator('#settings-form').evaluate(f=>Array.from(new FormData(f).entries())),initial);checks++;
+   await page.locator('#asaas-settings-tab-authentication').click();
+   const selector=page.locator('#asaas-operation-environment');check(await selector.inputValue()==='1','single persisted selection');
+   for(const env of ['production','sandbox']) {
+    await page.locator('#asaas-profile-authentication-'+env+'-tab').click();
+    check(await page.locator('#asaas-profile-authentication-'+env).isVisible(),'profile visible '+env);
+    check(await selector.inputValue()==='1','browsing never changes operational environment');
+   }
+   check(await selector.evaluate(el=>el.getBoundingClientRect().bottom<=document.querySelector('[data-asaas-environment-tabs]').getBoundingClientRect().top),'combo above subtabs');
+   await page.locator('#asaas-profile-authentication-production-tab').click();
+   const key=page.locator('[name="settings[paymentmethod_asaas_api_key]"]');await key.fill('synthetic-key');
+   await page.locator('[data-asaas-reveal="asaas-settings-api_key"]').click();check(await key.getAttribute('type')==='text','explicit reveal');
+   await page.locator('#asaas-profile-authentication-sandbox-tab').click();check(await key.getAttribute('type')==='password','leaving profile masks key');
+   await page.locator('#asaas-profile-authentication-sandbox-tab').press('ArrowLeft');check(await page.locator('#asaas-profile-authentication-production-tab').evaluate(el=>el===document.activeElement),'profile keyboard focus');
+   const hidden=page.locator('[name="settings[paymentmethod_asaas_profile_sandbox_label]"]');await hidden.evaluate(el=>{el.required=true;el.value='';});
+   await page.locator('button[type=submit]').click();check(await hidden.isVisible(),'native invalid reveals nested profile');check(await hidden.evaluate(el=>el===document.activeElement),'invalid gets focus');
+   await hidden.fill('synthetic-label');await selector.selectOption('');await page.locator('#other-tab').click();await page.locator('button[type=submit]').click();
+   check(await selector.isVisible(),'invalid selector restores gateway and auth');check(await selector.evaluate(el=>el===document.activeElement),'invalid selector focused');
+   await selector.selectOption('1');await page.evaluate(()=>module.exports.initialize(document));check(await page.locator('.nav-tabs-horizontal > li').count()===3,'idempotent init');
+   await assertNoOverflow('after validation and profile navigation');
+   await context.close();
+  }
+  assert.deepEqual(errors,[]);console.log('Asaas settings browser: '+checks+' checks passed; '+output);
+ } finally {await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

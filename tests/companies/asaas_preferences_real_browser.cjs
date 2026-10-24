@@ -11,6 +11,20 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {environment: settingsEnvironment} = require('./asaas_settings_real_browser.cjs');
 
+const NATIVE_TAB_ASSETS = Object.freeze({css: 'assets/builds/vendor-admin.css', script: 'assets/plugins/bootstrap/js/bootstrap.min.js'});
+// Called in the real page. Return booleans only; never leak page/account content.
+function nativeTabAssetFacts(assets, doc = document, jq = window.jQuery) {
+  const links = doc.querySelectorAll('link[rel="stylesheet"][href*="' + assets.css + '"]');
+  let rules = [];
+  try { rules = Array.from(links.length === 1 ? links[0].sheet?.cssRules || [] : []); } catch (_) {}
+  const hasDisplay = (selector, display) => rules.some(rule => rule.selectorText?.replace(/\s+/g, '') === selector && rule.style?.display === display);
+  return {
+    stylesheet: links.length === 1 && rules.length > 0,
+    tabStyles: rules.some(rule => rule.selectorText?.includes('.nav-tabs')) && hasDisplay('.tab-content>.tab-pane', 'none') && hasDisplay('.tab-content>.active', 'block'),
+    plugin: doc.querySelectorAll('script[src*="' + assets.script + '"]').length === 1 && typeof jq?.fn?.tab === 'function',
+  };
+}
+
 const ZERO = '0'.repeat(64);
 const DEFAULT_PROFILE = Object.freeze({label: 'Asaas', description: 'Fatura {invoice_number}', allow_pix: '1', allow_boleto: '1', allow_card: '1', revision: ZERO});
 const ENVIRONMENTS = ['production', 'sandbox'];
@@ -214,7 +228,10 @@ async function run(env = process.env) {
           check((response.headers()['cache-control'] || '').includes('no-store'), 'real nominal view prevents cached account/preferences recovery');
           check(await page.locator('.company-selector').getAttribute('data-company-current') === owner.issuer, 'header confirms the actual active owner');
           check(await page.locator('body.company-context-shell').count() === 1 && await page.locator('script[src*="assets/js/company-context-tabs.js"]').count() === 1, 'real company shell and native tabs asset are present');
-          check(await page.locator('link[href*="assets/plugins/bootstrap/css/bootstrap.min.css"]').count() === 1 && await page.evaluate(() => typeof window.jQuery?.fn?.tab === 'function'), 'actual Bootstrap stylesheet and plugin load');
+          const nativeAssets = await page.evaluate(nativeTabAssetFacts, NATIVE_TAB_ASSETS);
+          check(nativeAssets.stylesheet, 'actual native vendor stylesheet is loaded and readable');
+          check(nativeAssets.tabStyles, 'actual native vendor stylesheet contains Bootstrap tab visibility rules');
+          check(nativeAssets.plugin, 'actual Bootstrap script and jQuery tab plugin load');
           const preferences = page.locator('#preferences');
           const tabs = preferences.locator('[role=tab]');
           check(JSON.stringify((await tabs.allTextContents()).map(text => text.trim())) === JSON.stringify(['Produção', 'Homologação']), 'two native environment tabs use real PT-BR labels');
@@ -321,5 +338,5 @@ async function run(env = process.env) {
   } finally { if (browser) await browser.close(); }
 }
 
-module.exports = {environment, requestDecision, withNativeSessionPermit, consumeSessionDecision, readOnlyQuery, safePath, requestScope, bodyCategory, responseFacts, blockedRequests, run};
+module.exports = {NATIVE_TAB_ASSETS, nativeTabAssetFacts, environment, requestDecision, withNativeSessionPermit, consumeSessionDecision, readOnlyQuery, safePath, requestScope, bodyCategory, responseFacts, blockedRequests, run};
 if (require.main === module) run().catch(() => { process.exitCode = 1; });

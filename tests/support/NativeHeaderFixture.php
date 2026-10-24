@@ -24,9 +24,10 @@ if (PHP_SAPI !== 'cli') {
 }
 
 $fixtureFlags = array_slice($argv, 1);
-if (array_diff($fixtureFlags, ['--full-shell', '--long-name', '--mobile-user', '--selector-only', '--selected-two'])) {
+if (array_diff($fixtureFlags, ['--full-shell', '--long-name', '--mobile-user', '--selector-only', '--selected-two', '--company-google', '--company-microsoft'])) {
     throw new InvalidArgumentException('Unknown native-header fixture flag');
 }
+define('NATIVE_HEADER_FIXTURE_COMPANY', in_array('--company-google', $fixtureFlags, true) ? 'google_mail_oauth' : (in_array('--company-microsoft', $fixtureFlags, true) ? 'microsoft_mail_oauth' : ''));
 define('NATIVE_HEADER_FIXTURE_FULL_SHELL', in_array('--full-shell', $fixtureFlags, true));
 define('NATIVE_HEADER_FIXTURE_LONG_NAME', in_array('--long-name', $fixtureFlags, true));
 define('NATIVE_HEADER_FIXTURE_MOBILE_USER', in_array('--mobile-user', $fixtureFlags, true));
@@ -42,6 +43,7 @@ final class NativeHeaderFixtureDatabase
 {
     public function field_exists(string $field, string $table): bool
     {
+        if (NATIVE_HEADER_FIXTURE_COMPANY && $table === 'fixture_staff') { return false; }
         if ($field !== 'primary_issuer_id' || $table !== 'fixture_issuers_installation_identity') {
             throw new LogicException('Unexpected fixture field lookup');
         }
@@ -50,7 +52,11 @@ final class NativeHeaderFixtureDatabase
 
     public function query(string $sql, array $parameters = [])
     {
-        if ($sql === 'SELECT primary_issuer_id FROM fixture_issuers_installation_identity WHERE id=1'
+        if ($sql === 'SELECT active FROM fixture_modules WHERE module_name=?' && $parameters === ['theme_style']) {
+            $rows = [['active' => 1]];
+        } elseif ($sql === 'SELECT value FROM fixture_options WHERE name=?' && $parameters === ['theme_style']) {
+            $rows = [['value' => '[{"id":"btn-primary","color":"#32c977"},{"id":"admin-menu-active-item","color":"#32c977"}]']];
+        } elseif ($sql === 'SELECT primary_issuer_id FROM fixture_issuers_installation_identity WHERE id=1'
             && $parameters === []) {
             $rows = [['primary_issuer_id' => 1]];
         } elseif ($sql === 'SELECT * FROM fixture_issuers_registry WHERE id=? AND active=1'
@@ -72,6 +78,7 @@ final class NativeHeaderFixtureDatabase
             private array $rows;
             public function __construct(array $rows) { $this->rows = $rows; }
             public function result_array(): array { return $this->rows; }
+            public function row_array(): array { return $this->rows[0] ?? []; }
         };
     }
 }
@@ -89,13 +96,14 @@ function base_url(string $path = ''): string { return '/' . ltrim($path, '/'); }
 function admin_url(string $path = ''): string { return NATIVE_HEADER_FIXTURE_SELECTOR_ONLY ? '/admin/' . $path : '#fixture-' . rawurlencode($path); }
 function form_open(string $url, array $attributes = []): string
 {
-    $html = '<form action="' . e(NATIVE_HEADER_FIXTURE_SELECTOR_ONLY ? $url : '#') . '" method="post"';
+    $html = '<form action="' . e((NATIVE_HEADER_FIXTURE_SELECTOR_ONLY || NATIVE_HEADER_FIXTURE_COMPANY) ? $url : '#') . '" method="post"';
     foreach ($attributes as $key => $value) { $html .= ' ' . e($key) . '="' . e($value) . '"'; }
     return $html . '>';
 }
 function form_close(): string { return '</form>'; }
-function get_admin_header_logo_url(): string { return ''; }
-function crm_app_display_name_html(): string { return 'CRM sintético'; }
+function get_admin_header_logo_url(): string { return base_url('assets/images/argws/logo-dark.png'); }
+putenv('APP_DISPLAY_NAME=CRM sintético');
+require APPPATH.'helpers/app_branding_helper.php';
 function is_mobile(): bool { return NATIVE_HEADER_FIXTURE_MOBILE_USER; }
 function is_staff_member(): bool { return true; }
 function is_admin(): bool { return true; }
@@ -133,9 +141,12 @@ function collect(array $items)
 /** Presentation context only: does not exercise the authenticated ACL service. */
 final class CompanyRequestScope
 {
+    public static function token(): ?string { return null; }
     public static function context()
     {
         return new class {
+            public function isPrimary(): bool { return true; }
+            public function staffId(): int { return 1; }
             public function available(): array {
                 $companies = [['id' => 1, 'legal_name' => native_header_fixture_company_name()]];
                 if (NATIVE_HEADER_FIXTURE_SELECTOR_ONLY) { $companies[] = ['id' => 2, 'legal_name' => 'Outra empresa de teste']; }
@@ -145,8 +156,10 @@ final class CompanyRequestScope
             public function csrf(): string { return 'synthetic-fixture-only'; }
         };
     }
-    public static function adminUrl($application, string $path): string { return admin_url($path); }
+    public static function adminUrl($application, string $path = ''): string { return NATIVE_HEADER_FIXTURE_COMPANY ? '/admin/' . $path : admin_url($path); }
 }
+
+final class CompanySettingsRuntime { public static function active(): bool { return true; } public static function canResource($feature, $cap = 'view'): bool { return !in_array($feature, ['pusher', 'connect-api-connector', 'calendar'], true); } public static function can($cap): bool { return true; } }
 
 final class NativeHeaderFixtureApplication
 {
@@ -156,10 +169,12 @@ final class NativeHeaderFixtureApplication
     public object $load;
     public object $session;
     public object $app_modules;
+    public object $router;
 
     public function __construct()
     {
         $this->db = new NativeHeaderFixtureDatabase();
+        $this->router = new class { public function fetch_class(): string { return 'company_' . NATIVE_HEADER_FIXTURE_COMPANY; } };
         $this->app = new class {
             public function get_quick_actions_links(): array { return []; }
             public function get_available_languages(): array { return []; }
@@ -186,6 +201,8 @@ final class NativeHeaderFixtureApplication
             {
                 if (!in_array($view, [
                     'admin/includes/header',
+                    'admin/companies/google_mail_oauth',
+                    'admin/companies/microsoft_mail_oauth',
                     'admin/includes/company_selector',
                     'admin/includes/notifications',
                     'admin/tasks/started_timers',
@@ -215,6 +232,20 @@ final class NativeHeaderFixtureApplication
 }
 
 $fixtureApplication = new NativeHeaderFixtureApplication();
+if (NATIVE_HEADER_FIXTURE_COMPANY) {
+    ob_start();
+    $fixtureApplication->load->view('admin/companies/' . NATIVE_HEADER_FIXTURE_COMPANY, [
+        'csrf' => 'synthetic-form-csrf', 'can_edit' => true, 'error' => '', 'result' => '',
+        'trusted_redirect' => 'https://fixture.test/admin/callback', 'portal_mail' => ['mode' => 'native', 'revision' => 1],
+        'document_mail' => ['mode' => 'native', 'revision' => 1],
+        'profile' => ['revision' => 1, 'status' => 'unconfigured', 'sender_email' => 'sender@example.invalid', 'client_id' => '', 'secret_configured' => false, 'tenant_id' => ''],
+    ]);
+    $rendered = ob_get_clean();
+    // Explicitly synthetic table supplements the actual OAuth views for DOM ownership tests.
+    $tableFixture = '<form id="synthetic-table-owner" data-synthetic-table-fixture action="/synthetic-table" method="post"><input type="hidden" name="synthetic_csrf" value="unchanged"><table id="synthetic-table"><thead><tr><th>Coluna sintética A</th><th>Coluna sintética B</th><th>Coluna sintética C</th></tr></thead><tbody><tr id="synthetic-row"><td style="white-space:nowrap">Conteúdo sintético largo para testar rolagem horizontal local</td><td><input type="checkbox" name="synthetic_choice" value="1" checked></td><td>Mesma linha e mesmos nós</td></tr></tbody></table></form>';
+    echo str_replace('</section>', $tableFixture . '</section>', $rendered);
+    exit;
+}
 if (NATIVE_HEADER_FIXTURE_SELECTOR_ONLY) {
     $fixtureApplication->load->view('admin/includes/company_selector');
     exit;

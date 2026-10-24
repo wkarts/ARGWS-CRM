@@ -59,6 +59,53 @@ essentialCheck($get(null,'remind_user_check_in','portuguese_br')['message']===Em
 essentialCheck(create_email_template($module['source_subject'],$module['source_message'],$module['type'],$module['source_name'],'remind_user_check_in')===false,'module create is idempotent');
 create_email_template('Custom English subject','Unknown source body','custom','Unknown source','unknown-module-source');
 essentialCheck($get(null,'unknown-module-source','english')['message']==='Unknown source body' && $get(null,'unknown-module-source','portuguese_br')===[],'uncataloged source not mislabeled Portuguese');
+// Webhook defaults: usable fresh variants, without rewriting deliberate blanks/customizations.
+$webhook=EmailTemplatesPtBr::moduleTemplates()['webhook-failed'];
+$createWebhook=static fn()=>create_email_template($webhook['source_subject'],$webhook['source_message'],$webhook['type'],$webhook['source_name'],'webhook-failed');
+essentialCheck($createWebhook()!==false,'new webhook default is created');
+foreach(['english','portuguese_br'] as $language) {
+ $row=$get(null,'webhook-failed',$language);
+ essentialCheck(trim($row['message'])!=='' && trim($row['subject'])!=='','webhook variant has usable content '.$language);
+ essentialCheck(!str_contains($row['message'],'{webhook_response_code}'),'default does not email raw webhook diagnostics '.$language);
+}
+essentialCheck($createWebhook()===false,'webhook bootstrap replay is idempotent');
+require_once APPPATH.'services/EmailTemplateLocale.php';
+$webhookLookups=[];
+$webhookLookup=function($language)use($get,&$webhookLookups){$webhookLookups[]=$language;$row=$get(null,'webhook-failed',$language);return $row?(object)$row:null;};
+$chosenWebhook=EmailTemplateLocale::select($webhookLookup,'','portuguese_br');
+essentialCheck($chosenWebhook->language==='portuguese_br' && $webhookLookups===['portuguese_br'],'PT-BR application configuration selects only Portuguese webhook variant');
+$webhookLookups=[];
+$chosenWebhook=EmailTemplateLocale::select($webhookLookup,'english','portuguese_br');
+essentialCheck($chosenWebhook->language==='english' && $webhookLookups===['english'],'explicit recipient language remains respected without duplicate selection');
+
+$db->query("UPDATE {$p}emailtemplates SET message='Custom webhook body',subject='Custom webhook subject',active=0 WHERE slug='webhook-failed'");
+$customWebhook=$db->query("SELECT * FROM {$p}emailtemplates WHERE slug='webhook-failed' ORDER BY emailtemplateid")->result_array();
+essentialCheck($createWebhook()===false,'custom webhook variants are not recreated');
+EmailTemplateReconciler::upgrade($db,$p);
+essentialCheck($db->query("SELECT * FROM {$p}emailtemplates WHERE slug='webhook-failed' ORDER BY emailtemplateid")->result_array()===$customWebhook,'custom webhook content and disabled state survive reconciliation');
+$db->query("UPDATE {$p}emailtemplates SET message='' WHERE slug='webhook-failed'");
+$blankWebhook=$db->query("SELECT * FROM {$p}emailtemplates WHERE slug='webhook-failed' ORDER BY emailtemplateid")->result_array();
+essentialCheck($createWebhook()===false,'existing blank webhook variants remain untouched');
+EmailTemplateReconciler::upgrade($db,$p);
+essentialCheck($db->query("SELECT * FROM {$p}emailtemplates WHERE slug='webhook-failed' ORDER BY emailtemplateid")->result_array()===$blankWebhook,'blank webhook body is never silently replaced');
+// Explicit module migration repairs only active, recognized factory groups.
+essentialCheck(EmailTemplateReconciler::repairWebhookDefaults($db,$p)===0,'disabled/custom webhook group is skipped by explicit repair');
+$legacyWebhook=['issuer_id'=>501,'type'=>'webhooks','slug'=>'webhook-failed','language'=>'english','name'=>$webhook['source_name'],'subject'=>$webhook['source_subject'],'message'=>'','fromname'=>'Saved webhook sender','fromemail'=>'saved@example.invalid','active'=>1,'plaintext'=>1,'order'=>9];
+$insert($legacyWebhook);
+$disabledWebhook=$legacyWebhook;$disabledWebhook['issuer_id']=502;$disabledWebhook['active']=0;$insert($disabledWebhook);
+$customWebhookRow=$legacyWebhook;$customWebhookRow['issuer_id']=503;$customWebhookRow['message']='User body {webhook_response_code}';$insert($customWebhookRow);
+$foreignWebhook=$legacyWebhook;$foreignWebhook['issuer_id']=504;$foreignWebhook['language']='french';$insert($foreignWebhook);
+$beforeDisabled=$get(502,'webhook-failed','english');$beforeCustom=$get(503,'webhook-failed','english');$beforeForeign=$get(504,'webhook-failed','french');
+essentialCheck(EmailTemplateReconciler::repairWebhookDefaults($db,$p)===2,'explicit repair fills factory blank and adds missing Portuguese variant');
+foreach(['english','portuguese_br'] as $language) {
+ $row=$get(501,'webhook-failed',$language);
+ essentialCheck($row['message']===($language==='english'?$webhook['source_message']:EmailTemplatesPtBr::translateMessage($webhook['source_message'])),'explicit repair chooses correct body '.$language);
+ foreach(['fromname','fromemail','active','plaintext','order'] as $field)essentialCheck($row[$field]===$get(501,'webhook-failed','english')[$field],'repair preserves metadata '.$field);
+}
+essentialCheck($get(502,'webhook-failed','english')===$beforeDisabled && $get(502,'webhook-failed','portuguese_br')===[],'disabled factory group is unchanged');
+essentialCheck($get(503,'webhook-failed','english')===$beforeCustom && $get(503,'webhook-failed','portuguese_br')===[],'custom body/merge fields never bypassed');
+essentialCheck($get(504,'webhook-failed','french')===$beforeForeign && $get(504,'webhook-failed','english')===[],'foreign language fallback remains untouched');
+essentialCheck(EmailTemplateReconciler::repairWebhookDefaults($db,$p)===0,'explicit webhook repair replay is a no-op');
 // Reactivation respects the stored opposite language, including disabled defaults and custom English.
 $reactivation=EmailTemplatesPtBr::moduleTemplates()['purchase-request-approval'];
 $existing=['issuer_id'=>null,'type'=>$reactivation['type'],'slug'=>'purchase-request-approval','language'=>'english','name'=>$reactivation['source_name'],'subject'=>$reactivation['source_subject'],'message'=>$reactivation['source_message'],'fromname'=>'Saved sender','fromemail'=>'saved@example.invalid','active'=>0,'plaintext'=>1,'order'=>7];

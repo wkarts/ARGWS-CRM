@@ -13,6 +13,15 @@ class Dashboard extends AdminController
     // This is admin dashboard view
     public function index()
     {
+        // AdminController has already enforced current company membership and the
+        // primary-only native dashboard boundary before consuming upgrade feedback.
+        if ($this->input->method(true) === 'GET' && !$this->input->is_ajax_request()
+            && is_staff_logged_in() && is_admin()) {
+            require_once APPPATH . 'services/AdminDatabaseUpgrade.php';
+            if (AdminDatabaseUpgrade::consumeSuccess($this->session, (int) get_staff_user_id(), (string) $this->current_db_version)) {
+                set_alert('success', 'O CRM foi atualizado com sucesso.');
+            }
+        }
         close_setup_menu();
         $this->load->model('departments_model');
         $this->load->model('todo_model');

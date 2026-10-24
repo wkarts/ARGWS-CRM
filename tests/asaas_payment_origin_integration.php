@@ -278,7 +278,7 @@ namespace {
     function show_error(...$a){throw new \RuntimeException('forbidden');}
     function show_404(){throw new \RuntimeException('not_found');}
     function admin_url($url){return '/admin/'.$url;}
-    function redirect($url){}
+    function redirect($url){$GLOBALS['originRedirect']=$url;}
     require_once FCPATH.'modules/asaas/controllers/Payment_origins.php';
     [$gw,$adapter,$db]=fixture();
     $admin=false;throws(fn()=>new Payment_origins(),'non-admin cannot access reconciliation');$admin=true;
@@ -286,6 +286,8 @@ namespace {
     $controller->input=new class {
         public array $data=['invoice_id'=>1,'remote_id'=>'pay_original','account_id'=>'wallet_original','environment'=>'sandbox','origin_csrf'=>'bad'];
         public string $httpMethod='POST';
+        public array $query=[];
+        public function get($name){return $this->query[$name]??null;}
         public function method(){return $this->httpMethod;}
         public function post($name){return $this->data[$name]??null;}
     };
@@ -294,10 +296,11 @@ namespace {
     check(Client::$calls===[],'CSRF rejected before provider or binding');
     $controller->input->data['origin_csrf']=str_repeat('a',64);$controller->input->httpMethod='GET';
     throws(fn()=>$controller->reconcile(),'GET cannot mutate binding');
-    $controller->input->httpMethod='POST';Client::$responses=[wallet(),payment()];
+    $controller->input->httpMethod='POST';$controller->input->query=['panel'=>'1'];Client::$responses=[wallet(),payment()];
     $controller->reconcile();
     check($adapter->originStore()->byInvoice(1)['remote_id']==='pay_original','valid admin POST verifies remote evidence and records origin');
     check(array_column(Client::$calls,0)===['GET','GET'],'reconciliation is read-only at provider');
+    check($GLOBALS['originRedirect']==='/admin/asaas/payment_origins?panel=1','embedded reconciliation returns to protected partial without losing panel context');
     check(end($db->tables['tblasaas_payment_origin_events'])['actor_id']===7,'reconciliation records authenticated actor');
 
     echo "OK: {$checks} integration assertions; real provider, gateway, hooks and core guards; no network.\n";

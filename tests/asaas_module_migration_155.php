@@ -9,7 +9,7 @@ if($mysql)$engine=' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin';e
 $tables155=['modules','issuers_registry','asaas_payment_origins','asaas_company_accounts',...\Asaas\CompanyPreferencesSchema::tables()];
 $version155=fn()=>$db->get_where($p.'modules',['module_name'=>'asaas'])->row_array()['installed_version'];
 try{
-    migration154Check(($match[1]??null)==='1.5.5','actual155 header accompanies native155 migration');
+    migration154Check(($match[1]??null)==='1.5.6','current156 header preserves the historical155 migration');
     $db->query('CREATE TABLE `'.$p.'modules` (module_name VARCHAR(50) PRIMARY KEY,installed_version VARCHAR(20))'.$engine);
     $db->query('CREATE TABLE `'.$p.'issuers_registry` (id INT UNSIGNED NOT NULL PRIMARY KEY)'.$engine);
     $db->query('CREATE TABLE `'.$p.'asaas_payment_origins` (id INT NOT NULL PRIMARY KEY,environment VARCHAR(16) NOT NULL)'.$engine);
@@ -21,17 +21,17 @@ try{
     migration154Check((new App_module_migration('asaas'))->version('154')===true,'154 checkpoint remains explicit before155');
     migration154Throws(fn()=>\Asaas\ModuleReadiness::require155($db,$p),'asaas_module_155_required');
     $db->failQuery='CREATE TABLE IF NOT EXISTS `'.$p.'asaas_company_origin_profiles`';
-    migration154Throws(fn()=>(new App_module_migration('asaas'))->to_latest(),'issuer_storage_failed');
+    migration154Throws(fn()=>(new App_module_migration('asaas'))->version('155'),'issuer_storage_failed');
     migration154Check($version155()==='1.5.4'&&$db->table_exists($p.'asaas_company_preferences')&&!$db->table_exists($p.'asaas_company_origin_profiles'),'partial155 DDL cannot advance native tracking');
     migration154Check(!\Asaas\ModuleReadiness::ready155($db,$p),'partial155 readiness fails closed');
     $db->failQuery=null;$db->failVersionWrite=true;$runner=new App_module_migration('asaas');
-    migration154Check($runner->to_latest()===false&&$runner->error_string()==='module_migration_version_write_failed','complete155 schema cannot hide failed native tracking write');
+    migration154Check($runner->version('155')===false&&$runner->error_string()==='module_migration_version_write_failed','complete155 schema cannot hide failed native tracking write');
     \Asaas\CompanyPreferencesSchema::ensure($db,$p,false);
     migration154Check($version155()==='1.5.4'&&!\Asaas\ModuleReadiness::ready155($db,$p),'structure without155 tracking does not enable new capabilities');
     $db->failVersionWrite=false;$db->ignoreVersionWrite=true;$runner=new App_module_migration('asaas');
-    migration154Check($runner->to_latest()===false&&$runner->error_string()==='module_migration_version_unconfirmed','lying successful tracking update is rejected by readback');
+    migration154Check($runner->version('155')===false&&$runner->error_string()==='module_migration_version_unconfirmed','lying successful tracking update is rejected by readback');
     $db->ignoreVersionWrite=false;
-    migration154Check((string)(new App_module_migration('asaas'))->to_latest()==='155'&&$version155()==='1.5.5','retry completes real native155 tracking');
+    migration154Check((string)(new App_module_migration('asaas'))->version('155')==='155'&&$version155()==='1.5.5','retry completes real native155 tracking');
     migration154Check(\Asaas\ModuleReadiness::ready155($db,$p),'confirmed native155 becomes ready');
     foreach(\Asaas\CompanyPreferencesSchema::tables() as $table)migration154Check($db->get($p.$table)->result_array()===[],'migration never selects an environment or fabricates historical profile rows: '.$table);
     migration154Check($db->get($p.'asaas_company_accounts')->result_array()===$oldAccounts&&$db->get($p.'asaas_payment_origins')->result_array()===$oldOrigins,'155 preserves both accounts, revisions, tokens, automation and old origins');
@@ -40,14 +40,24 @@ try{
     $snapshot=json_encode(['preserved'=>'immutable synthetic evidence'],JSON_THROW_ON_ERROR);
     $db->insert($p.'asaas_company_origin_profiles',['origin_id'=>9,'issuer_id'=>7,'account_row'=>1,'snapshot_json'=>$snapshot,'snapshot_hash'=>hash('sha256',$snapshot),'created_at'=>'2026-10-21 00:00:00']);
     $before=[];foreach($tables155 as $table)$before[$table]=$db->get($p.$table)->result_array();
-    migration154Check((new App_module_migration('asaas'))->to_latest()===true,'native155 replay is no-op');
+    migration154Check((new App_module_migration('asaas'))->version('155')===true,'native155 replay is no-op');
     foreach($tables155 as $table)migration154Check($db->get($p.$table)->result_array()===$before[$table],'155 replay preserves '.$table);
     migration154Check((string)(new App_module_migration('asaas'))->version('154')==='154','code rollback records154 without deleting configuration/evidence');
     migration154Check(!\Asaas\ModuleReadiness::ready155($db,$p),'rollback disables155 capabilities despite preserved schema');
-    migration154Check((string)(new App_module_migration('asaas'))->to_latest()==='155','155 replay after rollback revalidates its additive schema');
+    migration154Check((string)(new App_module_migration('asaas'))->version('155')==='155','155 replay after rollback revalidates its additive schema');
     foreach($tables155 as $table)migration154Check($db->get($p.$table)->result_array()===$before[$table],'155 rollback/replay preserves '.$table);
     foreach(['1.5.4','1.5.50','1.5.5-preview','',null] as $invalid){$db->where('module_name','asaas')->update($p.'modules',['installed_version'=>$invalid]);migration154Check(!\Asaas\ModuleReadiness::ready155($db,$p),'malformed/old tracking never enables155');}
     $db->where('module_name','asaas')->update($p.'modules',['installed_version'=>'1.5.5']);
+    // Presentation156 remains a separately verified NOOP after historical155 checkpoints.
+    $before156=[];foreach($tables155 as $table)if($table!=='modules')$before156[$table]=$db->get($p.$table)->result_array();
+    $db->failVersionWrite=true;$runner156=new App_module_migration('asaas');
+    migration154Check($runner156->to_latest()===false&&$version155()==='1.5.5','156 tracking failure preserves confirmed155');
+    $db->failVersionWrite=false;$db->ignoreVersionWrite=true;$runner156=new App_module_migration('asaas');
+    migration154Check($runner156->to_latest()===false&&$runner156->error_string()==='module_migration_version_unconfirmed'&&$version155()==='1.5.5','156 lying tracking success is rejected');
+    $db->ignoreVersionWrite=false;
+    migration154Check((string)(new App_module_migration('asaas'))->to_latest()==='156'&&$version155()==='1.5.6','156 native tracking retry confirmed');
+    migration154Check((new App_module_migration('asaas'))->to_latest()===true,'156 replay is native no-op');
+    foreach($before156 as $table=>$rows)migration154Check($db->get($p.$table)->result_array()===$rows,'156 preserves all profile/account/origin data: '.$table);
     $db->query('ALTER TABLE `'.$p.'asaas_company_profiles` ADD `unexpected` INT NULL');
     migration154Throws(fn()=>\Asaas\CompanyPreferencesSchema::ensure($db,$p,false),'issuer_asaas_preferences_schema_invalid');
     echo 'Asaas native155 migration: '.($checks-$start155).' checks passed ('.$pdo->getAttribute(PDO::ATTR_DRIVER_NAME).'). Failure/retry/readback/replay; no provider calls.'.PHP_EOL;

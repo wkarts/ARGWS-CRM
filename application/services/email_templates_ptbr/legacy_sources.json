@@ -748,5 +748,18 @@
       "source_file": "modules/purchase/migrations/117_version_117.php",
       "source_line": 84
     }
+  ],
+  "webhook-failed": [
+    {
+      "name": "Falha na entrega do webhook",
+      "subject": "Falha na entrega de um webhook",
+      "source_name": "Webhook failed",
+      "source_subject": "Webhook failed",
+      "source_message": "",
+      "module": "webhooks",
+      "type": "webhooks",
+      "source_file": "modules/webhooks/webhooks.php",
+      "source_line": 93
+    }
   ]
 }

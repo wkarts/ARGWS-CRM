@@ -22,5 +22,6 @@
   "%s created a new application %s at %s": "%s criou uma nova solicitação %s em %s",
   "You received a new order %s with a total amount of %s %s %s%s": "Você recebeu o pedido nº %s no valor total de %s %s. %s%s",
   "Your payment for order %s is paid through %s%s with a total amount of %s %s": "Seu pedido nº %s foi pago com sucesso. Comprovante: %s%s. Valor total: %s %s.",
-  "We would like to share with you a link of Invoice information with the number %s": "Disponibilizamos a fatura nº %s para sua consulta."
+  "We would like to share with you a link of Invoice information with the number %s": "Disponibilizamos a fatura nº %s para sua consulta.",
+  "A webhook delivery failed. Review the webhook logs in the CRM.": "A entrega de um webhook falhou. Consulte os registros de webhooks no CRM."
 }

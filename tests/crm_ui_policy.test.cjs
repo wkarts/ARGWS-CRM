@@ -71,7 +71,17 @@ test('flag iDEAL é propagada, desabilitada por padrão e não substitui RBAC', 
   const mods = read('application/controllers/admin/Mods.php');
   const index = mods.slice(mods.indexOf('public function index()'), mods.indexOf('public function activate('));
   assert.match(index, /foreach \(\$this->app_modules->get\(\) as \$module\)/);
-  assert.doesNotMatch(index, /hidden_resources|CRM_HIDDEN_RESOURCES|idealEnabled/);
+  assert.doesNotMatch(index, /hidden_resources|CRM_HIDDEN_RESOURCES/);
+  // The flag may explain availability, but must never filter the visible module list.
+  assert.doesNotMatch(index, /\b(?:continue|break|return|array_filter)\b|\bif\s*\(/);
+  assert.equal((index.match(/idealEnabled\(\)/g) || []).length, 1);
+  assert.match(index, /\$resource\['availability_reason'\] = \$name === 'ideal' && !\\app\\services\\PaymentGatewayCatalog::idealEnabled\(\)\s*\? 'Disponibilidade restrita pela configuração CRM_ENABLE_IDEAL\.'/);
+  assert.match(index, /\$data\['resources'\]\[\] = \$resource;\s*}/);
+  const activation = mods.slice(mods.indexOf('public function activate('), mods.indexOf('public function deactivate('));
+  assert.match(activation, /\$definition = \$this->get_resource_definition\(\$name\);/);
+  assert.match(activation, /if \(!\$definition \|\| !\$this->app_modules->get\(\$name\)\)\s*{\s*show_404\(\);/);
+  const definition = mods.slice(mods.indexOf('private function get_resource_definition('), mods.indexOf('private function resource_name('));
+  assert.match(definition, /if \(!\$forDeactivation && \$name === 'ideal' && !\\app\\services\\PaymentGatewayCatalog::idealEnabled\(\)\)\s*{\s*return false;/);
   assert.match(mods, /\$name === 'ideal' && !\\app\\services\\PaymentGatewayCatalog::idealEnabled\(\)/);
   assert.match(index, /can_manage_availability/);
   assert.match(read('application/libraries/App_modules.php'), /\$name === 'ideal' && !\\app\\services\\PaymentGatewayCatalog::idealEnabled\(\)/);

@@ -21,6 +21,7 @@ class Mods extends AdminController
         $this->config->load('argws_resources');
         $definitions = $this->config->item('argws_resources');
         $data['resources'] = [];
+        $maintenance = $this->app_modules->database_maintenance_inventory();
         // Visibility is not activation or authorization. Show every available module,
         // including those absent from the commercial catalog or hidden by environment.
         foreach ($this->app_modules->get() as $module) {
@@ -33,9 +34,14 @@ class Mods extends AdminController
             ];
             $resource = array_merge($module, $definition);
             $resource['can_manage_availability'] = (bool) $this->get_resource_definition($name);
+            $resource['maintenance_pending'] = isset($maintenance[$name]);
+            $resource['can_deactivate'] = (int) $module['activated'] === 1 && (bool) $this->get_resource_definition($name, true);
+            $resource['availability_reason'] = $name === 'ideal' && !\app\services\PaymentGatewayCatalog::idealEnabled()
+                ? 'Disponibilidade restrita pela configuração CRM_ENABLE_IDEAL.'
+                : 'Recurso fora do catálogo de ativação; disponibilidade operacional preservada.';
             $data['resources'][] = $resource;
         }
-        $data['maintenance_count'] = $this->app_modules->number_of_modules_that_require_database_upgrade();
+        $data['maintenance_count'] = count($maintenance);
         $data['title'] = 'Recursos';
         $this->load->view('admin/modules/list', $data);
     }
@@ -79,7 +85,7 @@ class Mods extends AdminController
             show_404();
         }
 
-        $definition = $this->get_resource_definition($name);
+        $definition = $this->get_resource_definition($name, true);
         if (!$definition || !$this->app_modules->get($name)) {
             show_404();
         }
@@ -203,9 +209,9 @@ class Mods extends AdminController
         show_404();
     }
 
-    private function get_resource_definition($name)
+    private function get_resource_definition($name, $forDeactivation = false)
     {
-        if ($name === 'ideal' && !\app\services\PaymentGatewayCatalog::idealEnabled()) {
+        if (!$forDeactivation && $name === 'ideal' && !\app\services\PaymentGatewayCatalog::idealEnabled()) {
             return false;
         }
         $this->config->load('argws_resources');

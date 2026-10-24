@@ -10,18 +10,18 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "152dc5a29c0b0ed6fb2c419897dfdfc4d636b70ea8ac06fd720dadb830cdf244",
+    "source_manifest_sha256": "7af9817913085b689da2685da1f7e8ac9737105dd9e057b30ce4f89f821faf34",
     "counts": {
         "modules": 38,
-        "source_files": 4215,
+        "source_files": 4219,
         "literal_option_keys": 684,
         "dynamic_option_references": 146,
         "controllers": 254,
         "hook_candidates": 553,
-        "job_file_candidates": 66,
+        "job_file_candidates": 67,
         "report_file_candidates": 293,
         "table_name_candidates": 834,
-        "database_call_candidates": 12519
+        "database_call_candidates": 12521
     },
     "infrastructure_options": [
         "cron_has_run_from_cli",
@@ -460,7 +460,7 @@
         {
             "name": "asaas",
             "entry": "modules/asaas/asaas.php",
-            "version": "1.5.5",
+            "version": "1.5.6",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -2267,6 +2267,7 @@
                 "modules/webhooks/migrations/124_version_124.php",
                 "modules/webhooks/migrations/125_version_125.php",
                 "modules/webhooks/migrations/126_version_126.php",
+                "modules/webhooks/migrations/127_version_127.php",
                 "modules/webhooks/models/Webhook_cron_model.php",
                 "modules/webhooks/models/Webhooks_model.php",
                 "modules/webhooks/resources/application/config/my_hooks.php",
@@ -6645,8 +6646,8 @@
         },
         {
             "path": "application/libraries/App.php",
-            "line": 383,
-            "source_sha256": "565a0c2c413faa50f7e63c3dd0739103e9c9d3d65f7038b7e8efa659145a4ca2",
+            "line": 399,
+            "source_sha256": "ddc5aa15fb10c422d996c0c78783f72b52c7e911dcbd4700405c12d1bf4681c3",
             "call": "get_option",
             "expression": "$name",
             "state": "requires_call_site_review"
@@ -10488,7 +10489,7 @@
         },
         {
             "path": "application/controllers/admin/Dashboard.php",
-            "source_sha256": "0727caa4a90c06decdfac59ae3a2c020f44ffb23d9fa0639a1318bc047bd6dd0",
+            "source_sha256": "9d454ae402e67ad72f944bdb63bba5d3fc38a84b194ed42e858e63b63453f181",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -10505,17 +10506,17 @@
                 },
                 {
                     "method": "weekly_payments_statistics",
-                    "line": 91,
+                    "line": 100,
                     "visibility": "public"
                 },
                 {
                     "method": "monthly_payments_statistics",
-                    "line": 101,
+                    "line": 110,
                     "visibility": "public"
                 },
                 {
                     "method": "ticket_widget",
-                    "line": 110,
+                    "line": 119,
                     "visibility": "public"
                 }
             ],
@@ -12002,7 +12003,7 @@
         },
         {
             "path": "application/controllers/admin/Mods.php",
-            "source_sha256": "c7f37529a56e7994a91026294982e7c1d3f7fc3c5774673870209a22697c20f6",
+            "source_sha256": "8a09bcc9f18c444d0bb3b8cd3608eefded61a1815f3c21d45cc290700ac682d4",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -12019,37 +12020,37 @@
                 },
                 {
                     "method": "activate",
-                    "line": 43,
+                    "line": 49,
                     "visibility": "public"
                 },
                 {
                     "method": "deactivate",
-                    "line": 76,
+                    "line": 82,
                     "visibility": "public"
                 },
                 {
                     "method": "uninstall",
-                    "line": 117,
+                    "line": 123,
                     "visibility": "public"
                 },
                 {
                     "method": "upload",
-                    "line": 122,
+                    "line": 128,
                     "visibility": "public"
                 },
                 {
                     "method": "maintenance",
-                    "line": 127,
+                    "line": 133,
                     "visibility": "public"
                 },
                 {
                     "method": "upgrade_database",
-                    "line": 142,
+                    "line": 148,
                     "visibility": "public"
                 },
                 {
                     "method": "update_version",
-                    "line": 201,
+                    "line": 207,
                     "visibility": "public"
                 }
             ],
@@ -16560,7 +16561,7 @@
         },
         {
             "path": "modules/asaas/controllers/Asaas.php",
-            "source_sha256": "0fca9dd80093159f8b877b47981ecaa392262f843e63efda9272011820662055",
+            "source_sha256": "5b5f164cd51a52dd3a16be0220e283b74245f68bf2cc4950e1be8c47aeba3832",
             "module": "asaas",
             "base_class": "AdminController",
             "surface": "admin",
@@ -16577,87 +16578,87 @@
                 },
                 {
                     "method": "register_integration",
-                    "line": 84,
+                    "line": 85,
                     "visibility": "public"
                 },
                 {
                     "method": "rotate_integration_token",
-                    "line": 110,
+                    "line": 111,
                     "visibility": "public"
                 },
                 {
                     "method": "reveal_integration_token",
-                    "line": 126,
+                    "line": 127,
                     "visibility": "public"
                 },
                 {
                     "method": "disable_integration",
-                    "line": 140,
+                    "line": 141,
                     "visibility": "public"
                 },
                 {
                     "method": "retry_reviewed_event",
-                    "line": 154,
+                    "line": 155,
                     "visibility": "public"
                 },
                 {
                     "method": "get_invoice_data",
-                    "line": 216,
+                    "line": 217,
                     "visibility": "public"
                 },
                 {
                     "method": "charges",
-                    "line": 228,
+                    "line": 229,
                     "visibility": "public"
                 },
                 {
                     "method": "customers",
-                    "line": 243,
+                    "line": 244,
                     "visibility": "public"
                 },
                 {
                     "method": "health",
-                    "line": 256,
+                    "line": 257,
                     "visibility": "public"
                 },
                 {
                     "method": "merge",
-                    "line": 264,
+                    "line": 265,
                     "visibility": "public"
                 },
                 {
                     "method": "services",
-                    "line": 271,
+                    "line": 272,
                     "visibility": "public"
                 },
                 {
                     "method": "setup_webhook",
-                    "line": 277,
-                    "visibility": "public"
-                },
-                {
-                    "method": "set_webhook",
                     "line": 278,
                     "visibility": "public"
                 },
                 {
-                    "method": "set_webhook_invoice",
+                    "method": "set_webhook",
                     "line": 279,
                     "visibility": "public"
                 },
                 {
-                    "method": "set_webhook_transfer",
+                    "method": "set_webhook_invoice",
                     "line": 280,
                     "visibility": "public"
                 },
                 {
+                    "method": "set_webhook_transfer",
+                    "line": 281,
+                    "visibility": "public"
+                },
+                {
                     "method": "retorna_cobranca",
-                    "line": 282,
+                    "line": 283,
                     "visibility": "public"
                 },
                 {
                     "method": "retorna_cobrancas",
-                    "line": 289,
+                    "line": 290,
                     "visibility": "public"
                 }
             ],
@@ -16767,7 +16768,7 @@
         },
         {
             "path": "modules/asaas/controllers/Payment_origins.php",
-            "source_sha256": "0faeb8f1e1dcc9e4015ec2aaeaf38313f615c6176a0f0d439ba821ba52ad948b",
+            "source_sha256": "8ce97d8174e67e261de1d9c4609590ae689cff09222761b3ec512a37f858bf39",
             "module": "asaas",
             "base_class": "AdminController",
             "surface": "admin",
@@ -16784,7 +16785,7 @@
                 },
                 {
                     "method": "reconcile",
-                    "line": 36,
+                    "line": 38,
                     "visibility": "public"
                 }
             ],
@@ -28257,7 +28258,7 @@
         {
             "name": "emailtemplates",
             "state": "not_verified",
-            "reference_count": 59
+            "reference_count": 60
         },
         {
             "name": "estimate_request_forms",
@@ -29432,7 +29433,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 84
+            "reference_count": 86
         },
         {
             "name": "mrp_manufacturing_orders",
@@ -29487,7 +29488,7 @@
         {
             "name": "options",
             "state": "not_verified",
-            "reference_count": 110
+            "reference_count": 111
         },
         {
             "name": "order_items",

@@ -1,6 +1,12 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php init_head(); ?>
-<div id="wrapper"><div class="content"><div class="row"><div class="col-md-12">
+<?php $embedded_panel = !empty($embedded_panel); if (!$embedded_panel) { init_head(); } ?>
+<div data-asaas-operation-content>
+<?php if ($embedded_panel) { foreach (['success', 'warning', 'danger', 'info'] as $alertType) {
+    $panelAlert = get_instance()->session->flashdata('message-' . $alertType);
+    if (is_string($panelAlert) && $panelAlert !== '') { ?>
+<div role="status" class="alert alert-<?= html_escape($alertType); ?>"><?= html_escape($panelAlert); ?></div>
+<?php } } } ?>
+<div<?= $embedded_panel ? '' : ' id="wrapper"'; ?>><div class="content"><div class="row"><div class="col-md-12">
 <div class="panel_s"><div class="panel-body">
 <h4><?php echo html_escape($title); ?></h4>
 <p>A origem identifica a conta e o ambiente usados na emissão. Alterar as configurações atuais não altera cobranças anteriores.</p>
@@ -35,5 +41,6 @@
 <?php echo form_close(); ?>
 <?php } ?>
 </div></div></div></div></div></div>
-<?php init_tail(); ?>
-</body></html>
+</div>
+<?php if (!$embedded_panel) { init_tail(); } ?>
+<?php if (!$embedded_panel) { ?></body></html><?php } ?>

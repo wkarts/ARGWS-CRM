@@ -210,7 +210,23 @@ class App
             AdminDatabaseUpgrade::recordSuccess($this->ci->session, (int) get_staff_user_id(), (string) $this->get_current_db_version());
             update_option('last_updated_date', time());
             if (is_staff_logged_in()) {
-                redirect(admin_url('company_context'), 'location', 303);
+                // The request may have entered before migrations made company scope
+                // available. Re-resolve from persisted ACLs, never reuse that stale scope
+                // or a submitted return URL. Only the primary has a native dashboard.
+                if (!class_exists('CompanyContext', false)) {
+                    require_once APPPATH . 'services/CompanyContext.php';
+                }
+                $destination = 'company_context';
+                try {
+                    $context = new CompanyContext($this->ci->db, db_prefix(), $this->ci->session, get_staff_user_id());
+                    if ($context->resolve(false, true) !== null && $context->isPrimary()) {
+                        $destination = '';
+                    }
+                } catch (DomainException $error) {
+                    // Revoked/malformed selections need explicit recovery, not an
+                    // automatic switch to another company after a database upgrade.
+                }
+                redirect(admin_url($destination), 'location', 303);
             } else {
                 redirect(admin_url('authentication'));
             }

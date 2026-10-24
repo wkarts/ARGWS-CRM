@@ -73,3 +73,23 @@ test('real overflow gate covers each tab and preserves viewport assertion and ma
   assert.match(runner, /mask: \[page\.locator/);
   assert.ok(runner.indexOf('layout = await page.evaluate') > runner.indexOf('for (const section of sections)'));
 });
+test('dynamic scroll initializes once after native ready and regression uses real native code',()=>{
+ const moduleSource=fs.readFileSync('modules/asaas/assets/js/settings-tabs.js','utf8');
+ assert.match(moduleSource,/wrapper\.className = 'panel-full-width-tabs mtop15 mbot15'/,'dynamic wrapper cannot be double-scanned before its own ready callback');
+ assert.match(moduleSource,/root\.jQuery\(function \(\) \{[\s\S]*?wrapper\.classList\.add\('horizontal-scrollable-tabs'\);[\s\S]*?root\.jQuery\(wrapper\)\.horizontalTabs\(\)/);
+ const fixtureSource=fs.readFileSync('tests/asaas_native_scroll.browser.cjs','utf8');
+ for(const contract of ['assets/js/main.js','native-before-insertion','native-ready-after-insertion','gateway initially hidden','unique native','desktop right arrow hidden','scrollLeft>0','scrollLeft===0','new FormData(form)']) assert.ok(fixtureSource.includes(contract),contract);
+ assert.doesNotMatch(fixtureSource,/force:\s*true|scrollLeft\s*=(?!=)|\.fn\.horizontalTabs\s*=/,'native scrolling cannot be mocked or forced');
+ const realSource=fs.readFileSync('tests/companies/asaas_settings_real_browser.cjs','utf8');
+ for(const phase of ['click real mobile right arrow','await real mobile right scroll','click real mobile left arrow','await real mobile left scroll','390-arrow-failure-masked.png']) assert.ok(realSource.includes(phase));
+ const workflow=fs.readFileSync('.github/workflows/deployment-integrity.yml','utf8');
+ const focused=workflow.indexOf('node tests/asaas_native_scroll.browser.cjs'),real=workflow.indexOf('bash tests/docker_provision_smoke.sh');
+ assert.ok(focused>=0&&real>focused,'native focused regression precedes long provision/BB flow');
+});
+test('native padding overflow regression preserves spacing and real click coverage',()=>{
+ const moduleSource=fs.readFileSync('modules/asaas/assets/js/settings-tabs.js','utf8');
+ for(const contract of ['nav.firstElementChild.style.paddingLeft = navStyle.paddingLeft','nav.lastElementChild.style.paddingRight = navStyle.paddingRight',"nav.style.paddingLeft = '0px'","nav.style.paddingRight = '0px'"]) assert.ok(moduleSource.includes(contract),contract);
+ const fixtureSource=fs.readFileSync('tests/asaas_native_scroll.browser.cjs','utf8');
+ for(const contract of ['column:358,font:16','column:280,font:16','column:358,font:18','real threshold: item widths alone fit','real threshold: native padding creates overflow','native total spacing is preserved','link hit area is unchanged','arrows visible at real overflow',"['authentication','general']"]) assert.ok(fixtureSource.includes(contract),contract);
+ assert.doesNotMatch(moduleSource,/\.scroller.*(?:\.show\(|style\.display)/,'Asaas cannot override native arrow visibility');
+});

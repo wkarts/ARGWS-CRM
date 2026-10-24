@@ -1,6 +1,12 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php init_head(); ?>
-<div id="wrapper"><div class="content"><div class="panel_s"><div class="panel-body">
+<?php $embedded_panel = !empty($embedded_panel); if (!$embedded_panel) { init_head(); } ?>
+<div data-asaas-operation-content>
+<?php if ($embedded_panel) { foreach (['success', 'warning', 'danger', 'info'] as $alertType) {
+    $panelAlert = get_instance()->session->flashdata('message-' . $alertType);
+    if (is_string($panelAlert) && $panelAlert !== '') { ?>
+<div role="status" class="alert alert-<?= html_escape($alertType); ?>"><?= html_escape($panelAlert); ?></div>
+<?php } } } ?>
+<div<?= $embedded_panel ? '' : ' id="wrapper"'; ?>><div class="content"><div class="panel_s"><div class="panel-body">
 <h3>Webhooks de pagamento Asaas</h3>
 <p>Cada endereço pertence a uma conta e ambiente verificados. O token é exclusivo do webhook, diferente da chave da API, e os novos valores são guardados cifrados para recuperação por administradores autorizados.</p>
 <div class="alert alert-info">Esta tela configura o recebedor local. A confirmação de conta não comprova que o webhook remoto está cadastrado. Emitentes adicionais permanecem indisponíveis até o isolamento operacional completo.</div>
@@ -105,10 +111,11 @@
 <button type="submit" class="btn btn-primary">Verificar conta e GERAR token</button></fieldset><?= form_close(); ?>
 <p class="text-muted mtop15">O endpoint legado continua separado e não comprova o vínculo por conta. Não configure eventos financeiros no módulo genérico de webhooks.</p>
 <a class="btn btn-default" href="<?= html_escape(admin_url('asaas/payment_origins')); ?>">Origem e pendências</a>
-<a class="btn btn-default" href="<?= html_escape(admin_url('settings?group=online_payment_modes')); ?>">Configurações de pagamento</a>
+<a class="btn btn-default" href="<?= html_escape(admin_url('settings?group=payment_gateways&active_tab=online_payments_asaas_tab')); ?>">Configurações de pagamento</a>
 </div></div></div></div>
-<?php init_tail(); ?>
-<script>
+</div>
+<?php if (!$embedded_panel) { init_tail(); } ?>
+<?php if (!$embedded_panel) { ?><script>
 document.querySelectorAll('.js-copy-webhook-url').forEach(function (button) {
   button.addEventListener('click', function () {
     var input = document.getElementById(button.getAttribute('data-target'));
@@ -132,4 +139,4 @@ window.addEventListener('pagehide', function () {
   var input = document.getElementById('generated-webhook-token');
   if (input) { input.value = ''; input.type = 'password'; }
 });
-</script>
+</script><?php } ?>

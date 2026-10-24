@@ -133,7 +133,12 @@ async function captureRealScreens(page, routes) {
       await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('#submit_btn').click()]);
       assert(!page.url().includes('/essential_modules'), 'same native POST finishes company core');
       assert.notEqual(sql('SELECT version FROM tblmigrations LIMIT 1'), before, 'real old schema migrated');
-      assert.equal(new URL(page.url()).pathname, '/admin/company_context', 'native upgrade finishes in the existing isolated company selector');
+      // Legacy access migration preserves the actor's principal membership/default.
+      // That authorizes its dashboard, NOT installation-master/company-creation rights.
+      assert.equal(sql("SELECT COUNT(*) FROM tblstaff s JOIN tblissuers_staff_defaults d ON d.staff_id=s.staffid JOIN tblissuers_installation_identity i ON i.id=1 AND i.primary_issuer_id=d.issuer_id JOIN tblissuers_registry r ON r.id=d.issuer_id AND r.active=1 JOIN tblissuers_staff m ON m.issuer_id=d.issuer_id AND m.staff_id=s.staffid AND m.can_view=1 WHERE s.email='admin-ci@example.invalid' AND s.active=1"), '1', 'legacy upgrade preserves a valid principal default and membership for this actor');
+      const upgradedPrimary = sql('SELECT primary_issuer_id FROM tblissuers_installation_identity WHERE id=1');
+      assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), '/admin', 'persisted authorized principal context returns directly to CRM even without master designation');
+      assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), upgradedPrimary, 'dashboard actually retains the authorized principal context');
       await page.getByText('O CRM foi atualizado com sucesso.', { exact: true }).waitFor({ state: 'visible' });
       await page.goto(url + '/admin');
       await shell(page);
@@ -153,7 +158,21 @@ async function captureRealScreens(page, routes) {
       await page.goto(url + '/admin/modules');
       const row = page.locator('tr').filter({ has: page.locator('td strong').filter({ hasText: /^Emitentes$|^Empresas(?: emitentes)?$/ }) });
       assert.equal(await row.count(), 0, 'company core is absent from the module catalog');
+      const bbRow = page.locator('tr').filter({has: page.locator('td strong').filter({hasText: /^Banco do Brasil - Cobrança e CNAB 240\/400$/})});
+      assert.equal(await bbRow.count(), 1, 'Banco do Brasil is visible in the actual native catalog');
+      assert.equal(await bbRow.locator('form[action*="modules/activate/banco_brasil"], form[action*="modules/deactivate/banco_brasil"]').count(), 1, 'BB exposes one native availability control without clicking it');
+      const idealRow = page.locator('tr').filter({has: page.locator('td strong').filter({hasText: /^iDEAL$/})});
+      assert.equal(await idealRow.count(), 1, 'iDEAL remains visible in the actual native catalog');
+      const moduleState = () => sql('SELECT CONCAT(module_name,CHAR(58),installed_version,CHAR(58),active) FROM tblmodules ORDER BY module_name');
+      const beforeCatalogEvidence = moduleState();
+      await captureRealScreens(page, [['module-catalog',url + '/admin/modules'], ['module-maintenance',url + '/admin/modules/maintenance']]);
+      assert.equal(moduleState(), beforeCatalogEvidence, 'read-only catalog evidence never activates modules or updates version tracking');
       assert.equal((await context.request.get(url + '/admin/essential_modules')).status(), 404, 'old wizard route removed');
+      const recoveryIdentity = sql("SELECT CONCAT(master_staff_id,':',primary_issuer_id,':',source) FROM tblissuers_installation_identity WHERE id=1");
+      const recoveryPrimary = sql('SELECT primary_issuer_id FROM tblissuers_installation_identity WHERE id=1');
+      assert.equal(recoveryIdentity.split(':')[0], sql("SELECT staffid FROM tblstaff WHERE email='admin-ci@example.invalid' AND admin=1 AND active=1"), 'fresh recovery actor is the persisted installation master');
+      assert.match(recoveryPrimary, /^[1-9]\d*$/);
+      assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), recoveryPrimary, 'fresh recovery starts in the authorized principal context');
       // Synthetic isolated schema incompatibility. The original table and all
       // its rows remain intact under a temporary name, restored in finally.
       sql('RENAME TABLE tblissuers_resource_permissions TO tblissuers_resource_permissions_smoke_backup');
@@ -199,7 +218,9 @@ async function captureRealScreens(page, routes) {
         const successResponse = await successPost;
         assert.equal(successResponse.status(), 303, 'native successful POST redirects with See Other');
         assert.equal(successResponse.headers().refresh, undefined, 'native success does not return an empty Refresh document');
-        assert.equal(new URL(page.url()).pathname, '/admin/company_context', 'native success returns to safe isolated company selection');
+        assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), '/admin', 'valid principal context returns to the native CRM dashboard');
+        assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), recoveryPrimary, 'successful repair preserves the principal context');
+        assert.equal(sql("SELECT CONCAT(master_staff_id,':',primary_issuer_id,':',source) FROM tblissuers_installation_identity WHERE id=1"), recoveryIdentity, 'repair never changes persisted master or principal identity');
         assert((await page.content()).includes('atualizado com sucesso'), 'native success alert is delivered');
         await page.getByText('O CRM foi atualizado com sucesso.', { exact: true }).waitFor({ state: 'visible' });
         assert.equal(sql('SELECT COUNT(*) FROM tblissuers_lock WHERE id=1'), '1');

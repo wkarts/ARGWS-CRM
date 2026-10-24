@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__DIR__).'/support/StrictViewFixture.php';
 require_once __DIR__.'/asaas_language_fixture.php';
 /** Real isolated HTML view and exact public bootstrap selection; synthetic I/O only. */
 require __DIR__.'/asaas_positive.php';
@@ -22,9 +23,9 @@ if(!class_exists('CompanyRequestScope',false)){
 }
 function base_url($path){return 'https://synthetic.invalid/'.$path;}
 $harness=new class {
-    public object $config;public object $security;
-    public function __construct(){$this->config=new class {public function item($name){return $name==='csrf_protection';}};$this->security=new class {public function get_csrf_token_name(){return 'synthetic_csrf';}public function get_csrf_hash(){return 'synthetic-csrf-hash';}};}
-    public function render(array $data):string{extract($data);ob_start();include APPPATH.'views/admin/companies/asaas.php';return ob_get_clean();}
+    public object $config;public object $security;public object $db;public object $router;
+    public function __construct(){$this->db=$GLOBALS['CI']->db;$this->router=new class{public function fetch_class():string{return 'company_asaas';}};$this->config=new class {public function item($name){return $name==='csrf_protection';}};$this->security=new class {public function get_csrf_token_name(){return 'synthetic_csrf';}public function get_csrf_hash(){return 'synthetic-csrf-hash';}};}
+    public function render(array $data):string{return strictFixtureRender(function()use($data):void{extract($data);include APPPATH.'views/admin/companies/asaas.php';});}
 };
 require_once APPPATH.'services/CompanyUiTranslation.php';
 $data=$asaas->overview($b,7)+['translate'=>CompanyUiTranslation::translator('portuguese_br'),'error'=>null,'saved'=>null,'one_time'=>null,'invoice'=>null,'can_configure'=>true,'can_settle'=>true,'can_fee'=>true,'can_issue'=>true,'context_token'=>'synthetic-context-token','action_url'=>'https://synthetic.invalid/admin/company_asaas','callback_urls'=>[],'can_webhook'=>true,'webhook_csrf'=>str_repeat('c',64)];

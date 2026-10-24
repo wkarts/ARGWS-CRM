@@ -8,15 +8,17 @@ permissions:
 jobs:
   native-ui:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+      options: --shm-size=1g
     steps:
       - uses: actions/checkout@v5
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.1'
-          extensions: pdo_sqlite, mbstring, dom
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - name: Verificar ferramentas incorporadas
+        run: |
+          php -r 'foreach (["pdo_sqlite", "mbstring", "dom"] as $extension) { if (!extension_loaded($extension)) { throw new RuntimeException("Missing extension: " . $extension); } }'
+          php --version
+          node --version
+          node -e 'console.log("Playwright " + require("playwright/package.json").version); console.log("Chromium executable: " + require("playwright").chromium.executablePath())'
       - name: Validar rota ativa com o loader nativo real
         run: php tests/support/CompanyShellRouteFixture.php
       - name: Validar inventário operacional e mostrar diferenças
@@ -28,23 +30,24 @@ jobs:
           find application/views/admin/companies application/views/admin/includes application/views/admin/settings application/views/admin/issuers -name '*.php' -print0 | xargs -0 -n1 php -l
           php -l application/controllers/admin/Company_onboarding.php
           php -l application/controllers/admin/Issuers.php
+          python3 tests/company_ui_surface_inventory.py
           node --check assets/js/company-workspace.js
           node --check assets/js/company-registry.js
           node --check assets/js/company-shell.js
           node --check assets/js/company-onboarding-modal.js
           node --test tests/company_settings_native.test.cjs tests/company_workspace_driver.test.cjs tests/company_selector_driver.test.cjs tests/native_header_overflow.test.cjs tests/native_sidebar_toggle.test.cjs
           php tests/company_settings_native.php
+          php tests/company_shell_presentation.php
+          node --test tests/company_shell_controls.test.cjs
           php tests/company_settings_certificate_link.php
-      - name: Navegador isolado
-        run: |
-          npm install --no-save --no-package-lock playwright@1.55.1
-          npx playwright install --with-deps chromium
       - name: Fluxos desktop/mobile, grid e modal
         env:
           SCREENSHOT_DIR: artifacts/company-native-ui
+          COMPANY_SHELL_SCREENSHOT_DIR: artifacts/company-native-ui/fidelity
         run: |
           mkdir -p artifacts/company-native-ui
           node tests/company_shell_browser.cjs
+          node tests/company_shell_fidelity.browser.cjs
           node tests/company_workspace_browser.cjs
           for attempt in 1 2 3; do node tests/company_registry_modal_browser.cjs; done
           node tests/company_settings_native_browser.cjs

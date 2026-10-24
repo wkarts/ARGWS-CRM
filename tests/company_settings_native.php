@@ -7,6 +7,16 @@ $renderData['company_identity']['legal_name'] = 'Empresa sintética';
 $renderData['values']['smtp_host'] = 'smtp.example.invalid';
 $renderData['can_edit'] = true;
 $html = $viewHarness->render($renderData);
+$renderLevel = ob_get_level();
+$incompleteHarness = clone $viewHarness;
+unset($incompleteHarness->router);
+try { $incompleteHarness->render($renderData); throw new RuntimeException('Missing router was not rejected'); }
+catch (ErrorException $error) { essentialCheck(str_contains($error->getMessage(), 'router'), 'missing renderer dependency fails before HTML'); }
+essentialCheck(ob_get_level() === $renderLevel, 'failed renderer restores output buffer boundary');
+try { strictFixtureRender(static function (): void { echo 'must not leak'; throw new Error('synthetic-render-fatal'); }); }
+catch (Error $error) { essentialCheck($error->getMessage() === 'synthetic-render-fatal', 'fatal renderer error remains fatal'); }
+essentialCheck(ob_get_level() === $renderLevel, 'fatal renderer restores output buffer boundary');
+
 essentialCheck(str_contains($html, 'company-native-settings'), 'native Settings composition is rendered');
 essentialCheck(str_contains($html, 'panel-footer text-right'), 'save action is in native panel footer');
 essentialCheck(!str_contains($html, 'class="company-settings-nav"'), 'no parallel horizontal settings navigation');
