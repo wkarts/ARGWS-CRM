@@ -9,6 +9,7 @@ require __DIR__.'/companies/invoices.php';
 require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/ModuleRelease.php';
 require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/ModuleStore.php';
 if(!function_exists('read_file')){function read_file($path){return file_get_contents($path);}}
+if(!function_exists('register_payment_gateway')){function register_payment_gateway(...$args):void{}}
 $nativeBbStart=$GLOBALS['essentialChecks'];$ci=get_instance();$modules=$ci->app_modules;
 $headers=$modules->get_headers(APP_MODULES_PATH.'banco_brasil/banco_brasil.php');$target=$headers['version']??'';$targetCore=$headers['requires_at_least']??'';
 essentialCheck(preg_match('/^[0-9]\.[0-9]\.[0-9]$/D',$target)===1&&version_compare($target,'1.2.1','>='),'current real module header is a supported native target');
