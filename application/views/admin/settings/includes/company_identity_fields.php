@@ -28,7 +28,7 @@ foreach($companyIdentityLabels as $name=>$label){
     ];
     $inputName='settings['.$name.']';
     $inputId='company-setting-'.preg_replace('/[^a-z0-9_-]+/i','-',(string)$name);
-    $inputValue=function_exists('set_value')?set_value($inputName,$companyIdentityOption($name),false):$companyIdentityOption($name);
+    $inputValue=$companyIdentityOption($name);
     $safe=static fn($value)=>htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
     echo '<div class="form-group" app-field-wrapper="'.$safe($inputName).'">';
     echo '<label for="'.$safe($inputId).'" class="control-label">'.$safe($fallbackLabels[$label]??$label).'</label>';

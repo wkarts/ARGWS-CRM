@@ -5531,7 +5531,7 @@
       "evidence": ""
     },
     "application/views/admin/settings/includes/company_identity_fields.php": {
-      "sha256": "40dc7e4b669e53418e0ae5024e9ebcca3473da1307d5dc107e7edc1a75e6da4c",
+      "sha256": "043e90179b723f4b5c5b35b1e5b41ce8ad1784ab3bcf507433d152dc3b605c87",
       "categories": [
         "documents_numbering"
       ],
