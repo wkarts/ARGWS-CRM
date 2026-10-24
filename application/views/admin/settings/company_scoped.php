@@ -100,8 +100,9 @@ ob_start();
                         ? (string) _l('settings_sales_company_info_note')
                         : 'Esta informação será exibida nas faturas, orçamentos, pagamentos e outros documentos em PDF nos quais as informações da empresa são necessárias.';
                     ?><div class="alert alert-info"><?= $escape($companyIdentityInfo); ?></div><?php
+                    $companyIdentityNative = true;
                     require APPPATH.'views/admin/settings/includes/company_identity_fields.php';
-                    unset($companyIdentityOption);
+                    unset($companyIdentityOption, $companyIdentityNative);
                     ?><p class="text-muted">Campos personalizados globais e o formato livre de apresentação ainda não têm configuração isolada por empresa. Nenhum valor de outra empresa é carregado ou alterado aqui.</p><?php
                 }else{ ?>
                 <div class="company-settings-grid">

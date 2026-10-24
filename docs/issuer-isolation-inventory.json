@@ -5506,7 +5506,7 @@
       "evidence": ""
     },
     "application/views/admin/settings/company_scoped.php": {
-      "sha256": "c7eef81c91b41b82de953256ebbea510de70c1d4cf14898171694ec5c3a05bbd",
+      "sha256": "8024db2f5cd597a8591c3ce7bc2b0993fb6119f20935adb36a091823e8505c56",
       "categories": [
         "documents_numbering"
       ],
@@ -5531,7 +5531,7 @@
       "evidence": ""
     },
     "application/views/admin/settings/includes/company_identity_fields.php": {
-      "sha256": "c242371217a4949e0cbf87c7a13cbac65692325a6f09ae3fb95886ef9ab5b622",
+      "sha256": "40dc7e4b669e53418e0ae5024e9ebcca3473da1307d5dc107e7edc1a75e6da4c",
       "categories": [
         "documents_numbering"
       ],

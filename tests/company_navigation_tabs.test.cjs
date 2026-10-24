@@ -35,7 +35,10 @@ test('company settings uses one native field component with explicit scoped adap
  assert.ok(native.includes("require __DIR__.'/company_identity_fields.php'"));
  assert.ok(scoped.includes("require APPPATH.'views/admin/settings/includes/company_identity_fields.php'"));
  assert.ok(scoped.includes('array_key_exists($name,$values)'));
+ assert.ok(scoped.includes('$companyIdentityNative = true;'));
  assert.ok(fields.includes("echo render_input('settings['.$name.']',$label,$companyIdentityOption($name))"));
+ assert.ok(fields.includes('empty($companyIdentityNative)'));
+ assert.ok(fields.includes("$inputId='company-setting-"));
  assert.doesNotMatch(fields,/get_option\(|render_custom_fields\(|hooks\(/,'shared component has no implicit global data access');
  assert.ok(native.includes('render_custom_fields'),'legacy principal feature retained');
 });

@@ -13,7 +13,7 @@ $companyIdentityLabels=[
  'company_vat'=>'company_vat_number',
 ];
 foreach($companyIdentityLabels as $name=>$label){
-    if (function_exists('_l') && function_exists('render_input')) {
+    if (empty($companyIdentityNative) && function_exists('_l') && function_exists('render_input')) {
         echo render_input('settings['.$name.']',$label,$companyIdentityOption($name));
         continue;
     }
@@ -27,7 +27,7 @@ foreach($companyIdentityLabels as $name=>$label){
         'settings_sales_postal_code'=>'CEP','settings_sales_phonenumber'=>'Telefone',
     ];
     $inputName='settings['.$name.']';
-    $inputId='company-settings-'.preg_replace('/[^a-z0-9_-]+/i','-',(string)$name);
+    $inputId='company-setting-'.preg_replace('/[^a-z0-9_-]+/i','-',(string)$name);
     $inputValue=function_exists('set_value')?set_value($inputName,$companyIdentityOption($name),false):$companyIdentityOption($name);
     $safe=static fn($value)=>htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
     echo '<div class="form-group" app-field-wrapper="'.$safe($inputName).'">';
