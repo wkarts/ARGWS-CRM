@@ -59,8 +59,11 @@ $connection=$store->createConnection($a,7,['id'=>$a,'tax_id'=>'12345678000195','
 essentialCheck(!$import['duplicate']&&$import['events']===1,'historical fixture contains a real imported parent400 and provenance');$oldRows=$snapshotRows();$schema=$snapshotSchema();$routes=[];
 foreach($baseline===null?[]:[$baseline]as$from){
  if(version_compare($from,$target,'>='))continue;$routes[]=$from.'→'.$target;
- $db->query("UPDATE {$p}modules SET installed_version=? WHERE module_name='banco_brasil'",[$from]);$before=count($db->queries);$db->failVersion=$target;$result=(new App_module_migration('banco_brasil'))->to_latest();$db->failVersion=null;
- essentialCheck($result===false&&$marker()['installed_version']===$previous,$from.'→'.$target.' rejects failed final marker without inventing advancement');$noDdl($before,$from.' failed marker');
+ $db->query("UPDATE {$p}modules SET installed_version=? WHERE module_name='banco_brasil'",[$from]);$before=count($db->queries);$freshHistoricalSchema=!$db->table_exists($p.'bb_checkout_publications')||!$db->table_exists($p.'bb_api_origin_policy');$db->failVersion=$target;$result=(new App_module_migration('banco_brasil'))->to_latest();$db->failVersion=null;
+ essentialCheck($result===false&&$marker()['installed_version']===$previous,$from.'→'.$target.' rejects failed final marker without inventing advancement');
+ $ddl=array_values(array_filter(array_slice($db->queries,$before),static fn($q)=>preg_match('/^\s*(?:CREATE|ALTER|DROP|TRUNCATE|RENAME)\b/i',$q[0])));
+ if($freshHistoricalSchema){$ddlSql=array_map(static fn($q)=>(string)$q[0],$ddl);essentialCheck(count($ddlSql)===2&&count(array_filter($ddlSql,static fn($sql)=>str_contains($sql,$p.'bb_checkout_publications')||str_contains($sql,$p.'bb_api_origin_policy'))===2,$from.' first historical upgrade creates only the new 124/125 tables');}
+ else essentialCheck($ddl===[],$from.' failed marker replay executes no extra DDL');
  // Real SQL ignores only the target marker; native runner must reject false write success.
  $db->query("UPDATE {$p}modules SET installed_version=? WHERE module_name='banco_brasil'",[$from]);$trigger=$p.'resume_bb_target';$db->query("CREATE TRIGGER `$trigger` BEFORE UPDATE ON `{$p}modules` FOR EACH ROW SET NEW.installed_version=IF(NEW.module_name='banco_brasil' AND NEW.installed_version='$target',OLD.installed_version,NEW.installed_version)");$before=count($db->queries);$result=(new App_module_migration('banco_brasil'))->to_latest();$noDdl($before,$from.' ignored marker');$db->query('DROP TRIGGER `'.$trigger.'`');essentialCheck($result===false&&$marker()['installed_version']===$previous,$from.'→'.$target.' persisted readback rejects actual ignored target update');
  foreach([
