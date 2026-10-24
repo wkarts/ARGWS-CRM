@@ -106,6 +106,19 @@ class RegistryShardsTest(unittest.TestCase):
         self.assertIn('CREATE DATABASE issuer_module_audit', audit)
         self.assertIn('php tests/companies/module_version_column_mysql.php', audit)
 
+    def test_module_column_fixture_matches_persistent_production_table(self):
+        source = (ROOT / 'tests/companies/module_version_column_mysql.php').read_text()
+        self.assertNotIn('CREATE TEMPORARY TABLE', source)
+        self.assertNotIn('DROP TEMPORARY TABLE', source)
+        self.assertNotIn('CREATE TABLE IF NOT EXISTS', source)
+        self.assertIn('bin2hex(random_bytes(8))', source)
+        self.assertIn("$metadata['Extra'] === ''", source)
+        self.assertIn('information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?', source)
+        self.assertIn('if ($created) { $db->query("DROP TABLE IF EXISTS', source)
+        self.assertEqual(source.count('$created = false;'), 2)
+        self.assertIn('versionColumnSnapshot($db, $table) === $before', source)
+        self.assertIn('versionColumnMetadata($db, $table) === $wide', source)
+
     def test_pinned_images_match_php_and_smoke_is_mandatory(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
         shards = source.split('  registry-shards:\n')[1].split('  registry:\n')[0]

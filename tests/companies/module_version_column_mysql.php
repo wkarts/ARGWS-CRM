@@ -6,7 +6,7 @@ declare(strict_types=1);
 require __DIR__ . '/legacy_financial_module_fixture.php';
 class CI_Migration { public $db; }
 require APPPATH . 'migrations/472_version_472.php';
-$prefix = 'version472_' . bin2hex(random_bytes(4)) . '_';
+$prefix = 'version472_' . bin2hex(random_bytes(8)) . '_';
 $GLOBALS['moduleReaderPrefix'] = $prefix;
 $db->set_dbprefix($prefix);
 $table = $prefix . 'modules';
@@ -22,7 +22,7 @@ function versionColumnMetadata($db, string $table): array
 {
     return $db->query("SHOW FULL COLUMNS FROM `{$table}` LIKE 'installed_version'")->row_array();
 }
-/** Only metadata from this synthetic temporary table; no row values or connection secrets. */
+/** Only metadata from this synthetic disposable table; no row values or connection secrets. */
 function versionColumnReceipt($db, string $table, string $stage): void
 {
     $metadata = versionColumnMetadata($db, $table);
@@ -35,17 +35,25 @@ function versionColumnSnapshot($db, string $table): array
 {
     return $db->query("SELECT module_name, HEX(installed_version) AS version_bytes, active FROM `{$table}` ORDER BY module_name")->result_array();
 }
+$created = false;
 try {
-    // A temporary table prevents collisions and is discarded even if PHP is interrupted.
-    $db->query("CREATE TEMPORARY TABLE `{$table}` (module_name VARCHAR(55) PRIMARY KEY,
+    // https://bugs.mysql.com/bug.php?id=112275
+    // Match the persistent production table: MySQL bug112275 reports different
+    // Extra metadata for TEMPORARY tables (CI8.0.46 returned the string "NULL").
+    // This random table lives only in the dedicated issuer_*module_audit schema.
+    // finally removes our own table; a killed process is cleaned by CI service teardown.
+    $created = $db->query("CREATE TABLE `{$table}` (module_name VARCHAR(55) PRIMARY KEY,
         installed_version VARCHAR(11) COLLATE utf8mb4_bin NOT NULL DEFAULT '1.0.0' COMMENT 'legacy version label',
-        active TINYINT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        active TINYINT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci") !== false;
+    versionColumnCheck($created, 'synthetic persistent table created');
     foreach ([['gerencianet_gateway', '5.1.4 sdk f', 1], ['banco_brasil', '1.2.3', 0], ['ideal', '1.0.1', 0]] as [$name, $version, $active]) {
         $db->query("INSERT INTO `{$table}` VALUES (?, ?, ?)", [$name, $version, $active]);
     }
     $before = versionColumnSnapshot($db, $table);
     $metadata = versionColumnMetadata($db, $table);
     versionColumnReceipt($db, $table, 'varchar11_not_null_before_up');
+    versionColumnCheck($metadata['Extra'] === '', 'persistent literal-default column has no extra attributes');
+    versionColumnCheck((int) $db->query('SELECT COUNT(*) AS present FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?', [$table])->row()->present === 1, 'fixture is a persistent table like production');
     $migration->up();
     $after = versionColumnMetadata($db, $table);
     versionColumnReceipt($db, $table, 'varchar64_not_null_after_up');
@@ -64,11 +72,13 @@ try {
     versionColumnCheck(versionColumnSnapshot($db, $table) === $snapshot, 'replay preserves real rows');
     $migration->down();
     versionColumnCheck(versionColumnMetadata($db, $table) === $after, 'rollback never narrows or changes metadata');
-    $db->query("DROP TEMPORARY TABLE `{$table}`");
+    versionColumnCheck($db->query("DROP TABLE `{$table}`") !== false, 'owned synthetic table dropped');
+    $created = false;
 
-    $db->query("CREATE TEMPORARY TABLE `{$table}` (module_name VARCHAR(55) PRIMARY KEY,
+    $created = $db->query("CREATE TABLE `{$table}` (module_name VARCHAR(55) PRIMARY KEY,
         installed_version VARCHAR(11) COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT 'nullable legacy', active TINYINT NOT NULL)
-        ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        ENGINE=InnoDB DEFAULT CHARSET=utf8mb4") !== false;
+    versionColumnCheck($created, 'synthetic nullable persistent table created');
     $db->query("INSERT INTO `{$table}` VALUES ('null_marker', NULL, 0)");
     versionColumnReceipt($db, $table, 'varchar11_nullable_before_up');
     $migration->up();
@@ -82,7 +92,7 @@ try {
     versionColumnCheck(versionColumnMetadata($db, $table) === $wide && versionColumnSnapshot($db, $table) === $wideRows, 'pre-existing wider schema and90-byte value remain unchanged');
     echo json_encode(['runtime' => PHP_VERSION, 'engine' => $db->query('SELECT VERSION() AS version')->row()->version,
         'checks' => $checks, 'passed' => $checks, 'acceptance' => 'PASS',
-        'scope' => 'Real migration472 SQL on temporary tables; no production, activation, financial calls or module installers. Native release dispatcher not exercised.'], JSON_PRETTY_PRINT) . "\n";
+        'scope' => 'Real migration472 SQL on persistent disposable tables; no production, activation, financial calls or module installers. Native release dispatcher not exercised.'], JSON_PRETTY_PRINT) . "\n";
 } finally {
-    $db->query("DROP TEMPORARY TABLE IF EXISTS `{$table}`");
+    if ($created) { $db->query("DROP TABLE IF EXISTS `{$table}`"); }
 }
