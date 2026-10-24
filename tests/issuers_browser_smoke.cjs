@@ -216,6 +216,21 @@ async function captureRealScreens(page, routes) {
         const successPost = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === '/admin');
         await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), page.locator('#submit_btn').click()]);
         const successResponse = await successPost;
+        if (successResponse.status() !== 303) {
+          const schemaDiagnostic = {
+            responseStatus: successResponse.status(),
+            responseBody: (await successResponse.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 600),
+            pageBody: (await page.locator('body').innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 600),
+            permissionColumns: sql("SELECT GROUP_CONCAT(CONCAT(COLUMN_NAME,':',COLUMN_TYPE,':',IS_NULLABLE,':',COALESCE(COLLATION_NAME,'NULL')) ORDER BY ORDINAL_POSITION) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_resource_permissions'"),
+            permissionPrimary: sql("SELECT GROUP_CONCAT(CONCAT(SEQ_IN_INDEX,':',COLUMN_NAME) ORDER BY SEQ_IN_INDEX) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_resource_permissions' AND INDEX_NAME='PRIMARY'"),
+            permissionForeignKeys: sql("SELECT GROUP_CONCAT(CONCAT(CONSTRAINT_NAME,':',COLUMN_NAME,'->',REFERENCED_TABLE_NAME,'.',REFERENCED_COLUMN_NAME,':',ORDINAL_POSITION) ORDER BY CONSTRAINT_NAME,ORDINAL_POSITION) FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_resource_permissions' AND REFERENCED_TABLE_SCHEMA=DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL"),
+            identityColumns: sql("SELECT GROUP_CONCAT(CONCAT(COLUMN_NAME,':',COLUMN_TYPE,':',IS_NULLABLE) ORDER BY ORDINAL_POSITION) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_installation_identity'"),
+            identityForeignKeys: sql("SELECT GROUP_CONCAT(CONCAT(CONSTRAINT_NAME,':',COLUMN_NAME,'->',REFERENCED_TABLE_NAME,'.',REFERENCED_COLUMN_NAME,':',ORDINAL_POSITION) ORDER BY CONSTRAINT_NAME,ORDINAL_POSITION) FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_installation_identity' AND REFERENCED_TABLE_SCHEMA=DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL"),
+            auditMetadata: sql("SELECT GROUP_CONCAT(CONCAT(COLUMN_TYPE,':',IS_NULLABLE) ORDER BY ORDINAL_POSITION) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_audit' AND COLUMN_NAME='metadata_json'"),
+            lockRows: sql('SELECT COUNT(*) FROM tblissuers_lock WHERE id=1'),
+          };
+          console.error('Native repair diagnostic: ' + JSON.stringify(schemaDiagnostic));
+        }
         assert.equal(successResponse.status(), 303, 'native successful POST redirects with See Other');
         assert.equal(successResponse.headers().refresh, undefined, 'native success does not return an empty Refresh document');
         assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), '/admin', 'valid principal context returns to the native CRM dashboard');
