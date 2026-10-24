@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH . 'services/EfiVersionAdoption.php';
 
 class App_modules
 {
@@ -376,6 +377,14 @@ class App_modules
      */
     public function upgrade_database($name)
     {
+        if ($name === \app\services\EfiVersionAdoption::MODULE) {
+            $module = $this->get($name);
+            $stored = $this->ci->db->where('module_name', $name)->get(db_prefix() . 'modules')->row();
+            if (($module['headers']['version'] ?? '') === \app\services\EfiVersionAdoption::TARGET
+                && (!$stored || (string) $stored->installed_version !== \app\services\EfiVersionAdoption::TARGET)) {
+                return 'module_migration_explicit_adoption_required';
+            }
+        }
         if ($name === 'issuers') {
             return false; // Retired module history is never executed through the module runner.
         }
@@ -481,12 +490,18 @@ class App_modules
                 // The native runner maps 1.2.3 to 123 and writes back one digit per component.
                 if (!preg_match('/^[0-9]\.[0-9]\.[0-9]$/D', (string) $installed)
                     || !preg_match('/^[0-9]\.[0-9]\.[0-9]$/D', (string) $code)) {
-                    $status = 'invalid_version';
+                    $status = \app\services\EfiVersionAdoption::eligible($name, (string) $installed, (string) $code)
+                        ? 'explicit_adoption' : 'invalid_version';
                 } elseif (version_compare($installed, $code, '=')) {
                     continue;
                 } else {
                     $status = version_compare($installed, $code, '<') ? 'upgrade' : 'downgrade';
                 }
+            }
+            if ($name === \app\services\EfiVersionAdoption::MODULE && $code === \app\services\EfiVersionAdoption::TARGET
+                && (string) $installed !== $code && $status !== 'explicit_adoption') {
+                // No native 514 baseline is proven for this release, even if manually relabelled.
+                $status = 'invalid_version';
             }
             if ($status === 'upgrade') {
                 foreach (self::maintenance_native_steps($name, $installed, $code) as $step) {
@@ -506,7 +521,7 @@ class App_modules
                 'code_version' => $code,
                 'activated' => (int) ($row ? $row->active : ($module['activated'] ?? 0)),
                 'status' => $status,
-                'can_upgrade' => $status === 'upgrade',
+                'can_upgrade' => in_array($status, ['upgrade', 'explicit_adoption'], true),
             ];
         }
         ksort($inventory);

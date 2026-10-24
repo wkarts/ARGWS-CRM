@@ -10,7 +10,7 @@ $manager->replace(20,2,0,$b['pfx'],$b['password']); $bSaved=a1row($db,20);
 $page=$manager->page(10,2);
 a1check($page['status']==='stored'&&$page['metadata']['document_status']==='matched','company A status');
 a1check(!isset($page['pfx_cipher'],$page['password_cipher'])&&!str_contains(json_encode($page),$a['password']),'GET projection contains no encrypted or plaintext secret');
-a1reject(fn()=>$manager->replace(10,2,1,$a['pfx'],'wrong'),'issuer_certificate_parse_failed','wrong password blocks replace');
+a1reject(fn()=>$manager->replace(10,2,1,$a['pfx'],'wrong'),'issuer_certificate_authentication_failed','wrong password or integrity blocks replace');
 a1check(a1row($db,10)===$saved,'parse failure preserves previous record');
 a1reject(fn()=>$manager->replace(10,2,1,$b['pfx'],$b['password']),'issuer_certificate_document_mismatch','mismatch blocks replace');
 a1check(a1row($db,10)===$saved,'mismatch preserves previous record');

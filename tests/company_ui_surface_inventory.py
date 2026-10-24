@@ -2,6 +2,7 @@
 """Static inventory gate only; never renders PHP, reads configuration values or calls APIs."""
 import json
 import re
+import tempfile
 from collections import Counter
 from pathlib import Path
 
@@ -14,8 +15,10 @@ def discover_views(root):
         'application/views/admin/issuers/**/*.php',
         'application/views/admin/includes/company_*.php',
         'application/views/admin/settings/company_scoped.php',
-        'application/views/admin/settings/includes/company.php',
+        'application/views/admin/settings/presentation*.php',
+        'application/views/admin/settings/includes/company*.php',
         'application/views/admin/emails/company_scoped.php',
+        'modules/pige_bridge/views/**/*.php',
     )))
 
 def discover_controllers(root):
@@ -75,6 +78,7 @@ def run():
             assert owner_path.is_file(), f'{path}: owner missing: {owner}'
             owner_source = owner_path.read_text(errors='replace')
             ref = row['path'].removeprefix('application/views/').removesuffix('.php')
+            ref = re.sub(r'^modules/([^/]+)/views/', r'\1/', ref)  # Native HMVC view reference.
             dynamic_settings = row['path'].endswith('settings/includes/company.php') and "$group['view']" in owner_source
             assert ref in owner_source or path.name in owner_source or dynamic_settings, f'{path}: stale owner evidence {owner}'
     for row in data['controllers']:
@@ -84,7 +88,21 @@ def run():
         assert re.findall(r'public\s+function\s+(\w+)\s*\(', source) == row['public_methods'], f"{row['path']}: public route inventory changed"
         assert row['reason'], f"{row['path']}: missing endpoint classification"
         for ref in refs:
-            assert (ROOT / 'application/views' / (ref+'.php')).is_file(), f'{ref}: referenced view missing'
+            view_file = ROOT / 'application/views' / (ref+'.php')
+            if row['path'].startswith('modules/'):
+                module = row['path'].split('/')[1]
+                if ref.startswith(module+'/'):
+                    view_file = ROOT / 'modules' / module / 'views' / (ref[len(module)+1:]+'.php')
+            assert view_file.is_file(), f'{ref}: referenced view missing'
+    # Shared presentation components must be discovered, including newly added ones.
+    with tempfile.TemporaryDirectory() as directory:
+        synthetic = Path(directory)
+        for name in ['presentation_layout.php', 'presentation_future.php']:
+            file = synthetic / 'application/views/admin/settings' / name
+            file.parent.mkdir(parents=True, exist_ok=True)
+            file.write_text('<?php // synthetic discovery fixture')
+        found = {p.name for p in discover_views(synthetic)}
+        assert found == {'presentation_layout.php', 'presentation_future.php'}, 'shared presentation discovery failed open'
     # Regression check: an added secret/settings view cannot evade discovery/approval.
     try:
         assert_coverage({'existing.php', 'new_secret_settings.php'}, ['existing.php'], 'synthetic-new-view')

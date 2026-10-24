@@ -91,8 +91,11 @@ test('o rótulo é LGPD e o item de configurações é somente Plataforma', () =
   assert.match(labels, /\$lang\['gdpr_short'\]\s*=\s*'LGPD'/);
   assert.match(labels, /\$lang\['gdpr'\]\s*=\s*'Lei Geral de Proteção de Dados \(LGPD\)'/);
   const settings = read('application/views/admin/settings/all.php');
-  assert.match(settings, /<span>Plataforma<\/span>/);
+  const presentation = read('application/views/admin/settings/presentation_layout.php');
+  assert.match(settings, /'name'=>'Plataforma'/);
+  assert.match(presentation, /<span><\?= \$settingsEscape\(\$child\['name'\]\); \?><\/span>/);
   assert.doesNotMatch(settings, /Plataforma ARGWS/);
+  assert.doesNotMatch(presentation, /Plataforma ARGWS/);
 });
 
 test('os gatilhos existentes mantêm IDs e mensagens; novos são desativados por padrão', () => {

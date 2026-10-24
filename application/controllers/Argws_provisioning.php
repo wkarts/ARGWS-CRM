@@ -67,18 +67,28 @@ class Argws_provisioning extends CI_Controller
         }
     }
 
-    /** Console authorization only; the staff member still confirms personally inside the CRM. */
+    /** Retired: no hosting challenge or password wizard is issued. */
     public function authorize_company_master($staffId = null)
     {
         if (PHP_SAPI !== 'cli') { show_404(); return; }
-        require_once APPPATH.'services/issuers/IssuerMasterResolution.php';
-        fwrite(STDOUT,"Designação de novo responsável no legado (não comprova o administrador histórico).\nMotivo autorizado, sem credenciais ou dados de clientes (12–500 caracteres): ");
-        $reason = fgets(STDIN,502);
+        fwrite(STDERR, "Assistente de designação retirado. Nenhuma alteração realizada.\n");
+        exit(1);
+    }
+
+    /** Operator-only maintenance; per-installation owner authorization is required outside the app. */
+    public function original_administrator($staffId = null, $mode = 'inspect', $primaryId = null, $confirmationReference = null)
+    {
+        if (PHP_SAPI !== 'cli') { show_404(); return; }
+        require_once APPPATH.'services/issuers/IssuerOriginalAdministrator.php';
         try {
-            $code = (new IssuerMasterResolution($this->db,db_prefix()))->authorizeDesignation($staffId,is_string($reason)?trim($reason):'');
-            fwrite(STDOUT,"Código de uso único, válido por 15 minutos para o colaborador indicado:\n".$code."\nConfirme em Configurações > Empresas > Responsável da instalação. Não registre este código em tickets ou logs.\n");
+            $service = new IssuerOriginalAdministrator($this->db, db_prefix());
+            if ($mode === 'inspect') { $result = $service->inspect($staffId); }
+            elseif ($mode === 'apply' && is_string($confirmationReference)) {
+                $result = $service->bind($staffId, $primaryId, $confirmationReference);
+            } else { throw new DomainException('issuer_original_invalid_mode'); }
+            fwrite(STDOUT, json_encode($result, JSON_THROW_ON_ERROR).PHP_EOL);
         } catch (Throwable $error) {
-            fwrite(STDERR,"Autorização recusada. Confira o ID do administrador legado ativo, as migrations e se a instalação ainda não tem responsável.\n");
+            fwrite(STDERR, "Vínculo não confirmado; confira a identidade autorizada e as pré-condições da instalação.\n");
             exit(1);
         }
     }

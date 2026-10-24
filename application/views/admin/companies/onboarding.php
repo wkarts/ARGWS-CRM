@@ -15,8 +15,8 @@ $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',
 <?php if($step>0&&$step<6){?><p class="text-muted" data-wizard-progress>Etapa <?= $step; ?> de <?= count($labels); ?> · O rascunho é salvo ao continuar.</p><?php } ?>
 <h1 id="wizard-title" tabindex="-1">Nova empresa<?php if($step){ ?> — <?= $esc($labels[$step]); ?><?php } ?></h1>
 <?php if($error){?><p class="alert alert-danger" role="alert"><?= $esc($error); ?></p><?php } ?>
-<nav aria-label="Etapas do cadastro"><ol class="company-onboarding-steps" tabindex="0">
-<?php foreach($labels as $number=>$label){?><li><?php if($number<=min((int)($draft['step']??0),5)&&(int)($draft['step']??0)<6&&$number!==$step){?><a href="<?= $esc($url($base.'?step='.$number)); ?>"><?= $number; ?>. <?= $esc($label); ?></a><?php }else{?><span <?= $number===$step?'aria-current="step"':''; ?>><?= $number; ?>. <?= $esc($label); ?></span><?php } ?></li><?php } ?></ol></nav>
+<nav aria-label="Etapas do cadastro"><ol class="nav nav-tabs company-onboarding-steps" tabindex="0">
+<?php foreach($labels as $number=>$label){?><li class="<?= $number===$step?'active':''; ?>"><?php if($number<=min((int)($draft['step']??0),5)&&(int)($draft['step']??0)<6&&$number!==$step){?><a href="<?= $esc($url($base.'?step='.$number)); ?>"><?= $number; ?>. <?= $esc($label); ?></a><?php }else{?><a role="link" tabindex="-1" <?= $number===$step?'aria-current="step"':'aria-disabled="true"'; ?>><?= $number; ?>. <?= $esc($label); ?></a><?php } ?></li><?php } ?></ol></nav>
 <?php if($step===6){?>
 <p class="alert alert-success" role="status">Empresa criada com as informações, preferências e permissões revisadas. Reenviar a conclusão não cria outra empresa.</p>
 <p>O responsável da instalação já tem acesso a esta empresa e às futuras, sem copiar permissões ou credenciais.</p>

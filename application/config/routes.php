@@ -256,3 +256,14 @@ $route['company_operations_api/hr_articles'] = 'company_operations_api/hr_articl
 $route['company_operations_api/hr_articles/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_articles/$1';
 $route['company_operations_api/hr_documents'] = 'company_operations_api/hr_documents';
 $route['company_operations_api/hr_documents/([1-9][0-9]{0,9})'] = 'company_operations_api/hr_documents/$1';
+
+// Reviewed finite Efí legacy URLs resolve to module code, never installer core copies.
+$route['gateways/gerencia_net/invoice/([1-9][0-9]*)/([A-Za-z0-9_-]+)'] = 'gerencianet_gateway/gerencia_net/invoice/$1/$2';
+$route['gateways/gerencia_net/gerar_cartao_credito/([1-9][0-9]*)/([A-Za-z0-9_-]+)'] = 'gerencianet_gateway/gerencia_net/gerar_cartao_credito/$1/$2';
+$route['gateways/gerencia_net/gerar_pix_por_javascript/([1-9][0-9]*)/([A-Za-z0-9_-]+)'] = 'gerencianet_gateway/gerencia_net/gerar_pix_por_javascript/$1/$2';
+$route['gateways/gerencia_net/callback_check_pix_pago/([A-Za-z0-9]+)/([1-9][0-9]*)/([A-Za-z0-9_-]+)'] = 'gerencianet_gateway/gerencia_net/callback_check_pix_pago/$1/$2/$3';
+$route['gateways/gerencia_net/callback_boleto'] = 'gerencianet_gateway/gerencia_net/callback_boleto';
+$route['gateways/gerencia_net/callback_cartao'] = 'gerencianet_gateway/gerencia_net/callback_cartao';
+$route['gateways/gerencia_net/view_converter_certificado_p12_para_pem'] = 'gerencianet_gateway/gerencia_net/view_converter_certificado_p12_para_pem';
+$route['gateways/gerencia_net/converterCertificado'] = 'gerencianet_gateway/gerencia_net/converterCertificado';
+$route['gateways/gerencia_net/fetch_pixes'] = 'gerencianet_gateway/gerencia_net/fetch_pixes';

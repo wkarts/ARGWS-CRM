@@ -6,6 +6,8 @@ defined('BASEPATH') or exit('No direct script access allowed');
 require_once APPPATH.'services/AsaasLegacyCheckoutPreflight.php';
 $asaasLegacyBootstrap=&get_instance();
 if(!AsaasLegacyCheckoutPreflight::allowsBootstrap($asaasLegacyBootstrap)){show_404();return;}
+require_once APPPATH.'services/EfiLegacyCheckoutPreflight.php';
+if(!EfiLegacyCheckoutPreflight::allowsBootstrap($asaasLegacyBootstrap)){show_404();return;}
 
 // Machine inboxes select only exact server-owned routes, before optional modules or sessions.
 require_once APPPATH.'services/CompanyAsaasCallbackScope.php';
@@ -169,6 +171,10 @@ $gateways = list_files(APPPATH . '/libraries/gateways');
 
 foreach ($gateways as $gateway) {
     $pathinfo = pathinfo($gateway);
+    // The retired installer copied this class into core. Keep the artifact but
+    // never let it shadow the reviewed module library or bypass module deactivation.
+    if (strtolower($pathinfo['filename']) === 'gerencianet_gateway') { continue; }
+
     // Check if file is .php and do not starts with .dot
     // Offen happens Mac os user to have underscore prefixed files while unzipping the zip file.
     if ($pathinfo['extension'] == 'php' && 0 !== strpos($gateway, '.') && $pathinfo['filename'] != 'App_gateway') {

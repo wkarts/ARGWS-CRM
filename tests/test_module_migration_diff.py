@@ -40,6 +40,21 @@ class ModuleMigrationDelta(unittest.TestCase):
     def errors(self, before, after):
         return POLICY.validate_changes(POLICY.MemoryTree(before), POLICY.MemoryTree(after))[0]
 
+    def test_efi_exact_audited_adoption_not_generic_normalization(self):
+        path = "modules/gerencianet_gateway/gerencianet_gateway.php"
+        source = (ROOT / "tests/fixtures/efi/legacy-entrypoint.php.txt").read_text()
+        before = {path: source}
+        after = {path: source.replace("Version: 5.1.4 sdk final", "Version: 5.1.5"),
+                 "modules/gerencianet_gateway/migrations/515_version_515.php": migration(515)}
+        self.assertEqual([], self.errors(before, after))
+        self.assertTrue(self.errors(dict(before, **{"modules/gerencianet_gateway/migrations/514_version_514.php": migration(514)}), dict(after, **{"modules/gerencianet_gateway/migrations/514_version_514.php": migration(514)})))
+        for bad in [source + "\n", source.replace("sdk final", "sdk f"), source.replace("sdk final", "other")]:
+            self.assertTrue(self.errors({path: bad}, after))
+        self.assertTrue(self.errors(before, {path: after[path].replace("5.1.5", "5.1.6"),
+            "modules/gerencianet_gateway/migrations/516_version_516.php": migration(516)}))
+        self.assertTrue(self.errors(before, {path: after[path]}))
+        self.assertTrue(self.errors(before, dict(after, **{"modules/gerencianet_gateway/migrations/514_version_514.php": migration(514)})))
+
     def test_new_101_native_module_passes(self):
         self.assertEqual([], self.errors({}, module()))
 

@@ -68,7 +68,7 @@ final class CompanyInvoices
     private function transaction(callable $operation,array $extraTables=[])
     {
         $tables=['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_clients','issuers_client_links','issuers_audit','staff','clients','invoices','issuers_invoice_documents','issuers_sequences','itemable','item_tax','currencies','options','company_invoice_requests','invoicepaymentrecords','credits'];
-        foreach(['bb_origins','asaas_payment_origins'] as $table)if($this->db->table_exists($this->prefix.$table))$tables[]=$table;
+        foreach(['bb_origins','asaas_payment_origins','efi_company_origins'] as $table)if($this->db->table_exists($this->prefix.$table))$tables[]=$table;
         $tables=array_values(array_unique(array_merge($tables,$extraTables,(new CompanyCurrencyUnits($this->db,$this->prefix))->tables(),(new CompanyFinancialJournal($this->db,$this->prefix))->tables('invoice'),(new CompanyInvoiceBalance($this->db,$this->prefix))->tables())));
         return IssuerTransaction::run($this->db,$this->prefix,$tables,$operation);
     }
@@ -239,7 +239,7 @@ final class CompanyInvoices
             (new CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($row['currency']);
             $documentBefore=$this->documents($issuer,$actor)->get($invoice,$issuer);
             $before=['date'=>$row['date'],'total'=>self::decimal(self::cents($row['total'])),'status'=>(int)$row['status'],'revision'=>$revision];
-            foreach(['bb_origins','asaas_payment_origins'] as $table)if($this->db->table_exists($this->prefix.$table)&&$this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new DomainException('company_invoice_provider_review_required');
+            foreach(['bb_origins','asaas_payment_origins','efi_company_origins'] as $table)if($this->db->table_exists($this->prefix.$table)&&$this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new DomainException('company_invoice_provider_review_required');
             if((new CompanyBankReceiptComponents($this->db,$this->prefix))->forInvoiceInOwned($issuer,$actor,$invoice))throw new DomainException('company_invoice_immutable');
             foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT amount FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice]))throw new DomainException('company_invoice_immutable');
             if($data===null){IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'invoices SET status=5 WHERE id=? AND issuer_id=?',[$invoice,$issuer]);}

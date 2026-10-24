@@ -14,7 +14,7 @@ class Request
     private $config;
     private $certified_path;
 
-    public function __construct(array $options = null)
+    public function __construct(?array $options = null)
     {
         $this->config = Config::options($options);
         $composerData = json_decode(file_get_contents(__DIR__ . '/../../composer.json'), true);
@@ -77,6 +77,8 @@ class Request
 
     public function send($method, $route, $requestOptions)
     {
+        // Do not forward credentials or replay a mutation through HTTP redirects.
+        $requestOptions['allow_redirects'] = false;
         try {
             if (isset($this->config['certificate'])) {
                 $requestOptions['cert'] = $this->verifyCertificate($this->config['certificate']);

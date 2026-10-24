@@ -10,15 +10,24 @@ final class ApiCreditedReceipt implements \CompanyReceiptSource
 {
     private ?array $captured=null;
     private bool $hasAsaas=false;
+    private ?string $originReference=null;
+    private $originGuard=null;
+    private array $guardTables=[];
+    public static function explicit(int $originId,int $operationId,string $originReference,callable $originGuard,array $guardTables=[]):self
+    {
+        if(!preg_match('/^[a-f0-9]{64}$/D',$originReference))throw new \DomainException('bb_api_bridge_reference_invalid');
+        foreach($guardTables as $table)if(!is_string($table)||!preg_match('/^[A-Za-z0-9_]+$/D',$table))throw new \InvalidArgumentException('bb_api_bridge_guard_table_invalid');
+        $source=new self($originId,$operationId);$source->originReference=$originReference;$source->originGuard=$originGuard;$source->guardTables=$guardTables;return $source;
+    }
     public function __construct(private int $originId,private int $operationId)
     {
         \IssuerPolicy::id($originId);\IssuerPolicy::id($operationId);
     }
-    public function tables():array{return array_merge(array_merge(ApiService::receiptTables(),['bb_return_events','bb_event_receipts','bb_api_notifications','bb_api_webhook_receivers']),$this->hasAsaas?['asaas_payment_origins']:[]);}
+    public function tables():array{return array_merge(array_merge(array_merge(ApiService::receiptTables(),$this->guardTables),['bb_return_events','bb_event_receipts','bb_api_notifications','bb_api_webhook_receivers']),$this->hasAsaas?['asaas_payment_origins']:[]);}
     public function assertSchema($db,string $p):void
     {
         require_once __DIR__.'/ApiWebhookSchema.php';ApiWebhookSchema::ensure($db,$p,false);
-        ApiSchema::ensure($db,$p,false);ApiReceiptSchema::ensure($db,$p,false);OriginationSchema::assertValid($db,$p);
+        ApiOriginPolicy::ensure($db,$p,false);ApiSchema::ensure($db,$p,false);ApiReceiptSchema::ensure($db,$p,false);OriginationSchema::assertValid($db,$p);
         require_once __DIR__.'/ReconciliationSchema.php';ReconciliationSchema::ensure($db,$p,false);
         $this->hasAsaas=$db->table_exists($p.'asaas_payment_origins');
     }
@@ -66,22 +75,31 @@ final class ApiCreditedReceipt implements \CompanyReceiptSource
         $old=self::rows($db,"SELECT * FROM {$p}bb_api_receipts WHERE origin_id=? OR canonical_key=? FOR UPDATE",[$this->originId,$key]);
         if(count($old)>1||($old&&((int)$old[0]['origin_id']!==$this->originId||(int)$old[0]['issuer_id']!==$issuer||$old[0]['canonical_key']!==$key||$old[0]['evidence_hash']!==$evidence)))throw new \DomainException('bb_api_credit_receipt_conflict');
         if(!$old){if($operation['updated_at']<gmdate('Y-m-d H:i:s',time()-300)||$operation['updated_at']>gmdate('Y-m-d H:i:s'))throw new \DomainException('bb_api_credit_query_stale');ApiFinancialMutationFence::assertResolvedInOwned($db,$p,$this->originId,$operation,$result);}
-        $this->captured=compact('issuer','actor','origin','key','evidence');
+        $proofHash=hash('sha256',$operation['result_json']);$responseHash=$operation['response_hash'];
+        $this->captured=compact('issuer','actor','origin','key','evidence','proofHash','responseHash');
+        $this->source($db,$p,$issuer,$actor);
         return ['invoice'=>(int)$parent['id'],'key'=>$key,'input'=>['amount'=>Fields::amount($nominal),'date'=>$credit,'reference'=>'BBAPI-'.$key,'note'=>'Crédito integral sem ajustes, confirmado por consulta API vinculada à conta de origem.']];
     }
     private function source($db,string $p,int $issuer,int $actor):array
     {
-        return (new ApiService($db,$p))->receiptOriginInOwnedTransaction($issuer,$actor,$this->originId);
+        return (new ApiService($db,$p))->receiptOriginInOwnedTransaction($issuer,$actor,$this->originId,$this->originReference,$this->originGuard,$this->guardTables);
+    }
+    private function confirmProof($db,string $p,int $issuer,int $actor):void
+    {
+        $this->source($db,$p,$issuer,$actor);$c=$this->captured;
+        $op=self::rows($db,"SELECT * FROM {$p}bb_api_operations WHERE origin_id=? AND operation='query' ORDER BY id DESC LIMIT 1 FOR UPDATE",[$this->originId])[0]??[];
+        if(!$c||(int)($op['id']??0)!==$this->operationId||($op['status']??null)!=='validated'||($op['response_hash']??null)!==$c['responseHash']||!hash_equals($c['proofHash'],hash('sha256',$op['result_json']??'')))throw new \DomainException('bb_api_credit_query_stale');
     }
     public function applied($db,string $p,int $issuer,int $actor,int $payment):void
     {
         $c=$this->captured;if(!$c||$c['issuer']!==$issuer||$c['actor']!==$actor)throw new \DomainException('bb_api_credit_claim_required');
-        $this->source($db,$p,$issuer,$actor);$old=self::rows($db,"SELECT * FROM {$p}bb_api_receipts WHERE origin_id=? FOR UPDATE",[$this->originId])[0]??null;
-        if($old){if((int)$old['payment_id']!==$payment||$old['canonical_key']!==$c['key']||$old['evidence_hash']!==$c['evidence'])throw new \DomainException('bb_api_credit_receipt_conflict');return;}
+        $this->confirmProof($db,$p,$issuer,$actor);$old=self::rows($db,"SELECT * FROM {$p}bb_api_receipts WHERE origin_id=? FOR UPDATE",[$this->originId])[0]??null;
+        if($old){if((int)$old['payment_id']!==$payment||$old['canonical_key']!==$c['key']||$old['evidence_hash']!==$c['evidence'])throw new \DomainException('bb_api_credit_receipt_conflict');$this->confirmProof($db,$p,$issuer,$actor);return;}
         \IssuerStorage::query($db,"INSERT INTO {$p}bb_api_receipts(origin_id,issuer_id,operation_id,canonical_key,payment_id,evidence_hash,created_by,created_at) VALUES(?,?,?,?,?,?,?,?)",[$this->originId,$issuer,$this->operationId,$c['key'],$payment,$c['evidence'],$actor,date('Y-m-d H:i:s')]);
         \IssuerStorage::query($db,"INSERT INTO {$p}bb_audit(issuer_id,connection_id,actor_id,action,resource_type,resource_id,created_at) VALUES(?,?,?,'api_credit_applied','api_origin',?,?)",[$issuer,$c['origin']['connection_id'],$actor,$this->originId,date('Y-m-d H:i:s')]);
         $audit=(int)$db->insert_id();
         $confirmed=self::rows($db,"SELECT payment_id,evidence_hash FROM {$p}bb_api_receipts WHERE origin_id=? AND issuer_id=?",[$this->originId,$issuer])[0]??[];
         if((int)($confirmed['payment_id']??0)!==$payment||($confirmed['evidence_hash']??null)!==$c['evidence']||$audit<1||!self::rows($db,"SELECT id FROM {$p}bb_audit WHERE id=? AND issuer_id=? AND resource_id=?",[$audit,$issuer,$this->originId]))throw new \RuntimeException('issuer_bb_api_credit_unconfirmed');
+        $this->confirmProof($db,$p,$issuer,$actor);
     }
 }

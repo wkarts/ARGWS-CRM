@@ -2,6 +2,8 @@ import contextlib
 import importlib.util
 import io
 import json
+import os
+import textwrap
 import subprocess
 import sys
 import tarfile
@@ -246,9 +248,13 @@ class HistoricalRepairTest(unittest.TestCase):
                 PACKAGE.main()
         self.assertFalse((self.work / 'output').exists())
 
-    def test_workflow_retains_triggers_and_publication_contract(self):
+    def test_workflow_requires_explicit_dispatch_and_retains_publication_contract(self):
         text = (ROOT / '.github/workflows/repair-release-assets.yml').read_text()
-        self.assertIn('  push:', text)
+        self.assertNotIn('  push:', text)
+        self.assertNotIn('default:', text)
+        self.assertNotIn("|| 'v3.4.2'", text)
+        self.assertIn('required: true', text)
+        self.assertIn("if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.release_tag != ''", text)
         self.assertIn('  workflow_dispatch:', text)
         self.assertIn('contents: write', text)
         self.assertIn('--clobber', text)
@@ -260,6 +266,34 @@ class HistoricalRepairTest(unittest.TestCase):
         self.assertIn('--repair-tag', text)
         self.assertNotIn('      - scripts/release_policy.py', text)
         self.assertNotIn('      - scripts/legacy-release-aliases.json', text)
+
+
+class RepairDispatchGuardTest(unittest.TestCase):
+    def test_actual_shell_gate_rejects_implicit_or_wrong_context(self):
+        workflow = (ROOT / '.github/workflows/repair-release-assets.yml').read_text()
+        # Execute the actual production guard before any fetch/gh/API operation.
+        guard = textwrap.dedent(workflow.split('        run: |', 1)[1].split('          git fetch --tags origin', 1)[0])
+        self.assertIn('GITHUB_EVENT_NAME', guard)
+        self.assertIn('GITHUB_REF', guard)
+        self.assertIn('RELEASE_TAG', guard)
+        cases = [
+            ('missing', 'workflow_dispatch', 'refs/heads/main', None, False),
+            ('empty', 'workflow_dispatch', 'refs/heads/main', '', False),
+            ('whitespace', 'workflow_dispatch', 'refs/heads/main', ' ', False),
+            ('wrong ref', 'workflow_dispatch', 'refs/heads/develop', 'v4.7.2', False),
+            ('tag ref', 'workflow_dispatch', 'refs/tags/v4.7.2', 'v4.7.2', False),
+            ('push', 'push', 'refs/heads/main', 'v4.7.2', False),
+            ('invalid tag', 'workflow_dispatch', 'refs/heads/main', 'refs/tags/v4.7.2', False),
+            ('current explicit', 'workflow_dispatch', 'refs/heads/main', 'v4.7.2', True),
+            ('historical explicit', 'workflow_dispatch', 'refs/heads/main', 'v3.4.2', True),
+        ]
+        for name, event, ref, tag, accepted in cases:
+            with self.subTest(name=name):
+                env = {'PATH': os.environ['PATH'], 'GITHUB_EVENT_NAME': event, 'GITHUB_REF': ref}
+                if tag is not None:
+                    env['RELEASE_TAG'] = tag
+                result = subprocess.run(['bash', '-c', guard], env=env, capture_output=True, text=True)
+                self.assertEqual(result.returncode == 0, accepted)
 
 
 if __name__ == '__main__':

@@ -17,7 +17,14 @@
             <td><?php if ($item['can_upgrade']) { ?>
                 <?= form_open(admin_url('modules/upgrade_database/' . rawurlencode($item['system_name']))); ?>
                 <input type="hidden" name="module_migration_csrf" value="<?= html_escape($module_migration_csrf); ?>">
-                <button class="btn btn-warning btn-sm" type="submit">Atualizar banco explicitamente</button>
+                <?php if ($item['status'] === 'explicit_adoption') { ?>
+                    <input type="hidden" name="adoption_plan" value="efi-native-515-v1">
+                    <input type="hidden" name="adoption_source" value="<?= html_escape($item['installed_version']); ?>">
+                    <p>Adoção explícita da versão 5.1.5: preserva o rótulo original no histórico, sem afirmar execução de uma versão 5.1.4. Não ativa o recurso nem homologa pagamentos.</p>
+                    <button class="btn btn-warning btn-sm" type="submit">Confirmar adoção auditada 5.1.5</button>
+                <?php } else { ?>
+                    <button class="btn btn-warning btn-sm" type="submit">Atualizar banco explicitamente</button>
+                <?php } ?>
                 <?= form_close(); ?>
             <?php } else {
                 $reasons = [

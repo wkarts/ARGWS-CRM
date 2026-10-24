@@ -170,6 +170,21 @@ class Mods extends AdminController
             $locked = true;
             $row = $this->db->where('module_name', $name)->get(db_prefix() . 'modules')->row();
             $target = (string) $module['headers']['version'];
+            $adoption = $row && ($name === \app\services\EfiVersionAdoption::MODULE && $target === \app\services\EfiVersionAdoption::TARGET)
+                && (\app\services\EfiVersionAdoption::eligible($name, (string) $row->installed_version, $target)
+                    || $this->input->post('adoption_plan') === \app\services\EfiVersionAdoption::PLAN);
+            if ($adoption) {
+                if ($this->input->post('adoption_plan') !== \app\services\EfiVersionAdoption::PLAN
+                    || !is_string($this->input->post('adoption_source'))) {
+                    throw new RuntimeException('module_migration_adoption_confirmation_required');
+                }
+                \app\services\EfiVersionAdoption::adopt($this->db, db_prefix(), (int) get_staff_user_id(), $target, $this->input->post('adoption_source'));
+                set_alert('success', 'Versão nativa adotada com histórico original preservado. O estado de ativação não foi alterado.');
+            } else {
+            if ($name === \app\services\EfiVersionAdoption::MODULE && $target === \app\services\EfiVersionAdoption::TARGET
+                && (!$row || (string) $row->installed_version !== $target)) {
+                throw new RuntimeException('module_migration_adoption_origin_unrecognized');
+            }
             if (!$row || !preg_match('/^[0-9]\.[0-9]\.[0-9]$/D', (string) $row->installed_version)
                 || !preg_match('/^[0-9]\.[0-9]\.[0-9]$/D', $target)
                 || version_compare($row->installed_version, $target, '>')) {
@@ -194,6 +209,7 @@ class Mods extends AdminController
                 throw new RuntimeException('module_migration_unconfirmed');
             }
             set_alert('success', 'Banco de dados do recurso atualizado e versão confirmada.');
+            }
         } catch (Throwable $error) {
             $reason = preg_match('/^module_migration_[a-z_]+$/D', $error->getMessage()) ? $error->getMessage() : get_class($error);
             log_message('error', 'Module maintenance failed: ' . $name . ' [' . $reason . ']');

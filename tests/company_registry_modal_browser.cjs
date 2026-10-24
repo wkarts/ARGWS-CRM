@@ -21,29 +21,32 @@ class CompanyRequestScope {
 }
 $view=new class {
  public $security;
- public function render($step){
+ public function render($step,$edit=false){
   $this->security=new class {
    public function get_csrf_token_name(){return 'csrf_test_name';}
    public function get_csrf_hash(){return 'next-csrf';}
   };
   $draft=['draft_key'=>'fixture-only','step'=>$step,'revision'=>1,'payload'=>[]];
   $error=null; $company_onboarding_csrf='wizard-fixture-token';
-  ob_start(); require APPPATH.'views/admin/companies/onboarding.php'; return ob_get_clean();
+  $selected=['id'=>41];$identity_values=['legal_name'=>'Existing fixture company','tax_id'=>'12345678000195','profile'=>['invoice_company_city'=>'Fixture city']];$identity_revision=str_repeat('b',64);$issuers_csrf=str_repeat('a',64);$notice=null;
+  ob_start(); require APPPATH.'views/admin/companies/'.($edit?'identity_modal':'onboarding').'.php'; return ob_get_clean();
  }
 };
-echo $view->render((int)$argv[2]);`;
+echo $view->render((int)$argv[2],($argv[3]??'')==='edit');`;
 const renderWizard = step => execFileSync(process.env.PHP_BINARY || 'php', ['-r',renderCode,root,String(step)], {encoding:'utf8'});
 const wizardHtml = renderWizard(1), completedHtml = renderWizard(6);
+const editHtml=execFileSync(process.env.PHP_BINARY||'php',['-r',renderCode,root,'1','edit'],{encoding:'utf8'});
 assert.match(wizardHtml, /data-wizard-progress>Etapa 1 de 6 /, 'progress counts all six stages shown in navigation');
 const nativeAssets = ['assets/css/reset.min.css','assets/plugins/inter/inter.css','assets/plugins/bootstrap/css/bootstrap.min.css','assets/builds/tailwind.css','assets/css/style.min.css','assets/css/company-registry.css'];
-for (const rendered of [wizardHtml, completedHtml]) {
+for (const rendered of [wizardHtml, completedHtml, editHtml]) {
  const assets = Array.from(rendered.matchAll(/<link rel="stylesheet" href="([^"]+)"/g), match=>match[1]);
  assert.deepEqual(assets.slice(0,nativeAssets.length),nativeAssets.map(asset=>'/'+asset),'wizard uses native CSS in native order');
  assert.doesNotMatch(rendered, /assets\/js\/(?:main|app)(?:\.min)?\.js/, 'wizard must not hydrate the global admin shell');
 }
 const nativeLinks = nativeAssets.map(asset=>`<link rel="stylesheet" href="/${asset}">`).join('');
 const rows = Array.from({length:27},(_,i)=>`<tr><td>Empresa ${i+1}</td><td>Documento ${i+1}</td><td>Ativa</td><td>—</td></tr>`).join('');
-const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">${nativeLinks}</head><body class="admin"><button class="btn btn-primary" data-native-reference>Referência nativa</button><div data-company-registry class="company-registry"><button data-new-company>Nova empresa</button><label>Buscar<input id="company-grid-search"></label><select data-page-size><option>10</option><option>25</option></select><table><thead><tr>${['Empresa','Documento','Situação','Contexto'].map((x,i)=>`<th><button data-sort="${i}">${x}</button></th>`).join('')}</tr></thead><tbody>${rows}</tbody></table><p data-company-empty hidden>Vazio</p><p data-company-count></p><button data-page-prev>Anterior</button><button data-page-next>Próxima</button><div class="modal fade" id="company-create-modal" data-open-on-load="0" tabindex="-1" role="dialog" aria-modal="true"><div class="modal-dialog"><div class="modal-content"><button data-dismiss="modal">Fechar</button><iframe name="company-create-frame" src="about:blank"></iframe></div></div></div><form id="company-wizard-open" method="post" target="company-create-frame" action="/wizard" hidden><input name="action" value="show"><input name="_company_context" value="old-tab-token"><input name="csrf_test_name" value="first-csrf"></form></div><script src="/assets/plugins/jquery/jquery.min.js"></script><script src="/assets/plugins/bootstrap/js/bootstrap.min.js"></script><script src="/assets/js/company-registry.js"></script></body></html>`;
+let html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">${nativeLinks}</head><body class="admin"><button class="btn btn-primary" data-native-reference>Referência nativa</button><div data-company-registry class="company-registry"><button data-new-company>Nova empresa</button><label>Buscar<input id="company-grid-search"></label><select data-page-size><option>10</option><option>25</option></select><table><thead><tr>${['Empresa','Documento','Situação','Contexto'].map((x,i)=>`<th><button data-sort="${i}">${x}</button></th>`).join('')}</tr></thead><tbody>${rows}</tbody></table><p data-company-empty hidden>Vazio</p><p data-company-count></p><button data-page-prev>Anterior</button><button data-page-next>Próxima</button><div class="modal fade" id="company-create-modal" data-open-on-load="0" tabindex="-1" role="dialog" aria-modal="true"><div class="modal-dialog"><div class="modal-content"><button data-dismiss="modal">Fechar</button><iframe name="company-create-frame" src="about:blank"></iframe></div></div></div><form id="company-wizard-open" method="post" target="company-create-frame" action="/wizard" hidden><input name="action" value="show"><input name="_company_context" value="old-tab-token"><input name="csrf_test_name" value="first-csrf"></form></div><script src="/assets/plugins/jquery/jquery.min.js"></script><script src="/assets/plugins/bootstrap/js/bootstrap.min.js"></script><script src="/assets/js/company-registry.js"></script></body></html>`;
+html=html.replace('</body>','<a class="btn btn-default" data-edit-company href="/edit-document">Editar empresa existente</a><div class="modal fade" id="company-edit-modal" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-body"><iframe name="company-edit-frame" title="Editar empresa existente" src="about:blank"></iframe></div></div></div></div><script src="/assets/js/company-identity-modal.js"></script></body>');
 // Wait for both independent lifecycles: the new iframe document and Bootstrap's
 // shown event. A visible heading can still belong to the previous document, and
 // Bootstrap focuses the parent modal at the end of its opening transition.
@@ -77,6 +80,7 @@ let posts=[];
 const server=http.createServer((req,res)=>{
  if(req.url==='/'){res.setHeader('Content-Type','text/html; charset=utf-8');res.end(html);return;}
  if(req.url==='/wizard'){let body='';req.on('data',x=>body+=x);req.on('end',()=>{posts.push(Object.fromEntries(new URLSearchParams(body)));res.setHeader('Content-Type','text/html; charset=utf-8');res.end(wizardHtml);});return;}
+ if(req.url==='/edit-document'){res.setHeader('Content-Type','text/html; charset=utf-8');res.end(editHtml);return;}
  if(req.url==='/wizard-completed'){res.setHeader('Content-Type','text/html; charset=utf-8');res.end(completedHtml);return;}
  const file=path.resolve(root,'.'+new URL(req.url,'http://fixture.local').pathname);if(!file.startsWith(root+'/assets/')){res.writeHead(404);res.end();return;}
  fs.readFile(file,(err,data)=>{if(err){res.writeHead(404);res.end();return;}res.setHeader('Content-Type',file.endsWith('.css')?'text/css; charset=utf-8':file.endsWith('.woff2')?'font/woff2':file.endsWith('.woff')?'font/woff':'application/javascript; charset=utf-8');res.end(data);});
@@ -117,7 +121,7 @@ const server=http.createServer((req,res)=>{
   const nativeSkin = await page.locator('[data-native-reference]').evaluate(button=>({font:getComputedStyle(document.body).fontFamily,color:getComputedStyle(document.body).color,background:getComputedStyle(button).backgroundColor,border:getComputedStyle(button).borderColor,radius:getComputedStyle(button).borderRadius}));
   const wizardSkin = await frame.locator('button[type="submit"]').evaluate(button=>({font:getComputedStyle(document.body).fontFamily,color:getComputedStyle(document.body).color,background:getComputedStyle(button).backgroundColor,border:getComputedStyle(button).borderColor,radius:getComputedStyle(button).borderRadius}));
   assert.deepEqual(wizardSkin,nativeSkin,'iframe uses the actual native typography, foreground and primary button skin');
-  assert.equal(await frame.locator('.company-onboarding-steps li').count(),6,'all six steps remain present');
+  assert.equal(await frame.locator('.company-onboarding-steps.nav.nav-tabs li').count(),6,'all six steps remain present');
   assert.match(await frame.locator('[data-wizard-progress]').innerText(), /^Etapa 1 de 6 /, 'visible progress agrees with navigation');
   const compact = await frame.evaluate(() => {
    const steps=document.querySelector('.company-onboarding-steps'), sections=document.querySelector('.company-identity-sections');
@@ -129,16 +133,44 @@ const server=http.createServer((req,res)=>{
   assert.equal(compact.stepsScroll,true,'steps scroll horizontally instead of disappearing');
   assert.equal(compact.stepsKeyboard,0);assert.equal(compact.sectionsKeyboard,0);
   assert.ok(compact.width<=compact.viewport+1,'iframe has no page-wide horizontal overflow');
-  await frame.getByRole('link',{name:'2. Endereço',exact:true}).click();
+  await frame.getByRole('tab',{name:'2. Endereço',exact:true}).click();
   assert.equal(await frame.getByLabel('CEP',{exact:true}).isVisible(),true,'address fields remain reachable');
-  await frame.getByRole('link',{name:'3. Contato',exact:true}).click();
+  await frame.getByRole('tab',{name:'3. Contato',exact:true}).click();
   assert.equal(await frame.getByLabel('Telefone',{exact:true}).isVisible(),true,'contact fields remain reachable');
-  await frame.getByRole('link',{name:'1. Identificação',exact:true}).click();
+  await frame.getByRole('tab',{name:'1. Identificação',exact:true}).click();
   assert.equal(await frame.getByLabel('CPF / CNPJ',{exact:true}).isVisible(),true);
   assert.equal(await frame.getByLabel('Razão social / nome',{exact:true}).isVisible(),true);
   await assertKeyboardActions();
   await frame.locator('#legal_name').focus();await dismissWizard(page, () => frame.locator('#legal_name').press('Escape'));
   assert.equal(await page.locator('[data-new-company]').evaluate(el=>el===document.activeElement),true,'Escape returns focus after Bootstrap dismissal completes');
+  // Existing editor renders the real shared fields, never the creation wizard.
+  const mutationsBeforeEdit=posts.length;
+  for(const width of [1280,768,390]){
+   await page.setViewportSize({width,height:900});
+   await page.evaluate(()=>{window.editShown=false;jQuery('#company-edit-modal').one('shown.bs.modal',()=>{window.editShown=true;});});
+   const editor=page.frame({name:'company-edit-frame'});
+   await Promise.all([editor.waitForNavigation({waitUntil:'load'}),page.locator('[data-edit-company]').click()]);
+   await page.waitForFunction(()=>window.editShown);
+   await editor.getByRole('heading',{name:'Editar empresa',exact:true}).waitFor();
+   assert.equal(await editor.locator('#legal_name').inputValue(),'Existing fixture company');
+   assert.equal(await editor.locator('[name=issuer_id]').inputValue(),'41');
+   assert.equal(await editor.locator('[name=action]').inputValue(),'edit_identity');
+   assert.equal(await editor.locator('[name=identity_revision]').inputValue(),'b'.repeat(64));
+   const before=await editor.locator('form').evaluate(form=>JSON.stringify(Array.from(new FormData(form).entries())));
+   await editor.getByRole('tab',{name:'2. Endereço',exact:true}).click();
+   assert.equal(await editor.getByLabel('Cidade',{exact:true}).inputValue(),'Fixture city');
+   await editor.getByRole('tab',{name:'3. Contato',exact:true}).click();
+   assert.equal(await editor.getByLabel('Telefone',{exact:true}).isVisible(),true);
+   assert.equal(await editor.locator('form').evaluate(form=>JSON.stringify(Array.from(new FormData(form).entries()))),before);
+   assert.equal(await editor.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,'editor has no page overflow');
+   const output=process.env.SCREENSHOT_DIR||path.join(root,'artifacts/company-native-ui');fs.mkdirSync(output,{recursive:true});
+   await page.screenshot({path:path.join(output,'company-edit-modal-'+width+'.png'),fullPage:true});
+   await page.evaluate(()=>{window.editHidden=false;jQuery('#company-edit-modal').one('hidden.bs.modal',()=>{window.editHidden=true;});});
+   await editor.locator('[data-company-edit-close]').press('Escape');
+   await page.waitForFunction(()=>window.editHidden);
+   assert.equal(await page.locator('[data-edit-company]').evaluate(el=>el===document.activeElement),true,'editing Escape restores exact opener');
+  }
+  assert.equal(posts.length,mutationsBeforeEdit,'opening/navigating/closing editor never creates or saves');
   const completed=await browser.newPage({viewport:{width:368,height:550}});
   completed.on('pageerror',error=>errors.push(error.message));
   try {

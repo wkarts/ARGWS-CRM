@@ -11,11 +11,11 @@ final class CompanyReconciliation
     private function rows(string $sql,array $args=[]):array{return \IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private function transaction(callable $work)
     {
-        CompanySchema::ensure($this->db,$this->p,false);return \IssuerTransaction::run($this->db,$this->p,CompanyService::tables(),$work);
+        CompanySchema::ensure($this->db,$this->p,false);return \IssuerTransaction::run($this->db,$this->p,array_merge(CompanyService::tables(),CompanyOriginPolicy::tables($this->db,$this->p)),$work);
     }
     private function policy(array $job):array
     {
-        $service=new CompanyService($this->db,$this->p);$service->authorize((int)$job['issuer_id'],(int)$job['actor_id'],'settle');
+        $service=new CompanyService($this->db,$this->p);$service->assertAutomaticAllowed((int)$job['origin_id']);$service->authorize((int)$job['issuer_id'],(int)$job['actor_id'],'settle');
         $account=$this->rows('SELECT a.* FROM '.$this->p.'asaas_company_accounts a JOIN '.$this->p.'asaas_company_origin_meta m ON m.account_row=a.id WHERE m.origin_id=? AND a.issuer_id=? FOR UPDATE',[$job['origin_id'],$job['issuer_id']])[0]??null;
         if(!$account||(int)$account['enabled']!==1||$account['verified_at']===null||(int)$account['automation_actor']!==(int)$job['actor_id'])throw new \DomainException('asaas_company_automation_denied');return $account;
     }

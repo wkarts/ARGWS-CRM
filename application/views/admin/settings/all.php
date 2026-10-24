@@ -7,88 +7,24 @@
             <?= $this->session->flashdata('debug'); ?>
         </div>
         <?php } ?>
-        <div class="row">
-            <div class="col-xs-12 col-md-12 col-lg-10">
-                <div class="row">
-                    <div class="col-md-4 col-lg-3">
-                        <h4 class="tw-font-bold tw-mt-0 tw-text-neutral-800">
-                            <?= _l('settings'); ?>
-                        </h4>
-                        <div class="panel_s">
-                            <div class="panel-body">
-                                <div class="tw-flex tw-flex-col tw-gap-6">
-                                    <?php foreach ($sections as $sectionId => $section) { ?>
-                                    <div>
-                                        <h4 class="tw-mt-0 tw-mb-4 tw-text-sm tw-text-neutral-500 tw-font-medium">
-                                            <?= $section['title']; ?>
-                                        </h4>
-                                        <ul class="tw-space-y-2">
-                                            <?php foreach ($section['children'] as $child) { ?>
-                                            <li
-                                                class="settings-group-<?= e($child['id']); ?>">
-                                                <a href="<?= admin_url('settings?group=' . $child['id']); ?>"
-                                                    class="tw-group tw-flex tw-items-center tw-text-sm hover:tw-text-neutral-800 focus:tw-text-neutral-800 tw-font-medium tw-gap-2.5 <?= ($group['id'] === $child['id']) ? ' tw-text-neutral-800' : 'tw-text-neutral-600' ?>">
-                                                    <i
-                                                        class="<?= $child['icon'] ?? 'fa-regular fa-circle-question'; ?> fa-fw fa-lg tw-mr-0.5 group-hover:tw-text-neutral-800 <?= $group['id'] === $child['id'] ? 'tw-text-neutral-800' : 'tw-text-neutral-500'; ?>"></i>
-                                                    <span>
-                                                        <?= $child['name']; ?>
-                                                    </span>
-                                                    <?php if (isset($child['badge'], $child['badge']['value']) && ! empty($child['badge'])) { ?>
-                                                    <span
-                                                        class="badge tw-ml-auto
-        <?= isset($child['badge']['type']) && $child['badge']['type'] != '' ? "bg-{$child['badge']['type']}" : 'bg-info' ?>"
-                                                        <?= (isset($child['badge']['type']) && $child['badge']['type'] == '') || isset($child['badge']['color']) ? "style='background-color: {$child['badge']['color']}'" : '' ?>>
-                                                        <?= $child['badge']['value'] ?>
-                                                    </span>
-                                                    <?php } ?>
-                                                </a>
-                                            </li>
-                                            <?php } ?>
-                                            <?php if ($sectionId === 'general') { ?>
-                                            <li class="settings-group-system-update">
-                                                <a href="<?= admin_url('settings?group=update'); ?>"
-                                                    class="tw-group tw-flex tw-items-center tw-text-sm hover:tw-text-neutral-800 focus:tw-text-neutral-800 tw-font-medium tw-gap-2.5 <?= ($group['id'] === 'update') ? ' tw-text-neutral-800' : 'tw-text-neutral-600' ?>">
-                                                    <i
-                                                        class="fa-solid fa-hammer fa-fw fa-lg tw-mr-0.5 group-hover:tw-text-neutral-800 <?= $group['id'] === 'update' ? 'tw-text-neutral-800' : 'tw-text-neutral-500'; ?>"></i>
-                                                    <span><?= _l('settings_update'); ?></span>
-                                                </a>
-                                            </li>
-
-                                            <?php if (is_admin()) { ?>
-                                            <li class="settings-group-argws-platform">
-                                                <a href="<?= admin_url('settings?group=argws_platform'); ?>"
-                                                    class="tw-group tw-flex tw-items-center tw-text-sm hover:tw-text-neutral-800 focus:tw-text-neutral-800 tw-font-medium tw-gap-2.5 <?= ($group['id'] === 'argws_platform') ? ' tw-text-neutral-800' : 'tw-text-neutral-600' ?>">
-                                                    <i class="fa-solid fa-sliders fa-fw fa-lg tw-mr-0.5 <?= $group['id'] === 'argws_platform' ? 'tw-text-neutral-800' : 'tw-text-neutral-500'; ?>"></i>
-                                                    <span>Plataforma</span>
-                                                </a>
-                                            </li>
-                                            <?php } ?>
-
-                                            <?php if (is_admin()) { ?>
-                                            <li class="settings-group-system-info">
-                                                <a href="<?= admin_url('settings?group=info'); ?>"
-                                                    class="tw-group tw-flex tw-items-center tw-text-sm hover:tw-text-neutral-800 focus:tw-text-neutral-800 tw-font-medium tw-gap-2.5 <?= ($group['id'] === 'info') ? ' tw-text-neutral-800' : 'tw-text-neutral-600' ?>">
-                                                    <i
-                                                        class="fa-solid fa-question fa-fw fa-lg tw-mr-0.5 group-hover:tw-text-neutral-800 <?= $group['id'] === 'update' ? 'tw-text-neutral-800' : 'tw-text-neutral-500'; ?>"></i>
-
-                                                    <span>Informações do servidor</span>
-                                                </a>
-                                            </li>
-                                            <?php } ?>
-                                            <?php } ?>
-                                        </ul>
-                                    </div>
-                                    <?php } ?>
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-8 col-lg-9">
-                        <h4 class="tw-font-bold tw-mt-0 tw-text-neutral-800">
-                            <?= $group['name']; ?>
-                        </h4>
-                        <?php
+        <?php
+$settingsNavigation=[];
+foreach($sections as $sectionId=>$section) {
+    $children=[];
+    foreach($section['children'] as $child) {
+        $children[]=['id'=>$child['id'],'name'=>$child['name'],'url'=>admin_url('settings?group='.$child['id']),
+            'icon'=>$child['icon']??'fa-regular fa-circle-question','badge'=>$child['badge']??[]];
+    }
+    if($sectionId==='general') {
+        $children[]=['id'=>'update','name'=>_l('settings_update'),'url'=>admin_url('settings?group=update'),'icon'=>'fa-solid fa-hammer'];
+        if(is_admin()) {
+            $children[]=['id'=>'argws_platform','name'=>'Plataforma','url'=>admin_url('settings?group=argws_platform'),'icon'=>'fa-solid fa-sliders'];
+            $children[]=['id'=>'info','name'=>'Informações do servidor','url'=>admin_url('settings?group=info'),'icon'=>'fa-solid fa-question'];
+        }
+    }
+    $settingsNavigation[]=['title'=>$section['title'],'children'=>$children];
+}
+ob_start();
 $actionUrl = $group['update_url']
                             ?? $this->uri->uri_string() . '?group=' . $group['id'] . ($this->input->get('tab') ? '&active_tab=' . $this->input->get('tab') : '');
 
@@ -114,10 +50,11 @@ echo form_open_multipart($actionUrl, $formAttributes);
                             <?php } ?>
                         </div>
                         <?= form_close(); ?>
-                    </div>
-                </div>
-            </div>
-        </div>
+<?php
+$settingsPresentation=['title'=>_l('settings'),'heading'=>$group['name'],'active'=>$group['id'],'sections'=>$settingsNavigation,'content'=>ob_get_clean()];
+require __DIR__.'/presentation_layout.php';
+unset($settingsPresentation,$settingsNavigation);
+?>
     </div>
 </div>
 <div id="new_version"></div>

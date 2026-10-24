@@ -1,7 +1,16 @@
+<?php
+defined('BASEPATH') or exit('No direct script access allowed');
+$efiTokens = ['efi_checkout_csrf' => get_instance()->session->userdata('efi_checkout_csrf')];
+if (get_instance()->config->item('csrf_protection')) {
+    $efiTokens[get_instance()->security->get_csrf_token_name()] = get_instance()->security->get_csrf_hash();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+<script>const efiRequestTokens = <?= json_encode($efiTokens, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;</script>
+
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -34,6 +43,8 @@
 </head>
 
 <body class="customers safari viewinvoice">
+<p class="alert alert-info">Escolha uma forma de pagamento antes de emitir. Depois da emissão, troca de modalidade, conta ou ambiente exige revisão; não será criada outra cobrança automaticamente.</p>
+
     <style>
         @media (min-width:968px) {
             .jzdkxv {
@@ -355,7 +366,11 @@
                                                                 document.execCommand('copy');
                                                             })
 
-                                                            $.post(`${baseUrl}gateways/gerencia_net/gerar_pix_por_javascript/${invoice_id}/${hash}`, function(response) {
+                                                            const generatePix = $('<button type="button" class="btn btn-primary">Gerar cobrança Pix</button>');
+                                                            $('.get-img-qrcode').first().before(generatePix);
+                                                            generatePix.on('click', function () {
+                                                            generatePix.prop('disabled', true);
+                                                            $.post(`${baseUrl}gateways/gerencia_net/gerar_pix_por_javascript/${invoice_id}/${hash}`, efiRequestTokens, function(response) {
                                                                 try {
 
                                                                     const obj = JSON.parse(response);
@@ -369,7 +384,7 @@
 
                                                                     setTimeout(() => {
                                                                         setInterval(() => {
-                                                                            $.get(`<?php echo base_url() ?>gateways/gerencia_net/callback_check_pix_pago/${txid}/${invoice_id}`, function(response) {
+                                                                            $.get(`<?php echo base_url() ?>gateways/gerencia_net/callback_check_pix_pago/${txid}/${invoice_id}/${hash}`, function(response) {
                                                                                 if (response == '1') {
                                                                                     $('.btn-pagar').attr('disabled', true);
                                                                                     $('.invoice-status-1').css({
@@ -385,6 +400,7 @@
                                                                 } catch (error) {
                                                                     console.error(error.toString());
                                                                 }
+                                                            }).fail(function () { alert('Emissão não confirmada. Não repita: solicite revisão da cobrança antes de tentar outra forma de pagamento.'); });
                                                             });
                                                         }
                                                     });
@@ -717,7 +733,7 @@
                                                                         </div>
                                                                     </div>
                                                                     <div class="col2">
-                                                                        <form id="form-cartao" method="post">
+                                                                        <form id="form-cartao" method="post"><?php foreach ($efiTokens as $key => $value) { ?><input type="hidden" name="<?= html_escape($key); ?>" value="<?= html_escape($value); ?>"><?php } ?>
                                                                             <h4 style="text-align: center;"><strong>Dados do cartão</strong></h4>
                                                                             <div>
                                                                                 <label>Selecione a bandeira</label><br />
@@ -901,6 +917,7 @@
                                                                         $.ajax({
                                                                             url: `${baseUrl}gateways/gerencia_net/gerar_cartao_credito/${invoice_id}/${hash}`,
                                                                             data: {
+                                                                                ...efiRequestTokens,
                                                                                 nome_cliente: name.value,
                                                                                 cpf: cpf.value,
                                                                                 payament_token: response.data.payment_token,
@@ -1196,7 +1213,7 @@
             </div>
         </div>
     </div>
-    <form action="" method="post" id="form-pagamento">
+    <form action="" method="post" id="form-pagamento"><?php foreach ($efiTokens as $key => $value) { ?><input type="hidden" name="<?= html_escape($key); ?>" value="<?= html_escape($value); ?>"><?php } ?>
         <input type="hidden" name="gerencianet_pagamento_input_tipo" id="id_pagamento_gerencianet_input_tipo" class="pagamento_gerencianet_input_tipo_class" value="<?php echo  $arr[3]; ?>">
     </form>
     <?php echo payment_gateway_scripts(); ?>

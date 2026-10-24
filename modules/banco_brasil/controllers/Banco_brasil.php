@@ -5,6 +5,7 @@ require_once dirname(__DIR__).'/libraries/BancoBrasil/CapabilityPolicy.php';
 class Banco_brasil extends AdminController
 {
     private $store;
+    private ?array $checkoutPreview=null;
     public function __construct()
     {
         parent::__construct();
@@ -13,7 +14,7 @@ class Banco_brasil extends AdminController
     public function index()
     {
         $companyId=$this->companyContextId();
-        $data=['title'=>'Banco do Brasil','issuers'=>[],'selected'=>null,'connections'=>[],
+        $data=['checkout_preview'=>$this->checkoutPreview,'title'=>'Banco do Brasil','issuers'=>[],'selected'=>null,'connections'=>[],
             'returns'=>[],'events'=>[],'layout_bindings'=>[],'layouts'=>\BancoBrasil\LayoutCatalog::all(),'can_manage'=>false,'can_import'=>false,'resource_acl_ready'=>false,'storage_error'=>false,'isolated'=>false,'company_context_token'=>null,'api_ready'=>false,'api_webhook_ready'=>false,'api_webhook_receivers'=>[],'api_notifications'=>[],'api_profiles'=>[],'api_origins'=>[],'api_operations'=>[],'api_receipts'=>[],'can_api_charges'=>false,'can_api_discount'=>false,'can_api_amend'=>false,'can_api_amend_abatement'=>false,'can_api_amend_reference'=>false,'can_api_amend_address'=>false,'can_api_amend_discount'=>false,'can_api_amend_window'=>false,'can_api_receipt_window'=>false,'can_api_cancel_discount'=>false,'can_api_assign_discount'=>false,'can_api_issue'=>false,'can_api_query'=>false,'can_api_cancel'=>false,'reconciliations'=>[],'reconciliation_ready'=>false,'can_reconcile'=>false,'can_settle'=>false,'can_settle_components'=>false,'can_settle_tariff'=>false,'can_settle_api_components'=>false,'api_cnab_ready'=>false,'can_api_return'=>false,'can_api_return_components'=>false,'api_cnab_contracts'=>[],'can_external_reverse'=>false,'api_reversal_ready'=>false,'api_reversal_positions'=>[],'can_external_reverse_api_components'=>false,'receipt_reversal_ready'=>false,'receipt_reversal_positions'=>[],'batches'=>[],'origination_ready'=>false,'can_generate'=>false,'can_download'=>false,'request_key'=>bin2hex(random_bytes(32)),'admin_base_url'=>$this->url(''),'notice'=>$this->session->userdata('bb_notice'),'csrf'=>$this->csrfToken(),'matrix'=>\BancoBrasil\CapabilityPolicy::matrix()];
         if(class_exists('CompanyRequestScope',false)){
             $data['isolated']=\CompanyRequestScope::sealedFor($this);
@@ -27,6 +28,7 @@ class Banco_brasil extends AdminController
                 $data['issuers']=array_values(array_filter($available,fn($row)=>($companyId===null||(int)((array)$row)['id']===$companyId)&&$this->allowed((int)((array)$row)['id'],'view')));
             }catch(Throwable $e){$data['storage_error']=true;}
             $raw=$this->input->get('issuer_id');
+            if(($raw===null||$raw==='')&&$this->checkoutPreview!==null)$raw=(string)$this->checkoutPreview['issuer_id'];
             if($companyId!==null){
                 if($raw!==null&&$raw!==''&&$this->positiveId($raw)!==$companyId)$this->denied();
                 $raw=(string)$companyId;
@@ -192,6 +194,28 @@ class Banco_brasil extends AdminController
     {
         require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiService.php';$this->load->library('encryption');
         return new \BancoBrasil\ApiService($this->db,db_prefix(),fn($value)=>$this->encryption->encrypt($value),fn($value)=>$this->encryption->decrypt($value));
+    }
+    public function preview_checkout()
+    {
+        $this->post();$issuer=$this->positiveId($this->input->post('issuer_id'));$this->issuer($issuer,'manage');
+        try{
+            require_once dirname(__DIR__).'/libraries/BancoBrasil/Checkout.php';
+            $this->checkoutPreview=(new \BancoBrasil\Checkout($this->db,db_prefix()))->staffInstrument($issuer,$this->staffId(),$this->positiveId($this->input->post('origin_id')));
+            $this->checkoutPreview['issuer_id']=$issuer;
+        }catch(Throwable $error){$this->flash('warning','Instrumento indisponível ou precisa de revisão. Nenhuma chamada bancária foi feita.');}
+        $this->index();
+    }
+    public function publish_checkout()
+    {
+        $this->post();$issuer=$this->positiveId($this->input->post('issuer_id'));$this->issuer($issuer,'manage');
+        try{
+            require_once dirname(__DIR__).'/libraries/BancoBrasil/Checkout.php';
+            $enabled=$this->input->post('enabled',false);$revision=$this->input->post('revision',false);
+            if(!in_array($enabled,['0','1'],true)||!is_string($revision))throw new InvalidArgumentException('invalid_checkout');
+            (new \BancoBrasil\Checkout($this->db,db_prefix()))->publish($issuer,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$revision,$enabled==='1');
+            $this->flash('success','Disponibilidade do boleto no portal atualizada. Nenhuma cobrança ou pagamento foi criado.');
+        }catch(Throwable $error){$this->flash('warning','Publicação não confirmada. Confira permissões, revisão e instrumento bancário existente.');}
+        redirect($this->url('banco_brasil?issuer_id='.$issuer).'#bb-billing');
     }
     public function declare_api_profile()
     {

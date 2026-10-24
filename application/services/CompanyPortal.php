@@ -62,6 +62,11 @@ final class CompanyPortal
             return ['issuer_id'=>$issuer,'contact_id'=>(int)$row['id'],'client_id'=>(int)$row['userid'],'stamp'=>$stamp];
         });
     }
+    /** Cross-service readers must share this exact connection and tenant namespace. */
+    public function assertStorageBinding($db,string $prefix):void
+    {
+        if($this->db!==$db||$this->prefix!==$prefix)throw new DomainException('company_portal_storage_mismatch');
+    }
     /** Revalidates every request; password/email/owner changes invalidate the session stamp. */
     public function invoiceIdentity(array $session,$issuer,bool $lock=false): ?array
     {

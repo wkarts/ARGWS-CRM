@@ -1,34 +1,24 @@
 name: Repair ARGWS release packages
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/first-release-base.txt
-      - .github/workflows/repair-release-assets.yml
-      - .github/workflows/deployer-release.yml
-      - deploy/**
-      - tools/argws-crm-deployer/**
-      - scripts/package-release.py
   workflow_dispatch:
     inputs:
       release_tag:
         description: Tag SemVer existente cujos pacotes serão reconstruídos
-        required: false
+        required: true
         type: string
-        default: v3.4.2
 
 permissions:
   contents: write
 
 concurrency:
-  group: argws-crm-repair-${{ inputs.release_tag || 'v3.4.2' }}
+  group: argws-crm-repair-${{ inputs.release_tag }}
   cancel-in-progress: false
 
 jobs:
   repair:
     name: Recriar pacotes de uma release existente
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.release_tag != ''
     runs-on: ubuntu-latest
     steps:
       - name: Obter histórico, tags e configuração de base
@@ -40,14 +30,15 @@ jobs:
       - name: Escolher fonte da release e base de comparação
         id: source
         env:
-          RELEASE_TAG: ${{ inputs.release_tag || 'v3.4.2' }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
+          [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]
           [[ "$GITHUB_REF" == "refs/heads/main" ]]
           [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
-            echo "Informe uma tag SemVer estável como v3.4.2." >&2
+            echo "Informe explicitamente uma tag SemVer estável existente." >&2
             exit 1
           }
 

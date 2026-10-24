@@ -4,6 +4,7 @@
 final class PigeBridgeProtocol
 {
     public const REQUEST_PATH = '/pige_bridge/api/v1/requests';
+    public const DIAGNOSTIC_PATH = '/pige_bridge/api/v1/diagnostics';
     public const MAX_BODY_BYTES = 16384;
 
     private static function exactKeys(array $value, array $expected): void
@@ -77,9 +78,21 @@ final class PigeBridgeProtocol
         return $value;
     }
 
-    /** Select exactly one explicitly configured scope; never fall back to another issuer/account. */
-    public static function authenticate(array $envelope, string $body, array $headers, array $connections, int $now): string
+    public static function decodeDiagnostic(string $body): array
     {
+        if(strlen($body)>self::MAX_BODY_BYTES)throw new InvalidArgumentException('body_too_large');
+        $value=json_decode($body,true,16,JSON_THROW_ON_ERROR);
+        if(!is_array($value)||($value['schema_version']??null)!==1||($value['event_type']??null)!=='connection.test'||!is_array($value['data']??null))throw new InvalidArgumentException('unsupported_diagnostic');
+        self::exactKeys($value,['schema_version','event_id','event_type','scope','data']);self::exactKeys($value['data'],['nonce']);
+        if(!is_string($value['data']['nonce'])||!self::isUuid($value['data']['nonce'])||json_encode($value,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_LINE_TERMINATORS|JSON_THROW_ON_ERROR)!==$body)throw new InvalidArgumentException('invalid_diagnostic');
+        $probe=$value;$probe['event_type']='charge.requested';$probe['data']=['charge_id'=>$value['data']['nonce'],'amount_cents'=>1,'currency'=>'BRL','due_date'=>'2030-01-01','description'=>'Connection diagnostic'];
+        self::decode(json_encode($probe,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_LINE_TERMINATORS|JSON_THROW_ON_ERROR));return $value;
+    }
+
+    /** Select exactly one explicitly configured scope; never fall back to another issuer/account. */
+    public static function authenticate(array $envelope, string $body, array $headers, array $connections, int $now, string $path=self::REQUEST_PATH): string
+    {
+        if(!in_array($path,[self::REQUEST_PATH,self::DIAGNOSTIC_PATH,'/pige_bridge/api/v2/invoices','/pige_bridge/api/v2/invoices/status','/pige_bridge/api/v3/charges','/pige_bridge/api/v3/charges/status','/pige_bridge/api/v3/charges/sync','/pige_bridge/api/v3/charges/instruments','/pige_bridge/api/v3/charges/reconcile'],true))throw new RuntimeException('unauthorized');
         $timestamp = $headers['timestamp'] ?? '';
         $eventId = $headers['event_id'] ?? '';
         $signature = $headers['signature'] ?? '';
@@ -105,7 +118,7 @@ final class PigeBridgeProtocol
             throw new RuntimeException('unauthorized');
         }
         $key = array_key_first($matches);
-        $expected = self::signature($matches[$key]['secret'], $timestamp, $eventId, 'POST', self::REQUEST_PATH, $body);
+        $expected = self::signature($matches[$key]['secret'], $timestamp, $eventId, 'POST', $path, $body);
         if (!hash_equals($expected, $signature)) {
             throw new RuntimeException('unauthorized');
         }

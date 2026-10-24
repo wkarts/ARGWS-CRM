@@ -2,7 +2,9 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-require __DIR__ . '../../../../modules/gerencianet_gateway/vendor/autoload.php';
+require_once dirname(__DIR__) . '/services/EfiChargeLedger.php';
+require_once dirname(__DIR__) . '/services/EfiChargeIntent.php';
+require_once dirname(__DIR__) . '/services/EfiCertificateStore.php';
 
 use Gerencianet\Exception\GerencianetException;
 use Gerencianet\Gerencianet;
@@ -25,16 +27,15 @@ class Gerencia_net extends App_Controller
         $this->ci = $CI;
 
         $this->gn_gateway = $this->gerencianet_gateway;
+        $module = $this->db->where('module_name','gerencianet_gateway')->get(db_prefix().'modules')->row();
+        if (!$module || (int)$module->active !== 1 || (string)$module->installed_version !== '5.1.5') { show_404(); exit; }
     }
 
     public function invoice($invoice_id, $invoice_hash)
     {
 
-        check_invoice_restrictions($invoice_id, $invoice_hash);
-
-        $this->load->model('invoices_model');
-
-        $invoice = $this->invoices_model->get($invoice_id);
+        $invoice = $this->authorizedInvoice($invoice_id, $invoice_hash);
+        if ($this->input->method(true) === 'POST') { $this->requirePost(); }
 
         if ($this->input->server('REQUEST_METHOD') === 'GET') {
             $this->gerar_html($invoice);
@@ -44,7 +45,7 @@ class Gerencia_net extends App_Controller
 
             $tipo_pagamento =  $this->input->post('gerencianet_pagamento_input_tipo');
 
-            if ($tipo_pagamento == null) {
+            if ((!is_string($tipo_pagamento)&&!is_int($tipo_pagamento)) || !in_array((string)$tipo_pagamento,['1','2','3'],true)) {
                 set_alert('warning', "Por favar, selecione um método de pagamento do EFÍ.");
                 redirect(site_url('invoice/' . $invoice->id . '/' . $invoice->hash));
             }
@@ -53,10 +54,9 @@ class Gerencia_net extends App_Controller
 
             $invoice->post_data = true;
 
-            $this->gerar_html($invoice);
-
             switch ($tipo[$tipo_pagamento]) {
                 case 'billet':
+                    $this->requireKind('boleto');
                     if ($this->gn_gateway->getSetting('check_billet') == 1) {
                         if (!empty($invoice->token)) {
                             $charge = $this->fetch_payment($invoice);
@@ -78,7 +78,7 @@ class Gerencia_net extends App_Controller
                     }
                     break;
                 case 'pix':
-                    $this->do_pix($options, $invoice);
+                    $this->gerar_pix_por_javascript($invoice_id,$invoice_hash);
                     break;
                 default:
                     set_alert('warning', "Por favar, selecione um método de pagamento do EFÍ.");
@@ -88,7 +88,7 @@ class Gerencia_net extends App_Controller
         }
     }
 
-    public function fetch_payment($data = null)
+    private function fetch_payment($data = null)
     {
 
         if (empty($data)) {
@@ -111,7 +111,8 @@ class Gerencia_net extends App_Controller
             'sandbox' => $sandbox
         ];
 
-        $gateway = new Gerencianet($options);
+        $this->ledger()->bound('boleto',(string)$data->token,$options,(array)$data);
+        $gateway = $this->client($options);
 
         $params = [
             'id' => (int)$data->token
@@ -122,32 +123,16 @@ class Gerencia_net extends App_Controller
         return $charge;
     }
 
-    public function callback_check_pix_pago(string $txid, int $id_fatura)
+    public function callback_check_pix_pago(string $txid, int $id_fatura, string $hash = '')
     {
-        if ($this->input->server('REQUEST_METHOD') === 'GET') {
-            $params = ['txid' => $txid];
-            try {
-                $options = $this->get_gn_options();
-                $api = Gerencianet::getInstance($options);
-                $pix = $api->pixDetailCharge($params);
-
-                if (isset($pix['pix'])) {
-                    $arr = $pix['pix'][0];
-                    $data['amount'] = $arr['valor'];
-                    $data['invoiceid'] = $id_fatura;
-                    $data['paymentmethod'] = 'pix';
-                    $data['transactionid'] = $arr['txid'];
-                    $this->fazerPagamento($data);
-                    echo '1';
-                    die;
-                }
-                echo 'false';
-            } catch (GerencianetException $e) {
-                return $e->error;
-            } catch (Exception $e) {
-                return $e->getMessage();
-            }
-        }
+        try {
+            $invoice=$this->authorizedInvoice($id_fatura,$hash);
+            $options=$this->get_gn_options();
+            $this->ledger()->bound('pix',$txid,$options,(array)$invoice);
+            $response=$this->client($options)->pixDetailCharge(['txid'=>$txid]);
+            $this->recordBoundPayment('pix',$txid,$options,$invoice,$response);
+            echo '1';
+        } catch (Throwable $error) { $this->failure(); }
     }
 
     private function get_bairro(int $user_id)
@@ -160,7 +145,7 @@ class Gerencia_net extends App_Controller
         $db->join(db_prefix() . 'customfieldsvalues', db_prefix() .
             'customfieldsvalues.fieldid = ' . db_prefix() . 'customfields.id');
         $query =  $db->get();
-        return $query->row()->value;
+        return (string) ($query->row()->value ?? '');
     }
 
     private function formatar_message(bool $erro, string $message)
@@ -171,7 +156,9 @@ class Gerencia_net extends App_Controller
 
     public function gerar_cartao_credito($invoice_id, $invoice_hash)
     {
-        check_invoice_restrictions($invoice_id, $invoice_hash);
+        $this->requirePost();
+        $this->requireKind('card');
+        $this->authorizedInvoice($invoice_id, $invoice_hash);
 
         $options = $this->get_gn_options();
 
@@ -192,6 +179,10 @@ class Gerencia_net extends App_Controller
         $cpf = $this->input->post('cpf');
 
         $email = $this->input->post('email');
+        foreach ([$paymentToken,$nome_cliente,$birth,$cpf,$email] as $value) {
+            if (!is_string($value) || $value === '' || strlen($value) > 2048) { $this->failure(); }
+        }
+
 
         $callbackUrl = site_url('gateways/gerencia_net/callback_cartao?invoiceid=' . $invoice_id . '&hash=' . $invoice_hash);
 
@@ -203,7 +194,7 @@ class Gerencia_net extends App_Controller
             $this->formatar_message(true, 'O campo descrição não pode ser superior a 255 caracteres.');
         }
 
-        $valor_cobrado = (int) number_format($invoice->total, 2, '', '');
+        $valor_cobrado = EfiChargeLedger::minor($invoice->total);
 
         $item_1 = [
             'name' => $description, // nome do item, produto ou serviço
@@ -217,9 +208,7 @@ class Gerencia_net extends App_Controller
 
         $metadata = ['notification_url' => $callbackUrl];
 
-        if ($this->gn_gateway->getSetting('test_mode_enabled') == 1) { // Teste
-            $metadata = ['notification_url' => 'http://api.webhookinbox.com/i/0ZyGtASW/in/'];
-        };
+
 
         if (str_word_count(trim($nome_cliente)) < 2) {
             $this->formatar_message(true, 'O nome do cliente deve ter no mínimo duas palavras.');
@@ -290,29 +279,27 @@ class Gerencia_net extends App_Controller
             'payment' => $payment
         ];
 
+        $permit=null;
         try {
-            $api = new Gerencianet($options);
-
-            $pay_charge = $api->oneStep([], $body);
+            $permit=$this->intents()->reserve('card',$options,(array)$invoice);
+            $api = $this->client($options);
+            $pay_charge = $permit['dispatch'] ? $api->createOneStepCharge([], $body)
+                : $api->detailCharge(['id'=>$permit['row']['provider_id']]);
 
 
             if ($pay_charge['code'] == 200) {
-                $this->ci->db->where('id', $invoice_id);
-
-                $this->ci->db->update('tblinvoices', [
-                    'token' => $pay_charge['data']['charge_id'],
-                ]);
+                if($permit['dispatch'])$this->intents()->complete($permit,(string)$pay_charge['data']['charge_id'],$options,(array)$invoice);
+                elseif((string)$pay_charge['data']['charge_id']!==$permit['row']['provider_id'])throw new DomainException('efi_charge_identity_conflict');
+                $this->saveInvoiceToken($invoice_id,(string)$pay_charge['data']['charge_id']);
 
                 $this->formatar_message(!true, 'success');
             } else {
-                $this->formatar_message(!true, json_encode($pay_charge));
+                $this->failure();
             }
         } catch (GerencianetException $e) {
-            print_r($e->code);
-            print_r($e->error);
-            print_r($e->errorDescription);
-        } catch (Exception $e) {
-            print_r($e->getMessage());
+            $this->markUnknown($permit); $this->failure();
+        } catch (Throwable $e) {
+            $this->markUnknown($permit); $this->failure();
         }
     }
 
@@ -362,145 +349,43 @@ class Gerencia_net extends App_Controller
 
     public function view_converter_certificado_p12_para_pem()
     {
+        $this->requireAdmin();
+        $this->checkoutToken();
         $this->ci->load->view('gerencianet_gateway/gerencia_net');
     }
 
     public function converterCertificado()
     {
-
-        $dir = './media/gerencianet/';
-
-        if (!is_dir($dir)) {
-            mkdir($dir);
-        }
-
-        if (isset($_POST["converter"])) {
-
-            $nome_certificado = basename($_FILES['cert_p12']['name']);
-
-            $tipo = $_FILES['cert_p12']['type'];
-
-            if ($tipo == "application/x-pkcs12") {
-
-                // Realiza o upload do arquivo .p12
-                if (move_uploaded_file($_FILES['cert_p12']['tmp_name'], $dir  . $nome_certificado)) {
-
-                    $nome_download = explode(".", $nome_certificado);
-                    $nome_download = $nome_download[0];
-
-                    $senha_atual = null;
-                    $nova_senha = null; // Caso deseje converter definindo uma senha
-                    $results = array();
-
-                    // Lê o conteúdo do arquivo .p12
-                    if (!$worked = openssl_pkcs12_read(file_get_contents($dir  . $nome_certificado), $results, $senha_atual)) {
-                        echo "Falha ao ler o conteúdo do certificado. Falha: " . openssl_error_string();
-                        exit;
-                    }
-
-                    $tipo       =  $this->input->post('nome');
-
-                    $fileName   = $dir  . "certificado_producao.pem";
-
-                    if ($tipo == 'homologacao') {
-                        $fileName   = $dir  . "certificado_homologacao.pem";
-                    }
-
-                    // Converte o conteúdo em .pem
-                    if (!$worked = openssl_pkey_export_to_file($results['pkey'], $fileName, $nova_senha)) {
-                        echo "Falha ao converter o conteúdo do certificado. Falha: " . openssl_error_string();
-                        exit;
-                    }
-
-                    if ((bool) $this->input->post('configurar-automaticamente')) {
-                        // Atualiza o dado existente no DB
-                        if (delete_option('paymentmethod_gerencianet_tipo_pagamento_pix_certificado_pem_' . $tipo)) {
-
-                            if (add_option('paymentmethod_gerencianet_tipo_pagamento_pix_certificado_pem_' . $tipo, ltrim($fileName, '.'))) {
-                                echo 'success';
-                            } else {
-                                echo 'false';
-                            }
-                        } else {
-                            echo 'Não foi possível excluir a opção.';
-                        }
-                    }
-
-                    // Executa comandos no terminal e exclui os arquivos temporários criados
-                    unlink($dir  . $nome_certificado);
-                } else {
-                    echo "Ocorreu uma falha ao enviar o arquivo, tente novamente!";
-                }
-            } else {
-                echo "Tipo de arquivo não permitido.";
-            }
-        } else {
-            echo 'Não é possível fazer a conversão.';
-        }
-    }
-
-    private function do_pix($options, $data)
-    {
+        $this->requireAdmin(); $this->requirePost();
         try {
-            if (!file_exists($options['pix_cert'])) {
-                set_alert('warning', 'O arquivo do certificado não existe ou o caminho está incorreto.');
-                redirect(site_url('invoice/' . $data->id . '/' . $data->hash));
-                die;
+            $environment=$this->input->post('nome');
+            $file=$_FILES['cert_p12']??null;
+            if (!in_array($environment,['producao','homologacao'],true) || !is_array($file)
+                || ($file['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_OK || !is_string($file['tmp_name']??null)
+                || !is_uploaded_file($file['tmp_name']) || (int)($file['size']??0)<1 || (int)$file['size']>EfiCertificateStore::MAX_BYTES) {
+                throw new DomainException('efi_certificate_invalid');
             }
-
-            $infoAdicionais = [
-                [
-                    "nome" => "FATURA",
-                    "valor" => format_invoice_number($data->id),
-                ],
-                [
-                    "nome" => "CÓDIGO",
-                    "valor" => $data->id,
-                ]
-            ];
-
-            foreach ($data->items as $value) {
-                $infoAdicionais[] = ['nome' => substr($value['description'], 0, 50), 'valor' => (int) $value['qty'] . 'x' . $value['rate']];
-            }
-
-            $body = [
-                "calendario" => [
-                    "expiracao" => 3600
-                ],
-                "valor" => [
-                    "original" => $data->total
-                ],
-                "chave" => $this->gn_gateway->getSetting('pagamento_pix_chave'),
-                "solicitacaoPagador" => "Cobrança dos serviços prestados.",
-                "infoAdicionais" => $infoAdicionais
-            ];
-
-            $api = Gerencianet::getInstance($options);
-
-            $pix = $api->pixCreateImmediateCharge([], $body);
-
-            if ($pix['txid']) {
-
-                $params = [
-                    'id' => $pix['loc']['id']
-                ];
-
-                $qrcode = $api->pixGenerateQRCode($params);
-            }
-        } catch (GerencianetException $e) {
-            set_alert('warning', $e->code);
-            set_alert('warning', $e->error);
-            set_alert('warning', $e->errorDescription);
-        } catch (Exception $e) {
-            set_alert('warning', $e->getMessage());
-        }
+            $bytes=file_get_contents($file['tmp_name']);
+            if (!is_string($bytes))throw new DomainException('efi_certificate_invalid');
+            $this->load->library('encryption');
+            $password=$this->input->post('certificate_password');
+            if(!is_string($password))$password='';
+            $cipher=EfiCertificateStore::seal($bytes,$password,$this->encryption);
+            $key='paymentmethod_gerencianet_certificate_cipher_'.$environment;
+            update_option($key,$cipher);
+            if (get_option($key)!==$cipher)throw new RuntimeException('efi_certificate_tracking_failed');
+            echo 'success';
+        } catch(Throwable $error) { $this->failure(); }
     }
 
     public function gerar_pix_por_javascript($invoice_id, $invoice_hash)
     {
+        $permit=null;
         try {
 
-            check_invoice_restrictions($invoice_id, $invoice_hash);
+            $this->requirePost();
+            $this->requireKind('pix');
+            $this->authorizedInvoice($invoice_id, $invoice_hash);
 
             $this->load->model('invoices_model');
 
@@ -509,7 +394,7 @@ class Gerencia_net extends App_Controller
             $options = $this->get_gn_options();
 
 
-            if (!file_exists($options['pix_cert'])) {
+            if (!isset($options['pix_cert']) || !is_file($options['pix_cert'])) {
                 set_alert('warning', 'O arquivo do certificado não existe ou o caminho está incorreto.');
                 redirect(site_url('invoice/' . $invoice->id . '/' . $invoice->hash));
                 die;
@@ -542,11 +427,15 @@ class Gerencia_net extends App_Controller
                 "infoAdicionais" => $infoAdicionais
             ];
 
-            $api = Gerencianet::getInstance($options);
-
-            $pix = $api->pixCreateImmediateCharge([], $body);
+            $permit=$this->intents()->reserve('pix',$options,(array)$invoice);
+            $api = $this->client($options);
+            $pix = $permit['dispatch'] ? $api->pixCreateImmediateCharge([], $body)
+                : $api->pixDetailCharge(['txid'=>$permit['row']['provider_id']]);
 
             if ($pix['txid']) {
+                if(EfiChargeLedger::minor($pix['valor']['original']??null)!==EfiChargeLedger::minor($invoice->total))throw new DomainException('efi_charge_amount_conflict');
+                if($permit['dispatch'])$this->intents()->complete($permit,(string)$pix['txid'],$options,(array)$invoice);
+                elseif((string)$pix['txid']!==$permit['row']['provider_id'])throw new DomainException('efi_charge_identity_conflict');
 
                 $params = [
                     'id' => $pix['loc']['id']
@@ -559,11 +448,11 @@ class Gerencia_net extends App_Controller
                 echo json_encode($qrcode);
             }
         } catch (GerencianetException $e) {
-            set_alert('warning', $e->code);
-            set_alert('warning', $e->error);
-            set_alert('warning', $e->errorDescription);
-        } catch (Exception $e) {
-            set_alert('warning', $e->getMessage());
+            $this->markUnknown($permit); $this->failure();
+
+
+        } catch (Throwable $e) {
+            $this->markUnknown($permit); $this->failure();
         }
     }
 
@@ -597,7 +486,7 @@ class Gerencia_net extends App_Controller
 
         $callbackUrl = site_url('gateways/gerencia_net/callback_boleto?invoiceid=' . $data->id . '&hash=' . $data->hash);
 
-        $valor_cobrado = (int) number_format($data->total, 2, '', '');
+        $valor_cobrado = EfiChargeLedger::minor($data->total);
 
         if ($valor_cobrado < 5) {
             set_alert('warning', 'O valor não pode ser inferior a R$ 5,00');
@@ -624,13 +513,19 @@ class Gerencia_net extends App_Controller
             'metadata' => $metadata
         ];
 
+        $permit=null;
         try {
-            $gateway = new Gerencianet($options);
-
+            $permit=$this->intents()->reserve('boleto',$options,(array)$data);
+            $gateway = $this->client($options);
+            if(!$permit['dispatch']) {
+                $charge=$gateway->detailCharge(['id'=>$permit['row']['provider_id']]);
+                if(($charge['code']??null)!==200||(string)($charge['data']['charge_id']??'')!==$permit['row']['provider_id'])throw new DomainException('efi_charge_identity_conflict');
+                return ['code'=>200,'data'=>['charge_id'=>$permit['row']['provider_id'],'link'=>$charge['data']['payment']['banking_billet']['link']]];
+            }
             $charge = $gateway->createCharge([], $body);
 
             if ($charge["code"] == 200) {
-
+                $this->intents()->providerCreated($permit,(string)$charge['data']['charge_id']);
                 $params = ['id' => $charge["data"]["charge_id"]];
 
                 $vat = $data->client->vat;
@@ -672,17 +567,15 @@ class Gerencia_net extends App_Controller
 
                 $body = ['payment' => $payment];
 
-                $gateway = new Gerencianet($options);
+                $gateway = $this->client($options);
 
+                $this->intents()->boletoPayment($permit,(string)$charge['data']['charge_id']);
                 $pay_charge = $gateway->definePayMethod($params, $body);
 
                 if ($pay_charge["code"] == 200) {
-
-                    $this->ci->db->where('id', $data->id);
-
-                    $this->ci->db->update('tblinvoices', [
-                        'token' => $pay_charge["data"]["charge_id"],
-                    ]);
+                    if((string)$pay_charge['data']['charge_id']!==(string)$charge['data']['charge_id'])throw new DomainException('efi_charge_identity_conflict');
+                    $this->intents()->complete($permit,(string)$pay_charge['data']['charge_id'],$options,(array)$data);
+                    $this->saveInvoiceToken($data->id,(string)$pay_charge['data']['charge_id']);
 
                     return $pay_charge;
                 } else {
@@ -692,199 +585,162 @@ class Gerencia_net extends App_Controller
                 return $charge;
             }
         } catch (GerencianetException $e) {
-            set_alert('warning', $e->code);
-            set_alert('warning', $e->error);
-            set_alert('warning', $e->errorDescription);
-        } catch (Exception $e) {
-            set_alert('warning', $e->getMessage());
+            $this->markUnknown($permit); $this->failure();
+
+
+        } catch (Throwable $e) {
+            $this->markUnknown($permit); $this->failure();
         }
     }
 
-    public function callback_boleto()
+    public function callback_boleto() { $this->chargeCallback('boleto'); }
+    public function callback_cartao() { $this->chargeCallback('card'); }
+
+    private function chargeCallback(string $kind): void
     {
-
-        $invoiceid = $this->input->get('invoiceid');
-
-        $hash = $this->input->get('hash');
-
-        check_invoice_restrictions($invoiceid, $hash);
-
-        $this->db->where('id', $invoiceid);
-
-        $this->db->where('hash', $hash);
-
-        $invoice = $this->db->get('tblinvoices')->row();
-
-        if (count($invoice) > 0) {
-
-            // $data = array('invoice' => $invoice);
-
-            $charge = $this->fetch_payment($invoice);
-
-            if ($invoice->status != 2) {
-
-                if ($charge["code"] == 200) {
-                    if ($charge["data"]["status"] == "paid") {
-                        $this->gn_gateway->addPayment(
-                            [
-                                'amount'        => $invoice->total,
-                                'invoiceid'     => $invoiceid,
-                                'paymentmode'     => 'gerencianet',
-                                'paymentmethod' => 'Boleto',
-                                'transactionid' => $charge["data"]["charge_id"],
-                            ]
-                        );
-                        echo '1) EFÍ: Confirmação de pagamento para a fatura ' . $invoice->id . ', com o ID: ' . $charge["data"]["charge_id"];
-                    } else {
-                        echo '2) EFÍ: Estado do pagamento da fatura ' . $invoice->id . ', com o ID: ' . $charge["data"]["charge_id"] . ', Status: ' . $charge["data"]["status"];
-                    }
-                } else {
-                    echo '3) EFÍ: Falha ao receber callback para a fatura ' . $invoice->id . ', com o ID: ' . $charge["data"]["charge_id"];
-                }
-            } else {
-                echo '4) EFÍ: Estado do pagamento da fatura ' . $invoice->id . ', com o ID: ' . $charge["data"]["charge_id"] . ', Status: ' . $charge["data"]["status"];
-            }
-        } else {
-            echo '5) EFÍ: Falha ao receber callback para a fatura ' . $invoiceid . ', com o hash: ' . $hash . ', fatura não encontrada.';
-        }
-    } 
-    
-    public function callback_cartao()
-    {
-
-        $invoiceid = $this->input->get('invoiceid');
-
-        $hash = $this->input->get('hash');
-
-        check_invoice_restrictions($invoiceid, $hash);
-
-        $this->db->where('id', $invoiceid);
-
-        $this->db->where('hash', $hash);
-
-        $invoice = $this->db->get('tblinvoices')->row();
-
-        if (count($invoice) > 0) {
-
-            // $data = array('invoice' => $invoice);
-
-            $charge = $this->fetch_payment($invoice);
-
-            if ($invoice->status != 2) {
-
-                if ($charge["code"] == 200) {
-                    if ($charge["data"]["status"] == "paid") {
-                        $this->gn_gateway->addPayment(
-                            [
-                                'amount'        => $invoice->total,
-                                'invoiceid'     => $invoiceid,
-                                'paymentmode'     => 'gerencianet',
-                                'paymentmethod' => 'Cartão',
-                                'transactionid' => $charge["data"]["charge_id"],
-                            ]
-                        );
-                        echo '1) EFÍ: Confirmação de pagamento para a fatura ' . $invoice->id . ', com o ID: ' . $charge["data"]["charge_id"];
-                    } else {
-                        echo '2) EFÍ: Estado do pagamento da fatura ' . $invoice->id . ', com o ID: ' . $charge["data"]["charge_id"] . ', Status: ' . $charge["data"]["status"];
-                    }
-                } else {
-                    echo '3) EFÍ: Falha ao receber callback para a fatura ' . $invoice->id . ', com o ID: ' . $charge["data"]["charge_id"];
-                }
-            } else {
-                echo '4) EFÍ: Estado do pagamento da fatura ' . $invoice->id . ', com o ID: ' . $charge["data"]["charge_id"] . ', Status: ' . $charge["data"]["status"];
-            }
-        } else {
-            echo '5) EFÍ: Falha ao receber callback para a fatura ' . $invoiceid . ', com o hash: ' . $hash . ', fatura não encontrada.';
-        }
+        try {
+            $invoice=$this->authorizedInvoice($this->input->get('invoiceid'),(string)$this->input->get('hash'));
+            $options=$this->get_gn_options(); unset($options['pix_cert']);
+            $provider=(string)$invoice->token;
+            $this->ledger()->bound($kind,$provider,$options,(array)$invoice);
+            $response=$this->client($options)->detailCharge(['id'=>$provider],[]);
+            $this->recordBoundPayment($kind,$provider,$options,$invoice,$response);
+            echo '1';
+        } catch(Throwable $error) { $this->failure(); }
     }
 
-    private function get_gn_options()
+    private function recordBoundPayment(string $kind,string $provider,array $options,$invoice,array $response): int
     {
-        $gerencia_net =  $this->gn_gateway;
+        $this->load->model('payments_model');
+        return $this->ledger()->settle($kind,$provider,$options,(array)$invoice,$response,
+            function(array $data) {
+                // The native model offers extension hooks. Veto substitutions under its
+                // canonical invoice row lock, before INSERT, not merely after a bad commit.
+                $guard=static function($allowed,array $locked,array $record)use($data):bool {
+                    if($allowed!==true||($locked['issuer_id']??null)!==null||(int)$locked['id']!==(int)$data['invoiceid'])return false;
+                    foreach(['invoiceid','paymentmode','paymentmethod','transactionid'] as $key) {
+                        if((string)($record[$key]??'')!==(string)$data[$key])return false;
+                    }
+                    try{return EfiChargeLedger::minor($record['amount']??null)===EfiChargeLedger::minor($data['amount']);}
+                    catch(Throwable $error){return false;}
+                };
+                hooks()->add_filter('before_invoice_payment_insert_allowed',$guard,PHP_INT_MAX,3);
+                try{return $this->payments_model->add($data);}
+                finally{hooks()->remove_filter('before_invoice_payment_insert_allowed',$guard,PHP_INT_MAX);}
+            });
+    }
 
-        if ($gerencia_net->getSetting('test_mode_enabled') == 1) {
-            $clientId = $gerencia_net->decryptSetting('dev_client_id');
-            $clientSecret = $gerencia_net->decryptSetting('dev_client_secret');
-            $sandbox = true;
-            $debug = false;
-            $timeout = 30;
-            $pix_cert = $gerencia_net->getSetting('tipo_pagamento_pix_certificado_pem_homologacao');
+    private array $temporaryCertificates = [];
+
+    private function get_gn_options(): array
+    {
+        $sandbox=(int)$this->gn_gateway->getSetting('test_mode_enabled')===1;
+        $environment=$sandbox?'homologacao':'producao';
+        $options=['client_id'=>$this->gn_gateway->decryptSetting($sandbox?'dev_client_id':'production_client_id'),
+            'client_secret'=>$this->gn_gateway->decryptSetting($sandbox?'dev_client_secret':'production_client_secret'),
+            'sandbox'=>$sandbox,'debug'=>false,'timeout'=>30];
+        $cipher=get_option('paymentmethod_gerencianet_certificate_cipher_'.$environment);
+        if (is_string($cipher)&&$cipher!=='') {
+            $this->load->library('encryption');
+            $path=EfiCertificateStore::temporary($cipher,$this->encryption);
+            $this->temporaryCertificates[]=$path;
+            register_shutdown_function(static function()use($path):void{if(is_file($path))@unlink($path);});
+            $options['pix_cert']=$path;
         } else {
-            $clientId = $gerencia_net->decryptSetting('production_client_id');
-            $clientSecret = $gerencia_net->decryptSetting('production_client_secret');
-            $sandbox = false;
-            $debug = false;
-            $timeout = 30;
-            $pix_cert = $gerencia_net->getSetting('tipo_pagamento_pix_certificado_pem_producao');
+            // Preserve configured external private files; never fall back to web-accessible media.
+            $configured=$this->gn_gateway->getSetting('tipo_pagamento_pix_certificado_pem_'.$environment);
+            $path=is_string($configured)&&$configured!==''?realpath($configured):false;
+            $web=realpath(FCPATH);
+            if($path!==false&&$web!==false&&!str_starts_with($path,$web.DIRECTORY_SEPARATOR)&&$path!==$web
+                &&is_file($path)&&is_readable($path)&&((fileperms($path)&0077)===0))$options['pix_cert']=$path;
         }
-
-        $path_cert = $_SERVER['DOCUMENT_ROOT'] . dirname($_SERVER['PHP_SELF']);
-
-        $options = [
-            'client_id' => $clientId,
-            'client_secret' => $clientSecret,
-            'sandbox' => $sandbox,
-            'pix_cert' => $path_cert . $pix_cert,
-            'debug' => $debug,
-            'timeout' => $timeout
-        ];
         return $options;
     }
 
     public function fetch_pixes()
     {
-
-        $data_final = date('Y-m-d\Th:i:s\Z', (strtotime('+1 day', time())));
-
-        $data_inicial = date('Y-m-d\Th:i:s\Z', (strtotime('-30 day', strtotime($data_final))));
-
-        $params = ['inicio' => $data_inicial, 'fim' => $data_final];
-
+        $this->requireAdmin(); $this->requirePost();
         try {
-
-            $options = $this->get_gn_options();
-
-            $api = Gerencianet::getInstance($options);
-
-            $pix = $api->pixListCharges($params);
-
-            foreach ($pix['cobs'] as $cobracanca) {
-                if (isset($cobracanca['pix'])) {
-                    if ($cobracanca['infoAdicionais'][1]['nome'] == 'CÓDIGO') {
-                        if ($cobracanca['status'] == 'CONCLUIDA') {
-                            $id_fatura = (int) $cobracanca['infoAdicionais'][1]['valor'];
-                            $data['amount'] = $cobracanca['pix'][0]['valor'];
-                            $data['invoiceid'] = $id_fatura;
-                            $data['paymentmethod'] = 'pix';
-                            $data['transactionid'] = $cobracanca['txid'];
-                            $this->fazerPagamento($data);
-                        }
-                    }
-                }
+            $options=$this->get_gn_options(); $completed=0;
+            // Query only locally bound charges. Never trust provider infoAdicionais as invoice IDs.
+            foreach($this->ledger()->pendingPix($options) as $row) {
+                $invoice=$this->authorizedInvoice($row['id'],$row['hash']);
+                $response=$this->client($options)->pixDetailCharge(['txid'=>$row['provider_id']]);
+                if(($response['status']??null)!=='CONCLUIDA')continue;
+                $this->recordBoundPayment('pix',$row['provider_id'],$options,$invoice,$response); ++$completed;
             }
-        } catch (GerencianetException $e) {
-            set_alert('warning', $e->code);
-            set_alert('warning', $e->error);
-            set_alert('warning', $e->errorDescription);
-            set_alert('warning', $e->error);
-        } catch (Exception $e) {
-            set_alert('danger', $e->getMessage());
-        }
+            echo json_encode(['confirmed'=>$completed]);
+        } catch(Throwable $error) { $this->failure(); }
     }
 
-    private function fazerPagamento($data)
+    private function saveInvoiceToken($invoice,string $provider): void
     {
+        $result=$this->db->query('UPDATE '.db_prefix().'invoices SET token=? WHERE id=? AND issuer_id IS NULL',[$provider,$invoice]);
+        $check=$this->db->query('SELECT token FROM '.db_prefix().'invoices WHERE id=? AND issuer_id IS NULL',[$invoice]);
+        if($result===false||!$check||(string)($check->row()->token??'')!==$provider)throw new RuntimeException('efi_invoice_tracking_unconfirmed');
+    }
 
-        $data['paymentmode'] = $this->gn_gateway->getId();
+    private function intents(): EfiChargeIntent { return new EfiChargeIntent($this->db,db_prefix()); }
 
-        $this->ci->load->model('payments_model');
+    private function markUnknown(?array $permit): void
+    {
+        if(!$permit||($permit['dispatch']??false)!==true)return;
+        try{$this->intents()->uncertain($permit);}catch(Throwable $error){log_message('error','Efí intent update unconfirmed; existing durable dispatch fence retained.');}
+    }
 
-        $this->ci->load->model('invoices_model');
+    private function ledger(): EfiChargeLedger { return new EfiChargeLedger($this->db,db_prefix()); }
 
-        $invoice = $this->ci->invoices_model->get($data['invoiceid']);
-
-        if ($invoice->status != 2) {
-            return $this->ci->payments_model->add($data);
+    private function authorizedInvoice($id,string $hash)
+    {
+        $this->ledger()->invoice($id,$hash);
+        check_invoice_restrictions($id,$hash);
+        $this->load->model('invoices_model');
+        $invoice=$this->invoices_model->get($id);
+        if(!$invoice||!array_key_exists('issuer_id',(array)$invoice)||$invoice->issuer_id!==null
+            ||!hash_equals((string)$invoice->hash,$hash)||(int)$this->gn_gateway->getSetting('active')!==1
+            ||!in_array('gerencianet',\app\services\PaymentGatewayCatalog::decodeModes($invoice->allowed_payment_modes),true)) {
+            show_404(); throw new DomainException('efi_invoice_denied');
         }
+        $this->checkoutToken();
+        return $invoice;
+    }
+
+    private function checkoutToken(): string
+    {
+        $token=$this->session->userdata('efi_checkout_csrf');
+        if(!is_string($token)||!preg_match('/^[a-f0-9]{64}$/D',$token)) {
+            $token=bin2hex(random_bytes(32)); $this->session->set_userdata('efi_checkout_csrf',$token);
+        }
+        return $token;
+    }
+
+    private function requirePost(): void
+    {
+        $expected=$this->session->userdata('efi_checkout_csrf'); $actual=$this->input->post('efi_checkout_csrf');
+        if($this->input->method(true)!=='POST'||!is_string($expected)||!preg_match('/^[a-f0-9]{64}$/D',$expected)
+            ||!is_string($actual)||!hash_equals($expected,$actual)) { show_error('Solicitação inválida.',403); throw new DomainException('efi_csrf_denied'); }
+    }
+
+    private function requireKind(string $kind): void
+    {
+        $keys=['pix'=>'tipo_pagamento_pix','boleto'=>'tipo_pagamento_boleto','card'=>'tipo_pagamento_cartaocredito'];
+        if(!isset($keys[$kind])||(int)$this->gn_gateway->getSetting($keys[$kind])!==1) { show_error('Forma de pagamento indisponível.',403); throw new DomainException('efi_payment_kind_disabled'); }
+    }
+
+    private function requireAdmin(): void
+    {
+        if(!is_staff_logged_in()||!is_admin()) { show_error('Acesso negado.',403); throw new DomainException('efi_admin_denied'); }
+    }
+
+    protected function client(array $options)
+    {
+        require_once dirname(__DIR__) . '/services/EfiSdkClient.php';
+        return new EfiSdkClient($options);
+    }
+
+    private function failure(): void
+    {
+        show_error('Operação Efí não confirmada. Cobranças sem vínculo local de conta, ambiente e fatura exigem revisão manual. Nenhum vínculo legado é inferido automaticamente.',409);
+        throw new RuntimeException('efi_operation_unconfirmed');
     }
 }

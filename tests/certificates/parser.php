@@ -7,7 +7,7 @@ a1check($m['document']==='11222333000181'&&$m['document_status']==='matched','SA
 a1check(count($m)===8&&!str_contains(json_encode($m),'PRIVATE KEY')&&!str_contains(json_encode($m),$a['password']),'metadata is allowlisted');
 a1check(IssuerCertificateParser::inspect($none['pfx'],$none['password'],'11222333000181')['document_status']==='unverified','missing OID remains unverified despite CN digits');
 a1reject(fn()=>IssuerCertificateParser::inspect($b['pfx'],$b['password'],'11222333000181'),'issuer_certificate_document_mismatch','CNPJ mismatch');
-a1reject(fn()=>IssuerCertificateParser::inspect($a['pfx'],'wrong','11222333000181'),'issuer_certificate_parse_failed','wrong password');
+a1reject(fn()=>IssuerCertificateParser::inspect($a['pfx'],'wrong','11222333000181'),'issuer_certificate_authentication_failed','wrong password or integrity');
 a1reject(fn()=>IssuerCertificateParser::inspect('invalid','secret','11222333000181'),'issuer_certificate_parse_failed','invalid file');
 a1reject(fn()=>IssuerCertificateParser::inspect(str_repeat('x',2097153),'','11222333000181'),'issuer_certificate_invalid_upload','2 MiB size bound');
 a1reject(fn()=>IssuerCertificateParser::inspect($a['pfx'],str_repeat('x',4097),'11222333000181'),'issuer_certificate_invalid_upload','password length bound');
@@ -21,9 +21,9 @@ a1reject(fn()=>IssuerCertificateParser::inspect($badDocument['pfx'],$badDocument
 $duplicate=a1fixture('11222333000181,otherName:2.16.76.1.3.3;UTF8:11222333000181');
 a1reject(fn()=>IssuerCertificateParser::inspect($duplicate['pfx'],$duplicate['password'],'11222333000181'),'issuer_certificate_document_invalid','duplicate CNPJ otherName is ambiguous');
 $noKey=a1pkcs12(null,$a['certificate']);
-a1reject(fn()=>IssuerCertificateParser::inspect($noKey,'','11222333000181'),'issuer_certificate_parse_failed','PKCS12 without private key');
+a1reject(fn()=>IssuerCertificateParser::inspect($noKey,'','11222333000181'),'issuer_certificate_key_required','PKCS12 without private key');
 $mismatch=a1pkcs12($a['private'],$b['certificate']);
-a1reject(fn()=>IssuerCertificateParser::inspect($mismatch,'','11222333000181'),'issuer_certificate_parse_failed','PKCS12 mismatched private key');
+a1reject(fn()=>IssuerCertificateParser::inspect($mismatch,'','11222333000181'),'issuer_certificate_key_required','PKCS12 mismatched private key');
 $goodBare=a1pkcs12($a['private'],$a['certificate']);
 a1check(IssuerCertificateParser::inspect($goodBare,'','11222333000181')['document_status']==='matched','synthetic PKCS12 fixture builder has usable private material');
 $vault=new IssuerCertificateVault(a1encryption()); $sealed=$vault->seal(10,1,$m,$a['pfx'],$a['password']);

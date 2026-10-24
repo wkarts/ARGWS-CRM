@@ -10,7 +10,7 @@ class ApiRequest
     private $request;
     private $options;
 
-    public function __construct(array $options = null)
+    public function __construct(?array $options = null)
     {
         $this->auth = new Auth($options);
         $this->request = new Request($options);
@@ -41,7 +41,13 @@ class ApiRequest
                 'headers' => $requestHeaders
             ]);
         } catch (AuthorizationException $e) {
+            // A financial mutation belongs to one durable CRM dispatch intent.
+            // Never replay POST/PUT/PATCH/DELETE automatically, even after reauthentication.
+            if (!in_array(strtolower((string) $method), ['get', 'head'], true)) {
+                throw $e;
+            }
             $this->auth->authorize();
+            $requestHeaders['Authorization'] = 'Bearer ' . $this->auth->accessToken;
 
             return $this->request->send($method, $route, [
                 'json' => $body,

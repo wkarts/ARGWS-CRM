@@ -10,13 +10,44 @@
     // Progressive enhancement: every field stays available if JavaScript is disabled.
     var panels = Array.from(editor.querySelectorAll('[data-identity-panel]'));
     var tabs = Array.from(editor.querySelectorAll('.company-identity-sections a'));
-    function showPanel(index) {
+    var navigation = editor.querySelector('.company-identity-sections');
+    navigation.setAttribute('role', 'tablist');
+    panels.forEach(function (panel, index) {
+      var tab = tabs[index]; tab.id = panel.id + '-tab';
+      tab.setAttribute('role', 'tab'); tab.setAttribute('aria-controls', panel.id);
+      tab.parentNode.setAttribute('role', 'presentation');
+      panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', tab.id);
+    });
+    function showPanel(index, address) {
       panels.forEach(function (panel, i) { panel.hidden = i !== index; });
-      tabs.forEach(function (tab, i) { tab.setAttribute('aria-current', i === index ? 'step' : 'false'); });
+      tabs.forEach(function (tab, i) {
+        tab.setAttribute('aria-selected', i === index ? 'true' : 'false');
+        tab.setAttribute('aria-current', i === index ? 'step' : 'false');
+        tab.tabIndex = i === index ? 0 : -1;
+        tab.parentNode.classList.toggle('active', i === index);
+      });
+      // Scroll this navigation only, never jump the surrounding modal/page.
+      var item = tabs[index].getBoundingClientRect(), box = navigation.getBoundingClientRect();
+      if (item.left < box.left) navigation.scrollLeft -= box.left - item.left;
+      else if (item.right > box.right) navigation.scrollLeft += item.right - box.right;
+      if (address && location.hash !== tabs[index].hash) history.pushState(null, '', tabs[index].hash);
     }
-    tabs.forEach(function (tab, index) { tab.addEventListener('click', function (event) { event.preventDefault(); showPanel(index); panels[index].querySelector('input').focus(); }); });
-    form.addEventListener('invalid', function (event) { var index = panels.findIndex(function (panel) { return panel.contains(event.target); }); if (index !== -1) showPanel(index); }, true);
-    showPanel(0);
+    function fromAddress() {
+      var index = tabs.findIndex(function (tab) { return tab.hash === location.hash; });
+      showPanel(index < 0 ? 0 : index, false);
+    }
+    tabs.forEach(function (tab, index) {
+      tab.addEventListener('click', function (event) { event.preventDefault(); showPanel(index, true); });
+      tab.addEventListener('keydown', function (event) {
+        var next = event.key === 'ArrowRight' ? (index + 1) % tabs.length : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : -1;
+        if (next >= 0) { event.preventDefault(); showPanel(next, true); tabs[next].focus(); }
+        else if (event.key === ' ') { event.preventDefault(); showPanel(index, true); }
+      });
+    });
+    form.addEventListener('invalid', function (event) { var index = panels.findIndex(function (panel) { return panel.contains(event.target); }); if (index !== -1) showPanel(index, false); }, true);
+    window.addEventListener('hashchange', fromAddress);
+    window.addEventListener('popstate', fromAddress);
+    fromAddress();
 
     function target(key) { return Array.from(editor.querySelectorAll('[data-company-field]')).find(function (el) { return el.dataset.companyField === key; }); }
     function discard() { preview.hidden = true; fields.replaceChildren(); rows = []; }

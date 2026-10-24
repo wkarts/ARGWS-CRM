@@ -5,8 +5,8 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: EFÍ
 Description: Módulo de Gateway de Pagamento EFÍ, API PIX, boleto
-Version: 5.1.4 sdk final
-Requires at least: 1.0.*
+Version: 5.1.5
+Requires at least: 4.7.3
 Author: Wallace Kleiton | WWSoftware's
 Author URI: https://t.me/wkartspro
 */
@@ -73,9 +73,9 @@ register_uninstall_hook(GERENCIANET_GATEWAY_MODULE_NAME, 'gerencia_net_uninstall
 function gerencia_net_uninstall_hook()
 {
 
-    // if (file_exists('application/libraries/gateways/Gerencianet_gateway.php')) {
-        unlink('application/libraries/gateways/Gerencianet_gateway.php');
-    // } 
+    // Retain legacy core copies, payment history and credentials on deactivation/uninstall.
+    // Removing a copied file can delete an independently managed deployment artifact.
+
 }
 
 register_payment_gateway('gerencianet_gateway', 'gerencianet_gateway');

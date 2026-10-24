@@ -3,6 +3,7 @@
 declare(strict_types=1);
 namespace BancoBrasil;
 require_once __DIR__.'/ModuleRelease.php';
+require_once __DIR__.'/ApiOriginPolicy.php';
 require_once __DIR__.'/Origination.php';
 require_once __DIR__.'/ApiSchema.php';
 require_once __DIR__.'/ApiPayload.php';
@@ -26,23 +27,24 @@ final class ApiService
     {
         \IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.$table.' (`'.implode('`,`',array_keys($fields)).'`) VALUES('.implode(',',array_fill(0,count($fields),'?')).')',array_values($fields));$id=(int)$this->db->insert_id();if($id<1)throw new \RuntimeException('issuer_bb_api_write_unconfirmed');return $id;
     }
-    private function transaction(callable $work)
+    private function transaction(callable $work,array $guardTables=[],?callable $guard=null)
     {
-        ApiSchema::ensure($this->db,$this->prefix,false);OriginationSchema::assertValid($this->db,$this->prefix);
+        ApiOriginPolicy::ensure($this->db,$this->prefix,false);ApiSchema::ensure($this->db,$this->prefix,false);OriginationSchema::assertValid($this->db,$this->prefix);
         require_once __DIR__.'/ApiWebhookSchema.php';ApiWebhookSchema::ensure($this->db,$this->prefix,false);
         ApiReceiptSchema::ensure($this->db,$this->prefix,false);$tables=self::receiptTables();
         if($this->db->table_exists($this->prefix.'asaas_payment_origins'))$tables[]='asaas_payment_origins';
-        return \IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge($tables,(new \CompanyInvoiceBalance($this->db,$this->prefix))->tables()))),$work);
+        if($this->db->table_exists($this->prefix.'efi_company_origins'))$tables[]='efi_company_origins';
+        return \IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge($tables,$guardTables,(new \CompanyInvoiceBalance($this->db,$this->prefix))->tables()))),function()use($work,$guard){if($guard)$guard();$result=$work();if($guard)$guard();return $result;});
     }
     /** Internal table contract for the core-owned receipt transaction, never a session scope. */
     public static function receiptTables():array
     {
-        return ['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_audit','staff','modules','invoices','issuers_invoice_documents','currencies','company_currency_units','company_financial_events','invoicepaymentrecords','credits','bb_connections','bb_layout_bindings','bb_origins','bb_audit','bb_number_reservations','bb_api_profiles','bb_api_credentials','bb_api_origins','bb_api_operations','bb_api_receipts','bb_api_webhook_receivers','bb_api_notifications'];
+        return ['bb_api_origin_policy','issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_audit','staff','modules','invoices','issuers_invoice_documents','currencies','company_currency_units','company_financial_events','invoicepaymentrecords','credits','bb_connections','bb_layout_bindings','bb_origins','bb_audit','bb_number_reservations','bb_api_profiles','bb_api_credentials','bb_api_origins','bb_api_operations','bb_api_receipts','bb_api_webhook_receivers','bb_api_notifications'];
     }
-    public function receiptOriginInOwnedTransaction(int $issuer,int $actor,int $origin):array
+    public function receiptOriginInOwnedTransaction(int $issuer,int $actor,int $origin,?string $originReference=null,?callable $originGuard=null,array $guardTables=[]):array
     {
         \IssuerTransaction::assertOwned($this->db,$this->prefix,self::receiptTables());
-        $this->authorize($issuer,$actor,'reconcile',true);return $this->loadOrigin($issuer,$origin);
+        $this->authorize($issuer,$actor,'reconcile',true);ApiOriginPolicy::guard($this->db,$this->prefix,$issuer,$origin,$originReference,$originGuard,$guardTables);return $this->loadOrigin($issuer,$origin);
     }
     private function authorize(int $issuer,int $actor,string $cap,bool $invoice=false):void
     {
@@ -114,13 +116,14 @@ final class ApiService
         return ApiClient::credentials($data['credentials']??[]);
     }
     /** Reserve once in a durable core transaction, then execute the outbox outside all SQL locks. */
-    public function issue($issuer,$actor,$profile,$invoice,array $input,string $requestKey):int
+    public function issue($issuer,$actor,$profile,$invoice,array $input,string $requestKey,?callable $originGuard=null,array $guardTables=[],?string $originReference=null):int
     {
+        if($originReference!==null&&(!$originGuard||!preg_match('/^[a-f0-9]{64}$/D',$originReference)))throw new \DomainException('bb_api_bridge_guard_required');
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$profile=\IssuerPolicy::id($profile);$invoice=\IssuerPolicy::id($invoice);$input=ApiPayload::input($input);if(!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new \DomainException('bb_api_invalid_input');$inputHash=hash('sha256',json_encode([$profile,$invoice,$input],JSON_THROW_ON_ERROR));
-        $origin=$this->transaction(function()use($issuer,$actor,$profile,$invoice,$input,$requestKey,$inputHash):int{
-            $this->authorize($issuer,$actor,'api_issue',true);[$p,$definition,$c,$a]=$this->profile($issuer,$profile);if(isset($definition['interest_policy']))$this->authorize($issuer,$actor,'api_charges',true);if(isset($definition['discount_policy']))$this->authorize($issuer,$actor,'api_discount',true);if(isset($definition['receipt_window_policy']))$this->authorize($issuer,$actor,'api_receipt_window',true);if(isset($definition['discount_assignment_policy']))$this->authorize($issuer,$actor,'api_assign_discount',true);
+        $origin=$this->transaction(function()use($issuer,$actor,$profile,$invoice,$input,$requestKey,$inputHash,$originReference,$originGuard,$guardTables):int{
+            $this->authorize($issuer,$actor,'api_issue',true);[$p,$definition,$c,$a]=$this->profile($issuer,$profile);if($originReference!==null)foreach(['interest_policy','discount_policy','receipt_window_policy','discount_assignment_policy'] as $term)if(isset($definition[$term]))throw new \DomainException('bb_api_bridge_profile_requires_review');if(isset($definition['interest_policy']))$this->authorize($issuer,$actor,'api_charges',true);if(isset($definition['discount_policy']))$this->authorize($issuer,$actor,'api_discount',true);if(isset($definition['receipt_window_policy']))$this->authorize($issuer,$actor,'api_receipt_window',true);if(isset($definition['discount_assignment_policy']))$this->authorize($issuer,$actor,'api_assign_discount',true);
             $old=$this->rows('SELECT o.origin_id,o.input_hash,b.issuer_id FROM '.$this->prefix.'bb_api_origins o JOIN '.$this->prefix.'bb_origins b ON b.id=o.origin_id WHERE o.request_key=? FOR UPDATE',[$requestKey])[0]??null;
-            if($old){if((int)$old['issuer_id']!==$issuer||!hash_equals($old['input_hash'],$inputHash))throw new \DomainException('bb_api_request_conflict');return (int)$old['origin_id'];}
+            if($old){if((int)$old['issuer_id']!==$issuer||!hash_equals($old['input_hash'],$inputHash))throw new \DomainException('bb_api_request_conflict');ApiOriginPolicy::guard($this->db,$this->prefix,$issuer,(int)$old['origin_id'],$originReference,$originGuard,$guardTables);return (int)$old['origin_id'];}
             if(!$this->rows('SELECT id FROM '.$this->prefix.'bb_api_credentials WHERE profile_id=? AND issuer_id=?',[$profile,$issuer]))throw new \DomainException('bb_api_credentials_required');
             $record=$this->rows('SELECT i.id,i.issuer_id,i.clientid,i.total,i.status,i.date,i.duedate,i.currency currency_id FROM '.$this->prefix.'invoices i WHERE i.id=? AND i.issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
             if($record){$record['currency']=(new \CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($record['currency_id'])['iso_code'];}
@@ -130,6 +133,7 @@ final class ApiService
             // Keep all historical origins. Only an API-origin bank-confirmed cancellation can release its active slot.
             foreach($this->rows('SELECT id,state,active_slot,channel FROM '.$this->prefix.'bb_origins WHERE invoice_id=? FOR UPDATE',[$invoice]) as $old)if($old['active_slot']!==null||$old['channel']!=='api'||$old['state']!=='api_cancelled_confirmed')throw new \DomainException('bb_invoice_already_bound');
             if($this->db->table_exists($this->prefix.'asaas_payment_origins')&&$this->rows('SELECT id FROM '.$this->prefix.'asaas_payment_origins WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('bb_invoice_already_bound');
+            if($this->db->table_exists($this->prefix.'efi_company_origins')&&$this->rows('SELECT id FROM '.$this->prefix.'efi_company_origins WHERE invoice_id=? FOR UPDATE',[$invoice]))throw new \DomainException('bb_invoice_already_bound');
             $acl=new \IssuerResourceAccess($this->db,$this->prefix);$docs=new \InvoiceIssuerDocuments($this->db,$this->prefix,$actor,static fn($i,$s,$cap)=>$i===$issuer&&$s===$actor&&$acl->can($issuer,$actor,'invoices','view'));$doc=$docs->get($invoice,$issuer);
             $range=$this->rows('SELECT * FROM '.$this->prefix.'bb_number_reservations WHERE bank_namespace=? FOR UPDATE',[self::bankNamespace($a)])[0]??null;
             if(!$range||(int)$range['issuer_id']!==$issuer||$range['beneficiary_tax_id']!==$a->taxId||(int)$range['next_number']>(int)$range['last_number'])throw new \DomainException('bb_number_range_exhausted');
@@ -139,9 +143,10 @@ final class ApiService
             $confirmed=$this->rows('SELECT next_number FROM '.$this->prefix.'bb_number_reservations WHERE bank_namespace=?',[self::bankNamespace($a)])[0]??[];if((int)($confirmed['next_number']??0)!==$sequence+1)throw new \RuntimeException('issuer_bb_api_write_unconfirmed');
             $id=$this->insert('bb_origins',['invoice_id'=>$invoice,'issuer_id'=>$issuer,'connection_id'=>$c['id'],'account_id'=>$a->scope->accountId,'environment'=>$a->scope->environment,'agreement_number'=>$a->scope->agreement,'provider'=>'banco_brasil','channel'=>'api','remote_id'=>$number,'control_reference'=>'CRM'.$invoice.'N'.$sequence,'scope_key'=>$a->scope->key(),'state'=>'api_reserved','active_slot'=>1,'payload_hash'=>hash('sha256',$json),'created_at'=>date('Y-m-d H:i:s')]);
             \IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'bb_api_origins(origin_id,profile_id,request_key,input_hash,payload_json,snapshot_json) VALUES(?,?,?,?,?,?)',[$id,$profile,$requestKey,$inputHash,$payload,$json]);
+            if($originReference!==null){ApiOriginPolicy::mark($this->db,$this->prefix,$issuer,$id,$originReference);ApiOriginPolicy::guard($this->db,$this->prefix,$issuer,$id,$originReference,$originGuard,$guardTables);}
             $this->audit($issuer,(int)$c['id'],$actor,'api_number_reserved','origin',$id);return $id;
-        });
-        $this->perform($issuer,$actor,$origin,'issue',hash('sha256','bb-api-issue-'.$origin));return $origin;
+        },$guardTables,$originGuard);
+        $this->perform($issuer,$actor,$origin,'issue',hash('sha256','bb-api-issue-'.$origin),null,$originGuard,$guardTables,$originReference);return $origin;
     }
     private function loadOrigin(int $issuer,int $id):array
     {
@@ -165,9 +170,9 @@ final class ApiService
     {
         $origin=\IssuerPolicy::id($origin);return $this->perform(\IssuerPolicy::id($issuer),\IssuerPolicy::id($actor),$origin,'issue',hash('sha256','bb-api-issue-'.$origin));
     }
-    public function query($issuer,$actor,$origin,string $key):int
+    public function query($issuer,$actor,$origin,string $key,?callable $originGuard=null,array $guardTables=[],?string $originReference=null):int
     {
-        return $this->perform(\IssuerPolicy::id($issuer),\IssuerPolicy::id($actor),\IssuerPolicy::id($origin),'query',$key);
+        return $this->perform(\IssuerPolicy::id($issuer),\IssuerPolicy::id($actor),\IssuerPolicy::id($origin),'query',$key,null,$originGuard,$guardTables,$originReference);
     }
     public function movements($issuer,$actor,$origin,array $window,string $key):int
     {
@@ -177,10 +182,12 @@ final class ApiService
     {
         $origin=\IssuerPolicy::id($origin);return $this->perform(\IssuerPolicy::id($issuer),\IssuerPolicy::id($actor),$origin,'cancel',hash('sha256','bb-api-cancel-'.$origin));
     }
-    private function perform(int $issuer,int $actor,int $originId,string $operation,string $requestKey,?array $amendment=null):int
+    private function perform(int $issuer,int $actor,int $originId,string $operation,string $requestKey,?array $amendment=null,?callable $originGuard=null,array $guardTables=[],?string $originReference=null):int
     {
         if(!in_array($operation,['issue','query','cancel','amend_due','amend_abat','amend_addr','amend_ref','amend_disc','amend_win','clear_disc','add_disc','movements'],true)||!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new \DomainException('bb_api_invalid_input');
-        $prepared=$this->transaction(function()use($issuer,$actor,$originId,$operation,$requestKey,$amendment):array{
+        $guard=fn()=>ApiOriginPolicy::guard($this->db,$this->prefix,$issuer,$originId,$originReference,$originGuard,$guardTables);
+        $run=fn(callable $work)=>$this->transaction($work,$guardTables,$guard);
+        $prepared=$run(function()use($issuer,$actor,$originId,$operation,$requestKey,$amendment):array{
             $this->authorizeOperation($issuer,$actor,$operation);[$origin,$stored,$snapshot,$profile,$agreement]=$this->loadOrigin($issuer,$originId);if($operation==='issue'&&in_array(ApiClient::decodeExact($stored['payload_json'])['jurosMora']['tipo']??null,['1','2'],true))$this->authorize($issuer,$actor,'api_charges',true);if($operation==='issue'&&in_array(ApiClient::decodeExact($stored['payload_json'])['desconto']['tipo']??null,['1','2'],true))$this->authorize($issuer,$actor,'api_discount',true);if($operation==='issue'){$issuedPayload=ApiClient::decodeExact($stored['payload_json']);if(($issuedPayload['indicadorAceiteTituloVencido']??null)==='S')$this->authorize($issuer,$actor,'api_receipt_window',true);[, $definition]=$this->profile($issuer,(int)$profile['id']);if(isset($definition['discount_assignment_policy']))$this->authorize($issuer,$actor,'api_assign_discount',true);}
             $op=$this->rows('SELECT * FROM '.$this->prefix.'bb_api_operations WHERE origin_id=? AND operation=? AND request_key=? FOR UPDATE',[$originId,$operation,$requestKey])[0]??null;
             if($operation==='movements'&&$op){$saved=json_decode($op['result_json'],true,32,JSON_THROW_ON_ERROR);if(($saved['movement_window']??null)!==$amendment||(int)$op['actor_id']!==$actor)throw new \DomainException('bb_api_request_conflict');}
@@ -221,13 +228,13 @@ final class ApiService
         });
         $id=$prepared['id'];if(!$prepared['execute'])return $id;
         // No charge request can happen before this distinct, confirmed sending marker.
-        $sending=false;
-        $activityGuard=function(string$status='sending')use($issuer,$actor,$originId,$operation,$prepared):void{if(isset($prepared['reference_activity']))$this->transaction(fn()=>$this->assertReferenceActivityInOwned($issuer,$actor,$originId,$operation,$prepared,$status));};
+        $sending=false;$technicalResult=null;
+        $activityGuard=function(string$status='sending')use($issuer,$actor,$originId,$operation,$prepared,$run):void{$run(static fn()=>null);if(isset($prepared['reference_activity']))$run(fn()=>$this->assertReferenceActivityInOwned($issuer,$actor,$originId,$operation,$prepared,$status));};
         try{
             $credentials=$this->secrets($prepared['profile'],$prepared['credential'],$prepared['origin']);
             $activityGuard('authenticating');
             $token=$this->client->token($prepared['profile']['api_stage'],$credentials,$operation);
-            $this->transaction(function()use($issuer,$actor,$originId,$operation,$prepared,$id):void{
+            $run(function()use($issuer,$actor,$originId,$operation,$prepared,$id):void{
                 $this->assertReferenceActivityInOwned($issuer,$actor,$originId,$operation,$prepared,'authenticating');
                 $this->authorizeOperation($issuer,$actor,$operation);$op=$this->rows('SELECT claim_token,status,actor_id FROM '.$this->prefix.'bb_api_operations WHERE id=? AND origin_id=? FOR UPDATE',[$id,$originId])[0]??[];
                 if(($op['claim_token']??null)!==$prepared['claim']||($op['status']??null)!=='authenticating'||(int)$op['actor_id']!==$actor)throw new \DomainException('bb_api_claim_superseded');
@@ -248,11 +255,15 @@ final class ApiService
             if($operation==='amend_win')$wire=ApiReceiptWindow::payload($prepared['origin']['agreement_number'],$prepared['amendment']);
             $activityGuard();
             $response=$this->client->execute($prepared['profile']['api_stage'],$credentials,$operation,$prepared['origin']['remote_id'],$prepared['origin']['agreement_number'],$token,$wire);
-            $activityGuard();
+            // Bridge response normalization is local and cannot authorize another HTTP call.
+            // Preserve its bounded technical evidence even if consent changed in flight.
+            if($originReference===null)$activityGuard();
             $querySnapshot=$prepared['snapshot'];
             if($operation==='query')$querySnapshot=$this->queryAmendmentSnapshot($originId,$response['data'],$querySnapshot);
             if($operation==='query')$querySnapshot=$this->queryOwnNumberSnapshot($prepared['origin'],$response['data'],$querySnapshot);
             $projection=$operation==='movements'?ApiMovements::projection($response['data'],$prepared['amendment'],$prepared['origin'],$prepared['snapshot'],$prepared['agreement']):($operation==='amend_due'?self::amendmentResult($response['data'],$prepared['snapshot'],$prepared['amendment']):(in_array($operation,['amend_abat','amend_addr','amend_ref','amend_disc','amend_win','clear_disc','add_disc'],true)?[]:ApiPayload::validateResult($operation,$response['data'],$querySnapshot,$prepared['origin'],$prepared['agreement'])));
+            if($originReference!==null&&in_array($operation,['issue','query'],true))$technicalResult=self::technicalResult($response,$projection,$prepared['origin']);
+            if($originReference!==null)$activityGuard();
             if($operation==='amend_abat')$projection=ApiAbatement::acknowledged($response['data'],$prepared['snapshot'],$prepared['amendment'],ApiAbatement::fingerprint($prepared['origin'],$prepared['snapshot'],$prepared['amendment']));
             if($operation==='amend_ref')$projection=ApiOwnNumber::acknowledged($response['data'],$prepared['snapshot'],$prepared['amendment'],ApiOwnNumber::fingerprint($prepared['origin'],$prepared['snapshot'],$prepared['amendment']));
             if($operation==='amend_addr')$projection=ApiAddress::acknowledged($response['data'],$prepared['snapshot'],$prepared['amendment'],ApiAddress::fingerprint($prepared['origin'],$prepared['snapshot'],$prepared['amendment']));
@@ -266,13 +277,14 @@ final class ApiService
             if($operation==='query'){foreach(['bank_own_number','reference_id','reference_claim_hash']as$field)if(isset($querySnapshot[$field]))$projection[$field]=(string)$querySnapshot[$field];}
             if($operation==='query'&&isset($querySnapshot['amendment_id']))$projection+=['amendment_id'=>(string)$querySnapshot['amendment_id'],'bank_due_date'=>$querySnapshot['invoice']['duedate']];
             if($operation==='query'&&isset($querySnapshot['amendment_claim_hash']))$projection['amendment_claim_hash']=$querySnapshot['amendment_claim_hash'];
-            $this->completeOperation($issuer,$actor,$originId,$id,$prepared['claim'],$operation,$response['status'],$response['response_hash'],$projection,$prepared);
+            if($originReference!==null&&in_array($operation,['issue','query'],true))$technicalResult=self::technicalResult($response,$projection,$prepared['origin']);
+            $this->completeOperation($issuer,$actor,$originId,$id,$prepared['claim'],$operation,$response['status'],$response['response_hash'],$projection,$prepared,$originGuard,$guardTables,$originReference);
         }catch(\Throwable $error){
             $category=$error instanceof ApiFailure?$error->category:($error instanceof \DomainException&&preg_match('/^bb_api_[a-z_]+$/D',$error->getMessage())?substr($error->getMessage(),7):'operation_unconfirmed');
             $status=$error instanceof ApiFailure?$error->httpStatus:0;
             // Before the sending marker, no charge/cancellation request has been attempted.
             $state=!$sending?'auth_failed':(($error instanceof ApiFailure&&!$error->uncertain)?'rejected':'unknown');
-            try{$this->failOperation($issuer,$actor,$originId,$id,$prepared['claim'],$operation,$state,$category,$status);}catch(\Throwable $ignored){}
+            try{$this->failOperation($issuer,$actor,$originId,$id,$prepared['claim'],$operation,$state,$category,$status,$technicalResult);}catch(\Throwable $ignored){}
             // A reserved origin and possibly an external effect survive a process/commit failure. Never repeat POST automatically.
             throw new \RuntimeException($sending?'bb_api_result_unconfirmed_query_origin':'bb_api_authentication_not_submitted');
         }
@@ -284,7 +296,7 @@ final class ApiService
         if(!in_array($operation,['issue','cancel','amend_due','amend_abat','amend_addr','amend_ref','amend_disc','amend_win','clear_disc','add_disc'],true))return;$invoice=(int)$origin['invoice_id'];$position=(new \CompanyInvoiceBalance($this->db,$this->prefix))->inOwned($issuer,$actor,$invoice);$currency=$this->rows('SELECT currency FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;if(!$currency)throw new \DomainException('bb_api_invoice_not_eligible');(new \CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($currency['currency']);
         $error=match($operation){'cancel'=>'bb_api_cancel_financial_history','amend_due'=>'bb_api_amendment_financial_history','amend_abat'=>'bb_api_abatement_financial_history','amend_ref'=>'bb_api_reference_financial_history','amend_addr'=>'bb_api_address_financial_history','amend_disc'=>'bb_api_discount_amend_financial_history',default=>'bb_api_invoice_not_eligible'};if($position['receivable']!==$position['total'])throw new \DomainException($error);foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])if($this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice]))throw new \DomainException($error);
     }
-    private function completeOperation(int $issuer,int $actor,int $originId,int $id,string $claim,string $operation,int $http,string $responseHash,array $result,?array $referencePrepared=null):void
+    private function completeOperation(int $issuer,int $actor,int $originId,int $id,string $claim,string $operation,int $http,string $responseHash,array $result,?array $referencePrepared=null,?callable $originGuard=null,array $guardTables=[],?string $originReference=null):void
     {
         $this->transaction(function()use($issuer,$actor,$originId,$id,$claim,$operation,$http,$responseHash,$result,$referencePrepared):void{
             // A query/reference proof is authoritative only in the context that authorized each I/O.
@@ -315,20 +327,79 @@ final class ApiService
             $this->audit($issuer,(int)$origin['connection_id'],$actor,'api_result_validated','api_operation',$id);
             $saved=$this->rows('SELECT status,http_status,response_hash,result_json FROM '.$this->prefix.'bb_api_operations WHERE id=?',[$id])[0]??[];
             if(($saved['status']??null)!=='validated'||(int)($saved['http_status']??0)!==$http||($saved['response_hash']??null)!==$responseHash||($saved['result_json']??null)!==$json)throw new \RuntimeException('issuer_bb_api_write_unconfirmed');
-        });
+        },$guardTables,fn()=>ApiOriginPolicy::guard($this->db,$this->prefix,$issuer,$originId,$originReference,$originGuard,$guardTables));
     }
-    private function failOperation(int $issuer,int $actor,int $originId,int $id,string $claim,string $operation,string $state,string $category,int $http):void
+    /** Only already-normalized projection; never raw JSON, credentials, payer body or headers. */
+    private static function technicalResult(array $response,array $projection,array $origin):array
     {
-        $this->transaction(function()use($issuer,$actor,$originId,$id,$claim,$operation,$state,$category,$http):void{
-            $op=$this->rows('SELECT claim_token,status,actor_id FROM '.$this->prefix.'bb_api_operations WHERE id=? AND origin_id=? FOR UPDATE',[$id,$originId])[0]??[];
-            if(($op['claim_token']??null)!==$claim||!in_array($op['status']??null,['authenticating','sending'],true)||(int)$op['actor_id']!==$actor)return;
-            $origin=$this->rows('SELECT connection_id FROM '.$this->prefix.'bb_origins WHERE id=? AND issuer_id=? FOR UPDATE',[$originId,$issuer])[0]??null;if(!$origin)throw new \DomainException('bb_api_origin_unavailable');
+        $json=json_encode(['technical_only'=>true,'projection'=>$projection],JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
+        if(strlen($json)>32768||!is_int($response['status'])||$response['status']<200||$response['status']>299||!preg_match('/^[a-f0-9]{64}$/D',$response['response_hash']))throw new \DomainException('bb_api_technical_result_invalid');
+        return ['json'=>$json,'http'=>$response['status'],'hash'=>$response['response_hash'],'origin'=>array_intersect_key($origin,array_flip(['connection_id','account_id','environment','remote_id','payload_hash']))];
+    }
+    private function failOperation(int $issuer,int $actor,int $originId,int $id,string $claim,string $operation,string $state,string $category,int $http,?array $technicalResult=null):void
+    {
+        $this->transaction(function()use($issuer,$actor,$originId,$id,$claim,$operation,$state,$category,$http,$technicalResult):void{
+            $op=$this->rows('SELECT claim_token,status,actor_id,operation FROM '.$this->prefix.'bb_api_operations WHERE id=? AND origin_id=? FOR UPDATE',[$id,$originId])[0]??[];
+            if(($op['claim_token']??null)!==$claim||!in_array($op['status']??null,['authenticating','sending'],true)||(int)$op['actor_id']!==$actor||($op['operation']??null)!==$operation)return;
+            $origin=$this->rows('SELECT connection_id,account_id,environment,remote_id,payload_hash,state FROM '.$this->prefix.'bb_origins WHERE id=? AND issuer_id=? FOR UPDATE',[$originId,$issuer])[0]??null;if(!$origin)throw new \DomainException('bb_api_origin_unavailable');
+            if($technicalResult!==null){
+                if(($op['status']??null)!=='sending')throw new \DomainException('bb_api_technical_claim_conflict');
+                foreach($technicalResult['origin'] as $field=>$value)if((string)$origin[$field]!== (string)$value)throw new \DomainException('bb_api_technical_origin_changed');
+                // Quarantined observation: deliberately not a validated proof or payment source.
+                $state='unknown';$http=$technicalResult['http'];$category='technical_result_quarantined';
+                \IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'bb_api_operations SET response_hash=?,result_json=? WHERE id=?',[$technicalResult['hash'],$technicalResult['json'],$id]);
+                $saved=$this->rows('SELECT response_hash,result_json FROM '.$this->prefix.'bb_api_operations WHERE id=?',[$id])[0]??[];
+                if(($saved['response_hash']??null)!==$technicalResult['hash']||($saved['result_json']??null)!==$technicalResult['json'])throw new \RuntimeException('issuer_bb_api_write_unconfirmed');
+            }
             $category=preg_match('/^[a-z_]{1,48}$/D',$category)?$category:'operation_unconfirmed';
             \IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'bb_api_operations SET status=?,http_status=?,failure_category=?,updated_at=? WHERE id=?',[$state,$http,$category,gmdate('Y-m-d H:i:s'),$id]);
             if($operation==='issue')\IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'bb_origins SET state=? WHERE id=? AND issuer_id=?',[$state==='auth_failed'?'api_auth_failed':($state==='rejected'?'api_registration_rejected':'api_unknown'),$originId,$issuer]);
+            elseif($technicalResult!==null&&$operation==='query'&&!in_array($origin['state'],['api_settlement_observed','api_cancelled_confirmed','api_conflict_review'],true))\IssuerStorage::query($this->db,"UPDATE ".$this->prefix."bb_origins SET state='api_unknown' WHERE id=? AND issuer_id=?",[$originId,$issuer]);
             $this->audit($issuer,(int)$origin['connection_id'],$actor,'api_call_'.$state,'api_operation',$id);
         });
     }
+    /** Read-only checkout projection inside a caller-owned issuer transaction. Never queries the bank. */
+    public function checkoutInstrumentInOwnedTransaction(int $issuer,int $actor,int $originId):array
+    {
+        \IssuerTransaction::assertOwned($this->db,$this->prefix,self::receiptTables());
+        $this->authorize($issuer,$actor,'api_query',true);
+        [$origin,$stored,$snapshot,$profile]=$this->loadOrigin($issuer,$originId);
+        if($origin['state']!=='api_registered'||$origin['active_slot']===null)throw new \DomainException('bb_checkout_unavailable');
+        $invoice=$this->rows('SELECT id,clientid,total,status,duedate,currency FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$origin['invoice_id'],$issuer])[0]??null;
+        if(!$invoice||!in_array((int)$invoice['status'],[1,4],true)
+            ||(int)$invoice['clientid']!==(int)$snapshot['invoice']['clientid']
+            ||(int)$invoice['currency']!==(int)$snapshot['invoice']['currency_id']
+            ||\app\services\InvoicePaymentWriter::minorUnits($invoice['total'])!==\app\services\InvoicePaymentWriter::minorUnits($snapshot['invoice']['total'])
+            ||$invoice['duedate']!==$snapshot['invoice']['duedate'])throw new \DomainException('bb_checkout_unavailable');
+        foreach([['invoicepaymentrecords','invoiceid'],['credits','invoice_id']] as [$table,$column])
+            if($this->rows('SELECT id FROM '.$this->prefix.$table.' WHERE '.$column.'=? FOR UPDATE',[$invoice['id']]))throw new \DomainException('bb_checkout_unavailable');
+        // Amendments, cancellation and uncertain operations require a freshly reviewed instrument.
+        if($this->rows("SELECT id FROM ".$this->prefix."bb_api_operations WHERE origin_id=? AND (operation NOT IN ('issue','query') OR status<>'validated') FOR UPDATE",[$originId]))throw new \DomainException('bb_checkout_review_required');
+        // Any adverse/partial bank observation remains a review barrier, even after a later normal query.
+        foreach($this->rows("SELECT result_json FROM ".$this->prefix."bb_api_operations WHERE origin_id=? AND operation='query' FOR UPDATE",[$originId]) as $query){
+            $observed=json_decode($query['result_json'],true,32,JSON_THROW_ON_ERROR);
+            if(($observed['codigoEstadoTituloCobranca']??null)!=='1')throw new \DomainException('bb_checkout_review_required');
+            foreach(['valorPagamentoParcialTitulo','valorPagoSacado','valorCreditoCedente'] as $field)
+                if(isset($observed[$field])&&\app\services\InvoicePaymentWriter::minorUnits($observed[$field])!==0)throw new \DomainException('bb_checkout_review_required');
+        }
+        $ops=$this->rows("SELECT id,result_json FROM ".$this->prefix."bb_api_operations WHERE origin_id=? AND operation='issue' AND status='validated' FOR UPDATE",[$originId]);
+        if(count($ops)!==1)throw new \DomainException('bb_checkout_unavailable');
+        $result=json_decode($ops[0]['result_json'],true,16,JSON_THROW_ON_ERROR);
+        if(($result['bank_state']??null)!=='registration_accepted'||($result['numero']??null)!==$origin['remote_id']
+            ||!preg_match('/^0019[0-9]{40}$/D',$result['codigoBarraNumerico']??'')
+            ||!preg_match('/^[0-9]{47}$/D',$result['linhaDigitavel']??'')
+            ||substr($result['codigoBarraNumerico'],19)!=='000000'.substr($origin['remote_id'],3).'17'
+            ||ApiPayload::line($result['codigoBarraNumerico'])!==$result['linhaDigitavel']
+            ||(int)substr($result['codigoBarraNumerico'],9,10)!==\app\services\InvoicePaymentWriter::minorUnits($invoice['total']))throw new \DomainException('bb_checkout_unavailable');
+        $factor=1000+(int)(new \DateTimeImmutable('2025-02-22'))->diff(new \DateTimeImmutable($invoice['duedate']))->format('%r%a');
+        if($factor<1000||$factor>9999||substr($result['codigoBarraNumerico'],5,4)!==str_pad((string)$factor,4,'0',STR_PAD_LEFT))throw new \DomainException('bb_checkout_unavailable');
+        $out=['origin_id'=>$originId,'invoice_id'=>(int)$invoice['id'],'client_id'=>(int)$invoice['clientid'],
+            'environment'=>$origin['environment'],'profile_id'=>(int)$profile['id'],'line'=>$result['linhaDigitavel'],
+            'barcode'=>$result['codigoBarraNumerico'],'amount'=>$snapshot['invoice']['total'],'due_date'=>$invoice['duedate']];
+        $out['revision']=hash('sha256',json_encode([$out,$origin['scope_key'],$profile['profile_hash'],$ops[0]['id']],JSON_THROW_ON_ERROR));
+        return $out;
+    }
+
     public function overview($issuer,$actor):array
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);

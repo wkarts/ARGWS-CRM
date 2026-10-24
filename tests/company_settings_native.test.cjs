@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const view = fs.readFileSync(path.join(root, 'application/views/admin/settings/company_scoped.php'), 'utf8');
-const css = fs.readFileSync(path.join(root, 'assets/css/company-settings-native.css'), 'utf8');
+const presentation = fs.readFileSync(path.join(root, 'application/views/admin/settings/presentation_layout.php'), 'utf8');
 const catalog = fs.readFileSync(path.join(root, 'application/services/CompanySettingsCatalog.php'), 'utf8');
 test('native Settings sidebar covers every admitted group without global hooks', () => {
   const admitted = [...catalog.slice(catalog.indexOf('public static function groups'), catalog.indexOf('public static function fields')).matchAll(/'([a-z_]+)'\s*=>/g)].map(m => m[1]);
@@ -13,7 +13,7 @@ test('native Settings sidebar covers every admitted group without global hooks',
   for (const key of admitted) assert.equal((sections.match(new RegExp("'" + key + "'", 'g')) || []).length, 1, key);
   assert.match(view, /isset\(\$groups\[\$key\], \$company_urls\[\$key\]\)/);
   assert.match(view, /array_diff\(array_keys\(\$groups\), \$listedGroups\)/, 'new admitted groups must not disappear');
-  assert.match(view, /aria-label="Seções de definições"/);
+  assert.match(presentation, /aria-label="Seções de definições"/);
   assert.match(view, /panel_s/);
   assert.match(view, /panel-footer text-right/);
   assert.doesNotMatch(view, /init_head\(|init_tail\(|hooks\(\)|company-settings-nav/);
@@ -36,11 +36,12 @@ test('existing settings action, authorization, CSRF and revision contracts are r
   assert.match(form, /name="clear_smtp_password"/);
   for (const route of ['company_google_mail_oauth', 'company_microsoft_mail_oauth', 'company_connect_api']) assert.ok(view.includes(route));
 });
-test('presentation overrides are scoped to Settings, preserving shared shell', () => {
-  assert.match(css, /\.company-native-settings/);
-  assert.doesNotMatch(css, /#header|#menu|body\s*\{|position:\s*fixed/);
-  assert.match(css, /focus-visible/);
-  assert.match(view, /company-settings-native\.css/);
+test('native and scoped use one pure native presentation component without approximate CSS', () => {
+  const native=fs.readFileSync(path.join(root,'application/views/admin/settings/all.php'),'utf8');
+  for(const source of [view,native]) assert.match(source,/require __DIR__\.'\/presentation_layout\.php'/);
+  assert.doesNotMatch(view,/company-settings-native\.css/);
+  assert.doesNotMatch(presentation,/init_head\(|init_tail\(|hooks\(\)|get_option\(|CompanySettingsRuntime|\$this/);
+  for(const cls of ['col-xs-12 col-md-12 col-lg-10','col-md-4 col-lg-3','col-md-8 col-lg-9','tw-flex tw-flex-col tw-gap-6','fa-fw fa-lg']) assert.ok(presentation.includes(cls),cls);
 });
 test('certificate entry uses only active company and settings edit permission', () => {
   const native = fs.readFileSync(path.join(root, 'application/views/admin/settings/includes/company.php'), 'utf8');
@@ -78,4 +79,16 @@ test('standalone shared-shell fixtures declare framework dependencies and fail b
  assert.doesNotMatch(guard,/error_reporting\(|ini_set\(/,'never suppress renderer diagnostics');
  const common=fs.readFileSync(path.join(root,'tests/issuers_core_support.php'),'utf8');
  assert.match(common,/'router' => new class \{ public function fetch_class\(\)/);
+});
+
+test('shared envelope validates navigation DTO and preserves trusted server form slots',()=>{
+ assert.match(presentation,/Invalid settings item/);
+ assert.match(presentation,/htmlspecialchars/);
+ assert.match(presentation,/\$settingsPresentation\['content'\]/);
+ assert.doesNotMatch(presentation,/<form\b|<\/form>|<script\b|include\s|require\s/,'component owns neither actions nor runtime');
+ const fixture=fs.readFileSync(path.join(root,'tests/company_settings_layout.php'),'utf8');
+ for(const text of ['settings/all.php','Native hooks changed','javascript:alert(1)','//external.invalid','Unsafe DTO accepted','strictFixtureRender']) assert.ok(fixture.includes(text));
+ const browser=fs.readFileSync(path.join(root,'tests/company_settings_layout.browser.cjs'),'utf8');
+ for(const text of ['[1280,768,390]','company_settings_native.php','company_settings_layout.php','getComputedStyle','form form','new FormData','settings-envelope-synthetic-']) assert.ok(browser.includes(text));
+ assert.doesNotMatch(browser,/test\.skip|force:\s*true/);
 });
