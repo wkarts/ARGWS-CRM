@@ -32,7 +32,9 @@ final class PigeBridgeExternalConfiguration
         $issuer=(int)$scope['issuer_id'];$actor=$mapping['actor_id'];$acl=new IssuerResourceAccess($this->db,$this->prefix);
         foreach(array_merge(['view','api_issue','api_query'],$mapping['allow_reconcile']?['reconcile']:[]) as $cap)if(!$acl->can($issuer,$actor,'banco_brasil',$cap))throw new DomainException('pige_external_actor_denied');
         $module=$this->rows('SELECT active,installed_version FROM '.$this->prefix.'modules WHERE module_name=?',['banco_brasil'])[0]??[];
-        if((int)($module['active']??0)!==1||($module['installed_version']??null)!=='1.2.5')throw new DomainException('pige_external_module_required');
+        // The bridge consumes the 1.2.5 API contract; later compatible patch
+        // releases must remain eligible instead of being rejected as stale.
+        if((int)($module['active']??0)!==1||version_compare((string)($module['installed_version']??'0'),'1.2.5','<'))throw new DomainException('pige_external_module_required');
         $account=$this->rows('SELECT * FROM '.$this->prefix.'bb_connections WHERE id=? FOR UPDATE',[$mapping['account_row']])[0]??null;
         $profile=$this->rows('SELECT * FROM '.$this->prefix.'bb_api_profiles WHERE id=? FOR UPDATE',[$mapping['profile_row']])[0]??null;
         $credential=$this->rows('SELECT id FROM '.$this->prefix.'bb_api_credentials WHERE profile_id=? AND issuer_id=? ORDER BY id DESC LIMIT 1 FOR UPDATE',[$mapping['profile_row'],$issuer])[0]??null;
