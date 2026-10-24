@@ -13,7 +13,27 @@ $companyIdentityLabels=[
  'company_vat'=>'company_vat_number',
 ];
 foreach($companyIdentityLabels as $name=>$label){
-    echo render_input('settings['.$name.']',$label,$companyIdentityOption($name));
+    if (function_exists('_l') && function_exists('render_input')) {
+        echo render_input('settings['.$name.']',$label,$companyIdentityOption($name));
+        continue;
+    }
+    // The isolated native Settings route intentionally does not load the
+    // legacy language helper. Keep this shared component usable there without
+    // reintroducing global option/model hydration just for presentation.
+    $fallbackLabels=[
+        'settings_sales_company_name'=>'Nome da empresa','company_vat_number'=>'CPF/CNPJ',
+        'settings_sales_address'=>'Endereço','settings_sales_city'=>'Cidade',
+        'billing_state'=>'Estado','settings_sales_country_code'=>'País',
+        'settings_sales_postal_code'=>'CEP','settings_sales_phonenumber'=>'Telefone',
+    ];
+    $inputName='settings['.$name.']';
+    $inputId='company-settings-'.preg_replace('/[^a-z0-9_-]+/i','-',(string)$name);
+    $inputValue=function_exists('set_value')?set_value($inputName,$companyIdentityOption($name),false):$companyIdentityOption($name);
+    $safe=static fn($value)=>htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
+    echo '<div class="form-group" app-field-wrapper="'.$safe($inputName).'">';
+    echo '<label for="'.$safe($inputId).'" class="control-label">'.$safe($fallbackLabels[$label]??$label).'</label>';
+    echo '<input type="text" id="'.$safe($inputId).'" name="'.$safe($inputName).'" class="form-control" value="'.$safe($inputValue).'">';
+    echo '</div>';
 }
 unset($companyIdentityLabels);
 ?>

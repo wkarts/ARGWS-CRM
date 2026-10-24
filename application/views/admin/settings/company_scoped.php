@@ -96,7 +96,10 @@ ob_start();
                     // Native field markup and labels; data remains the controller's
                     // exact scoped projection, never a callback into global options.
                     $companyIdentityOption=static function($name)use($values){if(!array_key_exists($name,$values)){throw new LogicException('Missing scoped company field');}return $values[$name];};
-                    ?><div class="alert alert-info"><?= _l('settings_sales_company_info_note'); ?></div><?php
+                    $companyIdentityInfo = function_exists('_l')
+                        ? (string) _l('settings_sales_company_info_note')
+                        : 'Esta informação será exibida nas faturas, orçamentos, pagamentos e outros documentos em PDF nos quais as informações da empresa são necessárias.';
+                    ?><div class="alert alert-info"><?= $escape($companyIdentityInfo); ?></div><?php
                     require APPPATH.'views/admin/settings/includes/company_identity_fields.php';
                     unset($companyIdentityOption);
                     ?><p class="text-muted">Campos personalizados globais e o formato livre de apresentação ainda não têm configuração isolada por empresa. Nenhum valor de outra empresa é carregado ou alterado aqui.</p><?php
