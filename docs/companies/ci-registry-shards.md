@@ -19,13 +19,14 @@ counts. Tests freeze the ten external argv entries and their shard-1 conditions,
 proving each runs once per PHP version. No old main PHP invocation was removed.
 Preflight and the legacy audit's exclusive database remain in the workflow.
 
-Four round-robin shards receive 118 commands each, preserving relative order
-within each shard. Every command still runs in a fresh process with the existing
+Four frozen cost-balanced shards receive 118 commands each, preserving relative
+order within each shard. The plan is generated deterministically from paired
+PHP 8.1/8.5 command timings; see [timing baseline and limitations](ci-registry-balance.md). Every command still runs in a fresh process with the existing
 environment and repository working directory. Each matrix job has its own
 container and MySQL service; no concurrent workers share a test database between
 shards. A scenario's own intentional concurrency is unchanged.
 
-Tests verify the original manifest digest, exact union, no duplicate argv,
+Tests verify the original manifest digest, reproducible frozen assignments, exact union, no duplicate argv,
 arguments (including `--tracking`), fail-fast behavior, and timing output.
 When intentionally adding coverage, add its argv and update the inventory test;
 never remove a command merely to reduce execution time. Do not cache test results

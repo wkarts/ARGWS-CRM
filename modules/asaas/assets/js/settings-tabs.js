@@ -28,7 +28,10 @@
     Array.prototype.forEach.call(container.querySelectorAll('[data-asaas-profile-note]'), function (note) {
       profileNotes[note.getAttribute('data-asaas-profile-note')] = note;
     });
-    var wrapper = doc.createElement('div'); wrapper.className = 'horizontal-scrollable-tabs panel-full-width-tabs mtop15 mbot15';
+    // This wrapper is dynamic: the native global ready callback may already have
+    // scanned the page. Keep it outside that scan until our own queued ready
+    // callback installs exactly one native scroll controller.
+    var wrapper = doc.createElement('div'); wrapper.className = 'panel-full-width-tabs mtop15 mbot15';
     ['left', 'right'].forEach(function (direction) {
       var arrow = doc.createElement('div'), icon = doc.createElement('i');
       arrow.className = 'scroller arrow-' + direction;
@@ -133,6 +136,17 @@
       });
     });
     container.appendChild(wrapper); container.appendChild(content);
+    if (root.jQuery && root.jQuery.fn.horizontalTabs) {
+      root.jQuery(function () {
+        if (wrapper.getAttribute('data-asaas-scroll-ready') === '1') return;
+        wrapper.classList.add('horizontal-scrollable-tabs');
+        root.jQuery(wrapper).horizontalTabs();
+        wrapper.setAttribute('data-asaas-scroll-ready', '1');
+        root.jQuery(root).trigger('resize');
+        if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { root.jQuery(root).trigger('resize'); });
+      });
+    } else { wrapper.classList.add('horizontal-scrollable-tabs'); }
+
     if (root.jQuery) {
       root.jQuery(nav).on('shown.bs.tab', 'a[data-toggle="tab"]', function () {
         synchronize(this.id.slice('asaas-settings-tab-'.length));

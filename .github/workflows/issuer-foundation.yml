@@ -35,6 +35,7 @@ on:
       - docs/module-migrations.md
       - docs/issuer-essential-module.md
       - scripts/ci/run-company-registry-shard.py
+      - scripts/ci/plan-company-registry-shards.py
       - tests/ci/**
       - docker/ci/**
       - .github/workflows/issuer-foundation.yml
@@ -73,6 +74,7 @@ on:
       - docs/module-migrations.md
       - docs/issuer-essential-module.md
       - scripts/ci/run-company-registry-shard.py
+      - scripts/ci/plan-company-registry-shards.py
       - tests/ci/**
       - docker/ci/**
       - .github/workflows/issuer-foundation.yml

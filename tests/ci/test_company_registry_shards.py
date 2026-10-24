@@ -42,7 +42,7 @@ class RegistryShardsTest(unittest.TestCase):
             return subprocess.CompletedProcess(argv, 9)
         with tempfile.TemporaryDirectory() as directory:
             evidence = Path(directory) / 'timings.jsonl'
-            self.assertEqual(runner.run([['php', 'a']] * 9, 1, evidence, execute), 9)
+            self.assertEqual(runner.run([['php', 'a']] * 9, 1, evidence, execute, assignments=[1,2,3,4,1,2,3,4,1]), 9)
             self.assertEqual(len(calls), 1)
             self.assertFalse(calls[0][1]['check'])
             self.assertNotIn('shell', calls[0][1])
@@ -55,11 +55,11 @@ class RegistryShardsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             evidence = Path(directory) / 'timings.jsonl'
             commands = [['php', str(i)] for i in range(9)]
-            self.assertEqual(runner.run(commands, 1, evidence, lambda argv, **kw: subprocess.CompletedProcess(argv, 0)), 0)
+            self.assertEqual(runner.run(commands, 1, evidence, lambda argv, **kw: subprocess.CompletedProcess(argv, 0), assignments=[1,2,3,4,1,2,3,4,1]), 0)
             self.assertEqual([json.loads(line)['index'] for line in evidence.read_text().splitlines()], [0, 4, 8])
             def missing(*args, **kwargs):
                 raise FileNotFoundError('synthetic')
-            self.assertEqual(runner.run(commands, 1, evidence, missing), 127)
+            self.assertEqual(runner.run(commands, 1, evidence, missing, assignments=[1,2,3,4,1,2,3,4,1]), 127)
 
     def test_external_preflight_and_audit_run_exactly_once_per_php(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
@@ -142,6 +142,40 @@ class RegistryShardsTest(unittest.TestCase):
         self.assertEqual(source.count('      - docker/ci/**'), 2)
         self.assertNotIn('credentials:', shards, 'public CI image must be pulled anonymously')
         self.assertNotIn('packages:', source, 'consumer needs no registry credential permission')
+
+    def test_frozen_plan_is_reproducible_and_uses_both_versions(self):
+        planner_spec = importlib.util.spec_from_file_location('planner', ROOT / 'scripts/ci/plan-company-registry-shards.py')
+        planner = importlib.util.module_from_spec(planner_spec)
+        planner_spec.loader.exec_module(planner)
+        baseline = json.loads((ROOT / 'tests/ci/company-registry-timing-baseline.json').read_text())
+        expected = json.loads(runner.PLAN.read_text())
+        self.assertEqual(planner.build_plan(runner.load_commands(), baseline), expected)
+        self.assertEqual(len(baseline['artifacts']), 8)
+        for php in ['8.1', '8.5']:
+            for shard in range(1, 5):
+                artifacts = [a for a in baseline['artifacts'] if a['php'] == php and a['shard'] == shard]
+                self.assertEqual(len(artifacts), 1)
+                self.assertEqual(artifacts[0]['commands'], 118)
+                self.assertEqual(sum(t for i, t in enumerate(baseline['milliseconds'][php]) if i % 4 == shard-1), artifacts[0]['milliseconds'])
+                self.assertRegex(artifacts[0]['zip_sha256'], r'^[a-f0-9]{64}$')
+        self.assertEqual(planner.balanced_assignment([10] * 8), [1,2,3,4,1,2,3,4])
+        changed = json.loads(json.dumps(baseline))
+        changed['manifest_sha256'] = 'invalid'
+        with self.assertRaises(ValueError):
+            planner.build_plan(runner.load_commands(), changed)
+
+    def test_invalid_or_stale_plan_cannot_silently_change_coverage(self):
+        commands = runner.load_commands()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'plan.json'
+            path.write_text(json.dumps({'manifest_sha256': 'wrong', 'assignments': []}))
+            with self.assertRaises(ValueError):
+                runner.load_assignment(commands, path)
+        for assignments in [None, [], [1] * (len(commands)-1), [5] * len(commands), [True] * len(commands)]:
+            if assignments is None:
+                continue
+            with self.assertRaises(ValueError):
+                runner.select_commands(commands, 1, assignments)
 
     def test_workflow_preserves_matrix_and_fail_closed_required_names(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()

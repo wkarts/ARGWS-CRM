@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run unchanged registry commands in independent CI jobs, never parallel in one DB."""
 import argparse
+import hashlib
 import json
 import subprocess
 import time
@@ -8,6 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / 'tests/ci/company-registry-commands.json'
+PLAN = ROOT / 'tests/ci/company-registry-shard-plan.json'
 SHARDS = 4
 
 
@@ -30,14 +32,30 @@ def load_commands(path=MANIFEST):
     return commands
 
 
-def select_commands(commands, shard):
+def load_assignment(commands, path=PLAN):
+    plan = json.loads(Path(path).read_text())
+    digest = hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest()
+    if plan.get('manifest_sha256') != digest or plan.get('model') != 'paired-geometric-ms-capacity-lpt-v1':
+        raise ValueError('Frozen shard plan does not match command manifest/model')
+    assignments = plan.get('assignments')
+    if not isinstance(assignments, list) or len(assignments) != len(commands) or any(type(s) is not int for s in assignments) or any(assignments.count(s) != len(commands) // SHARDS for s in range(1, SHARDS + 1)):
+        raise ValueError('Frozen plan must retain equal nonempty shard capacities')
+    return assignments
+
+
+def select_commands(commands, shard, assignments=None):
     if shard not in range(1, SHARDS + 1):
         raise ValueError('Shard must be 1..4')
-    return [(index, command) for index, command in enumerate(commands) if index % SHARDS == shard - 1]
+    if assignments is None:
+        assignments = load_assignment(commands)
+    if not isinstance(assignments, list) or len(assignments) != len(commands) or any(type(s) is not int or s not in range(1, SHARDS + 1) for s in assignments):
+        raise ValueError('Every command must have exactly one valid shard assignment')
+    # Enumerating the original manifest preserves relative order within each shard.
+    return [(index, command) for index, command in enumerate(commands) if assignments[index] == shard]
 
 
-def run(commands, shard, timings, execute=subprocess.run):
-    selected = select_commands(commands, shard)
+def run(commands, shard, timings, execute=subprocess.run, assignments=None):
+    selected = select_commands(commands, shard, assignments)
     Path(timings).parent.mkdir(parents=True, exist_ok=True)
     with Path(timings).open('w') as evidence:
         for index, command in selected:

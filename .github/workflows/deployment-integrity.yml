@@ -2,15 +2,15 @@ name: Integridade das stacks ARGWS CRM
 on:
   pull_request:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
-    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/company_context_tabs_browser.cjs, tests/asaas_settings*, tests/ci_preflight_order.test.cjs, tests/company_shell_browser.cjs, tests/company_identity_browser.cjs, tests/company_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/company_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/ci/portal_*, tests/ci/test_portal_pilot.py, tests/company_shell_browser.cjs, tests/company_identity_browser.cjs, tests/company_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
   push:
     branches: [develop, main]
-    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/company_context_tabs_browser.cjs, tests/asaas_settings*, tests/ci_preflight_order.test.cjs, tests/company_shell_browser.cjs, tests/company_identity_browser.cjs, tests/company_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
+    paths: [deploy/**, tools/argws-crm-deployer/**, scripts/package-release.py, scripts/package-deploy.py, scripts/apply-release-version.py, scripts/cleanup_actions_cache.py, tests/test_package_release.py, tests/test_package_deploy.py, tests/test_release_version.py, tests/test_deployer_release_contract.py, tests/test_actions_cache_cleanup.py, tests/test_docker_provisioning.py, tests/test_issuer_browser_environment.py, tests/docker_provision_smoke.sh, tests/issuers_browser_smoke.cjs, tests/company_context_tabs_browser.cjs, tests/asaas_settings*, tests/asaas_native_scroll*, tests/ci_preflight_order.test.cjs, tests/ci/portal_*, tests/ci/test_portal_pilot.py, tests/company_shell_browser.cjs, tests/company_identity_browser.cjs, tests/company_identity_fixture.php, assets/js/company-identity.js, assets/css/company-identity.css, assets/css/company-shell.css, tests/issuers_standalone_http_smoke.sh, tests/companies/**, tests/companies*.cjs, tests/banco_brasil*.cjs, modules/asaas/**, modules/banco_brasil/**, install/**, application/**, .github/workflows/deployment-integrity.yml, Dockerfile, .dockerignore, docker/**, compose.yaml, .github/workflows/actions-cache-retention.yml, .github/workflows/deployer-release.yml, .github/workflows/release-packages.yml]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  validate:
+  serial:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -22,6 +22,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Validar contrato do piloto portal antes de Docker
+        run: python3 tests/ci/test_portal_pilot.py
       - name: Validar tradução dos modelos HTML
         run: node --test tests/email_templates_ptbr.test.cjs
       - name: Validar contratos das integrações financeiras e SMS
@@ -102,6 +104,7 @@ jobs:
         env:
           ASAAS_UI_ARTIFACTS: /tmp/asaas-settings-evidence
         run: |
+          node tests/asaas_native_scroll.browser.cjs
           node tests/asaas_settings_tabs.browser.cjs
           node tests/asaas_operations_panel.browser.cjs
       - name: Preservar capturas sintéticas das abas Asaas
@@ -146,3 +149,61 @@ jobs:
           docker compose --env-file deploy/production/.env.example -f deploy/production/compose.yaml config --quiet
           ARGWS_DB_HOST=database.example.invalid ARGWS_DB_NAME=argws_crm ARGWS_DB_USER=argws_crm ARGWS_DB_PASSWORD=ci-test-password docker compose --env-file "$out/production/.env" -f compose.yaml config --quiet
           docker compose --env-file "$out/production/.env" -f compose.yaml config --quiet
+
+  portal-pilot:
+    # Temporary evidence job: never replaces or skips the serial validate job.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validar contrato do piloto antes de Docker
+        run: python3 tests/ci/test_portal_pilot.py
+      - name: Preparar ferramentas isoladas do piloto
+        run: |
+          mkdir -p "$RUNNER_TEMP/ci-browser"
+          cp docker/ci/package.json docker/ci/package-lock.json "$RUNNER_TEMP/ci-browser/"
+          npm ci --prefix "$RUNNER_TEMP/ci-browser" --ignore-scripts
+          "$RUNNER_TEMP/ci-browser/node_modules/.bin/playwright" install --with-deps chromium
+          echo "NODE_PATH=$RUNNER_TEMP/ci-browser/node_modules" >> "$GITHUB_ENV"
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
+      - name: Executar prefixo real e piloto em serviço MySQL próprio
+        id: portal_pilot_execution
+        env:
+          ARGWS_ISSUER_BROWSER_SMOKE: '1'
+          ISSUER_SMOKE_MODE: portal-pilot
+          ISSUERS_BROWSER_ARTIFACTS: /tmp/issuer-portal-pilot
+        run: bash tests/docker_provision_smoke.sh
+      - name: Preservar evidências do piloto
+        if: always() && (steps.portal_pilot_execution.outcome == 'success' || steps.portal_pilot_execution.outcome == 'failure')
+        uses: actions/upload-artifact@v4
+        with:
+          name: issuer-portal-pilot
+          path: /tmp/issuer-portal-pilot
+          if-no-files-found: error
+          retention-days: 1
+  validate:
+    needs: [serial, portal-pilot]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Exigir ambos os jobs completos sem skip ou cancelamento
+        env:
+          SERIAL_RESULT: ${{ needs.serial.result }}
+          PILOT_RESULT: ${{ needs.portal-pilot.result }}
+        run: test "$SERIAL_RESULT" = success && test "$PILOT_RESULT" = success
+      - uses: actions/download-artifact@v4
+        with:
+          name: issuer-native-browser
+          path: /tmp/portal-serial-evidence
+      - uses: actions/download-artifact@v4
+        with:
+          name: issuer-portal-pilot
+          path: /tmp/portal-pilot-evidence
+      - name: Comparar cobertura e footprint sem autorizar retirada do serial
+        run: python3 tests/ci/portal_evidence.py compare /tmp/portal-serial-evidence/portal-chain/proof.json /tmp/portal-pilot-evidence/portal-chain/proof.json

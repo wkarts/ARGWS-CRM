@@ -131,14 +131,37 @@ async function run(env = process.env) {
           check(await pane.locator('#asaas-settings-panel-general [data-asaas-profile="' + environment + '"]').count() === 1, 'real independent payment profile: ' + environment);
         }
         check(await pane.evaluate(el => el.querySelector('[data-asaas-webhook-admin-url]').getBoundingClientRect().bottom <= el.querySelector('.horizontal-scrollable-tabs').getBoundingClientRect().top), 'native heading and separator keep management link clear of tabs');
+        phase = 'await native tab fonts and local scroll controller';
+        await page.evaluate(() => document.fonts.ready);
+        await pane.locator('[data-asaas-scroll-ready="1"]').waitFor();
+        const tabGeometry = () => pane.evaluate(el => {
+          const nav = el.querySelector('.nav-tabs-horizontal');
+          const arrow = direction => {
+            const item=el.querySelector('.arrow-'+direction), box=item.getBoundingClientRect();
+            const handlers=window.jQuery?._data(item,'events')?.click || [];
+            return {visible:box.width>0&&box.height>0, disabled:item.classList.contains('disabled'), nativeHandlers:handlers.filter(h=>h.namespace==='horizontalTabs').length};
+          };
+          return {scrollWidth:nav.scrollWidth, clientWidth:nav.clientWidth, scrollLeft:nav.scrollLeft, left:arrow('left'), right:arrow('right')};
+        });
         if (width === 390 && await pane.locator('.nav-tabs-horizontal').evaluate(el => el.scrollWidth > el.clientWidth)) {
           const scrollable = pane.locator('.nav-tabs-horizontal');
           check(await scrollable.evaluate(el => el.scrollWidth >= el.clientWidth), 'real mobile tabs exercise overflow');
-          await pane.locator('.arrow-right').click();
-          await page.waitForFunction(() => document.querySelector('#online_payments_asaas_tab .nav-tabs-horizontal').scrollLeft > 0, null, {timeout: 10000});
-          await pane.locator('.arrow-left').click();
-          await page.waitForFunction(() => document.querySelector('#online_payments_asaas_tab .nav-tabs-horizontal').scrollLeft === 0, null, {timeout: 10000});
-          check(await scrollable.evaluate(el => el.scrollLeft === 0), 'real native arrows scroll right and return left');
+          try {
+            phase = 'click real mobile right arrow'; layout = await tabGeometry();
+            await pane.locator('.arrow-right').click();
+            phase = 'await real mobile right scroll'; layout = await tabGeometry();
+            await page.waitForFunction(() => document.querySelector('#online_payments_asaas_tab .nav-tabs-horizontal').scrollLeft > 0, null, {timeout: 10000});
+            phase = 'click real mobile left arrow'; layout = await tabGeometry();
+            await pane.locator('.arrow-left').click();
+            phase = 'await real mobile left scroll'; layout = await tabGeometry();
+            await page.waitForFunction(() => document.querySelector('#online_payments_asaas_tab .nav-tabs-horizontal').scrollLeft === 0, null, {timeout: 10000});
+            check(await scrollable.evaluate(el => el.scrollLeft === 0), 'real native arrows scroll right and return left');
+          } catch(error) {
+            layout = await tabGeometry();
+            await page.screenshot({path:path.join(config.output,'390-arrow-failure-masked.png'),fullPage:true,
+              mask:[page.locator('input,textarea,select,pre,code,#header')]}).catch(()=>{});
+            throw error;
+          }
         }
         const iconsLoaded = await page.evaluate(async () => {
           await document.fonts.ready;
