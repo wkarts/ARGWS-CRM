@@ -13885,9 +13885,771 @@
                     "line": 75,
                     "visibility": "public"
                 },
-       
-... 26744 bytes omitted ...
- "expense_category_mapping_table",
+                {
+                    "method": "delete_todo_item",
+                    "line": 83,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/admin/Utilities.php",
+            "source_sha256": "e97c27267b4123d129f5030e329e112349d14f36e78a0800bcb6a304aca7c684",
+            "module": null,
+            "base_class": "AdminController",
+            "surface": "admin",
+            "method_candidates": [
+                {
+                    "method": "__construct",
+                    "line": 7,
+                    "visibility": "public"
+                },
+                {
+                    "method": "activity_log",
+                    "line": 14,
+                    "visibility": "public"
+                },
+                {
+                    "method": "pipe_log",
+                    "line": 28,
+                    "visibility": "public"
+                },
+                {
+                    "method": "clear_activity_log",
+                    "line": 41,
+                    "visibility": "public"
+                },
+                {
+                    "method": "clear_pipe_log",
+                    "line": 50,
+                    "visibility": "public"
+                },
+                {
+                    "method": "calendar",
+                    "line": 60,
+                    "visibility": "public"
+                },
+                {
+                    "method": "get_calendar_data",
+                    "line": 88,
+                    "visibility": "public"
+                },
+                {
+                    "method": "view_event",
+                    "line": 100,
+                    "visibility": "public"
+                },
+                {
+                    "method": "delete_event",
+                    "line": 110,
+                    "visibility": "public"
+                },
+                {
+                    "method": "media",
+                    "line": 134,
+                    "visibility": "public"
+                },
+                {
+                    "method": "media_connector",
+                    "line": 151,
+                    "visibility": "public"
+                },
+                {
+                    "method": "bulk_pdf_exporter",
+                    "line": 277,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/gateways/Authorize_acceptjs.php",
+            "source_sha256": "f13709b258511106559d3e809ef126a121a8d7a17d7d41f53d6c00416026819a",
+            "module": null,
+            "base_class": "App_Controller",
+            "surface": "public_or_api_or_job",
+            "method_candidates": [
+                {
+                    "method": "capture",
+                    "line": 11,
+                    "visibility": "public"
+                },
+                {
+                    "method": "payment",
+                    "line": 81,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/gateways/Braintree.php",
+            "source_sha256": "6475aef6f9d505d4c3253e4c9d819c48bd9f597539a233f5514d93732e2b5ff3",
+            "module": null,
+            "base_class": "App_Controller",
+            "surface": "public_or_api_or_job",
+            "method_candidates": [
+                {
+                    "method": "complete_purchase",
+                    "line": 7,
+                    "visibility": "public"
+                },
+                {
+                    "method": "make_payment",
+                    "line": 43,
+                    "visibility": "public"
+                },
+                {
+                    "method": "get_view",
+                    "line": 79,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/gateways/Instamojo.php",
+            "source_sha256": "b18c5f8ec8d1d47f9243fed654ebf86c9a39cdf21a4dc06737ab7ab884c57fd4",
+            "module": null,
+            "base_class": "App_Controller",
+            "surface": "public_or_api_or_job",
+            "method_candidates": [
+                {
+                    "method": "redirect",
+                    "line": 7,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/gateways/Mollie.php",
+            "source_sha256": "d92f15c2748f62ff626ad323116f17feb526321868515511f1fcd6789539f262",
+            "module": null,
+            "base_class": "App_Controller",
+            "surface": "public_or_api_or_job",
+            "method_candidates": [
+                {
+                    "method": "verify_payment",
+                    "line": 12,
+                    "visibility": "public"
+                },
+                {
+                    "method": "webhook",
+                    "line": 45,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/gateways/Paypal.php",
+            "source_sha256": "82fe478df54a92369bd706b8284e09ba5b60bebd6ff23dabac56ff50da35eaf4",
+            "module": null,
+            "base_class": "App_Controller",
+            "surface": "public_or_api_or_job",
+            "method_candidates": [
+                {
+                    "method": "complete_purchase",
+                    "line": 7,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/gateways/Paypal_checkout.php",
+            "source_sha256": "7b5f796dbb6a1da80eae4ce71290f8aa7a8d9b74e3078d78142635ca27f0d5bc",
+            "module": null,
+            "base_class": "App_Controller",
+            "surface": "public_or_api_or_job",
+            "method_candidates": [
+                {
+                    "method": "complete",
+                    "line": 12,
+                    "visibility": "public"
+                },
+                {
+                    "method": "payment",
+                    "line": 60,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/gateways/Payu_money.php",
+            "source_sha256": "3b76a49f33e6c5dfbe73b1a86a8bb76c71b390e2d84a7bacd0ef135333196e09",
+            "module": null,
+            "base_class": "App_Controller",
+            "surface": "public_or_api_or_job",
+            "method_candidates": [
+                {
+                    "method": "make_payment",
+                    "line": 9,
+                    "visibility": "public"
+                },
+                {
+                    "method": "success",
+                    "line": 80,
+                    "visibility": "public"
+                },
+                {
+                    "method": "failure",
+                    "line": 120,
+                    "visibility": "public"
+                },
+                {
+                    "method": "get_html",
+                    "line": 145,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/gateways/Stripe.php",
+            "source_sha256": "d0963c43c78c9037a6662ed4016a87fe09b186ab80042e943eeaa315b370a259",
+            "module": null,
+            "base_class": "App_Controller",
+            "surface": "public_or_api_or_job",
+            "method_candidates": [
+                {
+                    "method": "create_webhook",
+                    "line": 35,
+                    "visibility": "public"
+                },
+                {
+                    "method": "enable_webhook",
+                    "line": 72,
+                    "visibility": "public"
+                },
+                {
+                    "method": "webhook_endpoint",
+                    "line": 88,
+                    "visibility": "public"
+                },
+                {
+                    "method": "success",
+                    "line": 183,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/gateways/Stripe_ideal.php",
+            "source_sha256": "8afc4298eea78f7fac6595b7dd2f8613f2cae204a5c166f4ffab4314374a9cd9",
+            "module": null,
+            "base_class": "App_Controller",
+            "surface": "public_or_api_or_job",
+            "method_candidates": [
+                {
+                    "method": "response",
+                    "line": 7,
+                    "visibility": "public"
+                },
+                {
+                    "method": "create_webhook",
+                    "line": 73,
+                    "visibility": "public"
+                },
+                {
+                    "method": "enable_webhook",
+                    "line": 112,
+                    "visibility": "public"
+                },
+                {
+                    "method": "webhook",
+                    "line": 123,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "application/controllers/gateways/Two_checkout.php",
+            "source_sha256": "17c09dd29d87b48e0bbe47542bf7d312aa6d52dcc5e306bbc6763cccdd2b8211",
+            "module": null,
+            "base_class": "App_Controller",
+            "surface": "public_or_api_or_job",
+            "method_candidates": [
+                {
+                    "method": "payment",
+                    "line": 6,
+                    "visibility": "public"
+                },
+                {
+                    "method": "get_html",
+                    "line": 47,
+                    "visibility": "public"
+                },
+                {
+                    "method": "verify",
+                    "line": 159,
+                    "visibility": "public"
+                },
+                {
+                    "method": "cancelled",
+                    "line": 167,
+                    "visibility": "public"
+                },
+                {
+                    "method": "webhook",
+                    "line": 175,
+                    "visibility": "public"
+                }
+            ],
+            "http_verbs": "requires_dispatch_review",
+            "authentication": "requires_entry_point_review",
+            "company_origin": "requires_persisted_origin_review",
+            "state": "not_verified",
+            "operational_ready": false
+        },
+        {
+            "path": "modules/accounting/controllers/Accounting.php",
+            "source_sha256": "54860b1675a4f785fd115c912fdd50be79cc866e287a8b94f4192e26c83cfdff",
+            "module": "accounting",
+            "base_class": "AdminController",
+            "surface": "admin",
+            "method_candidates": [
+                {
+                    "method": "__construct",
+                    "line": 8,
+                    "visibility": "public"
+                },
+                {
+                    "method": "transaction",
+                    "line": 26,
+                    "visibility": "public"
+                },
+                {
+                    "method": "sales_table",
+                    "line": 143,
+                    "visibility": "public"
+                },
+                {
+                    "method": "sales_invoice_table",
+                    "line": 301,
+                    "visibility": "public"
+                },
+                {
+                    "method": "expenses_table",
+                    "line": 457,
+                    "visibility": "public"
+                },
+                {
+                    "method": "banking_table",
+                    "line": 637,
+                    "visibility": "public"
+                },
+                {
+                    "method": "chart_of_accounts",
+                    "line": 780,
+                    "visibility": "public"
+                },
+                {
+                    "method": "setting",
+                    "line": 810,
+                    "visibility": "public"
+                },
+                {
+                    "method": "update_general_setting",
+                    "line": 882,
+                    "visibility": "public"
+                },
+                {
+                    "method": "update_automatic_conversion",
+                    "line": 898,
+                    "visibility": "public"
+                },
+                {
+                    "method": "accounts_table",
+                    "line": 915,
+                    "visibility": "public"
+                },
+                {
+                    "method": "account",
+                    "line": 1115,
+                    "visibility": "public"
+                },
+                {
+                    "method": "get_data_convert",
+                    "line": 1160,
+                    "visibility": "public"
+                },
+                {
+                    "method": "convert",
+                    "line": 2933,
+                    "visibility": "public"
+                },
+                {
+                    "method": "transfer",
+                    "line": 2952,
+                    "visibility": "public"
+                },
+                {
+                    "method": "transfer_table",
+                    "line": 2967,
+                    "visibility": "public"
+                },
+                {
+                    "method": "add_transfer",
+                    "line": 3064,
+                    "visibility": "public"
+                },
+                {
+                    "method": "journal_entry",
+                    "line": 3100,
+                    "visibility": "public"
+                },
+                {
+                    "method": "journal_entry_table",
+                    "line": 3114,
+                    "visibility": "public"
+                },
+                {
+                    "method": "new_journal_entry",
+                    "line": 3204,
+                    "visibility": "public"
+                },
+                {
+                    "method": "delete_journal_entry",
+                    "line": 3251,
+                    "visibility": "public"
+                },
+                {
+                    "method": "report",
+                    "line": 3272,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_balance_sheet",
+                    "line": 3285,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_balance_sheet_comparison",
+                    "line": 3306,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_balance_sheet_detail",
+                    "line": 3327,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_balance_sheet_summary",
+                    "line": 3348,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_business_snapshot",
+                    "line": 3368,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_custom_summary_report",
+                    "line": 3380,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_profit_and_loss_as_of_total_income",
+                    "line": 3396,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_profit_and_loss_comparison",
+                    "line": 3417,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_profit_and_loss_detail",
+                    "line": 3438,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_profit_and_loss_year_to_date_comparison",
+                    "line": 3459,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_profit_and_loss",
+                    "line": 3480,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_statement_of_cash_flows",
+                    "line": 3501,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_statement_of_changes_in_equity",
+                    "line": 3514,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_deposit_detail",
+                    "line": 3528,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_income_by_customer_summary",
+                    "line": 3541,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_check_detail",
+                    "line": 3555,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_account_list",
+                    "line": 3568,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_account_history",
+                    "line": 3581,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_general_ledger",
+                    "line": 3596,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_journal",
+                    "line": 3610,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_recent_transactions",
+                    "line": 3623,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_transaction_detail_by_account",
+                    "line": 3636,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_transaction_list_by_date",
+                    "line": 3650,
+                    "visibility": "public"
+                },
+                {
+                    "method": "rp_trial_balance",
+                    "line": 3663,
+                    "visibility": "public"
+                },
+                {
+                    "method": "dashboard",
+                    "line": 3677,
+                    "visibility": "public"
+                },
+                {
+                    "method": "import_xlsx_banking",
+                    "line": 3696,
+                    "visibility": "public"
+                },
+                {
+                    "method": "import_file_xlsx_banking",
+                    "line": 3726,
+                    "visibility": "public"
+                },
+                {
+                    "method": "get_data_transfer",
+                    "line": 3927,
+                    "visibility": "public"
+                },
+                {
+                    "method": "delete_transfer",
+                    "line": 3938,
+                    "visibility": "public"
+                },
+                {
+                    "method": "get_data_account",
+                    "line": 3961,
+                    "visibility": "public"
+                },
+                {
+                    "method": "delete_account",
+                    "line": 3986,
+                    "visibility": "public"
+                },
+                {
+                    "method": "new_rule",
+                    "line": 4012,
+                    "visibility": "public"
+                },
+                {
+                    "method": "delete_convert",
+                    "line": 4051,
+                    "visibility": "public"
+                },
+                {
+                    "method": "reconcile",
+                    "line": 4071,
+                    "visibility": "public"
+                },
+                {
+                    "method": "reconcile_account",
+                    "line": 4127,
+                    "visibility": "public"
+                },
+                {
+                    "method": "get_info_reconcile",
+                    "line": 4146,
+                    "visibility": "public"
+                },
+                {
+                    "method": "reconcile_history_table",
+                    "line": 4179,
+                    "visibility": "public"
+                },
+                {
+                    "method": "adjustment",
+                    "line": 4280,
+                    "visibility": "public"
+                },
+                {
+                    "method": "finish_reconcile_account",
+                    "line": 4309,
+                    "visibility": "public"
+                },
+                {
+                    "method": "edit_reconcile",
+                    "line": 4335,
+                    "visibility": "public"
+                },
+                {
+                    "method": "banking_rules_table",
+                    "line": 4361,
+                    "visibility": "public"
+                },
+                {
+                    "method": "delete_rule",
+                    "line": 4416,
+                    "visibility": "public"
+                },
+                {
+                    "method": "view_report",
+                    "line": 4438,
+                    "visibility": "public"
+                },
+                {
+                    "method": "get_data_dashboard",
+                    "line": 4612,
+                    "visibility": "public"
+                },
+                {
+                    "method": "reset_data",
+                    "line": 4628,
+                    "visibility": "public"
+                },
+                {
+                    "method": "change_account_status",
+                    "line": 4642,
+                    "visibility": "public"
+                },
+                {
+                    "method": "item_automatic_table",
+                    "line": 4655,
+                    "visibility": "public"
+                },
+                {
+                    "method": "item_automatic",
+                    "line": 4712,
+                    "visibility": "public"
+                },
+                {
+                    "method": "delete_item_automatic",
+                    "line": 4746,
+                    "visibility": "public"
+                },
+                {
+                    "method": "transaction_bulk_action",
+                    "line": 4767,
+                    "visibility": "public"
+                },
+                {
+                    "method": "journal_entry_bulk_action",
+                    "line": 5158,
+                    "visibility": "public"
+                },
+                {
+                    "method": "transfer_bulk_action",
+                    "line": 5185,
+                    "visibility": "public"
+                },
+                {
+                    "method": "tax_mapping_table",
+                    "line": 5213,
+                    "visibility": "public"
+                },
+                {
+                    "method": "tax_mapping",
+                    "line": 5267,
+                    "visibility": "public"
+                },
+                {
+                    "method": "delete_tax_mapping",
+                    "line": 5301,
+                    "visibility": "public"
+                },
+                {
+                    "method": "accounts_bulk_action",
+                    "line": 5322,
+                    "visibility": "public"
+                },
+                {
+                    "method": "expense_category_mapping_table",
                     "line": 5370,
                     "visibility": "public"
                 },
