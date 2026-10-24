@@ -41,7 +41,7 @@ process.stdout.write(JSON.stringify(results));
         for artifact, (command, missing_policy) in cases.items():
             with self.subTest(artifact=artifact):
                 uploads = [step for step in steps
-                           if "uses: actions/upload-artifact@v4" in step and re.search(r"(?m)^          name: " + re.escape(artifact) + r"$", step)]
+                           if re.search(r"(?m)^          name: " + re.escape(artifact) + r"$", step)]
                 self.assertEqual(len(uploads), 1, "each artifact needs exactly one upload")
                 upload = uploads[0]
                 expression = re.search(r"(?m)^        if: (.+)$", upload).group(1)
@@ -128,10 +128,7 @@ setImmediate(()=>{if(!reachedBrowser||fixtureRuns!==1){console.error('fixture se
     def test_every_browser_receives_its_disposable_environment(self):
         script = Path(__file__).with_name("issuers_standalone_http_smoke.sh")
         blocks, pending = [], []
-        # Expand the shared six-scenario chain at its original serial location.
-        source = script.read_text().replace('source tests/ci/portal_chain.sh',
-            (script.parent / 'ci/portal_chain.sh').read_text())
-        for line in source.splitlines():
+        for line in script.read_text().splitlines():
             pending.append(line)
             if line.endswith("\\"):
                 continue

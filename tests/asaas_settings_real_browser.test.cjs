@@ -86,3 +86,10 @@ test('dynamic scroll initializes once after native ready and regression uses rea
  const focused=workflow.indexOf('node tests/asaas_native_scroll.browser.cjs'),real=workflow.indexOf('bash tests/docker_provision_smoke.sh');
  assert.ok(focused>=0&&real>focused,'native focused regression precedes long provision/BB flow');
 });
+test('native padding overflow regression preserves spacing and real click coverage',()=>{
+ const moduleSource=fs.readFileSync('modules/asaas/assets/js/settings-tabs.js','utf8');
+ for(const contract of ['nav.firstElementChild.style.paddingLeft = navStyle.paddingLeft','nav.lastElementChild.style.paddingRight = navStyle.paddingRight',"nav.style.paddingLeft = '0px'","nav.style.paddingRight = '0px'"]) assert.ok(moduleSource.includes(contract),contract);
+ const fixtureSource=fs.readFileSync('tests/asaas_native_scroll.browser.cjs','utf8');
+ for(const contract of ['column:358,font:16','column:280,font:16','column:358,font:18','real threshold: item widths alone fit','real threshold: native padding creates overflow','native total spacing is preserved','link hit area is unchanged','arrows visible at real overflow',"['authentication','general']"]) assert.ok(fixtureSource.includes(contract),contract);
+ assert.doesNotMatch(moduleSource,/\.scroller.*(?:\.show\(|style\.display)/,'Asaas cannot override native arrow visibility');
+});

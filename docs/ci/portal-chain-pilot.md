@@ -1,88 +1,76 @@
-# Temporary portal-chain pilot (not a semantic-equivalence certificate)
+# Experimento temporário de particionamento do smoke
 
-## Wiring and scope
+O piloto da cadeia de seis testes portal/projetos foi introduzido no SHA
+`56a99618`, run Stacks `40065855624`, para medir um ramo isolado sem retirar
+qualquer cenário serial. Esta revisão remove seus jobs, agregador e helpers
+temporários: restaura o job obrigatório `validate` e as 100 invocações originais,
+na mesma ordem, preservando a correção/preflight Asaas e o balanceamento Empresas.
 
-`serial` preserves the complete original pipeline and all100 top-level Node invocations.
-`portal-pilot` is independent and parallel: its own product build, MySQL service,
-network, application containers and filesystem execute the identical genuine
-install/upgrade and prefix through contract discussions, then the same six portal
-scripts in the same order. No SQL snapshot or shared mutable cache is used.
-The existing required job name `validate` aggregates both jobs and comparison:
-failure, cancellation, skip, missing artifact or comparison failure blocks it.
-The image is built locally for disposable tests, not published.
+## Evidência e limites
 
-The six invocations moved verbatim into `tests/ci/portal_chain.sh`. Environment,
-assertions, includes, browser waits and ACL/CSRF checks remain unchanged. The
-standalone default is `serial`; only the explicit `portal-pilot` mode stops after
-the six-script chain. Unknown modes fail closed. This duplication is temporary,
-not a permanent replacement for optimization.
+Rodada terminal: [Stacks 40065855624](https://github.com/wkarts/ARGWS-CRM/actions/runs/40065855624),
+SHA `56a99618`. O job piloto `120788840262` passou. O serial `120788840375`
+passou pela cadeia de seis, mas falhou depois na navegação mobile Asaas; portanto
+não houve sucesso integral de Stacks e o agregador não executou a comparação.
 
-## Evidence and limits
+A comparação oficial foi executada **localmente sobre os dois artifacts** com
+`tests/ci/portal_evidence.py` idêntico ao publicado: exit 0, `FOOTPRINT_MATCH`,
+`semantic_equivalence_proven=false`, `serial_removal_authorized=false`.
+PHP 8.3.35/MySQL 8.0.46 em ambos. Sentinelas iniciais: uma identidade de instalação,
+122 faturas, sete notas de crédito e seis recebimentos nativos, preservados em cada
+execução. Os seis cenários concluíram em ambas as execuções:
 
-Before/after snapshots use read-only PDO transactions against the strictly
-allowlisted disposable database. All table rows are fingerprinted, including BLOBs;
-no row values are exported. Column/index/key/reference/CHECK/view/trigger metadata
-is fingerprinted without cardinality or the mutable AUTO_INCREMENT counter.
-Schema metadata must remain unchanged within each job. Source revision, prefix,
-chain/helpers, PHP/MySQL versions and schema fingerprints must agree across jobs.
+| Cenário | Serial (s) | Piloto (s) |
+|---|---:|---:|
+| Portal de tarefas |89|144|
+| Escrita de tarefas no portal |46|73|
+| Marcos |51|81|
+| Apontamentos |67|108|
+| Gantt |83|136|
+| Arquivos de contato |36|58|
+| **Cadeia completa** |**372 (6m12s)**|**600 (10m00s)**|
 
-Four known-populated sentinels (installation identity, invoices, creditnotes,
-native payment records) must be byte-preserved. The prefix proves these are real:
-`companies_invoices_browser.cjs:89,103` checks invoice value and one native payment;
-`companies_credits_browser.cjs:14,22,24` checks issued/voided credit rows and retained
-payment rows through zero-remaining reversal. Immediately before the portal block,
-`companies_ledger_browser.cjs:19,21` checks a positive payment ID and13.00 remaining;
-its fixture additionally creates101 canonical invoices/events. The subsequent
-operations/support/discussion cases do not delete these financial rows. All installed company credit,
-payment, financial, expense, invoice and bank-receipt tables must also be preserved,
-even if empty. Files under uploads and generated config are recorded with opaque
-path hashes, byte hashes, size, mode, owner and group; preexisting files must stay
-unchanged. Project file bytes also live in database BLOBs (`company_project_files`).
+São medições em runners distintos, não uma comparação causal nem demonstração de
+ganho: o ramo piloto foi mais lento nesse trecho. Não houve teste diferencial dos
+62 cenários posteriores com/sem os efeitos da cadeia; a política B impede afirmar
+um corte transparente.
 
-Coverage requires six ordered successful completion records, with per-scenario
-and total elapsed seconds. Cross-job comparison checks source/runtime/schema,
-populated sentinel counts, table count/delta/changed footprints and filesystem
-counts. `tblsessions`, `tblactivity_log` and `tbluser_auto_login` counts are explicitly
-reported as observations, not equality: independent authentication runs may create
-or expire different sessions/logging rows. No existing audit assertion is removed.
+Recibos preservados para reprodução antes de remover os helpers:
+- ZIP serial, digest verificado pelo integrador:
+  `33192ae48802a8d0ed282e8e3e534246090cab83d28efde4aa1403585a4b0f9a`.
+- ZIP piloto, digest verificado pelo integrador:
+  `add2680c6c3ded611c07e272e74450adccf4a5b7f8d5f0f05268e99c0d5d6955`.
+- `proof.json` serial, SHA256 conferido localmente:
+  `5a7bad6263f0a647f685dbdab099b39b636b55cd0906a18d5bcb404bff0018f5`.
+- `proof.json` piloto, SHA256 conferido localmente:
+  `d7928100d55ed9c5b70d694fe1083ce4a785806ca401f81d926f6f7dac3fc4a3`.
 
-**FOOTPRINT_MATCH is not semantic equivalence.** Different owner/amount values in a
-changed table can produce the same footprint; different new-file bytes can produce
-the same file count. Negative-contract examples explicitly demonstrate this
-limitation. Result always states `semantic_equivalence_proven: false` and
-`serial_removal_authorized: false`. Unchanged fingerprints are checked within each
-job; timestamps, random IDs, tokens and password salts are not normalized globally.
-Transient temp/log/cache files, module upload roots, host artifacts and proxy event
-streams are not exhaustively fingerprinted by this pilot. They are not restored or
-shared; existing serial checks retain their coverage. Thus this census cannot be
-used as a general snapshot/restore mechanism.
+Separadamente, [Empresas 40065855623](https://github.com/wkarts/ARGWS-CRM/actions/runs/40065855623)
+passou em 24m43s com 944 registros e os gates completos. O balanceamento é preservado,
+mas não se atribui toda a redução observada a ele: runtimes/VMs variam e o
+contrafactual da própria rodada não demonstrou vantagem do plano balanceado.
+Essa medição não transforma a falha Stacks em sucesso.
 
-## Exit criterion and removal of duplicate cost
+`FOOTPRINT_MATCH` verificava preservação intrarun e correspondência estrutural,
+não equivalência semântica. IDs, timestamps, chaves e salts não foram normalizados
+para fabricar igualdade. A investigação identificou acoplamento concreto:
 
-After the first paired run, review its actual write set. Before promoting a split:
+- Portal altera a política de arquivos da empresa B de 0 para 1, além de revisões
+  e auditoria; calendário e recorrência posteriores preservam configurações.
+- BB reutiliza conexões, reservas e perfis entre originação, componentes,
+  alterações 439, CNAB400, tarifas e numeração.
+- Asaas remote/checkout dependem das contas anteriores; outras rotinas reutilizam
+  contas/origens, e revisão pós-estorno participa da cadeia TLS compartilhada.
 
-1. establish an explicit expected-write allowlist and byte preservation for every
-   other table/file, with populated non-owned/financial sentinels;
-2. prove expected changed rows semantically: owners, relationships, revisions,
-   permissions, flags and exact file content—not counts alone;
-3. execute downstream cases with and without the chain and retain identical
-   positive, negative, preservation and lock assertions;
-4. keep all six scripts in their own isolated job, retain the aggregate required
-   gate, and only then remove the duplicated serial block/pilot scaffolding;
-5. compare measured critical-path time, including bootstrap and artifact overhead.
+A cauda de cinco testes compras/RH tem preparação própria e nenhum consumidor
+posterior, mas os três testes de compras compartilham `purchases-proof.json`.
+É apenas um candidato de menor acoplamento, ainda sem corte seguro demonstrado.
 
-Until then the complete serial run remains mandatory. No speedup is claimed from
-this temporary validation configuration. The historical block measured about10min;
-that is a target, not a measured saving.
+## Trabalho separado, autorizado e pendente
 
-## Validation and rollback
-
-Local Python tests exercise omission/drift rejection, nonempty preservation,
-shared-chain placement, default serial mode and aggregate fail-closed wiring.
-The environment contract still executes each command's real environment block with
-an intercepted Node executable. PHP/Docker/browser execution is unavailable locally;
-paired CI is required before any correctness claim.
-
-Rollback is reverting this test/workflow commit; no production schema, module,
-application source or deployment changes exist. Core version/inventories remain the
-integration coordinator's responsibility. No publication is performed by this patch.
+A otimização estrutural do smoke continua pendente em frente própria, não como
+piloto permanente nesta PR. Exige medir o caminho crítico, provar pré-requisitos
+e sentinelas populadas, validar relações/ACL/finanças/arquivos e executar teste
+diferencial do downstream antes de retirar qualquer dependência. Não usar cache
+mutável compartilhado, snapshot apenas de banco ou redução de assertions/esperas.
+Nenhuma mudança de produção ou homologação bancária decorre deste experimento.

@@ -140,6 +140,14 @@
       root.jQuery(function () {
         if (wrapper.getAttribute('data-asaas-scroll-ready') === '1') return;
         wrapper.classList.add('horizontal-scrollable-tabs');
+        // Native horizontalTabs measures LI outerWidth, not UL padding. Preserve
+        // the native edge spacing on the edge items so padding-only overflow is
+        // included in that measurement (without replacing the native controller).
+        var navStyle = root.getComputedStyle(nav);
+        nav.firstElementChild.style.paddingLeft = navStyle.paddingLeft;
+        nav.lastElementChild.style.paddingRight = navStyle.paddingRight;
+        nav.style.paddingLeft = '0px';
+        nav.style.paddingRight = '0px';
         root.jQuery(wrapper).horizontalTabs();
         wrapper.setAttribute('data-asaas-scroll-ready', '1');
         root.jQuery(root).trigger('resize');

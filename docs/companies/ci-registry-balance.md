@@ -108,3 +108,46 @@ Artifact IDs and verified SHA-256 values:
 - PHP 8.1 shard 4: 12548194165 / b9605ea81984f8f49aee6446041eabe54f37fc0d9afa6de5da8efa843f807253
 - PHP 8.1 shard 3: 12548009276 / c571d591894728e32d8414252de8510f7ea19286bdea6c3254b7d4f0f8662caf
 - PHP 8.5 shard 1: 12547494341 / b55581920c711bf15ede3767b753c619b6bb0ea59f4b22b1a85e06634b82e5dc
+
+## Executed balanced registry: 56a99618
+
+[Run40065855623](https://github.com/wkarts/ARGWS-CRM/actions/runs/40065855623): SUCCESS. Official `/timing`: **24m43s** (1483000ms).
+Published plan byte-for-byte SHA256: `1a4f54a480af305d6828192a52378796487d387c4fc0890ee9935c56c4411b92`.
+All 8 ZIP digests match GitHub; all 944 records have exact argv/assignment and exit0; 118 commands per PHP/shard. Both aggregate gates SUCCESS.
+
+| PHP/shard | Actual job seconds | Actual MySQL step seconds | Actual command sum seconds |
+|---|---:|---:|---:|
+| 8.1/1 | 1340 | 1259 | 1258.749 |
+| 8.1/2 | 771 | 709 | 708.896 |
+| 8.1/3 | 1390 | 1323 | 1322.746 |
+| 8.1/4 | 1358 | 1292 | 1292.466 |
+| 8.5/1 | 1199 | 1127 | 1127.601 |
+| 8.5/2 | 746 | 678 | 677.361 |
+| 8.5/3 | 786 | 721 | 720.901 |
+| 8.5/4 | 1126 | 1054 | 1053.662 |
+
+### Real workflow comparisons
+- 846af95: official30m32s →24m43s =5m49s less (-19.05%).
+- c7bc0bd3: integrator-reported26m49s →24m43s =2m06s less (-7.83%); earlier run ID not independently re-fetched here.
+- Originalmain39996938632: official89m05s →24m43s =64m22s less (-72.26%).
+These are distinct executions, not a controlled causal scheduler comparison.
+
+### Same-run counterfactual (not executed)
+
+| PHP | Actual balanced max command sum | Hypothetical RR max on same individual times | Actual above hypothetical |
+|---|---:|---:|---:|
+| 8.1 | 1322.746s | 1251.754s | 5.67% |
+| 8.5 | 1127.601s | 989.859s | 13.92% |
+
+Under invariant per-command runtime, RR would have a global command maximum70.992s lower. This is NOT an executed RR result and does NOT prove reverting would help: these timings came from VMs and DB states assigned by the balanced plan. Reassignment changes conditions. Large shard differences are consistent with runner/environment variability but do not isolate its cause.
+Do not attribute the full5m49s observed reduction to balancing, retrain from this one run, or guarantee savings. Keep this negative counterfactual alongside the previous positive holdout. The frozen allocation was not retrained after this result.
+
+### Artifact IDs / verified ZIP digests
+- 8.1/3: `12550360137` — `27e22b6cba2f90ef89447e3a646cc107792dd8e767dc1e4f02ea6815ac3104e4`
+- 8.1/4: `12550150499` — `a90276492922074c0447c18ec76564cc24a0e0fbfa91ed22476dbce65b276e11`
+- 8.5/1: `12550050510` — `c19bc41de6d4a31d38db6dd7edaf8742911bff66f773eaa8c54af92c7cc0277e`
+- 8.5/2: `12549453407` — `0f10f05031501e315b39738ba14732966a85308a8aebde5f95c711b4dc69da3b`
+- 8.5/4: `12549392822` — `dec53591f04907c46565e0b7eb694a62ab96066dd5654d042ca72b3cc4c70476`
+- 8.5/3: `12549119908` — `1c86b816a20e7689f85a526062d49918fcd97725fc20197edb04dbdb20c20c6f`
+- 8.1/1: `12549079161` — `9e884eed1dbf344eb292e65e56a7a59b6f620ef92b5173f7331df2b0a65d3eb2`
+- 8.1/2: `12548973524` — `5979012121be9a93b2eb8d33ca2a5a958c7bcabd312ed5096eb1268c1d0040f0`

@@ -141,7 +141,7 @@ async function run(env = process.env) {
             const handlers=window.jQuery?._data(item,'events')?.click || [];
             return {visible:box.width>0&&box.height>0, disabled:item.classList.contains('disabled'), nativeHandlers:handlers.filter(h=>h.namespace==='horizontalTabs').length};
           };
-          return {scrollWidth:nav.scrollWidth, clientWidth:nav.clientWidth, scrollLeft:nav.scrollLeft, left:arrow('left'), right:arrow('right')};
+          return {scrollWidth:nav.scrollWidth, clientWidth:nav.clientWidth, scrollLeft:nav.scrollLeft, wrapperWidth:el.querySelector('.horizontal-scrollable-tabs').getBoundingClientRect().width, itemWidths:Array.from(nav.children, item=>item.getBoundingClientRect().width), edgePadding:[getComputedStyle(nav.firstElementChild).paddingLeft,getComputedStyle(nav.lastElementChild).paddingRight].map(parseFloat), left:arrow('left'), right:arrow('right')};
         });
         if (width === 390 && await pane.locator('.nav-tabs-horizontal').evaluate(el => el.scrollWidth > el.clientWidth)) {
           const scrollable = pane.locator('.nav-tabs-horizontal');
