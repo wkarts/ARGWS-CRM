@@ -11,13 +11,14 @@ final class ApiOriginPolicy
         Transaction::quiet($db,static function()use($db,$p,$create):void{
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new \InvalidArgumentException('bb_prefix_invalid');
         $table=$p.'bb_api_origin_policy';
-        if($create&&!$db->query("CREATE TABLE IF NOT EXISTS `{$table}` (
+        $meta=$db->query('SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$table]);
+        if($create&&$meta&&$meta->row_array()===[]&&!$db->query("CREATE TABLE IF NOT EXISTS `{$table}` (
             origin_id BIGINT UNSIGNED NOT NULL,issuer_id BIGINT UNSIGNED NOT NULL,
             origin_reference CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
             mode VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,created_at DATETIME NOT NULL,
             PRIMARY KEY(origin_id),UNIQUE KEY origin_reference(origin_reference)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin"))throw new \RuntimeException('bb_api_origin_policy_schema_failed');
-        $meta=$db->query('SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$table]);
+        if($create&&$meta&&$meta->row_array()===[])$meta=$db->query('SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$table]);
         if(!$meta||strtoupper($meta->row_array()['ENGINE']??'')!=='INNODB')throw new \RuntimeException('bb_api_origin_policy_schema_invalid');
         $result=$db->query('SHOW FULL COLUMNS FROM `'.$table.'`');if(!$result)throw new \RuntimeException('bb_api_origin_policy_schema_invalid');
         $cols=[];foreach($result->result_array() as $row)$cols[$row['Field']]=$row;
