@@ -159,13 +159,6 @@ jobs:
         with:
           name: company-operational-surfaces-php-${{ matrix.php }}
           path: /tmp/company-operational-surfaces-full.json
-      - name: Testar schema, transações, ACL e concorrência em MySQL isolado
-        env:
-          ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_tests;charset=utf8mb4
-          ISSUERS_TEST_USER: root
-          ISSUERS_TEST_PASSWORD: synthetic-test-password
-        run: |
-          python3 scripts/ci/run-company-registry-shard.py --shard ${{ matrix.shard }} --timings /tmp/registry-timings.jsonl
       - name: Testar entradas legadas Finance e Accounting em banco exclusivo
         if: matrix.shard == 1
         env:
@@ -178,6 +171,13 @@ jobs:
           php tests/companies/legacy_financial_module_tables.php
           php tests/companies/legacy_financial_module_migrations.php
           php tests/companies/module_version_column_mysql.php
+      - name: Testar schema, transações, ACL e concorrência em MySQL isolado
+        env:
+          ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_tests;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: synthetic-test-password
+        run: |
+          python3 scripts/ci/run-company-registry-shard.py --shard ${{ matrix.shard }} --timings /tmp/registry-timings.jsonl
       - name: Preservar tempos por comando (inclui falhas)
         if: always()
         uses: actions/upload-artifact@v4

@@ -22,6 +22,15 @@ function versionColumnMetadata($db, string $table): array
 {
     return $db->query("SHOW FULL COLUMNS FROM `{$table}` LIKE 'installed_version'")->row_array();
 }
+/** Only metadata from this synthetic temporary table; no row values or connection secrets. */
+function versionColumnReceipt($db, string $table, string $stage): void
+{
+    $metadata = versionColumnMetadata($db, $table);
+    $allowed = array_intersect_key($metadata, array_flip(['Type', 'Collation', 'Null', 'Default', 'Extra', 'Comment']));
+    echo json_encode(['diagnostic' => 'migration472_metadata', 'stage' => $stage,
+        'runtime' => PHP_VERSION, 'engine' => $db->query('SELECT VERSION() AS version')->row()->version,
+        'metadata' => $allowed], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE) . "\n";
+}
 function versionColumnSnapshot($db, string $table): array
 {
     return $db->query("SELECT module_name, HEX(installed_version) AS version_bytes, active FROM `{$table}` ORDER BY module_name")->result_array();
@@ -36,8 +45,10 @@ try {
     }
     $before = versionColumnSnapshot($db, $table);
     $metadata = versionColumnMetadata($db, $table);
+    versionColumnReceipt($db, $table, 'varchar11_not_null_before_up');
     $migration->up();
     $after = versionColumnMetadata($db, $table);
+    versionColumnReceipt($db, $table, 'varchar64_not_null_after_up');
     versionColumnCheck(strtolower($after['Type']) === 'varchar(64)', 'actual column widened to64');
     foreach (['Collation', 'Null', 'Default', 'Extra', 'Comment'] as $key) {
         versionColumnCheck($after[$key] === $metadata[$key], 'metadata preserved: ' . $key);
@@ -59,6 +70,7 @@ try {
         installed_version VARCHAR(11) COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT 'nullable legacy', active TINYINT NOT NULL)
         ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     $db->query("INSERT INTO `{$table}` VALUES ('null_marker', NULL, 0)");
+    versionColumnReceipt($db, $table, 'varchar11_nullable_before_up');
     $migration->up();
     $nullable = versionColumnMetadata($db, $table);
     versionColumnCheck($nullable['Null'] === 'YES' && $nullable['Default'] === null && $nullable['Comment'] === 'nullable legacy', 'nullable default and comment preserved');

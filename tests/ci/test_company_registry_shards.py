@@ -97,6 +97,15 @@ class RegistryShardsTest(unittest.TestCase):
         self.assertEqual(len(combined), 480)
         self.assertEqual(len(set(map(tuple, combined))), 480)
 
+    def test_isolated_module_audit_precedes_long_registry_suite(self):
+        source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
+        self.assertLess(source.index('      - name: Testar entradas legadas'),
+                        source.index('      - name: Testar schema,'))
+        audit = source.split('      - name: Testar entradas legadas')[1].split('      - name: Testar schema,')[0]
+        self.assertIn('dbname=issuer_module_audit;', audit)
+        self.assertIn('CREATE DATABASE issuer_module_audit', audit)
+        self.assertIn('php tests/companies/module_version_column_mysql.php', audit)
+
     def test_pinned_images_match_php_and_smoke_is_mandatory(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
         shards = source.split('  registry-shards:\n')[1].split('  registry:\n')[0]
