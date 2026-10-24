@@ -5506,7 +5506,7 @@
       "evidence": ""
     },
     "application/views/admin/settings/company_scoped.php": {
-      "sha256": "8b41b077d52efa6c3b7b15d02d02e496d65c53df083af114536645811482ae8f",
+      "sha256": "c7eef81c91b41b82de953256ebbea510de70c1d4cf14898171694ec5c3a05bbd",
       "categories": [
         "documents_numbering"
       ],
@@ -5516,8 +5516,8 @@
         15,
         130
       ],
-      "state": "unreviewed",
-      "evidence": ""
+      "state": "partial",
+      "evidence": "Code review: isolated native Settings receives the scoped identity projection and renders only the native shell; the language-helper fallback is presentation-only. Local native Settings contracts pass; real secondary-company browser proof remains in CI/homologation."
     },
     "application/views/admin/settings/includes/clients.php": {
       "sha256": "b424b4cb29e3cdb2abcf321423b77e2d9fe418c92b682c771d44da9da976e1f7",
@@ -5531,7 +5531,7 @@
       "evidence": ""
     },
     "application/views/admin/settings/includes/company_identity_fields.php": {
-      "sha256": "5ffd0a95e66de92e9368e40a5b24741d4c42f511c1fb152f5b830356371ed126",
+      "sha256": "c242371217a4949e0cbf87c7a13cbac65692325a6f09ae3fb95886ef9ab5b622",
       "categories": [
         "documents_numbering"
       ],
@@ -5541,8 +5541,8 @@
         11,
         12
       ],
-      "state": "unreviewed",
-      "evidence": ""
+      "state": "partial",
+      "evidence": "Code review: primary and isolated Settings use one explicit value adapter; the isolated branch escapes labels/values and never calls global options. Local native Settings contracts pass; real secondary-company browser proof remains in CI/homologation."
     },
     "application/views/admin/settings/includes/credit_notes.php": {
       "sha256": "31ac65398272a9b3aba8217de6cdde55f9aeffd4468c691689ade98bb1bdd10d",
