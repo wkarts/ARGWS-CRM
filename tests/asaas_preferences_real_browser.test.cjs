@@ -3,7 +3,7 @@
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
 const fs = require('node:fs');
-const {environment, requestDecision, readOnlyQuery, safePath, requestScope, bodyCategory, responseFacts, blockedRequests, run} = require('./companies/asaas_preferences_real_browser.cjs');
+const {NATIVE_TAB_ASSETS, nativeTabAssetFacts, environment, requestDecision, readOnlyQuery, safePath, requestScope, bodyCategory, responseFacts, blockedRequests, run} = require('./companies/asaas_preferences_real_browser.cjs');
 const fixture = {
   ISSUERS_BROWSER_URL: 'http://127.0.0.1:48321',
   ISSUERS_BROWSER_DB_CONTAINER: 'argws-crm-provision-db-999',
@@ -37,7 +37,7 @@ test('rejects missing or unsafe loopback/DB/container identity before browser la
 });
 
 test('permits only exact native GET pages and local static assets', () => {
-  for (const pathname of ['/admin/authentication', '/admin/authentication/admin', '/admin', '/admin/', '/admin/company_context', '/admin/company_asaas', '/admin/company_asaas?invoice=12', '/admin/company_asaas#company-asaas-profile-production', '/assets/js/company-context-tabs.js?v=4.0.4', '/assets/plugins/bootstrap/css/bootstrap.min.css', '/assets/plugins/inter/Inter-Regular.woff2', '/uploads/company/synthetic-logo.png']) {
+  for (const pathname of ['/admin/authentication', '/admin/authentication/admin', '/admin', '/admin/', '/admin/company_context', '/admin/company_asaas', '/admin/company_asaas?invoice=12', '/admin/company_asaas#company-asaas-profile-production', '/assets/js/company-context-tabs.js?v=4.0.4', '/assets/builds/vendor-admin.css', '/assets/plugins/inter/Inter-Regular.woff2', '/uploads/company/synthetic-logo.png']) {
     assert.equal(decision(pathname), 'allow', pathname);
     assert.equal(decision(pathname, 'HEAD'), 'allow', pathname);
   }
@@ -218,4 +218,36 @@ test('all executable browser suites use immediate choice without a second helper
   assert.deepEqual(formSubmissions,[['companies/asaas_preferences_real_browser.cjs',"await submitSession(page.locator('.company-selector-form'), () => selectCompanyOption(page, owner.issuer));"]], 'the only form helper is the permit wrapper around the genuine choice, never a second confirmation');
   const purchases=fs.readFileSync(__dirname+'/companies/purchases_browser.cjs','utf8');
   assert.match(purchases,/await selectCompanyOption\(p, String\(issuer\)\);await p\.waitForLoadState\('networkidle'\)/,'existing post-navigation settling is preserved');
+});
+
+
+test('real preferences asset contract matches native layout before expensive integration', () => {
+  const head=fs.readFileSync('application/views/admin/companies/layout_head.php','utf8');
+  const tail=fs.readFileSync('application/views/admin/companies/layout_tail.php','utf8');
+  assert.ok(head.includes("'"+NATIVE_TAB_ASSETS.css+"'"));
+  assert.ok(tail.includes("'"+NATIVE_TAB_ASSETS.script+"'"));
+  assert.ok(!head.includes("'assets/plugins/bootstrap/css/bootstrap.min.css'"),'no obsolete standalone CSS assumption');
+  const css=fs.readFileSync(NATIVE_TAB_ASSETS.css,'utf8');
+  assert.match(css,/\.tab-content>\.tab-pane\{display:none\}/);
+  assert.match(css,/\.tab-content>\.active\{display:block\}/);
+  assert.ok(css.includes('.nav-tabs'));
+  assert.equal(decision('/'+NATIVE_TAB_ASSETS.css+'?v=synthetic'),'allow');
+  assert.equal(decision('/'+NATIVE_TAB_ASSETS.script+'?v=synthetic'),'allow');
+  const workflow=fs.readFileSync('.github/workflows/deployment-integrity.yml','utf8');
+  const preflight=workflow.indexOf('node --test tests/asaas_preferences_real_browser.test.cjs');
+  const integration=workflow.indexOf('bash tests/docker_provision_smoke.sh');
+  assert.ok(preflight>=0 && integration>preflight,'native asset contract runs before Docker integration');
+});
+
+test('native assets probe fails closed on absent CSS, inaccessible rules or missing plugin', () => {
+  const rules=[{selectorText:'.nav-tabs > li',style:{}},{selectorText:'.tab-content > .tab-pane',style:{display:'none'}},{selectorText:'.tab-content > .active',style:{display:'block'}}];
+  const doc=(links=[{sheet:{cssRules:rules}}],scripts=[{}])=>({querySelectorAll:selector=>selector.startsWith('link')?links:scripts});
+  const jquery={fn:{tab(){}}};
+  assert.deepEqual(nativeTabAssetFacts(NATIVE_TAB_ASSETS,doc(),jquery),{stylesheet:true,tabStyles:true,plugin:true});
+  assert.equal(nativeTabAssetFacts(NATIVE_TAB_ASSETS,doc([]),jquery).stylesheet,false);
+  assert.equal(nativeTabAssetFacts(NATIVE_TAB_ASSETS,doc([{sheet:{cssRules:[]}}]),jquery).tabStyles,false);
+  assert.equal(nativeTabAssetFacts(NATIVE_TAB_ASSETS,doc(),{}).plugin,false);
+  assert.equal(nativeTabAssetFacts(NATIVE_TAB_ASSETS,doc(undefined,[]),jquery).plugin,false);
+  const unreadable={get sheet(){throw new Error('synthetic CSSOM rejection');}};
+  assert.deepEqual(nativeTabAssetFacts(NATIVE_TAB_ASSETS,doc([unreadable]),jquery),{stylesheet:false,tabStyles:false,plugin:true});
 });

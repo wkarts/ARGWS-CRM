@@ -45,6 +45,31 @@ uploaded even on failure (where available). No environment/credentials are logge
 The first new full run must establish actual shard balance and wall-clock savings;
 118 commands each does not imply equal runtime or a guaranteed fourfold speedup.
 
+### First completed registry measurement
+
+[Run 40057616635](https://github.com/wkarts/ARGWS-CRM/actions/runs/40057616635)
+at `c7bc0bd3eab1dada9f2adb6e39f32786095c41b1` completed successfully on
+2026-10-24, from 03:16:18 to 03:43:07 UTC: **26m49s**. The requested main 4.7.1
+baseline [39996938632](https://github.com/wkarts/ARGWS-CRM/actions/runs/39996938632)
+ran from 17:40:01 to 19:09:06 UTC on 2026-10-23: **89m05s**. This observed
+workflow wall-clock reduction is approximately **70%**, not a guaranteed future
+duration or a controlled benchmark of the image alone.
+
+All eight timing ZIP hashes matched GitHub artifact receipts. Their JSONL records
+contain exactly 118 successful commands per shard, 472 per PHP version, with the
+complete manifest argv/index union and no omissions or duplicates (944 executions).
+The ten external PHP commands per version also passed. Command-duration sums:
+
+| PHP | Shard 1 | Shard 2 | Shard 3 | Shard 4 |
+| --- | ---: | ---: | ---: | ---: |
+| 8.1 | 1159.838s | 1313.273s | 738.688s | 1112.623s |
+| 8.5 | 973.455s | 1001.017s | 1432.896s | 1245.002s |
+
+These sums exclude setup and queue time and must not be added as wall-clock time.
+Both required aggregates passed. The separate Stacks HTTP/browser workflow later
+failed an outdated Bootstrap stylesheet assertion; this registry measurement is
+not evidence that the entire PR CI passed. Its artifact and failure remain preserved.
+
 ## Validation images (not application images)
 
 The registry shards now consume immutable images built successfully in
