@@ -1,5 +1,8 @@
-const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const source=fs.readFileSync(process.argv[2]||'/tmp/native-all-contacts.js','utf8');
+const assert=require('node:assert/strict'),path=require('node:path'),vm=require('node:vm'),{spawnSync}=require('node:child_process');
+// Render the actual PHP view in this invocation: never consume another test's /tmp artifact.
+const rendered=spawnSync(process.env.PHP_BINARY||'php',['-d','display_errors=stderr','-d','log_errors=0',path.resolve(__dirname,'../support/NativeCustomerScriptFixture.php')],{encoding:'utf8',timeout:10000,maxBuffer:1024*1024});
+assert.ifError(rendered.error);assert.equal(rendered.status,0,rendered.stderr);assert.equal(rendered.stderr,'');
+const source=rendered.stdout;assert(source.startsWith('<script>')||source.includes('<script>'));
 const begin=source.indexOf("$('#send_file form').on('submit.nativeFileQueue'");
 const end=source.indexOf("$('body').on('click','.native-customer-file-delete'",begin);
 assert(begin>=0&&end>begin);let handler,reply,fail=false,posts=0,hidden=0,prevented=0;const alerts=[],data={};const button={disabled:false,prop(k,v){this[k]=v;return this;}};

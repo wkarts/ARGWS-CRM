@@ -59,7 +59,7 @@ test('native presentation metadata stays inside canonical writer and never expos
   assert(!/UPDATE |INSERT |DELETE |->query\(/.test(fields));
   assert.match(writer, /private function writeNativeFields/);
   assert.match(writer, /WHERE id=\? AND issuer_id=\?/);
-  assert.match(writer, /if\(array_key_exists\('native_fields',\$data\)\|\|array_key_exists\('native_project',\$data\)\)return null/);
+  assert.match(writer, /if\(array_key_exists\('native_fields',\$data\)\|\|array_key_exists\('native_project',\$data\)\|\|array_key_exists\('native_preferences',\$data\)\)return null/);
   assert.match(writer, /company_invoice_provider_review_required/);
   assert.match(writer, /CompanyInvoiceNativeFields::input\(\$read\[0\]\)\s*!==\s*\$input/);
   const draft = read('application/services/CompanyInvoiceDraftsInput.php');
