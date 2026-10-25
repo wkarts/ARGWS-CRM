@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/CompanyTaskNativeSnapshot.php';
 require_once __DIR__.'/CompanyTaskPrioritySchema.php';require_once __DIR__.'/CompanyTaskOperationPreferences.php';
 /** Native enum from tasks_helper (without ambient hooks); optional historical sidecar reads. */
 final class CompanyTaskPriority
@@ -26,6 +27,6 @@ final class CompanyTaskPriority
  }
  public static function frame($db,string$p,string$kind,int$i,int$id,bool$audits=true):array
  {
-  $parent=$kind==='project'?'company_tasks':'company_standalone_tasks';IssuerTransaction::assertOwned($db,$p,[$parent]);$row=IssuerStorage::query($db,'SELECT * FROM '.$p.$parent.' WHERE issuer_id=? AND id=? FOR UPDATE',[$i,$id])->row_array();if(!$row)throw new DomainException('company_project_access_denied');$followers=[];if($kind==='project'){IssuerTransaction::assertOwned($db,$p,['company_task_followers']);$followers=IssuerStorage::query($db,'SELECT issuer_id,task_id,staff_id FROM '.$p.'company_task_followers WHERE issuer_id=? AND task_id=? ORDER BY staff_id FOR UPDATE',[$i,$id])->result_array();$followers=array_map(static fn($r)=>array_map('strval',$r),$followers);}$registry=IssuerStorage::query($db,'SELECT active,settings_json FROM '.$p.'issuers_registry WHERE id=? FOR UPDATE',[$i])->row_array();if(!$registry||(int)$registry['active']!==1)throw new DomainException('company_project_access_denied');return ['native'=>array_map('strval',$row),'priority'=>self::raw($db,$p,$kind,$i,$id),'followers'=>$followers,'registry'=>array_map('strval',$registry)]+($audits?['audit_markers'=>self::auditMarkers($db,$p,$kind,$i,$id)]:[]);
+  $parent=$kind==='project'?'company_tasks':'company_standalone_tasks';IssuerTransaction::assertOwned($db,$p,[$parent]);$row=IssuerStorage::query($db,'SELECT * FROM '.$p.$parent.' WHERE issuer_id=? AND id=? FOR UPDATE',[$i,$id])->row_array();if(!$row)throw new DomainException('company_project_access_denied');$followers=[];if($kind==='project'){IssuerTransaction::assertOwned($db,$p,['company_task_followers']);$followers=IssuerStorage::query($db,'SELECT issuer_id,task_id,staff_id FROM '.$p.'company_task_followers WHERE issuer_id=? AND task_id=? ORDER BY staff_id FOR UPDATE',[$i,$id])->result_array();$followers=array_map(static fn($r)=>array_map('strval',$r),$followers);}$registry=IssuerStorage::query($db,'SELECT active,settings_json FROM '.$p.'issuers_registry WHERE id=? FOR UPDATE',[$i])->row_array();if(!$registry||(int)$registry['active']!==1)throw new DomainException('company_project_access_denied');return ['native'=>array_map(static fn($v)=>$v===null?null:(string)$v,CompanyTaskNativeSnapshot::row($row)),'priority'=>self::raw($db,$p,$kind,$i,$id),'followers'=>$followers,'registry'=>array_map('strval',$registry)]+($audits?['audit_markers'=>self::auditMarkers($db,$p,$kind,$i,$id)]:[]);
  }
 }

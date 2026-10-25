@@ -10,11 +10,26 @@ class Tickets extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if(CompanyRequestScope::nativeFor($this)){
+            if(in_array(strtolower((string)$this->router->fetch_method()),['change_status_ajax','edit_message','block_sender','update_staff_replying','check_staff_replying','delete_attachment'],true)){$this->nativeTicketLifecycle();return;}
+            if(in_array(strtolower((string)$this->router->fetch_method()),['add','ticket_change_data'],true)){$this->nativeTicketPage();return;}
+            if(!in_array(strtolower((string)$this->router->fetch_method()),['statuses','status','delete_ticket_status','priorities','priority','delete_priority','services','service','delete_service','predefined_replies','predefined_reply','delete_predefined_reply','get_predefined_reply_ajax'],true))throw new DomainException('native_ticket_adapter_incomplete');
+            $this->nativeTicketCatalog();return;
+        }
         if (get_option('access_tickets_to_none_staff_members') == 0 && ! is_staff_member()) {
             redirect(admin_url());
         }
         $this->load->model('tickets_model');
     }
+
+    private function nativeTicketCatalog():NativeCompanyTicketCatalogController
+    {require_once APPPATH.'services/NativeCompanyTicketCatalogController.php';return new NativeCompanyTicketCatalogController($this);}
+
+    private function nativeTicketPage():NativeCompanyTicketPageController
+    {require_once APPPATH.'services/NativeCompanyTicketPageController.php';return new NativeCompanyTicketPageController($this);}
+
+    private function nativeTicketLifecycle():NativeCompanyTicketLifecycleController
+    {require_once APPPATH.'services/NativeCompanyTicketLifecycleController.php';return new NativeCompanyTicketLifecycleController($this);}
 
     public function index($status = '', $userid = '')
     {
@@ -65,6 +80,7 @@ class Tickets extends AdminController
 
     public function add($userid = false)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketPage()->add($userid);return;}
         if ($this->input->post()) {
             $data            = $this->input->post();
             $data['message'] = html_purify($this->input->post('message', false));
@@ -147,6 +163,7 @@ class Tickets extends AdminController
 
     public function delete_attachment($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketLifecycle()->deleteAttachment((string)$id);return;}
         if (is_admin() || (! is_admin() && get_option('allow_non_admin_staff_to_delete_ticket_attachments') == '1')) {
             if (get_option('staff_access_only_assigned_departments') == 1 && ! is_admin()) {
                 $attachment = $this->tickets_model->get_ticket_attachment($id);
@@ -168,6 +185,7 @@ class Tickets extends AdminController
 
     public function update_staff_replying($ticketId, $userId = '')
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketLifecycle()->updateReplying($ticketId,$userId);return;}
         if ($this->input->is_ajax_request()) {
             echo json_encode(['success' => $this->tickets_model->update_staff_replying($ticketId, $userId)]);
 
@@ -177,6 +195,7 @@ class Tickets extends AdminController
 
     public function check_staff_replying($ticketId)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketLifecycle()->checkReplying($ticketId);return;}
         if ($this->input->is_ajax_request()) {
             $ticket            = $this->tickets_model->get_staff_replying($ticketId);
             $isAnotherReplying = $ticket->staff_id_replying !== null && $ticket->staff_id_replying !== get_staff_user_id();
@@ -265,6 +284,7 @@ class Tickets extends AdminController
 
     public function edit_message()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketLifecycle()->editMessage();return;}
         if (! can_staff_edit_ticket_message()) {
             access_denied();
         }
@@ -312,6 +332,7 @@ class Tickets extends AdminController
 
     public function change_status_ajax($id, $status)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketLifecycle()->changeStatus($id,$status);return;}
         if ($this->input->is_ajax_request()) {
             echo json_encode($this->tickets_model->change_ticket_status($id, $status));
         }
@@ -364,6 +385,7 @@ class Tickets extends AdminController
     // Get all ticket priorities
     public function priorities()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketCatalog()->priorities();return;}
         if (! is_admin()) {
             access_denied('Ticket Priorities');
         }
@@ -375,6 +397,7 @@ class Tickets extends AdminController
     // Add new priority od update existing
     public function priority()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketCatalog()->save('priority');return;}
         if (! is_admin()) {
             access_denied('Ticket Priorities');
         }
@@ -401,6 +424,7 @@ class Tickets extends AdminController
     // Delete ticket priority
     public function delete_priority($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketCatalog()->delete('priority',$id);return;}
         if (! is_admin()) {
             access_denied('Ticket Priorities');
         }
@@ -421,6 +445,7 @@ class Tickets extends AdminController
     // List all ticket predefined replies
     public function predefined_replies()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketCatalog()->table('predefined_reply');return;}
         if (! is_admin()) {
             access_denied('Predefined Replies');
         }
@@ -437,28 +462,7 @@ class Tickets extends AdminController
             $rResult = $result['rResult'];
 
             foreach ($rResult as $aRow) {
-                $row = [];
-
-                for ($i = 0; $i < count($aColumns); $i++) {
-                    $_data = $aRow[$aColumns[$i]];
-                    if ($aColumns[$i] == 'name') {
-                        $_data = '<a href="' . admin_url('tickets/predefined_reply/' . $aRow['id']) . '" class="tw-font-medium">' . e($_data) . '</a>';
-                    }
-                    $row[] = $_data;
-                }
-
-                $options = '<div class="tw-flex tw-items-center tw-space-x-2">';
-                $options .= '<a href="' . admin_url('tickets/predefined_reply/' . $aRow['id']) . '" class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700">
-                    <i class="fa-regular fa-pen-to-square fa-lg"></i>
-                </a>';
-
-                $options .= '<a href="' . admin_url('tickets/delete_predefined_reply/' . $aRow['id']) . '"
-                class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 _delete">
-                    <i class="fa-regular fa-trash-can fa-lg"></i>
-                </a>';
-                $options .= '</div>';
-                $row[]              = $options;
-                $output['aaData'][] = $row;
+                $output['aaData'][] = require APPPATH.'views/admin/tickets/predefined_replies/table_row.php';
             }
             echo json_encode($output);
 
@@ -470,11 +474,13 @@ class Tickets extends AdminController
 
     public function get_predefined_reply_ajax($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketCatalog()->predefinedRead($id);return;}
         echo json_encode($this->tickets_model->get_predefined_reply($id));
     }
 
     public function ticket_change_data()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketPage()->contactChange();return;}
         if ($this->input->is_ajax_request()) {
             $contact_id = $this->input->post('contact_id');
             echo json_encode([
@@ -487,6 +493,7 @@ class Tickets extends AdminController
     // Add new reply or edit existing
     public function predefined_reply($id = '')
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketCatalog()->predefined($id);return;}
         if (! is_admin() && get_option('staff_members_save_tickets_predefined_replies') == '0') {
             access_denied('Predefined Reply');
         }
@@ -533,6 +540,7 @@ class Tickets extends AdminController
     // Delete ticket reply from database
     public function delete_predefined_reply($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketCatalog()->delete('predefined_reply',$id);return;}
         if (! is_admin()) {
             access_denied('Delete Predefined Reply');
         }
@@ -552,6 +560,7 @@ class Tickets extends AdminController
     // Get all ticket statuses
     public function statuses()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketCatalog()->statuses();return;}
         if (! is_admin()) {
             access_denied('Ticket Statuses');
         }
@@ -563,6 +572,7 @@ class Tickets extends AdminController
     // Add new or edit existing status
     public function status()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketCatalog()->save('status');return;}
         if (! is_admin()) {
             access_denied('Ticket Statuses');
         }
@@ -589,6 +599,7 @@ class Tickets extends AdminController
     // Delete ticket status from database
     public function delete_ticket_status($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketCatalog()->delete('status',$id);return;}
         if (! is_admin()) {
             access_denied('Ticket Statuses');
         }
@@ -611,6 +622,7 @@ class Tickets extends AdminController
     // List all ticket services
     public function services()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketCatalog()->table('service');return;}
         if (! is_admin()) {
             access_denied('Ticket Services');
         }
@@ -628,26 +640,7 @@ class Tickets extends AdminController
             $rResult = $result['rResult'];
 
             foreach ($rResult as $aRow) {
-                $row = [];
-
-                for ($i = 0; $i < count($aColumns); $i++) {
-                    $_data = $aRow[$aColumns[$i]];
-                    if ($aColumns[$i] == 'name') {
-                        $_data = '<a href="#" class="tw-font-medium" onclick="edit_service(this,' . $aRow['serviceid'] . ');return false" data-name="' . $aRow['name'] . '">' . $_data . '</a>';
-                    }
-                    $row[] = $_data;
-                }
-
-                $options = '<a href="#" onclick="edit_service(this,' . $aRow['serviceid'] . '); return false;"  data-name="' . $aRow['name'] . '"class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 tw-mr-2">
-                <i class="fa-regular fa-pen-to-square fa-lg"></i>
-            </a>';
-
-                $options .= '<a href="' . admin_url('tickets/delete_service/' . $aRow['serviceid']) . '" class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 _delete">
-            <i class="fa-regular fa-trash-can fa-lg"></i>
-        </a>';
-
-                $row[]              = $options;
-                $output['aaData'][] = $row;
+                $output['aaData'][] = require APPPATH.'views/admin/tickets/services/table_row.php';
             }
             echo json_encode($output);
 
@@ -660,6 +653,7 @@ class Tickets extends AdminController
     // Add new service od delete existing one
     public function service($id = '')
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketCatalog()->save('service');return;}
         if (! is_admin() && get_option('staff_members_save_tickets_predefined_replies') == '0') {
             access_denied('Ticket Services');
         }
@@ -695,6 +689,7 @@ class Tickets extends AdminController
     // Delete ticket service from database
     public function delete_service($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketCatalog()->delete('service',$id);return;}
         if (! is_admin()) {
             access_denied('Ticket Services');
         }
@@ -714,6 +709,7 @@ class Tickets extends AdminController
 
     public function block_sender()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketLifecycle()->blockSender();return;}
         if ($this->input->post()) {
             $this->load->model('spam_filters_model');
             $sender  = $this->input->post('sender');

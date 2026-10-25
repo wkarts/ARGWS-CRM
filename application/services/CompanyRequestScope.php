@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/CompanyContext.php';
+require_once __DIR__ . '/NativeCompanyRoutes.php';
 require_once __DIR__ . '/issuers/IssuerCore.php';
 
 /** Pre-hydration browser boundary, deliberately separate from job/webhook service scopes. */
@@ -11,9 +12,11 @@ final class CompanyRequestScope
     private static $owner = null;
     private static $release = null;
     private static bool $isolated = false;
+    private static bool $nativePresentation = false;
     private static bool $nativeUpgradeOnly = false;
     private static bool $prepared = false;
     private static ?string $submittedToken = null;
+    private static ?string $submittedNativeCsrf = null;
 
     public static function interactive($ci): bool
     {
@@ -62,6 +65,7 @@ final class CompanyRequestScope
         $companyScopedBbRoute = self::companyBbRoute($ci);
         self::$isolated = ($native && $class === 'issuers' && $method === 'lookup')
             || ($native && $class === 'company_context' && in_array($method, ['index', 'select'], true))
+            || ($native && $class === 'company_selection' && $method === 'select')
             || ($native && $class === 'company_onboarding' && $method === 'index')
             || ($native && $class === 'company_clients' && in_array($method,['index','lookup'],true))
             || ($native && in_array($class,['company_staff','company_task_recurring'],true) && $method === 'index')
@@ -90,8 +94,14 @@ final class CompanyRequestScope
         try {
             self::$context = new CompanyContext($ci->db, db_prefix(), $ci->session, $ci->session->userdata('staff_user_id'));
             $verb = strtoupper($ci->input->method(true));
-            $recover = self::$isolated && $method === 'index' && in_array($verb, ['GET', 'HEAD'], true);
-            self::$context->resolve($recover, self::$isolated && $class === 'company_context');
+            $nativeDashboard = $native && $class === 'dashboard' && $method === 'index' && in_array($verb, ['GET', 'HEAD'], true);
+            $recover = $nativeDashboard || (self::$isolated && $method === 'index' && in_array($verb, ['GET', 'HEAD'], true));
+            self::$context->resolve($recover, $nativeDashboard || (self::$isolated && in_array($class, ['company_context', 'company_selection'], true)));
+            // Exact native actions use company data adapters, never the legacy hydration path.
+            self::$nativePresentation = !self::$context->isPrimary() && NativeCompanyRoutes::admits(
+                (string) $ci->router->fetch_directory(), $module, $class, $method, $verb
+            );
+            if (self::$nativePresentation) { self::$isolated = true; }
             // Only the native Settings renderer proven to avoid legacy hooks/transports is admitted.
             if ($native && !self::$context->isPrimary() && (($class === 'settings' && $method === 'index')
                 || ($class === 'issuers' && in_array($method, ['index', 'save'], true))
@@ -106,6 +116,17 @@ final class CompanyRequestScope
             $token = $token ?: $postedToken;
             if (!in_array($verb, ['GET', 'HEAD', 'OPTIONS'], true) || $token) { self::$context->assertToken($token); }
             self::$submittedToken = is_string($token) ? $token : null;
+            $nativeHeader = $ci->input->get_request_header('X-Native-Company-CSRF', false);
+            $nativeBody = $ci->input->post('_native_company_csrf', false);
+            if ($nativeHeader !== null && $nativeHeader !== false && $nativeBody !== null && $nativeBody !== false && $nativeHeader !== $nativeBody) {
+                throw new DomainException('native_company_csrf_mismatch');
+            }
+            $nativeCsrf = $nativeHeader ?: $nativeBody;
+            self::$submittedNativeCsrf = is_string($nativeCsrf) ? $nativeCsrf : null;
+            if (self::$nativePresentation && !in_array($verb, ['GET', 'HEAD'], true)) {
+                self::assertNativeMutation($ci);
+            }
+            unset($_POST['_native_company_csrf']);
             // Middleware metadata must not enter legacy models that persist the complete POST array.
             unset($_POST['_company_context']);
             if (!self::$isolated && !self::$context->isPrimary()) { self::deny($ci, 'company_context_route_not_isolated', 403); }
@@ -137,6 +158,28 @@ final class CompanyRequestScope
     {
         return self::$prepared && self::$owner === $ci && self::$isolated && self::$context !== null;
     }
+    /** Native presentation is a server-owned request attestation, not a query parameter. */
+    public static function nativeFor($ci): bool
+    {
+        return self::sealedFor($ci) && self::$nativePresentation;
+    }
+    public static function nativeRouteAllowed($ci, string $route): bool
+    {
+        return self::nativeFor($ci) && NativeCompanyRoutes::navigation($route);
+    }
+    public static function nativeCsrfToken($ci): ?string
+    {
+        return self::nativeFor($ci) ? self::$context->nativeCsrf() : null;
+    }
+    public static function assertNativeMutation($ci): void
+    {
+        if (!self::nativeFor($ci) || strtoupper($ci->input->method(true)) !== 'POST'
+            || self::$submittedNativeCsrf === null
+            || !hash_equals(self::$context->nativeCsrf(), self::$submittedNativeCsrf)) {
+            throw new DomainException('native_company_csrf_invalid');
+        }
+        self::$context->assertToken(self::$submittedToken);
+    }
     public static function context(): ?CompanyContext { return self::$context; }
     public static function submittedToken(): ?string { return self::$submittedToken; }
     public static function token(): ?string { return self::$context === null ? null : self::$context->token(); }
@@ -158,9 +201,11 @@ final class CompanyRequestScope
         self::$context = null;
         self::$owner = null;
         self::$isolated = false;
+        self::$nativePresentation = false;
         self::$nativeUpgradeOnly = false;
         self::$prepared = false;
         self::$submittedToken = null;
+        self::$submittedNativeCsrf = null;
     }
     private static function deny($ci, string $reason, int $status): void
     {
@@ -177,7 +222,7 @@ final class CompanyRequestScope
             ? 'A empresa desta aba mudou. Recarregue a página antes de enviar novamente. Nenhuma operação foi executada.'
             : 'Esta operação não está disponível no contexto de empresa atual. Selecione uma empresa autorizada.';
         if ($status === 503) { $message = 'O contexto de empresas está indisponível. Conclua a atualização do núcleo ou consulte o administrador.'; }
-        $url = htmlspecialchars(self::adminUrl($ci, 'company_context'), ENT_QUOTES, 'UTF-8');
+        $url = htmlspecialchars(self::adminUrl($ci), ENT_QUOTES, 'UTF-8');
         show_error($message . ' <a href="' . $url . '">Selecionar empresa</a>', $status);
         throw new CompanyRequestDenied($reason, $status); // Defensive stop if an alternative renderer returns.
     }

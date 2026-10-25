@@ -4211,3 +4211,9 @@ $lang['asaas_company_environment_invalid'] = 'Invalid environment';
 $lang['asaas_company_method_pix'] = 'Pix';
 $lang['asaas_company_method_boleto'] = 'Bank slip';
 $lang['asaas_company_method_card'] = 'Hosted card, single payment';
+
+// Existing company-owned states have identities distinct from legacy native statuses.
+$lang['company_project_status_active'] = 'Active';
+$lang['company_ticket_status_open'] = 'Open';
+$lang['company_ticket_status_resolved'] = 'Resolved';
+$lang['company_ticket_status_closed'] = 'Closed';

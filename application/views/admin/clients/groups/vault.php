@@ -1,11 +1,11 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') or exit('No direct script access allowed'); $native_customers=$native_customers??false; ?>
 <h4 class="customer-profile-group-heading">
     <?= _l('vault'); ?>
 </h4>
-<button class="btn btn-primary mbot15" data-toggle="modal" data-target="#entryModal">
+<?php if(!$native_customers||($native_customer_capabilities['edit']??false)){ ?><button class="btn btn-primary mbot15" data-toggle="modal" data-target="#entryModal">
     <i class="fa-regular fa-plus tw-mr-1"></i>
     <?= _l('new_vault_entry'); ?>
-</button>
+</button><?php } ?>
 <?php if (count($vault_entries) == 0) { ?>
 <p class="tw-text-neutral-500 tw-mt-1 tw-mb-0">
     <?= _l('no_vault_entries'); ?>
@@ -13,21 +13,21 @@
 <?php } ?>
 <?php foreach ($vault_entries as $entry) { ?>
 <div
-    class="tw-border tw-border-solid tw-border-neutral-200 tw-rounded-md tw-overflow-hidden tw-mb-3 last:tw-mb-0 panel-vault">
+    data-native-vault-revision="<?= $native_customers ? e($entry['revision']) : '' ?>" class="tw-border tw-border-solid tw-border-neutral-200 tw-rounded-md tw-overflow-hidden tw-mb-3 last:tw-mb-0 panel-vault">
     <div class="tw-flex tw-justify-between tw-items-center tw-px-6 tw-py-3 tw-border-b tw-border-solid tw-border-neutral-200 tw-bg-neutral-50"
         id="<?= 'vaultEntryHeading-' . e($entry['id']); ?>">
         <h4 class="tw-font-semibold tw-my-0 tw-text-lg">
             <?= e($entry['server_address']); ?>
         </h4>
         <div class="tw-flex-inline tw-items-center tw-space-x-2">
-            <?php if ($entry['creator'] == get_staff_user_id() || is_admin()) { ?>
+            <?php if ($native_customers ? $entry['can_manage'] : ($entry['creator'] == get_staff_user_id() || is_admin())) { ?>
             <a href="#"
                 onclick="edit_vault_entry(<?= e($entry['id']); ?>); return false;"
                 class="text-muted">
                 <i class="fa-regular fa-pen-to-square"></i>
             </a>
             <a href="<?= admin_url('clients/vault_entry_delete/' . $entry['id']); ?>"
-                class="text-muted _delete">
+                <?= $native_customers ? 'data-native-admin-remove="1" data-revision="'.e($entry['revision']).'"' : '' ?> class="text-muted <?= $native_customers ? '' : '_delete' ?>">
                 <i class="fa-regular fa-trash-can"></i>
             </a>
             <?php } ?>
@@ -64,7 +64,7 @@
                 <?php if (! empty($entry['description'])) { ?>
                 <p>
                     <b><?= _l('vault_description'); ?>:
-                    </b><br /><?= process_text_content_for_display($entry['description']); ?>
+                    </b><br /><?= $native_customers ? nl2br(e($entry['description'])) : process_text_content_for_display($entry['description']); ?>
                 </p>
                 <hr />
                 <?php } ?>
@@ -96,6 +96,7 @@
 <div class="modal fade" id="entryModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <?= form_open(admin_url('clients/vault_entry_create/' . $client->userid), ['data-create-url' => admin_url('clients/vault_entry_create/' . $client->userid), 'data-update-url' => admin_url('clients/vault_entry_update')]); ?>
+        <?php if($native_customers){ ?><input type="hidden" name="revision" value=""><input type="hidden" name="_native_company_csrf" value="<?= e($company_clients_csrf); ?>"><?php } ?>
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -155,10 +156,11 @@
 </div>
 <!-- /.modal -->
 <?php $this->load->view('admin/clients/vault_confirm_password'); ?>
-<?php hooks()->add_action('app_admin_footer', 'vault_form_validate');
-function vault_form_validate()
+<?php if(!$native_customers)hooks()->add_action('app_admin_footer', 'vault_form_validate');
+function vault_form_validate($native_customers=false)
 { ?>
 <script>
+<?php if($native_customers??false){ ?>document.addEventListener('DOMContentLoaded', function(){<?php } ?>
     var $entryModal = $('#entryModal');
     $(function() {
 
@@ -173,7 +175,7 @@ function vault_form_validate()
         $entryModal.on('hidden.bs.modal', function() {
             var $form = $entryModal.find('form');
             $form.attr('action', $form.data('create-url'));
-            $form.find('input[type="text"]').val('');
+            $form.find('input[type="text"]').val('');$form.find('input[name="revision"]').val('');
             $form.find('input[type="radio"]:first').prop('checked', true);
             $form.find('textarea').val('');
             $('#vault_password_change_notice').addClass('hide');
@@ -185,10 +187,11 @@ function vault_form_validate()
         });
     });
 
-    function edit_vault_entry(id) {
+    window.edit_vault_entry = function(id) {
         $.get(admin_url + 'clients/get_vault_entry/' + id, function(response) {
             var $form = $entryModal.find('form');
             $form.attr('action', $form.data('update-url') + '/' + id);
+            $form.find('input[name="revision"]').val(response.revision||'');
             $form.find('#server_address').val(response.server_address);
             $form.find('#port').val(response.port);
             $form.find('#username').val(response.username);
@@ -201,5 +204,6 @@ function vault_form_validate()
             $entryModal.modal('show');
         }, 'json');
     }
+<?php if($native_customers){ ?>});<?php } ?>
 </script>
-<?php } ?>
+<?php } if($native_customers)vault_form_validate(true); ?>

@@ -259,6 +259,7 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                                     <?php if ($invoice->sent == 0) { ?>
                                     <li>
                                         <a
+                                            <?php if (isset($native_invoice_communication)) { ?>data-native-invoice-communication-revision="<?= e($native_invoice_communication['revision']); ?>" onclick="return native_invoice_communication(this);"<?php } ?>
                                             href="<?= admin_url('invoices/mark_as_sent/' . $invoice->id); ?>"><?= _l('invoice_mark_as_sent'); ?></a>
                                     </li>
                                     <?php } ?>
@@ -282,9 +283,11 @@ if ($invoice->sent == 1 && is_date($invoice->datesend)) {
                                     <li>
                                         <?php if ($invoice->cancel_overdue_reminders == 1) { ?>
                                         <a
+                                            <?php if (isset($native_invoice_communication)) { ?>data-native-invoice-communication-revision="<?= e($native_invoice_communication['revision']); ?>" onclick="return native_invoice_communication(this);"<?php } ?>
                                             href="<?= admin_url('invoices/resume_overdue_reminders/' . $invoice->id); ?>"><?= _l('resume_overdue_reminders'); ?></a>
                                         <?php } else { ?>
                                         <a
+                                            <?php if (isset($native_invoice_communication)) { ?>data-native-invoice-communication-revision="<?= e($native_invoice_communication['revision']); ?>" onclick="return native_invoice_communication(this);"<?php } ?>
                                             href="<?= admin_url('invoices/pause_overdue_reminders/' . $invoice->id); ?>"><?= _l('pause_overdue_reminders'); ?></a>
                                         <?php } ?>
                                     </li>

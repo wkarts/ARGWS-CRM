@@ -53,7 +53,7 @@ Emissão: <?= $escape($date($data['date'])) ?><br />
 <br />
 <table cellpadding="5" cellspacing="0" border="0" width="100%">
 <thead><tr style="background-color:#e8edf2;font-weight:bold;">
-<th width="43%">Descrição</th><th width="13%" align="right">Qtd.</th><th width="22%" align="right">Valor unitário</th><th width="22%" align="right">Valor</th>
+<th width="43%">Descrição</th><th width="13%" align="right"><?= $escape([1=>'Qtd.',2=>'Horas',3=>'Qtd./Horas'][$data['quantity_mode']]) ?></th><th width="22%" align="right">Valor unitário</th><th width="22%" align="right">Valor</th>
 </tr></thead><tbody>
 <?php foreach ($data['items'] as $item) { ?>
 <tr>
@@ -85,6 +85,6 @@ Emissão: <?= $escape($date($data['date'])) ?><br />
 <?php } ?>
 <?php if(!empty($data['position']['bank_tariffs'])){ ?><br /><b>Recebimento integral com tarifa bancária separada</b><?php foreach($data['position']['bank_tariffs']as$tariff){ ?><p>Principal recebido do cliente: <?= $money($tariff['principal_received']); ?> · Tarifa deduzida observada: <?= $money($tariff['tariff_deducted']); ?> · Líquido bancário observado: <?= $money($tariff['bank_net']); ?>.</p><?php } ?><p>A tarifa não reduz o principal recebido e não cria despesa fiscal automaticamente.</p><?php } ?>
 <?php if ($data['note'] !== '') { ?><br /><b>Observações</b><br /><?= $lines($data['note']) ?><?php } ?>
-<?php if ($identity['terms'] !== '') { ?><br /><br /><b>Condições</b><br /><?= $lines($identity['terms']) ?><?php } ?>
+<?php if ($data['terms'] !== '') { ?><br /><br /><b>Condições</b><br /><?= $lines($data['terms']) ?><?php } ?>
 
 <?php if(!empty($identity['signature_inline'])){ ?><br /><br /><img width="140" src="<?= $escape($identity['signature_inline']); ?>"><br />Assinatura do emitente<?php } ?>

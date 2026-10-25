@@ -35,3 +35,8 @@ $legacy=essentialLegacy($f);$service->save($a,12,'logo',$bytes,$service->view($a
 essentialCheck(str_starts_with($service->download($a,12,'logo',$service->view($a,12)['revision']),"\x89PNG"),'download returns authorized normalized raster bytes');
 $db->failOn='INSERT INTO '.$p.'issuers_audit';essentialThrows(fn()=>$service->download($a,12,'logo',$service->view($a,12)['revision']),'issuer_storage_failed','failed download audit releases no bytes');$db->failOn=null;
 echo 'Company raster assets: '.$GLOBALS['essentialChecks'].' checks passed ('.$db->driver().').'.PHP_EOL;
+$brand=$service->brandingForStaff($a,12);essentialCheck(array_keys($brand)===['logo','logo_dark','favicon']&&!isset($brand['signature']),'member header projection excludes signature and settings');
+essentialCheck($brand['logo']!==''&&$brand['logo_dark']===''&&$brand['favicon']==='','header branding keeps missing private variants empty, no global fallback');
+$db->query("UPDATE {$p}issuers_staff SET can_view=0 WHERE issuer_id=? AND staff_id=12",[$a]);
+essentialThrows(fn()=>$service->brandingForStaff($a,12),'company_asset_access_denied','revocation closes member branding projection');
+$db->query("UPDATE {$p}issuers_staff SET can_view=1 WHERE issuer_id=? AND staff_id=12",[$a]);

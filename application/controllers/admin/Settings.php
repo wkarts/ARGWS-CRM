@@ -14,6 +14,7 @@ class Settings extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if (class_exists('CompanyRequestScope',false) && method_exists('CompanyRequestScope','nativeFor') && CompanyRequestScope::nativeFor($this)) { return; }
         if ($this->isolated_company()) {
             if (!class_exists('CompanyRequestScope', false) || !CompanyRequestScope::sealedFor($this)) { show_error('Acesso negado.', 403); return; }
             $this->load->library('encryption');
@@ -27,6 +28,7 @@ class Settings extends AdminController
     // View all settings
     public function index()
     {
+        if (class_exists('CompanyRequestScope',false) && method_exists('CompanyRequestScope','nativeFor') && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySettingsController.php'; NativeCompanySettingsController::index($this); return; }
         if ($this->isolated_company() || (CompanySettingsRuntime::active() && in_array($this->input->get('group'),['task_timer_stop','task_timers','task_operations','project_files','pdf_typography','ticket_preferences','task_defaults'],true))) { return $this->isolated_index(); }
         if (!$this->settings_allowed('view')) {
             access_denied('settings');
@@ -329,7 +331,7 @@ class Settings extends AdminController
                 'ticket_preferences'=>CompanyRequestScope::adminUrl($this,'settings?group=ticket_preferences'),
                 'pdf_typography'=>CompanyRequestScope::adminUrl($this,'settings?group=pdf_typography'),
                 'project_files'=>CompanyRequestScope::adminUrl($this,'settings?group=project_files'),
-                'companies' => CompanyRequestScope::adminUrl($this, 'company_context'),
+                'companies' => CompanyRequestScope::adminUrl($this, 'issuers'),
                 'company' => CompanyRequestScope::adminUrl($this, 'settings?group=company'),
                 'email' => CompanyRequestScope::adminUrl($this, 'settings?group=email'),
                 'localization' => CompanyRequestScope::adminUrl($this, 'settings?group=localization'),
@@ -503,6 +505,7 @@ class Settings extends AdminController
 
     public function remove_signature_image()
     {
+        if (class_exists('CompanyRequestScope',false) && method_exists('CompanyRequestScope','nativeFor') && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySettingsController.php'; NativeCompanySettingsController::removeAsset($this,'signature'); return; }
         if ($this->isolated_company()) { access_denied('settings'); }
         if (!$this->settings_allowed('delete')) {
             access_denied('settings');
@@ -521,6 +524,7 @@ class Settings extends AdminController
     // Remove company logo from settings / ajax
     public function remove_company_logo($type = '')
     {
+        if (class_exists('CompanyRequestScope',false) && method_exists('CompanyRequestScope','nativeFor') && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySettingsController.php'; NativeCompanySettingsController::removeAsset($this,($type===''?'logo':($type==='dark'?'logo_dark':'invalid'))); return; }
         if ($this->isolated_company()) { access_denied('settings'); }
         hooks()->do_action('before_remove_company_logo');
 
@@ -544,6 +548,7 @@ class Settings extends AdminController
 
     public function remove_fv()
     {
+        if (class_exists('CompanyRequestScope',false) && method_exists('CompanyRequestScope','nativeFor') && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySettingsController.php'; NativeCompanySettingsController::removeAsset($this,'favicon'); return; }
         if ($this->isolated_company()) { access_denied('settings'); }
         hooks()->do_action('before_remove_favicon');
         if (!$this->settings_allowed('delete')) {

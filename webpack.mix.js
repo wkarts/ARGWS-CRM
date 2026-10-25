@@ -28,6 +28,8 @@ mix.minify([
   "assets/themes/perfex/js/clients.js",
   "assets/themes/perfex/js/global.js",
   "assets/js/main.js",
+  "assets/js/native-tasks.js",
+  "assets/js/native-ui-tools.js",
   "assets/js/map.js",
   "assets/js/projects.js",
   "assets/js/tickets.js",
@@ -63,6 +65,7 @@ mix.combine(
     "assets/plugins/internal/google-picker/picker.min.js",
     "assets/plugins/waypoint/jquery.waypoints.min.js",
     "assets/plugins/internal/bootstrap-nav-tabs-scrollable/bootstrap-nav-tab-scrollable.js",
+    "assets/js/native-device.js",
     "assets/js/app.js",
   ],
   "assets/builds/common.js"
@@ -180,9 +183,8 @@ mix.minify([
 
 if (mix.inProduction()) {
   mix.after(() => {
-    let migrationFile = fs.readFileSync("./application/config/migration.php");
-    let versionRegex = /(\['migration_version'\] = )(\d+;) (\/\/) (\d.\d.\d)/gm;
-    let versionConfig = versionRegex.exec(migrationFile)[4];
+    // Comments are documentation, not release identity. Validate the generated files.
+    const versionConfig = require('./scripts/native-build-version.cjs')(__dirname);
 
     [
       "assets/js/main.min.js",
@@ -194,7 +196,7 @@ if (mix.inProduction()) {
     ].forEach((headerableFile) => {
       const data = fs.readFileSync(headerableFile);
       const fd = fs.openSync(headerableFile, "w+");
-      const insert = Buffer.from("/* " + versionConfig + " */ \n");
+      const insert = Buffer.from("/* " + versionConfig + " */\n");
       fs.writeSync(fd, insert, 0, insert.length, 0);
       fs.writeSync(fd, data, 0, data.length, insert.length);
       fs.close(fd, (err) => {

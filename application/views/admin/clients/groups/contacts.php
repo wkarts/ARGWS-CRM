@@ -1,7 +1,8 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php $native_customers=$native_customers??false;$nativeIndividual=$native_customers?($native_contact_metadata['company']===''):false; ?>
 <?php if (isset($client)) { ?>
 <h4 class="customer-profile-group-heading">
-    <?= e(is_empty_customer_company($client->userid) ? _l('contact') : _l('customer_contacts')); ?>
+    <?= e(($native_customers?$nativeIndividual:is_empty_customer_company($client->userid)) ? _l('contact') : _l('customer_contacts')); ?>
 </h4>
 <?php if ($this->session->flashdata('gdpr_delete_warning')) { ?>
 <div class="alert alert-warning">
@@ -10,9 +11,9 @@
     proposals linked to this contact.
 </div>
 <?php } ?>
-<?php if ((staff_can('create', 'customers') || is_customer_admin($client->userid)) && $client->registration_confirmed == '1') {
+<?php if (($native_customers?$native_contact_create:(staff_can('create', 'customers') || is_customer_admin($client->userid))) && $client->registration_confirmed == '1') {
     $disable_new_contacts = false;
-    if (is_empty_customer_company($client->userid) && total_rows(db_prefix() . 'contacts', ['userid' => $client->userid]) == 1) {
+    if (($native_customers?$nativeIndividual:is_empty_customer_company($client->userid)) && ($native_customers?$native_contact_metadata['total']:total_rows(db_prefix() . 'contacts', ['userid' => $client->userid])) == 1) {
         $disable_new_contacts = true;
     } ?>
 <div class="inline-block new-contact-wrapper"
@@ -32,14 +33,14 @@
 } ?>
 <?php
     $table_data = [_l('clients_list_full_name')];
-    if (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1') {
+    if ($native_customers?$native_contact_consent_enabled:(is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1')) {
         array_push($table_data, [
             'name'     => _l('gdpr_consent') . ' (' . _l('gdpr_short') . ')',
             'th_attrs' => ['id' => 'th-consent', 'class' => 'not-export'],
         ]);
     }
     $table_data    = array_merge($table_data, [_l('client_email'), _l('contact_position'), _l('client_phonenumber'), _l('contact_active'), _l('clients_list_last_login')]);
-    $custom_fields = get_custom_fields('contacts', ['show_on_table' => 1]);
+    $custom_fields = $native_customers?$native_contact_table_fields:get_custom_fields('contacts', ['show_on_table' => 1]);
 
     foreach ($custom_fields as $field) {
         array_push($table_data, [

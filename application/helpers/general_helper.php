@@ -569,10 +569,18 @@ function _l($line, $label = '', $log_errors = true)
 {
     $CI = &get_instance();
 
-    $hook_data = hooks()->apply_filters('before_get_language_text', ['line' => $line, 'label' => $label]);
-
-    $line  = $hook_data['line'];
-    $label = $hook_data['label'];
+    // Same formatter for both contexts; native company scope must not execute global module hooks.
+    $nativeAdmin = class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($CI);
+    $nativePortal = class_exists('PortalRequestScope', false) && PortalRequestScope::nativeFor($CI);
+    $native = $nativeAdmin || $nativePortal;
+    if (($nativeAdmin && ! CompanyRequestScope::sealedFor($CI)) || ($nativePortal && ! PortalRequestScope::sealedFor($CI))) {
+        throw new DomainException('native_translation_context_invalid');
+    }
+    if (! $native) {
+        $hook_data = hooks()->apply_filters('before_get_language_text', ['line' => $line, 'label' => $label]);
+        $line  = $hook_data['line'];
+        $label = $hook_data['label'];
+    }
 
     if (is_array($label) && count($label) > 0) {
         $_line = vsprintf($CI->lang->line(trim($line), $log_errors), $label);
@@ -588,10 +596,11 @@ function _l($line, $label = '', $log_errors = true)
         }
     }
 
-    $hook_data = hooks()->apply_filters('after_get_language_text', ['line' => $line, 'formatted_line' => $_line]);
-
-    $_line = $hook_data['formatted_line'];
-    $line  = $hook_data['line'];
+    if (! $native) {
+        $hook_data = hooks()->apply_filters('after_get_language_text', ['line' => $line, 'formatted_line' => $_line]);
+        $_line = $hook_data['formatted_line'];
+        $line  = $hook_data['line'];
+    }
 
     if ($_line != '') {
         if (preg_match('/"/', $_line) && ! is_html($_line)) {
@@ -617,6 +626,9 @@ function _l($line, $label = '', $log_errors = true)
  */
 function _d($date)
 {
+    if(class_exists('PortalRequestScope',false)&&PortalRequestScope::candidate()){require_once APPPATH.'services/NativeCompanyFormatting.php';$nativeCi=&get_instance();return NativeCompanyFormatting::portal($nativeCi)->date($date);}
+    if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()){require_once APPPATH.'services/NativeCompanyFormatting.php';return NativeCompanyFormatting::current()->date($date);}
+
     $formatted = '';
 
     if ($date == '' || is_null($date) || $date == '0000-00-00') {
@@ -649,6 +661,9 @@ function _d($date)
  */
 function _dt($date, $is_timesheet = false)
 {
+    if(class_exists('PortalRequestScope',false)&&PortalRequestScope::candidate()){require_once APPPATH.'services/NativeCompanyFormatting.php';$nativeCi=&get_instance();return NativeCompanyFormatting::portal($nativeCi)->datetime($date,(bool)$is_timesheet);}
+    if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()){require_once APPPATH.'services/NativeCompanyFormatting.php';return NativeCompanyFormatting::current()->datetime($date,(bool)$is_timesheet);}
+
     $original = $date;
 
     if ($date == '' || is_null($date) || $date == '0000-00-00 00:00:00') {
@@ -694,6 +709,9 @@ function _dt($date, $is_timesheet = false)
  */
 function to_sql_date($date, $datetime = false)
 {
+    if(class_exists('PortalRequestScope',false)&&PortalRequestScope::candidate()){require_once APPPATH.'services/NativeCompanyFormatting.php';$nativeCi=&get_instance();return NativeCompanyFormatting::portal($nativeCi)->toSql($date,(bool)$datetime);}
+    if(class_exists('CompanySettingsRuntime',false)&&CompanySettingsRuntime::active()){require_once APPPATH.'services/NativeCompanyFormatting.php';return NativeCompanyFormatting::current()->toSql($date,(bool)$datetime);}
+
     if ($date == '' || $date == null) {
         return null;
     }

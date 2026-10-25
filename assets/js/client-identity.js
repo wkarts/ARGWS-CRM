@@ -35,6 +35,7 @@
         ['company', 'trade_name', 'address', 'address_number', 'address_complement', 'address_district', 'city', 'state', 'zip', 'country_code', 'phonenumber'].forEach(function (key) { var el = target(key); if (el) before[key] = el.value; });
         var data = new URLSearchParams();
         form.querySelectorAll('input[type=hidden]').forEach(function (input) { if (input.name && !input.name.includes('[')) data.set(input.name, input.value); });
+        if (root.dataset.nativeCompanyCsrf) data.set('_native_company_csrf', root.dataset.nativeCompanyCsrf);
         data.set('_company_context', root.dataset.companyContext); data.set('lookup_csrf', root.dataset.lookupToken); data.set('client_id', root.dataset.clientId); data.set('kind', button.dataset.clientLookup); data.set('value', originalQuery);
         busy = true; button.disabled = true; status.textContent = 'Consultando. Seus dados serão preservados.';
         var abort = new AbortController(), timer = setTimeout(function () { abort.abort(); }, 12000);

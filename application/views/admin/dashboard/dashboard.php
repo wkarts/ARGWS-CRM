@@ -1,7 +1,22 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
+<?php
+$scopedDashboard=isset($company_dashboard)||!empty($company_dashboard_selection_required);
+$dashboardData=$company_dashboard??null;
+$renderDashboard=function(string $container) use($scopedDashboard,$dashboardData) {
+    if (!$scopedDashboard) { render_dashboard_widgets($container); return; }
+    if($dashboardData===null)return;
+    // Same native widget files/positions, but no global/module hook registry or eager hidden queries.
+    $widgets=['top-12'=>['top_stats'],'left-8'=>['finance_overview','user_data','upcoming_events','calendar','payments_chart','contracts_expiring','tickets_report'],
+        'right-4'=>['todos','leads_chart','projects_chart','tickets_chart','projects_activity']];
+    $ordered=$dashboardData['widget_order'];$assigned=[];foreach($ordered as $ids)foreach($ids as $id)$assigned[substr($id,7)]=true;
+    $names=array_map(static fn($id)=>substr($id,7),$ordered[$container]??[]);
+    foreach($widgets[$container]??[] as $widget)if(!isset($assigned[$widget]))$names[]=$widget;
+    foreach($names as $widget)$this->load->view('admin/dashboard/widgets/'.$widget,array_merge($dashboardData['view'],['company_dashboard'=>$dashboardData]));
+};
+?>
 <div id="wrapper">
-    <div class="screen-options-area"></div>
+    <?php if (empty($company_dashboard_selection_required)) { ?><div class="screen-options-area"></div>
     <div class="screen-options-btn">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
             class="tw-w-5 tw-h-5 ltr:tw-mr-1 rtl:tw-ml-1">
@@ -12,57 +27,58 @@
 
         <?= _l('dashboard_options'); ?>
     </div>
-    <div class="content">
+    <?php } ?><div class="content">
         <div class="row">
             <?php $this->load->view('admin/includes/alerts'); ?>
+            <?php if(!empty($company_dashboard_selection_required)) { ?><div class="col-md-12"><div class="alert alert-info" role="status">Selecione uma empresa no menu para consultar o painel. Nenhum dado de empresa foi carregado.</div></div><?php } ?>
 
-            <?php hooks()->do_action('before_start_render_dashboard_content'); ?>
+            <?php if (!$scopedDashboard) { hooks()->do_action('before_start_render_dashboard_content'); } ?>
 
             <div class="clearfix"></div>
 
             <div class="col-md-12 mtop20" data-container="top-12">
-                <?php render_dashboard_widgets('top-12'); ?>
+                <?php $renderDashboard('top-12'); ?>
             </div>
 
-            <?php hooks()->do_action('after_dashboard_top_container'); ?>
+            <?php if (!$scopedDashboard) { hooks()->do_action('after_dashboard_top_container'); } ?>
 
             <div class="col-md-6" data-container="middle-left-6">
-                <?php render_dashboard_widgets('middle-left-6'); ?>
+                <?php $renderDashboard('middle-left-6'); ?>
             </div>
             <div class="col-md-6" data-container="middle-right-6">
-                <?php render_dashboard_widgets('middle-right-6'); ?>
+                <?php $renderDashboard('middle-right-6'); ?>
             </div>
 
-            <?php hooks()->do_action('after_dashboard_half_container'); ?>
+            <?php if (!$scopedDashboard) { hooks()->do_action('after_dashboard_half_container'); } ?>
 
             <div class="col-md-8" data-container="left-8">
-                <?php render_dashboard_widgets('left-8'); ?>
+                <?php $renderDashboard('left-8'); ?>
             </div>
             <div class="col-md-4" data-container="right-4">
-                <?php render_dashboard_widgets('right-4'); ?>
+                <?php $renderDashboard('right-4'); ?>
             </div>
 
             <div class="clearfix"></div>
 
             <div class="col-md-4" data-container="bottom-left-4">
-                <?php render_dashboard_widgets('bottom-left-4'); ?>
+                <?php $renderDashboard('bottom-left-4'); ?>
             </div>
             <div class="col-md-4" data-container="bottom-middle-4">
-                <?php render_dashboard_widgets('bottom-middle-4'); ?>
+                <?php $renderDashboard('bottom-middle-4'); ?>
             </div>
             <div class="col-md-4" data-container="bottom-right-4">
-                <?php render_dashboard_widgets('bottom-right-4'); ?>
+                <?php $renderDashboard('bottom-right-4'); ?>
             </div>
 
-            <?php hooks()->do_action('after_dashboard'); ?>
+            <?php if (!$scopedDashboard) { hooks()->do_action('after_dashboard'); } ?>
         </div>
     </div>
 </div>
 <script>
-    app.calendarIDs = '<?= json_encode($google_ids_calendars); ?>';
+    app.calendarIDs = '<?= json_encode($google_ids_calendars ?? []); ?>';
 </script>
 <?php init_tail(); ?>
-<?php $this->load->view('admin/utilities/calendar_template'); ?>
+<?php if(empty($company_dashboard_selection_required))$this->load->view('admin/utilities/calendar_template'); ?>
 <?php $this->load->view('admin/dashboard/dashboard_js'); ?>
 </body>
 

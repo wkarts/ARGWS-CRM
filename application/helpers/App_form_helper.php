@@ -94,6 +94,9 @@ if ( ! function_exists('form_open'))
             if (($base['scheme'] ?? '') === ($target['scheme'] ?? '') && ($base['host'] ?? '') === ($target['host'] ?? '')
                 && ($base['port'] ?? null) === ($target['port'] ?? null)) {
                 $form .= '<input type="hidden" name="_company_context" value="' . html_escape(CompanyRequestScope::token()) . '" />';
+                if (CompanyRequestScope::nativeFor($CI)) {
+                    $form .= '<input type="hidden" name="_native_company_csrf" value="' . html_escape(CompanyRequestScope::nativeCsrfToken($CI)) . '" />';
+                }
             }
         }
         return $form;

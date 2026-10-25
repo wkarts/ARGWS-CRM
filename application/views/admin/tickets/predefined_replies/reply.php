@@ -17,6 +17,8 @@
             <div class="panel_s">
                 <div class="panel-body">
                     <?= form_open($this->uri->uri_string()); ?>
+        <?php if(!empty($native_ticket_catalog)){ ?><input type="hidden" name="_company_context" value="<?= e($native_ticket_context); ?>"><input type="hidden" name="_native_company_csrf" value="<?= e($native_ticket_csrf); ?>"><?php } ?>
+                    <?php if(!empty($native_ticket_catalog)&&isset($predefined_reply)){ ?><input type="hidden" name="revision" value="<?= e($predefined_reply->revision_token); ?>"><?php } ?>
                     <?php $value = (isset($predefined_reply) ? $predefined_reply->name : ''); ?>
                     <?php $attrs = (isset($predefined_reply) ? [] : ['autofocus' => true]); ?>
                     <?= render_input('name', 'predefined_reply_add_edit_name', $value, 'text', $attrs); ?>

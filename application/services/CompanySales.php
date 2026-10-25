@@ -45,6 +45,17 @@ final class CompanySales extends CompanySalesBase
         if(strlen($search)>191||preg_match('//u',$search)!==1)throw new DomainException('company_sales_invalid');$like='%'.str_replace(['!','%','_'],['!!','!%','!_'],$search).'%';$r=$this->rows("SELECT id,kind,number,state,total,invoice_id,created_at,context_json,origin_hash FROM ".$this->prefix."company_sales_documents WHERE issuer_id=? AND kind=? AND id>? AND (payload_json LIKE ? ESCAPE '!' OR context_json LIKE ? ESCAPE '!') ORDER BY id LIMIT 51",[$issuer,$kind,$after,$like,$like]);foreach($r as &$row){$this->owned($issuer,$actor,(int)$row['id'],true);$context=CompanySalesPreferences::context($row['context_json'],$row['origin_hash'],$issuer);$row['formatted_number']=CompanySalesPreferences::presentation($row['kind'],$row['number'],$context)['formatted_number'];unset($row['context_json'],$row['origin_hash']);}unset($row);$this->auth($issuer,$actor,$kind);return ['items'=>array_slice($r,0,50),'next'=>count($r)>50?(int)$r[49]['id']:null];});
     }
 
+    /** Bounded native relation search with the same snapshot validation and number presentation. */
+    public function relationOptions(int $issuer,int $actor,string $kind,string $search=''):array
+    {
+        $kind=self::kind($kind);if(strlen($search)>191||preg_match('//u',$search)!==1||preg_match('/[\x00-\x1f\x7f]/',$search))throw new DomainException('company_sales_invalid');
+        return$this->tx($issuer,$actor,function()use($issuer,$actor,$kind,$search){
+            $this->auth($issuer,$actor,$kind);$needle='%'.str_replace(['!','%','_'],['!!','!%','!_'],$search).'%';$number=0;
+            if(preg_match('/([0-9]{1,10})$/D',$search,$m)&&((int)$m[1])<=2147483647)$number=(int)$m[1];
+            $rows=$this->rows("SELECT id FROM ".$this->prefix."company_sales_documents WHERE issuer_id=? AND kind=? AND (number=? OR payload_json LIKE ? ESCAPE '!' OR context_json LIKE ? ESCAPE '!') ORDER BY id LIMIT 50",[$issuer,$kind,$number,$needle,$needle]);
+            $out=[];foreach($rows as$r){$row=$this->owned($issuer,$actor,(int)$r['id'],true);$context=CompanySalesPreferences::context($row['context_json'],$row['origin_hash'],$issuer);$label=CompanySalesPreferences::presentation($kind,$row['number'],$context,$kind==='estimates'?'ORC-':'PROP-')['formatted_number'];$out[]=['id'=>(string)$row['id'],'name'=>$label,'subtext'=>''];}$this->auth($issuer,$actor,$kind);return$out;
+        });
+    }
     public function decide($issuer,$actor,$id,string $decision,?string $revision=null):void
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);if(!in_array($decision,['accepted','declined','cancelled'],true))throw new DomainException('company_sales_invalid');

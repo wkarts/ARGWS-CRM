@@ -7,7 +7,7 @@ class Utilities extends AdminController
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('utilities_model');
+        if (!CompanyRequestScope::nativeFor($this)) $this->load->model('utilities_model');
     }
 
     /* Registros locais de atividade */
@@ -56,9 +56,20 @@ class Utilities extends AdminController
         redirect(admin_url('utilities/pipe_log'));
     }
 
+    private function nativeCalendarJson(string $method,$id=null)
+    {
+        require_once APPPATH.'services/NativeCompanyCalendarEndpoints.php';
+        try{$data=$id===null?NativeCompanyCalendarEndpoints::$method($this):NativeCompanyCalendarEndpoints::$method($this,$id);return $this->output->set_content_type('application/json')->set_header('Cache-Control: no-store')->set_output(json_encode($data,JSON_THROW_ON_ERROR));}
+        catch(DomainException $error){return $this->output->set_status_header(409)->set_content_type('application/json')->set_header('Cache-Control: no-store')->set_output(json_encode(['success'=>false,'message'=>_l('something_went_wrong')]));}
+    }
+
     /* Calendar functions */
     public function calendar()
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            if (strtoupper($this->input->method())==='POST') return $this->nativeCalendarJson('save');
+            require_once APPPATH.'services/NativeCompanyCalendarEndpoints.php';$data=NativeCompanyCalendarEndpoints::page($this);add_calendar_assets();return $this->load->view('admin/utilities/calendar',$data);
+        }
         if ($this->input->post() && $this->input->is_ajax_request()) {
             $data = $this->input->post();
 
@@ -87,6 +98,9 @@ class Utilities extends AdminController
 
     public function get_calendar_data()
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            return $this->nativeCalendarJson('feed');
+        }
         echo json_encode($this->utilities_model->get_calendar_data(
                 date('Y-m-d', strtotime($this->input->get('start'))),
                 date('Y-m-d', strtotime($this->input->get('end'))),
@@ -99,6 +113,9 @@ class Utilities extends AdminController
 
     public function view_event($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyCalendarEndpoints.php';return $this->load->view('admin/utilities/event',NativeCompanyCalendarEndpoints::event($this,$id));
+        }
         $data['event'] = $this->utilities_model->get_event($id);
         if ($data['event']->public == 1 && !is_staff_member()
             || $data['event']->public == 0 && $data['event']->userid != get_staff_user_id()) {
@@ -109,6 +126,9 @@ class Utilities extends AdminController
 
     public function delete_event($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            return $this->nativeCalendarJson('delete',$id);
+        }
         if ($this->input->is_ajax_request()) {
             $event = $this->utilities_model->get_event_by_id($id);
             if ($event->userid != get_staff_user_id() && !is_admin()) {

@@ -14,6 +14,7 @@
             </div>
             <?= form_open('admin/invoice_items/manage', ['id' => 'invoice_item_form']); ?>
             <?= form_hidden('itemid'); ?>
+            <?php if(CompanyRequestScope::nativeFor($this))echo form_hidden('revision'); ?>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-12">
@@ -28,8 +29,14 @@
                             <input type="number" id="rate" name="rate" class="form-control" value="">
                         </div>
                         <?php
+                            $nativeItemCurrencies = null;
+                            if (CompanyRequestScope::nativeFor($this)) {
+                                require_once APPPATH.'services/NativeCompanyCurrencyReference.php';
+                                $itemContext=CompanyRequestScope::context();
+                                $nativeItemCurrencies=(new NativeCompanyCurrencyReference($this->db,db_prefix(),$itemContext->issuerId(),$itemContext->staffId()))->clientCurrencyIds();
+                            }
                             foreach ($currencies as $currency) {
-                                if ($currency['isdefault'] == 0 && total_rows(db_prefix() . 'clients', ['default_currency' => $currency['id']]) > 0) { ?>
+                                if ($currency['isdefault'] == 0 && ($nativeItemCurrencies!==null ? in_array((int)$currency['id'],$nativeItemCurrencies,true) : total_rows(db_prefix() . 'clients', ['default_currency' => $currency['id']]) > 0)) { ?>
                         <div class="form-group">
                             <label
                                 for="rate_currency_<?= e($currency['id']); ?>"
@@ -185,6 +192,7 @@
 
             var $itemModal = $('#sales_item_modal');
             $('input[name="itemid"]').val('');
+            $('input[name="revision"]').val('');
             $itemModal.find('input').not('input[type="hidden"]').val('');
             $itemModal.find('textarea').val('');
             $itemModal.find('select').selectpicker('val', '').selectpicker('refresh');
@@ -201,6 +209,7 @@
                 $('input[name="itemid"]').val(id);
 
                 requestGetJSON('invoice_items/get_item_by_id/' + id).done(function(response) {
+                    $itemModal.find('input[name="revision"]').val(response.revision || '');
                     $itemModal.find('input[name="description"]').val(response.description);
                     $itemModal.find('textarea[name="long_description"]').val(response.long_description
                         .replace(/(<|<)br\s*\/*(>|>)/g, " "));

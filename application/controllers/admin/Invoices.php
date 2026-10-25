@@ -7,6 +7,9 @@ class Invoices extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if (CompanyRequestScope::nativeFor($this)) {
+            return; // NativeCompanyRoutes must admit only completely adapted methods.
+        }
         $this->load->model('invoices_model');
         $this->load->model('credit_notes_model');
     }
@@ -20,6 +23,25 @@ class Invoices extends AdminController
     /* List all invoices datatables */
     public function list_invoices($id = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                if(!in_array(strtoupper($this->input->method(true)),['GET','HEAD'],true))throw new DomainException('native_company_invoice_query_invalid');
+                $status=$this->input->get('status');$notSent=$this->input->get('not_sent');
+                if($status!==null&&$status!==''&&(!is_scalar($status)||!preg_match('/^[1-6]$/D',(string)$status)))throw new DomainException('native_company_invoice_query_invalid');
+                if($notSent!==null&&!in_array($notSent,['',0,1,'0','1'],true))throw new DomainException('native_company_invoice_query_invalid');
+                require_once APPPATH.'services/NativeCompanyInvoiceManage.php';
+                $context=CompanyRequestScope::context();
+                $data=(new NativeCompanyInvoiceManage($this->db,db_prefix()))->data($context->issuerId(),$context->staffId(),$id);
+                $this->load->view('admin/invoices/manage',$data);
+            } catch (DomainException $error) {
+                show_error('Faturas indisponíveis ou solicitação inválida nesta empresa.',$error->getMessage()==='native_company_invoice_query_invalid'?422:403);
+            } catch (Throwable $error) {
+                show_error('Não foi possível confirmar a configuração das faturas.',503);
+            }
+            return;
+        }
+
         if (staff_cant('view', 'invoices')
             && staff_cant('view_own', 'invoices')
             && get_option('allow_staff_view_invoices_assigned') == '0') {
@@ -60,6 +82,40 @@ class Invoices extends AdminController
 
     public function table($clientid = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);
+                require_once APPPATH.'services/NativeCompanyInvoiceDataTable.php';
+                require_once APPPATH.'services/NativeCompanyInvoiceRows.php';
+                if($this->input->get('recurring'))throw new DomainException('native_company_invoice_table_request_invalid');
+                $input=$this->input->post(null,false)?:[];
+                unset($input['_company_context'],$input['_native_company_csrf']);
+                if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                $context=CompanyRequestScope::context();$issuer=$context->issuerId();$actor=$context->staffId();
+                $columns=new NativeCompanyInvoiceCustomColumns($this->db,db_prefix(),$issuer,$actor);
+                $request=NativeCompanyInvoiceDataTable::request($input,$clientid,$columns->definitions(true));
+                $page=(new NativeCompanyInvoiceRead($this->db,db_prefix()))->page($issuer,$actor,$request['query'],$request['scope']);
+                $presenter=new NativeCompanyInvoiceRows($this->db,db_prefix());$rows=[];
+                foreach($page['documents']as$document)$rows[]=$presenter->render($issuer,$actor,$document['invoice_id'],$request['scope']);
+                $columns->recheck();
+                if(isset($input['order'],$input['last_order_identifier'])&&get_option('save_last_order_for_tables')==='1'){
+                    require_once APPPATH.'services/NativeCompanyTableOrder.php';
+                    (new NativeCompanyTableOrder($this->db,db_prefix(),$issuer,$actor))->save($input['last_order_identifier'],$input['order'],count($input['columns']));
+                }
+                $response=NativeCompanyInvoiceDataTable::response($page,$rows);
+                $this->output->set_content_type('application/json')->set_output(json_encode($response,JSON_THROW_ON_ERROR));
+            } catch (DomainException $error) {
+                $message=$error->getMessage();
+                $status=in_array($message,['native_company_invoice_table_request_invalid','native_company_invoice_query_invalid','native_company_invoice_filter_invalid'],true)?422:
+                    (in_array($message,['native_company_invoice_read_changed','native_company_invoice_columns_changed'],true)?409:403);
+                show_error('Lista de faturas indisponível ou solicitação inválida nesta empresa.',$status);
+            } catch (Throwable $error) {
+                show_error('Não foi possível confirmar a lista de faturas.',503);
+            }
+            return;
+        }
+
         if (staff_cant('view', 'invoices')
             && staff_cant('view_own', 'invoices')
             && get_option('allow_staff_view_invoices_assigned') == '0') {
@@ -140,6 +196,21 @@ class Invoices extends AdminController
 
     public function validate_invoice_number()
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);
+                require_once APPPATH.'services/NativeCompanyInvoiceNumberValidation.php';
+                $input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);
+                if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                $context=CompanyRequestScope::context();
+                $valid=(new NativeCompanyInvoiceNumberValidation($this->db,db_prefix()))->validate($context->issuerId(),$context->staffId(),$input);
+                $this->output->set_content_type('application/json')->set_output(json_encode($valid));
+            } catch (DomainException $error) {
+                show_error('Número inválido ou fatura indisponível nesta empresa.',str_contains($error->getMessage(),'stale')?409:($error->getMessage()==='native_invoice_number_invalid'?422:403));
+            } catch (Throwable $error) { show_error('Não foi possível confirmar o número da fatura.',503); }
+            return;
+        }
         $isedit          = $this->input->post('isedit');
         $number          = $this->input->post('number');
         $date            = $this->input->post('date');
@@ -165,6 +236,10 @@ class Invoices extends AdminController
 
     public function add_note($rel_id)
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->companyNotes($rel_id, true);
+            return;
+        }
         if ($this->input->post() && user_can_view_invoice($rel_id)) {
             $this->misc_model->add_note($this->input->post(), 'invoice', $rel_id);
             echo $rel_id;
@@ -173,14 +248,68 @@ class Invoices extends AdminController
 
     public function get_notes($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->companyNotes($id, false);
+            return;
+        }
         if (user_can_view_invoice($id)) {
             $data['notes'] = $this->misc_model->get_notes($id, 'invoice');
             $this->load->view('admin/includes/sales_notes_template', $data);
         }
     }
 
+    private function companyNotes($id, bool $write): void
+    {
+        require_once APPPATH.'services/NativeCompanyAuxiliaryUi.php';
+        $context=CompanyRequestScope::context();
+        $this->output->set_header('Cache-Control: no-store');
+        try {
+            $service=new NativeCompanyAuxiliaryUi($this->db,db_prefix(),$context->issuerId(),$context->staffId());
+            if ($write) {
+                CompanyRequestScope::assertNativeMutation($this);
+                $service->saveNote('invoice',$id,['description'=>$this->input->post('description',false)]);
+                $this->output->set_content_type('text/plain')->set_output((string)$id);
+            } else {
+                if(!in_array($this->input->method(true),['GET','HEAD'],true)){
+                    show_error('Método não permitido.',405);return;
+                }
+                $notes=$service->notes('invoice',$id);
+                if($this->input->method(true)==='HEAD'){$this->output->set_output('');return;}
+                $this->load->view('admin/includes/sales_notes_template',['notes'=>$notes,'native_company_notes'=>true]);
+            }
+        } catch (DomainException $error) {
+            $reason=$error->getMessage();
+            $status=str_contains($reason,'stale')?409:(str_contains($reason,'invalid_input')?422:403);
+            show_error('Nota indisponível ou solicitação não autorizada nesta empresa.',$status);
+        } catch (Throwable $error) {
+            show_error('Não foi possível confirmar a operação. Recarregue a fatura.',503);
+        }
+    }
+
+    /** Existing native action URLs, with company-bound POST authority and durable replay. */
+    private function nativeCommunicationCommand($id, string $operation): void
+    {
+        $this->output->set_header('Cache-Control: no-store');
+        try {
+            CompanyRequestScope::assertNativeMutation($this);
+            require_once APPPATH.'services/NativeCompanyInvoiceCommunicationState.php';
+            $input=$this->input->post(null,false)?:[];
+            unset($input['_company_context'],$input['_native_company_csrf']);
+            if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+            if(array_diff(array_keys($input),['revision','request_key'])||!is_string($input['revision']??null)||!is_string($input['request_key']??null))throw new DomainException('native_invoice_communication_invalid');
+            $reference=NativeCompanyResourceId::decode('invoice',$id);
+            if($reference['source_kind']!=='invoice')throw new DomainException('native_invoice_draft_issue_required');
+            $context=CompanyRequestScope::context();
+            $result=(new NativeCompanyInvoiceCommunicationState($this->db,db_prefix()))->change($context->issuerId(),$context->staffId(),$reference['source_id'],$operation,$input['revision'],$input['request_key']);
+            $this->output->set_content_type('application/json')->set_output(json_encode(['success'=>true,'redirect'=>admin_url('invoices/list_invoices/'.$reference['canonical_id'])]+$result,JSON_THROW_ON_ERROR));
+        } catch(DomainException $error) {
+            $reason=$error->getMessage();show_error('Não foi possível confirmar a alteração desta fatura.',str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'invalid')&&!str_contains($reason,'csrf')?422:403));
+        } catch(Throwable $error) { show_error('Não foi possível confirmar a alteração desta fatura.',503); }
+    }
+
     public function pause_overdue_reminders($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeCommunicationCommand($id, 'pause_overdue_reminders'); return; }
         if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) { show_404(); }
         if (staff_can('edit',  'invoices')) {
             $this->db->where('id', $id);
@@ -191,6 +320,7 @@ class Invoices extends AdminController
 
     public function resume_overdue_reminders($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeCommunicationCommand($id, 'resume_overdue_reminders'); return; }
         if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) { show_404(); }
         if (staff_can('edit',  'invoices')) {
             $this->db->where('id', $id);
@@ -201,6 +331,32 @@ class Invoices extends AdminController
 
     public function mark_as_cancelled($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);
+                require_once APPPATH.'services/NativeCompanyResourceId.php';
+                require_once APPPATH.'services/CompanyInvoices.php';
+                $input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);
+                if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                $context=CompanyRequestScope::context();$issuer=$context->issuerId();$actor=$context->staffId();
+                $reference=NativeCompanyResourceId::decode('invoice',$id);
+                if($reference['source_kind']==='company_invoice_draft'){
+                    if(array_diff(array_keys($input),['revision','request_key'])||!is_string($input['request_key']??null))throw new DomainException('company_invoice_invalid_input');
+                    require_once APPPATH.'services/CompanyInvoiceDrafts.php';
+                    (new CompanyInvoiceDrafts($this->db,db_prefix()))->change($issuer,$actor,$reference['source_id'],$input['revision']??null,null,$input['request_key']);
+                }else{
+                    if(array_keys($input)!==['revision']||!is_string($input['revision']))throw new DomainException('company_invoice_invalid_input');
+                    require_once APPPATH.'services/NativeCompanyInvoiceIdentity.php';
+                    $identity=(new NativeCompanyInvoiceIdentity($this->db,db_prefix()))->resolve($issuer,$actor,$reference['source_id'],'edit');
+                    if($identity['lineage']!=='named_company')throw new DomainException('native_legacy_invoice_review_required');
+                    (new CompanyInvoices($this->db,db_prefix()))->change($issuer,$actor,$reference['source_id'],$input['revision']);
+                }
+                $this->output->set_content_type('application/json')->set_output(json_encode(['success'=>true,'redirect'=>admin_url('invoices/list_invoices/'.$reference['canonical_id'])],JSON_THROW_ON_ERROR));
+            }catch(DomainException$error){$reason=$error->getMessage();show_error('Não foi possível cancelar esta fatura nesta empresa.',str_contains($reason,'csrf')||str_contains($reason,'context')?403:(str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'invalid')?422:403)));}
+            catch(Throwable$error){show_error('Não foi possível confirmar o cancelamento.',503);}
+            return;
+        }
         if (staff_cant('edit', 'invoices') && staff_cant('create', 'invoices')) {
             access_denied('invoices');
         }
@@ -216,6 +372,27 @@ class Invoices extends AdminController
 
     public function unmark_as_cancelled($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);
+                require_once APPPATH.'services/NativeCompanyResourceId.php';
+                require_once APPPATH.'services/NativeCompanyInvoiceIdentity.php';
+                require_once APPPATH.'services/CompanyInvoices.php';
+                $input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);
+                if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                if(array_keys($input)!==['revision']||!is_string($input['revision']))throw new DomainException('company_invoice_invalid_input');
+                $context=CompanyRequestScope::context();$issuer=$context->issuerId();$actor=$context->staffId();
+                $reference=NativeCompanyResourceId::decode('invoice',$id);
+                if($reference['source_kind']==='company_invoice_draft')throw new DomainException('company_invoice_reopen_review_required');
+                $identity=(new NativeCompanyInvoiceIdentity($this->db,db_prefix()))->resolve($issuer,$actor,$reference['source_id'],'edit');
+                if($identity['lineage']!=='named_company')throw new DomainException('native_legacy_invoice_review_required');
+                (new CompanyInvoices($this->db,db_prefix()))->reopen($issuer,$actor,$reference['source_id'],$input['revision']);
+                $this->output->set_content_type('application/json')->set_output(json_encode(['success'=>true,'redirect'=>admin_url('invoices/list_invoices/'.$reference['canonical_id'])],JSON_THROW_ON_ERROR));
+            }catch(DomainException$error){$reason=$error->getMessage();show_error('Não foi possível reabrir esta fatura nesta empresa.',str_contains($reason,'csrf')||str_contains($reason,'context')?403:(str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'invalid')?422:403)));}
+            catch(Throwable$error){show_error('Não foi possível confirmar a reabertura.',503);}
+            return;
+        }
         if (staff_cant('edit', 'invoices') && staff_cant('create', 'invoices')) {
             access_denied('invoices');
         }
@@ -511,6 +688,35 @@ class Invoices extends AdminController
 
     public function get_invoices_total()
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);
+                require_once APPPATH.'services/NativeCompanyInvoiceTotals.php';
+                require_once APPPATH.'services/NativeCompanyInvoiceRead.php';
+                $input=$this->input->post(null,false)?:[];
+                // The native CSRF/context pair has already been captured and checked by the boundary.
+                unset($input['_company_context'],$input['_native_company_csrf']);
+                if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                $request=NativeCompanyInvoiceTotals::request($input);
+                $context=CompanyRequestScope::context();
+                $data=(new NativeCompanyInvoiceRead($this->db,db_prefix()))->summary(
+                    $context->issuerId(),$context->staffId(),$request['currency'],$request['years'],$request['scope']
+                );
+                $data['_currency']=$data['total_result']['currencyid'];
+                if(count($data['invoices_total_currencies'])<=1)unset($data['invoices_total_currencies']);
+                if($data['invoices_years']&&!in_array((int)date('Y'),array_column($data['invoices_years'],'year'),true))
+                    array_unshift($data['invoices_years'],['year'=>(int)date('Y')]);
+                $this->load->view('admin/invoices/invoices_total_template',$data);
+            } catch (DomainException $error) {
+                $status=$error->getMessage()==='native_company_invoice_query_invalid'?422:
+                    ($error->getMessage()==='native_company_invoice_read_changed'?409:403);
+                show_error('Totais indisponíveis ou solicitação inválida nesta empresa.',$status);
+            } catch (Throwable $error) {
+                show_error('Não foi possível confirmar os totais das faturas.',503);
+            }
+            return;
+        }
         if ($this->input->post()) {
             load_invoices_total_template();
         }
@@ -636,6 +842,21 @@ class Invoices extends AdminController
 
     public function delete_attachment($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);
+                require_once APPPATH.'services/NativeCompanyInvoiceFiles.php';
+                $input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);
+                if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                if(array_keys($input)!==['revision'])throw new DomainException('native_invoice_file_invalid');
+                $revision=IssuerPolicy::id($input['revision']);$file=IssuerPolicy::id($id);$context=CompanyRequestScope::context();
+                (new NativeCompanyInvoiceFiles($this->db,db_prefix()))->remove($context->issuerId(),$context->staffId(),$file,$revision);
+                $this->output->set_content_type('application/json')->set_output('true');
+            }catch(DomainException$error){$reason=$error->getMessage();show_error('Anexo indisponível ou solicitação não autorizada nesta empresa.',str_contains($reason,'csrf')||str_contains($reason,'context')?403:(str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'invalid')?422:403)));}
+            catch(Throwable$error){show_error('Não foi possível confirmar a remoção do anexo.',503);}
+            return;
+        }
         $file = $this->misc_model->get_file($id);
         if ($file->staffid == get_staff_user_id() || is_admin()) {
             echo $this->invoices_model->delete_attachment($id);
@@ -670,6 +891,10 @@ class Invoices extends AdminController
     /* Generates invoice PDF and senting to email of $send_to_email = true is passed */
     public function pdf($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->companyPdf($id);
+            return;
+        }
         if (!$id) {
             redirect(admin_url('invoices/list_invoices'));
         }
@@ -711,8 +936,31 @@ class Invoices extends AdminController
         $pdf->Output(mb_strtoupper(slug_it($invoice_number)) . '.pdf', $type);
     }
 
+    private function companyPdf($id): void
+    {
+        require_once APPPATH.'services/NativeCompanyInvoicePdf.php';
+        $context = CompanyRequestScope::context();
+        try {
+            $response = (new NativeCompanyInvoicePdf($this->db, db_prefix()))->response(
+                $context->issuerId(), $context->staffId(), $id,
+                $this->input->method(true), $this->input->get(null, false) ?: []
+            );
+            foreach ($response['headers'] as $header) { $this->output->set_header($header); }
+            $this->output->set_content_type($response['content_type'])->set_output($response['body']);
+        } catch (DomainException $error) {
+            $status = $error->getMessage() === 'native_company_invoice_method_denied' ? 405
+                : ($error->getMessage() === 'native_company_invoice_pdf_input' ? 422 : 403);
+            $this->output->set_header('Cache-Control: no-store');
+            show_error('Fatura indisponível ou solicitação não autorizada nesta empresa.', $status);
+        } catch (Throwable $error) {
+            $this->output->set_header('Cache-Control: no-store');
+            show_error('Não foi possível preparar o documento. Tente novamente.', 503);
+        }
+    }
+
     public function mark_as_sent($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { $this->nativeCommunicationCommand($id, 'mark_as_sent'); return; }
         if (!$id) {
             redirect(admin_url('invoices/list_invoices'));
         }
@@ -733,6 +981,24 @@ class Invoices extends AdminController
 
     public function get_due_date()
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);
+                require_once APPPATH.'services/NativeCompanyInvoiceDates.php';
+                $context=CompanyRequestScope::context();
+                $date=(new NativeCompanyInvoiceDates($this->db,db_prefix()))->dueDate(
+                    $context->issuerId(),$context->staffId(),$this->input->post('date',false)
+                );
+                $this->output->set_content_type('text/plain')->set_output($date);
+            } catch (DomainException $error) {
+                show_error('Data inválida ou operação não autorizada nesta empresa.',
+                    $error->getMessage()==='native_company_invoice_date_invalid'?422:403);
+            } catch (Throwable $error) {
+                show_error('Não foi possível calcular o vencimento.',503);
+            }
+            return;
+        }
         if ($this->input->post()) {
             $date    = $this->input->post('date');
             $duedate = '';

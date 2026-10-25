@@ -143,8 +143,26 @@ class Staff extends AdminController
         echo json_encode($this->roles_model->get($id)->permissions);
     }
 
+    private function nativeDashboardPreference(string $part): bool
+    {
+        if(!class_exists('CompanyRequestScope',false)||!CompanyRequestScope::nativeFor($this))return false;
+        try{
+            CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();
+            if($ctx->issuerId()===null)throw new DomainException('native_dashboard_preferences_denied');
+            require_once APPPATH.'services/NativeCompanyDashboardPreferences.php';
+            $input=$this->input->post();if(!is_array($input))$input=[];
+            unset($input[$this->security->get_csrf_token_name()]);
+            if($part==='visibility'){if(array_diff(array_keys($input),['widgets'])||!is_array($input['widgets']??null))throw new DomainException('native_dashboard_preferences_invalid');$input=$input['widgets'];}
+            if($part==='reset'&&$input)throw new DomainException('native_dashboard_preferences_invalid');
+            (new NativeCompanyDashboardPreferences($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId()))->save($part,$input);
+            $this->output->set_header('Cache-Control: no-store');$this->output->set_content_type('application/json')->set_output('{"success":true}');
+        }catch(DomainException $error){show_error('Não foi possível salvar as preferências desta empresa.',403);}
+        return true;
+    }
+
     public function save_dashboard_widgets_order()
     {
+        if($this->nativeDashboardPreference('order'))return;
         hooks()->do_action('before_save_dashboard_widgets_order');
 
         $post_data = $this->input->post();
@@ -158,6 +176,7 @@ class Staff extends AdminController
 
     public function save_dashboard_widgets_visibility()
     {
+        if($this->nativeDashboardPreference('visibility'))return;
         hooks()->do_action('before_save_dashboard_widgets_visibility');
 
         $post_data = $this->input->post();
@@ -166,6 +185,7 @@ class Staff extends AdminController
 
     public function reset_dashboard()
     {
+        if($this->nativeDashboardPreference('reset'))return;
         update_staff_meta(get_staff_user_id(), 'dashboard_widgets_visibility', null);
         update_staff_meta(get_staff_user_id(), 'dashboard_widgets_order', null);
 

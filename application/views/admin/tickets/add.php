@@ -1,8 +1,19 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php init_head(); ?>
+<?php
+$native_ticket_add = isset($native_ticket_presentation);
+$ticketOption = static function ($key) use ($native_ticket_add, &$native_ticket_presentation) {
+    return $native_ticket_add ? $native_ticket_presentation['options'][$key] : get_option($key);
+};
+init_head(); ?>
 <div id="wrapper">
     <div class="content">
-        <?= form_open_multipart($this->uri->uri_string(), ['id' => 'new_ticket_form']); ?>
+        <?= form_open_multipart($this->uri->uri_string(), ['id' => 'new_ticket_form', 'data-native-ticket' => $native_ticket_add ? '1' : '0']); ?>
+        <?php if ($native_ticket_add) { ?>
+        <?= form_hidden('_company_context', $native_ticket_context); ?>
+        <?= form_hidden('_native_company_csrf', $native_ticket_csrf); ?>
+        <?= form_hidden('_native_ticket_request', $native_ticket_request); ?>
+        <div class="alert alert-info" role="status"><?= e($native_ticket_presentation['limitations']); ?></div>
+        <?php } ?>
         <div class="row">
             <div class="col-md-10 col-md-offset-1">
                 <div class="tw-flex tw-items-center tw-mb-2">
@@ -36,7 +47,7 @@
                                         <option
                                             value="<?= e($contact['id']); ?>"
                                             selected>
-                                            <?= $contact['firstname'] . ' ' . $contact['lastname']; ?>
+                                            <?= e($contact['firstname'] . ' ' . $contact['lastname']); ?>
                                         </option>
                                         <?php } ?>
                                         <option value=""></option>
@@ -81,7 +92,7 @@
                                         <?php foreach ($staff as $member) { ?>
                                         <option
                                             value="<?= e($member['staffid']); ?>"
-                                            <?php if ($member['staffid'] == get_staff_user_id()) {
+                                            <?php if ($member['staffid'] == ($native_ticket_add ? $native_ticket_presentation['actor'] : get_staff_user_id())) {
                                                 echo 'selected';
                                             } ?>>
                                             <?= e($member['firstname'] . ' ' . $member['lastname']); ?>
@@ -90,17 +101,17 @@
                                     </select>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-<?php if (get_option('services') == 1) {
+                                    <div class="col-md-<?php if ($ticketOption('services') == 1) {
                                         echo 6;
                                     } else {
                                         echo 12;
                                     } ?>">
-                                        <?php $priorities['callback_translate'] = 'ticket_priority_translate';
-echo render_select('priority', $priorities, ['priorityid', 'name'], 'ticket_settings_priority', hooks()->apply_filters('new_ticket_priority_selected', 2), ['required' => 'true']); ?>
+                                        <?php if (!$native_ticket_add) $priorities['callback_translate'] = 'ticket_priority_translate';
+echo render_select('priority', $priorities, ['priorityid', 'name'], 'ticket_settings_priority', $native_ticket_add ? $native_ticket_presentation['default_priority'] : hooks()->apply_filters('new_ticket_priority_selected', 2), ['required' => 'true']); ?>
                                     </div>
-                                    <?php if (get_option('services') == 1) { ?>
+                                    <?php if ($ticketOption('services') == 1) { ?>
                                     <div class="col-md-6">
-                                        <?php if (is_admin() || get_option('staff_members_create_inline_ticket_services') == '1') {
+                                        <?php if ($native_ticket_add ? $native_ticket_presentation['inline_service'] : (is_admin() || $ticketOption('staff_members_create_inline_ticket_services') == '1')) {
                                             echo render_select_with_input_group('service', $services, ['serviceid', 'name'], 'ticket_settings_service', '', '<div class="input-group-btn"><a href="#" class="btn btn-default" onclick="new_service();return false;"><i class="fa fa-plus"></i></a></div>');
                                         } else {
                                             echo render_select('service', $services, ['serviceid', 'name'], 'ticket_settings_service');
@@ -125,7 +136,7 @@ echo render_select('priority', $priorities, ['priorityid', 'name'], 'ticket_sett
                                             <option
                                                 value="<?= e($project_id); ?>"
                                                 selected>
-                                                <?= '#' . $project_id . ' - ' . e(get_project_name_by_id($project_id)); ?>
+                                                <?= '#' . $project_id . ' - ' . e($native_ticket_add ? $native_ticket_presentation['project_name'] : get_project_name_by_id($project_id)); ?>
                                             </option>
                                             <?php } ?>
                                         </select>
@@ -133,7 +144,7 @@ echo render_select('priority', $priorities, ['priorityid', 'name'], 'ticket_sett
                                 </div>
                             </div>
                             <div class="col-md-12">
-                                <?= render_custom_fields('tickets'); ?>
+                                <?= !empty($native_ticket_presentation) ? render_custom_fields('tickets', false, [], ['native_purpose'=>'create']) : render_custom_fields('tickets'); ?>
                             </div>
 
                             <div class="col-md-12">
@@ -158,12 +169,12 @@ echo render_select('priority', $priorities, ['priorityid', 'name'], 'ticket_sett
                                                     <?php } ?>
                                                 </select>
                                             </div>
-                                            <?php if (get_option('use_knowledge_base') == 1) { ?>
+                                            <?php if ($native_ticket_add ? !empty($native_ticket_presentation['knowledge_groups']) : get_option('use_knowledge_base') == 1) { ?>
                                             <div class="visible-xs">
                                                 <div class="mtop15"></div>
                                             </div>
                                             <div class="col-md-6">
-                                                <?php $groups = get_all_knowledge_base_articles_grouped(); ?>
+                                                <?php $groups = $native_ticket_add ? $native_ticket_presentation['knowledge_groups'] : get_all_knowledge_base_articles_grouped(); ?>
                                                 <select id="insert_knowledge_base_link" data-width="100%"
                                                     class="selectpicker" data-live-search="true"
                                                     onchange="insert_ticket_knowledgebase_link(this);"
@@ -175,7 +186,7 @@ echo render_select('priority', $priorities, ['priorityid', 'name'], 'ticket_sett
                                                         label="<?= e($group['name']); ?>">
                                                         <?php foreach ($group['articles'] as $article) { ?>
                                                         <option
-                                                            value="<?= e($article['articleid']); ?>">
+                                                            value="<?= e($article['articleid']); ?>"<?php if ($native_ticket_add) { ?> data-public-url="<?= e($article['public_url']); ?>"<?php } ?>>
                                                             <?= e($article['subject']); ?>
                                                         </option>
                                                         <?php } ?>
@@ -199,13 +210,13 @@ echo render_select('priority', $priorities, ['priorityid', 'name'], 'ticket_sett
                                                         class="control-label"><?= _l('ticket_add_attachments'); ?></label>
                                                     <div class="input-group">
                                                         <input type="file"
-                                                            extension="<?= str_replace(['.', ' '], '', get_option('ticket_attachments_file_extensions')); ?>"
+                                                            extension="<?= e(str_replace(['.', ' '], '', $ticketOption('ticket_attachments_file_extensions'))); ?>"
                                                             filesize="<?= file_upload_max_size(); ?>"
                                                             class="form-control" name="attachments[0]"
-                                                            accept="<?= get_ticket_form_accepted_mimes(); ?>">
+                                                            accept="<?= $native_ticket_add ? e(get_ticket_form_accepted_mimes($ticketOption('ticket_attachments_file_extensions'))) : get_ticket_form_accepted_mimes(); ?>">
                                                         <span class="input-group-btn">
                                                             <button class="btn btn-default add_more_attachments"
-                                                                data-max="<?= get_option('maximum_allowed_ticket_attachments'); ?>"
+                                                                data-max="<?= $ticketOption('maximum_allowed_ticket_attachments'); ?>"
                                                                 type="button"><i class="fa fa-plus"></i></button>
                                                         </span>
                                                     </div>
@@ -231,7 +242,7 @@ echo render_select('priority', $priorities, ['priorityid', 'name'], 'ticket_sett
     <div class="tw-py-10"></div>
     <?php $this->load->view('admin/tickets/services/service'); ?>
     <?php init_tail(); ?>
-    <?php hooks()->do_action('new_ticket_admin_page_loaded'); ?>
+    <?php if (!$native_ticket_add) hooks()->do_action('new_ticket_admin_page_loaded'); ?>
     <script>
         $(function() {
 

@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
 if (isset($client)) { ?>
-<?php if (staff_can('edit', 'customers')) { ?>
+<?php if ((!empty($native_customers)?!empty($native_map_edit):staff_can('edit', 'customers'))) { ?>
 <div class="row"
     data-address="<?= htmlentities($client->address); ?>"
     data-city="<?= htmlentities($client->city); ?>"
@@ -37,7 +37,7 @@ if (isset($client)) { ?>
 </div>
 <?php } ?>
 <?php
-if (get_option('google_api_key') !== '') {
+if ((!empty($native_customers)?$native_map_key:get_option('google_api_key')) !== '') {
     if ($client->longitude == '' && $client->latitude == '') {
         echo '<div class="alert alert-info tw-mb-0">' . _l('customer_map_notice') . '</div>';
     } else {
@@ -49,3 +49,7 @@ if (get_option('google_api_key') !== '') {
 }
 }
 ?>
+<?php if(!empty($native_customers)&&($native_map_key??'')!==''&&isset($client)&&$client->latitude!==''&&$client->longitude!==''){ ?>
+<script src="<?= e(base_url('assets/js/map.js')); ?>"></script>
+<script id="google-maps-api-js" src="<?= e('https://maps.googleapis.com/maps/api/js?key='.rawurlencode($native_map_key).'&callback=initMap'); ?>" latitude="<?= e($client->latitude); ?>" longitude="<?= e($client->longitude); ?>" mapMarkerTitle="<?= e($client->company); ?>" async defer></script>
+<?php } ?>

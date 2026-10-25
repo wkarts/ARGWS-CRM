@@ -1,0 +1,18 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('assets/js/native-admin-item-order.js','utf8');assert.doesNotMatch(fs.readFileSync('assets/js/main.js','utf8'),/function save_ei_items_order\(/);
+let reloads=0,failCallback=null;let native=true,called=[],labels=[],legacy=0,response={revision:'b'.repeat(64)};
+const attrs={'data-type':'invoice','data-native-invoice-id':'42','data-native-invoice-revision':'a'.repeat(64)};
+const row=id=>({attr(){return id;},data(){return id;},find(){return{text(x){labels.push(x);},html(x){labels.push(x);}};}});
+let rows=[row('73'),row('71')];const list={each(fn){rows.forEach((r,i)=>fn.call(r,i));}};
+const table={attr(k,v){if(v===undefined)return attrs[k];attrs[k]=v;return this;},find(){return list;}};
+const $=v=>v==='body'?{hasClass:()=>native}:typeof v==='string'?table:v;
+$.each=(list,fn)=>rows.forEach(r=>fn.call(r));$.post=()=>legacy++;
+const transport={request(path,method,data){called.push({path,method,data});return{done(fn){fn(response);return this;},fail(fn){failCallback=fn;return this;}};}};
+const context={$,window:{NativeCompanyTransport:transport,location:{reload(){reloads++;}}},NativeCompanyTransport:transport,admin_url:'/admin/',setTimeout:fn=>fn()};vm.createContext(context);vm.runInContext(source,context);
+context.save_ei_items_order();assert.equal(called[0].method,'POST');assert.equal(called[0].data.invoice_id,'42');assert.deepEqual(JSON.parse(JSON.stringify(called[0].data.data)),[['73',1],['71',2]]);assert.equal(attrs['data-native-invoice-revision'],'b'.repeat(64));assert.deepEqual(labels,[1,2]);assert.equal(legacy,0);failCallback();assert.equal(reloads,1);assert.equal(called.length,1);
+labels=[];response={revision:'bad'};assert.throws(()=>context.save_ei_items_order(),/receipt_invalid/);assert.deepEqual(labels,[]);assert.equal(reloads,2);
+rows=[row('71'),row('71')];assert.throws(()=>context.save_ei_items_order(),/order_invalid/);assert.equal(called.length,2);
+rows=[row('71')];delete context.window.NativeCompanyTransport;assert.throws(()=>context.save_ei_items_order(),/identity_required/);assert.equal(legacy,0);
+native=false;context.save_ei_items_order();assert.equal(legacy,1);
+console.log('Shared item-order handler: explicit POST/CAS, receipt-only labels, duplicates/no fallback, original legacy PASS');

@@ -41,7 +41,7 @@
                 <!-- /.modal -->
                 <?php } ?>
 
-                <?php hooks()->do_action('before_items_page_content'); ?>
+                <?php if(!CompanyRequestScope::nativeFor($this))hooks()->do_action('before_items_page_content'); ?>
 
                 <div class="tw-mb-3">
                     <h4 class="tw-my-0 tw-font-bold tw-text-xl">
@@ -140,7 +140,7 @@ render_datatable($table_data, 'invoice-items'); ?>
                             <tbody>
                                 <?php foreach ($items_groups as $group) { ?>
                                 <tr class="row-has-options"
-                                    data-group-row-id="<?= e($group['id']); ?>">
+                                    data-group-row-id="<?= e($group['id']); ?>" <?php if(isset($group['revision'])){ ?>data-revision="<?= e($group['revision']); ?>"<?php } ?>>
                                     <td
                                         data-order="<?= e($group['id']); ?>">
                                         <?= e($group['id']); ?>
@@ -165,10 +165,19 @@ render_datatable($table_data, 'invoice-items'); ?>
                                             </a>
                                             <?php } ?>
                                             <?php if (staff_can('delete', 'items')) { ?>
+                                            <?php if (CompanyRequestScope::nativeFor($this)) { ?>
+                                            <form method="post" class="tw-inline" action="<?= e(admin_url('invoice_items/delete_group/' . $group['id'])); ?>">
+                                                <input type="hidden" name="_native_company_csrf" value="<?= e(CompanyRequestScope::nativeCsrfToken($this)); ?>">
+                                                <input type="hidden" name="_company_context" value="<?= e(CompanyRequestScope::token()); ?>">
+                                                <input type="hidden" name="revision" value="<?= e($group['revision']); ?>">
+                                                <button type="submit" class="btn btn-link text-danger"><?= _l('delete'); ?></button>
+                                            </form>
+                                            <?php } else { ?>
                                             | <a href="<?= admin_url('invoice_items/delete_group/' . $group['id']); ?>"
                                                 class="delete-item-group _delete text-danger">
                                                 <?= _l('delete'); ?>
                                             </a>
+                                            <?php } ?>
                                             <?php } ?>
                                         </div>
                                     </td>
@@ -197,13 +206,13 @@ render_datatable($table_data, 'invoice-items'); ?>
 
 
         <?php if ($this->input->get('id')) { ?>
-        var id =
-            "<?= $this->input->get('id') ?>";
+        var id = <?= json_encode((string)$this->input->get('id'), JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>;
         if (typeof(id) !== 'undefined') {
             var $itemModal = $('#sales_item_modal');
             $('input[name="itemid"]').val(id);
             requestGetJSON('invoice_items/get_item_by_id/' + id).done(function(response) {
-                $itemModal.find('input[name="description"]').val(response.description);
+                $itemModal.find('input[name="revision"]').val(response.revision || '');
+                    $itemModal.find('input[name="description"]').val(response.description);
                 $itemModal.find('textarea[name="long_description"]').val(response.long_description
                     .replace(
                         /(<|<)br\s*\/*(>|>)/g, " "));
@@ -270,7 +279,8 @@ render_datatable($table_data, 'invoice-items'); ?>
             name = tr.find('.group_edit input').val();
             if (name != '') {
                 $.post(admin_url + 'invoice_items/update_group/' + group_id, {
-                    name: name
+                    name: name,
+                    revision: tr.attr('data-revision')
                 }).done(function() {
                     window.location.href = admin_url + 'invoice_items';
                 });
@@ -296,6 +306,8 @@ render_datatable($table_data, 'invoice-items'); ?>
                 }
             });
             data.ids = ids;
+            data.revisions = {};
+            rows.find('input[type="checkbox"]:checked[data-revision]').each(function(){data.revisions[$(this).val()]=$(this).attr('data-revision');});
             $(event).addClass('disabled');
             setTimeout(function() {
                 $.post(admin_url + 'invoice_items/bulk_action', data).done(function() {

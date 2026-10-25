@@ -4140,3 +4140,8 @@ $lang['csv_export_button'] = 'Export';
 $lang['clear_queue'] = 'Clear Queue';
 $lang['email_queue_cleared'] = 'Email queue cleared successfully';
 $lang['proposal_auto_convert_leads_to_client_on_client_accept'] = 'Auto convert leads to clients when proposal is accepted';
+// Existing company-owned states have identities distinct from legacy native statuses.
+$lang['company_project_status_active'] = 'Ativo';
+$lang['company_ticket_status_open'] = 'Aberto';
+$lang['company_ticket_status_resolved'] = 'Resolvido';
+$lang['company_ticket_status_closed'] = 'Fechado';

@@ -1,13 +1,19 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php
+require_once APPPATH.'services/NativeCompanyAdminPresentation.php';
+$nativeCompany=NativeCompanyAdminPresentation::current(function_exists('get_instance') ? get_instance() : $this);
+$nativeLabel=$nativeCompany ? static fn($key, ...$unused)=>NativeCompanyAdminPresentation::label((string)$key) : static fn($key, ...$args)=>_l($key,...$args);
+?>
+
 <div id="setup-menu-wrapper"
-    class="sidebar animated<?= $this->session->has_userdata('setup-menu-open')
-    && $this->session->userdata('setup-menu-open') == true ? ' display-block' : ''; ?>">
+    class="sidebar animated<?= ($nativeCompany?$nativeCompany['setup_open']:($this->session->has_userdata('setup-menu-open')
+    && $this->session->userdata('setup-menu-open') == true)) ? ' display-block' : ''; ?>">
     <ul class="nav metis-menu tw-mt-[57px]" id="setup-menu">
         <div
             class="tw-flex tw-items-center tw-justify-between tw-space-x-2 rtl:tw-space-x-reverse tw-pl-4 tw-pr-2.5 tw-py-3">
 
             <span class="text-left tw-font-semibold customizer-heading">
-                <?= _l('setting_bar_heading'); ?>
+                <?= $nativeLabel('setting_bar_heading'); ?>
             </span>
             <a
                 class="close-customizer tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 hover:tw-bg-neutral-200 tw-p-0.5 hover:tw-rounded-md">
@@ -29,7 +35,7 @@ foreach ($setup_menu as $key => $item) {
                 <i
                     class="<?= e($item['icon']); ?> menu-icon"></i>
                 <span class="menu-text">
-                    <?= html_purify(_l($item['name'], '', false)); ?>
+                    <?= ($nativeCompany ? e($item['name']) : html_purify($nativeLabel($item['name'], '', false))); ?>
                 </span>
                 <?php if (count($item['children']) > 0) { ?>
                 <span class="fa arrow"></span>
@@ -56,7 +62,7 @@ foreach ($setup_menu as $key => $item) {
                             class="<?= e($submenu['icon']); ?> menu-icon"></i>
                         <?php } ?>
                         <span class="sub-menu-text">
-                            <?= e(_l($submenu['name'], '', false)); ?>
+                            <?= e($nativeLabel($submenu['name'], '', false)); ?>
                         </span>
                     </a>
                     <?php if (isset($submenu['badge'], $submenu['badge']['value']) && ! empty($submenu['badge'])) {?>
@@ -73,18 +79,18 @@ foreach ($setup_menu as $key => $item) {
             </ul>
             <?php } ?>
         </li>
-        <?php hooks()->do_action('after_render_single_setup_menu', $item); ?>
+        <?php if(!$nativeCompany) { hooks()->do_action('after_render_single_setup_menu', $item); } ?>
         <?php } ?>
-        <?php $supportDestination = support_contact_destination();
-        if (get_option('show_help_on_setup_menu') == 1 && is_admin() && $supportDestination) {
+        <?php $supportDestination = $nativeCompany ? null : support_contact_destination();
+        if (!$nativeCompany && get_option('show_help_on_setup_menu') == 1 && is_admin() && $supportDestination) {
             $totalSetupMenuItems++; ?>
         <li>
             <a href="<?= html_escape($supportDestination['href']); ?>"
                 target="_blank" rel="noopener noreferrer nofollow">
-                <?= hooks()->apply_filters('help_menu_item_text', _l('setup_help')); ?>
+                <?= hooks()->apply_filters('help_menu_item_text', $nativeLabel('setup_help')); ?>
             </a>
         </li>
         <?php } ?>
     </ul>
 </div>
-<?php $this->app->set_setup_menu_visibility($totalSetupMenuItems); ?>
+<?php if(!$nativeCompany) { $this->app->set_setup_menu_visibility($totalSetupMenuItems); } ?>

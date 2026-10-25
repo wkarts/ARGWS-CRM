@@ -4,6 +4,10 @@
     <div class="content">
         <div class="row">
             <?= form_open($this->uri->uri_string(), ['id' => 'invoice-form', 'class' => '_transaction_form invoice-form']); ?>
+            <?php if (isset($native_invoice_editor_items)) {
+                echo form_hidden('_native_invoice_id', $native_invoice_id ?? '');
+                echo form_hidden('_native_invoice_revision', $native_invoice_revision ?? '');
+            } ?>
             <?php if (isset($invoice)) {
                 echo form_hidden('isedit');
             } ?>

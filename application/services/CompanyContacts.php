@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__.'/CompanyCustomerAccess.php';
 require_once __DIR__.'/issuers/IssuerResourceAccess.php';
 require_once __DIR__.'/issuers/IssuerTransaction.php';
 
@@ -50,7 +51,7 @@ final class CompanyContacts
     }
     private function authorize(int $issuer,int $actor,int $client,string $capability):void
     {
-        if(!(new IssuerResourceAccess($this->db,$this->prefix))->can($issuer,$actor,'customers',$capability)||!$this->rows('SELECT o.client_id FROM '.$this->prefix.'issuers_clients o JOIN '.$this->prefix.'clients c ON c.userid=o.client_id WHERE o.client_id=? AND o.owner_issuer_id=? AND c.active=1',[$client,$issuer]))throw new DomainException('company_client_access_denied');
+        if(!(new CompanyCustomerAccess($this->db,$this->prefix))->can($issuer,$actor,$client,['create'=>'create_contact','delete'=>'delete_contact'][$capability]??$capability)||!$this->rows('SELECT o.client_id FROM '.$this->prefix.'issuers_clients o JOIN '.$this->prefix.'clients c ON c.userid=o.client_id WHERE o.client_id=? AND o.owner_issuer_id=? AND c.active=1',[$client,$issuer]))throw new DomainException('company_client_access_denied');
     }
     public function page($issuer,$actor,$client):array
     {

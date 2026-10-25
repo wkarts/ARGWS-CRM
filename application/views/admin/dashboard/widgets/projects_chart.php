@@ -1,3 +1,4 @@
+<?php if(isset($company_dashboard) && $company_dashboard['widgets']['projects']['status']!=='available') { return; } ?>
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="widget" id="widget-<?php echo create_widget_id(); ?>" data-name="<?php echo _l('projects_chart'); ?>">
     <div class="row">

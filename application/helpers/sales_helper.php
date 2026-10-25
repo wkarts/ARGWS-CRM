@@ -899,7 +899,9 @@ function get_items_table_data($transaction, $type, $for = 'html', $admin_preview
     include_once APPPATH . 'libraries/App_items_table.php';
     $class = new App_items_table($transaction, $type, $for, $admin_preview);
 
-    $class = hooks()->apply_filters('items_table_class', $class, $transaction, $type, $for, $admin_preview);
+    if (!isset($transaction->native_items_presentation)) {
+        $class = hooks()->apply_filters('items_table_class', $class, $transaction, $type, $for, $admin_preview);
+    }
 
     if (! $class instanceof App_items_table_template) {
         show_error(get_class($class) . ' must be instance of "App_items_template"');
@@ -913,19 +915,8 @@ function sales_number_format($number, $format, $applied_prefix, $date)
     $originalNumber = $number;
     $prefixPadding  = get_option('number_padding_prefixes');
 
-    if ($format == 1) {
-        // Number based
-        $number = $applied_prefix . str_pad($number, $prefixPadding, '0', STR_PAD_LEFT);
-    } elseif ($format == 2) {
-        // Year based
-        $number = $applied_prefix . date('Y', strtotime($date)) . '/' . str_pad($number, $prefixPadding, '0', STR_PAD_LEFT);
-    } elseif ($format == 3) {
-        // Number-yy based
-        $number = $applied_prefix . str_pad($number, $prefixPadding, '0', STR_PAD_LEFT) . '-' . date('y', strtotime($date));
-    } elseif ($format == 4) {
-        // Number-mm-yyyy based
-        $number = $applied_prefix . str_pad($number, $prefixPadding, '0', STR_PAD_LEFT) . '/' . date('m', strtotime($date)) . '/' . date('Y', strtotime($date));
-    }
+    require_once APPPATH . 'services/SalesNumberPresentation.php';
+    $number = SalesNumberPresentation::format($number, $format, $applied_prefix, $date, $prefixPadding);
 
     return hooks()->apply_filters('sales_number_format', $number, [
         'format'         => $format,

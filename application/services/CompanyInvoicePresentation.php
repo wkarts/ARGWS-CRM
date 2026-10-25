@@ -33,7 +33,14 @@ final class CompanyInvoicePresentation
     /** Validate first; exclude exactly one presentation key, retaining all unknown/fiscal keys for comparison. */
     public static function fiscalIdentity(array $identity):array
     {
+        require_once __DIR__.'/issuers/InvoiceIssuerDocuments.php';
+        $profile=$identity;unset($profile['legal_name'],$profile['tax_id']);
+        $validated=InvoiceIssuerDocuments::identity(['legal_name'=>$identity['legal_name']??null,'tax_id'=>$identity['tax_id']??null,'settings_json'=>json_encode(['document_profile'=>$profile],JSON_THROW_ON_ERROR)]);
+        // Validate everything before excluding presentation metadata. Never normalize corrupt fiscal values away.
+        if($identity!=$validated)throw new DomainException('company_document_identity_invalid');
+        $identity=$validated;
         if(array_key_exists('pdf_preferences',$identity)){self::validate($identity['pdf_preferences'],'invoices');unset($identity['pdf_preferences']);}
+        unset($identity['padding'],$identity['number_format'],$identity['number_date']);
         return $identity;
     }
 }

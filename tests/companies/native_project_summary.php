@@ -1,0 +1,24 @@
+<?php
+require __DIR__.'/../company_dashboard_presenter.php';
+require_once APPPATH.'services/NativeCompanyProjectRead.php';
+register_shutdown_function(static function()use($db,$p):void{$db->query('DROP TABLE IF EXISTS '.$p.'projects');});
+$db->query("CREATE TABLE {$p}projects(id INT PRIMARY KEY,clientid INT NOT NULL,status INT NOT NULL)");
+$db->query("INSERT INTO {$p}clients VALUES(10,'Private A')");
+$db->query("INSERT INTO {$p}issuers_clients VALUES(10,?,'52998224725',7,'2026-10-25 12:00:00')",[$a]);
+$db->query("INSERT INTO {$p}projects VALUES(1,9,2),(2,10,2),(3,9,4)");
+$db->query("INSERT INTO {$p}company_projects(issuer_id,status) VALUES(1,'active'),(1,'completed')");
+unset($db->data_cache['table_names']);
+$read=new NativeCompanyProjectRead($db,$p);$translate=static fn($key)=>'translated:'.$key;
+$primary=$read->summary(1,7,$translate);$secondary=$read->summary($a,7,$translate);
+essentialCheck($primary['lineages']===['owned'=>2,'legacy'=>2]&&$primary['total']===4,'Principal retains both histories but excludes other-company customer');
+essentialCheck($primary['status_counts']['2']===1&&$primary['status_counts'][NativeCompanyWorkStatusCatalog::id('project','active')]===1,'Active and native in-progress remain separate identities');
+essentialCheck($secondary['primary_included']===false&&count($secondary['statuses'])===6&&!isset($secondary['status_counts']['2']),'Secondary has no legacy catalogue or counts');
+essentialCheck($secondary['total']===2&&$secondary['lineages']['legacy']===0,'Actual owned counts');
+$before=essentialLegacy($f);$read->summary(1,7,$translate);essentialCheck(essentialLegacy($f)===$before,'Read never adopts or mutates historical rows');
+essentialThrows(fn()=>$read->summary($a,52,$translate),'native_project_access_denied','Unauthorized member denied');
+essentialThrows(fn()=>$read->summary($a,51,$translate),'native_project_access_denied','Previously revoked project permission denied');
+$db->query("INSERT INTO {$p}company_projects(issuer_id,status) VALUES(?,'unknown')",[$a]);
+essentialThrows(fn()=>$read->summary($a,7,$translate),'native_work_status_unknown','Unknown state is not silently hidden or mapped');
+$db->query("INSERT INTO {$p}projects VALUES(4,9,19)");
+essentialThrows(fn()=>$read->summary(1,7,$translate),'native_work_status_legacy_denied','Unknown legacy hooked state needs explicit catalogue adapter');
+echo 'Native project status summary: '.$GLOBALS['essentialChecks']." cumulative checks passed.\n";

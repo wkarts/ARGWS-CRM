@@ -1,0 +1,22 @@
+<?php
+require __DIR__.'/settings/company_settings.php';
+require_once APPPATH.'services/NativeCompanyResourceReferences.php';
+$db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id IN(41,82)");
+foreach([41,82]as$issuer)foreach(['customers','projects','tasks','staff']as$feature)foreach(['view','edit']as$cap)$db->query("INSERT INTO {$p}issuers_resource_permissions VALUES(?,12,?,?)",[$issuer,$feature,$cap]);
+$db->query("INSERT INTO {$p}clients(userid,company) VALUES(8001,'Only A'),(8002,'Only B')");
+$db->query("INSERT INTO {$p}issuers_clients(client_id,owner_issuer_id,tax_id,created_by,created_at) VALUES(8001,41,NULL,7,'2026-01-01'),(8002,82,NULL,7,'2026-01-01')");
+$r=NativeCompanyResourceReferences::resolve($db,$p,41,12,'client',8001);
+essentialCheck($r['name']==='Only A'&&$r['canonical_id']==='8001','client native URL identity preserved');
+settingThrows(fn()=>NativeCompanyResourceReferences::resolve($db,$p,41,12,'client',8002),'native_resource_reference_denied','foreign client not hydrated');
+$db->query("CREATE TABLE {$p}projects(id INTEGER PRIMARY KEY,clientid INT,name TEXT)");if(property_exists($db,'data_cache'))unset($db->data_cache['table_names']);
+$db->query("INSERT INTO {$p}projects VALUES(8001,8002,'Legacy project referencing B')");
+settingThrows(fn()=>NativeCompanyResourceReferences::resolve($db,$p,$primary,7,'project',8001),'native_resource_reference_denied','principal cannot expose legacy project tied to secondary customer');
+$db->query("CREATE TABLE {$p}company_projects(id INTEGER PRIMARY KEY,issuer_id INT,name TEXT)");if(property_exists($db,'data_cache'))unset($db->data_cache['table_names']);
+$db->query("INSERT INTO {$p}company_projects VALUES(8001,41,'Owned A project')");
+$wire=NativeCompanyResourceId::encode('company_project',8001);
+$r=NativeCompanyResourceReferences::resolve($db,$p,41,12,'project',$wire);
+essentialCheck($r['source_id']===8001&&$r['name']==='Owned A project'&&$r['url']==='projects/view/'.$wire,'owned namespace avoids matching legacy ID');
+settingThrows(fn()=>NativeCompanyResourceReferences::resolve($db,$p,82,12,'project',$wire),'native_resource_reference_denied','owned project namespace does not confer cross-issuer authority');
+$db->query("UPDATE {$p}issuers_staff SET can_view=0 WHERE issuer_id=41 AND staff_id=12");
+settingThrows(fn()=>NativeCompanyResourceReferences::resolve($db,$p,41,12,'project',$wire),'native_resource_reference_denied','membership revocation blocks resource resolution');
+echo "Native resource reference isolation passed (".$db->driver().").\n";

@@ -1,7 +1,7 @@
 <?php
 /** Reconstructed prerequisite for the byte-preserved440 packet tests; original439 prerequisite was unavailable. */
 declare(strict_types=1);
-register_shutdown_function(static function():void{if(!isset($GLOBALS['db'],$GLOBALS['p']))return;foreach(['company_invoice_schedule_discovery','company_invoice_schedule_drafts','company_invoice_schedule_modes','company_invoice_draft_events','company_invoice_drafts','company_invoice_copy_requests','company_invoice_schedule_requests','company_invoice_schedule_runs','company_invoice_schedules']as$table)$GLOBALS['db']->query('DROP TABLE IF EXISTS '.$GLOBALS['p'].$table);unset($GLOBALS['db']->data_cache['table_names']);});
+register_shutdown_function(static function():void{if(!isset($GLOBALS['db'],$GLOBALS['p']))return;foreach(['company_invoice_schedule_discovery','company_invoice_schedule_drafts','company_invoice_schedule_modes','company_invoice_draft_projection','company_invoice_draft_events','company_invoice_drafts','company_invoice_copy_requests','company_invoice_schedule_requests','company_invoice_schedule_runs','company_invoice_schedules']as$table)$GLOBALS['db']->query('DROP TABLE IF EXISTS '.$GLOBALS['p'].$table);unset($GLOBALS['db']->data_cache['table_names']);});
 require __DIR__.'/invoice_delivery.php';
 require_once APPPATH.'services/CompanyInvoiceRecurring.php';
 if($db->driver()==='mysql'){CompanyInvoiceRecurringSchema::ensure($db,$p);CompanyInvoiceRecurringSchema::ensure($db,$p);}else{

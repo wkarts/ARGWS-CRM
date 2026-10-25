@@ -946,3 +946,21 @@ function _maybe_remove_task_from_project_milestone(task_id) {
     }
   }
 }
+
+// Same native member action, explicit POST with the original form's captured context and revision.
+$(document).on('click', '.native-project-member-remove', function (event) {
+    event.preventDefault();
+    var action = new URL(this.href, window.location.href);
+    var memberForm = document.querySelector('#add-edit-members form');
+    if (!memberForm || action.origin !== window.location.origin || !memberForm.querySelector('input[name="native_members_revision"]')) {
+        throw new Error('Native project member request is incomplete');
+    }
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = action.href;
+    memberForm.querySelectorAll('input[type="hidden"]').forEach(function (input) {
+        form.appendChild(input.cloneNode(true));
+    });
+    document.body.appendChild(form);
+    form.submit();
+});

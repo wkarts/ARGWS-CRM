@@ -38,9 +38,12 @@ test('unstyled table receives native responsive wrapper without cloning rows or 
 test('shared sidebar uses complete icon families from native menu definitions, never forced solid',()=>{
  const head=fs.readFileSync(path.join(__dirname,'../application/views/admin/companies/layout_head.php'),'utf8');
  const menu=fs.readFileSync(path.join(__dirname,'../application/helpers/menu_helper.php'),'utf8');
+ const catalog=fs.readFileSync(path.join(__dirname,'../application/services/NativeAdminMenuCatalog.php'),'utf8');
  for(const [label,slug] of Object.entries({Clientes:'customers',Vendas:'sales',Despesas:'expenses',Contratos:'contracts',Projetos:'projects',Tarefas:'tasks',Suporte:'support',Leads:'leads','Relatórios':'reports'})){
   const block=menu.slice(menu.indexOf("add_sidebar_menu_item('"+slug+"'"));
-  const native=block.match(/'icon'\s*=>\s*'([^']+)'/)[1];
+  const descriptor=block.match(/^add_sidebar_menu_item\('[^']+', (?:array_replace\()?NativeAdminMenuCatalog::legacy\('([^']+)'\)/);
+  const source=descriptor ? catalog.split("'"+descriptor[1]+"' => [")[1].split('],')[0] : block;
+  const native=source.match(/'icon'\s*=>\s*'([^']+)'/)[1];
   const isolated=head.match(new RegExp("'"+label+"' => \\[\\'([^']+)"))[1];
   assert.equal(isolated,native,label);
  }

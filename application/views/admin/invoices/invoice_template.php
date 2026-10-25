@@ -1,5 +1,9 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php $payment_modes = \app\services\PaymentGatewayCatalog::forSelection($payment_modes); ?>
+<?php if(isset($native_invoice_editor_items)) {
+    if(!($native_invoice_editor_items instanceof NativeCompanyInvoiceEditorItems))throw new DomainException('native_invoice_editor_mismatch');
+    $native_invoice_editor_items->assertCurrent();
+} ?>
 <div class="<?= (! isset($invoice) || (isset($invoice) && count($invoices_to_merge) == 0 && (! isset($invoice_from_project) && count($expenses_to_bill) == 0 || $invoice->status == Invoices_model::STATUS_CANCELLED))) ? 'hide' : ''; ?>"
     id="invoice_top_info">
     <div class="panel_s">
@@ -577,7 +581,7 @@ echo render_select('sale_agent', $staff, ['staffid', ['firstname', 'lastname']],
                             <?= _l('invoice_table_item_description'); ?>
                         </th>
                         <?php
-                  $custom_fields = get_custom_fields('items');
+                  $custom_fields = isset($native_invoice_editor_items) ? $native_invoice_editor_items->definitions() : get_custom_fields('items');
 
 foreach ($custom_fields as $cf) {
     echo '<th width="15%" align="left" class="custom_field">' . e($cf['name']) . '</th>';
@@ -615,7 +619,7 @@ if (isset($invoice) && $invoice->show_quantity_as == 2 || isset($hours_quantity)
                             <textarea name="long_description" rows="4" class="form-control"
                                 placeholder="<?= _l('item_long_description_placeholder'); ?>"></textarea>
                         </td>
-                        <?= render_custom_fields_items_table_add_edit_preview(); ?>
+                        <?= render_custom_fields_items_table_add_edit_preview($native_invoice_editor_items ?? null); ?>
                         <td>
                             <input type="number" name="quantity" min="0" value="1" class="form-control"
                                 placeholder="<?= _l('item_quantity_placeholder'); ?>">
@@ -670,7 +674,7 @@ echo $select;
                             if (! is_numeric($item['qty'])) {
                                 $item['qty'] = 1;
                             }
-                            $invoice_item_taxes = get_invoice_item_taxes($item['id']);
+                            $invoice_item_taxes = isset($native_invoice_editor_items) ? $item['taxname'] : get_invoice_item_taxes($item['id']);
                             // passed like string
                             if ($item['id'] == 0) {
                                 $invoice_item_taxes = $item['taxname'];
@@ -682,10 +686,10 @@ echo $select;
                             // order input
                             $table_row .= '<input type="hidden" class="order" name="' . $items_indicator . '[' . $i . '][order]">';
                             $table_row .= '</td>';
-                            $table_row .= '<td class="bold description"><textarea name="' . $items_indicator . '[' . $i . '][description]" class="form-control" rows="5">' . clear_textarea_breaks($item['description']) . '</textarea></td>';
-                            $table_row .= '<td><textarea name="' . $items_indicator . '[' . $i . '][long_description]" class="form-control" rows="5">' . clear_textarea_breaks($item['long_description']) . '</textarea></td>';
+                            $table_row .= '<td class="bold description"><textarea name="' . $items_indicator . '[' . $i . '][description]" class="form-control" rows="5">' . (isset($native_invoice_editor_items) ? e(clear_textarea_breaks($item['description'])) : clear_textarea_breaks($item['description'])) . '</textarea></td>';
+                            $table_row .= '<td><textarea name="' . $items_indicator . '[' . $i . '][long_description]" class="form-control" rows="5">' . (isset($native_invoice_editor_items) ? e(clear_textarea_breaks($item['long_description'])) : clear_textarea_breaks($item['long_description'])) . '</textarea></td>';
 
-                            $table_row .= render_custom_fields_items_table_in($item, $items_indicator . '[' . $i . ']');
+                            $table_row .= render_custom_fields_items_table_in($item, $items_indicator . '[' . $i . ']', $native_invoice_editor_items ?? null);
 
                             $table_row .= '<td><input type="number" min="0" onblur="calculate_total();" onchange="calculate_total();" data-quantity name="' . $items_indicator . '[' . $i . '][qty]" value="' . $item['qty'] . '" class="form-control">';
 
@@ -695,11 +699,11 @@ echo $select;
                                 $item['unit']     = '';
                             }
 
-                            $table_row .= '<input type="text" placeholder="' . $unit_placeholder . '" name="' . $items_indicator . '[' . $i . '][unit]" class="form-control input-transparent text-right" value="' . $item['unit'] . '">';
+                            $table_row .= '<input type="text" placeholder="' . $unit_placeholder . '" name="' . $items_indicator . '[' . $i . '][unit]" class="form-control input-transparent text-right" value="' . (isset($native_invoice_editor_items) ? e($item['unit']) : $item['unit']) . '">';
 
                             $table_row .= '</td>';
                             $table_row .= '<td class="rate"><input type="number" data-toggle="tooltip" title="' . _l('numbers_not_formatted_while_editing') . '" onblur="calculate_total();" onchange="calculate_total();" name="' . $items_indicator . '[' . $i . '][rate]" value="' . $item['rate'] . '" class="form-control"></td>';
-                            $table_row .= '<td class="taxrate">' . $this->misc_model->get_taxes_dropdown_template('' . $items_indicator . '[' . $i . '][taxname][]', $invoice_item_taxes, 'invoice', $item['id'], true, $manual) . '</td>';
+                            $table_row .= '<td class="taxrate">' . (isset($native_invoice_editor_items) ? $native_invoice_editor_items->taxDropdown($items_indicator . '[' . $i . '][taxname][]', $item) : $this->misc_model->get_taxes_dropdown_template('' . $items_indicator . '[' . $i . '][taxname][]', $invoice_item_taxes, 'invoice', $item['id'], true, $manual)) . '</td>';
                             $table_row .= '<td class="amount" align="right">' . $amount . '</td>';
                             $table_row .= '<td><a href="#" class="btn btn-danger pull-left !tw-px-3" onclick="delete_item(this,' . $item['id'] . '); return false;"><i class="fa fa-times"></i></a></td>';
                             if (isset($item['task_id'])) {

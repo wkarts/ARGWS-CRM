@@ -273,7 +273,7 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
             $attachment_url = $attachment['external_link'];
         } ?>
     <div class="mbot15 row inline-block full-width"
-        data-attachment-id="<?= e($attachment['id']); ?>">
+        data-attachment-id="<?= e($attachment['id']); ?>"<?php if (($attachment['native_file_source'] ?? null) === 'invoice') { ?> data-native-file-revision="<?= e($attachment['revision']); ?>"<?php } ?>>
         <div class="col-md-8">
             <a href="<?= e($attachment_url); ?>"
                 target="_blank"><?= e($attachment['file_name']); ?></a>
@@ -291,11 +291,12 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
             } ?>
             <a href="#" data-toggle="tooltip" class="text-muted"
                 onclick="toggle_file_visibility(<?= e($attachment['id']); ?>,<?= e($invoice->id); ?>,this); return false;"
+                <?php if (($attachment['native_file_source'] ?? null) === 'invoice') { ?>data-native-file-source="invoice" data-native-file-revision="<?= e($attachment['revision']); ?>" data-native-file-visible="<?= e($attachment['visible_to_customer']); ?>"<?php } ?>
                 data-title="<?= e($tooltip); ?>">
                 <i class="fa <?= e($icon); ?> fa-lg"
                     aria-hidden="true"></i>
             </a>
-            <?php if ($attachment['staffid'] == get_staff_user_id() || is_admin()) { ?>
+            <?php if (($attachment['native_file_source'] ?? null) === 'invoice' ? (($attachment['can_delete'] ?? false) === true) : ($attachment['staffid'] == get_staff_user_id() || is_admin())) { ?>
             <a href="#" class="text-muted"
                 onclick="delete_invoice_attachment(<?= e($attachment['id']); ?>); return false;">
                 <i class="fa-regular fa-trash-can"></i>

@@ -185,12 +185,17 @@ function essentialThrows(callable $operation, string $message, string $label): v
     try { $operation(); } catch (RuntimeException $exception) { $caught = $exception->getMessage(); }
     essentialCheck($caught === $message, $label . ' (actual: ' . var_export($caught, true) . ')');
 }
-function essentialFixture(?string $version = null, int $active = 0, bool $available = true): object
+function essentialFixture(?string $version = null, int $active = 0, bool $available = true, int $coreVersion = 447): object
 {
     $prefix = 'essential_' . bin2hex(random_bytes(5)) . '_';
     $pdo = new PDO(getenv('ISSUERS_TEST_DSN') ?: 'sqlite::memory:', getenv('ISSUERS_TEST_USER') ?: null, getenv('ISSUERS_TEST_PASSWORD') ?: null);
     if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') { $pdo->exec('PRAGMA foreign_keys=ON'); }
     $db = new EssentialTestDb($pdo, $prefix);
+    // Synthetic pre-priority boundary: this minimal fixture does not install the mandatory 448 sidecars.
+    // This marker does not prove execution of the complete historical migration chain.
+    if ($coreVersion < 1 || $coreVersion > 999) { throw new InvalidArgumentException('Invalid fixture core version'); }
+    $db->query("CREATE TABLE {$prefix}migrations(version BIGINT NOT NULL)");
+    $db->query("INSERT INTO {$prefix}migrations(version) VALUES(?)", [$coreVersion]);
     $db->query("CREATE TABLE {$prefix}modules(module_name VARCHAR(50) PRIMARY KEY, installed_version VARCHAR(20), active INT NOT NULL)");
     $db->query("CREATE TABLE {$prefix}options(name VARCHAR(80) PRIMARY KEY, value TEXT)");
     $db->query("INSERT INTO {$prefix}options VALUES('companyname','Synthetic global company'),('smtp_password','synthetic-test-only'),('payment_account','legacy-test-only')");

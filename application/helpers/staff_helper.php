@@ -242,17 +242,7 @@ function staff_profile_image_url($staff_id, $type = 'small')
  */
 function staff_profile_image($id, $classes = ['staff-profile-image'], $type = 'small', $img_attrs = [])
 {
-    $url = base_url('assets/images/user-placeholder.jpg');
-
     $id = trim($id);
-
-    $_attributes = '';
-    foreach ($img_attrs as $key => $val) {
-        $_attributes .= $key . '=' . '"' . e($val) . '" ';
-    }
-
-    $blankImageFormatted = '<img src="' . $url . '" ' . $_attributes . ' class="' . implode(' ', $classes) . '" />';
-
     if ((string) $id === (string) get_staff_user_id() && isset($GLOBALS['current_user'])) {
         $result = $GLOBALS['current_user'];
     } else {
@@ -267,22 +257,8 @@ function staff_profile_image($id, $classes = ['staff-profile-image'], $type = 's
         }
     }
 
-    if (!$result) {
-        return $blankImageFormatted;
-    }
-
-    if ($result && $result->profile_image !== null) {
-        $profileImagePath = 'uploads/staff_profile_images/' . $id . '/' . $type . '_' . $result->profile_image;
-        if (file_exists($profileImagePath)) {
-            $profile_image = '<img ' . $_attributes . ' src="' . base_url($profileImagePath) . '" class="' . implode(' ', $classes) . '" />';
-        } else {
-            return $blankImageFormatted;
-        }
-    } else {
-        $profile_image = '<img src="' . $url . '" ' . $_attributes . ' class="' . implode(' ', $classes) . '" />';
-    }
-
-    return $profile_image;
+    require_once APPPATH.'services/StaffAvatarPresentation.php';
+    return StaffAvatarPresentation::render($result, $id, $classes, $type, $img_attrs, 'base_url', 'file_exists');
 }
 
 /**

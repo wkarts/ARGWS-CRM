@@ -35,11 +35,12 @@ final class CompanyOnboarding
         if(!(is_int($revision)&&$revision>=0)&&!(is_string($revision)&&preg_match('/^(0|[1-9][0-9]{0,8})$/D',$revision))){throw new DomainException('issuer_wizard_stale');}
         return (int)$revision;
     }
-    private function transaction(callable $operation)
+    private function transaction(callable $operation, bool $createIssuer=false)
     {
         $tables=['company_wizard_drafts','issuers_lock','issuers_registry','issuers_staff','issuers_staff_defaults',
             'issuers_audit','issuers_resource_permissions','issuers_installation_identity','staff','options'];
         if($this->db->table_exists($this->prefix.'emailtemplates')){$tables[]='emailtemplates';}
+        if($createIssuer){require_once __DIR__.'/NativeCompanyTicketBootstrap.php';$plan=NativeCompanyTicketBootstrap::plan($this->db,$this->prefix);$tables=array_merge($tables,$plan['tables']);$work=$operation;$operation=function()use($work,$plan){NativeCompanyTicketBootstrap::confirmInOwnedTransaction($this->db,$this->prefix,$plan);return$work();};}
         return IssuerTransaction::run($this->db,$this->prefix,$tables,$operation);
     }
     private function row(int $actor,string $key): array
@@ -140,7 +141,7 @@ final class CompanyOnboarding
             if((int)$this->row($actor,$key)['issuer_id']!==$issuer){throw new RuntimeException('issuer_wizard_write_unconfirmed');}
             IssuerStorage::query($this->db,"INSERT INTO {$this->prefix}issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,'company_onboarding_completed',?,NULL,?)",[$actor,$issuer,gmdate('Y-m-d H:i:s')]);
             return $issuer;
-        });
+        },true);
     }
     public function staffCatalog($actor): array
     {

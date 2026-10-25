@@ -1,0 +1,82 @@
+name: Native company experience focused
+on:
+  pull_request:
+    branches: [main, develop]
+    paths: ['application/**', 'assets/**', 'resources/**', 'tests/**', 'scripts/**', 'package*.json', 'webpack.mix.js', '.github/workflows/native-company-experience.yml']
+  push:
+    # Temporary pre-PR bootstrap branch; remove this exact branch after the first
+    # successful focused checkpoint. PR/main coverage below remains permanent.
+    branches: [main, develop, fix/native-company-experience]
+    paths: ['application/**', 'assets/**', 'resources/**', 'tests/**', 'scripts/**', 'package*.json', 'webpack.mix.js', '.github/workflows/native-company-experience.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - php: '8.1'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+          - php: '8.5'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:d050af83a621363bdc79e5868f85d7203e8b5fb03be6cd37fbb7c41500894677
+    container:
+      image: ${{ matrix.image }}
+      options: --shm-size=1g
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: synthetic-test-password
+          MYSQL_DATABASE: issuer_native_module_audit
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -psynthetic-test-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    env:
+      NATIVE_COMPANY_EVIDENCE: /tmp/native-company-focused
+      NATIVE_COMPANY_SCREENSHOT_DIR: /tmp/native-company-focused/screenshots
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify pinned CI runtime
+        env:
+          EXPECTED_PHP: ${{ matrix.php }}
+        run: argws-ci-smoke
+      - name: Validate explicit focused manifest and inventories
+        run: |
+          python3 tests/ci/test_native_company_focused.py
+          for phase in sqlite node mysql browser; do python3 scripts/ci/run-native-company-focused.py "$phase" --check; done
+          php scripts/company-surface-inventory.php --check
+          python3 scripts/inventory-company-boundaries.py --check
+          python3 tests/company_ui_surface_inventory.py
+      - name: Test shared native UI contracts without browser
+        run: python3 scripts/ci/run-native-company-focused.py node
+      - name: Test actual PHP services and controllers using disposable SQLite
+        run: python3 scripts/ci/run-native-company-focused.py sqlite
+      - name: Test actual MySQL additive migration and schema metadata
+        env:
+          ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_native_module_audit;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: synthetic-test-password
+        run: python3 scripts/ci/run-native-company-focused.py mysql
+      - name: Render actual native templates in Chromium
+        run: python3 scripts/ci/run-native-company-focused.py browser
+      - name: Verify reproducible compiled native assets
+        if: matrix.php == '8.1'
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          PATH="$PWD/node_modules/.bin:$PATH" ./node_modules/.bin/mix --production
+          git diff --exit-code -- assets/builds assets/js/main.min.js assets/js/native-tasks.min.js assets/js/native-ui-tools.min.js assets/js/tickets.min.js mix-manifest.json
+      - name: Preserve focused receipts and synthetic screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-company-focused-php-${{ matrix.php }}
+          path: /tmp/native-company-focused
+          if-no-files-found: warn
+          retention-days: 3

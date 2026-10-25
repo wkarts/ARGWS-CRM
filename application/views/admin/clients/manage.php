@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php init_head(); ?>
+<?php $native_customers = $native_customers ?? false; init_head(); ?>
 <div id="wrapper">
     <div class="content">
         <div class="row">
@@ -14,18 +14,18 @@
                         <h4 class="tw-my-0 tw-font-bold tw-text-xl">
                             <?= _l('clients'); ?>
                         </h4>
-                        <a
+                        <?php if (!$native_customers) { ?><a
                             href="<?= admin_url('clients/all_contacts'); ?>">
                             <?= _l('customer_contacts'); ?>
                             &rarr;
-                        </a>
+                        </a><?php } ?>
                     </div>
 
                     <div class="tw-grid tw-grid-cols-2 md:tw-grid-cols-3 lg:tw-grid-cols-6 tw-gap-2">
                         <div
                             class="tw-border-neutral-300/80 tw-shadow-sm tw-text-sm tw-border tw-border-solid tw-rounded-lg tw-px-4 tw-py-3 text-sm tw-flex-1 tw-flex tw-items-center tw-bg-white">
                             <span class="tw-font-semibold tw-mr-1 rtl:tw-ml-1">
-                                <?= total_rows(db_prefix() . 'clients', ($where_summary != '' ? substr($where_summary, 5) : '')); ?>
+                                <?= ($native_customers ? $native_customer_summary['total'] : total_rows(db_prefix() . 'clients', ($where_summary != '' ? substr($where_summary, 5) : ''))); ?>
                             </span>
                             <span
                                 class="text-dark tw-truncate sm:tw-text-clip"><?= _l('customers_summary_total'); ?></span>
@@ -33,21 +33,21 @@
                         <div
                             class="tw-border-neutral-300/80 tw-shadow-sm tw-text-sm tw-border tw-border-solid tw-rounded-lg tw-px-4 tw-py-3 text-sm tw-flex-1 tw-flex tw-items-center tw-bg-white">
                             <span class="tw-font-semibold tw-mr-1 rtl:tw-ml-1">
-                                <?= total_rows(db_prefix() . 'clients', 'active=1' . $where_summary); ?></span>
+                                <?= ($native_customers ? $native_customer_summary['active'] : total_rows(db_prefix() . 'clients', 'active=1' . $where_summary)); ?></span>
                             <span
                                 class="text-success tw-truncate sm:tw-text-clip"><?= _l('active_customers'); ?></span>
                         </div>
                         <div
                             class="tw-border-neutral-300/80 tw-shadow-sm tw-text-sm tw-border tw-border-solid tw-rounded-lg tw-px-4 tw-py-3 text-sm tw-flex-1 tw-flex tw-items-center tw-bg-white">
                             <span class="tw-font-semibold tw-mr-1 rtl:tw-ml-1">
-                                <?= total_rows(db_prefix() . 'clients', 'active=0' . $where_summary); ?></span>
+                                <?= ($native_customers ? $native_customer_summary['inactive'] : total_rows(db_prefix() . 'clients', 'active=0' . $where_summary)); ?></span>
                             <span
                                 class="text-danger tw-truncate sm:tw-text-clip"><?= _l('inactive_active_customers'); ?></span>
                         </div>
                         <div
                             class="tw-border-neutral-300/80 tw-shadow-sm tw-text-sm tw-border tw-border-solid tw-rounded-lg tw-px-4 tw-py-3 text-sm tw-flex-1 tw-flex tw-items-center tw-bg-white">
                             <span class="tw-font-semibold tw-mr-1 rtl:tw-ml-1">
-                                <?= total_rows(db_prefix() . 'contacts', 'active=1' . $where_summary); ?>
+                                <?= ($native_customers ? $native_customer_summary['active_contacts'] : total_rows(db_prefix() . 'contacts', 'active=1' . $where_summary)); ?>
                             </span>
                             <span
                                 class="text-info tw-truncate sm:tw-text-clip"><?= _l('customers_summary_active'); ?></span>
@@ -55,7 +55,7 @@
                         <div
                             class="tw-border-neutral-300/80 tw-shadow-sm tw-text-sm tw-border tw-border-solid tw-rounded-lg tw-px-4 tw-py-3 text-sm tw-flex-1 tw-flex tw-items-center tw-bg-white">
                             <span class="tw-font-semibold tw-mr-1 rtl:tw-ml-1">
-                                <?= total_rows(db_prefix() . 'contacts', 'active=0' . $where_summary); ?>
+                                <?= ($native_customers ? $native_customer_summary['inactive_contacts'] : total_rows(db_prefix() . 'contacts', 'active=0' . $where_summary)); ?>
                             </span>
                             <span
                                 class="text-danger tw-truncate sm:tw-text-clip"><?= _l('customers_summary_inactive'); ?></span>
@@ -63,7 +63,7 @@
                         <div
                             class="tw-flex tw-items-center tw-font-medium tw-border-neutral-300/80 tw-shadow-sm tw-text-sm tw-border tw-border-solid tw-rounded-lg tw-px-4 tw-py-3 text-sm tw-flex-1 tw-bg-white">
                             <span class="tw-font-semibold tw-mr-1 rtl:tw-ml-1">
-                                <?= total_rows(db_prefix() . 'contacts', 'last_login LIKE "' . date('Y-m-d') . '%"' . $where_summary); ?>
+                                <?= ($native_customers ? $native_customer_summary['logged_today'] : total_rows(db_prefix() . 'contacts', 'last_login LIKE "' . date('Y-m-d') . '%"' . $where_summary)); ?>
                             </span>
                             <span class="text-muted tw-truncate" data-toggle="tooltip"
                                 data-title="<?= _l('customers_summary_logged_in_today'); ?>">
@@ -102,7 +102,7 @@
                             <?= _l('new_client'); ?>
                         </a>
                         <?php } ?>
-                        <?php if (staff_can('create', 'customers')) { ?>
+                        <?php if (!$native_customers && staff_can('create', 'customers')) { ?>
                         <a href="<?= admin_url('clients/import'); ?>"
                             class="hidden-xs btn btn-default">
                             <i class="fa-solid fa-upload tw-mr-1"></i>
@@ -110,17 +110,17 @@
                         </a>
                         <?php } ?>
                     </div>
-                    <div id="vueApp" class="tw-inline">
+                    <?php if (!$native_customers) { ?><div id="vueApp" class="tw-inline">
                         <app-filters id="<?= $table->id(); ?>"
                             view="<?= $table->viewName(); ?>"
                             :saved-filters="<?= $table->filtersJs(); ?>"
                             :available-rules="<?= $table->rulesJs(); ?>">
                         </app-filters>
-                    </div>
+                    </div><?php } ?>
                 </div>
                 <div class="panel_s tw-mt-2">
                     <div class="panel-body">
-                        <a href="#" data-toggle="modal" data-target="#customers_bulk_action"
+                        <?php if (!$native_customers) { ?><a href="#" data-toggle="modal" data-target="#customers_bulk_action"
                             class="bulk-actions-btn table-btn hide"
                             data-table=".table-clients"><?= _l('bulk_actions'); ?></a>
                         <div class="modal fade bulk_actions" id="customers_bulk_action" tabindex="-1" role="dialog">
@@ -158,6 +158,7 @@
                                 </div>
                             </div>
                         </div>
+                        <?php } ?>
                         <?php
                          $table_data = [];
 $_table_data                         = [
@@ -200,7 +201,7 @@ foreach ($_table_data as $_t) {
     array_push($table_data, $_t);
 }
 
-$custom_fields = get_custom_fields('customers', ['show_on_table' => 1]);
+$custom_fields = $native_customers ? [] : get_custom_fields('customers', ['show_on_table' => 1]);
 
 foreach ($custom_fields as $field) {
     array_push($table_data, [
@@ -208,13 +209,14 @@ foreach ($custom_fields as $field) {
         'th_attrs' => ['data-type' => $field['type'], 'data-custom-field' => 1],
     ]);
 }
-$table_data = hooks()->apply_filters('customers_table_columns', $table_data);
+if (!$native_customers) $table_data = hooks()->apply_filters('customers_table_columns', $table_data);
+else $table_data[0] = ''; // No bulk mutation in the scoped native directory.
 ?>
                         <div class="panel-table-full">
                             <?php
            render_datatable($table_data, 'clients', ['number-index-2'], [
                'data-last-order-identifier' => 'customers',
-               'data-default-order'         => get_table_last_order('customers'),
+               'data-default-order'         => ($native_customers ? '[]' : get_table_last_order('customers')),
                'id'                         => 'clients',
            ]);
 ?>
@@ -229,7 +231,7 @@ $table_data = hooks()->apply_filters('customers_table_columns', $table_data);
 <script>
     $(function() {
         var tAPI = initDataTable('.table-clients', admin_url + 'clients/table', [0], [0], {},
-            <?= hooks()->apply_filters('customers_table_default_order', json_encode([2, 'asc'])); ?>
+            <?= ($native_customers ? json_encode([2, 'asc']) : hooks()->apply_filters('customers_table_default_order', json_encode([2, 'asc']))); ?>
         );
     });
 

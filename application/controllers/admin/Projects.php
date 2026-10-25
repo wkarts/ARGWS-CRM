@@ -11,13 +11,39 @@ class Projects extends AdminController
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('projects_model');
-        $this->load->model('currencies_model');
+        if(!$this->nativeProjects()){
+            $this->load->model('projects_model');
+            $this->load->model('currencies_model');
+        }
         $this->load->helper('date');
+    }
+
+    private function nativeProjects():bool
+    {return class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this);}
+
+    private function nativeProjectIndex():void
+    {
+        if(!in_array($this->input->method(true),['GET','HEAD'],true)){show_error('Método não permitido.',405);return;}
+        $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null){show_error('Selecione uma empresa.',403);return;}
+        require_once APPPATH.'services/NativeCompanyProjectTableFactory.php';
+        require_once APPPATH.'services/NativeCompanyFilters.php';
+        try{
+            $issuer=$ctx->issuerId();$actor=$ctx->staffId();$factory=new NativeCompanyProjectTableFactory($this->db,db_prefix());$catalog=$factory->data($issuer,$actor);
+            $table=$factory->make($issuer,$actor);$saved=(new NativeCompanyFilters($this->db,db_prefix(),$issuer,$actor,$table))->listing();$table=$factory->make($issuer,$actor,'projects',$saved);
+            $acl=new IssuerResourceAccess($this->db,db_prefix());
+            $data=['title'=>_l('projects'),'table'=>$table,'statuses'=>$catalog['summary']['statuses'],'native_project_summary'=>$catalog['summary'],
+                'native_project_permissions'=>['create'=>$acl->can($issuer,$actor,'projects','create'),'edit'=>$acl->can($issuer,$actor,'projects','edit'),'delete'=>$acl->can($issuer,$actor,'projects','delete')],
+                'native_project_custom_fields'=>array_values(array_filter($catalog['customDefinitions'],static fn($d)=>(int)$d['show_on_table']===1)),
+                'task_statuses'=>NativeCompanyWorkStatusCatalog::owned('task','_l')];
+            $html=$this->load->view('admin/projects/manage',$data,true);
+            if($factory->data($issuer,$actor)!==$catalog||!$acl->can($issuer,$actor,'projects','view'))throw new DomainException('native_project_snapshot_changed');
+            $this->output->set_header('Cache-Control: no-store');$this->output->set_output($html);
+        }catch(DomainException$e){show_error('Não foi possível confirmar os projetos e permissões desta empresa.',403);}
     }
 
     public function index()
     {
+        if($this->nativeProjects()){$this->nativeProjectIndex();return;}
         close_setup_menu();
         $data['statuses'] = $this->projects_model->get_project_statuses();
         $data['title']    = _l('projects');
@@ -27,6 +53,21 @@ class Projects extends AdminController
 
     public function table($clientid = '')
     {
+        if($this->nativeProjects()){
+            $this->output->set_header('Cache-Control: no-store');
+            try{
+                CompanyRequestScope::assertNativeMutation($this);
+                require_once APPPATH.'services/NativeCompanyProjectPage.php';require_once APPPATH.'services/NativeCompanyProjectRows.php';
+                $input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_project_access_denied');
+                $reader=new NativeCompanyProjectPage($this->db,db_prefix());$today=gmdate('Y-m-d');$page=$reader->read($ctx->issuerId(),$ctx->staffId(),$input,$clientid,$today);
+                $result=(new NativeCompanyProjectRows($this->db,db_prefix()))->render($ctx->issuerId(),$ctx->staffId(),$page,$clientid);
+                if($reader->read($ctx->issuerId(),$ctx->staffId(),$input,$clientid,$today)!==$page)throw new DomainException('native_project_snapshot_changed');
+                $this->output->set_content_type('application/json')->set_output(json_encode($result,JSON_THROW_ON_ERROR));
+            }catch(DomainException$e){show_error('Lista de projetos indisponível ou solicitação inválida nesta empresa.',str_contains($e->getMessage(),'invalid')?422:403);}
+            catch(Throwable$e){show_error('Não foi possível confirmar a lista de projetos.',503);}
+            return;
+        }
         App_table::find('projects')->output([
             'clientid' => $clientid,
         ]);
@@ -71,8 +112,25 @@ class Projects extends AdminController
         }
     }
 
+    private function nativeProjectForm($id):void
+    {
+        $this->output->set_header('Cache-Control: no-store');
+        try{
+            $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_project_access_denied');require_once APPPATH.'services/NativeCompanyProjectForm.php';$adapter=new NativeCompanyProjectForm($this->db,db_prefix());
+            if(strtoupper($this->input->method(true))==='POST'){
+                CompanyRequestScope::assertNativeMutation($this);$input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                if(isset($input['description']))$input['description']=html_purify($input['description']);$saved=$adapter->save($ctx->issuerId(),$ctx->staffId(),$id,$input);set_alert('success',_l($id===''?'added_successfully':'updated_successfully',_l('project')));redirect(admin_url('projects/view/'.$saved),'location',303);return;
+            }
+            if(!in_array(strtoupper($this->input->method(true)),['GET','HEAD'],true)){show_error('Método não permitido.',405);return;}
+            if($this->input->get('via_estimate_id'))throw new DomainException('native_project_action_not_composed');$today=date('Y-m-d');$customer=$this->input->get('customer_id');$data=$adapter->read($ctx->issuerId(),$ctx->staffId(),$id,$customer,$today);$snapshot=$data;
+            $data['native_project_form']['context_token']=$ctx->token();$data['native_project_form']['csrf_token']=CompanyRequestScope::nativeCsrfToken($this);$data['native_project_form']['request_key']=bin2hex(random_bytes(32));
+            $html=$this->load->view('admin/projects/project',$data,true);if(json_encode($adapter->read($ctx->issuerId(),$ctx->staffId(),$id,$customer,$today),JSON_THROW_ON_ERROR)!==json_encode($snapshot,JSON_THROW_ON_ERROR))throw new DomainException('native_project_snapshot_changed');$this->output->set_output($html);
+        }catch(DomainException$e){show_error('Não foi possível confirmar os dados, a ação ou as permissões deste projeto.',422);}catch(RuntimeException$e){show_error('Não foi possível confirmar o armazenamento do projeto.',503);}
+    }
+
     public function project($id = '')
     {
+        if($this->nativeProjects()){$this->nativeProjectForm($id);return;}
         if (staff_cant('edit', 'projects') && staff_cant('create', 'projects')) {
             access_denied('Projects');
         }
@@ -509,8 +567,23 @@ class Projects extends AdminController
         redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
     }
 
+    private function nativeProjectMembers($canonicalProject,$removeStaff=null):void
+    {
+        $this->output->set_header('Cache-Control: no-store');
+        try{
+            CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_assignment_denied');
+            require_once APPPATH.'services/NativeCompanyResourceReferences.php';require_once APPPATH.'services/NativeCompanyWorkAssignments.php';
+            $ref=\NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),'project',$canonicalProject,'edit');if($ref['source_kind']!=='company_project')throw new DomainException('native_project_legacy_writer_required');
+            $service=new \NativeCompanyWorkAssignments($this->db,db_prefix());$revision=$this->input->post('native_members_revision');if(!is_string($revision))throw new DomainException('native_assignment_invalid');
+            if($removeStaff!==null)$service->remove($ctx->issuerId(),$ctx->staffId(),'project',$ref['source_id'],$revision,$removeStaff);
+            else{$members=$this->input->post('project_members')??[];if(!is_array($members))throw new DomainException('native_assignment_invalid');$service->replace($ctx->issuerId(),$ctx->staffId(),'project',$ref['source_id'],$revision,$members);}
+            set_alert('success',_l('updated_successfully',_l('project_members')));redirect(admin_url('projects/view/'.$ref['canonical_id']),'location',303);
+        }catch(DomainException$e){show_error('Não foi possível confirmar os membros, a revisão ou as permissões deste projeto.',422);}catch(RuntimeException$e){show_error('Não foi possível confirmar a alteração dos membros do projeto.',503);}
+    }
+
     public function add_edit_members($project_id)
     {
+        if($this->nativeProjects()){$this->nativeProjectMembers($project_id);return;}
         if (staff_can('edit', 'projects')) {
             $this->projects_model->add_edit_members($this->input->post(), $project_id);
             redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
@@ -830,6 +903,7 @@ class Projects extends AdminController
 
     public function remove_team_member($project_id, $staff_id)
     {
+        if($this->nativeProjects()){$this->nativeProjectMembers($project_id,$staff_id);return;}
         if (staff_can('edit', 'projects')) {
             if ($this->projects_model->remove_team_member($project_id, $staff_id)) {
                 set_alert('success', _l('project_member_removed'));

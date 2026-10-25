@@ -1,17 +1,19 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php init_head(); ?>
+<?php $native_customers=$native_customers??false; init_head(); ?>
 <div id="wrapper" class="customer_profile">
     <div class="content">
         <div class="md:tw-w-[calc(100%-theme(width.64)+theme(spacing.16))] [&_div:last-child]:tw-mb-6">
-            <?php if (isset($client) && $client->registration_confirmed == 0 && is_admin()) { ?>
+            <?php if (isset($client) && $client->registration_confirmed == 0 && ($native_customers?($native_registration_authorized??false):is_admin())) { ?>
             <div class="alert alert-warning">
                 <h4>
                     <?= _l('customer_requires_registration_confirmation'); ?>
                 </h4>
+                <?php if($native_customers){echo form_open(admin_url('clients/confirm_registration/'.$client->userid));echo form_hidden('_native_company_csrf',$company_clients_csrf);echo form_hidden('revision',$native_registration_revision); ?><button type="submit" class="btn btn-link alert-link"><?= e(_l('confirm_registration')); ?></button><?= form_close(); }else{ ?>
                 <a href="<?= admin_url('clients/confirm_registration/' . $client->userid); ?>"
                     class="alert-link">
                     <?= _l('confirm_registration'); ?>
                 </a>
+                <?php } ?>
             </div>
             <?php } elseif (isset($client) && $client->active == 0 && $client->registration_confirmed == 1) { ?>
             <div class="alert alert-warning">
@@ -48,7 +50,7 @@
                     <span class="tw-truncate">
                         #<?= e($client->userid . ' ' . $title); ?>
                     </span>
-                    <?php if (staff_can('delete', 'customers') || is_admin()) { ?>
+                    <?php if (!$native_customers && (staff_can('delete', 'customers') || is_admin())) { ?>
                     <div class="btn-group">
                         <a href="#" class="dropdown-toggle btn-link" data-toggle="dropdown" aria-haspopup="true"
                             aria-expanded="false">
@@ -108,9 +110,9 @@
                             </div>
                         </div>
                     </div>
-                    <?php if ($group == 'profile') { ?>
+                    <?php if ($group == 'profile' && (!$native_customers || ($native_customer_owned && (!isset($client) ? $native_customer_capabilities['create'] : $native_customer_capabilities['edit'])))) { ?>
                     <div class="panel-footer text-right tw-space-x-1" id="profile-save-section">
-                        <?php if (! isset($client)) { ?>
+                        <?php if (! isset($client) && !$native_customers) { ?>
                         <button class="btn btn-default save-and-add-contact customer-form-submiter">
                             <?= _l('save_customer_and_add_contact'); ?>
                         </button>
@@ -127,7 +129,7 @@
     </div>
 </div>
 <?php init_tail(); ?>
-<?php if (isset($client)) { ?>
+<?php if (isset($client) && !$native_customers) { ?>
 <script>
     $(function() {
         init_rel_tasks_table( <?= e($client->userid); ?> ,

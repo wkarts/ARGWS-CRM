@@ -483,7 +483,7 @@ foreach ($task->timesheets as $timesheet) { ?>
                 <option value=""></option>
                 <?php foreach ($checklistTemplates as $chkTemplate) { ?>
                 <option
-                    value="<?= e($chkTemplate['id']); ?>">
+                    value="<?= e($chkTemplate['id']); ?>"<?php if(isset($chkTemplate['revision'])) { ?> data-template-revision="<?= e($chkTemplate['revision']); ?>"<?php } ?>>
                     <?= e($chkTemplate['description']); ?>
                 </option>
                 <?php } ?>

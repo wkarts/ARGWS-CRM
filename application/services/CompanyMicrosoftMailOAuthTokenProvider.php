@@ -7,7 +7,7 @@ require_once __DIR__.'/CompanyMicrosoftMailOAuthDispatchSource.php';
 /** PHPMailer receives a short-lived credential only after the canonical job and connector are revalidated. */
 final class CompanyMicrosoftMailOAuthTokenProvider implements \PHPMailer\PHPMailer\OAuthTokenProvider
 {
-    public function __construct(private CompanyMicrosoftMailOAuth $oauth,private int $issuer,private int $epoch,private string $email,private $encrypt,private $decrypt,private CompanyMicrosoftMailOAuthDispatchSource|CompanyPortalMailDispatchSource|null $source){}
+    public function __construct(private CompanyMicrosoftMailOAuth $oauth,private int $issuer,private int $epoch,private string $email,private $encrypt,private $decrypt,private CompanyMicrosoftMailOAuthDispatchSource|CompanyPortalMailDispatchSource|NativeCompanyFileMailDispatchSource|NativeCompanyMailTestSource|NativeCompanyEventMailSource|null $source){}
     public function assertReady():void
     {
         if(!$this->source)throw new DomainException('company_microsoft_mail_queue_required');$this->source->assertFor($this->issuer);$this->oauth->assertReady($this->issuer,$this->epoch);$profile=$this->oauth->transportProfile($this->issuer);if(!$profile||!hash_equals($profile['sender_email'],$this->email))throw new DomainException('company_microsoft_mail_queue_invalid');

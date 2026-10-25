@@ -48,7 +48,7 @@ function get_tinymce_language($locale)
  * Get system favourite colors
  * @return array
  */
-function get_system_favourite_colors()
+function get_system_favourite_colors(bool $applyHooks = true)
 {
     // don't delete any of these colors are used all over the system
     $colors = [
@@ -65,7 +65,7 @@ function get_system_favourite_colors()
         '#fb3b3b',
     ];
 
-    return hooks()->apply_filters('system_favourite_colors', $colors);
+    return $applyHooks ? hooks()->apply_filters('system_favourite_colors', $colors) : $colors;
 }
 
 function process_digital_signature_image($partBase64, $path)

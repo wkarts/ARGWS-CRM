@@ -41,6 +41,7 @@ final class CompanyLedgerReports
             case 'invoice_issued':$put('invoice_nominal',$amount,$date);$put('invoice_after_changes',$amount,$date);break;
             case 'expense_recorded':$put('expense_nominal',$amount,$date);$put('expense_after_changes',$amount,$date);break;
             case 'invoice_updated':case 'expense_updated':$old=self::money($event['before']['total']??null);$new=self::money($event['after']['total']??null);$oldDate=self::date($event['before']['date']??'');$newDate=self::date($event['after']['date']??'');if($new!==$amount||$newDate!==$date||$oldDate!==$event['previous_book_date'])throw new DomainException('company_ledger_invalid_event');$metric=$event['kind']==='invoice_updated'?'invoice_after_changes':'expense_after_changes';$put($metric,-$old,$oldDate);$put($metric,$new,$newDate);break;
+            case 'invoice_reopened':$put('invoice_after_changes',$amount,$date);break;
             case 'invoice_cancelled':$put('invoice_after_changes',-$amount,$date);break;
             case 'expense_cancelled':$put('expense_after_changes',-$amount,$date);break;
             case 'receipt_recorded':$put('receipt_nominal',$amount,$date);$put('receipt_after_reversals',$amount,$date);break;

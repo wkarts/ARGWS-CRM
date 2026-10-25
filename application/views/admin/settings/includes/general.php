@@ -1,12 +1,12 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="row">
 	<div class="col-md-12">
-		<?php $company_logo_light = get_option('company_logo'); ?>
-		<?php $company_logo_dark  = get_option('company_logo_dark'); ?>
+		<?php $nativeBrand=isset($native_settings_assets)&&is_array($native_settings_assets)?$native_settings_assets:null; $company_logo_light = $nativeBrand!==null?($nativeBrand['assets']['logo']??''):get_option('company_logo'); ?>
+		<?php $company_logo_dark  = $nativeBrand!==null?($nativeBrand['assets']['logo_dark']??''):get_option('company_logo_dark'); ?>
 		<?php if ($company_logo_light != '') { ?>
 		<div class="row">
 			<div class="col-md-9">
-				<img src="<?= base_url('uploads/company/' . $company_logo_light); ?>"
+				<img src="<?= e($nativeBrand!==null?$company_logo_light:base_url('uploads/company/' . $company_logo_light)); ?>"
 					class="img img-responsive">
 			</div>
 			<?php if (staff_can('delete', 'settings')) { ?>
@@ -14,7 +14,7 @@
 				<a href="<?= admin_url('settings/remove_company_logo'); ?>"
 					data-toggle="tooltip"
 					title="<?= _l('settings_general_company_remove_logo_tooltip'); ?>"
-					class="_delete text-danger"><i class="fa fa-remove"></i></a>
+					class="_delete text-danger" <?php if($nativeBrand!==null){ ?>data-native-revision="<?= e($nativeBrand['revision']); ?>"<?php } ?>><i class="fa fa-remove"></i></a>
 			</div>
 			<?php } ?>
 		</div>
@@ -31,7 +31,7 @@
 		<?php if ($company_logo_dark != '') { ?>
 		<div class="row">
 			<div class="col-md-9">
-				<img src="<?= base_url('uploads/company/' . $company_logo_dark); ?>"
+				<img src="<?= e($nativeBrand!==null?$company_logo_dark:base_url('uploads/company/' . $company_logo_dark)); ?>"
 					class="img img-responsive">
 			</div>
 			<?php if (staff_can('delete', 'settings')) { ?>
@@ -39,7 +39,7 @@
 				<a href="<?= admin_url('settings/remove_company_logo/dark'); ?>"
 					data-toggle="tooltip"
 					title="<?= _l('settings_general_company_remove_logo_tooltip'); ?>"
-					class="_delete text-danger"><i class="fa fa-remove"></i></a>
+					class="_delete text-danger" <?php if($nativeBrand!==null){ ?>data-native-revision="<?= e($nativeBrand['revision']); ?>"<?php } ?>><i class="fa fa-remove"></i></a>
 			</div>
 			<?php } ?>
 		</div>
@@ -53,18 +53,18 @@
 		</div>
 		<?php } ?>
 		<hr />
-		<?php $favicon = get_option('favicon'); ?>
+		<?php $favicon = $nativeBrand!==null?($nativeBrand['assets']['favicon']??''):get_option('favicon'); ?>
 		<?php if ($favicon != '') { ?>
 		<div class="form-group favicon">
 			<div class="row">
 				<div class="col-md-9">
-					<img src="<?= base_url('uploads/company/' . $favicon); ?>"
+					<img src="<?= e($nativeBrand!==null?$favicon:base_url('uploads/company/' . $favicon)); ?>"
 						class="img img-responsive">
 				</div>
 				<?php if (staff_can('delete', 'settings')) { ?>
 				<div class="col-md-3 text-right">
 					<a href="<?= admin_url('settings/remove_fv'); ?>"
-						class="_delete text-danger"><i class="fa fa-remove"></i></a>
+						class="_delete text-danger" <?php if($nativeBrand!==null){ ?>data-native-revision="<?= e($nativeBrand['revision']); ?>"<?php } ?>><i class="fa fa-remove"></i></a>
 				</div>
 				<?php } ?>
 			</div>

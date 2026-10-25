@@ -13,7 +13,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * @param mixed  $replace_1
  * @param mixed  $replace_0
  */
-function render_yes_no_option($option_value, $label, $tooltip = '', $replace_yes_text = '', $replace_no_text = '', $replace_1 = '', $replace_0 = '')
+function render_yes_no_option($option_value, $label, $tooltip = '', $replace_yes_text = '', $replace_no_text = '', $replace_1 = '', $replace_0 = '', $explicit_value = null)
 {
     ob_start(); ?>
 <div class="form-group">
@@ -25,7 +25,7 @@ function render_yes_no_option($option_value, $label, $tooltip = '', $replace_yes
         <input type="radio" id="y_opt_1_<?= $label; ?>"
             name="settings[<?= $option_value; ?>]"
             value="<?= $replace_1 == '' ? 1 : $replace_1; ?>"
-            <?php if (get_option($option_value) == ($replace_1 == '' ? '1' : $replace_1)) {
+            <?php if (($explicit_value ?? get_option($option_value)) == ($replace_1 == '' ? '1' : $replace_1)) {
                 echo 'checked';
             } ?>>
         <label for="y_opt_1_<?= $label; ?>">
@@ -36,7 +36,7 @@ function render_yes_no_option($option_value, $label, $tooltip = '', $replace_yes
         <input type="radio" id="y_opt_2_<?= $label; ?>"
             name="settings[<?= $option_value; ?>]"
             value="<?= $replace_0 == '' ? 0 : $replace_0; ?>"
-            <?php if (get_option($option_value) == ($replace_0 == '' ? '0' : $replace_0)) {
+            <?php if (($explicit_value ?? get_option($option_value)) == ($replace_0 == '' ? '0' : $replace_0)) {
                 echo 'checked';
             } ?>>
         <label for="y_opt_2_<?= $label; ?>">

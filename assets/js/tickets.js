@@ -1,9 +1,11 @@
 $(function () {
+    var nativeTicketAdd = $("#new_ticket_form").attr("data-native-ticket") === "1";
+    var ticketAiEnabled = !nativeTicketAdd && !!app.options.is_ai_provider_enabled;
     init_editor("#message", {
-        quickbars_selection_toolbar: `bold link ${app.options.is_ai_provider_enabled ? 'ai' : ''}`,
+        quickbars_selection_toolbar: `bold link ${ticketAiEnabled ? 'ai' : ''}`,
         append_plugins: 'quickbars',
         setup: function (editor) {
-            if(app.options.is_ai_provider_enabled) {
+            if(ticketAiEnabled) {
                 configure_ai_editor(editor);
             }
         }
@@ -112,6 +114,13 @@ $(function () {
         var sender = $(this).data("sender");
         if (sender == "") {
             alert("No Sender Found");
+            return false;
+        }
+        if (document.body.classList.contains('native-company-admin')) {
+            ticket_block_sender_request().done(function (response) {
+                if (!response || response.success !== true) throw new Error('native_ticket_receipt_invalid');
+                window.location.reload();
+            });
             return false;
         }
         $.post(admin_url + "tickets/block_sender", {
@@ -240,9 +249,7 @@ $(function () {
     $('.change-ticket-status').on("click", function () {
         var status = $(this).data('status');
         var ticketid = $('input[name="ticketid"]').val();
-        requestGetJSON(
-            "tickets/change_status_ajax/" + ticketid + "/" + status
-        ).done(function (response) {
+        ticket_status_request(ticketid, status).done(function (response) {
             alert_float(response.alert, response.message);
             setTimeout(function () {
                 window.location.reload()
@@ -254,9 +261,7 @@ $(function () {
     $('select[name="status_top"]').on("change", function () {
         var status = $(this).val();
         var ticketid = $('input[name="ticketid"]').val();
-        requestGetJSON(
-            "tickets/change_status_ajax/" + ticketid + "/" + status
-        ).done(function (response) {
+        ticket_status_request(ticketid, status).done(function (response) {
             alert_float(response.alert, response.message);
         });
     });
@@ -288,8 +293,12 @@ $(function () {
         if (contactid != "") {
             $.post(admin_url + "tickets/ticket_change_data/", {
                 contact_id: contactid,
+                _company_context: $('#new_ticket_form input[name="_company_context"]').val(),
+                _native_company_csrf: $('#new_ticket_form input[name="_native_company_csrf"]').val(),
             }).done(function (response) {
-                response = JSON.parse(response);
+                if (typeof response === "string") response = JSON.parse(response);
+                // A late response must not overwrite a newer contact selection.
+                if ($('select[name="contactid"]').val() !== contactid) return;
                 if (response.contact_data) {
                     $('input[name="name"]').val(
                         response.contact_data.firstname +
@@ -329,7 +338,7 @@ $(function () {
             clear_ticket_no_contact_email_warning();
         }
     });
-    init_ai_features();
+    if (!nativeTicketAdd) init_ai_features();
 });
 
 // Insert ticket knowledge base link modal
@@ -338,22 +347,21 @@ function insert_ticket_knowledgebase_link(e) {
     if (id == "") {
         return;
     }
-    requestGetJSON("knowledge_base/get_article_by_id_ajax/" + id).done(function (
-        response
-    ) {
-        var textarea = $('textarea[name="message"]');
-        tinymce.activeEditor.execCommand(
-            "mceInsertContent",
-            false,
-            '<a href="' +
-            site_url +
-            "knowledge_base/" +
-            response.slug +
-            '">' +
-            response.subject +
-            "</a>"
-        );
+    function insertLink(url, subject) {
+        var link = document.createElement("a");
+        link.href = url;
+        link.textContent = subject;
+        tinymce.activeEditor.execCommand("mceInsertContent", false, link.outerHTML);
         $(e).selectpicker("val", "");
+    }
+    if ($("#new_ticket_form").attr("data-native-ticket") === "1") {
+        var option = $(e).find("option:selected");
+        var url = option.attr("data-public-url");
+        if (url && /^https?:\/\//i.test(url)) insertLink(url, option.text());
+        return;
+    }
+    requestGetJSON("knowledge_base/get_article_by_id_ajax/" + id).done(function (response) {
+        insertLink(site_url + "knowledge_base/" + encodeURIComponent(response.slug), response.subject);
     });
 }
 
@@ -503,3 +511,44 @@ function init_ai_features() {
     });
 }
 
+
+// Existing status controls share one request path; named mutations never fall back to GET.
+function ticket_status_request(ticketid, status) {
+    if (!document.body.classList.contains('native-company-admin')) {
+        return requestGetJSON("tickets/change_status_ajax/" + ticketid + "/" + status);
+    }
+    if (!window.NativeCompanyTransport || !/^[1-9][0-9]*$/.test(String(ticketid)) || !/^[1-9][0-9]*$/.test(String(status))) throw new Error('native_ticket_status_invalid');
+    var form = $('#single-ticket-form');
+    var revision = form.find('input[name="revision"]').val();
+    var nonce = form.find('input[name="request_nonce"]').val();
+    if (!/^[a-f0-9]{64}$/.test(revision || '') || !/^[a-f0-9]{64}$/.test(nonce || '')) throw new Error('native_ticket_revision_required');
+    return window.NativeCompanyTransport.request("tickets/change_status_ajax/" + ticketid + "/" + status, 'POST', { revision: revision, request_nonce: nonce }, { dataType: 'json' }).done(function (response) {
+        if (!response || response.success !== true || String(response.ticketid) !== String(ticketid) || !/^[a-f0-9]{64}$/.test(response.revision || '')) throw new Error('native_ticket_receipt_invalid');
+        // Reload is already the native click handler. The older select control needs a new command identity after a confirmed response.
+        var random = new Uint8Array(32); window.crypto.getRandomValues(random);
+        form.find('input[name="revision"]').val(response.revision);
+        form.find('input[name="request_nonce"]').val(Array.from(random, function (b) { return b.toString(16).padStart(2, '0'); }).join(''));
+    });
+}
+
+function ticket_block_sender_request() {
+    if (!document.body.classList.contains('native-company-admin') || !window.NativeCompanyTransport) throw new Error('native_ticket_context_required');
+    var form = $('#single-ticket-form');
+    var ticket = form.find('input[name="ticketid"]').val();
+    var revision = form.find('input[name="revision"]').val();
+    var nonce = form.find('input[name="request_nonce"]').val();
+    if (!/^[1-9][0-9]*$/.test(ticket || '') || !/^[a-f0-9]{64}$/.test(revision || '') || !/^[a-f0-9]{64}$/.test(nonce || '')) throw new Error('native_ticket_revision_required');
+    return window.NativeCompanyTransport.request('tickets/block_sender', 'POST', {ticketid: ticket, revision: revision, request_nonce: nonce}, {dataType: 'json'});
+}
+
+// Same native typing lifecycle; named writes carry content CAS and authenticated context.
+function ticket_replying_request(ticket, actor) {
+    var path = 'tickets/update_staff_replying/' + ticket + (actor === '' ? '' : '/' + actor);
+    if (!document.body.classList.contains('native-company-admin')) return $.post(admin_url + path);
+    if (!window.NativeCompanyTransport || !/^[1-9][0-9]*$/.test(ticket) || (actor !== '' && !/^[1-9][0-9]*$/.test(actor))) throw new Error('native_ticket_context_required');
+    var revision = $('#single-ticket-form').find('input[name="revision"]').val();
+    if (!/^[a-f0-9]{64}$/.test(revision || '')) throw new Error('native_ticket_revision_required');
+    return window.NativeCompanyTransport.request(path, 'POST', {revision: revision}, {dataType: 'json'}).done(function (result) {
+        if (!result || result.success !== true || result.revision !== revision) throw new Error('native_ticket_lease_unconfirmed');
+    });
+}

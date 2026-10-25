@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="widget" id="widget-<?php echo create_widget_id(); ?>" data-name="<?php echo _l('home_payment_records'); ?>">
-    <?php if (staff_can('view',  'payments') || staff_can('view_own',  'invoices')) { ?>
+    <?php if (isset($company_dashboard) ? ($company_dashboard['permissions']['payments'] && $company_dashboard['permissions']['invoices']) : (staff_can('view', 'payments') || staff_can('view_own', 'invoices'))) { ?>
     <div class="row" id="payments">
         <div class="col-md-12">
             <div class="panel_s">
@@ -22,7 +22,7 @@
                         <div
                             class="tw-divide-x tw-divide-solid tw-divide-neutral-300 tw-space-x-2 tw-flex tw-items-center">
 
-                            <?php if (is_using_multiple_currencies()) { ?>
+                            <?php if (isset($company_dashboard) ? count($currencies)>1 : is_using_multiple_currencies()) { ?>
                             <select class="selectpicker tw-pr-2" name="currency"
                                 data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
                                 <?php foreach ($currencies as $currency) {
@@ -37,7 +37,7 @@
 } ?>
                             </select>
                             <?php } ?>
-                            <?php if (staff_can('view',  'reports')) { ?>
+                            <?php if (isset($company_dashboard) ? $company_dashboard['permissions']['reports'] : staff_can('view', 'reports')) { ?>
                             <a href="<?php echo admin_url('reports/sales'); ?>" class="tw-pl-2">
                                 <?php echo _l('home_stats_full_report'); ?>
                             </a>

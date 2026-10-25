@@ -203,9 +203,9 @@ function can_change_ticket_status_in_clients_area($status = null)
  * This function is used for the tickets form attachments
  * @return string
  */
-function get_ticket_form_accepted_mimes()
+function get_ticket_form_accepted_mimes(?string $ticket_allowed_extensions = null)
 {
-    $ticket_allowed_extensions = get_option('ticket_attachments_file_extensions');
+    $ticket_allowed_extensions ??= get_option('ticket_attachments_file_extensions');
 
     $_ticket_allowed_extensions = array_map(function ($ext) {
         return trim($ext);

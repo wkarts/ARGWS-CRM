@@ -366,7 +366,7 @@
                     $.get(admin_url +
                         'tickets/check_staff_replying/<?= e($ticket->ticketid); ?>',
                         function(result) {
-                            var data = JSON.parse(result)
+                            var data = typeof result === 'string' ? JSON.parse(result) : result;
                             if (data.is_other_staff_replying === true || data
                                 .is_other_staff_replying === 'true') {
                                 $('.staff_replying_notice').html('<p>' + data.message +
@@ -380,15 +380,11 @@
                     firstTypeCheckPerformed = true;
                 }
 
-                $.post(admin_url +
-                    'tickets/update_staff_replying/<?= e($ticket->ticketid); ?>/<?= get_staff_user_id()?>'
-                );
+                ticket_replying_request('<?= e($ticket->ticketid); ?>', '<?= isset($native_ticket_presentation)?e($native_ticket_presentation['actor']):get_staff_user_id()?>');
             });
 
-            $(document).on('pagehide, beforeunload', function() {
-                $.post(admin_url +
-                    'tickets/update_staff_replying/<?= e($ticket->ticketid); ?>'
-                );
+            $(document).on('pagehide beforeunload', function() {
+                ticket_replying_request('<?= e($ticket->ticketid); ?>', '');
             })
 
             $(document).on('visibilitychange', function() {
@@ -396,9 +392,7 @@
                         .trim() !=
                         ''))
                     return;
-                $.post(admin_url +
-                    'tickets/update_staff_replying/<?= e($ticket->ticketid); ?>'
-                );
+                ticket_replying_request('<?= e($ticket->ticketid); ?>', '');
             })
         }
     });

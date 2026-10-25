@@ -33,15 +33,22 @@ final class CompanyPortal
     public function allowAttempt($issuer,string $ip,string $kind): bool
     {
         $issuer=IssuerPolicy::id($issuer);
-        if(!in_array($kind,['login','recovery','reset'],true)||strlen($ip)>100)throw new DomainException('company_portal_invalid_input');
+        if(!in_array($kind,['login','recovery','reset','verification','registration','captcha'],true)||strlen($ip)>100)throw new DomainException('company_portal_invalid_input');
         if(!$this->rows('SELECT id FROM '.$this->prefix.'issuers_registry WHERE id=? AND active=1',[$issuer]))return false;
         $bucket=hash_hmac('sha256',$issuer.'|'.$kind.'|'.$ip,$this->secret);$now=time();
         return IssuerTransaction::run($this->db,$this->prefix,['issuers_lock','company_portal_limits'],function()use($bucket,$now,$kind):bool{
             IssuerStorage::query($this->db,'DELETE FROM '.$this->prefix.'company_portal_limits WHERE window_start<?',[$now-172800]);
             $row=$this->rows('SELECT window_start,attempts FROM '.$this->prefix.'company_portal_limits WHERE bucket_hash=? FOR UPDATE',[$bucket])[0]??null;
-            if(!$row){IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'company_portal_limits(bucket_hash,window_start,attempts) VALUES(?,?,1)',[$bucket,$now]);return true;}
+            if(!$row){
+                IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'company_portal_limits(bucket_hash,window_start,attempts) VALUES(?,?,1)',[$bucket,$now]);
+                $written=$this->rows('SELECT window_start,attempts FROM '.$this->prefix.'company_portal_limits WHERE bucket_hash=?',[$bucket]);
+                if(count($written)!==1||(int)$written[0]['window_start']!==$now||(int)$written[0]['attempts']!==1)throw new RuntimeException('issuer_portal_throttle_unconfirmed');
+                return true;
+            }
             $count=(int)$row['window_start']<$now-900?1:min(1000000000,(int)$row['attempts']+1);$start=$count===1?$now:(int)$row['window_start'];
             IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'company_portal_limits SET attempts=?,window_start=? WHERE bucket_hash=?',[$count,$start,$bucket]);
+            $written=$this->rows('SELECT window_start,attempts FROM '.$this->prefix.'company_portal_limits WHERE bucket_hash=?',[$bucket]);
+            if(count($written)!==1||(int)$written[0]['window_start']!==$start||(int)$written[0]['attempts']!==$count)throw new RuntimeException('issuer_portal_throttle_unconfirmed');
             return $count<=($kind==='recovery'?5:20);
         });
     }
@@ -125,14 +132,14 @@ final class CompanyPortal
         $written=$this->rows('SELECT issuer_id,email,message FROM '.$this->prefix.'mail_queue WHERE id=?',[$id])[0]??[];
         if(($written['message']??null)!==$message||($written['email']??null)!==$row['email']||(int)($written['issuer_id']??0)!==$issuer)throw new RuntimeException('issuer_portal_write_unconfirmed');
     }
-    public function reset($issuer,string $token,string $password,callable $hashPassword): bool
+    public function reset($issuer,string $token,string $password,callable $hashPassword,?int $expectedContact=null): bool
     {
         $issuer=IssuerPolicy::id($issuer);
         if(!preg_match('/^[a-f0-9]{64}$/D',$token)||strlen($password)<12||strlen($password)>4096)return false;
         $hash=$hashPassword($password);if(!is_string($hash)||strlen($hash)<20)throw new RuntimeException('issuer_portal_hash_failed');
-        return $this->transaction(function()use($issuer,$token,$hash):bool{
+        return $this->transaction(function()use($issuer,$token,$hash,$expectedContact):bool{
             $key=hash('sha256',$token);$receipt=$this->rows('SELECT * FROM '.$this->prefix.'company_portal_tokens WHERE token_hash=? AND issuer_id=? FOR UPDATE',[$key,$issuer])[0]??null;
-            if(!$receipt||$receipt['expires_at']<=date('Y-m-d H:i:s'))return false;
+            if(!$receipt||($expectedContact!==null&&(int)$receipt['contact_id']!==$expectedContact)||$receipt['expires_at']<=date('Y-m-d H:i:s'))return false;
             $row=$this->contact($issuer,null,(int)$receipt['contact_id'],true);
             if(!$row||(int)$row['userid']!==(int)$receipt['client_id']||!hash_equals($receipt['identity_hash'],$this->identityHash($row)))return false;
             IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'contacts SET password=?,new_pass_key=NULL,new_pass_key_requested=NULL,last_password_change=? WHERE id=? AND userid=?',[$hash,date('Y-m-d H:i:s'),$row['id'],$row['userid']]);
@@ -143,8 +150,34 @@ final class CompanyPortal
             $this->audit($issuer,(int)$row['id'],'company_portal_password_changed');return true;
         },['user_auto_login']);
     }
+    /** Complete an already-issued core password link only for the persisted, unowned principal lineage. */
+    public function resetHistoricalPrimary(int $issuer,int $contact,string $key,string $password,callable $hashPassword): bool
+    {
+        if(!preg_match('/^[a-f0-9]{32}$/D',$key)||strlen($password)<12||strlen($password)>4096)return false;
+        return $this->transaction(function()use($issuer,$contact,$key,$password,$hashPassword):bool{
+            $p=$this->prefix;
+            if(count($this->rows('SELECT r.id FROM '.$p.'issuers_installation_identity i JOIN '.$p.'issuers_registry r ON r.id=i.primary_issuer_id WHERE i.id=1 AND r.id=? AND r.active=1',[$issuer]))!==1)return false;
+            $row=$this->contact($issuer,null,$contact,true);
+            if($row)$row=array_merge($row,$this->rows('SELECT new_pass_key,new_pass_key_requested FROM '.$p.'contacts WHERE id=? AND userid=?',[$contact,$row['userid']])[0]??[]);
+            if(!$row||$this->rows('SELECT client_id FROM '.$p.'issuers_clients WHERE client_id=?',[$row['userid']])||!is_string($row['new_pass_key'])||!hash_equals($row['new_pass_key'],$key))return false;
+            $sent=$row['new_pass_key_requested'];$date=is_string($sent)?DateTimeImmutable::createFromFormat('!Y-m-d H:i:s',$sent,new DateTimeZone('UTC')):false;
+            if(!$date||$date->format('Y-m-d H:i:s')!==$sent||$date->getTimestamp()>time()||$date->getTimestamp()<time()-3600)return false;
+            $hash=$hashPassword($password);if(!is_string($hash)||strlen($hash)<20)throw new RuntimeException('issuer_portal_hash_failed');$now=gmdate('Y-m-d H:i:s');
+            IssuerStorage::query($this->db,'UPDATE '.$p.'contacts SET password=?,new_pass_key=NULL,new_pass_key_requested=NULL,last_password_change=? WHERE id=? AND userid=? AND new_pass_key=?',[$hash,$now,$contact,$row['userid'],$key]);
+            $after=$this->contact($issuer,null,$contact,true);if($after)$after=array_merge($after,$this->rows('SELECT new_pass_key,new_pass_key_requested FROM '.$p.'contacts WHERE id=? AND userid=?',[$contact,$row['userid']])[0]??[]);if(!$after||$after['password']!==$hash||$after['new_pass_key']!==null||$after['new_pass_key_requested']!==null)throw new RuntimeException('issuer_portal_write_unconfirmed');
+            IssuerStorage::query($this->db,'DELETE FROM '.$p.'company_portal_tokens WHERE contact_id=?',[$contact]);IssuerStorage::query($this->db,'DELETE FROM '.$p.'user_auto_login WHERE user_id=? AND staff=0',[$contact]);
+            if($this->rows('SELECT token_hash FROM '.$p.'company_portal_tokens WHERE contact_id=?',[$contact])||$this->rows('SELECT user_id FROM '.$p.'user_auto_login WHERE user_id=? AND staff=0',[$contact]))throw new RuntimeException('issuer_portal_write_unconfirmed');
+            $this->audit($issuer,$contact,'company_portal_historical_password_changed');return true;
+        },['user_auto_login']);
+    }
     private function audit(int $issuer,int $contact,string $event): void
     {
-        IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(0,?,?,?,?)',[$event,$issuer,$contact,date('Y-m-d H:i:s')]);
+        $metadata=json_encode(['actor_kind'=>'contact','contact_id'=>$contact,'receipt_nonce'=>bin2hex(random_bytes(24))],JSON_THROW_ON_ERROR);
+        $now=date('Y-m-d H:i:s');
+        IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'issuers_audit(actor_id,event,issuer_id,subject_id,metadata_json,created_at) VALUES(0,?,?,?,?,?)',[$event,$issuer,$contact,$metadata,$now]);
+        // A trigger may ignore an INSERT without failing the transaction. A new nonce
+        // proves this operation, not a previous identical event/lastInsertId.
+        $receipt=$this->rows('SELECT actor_id,event,issuer_id,subject_id,metadata_json,created_at FROM '.$this->prefix.'issuers_audit WHERE metadata_json=?',[$metadata]);
+        if(count($receipt)!==1||(int)$receipt[0]['actor_id']!==0||$receipt[0]['event']!==$event||(int)$receipt[0]['issuer_id']!==$issuer||(int)$receipt[0]['subject_id']!==$contact||$receipt[0]['metadata_json']!==$metadata||$receipt[0]['created_at']!==$now)throw new RuntimeException('issuer_portal_audit_unconfirmed');
     }
 }

@@ -2,6 +2,7 @@
 <div class="modal fade" id="vaultConfirmPassword" tabindex="-1" role="dialog">
    <div class="modal-dialog" role="document">
       <?php echo form_open(admin_url('clients/vault_encrypt_password')); ?>
+      <?php if($native_customers??false){ ?><input type="hidden" name="revision"><input type="hidden" name="_native_company_csrf" value="<?= e($company_clients_csrf); ?>"><?php } ?>
       <div class="modal-content">
          <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -36,6 +37,7 @@ function vault_re_enter_password(id, e) {
 
     if (!invoker.hasClass('decrypted')) {
         $confirmPasswordVaultModal.find('form input[name="id"]').val(id);
+        $confirmPasswordVaultModal.find('form input[name="revision"]').val(vaultEntry.closest('.panel-vault').attr('data-native-vault-revision')||'');
         $confirmPasswordVaultModal.modal('show');
     } else {
         invoker.removeClass('decrypted');
@@ -53,7 +55,7 @@ function vault_encrypt_password(form) {
     var $confirmPasswordVaultModal = $('#vaultConfirmPassword');
 
     $.post($form.attr('action'), data).done(function(response) {
-        response = JSON.parse(response);
+        if(typeof response === 'string') response = JSON.parse(response);
         vaultEntry.find('.vault-password-fake').addClass('hide');
         vaultEntry.find('.vault-view-password').addClass('decrypted');
         vaultEntry.find('.vault-password-encrypted').removeClass('hide').html(response.password);

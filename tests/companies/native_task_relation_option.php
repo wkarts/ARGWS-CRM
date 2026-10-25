@@ -1,0 +1,23 @@
+<?php
+require __DIR__.'/native_task_timer_read.php';
+$db->query("UPDATE {$p}issuers_staff SET can_view=1 WHERE issuer_id=? AND staff_id=51",[$a]);
+$db->query("INSERT INTO {$p}issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,51,'projects','view')",[$a]);
+$db->query("CREATE TABLE {$p}company_projects(id INT PRIMARY KEY,issuer_id INT NOT NULL,name VARCHAR(100) NOT NULL)");
+$db->query("ALTER TABLE {$p}company_tasks ADD COLUMN project_id INT NULL");
+$db->query("INSERT INTO {$p}company_projects VALUES(1,?,'Project A'),(2,?,'Project B')",[$a,$b]);
+$db->query("UPDATE {$p}company_tasks SET project_id=id");unset($db->data_cache['table_names']);
+$owned=NativeCompanyResourceId::encode('company_task',1);$standalone=NativeCompanyResourceId::encode('company_standalone_task',1);
+$option=$reader->relationOption($a,51,$owned);
+essentialCheck($option['id']===$owned&&$option['name']==='Project A'&&$option['link']==='tasks/view/'.$owned&&$option['source_kind']==='company_task','Selected project task has exact canonical identity and native route');
+$separate=$reader->relationOption($a,51,$standalone);essentialCheck($separate['id']!==$owned&&$separate['name']==='Standalone A','Identical numeric standalone and project task IDs remain distinct');
+essentialThrows(fn()=>$reader->relationOption($b,51,$owned),'native_resource_reference_denied','Cross-company selected task denied');
+$legacyOption=$reader->relationOption(1,7,'1');essentialCheck($legacyOption['id']==='1'&&$legacyOption['source_kind']==='task'&&$legacyOption['name']==='Legacy only','Proven principal keeps historical task lineage');
+essentialThrows(fn()=>$reader->relationOption(1,7,'2'),'native_resource_reference_denied','Principal cannot resolve historical task linked to secondary private client');
+essentialThrows(fn()=>$reader->relationOption($a,51,'1'),'native_resource_reference_denied','Secondary cannot alias historical task');
+$db->query("UPDATE {$p}company_tasks SET project_id=2 WHERE id=1");essentialThrows(fn()=>$reader->relationOption($a,51,$owned),'native_resource_reference_denied','Damaged cross-company project relation refused');$db->query("UPDATE {$p}company_tasks SET project_id=1 WHERE id=1");
+$db->query("DELETE FROM {$p}issuers_resource_permissions WHERE issuer_id=? AND staff_id=51 AND feature='projects'",[$a]);
+$queryStart=count($db->queries);essentialThrows(fn()=>$reader->relationOption($a,51,$owned),'native_company_task_denied','Project grant required for project-linked selected task');
+essentialCheck(!array_filter(array_slice($db->queries,$queryStart),static fn($q)=>str_contains($q[0],' AS label FROM ')),'Project ACL is checked before task label hydration');
+essentialCheck($reader->relationOption($a,51,$standalone)['id']===$standalone,'Standalone selection does not require unrelated project grant');
+$db->query("UPDATE {$p}issuers_staff SET can_view=0 WHERE issuer_id=? AND staff_id=51",[$a]);essentialThrows(fn()=>$reader->relationOption($a,51,$standalone),'native_company_task_denied','Membership revocation denies selected task');
+echo "Native selected task relation: {$GLOBALS['essentialChecks']} cumulative checks passed.\n";

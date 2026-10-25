@@ -7,6 +7,7 @@ class Spam_filters extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeSpam();return;}
 
         if (! is_admin()) {
             access_denied('Spam Filters');
@@ -15,8 +16,11 @@ class Spam_filters extends AdminController
         $this->load->model('spam_filters_model');
     }
 
+    private function nativeSpam():NativeCompanySpamController{require_once APPPATH.'services/NativeCompanySpamController.php';return new NativeCompanySpamController($this);}
+
     public function view($rel_type, $filter_type = '')
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeSpam()->view($rel_type,$filter_type);return;}
         if ($this->input->is_ajax_request()) {
             $aColumns = [
                 'value',
@@ -32,26 +36,7 @@ class Spam_filters extends AdminController
             $rResult = $result['rResult'];
 
             foreach ($rResult as $aRow) {
-                $row = [];
-
-                for ($i = 0; $i < count($aColumns); $i++) {
-                    $_data = $aRow[$aColumns[$i]];
-                    $row[] = e($_data);
-                }
-
-                $options = '<div class="tw-flex tw-items-center tw-space-x-2">';
-                $options .= '<a href="#" class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700" data-type="' . $filter_type . '" data-value="' . e($aRow['value']) . '" onclick="edit_spam_filter(this,' . $aRow['id'] . '); return false;">
-                    <i class="fa-regular fa-pen-to-square fa-lg"></i>
-                </a>';
-
-                $options .= '<a href="' . admin_url('spam_filters/delete/' . $aRow['id'] . '/' . $rel_type) . '"
-                class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 _delete">
-                    <i class="fa-regular fa-trash-can fa-lg"></i>
-                </a>';
-                $options .= '</div>';
-
-                $row[]              = $options;
-                $output['aaData'][] = $row;
+                $output['aaData'][] = require APPPATH.'views/admin/spam_filters/table_row.php';
             }
             echo json_encode($output);
 
@@ -65,6 +50,7 @@ class Spam_filters extends AdminController
 
     public function filter($type)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeSpam()->filter($type);return;}
         $message = '';
         $success = false;
         if ($this->input->post()) {
@@ -88,6 +74,7 @@ class Spam_filters extends AdminController
 
     public function delete($id, $type)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeSpam()->delete($id,$type);return;}
         $success = $this->spam_filters_model->delete($id, $type);
         if ($success) {
             set_alert('success', _l('deleted', _l('spam_filter')));

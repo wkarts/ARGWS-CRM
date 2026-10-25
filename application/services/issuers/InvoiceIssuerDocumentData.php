@@ -102,7 +102,10 @@ final class InvoiceIssuerDocumentData
             'totals'=>array_map([self::class,'decimal'],$totals),
             'position'=>self::position($source['position']??null,$invoiceId,$issuerId,$totals['total']),
             'note'=>self::text($record['clientnote'] ?? '',20000),
+            'terms'=>self::text($record['terms'] ?? $snapshot['identity']['terms'] ?? '',20000),
+            'quantity_mode'=>(int)($record['show_quantity_as'] ?? 1),
         ];
+        if(!in_array((string)($record['show_quantity_as']??1),['1','2','3'],true))throw new DomainException('issuer_document_invalid_content');
         if (strlen(json_encode($this->data, JSON_THROW_ON_ERROR)) > 16777215) {
             throw new DomainException('issuer_document_content_too_large');
         }

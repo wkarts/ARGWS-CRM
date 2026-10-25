@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php $tabs = filter_client_visible_tabs($customer_tabs, $client->userid); ?>
+<?php $tabs = !empty($native_customers) ? $customer_tabs : filter_client_visible_tabs($customer_tabs, $client->userid); ?>
 
 <select class="tw-block md:tw-hidden form-control" onchange="redirectToTab(this)">
   <?php foreach ($tabs as $key => $tab) { ?>

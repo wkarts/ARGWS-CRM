@@ -1,0 +1,26 @@
+<?php
+require __DIR__.'/native_clients.php';
+require_once APPPATH.'services/CompanyCustomerAccess.php';
+foreach(['firstname','lastname']as$field)if(!$db->field_exists($field,$p.'staff'))$db->query('ALTER TABLE '.$p.'staff ADD '.$field.' varchar(191)');
+$db->query("INSERT INTO {$p}staff(staffid,active,admin,firstname,lastname) VALUES(51,1,0,'Assigned','A'),(52,1,0,'Unassigned','B')");$db->query("INSERT INTO {$p}issuers_staff(issuer_id,staff_id,can_view) VALUES(41,51,1),(41,52,1),(82,51,1)");
+CompanyCustomerAdminSchema::ensure($db,$p);CompanyCustomerAdminSchema::ensure($db,$p);$access=new CompanyCustomerAccess($db,$p);$acl=new IssuerResourceAccess($db,$p);$start=$GLOBALS['essentialChecks'];
+essentialCheck(!$access->canReadDirectory(41,51),'unassigned member gains no customer directory');
+$before=$access->assignments(41,12,$nativeA);$access->assign(41,12,$nativeA,[51],$before['revision']);
+foreach(['view','edit','create_contact','delete_contact']as$cap)essentialCheck($access->can(41,51,$nativeA,$cap),'assigned responsible has native per-customer action '.$cap);
+$assignedWriter=new CompanyClients($db,$p);
+$assignedAdapter=new NativeCompanyClients($db,$p,41,51);essentialCheck(is_array($assignedAdapter->references($nativeA)['groups'])&&$assignedAdapter->groups($nativeA)===[],'assigned native profile reads exact customer catalog and memberships');essentialThrows(fn()=>$assignedAdapter->references($nativeB),'company_client_access_denied','reference catalog cannot use another customer as authority');essentialCheck($assignedAdapter->table([])['recordsTotal']===1&&$assignedAdapter->summary()['total']===1,'native DataTable and summary aggregate only assigned customers');essentialCheck($assignedAdapter->capabilities($nativeA)['edit']&&!$assignedAdapter->capabilities($nativeB)['edit']&&!$assignedAdapter->capabilities()['create'],'native resource capabilities do not become company-wide edit or create');
+essentialCheck($assignedWriter->get(41,51,$nativeA)['userid']===$nativeA&&array_column($assignedWriter->page(41,51)['items'],'userid')===[$nativeA],'native writer directory and read expose only the assigned customer');
+essentialThrows(fn()=>$assignedWriter->get(41,51,$nativeB),'company_client_access_denied','native writer refuses another customer despite same actor membership');
+$assignedBefore=$assignedWriter->details(41,51,$nativeA);$assignedWriter->update(41,51,$nativeA,['company'=>'Assigned update','vat'=>'','profile'=>['address'=>'Assigned address'],'native_profile'=>['website'=>'https://example.test/assigned'],'groups_in'=>[]],$assignedBefore['revision']);
+essentialCheck($assignedWriter->details(41,51,$nativeA)['profile']['address']==='Assigned address'&&CompanyClientNativeFields::read($db,$p,41,$nativeA)['website']==='https://example.test/assigned','assigned edit reaches native profile and fields without company-wide edit');
+essentialThrows(fn()=>$assignedWriter->create(41,51,['company'=>'Denied create','vat'=>'']),'company_client_access_denied','assigned responsible cannot create another customer');
+essentialThrows(fn()=>$assignedWriter->setSharing(41,51,$nativeA,[82],$assignedWriter->details(41,51,$nativeA)['revision']),'company_client_access_denied','assigned responsible cannot share customer with other company');
+essentialCheck(!$acl->can(41,51,'customers','view')&&!$acl->can(41,51,'invoices','view')&&!$acl->can(41,51,'customers','create'),'assignment never writes company-wide or financial capabilities');
+essentialCheck($access->assignedClientIds(41,51)===[$nativeA]&&!$access->can(82,51,$nativeA,'view')&&!$access->can(41,51,$nativeB,'view'),'assignment list and direct reads remain exact issuer/customer');
+essentialThrows(fn()=>$access->assign(41,51,$nativeA,[52],$access->assignments(41,12,$nativeA)['revision']),'company_client_access_denied','per-customer responsible cannot delegate broader authority');
+essentialThrows(fn()=>$access->assign(41,12,$nativeA,[52],$before['revision']),'company_client_stale','stale assignment replacement rejected');
+$db->query("UPDATE {$p}issuers_staff SET can_view=0 WHERE issuer_id=41 AND staff_id=51");essentialCheck(!$access->can(41,51,$nativeA,'view')&&$access->assignedClientIds(41,51)===[],'membership revocation immediately invalidates assignment');
+$db->query("UPDATE {$p}issuers_staff SET can_view=1 WHERE issuer_id=41 AND staff_id=51");$fresh=$access->assignments(41,12,$nativeA);$db->query("CREATE TRIGGER {$p}ignore_assignment_audit BEFORE INSERT ON {$p}issuers_audit BEGIN SELECT RAISE(IGNORE); END");
+essentialThrows(fn()=>$access->assign(41,12,$nativeA,[52],$fresh['revision']),'issuer_client_write_unconfirmed','assignment replacement requires exact audit receipt');essentialCheck($access->assignments(41,12,$nativeA)===$fresh,'audit failure rolls grant removal/insertion back');$db->query("DROP TRIGGER {$p}ignore_assignment_audit");
+$access->assign(41,12,$nativeA,[52],$fresh['revision']);essentialCheck(!$access->can(41,51,$nativeA,'view')&&$access->can(41,52,$nativeA,'view'),'replacement atomically revokes old responsible and grants only new one');
+echo 'Native customer assignment isolation: '.($GLOBALS['essentialChecks']-$start).' checks passed; concurrency still needs MySQL.'.PHP_EOL;

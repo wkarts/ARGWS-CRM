@@ -1,6 +1,12 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php
+require_once APPPATH.'services/NativeCompanyAdminPresentation.php';
+$nativeCompany=NativeCompanyAdminPresentation::current(function_exists('get_instance') ? get_instance() : $this);
+$nativeLabel=$nativeCompany ? static fn($key, ...$unused)=>NativeCompanyAdminPresentation::label((string)$key) : static fn($key, ...$args)=>_l($key,...$args);
+?>
+
 <aside id="menu" class="sidebar">
-    <?php $isSidebarDark = function_exists('is_admin_sidebar_background_light') ?
+    <?php $isSidebarDark = !$nativeCompany && function_exists('is_admin_sidebar_background_light') ?
             is_admin_sidebar_background_light() :
             false; ?>
     <div class="tw-mt-[80px] tw-mx-1.5 company-sidebar-account">
@@ -11,38 +17,38 @@
             class="dropdown-toggle profile -tw-mt-1 tw-font-medium tw-border tw-border-solid tw-rounded-lg tw-bg-white tw-py-2 tw-px-2.5 tw-block tw-shadow-xs <?= $isSidebarDark ? 'tw-text-white tw-border-white/10 hover:tw-border-white/30 focus:tw-border-white/30 hover:tw-text-white focus:tw-text-white hover:tw-bg-neutral-900/10 focus:tw-bg-neutral-900/10' : 'tw-border-neutral-300 tw-text-neutral-700 hover:tw-text-neutral-800 focus:tw-text-neutral-800 hover:tw-bg-neutral-900/5 focus:tw-bg-neutral-900/5'; ?>"
             data-toggle="dropdown" aria-expanded="false">
             <span class="tw-inline-flex tw-items-center tw-gap-x-3 tw-pt-0.5">
-                <?= staff_profile_image($current_user->staffid, ['img', 'img-responsive', 'staff-profile-image-small']); ?>
+                <?php if($nativeCompany) { ?><img src="<?= e($nativeCompany['avatar']); ?>" class="img img-responsive staff-profile-image-small" alt=""><?php } else { echo staff_profile_image($current_user->staffid, ['img', 'img-responsive', 'staff-profile-image-small']); } ?>
                 <span>
                     <span
-                        class="tw-truncate tw-block tw-w-[140px] tw-font-semibold"><?= get_staff_full_name(); ?></span>
+                        class="tw-truncate tw-block tw-w-[140px] tw-font-semibold"><?= ($nativeCompany ? e($nativeCompany['name']) : get_staff_full_name()); ?></span>
                     <span
                         class="tw-font-normal tw-truncate tw-block tw-w-[140px] tw-text-sm <?= $isSidebarDark ? 'tw-text-neutral-300' : 'tw-text-neutral-500' ?>">
-                        <?= get_staff()->email; ?>
+                        <?= ($nativeCompany ? e($nativeCompany['staff']['email']) : get_staff()->email); ?>
                     </span>
                 </span>
             </span>
         </a>
         <ul class="dropdown-menu tw-w-full">
-            <li class="header-my-profile"><a
-                    href="<?= admin_url('profile'); ?>"><?= _l('nav_my_profile'); ?></a>
-            </li>
-            <li class="header-my-timesheets"><a
-                    href="<?= admin_url('staff/timesheets'); ?>"><?= _l('my_timesheets'); ?></a>
-            </li>
-            <li class="header-edit-profile"><a
-                    href="<?= admin_url('staff/edit_profile'); ?>"><?= _l('nav_edit_profile'); ?>
+            <?php if(!$nativeCompany || isset($nativeCompany['routes']['profile'])) { ?><li class="header-my-profile"><a
+                    href="<?= admin_url('profile'); ?>"><?= $nativeLabel('nav_my_profile'); ?></a>
+            </li><?php } ?>
+            <?php if(!$nativeCompany || isset($nativeCompany['routes']['staff/timesheets'])) { ?><li class="header-my-timesheets"><a
+                    href="<?= admin_url('staff/timesheets'); ?>"><?= $nativeLabel('my_timesheets'); ?></a>
+            </li><?php } ?>
+            <?php if(!$nativeCompany || isset($nativeCompany['routes']['staff/edit_profile'])) { ?><li class="header-edit-profile"><a
+                    href="<?= admin_url('staff/edit_profile'); ?>"><?= $nativeLabel('nav_edit_profile'); ?>
                 </a>
-            </li>
-            <?php if (! is_language_disabled()) { ?>
+            </li><?php } ?>
+            <?php if (!$nativeCompany && !is_language_disabled()) { ?>
             <li class="dropdown-submenu pull-left header-languages">
                 <a href="#"
-                    tabindex="-1"><?= _l('language'); ?></a>
+                    tabindex="-1"><?= $nativeLabel('language'); ?></a>
                 <ul class="dropdown-menu dropdown-menu">
                     <li
                         class="<?= $current_user->default_language == '' ? 'active' : ''; ?>">
                         <a
                             href="<?= admin_url('staff/change_language'); ?>">
-                            <?= _l('system_default_string'); ?>
+                            <?= $nativeLabel('system_default_string'); ?>
                         </a>
                     </li>
                     <?php foreach ($this->app->get_available_languages() as $user_lang) { ?>
@@ -56,16 +62,16 @@
                 </ul>
             </li>
             <?php } ?>
-            <li class="header-logout">
-                <a href="#"
-                    onclick="logout(); return false;"><?= _l('nav_logout'); ?></a>
-            </li>
+            <?php if(!$nativeCompany || isset($nativeCompany['routes']['authentication/logout'])) { ?><li class="header-logout">
+                <a href="<?= $nativeCompany ? e($nativeCompany['routes']['authentication/logout']) : '#'; ?>"
+                    <?= $nativeCompany ? '' : 'onclick="logout(); return false;"'; ?>><?= $nativeLabel('nav_logout'); ?></a>
+            </li><?php } ?>
         </ul>
     </div>
     <ul class="nav metis-menu tw-mt-[15px]" id="side-menu">
 
         <?php
- hooks()->do_action('before_render_aside_menu');
+ if(!$nativeCompany) { hooks()->do_action('before_render_aside_menu'); }
 ?>
         <?php foreach ($sidebar_menu as $key => $item) {
             if ((isset($item['collapse']) && $item['collapse']) && count($item['children']) === 0) {
@@ -79,7 +85,7 @@
                 <i
                     class="<?= e($item['icon']); ?> menu-icon"></i>
                 <span class="menu-text">
-                    <?= e(_l($item['name'], '', false)); ?>
+                    <?= e($nativeLabel($item['name'], '', false)); ?>
                 </span>
                 <?php if (count($item['children']) > 0) { ?>
                 <span class="fa arrow pleft5 fa-sm tw-mt-1.5"></span>
@@ -106,7 +112,7 @@
                             class="<?= e($submenu['icon']); ?> menu-icon"></i>
                         <?php } ?>
                         <span class="sub-menu-text">
-                            <?= _l($submenu['name'], '', false); ?>
+                            <?= $nativeCompany ? e($submenu['name']) : $nativeLabel($submenu['name'], '', false); ?>
                         </span>
                     </a>
                     <?php if (isset($submenu['badge'], $submenu['badge']['value']) && ! empty($submenu['badge'])) {?>
@@ -123,18 +129,18 @@
             </ul>
             <?php } ?>
         </li>
-        <?php hooks()->do_action('after_render_single_aside_menu', $item); ?>
+        <?php if(!$nativeCompany) { hooks()->do_action('after_render_single_aside_menu', $item); } ?>
         <?php
         } ?>
-        <?php if ($this->app->show_setup_menu() == true && (is_staff_member() || is_admin())) { ?>
-        <li<?php if (get_option('show_setup_menu_item_only_on_hover') == 1) {
+        <?php if (($nativeCompany ? count($nativeCompany['setup_menu'])>0 : ($this->app->show_setup_menu() == true && (is_staff_member() || is_admin())))) { ?>
+        <li<?php if (!$nativeCompany && get_option('show_setup_menu_item_only_on_hover') == 1) {
             echo ' style="display:none;"';
         } ?> id="setup-menu-item">
             <a href="#" class="open-customizer"><i class="fa fa-cog menu-icon"></i>
                 <span class="menu-text">
-                    <?= _l('setting_bar_heading'); ?>
+                    <?= $nativeLabel('setting_bar_heading'); ?>
                     <?php
-               if ($modulesNeedsUpgrade = $this->app_modules->number_of_modules_that_require_database_upgrade()) {
+               if (!$nativeCompany && ($modulesNeedsUpgrade = $this->app_modules->number_of_modules_that_require_database_upgrade())) {
                    echo '<span class="badge menu-badge !tw-bg-warning-600">' . $modulesNeedsUpgrade . '</span>';
                }
             ?>
@@ -142,7 +148,7 @@
             </a>
             <?php } ?>
             </li>
-            <?php hooks()->do_action('after_render_aside_menu'); ?>
-            <?php $this->load->view('admin/projects/pinned'); ?>
+            <?php if(!$nativeCompany) { hooks()->do_action('after_render_aside_menu'); } ?>
+            <?php if(!$nativeCompany) { $this->load->view('admin/projects/pinned'); } ?>
     </ul>
 </aside>

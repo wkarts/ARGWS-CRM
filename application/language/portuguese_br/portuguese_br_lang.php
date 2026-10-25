@@ -4233,3 +4233,5 @@ $lang['asaas_company_environment_invalid'] = 'Ambiente inválido';
 $lang['asaas_company_method_pix'] = 'Pix';
 $lang['asaas_company_method_boleto'] = 'Boleto';
 $lang['asaas_company_method_card'] = 'Cartão hospedado à vista';
+
+$lang['native_ticket_historical_statuses_notice'] = 'Tickets históricos com estado textual original preservado, sem conversão automática para os status configurados:';

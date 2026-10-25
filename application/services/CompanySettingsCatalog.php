@@ -4,19 +4,27 @@ declare(strict_types=1);
 require_once __DIR__.'/CompanySettingsIdentity.php';
 require_once __DIR__.'/CompanySettingsFormats.php';
 require_once __DIR__.'/CompanyDocumentPdf.php';
+require_once __DIR__.'/NativeCompanyUploadPreferences.php';
+require_once __DIR__.'/NativeCompanyContactPreferences.php';
+require_once __DIR__.'/NativeCompanyTicketPreferences.php';
 
 /** Only groups consumed by the isolated company flows; never the legacy plugin catalog. */
 final class CompanySettingsCatalog
 {
     public static function groups(): array
     {
-        return ['task_timer_stop'=>'Parada do cronômetro anterior','task_timers'=>'Cronômetros das tarefas','task_operations'=>'Prioridade e acompanhamento de tarefas','task_defaults'=>'Padrões de criação de tarefas','ticket_preferences'=>'Ordem das respostas de suporte','pdf_typography'=>'Tipografia dos PDFs','project_files'=>'Arquivos de projetos','company'=>'Informações da Empresa','email'=>'Servidor SMTP','email_content'=>'Apresentação dos e-mails',
+        return ['tickets'=>'Suporte','table_preferences'=>'Tabelas','knowledge_base'=>'Base de conhecimento','upload_preferences'=>'Arquivos e mídia','contact_preferences'=>'Preferências de contatos','task_timer_stop'=>'Parada do cronômetro anterior','task_timers'=>'Cronômetros das tarefas','task_operations'=>'Prioridade e acompanhamento de tarefas','task_defaults'=>'Padrões de criação de tarefas','ticket_preferences'=>'Ordem das respostas de suporte','pdf_typography'=>'Tipografia dos PDFs','project_files'=>'Arquivos de projetos','company'=>'Informações da Empresa','email'=>'Servidor SMTP','email_content'=>'Apresentação dos e-mails',
             'documents'=>'Faturas e créditos','sales_documents'=>'Orçamentos e propostas','document_pdf'=>'PDF de faturas, créditos e contratos','sales_pdf'=>'PDF de orçamentos e propostas','localization'=>'Data e hora'];
     }
 
     public static function fields(string $group): array
     {
         return match($group) {
+            'table_preferences'=>['tables_pagination_limit'],
+            'knowledge_base'=>['use_knowledge_base','knowledge_base_without_registration'],
+            'tickets'=>NativeCompanyTicketPreferences::fields(),
+            'upload_preferences'=>NativeCompanyUploadPreferences::fields(),
+            'contact_preferences'=>NativeCompanyContactPreferences::fields(),
             'task_timer_stop'=>['auto_stop_tasks_timers_on_new_timer'],
             'task_timers'=>['timer_started_change_status_in_progress'],
             'task_operations'=>['default_task_priority','new_task_auto_follower_current_member'],
@@ -29,7 +37,7 @@ final class CompanySettingsCatalog
             'document_pdf'=>['pdf_format_invoice','pdf_format_credit_note','pdf_format_contract'],
             'sales_pdf'=>['pdf_format_estimate','pdf_format_proposal'],
             'sales_documents'=>['estimate_prefix','predefined_terms_estimate','proposal_number_prefix','predefined_terms_proposal'],
-            'documents'=>['invoice_prefix','predefined_terms_invoice','credit_note_prefix','predefined_terms_credit_note'],
+            'documents'=>['invoice_prefix','predefined_terms_invoice','credit_note_prefix','predefined_terms_credit_note','invoice_due_after'],
             'email'=>['smtp_host','smtp_port','smtp_encryption','smtp_email','smtp_username','smtp_password'],
             'email_content'=>['email_header','email_signature','email_footer'],
             default=>throw new DomainException('company_settings_group_unavailable'),
@@ -39,6 +47,14 @@ final class CompanySettingsCatalog
     public static function defaultValue(string $group,string $field):string
     {
         if(!in_array($field,self::fields($group),true))throw new DomainException('company_settings_invalid_input');
+        if($group==='table_preferences')return '25';
+        if($group==='knowledge_base')return '0';
+        if($group==='tickets')return NativeCompanyTicketPreferences::defaultValue($field);
+        if($group==='upload_preferences')return NativeCompanyUploadPreferences::defaultValue($field);
+        if($group==='contact_preferences')return NativeCompanyContactPreferences::defaultValue($field);
+        if($group==='localization')return ['dateformat'=>'Y-m-d|%Y-%m-%d','time_format'=>'24'][$field]; // Native public installation defaults.
+        if($group==='documents'&&$field==='invoice_prefix')return 'INV-'; // Public native installation default; explicit empty storage remains empty.
+        if($group==='documents'&&$field==='invoice_due_after')return '30'; // Same public product default as native clean installation; not another company's option.
         if($group==='pdf_typography')return $field==='pdf_font'?'dejavusans':'';
         if(in_array($group,['task_timers','task_timer_stop'],true))return '0';
         if($group==='task_operations')return $field==='default_task_priority'?'2':'0';
@@ -57,6 +73,14 @@ final class CompanySettingsCatalog
     /** Validate the entire form before encryption, SQL or audit. Returns normalized safe fragments. */
     public static function prepare(string $group,array $settings): array
     {
+        if($group==='table_preferences'){
+            if(array_diff(array_keys($settings),['tables_pagination_limit']))throw new DomainException('company_settings_invalid_input');
+            foreach($settings as $value)if(!is_string($value)||!preg_match('/^[1-9][0-9]*$/D',$value)||strlen($value)>strlen((string)PHP_INT_MAX)||(strlen($value)===strlen((string)PHP_INT_MAX)&&strcmp($value,(string)PHP_INT_MAX)>0))throw new DomainException('company_settings_invalid_input');
+        }
+        if($group==='knowledge_base'&&(array_diff(array_keys($settings),['use_knowledge_base','knowledge_base_without_registration'])||array_filter($settings,static fn($v)=>!in_array($v,['0','1'],true))))throw new DomainException('company_settings_invalid_input');
+        if($group==='tickets')return NativeCompanyTicketPreferences::prepare($settings);
+        if($group==='upload_preferences')return NativeCompanyUploadPreferences::prepare($settings);
+        if($group==='contact_preferences')return NativeCompanyContactPreferences::prepare($settings);
         if(array_diff(array_keys($settings),self::fields($group)))throw new DomainException('company_settings_invalid_input');
         foreach($settings as $name=>$value) {
             if(!is_string($value)||preg_match('//u',$value)!==1
@@ -66,6 +90,7 @@ final class CompanySettingsCatalog
             if(strlen($value)>$limit)throw new DomainException('company_settings_invalid_input');
             if($group!=='company'&&$name!=='smtp_password'&&!self::multiline($name)&&preg_match('/[\r\n]/',$value))throw new DomainException('company_settings_invalid_input');
         }
+        if(array_key_exists('invoice_due_after',$settings)&&!preg_match('/^(?:0|[1-9][0-9]{0,3})$/D',$settings['invoice_due_after']))throw new DomainException('company_settings_invalid_input');
         if($group==='project_files'&&(array_keys($settings)!==['allow_contact_to_delete_files']||!in_array($settings['allow_contact_to_delete_files'],['0','1'],true)))throw new DomainException('company_settings_invalid_input');
         if($group==='task_timer_stop'){require_once __DIR__.'/CompanyTaskTimerStopPreferences.php';CompanyTaskTimerStopPreferences::prepare($settings);}
         if($group==='task_timers'){require_once __DIR__.'/CompanyTaskTimerPreferences.php';CompanyTaskTimerPreferences::prepare($settings);}
@@ -82,13 +107,13 @@ final class CompanySettingsCatalog
             if(($settings['smtp_host']??'')!==''&&!preg_match('/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9.-]{0,251}[a-zA-Z0-9])?|\[[a-fA-F0-9:]+\])$/D',$settings['smtp_host']))throw new DomainException('company_settings_invalid_input');
         }
         if($group==='email_content') {
-            foreach($settings as $name=>$value)$settings[$name]=self::emailHtml($value);
+            foreach($settings as $name=>$value)$settings[$name]=self::htmlFragment($value);
         }
         return $settings;
     }
 
     /** Independent HTML fragments; no scripts, remote images, forms, stylesheets or hooks. */
-    private static function emailHtml(string $html): string
+    public static function htmlFragment(string $html): string
     {
         if(!class_exists('HTMLPurifier'))require_once __DIR__.'/../vendor/ezyang/htmlpurifier/library/HTMLPurifier.auto.php';
         $config=HTMLPurifier_Config::createDefault();

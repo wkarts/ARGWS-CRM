@@ -40,30 +40,8 @@ function format_task_status($status, $text = false, $clean = false)
  */
 function get_tasks_priorities()
 {
-    return hooks()->apply_filters('tasks_priorities', [
-        [
-            'id'    => 1,
-            'name'  => _l('task_priority_low'),
-            'color' => '#777',
-
-        ],
-        [
-            'id'    => 2,
-            'name'  => _l('task_priority_medium'),
-            'color' => '#03a9f4',
-
-        ],
-        [
-            'id'    => 3,
-            'name'  => _l('task_priority_high'),
-            'color' => '#ff6f00',
-        ],
-        [
-            'id'    => 4,
-            'name'  => _l('task_priority_urgent'),
-            'color' => '#fc2d42',
-        ],
-    ]);
+    require_once APPPATH . 'services/TaskPriorityPresentation.php';
+    return hooks()->apply_filters('tasks_priorities', TaskPriorityPresentation::definitions('_l'));
 }
 
 /**

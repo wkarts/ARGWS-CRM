@@ -4,9 +4,16 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Misc extends AdminController
 {
+    private ?NativeCompanyAuxiliaryUi $companyAuxiliary = null;
     public function __construct()
     {
         parent::__construct();
+        if (CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyAuxiliaryUi.php';
+            $context=CompanyRequestScope::context();
+            $this->companyAuxiliary=new NativeCompanyAuxiliaryUi($this->db,db_prefix(),$context->issuerId(),$context->staffId(),$this);
+            return;
+        }
         $this->load->model('misc_model');
     }
 
@@ -45,11 +52,13 @@ class Misc extends AdminController
 
     public function get_currency($id)
     {
+        if($this->companyAuxiliary!==null){echo json_encode($this->nativeCatalog()->currency($id),JSON_THROW_ON_ERROR);return;}
         echo json_encode(get_currency($id));
     }
 
     public function get_taxes_dropdown_template()
     {
+        if($this->companyAuxiliary!==null){$name=$this->input->post('name');if(!is_string($name))throw new DomainException('company_catalog_invalid');echo $this->nativeCatalog()->taxDropdown($name,$this->input->post('taxname'));return;}
         $name    = $this->input->post('name');
         $taxname = $this->input->post('taxname');
         echo $this->misc_model->get_taxes_dropdown_template($name, $taxname);
@@ -75,6 +84,7 @@ class Misc extends AdminController
 
     public function clear_system_popup()
     {
+        if($this->companyAuxiliary!==null)CompanyRequestScope::assertNativeMutation($this);
         $this->session->unset_userdata('system-popup');
     }
 
@@ -88,6 +98,7 @@ class Misc extends AdminController
 
     public function get_relation_data()
     {
+        if($this->companyAuxiliary!==null){require_once APPPATH.'services/NativeCompanyRelationEndpoints.php';echo json_encode(NativeCompanyRelationEndpoints::read($this),JSON_THROW_ON_ERROR);return;}
         if ($this->input->post()) {
             $type = $this->input->post('type');
             $data = get_relation_data($type, '', $this->input->post('extra'));
@@ -116,6 +127,7 @@ class Misc extends AdminController
 
     public function upload_sales_file()
     {
+        if($this->companyAuxiliary!==null){require_once APPPATH.'services/NativeCompanyFileEndpoints.php';echo json_encode(NativeCompanyFileEndpoints::uploadInvoice($this),JSON_THROW_ON_ERROR);return;}
         $rel_id = $this->input->post('rel_id');
 
         if (! is_numeric($rel_id)) {
@@ -127,6 +139,7 @@ class Misc extends AdminController
 
     public function add_sales_external_attachment()
     {
+        if($this->companyAuxiliary!==null){require_once APPPATH.'services/NativeCompanyFileEndpoints.php';echo json_encode(NativeCompanyFileEndpoints::externalInvoice($this),JSON_THROW_ON_ERROR);return;}
         if ($this->input->post()) {
             $file = $this->input->post('files');
             $this->misc_model->add_attachment_to_database($this->input->post('rel_id'), $this->input->post('type'), $file, $this->input->post('external'));
@@ -135,6 +148,7 @@ class Misc extends AdminController
 
     public function toggle_file_visibility($id)
     {
+        if($this->companyAuxiliary!==null){require_once APPPATH.'services/NativeCompanyFileEndpoints.php';echo json_encode(NativeCompanyFileEndpoints::visibility($this,$id),JSON_THROW_ON_ERROR);return;}
         $this->db->where('id', $id);
         $row = $this->db->get(db_prefix() . 'files')->row();
         if (!$row || ($row->rel_type === 'invoice' && !\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $row->rel_id))) { show_404(); }
@@ -153,6 +167,11 @@ class Misc extends AdminController
 
     public function format_date()
     {
+        if($this->companyAuxiliary!==null){
+            $raw=$this->input->post('date');if(!is_string($raw)||strlen($raw)>160||str_contains($raw,"\0"))throw new DomainException('company_auxiliary_invalid_input');
+            $stamp=strtotime(trim(explode('(',$raw,2)[0]));if($stamp===false)throw new DomainException('company_auxiliary_invalid_input');
+            require_once APPPATH.'services/NativeCompanyDateInput.php';echo (new NativeCompanyDateInput($this->db,db_prefix(),CompanyRequestScope::context()->issuerId()))->displayDate(date('Y-m-d',$stamp));return;
+        }
         if ($this->input->post()) {
             $date = $this->input->post('date');
             $date = strtotime(current(explode('(', $date)));
@@ -162,6 +181,7 @@ class Misc extends AdminController
 
     public function send_file()
     {
+        if($this->companyAuxiliary!==null){require_once APPPATH.'services/NativeCompanyFileEndpoints.php';echo json_encode(NativeCompanyFileEndpoints::send($this),JSON_THROW_ON_ERROR);return;}
         if ($this->input->post('send_file_email')) {
             if ($this->input->post('file_path')) {
                 $this->load->model('emails_model');
@@ -186,19 +206,21 @@ class Misc extends AdminController
 
     public function update_ei_items_order($type)
     {
-        $data = $this->input->post();
-
-        foreach ($data['data'] as $order) {
-            $this->db->where('id', $order[0]);
-            $this->db->update(db_prefix() . 'itemable', [
-                'item_order' => $order[1],
-            ]);
-        }
+        if($this->companyAuxiliary!==null){require_once APPPATH.'services/NativeCompanyItemOrderEndpoints.php';echo json_encode(NativeCompanyItemOrderEndpoints::save($this,$type),JSON_THROW_ON_ERROR);return;}
+        $context=CompanyRequestScope::context();
+        if(strtoupper($this->input->method(true))!=='POST'||$context===null||!$context->isPrimary()||$context->staffId()!==(int)get_staff_user_id())throw new DomainException('native_legacy_order_denied');
+        require_once APPPATH.'services/NativeCompanyLegacyItemOrder.php';
+        (new NativeCompanyLegacyItemOrder($this->db,db_prefix()))->save($context->issuerId(),$context->staffId(),$type,$this->input->post('data'));
     }
 
     // Since version 1.0.2 add client reminder
     public function add_reminder($rel_id_id, $rel_type)
     {
+        if ($this->companyAuxiliary !== null) {
+            CompanyRequestScope::assertNativeMutation($this);
+            $this->companyAuxiliary->saveReminder($rel_type,$rel_id_id,$this->nativeReminderInput());
+            echo json_encode(['alert_type'=>'success','message'=>_l('reminder_added_successfully')],JSON_THROW_ON_ERROR); return;
+        }
         $message    = '';
         $alert_type = 'warning';
         if ($this->input->post()) {
@@ -216,6 +238,7 @@ class Misc extends AdminController
 
     public function get_reminders($id, $rel_type)
     {
+        if($this->companyAuxiliary!==null){$this->nativeReminderTable($rel_type,$id,'relation'); return;}
         if ($this->input->is_ajax_request()) {
             $this->app->get_table_data('reminders', [
                 'id'       => $id,
@@ -226,6 +249,7 @@ class Misc extends AdminController
 
     public function my_reminders()
     {
+        if($this->companyAuxiliary!==null){$this->nativeReminderTable(null,null,'mine'); return;}
         if ($this->input->is_ajax_request()) {
             $this->app->get_table_data('staff_reminders');
         }
@@ -233,6 +257,7 @@ class Misc extends AdminController
 
     public function reminders()
     {
+        if($this->companyAuxiliary!==null){$this->load->view('admin/utilities/all_reminders',['members'=>$this->companyAuxiliary->members(),'title'=>_l('reminders'),'bodyclass'=>'all-reminders']); return;}
         $this->load->model('staff_model');
         $data['members']   = $this->staff_model->get('', ['active' => 1]);
         $data['title']     = _l('reminders');
@@ -242,6 +267,7 @@ class Misc extends AdminController
 
     public function reminders_table()
     {
+        if($this->companyAuxiliary!==null){$this->nativeReminderTable(null,null,'all'); return;}
         if ($this->input->is_ajax_request()) {
             $this->app->get_table_data('all_reminders');
         }
@@ -250,6 +276,13 @@ class Misc extends AdminController
     // Since version 1.0.2 delete client reminder
     public function delete_reminder($rel_id, $id, $rel_type)
     {
+        if ($this->companyAuxiliary !== null) {
+            CompanyRequestScope::assertNativeMutation($this);
+            $row=$this->companyAuxiliary->reminder($id);
+            if ((string)$row['rel_id']!==(string)$rel_id || $row['rel_type']!==$rel_type) throw new DomainException('company_auxiliary_access_denied');
+            $this->companyAuxiliary->deleteReminder($id,$this->input->post('revision'));
+            echo json_encode(['alert_type'=>'success','message'=>_l('reminder_deleted')],JSON_THROW_ON_ERROR); return;
+        }
         if (! $id && ! $rel_id) {
             exit('No reminder found');
         }
@@ -268,6 +301,11 @@ class Misc extends AdminController
 
     public function get_reminder($id)
     {
+        if ($this->companyAuxiliary !== null) {
+            $row=$this->companyAuxiliary->reminder($id);require_once APPPATH.'services/NativeCompanyDateInput.php';
+            $row['date']=(new NativeCompanyDateInput($this->db,db_prefix(),CompanyRequestScope::context()->issuerId()))->display($row['date']);
+            echo json_encode($row,JSON_THROW_ON_ERROR); return;
+        }
         $reminder = $this->misc_model->get_reminders($id);
         if ($reminder) {
             if ($reminder->creator == get_staff_user_id() || is_admin()) {
@@ -280,6 +318,12 @@ class Misc extends AdminController
 
     public function edit_reminder($id)
     {
+        if ($this->companyAuxiliary !== null) {
+            CompanyRequestScope::assertNativeMutation($this);
+            $row=$this->companyAuxiliary->reminder($id);
+            $this->companyAuxiliary->saveReminder($row['rel_type'],$row['rel_id'],$this->nativeReminderInput(),$id,$this->input->post('revision'));
+            echo json_encode(['alert_type'=>'success','message'=>_l('updated_successfully',_l('reminder'))],JSON_THROW_ON_ERROR); return;
+        }
         $reminder = $this->misc_model->get_reminders($id);
         if ($reminder && ($reminder->creator == get_staff_user_id() || is_admin()) && $reminder->isnotified == 0) {
             $success = $this->misc_model->edit_reminder($this->input->post(), $id);
@@ -302,6 +346,7 @@ class Misc extends AdminController
     // Since Version 1.0.1 - General search
     public function search()
     {
+        if($this->companyAuxiliary!==null){require_once APPPATH.'services/NativeCompanyHeaderEndpoints.php';echo json_encode(NativeCompanyHeaderEndpoints::search($this),JSON_THROW_ON_ERROR);return;}
         $q = $this->input->post('q');
 
         $recentSearches = array_reverse(get_staff_recent_search_history());
@@ -319,6 +364,7 @@ class Misc extends AdminController
 
     public function remove_recent_search($index)
     {
+        if($this->companyAuxiliary!==null){require_once APPPATH.'services/NativeCompanyHeaderEndpoints.php';echo json_encode(NativeCompanyHeaderEndpoints::removeSearch($this,$index),JSON_THROW_ON_ERROR);return;}
         $recentSearches = get_staff_recent_search_history();
         unset($recentSearches[$index]);
         update_staff_recent_search_history(array_reverse($recentSearches));
@@ -326,6 +372,13 @@ class Misc extends AdminController
 
     public function add_note($rel_id, $rel_type)
     {
+        if ($this->companyAuxiliary !== null) {
+            CompanyRequestScope::assertNativeMutation($this);
+            $this->companyAuxiliary->saveNote($rel_type,$rel_id,['description'=>$this->input->post('description',false)]);
+            $context=CompanyRequestScope::context();
+            $ref=NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$context->issuerId(),$context->staffId(),$rel_type,$rel_id);
+            redirect($ref['url'],'location',303); return;
+        }
         if ($this->input->post()) {
             $success = $this->misc_model->add_note($this->input->post(), $rel_type, $rel_id);
             if ($success) {
@@ -337,6 +390,13 @@ class Misc extends AdminController
 
     public function edit_note($id)
     {
+        if ($this->companyAuxiliary !== null) {
+            CompanyRequestScope::assertNativeMutation($this);
+            $row=$this->companyAuxiliary->note($id);$description=$this->input->post('description',false);
+            $this->companyAuxiliary->saveNote($row['rel_type'],$row['rel_id'],['description'=>$description],$id,$this->input->post('revision'));
+            $saved=$this->companyAuxiliary->note($id);
+            echo json_encode(['success'=>true,'description'=>nl2br(htmlspecialchars($saved['description'],ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')),'revision'=>$saved['revision'],'message'=>_l('note_updated_successfully')],JSON_THROW_ON_ERROR); return;
+        }
         if ($this->input->post()) {
             $data    = $this->input->post();
             $success = $this->misc_model->edit_note($data, $id);
@@ -351,6 +411,11 @@ class Misc extends AdminController
 
     public function delete_note($id)
     {
+        if ($this->companyAuxiliary !== null) {
+            CompanyRequestScope::assertNativeMutation($this);
+            $this->companyAuxiliary->deleteNote($id,$this->input->post('revision'));
+            echo json_encode(['success'=>true],JSON_THROW_ON_ERROR); return;
+        }
         $success = $this->misc_model->delete_note($id);
 
         if (! $this->input->is_ajax_request()) {
@@ -366,6 +431,7 @@ class Misc extends AdminController
     // Remove customizer open from database
     public function set_setup_menu_closed()
     {
+        if($this->companyAuxiliary!==null)CompanyRequestScope::assertNativeMutation($this);
         if ($this->input->is_ajax_request()) {
             $this->session->set_userdata([
                 'setup-menu-open' => '',
@@ -376,6 +442,7 @@ class Misc extends AdminController
     // Set session that user clicked on setup_menu menu link to stay open
     public function set_setup_menu_open()
     {
+        if($this->companyAuxiliary!==null)CompanyRequestScope::assertNativeMutation($this);
         if ($this->input->is_ajax_request()) {
             $this->session->set_userdata([
                 'setup-menu-open' => true,
@@ -386,6 +453,11 @@ class Misc extends AdminController
     // User dismiss announcement
     public function dismiss_announcement($id)
     {
+        if ($this->companyAuxiliary !== null) {
+            CompanyRequestScope::assertNativeMutation($this);
+            $this->companyAuxiliary->dismissAnnouncement($id);
+            redirect(CompanyRequestScope::adminUrl($this,'announcements'),'location',303); return;
+        }
         $this->misc_model->dismiss_announcement($id);
         redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
     }
@@ -393,6 +465,7 @@ class Misc extends AdminController
     // Set notifications to read
     public function set_notifications_read()
     {
+        if($this->companyAuxiliary!==null){require_once APPPATH.'services/NativeCompanyHeaderEndpoints.php';echo json_encode(NativeCompanyHeaderEndpoints::markNotifications($this,null,'seen'),JSON_THROW_ON_ERROR);return;}
         if ($this->input->is_ajax_request()) {
             echo json_encode([
                 'success' => $this->misc_model->set_notifications_read(),
@@ -402,21 +475,25 @@ class Misc extends AdminController
 
     public function set_notification_read_inline($id)
     {
+        if($this->companyAuxiliary!==null){require_once APPPATH.'services/NativeCompanyHeaderEndpoints.php';echo json_encode(NativeCompanyHeaderEndpoints::markNotifications($this,$id,'inline'),JSON_THROW_ON_ERROR);return;}
         $this->misc_model->set_notification_read_inline($id);
     }
 
     public function set_desktop_notification_read($id)
     {
+        if($this->companyAuxiliary!==null){require_once APPPATH.'services/NativeCompanyHeaderEndpoints.php';echo json_encode(NativeCompanyHeaderEndpoints::markNotifications($this,$id,'all'),JSON_THROW_ON_ERROR);return;}
         $this->misc_model->set_desktop_notification_read($id);
     }
 
     public function mark_all_notifications_as_read_inline()
     {
+        if($this->companyAuxiliary!==null){require_once APPPATH.'services/NativeCompanyHeaderEndpoints.php';echo json_encode(NativeCompanyHeaderEndpoints::markNotifications($this,null,'all'),JSON_THROW_ON_ERROR);return;}
         $this->misc_model->mark_all_notifications_as_read_inline();
     }
 
     public function notifications_check()
     {
+        if($this->companyAuxiliary!==null){require_once APPPATH.'services/NativeCompanyHeaderEndpoints.php';echo json_encode(NativeCompanyHeaderEndpoints::notifications($this),JSON_THROW_ON_ERROR);return;}
         $notificationsIds = [];
         if (get_option('desktop_notifications') == '1') {
             $notifications = $this->misc_model->get_user_notifications();
@@ -456,6 +533,14 @@ class Misc extends AdminController
     // Check if client email exists/  ajax
     public function contact_email_exists()
     {
+        if($this->companyAuxiliary!==null){
+            CompanyRequestScope::assertNativeMutation($this);$context=CompanyRequestScope::context();
+            $client=IssuerPolicy::id($this->input->post('client_id'));$id=$this->input->post('userid');$email=$this->input->post('email');
+            if(!is_string($email))throw new DomainException('company_contact_invalid_input');
+            require_once APPPATH.'services/CompanyNativeContacts.php';
+            $available=(new CompanyNativeContacts($this->db,db_prefix()))->emailAvailable($context->issuerId(),$context->staffId(),$client,$email,$id===null||$id===''?null:IssuerPolicy::id($id));
+            $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode($available));return;
+        }
         if ($this->input->is_ajax_request()) {
             if ($this->input->post()) {
                 // First we need to check if the email is the same
@@ -670,5 +755,39 @@ class Misc extends AdminController
         $this->db->query('ALTER TABLE `' . db_prefix() . 'milestones` CHANGE `name` `name` VARCHAR(191) CHARACTER SET ' . $charset . ' COLLATE ' . $collat . ' NOT NULL;');
         $this->db->query('ALTER TABLE `' . db_prefix() . 'leads` CHANGE `email` `email` VARCHAR(100) CHARACTER SET ' . $charset . ' COLLATE ' . $collat . ' NULL DEFAULT NULL;');
         add_option('_232_upgrade_db_queries_performed', '1', 0);
+    }
+    private function nativeReminderInput():array
+    {
+        $input=[];
+        foreach(['description','date','staff','notify_by_email']as$key){$value=$this->input->post($key,false);if($value!==null)$input[$key]=$value;}
+        require_once APPPATH.'services/NativeCompanyDateInput.php';
+        $input['date']=(new NativeCompanyDateInput($this->db,db_prefix(),CompanyRequestScope::context()->issuerId()))->parse($input['date']??null);
+        return $input;
+    }
+    private function nativeReminderTable(?string $type,$id,string $mode):void
+    {
+        $start=$this->input->post('start');$length=$this->input->post('length');$draw=$this->input->post('draw');$search=$this->input->post('search');
+        foreach([$start,$length,$draw]as$value)if(!is_scalar($value)||!preg_match('/^[0-9]{1,6}$/D',(string)$value))throw new DomainException('company_auxiliary_invalid_input');
+        $result=$this->companyAuxiliary->reminderTable($type,$id,(int)$start,(int)$length,is_array($search)?(string)($search['value']??''):'',$mode==='mine',$mode==='all');
+        $output=['draw'=>(int)$draw,'iTotalRecords'=>$result['total'],'iTotalDisplayRecords'=>$result['filtered'],'aaData'=>[]];
+        foreach($result['rows']as$row){
+            $options='';
+            if($row['can_edit']){
+                $options='<div class="row-options">';
+                if(!(int)$row['isnotified'])$options.='<a href="#" onclick="edit_reminder('.(int)$row['id'].',this);return false;">'.e(_l('edit')).'</a> | ';
+                $options.='<a href="'.e(admin_url('misc/delete_reminder/'.$row['rel_id'].'/'.$row['id'].'/'.$row['rel_type'])).'" class="text-danger delete-reminder" data-reminder-revision="'.e((string)$row['revision']).'">'.e(_l('delete')).'</a></div>';
+            }
+            $description=nl2br(e($row['description']));require_once APPPATH.'services/NativeCompanyDateInput.php';$date=e((new NativeCompanyDateInput($this->db,db_prefix(),CompanyRequestScope::context()->issuerId()))->display($row['date']));
+            $relation='<a href="'.e(admin_url($row['relation']['url'])).'">'.e($row['relation']['name']).'</a>';
+            $staff=e(trim($row['firstname'].' '.$row['lastname']));
+            $notified=e(_l((int)$row['isnotified']?'reminder_is_notified_boolean_yes':'reminder_is_notified_boolean_no'));
+            $cells=$mode==='mine'?[$relation.$options,$description,$date]:($mode==='relation'?[$description.$options,$date,$staff,$notified]:[$relation.$options,$description,$date,$staff,$notified]);
+            $cells['DT_RowClass']='has-row-options';$output['aaData'][]=$cells;
+        }
+        echo json_encode($output,JSON_THROW_ON_ERROR);
+    }
+    private function nativeCatalog():NativeCompanyCatalogUi
+    {
+        require_once APPPATH.'services/NativeCompanyCatalogUi.php';$context=CompanyRequestScope::context();return new NativeCompanyCatalogUi($this->db,db_prefix(),$context->issuerId(),$context->staffId(),$this);
     }
 }

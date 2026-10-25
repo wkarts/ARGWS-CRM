@@ -241,6 +241,7 @@ class Emails extends AdminController
     /* Since version 1.0.1 - test your smtp settings */
     public function sent_smtp_test_email()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanySettingsController.php';return NativeCompanySettingsController::testMail($this);}
         if ($this->input->post()) {
             $this->load->config('email');
             // Simulate fake template to be parsed
@@ -294,6 +295,7 @@ class Emails extends AdminController
 
     public function delete_queued_email($id)
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanySettingsController.php';return NativeCompanySettingsController::removeQueue($this,$id);}
         if (staff_can('edit', 'settings')) {
             $this->email->delete_queued_email($id);
              set_alert('success', _l('deleted', _l('email_queue')));
@@ -304,6 +306,7 @@ class Emails extends AdminController
 
     public function clear_queued_emails()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanySettingsController.php';return NativeCompanySettingsController::removeQueue($this,null);}
         if (staff_can('edit', 'settings')) {
             $this->email->clear_queued_emails();
             set_alert('success', _l('email_queue_cleared'));

@@ -85,7 +85,7 @@
                                             data-toggle="tooltip">
                                             <?php if (staff_can('edit', 'projects')) { ?>
                                             <a href="<?= admin_url('projects/remove_team_member/' . $project->id . '/' . $member['staff_id']); ?>"
-                                                class="_delete group-hover:tw-inline-flex tw-hidden tw-rounded-full tw-absolute tw-items-center tw-justify-center tw-bg-neutral-300/50 tw-h-7 tw-w-7 tw-cursor-pointer tw-text-neutral-500 hover:tw-text-neutral-600 focus:tw-text-neutral-600">
+                                                class="<?= isset($native_project_view) ? 'native-project-member-remove' : '_delete'; ?> group-hover:tw-inline-flex tw-hidden tw-rounded-full tw-absolute tw-items-center tw-justify-center tw-bg-neutral-300/50 tw-h-7 tw-w-7 tw-cursor-pointer tw-text-neutral-500 hover:tw-text-neutral-600 focus:tw-text-neutral-600">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                     stroke-width="1.5" stroke="currentColor" class="tw-w-4 tw-h-4">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -206,6 +206,7 @@
 <div class="modal fade" id="add-edit-members" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <?= form_open(admin_url('projects/add_edit_members/' . $project->id)); ?>
+        <?php if (isset($native_project_view)) { echo form_hidden('_company_context', $native_project_view['context_token']); echo form_hidden('_native_company_csrf', $native_project_view['csrf_token']); echo form_hidden('native_members_revision', $native_project_view['members_revision']); } ?>
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span

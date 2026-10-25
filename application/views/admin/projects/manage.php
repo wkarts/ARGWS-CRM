@@ -10,7 +10,7 @@
                     </div>
                     <div class="_buttons">
                         <div class="md:tw-flex md:tw-items-center">
-                            <?php if (staff_can('create', 'projects')) { ?>
+                            <?php if (isset($native_project_permissions) ? $native_project_permissions['create'] : staff_can('create', 'projects')) { ?>
                             <a href="<?= admin_url('projects/project'); ?>"
                                 class="btn btn-primary pull-left display-block mright5">
                                 <i class="fa-regular fa-plus tw-mr-1"></i>
@@ -57,7 +57,7 @@
 <script>
     $(function() {
         initDataTable('.table-projects', admin_url + 'projects/table', undefined, undefined, {},
-            <?= hooks()->apply_filters('projects_table_default_order', json_encode([5, 'asc'])); ?>
+            <?= isset($native_project_summary) ? json_encode([5, 'asc']) : hooks()->apply_filters('projects_table_default_order', json_encode([5, 'asc'])); ?>
         );
 
         init_ajax_search('customer', '#clientid_copy_project.ajax-search');

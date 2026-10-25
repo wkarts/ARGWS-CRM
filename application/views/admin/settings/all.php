@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php init_head(); ?>
+<?php $isNativeSettings=!empty($native_settings)&&class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor(get_instance()); init_head(); ?>
 <div id="wrapper">
     <div class="content">
         <?php if ($this->session->flashdata('debug')) { ?>
@@ -34,14 +34,15 @@ $formAttributes = [
 ];
 
 echo form_open_multipart($actionUrl, $formAttributes);
+if($isNativeSettings){echo form_hidden('native_settings_revision',$native_settings_revision);echo form_hidden('_native_company_csrf',CompanyRequestScope::nativeCsrfToken(get_instance()));echo form_hidden('_company_context',CompanyRequestScope::token());}
 ?>
                         <div class="panel_s">
                             <div class="panel-body">
-                                <?php hooks()->do_action('before_settings_group_view', $group); ?>
+                                <?php if(!$isNativeSettings)hooks()->do_action('before_settings_group_view', $group); ?>
                                 <?php $this->load->view($group['view']) ?>
-                                <?php hooks()->do_action('after_settings_group_view', $group); ?>
+                                <?php if(!$isNativeSettings)hooks()->do_action('after_settings_group_view', $group); ?>
                             </div>
-                            <?php if (($group['without_submit_button'] ?? false) !== true) { ?>
+                            <?php if (($group['without_submit_button'] ?? false) !== true && (!$isNativeSettings || $native_settings_can_edit)) { ?>
                             <div class="panel-footer text-right">
                                 <button type="submit" class="btn btn-primary">
                                     <?= _l('settings_save'); ?>

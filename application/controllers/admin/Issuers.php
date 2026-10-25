@@ -221,7 +221,7 @@ class Issuers extends AdminController
             $active = $this->input->post('active', false);
             $this->registry->setActive($actor, $id, $active);
             CompanyRequestScope::invalidateCaches($this);
-            if ($context && $context->issuerId() === $id && (int)$active === 0) { $destination = 'company_context'; }
+            if ($context && $context->issuerId() === $id && (int)$active === 0) { $destination = ''; }
             $notice = ['type'=>'success', 'text'=>'Situação da empresa atualizada.'];
         } catch (DomainException $error) {
             $notice = ['type'=>'danger', 'text'=>'Não foi possível alterar a situação. Confira a empresa e suas permissões.'];

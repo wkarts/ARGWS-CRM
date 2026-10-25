@@ -49,6 +49,16 @@ final class CompanyCredits
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$after=$after===0?0:IssuerPolicy::id($after);if($limit<1||$limit>100)throw new DomainException('company_credit_invalid_input');return $this->transaction($issuer,$actor,function()use($issuer,$after,$limit):array{$rows=$this->rows('SELECT c.id,c.formatted_number,c.date,c.total,c.status,c.currency currency_id FROM '.$this->p.'creditnotes c JOIN '.$this->p.'company_credit_documents d ON d.credit_id=c.id AND d.issuer_id=c.issuer_id WHERE c.issuer_id=? AND c.id>? ORDER BY c.id LIMIT '.($limit+1),[$issuer,$after]);foreach($rows as &$row){$unit=(new CompanyCurrencyUnits($this->db,$this->p))->resolveRead($row['currency_id']);$row['currency']=$unit['iso_code'];$row['currency_basis']=$unit['basis'];unset($row['currency_id']);}unset($row);$more=count($rows)>$limit;if($more)array_pop($rows);return ['items'=>$rows,'next'=>$more?(int)$rows[count($rows)-1]['id']:null];});
     }
+    /** Native relation chooser: canonical source and stored number, never a global model. */
+    public function relationOptions(int $issuer,int $actor,string $search=''):array
+    {
+        if(strlen($search)>191||preg_match('//u',$search)!==1||preg_match('/[\x00-\x1f\x7f]/',$search))throw new DomainException('company_credit_invalid_input');
+        return $this->transaction($issuer,$actor,function()use($issuer,$actor,$search){
+            $needle='%'.str_replace(['!','%','_'],['!!','!%','!_'],$search).'%';
+            $rows=$this->rows("SELECT c.id FROM ".$this->p."creditnotes c JOIN ".$this->p."company_credit_documents d ON d.credit_id=c.id AND d.issuer_id=c.issuer_id WHERE c.issuer_id=? AND (c.formatted_number LIKE ? ESCAPE '!' OR d.recipient_json LIKE ? ESCAPE '!') ORDER BY c.id LIMIT 50",[$issuer,$needle,$needle]);
+            $out=[];foreach($rows as$r){$doc=$this->document($issuer,(int)$r['id']);$out[]=['id'=>(string)$doc['id'],'name'=>$doc['number'],'subtext'=>''];}return$out;
+        });
+    }
     public function invoiceOptions($issuer,$actor,$credit):array
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$credit=IssuerPolicy::id($credit);return $this->transaction($issuer,$actor,function()use($issuer,$actor,$credit):array{if(!$this->acl->can($issuer,$actor,'invoices','view'))return [];$doc=$this->document($issuer,$credit);$rows=$this->rows('SELECT i.id,i.formatted_number,i.total,i.status FROM '.$this->p.'invoices i JOIN '.$this->p.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE i.issuer_id=? AND i.clientid=? AND i.currency=? AND i.status IN (1,3,4) ORDER BY i.id LIMIT 100',[$issuer,$doc['client_id'],$doc['currency_id']]);$result=[];foreach($rows as $row){$position=(new CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,(int)$row['id']);if(CompanyInvoiceAmounts::minor($position['receivable'])>0){$row['receivable']=$position['receivable'];$result[]=$row;}}return $result;});

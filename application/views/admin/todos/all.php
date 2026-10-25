@@ -129,7 +129,7 @@ function render_li_items(finished, obj) {
         todo_finished_class = ' line-throught';
         checked = 'checked';
     }
-    return '<li><div class="media"><div class="media-left no-padding-right"><div class="dragger todo-dragger"></div> <input type="hidden" value="' +
+    return '<li' + (obj.revision ? ' data-todo-revision="' + obj.revision + '" data-todo-id="' + obj.todoid + '"' : '') + '><div class="media"><div class="media-left no-padding-right"><div class="dragger todo-dragger"></div> <input type="hidden" value="' +
         finished + '" name="finished"><input type="hidden" value="' + obj.item_order +
         '" name="todo_order"><div class="checkbox checkbox-default todo-checkbox"><input type="checkbox" name="todo_id" value="' +
         obj.todoid + '" ' + checked +

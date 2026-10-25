@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__.'/CompanyTaskNativeSnapshot.php';
 require_once __DIR__.'/CompanySalesBase.php';require_once __DIR__.'/CompanyBillingInvoiceLifecycle.php';
 require_once __DIR__.'/CompanyStandaloneTasksSchema.php';
 require_once __DIR__.'/CompanyStandaloneBillingSchema.php';
@@ -12,7 +13,7 @@ abstract class CompanyStandaloneBillingStorage extends CompanySalesBase
  public function tables():array{return array_values(array_unique(array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit','currencies','company_currency_units','options','company_invoice_requests','invoices','issuers_invoice_documents','company_standalone_billing_origins','company_standalone_billing_links'],array_keys(CompanyStandaloneTasksSchema::definitions($this->prefix)),CompanyTaskTimeBatchFence::tables($this->db,$this->prefix),(new CompanyBillingInvoiceLifecycle($this->db,$this->prefix))->tables())));}
  protected function billingAuth(int $issuer,int $actor):void{$acl=new IssuerResourceAccess($this->db,$this->prefix);foreach([['tasks','view'],['tasks','edit'],['customers','view'],['invoices','view'],['invoices','create']] as [$f,$c])if(!$acl->can($issuer,$actor,$f,$c))throw new DomainException('company_standalone_billing_denied');}
  protected function billingTx(int $issuer,int $actor,callable $work){CompanyStandaloneTasksSchema::assertValid($this->db,$this->prefix);CompanyStandaloneBillingSchema::assertValid($this->db,$this->prefix);return IssuerTransaction::run($this->db,$this->prefix,$this->tables(),function()use($issuer,$actor,$work){(new IssuerResourceAccess($this->db,$this->prefix))->lockFinancialIdentity($issuer,$actor);$this->billingAuth($issuer,$actor);$r=$work();$this->billingAuth($issuer,$actor);return $r;});}
- protected function task(int $issuer,int $id):array{$r=$this->rows('SELECT * FROM '.$this->prefix.'company_standalone_tasks WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$id])[0]??null;if(!$r)throw new DomainException('company_standalone_billing_denied');foreach(['id','issuer_id','assignee_id','revision'] as $k)$r[$k]=(int)$r[$k];return $r;}
+ protected function task(int $issuer,int $id):array{$r=$this->rows('SELECT * FROM '.$this->prefix.'company_standalone_tasks WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$id])[0]??null;if(!$r)throw new DomainException('company_standalone_billing_denied');foreach(['id','issuer_id','assignee_id','revision'] as $k)$r[$k]=$r[$k]===null?null:(int)$r[$k];$r=CompanyTaskNativeSnapshot::row($r);return $r;}
  protected function references(int $issuer,int $client):void{if(!$this->rows('SELECT c.userid FROM '.$this->prefix.'clients c JOIN '.$this->prefix.'issuers_clients o ON o.client_id=c.userid WHERE c.userid=? AND c.active=1 AND o.owner_issuer_id=? FOR UPDATE',[$client,$issuer]))throw new DomainException('company_standalone_billing_reference_denied');}
  protected function source(int $issuer,int $id,int $client):array
  {

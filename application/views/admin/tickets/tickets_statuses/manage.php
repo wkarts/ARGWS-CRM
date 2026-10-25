@@ -13,6 +13,7 @@
 
                 <div class="panel_s">
                     <div class="panel-body panel-table-full">
+                        <?php if(!empty($native_ticket_unclassified)){ ?><div class="alert alert-info"><?= e(_l('native_ticket_historical_statuses_notice')); ?> <?php foreach($native_ticket_unclassified as$original=>$count){ ?><span><?= e($original); ?>: <?= e($count); ?></span> <?php } ?></div><?php } ?>
                         <?php if (count($statuses) > 0) { ?>
                         <table class="table dt-table">
                             <thead>
@@ -31,23 +32,23 @@
                                     </td>
                                     <td><a href="#" class="tw-font-medium"
                                             onclick="edit_status(this,<?= e($status['ticketstatusid']); ?>); return false"
-                                            data-name="<?= e($status['name']); ?>"
+                                            data-name="<?= e($status['name']); ?>" <?php if(!empty($native_ticket_catalog)){ ?>data-native-revision="<?= e($status['revision_token']); ?>"<?php } ?>
                                             data-color="<?= e($status['statuscolor']); ?>"
                                             data-order="<?= e($status['statusorder']); ?>"><?= e($status['name']); ?></a><br />
-                                        <?= _l('ticket_statuses_table_total', total_rows(db_prefix() . 'tickets', ['status' => $status['ticketstatusid']])); ?>
+                                        <?= _l('ticket_statuses_table_total', (!empty($native_ticket_catalog)?$status['native_total']:total_rows(db_prefix() . 'tickets', ['status' => $status['ticketstatusid']]))); ?>
                                     </td>
                                     <td>
                                         <div class="tw-flex tw-items-center tw-space-x-2">
                                             <a href="#"
                                                 onclick="edit_status(this,<?= e($status['ticketstatusid']); ?>); return false"
-                                                data-name="<?= e($status['name']); ?>"
+                                                data-name="<?= e($status['name']); ?>" <?php if(!empty($native_ticket_catalog)){ ?>data-native-revision="<?= e($status['revision_token']); ?>"<?php } ?>
                                                 data-color="<?= e($status['statuscolor']); ?>"
                                                 data-order="<?= e($status['statusorder']); ?>"
                                                 class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700">
                                                 <i class="fa-regular fa-pen-to-square fa-lg"></i>
                                             </a>
                                             <?php if ($status['isdefault'] == 0) { ?>
-                                            <a href="<?= admin_url('tickets/delete_ticket_status/' . $status['ticketstatusid']); ?>"
+                                            <a <?php if(!empty($native_ticket_catalog)){ ?>data-native-revision="<?= e($status['revision_token']); ?>" data-native-return="<?= e(admin_url('tickets/statuses')); ?>"<?php } ?> href="<?= admin_url('tickets/delete_ticket_status/' . $status['ticketstatusid']); ?>"
                                                 class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 _delete">
                                                 <i class="fa-regular fa-trash-can fa-lg"></i>
                                             </a>
@@ -72,6 +73,7 @@
 <div class="modal fade" id="ticket_status" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <?= form_open(admin_url('tickets/status')); ?>
+        <?php if(!empty($native_ticket_catalog)){ ?><input type="hidden" name="_company_context" value="<?= e($native_ticket_context); ?>"><input type="hidden" name="_native_company_csrf" value="<?= e($native_ticket_csrf); ?>"><?php } ?>
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -137,7 +139,8 @@
         var name = $(invoker).data('name');
         var color = $(invoker).data('color');
         var statusorder = $(invoker).data('order');
-        $('#additional').append(hidden_input('id', id));
+        $('#additional').empty().append(hidden_input('id', id));
+        if($(invoker).attr('data-native-revision'))$('#additional').append($('<input>',{type:'hidden',name:'revision',value:$(invoker).attr('data-native-revision')}));
         $('#ticket_status input[name="name"]').val(name);
         $('#ticket_status .colorpicker-input').colorpicker('setValue', color);
         $('#ticket_status input[name="statusorder"]').val(statusorder);

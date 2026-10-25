@@ -1,0 +1,20 @@
+{
+  "source_base": "abbf6c7",
+  "functions": {
+    "delete_user_unfinished_timesheet": "995cf462e98bed19e38c4cc261fc1eff578361ab110a2bfba5442907487d392f",
+    "reload_tasks_tables": "1497dfe21255f5b44c3c43aa85c95b05223473465b5f9f81f4e6785f0eadf4f7",
+    "new_task": "26d187eeb9aefdcdbd49691dc94c0133a1b17c980e628c533bd19e9e286b8225",
+    "new_task_from_relation": "f06405cd1322ac303c80970b0769c144b780877e562f872c2f0d95bac4244cc9",
+    "edit_task": "f80909d8876bfab93f8ea70aedae50db8635397a560ad5e24ac82ab43a90e70d",
+    "task_form_handler": "807b71993ae36d03e49158a7b57d0621525eef3c111ce86409466e81b0fff65f",
+    "timer_action": "f5eecfa7cccc90b1022532803dd4d790c38ae4be322474e64653ff66263affaf",
+    "init_task_modal": "9d8660a72bd899a51395a633764ddd0aa7c063b46d81d8fbe65d8c013468ed7b",
+    "_task_append_html": "053da176a5712397eb91e3bdca0d9954b8cec8935823390288e657f41b7a0bcf",
+    "init_timers": "4b7d9e745f48fa9c3283dc42777edcdfdb8c8d8165d2c9430d225828d266b7d1",
+    "_init_timers_top_html": "1643d89bd52ec2a9daa38a5d8f3f71a5eda20a45d3ae17c7545711126cc6fa2d",
+    "do_task_checklist_items_height": "eb59ba1c659b1459a23ba5bf56fb8feb704c1fff0fa48182e3ef1cbed509436f",
+    "recalculate_checklist_items_progress": "9ab9bb44769a017a6cc61492afad49366d85afe2f3b64ed8e171d532cb1dea4f",
+    "fix_task_modal_left_col_height": "a09e4b5e265dc7f49ad0d7785dc1affda557ba1e4ea865c2176caf939b3540f7",
+    "init_new_task_comment": "de3265e28a0b451a59371143d05d0e8b090d7417a074bd6304246893fecb685c"
+  }
+}

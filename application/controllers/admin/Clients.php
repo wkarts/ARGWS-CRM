@@ -4,9 +4,86 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Clients extends AdminController
 {
+    /** Server-attested native company route; no request parameter can select this adapter. */
+    private function nativeCompanyClients(): ?NativeCompanyClients
+    {
+        if (!class_exists('CompanyRequestScope', false) || !method_exists('CompanyRequestScope', 'nativeFor')
+            || !CompanyRequestScope::nativeFor($this)) return null;
+        $context = CompanyRequestScope::context();
+        if (!$context || $context->isPrimary()) return null;
+        require_once APPPATH.'services/NativeCompanyClients.php';
+        return new NativeCompanyClients($this->db, db_prefix(), $context->issuerId(), $context->staffId());
+    }
+
+    private function nativeCompanyClientFailure(Throwable $error): void
+    {
+        $reason = $error instanceof DomainException ? $error->getMessage() : '';
+        $status = $reason === 'company_client_access_denied' ? 403 : ($reason === 'company_client_stale' ? 409 : ($reason !== '' ? 422 : 503));
+        show_error($status === 409 ? 'Este cadastro mudou. Reabra antes de salvar.' : 'Não foi possível concluir esta operação nesta empresa.', $status);
+    }
+
+    private function nativeCompanyContactFailure(Throwable $error):void
+    {
+        $reason=$error instanceof DomainException?$error->getMessage():'';$status=$reason==='company_client_access_denied'?403:($reason==='company_client_stale'?409:($reason!==''?422:503));
+        $this->output->set_status_header($status)->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['success'=>false,'message'=>$status===409?'Este contato mudou. Reabra antes de salvar.':'Não foi possível concluir esta operação nesta empresa.'],JSON_THROW_ON_ERROR));
+    }
+    public function contact_email_exists():void
+    {
+        if(!$this->nativeCompanyClients()){show_404();return;}
+        try{
+            if($this->input->method(true)!=='POST'){show_error('Use POST.',405);return;}CompanyRequestScope::assertNativeMutation($this);
+            require_once APPPATH.'services/CompanyNativeContacts.php';$ctx=CompanyRequestScope::context();$client=IssuerPolicy::id($this->input->post('client_id',false));$id=$this->input->post('userid',false);$email=$this->input->post('email',false);if(!is_string($email))throw new DomainException('company_contact_invalid_input');
+            $available=(new CompanyNativeContacts($this->db,db_prefix()))->emailAvailable($ctx->issuerId(),$ctx->staffId(),$client,$email,$id===null||$id===''?null:IssuerPolicy::id($id));
+            $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode($available));
+        }catch(Throwable $error){$this->nativeCompanyContactFailure($error);}
+    }
+    public function contact_profile_image($client,$contact):void
+    {
+        if(!$this->nativeCompanyClients()){show_404();return;}
+        try{
+            if(!in_array($this->input->method(true),['GET','HEAD'],true)){show_error('Use GET.',405);return;}
+            require_once APPPATH.'services/NativeCompanyContactImage.php';$ctx=CompanyRequestScope::context();$image=(new NativeCompanyContactImage($this->db,db_prefix()))->read($ctx->issuerId(),$ctx->staffId(),IssuerPolicy::id($client),IssuerPolicy::id($contact));if(!$image){show_404();return;}
+            $this->output->set_header('Cache-Control: private, no-store')->set_header('X-Content-Type-Options: nosniff')->set_header("Content-Security-Policy: default-src 'none'; sandbox")->set_content_type($image['mime'])->set_output($this->input->method(true)==='HEAD'?'':$image['content']);
+        }catch(Throwable $error){$this->nativeCompanyContactFailure($error);}
+    }
+
+    public function lookup(): void
+    {
+        if(!$this->nativeCompanyClients()){show_error('Contexto indisponível.',503);return;}
+        $this->output->set_header('Cache-Control: no-store');
+        $reply=function(int $status,array $body):void{$body['csrf']=['name'=>$this->security->get_csrf_token_name(),'hash'=>$this->security->get_csrf_hash()];$this->output->set_status_header($status)->set_content_type('application/json')->set_output(json_encode($body));};
+        if($this->input->method(true)!=='POST'){$reply(405,['error'=>'Use POST para consultar.']);return;}
+        try{CompanyRequestScope::assertNativeMutation($this);}catch(Throwable $error){$reply(403,['error'=>'Recarregue o formulário antes de consultar.']);return;}
+        try{
+            require_once APPPATH.'services/CompanyClientProfile.php';require_once APPPATH.'services/CompanyRegistryLookup.php';
+            $issuer=CompanyRequestScope::context()->issuerId();$actor=CompanyRequestScope::context()->staffId();$id=$this->input->post('client_id',false);
+            $allowed=$id===null||$id===''?(new IssuerResourceAccess($this->db,db_prefix()))->can($issuer,$actor,'customers','create'):(new CompanyClientProfile($this->db,db_prefix()))->allowed($issuer,$actor,IssuerPolicy::id($id),'edit');
+            if(!$allowed){$reply(403,['error'=>'Sem permissão para consultar neste cadastro.']);return;}
+            $last=$this->session->userdata('company_registry_lookup_at');if(is_numeric($last)&&time()-(int)$last<3){$reply(429,['error'=>'Aguarde alguns segundos para consultar novamente.']);return;}
+            $kind=$this->input->post('kind',false);$value=$this->input->post('value',false);
+            if(!is_string($kind)||!in_array($kind,['cnpj','cep'],true))throw new DomainException('company_client_invalid_input');
+            CompanyRegistryLookup::request($kind,$value);$this->session->set_userdata('company_registry_lookup_at',time());
+            $result=$this->queryRegistry($kind,$value);
+            $mapping=['legal_name'=>'company','company_trade_name'=>'trade_name','invoice_company_address'=>'address','company_address_number'=>'address_number','company_address_complement'=>'address_complement','company_address_district'=>'address_district','invoice_company_city'=>'city','company_state'=>'state','invoice_company_postal_code'=>'zip','invoice_company_phonenumber'=>'phonenumber','invoice_company_country_code'=>'country_code'];
+            $fields=[];foreach($mapping as $key=>$target)if(isset($result['fields'][$key]))$fields[$target]=$result['fields'][$key];
+            $reply(200,['provider'=>$result['provider'],'fields'=>$fields]);
+        }catch(DomainException $error){$reply(422,['error'=>'Confira CNPJ numérico ou CEP. Você pode preencher manualmente.']);}
+        catch(Throwable $error){$reply(503,['error'=>'Consulta indisponível. Nenhum campo foi alterado; preencha manualmente ou tente depois.']);}
+    }
+    protected function queryRegistry(string $kind,string $value):array{return CompanyRegistryLookup::lookup($kind,$value);}
+
     /* List all clients */
     public function index()
     {
+        if ($native = $this->nativeCompanyClients()) {
+            if (!in_array($this->input->method(true), ['GET','HEAD'], true)) { show_error('Use GET.',405); return; }
+            try {
+                $data = ['title'=>_l('clients'), 'native_customers'=>true, 'native_customer_summary'=>$native->summary(),
+                    'contacts_logged_in_today'=>[], 'groups'=>[], 'native_customer_capabilities'=>$native->capabilities()];
+                $this->load->view('admin/clients/manage', $data);
+            } catch (Throwable $error) { $this->nativeCompanyClientFailure($error); }
+            return;
+        }
         if (staff_cant('view', 'customers')) {
             if (!have_assigned_customers() && staff_cant('create', 'customers')) {
                 access_denied('customers');
@@ -46,6 +123,20 @@ class Clients extends AdminController
 
     public function table()
     {
+        if ($native = $this->nativeCompanyClients()) {
+            if ($this->input->method(true) !== 'POST') { show_error('Use POST.',405); return; }
+            try {
+                $page = $native->table($this->input->post() ?: []); $data=[];
+                foreach ($page['rows'] as $row) {
+                    $id=(int)$row['userid'];
+                    $data[]=['', $id, '<a href="'.e(admin_url('clients/client/'.$id)).'">'.e($row['company']).'</a>',
+                        e(trim(($row['primary_firstname']??'').' '.($row['primary_lastname']??''))), e($row['primary_email']??''), e($row['phonenumber']??''), (int)$row['active']===1?_l('yes'):_l('no'), e(implode(', ',array_column($row['groups']??[],'name'))), e($row['datecreated']??'')];
+                }
+                unset($page['rows']); $page['data']=$data;
+                $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode($page,JSON_THROW_ON_ERROR));
+            } catch (Throwable $error) { $this->nativeCompanyClientFailure($error); }
+            return;
+        }
         if (staff_cant('view', 'customers')) {
             if (!have_assigned_customers() && staff_cant('create', 'customers')) {
                 ajax_access_denied();
@@ -57,6 +148,31 @@ class Clients extends AdminController
 
     public function all_contacts()
     {
+        if($this->nativeCompanyClients()){
+            try{
+                require_once APPPATH.'services/NativeCompanyContactDirectory.php';$ctx=CompanyRequestScope::context();$i=$ctx->issuerId();$a=$ctx->staffId();$directory=new NativeCompanyContactDirectory($this->db,db_prefix());$meta=$directory->metadata($i,$a);
+                if($this->input->is_ajax_request()){
+                    if($this->input->method(true)!=='POST')throw new DomainException('company_client_invalid_input');
+                    $page=$directory->page($i,$a,$this->input->post()?:[]);$data=[];$access=new CompanyCustomerAccess($this->db,db_prefix());$fields=new NativeCompanyCustomFields($this->db,db_prefix());
+                    foreach($page['rows']as$r){
+                        $id=(int)$r['id'];$client=(int)$r['userid'];$edit=$access->can($i,$a,$client,'edit');$image=str_starts_with((string)$r['profile_image'],'native:')?admin_url('clients/contact_profile_image/'.$client.'/'.$id):base_url('assets/images/user-placeholder.jpg');
+                        $name='<img src="'.e($image).'" class="client-profile-image-small mright5"><a href="#" class="tw-font-medium" onclick="contact('.$client.','.$id.');return false;">'.e($r['firstname']).'</a>';
+                        $actions=[];if($edit)$actions[]='<a href="#" onclick="contact('.$client.','.$id.');return false;">'.e(_l('edit')).'</a>';
+                        if($access->can($i,$a,$client,'delete_contact')&&((int)$r['is_primary']!==1||(int)$r['total_contacts']===1))$actions[]='<a href="'.e(admin_url('clients/delete_contact/'.$client.'/'.$id)).'" class="native-contact-delete" data-native-revision="'.e($r['revision']).'">'.e(_l('delete')).'</a>';
+                        if($actions)$name.='<div class="row-options tw-ml-9">'.implode(' | ',$actions).'</div>';
+                        $cells=[$name,e($r['lastname'])];
+                        if($page['consent_enabled']){$html='<p class="bold"><a href="#" onclick="view_contact_consent('.$id.');return false;">'.e(_l('view_consent')).'</a></p>';foreach((new NativeCompanyConsents($this->db,db_prefix()))->purposes($i,$a,$id)as$purpose)$html.='<p>'.e($purpose['name']).(!empty($purpose['consent_given'])?'<i class="fa fa-check text-success pull-right"></i>':'<i class="fa fa-remove text-danger pull-right"></i>').'</p>';$cells[]=$html;}
+                        $switch='<div class="onoffswitch"><input type="checkbox" class="onoffswitch-checkbox native-contact-status" id="c_'.$id.'" data-native-contact="'.$id.'" data-native-client="'.$client.'" data-native-revision="'.e($r['revision']).'"'.((int)$r['active']===1?' checked':'').(!$edit||(int)$r['client_active']!==1||(int)$r['registration_confirmed']!==1?' disabled':'').'><label class="onoffswitch-label" for="c_'.$id.'"></label></div><span class="hide">'.e(_l((int)$r['active']===1?'is_active_export':'is_not_active_export')).'</span>';
+                        $cells=array_merge($cells,['<a href="mailto:'.e($r['email']).'">'.e($r['email']).'</a>','<a href="'.e(admin_url('clients/client/'.$client)).'">'.e($r['company']).'</a>','<a href="tel:'.e($r['phonenumber']).'">'.e($r['phonenumber']).'</a>',e($r['title']),empty($r['last_login'])?'':e(_dt($r['last_login'])),$switch]);
+                        $values=$fields->values($i,$a,'contacts',$id);foreach($page['custom_fields']as$field)$cells[]=e($values[$field['id']]??'');$cells['DT_RowClass']='has-row-options has-border-left'.((int)$r['registration_confirmed']===0?' row-border-warning requires-confirmation':'');$data[]=$cells;
+                    }
+                    unset($page['rows'],$page['custom_fields'],$page['consent_enabled'],$page['purposes']);$page['data']=$data;$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode($page,JSON_THROW_ON_ERROR));return;
+                }
+                if($this->input->method(true)!=='GET')throw new DomainException('company_client_invalid_input');
+                $data=['title'=>_l('customer_contacts'),'native_customers'=>true,'native_contact_consent_enabled'=>$meta['consent_enabled'],'native_contact_table_fields'=>$meta['custom_fields'],'company_clients_csrf'=>CompanyRequestScope::nativeCsrfToken($this)];if($meta['consent_enabled'])$data['consent_purposes']=$meta['purposes'];
+                $this->load->view('admin/clients/all_contacts',$data);
+            }catch(Throwable$error){$this->nativeCompanyClientFailure($error);}return;
+        }
         if ($this->input->is_ajax_request()) {
             $this->app->get_table_data('all_contacts');
         }
@@ -73,6 +189,74 @@ class Clients extends AdminController
     /* Edit client or add new client*/
     public function client($id = '')
     {
+        if ($native = $this->nativeCompanyClients()) {
+            try {
+                $group=$this->input->get('group')?:'profile';
+                if(!in_array($group,['profile','vault','contacts','attachments','map'],true)){ show_error('Esta seção ainda não possui adaptação nativa por empresa.', 409); return; }
+                $token=CompanyRequestScope::nativeCsrfToken($this);
+                $capabilities=$native->capabilities($id===''?null:IssuerPolicy::id($id));
+                if($this->input->method(true)==='POST'){
+                    CompanyRequestScope::assertNativeMutation($this);
+                    $input=$this->input->post()?:[];
+                    // Native CI CSRF metadata is validated by the framework, not persisted as profile data.
+                    unset($input[$this->security->get_csrf_token_name()],$input['_native_company_csrf'],$input['_company_context']);
+                    $saved=$native->save($input,$id===''?null:$id);
+                    CompanyRequestScope::invalidateCaches($this);
+                    redirect(admin_url('clients/client/'.$saved),'location',303);return;
+                }
+                if(!in_array($this->input->method(true),['GET','HEAD'],true)){show_error('Use GET ou POST.',405);return;}
+                $data=['group'=>$group,'native_customers'=>true,'native_customer_capabilities'=>$capabilities,
+                    'company_clients_csrf'=>$token,'native_customer_request_key'=>bin2hex(random_bytes(32)),
+                    'native_customer_revision'=>'','native_customer_profile'=>[], 'bodyclass'=>'customer-profile',
+                    'title'=>_l('add_new',_l('client'))]+$native->references($id===''?null:IssuerPolicy::id($id));
+                $data['native_customer_languages']=array_values(array_filter(array_map('basename',glob(APPPATH.'language/*',GLOB_ONLYDIR)?:[]),static fn($name)=>preg_match('/^[a-z][a-z0-9_-]{0,39}$/D',$name)));
+                $data['native_customer_owned']=true;
+                if($id!==''){
+                    $details=$native->details($id);if(!$details){show_404();return;}
+                    $data['client']=(object)($details['client']+$details['profile']+($details['native_profile']??[])+['registration_confirmed'=>null,'leadid'=>null,'show_primary_contact'=>0,'default_currency'=>0,'country'=>0,'website'=>'','default_language'=>'']);
+                    $data['title']=$details['client']['company'];
+                    $data['native_customer_revision']=$details['revision'];
+                    $data['native_customer_profile']=$details['profile'];
+                    $data['native_customer_owned']=$details['client']['owner_issuer_id']===CompanyRequestScope::context()->issuerId();
+                    $data['customer_groups']=$data['native_customer_owned']?$native->groups($id):[];
+                    $data['native_customer_admin_manage']=false;
+                    if($data['native_customer_owned']){
+                        $ctx=CompanyRequestScope::context();$acl=new IssuerResourceAccess($this->db,db_prefix());
+                        $data['native_customer_admin_manage']=$acl->can($ctx->issuerId(),$ctx->staffId(),'customers','create')||$acl->can($ctx->issuerId(),$ctx->staffId(),'customers','edit');
+                        if($data['native_customer_admin_manage']){$access=new CompanyCustomerAccess($this->db,db_prefix());$admins=$access->assignments($ctx->issuerId(),$ctx->staffId(),(int)$id);$data['customer_admins']=$admins['rows'];$data['native_customer_admin_revision']=$admins['revision'];$data['staff']=$access->candidates($ctx->issuerId(),$ctx->staffId(),(int)$id);}
+                    }
+
+                    $data['native_registration_authorized']=$data['native_customer_owned']&&(new IssuerResourceAccess($this->db,db_prefix()))->administrative($ctx->issuerId(),$ctx->staffId());
+                    if($data['native_registration_authorized']&&(int)$data['client']->registration_confirmed===0){require_once APPPATH.'services/NativeCompanyCustomerRegistration.php';$data['native_registration_revision']=(new NativeCompanyCustomerRegistration($this->db,db_prefix(),(string)$this->config->item('encryption_key')))->revision($ctx->issuerId(),$ctx->staffId(),(int)$id);}
+                    $data['customer_tabs']=['profile'=>['name'=>_l('client_add_edit_profile'),'view'=>'admin/clients/groups/profile','icon'=>'fa-regular fa-user']];
+                    if($data['native_customer_owned']){$data['customer_tabs']['vault']=['name'=>_l('vault'),'view'=>'admin/clients/groups/vault','icon'=>'fa-solid fa-lock'];if($group==='vault'){require_once APPPATH.'services/NativeCompanyCustomerVault.php';$data['vault_entries']=(new NativeCompanyCustomerVault($this->db,db_prefix()))->page($ctx->issuerId(),$ctx->staffId(),(int)$id);}}elseif($group==='vault')throw new DomainException('company_client_access_denied');
+                    if($data['native_customer_owned']){
+                        $data['customer_tabs']['contacts']=['name'=>_l('customer_contacts'),'view'=>'admin/clients/groups/contacts','icon'=>'fa-regular fa-address-book'];
+                        if($group==='contacts'){
+                            require_once APPPATH.'services/CompanyNativeContacts.php';
+                            $data['native_contact_metadata']=(new CompanyNativeContacts($this->db,db_prefix()))->metadata($ctx->issuerId(),$ctx->staffId(),(int)$id);
+                            $data['native_contact_create']=(int)$data['client']->active===1&&(new CompanyCustomerAccess($this->db,db_prefix()))->can($ctx->issuerId(),$ctx->staffId(),(int)$id,'create_contact');
+                            $data['native_contact_consent_enabled']=(new CompanyNativeContacts($this->db,db_prefix()))->consentEnabled($ctx->issuerId(),$ctx->staffId(),(int)$id);
+                            $data['native_contact_table_fields']=(new NativeCompanyCustomFields($this->db,db_prefix()))->definitionsForClientContacts($ctx->issuerId(),$ctx->staffId(),(int)$id,['show_on_table'=>1]);
+                        }
+                    }elseif($group==='contacts')throw new DomainException('company_client_access_denied');
+                    if($data['native_customer_owned']){
+                        $data['customer_tabs']['attachments']=['name'=>_l('customer_attachments'),'view'=>'admin/clients/groups/attachments','icon'=>'fa-solid fa-paperclip'];
+                        if($group==='attachments'){
+                            require_once APPPATH.'services/NativeCompanyCustomerFiles.php';$data['attachments']=['customer'=>(new NativeCompanyCustomerFiles($this->db,db_prefix()))->page($ctx->issuerId(),$ctx->staffId(),(int)$id)];
+                            $data['contacts']=IssuerStorage::query($this->db,'SELECT id,firstname,lastname,is_primary FROM '.db_prefix().'contacts WHERE userid=? AND active=1 ORDER BY id',[(int)$id])->result_array();
+                            $data['native_file_primary_contact']=0;foreach($data['contacts']as$contact)if((int)$contact['is_primary']===1){if($data['native_file_primary_contact']!==0)throw new DomainException('company_contact_invalid_primary');$data['native_file_primary_contact']=(int)$contact['id'];}
+                            $access=new CompanyCustomerAccess($this->db,db_prefix());$data['native_file_edit']=$access->can($ctx->issuerId(),$ctx->staffId(),(int)$id,'edit');$data['native_file_delete']=$access->can($ctx->issuerId(),$ctx->staffId(),(int)$id,'delete_contact');$data['native_file_signature']=(new CompanySettingsStorage($this->db,db_prefix()))->get($ctx->issuerId(),'email_signature');
+                        }
+                    }elseif($group==='attachments')throw new DomainException('company_client_access_denied');
+                    if($data['native_customer_owned']){$data['customer_tabs']['map']=['name'=>_l('customer_map'),'view'=>'admin/clients/groups/map','icon'=>'fa-solid fa-map-marker'];if($group==='map'){$coordinates=$native->maps((int)$id);$data['client']->latitude=$coordinates['latitude']??'';$data['client']->longitude=$coordinates['longitude']??'';$data['native_map_key']=$coordinates['google_api_key'];$data['native_map_revision']=$coordinates['revision'];$data['native_map_edit']=(new CompanyCustomerAccess($this->db,db_prefix()))->can($ctx->issuerId(),$ctx->staffId(),(int)$id,'edit');}}elseif($group==='map')throw new DomainException('company_client_access_denied');
+                    $data['tab']=$data['customer_tabs'][$group];
+                } elseif(!$capabilities['create']) {show_error('Sem permissão para criar clientes.',403);return;}
+                if($data['native_customer_owned'])$data+=$native->fieldData($id===''?null:$id);
+                $this->load->view('admin/clients/client',$data);
+            } catch(Throwable $error){$this->nativeCompanyClientFailure($error);}
+            return;
+        }
         if (staff_cant('view', 'customers')) {
             if ($id != '' && !is_customer_admin($id)) {
                 access_denied('customers');
@@ -277,6 +461,12 @@ class Clients extends AdminController
     // Used to give a tip to the user if the company exists when new company is created
     public function check_duplicate_customer_name()
     {
+        if($native=$this->nativeCompanyClients()){
+            if($this->input->method(true)!=='POST'){show_error('Use POST.',405);return;}
+            try{CompanyRequestScope::assertNativeMutation($this);$name=$this->input->post('company',false);$exists=$native->duplicateName($name);
+                $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['exists'=>$exists,'message'=>_l('company_exists_info','<b>'.e($name).'</b>')],JSON_THROW_ON_ERROR));
+            }catch(Throwable $error){$this->nativeCompanyClientFailure($error);}return;
+        }
         if (staff_can('create',  'customers')) {
             $companyName = trim($this->input->post('company'));
             $response    = [
@@ -289,6 +479,9 @@ class Clients extends AdminController
 
     public function save_longitude_and_latitude($client_id)
     {
+        if($native=$this->nativeCompanyClients()){
+            try{CompanyRequestScope::assertNativeMutation($this);$revision=$this->input->post('native_coordinates_revision');if(!is_string($revision))throw new DomainException('company_client_stale');$native->saveCoordinates(IssuerPolicy::id($client_id),$this->input->post('latitude'),$this->input->post('longitude'),$revision);$this->output->set_header('Cache-Control: no-store')->set_content_type('text/plain')->set_output('success');}catch(Throwable$error){$this->nativeCompanyClientFailure($error);}return;
+        }
         if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $client_id)) { show_404(); return; }
         if (staff_cant('edit', 'customers')) {
             if (!is_customer_admin($client_id)) {
@@ -310,6 +503,29 @@ class Clients extends AdminController
 
     public function form_contact($customer_id, $contact_id = '')
     {
+        if($this->nativeCompanyClients()){
+            try{
+                require_once APPPATH.'services/NativeCompanyContactForm.php';
+                $context=CompanyRequestScope::context();$client=IssuerPolicy::id($customer_id);$id=$contact_id===''?null:IssuerPolicy::id($contact_id);
+                $form=new NativeCompanyContactForm($this->db,db_prefix(),$context->issuerId(),$context->staffId());
+                if($this->input->method(true)==='POST'){
+                    CompanyRequestScope::assertNativeMutation($this);$input=$this->input->post()?:[];$input['password']=$this->input->post('password',false)??'';
+                    unset($input[$this->security->get_csrf_token_name()],$input['_native_company_csrf'],$input['_company_context']);
+                    $bytes=null;
+                    if(array_diff(array_keys($_FILES),['profile_image']))throw new DomainException('company_contact_image_invalid');
+                    if(isset($_FILES['profile_image'])&&($_FILES['profile_image']['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_NO_FILE){$file=$_FILES['profile_image'];if(($file['error']??null)!==UPLOAD_ERR_OK||!is_string($file['tmp_name']??null)||!is_uploaded_file($file['tmp_name'])||!is_int($file['size']??null)||$file['size']<16||$file['size']>NativeCompanyContactImage::MAX_BYTES)throw new DomainException('company_contact_image_invalid');$bytes=file_get_contents($file['tmp_name'],false,null,0,NativeCompanyContactImage::MAX_BYTES+1);if(!is_string($bytes)||strlen($bytes)!==$file['size'])throw new DomainException('company_contact_image_invalid');}
+                    $this->load->library('encryption');
+                    $result=$form->save($client,$id,$input,(string)$this->config->item('encryption_key'),site_url(),fn($v)=>$this->encryption->decrypt($v),fn($v)=>app_hash_password($v),$bytes);
+                    $result['message']=_l($id===null?'added_successfully':'updated_successfully',_l('contact'));CompanyRequestScope::invalidateCaches($this);
+                    $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode($result,JSON_THROW_ON_ERROR));return;
+                }
+                if(!in_array($this->input->method(true),['GET','HEAD'],true)){show_error('Use GET ou POST.',405);return;}
+                $data=$form->data($client,$id);$data['company_clients_csrf']=CompanyRequestScope::nativeCsrfToken($this);$data['title']=$id===null?_l('add_new',_l('contact')):$data['contact']->firstname.' '.$data['contact']->lastname;
+                $data['customer_permissions']=[];foreach([1=>['invoice','invoices'],2=>['estimate','estimates'],3=>['contract','contracts'],4=>['proposal','proposals'],5=>['support','support'],6=>['projects','projects']]as$permission=>$label)$data['customer_permissions'][]=['id'=>$permission,'name'=>_l('customer_permission_'.$label[0]),'short_name'=>$label[1]];
+                $this->output->set_header('Cache-Control: no-store');$this->load->view('admin/clients/modals/contact',$data);
+            }catch(Throwable $error){$this->nativeCompanyContactFailure($error);}return;
+        }
+
         if ($contact_id !== '') {
             $contact = $this->clients_model->get_contact($contact_id);
             if (!$contact || (int) $contact->userid !== (int) $customer_id) { show_404(); return; }
@@ -455,6 +671,15 @@ class Clients extends AdminController
 
     public function confirm_registration($client_id)
     {
+        if($this->nativeCompanyClients()){
+            if($this->input->method(true)!=='POST'){show_error('Use POST.',405);return;}
+            try{
+                CompanyRequestScope::assertNativeMutation($this);
+                require_once APPPATH.'services/NativeCompanyCustomerRegistration.php';$ctx=CompanyRequestScope::context();$id=IssuerPolicy::id($client_id);$revision=$this->input->post('revision',false);if(!is_string($revision))throw new DomainException('company_client_stale');$this->load->library('encryption');
+                (new NativeCompanyCustomerRegistration($this->db,db_prefix(),(string)$this->config->item('encryption_key')))->confirm($ctx->issuerId(),$ctx->staffId(),$id,$revision,site_url(),fn($v)=>$this->encryption->decrypt($v));CompanyRequestScope::invalidateCaches($this);set_alert('success',_l('customer_registration_successfully_confirmed'));redirect(admin_url('clients/client/'.$id),'location',303);
+            }catch(Throwable$error){$this->nativeCompanyClientFailure($error);}return;
+        }
+
         if (!is_admin()) {
             access_denied('Customer Confirm Registration, ID: ' . $client_id);
         }
@@ -465,6 +690,11 @@ class Clients extends AdminController
 
     public function update_file_share_visibility()
     {
+        if($this->nativeCompanyClients()){
+            if($this->input->method(true)!=='POST'){show_error('Use POST.',405);return;}
+            try{CompanyRequestScope::assertNativeMutation($this);require_once APPPATH.'services/NativeCompanyCustomerFiles.php';$ctx=CompanyRequestScope::context();$visible=$this->input->post('visible',false);$contacts=$this->input->post('share_contacts_id',false)??[];if(!in_array($visible,['0','1'],true)||!is_array($contacts))throw new DomainException('native_customer_file_invalid');$next=(new NativeCompanyCustomerFiles($this->db,db_prefix()))->share($ctx->issuerId(),$ctx->staffId(),IssuerPolicy::id($this->input->post('file_id',false)),IssuerPolicy::id($this->input->post('revision',false)),$visible==='1',$contacts,IssuerPolicy::id($this->input->post('customer_id',false)));$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['success'=>true,'revision'=>$next],JSON_THROW_ON_ERROR));}catch(Throwable$error){$this->nativeCompanyClientFailure($error);}return;
+        }
+
         if ($this->input->post()) {
             $file_id           = $this->input->post('file_id');
             $share_contacts_id = [];
@@ -497,11 +727,22 @@ class Clients extends AdminController
 
     public function delete_contact_profile_image($contact_id)
     {
+        if($this->nativeCompanyClients()){
+            try{
+                if($this->input->method(true)!=='POST'){show_error('Use POST.',405);return;}CompanyRequestScope::assertNativeMutation($this);
+                require_once APPPATH.'services/NativeCompanyContactImage.php';$ctx=CompanyRequestScope::context();$client=IssuerPolicy::id($this->input->post('client_id',false));$id=IssuerPolicy::id($contact_id);$revision=$this->input->post('revision',false);if(!is_string($revision))throw new DomainException('company_client_stale');
+                (new NativeCompanyContactImage($this->db,db_prefix()))->remove($ctx->issuerId(),$ctx->staffId(),$client,$id,$revision);
+                $fresh=(new CompanyNativeContacts($this->db,db_prefix()))->get($ctx->issuerId(),$ctx->staffId(),$client,$id);
+                $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['success'=>true,'revision'=>$fresh['revision']],JSON_THROW_ON_ERROR));
+            }catch(Throwable $error){$this->nativeCompanyContactFailure($error);}return;
+        }
+
         $this->clients_model->delete_contact_profile_image($contact_id);
     }
 
     public function mark_as_active($id)
     {
+        if($this->nativeCompanyClients()){$this->change_client_status($id,'1');return;}
         if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $id)) { show_404(); return; }
         $this->db->where('userid', $id);
         $this->db->update(db_prefix() . 'clients', [
@@ -571,6 +812,12 @@ class Clients extends AdminController
 
     public function assign_admins($id)
     {
+        if($this->nativeCompanyClients()){
+            try{CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();$client=IssuerPolicy::id($id);$access=new CompanyCustomerAccess($this->db,db_prefix());$revision=$this->input->post('revision');if(!is_string($revision))throw new DomainException('company_client_stale');$staff=$this->input->post('customer_admins')??[];if(!is_array($staff))throw new DomainException('company_client_invalid_input');
+                $access->assign($ctx->issuerId(),$ctx->staffId(),$client,$staff,$revision);CompanyRequestScope::invalidateCaches($this);redirect(admin_url('clients/client/'.$client.'?tab=customer_admins'),'location',303);
+            }catch(Throwable$error){$this->nativeCompanyClientFailure($error);}return;
+        }
+
         if (staff_cant('create', 'customers') && staff_cant('edit', 'customers')) {
             access_denied('customers');
         }
@@ -584,6 +831,12 @@ class Clients extends AdminController
 
     public function delete_customer_admin($customer_id, $staff_id)
     {
+        if($this->nativeCompanyClients()){
+            try{CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();$client=IssuerPolicy::id($customer_id);$access=new CompanyCustomerAccess($this->db,db_prefix());$revision=$this->input->post('revision');if(!is_string($revision))throw new DomainException('company_client_stale');$current=$access->assignments($ctx->issuerId(),$ctx->staffId(),$client);$staff=array_values(array_diff(array_map('intval',array_column($current['rows'],'staff_id')),[IssuerPolicy::id($staff_id)]));
+                $access->assign($ctx->issuerId(),$ctx->staffId(),$client,$staff,$revision);CompanyRequestScope::invalidateCaches($this);redirect(admin_url('clients/client/'.$client.'?tab=customer_admins'),'location',303);
+            }catch(Throwable$error){$this->nativeCompanyClientFailure($error);}return;
+        }
+
         if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { show_404(); return; }
         if (staff_cant('create', 'customers') && staff_cant('edit', 'customers')) {
             access_denied('customers');
@@ -597,6 +850,12 @@ class Clients extends AdminController
 
     public function delete_contact($customer_id, $id)
     {
+        if($this->nativeCompanyClients()){
+            try{CompanyRequestScope::assertNativeMutation($this);require_once APPPATH.'services/CompanyNativeContacts.php';$ctx=CompanyRequestScope::context();$revision=$this->input->post('revision');if(!is_string($revision))throw new DomainException('company_client_stale');
+                (new CompanyNativeContacts($this->db,db_prefix()))->delete($ctx->issuerId(),$ctx->staffId(),IssuerPolicy::id($customer_id),IssuerPolicy::id($id),$revision);
+                CompanyRequestScope::invalidateCaches($this);$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['success'=>true],JSON_THROW_ON_ERROR));
+            }catch(Throwable$error){$this->nativeCompanyContactFailure($error);}return;
+        }
         if (staff_cant('delete', 'customers')) {
             if (!is_customer_admin($customer_id)) {
                 access_denied('customers');
@@ -619,18 +878,53 @@ class Clients extends AdminController
 
     public function contacts($client_id)
     {
+        if($this->nativeCompanyClients()){
+            try{
+                if($this->input->method(true)!=='POST')throw new DomainException('company_client_invalid_input');
+                require_once APPPATH.'services/CompanyNativeContacts.php';require_once APPPATH.'services/NativeCompanyCustomFields.php';
+                $ctx=CompanyRequestScope::context();$issuer=$ctx->issuerId();$actor=$ctx->staffId();$client=IssuerPolicy::id($client_id);
+                $service=new CompanyNativeContacts($this->db,db_prefix());$consentEnabled=$service->consentEnabled($issuer,$actor,$client);$tableInput=$this->input->post()?:[];if($consentEnabled&&isset($tableInput['order'][0]['column'])){$column=$tableInput['order'][0]['column'];if(!is_scalar($column)||!preg_match('/^(0|[1-9][0-9]{0,3})$/D',(string)$column))throw new DomainException('company_client_invalid_page');$tableInput['order'][0]['column']=(int)$column<=1?0:(int)$column-1;}$page=$service->page($issuer,$actor,$client,$tableInput,true);$meta=$service->metadata($issuer,$actor,$client);
+                $fields=new NativeCompanyCustomFields($this->db,db_prefix());$definitions=$page['custom_fields'];unset($page['custom_fields']);
+                $edit=(new CompanyCustomerAccess($this->db,db_prefix()))->can($issuer,$actor,$client,'edit');$data=[];
+                foreach($page['rows']as$row){
+                    $id=(int)$row['id'];$name=e(trim($row['firstname'].' '.$row['lastname']));
+                    $imageUrl=str_starts_with((string)$row['profile_image'],'native:')?admin_url('clients/contact_profile_image/'.$client.'/'.$id):base_url('assets/images/user-placeholder.jpg');
+                    $name='<img src="'.e($imageUrl).'" class="client-profile-image-small mright5"><a href="#" onclick="contact('.$client.','.$id.');return false;">'.$name.'</a>';
+                    if($edit)$name.='<div class="row-options"><a href="#" onclick="contact('.$client.','.$id.');return false;">'.e(_l('edit')).'</a></div>';
+                    $switch='<div class="onoffswitch"><input type="checkbox" class="onoffswitch-checkbox native-contact-status" id="c_'.$id.'" data-native-contact="'.$id.'" data-native-client="'.$client.'" data-native-revision="'.e($row['revision']).'"'.((int)$row['active']===1?' checked':'').(!$edit||(int)$meta['registration_confirmed']!==1||(int)$meta['active']!==1?' disabled':'').'><label class="onoffswitch-label" for="c_'.$id.'"></label></div><span class="hide">'.e(_l((int)$row['active']===1?'is_active_export':'is_not_active_export')).'</span>';
+                    $cells=[$name,'<a href="mailto:'.e($row['email']).'">'.e($row['email']).'</a>',e($row['title']),'<a href="tel:'.e($row['phonenumber']).'">'.e($row['phonenumber']).'</a>',$switch,empty($row['last_login'])?'':e(_dt($row['last_login']))];
+                    if($consentEnabled){require_once APPPATH.'services/NativeCompanyConsents.php';$consentHtml='<p class="bold"><a href="#" onclick="view_contact_consent('.$id.');return false;">'.e(_l('view_consent')).'</a></p>';foreach((new NativeCompanyConsents($this->db,db_prefix()))->purposes($issuer,$actor,$id)as$purpose)$consentHtml.='<p style="margin-bottom:0px;">'.e($purpose['name']).(!empty($purpose['consent_given'])?'<i class="fa fa-check text-success pull-right"></i>':'<i class="fa fa-remove text-danger pull-right"></i>').'</p>';array_splice($cells,1,0,[$consentHtml]);}
+                    $values=$fields->values($issuer,$actor,'contacts',$id);foreach($definitions as$definition)$cells[]=e($values[(string)$definition['id']]??'');$cells['DT_RowClass']='has-row-options';$data[]=$cells;
+                }
+                unset($page['rows']);$page['data']=$data;$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode($page,JSON_THROW_ON_ERROR));
+            }catch(Throwable$error){$this->nativeCompanyClientFailure($error);}return;
+        }
         $this->app->get_table_data('contacts', [
             'client_id' => $client_id,
         ]);
     }
 
+    protected function nativeCustomerUploadBytes(array$file):string
+    {
+        if(($file['error']??null)!==UPLOAD_ERR_OK||!is_string($file['name']??null)||!is_string($file['tmp_name']??null)||!is_uploaded_file($file['tmp_name'])||!is_int($file['size']??null)||$file['size']<1||$file['size']>NativeCompanyCustomerFiles::MAX_BYTES)throw new DomainException('native_customer_file_invalid');$bytes=file_get_contents($file['tmp_name'],false,null,0,NativeCompanyCustomerFiles::MAX_BYTES+1);if(!is_string($bytes)||strlen($bytes)!==$file['size'])throw new DomainException('native_customer_file_invalid');return$bytes;
+    }
     public function upload_attachment($id)
     {
+        if($this->nativeCompanyClients()){
+            if($this->input->method(true)!=='POST'){show_error('Use POST.',405);return;}
+            try{CompanyRequestScope::assertNativeMutation($this);require_once APPPATH.'services/NativeCompanyCustomerFiles.php';$ctx=CompanyRequestScope::context();$key=$this->input->post('request_key',false);if(!is_string($key)||array_diff(array_keys($_FILES),['file']))throw new DomainException('native_customer_file_invalid');$upload=$_FILES['file']??null;if(!is_array($upload))throw new DomainException('native_customer_file_invalid');if(!(new CompanyCustomerAccess($this->db,db_prefix()))->can($ctx->issuerId(),$ctx->staffId(),IssuerPolicy::id($id),'edit'))throw new DomainException('company_client_access_denied');$bytes=$this->nativeCustomerUploadBytes($upload);$file=(new NativeCompanyCustomerFiles($this->db,db_prefix()))->upload($ctx->issuerId(),$ctx->staffId(),IssuerPolicy::id($id),$key,$upload['name'],$bytes);$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['success'=>true,'id'=>$file],JSON_THROW_ON_ERROR));}catch(Throwable$error){$this->nativeCompanyClientFailure($error);}return;
+        }
+
         handle_client_attachments_upload($id);
     }
 
     public function add_external_attachment()
     {
+        if($this->nativeCompanyClients()){
+            if($this->input->method(true)!=='POST'){show_error('Use POST.',405);return;}
+            try{CompanyRequestScope::assertNativeMutation($this);require_once APPPATH.'services/NativeCompanyCustomerFiles.php';$ctx=CompanyRequestScope::context();$files=$this->input->post('files',false);$provider=$this->input->post('external',false);$key=$this->input->post('request_key',false);if(!is_array($files)||count($files)!==1||!is_array($files[0]??null)||!is_string($files[0]['name']??null)||!is_string($files[0]['link']??null)||!is_string($provider)||!is_string($key))throw new DomainException('native_customer_file_invalid');$id=(new NativeCompanyCustomerFiles($this->db,db_prefix()))->addExternal($ctx->issuerId(),$ctx->staffId(),IssuerPolicy::id($this->input->post('clientid',false)),$key,$files[0]['name'],$provider,$files[0]['link']);$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['success'=>true,'id'=>$id],JSON_THROW_ON_ERROR));}catch(Throwable$error){$this->nativeCompanyClientFailure($error);}return;
+        }
+
         if ($this->input->post()) {
             $this->misc_model->add_attachment_to_database($this->input->post('clientid'), 'customer', $this->input->post('files'), $this->input->post('external'));
         }
@@ -638,6 +932,11 @@ class Clients extends AdminController
 
     public function delete_attachment($customer_id, $id)
     {
+        if($this->nativeCompanyClients()){
+            if($this->input->method(true)!=='POST'){show_error('Use POST.',405);return;}
+            try{CompanyRequestScope::assertNativeMutation($this);require_once APPPATH.'services/NativeCompanyCustomerFiles.php';$ctx=CompanyRequestScope::context();(new NativeCompanyCustomerFiles($this->db,db_prefix()))->delete($ctx->issuerId(),$ctx->staffId(),IssuerPolicy::id($customer_id),IssuerPolicy::id($id),IssuerPolicy::id($this->input->post('revision',false)));$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output('{"success":true}');}catch(Throwable$error){$this->nativeCompanyClientFailure($error);}return;
+        }
+
         if (staff_can('delete',  'customers') || is_customer_admin($customer_id)) {
             $this->clients_model->delete_attachment($id);
         }
@@ -676,12 +975,25 @@ class Clients extends AdminController
 
     public function get_customer_billing_and_shipping_details($id)
     {
+        if($native=$this->nativeCompanyClients()){
+            if(!in_array($this->input->method(true),['GET','HEAD'],true)){show_error('Use GET.',405);return;}
+            try{$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode($native->billing($id),JSON_THROW_ON_ERROR));}
+            catch(Throwable $error){$this->nativeCompanyClientFailure($error);}return;
+        }
         echo json_encode($this->clients_model->get_customer_billing_and_shipping_details($id));
     }
 
     /* Change client status / active / inactive */
     public function change_contact_status($id, $status)
     {
+        if($this->nativeCompanyClients()){
+            try{
+                CompanyRequestScope::assertNativeMutation($this);if(!in_array((string)$status,['0','1'],true))throw new DomainException('company_contact_invalid_input');
+                require_once APPPATH.'services/CompanyNativeContacts.php';$ctx=CompanyRequestScope::context();$client=IssuerPolicy::id($this->input->post('client_id'));$contact=IssuerPolicy::id($id);$revision=$this->input->post('revision');if(!is_string($revision))throw new DomainException('company_client_stale');
+                $service=new CompanyNativeContacts($this->db,db_prefix());$service->setActive($ctx->issuerId(),$ctx->staffId(),$client,$contact,(string)$status==='1',$revision);
+                CompanyRequestScope::invalidateCaches($this);$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['success'=>true],JSON_THROW_ON_ERROR));
+            }catch(Throwable$error){$this->nativeCompanyClientFailure($error);}return;
+        }
         if (staff_can('edit',  'customers') || is_customer_admin(get_user_id_by_contact_id($id))) {
             if ($this->input->is_ajax_request()) {
                 $this->clients_model->change_contact_status($id, $status);
@@ -692,6 +1004,12 @@ class Clients extends AdminController
     /* Change client status / active / inactive */
     public function change_client_status($id, $status)
     {
+        if($this->nativeCompanyClients()){
+            try{CompanyRequestScope::assertNativeMutation($this);if(!in_array((string)$status,['0','1'],true))throw new DomainException('company_client_invalid_input');$revision=$this->input->post('revision');if(!is_string($revision))throw new DomainException('company_client_stale');
+                $ctx=CompanyRequestScope::context();(new CompanyClients($this->db,db_prefix()))->setActive($ctx->issuerId(),$ctx->staffId(),IssuerPolicy::id($id),(string)$status==='1',$revision);
+                CompanyRequestScope::invalidateCaches($this);$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['success'=>true],JSON_THROW_ON_ERROR));
+            }catch(Throwable$error){$this->nativeCompanyClientFailure($error);}return;
+        }
         if (staff_cant('edit',  'customers') && !is_customer_admin(get_user_id_by_contact_id($id))) {
             ajax_access_denied();
         }
@@ -842,6 +1160,26 @@ class Clients extends AdminController
 
     public function groups()
     {
+        if($native=$this->nativeCompanyClients()){
+            try{
+                $context=CompanyRequestScope::context();$service=new CompanyCustomerGroups($this->db,db_prefix());
+                if($this->input->is_ajax_request()){
+                    if($this->input->method(true)!=='POST'){show_error('Use POST.',405);return;}
+                    CompanyRequestScope::assertNativeMutation($this);
+                    $q=NativeCompanyClients::request($this->input->post()?:[]);$all=$service->all($context->issuerId(),$context->staffId());
+                    $filtered=array_values(array_filter($all,static fn($row)=>$q['search']===''||stripos($row['name'],$q['search'])!==false));
+                    if($q['direction']==='desc')$filtered=array_reverse($filtered);$data=[];
+                    foreach(array_slice($filtered,$q['start'],$q['length']) as $row){
+                        $options='<a href="#" data-toggle="modal" data-target="#customer_group_modal" data-id="'.(int)$row['id'].'" data-revision="'.e($row['revision']).'" class="btn btn-default btn-icon"><i class="fa-regular fa-pen-to-square"></i><span class="sr-only">'.e(_l('edit')).'</span></a>';
+                        $options.=form_open(admin_url('clients/delete_group/'.(int)$row['id']),['class'=>'inline-block']).form_hidden('revision',$row['revision']).'<button type="submit" class="btn btn-danger btn-icon"><i class="fa fa-remove"></i><span class="sr-only">'.e(_l('delete')).'</span></button>'.form_close();
+                        $data[]=[e($row['name']),$options];
+                    }
+                    $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['draw'=>$q['draw'],'recordsTotal'=>count($all),'recordsFiltered'=>count($filtered),'data'=>$data],JSON_THROW_ON_ERROR));return;
+                }
+                if(!in_array($this->input->method(true),['GET','HEAD'],true)){show_error('Use GET.',405);return;}
+                $native->capabilities();$this->load->view('admin/clients/groups_manage',['title'=>_l('customer_groups'),'native_customers'=>true]);
+            }catch(Throwable $error){$this->nativeCompanyClientFailure($error);}return;
+        }
         if (!is_admin()) {
             access_denied('Customer Groups');
         }
@@ -854,6 +1192,15 @@ class Clients extends AdminController
 
     public function group()
     {
+        if($native=$this->nativeCompanyClients()){
+            try{
+                CompanyRequestScope::assertNativeMutation($this);$context=CompanyRequestScope::context();
+                $id=$this->input->post('id',false);$name=$this->input->post('name',false);$revision=$this->input->post('revision',false);
+                if(!is_string($name)||($revision!==null&&!is_string($revision)))throw new DomainException('company_client_invalid_input');
+                $saved=(new CompanyCustomerGroups($this->db,db_prefix()))->save($context->issuerId(),$context->staffId(),$name,$id===null||$id===''?null:IssuerPolicy::id($id),$revision);
+                $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['success'=>true,'message'=>_l('updated_successfully',_l('customer_group')),'id'=>$saved,'name'=>$name],JSON_THROW_ON_ERROR));
+            }catch(Throwable $error){$this->nativeCompanyClientFailure($error);}return;
+        }
         if (!is_admin() && get_option('staff_members_create_inline_customer_groups') == '0') {
             access_denied('Customer Groups');
         }
@@ -885,6 +1232,14 @@ class Clients extends AdminController
 
     public function delete_group($id)
     {
+        if($native=$this->nativeCompanyClients()){
+            try{
+                CompanyRequestScope::assertNativeMutation($this);$context=CompanyRequestScope::context();$revision=$this->input->post('revision',false);
+                if(!is_string($revision))throw new DomainException('company_client_stale');
+                (new CompanyCustomerGroups($this->db,db_prefix()))->delete($context->issuerId(),$context->staffId(),IssuerPolicy::id($id),$revision);
+                redirect(admin_url('clients/groups'),'location',303);
+            }catch(Throwable $error){$this->nativeCompanyClientFailure($error);}return;
+        }
         if (!is_admin()) {
             access_denied('Delete Customer Group');
         }
@@ -929,8 +1284,30 @@ class Clients extends AdminController
         }
     }
 
+    private function nativeVaultAction(string $action,$id=null):bool
+    {
+        if(!$this->nativeCompanyClients())return false;
+        try{
+            require_once APPPATH.'services/NativeCompanyCustomerVault.php';$ctx=CompanyRequestScope::context();$service=new NativeCompanyCustomerVault($this->db,db_prefix());$issuer=$ctx->issuerId();$actor=$ctx->staffId();
+            if($action==='get'){
+                if(!in_array($this->input->method(true),['GET','HEAD'],true))throw new DomainException('native_vault_invalid');$data=$service->get($issuer,$actor,IssuerPolicy::id($id));$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode($data,JSON_THROW_ON_ERROR));return true;
+            }
+            CompanyRequestScope::assertNativeMutation($this);$this->load->library('encryption');$revision=$this->input->post('revision');
+            if($action==='reveal'){
+                if(!is_string($revision))throw new DomainException('company_client_stale');$password=$this->input->post('user_password',false);if(!is_string($password))throw new DomainException('native_vault_reauthentication_required');
+                $value=$service->reveal($issuer,$actor,IssuerPolicy::id($this->input->post('id')),$revision,$password,fn($plain,$hash)=>app_hasher()->CheckPassword($plain,$hash),fn($cipher)=>$this->encryption->decrypt($cipher));
+                $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['password'=>e($value)],JSON_THROW_ON_ERROR));return true;
+            }
+            $entry=$action==='create'?null:$service->get($issuer,$actor,IssuerPolicy::id($id));$client=$entry?(int)$entry['customer_id']:IssuerPolicy::id($id);
+            if($action==='delete'){if(!is_string($revision))throw new DomainException('company_client_stale');$service->delete($issuer,$actor,(int)$id,$revision);}
+            else{$input=$this->input->post()?:[];$input['password']=$this->input->post('password',false)??'';foreach(['id','revision','_native_company_csrf','_company_context','fakeusernameremembered','fakepasswordremembered',$this->security->get_csrf_token_name()]as$key)unset($input[$key]);$service->save($issuer,$actor,$client,$input,fn($plain)=>$this->encryption->encrypt($plain),$entry?(int)$id:null,is_string($revision)?$revision:null);}
+            CompanyRequestScope::invalidateCaches($this);redirect(admin_url('clients/client/'.$client.'?group=vault'),'location',303);
+        }catch(Throwable$error){$this->nativeCompanyClientFailure($error);}return true;
+    }
+
     public function vault_entry_create($customer_id)
     {
+        if($this->nativeVaultAction('create',$customer_id))return;
         if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { show_404(); return; }
         $data = $this->input->post();
 
@@ -959,6 +1336,7 @@ class Clients extends AdminController
 
     public function vault_entry_update($entry_id)
     {
+        if($this->nativeVaultAction('update',$entry_id))return;
         $entry = $this->clients_model->get_vault_entry($entry_id);
         if (!$entry) { show_404(); return; }
 
@@ -993,6 +1371,7 @@ class Clients extends AdminController
 
     public function vault_entry_delete($id)
     {
+        if($this->nativeVaultAction('delete',$id))return;
         $entry = $this->clients_model->get_vault_entry($id);
         if (!$entry) { show_404(); return; }
         if ($entry->creator == get_staff_user_id() || is_admin()) {
@@ -1003,6 +1382,7 @@ class Clients extends AdminController
 
     public function vault_encrypt_password()
     {
+        if($this->nativeVaultAction('reveal',null))return;
         $id            = $this->input->post('id');
         $user_password = $this->input->post('user_password', false);
         $user          = $this->staff_model->get(get_staff_user_id());
@@ -1031,6 +1411,7 @@ class Clients extends AdminController
 
     public function get_vault_entry($id)
     {
+        if($this->nativeVaultAction('get',$id))return;
         $entry = $this->clients_model->get_vault_entry($id);
         if (!$entry) { show_404(); return; }
         unset($entry->password);

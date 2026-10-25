@@ -15,7 +15,12 @@ class Tasks extends AdminController
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('projects_model');
+        if (!$this->nativeCompanyTasks()) { $this->load->model('projects_model'); }
+    }
+
+    private function nativeCompanyTasks(): bool
+    {
+        return class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this);
     }
 
     /* Open also all taks if user access this /tasks url */
@@ -291,6 +296,27 @@ class Tasks extends AdminController
     /* Add new task or update existing */
     public function task($id = '')
     {
+        if ($this->nativeCompanyTasks()) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_task_form_denied');
+                require_once APPPATH.'services/NativeCompanyTaskForm.php';$form=new NativeCompanyTaskForm($this->db,db_prefix());
+                if(strtoupper($this->input->method(true))==='POST') {
+                    CompanyRequestScope::assertNativeMutation($this);$wire=$this->input->post(null,false)?:[];unset($wire['_company_context'],$wire['_native_company_csrf']);if(isset($this->security))unset($wire[$this->security->get_csrf_token_name()]);
+                    foreach($_FILES as$upload){$errors=$upload['error']??null;if($errors===null)throw new DomainException('native_task_attachments_not_composed');$iterator=new RecursiveIteratorIterator(new RecursiveArrayIterator(is_array($errors)?$errors:[$errors]));foreach($iterator as$error)if((int)$error!==UPLOAD_ERR_NO_FILE)throw new DomainException('native_task_attachments_not_composed');}
+                    if(isset($wire['description']))$wire['description']=html_purify($wire['description']);$saved=$form->save($ctx->issuerId(),$ctx->staffId(),$id,$wire);
+                    $this->output->set_header('Content-Type: application/json; charset=utf-8')->set_output(json_encode(['success'=>true,'id'=>$saved,'message'=>_l($id===''?'added_successfully':'updated_successfully',_l('task'))],JSON_THROW_ON_ERROR));return;
+                }
+                if(!in_array(strtoupper($this->input->method(true)),['GET','HEAD'],true)){show_error('Método não permitido.',405);return;}
+                $query=[];foreach(['rel_type','rel_id','start_date']as$key)if($this->input->get($key)!==null)$query[$key]=$this->input->get($key);
+                foreach(['milestone_id','opened_from_lead_id']as$key)if($this->input->get($key))throw new DomainException('native_task_relation_writer_required');
+                $today=date('Y-m-d');$snapshot=$id===''?$form->newForm($ctx->issuerId(),$ctx->staffId(),$query,$today):$form->editForm($ctx->issuerId(),$ctx->staffId(),$id,$today);$data=$snapshot;
+                $data['native_task_form']['fields']+=['_company_context'=>$ctx->token(),'_native_company_csrf'=>CompanyRequestScope::nativeCsrfToken($this),'native_request_key'=>bin2hex(random_bytes(32))];
+                $html=$this->load->view('admin/tasks/task',$data,true);if(json_encode($id===''?$form->newForm($ctx->issuerId(),$ctx->staffId(),$query,$today):$form->editForm($ctx->issuerId(),$ctx->staffId(),$id,$today),JSON_THROW_ON_ERROR)!==json_encode($snapshot,JSON_THROW_ON_ERROR))throw new DomainException('native_task_form_changed');$this->output->set_output($html);return;
+            } catch (DomainException $error) { show_error('Não foi possível confirmar os dados e a ação desta tarefa.',422);return; }
+              catch (RuntimeException $error) { show_error('Não foi possível confirmar o armazenamento da tarefa.',503);return; }
+        }
+
         if (staff_cant('edit', 'tasks') && staff_cant('create', 'tasks')) {
             ajax_access_denied();
         }
@@ -514,6 +540,29 @@ class Tasks extends AdminController
 
     public function get_staff_started_timers($return = false)
     {
+        if ($this->nativeCompanyTasks()) {
+            $ctx=CompanyRequestScope::context();
+            if($ctx->issuerId()===null){show_error('Selecione uma empresa.',403);return;}
+            if(!$return && $this->input->method(true)!=='GET'){show_error('Método não permitido.',405);return;}
+            require_once APPPATH.'services/NativeCompanyTasksRead.php';require_once APPPATH.'services/NativeCompanyBlankTimers.php';require_once APPPATH.'services/NativeCompanyTimerPresentation.php';require_once APPPATH.'services/CompanySettingsStorage.php';
+            try {
+                $reader=new NativeCompanyTasksRead($this->db,db_prefix());$clock=time();
+                $timers=$reader->startedTimers($ctx->issuerId(),$ctx->staffId(),$clock);
+                $policyReader=new NativeCompanyTimerPolicy($this->db,db_prefix());$policy=$policyReader->read($ctx->issuerId(),$ctx->staffId());
+                $hasBlank=(bool)array_filter($timers,static fn($timer)=>(string)$timer['task_id']==='0');
+                $settings=new CompanySettingsStorage($this->db,db_prefix());$formats=['dateformat'=>$settings->get($ctx->issuerId(),'dateformat'),'time_format'=>$settings->get($ctx->issuerId(),'time_format')];$displayTimezone=date_default_timezone_get();
+                $renderedTimers=$timers;foreach($renderedTimers as &$renderedTimer)$renderedTimer['started_at_label']=NativeCompanyTimerPresentation::startedLabel($renderedTimer,$formats,$displayTimezone);unset($renderedTimer);
+                $nativeTimerPolicy=$policy+['can_start_blank'=>$policy['can_edit']&&!$hasBlank&&(!$policy['auto_stop']||count($timers)===0),'policy_hash'=>NativeCompanyBlankTimers::policyHash($policy)];
+                $html=$this->load->view('admin/tasks/started_timers',['startedTimers'=>$renderedTimers,'nativeTimerPolicy'=>$nativeTimerPolicy],true);
+                if(['dateformat'=>$settings->get($ctx->issuerId(),'dateformat'),'time_format'=>$settings->get($ctx->issuerId(),'time_format')]!==$formats||date_default_timezone_get()!==$displayTimezone)throw new DomainException('native_timer_policy_changed');
+                if($policyReader->read($ctx->issuerId(),$ctx->staffId())!==$policy)throw new DomainException('native_timer_policy_changed');
+                if($reader->startedTimers($ctx->issuerId(),$ctx->staffId(),$clock)!==$timers)throw new DomainException('native_company_task_read_changed');
+                $json=json_encode(['html'=>$html,'total_timers'=>count($timers)],JSON_THROW_ON_ERROR);
+                if($return)return $json;
+                $this->output->set_header('Cache-Control: no-store');$this->output->set_content_type('application/json');$this->output->set_output($json);return;
+            } catch(DomainException $error){show_error('Não foi possível confirmar os temporizadores desta empresa.',403);return;}
+        }
+
         $data['startedTimers'] = $this->misc_model->get_staff_started_timers();
         $_data['html']         = $this->load->view('admin/tasks/started_timers', $data, true);
         $_data['total_timers'] = count($data['startedTimers']);
@@ -528,6 +577,15 @@ class Tasks extends AdminController
 
     public function save_checklist_item_template()
     {
+        if ($this->nativeCompanyTasks()) {
+            try {
+                CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_task_template_denied');
+                require_once APPPATH.'services/NativeCompanyTaskChecklistTemplates.php';$service=new NativeCompanyTaskChecklistTemplates($this->db,db_prefix());
+                $result=$service->create($ctx->issuerId(),$ctx->staffId(),(string)$this->input->post('description',false),(string)$this->input->post('native_request_key'));
+                $this->output->set_header('Content-Type: application/json; charset=utf-8')->set_output(json_encode($result,JSON_THROW_ON_ERROR));return;
+            } catch (Throwable $error) { show_error('Não foi possível alterar o modelo de checklist.',422);return; }
+        }
+
         if (staff_can('create',  'checklist_templates')) {
             $id = $this->tasks_model->add_checklist_template($this->input->post('description'));
             echo json_encode(['id' => $id]);
@@ -536,6 +594,15 @@ class Tasks extends AdminController
 
     public function remove_checklist_item_template($id)
     {
+        if ($this->nativeCompanyTasks()) {
+            try {
+                CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_task_template_denied');
+                require_once APPPATH.'services/NativeCompanyTaskChecklistTemplates.php';$service=new NativeCompanyTaskChecklistTemplates($this->db,db_prefix());
+                $result=$service->delete($ctx->issuerId(),$ctx->staffId(),$id,(string)$this->input->post('native_revision'),(string)$this->input->post('native_request_key'));
+                $this->output->set_header('Content-Type: application/json; charset=utf-8')->set_output(json_encode($result,JSON_THROW_ON_ERROR));return;
+            } catch (Throwable $error) { show_error('Não foi possível alterar o modelo de checklist.',422);return; }
+        }
+
         if (staff_can('delete',  'checklist_templates')) {
             $success = $this->tasks_model->remove_checklist_item_template($id);
             echo json_encode(['success' => $success]);

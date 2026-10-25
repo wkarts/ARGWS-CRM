@@ -17,6 +17,6 @@ abstract class CompanyProjectGanttStorage extends CompanyProjectMilestonesStorag
     protected static function datesHash(int $issuer,int $project,int $task,string $date,int $revision):string{return self::hash([$issuer,$project,$task,$date,$revision]);}
     protected function interval(int $issuer,int $project,array $task,string $start):array
     {
-        $r=$this->rows('SELECT start_date,due_date FROM '.$this->p.'company_projects WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$project])[0]??null;if(!$r)throw new DomainException('company_project_portal_unavailable');self::date($r['start_date']);self::date($r['due_date']);self::date($task['due_date']);if($start<$r['start_date']||$start>$task['due_date']||$task['due_date']>$r['due_date'])throw new DomainException('company_project_portal_invalid');return $r;
+        $r=$this->rows('SELECT start_date,due_date FROM '.$this->p.'company_projects WHERE issuer_id=? AND id=? FOR UPDATE',[$issuer,$project])[0]??null;if(!$r)throw new DomainException('company_project_portal_unavailable');self::date($r['start_date']);if($r['due_date']!==null)self::date($r['due_date']);self::date($task['due_date']);if($start<$r['start_date']||$start>$task['due_date']||($r['due_date']!==null&&$task['due_date']>$r['due_date']))throw new DomainException('company_project_portal_invalid');return $r;
     }
 }

@@ -7,12 +7,53 @@ class Dashboard extends AdminController
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('dashboard_model');
+        if (!$this->companyDashboard()) { $this->load->model('dashboard_model'); }
+    }
+
+    private function companyDashboard(): bool
+    {
+        return class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this);
+    }
+
+    private function renderCompanyDashboard(): void
+    {
+        if (!CompanyRequestScope::nativeFor($this)) { show_error('Contexto de empresa indisponível.', 503); return; }
+        if (!in_array($this->input->method(true), ['GET','HEAD'], true)) { show_error('Método não permitido.',405); return; }
+        require_once APPPATH.'services/CompanyDashboardPresenter.php';
+        $ctx=CompanyRequestScope::context();
+        if ($ctx->issuerId()===null) {
+            $this->output->set_header('Cache-Control: no-store');
+            $this->load->view('admin/dashboard/dashboard',['company_dashboard_selection_required'=>true,'title'=>_l('dashboard_string'),'bodyclass'=>'dashboard','dashboard'=>true]); return;
+        }
+        $presenter=new CompanyDashboardPresenter($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId());
+        try {
+            $snapshot=$presenter->snapshot();
+            $data=$snapshot['view']+['company_dashboard'=>$snapshot,'title'=>_l('dashboard_string'),'bodyclass'=>'dashboard','dashboard'=>true];
+            $html=$this->load->view('admin/dashboard/dashboard',$data,true);
+            $presenter->confirm();
+            $this->output->set_header('Cache-Control: no-store');
+            $this->output->set_output($html);
+        } catch (DomainException $e) {
+            show_error('Não foi possível confirmar os dados e permissões desta empresa. Recarregue a página.', $e->getMessage()==='company_dashboard_stale'?409:403);
+        }
+    }
+
+    private function companyPaymentChart($currency,string $period):void
+    {
+        $ctx=CompanyRequestScope::context();
+        if(!CompanyRequestScope::nativeFor($this)||$ctx->issuerId()===null){show_error('Selecione uma empresa.',403);return;}
+        if(!$this->input->is_ajax_request()||$this->input->method(true)!=='GET'){show_error('Método não permitido.',405);return;}
+        require_once APPPATH.'services/CompanyDashboardPayments.php';
+        try {
+            $data=(new CompanyDashboardPayments($this->db,db_prefix()))->read($ctx->issuerId(),$ctx->staffId(),$currency,$period);
+            $this->output->set_header('Cache-Control: no-store');$this->output->set_content_type('application/json');$this->output->set_output(json_encode($data,JSON_THROW_ON_ERROR));
+        } catch(DomainException $error){show_error('Não foi possível confirmar os recebimentos desta empresa.',403);}
     }
 
     // This is admin dashboard view
     public function index()
     {
+        if ($this->companyDashboard()) { $this->renderCompanyDashboard(); return; }
         // AdminController has already enforced current company membership and the
         // primary-only native dashboard boundary before consuming upgrade feedback.
         if ($this->input->method(true) === 'GET' && !$this->input->is_ajax_request()
@@ -99,6 +140,7 @@ class Dashboard extends AdminController
     // Chart weekly payments statistics on home page / ajax
     public function weekly_payments_statistics($currency)
     {
+        if ($this->companyDashboard()) { $this->companyPaymentChart($currency, 'weekly'); return; }
         if ($this->input->is_ajax_request()) {
             echo json_encode($this->dashboard_model->get_weekly_payments_statistics($currency));
 
@@ -109,6 +151,7 @@ class Dashboard extends AdminController
     // Chart monthly payments statistics on home page / ajax
     public function monthly_payments_statistics($currency)
     {
+        if ($this->companyDashboard()) { $this->companyPaymentChart($currency, 'monthly'); return; }
         if ($this->input->is_ajax_request()) {
             echo json_encode($this->dashboard_model->get_monthly_payments_statistics($currency));
 
@@ -118,6 +161,15 @@ class Dashboard extends AdminController
 
     public function ticket_widget($type)
     {
+        if ($this->companyDashboard()) {
+            $ctx=CompanyRequestScope::context();
+            if(!CompanyRequestScope::nativeFor($this)||$ctx->issuerId()===null){show_error('Selecione uma empresa.',403);return;}
+            if(!$this->input->is_ajax_request()||$this->input->method(true)!=='GET'){show_error('Método não permitido.',405);return;}
+            require_once APPPATH.'services/CompanyDashboardPresenter.php';
+            $reader=new CompanyDashboardPresenter($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId());
+            try {$data=['tickets_report'=>$reader->ticketReport((string)$type)];$html=$this->load->view('admin/dashboard/widgets/tickets_report_table',$data,true);$reader->confirm();$this->output->set_header('Cache-Control: no-store');$this->output->set_output($html);}
+            catch(DomainException $error){show_error('Não foi possível confirmar o relatório desta empresa.',403);}return;
+        }
         $data['tickets_report'] = (new app\services\TicketsReportByStaff())->filterBy($type);
         $this->load->view('admin/dashboard/widgets/tickets_report_table', $data);
     }

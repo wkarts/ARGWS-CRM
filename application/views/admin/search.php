@@ -1,4 +1,9 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php
+require_once APPPATH.'services/NativeCompanyAdminPresentation.php';
+$nativeSearchOwner=function_exists('get_instance') ? get_instance() : $this;
+$nativeSearch=NativeCompanyAdminPresentation::current($nativeSearchOwner);
+?>
 <ul class="dropdown-menu search-results animated fadeIn no-mtop display-block" id="top_search_dropdown">
     <?php
     $total = 0;
@@ -7,11 +12,17 @@
            $total++;
            ?>
            <li role="separator" class="divider"></li>
-           <li class="dropdown-header"><?php echo e($data['search_heading']); ?></li>
+           <li class="dropdown-header"><?php echo e($nativeSearch ? NativeCompanyAdminPresentation::label($data['search_heading']) : $data['search_heading']); ?></li>
        <?php } ?>
        <?php foreach($data['result'] as $_result){
         $output = '';
-        switch($data['type']){
+        if($nativeSearch){
+            if(empty($data['native_owned']) || (($_result['relative_url']??'')!=='settings?group=company' && !preg_match('~^(?:[a-z_]+/)+[0-9]+(?:\?group=contacts&contactid=[0-9]+)?$~D',$_result['relative_url']??'')))throw new LogicException('native_search_result_invalid');
+            $output='<a'.($data['type']==='custom_fields'?' class="pull-left"':'').' href="'.e(CompanyRequestScope::adminUrl($nativeSearchOwner,$_result['relative_url'])).'">'.e($_result['label']);
+            if($data['type']==='custom_fields')$output.='<span class="pull-right">'.e(NativeCompanyAdminPresentation::label($_result['relation_type'])).'</span>';
+            if(isset($_result['secondary_label']))$output.='<br /><small>'.e($_result['secondary_label']).'</small>';
+            $output.='</a>';
+        } else switch($data['type']){
             case 'clients':
             $output = '<a href="'.admin_url('clients/client/'.$_result['userid']).'">'.e($_result['company']) .'</a>';
             break;
@@ -81,10 +92,10 @@
             break;
         }
         ?>
-        <li><?php echo hooks()->apply_filters('global_search_result_output', $output, ['result'=>$_result, 'type'=>$data['type']]); ?></li>
+        <li><?php echo $nativeSearch ? $output : hooks()->apply_filters('global_search_result_output', $output, ['result'=>$_result, 'type'=>$data['type']]); ?></li>
     <?php } ?>
 <?php } ?>
 <?php if($total == 0){ ?>
-    <li class="padding-5 text-center search-no-results"><?php echo _l('not_results_found'); ?></li>
+    <li class="padding-5 text-center search-no-results"><?php echo $nativeSearch ? e(NativeCompanyAdminPresentation::label('not_results_found')) : _l('not_results_found'); ?></li>
 <?php } ?>
 </ul>

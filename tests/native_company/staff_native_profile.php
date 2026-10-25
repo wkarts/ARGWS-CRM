@@ -1,0 +1,12 @@
+<?php
+require __DIR__.'/staff_commands_storage.php';
+$detail=$service->get(41,7,14);$key=hash('sha256','native-full-profile');$profile=['hourly_rate'=>'25.00','facebook'=>'https://example.test/profile','linkedin'=>'https://example.test/team','skype'=>'synthetic','default_language'=>'portuguese_br','email_signature'=>'<p>Native <strong>signature</strong></p>','direction'=>'rtl','is_not_staff'=>'0','password'=>'synthetic-new-password-123'];
+$id=$service->updateNative(41,7,14,$detail['revision'],$profile,['tasks'=>['view']],false,$key);$dto=(new NativeCompanyStaffRead($db,$p))->member(41,7,14);
+essentialCheck((float)$dto['member']->hourly_rate===25.0&&$dto['member']->direction==='rtl'&&$dto['member']->default_language==='portuguese_br','original extended fields persist through existing staff command writer');
+require_once APPPATH.'third_party/phpass.php';$hash=$db->query('SELECT password FROM '.$p.'staff WHERE staffid=14')->row()->password;essentialCheck((new PasswordHash(8,true))->CheckPassword($profile['password'],$hash),'native update password is hashed not plaintext');
+essentialCheck($service->updateNative(41,7,14,$detail['revision'],$profile,['tasks'=>['view']],false,$key)===14,'native complete profile request replays exactly');
+settingThrows(fn()=>$service->updateNative(41,7,14,$detail['revision'],array_replace($profile,['password'=>'different-synthetic-password']),['tasks'=>['view']],false,$key),'issuer_staff_conflict','changed password cannot reuse native replay receipt');
+settingThrows(fn()=>$service->updateNative(41,7,14,$dto['access']['revision'],['admin'=>'1'],[],false,hash('sha256','promotion')),'issuer_staff_profile_field_denied','tenant form cannot promote global administrator');
+settingThrows(fn()=>$service->updateNative(41,7,14,$dto['access']['revision'],['role'=>'1'],[],false,hash('sha256','role')),'issuer_staff_profile_field_denied','tenant form cannot assign global role');
+$db->query("UPDATE {$p}issuers_staff SET can_view=1 WHERE issuer_id=41 AND staff_id=12");$db->query("INSERT INTO {$p}issuers_resource_permissions VALUES(41,12,'staff','edit')");$shared=$service->get(41,12,12);settingThrows(fn()=>$service->updateNative(41,12,12,$shared['revision'],['direction'=>'ltr'],[],false,hash('sha256','shared')),'issuer_staff_shared_identity','company manager cannot mutate cross-company identity');
+echo "Native extended staff profile: seven actual SQLite checks passed; no SMTP.\n";

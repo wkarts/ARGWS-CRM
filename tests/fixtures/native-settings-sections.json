@@ -1,0 +1,212 @@
+{
+    "general": {
+        "title": "settings_group_general",
+        "position": 1,
+        "children": [
+            {
+                "name": "settings_group_general",
+                "view": "admin/settings/includes/general",
+                "position": 5,
+                "icon": "fa fa-cog",
+                "id": "general"
+            },
+            {
+                "name": "company_information",
+                "view": "admin/settings/includes/company",
+                "position": 10,
+                "icon": "fa-solid fa-bars-staggered",
+                "id": "company"
+            },
+            {
+                "name": "settings_group_localization",
+                "view": "admin/settings/includes/localization",
+                "position": 15,
+                "icon": "fa-solid fa-globe",
+                "id": "localization"
+            },
+            {
+                "name": "settings_group_email",
+                "view": "admin/settings/includes/email",
+                "position": 20,
+                "icon": "fa-regular fa-envelope",
+                "id": "email"
+            }
+        ]
+    },
+    "finance": {
+        "title": "settings_group_sales",
+        "position": 5,
+        "children": [
+            {
+                "name": "settings_sales_general",
+                "view": "admin/settings/includes/sales_general",
+                "position": 5,
+                "icon": "fa fa-cog",
+                "id": "sales_general"
+            },
+            {
+                "name": "invoices",
+                "view": "admin/settings/includes/invoices",
+                "position": 10,
+                "icon": "fa fa-file-invoice",
+                "id": "invoices"
+            },
+            {
+                "name": "proposals",
+                "view": "admin/settings/includes/proposals",
+                "position": 15,
+                "icon": "fa-regular fa-file-powerpoint",
+                "id": "proposals"
+            },
+            {
+                "name": "estimates",
+                "view": "admin/settings/includes/estimates",
+                "position": 20,
+                "icon": "fa-regular fa-file",
+                "id": "estimates"
+            },
+            {
+                "name": "credit_notes",
+                "view": "admin/settings/includes/credit_notes",
+                "position": 25,
+                "icon": "fa-regular fa-file-lines",
+                "id": "credit_notes"
+            },
+            {
+                "name": "subscriptions",
+                "view": "admin/settings/includes/subscriptions",
+                "position": 30,
+                "icon": "fa fa-repeat",
+                "id": "subscriptions"
+            },
+            {
+                "name": "settings_group_online_payment_modes",
+                "view": "admin/settings/includes/payment_gateways",
+                "position": 35,
+                "icon": "fa-regular fa-credit-card",
+                "id": "payment_gateways"
+            }
+        ]
+    },
+    "configuration": {
+        "title": "settings_group_configure_features",
+        "position": 10,
+        "children": [
+            {
+                "name": "settings_group_clients",
+                "view": "admin/settings/includes/clients",
+                "position": 5,
+                "icon": "fa-regular fa-user",
+                "id": "clients"
+            },
+            {
+                "name": "tasks",
+                "view": "admin/settings/includes/tasks",
+                "position": 10,
+                "icon": "fa-regular fa-circle-check",
+                "id": "tasks"
+            },
+            {
+                "name": "support",
+                "view": "admin/settings/includes/tickets",
+                "position": 15,
+                "icon": "fa-regular fa-life-ring",
+                "id": "tickets"
+            },
+            {
+                "name": "leads",
+                "view": "admin/settings/includes/leads",
+                "position": 20,
+                "icon": "fa-solid fa-crosshairs",
+                "id": "leads"
+            }
+        ]
+    },
+    "integrations": {
+        "title": "integrations",
+        "position": 15,
+        "children": [
+            {
+                "name": "Google",
+                "view": "admin/settings/includes/google",
+                "position": 5,
+                "icon": "fa-brands fa-google",
+                "id": "google"
+            },
+            {
+                "name": "Pusher.com",
+                "view": "admin/settings/includes/pusher",
+                "position": 10,
+                "icon": "fa-regular fa-bell",
+                "id": "pusher"
+            }
+        ]
+    },
+    "ai": {
+        "title": "settings_group_ai",
+        "position": 15,
+        "children": [
+            {
+                "name": "settings_ai_general",
+                "view": "admin/settings/includes/ai",
+                "position": 15,
+                "icon": "fa fa-cog",
+                "id": "ai"
+            }
+        ]
+    },
+    "other": {
+        "title": "settings_group_other",
+        "position": 20,
+        "children": [
+            {
+                "name": "settings_calendar",
+                "view": "admin/settings/includes/calendar",
+                "position": 5,
+                "icon": "fa-regular fa-calendar",
+                "id": "calendar"
+            },
+            {
+                "name": "settings_pdf",
+                "view": "admin/settings/includes/pdf",
+                "position": 10,
+                "icon": "fa-regular fa-file-pdf",
+                "id": "pdf"
+            },
+            {
+                "name": "E-Sign",
+                "view": "admin/settings/includes/e_sign",
+                "position": 15,
+                "icon": "fa-solid fa-signature",
+                "id": "e_sign"
+            },
+            {
+                "name": "tags",
+                "view": "admin/settings/includes/tags",
+                "position": 20,
+                "icon": "fa-solid fa-tags",
+                "id": "tags"
+            }
+        ]
+    },
+    "misc": {
+        "title": "settings_group_misc",
+        "position": 25,
+        "children": [
+            {
+                "name": "settings_group_cronjob",
+                "view": "admin/settings/includes/cronjob",
+                "position": 5,
+                "icon": "fa-solid fa-microchip",
+                "id": "cronjob"
+            },
+            {
+                "name": "settings_group_misc",
+                "view": "admin/settings/includes/misc",
+                "position": 10,
+                "icon": "fa-solid fa-gears",
+                "id": "misc"
+            }
+        ]
+    }
+}

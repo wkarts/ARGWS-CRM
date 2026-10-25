@@ -13,6 +13,7 @@
             <div class="modal-body">
                 <div class="row">
                 <?php echo form_hidden('todoid', ''); ?>
+                <?php if (CompanyRequestScope::nativeFor($this)) { echo form_hidden('revision', ''); } ?>
                     <div class="col-md-12">
                         <?php echo render_textarea('description', 'add_new_todo_description', ''); ?>
                     </div>

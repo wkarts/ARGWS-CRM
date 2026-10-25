@@ -9,6 +9,17 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * @param  array $items_cf_params          used only for custom fields for items operations
  * @return mixed
  */
+/** Internal service selection is based solely on the attested request, never a submitted flag. */
+function native_company_custom_fields_scope()
+{
+    $ci=&get_instance();
+    if(!class_exists('CompanyRequestScope',false)||!method_exists('CompanyRequestScope','nativeFor')||!CompanyRequestScope::nativeFor($ci))return null;
+    require_once APPPATH.'services/NativeCompanyCustomFields.php';
+    $context=CompanyRequestScope::context();
+    if($context->issuerId()===null)throw new DomainException('native_custom_field_denied');
+    return [new NativeCompanyCustomFields($ci->db,db_prefix()),$context->issuerId(),$context->staffId()];
+}
+
 function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_cf_params = [])
 {
     // Is custom fields for items and in add/edit
@@ -23,9 +34,35 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
     // Is this custom fields for predefined items Sales->Items
     $items_pr = isset($items_cf_params['items_pr']) && $items_cf_params['items_pr'] ? true : false;
 
-    $is_admin = is_admin();
-
     $CI = & get_instance();
+    $nativeRegistration=class_exists('PortalRequestScope',false)&&PortalRequestScope::sealedFor($CI);
+    if($nativeRegistration&&(strtolower($CI->router->fetch_class())!=='authentication'||strtolower($CI->router->fetch_method())!=='register'||!in_array($belongs_to,['customers','contacts'],true)||!in_array($rel_id,[false,'',null],true)||$where!==['show_on_client_portal'=>1]||$items_cf_params!==[]))throw new DomainException('native_custom_field_denied');
+    $nativeFields=$nativeRegistration?null:native_company_custom_fields_scope();
+    if(isset($items_cf_params['native_invoice_editor'])&&!$nativeFields)throw new DomainException('native_custom_field_denied');
+    $is_admin=$nativeRegistration?false:($nativeFields?(new IssuerResourceAccess($CI->db,db_prefix()))->administrative($nativeFields[1],$nativeFields[2]):is_admin());
+    if($nativeRegistration){$rel_id=false;require_once APPPATH.'services/NativeCompanyCustomFields.php';$fields=(new NativeCompanyCustomFields($CI->db,db_prefix()))->definitionsForRegistration(PortalRequestScope::issuerId(),$belongs_to);}
+    elseif($nativeFields){
+        if(!is_array($where))throw new DomainException('native_custom_field_filter_invalid');
+        if($belongs_to==='company'&&($rel_id===0||$rel_id==='0'))$rel_id=$nativeFields[1];
+        $purpose=$items_cf_params['native_purpose']??'view';
+        if(!in_array($purpose,['view','create','edit'],true)||($purpose==='create'&&$rel_id!==false&&$rel_id!==''&&$rel_id!==null))throw new DomainException('native_custom_field_denied');
+        $nativeFilters=array_merge($where,['active'=>1]);
+        if($belongs_to==='items'&&isset($items_cf_params['native_invoice_editor'])){
+            $editor=$items_cf_params['native_invoice_editor'];
+            if(!($editor instanceof NativeCompanyInvoiceEditorItems))throw new DomainException('native_custom_field_denied');
+            $editor->assertContext($CI->db,db_prefix(),$nativeFields[1],$nativeFields[2]);
+            $fields=$editor->definitions();
+        }elseif($rel_id!==false&&$rel_id!==''&&$rel_id!==null){
+            if(is_array($rel_id))throw new DomainException('native_custom_field_transfer_requires_canonical_writer');
+            $fields=$nativeFields[0]->definitionsForResource($nativeFields[1],$nativeFields[2],$belongs_to,$rel_id,$nativeFilters,$purpose);
+        }elseif($belongs_to==='contacts'&&$purpose==='create'&&isset($items_cf_params['native_client_id'])){
+            $nativeClient=$items_cf_params['native_client_id'];
+            if(!(is_int($nativeClient)&&$nativeClient>0))throw new DomainException('native_custom_field_denied');
+            $fields=$nativeFields[0]->definitionsForContactCreation($nativeFields[1],$nativeFields[2],$nativeClient,$nativeFilters);
+        }else{
+            $fields=$nativeFields[0]->definitions($nativeFields[1],$nativeFields[2],$belongs_to,$nativeFilters,$purpose);
+        }
+    }else{
     $CI->db->where('active', 1);
     $CI->db->where('fieldto', $belongs_to);
 
@@ -35,6 +72,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
 
     $CI->db->order_by('field_order', 'asc');
     $fields = $CI->db->get(db_prefix() . 'customfields')->result_array();
+    }
 
     $fields_html = '';
 
@@ -73,6 +111,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                 if (!is_array($rel_id)) {
                     $value = get_custom_field_value($rel_id, $field['id'], ($items_pr ? 'items_pr' : $belongs_to), false);
                 } else {
+                    if($nativeFields)throw new DomainException('native_custom_field_transfer_requires_canonical_writer');
                     if (is_custom_fields_smart_transfer_enabled()) {
                         // Used only in:
                         // 1. Convert proposal to estimate, invoice
@@ -117,7 +156,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                 $_input_attrs['data-custom-field-required'] = true;
             }
 
-            if ($field['disalow_client_to_edit'] == 1 && is_client_logged_in()) {
+            if ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && is_client_logged_in()) {
                 $_input_attrs['disabled'] = true;
             }
 
@@ -156,7 +195,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                     $_select_attrs['data-custom-field-required'] = true;
                 }
 
-                if ($field['disalow_client_to_edit'] == 1 && is_client_logged_in()) {
+                if ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && is_client_logged_in()) {
                     $_select_attrs['disabled'] = true;
                 }
 
@@ -242,7 +281,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                         $_chk_attrs['data-custom-field-required'] = true;
                     }
 
-                    if ($field['disalow_client_to_edit'] == 1 && is_client_logged_in()) {
+                    if ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && is_client_logged_in()) {
                         $_chk_attrs['disabled'] = true;
                     }
                     foreach ($_chk_attrs as $key => $val) {
@@ -274,7 +313,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                 $field_template = '';
                 $field_template .= '<div id="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_popover-content" class="hide cfh-field-popover-template"><div class="form-group">';
                 $field_template .= '<div class="row"><div class="col-md-12"><label class="control-label" for="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_title">' . _l('cf_translate_input_link_title') . '</label>';
-                $field_template .= '<input type="text"' . ($field['disalow_client_to_edit'] == 1 && is_client_logged_in() ? ' disabled="true" ' : ' ') . 'id="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_title" value="" class="form-control">';
+                $field_template .= '<input type="text"' . ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && is_client_logged_in() ? ' disabled="true" ' : ' ') . 'id="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_title" value="" class="form-control">';
                 $field_template .= '</div>';
                 $field_template .= '</div>';
                 $field_template .= '</div>';
@@ -282,7 +321,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                 $field_template .= '<div class="row">';
                 $field_template .= '<div class="col-md-12">';
                 $field_template .= '<label class="control-label" for="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_link">' . _l('cf_translate_input_link_url') . '</label>';
-                $field_template .= '<div class="input-group"><input type="text"' . ($field['disalow_client_to_edit'] == 1 && is_client_logged_in() ? ' disabled="true" ' : ' ') . 'id="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_link" value="" class="form-control"><span class="input-group-addon"><a href="#" id="cf_hyperlink_open_' . $field['id'] . '" target="_blank"><i class="fa fa-globe"></i></a></span></div>';
+                $field_template .= '<div class="input-group"><input type="text"' . ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && is_client_logged_in() ? ' disabled="true" ' : ' ') . 'id="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_link" value="" class="form-control"><span class="input-group-addon"><a href="#" id="cf_hyperlink_open_' . $field['id'] . '" target="_blank"><i class="fa fa-globe"></i></a></span></div>';
                 $field_template .= '</div>';
                 $field_template .= '</div>';
                 $field_template .= '</div>';
@@ -334,6 +373,9 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
  */
 function get_custom_fields($field_to, $where = [], $exclude_only_admin = false)
 {
+    $native=native_company_custom_fields_scope();
+    if($native){if(!is_array($where))throw new DomainException('native_custom_field_filter_invalid');$filters=array_merge($where,['active'=>1]);if($exclude_only_admin)$filters['only_admin']=0;return $native[0]->definitions($native[1],$native[2],$field_to,$filters);}
+
     $is_admin = is_admin();
     $CI       = & get_instance();
     $CI->db->where('fieldto', $field_to);
@@ -357,6 +399,10 @@ function get_custom_fields($field_to, $where = [], $exclude_only_admin = false)
 
 function _maybe_translate_custom_field_name($name, $slug)
 {
+    if(native_company_custom_fields_scope()){
+        $key='cf_translate_'.$slug;$label=NativeCompanyAdminPresentation::label($key);return $label===$key?$name:$label;
+    }
+
     return _l('cf_translate_' . $slug, '', false) != 'cf_translate_' . $slug ? _l('cf_translate_' . $slug, '', false) : $name;
 }
 
@@ -379,6 +425,16 @@ function get_table_custom_fields($field_to)
  */
 function get_custom_field_value($rel_id, $field_id_or_slug, $field_to, $format = true)
 {
+    $native=native_company_custom_fields_scope();
+    if($native){
+        if($field_to==='company'&&($rel_id===0||$rel_id==='0'))$rel_id=$native[1];
+        $definitions=$native[0]->definitionsForResource($native[1],$native[2],$field_to,$rel_id);$found=null;
+        foreach($definitions as$definition)if((string)$definition['id']===(string)$field_id_or_slug||$definition['slug']===$field_id_or_slug){if($found!==null)throw new DomainException('native_custom_field_ambiguous');$found=$definition;}
+        if($found===null)return '';
+        $values=$native[0]->values($native[1],$native[2],$field_to,$rel_id);$value=$values[(string)$found['id']]??'';
+        if($format&&$value!==''){$value=match($found['type']){'date_picker'=>_d($value),'date_picker_time'=>_dt($value),default=>$value};}return$value;
+    }
+
     $CI = & get_instance();
 
     $CI->db->select(db_prefix() . 'customfieldsvalues.value,' . db_prefix() . 'customfields.type');
@@ -415,6 +471,12 @@ function get_custom_field_value($rel_id, $field_id_or_slug, $field_to, $format =
  */
 function handle_custom_fields_post($rel_id, $custom_fields, $is_cf_items = false)
 {
+    $native=native_company_custom_fields_scope();
+    if($native){
+        if(!is_array($custom_fields))throw new DomainException('native_custom_field_invalid');
+        foreach($custom_fields as$type=>$values){if(!is_string($type)||!is_array($values))throw new DomainException('native_custom_field_invalid');$native[0]->saveInOwnedTransaction($native[1],$native[2],$is_cf_items?'items_pr':$type,$rel_id,$values);}return true;
+    }
+
     $affectedRows = 0;
     $CI           = & get_instance();
 
@@ -511,8 +573,12 @@ function get_items_custom_fields_for_table_html($rel_id, $rel_type)
  * Render custom fields for table add/edit preview area
  * @return string
  */
-function render_custom_fields_items_table_add_edit_preview()
+function render_custom_fields_items_table_add_edit_preview($nativeInvoiceEditor = null)
 {
+    if($nativeInvoiceEditor!==null){
+        if(!($nativeInvoiceEditor instanceof NativeCompanyInvoiceEditorItems))throw new DomainException('native_custom_field_denied');
+        return render_custom_fields('items',false,[],['add_edit_preview'=>true,'native_invoice_editor'=>$nativeInvoiceEditor]);
+    }
     $where = hooks()->apply_filters('custom_fields_where_items_table_add_edit_preview', []);
 
     return render_custom_fields('items', false, $where, [
@@ -525,8 +591,13 @@ function render_custom_fields_items_table_add_edit_preview()
  * @param  mixed $part_item_name the input name for items eq. newitems or items for existing items
  * @return string
  */
-function render_custom_fields_items_table_in($item, $part_item_name)
+function render_custom_fields_items_table_in($item, $part_item_name, $nativeInvoiceEditor = null)
 {
+    if($nativeInvoiceEditor!==null){
+        if(!($nativeInvoiceEditor instanceof NativeCompanyInvoiceEditorItems))throw new DomainException('native_custom_field_denied');
+        $nativeInvoiceEditor->assertItem($item);
+        return render_custom_fields('items',$item['id'],[],['items_applied'=>true,'part_item_name'=>$part_item_name,'native_purpose'=>'edit','native_invoice_editor'=>$nativeInvoiceEditor]);
+    }
     $item_id = false;
 
     // When converting eq proposal to estimate,invoice etc to get tha previous item values for auto populate

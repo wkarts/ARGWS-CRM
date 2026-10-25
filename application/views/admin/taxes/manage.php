@@ -5,10 +5,12 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="tw-mb-2">
+                    <?php if (!isset($native_can_create) || $native_can_create) { ?>
                     <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#tax_modal">
                         <i class="fa-regular fa-plus tw-mr-1"></i>
                         <?php echo _l('new_tax'); ?>
                     </a>
+                    <?php } ?>
                 </div>
 
                 <div class="panel_s">
@@ -38,6 +40,7 @@
             </div>
             <?php echo form_open('admin/taxes/manage', ['id' => 'tax_form']); ?>
             <?php echo form_hidden('taxid'); ?>
+            <?php if(CompanyRequestScope::nativeFor($this))echo form_hidden('revision'); ?>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-12">
@@ -49,7 +52,7 @@
                         </div>
                         <?php echo render_input('name', 'tax_add_edit_name'); ?>
                         <?php echo render_input('taxrate', 'tax_add_edit_rate', '', 'number'); ?>
-                        <?php hooks()->do_action('before_taxes_modal_form_close'); ?>
+                        <?php if(!CompanyRequestScope::nativeFor($this))hooks()->do_action('before_taxes_modal_form_close'); ?>
                     </div>
                 </div>
             </div>
@@ -101,6 +104,7 @@ $(function() {
     $('#tax_modal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget)
         var id = button.data('id');
+        $('#tax_modal input[name="revision"]').val(button.attr('data-revision') || '');
         $(this).find('button[type="submit"]').prop('disabled', false);
         $('#tax_modal input[name="name"]').val('').prop('disabled', false);
         $('#tax_modal input[name="taxrate"]').val('').prop('disabled', false);

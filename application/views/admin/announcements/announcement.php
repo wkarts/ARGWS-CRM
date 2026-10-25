@@ -7,6 +7,7 @@
                 <?= e($title); ?>
             </h4>
             <?= form_open($this->uri->uri_string()); ?>
+            <?php if (CompanyRequestScope::nativeFor($this)) { echo form_hidden('revision', isset($announcement) ? $announcement->revision : ''); } ?>
             <div class="panel_s">
                 <div class="panel-body">
                     <?php $value = (isset($announcement) ? $announcement->name : ''); ?>
