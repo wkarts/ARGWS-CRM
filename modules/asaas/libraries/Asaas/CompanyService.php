@@ -38,7 +38,8 @@ final class CompanyService
     {
         return array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','modules','issuers_audit','invoices','issuers_invoice_documents','itemable','item_tax','currencies','company_currency_units','clients','issuers_clients','invoicepaymentrecords','credits','asaas_payment_origins'],CompanySchema::tables());
     }
-    private function tablesForRun():array{return array_values(array_unique(array_merge(self::tables(),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),CompanyOriginPolicy::tables($this->db,$this->p),$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[],$this->db->table_exists($this->p.'efi_company_origins')?['efi_company_origins']:[],$this->db->table_exists($this->p.'asaas_company_remote_operations')?['asaas_company_remote_operations']:[])));}
+    /** Shared owned boundary for adapters calling the service in an existing transaction. */
+    public function tablesForRun():array{return array_values(array_unique(array_merge(self::tables(),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),CompanyOriginPolicy::tables($this->db,$this->p),$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[],$this->db->table_exists($this->p.'efi_company_origins')?['efi_company_origins']:[],$this->db->table_exists($this->p.'asaas_company_remote_operations')?['asaas_company_remote_operations']:[])));}
     private function transaction(callable $operation,array $additionalTables=[])
     {
         CompanySchema::ensure($this->db,$this->p,false);if($this->db->table_exists($this->p.'asaas_company_remote_operations'))CompanyRemoteOperationsSchema::ensure($this->db,$this->p,false);$this->module();

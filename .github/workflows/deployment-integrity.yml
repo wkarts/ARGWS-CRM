@@ -45,6 +45,8 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
+      - name: Validar ownership transacional do checkout Asaas antes do smoke longo
+        run: php tests/asaas_checkout_transaction_tables.php
       - name: Preparar navegador para validar o shell nativo
         run: |
           mkdir -p "$RUNNER_TEMP/ci-browser"

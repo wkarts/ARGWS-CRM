@@ -10,7 +10,7 @@ abstract class CompanyRefundStorage
     public function __construct(protected $db,protected string $p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new \InvalidArgumentException('asaas_refund_prefix_invalid');$this->service=new CompanyService($db,$p);}
     public function tables():array
     {
-        $t=array_merge(CompanyService::tables(),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),array_keys(CompanyRefundSchema::definitions()));
+        $t=array_merge($this->service->tablesForRun(),array_keys(CompanyRefundSchema::definitions()));
         foreach(['bb_origins','asaas_company_remote_operations'] as $table)if($this->db->table_exists($this->p.$table))$t[]=$table;
         return array_values(array_unique($t));
     }

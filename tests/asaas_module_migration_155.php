@@ -9,7 +9,7 @@ if($mysql)$engine=' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin';e
 $tables155=['modules','issuers_registry','asaas_payment_origins','asaas_company_accounts',...\Asaas\CompanyPreferencesSchema::tables()];
 $version155=fn()=>$db->get_where($p.'modules',['module_name'=>'asaas'])->row_array()['installed_version'];
 try{
-    migration154Check(($match[1]??null)==='1.5.9','current159 header preserves the historical155 migration');
+    migration154Check(($match[1]??null)==='1.6.0','current160 header preserves the historical155 migration');
     $db->query('CREATE TABLE `'.$p.'modules` (module_name VARCHAR(50) PRIMARY KEY,installed_version VARCHAR(20))'.$engine);
     $db->query('CREATE TABLE `'.$p.'issuers_registry` (id INT UNSIGNED NOT NULL PRIMARY KEY)'.$engine);
     $db->query('CREATE TABLE `'.$p.'asaas_payment_origins` (id INT NOT NULL PRIMARY KEY,environment VARCHAR(16) NOT NULL)'.$engine);
@@ -76,12 +76,19 @@ try{
     migration154Check((new App_module_migration('asaas'))->version('158')===true,'158 native replay is no-op');
     foreach($before156 as $table=>$rows)migration154Check($db->get($p.$table)->result_array()===$rows,'158 preserves historical rows: '.$table);
     $db->failVersionWrite=true;$runner159=new App_module_migration('asaas');
-    migration154Check($runner159->to_latest()===false&&$version155()==='1.5.8','159 failed tracking preserves historical158');$db->failVersionWrite=false;
+    migration154Check($runner159->version('159')===false&&$version155()==='1.5.8','159 failed tracking preserves historical158');$db->failVersionWrite=false;
     $db->ignoreVersionWrite=true;$runner159=new App_module_migration('asaas');
-    migration154Check($runner159->to_latest()===false&&$runner159->error_string()==='module_migration_version_unconfirmed'&&$version155()==='1.5.8','159 lying tracking success denied');$db->ignoreVersionWrite=false;
-    migration154Check((string)(new App_module_migration('asaas'))->to_latest()==='159'&&$version155()==='1.5.9','159 latest native marker confirmed');
-    migration154Check((new App_module_migration('asaas'))->to_latest()===true,'159 native replay is no-op');
+    migration154Check($runner159->version('159')===false&&$runner159->error_string()==='module_migration_version_unconfirmed'&&$version155()==='1.5.8','159 lying tracking success denied');$db->ignoreVersionWrite=false;
+    migration154Check((string)(new App_module_migration('asaas'))->version('159')==='159'&&$version155()==='1.5.9','159 historical native marker confirmed');
+    migration154Check((new App_module_migration('asaas'))->version('159')===true,'159 native replay is no-op');
     foreach($before156 as $table=>$rows)migration154Check($db->get($p.$table)->result_array()===$rows,'159 preserves historical rows: '.$table);
+    $db->failVersionWrite=true;$runner160=new App_module_migration('asaas');
+    migration154Check($runner160->to_latest()===false&&$version155()==='1.5.9','160 failed tracking preserves historical159');$db->failVersionWrite=false;
+    $db->ignoreVersionWrite=true;$runner160=new App_module_migration('asaas');
+    migration154Check($runner160->to_latest()===false&&$runner160->error_string()==='module_migration_version_unconfirmed'&&$version155()==='1.5.9','160 lying tracking success denied');$db->ignoreVersionWrite=false;
+    migration154Check((string)(new App_module_migration('asaas'))->to_latest()==='160'&&$version155()==='1.6.0','160 latest native marker confirmed');
+    migration154Check((new App_module_migration('asaas'))->to_latest()===true,'160 native replay is no-op');
+    foreach($before156 as $table=>$rows)migration154Check($db->get($p.$table)->result_array()===$rows,'160 preserves historical rows: '.$table);
     $db->query('ALTER TABLE `'.$p.'asaas_company_profiles` ADD `unexpected` INT NULL');
     migration154Throws(fn()=>\Asaas\CompanyPreferencesSchema::ensure($db,$p,false),'issuer_asaas_preferences_schema_invalid');
     echo 'Asaas native155 migration: '.($checks-$start155).' checks passed ('.$pdo->getAttribute(PDO::ATTR_DRIVER_NAME).'). Failure/retry/readback/replay; no provider calls.'.PHP_EOL;
