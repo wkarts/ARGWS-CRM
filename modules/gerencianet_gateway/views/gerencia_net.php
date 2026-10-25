@@ -32,6 +32,12 @@
                         </ul>
                         <strong>Passo 3)</strong> <br><br />
                         <form action="" id="converterForm" enctype="multipart/form-data" method="post">
+                            <input type="hidden" name="efi_checkout_csrf" value="<?= html_escape(get_instance()->session->userdata('efi_checkout_csrf')); ?>">
+                            <?php if (get_instance()->config->item('csrf_protection')) { ?>
+                            <input type="hidden" name="<?= html_escape(get_instance()->security->get_csrf_token_name()); ?>" value="<?= html_escape(get_instance()->security->get_csrf_hash()); ?>">
+                            <?php } ?>
+                            <label for="certificate-password">Senha do certificado (se houver)</label>
+                            <input type="password" class="form-control" id="certificate-password" name="certificate_password" autocomplete="new-password" maxlength="4096">
                             <div class="top_stats_wrapper">
                                 <label for="cert_p12">Selecione o seu novo certificado baixado <b>.P12</b></label>
                                 <input required type="file" accept=".p12" name="cert_p12" id="cert_p12" style="border:0;width:100%;">
@@ -47,18 +53,12 @@
                                 <label for="homologacao">O certificado será para homologação.</label>
                             </div>
 
-                            <div class="checkbox">
-                                <input type="checkbox" class="capability" checked id="configurar-automaticamente" name="configurar-automaticamente">
-                                <label for="configurar-automaticamente">
-                                    Você deseja que este aquivo já seja configurado na área de configuração do módulo? <i class="fa fa-question-circle pull-left"
-                                    data-toggle="tooltip" data-title="Se você marcar esta opção, você não precisará entrar em mídia, copiar o nome do arquivo e salvar nas configurações do módulo de pagamento do gerência net." data-original-title="" title=""></i></label>
-                            </div>
-
+                            <p>O certificado será validado e armazenado criptografado. A chave privada não será publicada em mídia nem retornada ao navegador.</p>
                             <input type="hidden" name="converter">
 
                             <div class="alert alert-danger">
                                 <p><strong>Atenção!</strong><br>
-                                    Ao clicar em converter, caso haja um arquivo com o mesmo nome em media/gerencianet/&lt;NOME_DO_ARQUIVO&gt;, ele será sobrescrito.</p>
+                                    Esta ação substitui somente o certificado criptografado do ambiente selecionado. Certificados e cobranças históricas não serão apagados.</p>
                             </div>
                             <button id='btn-converter-p12toPem' class="btn btn-info mright5 display-block">Converter</button>
                         </form>

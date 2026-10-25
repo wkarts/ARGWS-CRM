@@ -17,8 +17,14 @@ final class IssuerCertificateParser
         $parts = []; $private = null;
         try {
             self::drainErrors();
-            if (!@openssl_pkcs12_read($pfx, $parts, $password) || !is_string($parts['cert'] ?? null) || !is_string($parts['pkey'] ?? null)) {
-                throw new DomainException('issuer_certificate_parse_failed');
+            if (!@openssl_pkcs12_read($pfx, $parts, $password)) {
+                $reason=self::readFailure();
+                require_once __DIR__.'/IssuerCertificateLegacyImport.php';
+                if ($reason!=='issuer_certificate_algorithm_unsupported' || !IssuerCertificateLegacyImport::enabled()) { throw new DomainException($reason); }
+                $parts=IssuerCertificateLegacyImport::read($pfx,$password);
+            }
+            if (!is_string($parts['cert'] ?? null) || !is_string($parts['pkey'] ?? null)) {
+                throw new DomainException('issuer_certificate_key_required');
             }
             // check_private_key alone compares public material, so load a private key first.
             $private = @openssl_pkey_get_private($parts['pkey']);
@@ -49,6 +55,21 @@ final class IssuerCertificateParser
         } catch (DomainException $error) { throw $error; }
         catch (Throwable $error) { throw new DomainException('issuer_certificate_parse_failed'); }
         finally { $parts = []; $private = null; self::drainErrors(); }
+    }
+
+    /** Consume diagnostics locally; never expose error text, filenames or input values. */
+    private static function readFailure(): string
+    {
+        $unsupported = false; $authentication = false;
+        while (($error = openssl_error_string()) !== false) {
+            // Exact library/reason allowlist, compatible with OpenSSL 1.1/3 error strings.
+            // An unknown error is deliberately not interpreted as an incorrect password.
+            $unsupported = $unsupported || preg_match('/^error:[0-9a-f]+:(?:digital envelope routines:[^:]*:unsupported|PKCS12 routines:[^:]*:unsupported algorithm)$/iD', $error) === 1;
+            $authentication = $authentication || preg_match('/^error:[0-9a-f]+:PKCS12 routines:[^:]*:mac verify failure$/iD', $error) === 1;
+        }
+        if ($unsupported) { return 'issuer_certificate_algorithm_unsupported'; }
+        if ($authentication) { return 'issuer_certificate_authentication_failed'; }
+        return 'issuer_certificate_parse_failed';
     }
 
     private static function drainErrors(): void { while (openssl_error_string() !== false) {} }

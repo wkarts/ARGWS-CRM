@@ -3,11 +3,12 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: Banco do Brasil - Cobrança e CNAB 240/400
 Description: Conexões isoladas por emitente, perfis CNAB 240/400 e revisão de retornos. Operação bancária depende de contrato validado e homologação.
-Version: 1.2.3
-Requires at least: 4.4.7
+Version: 1.2.6
+Requires at least: 4.7.3
 */
 define('BANCO_BRASIL_MODULE_NAME','banco_brasil');
 register_activation_hook(BANCO_BRASIL_MODULE_NAME,'banco_brasil_activate');
+register_payment_gateway('banco_brasil_gateway', BANCO_BRASIL_MODULE_NAME);
 hooks()->add_action('admin_init','banco_brasil_admin_init');
 function banco_brasil_activate() { require __DIR__.'/install.php'; }
 function banco_brasil_admin_init()

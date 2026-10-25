@@ -4563,3 +4563,54 @@ CREATE TABLE IF NOT EXISTS `tblrecurring_rule_runs` (
  `created_at` datetime NOT NULL,
  PRIMARY KEY (`id`), UNIQUE KEY `recurring_cycle` (`rule_id`,`cycle_date`), UNIQUE KEY `recurring_invoice` (`invoice_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- Core 4.7.3: explicit legacy-version receipts and scoped Efí provider identities.
+CREATE TABLE `tblmodule_version_adoptions` (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            module_name VARCHAR(64) COLLATE utf8mb4_bin NOT NULL,
+            plan_id VARCHAR(64) COLLATE utf8mb4_bin NOT NULL,
+            source_version VARCHAR(64) COLLATE utf8mb4_bin NOT NULL,
+            target_version VARCHAR(64) COLLATE utf8mb4_bin NOT NULL,
+            source_header_sha256 CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+            actor_id INT UNSIGNED NOT NULL,
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY (id), UNIQUE KEY module_plan (module_name,plan_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+CREATE TABLE `tblefi_charge_bindings` (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            provider_id VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+            kind VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+            sandbox TINYINT UNSIGNED NOT NULL,
+            account_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+            invoice_id INT UNSIGNED NOT NULL,
+            issuer_id INT UNSIGNED NULL,
+            amount_minor BIGINT UNSIGNED NOT NULL,
+            currency CHAR(3) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+            payment_id INT UNSIGNED NULL,
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY (id), UNIQUE KEY provider_identity (kind,sandbox,account_hash,provider_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+CREATE TABLE `tblefi_charge_intents` (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            invoice_id INT UNSIGNED NOT NULL,
+            issuer_id INT UNSIGNED NULL,
+            kind VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+            sandbox TINYINT UNSIGNED NOT NULL,
+            account_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+            amount_minor BIGINT UNSIGNED NOT NULL,
+            currency CHAR(3) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+            state VARCHAR(24) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+            provider_id VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (id), UNIQUE KEY invoice_intent (invoice_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+-- Company-scoped Efi storage (core 473); no credentials or company data seeded.
+CREATE TABLE `tblefi_company_accounts` (`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,`issuer_id` INT UNSIGNED NOT NULL,`environment` VARCHAR(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`account_hash` CHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`credentials_cipher` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`certificate_cipher` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,`revision` CHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`enabled` TINYINT UNSIGNED NOT NULL,`created_by` INT UNSIGNED NOT NULL,`updated_by` INT UNSIGNED NOT NULL,`created_at` DATETIME NOT NULL,`updated_at` DATETIME NOT NULL,PRIMARY KEY (`id`),UNIQUE KEY `issuer_environment` (`issuer_id`,`environment`),UNIQUE KEY `account_environment` (`account_hash`,`environment`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+CREATE TABLE `tblefi_company_origins` (`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,`issuer_id` INT UNSIGNED NOT NULL,`invoice_id` INT UNSIGNED NOT NULL,`account_id` BIGINT UNSIGNED NOT NULL,`account_revision` CHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`environment` VARCHAR(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`account_hash` CHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`kind` VARCHAR(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`amount_minor` BIGINT UNSIGNED NOT NULL,`currency` CHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`snapshot_json` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`snapshot_hash` CHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`state` VARCHAR(24) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`provider_id` VARCHAR(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,`created_by` INT UNSIGNED NOT NULL,`created_at` DATETIME NOT NULL,`updated_at` DATETIME NOT NULL,PRIMARY KEY (`id`),UNIQUE KEY `invoice_origin` (`invoice_id`),UNIQUE KEY `provider_identity` (`account_id`,`kind`,`provider_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+CREATE TABLE `tblefi_company_proofs` (`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,`origin_id` BIGINT UNSIGNED NOT NULL,`account_revision` CHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`operation` VARCHAR(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`result_json` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`evidence_hash` CHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`state` VARCHAR(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`created_by` INT UNSIGNED NOT NULL,`created_at` DATETIME NOT NULL,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+CREATE TABLE `tblefi_company_receipts` (`origin_id` BIGINT UNSIGNED NOT NULL,`issuer_id` INT UNSIGNED NOT NULL,`proof_id` BIGINT UNSIGNED NOT NULL,`payment_id` INT UNSIGNED NOT NULL,`canonical_key` CHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`evidence_hash` CHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,`created_by` INT UNSIGNED NOT NULL,`created_at` DATETIME NOT NULL,PRIMARY KEY (`origin_id`),UNIQUE KEY `native_payment` (`payment_id`),UNIQUE KEY `canonical_receipt` (`canonical_key`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;

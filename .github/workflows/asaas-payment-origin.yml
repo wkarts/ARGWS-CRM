@@ -10,6 +10,10 @@ on:
       - application/services/InvoicePaymentWriter.php
       - application/services/CompanyBankReversalSchema.php
       - tests/asaas_*.php
+      - tests/companies/asaas_origin_policy.php
+      - tests/companies/asaas_instruments.php
+      - tests/companies/asaas_explicit_reconciliation.php
+      - tests/asaas_origin_policy_static.py
       - tests/asaas_*.test.js
       - tests/asaas_*.test.cjs
       - docker/ci/**
@@ -25,6 +29,10 @@ on:
       - application/services/InvoicePaymentWriter.php
       - application/services/CompanyBankReversalSchema.php
       - tests/asaas_*.php
+      - tests/companies/asaas_origin_policy.php
+      - tests/companies/asaas_instruments.php
+      - tests/companies/asaas_explicit_reconciliation.php
+      - tests/asaas_origin_policy_static.py
       - tests/asaas_*.test.js
       - tests/asaas_*.test.cjs
       - docker/ci/**
@@ -62,6 +70,7 @@ jobs:
           php tests/asaas_hosted_card.php
           php tests/asaas_hosted_card_gateway.php
           php tests/asaas_customer_contact_policy.php
+          php tests/asaas_company_instruments.php
           php tests/asaas_mutation_no_retry.php
           php tests/asaas_settings_policy.php
           php tests/asaas_environment_profiles.php
@@ -84,12 +93,18 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Habilitar driver de teste
-        run: docker-php-ext-install pdo_mysql
+        run: |
+          apt-get update && apt-get install -y --no-install-recommends libpng-dev libjpeg62-turbo-dev libfreetype6-dev libonig-dev
+          docker-php-ext-configure gd --with-freetype --with-jpeg
+          docker-php-ext-install pdo_mysql mbstring gd
       - name: Validar persistencia e constraints no MySQL descartavel
         env:
           ASAAS_TEST_MYSQL_DSN: mysql:host=mysql;dbname=asaas_test;charset=utf8mb4
           ASAAS_TEST_MYSQL_USER: root
           ASAAS_TEST_MYSQL_PASSWORD: test-only-password
+          ISSUERS_TEST_DSN: mysql:host=mysql;dbname=asaas_test;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: test-only-password
         run: |
           php tests/asaas_payment_origin_schema.php
           php tests/asaas_webhook_schema.php
@@ -99,6 +114,10 @@ jobs:
           php tests/asaas_module_migrations.php
           php tests/asaas_callback_migration.php
           php tests/asaas_payment_writer_mysql.php
+          php tests/companies/asaas_origin_policy.php
+          php tests/companies/asaas_instruments.php
+          php tests/companies/asaas_explicit_reconciliation.php
+          php tests/companies/asaas_inflight_quarantine.php
 
   settings-ui:
     runs-on: ubuntu-latest

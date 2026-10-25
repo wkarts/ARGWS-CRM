@@ -5,7 +5,7 @@ $identity_labels=['company_trade_name'=>'Nome fantasia','company_state_registrat
 ?>
 <div class="company-identity-editor" data-company-identity data-company-context="<?= $esc(CompanyRequestScope::token()); ?>" data-lookup-url="<?= $esc($lookup_url); ?>" data-lookup-token="<?= $esc($lookup_token); ?>" data-lookup-mode="<?= $esc($identity_mode); ?>" data-issuer-id="<?= $esc($selected['id']??''); ?>">
 <link rel="stylesheet" href="<?= $esc(base_url('assets/css/company-identity.css')); ?>">
-<nav class="company-identity-sections" aria-label="Seções do cadastro"><a href="#company-identification">1. Identificação</a><a href="#company-address">2. Endereço</a><a href="#company-contact">3. Contato</a></nav>
+<ul class="nav nav-tabs company-identity-sections" aria-label="Seções do cadastro" tabindex="0"><li><a href="#company-identification">1. Identificação</a></li><li><a href="#company-address">2. Endereço</a></li><li><a href="#company-contact">3. Contato</a></li></ul>
 <section id="company-identification" data-identity-panel><h3>Identificação da empresa</h3>
 <p class="text-muted">Consulte o CNPJ ou preencha manualmente. Razão social e documento fiscal são obrigatórios.</p>
 <div class="company-identity-grid">

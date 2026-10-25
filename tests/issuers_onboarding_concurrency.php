@@ -2,7 +2,7 @@
 /** Two real MySQL writers; no SQLite fallback and no external provider. */
 require __DIR__.'/issuers_core_support.php';
 require_once APPPATH.'services/CompanyOnboarding.php';
-require_once APPPATH.'services/issuers/IssuerMasterResolution.php';
+require_once APPPATH.'services/issuers/IssuerOriginalAdministrator.php';
 if(!class_exists('CI_Migration')){#[AllowDynamicProperties] class CI_Migration {}}
 if(!str_starts_with(getenv('ISSUERS_TEST_DSN')?:'','mysql:')){fwrite(STDERR,"An isolated MySQL DSN is required.\n");exit(2);}
 function raceConnection(string $prefix): EssentialTestDb
@@ -15,10 +15,10 @@ if(($argv[1]??'')==='worker'){
     $input=json_decode(stream_get_contents(STDIN),true,16,JSON_THROW_ON_ERROR);$db=raceConnection($p);
     try{
         if($input['operation']==='master'){
-            (new IssuerMasterResolution($db,$p))->complete(7,$input['code'],'synthetic-confirmation',static fn($password,$hash)=>password_verify($password,$hash));
+            (new IssuerOriginalAdministrator($db,$p))->bind(7,$input['primary'],'test:concurrent-owner-confirmation');
             echo 'master';
         }else{echo (new CompanyOnboarding($db,$p,$catalog))->complete(7,$input['key'],$input['revision']);}
-    }catch(DomainException $error){if(in_array($error->getMessage(),['issuer_access_denied','issuer_master_candidate_denied'],true)){echo 'denied';}else{throw $error;}}
+    }catch(DomainException $error){if(in_array($error->getMessage(),['issuer_access_denied','issuer_original_active_admin_required','issuer_identity_already_resolved'],true)){echo 'denied';}else{throw $error;}}
     exit(0);
 }
 register_shutdown_function('essentialCleanup');
@@ -53,9 +53,13 @@ function race(array $input,?callable $beforeRelease=null): array
         return $outputs;
     }finally{if($db->pdo->inTransaction()){$db->trans_rollback();}}
 }
-$master=new IssuerMasterResolution($db,$p);$code=$master->authorizeDesignation(7,'Authorized synthetic concurrent designation validation');
-essentialCheck(race(['operation'=>'master','code'=>$code])===['master','master'],'same authorization completion serializes idempotently');
-essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}issuers_audit WHERE event='installation_master_designated'")->row()->n===1,'one durable designation audit');
+$master=new IssuerOriginalAdministrator($db,$p);$primary=$master->inspect(7)['primary_issuer_id'];
+essentialCheck(race(['operation'=>'master','primary'=>$primary],fn()=>$db->query("UPDATE {$p}staff SET active=0 WHERE staffid=7"))===['denied','denied'],'maintenance revalidates candidate revoked while waiting');
+essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}issuers_audit WHERE event='original_admin_attested'")->row()->n===0,'revoked candidate leaves no binding audit');
+$db->query("UPDATE {$p}staff SET active=1 WHERE staffid=7");
+
+essentialCheck(race(['operation'=>'master','primary'=>$primary])===['master','master'],'same authorization completion serializes idempotently');
+essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}issuers_audit WHERE event='original_admin_attested'")->row()->n===1,'one durable designation audit');
 $s=new CompanyOnboarding($db,$p,$catalog);
 function readyDraft(string $key,string $tax): array
 {

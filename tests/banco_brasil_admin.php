@@ -18,6 +18,7 @@ function issuer_resource_can($id,$actor,$feature,$cap){return in_array($id,$GLOB
 function access_denied($v){throw new BbDenied('denied');}function show_error($m,$s){throw new BbHttp((string)$s);}
 function admin_url($p){return 'https://crm.example.test/admin/'.$p;}function set_alert($kind,$text){$GLOBALS['alerts'][]=[$kind,$text];}
 function redirect($url){throw new BbRedirect($url);}function db_prefix(){return 't_';}
+function register_payment_gateway(...$args){$GLOBALS['registeredGateway']=$args;}
 class IssuerCore { public static function ready($db,$prefix): bool { return $GLOBALS['issuerCoreReady']; } }
 class IssuerRegistry {
  public function __construct($db,$prefix) {}

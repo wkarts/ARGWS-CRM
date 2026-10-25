@@ -10,7 +10,7 @@ final class CompanyPayers
     private CompanyService $service;
     public function __construct(private $db,private string $p){$this->service=new CompanyService($db,$p);}
     private function rows(string $sql,array $args=[]):array{return \IssuerStorage::query($this->db,$sql,$args)->result_array();}
-    public function tables():array{return array_merge(CompanyService::tables(),(new \CompanyInvoiceBalance($this->db,$this->p))->tables(),CompanyCheckoutSchema::tables(),$this->db->table_exists($this->p.'asaas_company_remote_operations')?['asaas_company_remote_operations']:[],$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[]);}
+    public function tables():array{return array_merge($this->service->tablesForRun(),CompanyCheckoutSchema::tables(),$this->db->table_exists($this->p.'asaas_company_remote_operations')?['asaas_company_remote_operations']:[],$this->db->table_exists($this->p.'bb_origins')?['bb_origins']:[]);}
     private function run(int $issuer,int $actor,callable $fn)
     {
         $this->service->checkoutModule();return \IssuerTransaction::run($this->db,$this->p,$this->tables(),function()use($issuer,$actor,$fn){(new \IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->service->authorize($issuer,$actor,'payer');$this->service->checkoutModule();return $fn();});

@@ -1,0 +1,8 @@
+{
+  "synthetic_only": true,
+  "secret": "synthetic-diagnostic-fixture-not-a-real-secret",
+  "timestamp": "1792800000",
+  "path": "/pige_bridge/api/v1/diagnostics",
+  "raw_body": "{\"schema_version\":1,\"event_id\":\"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\",\"event_type\":\"connection.test\",\"scope\":{\"school_id\":\"11111111-1111-4111-8111-111111111111\",\"issuer_id\":\"7\",\"account_id\":\"synthetic-wallet\",\"environment\":\"sandbox\"},\"data\":{\"nonce\":\"cccccccc-cccc-4ccc-8ccc-cccccccccccc\"}}",
+  "signature": "sha256=7a170421d2940cab3e907a19c376f10672fbaabeae36b938296150aad3f0565a"
+}

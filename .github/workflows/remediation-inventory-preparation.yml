@@ -1,0 +1,108 @@
+name: Preparar inventário oficial da remediação
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Gerar inventários oficiais sem carregar aplicação
+        run: |
+          mkdir -p /tmp/remediation-inventories
+          php scripts/company-surface-inventory.php --output /tmp/remediation-inventories/operational-surfaces.json
+          python3 scripts/inventory-company-boundaries.py --output /tmp/remediation-inventories/company-boundaries.json
+          php tests/efi_csrf_config.php
+          php tests/efi_native_autoload.php
+          php tests/efi/sdk_transport_contract.php
+          php tests/efi/intent_contract.php
+          php tests/efi_adoption_http.php
+          php tests/efi_checkout_preflight.php
+          php tests/efi/company_accounts_contract.php
+          php tests/efi/company_controller_contract.php
+          php tests/efi/company_proof_contract.php
+          php tests/issuers_original_administrator.php
+          php tests/company_settings_layout.php
+      - name: PWA em Chromium e HTTP reais descartáveis
+        env:
+          PWA_BROWSER_ARTIFACTS: /tmp/remediation-pwa-fixture
+        run: |
+          node tests/native_pwa.browser.cjs
+          SCREENSHOT_DIR=/tmp/remediation-pwa-fixture node tests/company_settings_layout.browser.cjs
+          COMPANY_SHELL_SCREENSHOT_DIR=/tmp/remediation-pwa-fixture node tests/efi/company_ui.browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: remediation-pwa-synthetic-browser
+          path: /tmp/remediation-pwa-fixture
+          if-no-files-found: warn
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: remediation-official-inventories
+          path: /tmp/remediation-inventories/*.json
+          if-no-files-found: error
+          retention-days: 7
+  early-php-mysql:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.5']
+        include:
+          - php: '8.1'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+          - php: '8.5'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:d050af83a621363bdc79e5868f85d7203e8b5fb03be6cd37fbb7c41500894677
+    container:
+      image: ${{ matrix.image }}
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: synthetic-test-password
+          MYSQL_DATABASE: issuer_module_audit
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -psynthetic-test-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Contratos curtos de Efí e importação isolada
+        env:
+          ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_module_audit;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: synthetic-test-password
+        run: |
+          python3 tests/test_efi_company_contract.py
+          python3 tests/test_efi_company_checkout_contract.py
+          php tests/asaas_checkout_transaction_tables.php
+          php tests/efi_install_contract.php
+          php tests/efi_routes.php
+          php tests/efi_csrf_config.php
+          php tests/efi_adoption_http.php
+          php tests/efi_checkout_preflight.php
+          php tests/efi/company_accounts_contract.php
+          php tests/efi/company_controller_contract.php
+          php tests/efi/company_proof_contract.php
+          php tests/efi/operational_contract.php
+          php tests/efi/controller_contract.php
+          php tests/efi/certificate_contract.php
+          php tests/efi_native_autoload.php
+          php tests/efi/sdk_transport_contract.php
+          php tests/efi/intent_contract.php
+          php tests/companies/efi_adoption_mysql.php
+          php tests/companies/efi_operational_mysql.php
+          php tests/companies/efi_company_checkout.php
+          php tests/companies/asaas_inflight_quarantine.php
+          php tests/banco_brasil_bridge125_mysql.php
+          php tests/pige_bridge_bb_mysql.php
+          php tests/certificates/openssl_compatibility.php
+          php tests/certificates/legacy_process_limits.php
+          python3 tests/test_native_pwa_http.py

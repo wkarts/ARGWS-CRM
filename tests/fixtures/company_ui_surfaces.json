@@ -579,6 +579,36 @@
       }
     },
     {
+      "path": "application/views/admin/companies/efi.php",
+      "kind": "company-shell",
+      "reason": "Configuração Efí empresarial usa shell isolado compartilhado; runtime e fidelidade visual ainda exigem validação específica.",
+      "owners": [
+        "application/controllers/admin/Company_efi.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 6,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 20,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
       "path": "application/views/admin/companies/expense_billing.php",
       "kind": "partial",
       "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
@@ -853,7 +883,8 @@
       "kind": "partial",
       "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
       "owners": [
-        "application/views/admin/companies/onboarding.php"
+        "application/views/admin/companies/onboarding.php",
+        "application/views/admin/companies/identity_modal.php"
       ],
       "literal_controls": {
         "table": {
@@ -896,6 +927,36 @@
         },
         "input": {
           "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/companies/identity_modal.php",
+      "kind": "modal-document",
+      "reason": "Documento same-origin para editar identidade existente; usa CSS nativo, contexto explícito e partial compartilhada, sem inicializar shell global ou wizard de criação.",
+      "owners": [
+        "application/controllers/admin/Issuers.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 2,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 5,
           "classless_presentation_candidates": 0
         },
         "select": {
@@ -2239,7 +2300,7 @@
           "classless_presentation_candidates": 0
         },
         "button": {
-          "literal_tags": 7,
+          "literal_tags": 9,
           "classless_presentation_candidates": 0
         },
         "input": {
@@ -2958,7 +3019,7 @@
     {
       "path": "application/views/admin/issuers/master_resolution.php",
       "kind": "native-shell",
-      "reason": "Página administrativa legada usa init_head/init_tail nativos.",
+      "reason": "Read-only native-shell notice for the retired responsibility wizard; no hosting code, password or mutation form remains.",
       "owners": [
         "application/controllers/admin/Company_master.php"
       ],
@@ -2968,11 +3029,11 @@
           "classless_presentation_candidates": 0
         },
         "button": {
-          "literal_tags": 1,
+          "literal_tags": 0,
           "classless_presentation_candidates": 0
         },
         "input": {
-          "literal_tags": 3,
+          "literal_tags": 0,
           "classless_presentation_candidates": 0
         },
         "select": {
@@ -3074,6 +3135,98 @@
           "classless_presentation_candidates": 0
         }
       }
+    },
+    {
+      "path": "application/views/admin/settings/includes/company_identity_fields.php",
+      "kind": "partial",
+      "reason": "Componente de campos nativos único para Settings principal e secundário; exige adaptador explícito de valores e não consulta opções globais.",
+      "owners": [
+        "application/views/admin/settings/includes/company.php",
+        "application/views/admin/settings/company_scoped.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "application/views/admin/settings/presentation_layout.php",
+      "kind": "partial",
+      "reason": "Envelope visual nativo compartilhado por Settings principal e scoped; somente DTO de apresentação admitido, sem hooks, opções, dispatch ou forms próprios.",
+      "owners": [
+        "application/views/admin/settings/all.php",
+        "application/views/admin/settings/company_scoped.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
+    },
+    {
+      "path": "modules/pige_bridge/views/settings.php",
+      "kind": "native-shell",
+      "reason": "Painel HMVC administrativo com init_head/init_tail nativos, sem bypass CompanyRequestScope; contém somente empresas autorizadas e token mascarado.",
+      "owners": [
+        "modules/pige_bridge/controllers/Settings.php"
+      ],
+      "literal_controls": {
+        "table": {
+          "literal_tags": 1,
+          "classless_presentation_candidates": 0
+        },
+        "button": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "input": {
+          "literal_tags": 16,
+          "classless_presentation_candidates": 0
+        },
+        "select": {
+          "literal_tags": 3,
+          "classless_presentation_candidates": 0
+        },
+        "textarea": {
+          "literal_tags": 0,
+          "classless_presentation_candidates": 0
+        }
+      }
     }
   ],
   "controllers": [
@@ -3082,11 +3235,12 @@
       "public_methods": [
         "complete_installation",
         "apply_migrations",
-        "authorize_company_master"
+        "authorize_company_master",
+        "original_administrator"
       ],
       "view_refs": [],
       "presentation": "non-view endpoint",
-      "reason": "Fluxo de callback/redirecionamento/API/provisionamento, sem view literal. Não é excluído: mudanças que introduzam view falham no inventário."
+      "reason": "Installation provisioning and explicitly authorized CLI-only original-administrator maintenance; HTTP access is refused and no identity is inferred."
     },
     {
       "path": "application/controllers/admin/Company_ai.php",
@@ -3223,6 +3377,17 @@
       ],
       "presentation": "views",
       "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
+    },
+    {
+      "path": "application/controllers/admin/Company_efi.php",
+      "public_methods": [
+        "index"
+      ],
+      "view_refs": [
+        "admin/companies/efi"
+      ],
+      "presentation": "views",
+      "reason": "Configuração e checkout empresarial isolados; ACL/CSRF e provedor fake precisam execução PHP/MySQL."
     },
     {
       "path": "application/controllers/admin/Company_expense_copies.php",
@@ -3649,6 +3814,7 @@
         "lookup"
       ],
       "view_refs": [
+        "admin/companies/identity_modal",
         "admin/companies/registry",
         "admin/issuers/manage"
       ],
@@ -3676,11 +3842,34 @@
     {
       "path": "modules/pige_bridge/controllers/Bridge.php",
       "public_methods": [
-        "requests"
+        "requests",
+        "diagnostics",
+        "invoices",
+        "invoice_status",
+        "charges",
+        "charge_status",
+        "charge_sync",
+        "charge_instruments",
+        "charge_reconcile"
       ],
       "view_refs": [],
       "presentation": "non-view endpoint",
-      "reason": "Fluxo de callback/redirecionamento/API/provisionamento, sem view literal. Não é excluído: mudanças que introduzam view falham no inventário."
+      "reason": "Endpoints HMAC JSON de recepção v1 e diagnóstico autenticado; não renderizam dados empresariais no shell."
+    },
+    {
+      "path": "modules/pige_bridge/controllers/Settings.php",
+      "public_methods": [
+        "__construct",
+        "index",
+        "save",
+        "mapping",
+        "external"
+      ],
+      "view_refs": [
+        "pige_bridge/settings"
+      ],
+      "presentation": "views",
+      "reason": "Painel nativo de conexões por empresa e delegação local, admin/CSRF/ACL antes da persistência; runtime visual ainda pendente."
     }
   ]
 }

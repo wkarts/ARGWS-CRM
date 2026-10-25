@@ -10,15 +10,7 @@
     <div class="alert alert-info">
         <?php echo _l('settings_sales_company_info_note'); ?>
     </div>
-    <?php echo render_input('settings[invoice_company_name]', 'settings_sales_company_name', get_option('invoice_company_name')); ?>
-    <?php foreach(['company_trade_name'=>'Nome fantasia','company_state_registration'=>'Inscrição estadual (ou ISENTO, quando aplicável)','company_address_number'=>'Número','company_address_complement'=>'Complemento','company_address_district'=>'Bairro'] as $field=>$label){echo render_input('settings['.$field.']',$label,get_option($field));} ?>
-    <?php echo render_input('settings[invoice_company_address]', 'settings_sales_address', get_option('invoice_company_address')); ?>
-    <?php echo render_input('settings[invoice_company_city]', 'settings_sales_city', get_option('invoice_company_city')); ?>
-    <?php echo render_input('settings[company_state]', 'billing_state', get_option('company_state')); ?>
-    <?php echo render_input('settings[invoice_company_country_code]', 'settings_sales_country_code', get_option('invoice_company_country_code')); ?>
-    <?php echo render_input('settings[invoice_company_postal_code]', 'settings_sales_postal_code', get_option('invoice_company_postal_code')); ?>
-    <?php echo render_input('settings[invoice_company_phonenumber]', 'settings_sales_phonenumber', get_option('invoice_company_phonenumber')); ?>
-    <?php echo render_input('settings[company_vat]', 'company_vat_number', get_option('company_vat')); ?>
+    <?php $companyIdentityOption=static fn($name)=>get_option($name); require __DIR__.'/company_identity_fields.php'; unset($companyIdentityOption); ?>
     <?php echo render_custom_fields('company', 0); ?>
     <hr />
     <?php echo render_textarea('settings[company_info_format]', 'company_info_format', clear_textarea_breaks(get_option('company_info_format')), ['rows' => 8, 'style' => 'line-height:20px;']); ?>

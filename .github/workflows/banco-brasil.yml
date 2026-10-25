@@ -2,11 +2,34 @@ name: Banco do Brasil module
 on:
   pull_request:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
-    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/support/BbPdoDatabase.php', 'docs/banco-brasil*', '.github/workflows/banco-brasil.yml']
+    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/support/BbPdoDatabase.php', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/test_bb_native_gateway.py', 'application/controllers/Company_portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', 'docs/modules/banco-brasil*', 'docs/banco-brasil*', '.github/workflows/banco-brasil.yml']
+  push:
+    branches: [main]
+    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/test_bb_native_gateway.py', 'tests/support/BancoBrasilCheckoutFixture.php', 'application/controllers/Company_portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', '.github/workflows/banco-brasil.yml']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
+  checkout-presentation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: ghcr.io/wkarts/argws-crm-ci-php@sha256:d050af83a621363bdc79e5868f85d7203e8b5fb03be6cd37fbb7c41500894677
+      options: --shm-size=1g
+    steps:
+      - uses: actions/checkout@v4
+      - run: EXPECTED_PHP=8.5 argws-ci-smoke
+      - run: python3 tests/test_bb_native_gateway.py
+      - run: php -l tests/support/BancoBrasilCheckoutFixture.php
+      - run: node tests/banco_brasil_checkout_browser.cjs
+        env:
+          BB_CHECKOUT_SCREENSHOT_DIR: /tmp/bb-checkout-render
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bb-checkout-production-views-synthetic-data
+          path: /tmp/bb-checkout-render/
+          if-no-files-found: error
   unit:
     runs-on: ubuntu-latest
     strategy:
@@ -19,6 +42,7 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
       - run: find modules/banco_brasil -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: php tests/banco_brasil_checkout_legacy_guard.php
       - run: php tests/banco_brasil_admin.php
       - run: php tests/banco_brasil_cnab240.php
       - run: php tests/banco_brasil_cnab400.php
@@ -71,6 +95,7 @@ jobs:
           php tests/banco_brasil_api16_components_mysql.php
           php tests/banco_brasil_api16_components_concurrency.php
           php tests/banco_brasil_api16_components_portal_mysql.php
+          php tests/banco_brasil_checkout_mysql.php
           php tests/banco_brasil_api16_components_cross_channel.php
           php tests/banco_brasil_pdf_typography_mysql.php
           php tests/banco_brasil_api_origin_cnab240_mysql.php
@@ -172,6 +197,7 @@ jobs:
           php tests/banco_brasil_api16_components_mysql.php
           php tests/banco_brasil_api16_components_concurrency.php
           php tests/banco_brasil_api16_components_portal_mysql.php
+          php tests/banco_brasil_checkout_mysql.php
           php tests/banco_brasil_api16_components_cross_channel.php
           php tests/banco_brasil_pdf_typography_mysql.php
           php tests/banco_brasil_api_origin_cnab240_mysql.php

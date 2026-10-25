@@ -83,6 +83,11 @@ class Payments_model extends App_Model
      */
     public function process_payment($data, $invoiceid = '')
     {
+        // BB instruments require an authenticated company portal; reject before invoice hydration or attempts.
+        if (($data['paymentmode'] ?? null) === 'banco_brasil') {
+            set_alert('warning', 'Consulte o boleto Banco do Brasil no portal autenticado da empresa.');
+            return false;
+        }
         $targetInvoiceId = is_numeric($invoiceid) ? $invoiceid : ($data['invoiceid'] ?? null);
         if (!InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $targetInvoiceId)) { return false; }
         if (isset($data['invoiceid']) && (string) $data['invoiceid'] !== (string) $targetInvoiceId) { return false; }

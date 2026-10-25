@@ -57,7 +57,7 @@ async function select(page, issuer) {
     await page.screenshot({ path: output + '/certificate-a-stored.png', fullPage: true });
     const before = sql('SELECT revision FROM tblissuer_certificate_credentials WHERE issuer_id=' + a[0]);
     await upload(page, fa, 'wrong-synthetic-password');
-    assert.match(await page.locator('[role=alert]').innerText(), /Não foi possível abrir/);
+    assert.match(await page.locator('[role=alert]').innerText(), /Não foi possível verificar a senha e a integridade do PFX\/P12/);
     assert.equal(sql('SELECT revision FROM tblissuer_certificate_credentials WHERE issuer_id=' + a[0]), before);
     assert.equal(await page.locator('#certificate-password').inputValue(), '');
     const stale = await context.request.post(page.url(), { form: { ...tokens, action: 'remove' } });

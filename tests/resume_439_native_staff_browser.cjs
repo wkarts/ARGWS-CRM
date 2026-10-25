@@ -1,6 +1,7 @@
 'use strict';
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
 const assert = require('node:assert/strict');
+const { assertAttestedMaster } = require('./helpers/installed_master_proof.cjs');
 const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const { chromium } = require('playwright');
@@ -34,7 +35,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
 (async()=>{
  const browser=await chromium.launch({headless:true}),context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());const page=await context.newPage();try{
  await login(page,'admin-ci@example.invalid',process.env.ISSUERS_BROWSER_PASSWORD);
- const identity=sql("SELECT CONCAT(master_staff_id,':',source) FROM tblissuers_installation_identity WHERE id=1");assert.match(identity,/^17:(installer|legacy_designation)$/);
+ const identity=sql("SELECT CONCAT(master_staff_id,':',source) FROM tblissuers_installation_identity WHERE id=1");assert.equal(identity, '17:owner_attestation'); assertAttestedMaster(sql);
     // Native Staff GUI first rejects missing company access, then creates a usable employee.
     async function fillStaff() {
       await page.locator('input[name=firstname]').fill('Synthetic');
@@ -58,6 +59,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
 
 
  assert.equal(sql("SELECT CONCAT(master_staff_id,':',source) FROM tblissuers_installation_identity WHERE id=1"),identity);
+ assertAttestedMaster(sql);
  console.log('Fresh439 native Staff GUI: missing membership rejected, canonical native employee creation with primary membership/default; installation master17 and designation source unchanged. No welcome email.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e.stack);process.exitCode=1;});

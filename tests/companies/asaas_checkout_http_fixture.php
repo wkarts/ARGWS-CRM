@@ -1,6 +1,10 @@
 <?php
 /** Explicit simulated bank protocol, CLI-only in the named disposable HTTP fixture database. */
 if(PHP_SAPI!=='cli'||getenv('ISSUERS_BROWSER_DB_NAME')!=='argws_upgrade_ci')exit(2);
+set_exception_handler(static function(Throwable $error):void {
+    $code=preg_match('/^(?:issuer|asaas)_[a-z_]+$/D',$error->getMessage())?$error->getMessage():'unclassified_fixture_error';
+    fwrite(STDERR,'Asaas checkout fixture failed: '.$code.' ('.get_class($error).')'.PHP_EOL);exit(1);
+});
 define('FCPATH',dirname(__DIR__,2).'/');define('BASEPATH',FCPATH.'system/');define('APPPATH',FCPATH.'application/');define('APP_MODULES_PATH',FCPATH.'modules/');require APPPATH.'config/app-config.php';if(APP_DB_NAME!=='argws_upgrade_ci')exit(2);
 require dirname(__DIR__).'/support/BbPdoDatabase.php';require APP_MODULES_PATH.'asaas/libraries/Asaas/CompanyPayers.php';require APPPATH.'services/CompanyClients.php';require APPPATH.'services/CompanyExpenses.php';require APPPATH.'services/CompanyContacts.php';require APPPATH.'services/CompanyContactInvoiceAccess.php';require BASEPATH.'libraries/Encryption.php';
 function db_prefix(){return 'tbl';}function log_message($level,$message){}

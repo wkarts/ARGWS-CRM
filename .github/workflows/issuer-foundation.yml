@@ -150,6 +150,24 @@ jobs:
           php -l application/hooks/InitHook.php
           php -l application/views/admin/modules/list.php
           find modules/issuers -name '*.php' -exec php -l '{}' \;
+          python3 tests/test_efi_company_contract.py
+          python3 tests/test_efi_company_checkout_contract.py
+          php tests/installed_master_proof.php
+          php tests/asaas_checkout_transaction_tables.php
+          php tests/efi_install_contract.php
+          php tests/efi_routes.php
+          php tests/efi/operational_contract.php
+          php tests/efi/controller_contract.php
+          php tests/efi/certificate_contract.php
+          php tests/efi_csrf_config.php
+          php tests/efi_native_autoload.php
+          php tests/efi/sdk_transport_contract.php
+          php tests/efi/intent_contract.php
+          php tests/efi_adoption_http.php
+          php tests/efi_checkout_preflight.php
+          php tests/efi/company_accounts_contract.php
+          php tests/efi/company_controller_contract.php
+          php tests/efi/company_proof_contract.php
           php tests/issuers_controller.php
           php tests/issuers_admin_upgrade_gate.php
           php tests/issuers_integration_view.php
@@ -173,6 +191,9 @@ jobs:
           php tests/companies/legacy_financial_module_tables.php
           php tests/companies/legacy_financial_module_migrations.php
           php tests/companies/module_version_column_mysql.php
+          php tests/companies/efi_adoption_mysql.php
+          php tests/companies/efi_operational_mysql.php
+          php tests/companies/efi_company_checkout.php
       - name: Testar schema, transações, ACL e concorrência em MySQL isolado
         env:
           ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_tests;charset=utf8mb4

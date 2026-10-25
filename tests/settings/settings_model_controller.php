@@ -50,6 +50,7 @@ final class SettingsTestLoader
         if ($name !== 'settings_model') { throw new RuntimeException('unexpected_legacy_model'); }
         $GLOBALS['CI']->settings_model = new Settings_model();
     }
+    public function helper($names): void { if($names!==['fields','form'])throw new RuntimeException('unexpected_helper'); }
     public function view($name,$data): void { $this->views[] = [$name,$data]; }
 }
 $GLOBALS['legacyModelConstructors'] = 0;
@@ -179,3 +180,23 @@ foreach([41=>'A',82=>'B'] as $owner=>$letter){
 }
 essentialCheck($store->get(41,'invoice_prefix')==='SYN-A-'&&$store->get(82,'invoice_prefix')==='SYN-B-','company switching never shares invoice prefix or terms');
 echo 'Document preferences controller: '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;
+
+// Exercise the actual native input helper and common field partial; global
+// get_option above deliberately throws, so scoped rendering cannot fall back.
+require_once APPPATH.'helpers/fields_helper.php';
+if(!function_exists('set_value')){function set_value($name,$value){return htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}}
+foreach([41,82] as $owner){
+ CompanySettingsRuntime::run($db,$p,$owner,12,function()use($viewHarness,$owner){
+  $controller=new Settings();$GLOBALS['CI']->input->group='company';$GLOBALS['CI']->input->payload=[];
+  $controller->index();$view=end($GLOBALS['CI']->load->views)[1];
+  $before=CompanySettingsRuntime::all();$html=$viewHarness->render($view);
+  foreach(CompanySettingsCatalog::fields('company') as $field){essentialCheck(substr_count($html,'name="settings['.$field.']"')===1,'native shared field appears exactly once '.$field);}
+  essentialCheck(str_contains($html,'app-field-wrapper="settings[invoice_company_name]"'),'actual native input markup reused');
+  essentialCheck(str_contains($html,'class="control-label"'),'native labels reused');
+  essentialCheck(!str_contains($html,'name="settings[company_info_format]"')&&!str_contains($html,'name="custom_fields'),'unsupported global fields cannot enter scoped submission');
+  essentialCheck($before===CompanySettingsRuntime::all(),'rendering shared native company fields never changes settings');
+  $view['values']['invoice_company_name']='"<script>scoped-fixture</script>';
+  $html=$viewHarness->render($view);essentialCheck(!str_contains($html,'<script>scoped-fixture</script>')&&str_contains($html,'&lt;script&gt;scoped-fixture'),'native helper escapes scoped identity value');
+ });
+}
+echo 'Native shared company fields A/B: '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;

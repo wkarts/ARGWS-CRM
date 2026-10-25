@@ -1,5 +1,4 @@
 <?php
-ob_start();
 /**
  * Gateway EFÍ da aplicação ARGWS CRM
  * @version 1.0
@@ -9,7 +8,7 @@ ob_start();
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-require __DIR__ . '../../../../modules/gerencianet_gateway/vendor/autoload.php';
+// SDK loading is deferred until an authorized controller operation.
 
 class Gerencianet_gateway extends App_gateway
 {
@@ -119,6 +118,8 @@ class Gerencianet_gateway extends App_gateway
 
 	public function process_payment($data)
 	{
+        $invoice = $data['invoice'] ?? null;
+        if (!$invoice || !array_key_exists('issuer_id',(array)$invoice) || $invoice->issuer_id !== null) { show_404(); return; }
 		redirect(site_url('gateways/gerencia_net/invoice/' . $data['invoice']->id . '/' . $data['hash']));
 	}
 }

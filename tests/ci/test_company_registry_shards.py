@@ -19,14 +19,17 @@ class RegistryShardsTest(unittest.TestCase):
         # Snapshot extracted from 2da2dff1's full MySQL run block, including both
         # Python checks and --tracking variants. Update deliberately when adding tests.
         commands = runner.load_commands()
-        self.assertEqual(len(commands), 472)
-        self.assertEqual(hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest(),
+        self.assertEqual(len(commands), 473)
+        self.assertEqual(commands[0], ['php', 'tests/issuers_original_administrator.php'])
+        self.assertEqual(hashlib.sha256(json.dumps(commands[1:], separators=(',', ':')).encode()).hexdigest(),
                          '1565aaa69234abd5ab9d7eec11fbbd912a93fdb75e0dfd919de0b913e408c835')
+        self.assertEqual(hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest(),
+                         'c016827e69a73fe5a1f09aa14b4f24bcb74d9df40e6d5b5db697e013c25bb413')
 
     def test_union_exact_once_and_order_preserved(self):
         commands = runner.load_commands()
         shards = [runner.select_commands(commands, i) for i in range(1, 5)]
-        self.assertEqual([len(shard) for shard in shards], [118] * 4)
+        self.assertEqual([len(shard) for shard in shards], [119,118,118,118])
         union = [entry for shard in shards for entry in shard]
         self.assertEqual(sorted(union), list(enumerate(commands)))
         self.assertEqual(len({index for index, _ in union}), len(commands))
@@ -65,6 +68,22 @@ class RegistryShardsTest(unittest.TestCase):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
         expected = {
             'Validar sintaxe e controles HTTP': [
+                ['php', 'tests/installed_master_proof.php'],
+                ['php', 'tests/asaas_checkout_transaction_tables.php'],
+                ['php', 'tests/efi_install_contract.php'],
+                ['php', 'tests/efi_routes.php'],
+                ['php', 'tests/efi/operational_contract.php'],
+                ['php', 'tests/efi/controller_contract.php'],
+                ['php', 'tests/efi/certificate_contract.php'],
+                ['php', 'tests/efi_csrf_config.php'],
+                ['php', 'tests/efi_native_autoload.php'],
+                ['php', 'tests/efi/sdk_transport_contract.php'],
+                ['php', 'tests/efi/intent_contract.php'],
+                ['php', 'tests/efi_adoption_http.php'],
+                ['php', 'tests/efi_checkout_preflight.php'],
+                ['php', 'tests/efi/company_accounts_contract.php'],
+                ['php', 'tests/efi/company_controller_contract.php'],
+                ['php', 'tests/efi/company_proof_contract.php'],
                 ['php', 'tests/issuers_controller.php'],
                 ['php', 'tests/issuers_admin_upgrade_gate.php'],
                 ['php', 'tests/issuers_integration_view.php'],
@@ -77,6 +96,9 @@ class RegistryShardsTest(unittest.TestCase):
                 ['php', 'tests/companies/legacy_financial_module_tables.php'],
                 ['php', 'tests/companies/legacy_financial_module_migrations.php'],
                 ['php', 'tests/companies/module_version_column_mysql.php'],
+                ['php', 'tests/companies/efi_adoption_mysql.php'],
+                ['php', 'tests/companies/efi_operational_mysql.php'],
+                ['php', 'tests/companies/efi_company_checkout.php'],
             ],
         }
         external = []
@@ -92,10 +114,10 @@ class RegistryShardsTest(unittest.TestCase):
                         if line.strip().startswith('php tests/')]
         self.assertEqual(all_external, external, 'no duplicated or moved external invocations')
         manifest_php = [command for command in runner.load_commands() if command[0] == 'php']
-        self.assertEqual(len(manifest_php), 470)
+        self.assertEqual(len(manifest_php), 471)
         combined = manifest_php + external
-        self.assertEqual(len(combined), 480)
-        self.assertEqual(len(set(map(tuple, combined))), 480)
+        self.assertEqual(len(combined), 500)
+        self.assertEqual(len(set(map(tuple, combined))), 500)
 
     def test_isolated_module_audit_precedes_long_registry_suite(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
@@ -150,6 +172,20 @@ class RegistryShardsTest(unittest.TestCase):
         baseline = json.loads((ROOT / 'tests/ci/company-registry-timing-baseline.json').read_text())
         expected = json.loads(runner.PLAN.read_text())
         self.assertEqual(planner.build_plan(runner.load_commands(), baseline), expected)
+        commands = runner.load_commands()
+        old = planner.build_measured_plan(commands[1:], baseline)
+        self.assertEqual(expected['assignments'][1:], old['assignments'], 'all 472 historical placements unchanged')
+        self.assertEqual(expected['assignments'][0], 1, 'unmeasured count tie goes to shard1')
+        self.assertEqual(hashlib.sha256((json.dumps(old, indent=2)+'\n').encode()).hexdigest(),
+                         '1a4f54a480af305d6828192a52378796487d387c4fc0890ee9935c56c4411b92')
+        self.assertEqual([len(t) for t in baseline['milliseconds'].values()], [472,472], 'no invented timing')
+        for invalid in [[], expected['unmeasured'] * 2, [{'argv':['php','tests/not_measured.php']}]]:
+            with self.assertRaises(ValueError):
+                planner.build_plan(commands, baseline, unmeasured=invalid)
+        for invalid_commands in [commands + [['php','tests/unregistered.php']], commands[1:], commands[:1]+list(reversed(commands[1:]))]:
+            with self.assertRaises(ValueError):
+                planner.build_plan(invalid_commands, baseline)
+
         self.assertEqual(len(baseline['artifacts']), 8)
         for php in ['8.1', '8.5']:
             for shard in range(1, 5):
@@ -169,6 +205,13 @@ class RegistryShardsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'plan.json'
             path.write_text(json.dumps({'manifest_sha256': 'wrong', 'assignments': []}))
+            with self.assertRaises(ValueError):
+                runner.load_assignment(commands, path)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'plan.json'
+            invalid = json.loads(runner.PLAN.read_text())
+            invalid['assignments'][1] = 1  # break 119/118/118/118 capacity
+            path.write_text(json.dumps(invalid))
             with self.assertRaises(ValueError):
                 runner.load_assignment(commands, path)
         for assignments in [None, [], [1] * (len(commands)-1), [5] * len(commands), [True] * len(commands)]:

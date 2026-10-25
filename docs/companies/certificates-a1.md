@@ -29,6 +29,61 @@ Não habilitar providers legados globalmente para aceitar arquivos antigos. O li
 é 2 MiB; os limites PHP/proxy de multipart devem permitir essa carga com overhead,
 sem elevar o limite efetivo do aplicativo. Erros do OpenSSL nunca são apresentados.
 
+## Compatibilidade de importação PKCS#12 (opt-in, desativada por padrão)
+
+O parser distingue somente categorias conhecidas da fila OpenSSL: algoritmo
+indisponível, falha de autenticação/integridade e arquivo não interpretável.
+Falha de MAC não comprova senha incorreta: corrupção também pode invalidar o MAC.
+Erros desconhecidos continuam genéricos; a fila é drenada antes/depois de cada
+operação e seus textos não são devolvidos ao navegador nem gravados em logs.
+Chave ausente/divergente é recusada; não há bypass de senha, MAC, validade ou CNPJ.
+
+A solução preferida continua sendo uma nova exportação pelo titular, com
+AES-256-CBC/PBKDF2, certificado e chave privada. Não enviar PFX ou senha pelo chat.
+Quando isso não for possível, a instalação pode optar pelo importador compatível
+com `ARGWS_CERTIFICATE_LEGACY_IMPORT=1`. Ausente ou qualquer outro valor significa
+**OFF**. Este código não habilita a opção automaticamente: habilitação permanente
+na instalação requer decisão/autorização operacional específica, fora desta PR.
+A variável deve existir no ambiente do processo PHP; adicioná-la apenas a um
+`.env` que não é encaminhado pelo Compose não a habilita. Não há alteração de
+Compose ou de ambiente de produção nesta entrega.
+
+Com opt-in, somente uma falha classificada como algoritmo indisponível permite
+uma segunda leitura. `/usr/bin/prlimit` executa `/usr/bin/openssl pkcs12 -legacy`
+em processo independente, sem shell. A configuração OpenSSL do subprocesso é
+`/dev/null` e nenhum provider é carregado no worker PHP/TLS. Dependências da imagem:
+`openssl` e `util-linux` (prlimit). Ausência/desabilitação de proc_open, executáveis,
+provider legado ou limites produz recusa segura; não há fallback irrestrito.
+
+Modelo de ameaça e limites:
+
+- PFX não confiável pode exigir recursos excessivos ou provocar falha do parser.
+  O subprocesso tem CPU de 3 s, endereço virtual de 128 MiB, core dump e tamanho de
+  arquivo em zero, 16 descritores e prazo monotônico de 5 s no pai. Saída máxima
+  de 4 MiB e stderr de 16 KiB; ultrapassagem mata o processo e recusa a importação.
+- O pai usa pipes não bloqueantes para PFX e senha (FD 3). Nenhum segredo vai em
+  argumento, ambiente, arquivo temporário ou log. PEM existe só na memória/pipes.
+  A senha via FD é delimitada por linha: CR/LF/NUL são recusados, nunca truncados.
+- O processo executa com o mesmo usuário do worker. Limites não são sandbox de
+  kernel, não removem acesso de um processo comprometido ao filesystem/rede, nem
+  protegem contra administrador/módulo PHP malicioso. Aprovar o opt-in exige aceitar
+  essa superfície adicional de parsing e manter OpenSSL atualizado.
+- O parse PHP normal acontece primeiro e mantém o limite de tamanho já existente;
+  os limites acima se aplicam ao subprocesso, **não** ao KDF inicial do PHP. Rate
+  limiting e orçamento do worker continuam sendo responsabilidade operacional.
+- O PEM retornado passa pela mesma conferência de chave, X509, validade e CNPJ.
+  O armazenamento mantém o PFX original cifrado e sua senha, não um PFX convertido.
+  Esta compatibilidade é só de inspeção/importação; não promete suporte de futuros
+  consumidores fiscais. A projeção de metadados não requer subprocesso.
+- Em falha, nenhuma revisão/cifra anterior é alterada. Em sucesso, os controles
+  transacionais/ACL e auditoria existentes continuam obrigatórios. Desligar a
+  variável restaura a recusa de novos uploads legados sem reconfiguração global.
+
+Testes adicionais (somente sintéticos): `php tests/certificates/openssl_compatibility.php`
+(moderno, RC2, senha, chave/validade/CNPJ, revisão zero e preservação) e
+`php tests/certificates/legacy_process_limits.php` (caps, timeout, saída não zero,
+large input e canal separado de senha). O CI instala o CLI/provider necessário.
+
 ## Segurança e semântica
 
 - `settings/edit` é a capacidade administrativa contextual existente usada no

@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = ROOT / 'tests/ci/company-registry-timing-baseline.json'
 PLAN = ROOT / 'tests/ci/company-registry-shard-plan.json'
+UNMEASURED = ROOT / 'tests/ci/company-registry-unmeasured.json'
 
 
 def balanced_assignment(weights, shards=4):
@@ -26,7 +27,34 @@ def balanced_assignment(weights, shards=4):
     return assignment
 
 
-def build_plan(commands, baseline):
+def measured_commands(commands, unmeasured):
+    additions = [entry['argv'] for entry in unmeasured]
+    if len({tuple(argv) for argv in additions}) != len(additions) or any(commands.count(argv) != 1 for argv in additions):
+        raise ValueError('Each explicit unmeasured command must occur exactly once')
+    return [argv for argv in commands if argv not in additions]
+
+
+def build_plan(commands, baseline, unmeasured=None):
+    if unmeasured is None:
+        unmeasured = json.loads(UNMEASURED.read_text())
+    measured = measured_commands(commands, unmeasured)
+    # Preserve the exact historical argv/order and paired observations. Unknown
+    # durations are not zero-duration samples and must never enter the LPT model.
+    base = build_measured_plan(measured, baseline)
+    assignment_by_argv = {tuple(argv): shard for argv, shard in zip(measured, base['assignments'])}
+    counts = [base['assignments'].count(shard) for shard in range(1, 5)]
+    for entry in unmeasured:
+        target = min(range(4), key=lambda shard: (counts[shard], shard))
+        assignment_by_argv[tuple(entry['argv'])] = target + 1
+        counts[target] += 1
+    return {**base, 'model': 'frozen-paired-lpt-plus-unmeasured-count-v1',
+            'manifest_sha256': hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest(),
+            'measured_manifest_sha256': base['manifest_sha256'],
+            'unmeasured': unmeasured,
+            'assignments': [assignment_by_argv[tuple(argv)] for argv in commands]}
+
+
+def build_measured_plan(commands, baseline):
     manifest_hash = hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest()
     if baseline['manifest_sha256'] != manifest_hash or set(baseline['milliseconds']) != {'8.1', '8.5'}:
         raise ValueError('Timing evidence must match exact command manifest and both PHP versions')
@@ -76,19 +104,22 @@ def main():
     commands = json.loads((ROOT / 'tests/ci/company-registry-commands.json').read_text())
     baseline = json.loads(BASELINE.read_text())
     if args.verify_artifacts:
-        verify_artifacts(args.verify_artifacts, commands, baseline)
+        verify_artifacts(args.verify_artifacts, measured_commands(commands, json.loads(UNMEASURED.read_text())), baseline)
     plan = build_plan(commands, baseline)
     if args.check:
         if json.loads(PLAN.read_text()) != plan:
             raise SystemExit('Frozen shard plan does not match the committed evidence')
     else:
         PLAN.write_text(json.dumps(plan, indent=2) + '\n')
+    measured = measured_commands(commands, plan['unmeasured'])
+    measured_assignments = [plan['assignments'][commands.index(argv)] for argv in measured]
     for php, times in baseline['milliseconds'].items():
         old = [sum(t for i, t in enumerate(times) if i % 4 == shard) / 1000 for shard in range(4)]
-        new = [sum(t for i, t in enumerate(times) if plan['assignments'][i] == shard) / 1000 for shard in range(1, 5)]
+        new = [sum(t for i, t in enumerate(times) if measured_assignments[i] == shard) / 1000 for shard in range(1, 5)]
         print(json.dumps({'php': php, 'observed_round_robin_command_seconds': old,
                           'estimated_replay_balanced_command_seconds': new,
-                          'not_a_new_run': True}))
+                          'unmeasured_commands_excluded': plan['unmeasured'],
+                          'partial_historical_replay_not_current_total': True, 'not_a_new_run': True}))
 
 
 if __name__ == '__main__':

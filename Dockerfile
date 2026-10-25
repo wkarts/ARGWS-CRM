@@ -36,7 +36,7 @@ LABEL org.opencontainers.image.title="ARGWS CRM" \
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gosu \
+    && apt-get install -y --no-install-recommends gosu openssl util-linux \
     && rm -rf /var/lib/apt/lists/* \
     && install-php-extensions mysqli pdo_mysql curl mbstring imap gd zip intl bcmath soap exif opcache
 

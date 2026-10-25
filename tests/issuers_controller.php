@@ -86,4 +86,20 @@ foreach ([['GET',$token,405],['POST','invalid',403]] as [$method,$submitted,$cod
 [$controller,$registry]=controller(array_merge($base,['action'=>'issuer_status','actor_id'=>'999','active'=>'0']),'POST',$token);
 try {$controller->save();}catch(RedirectStop $stop){check('/admin/issuers',$stop->getMessage(),'status returns to grid');}
 check([['setActive',[7,11,'0']]],$registry->calls,'status uses trusted actor and no identity/profile payload');
+// Existing-company editing never reuses the wizard/create action.
+foreach ([['GET',$token,405],['POST','invalid',403]] as [$method,$submitted,$code]) {
+    [$controller,$registry]=controller(['action'=>'edit_identity','issuer_id'=>'11','identity_revision'=>str_repeat('b',64),'issuers_csrf'=>$submitted],$method,$token);
+    try {$controller->save();throw new LogicException('edit guard bypassed');}catch(HttpStop $error){check($code,$error->getCode(),'edit HTTP/CSRF guard');}
+    check([],$registry->calls,'edit blocked before mutation');
+}
+[$controller,$registry]=controller(array_merge($base,['action'=>'edit_identity','identity_revision'=>str_repeat('b',64),'actor_id'=>'999','active'=>'0','legal_name'=>'Existing','tax_id'=>'12345678000195']),'POST',$token);
+try {$controller->save();}catch(RedirectStop $stop){check('/admin/issuers/index/11?edit_modal=1',$stop->getMessage(),'edit returns to existing modal');}
+check([['updateExistingIdentity',[7,['legal_name'=>'Existing','tax_id'=>'12345678000195','profile'=>[]],11,str_repeat('b',64)]]],$registry->calls,'edit binds authenticated actor/id/revision and ignores status');
+foreach(['issuer_access_denied','company_identity_revision_stale'] as $failure){
+    [$controller,$registry]=controller(array_merge($base,['action'=>'edit_identity','identity_revision'=>str_repeat('b',64)]),'POST',$token);$registry->failure=$failure;
+    try{$controller->save();throw new LogicException('edit service rejection ignored');}catch(HttpStop $error){check(409,$error->getCode(),'edit ACL/stale rejection is not success');}
+}
+[$controller,$registry]=controller(array_merge($base,['action'=>'edit_identity','issuer_id'=>'','identity_revision'=>str_repeat('b',64)]),'POST',$token);
+try{$controller->save();}catch(HttpStop $error){check(409,$error->getCode(),'empty issuer never becomes create');}
+check([],$registry->calls,'missing existing ID cannot reach writer');
 echo "Issuer controller: {$checks} checks passed; POST, CSRF, input shape and trusted actor.\n";
