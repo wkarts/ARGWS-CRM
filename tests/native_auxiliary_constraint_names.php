@@ -39,3 +39,11 @@ foreach($helpers as$class){
  $resolved++;
 }
 echo count($helpers)." migration helpers audited; {$resolved} actual definition builders at three prefixes; {$literal} literal index/constraint identifiers checked.\n";
+// MySQL requires a supporting non-unique issuer index on request receipts.
+$check=new ReflectionMethod(NativeCompanyTaskChecklistSchema::class,'assertMysqlIndexes');
+$row=static fn($name,$column,$unique,$seq=1)=>['Key_name'=>$name,'Column_name'=>$column,'Non_unique'=>$unique,'Seq_in_index'=>$seq,'Sub_part'=>null,'Index_type'=>'BTREE'];
+$valid=[$row('PRIMARY','request_key',0),$row('issuer','issuer_id',1)];$check->invoke(null,'company_task_checklist_template_requests',$valid);
+$old=$valid;$old[1]['Key_name']='nctfk_historical_generated_support';$check->invoke(null,'company_task_checklist_template_requests',$old);
+$badSets=[[$valid[0]],array_merge($valid,[$row('extra','actor_id',1)]),[$valid[0],$row('issuer','issuer_id',0)],[$valid[0],$row('issuer','actor_id',1)],[$valid[0],array_replace($valid[1],['Sub_part'=>5])],[$valid[0],array_replace($valid[1],['Index_type'=>'HASH'])]];
+foreach($badSets as$bad){$failed=false;try{$check->invoke(null,'company_task_checklist_template_requests',$bad);}catch(RuntimeException$e){$failed=$e->getMessage()==='native_task_checklist_schema_invalid';}if(!$failed)throw new RuntimeException('Invalid supporting index accepted');}
+echo "Checklist MySQL index contract: exact unique receipt/non-unique owner support; six negatives rejected, no blanket index allowance.\n";
