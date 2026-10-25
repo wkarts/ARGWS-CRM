@@ -14,21 +14,6 @@ register_shutdown_function(static function()use(&$db,&$p){
 });
 // Full historical invoice/draft schemas and real canonical synthetic documents, not minimal parent stubs.
 require __DIR__.'/invoice_drafts.php';
-// Test-only diagnostic boundary: report driver codes and DDL object only, never SQL/bindings.
-final class NativeDdlDiagnosticDb extends EssentialTestDb
-{
-    public function query($sql,$params=[])
-    {
-        try{return parent::query($sql,$params);}catch(PDOException $error){
-            $table='unclassified';if(preg_match('/^(?:CREATE TABLE(?: IF NOT EXISTS)?|ALTER TABLE) `?([A-Za-z0-9_]+)`?/D',$sql,$match))$table=$match[1];
-            $state=(string)($error->errorInfo[0]??'');$code=(int)($error->errorInfo[1]??0);
-            if(!preg_match('/^[A-Z0-9]{5}$/D',$state))$state='other';
-            fwrite(STDERR,'Synthetic DDL diagnostic: '.json_encode(['sqlstate'=>$state,'driver_code'=>$code,'table'=>$table],JSON_THROW_ON_ERROR)."\n");throw$error;
-        }
-    }
-}
-$db=new NativeDdlDiagnosticDb($db->pdo);$GLOBALS['CI']->db=$db;
-
 require APPPATH.'migrations/474_version_474.php';
 if($db->driver()!=='mysql')throw new RuntimeException('Real MySQL required');
 require_once APPPATH.'services/CompanyProjectsSchema.php';CompanyProjectsSchema::ensure($db,$p);
