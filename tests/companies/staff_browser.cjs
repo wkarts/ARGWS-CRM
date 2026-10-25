@@ -3,6 +3,7 @@ const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs'
 const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
 // Real HTTP/Chromium forms, native login and a deliberately isolated upgraded database.
 const assert = require('node:assert/strict');
+const { assertAttestedMaster } = require('../helpers/installed_master_proof.cjs');
 const {execFileSync} = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -50,7 +51,8 @@ async function login(page,email,password) {
 (async()=>{
   const suffix=randomBytes(5).toString('hex'), password='synthetic-staff453-'+suffix;
   const installed=sql("SELECT CONCAT(master_staff_id,':',primary_issuer_id,':',source) FROM tblissuers_installation_identity WHERE id=1");
-  assert.match(installed,/^17:1:(installer|legacy_designation)$/,'existing legitimate master, no new designation during this test');
+  assert.equal(installed, '17:1:owner_attestation', 'exact upstream owner confirmation, no new designation');
+  assertAttestedMaster(sql);
   const companies={a:sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b:sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'"),primary:'1'};
   for(const id of Object.values(companies))assert.match(id,/^[1-9]\d*$/,'wizard A/B must already exist');
   const beforeMaster={identity:identity(17),members:members(17),default:preference(17)};
@@ -176,6 +178,7 @@ async function login(page,email,password) {
     assert.equal(identity(17),beforeMaster.identity,'master global identity never rewritten');
     assert.equal(members(17),beforeMaster.members,'master prior membership flags preserved');
     assert.equal(preference(17),beforeMaster.default,'context switching does not rewrite master default');
+ assertAttestedMaster(sql);
     assert.deepEqual(errors,[],'no browser execution errors');
     const result={result:'PASS',browser_version:browser.version(),actual_http:true,companies:proof,shared_identity:{id:Number(shared.id),link_preserves_profile:true,manager_shared_profile_denied:403,own_acl_edit:true,revoked_a_retained_b:true,no_default_fallback:true},native_primary:{id:Number(nativeId),role:0,company_links:2},master_identity:installed,master_identity_sha256:digest(beforeMaster.identity),stale_context:409,stale_revision:409,live_acl_revocation:403,page_errors:errors};
     fs.writeFileSync(path.join(output,'staff-browser-proof.json'),JSON.stringify(result,null,2)+'\n');
