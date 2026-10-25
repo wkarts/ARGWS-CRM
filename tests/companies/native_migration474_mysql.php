@@ -14,24 +14,34 @@ register_shutdown_function(static function()use(&$db,&$p){
 });
 // Full historical invoice/draft schemas and real canonical synthetic documents, not minimal parent stubs.
 require __DIR__.'/invoice_drafts.php';
+// Test-only diagnostic boundary: report driver codes and DDL object only, never SQL/bindings.
+final class NativeDdlDiagnosticDb extends EssentialTestDb
+{
+    public function query($sql,$params=[])
+    {
+        try{return parent::query($sql,$params);}catch(PDOException $error){
+            $table='unclassified';if(preg_match('/^(?:CREATE TABLE(?: IF NOT EXISTS)?|ALTER TABLE) `?([A-Za-z0-9_]+)`?/D',$sql,$match))$table=$match[1];
+            $state=(string)($error->errorInfo[0]??'');$code=(int)($error->errorInfo[1]??0);
+            if(!preg_match('/^[A-Z0-9]{5}$/D',$state))$state='other';
+            fwrite(STDERR,'Synthetic DDL diagnostic: '.json_encode(['sqlstate'=>$state,'driver_code'=>$code,'table'=>$table],JSON_THROW_ON_ERROR)."\n");throw$error;
+        }
+    }
+}
+$db=new NativeDdlDiagnosticDb($db->pdo);$GLOBALS['CI']->db=$db;
+
 require APPPATH.'migrations/474_version_474.php';
 if($db->driver()!=='mysql')throw new RuntimeException('Real MySQL required');
 require_once APPPATH.'services/CompanyProjectsSchema.php';CompanyProjectsSchema::ensure($db,$p);
 require_once APPPATH.'services/CompanyStandaloneTasksSchema.php';CompanyStandaloneTasksSchema::ensure($db,$p);
 $db->query("CREATE TABLE {$p}items(id INT UNSIGNED NOT NULL PRIMARY KEY,description VARCHAR(191),rate DECIMAL(15,4)) ENGINE=InnoDB");
 $db->query("INSERT INTO {$p}items VALUES(1,'Synthetic preserved item',12.3456)");
-$db->query("CREATE TABLE {$p}contacts(id INT NOT NULL PRIMARY KEY) ENGINE=InnoDB");
-$db->query("CREATE TABLE {$p}gdpr_requests(id INT NOT NULL PRIMARY KEY) ENGINE=InnoDB");
 $db->query("INSERT INTO {$p}currencies(id,symbol,name,decimal_separator,thousand_separator,placement,isdefault) VALUES(2,'$','USD','.',',','before',0)");
-// Additional historical parents required by the actual native file/ticket sidecars.
+// Actual native baseline DDL and original indexes for every missing historical parent.
+// Existing invoice fixture tables/data are left untouched; no seed INSERT is executed.
+require_once __DIR__.'/../support/NativeInstalledSchemaFixture.php';
 $native=file_get_contents(dirname(__DIR__,2).'/install/database.sql');
-foreach(['files'=>'id','tickets'=>'ticketid','mail_queue'=>'id'] as$name=>$key){
-    if($db->table_exists($p.$name))continue;
-    if(!preg_match('/CREATE TABLE `tbl'.preg_quote($name,'/').'` \(.*?\) ENGINE=InnoDB[^;]*;/s',$native,$match))throw new RuntimeException('Missing native parent');
-    $sql=str_replace('`tbl'.$name.'`','`'.$p.$name.'`',$match[0]);
-    $sql=str_replace('`'.$key.'` int NOT NULL,','`'.$key.'` int NOT NULL AUTO_INCREMENT PRIMARY KEY,',$sql);
-    $db->query($sql);unset($db->data_cache['table_names']);
-}
+$nativeCreated=NativeInstalledSchemaFixture::apply($db,$p,$native);
+if(!in_array('customers_groups',$nativeCreated,true))throw new RuntimeException('Missing native group prerequisite');
 require_once APPPATH.'services/CompanyContractsSchema.php';CompanyContractsSchema::ensure($db,$p);
 require_once APPPATH.'services/CompanyInvoiceAttachmentSchema.php';CompanyInvoiceAttachmentSchema::ensure($db,$p);
 $snapshot=static function()use($db,$p){$out=[];foreach(['options','invoices','clients','modules','company_invoice_drafts','company_invoice_draft_events','issuers_audit']as$table)$out[$table]=$db->query('SELECT * FROM '.$p.$table.' ORDER BY 1')->result_array();return$out;};

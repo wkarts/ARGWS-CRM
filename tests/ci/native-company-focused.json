@@ -4,6 +4,10 @@
   "sqlite": [
     [
       "php",
+      "tests/native_installed_schema_fixture.php"
+    ],
+    [
+      "php",
       "tests/native_auxiliary_constraint_names.php"
     ],
     [
