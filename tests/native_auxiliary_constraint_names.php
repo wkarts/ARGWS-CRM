@@ -47,3 +47,18 @@ $old=$valid;$old[1]['Key_name']='nctfk_historical_generated_support';$check->inv
 $badSets=[[$valid[0]],array_merge($valid,[$row('extra','actor_id',1)]),[$valid[0],$row('issuer','issuer_id',0)],[$valid[0],$row('issuer','actor_id',1)],[$valid[0],array_replace($valid[1],['Sub_part'=>5])],[$valid[0],array_replace($valid[1],['Index_type'=>'HASH'])]];
 foreach($badSets as$bad){$failed=false;try{$check->invoke(null,'company_task_checklist_template_requests',$bad);}catch(RuntimeException$e){$failed=$e->getMessage()==='native_task_checklist_schema_invalid';}if(!$failed)throw new RuntimeException('Invalid supporting index accepted');}
 echo "Checklist MySQL index contract: exact unique receipt/non-unique owner support; six negatives rejected, no blanket index allowance.\n";
+// Standalone metadata suites use longer, independently random prefixes than the
+// full migration fixture. Audit their actual production DDL, including helpers
+// without a public definitions() method, before any MySQL job is started.
+require_once $root.'/application/services/NativeCompanyPrivacySchema.php';
+$standalone=[['privacy474_',NativeCompanyPrivacySchema::class,'company_native_gdpr_request_owners'],['customerfiles474_',NativeCompanyCustomerFileSchema::class,'company_customer_file_contents'],['filemail474_',NativeCompanyFileMessageSchema::class,'company_native_file_mail_requests']];
+foreach($standalone as[$stem,$class,$table]){
+ $prefix=$stem.'0123456789abcdef_';
+ if($class===NativeCompanyPrivacySchema::class){$capture=new class{public array$sql=[];public function query($sql,$params=[]){$this->sql[]=$sql;throw new RuntimeException('synthetic stop before execution');}};try{$class::ensure($capture,$prefix);}catch(RuntimeException$e){if($e->getMessage()!=='issuer_storage_failed')throw$e;}$sql=$capture->sql[0]??'';}
+ else $sql=$class::definitions($prefix)[$table];
+ if(strlen($prefix.$table)>64||!str_contains($sql,'CREATE TABLE'))throw new RuntimeException('Standalone table exceeds MySQL bound');
+ preg_match_all('/(?:CONSTRAINT\s+`?([A-Za-z0-9_]+)`?\s+)?FOREIGN\s+KEY\s*\(/i',$sql,$edges,PREG_SET_ORDER);
+ if(count($edges)<2)throw new RuntimeException('Standalone ownership edges not inspected');
+ foreach($edges as$n=>$edge){$name=($edge[1]??'')!==''?$edge[1]:$prefix.$table.'_ibfk_'.($n+1);if(strlen($name)>64)throw new RuntimeException('Standalone implicit constraint too long: '.$class);}
+}
+echo "Three standalone metadata fixtures audited at their actual 64-bit random prefix lengths; all FK names bounded.\n";

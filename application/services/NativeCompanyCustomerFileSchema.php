@@ -6,6 +6,9 @@ final class NativeCompanyCustomerFileSchema
     public static function definitions(string$p):array
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');
+        $fk_file_id="ncf_".substr(hash("sha256",$p."NativeCompanyCustomerFileSchema:file_id"),0,40);
+        $fk_issuer_id="ncf_".substr(hash("sha256",$p."NativeCompanyCustomerFileSchema:issuer_id"),0,40);
+        $fk_client_id="ncf_".substr(hash("sha256",$p."NativeCompanyCustomerFileSchema:client_id"),0,40);
         return ['company_customer_file_contents'=>"CREATE TABLE IF NOT EXISTS `{$p}company_customer_file_contents` (
             file_id INT NOT NULL, issuer_id INT UNSIGNED NOT NULL, client_id INT NOT NULL,
             request_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
@@ -15,7 +18,7 @@ final class NativeCompanyCustomerFileSchema
             revision INT UNSIGNED NOT NULL DEFAULT 1, active TINYINT UNSIGNED NOT NULL DEFAULT 1,
             write_nonce CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
             PRIMARY KEY(file_id), UNIQUE KEY issuer_request(issuer_id,request_key), KEY client_id(client_id),
-            FOREIGN KEY(file_id) REFERENCES `{$p}files`(id), FOREIGN KEY(issuer_id) REFERENCES `{$p}issuers_registry`(id), FOREIGN KEY(client_id) REFERENCES `{$p}clients`(userid)
+            CONSTRAINT {$fk_file_id} FOREIGN KEY(file_id) REFERENCES `{$p}files`(id), CONSTRAINT {$fk_issuer_id} FOREIGN KEY(issuer_id) REFERENCES `{$p}issuers_registry`(id), CONSTRAINT {$fk_client_id} FOREIGN KEY(client_id) REFERENCES `{$p}clients`(userid)
         ) ENGINE=InnoDB"];
     }
     public static function ensure($db,string$p):void{foreach(self::definitions($p)as$sql)IssuerStorage::query($db,$sql);self::assertValid($db,$p);}

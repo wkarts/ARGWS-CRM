@@ -8,7 +8,9 @@ final class NativeCompanyFileMessageSchema
     public static function definitions(string$p):array
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');
-        return['company_native_file_mail_requests'=>"CREATE TABLE {$p}company_native_file_mail_requests(queue_id INT NOT NULL,issuer_id INT UNSIGNED NOT NULL,request_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,request_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,binding_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,write_nonce CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,PRIMARY KEY(queue_id),UNIQUE KEY issuer_request(issuer_id,request_key),FOREIGN KEY(issuer_id) REFERENCES {$p}issuers_registry(id),FOREIGN KEY(queue_id) REFERENCES {$p}mail_queue(id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin"];
+        $fk_issuer_id="nfm_".substr(hash("sha256",$p."NativeCompanyFileMessageSchema:issuer_id"),0,40);
+        $fk_queue_id="nfm_".substr(hash("sha256",$p."NativeCompanyFileMessageSchema:queue_id"),0,40);
+        return['company_native_file_mail_requests'=>"CREATE TABLE {$p}company_native_file_mail_requests(queue_id INT NOT NULL,issuer_id INT UNSIGNED NOT NULL,request_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,request_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,binding_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,write_nonce CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,PRIMARY KEY(queue_id),UNIQUE KEY issuer_request(issuer_id,request_key),CONSTRAINT {$fk_issuer_id} FOREIGN KEY(issuer_id) REFERENCES {$p}issuers_registry(id),CONSTRAINT {$fk_queue_id} FOREIGN KEY(queue_id) REFERENCES {$p}mail_queue(id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin"];
     }
     public static function ensure($db,string$p):void
     {
