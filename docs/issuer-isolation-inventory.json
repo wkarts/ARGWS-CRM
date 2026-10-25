@@ -4998,3 +4998,4017 @@
     "application/views/admin/dashboard/widgets/finance_overview.php": {
       "sha256": "6ce90bc95077e7cb4ad6df8c371cebe68ee4f8a99316bc9800639e9f8aec7b24",
       "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        3,
+        281
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/dashboard/widgets/payments_chart.php": {
+      "sha256": "a6287211cd85334019aec080ad80026986b5c742b3593f455348c9d5ba4cdf45",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        3
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/dashboard/widgets/top_stats.php": {
+      "sha256": "5b53582421b7693c7c554ecf05df59c0382cd2f126dc8fc9821f009e5bb2aa5b",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        7,
+        10,
+        14,
+        18,
+        19
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/emails/email_templates.php": {
+      "sha256": "3745f2940186fdd564ed352aec1a18060aaf5805f46ab3580c7c066e8d4aeecb",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        348
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/estimates/estimate_preview_template.php": {
+      "sha256": "0f7a29dcba62fd02eea0c3d569a24d51b4faf1a2242afaa37d6b67ca46fb0397",
+      "categories": [
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        237,
+        263
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/estimates/estimate_send_to_client.php": {
+      "sha256": "dc2afe50cdd9cd6c40bc86616a38cfd5242e4127cbe3fdbed021ea98429bbcd4",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        27
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/estimates/schedule.php": {
+      "sha256": "9ccdf88f3cfb92c27de6e060a1f5361e97bab4b91d4de5732ef16a6b3274812d",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        27
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/expenses/expense.php": {
+      "sha256": "c513777f827f6b0a1ac3f698aa0533cfd5cca0471c14f4c05248a49952348f04",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        161,
+        169
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/expenses/expense_pdf.php": {
+      "sha256": "f2130c19f8ab87e8e85d3ac4c9bc8d2b2d1df148ea45c07924db1a8cad709346",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        43
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/expenses/expense_preview_template.php": {
+      "sha256": "6b080440194009c498eda6140ce1ec096dfccbcb91c0883a8540ac6bbe36f99f",
+      "categories": [
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        69,
+        137,
+        147
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/gdpr/pages/portability.php": {
+      "sha256": "f7dde08a8599983a3f9da331db1b5448673e91698f2f5e9bad5b90046010aa63",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        51,
+        52
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoice_items/item.php": {
+      "sha256": "63e1afafec52125ddf15e30408d717dd68a376400bbf51bde6c857681ee6512a",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        32
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/invoice.php": {
+      "sha256": "4aadb9bca3dea2e77eeff4fc95d1c96637dbf11922f8b5e53461e98561519229",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        13
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/invoice_preview_html.php": {
+      "sha256": "c96ad9eecec505868c6e2a6737ab5bdfb40ab4e1177e0d80c71e85a3fe21a1bf",
+      "categories": [
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        2,
+        10,
+        27,
+        57,
+        73,
+        98,
+        229,
+        244
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/invoice_preview_template.php": {
+      "sha256": "92a3b45cc570b5ffa14e33157f6e22cf1811a68b544671ca5bc4f2b05ec418d3",
+      "categories": [
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        21,
+        112,
+        172,
+        204,
+        208,
+        240,
+        253,
+        265,
+        267,
+        268,
+        269,
+        272,
+        278,
+        279,
+        294,
+        308,
+        329,
+        403,
+        417
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/invoice_send_to_client.php": {
+      "sha256": "473610e2fd507a57a943176e6d574b5de8981598adad77573d0c1f4144c77422",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        26
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/invoice_template.php": {
+      "sha256": "f0d7d1a0c806e44f7800640bc36ab8cdab370b9f51616672a161ba3babb17f89",
+      "categories": [
+        "documents_numbering",
+        "invoice_model"
+      ],
+      "signal_lines": [
+        3,
+        16,
+        136,
+        146,
+        157,
+        167,
+        178,
+        182
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/list_template.php": {
+      "sha256": "9574cbb664c41d3bc24f7804d4f59a632d5deb1c290c15a7d5d9df7244ea0383",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        6
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/manage.php": {
+      "sha256": "f24a0ebef531c559bdff639973d321fbdb87e105879d74eb9da69a1eddc3667e",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        11
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/merge_invoice.php": {
+      "sha256": "347b8a81d95d0c265aace54bc1efc0e681cd75394414a2c8fa03afff54d99c8f",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        17
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/quick_stats.php": {
+      "sha256": "03654ae2ea538fab43dc8530a400e0fab56549b7960bf3b05510618ca13cfdeb",
+      "categories": [
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        3,
+        19,
+        25,
+        38
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/record_payment_template.php": {
+      "sha256": "0c674e79207e6410c6b5725268b1a9d5d96535f40ba91f00cf5beb4c8d858834",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        10
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/recurring/list_template.php": {
+      "sha256": "51d1b761f6119a7f3117c6bf7961e7f95572a3a80ad3ef8f104fb0a91edc3115",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        6,
+        13
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/recurring/table_html.php": {
+      "sha256": "535ad6220c3d586a93f7deff66a0bd93b05ed676bd0667d20f6eb4eb69ade194",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        21
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/schedule.php": {
+      "sha256": "6e31c38d48651e8dcc0f3750605408ec7dc1916f2b048aae96e9471e36a362c4",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        8,
+        28
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/invoices/table_html.php": {
+      "sha256": "b88a8852f19df031021ed4eac45f45ffc65f3382f00c756cc56304cb887aa08d",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        28
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/leads/convert_to_customer.php": {
+      "sha256": "950ec183e4024d5f966f10a72a4e2cab0fb7bbe6cf22778726c92439ae87bdbc",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        49
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/leads/lead.php": {
+      "sha256": "27d7dfe3e7868c177ba6e1ac3c20f9d80c92786e446b630a62cdb9d4d5edc0a1",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        19
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/leads/profile.php": {
+      "sha256": "cde51d3896457675b50bef020df874a98d5d458fab0e015965c80f764c321e19",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        11,
+        14,
+        37,
+        65,
+        85
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/payments/batch_payment_modal.php": {
+      "sha256": "7d0593c0ed9f303f2236037123ea8e123582f43b93cd5daca66309a32344dbae",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        58
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/payments/payment.php": {
+      "sha256": "9d37f8967288eb9062b8d966191a1a3f76d82e17a02c3e16065ec83bc95d0da3",
+      "categories": [
+        "documents_numbering",
+        "invoice_model"
+      ],
+      "signal_lines": [
+        11,
+        164,
+        165,
+        175,
+        183,
+        184
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/payments/send_to_client.php": {
+      "sha256": "895a11fdc7af6d54afc6e988b06b32cdcdc7e33bb18489982356fc0fef9a3092",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        28
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/projects/view.php": {
+      "sha256": "755e57ea075742ca834e26bf8dbb9d1e69e754abee84d404d97770acff01ab31",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        114
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/proposals/proposal.php": {
+      "sha256": "d6df79905caf8aaf7129eab9f3357c3f239a0699fe9e8b78709a971ac13d0d3c",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        131
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/proposals/proposals_preview_template.php": {
+      "sha256": "952c3c801cc635af776ad17c8e26356833f458e8d83ad98ef8062d3b6beee49f",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        220,
+        222,
+        234,
+        254,
+        272
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/recurring_rules/list.php": {
+      "sha256": "f52b1b65f9a666b961db2ec1ad94ef3dc9e60d504738497602d21294fc8fc93e",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        6,
+        33,
+        46,
+        50
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/recurring_rules/view.php": {
+      "sha256": "844d7ddbc70b7fb510b6ac5032282fd44acd2cc32e3bd0da7916ecba0fbc376f",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        11
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/reports/sales.php": {
+      "sha256": "58ccda488422aa82685cb51758e0a77e2693ab227c1862770c7ec7809affa89a",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        259
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/search.php": {
+      "sha256": "c30962a953f5b6c84838ed2f349968cc1bf77ffada6b6a47b354a5fb9a78ab4f",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        15,
+        47,
+        48,
+        68
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/settings/company_scoped.php": {
+      "sha256": "8024db2f5cd597a8591c3ce7bc2b0993fb6119f20935adb36a091823e8505c56",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        13,
+        14,
+        15,
+        130
+      ],
+      "state": "partial",
+      "evidence": "Code review: isolated native Settings receives the scoped identity projection and renders only the native shell; the language-helper fallback is presentation-only. Local native Settings contracts pass; real secondary-company browser proof remains in CI/homologation."
+    },
+    "application/views/admin/settings/includes/clients.php": {
+      "sha256": "b424b4cb29e3cdb2abcf321423b77e2d9fe418c92b682c771d44da9da976e1f7",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        120
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/settings/includes/company_identity_fields.php": {
+      "sha256": "043e90179b723f4b5c5b35b1e5b41ce8ad1784ab3bcf507433d152dc3b605c87",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        6,
+        10,
+        11,
+        12
+      ],
+      "state": "partial",
+      "evidence": "Code review: primary and isolated Settings use one explicit value adapter; the isolated branch escapes labels/values and never calls global options. Local native Settings contracts pass; real secondary-company browser proof remains in CI/homologation."
+    },
+    "application/views/admin/settings/includes/credit_notes.php": {
+      "sha256": "31ac65398272a9b3aba8217de6cdde55f9aeffd4468c691689ade98bb1bdd10d",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        9
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/settings/includes/invoices.php": {
+      "sha256": "8ebbba41dfef8950e7b669e03a3a8e8a881ad1a8a030f8e301fee1242d0e54a3",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        9,
+        10
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/settings/includes/sales_general.php": {
+      "sha256": "55d91e64452ded95fb01b3a1387e132d901c365f0da8237c16b35252ac7af8ec",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        36
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/subscriptions/subscription.php": {
+      "sha256": "a29174611eef0c0de7602d9b3d56d5e567947baf823a4884d6fb91e75f69368a",
+      "categories": [
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        157,
+        164,
+        179
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/all_contacts.php": {
+      "sha256": "9666c833b3a8653cb1101436b7522a269a95e379d01152610c2229106f3ee319",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        24,
+        35,
+        53
+      ],
+      "state": "partial",
+      "evidence": "tests/client_issuer_scope.php; tests/client_issuer_model.php; tests/client_issuer_mutations.php; tests/client_issuer_api.php; tests/client_issuer_controllers.php; tests/client_issuer_helpers.php; tests/client_issuer_tables.php; tests/invoice_issuer_scope.php; docs/security/client-issuer-privacy-phase2.md (covered legacy boundaries only; portal/session, generic preview/static storage and other domains pending)"
+    },
+    "application/views/admin/tables/all_reminders.php": {
+      "sha256": "5bb3f9d103a74a986b7dbd2364e17e2f109b672738c9465911f3fc77874c3019",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        7,
+        10,
+        33,
+        36
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/clients.php": {
+      "sha256": "ae586c2c28d72bc15bb3e808307101c8d7fd1760c50ea03a50850cf70c71499e",
+      "categories": [
+        "customer_privacy",
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        5,
+        16,
+        20,
+        21,
+        22,
+        23,
+        27,
+        28,
+        35,
+        42,
+        48,
+        61,
+        124,
+        129,
+        160,
+        173,
+        175,
+        177,
+        183,
+        196,
+        209,
+        221,
+        234,
+        241,
+        249,
+        255,
+        259,
+        264,
+        268,
+        273
+      ],
+      "state": "partial",
+      "evidence": "tests/client_issuer_scope.php; tests/client_issuer_model.php; tests/client_issuer_mutations.php; tests/client_issuer_api.php; tests/client_issuer_controllers.php; tests/client_issuer_helpers.php; tests/client_issuer_tables.php; tests/invoice_issuer_scope.php; docs/security/client-issuer-privacy-phase2.md (covered legacy boundaries only; portal/session, generic preview/static storage and other domains pending)"
+    },
+    "application/views/admin/tables/contacts.php": {
+      "sha256": "2ba3e460ac180b86c0651b897ae326f16b7ecec86c1257345769e294716f525b",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        5,
+        35,
+        89
+      ],
+      "state": "partial",
+      "evidence": "tests/client_issuer_scope.php; tests/client_issuer_model.php; tests/client_issuer_mutations.php; tests/client_issuer_api.php; tests/client_issuer_controllers.php; tests/client_issuer_helpers.php; tests/client_issuer_tables.php; tests/invoice_issuer_scope.php; docs/security/client-issuer-privacy-phase2.md (covered legacy boundaries only; portal/session, generic preview/static storage and other domains pending)"
+    },
+    "application/views/admin/tables/contracts.php": {
+      "sha256": "500d1067fa51de63079dcaf1b465ec27c37e5e982f5715afdd568d7c7ad16101",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        27
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/credit_notes.php": {
+      "sha256": "abb914e916a7683fa984d1326485c6ad52e1429ba7e0d590c8c8b488fdd9822d",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        30
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/estimate_request.php": {
+      "sha256": "bbf0475866a57c638eafde8383632fcb57ce6cc1b3b2d0eb65f45b7c46a46a81",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        56
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/estimates.php": {
+      "sha256": "1030e26a71a4bf48b4d098bb735886865cd5e21726967b9f30310ec31e5c85c1",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        29
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/expenses.php": {
+      "sha256": "8e64478dc99f4e9cb18016e9c4c8deaace4149500c0234f2f7917d0bf36baf80",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        27,
+        101,
+        162
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/expenses_detailed_report.php": {
+      "sha256": "94b33681275818c214a51f3b96b816ced5130900ac771cf64a7d08fb9232b1c7",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        30,
+        151
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/invoices.php": {
+      "sha256": "46e5ac5b95a329107b8c83552e02ddded759f64ace0c6e72792421852af7e1ee",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        5,
+        7,
+        20,
+        22,
+        26,
+        29,
+        30,
+        31,
+        41,
+        44,
+        51,
+        58,
+        72,
+        73,
+        85,
+        88,
+        109,
+        136,
+        164,
+        169,
+        171,
+        182,
+        198,
+        207,
+        218
+      ],
+      "state": "partial",
+      "evidence": "tests/invoice_issuer_scope.php and tests/api_issuer_scope.php; scope and explicit remaining gaps: docs/invoice-issuer-core-scope.md. Not complete end-to-end coverage."
+    },
+    "application/views/admin/tables/leads.php": {
+      "sha256": "26a9729d93e940b062a38a7a4de533406bef49c0094c1ae09d5055090e053e17",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        148
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/payments.php": {
+      "sha256": "896852e7930bdc07cf06bfc171708d67c975e2a3384fd76df81755d927ff81ce",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        8,
+        14,
+        18,
+        19,
+        20,
+        21,
+        24,
+        25,
+        26,
+        29,
+        34,
+        36,
+        43,
+        81
+      ],
+      "state": "partial",
+      "evidence": "tests/invoice_issuer_scope.php and tests/api_issuer_scope.php; scope and explicit remaining gaps: docs/invoice-issuer-core-scope.md. Not complete end-to-end coverage."
+    },
+    "application/views/admin/tables/project_expenses.php": {
+      "sha256": "b5647ecd5e4a45bd1970068e90302dbbdddadf17d16c8ee885ddce91b5df039e",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        25,
+        79,
+        116
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/projects.php": {
+      "sha256": "7e82a28a3043130f911fe9ef7ea67ef796203b7c3d69d580f29e6a98ec5ed2f8",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        29
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/proposals_relations.php": {
+      "sha256": "a399fa5df1b5dfe7361de73bacb7565dff2367a2b7effb977acea97cc94b8b86",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        36
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/recurring_invoices.php": {
+      "sha256": "0fb8e6fe99933b2b709fd0e7c77ed60b745bf2c25f3c9e77bd9e38ccf9dc9183",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        12,
+        24,
+        27,
+        28,
+        31,
+        34,
+        47,
+        64,
+        70,
+        71,
+        91,
+        97
+      ],
+      "state": "partial",
+      "evidence": "tests/invoice_issuer_scope.php and tests/api_issuer_scope.php; scope and explicit remaining gaps: docs/invoice-issuer-core-scope.md. Not complete end-to-end coverage."
+    },
+    "application/views/admin/tables/staff_projects.php": {
+      "sha256": "7a29c22242f1ce759d3a649ac73527efb90f32e5b08ca710911ad83dc7d89dc0",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        10
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/staff_reminders.php": {
+      "sha256": "071218f9c7a2746b78315a516abe6f27a06973e8baa3bff8ab88e2682646f3b2",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        7,
+        10,
+        27,
+        30
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/staff_timesheets.php": {
+      "sha256": "db2ad456206f1e2cc6857c4b150b4519b62729afd9e1ad4a4c91b38f02e323d1",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        140,
+        152
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/subscriptions.php": {
+      "sha256": "a125b115050905104e06f43da499b625e62e1e8f15a95438bb20e5c371276962",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        40
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/tasks.php": {
+      "sha256": "1a5ff1c420b91dfcb19dd5b447719d4775fe884911c342c6cdb8d322894df84d",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        293,
+        296
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/tasks_relations.php": {
+      "sha256": "84da552edc953d062885e5cc93c280c89afa9ec23c159e041311f963214e113b",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        50,
+        62
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tables/tickets.php": {
+      "sha256": "29c23a4b77c33b4d22029f31ad452b074de9279fd67f00920f78930e80c53a8b",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        88,
+        96
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tasks/task.php": {
+      "sha256": "d81df91edcd0f2ffb15471ccb2f9a27d7cd93cc0fa17e88884a41fa103957096",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        28
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tasks/tasks_filter_by.php": {
+      "sha256": "dbe7e4031083f41dbce365f47cad27a3414ba5761ba2a12e063a277be7f686bf",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        111
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/tasks/view_task_template.php": {
+      "sha256": "fd8afa0ef4a4ccf8f679f9beea814dfd5dfe10515b2ff5402f9b743bde863c8d",
+      "categories": [
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        62,
+        982
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/admin/utilities/calendar_filters.php": {
+      "sha256": "9c8448540ff85d5279b205a4eb9603aa55f22436c7ddcf8792e9ea9c76347b3a",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        26,
+        27
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/company_portal/index.php": {
+      "sha256": "1d8749e2bea799909c3c8dba78a0a72462d8139ae7c0fef1e0c3e13fe5651944",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        26
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/themes/perfex/template_parts/invoices_stats.php": {
+      "sha256": "e879dbba37325d8b15f9d50b5e6df3f82186fa9765cf82ea59067734f1245e6f",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        3,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "state": "partial",
+      "evidence": "tests/invoice_issuer_scope.php and tests/api_issuer_scope.php; scope and explicit remaining gaps: docs/invoice-issuer-core-scope.md. Not complete end-to-end coverage."
+    },
+    "application/views/themes/perfex/template_parts/projects/project_invoices.php": {
+      "sha256": "686367b4d6eb4ea6c9905f451e20b1418e91a49737a32fe333f52c10ae567aaf",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        36
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/themes/perfex/template_parts/projects/project_tabs.php": {
+      "sha256": "ae22ae6746deadcd0d857309a63baf9d3cb881bfda287958228659a4b90a12a9",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        118
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/themes/perfex/template_parts/projects/project_task.php": {
+      "sha256": "95297f8f9e4958ae32976f90ba8eafb93c4863875858510d77aa7afb59bba6bc",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        69
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/themes/perfex/template_parts/proposals_table.php": {
+      "sha256": "b9660e90faa03394b6a33d1a4ea038b02c5c051aae01b0450933d4d338370789",
+      "categories": [
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        46,
+        47,
+        48
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/themes/perfex/views/home.php": {
+      "sha256": "d33b13fcf35f2bbaefef3a7ed22b03b4cb4d5f93a8e58c43f669d44efeec68bc",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        13,
+        18
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/themes/perfex/views/invoicehtml.php": {
+      "sha256": "8a69aa78d764c3ac6ce37bbf987db4d6f9fb28a03c02f86928b4936b2694b201",
+      "categories": [
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        20,
+        28,
+        42,
+        70,
+        204,
+        219,
+        362,
+        363
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/themes/perfex/views/invoicepdf.php": {
+      "sha256": "c64c1c60bb3f5cd1a0a35eed7bc3d1ff9484307a595ad2d08b14caefd8ac73ca",
+      "categories": [
+        "invoice_model",
+        "payments"
+      ],
+      "signal_lines": [
+        21,
+        149,
+        166
+      ],
+      "state": "partial",
+      "evidence": "tests/issuers_documents.php; tests/issuers_document_helpers.php; tests/issuers_document_render.php; docs/issuer-document-snapshots.md (gate remains blocked; permissions, complete financial isolation and independent transaction hardening pending)"
+    },
+    "application/views/themes/perfex/views/invoices.php": {
+      "sha256": "e77bc2a86b3dd5598a4e8371c3bc8773ce0e371795f33e5fa5aeec8805851da6",
+      "categories": [
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        5,
+        51
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/themes/perfex/views/paymentpdf.php": {
+      "sha256": "3d3794d741b6c151a4bf446c29f1934c6620dded924f0ef00da5e556bc606cad",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        85
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/themes/perfex/views/profile.php": {
+      "sha256": "e5807d48cffe595e8381fdbe787e570b81ea52250342b6e8dd7c2dc641103d60",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        96
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/themes/perfex/views/statement.php": {
+      "sha256": "130ec6e49eb39d5717adbff3b340bdf4be2d7048a19643d4ffa5ebdf7b238e0a",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        198,
+        200,
+        209
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/themes/perfex/views/statementpdf.php": {
+      "sha256": "6a00c02e54b15f53ca9b7154829cad7099957ad0bf10ce634f0e985ae8e67f8c",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        104,
+        110,
+        118
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/views/themes/perfex/views/subscriptionhtml.php": {
+      "sha256": "e994dc42eac268b6daf946f602aebdb21f77664d9d7edf64bfa508bf1d5ba957",
+      "categories": [
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        151,
+        193,
+        212
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/accounting/controllers/Accounting.php": {
+      "sha256": "54860b1675a4f785fd115c912fdd50be79cc866e287a8b94f4192e26c83cfdff",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        78,
+        155,
+        159,
+        215,
+        217,
+        219,
+        224,
+        225,
+        226,
+        227,
+        228,
+        230,
+        231,
+        264,
+        313,
+        317,
+        319,
+        369,
+        371,
+        373,
+        378,
+        380,
+        381,
+        384,
+        385,
+        394,
+        430,
+        593,
+        1170,
+        1171,
+        1176,
+        1250,
+        1343,
+        1344,
+        1351,
+        4213,
+        4214,
+        4216,
+        6647,
+        6648,
+        6649,
+        6663,
+        7048,
+        7108,
+        7112,
+        7149,
+        7379,
+        7380,
+        7409,
+        7410,
+        8571,
+        11041,
+        11043,
+        11047,
+        11052,
+        11100,
+        11102,
+        11104,
+        11109,
+        11114,
+        11116,
+        11117,
+        11119,
+        11155,
+        11159,
+        11751,
+        11752,
+        12111,
+        12112,
+        12541,
+        12542,
+        12544,
+        12545,
+        14883
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/accounting/libraries/AccountingLegacyScope.php": {
+      "sha256": "23ba445177bee7d707a110a1204a8f37d10ad02da65aebb6aa7db977a7148d9b",
+      "categories": [
+        "customer_privacy",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        5,
+        27,
+        40,
+        43,
+        50,
+        51,
+        65,
+        67,
+        81
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/accounting/models/Accounting_model.php": {
+      "sha256": "2c56a043e52de7ae49a3d3f5b14dfbc4b8a57b7ae87cb1331e0cd26d5a10a50a",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        2246,
+        2247,
+        4017,
+        4020,
+        5197,
+        7542,
+        7547,
+        7552,
+        8066,
+        8068,
+        8079,
+        8084,
+        8085,
+        8087,
+        8281,
+        8284,
+        8399,
+        9577,
+        9578,
+        9843,
+        9844,
+        10374,
+        10376,
+        10394,
+        10395,
+        10397,
+        10439,
+        10965,
+        10970,
+        11149,
+        11154,
+        15489,
+        15490,
+        16486,
+        16505,
+        16510,
+        16512,
+        16520,
+        16526,
+        16534,
+        16705,
+        16769,
+        16774,
+        16776,
+        16784,
+        16789,
+        16793,
+        16947,
+        18565,
+        19177,
+        19178,
+        19656,
+        19657,
+        20029,
+        20030,
+        20456,
+        20457,
+        20819,
+        20820,
+        21292,
+        21293,
+        21721,
+        21722,
+        21937,
+        21938,
+        22762,
+        23404,
+        23411,
+        23481,
+        24310,
+        24311,
+        28444,
+        28445,
+        28572,
+        28573,
+        29163,
+        29164,
+        30007,
+        30011,
+        30049,
+        30098,
+        30102,
+        30106,
+        30144,
+        30495,
+        31035
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/accounting/views/checks/check_pdf.php": {
+      "sha256": "beb1830a7ff65dc3abf92823cc43ef0ccdda136e78617ca8ae4a17ed84ab0e67",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        320
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/accounting/views/report/details/custom_summary_report_by_balance_sheet.php": {
+      "sha256": "4abaeebfa365908423bd50a44ebb26c193606eaaf3a7f1a58e33d0c4caa99920",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        114,
+        115,
+        261,
+        262
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/accounting/views/report/details/custom_summary_report_by_balance_sheet_summary.php": {
+      "sha256": "bef1ee77bf052e4a6ddad90339252a7314aeee576f3d4d4bc5a69a35deaa6bd2",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        119,
+        120,
+        261,
+        262
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/accounting/views/report/details/custom_summary_report_by_employees.php": {
+      "sha256": "e1f0b8820a9cb7cc1432c28aec257fd31ecd954a5d9bac100ddd8078d4268f49",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        97,
+        98,
+        235,
+        236
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/accounting/views/report/details/custom_summary_report_by_income_statement.php": {
+      "sha256": "eb39ba4131162582d778d7600f749968d643cf92393bd4664fae7b0e918df991",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        114,
+        115,
+        262,
+        263
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/accounting/views/report/details/custom_summary_report_by_product_service.php": {
+      "sha256": "b8a3bf57870574ce461e78a41a3cc309a580e54c02e85ca9730834501120f10b",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        105,
+        106,
+        243,
+        244
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/accounting/views/report/details/custom_summary_report_by_vendors.php": {
+      "sha256": "0502d80db8183e0721a4bbff6fbf06ac39dcb863b06ac810b4e12ca846b8ff36",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        87,
+        88,
+        224,
+        225
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/accounting/views/transaction/stock_export.php": {
+      "sha256": "c395bf90b98ba68e4a16bc4dc93127bf0f3e9b9f93c7d73570e44893891674b5",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        24
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/api/controllers/Contacts.php": {
+      "sha256": "84574f090828d5c0e3b1a48c725ae3287284a990c9091192d671239cded5788e",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        300,
+        349,
+        351,
+        470,
+        485,
+        516
+      ],
+      "state": "partial",
+      "evidence": "tests/client_issuer_scope.php; tests/client_issuer_model.php; tests/client_issuer_mutations.php; tests/client_issuer_api.php; tests/client_issuer_controllers.php; tests/client_issuer_helpers.php; tests/client_issuer_tables.php; tests/invoice_issuer_scope.php; docs/security/client-issuer-privacy-phase2.md (covered legacy boundaries only; portal/session, generic preview/static storage and other domains pending)"
+    },
+    "modules/api/controllers/Customers.php": {
+      "sha256": "8ce066e8b7ecd7aefad78bb8aec22f0c497216e697f2e7860a162b78f7069f34",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        75,
+        250,
+        251,
+        300,
+        301,
+        402,
+        403
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/api/controllers/Invoices.php": {
+      "sha256": "b27418f87e3d1677295df3cd1b5f7827a225363e054a2377e88d3d700f09ad5f",
+      "categories": [
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        167,
+        281,
+        470,
+        471,
+        517,
+        518,
+        520,
+        698,
+        699,
+        707,
+        733,
+        751,
+        752
+      ],
+      "state": "partial",
+      "evidence": "tests/invoice_issuer_scope.php and tests/api_issuer_scope.php; scope and explicit remaining gaps: docs/invoice-issuer-core-scope.md. Not complete end-to-end coverage."
+    },
+    "modules/api/controllers/Staffs.php": {
+      "sha256": "d34e7e19601f337ae20036ec2b80da02f440afbdf85c7da1d2aa829917dfe3e5",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        269
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/api/helpers/api_helper.php": {
+      "sha256": "627d8398587ba0d5a8e3be5415ce2337e52e410abcf6751daac8d84556a0ec0d",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        29,
+        94,
+        101,
+        102
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/api/models/Api_model.php": {
+      "sha256": "0973e956e1cd972532be32a65f5361237f97c32b28bf6b2d0574210f7cd573b9",
+      "categories": [
+        "customer_privacy",
+        "invoice_model",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        45,
+        46,
+        47,
+        55,
+        56,
+        57,
+        81,
+        122,
+        123,
+        127,
+        128,
+        131,
+        132,
+        133,
+        225,
+        316,
+        317,
+        319,
+        320,
+        331,
+        332,
+        334,
+        335,
+        336,
+        337,
+        338,
+        339,
+        342,
+        344,
+        379,
+        653,
+        656,
+        660,
+        668,
+        670,
+        671,
+        672,
+        674,
+        682,
+        766,
+        877,
+        878,
+        879,
+        883,
+        884,
+        899,
+        902,
+        910,
+        911,
+        912,
+        915,
+        916,
+        918,
+        955,
+        957,
+        959,
+        964,
+        1040,
+        1044,
+        1046,
+        1077,
+        1085,
+        1127,
+        1131,
+        1133
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/api/views/apidoc.php": {
+      "sha256": "773d06d80e80c809e9f2bfe0a0c65fe5afeb6ffcf00c580dd7ca2f720e6c06d1",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        10
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/asaas.php": {
+      "sha256": "b4b01dbf9b45c92f8471f8f67fcf7eaf633151f56f4147345b5983145462efb1",
+      "categories": [
+        "customer_privacy",
+        "invoice_model",
+        "payments"
+      ],
+      "signal_lines": [
+        166,
+        167,
+        224,
+        226,
+        291,
+        495,
+        509
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/controllers/Asaas.php": {
+      "sha256": "5b5f164cd51a52dd3a16be0220e283b74245f68bf2cc4950e1be8c47aeba3832",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        220
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/controllers/Checkout.php": {
+      "sha256": "2f70b5df27932a9be5ca74f760d4117a6df3c264d64239c2284ed048e420e7d0",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        22
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/libraries/Asaas/AsaasAdapter.php": {
+      "sha256": "02a6d626f06d2c1de31900b3b809faa617f37ce03476568dc03fa2f8fe4a6266",
+      "categories": [
+        "customer_privacy",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        358,
+        360,
+        680,
+        706,
+        717,
+        762,
+        796,
+        825,
+        831,
+        863,
+        897,
+        947
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/libraries/Asaas/CanonicalReceiptRecorder.php": {
+      "sha256": "5909da19ae8b308ab28ddc4e9f9595b4a280bc2dc8014838ea8b3e42405e91dc",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        34,
+        42,
+        47
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/libraries/Asaas/CompanyCheckoutSchema.php": {
+      "sha256": "969faa8ca6ca4392ab8dbe3d296d0c16637cee0dc8b75d09aba8e659aa7ba614",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        19
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/libraries/Asaas/CompanyHostedLinks.php": {
+      "sha256": "28dc6b446549f4a15476e2b42f2acfa6a1f18e3ad9607a91f02062a117d281b8",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        20,
+        49
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/libraries/Asaas/CompanyPreferences.php": {
+      "sha256": "76b18c02b20dbb7df75c0ff9374124e4f24bb53a3bf134d362d92e1098e12cbb",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        27
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/libraries/Asaas/CompanyRefundStorage.php": {
+      "sha256": "ecabc1fdbd6cde8976ee1781059dc35d44a601a3a0ec2eee446323ad75a81337",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        21,
+        52,
+        73,
+        76
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/libraries/Asaas/CompanyRemoteOperations.php": {
+      "sha256": "81ee8a8ee0bc31375d3010c332b18e53e6cb7fcb13e04af6876764d8e9c28e90",
+      "categories": [
+        "payments"
+      ],
+      "signal_lines": [
+        35
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/libraries/Asaas/CompanySchema.php": {
+      "sha256": "d0902c11d31e7a9a649e28ae10cfe08c2fb7564d02e560c7ed7a07d7e8f0e600",
+      "categories": [
+        "payments"
+      ],
+      "signal_lines": [
+        34,
+        35
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/libraries/Asaas/CompanyService.php": {
+      "sha256": "34d67692da3790e7cc1b9b6bda57d41d7d8a5b2c6bb61c28fd80bfb16e273288",
+      "categories": [
+        "customer_privacy",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        39,
+        57,
+        59,
+        60,
+        61,
+        226,
+        241,
+        306,
+        347,
+        500,
+        568
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/libraries/Asaas_gateway.php": {
+      "sha256": "18065592c5658cc2aa4ba7a18172e2e99982f808f60f97d661fdbe6aa979d8e4",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        340,
+        348,
+        375,
+        541,
+        558,
+        653,
+        769,
+        793,
+        796,
+        838,
+        842,
+        929
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/views/cartao.php": {
+      "sha256": "f29e2d88c8fa7b75fc457faf2a48fc53e6536112cb9728621f9e2209d8921f72",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        4
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/views/payment.php": {
+      "sha256": "b8c3de01cdd8ce1e8a05868c2b8e908e2ea3655f93e3ce3983375b7d27fad109",
+      "categories": [
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        22,
+        35
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/asaas/views/qrcode.php": {
+      "sha256": "fd65551fa51e39ef64bee4909e48f541ccf24b8ecb57f3c2866ef9b1085aaa00",
+      "categories": [
+        "documents_numbering",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        21,
+        33,
+        51,
+        86
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/controllers/Banco_brasil.php": {
+      "sha256": "38fda295833591b6b3dfba62dfd0f70b0001c2c30b22daa905f54527cb0eaeff",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        46,
+        47
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/Api16LocalNoncash.php": {
+      "sha256": "47ece44587d8e45796d01a40b6208da9f213ad29f1856dc92007ec9d26ba70c3",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        28
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/Api16ReviewedExternalReversal.php": {
+      "sha256": "b5fb5d7660efe51974605cfa6e29d6b79efe8ac7e1442f9bd1b4bc8bc87d1402",
+      "categories": [
+        "payments"
+      ],
+      "signal_lines": [
+        19
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ApiAmendments.php": {
+      "sha256": "e2d242098ea2b5b45f26fedfbbfb2cbb3e3ec95b6d51a9994ed4c3b94d193d2c",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        21,
+        58
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ApiOwnNumberAmendments.php": {
+      "sha256": "a5bdaebc08e794f9bca97ccfd1f4cde7738dd8f06cb728b9bb9d22246997cb88",
+      "categories": [
+        "payments"
+      ],
+      "signal_lines": [
+        37
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ApiReceiptReversalOverview.php": {
+      "sha256": "00b44097e78ca39fead05017ceb77a1185af1aa8bafe228bf7122556d74789eb",
+      "categories": [
+        "payments"
+      ],
+      "signal_lines": [
+        10
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ApiService.php": {
+      "sha256": "1b0ea0b497c39caff37206fefefea10f922396e08f86202bd9ec799649f2c499",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        42,
+        53,
+        128,
+        132,
+        137,
+        205,
+        296,
+        297,
+        368,
+        374
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/Checkout.php": {
+      "sha256": "04abf288d450ce50159c7edb282ab8c6dc09e090843f2d8be13e2c2d5f4674fb",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        21,
+        62
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/LocalNoncashReview.php": {
+      "sha256": "02e56f945819a9f87ac801f7d2976122d7fba0e4b162a6950fd9bb274d8e09b3",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        10,
+        18
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/Origination.php": {
+      "sha256": "102470590ce8863bd6488dac25f86b689c18ba5008ca418e207993c88a73a2b2",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        38,
+        43,
+        122,
+        124,
+        128
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ReceiptReversalOverview.php": {
+      "sha256": "7e3654ed0d8dd4201716e7e94ddbc940375748ae6e2d207a3154d7cf3b15cf60",
+      "categories": [
+        "payments"
+      ],
+      "signal_lines": [
+        13
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/Reconciliation.php": {
+      "sha256": "890b7b4cf39ca774b0866709169a662eec71c5cce34380a0eab243caab1f7bf6",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        21,
+        51
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/RestoredLocalNoncashFunds.php": {
+      "sha256": "76a9e0ad8edeea364fd71124c60939359b8a26a2e19bb2f50dc4b4a5662e0ae6",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        33,
+        52
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ReviewedComponentsReceipt.php": {
+      "sha256": "e0a4e6f8a9d4e4c6237d00e0be034e241c999f53b5a4c61348d03ede1d7b6f07",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        36,
+        50
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ReviewedExternalReversal.php": {
+      "sha256": "da2ab992c58e650a105647699645ff7e0c3d1836eba5c5f02661cefe1b43146b",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        23,
+        26,
+        27
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ReviewedReceipt.php": {
+      "sha256": "7f3dda4894586d53601c9e5025f47003ced9d11d9160dd380061a895c0d2cad4",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        31,
+        46
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/banco_brasil/libraries/BancoBrasil/ReviewedTariffReceipt.php": {
+      "sha256": "f527b0080bcf05d7fa91d2564dc7566a25b2803319f95438c4350691358b9cb3",
+      "categories": [
+        "customer_privacy",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        27,
+        37,
+        51,
+        103,
+        104,
+        121
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/connect_api_chat/models/Connect_api_chat_model.php": {
+      "sha256": "111be612ffb95f2e701c274bbb50892d3cf9a311a35160dc2437d0ab934aae30",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        1093,
+        1096
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/connect_api_connector/connect_api_connector.php": {
+      "sha256": "631a6f4d6ebd85ca214375d9a01bc54f67b3534b5e5c86157bba73c9de4b5536",
+      "categories": [
+        "customer_privacy",
+        "invoice_model"
+      ],
+      "signal_lines": [
+        163,
+        164,
+        166,
+        176
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/custom_links/controllers/Custom_links.php": {
+      "sha256": "ad1ac88a0310c8c0158e0fe1abcb13d94feb12f557f7f544fa1557e2395b5fa1",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        73,
+        74,
+        76,
+        130
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/custom_links/helpers/custom_links_helper.php": {
+      "sha256": "0b5e994e17a3b6925e0acdc001763f2e0d16cb6e1681c07d4b341a09d71b6049",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        81,
+        82
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/custom_links/models/Custom_links_model.php": {
+      "sha256": "4c55aa2f774ad655750ae2bf00fecdf134472a93a7730df5280f946f1b20e4e5",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        221,
+        222,
+        223,
+        225,
+        226,
+        227,
+        228,
+        232,
+        233
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/custom_links/views/index.php": {
+      "sha256": "c4418c14448acc52535c0308cdaf002c16117e3c9bc3d688c9a0d64bbdf328d3",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        222
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/einvoice/controllers/Einvoice.php": {
+      "sha256": "3e0d34859f4eff572680bbfde6e8019893728057be3c5d9b039d54f3eafeafa1",
+      "categories": [
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        12,
+        209,
+        214,
+        258,
+        277,
+        281
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/einvoice/einvoice.php": {
+      "sha256": "803b98268a255a95baaee56a3ed0fa635fa623ef31fe0507e0be40c0975de607",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        94
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/einvoice/src/BulkExporter.php": {
+      "sha256": "5ba2c5d5b8ba73c374fd4e3d42ff6156105bbdea2239401ea09ceab66cf52b5e",
+      "categories": [
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        36,
+        113,
+        114,
+        194
+      ],
+      "state": "partial",
+      "evidence": "tests/invoice_issuer_exports.php; docs/invoice-issuer-core-scope.md (SQL selection only, full files/download pending)"
+    },
+    "modules/einvoice/src/Data/Company.php": {
+      "sha256": "26065b8763bfe75843f99108bb7fb4812a74b82a12a587b84935ae944b750f90",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        30,
+        37,
+        38,
+        39,
+        43,
+        44,
+        45,
+        53,
+        58
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/einvoice/src/Data/Invoice.php": {
+      "sha256": "a49c4f96dcc07786e71e8d6881601178abfc2c0902eceec710358857493473ca",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        69
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/elite_custom_js_css/views/elite_custom_css_load.php": {
+      "sha256": "eef8841f23c055749bea36fc7994135be324e75a11fa99024698ce26adfa3c39",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        8
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/elite_custom_js_css/views/elite_custom_js_load.php": {
+      "sha256": "547b073fe3ce3180ef73fbbfcfc0f74d5b6d393291455a55e2e8f05bad1c94f2",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        8
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/elite_custom_js_css/views/form.php": {
+      "sha256": "6a48a1703194056f99b17c33e14dfc95465776b7b78da153103fe559a9c1b7e4",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        59,
+        60
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/elite_custom_js_css/views/table.php": {
+      "sha256": "d6ecd3e08db87e2349f519369ab518f99c200467f50cb976aae53c2f8689370f",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        53
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/exports/services/ContactCSVExport.php": {
+      "sha256": "7fec252a9e820cb98d28ee5639b45c8e59ce9c283df77977c2c447ef015db135",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        32,
+        35
+      ],
+      "state": "partial",
+      "evidence": "tests/client_issuer_document_writers.php, tests/client_issuer_scope.php and tests/invoice_issuer_exports.php cover explicit legacy customer writer/reference and projection boundaries with synthetic SQLite. Other readers, extensions and MySQL concurrency remain pending; see docs/private-client-rollout-checklist.md."
+    },
+    "modules/exports/services/CustomerCSVExport.php": {
+      "sha256": "9268dd805cb494988f4e62dec04a759865a7b90a225cf73a80d7e589160f800f",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        38,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        48,
+        49
+      ],
+      "state": "partial",
+      "evidence": "tests/client_issuer_document_writers.php, tests/client_issuer_scope.php and tests/invoice_issuer_exports.php cover explicit legacy customer writer/reference and projection boundaries with synthetic SQLite. Other readers, extensions and MySQL concurrency remain pending; see docs/private-client-rollout-checklist.md."
+    },
+    "modules/exports/services/ExpenseCSVExport.php": {
+      "sha256": "704689a995d25f12fbe987e376290e25113125f03102cd618a59f5e6ad58e099",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        55,
+        71,
+        74,
+        75,
+        76,
+        105
+      ],
+      "state": "partial",
+      "evidence": "tests/invoice_issuer_exports.php; docs/invoice-issuer-core-scope.md (SQL selection only, full files/download pending)"
+    },
+    "modules/exports/services/LeadCSVExport.php": {
+      "sha256": "afc7e15bef23de8893862b1aa4819da6c73de7c760af9dda8d911bd03523a721",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        47
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/exports/services/PaymentCSVExport.php": {
+      "sha256": "77916ac6dc2fe3e9c92379ac4decea4250a26f4d47974c19bf9e6319d93947bb",
+      "categories": [
+        "documents_numbering",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        43,
+        59
+      ],
+      "state": "partial",
+      "evidence": "tests/invoice_issuer_exports.php; docs/invoice-issuer-core-scope.md (SQL selection only, full files/download pending)"
+    },
+    "modules/finance/libraries/FinanceLegacyScope.php": {
+      "sha256": "924250c8db643cded9c02c2e09f51642a182d1b0269dca284faf0724a41f6cbe",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        5,
+        27,
+        41,
+        44,
+        50
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/finance/libraries/Finance_module.php": {
+      "sha256": "399998c92a70e0b2c2f2e9d497af0e860e3acb2dacccc372bb338807aef2e1ef",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        18,
+        23
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/finance/models/Finance_model.php": {
+      "sha256": "61ef702c5188d9fdcd5cf8570a1e8ae0a4501622023bdcdf5e82fa8a6db43bca",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        16,
+        18,
+        78,
+        99,
+        193,
+        195,
+        263
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/fleet/controllers/Fleet.php": {
+      "sha256": "0ed3a875fa503d020d7b06718e3a8d6c573d6ff634d94abaa3859b63345bd432",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        849,
+        863,
+        2639,
+        2658,
+        2697,
+        2723,
+        2809,
+        4273,
+        4278,
+        4302,
+        4305,
+        4306,
+        4327,
+        4329,
+        4331,
+        4336,
+        4338,
+        4348
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/fleet/models/Fleet_model.php": {
+      "sha256": "0cfb5c860275a5cb7ffde9a21efd3115991584097b6fcb209bd7d13db9a29078",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        1599,
+        1600,
+        1602,
+        1608,
+        1647,
+        1650,
+        2465,
+        2534,
+        2557,
+        2914,
+        2936,
+        2940,
+        2941,
+        2976
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/fleet/views/bookings/booking_detail.php": {
+      "sha256": "8ae9bb7cf6362b509cdd8bdc5c9cbf0b064d8fbd46dc7c8531c13bb842afe055",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        99
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/fleet/views/client/booking_detail.php": {
+      "sha256": "60744992d37f14b0e24d6e6bfb4431e44b88883e3c1087692d692bed9e6bf220",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        85
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/fleet/views/client/booking_manage.php": {
+      "sha256": "89d5b5dd283e07f264d4389d313b4d4e62a2658a63509638bb957f017a8b4558",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        42
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/fleet/views/dashboard/manage.php": {
+      "sha256": "b48278c687a9f894aa713819add8e1e746a27fe451aa6c3b5edaac7c0b82f85f",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        84,
+        161,
+        167
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/fleet/views/transactions/manage.php": {
+      "sha256": "2264c3e6f11900c89da230a5aead773e5f2065db49bd95cd37aa4ff1c4718773",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        13
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/gerencianet_gateway/controllers/Gerencia_net.php": {
+      "sha256": "9559608e5736ea2eac1222bea10c7e548a5134e4c7244c5b1c0ac7b73954a933",
+      "categories": [
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        167,
+        171,
+        189,
+        390,
+        392,
+        406,
+        483,
+        678,
+        679,
+        697,
+        698
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/gerencianet_gateway/services/CompanyAccounts.php": {
+      "sha256": "48e52b68f1817b675c5ad8b75ec0183c8622c5aa3fbb5651cda07ded69485360",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        24
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/gerencianet_gateway/services/CompanyCheckout.php": {
+      "sha256": "a83ef00fa281f0a8968b2889d75b599d61bba553c83cd4ec5d216086f4f3f73d",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        23,
+        39,
+        108
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/gerencianet_gateway/services/CompanyReceivedReceipt.php": {
+      "sha256": "2ae64747ea367862d494654a8689b93eb29d54c5303ba951bb34e35340bbae69",
+      "categories": [
+        "payments"
+      ],
+      "signal_lines": [
+        38
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/gerencianet_gateway/services/EfiChargeIntent.php": {
+      "sha256": "86aa76c647eae054fd2cab77e68e5e74cf5b242344e69aee8c5326b8c83c8bbd",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        23,
+        36,
+        39
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/gerencianet_gateway/services/EfiChargeLedger.php": {
+      "sha256": "f8d1fc11177e07f7b5961ce9a12c7fe7994330e77753ef1e6b2cb169efdcf15f",
+      "categories": [
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        45,
+        116,
+        143
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/gerencianet_gateway/views/gateway_page.php": {
+      "sha256": "cca689017ad105da11fac0c9d96445cdb4ed23c85069428f8aeb48049042f614",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        190
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/gerencianet_gateway/views/html.php": {
+      "sha256": "7cce8908730fff3adc99785c9bf3b617fca358c98abe1dda2ae18df08cda1049",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        161
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/goals/goals.php": {
+      "sha256": "fdbd2935df22bb5990bd333ac1006304aedb7b96c284e03a30d2c28fcf76aa50",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        179,
+        185
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/goals/models/Goals_model.php": {
+      "sha256": "98bcbd781aa99aec8359326f9381f6d3e8339ed2faa38f74aa889db1d7e97b3f",
+      "categories": [
+        "customer_privacy",
+        "invoice_table",
+        "payments"
+      ],
+      "signal_lines": [
+        225,
+        228,
+        231,
+        237,
+        239,
+        245,
+        250,
+        255,
+        269,
+        282
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/hr_profile/models/Hr_profile_model.php": {
+      "sha256": "8b5ec1c567e21fa6a362c5c3201124c88726f0c7fd9a3241a9c118331316f5f2",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        3749,
+        3754
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/ideal/controllers/Ideal.php": {
+      "sha256": "061e0a3dd146b7cfd48db1f8d44ada310da3d9b48bf81f48c7f25dbd56e30fe8",
+      "categories": [
+        "documents_numbering",
+        "invoice_model",
+        "payments"
+      ],
+      "signal_lines": [
+        10,
+        18,
+        19,
+        57,
+        112,
+        115,
+        132,
+        232
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/ideal/libraries/Ideal_gateway.php": {
+      "sha256": "7ea0e7b8138be8c293f4e8f17ec43effeea056acd38504960ba5954cff08b710",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        139
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/controllers/Client_invoice.php": {
+      "sha256": "264c64ee1919ea6b2d4d2ed153f958e4a8d406b08943d3fc39d2fee59287308b",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        21,
+        26
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/controllers/Invoice_link.php": {
+      "sha256": "9044f2bcfd9fa87654447d7e7d3739fe3bac2d6f3764e5fef6956be9b2ac6f4c",
+      "categories": [
+        "documents_numbering",
+        "invoice_model"
+      ],
+      "signal_lines": [
+        15,
+        20,
+        37,
+        38,
+        62,
+        77
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/controllers/Invoices_builder.php": {
+      "sha256": "df54c4eab6b2ecab0bdce0992544e79d8a4670460cf4d4f6ba3137af79b249d9",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        210,
+        211,
+        214,
+        215,
+        216,
+        219,
+        221,
+        240,
+        241,
+        256,
+        257,
+        258,
+        261,
+        263,
+        284,
+        289,
+        333,
+        334,
+        337,
+        338,
+        387,
+        394,
+        398,
+        402,
+        405,
+        412,
+        417,
+        420,
+        456,
+        465,
+        496,
+        498
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/helpers/invoices_builder_helper.php": {
+      "sha256": "720fc1c884e3217464bec36fd98e5bb7eea3cb871d9270ce5d112d090c431e5c",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_model"
+      ],
+      "signal_lines": [
+        68,
+        70,
+        75,
+        151,
+        153,
+        220,
+        231
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/invoices_builder.php": {
+      "sha256": "7ea5ff2a064c78c4ef7363371fcaab01adfcb7a60bc82f1e26d9e6f62eb6ca11",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        145
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/libraries/merge_fields/Invoice_built_merge_fields.php": {
+      "sha256": "3df423a4e69174676b665ddd4aac4150c52a0d237f65d74ffb4dbad0b232a7d9",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        62
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/libraries/pdf/Built_invoice_pdf.php": {
+      "sha256": "ac526bb512eff98aff12cc25ca9efa324bf6d88a2054a9489fd7cf9a502bf829",
+      "categories": [
+        "documents_numbering",
+        "invoice_model"
+      ],
+      "signal_lines": [
+        29,
+        33,
+        34,
+        41
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/models/Invoices_builder_model.php": {
+      "sha256": "95a64f0061396cc5ebee907b4347e8c7a9145c3ac5516304e05b4b1131999f45",
+      "categories": [
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        175,
+        200,
+        201,
+        223,
+        233,
+        245,
+        274,
+        279,
+        290,
+        306,
+        381,
+        393,
+        394,
+        395,
+        396,
+        397
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/views/build_invoices/additional_infor.php": {
+      "sha256": "764603900e160af1566ef0fa9f405325b6985e9c44e1432b46f39cb202d993eb",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        29,
+        39,
+        96,
+        102,
+        120,
+        126,
+        138,
+        144,
+        182,
+        183
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/views/build_invoices/build_invoice.php": {
+      "sha256": "ddc537e4404ad14073ac33e3b725ac95b9ded8fb193b8c965cc0a163d483b9ad",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        62
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/views/build_invoices/edit_converted_invoice.php": {
+      "sha256": "bb743858597e2863b0518f324cd64cc3a483c083ca78669e684ff4963d09fcaf",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        11
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/views/build_invoices/manage.php": {
+      "sha256": "9acbc15d3624bb48ef7ecd887a32cdc69a223e18f89828753f10a850c23f2281",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        41
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/views/build_invoices/table_invoices_built.php": {
+      "sha256": "7854ad05ee86768c4310962a83e7627ce0c9c0b1751a65a351b26d9ef774d0d2",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        9,
+        10,
+        13,
+        14,
+        23,
+        24,
+        28,
+        35,
+        40,
+        52,
+        57,
+        58,
+        59,
+        61,
+        62,
+        63,
+        64,
+        65
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/views/client_portal/invoices.php": {
+      "sha256": "54be0f644034ee7e7655516a70b91a7180c366fd9af32b58e5f024be8688f573",
+      "categories": [
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        5,
+        30
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/views/view_invoice/html/index.php": {
+      "sha256": "2d548d8563fedc5cf431932b61177cb5853bb0da2d319c48a094555817f03d71",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        21,
+        33,
+        75,
+        81,
+        134,
+        138,
+        150,
+        154,
+        162,
+        166,
+        192,
+        193,
+        889,
+        890
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/invoices_builder/views/view_invoice/pdf/built_invoice_pdf.php": {
+      "sha256": "2598ccf330eece6d999a5d487e7f9c054e1198fb130f4216b4afdfa638071dbd",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        55,
+        66,
+        124,
+        125,
+        145,
+        149,
+        161,
+        165,
+        173,
+        177
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/issuers/controllers/Issuers.php": {
+      "sha256": "d3825fbfabfe20de4928cf29c87cb9787623c7b68c7e013b3dc97bd65129101d",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        60
+      ],
+      "state": "partial",
+      "evidence": "tests/issuers_controller.php and client_issuer_controllers.php: trusted actor, POST/CSRF/input shape and adoption gate; registry-only scope."
+    },
+    "modules/ma/controllers/Ma.php": {
+      "sha256": "5712cbada4fe7bdcd314390b09411456656e56beeab27337337a82416fcf6e37",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        2250,
+        2599,
+        3020,
+        3021,
+        3024,
+        3165,
+        3166,
+        3169,
+        3251,
+        3252,
+        3255,
+        3951,
+        3955,
+        3956,
+        3957,
+        3958,
+        3962,
+        3969,
+        3997,
+        4054,
+        4059
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/ma/controllers/Ma_public.php": {
+      "sha256": "b53b44907340b8e90300a1cb2e5221882c52349796c0dcabb9d46ea4de4153ce",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        120
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/ma/models/Ma_model.php": {
+      "sha256": "f928755dc8bda25aef0f402c7cf2cb480b7be4aaae79a2ed8647fe1f7e3a15f7",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        3059,
+        3086,
+        3111,
+        5695,
+        5722,
+        5724,
+        5727,
+        5751,
+        5754,
+        5756,
+        5757,
+        5760,
+        5761,
+        5762,
+        5777,
+        5793,
+        5802,
+        5804,
+        5808,
+        6152,
+        7051,
+        7058,
+        7112,
+        7113,
+        7159,
+        7160,
+        7204,
+        7205,
+        7207,
+        7214,
+        7252,
+        7302,
+        7304,
+        7307,
+        7309,
+        7310,
+        7313
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/ma/views/campaigns/campaign_detail.php": {
+      "sha256": "98bab22bbd46daca51e85824c9491658c75421bbcefee91c2a6392fb47154726",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        87,
+        88,
+        345,
+        349
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/ma/views/segments/segment_detail.php": {
+      "sha256": "03729875fa825131beb28359880992364acdd9f7896ed65d64923aeb37ef97b6",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        75,
+        76,
+        157,
+        161
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/multiple_companies/models/Multiple_companies_model.php": {
+      "sha256": "8808ccb56f8482d33ff6d4be9d0a423e37b0052fb19b6b3c20e984f67ac2c562",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        25,
+        28,
+        40,
+        41
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/multiple_companies/multiple_companies.php": {
+      "sha256": "f07b466311132d1d44c66a6863a10afd823121b2530033789be1ef8645a92a42",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        310,
+        314,
+        385,
+        611,
+        626,
+        739,
+        777,
+        781
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/multiple_companies/services/LegacyContactIdentity.php": {
+      "sha256": "363fd28f0c6ce892ebb9cba4ecaf1689751efaf3476a049558937df67889f80a",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        12,
+        13,
+        23
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/page_builder/helpers/page_builder_helper.php": {
+      "sha256": "d117b860e2984cef16623dacba1e16226533b63ba4597a3ea166821b56c5d29e",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        390,
+        841
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/pige_bridge/controllers/Bridge.php": {
+      "sha256": "fbb542c4763403ec47fef47a8fab3b6ffa87244fe40dca58b4ba8ef450d620c9",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        107
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/pige_bridge/libraries/PigeBridgeConnections.php": {
+      "sha256": "2246324cf8bd3d9d236b3c0906ff254b8d1e599bcbd7c54837498ea8b9de12fa",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        48
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/pige_bridge/libraries/PigeBridgeExternalConfiguration.php": {
+      "sha256": "6aebb009286ca88ccd3184184d3fc69399e9a9216b8f46099282e916c12b811c",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        22
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/pige_bridge/libraries/PigeBridgeInvoices.php": {
+      "sha256": "22464da7bc1dacedbf6d607eb9f6cff9ae9ed5d335d8f2d02a4e27667ae694d5",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        11,
+        80,
+        85
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/products/controllers/Staff_order.php": {
+      "sha256": "e16f0bc83e5f3f2f28418664e59b68c8cf3806c7e9cbdd4ec394050d00545877",
+      "categories": [
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        10,
+        27
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/products/models/Coupons_model.php": {
+      "sha256": "411268b4444408d9e226d62bdb41a72f75be3c84b2a82b411e3cc45c1c620563",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        49,
+        52,
+        75,
+        78,
+        96
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/products/models/Order_model.php": {
+      "sha256": "0dba53ed3fd8f94a6ccc439a1cf0ef419aeda6ffbbb3bff6c289ea63581f2e7d",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_model"
+      ],
+      "signal_lines": [
+        58,
+        59,
+        210,
+        215,
+        318,
+        321,
+        344,
+        380,
+        383
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/products/products.php": {
+      "sha256": "98f0a8ac4cf49104abd364354222509f76494efe9f5f39600f8dada5d7e3bba8",
+      "categories": [
+        "invoice_model"
+      ],
+      "signal_lines": [
+        302,
+        303,
+        307,
+        317,
+        318,
+        323
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/products/views/tables/order_history.php": {
+      "sha256": "f265bc012e1d6a541c5a80c888bc68cfdc40619f1fe3a5aa64724a36ce60b896",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        12,
+        13,
+        29
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/purchase/controllers/Purchase.php": {
+      "sha256": "4b45a209d5e7b0c3319dc8eea277e31a44dac26394deaf525fa0b1001c0221bb",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        309,
+        597,
+        1400,
+        1414,
+        1470,
+        1565,
+        1566,
+        1571,
+        4553,
+        4561,
+        4575,
+        4577,
+        4585,
+        4587,
+        4591,
+        4612,
+        4655,
+        5621,
+        6197,
+        6199,
+        6364,
+        6377,
+        6379,
+        7700,
+        7758,
+        7851,
+        7896,
+        8030,
+        8035
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/purchase/controllers/Vendors_portal.php": {
+      "sha256": "e0161404a54eb4925010ea0c5945afe3eebf56dc461b8231dc09f52c241a70c6",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        947
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/purchase/helpers/purchase_helper.php": {
+      "sha256": "01ca1e28b3b052e719e0abf00f3697f55245f4a591dd07c0fe25bf30c8683154",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        1439,
+        1461,
+        1757,
+        2502,
+        2902
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/purchase/libraries/App_vendor_area_constructor.php": {
+      "sha256": "a2abf32328f3f02b6ede6f98fc5c0e4c92b56b56e6877fcf5a8deadadeb81135",
+      "categories": [
+        "invoice_model"
+      ],
+      "signal_lines": [
+        24
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/purchase/models/Purchase_model.php": {
+      "sha256": "2e48cd3070749e5c3b0b4bb68d042382316353f718f18a501918a8e2bb4b70ff",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering",
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        2255,
+        2256,
+        2439,
+        2440,
+        3453,
+        3455,
+        3665,
+        3667,
+        4379,
+        4396,
+        5933,
+        5935,
+        6079,
+        6085,
+        6132,
+        6202,
+        6409,
+        6418,
+        6442,
+        6444,
+        6487,
+        6552,
+        6590,
+        6639,
+        6723,
+        6751,
+        6758,
+        7215,
+        7276,
+        7296,
+        7324,
+        7357,
+        7600,
+        7657,
+        8266,
+        8367,
+        8373,
+        8804,
+        8807,
+        9132,
+        9465,
+        9466,
+        9481,
+        9482,
+        9483,
+        9484,
+        9485,
+        9486,
+        9487,
+        9504,
+        9506,
+        9560,
+        9562,
+        9572,
+        9573,
+        9616,
+        9618,
+        9621,
+        9622,
+        9673,
+        9675,
+        9680,
+        9681,
+        9691,
+        9693,
+        9706,
+        9710,
+        9712,
+        9721,
+        11108,
+        11114,
+        11136,
+        11447,
+        13434,
+        13436,
+        13674,
+        13710,
+        13733,
+        13907
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/purchase/purchase.php": {
+      "sha256": "b3552646ef1e9a999403dc86966232c10e68d9fdd4a7f1c655c62c4bd2a89166",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        268
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/purchase/views/invoices/table_pur_invoices.php": {
+      "sha256": "a4734c42a87e5b5a3d4e009199572e0bfad3af7bda6c18a4a66ceda328482dca",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        13,
+        15,
+        27,
+        28,
+        37,
+        51,
+        61,
+        70,
+        72,
+        88,
+        90,
+        106,
+        108,
+        118,
+        198,
+        199,
+        202,
+        203
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/purchase/views/purchase_order/pur_order.php": {
+      "sha256": "08e2d7bee9c990177c3a58c6eca3f9541ab42a96e0913b251cc12edf5ed91428",
+      "categories": [
+        "customer_privacy",
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        212,
+        213,
+        231
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/purchase/views/purchase_order/pur_order_preview.php": {
+      "sha256": "0b8e90b834757585e7bba111d23b55d0a4556de8ad664562569910f1c363ea93",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        136
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/purchase/views/purchase_request/pur_request.php": {
+      "sha256": "dcafe9aee057673231e8dc31862f5dbde2f0128f8658bf0b983e3029befe3960",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        114
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/purchase/views/return_orders/order_return.php": {
+      "sha256": "08e38c827f038ad464f8c11f2278f8ac25a0755713e36ac35035b3108c70a255",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        65
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/purchase/views/vendors/groups/payments.php": {
+      "sha256": "1c1c19e24df90feed06270281a7c7f140033050ab9a2ff8ff6407ca479e9c9cc",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        10
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/purchase/views/vendors/groups/profile.php": {
+      "sha256": "cf64b88756bd6eaeda1d3835446587ed055b2350534879a478c877c7f3420b85",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        66,
+        237
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/service_management/controllers/Service_management.php": {
+      "sha256": "c6c85ed622437c9a8a2976f9414acbc29bd1e4e31c57f185e08794678f41520a",
+      "categories": [
+        "customer_privacy",
+        "invoice_model",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        535,
+        617,
+        733,
+        736,
+        741,
+        1435,
+        1497
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/service_management/controllers/Service_management_client.php": {
+      "sha256": "2806603314fa543edbf148f4f79db7a596a0fb6f01e9c5c2f174906aedf44eee",
+      "categories": [
+        "customer_privacy",
+        "invoice_model"
+      ],
+      "signal_lines": [
+        22,
+        167,
+        168,
+        231,
+        440,
+        441,
+        442,
+        605
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/service_management/helpers/service_management_helper.php": {
+      "sha256": "85d3af33575165df7a90ccacb88f8a130728838cd589ad8c8ec8d50512e7b849",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        738
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/service_management/models/Service_contract_model.php": {
+      "sha256": "540fd5acbda906086feb7e862bbfeac6851b9934992a0930a287279f7bc7fe47",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        24,
+        284,
+        521
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/service_management/models/Service_management_model.php": {
+      "sha256": "a4eb4db159428ebc99a2b30678999d8136e6ffe197fac9b0326268a6dcf352a9",
+      "categories": [
+        "documents_numbering",
+        "invoice_model",
+        "payments"
+      ],
+      "signal_lines": [
+        1976,
+        2037,
+        2077,
+        2095,
+        2096,
+        2097,
+        2098,
+        2100,
+        2103,
+        2120,
+        2121,
+        2149,
+        2182,
+        2183,
+        2187,
+        2188,
+        2244,
+        2321,
+        2419,
+        2459
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/service_management/views/client_portals/orders/order_detail.php": {
+      "sha256": "0c60b3b36c0ea92346313c9fae4a0ccde5fc7affa74521d87d6780b748cb3ca0",
+      "categories": [
+        "documents_numbering",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        9,
+        90,
+        272
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/service_management/views/client_portals/service_managements/service_management.php": {
+      "sha256": "737272bebb9d5069800f9ee430183ed3f03d94630b517f822291ae1692bcbafa",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        72
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/service_management/views/contracts/contracts.php": {
+      "sha256": "d8de4339bb533d87b9c525289c13205c161ff2b687cf8beb012651ca21b65c53",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        24
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/service_management/views/contracts/send_to_client.php": {
+      "sha256": "88e099f682b49aa12354e6818c112fafe78acb271a68ebd034b77ddd9c52b5c6",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        23
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/service_management/views/service_managements/client_services/client_service_manage.php": {
+      "sha256": "073b965dc4c09afb31a487da3530375f009b1f7c8cdc73e1a8ee60907eed8796",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        21
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/service_management/views/service_managements/client_services/client_service_table.php": {
+      "sha256": "86d1385c7c0a0842bb2910d436250a2921243cd5b02adb09d7f1e3a16a28ebb7",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        141
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/service_management/views/service_managements/service_detail.php": {
+      "sha256": "eb79712d7d3b5b4607e63850741810b5bbf107735990de698fa5523fb0891e3d",
+      "categories": [
+        "documents_numbering"
+      ],
+      "signal_lines": [
+        88
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/service_management/views/service_managements/service_management.php": {
+      "sha256": "1b6dfad1d96dbc8db37de7d3ffd3dd2150065a2cbd376ef532aef6d2e6603bb3",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        36
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/surveys/controllers/Surveys.php": {
+      "sha256": "543461e21fde023fe810e148e2d11d071ee19e0130cd122bcef3dcc4fb0283e1",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        63,
+        137,
+        150,
+        158,
+        482,
+        485,
+        491,
+        492
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/surveys/views/mail_lists/list_view.php": {
+      "sha256": "e5a0a7e9e24492f73fa32d85e390f76e7a7b877ae3607aedd4e79f17dc91df5d",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        55,
+        114,
+        227
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/surveys/views/tables/mail_list_view.php": {
+      "sha256": "efc9377861d29fbf16fe31f359be19eeadf147ec7eb428809468e9460863171b",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        50,
+        55,
+        59,
+        105,
+        121
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/timesheets/controllers/Timesheets.php": {
+      "sha256": "c21fba64f49dfe0c558eb253d55ea86d5056b2ca8ce0f1a90e637f0ea06aa2f2",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        5119,
+        5121,
+        5445,
+        5446
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/timesheets/models/Timesheets_model.php": {
+      "sha256": "d7db3e029c80a6ddded41969354b05d099805aa819f4a4a5069a9793e0ab56ac",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        8323
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/timesheets/views/requisition_detail.php": {
+      "sha256": "43a97fe01b759440261dccf710a31a8648c565b75ef1958df68e84885f9aa86d",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        477,
+        478,
+        536,
+        544
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/timesheets/views/route_management/table_route_point.php": {
+      "sha256": "441de8ea1e0c9fd8033173029acdef83c1ca5a6927f16c15ff144e1f123ad111",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        4,
+        58
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/webhooks/webhooks.php": {
+      "sha256": "667953e7f234b5e40f5cde3cce6866bcf3a77329dca195dcd188fd250a4ba93d",
+      "categories": [
+        "customer_privacy",
+        "invoice_model"
+      ],
+      "signal_lines": [
+        105,
+        106,
+        117,
+        118,
+        129,
+        130,
+        175,
+        184,
+        193
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "modules/zillapage/controllers/Leads.php": {
+      "sha256": "ba3d315b3fea1cc7d883f7fd0d7db63e7eda0153dd64ad243a9a361c5393210f",
+      "categories": [
+        "customer_privacy"
+      ],
+      "signal_lines": [
+        145
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    }
+  }
+}
