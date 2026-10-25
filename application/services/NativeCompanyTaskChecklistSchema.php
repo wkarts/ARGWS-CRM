@@ -9,10 +9,12 @@ final class NativeCompanyTaskChecklistSchema
     public static function definitions(string $p):array
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');
-        return [
+        $definitions = [
             'company_task_checklist_templates'=>['`id` int unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY','`issuer_id` int unsigned NOT NULL','`description` varchar(4000) NOT NULL','`revision` int unsigned NOT NULL','`created_by` int NOT NULL','`created_at` datetime NOT NULL','UNIQUE KEY `template_owner` (`issuer_id`,`id`)','FOREIGN KEY (`issuer_id`) REFERENCES `'.$p.'issuers_registry` (`id`)'],
             'company_task_checklist_template_requests'=>['`request_key` varchar(64) NOT NULL','`issuer_id` int unsigned NOT NULL','`actor_id` int NOT NULL','`operation` varchar(16) NOT NULL','`source_kind` varchar(32) NOT NULL','`input_hash` varchar(64) NOT NULL','`result_id` int unsigned NOT NULL','`created_at` datetime NOT NULL','PRIMARY KEY (`request_key`)','FOREIGN KEY (`issuer_id`) REFERENCES `'.$p.'issuers_registry` (`id`)'],
         ];
+        foreach($definitions as$table=>&$parts)foreach($parts as$index=>&$part)if(str_starts_with($part,'FOREIGN KEY '))$part='CONSTRAINT `nctfk_'.substr(hash('sha256',$p.$table.':'.$index),0,40).'` '.$part;
+        unset($parts,$part);return $definitions;
     }
 
     public static function ensure($db,string $p):void

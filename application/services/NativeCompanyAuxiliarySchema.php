@@ -91,6 +91,13 @@ final class NativeCompanyAuxiliarySchema
             if (in_array($table,['company_announcement_dismissals','company_announcement_contact_dismissals'],true)) {
                 $parts[] = 'FOREIGN KEY (`issuer_id`,`announcementid`) REFERENCES `' . $prefix . 'company_announcements` (`issuer_id`,`announcementid`)';
             }
+            // MySQL's implicit table_ibfk_N exceeds 64 chars with valid long prefixes.
+            // Constraint identity is stable per complete table/edge, without changing any edge.
+            foreach ($parts as $index => $part) {
+                if (str_starts_with($part, 'FOREIGN KEY ')) {
+                    $parts[$index] = 'CONSTRAINT `ncafk_' . substr(hash('sha256', $prefix . $table . ':' . $index), 0, 40) . '` ' . $part;
+                }
+            }
             $result[$table] = $parts;
         }
         return $result;

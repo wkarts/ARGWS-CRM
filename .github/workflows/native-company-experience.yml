@@ -56,14 +56,14 @@ jobs:
           python3 tests/company_ui_surface_inventory.py
       - name: Test shared native UI contracts without browser
         run: python3 scripts/ci/run-native-company-focused.py node
-      - name: Test actual PHP services and controllers using disposable SQLite
-        run: python3 scripts/ci/run-native-company-focused.py sqlite
       - name: Test actual MySQL additive migration and schema metadata
         env:
           ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_native_module_audit;charset=utf8mb4
           ISSUERS_TEST_USER: root
           ISSUERS_TEST_PASSWORD: synthetic-test-password
         run: python3 scripts/ci/run-native-company-focused.py mysql
+      - name: Test actual PHP services and controllers using disposable SQLite
+        run: python3 scripts/ci/run-native-company-focused.py sqlite
       - name: Render actual native templates in Chromium
         run: python3 scripts/ci/run-native-company-focused.py browser
       - name: Verify reproducible compiled native assets

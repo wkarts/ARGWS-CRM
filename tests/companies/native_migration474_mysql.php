@@ -35,6 +35,14 @@ foreach(['files'=>'id','tickets'=>'ticketid','mail_queue'=>'id'] as$name=>$key){
 require_once APPPATH.'services/CompanyContractsSchema.php';CompanyContractsSchema::ensure($db,$p);
 require_once APPPATH.'services/CompanyInvoiceAttachmentSchema.php';CompanyInvoiceAttachmentSchema::ensure($db,$p);
 $snapshot=static function()use($db,$p){$out=[];foreach(['options','invoices','clients','modules','company_invoice_drafts','company_invoice_draft_events','issuers_audit']as$table)$out[$table]=$db->query('SELECT * FROM '.$p.$table.' ORDER BY 1')->result_array();return$out;};
+// Reproduce the actual MySQL implicit-constraint length failure in this disposable schema.
+$probe=$p.'company_announcement_contact_dismissals';
+if($db->table_exists($probe))throw new RuntimeException('Unexpected probe table already exists');
+$lengthError=null;
+try{$db->pdo->exec('CREATE TABLE `'.$probe.'` (issuer_id INT UNSIGNED NOT NULL, FOREIGN KEY(issuer_id) REFERENCES `'.$p.'issuers_registry`(id)) ENGINE=InnoDB');}
+catch(PDOException $error){$lengthError=$error->errorInfo[1]??null;}
+if($lengthError!==1059)throw new RuntimeException('Expected synthetic MySQL identifier-length error1059');
+echo "Actual MySQL implicit foreign-key identifier limit reproduced (1059); explicit bounded names required.\n";
 $before=$snapshot();$migration=new Migration_Version_474();$migration->db=$db;
 $migration->up();$migration->up();
 NativeCompanyProjectDeadlineSchema::assertValid($db,$p);
