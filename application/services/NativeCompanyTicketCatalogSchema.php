@@ -24,7 +24,8 @@ final class NativeCompanyTicketCatalogSchema
             'FOREIGN KEY (`issuer_id`) REFERENCES `'.$p.'issuers_registry` (`id`)','FOREIGN KEY (`actor_id`) REFERENCES `'.$p.'staff` (`staffid`)',
             $owned?'FOREIGN KEY (`issuer_id`,`ticket_id`) REFERENCES `'.$p.'company_tickets` (`issuer_id`,`id`)':'FOREIGN KEY (`ticket_id`) REFERENCES `'.$p.'tickets` (`ticketid`)',
         ];
-        return$out;
+        foreach($out as$table=>&$parts)foreach($parts as$index=>&$part)if(str_starts_with($part,'FOREIGN KEY '))$part='CONSTRAINT `nctcfk_'.substr(hash('sha256',$p.$table.':'.$index),0,40).'` '.$part;
+        unset($parts,$part);return$out;
     }
     public static function ensure($db,string $p):void
     {
@@ -66,7 +67,7 @@ final class NativeCompanyTicketCatalogSchema
             if(array_diff(array_keys($indexes),$expectedIndexes))throw new RuntimeException('issuer_native_ticket_catalog_schema_invalid');
             $foreign=[];foreach(IssuerStorage::query($db,'SELECT CONSTRAINT_NAME,COLUMN_NAME,REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND REFERENCED_TABLE_SCHEMA=DATABASE() ORDER BY CONSTRAINT_NAME,ORDINAL_POSITION',[$name])->result_array() as $r)$foreign[$r['CONSTRAINT_NAME']][]=$r['COLUMN_NAME'].':'.$r['REFERENCED_TABLE_NAME'].':'.$r['REFERENCED_COLUMN_NAME'];
             $expectedForeign=0;
-            foreach($parts as $definition)if(preg_match('/^FOREIGN KEY \(([^)]+)\) REFERENCES `([^`]+)` \(([^)]+)\)$/D',$definition,$m)){$expectedForeign++;$cols=explode(',',str_replace('`','',$m[1]));$refs=explode(',',str_replace('`','',$m[3]));$want=[];foreach($cols as $i=>$col)$want[]=$col.':'.$m[2].':'.$refs[$i];if(!in_array($want,array_values($foreign),true))throw new RuntimeException('issuer_native_ticket_catalog_schema_invalid');}
+            foreach($parts as $definition)if(preg_match('/^(?:CONSTRAINT `[A-Za-z0-9_]{1,64}` )?FOREIGN KEY \(([^)]+)\) REFERENCES `([^`]+)` \(([^)]+)\)$/D',$definition,$m)){$expectedForeign++;$cols=explode(',',str_replace('`','',$m[1]));$refs=explode(',',str_replace('`','',$m[3]));$want=[];foreach($cols as $i=>$col)$want[]=$col.':'.$m[2].':'.$refs[$i];if(!in_array($want,array_values($foreign),true))throw new RuntimeException('issuer_native_ticket_catalog_schema_invalid');}
         if(count($foreign)!==$expectedForeign)throw new RuntimeException('issuer_native_ticket_catalog_schema_invalid');
         $rules=IssuerStorage::query($db,'SELECT UPDATE_RULE,DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME=?',[$name])->result_array();
         if(count($rules)!==$expectedForeign)throw new RuntimeException('issuer_native_ticket_catalog_schema_invalid');
