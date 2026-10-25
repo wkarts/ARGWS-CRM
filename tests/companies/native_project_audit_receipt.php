@@ -14,3 +14,9 @@ if($db->driver()==='sqlite'){
  essentialThrows(fn()=>$probe->record($a,7,1),'issuer_project_write_unconfirmed','affected row count alone cannot authenticate altered audit');$db->query('DROP TRIGGER '.$p.'changed_receipt');
 }
 echo "Native project audit receipt: {$GLOBALS['essentialChecks']} cumulative checks passed.\n";
+// PDO MySQL may reset lastInsertId after a SELECT. This composition double uses
+// the real SQLite audit table but makes that readback lifetime explicit.
+$volatile=new class($db){public PDO$pdo;private int$last=0;public function __construct(private object$inner){$this->pdo=$inner->pdo;}public function query($sql,$args=[]){$r=$this->inner->query($sql,$args);$this->last=str_starts_with($sql,'INSERT')?$this->inner->insert_id():0;return$r;}public function insert_id():int{return$this->last;}};
+$volatileProbe=new NativeAuditProbe($volatile,$p);$volatileProbe->record($a,7,1);
+essentialCheck($volatile->insert_id()===0,'readback resets volatile insert identifier but the receipt remains proven');
+echo "Native project audit captures insert ID before any fallback metadata read.\n";

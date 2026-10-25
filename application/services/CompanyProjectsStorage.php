@@ -50,10 +50,11 @@ abstract class CompanyProjectsStorage
     {
         $expected=['actor_id'=>(string)$actor,'event'=>$event,'issuer_id'=>(string)$issuer,'subject_id'=>(string)$id,'created_at'=>date('Y-m-d H:i:s'),'metadata_json'=>json_encode(['operation_nonce'=>bin2hex(random_bytes(16))],JSON_THROW_ON_ERROR)];
         IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at,metadata_json) VALUES(?,?,?,?,?,?)',array_values($expected));
-        // Capture the INSERT result before any readback can overwrite affected-row state.
+        // Capture both INSERT receipts before a fallback SELECT can overwrite PDO MySQL lastInsertId.
+        $audit=(int)$this->db->insert_id();
         if(method_exists($this->db,'affected_rows')){$affected=(int)$this->db->affected_rows();}
         else{$connection=$this->db->pdo??$this->db->conn_id??null;if(!$connection instanceof PDO)throw new RuntimeException('issuer_project_write_unconfirmed');$function=$connection->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite'?'changes()':'ROW_COUNT()';$affected=(int)($this->rows('SELECT '.$function.' AS affected')[0]['affected']??-1);}
-        $audit=(int)$this->db->insert_id();$actual=$this->rows('SELECT actor_id,event,issuer_id,subject_id,created_at,metadata_json FROM '.$this->p.'issuers_audit WHERE id=?',[$audit])[0]??[];
+        $actual=$this->rows('SELECT actor_id,event,issuer_id,subject_id,created_at,metadata_json FROM '.$this->p.'issuers_audit WHERE id=?',[$audit])[0]??[];
         if($affected!==1||$audit<1||array_map('strval',$actual)!==$expected)throw new RuntimeException('issuer_project_write_unconfirmed');
     }
     protected function receiptResourceTable(string $operation):string{return str_starts_with($operation,'task_')?'company_tasks':'company_projects';}

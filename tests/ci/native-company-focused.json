@@ -1660,6 +1660,10 @@
     ],
     [
       "php",
+      "tests/companies/native_project_audit_mysql.php"
+    ],
+    [
+      "php",
       "tests/companies/expense_recurring_cli.php"
     ],
     [
