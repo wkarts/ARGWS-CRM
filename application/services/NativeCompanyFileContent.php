@@ -25,7 +25,7 @@ final class NativeCompanyFileContent
         if(in_array($ext,['png','jpg','jpeg'],true)){
             $info=@getimagesizefromstring($bytes);if(!$info||!in_array($mime,['image/png','image/jpeg'],true)||($info['mime']??'')!==$mime||$info[0]<1||$info[1]<1||$info[0]>4096||$info[1]>4096||$info[0]*$info[1]>8000000)throw new DomainException('native_file_content_invalid');
             if(!function_exists('imagecreatefromstring'))throw new RuntimeException('issuer_file_codec_unavailable');$image=@imagecreatefromstring($bytes);if(!$image)throw new DomainException('native_file_content_invalid');
-            ob_start();try{if(!imagepng($image,null,6))throw new DomainException('native_file_content_invalid');$out=ob_get_contents();}finally{ob_end_clean();imagedestroy($image);}if(!is_string($out)||strlen($out)>$maximum)throw new DomainException('native_file_content_invalid');return[pathinfo($name,PATHINFO_FILENAME).'.png','image/png',$out];
+            ob_start();try{if(!imagepng($image,null,6))throw new DomainException('native_file_content_invalid');$out=ob_get_contents();}finally{ob_end_clean();if (PHP_VERSION_ID < 80000) { imagedestroy($image); }}if(!is_string($out)||strlen($out)>$maximum)throw new DomainException('native_file_content_invalid');return[pathinfo($name,PATHINFO_FILENAME).'.png','image/png',$out];
         }
         if($ext==='txt'&&preg_match('//u',$bytes)===1&&!str_contains($bytes,"\0"))return[$name,'text/plain',$bytes];
         if(in_array($ext,['doc','xls'],true)&&strlen($bytes)>=512&&str_starts_with($bytes,"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"))return[$name,'application/octet-stream',$bytes];
