@@ -1,7 +1,6 @@
 name: Preparar inventário oficial da remediação
 on:
-  push:
-    branches: [fix/crm-remediation-pige360]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

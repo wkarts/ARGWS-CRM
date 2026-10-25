@@ -39,3 +39,7 @@ Then run the existing native migration tests and integrated payer/hosted portal,
 removal and refund scenarios. Those require PHP/MySQL/Chromium and were **not
 executed locally** for this patch. The CLI fixture now prints only an allowlisted
 error code and exception class on failure, never SQL, bindings or credentials.
+
+## CI reconciliation
+
+The authentic PHP inventory was generated on commit `0e6c48944954d98415c2e654b3be56974f7d7226` by job `121135277588`, artifact `12594641246` (ZIP SHA256 `c3bbbd2516f846742ed543f0b48309414083cbecc6067fb7c44691e907337437`). Only its source manifest, source-file count and Asaas version changed; readiness remains blocked. The preparation workflow is now explicit manual diagnostics, not a recurring push suite. Permanent PHP8.1/8.5 registry preflight runs the new ownership contract; its exact inventory rises from498 to499 PHP commands per version without changing historical shard assignments. The same contract runs before the long Stacks smoke. Full runtime results remain dependent on the final CI SHA.

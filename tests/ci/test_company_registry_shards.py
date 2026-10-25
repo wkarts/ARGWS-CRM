@@ -68,6 +68,7 @@ class RegistryShardsTest(unittest.TestCase):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()
         expected = {
             'Validar sintaxe e controles HTTP': [
+                ['php', 'tests/asaas_checkout_transaction_tables.php'],
                 ['php', 'tests/efi_install_contract.php'],
                 ['php', 'tests/efi_routes.php'],
                 ['php', 'tests/efi/operational_contract.php'],
@@ -114,8 +115,8 @@ class RegistryShardsTest(unittest.TestCase):
         manifest_php = [command for command in runner.load_commands() if command[0] == 'php']
         self.assertEqual(len(manifest_php), 471)
         combined = manifest_php + external
-        self.assertEqual(len(combined), 498)
-        self.assertEqual(len(set(map(tuple, combined))), 498)
+        self.assertEqual(len(combined), 499)
+        self.assertEqual(len(set(map(tuple, combined))), 499)
 
     def test_isolated_module_audit_precedes_long_registry_suite(self):
         source = (ROOT / '.github/workflows/issuer-foundation.yml').read_text()

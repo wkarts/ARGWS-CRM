@@ -152,6 +152,7 @@ jobs:
           find modules/issuers -name '*.php' -exec php -l '{}' \;
           python3 tests/test_efi_company_contract.py
           python3 tests/test_efi_company_checkout_contract.py
+          php tests/asaas_checkout_transaction_tables.php
           php tests/efi_install_contract.php
           php tests/efi_routes.php
           php tests/efi/operational_contract.php

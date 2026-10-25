@@ -5514,7 +5514,7 @@
         13,
         14,
         15,
-        130
+        134
       ],
       "state": "partial",
       "evidence": "Code review: isolated native Settings receives the scoped identity projection and renders only the native shell; the language-helper fallback is presentation-only. Local native Settings contracts pass; real secondary-company browser proof remains in CI/homologation."
@@ -6706,7 +6706,7 @@
       "evidence": ""
     },
     "modules/asaas/asaas.php": {
-      "sha256": "b4b01dbf9b45c92f8471f8f67fcf7eaf633151f56f4147345b5983145462efb1",
+      "sha256": "8733b5a4a5761e3735f99b90663f87cac950e79c6833838a18836a6e5c3088ba",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -6796,7 +6796,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyHostedLinks.php": {
-      "sha256": "28dc6b446549f4a15476e2b42f2acfa6a1f18e3ad9607a91f02062a117d281b8",
+      "sha256": "3bd81602bb96a3ab1e445c2f10271fa1d9f0ad2bd9851b31cebc6bf63b253287",
       "categories": [
         "invoice_table",
         "payments"
@@ -6820,7 +6820,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyRefundStorage.php": {
-      "sha256": "ecabc1fdbd6cde8976ee1781059dc35d44a601a3a0ec2eee446323ad75a81337",
+      "sha256": "e206b6af8a913b32def56cac33a30d87a7067071ecfa3b5389665782e8501b14",
       "categories": [
         "invoice_table",
         "payments"
@@ -6858,7 +6858,7 @@
       "evidence": ""
     },
     "modules/asaas/libraries/Asaas/CompanyService.php": {
-      "sha256": "34d67692da3790e7cc1b9b6bda57d41d7d8a5b2c6bb61c28fd80bfb16e273288",
+      "sha256": "0793c8e1ed7d6cfa46ea1c606b7094d9823fb8aea786dc3b1b10b85bfc9d9406",
       "categories": [
         "customer_privacy",
         "invoice_table",
@@ -6866,16 +6866,16 @@
       ],
       "signal_lines": [
         39,
-        57,
-        59,
+        58,
         60,
         61,
-        226,
-        241,
-        306,
-        347,
-        500,
-        568
+        62,
+        227,
+        242,
+        307,
+        348,
+        501,
+        569
       ],
       "state": "unreviewed",
       "evidence": ""
