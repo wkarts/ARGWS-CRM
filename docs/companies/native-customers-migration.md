@@ -195,3 +195,42 @@ use the staff selector as contact authority, or expose another issuer's identity
 The existing `NativePortalIdentity` and private attachment/announcement/domain
 readers are reusable contracts, not evidence that all controllers or layouts
 above are connected. MySQL, browser and full final-matrix validation remain open.
+
+## Current endpoint reconciliation — 25 October 2026
+
+The earlier public-route inventory above records the original gap, not current
+completion. At checkpoint `94b212d4`:
+
+- Authentication: all nine contact actions have explicit native branches and
+  boundary tests; the separate `admin` login is not contact authentication.
+- Verification: all three original actions have explicit native branches.
+- Public Clients: 7 of 39 methods are connected and tested at explicit controller
+  boundaries: `profile`, `remove_profile_image`, `company`, `announcements`,
+  `announcement`, `dismiss_announcement`, `gdpr`. **None of the Clients controller
+  is admitted as complete in the production portal gate.** The other 32 methods
+  remain the finite list above minus these seven.
+- Public Contacts is an additional existing consumer, not a new feature:
+  `index`, `contact`, `delete`, `delete_profile_image`,
+  `contact_email_profile_unique`. All five still require contact-bound adapters.
+  `allow_primary_contact_to_manage_other_contacts` cannot be described as fully
+  operational until those same original routes are connected and tested.
+- The Clients settings compositor is checkpointed but depends on the real owned
+  EstimateRequest catalog and controller wiring. Its two file flags also depend
+  on the three original public Clients file actions; a stored option alone is not
+  evidence of implemented behavior.
+
+No method count includes helpers, schemas or a duplicate view. This reconciliation
+is not an authorization to widen the portal gate or relax any resource ACL.
+
+### Native file endpoint update
+
+The original public `Clients::{files,upload_files,delete_file}` now have native
+branches and real storage/controller/view tests; the finite count is **10 of 39**
+connected boundary-tested methods, not production admission. The project and task
+variants of `delete_file` use their existing contact writers, with the original
+Clients deletion setting revalidated inside the transaction. The same native
+Download key route is connected separately. See
+[native portal files evidence](native-portal-customer-files.md) for exact tests,
+mail/notification dependencies and integration limits. Public Contacts remains
+five pending original actions. Do not interpret this checkpoint as the complete
+public Clients experience or enable it by wildcard.

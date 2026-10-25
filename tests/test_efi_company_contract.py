@@ -42,5 +42,12 @@ class EfiCompanyContracts(unittest.TestCase):
   self.assertIn('rel="noopener noreferrer"',view)
  def test_reverse_origin_fences(self):
   for file in ['application/services/CompanyInvoices.php','application/services/CompanyCreditWriter.php','application/services/InvoicePaymentWriter.php','modules/asaas/libraries/Asaas/CompanyService.php','modules/banco_brasil/libraries/BancoBrasil/ApiService.php','modules/banco_brasil/libraries/BancoBrasil/Origination.php']:
-   self.assertIn('efi_company_origins',(ROOT/file).read_text(),file)
+   source=(ROOT/file).read_text()
+   if file=='application/services/CompanyInvoices.php':
+    self.assertIn("require_once __DIR__.'/CompanyInvoiceProviderTables.php'",source)
+    self.assertGreaterEqual(source.count('CompanyInvoiceProviderTables::current('),4)
+    self.assertIn('efi_company_origins',(ROOT/'application/services/CompanyInvoiceProviderTables.php').read_text())
+    self.assertIn('company_invoice_provider_review_required',source)
+   else:
+    self.assertIn('efi_company_origins',source,file)
 if __name__=='__main__':unittest.main()

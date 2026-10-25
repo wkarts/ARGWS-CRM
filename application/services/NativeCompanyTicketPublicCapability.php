@@ -14,7 +14,7 @@ final class NativeCompanyTicketPublicCapability
         if($v!=='0')throw new DomainException('native_ticket_public_unavailable');
     }
     private function source(int$i,int$id):array{
-        $ticket=$this->rows('SELECT id,issuer_id,client_id FROM '.$this->p.'company_tickets WHERE issuer_id=? AND id=?',[$i,$id])[0]??null;if(!$ticket)throw new DomainException('native_ticket_public_unavailable');
+        NativeCompanyTicketVisibility::assertTicket($this->db,$this->p,$i,$id);$ticket=$this->rows('SELECT id,issuer_id,client_id FROM '.$this->p.'company_tickets WHERE issuer_id=? AND id=?',[$i,$id])[0]??null;if(!$ticket)throw new DomainException('native_ticket_public_unavailable');
         $meta=$this->rows('SELECT sender_origin,sender_email,contact_id FROM '.$this->p.NativeCompanyDepartmentSchema::TICKETS.' WHERE issuer_id=? AND ticket_id=?',[$i,$id])[0]??null;
         if($ticket['client_id']!==null){$client=(int)$ticket['client_id'];$owner=$this->rows('SELECT owner_issuer_id FROM '.$this->p.'issuers_clients WHERE client_id=?',[$client])[0]??null;if(!$owner||(int)$owner['owner_issuer_id']!==$i||!$this->rows('SELECT userid FROM '.$this->p.'clients WHERE userid=? AND active=1',[$client]))throw new DomainException('native_ticket_public_unavailable');if($meta&&$meta['contact_id']!==null&&!$this->rows('SELECT id FROM '.$this->p.'contacts WHERE id=? AND userid=? AND active=1',[$meta['contact_id'],$client]))throw new DomainException('native_ticket_public_unavailable');}
         elseif(!$meta||$meta['sender_origin']!=='staff_entered'||$meta['contact_id']!==null||!filter_var($meta['sender_email'],FILTER_VALIDATE_EMAIL))throw new DomainException('native_ticket_public_unavailable');

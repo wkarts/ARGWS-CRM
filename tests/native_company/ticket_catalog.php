@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 require __DIR__.'/knowledge_read.php';require_once __DIR__.'/../../application/services/NativeCompanyTicketCatalog.php';
+// Persisted synthetic pre-474 boundary, not proof of a full historical migration chain.
+$db->query('CREATE TABLE tblmigrations(version INTEGER NOT NULL)');$db->query('INSERT INTO tblmigrations VALUES(473)');
 $db->query("ALTER TABLE tblissuers_registry ADD COLUMN settings_json TEXT NOT NULL DEFAULT '{}'");
 $db->query('CREATE TABLE tblcompany_ticket_catalog(id INTEGER PRIMARY KEY AUTOINCREMENT,issuer_id INTEGER,kind TEXT,code TEXT,name TEXT,message TEXT,color TEXT,sort_order INTEGER,is_default INTEGER,revision INTEGER,actor_id INTEGER,created_at TEXT,updated_at TEXT,UNIQUE(issuer_id,kind,code))');
 foreach(['company_ticket_catalog_references','company_legacy_ticket_catalog_references']as$table)$db->query('CREATE TABLE tbl'.$table.'(id INTEGER PRIMARY KEY,issuer_id INTEGER,ticket_id INTEGER,kind TEXT,source_kind TEXT,source_id INTEGER,revision INTEGER,actor_id INTEGER,created_at TEXT,updated_at TEXT)');

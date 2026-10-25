@@ -2,7 +2,7 @@
 require __DIR__.'/../company_dashboard_presenter.php';
 require_once APPPATH.'services/NativeCompanyProjectRead.php';
 register_shutdown_function(static function()use($db,$p):void{$db->query('DROP TABLE IF EXISTS '.$p.'projects');});
-$db->query("CREATE TABLE {$p}projects(id INT PRIMARY KEY,clientid INT NOT NULL,status INT NOT NULL)");
+$db->query("SELECT id,clientid,status FROM {$p}projects WHERE 1=0"); // Shared fixture already declares this exact source.
 $db->query("INSERT INTO {$p}clients VALUES(10,'Private A')");
 $db->query("INSERT INTO {$p}issuers_clients VALUES(10,?,'52998224725',7,'2026-10-25 12:00:00')",[$a]);
 $db->query("INSERT INTO {$p}projects VALUES(1,9,2),(2,10,2),(3,9,4)");

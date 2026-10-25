@@ -16,6 +16,21 @@ final class NativeCompanyRoutes
             'monthly_payments_statistics' => ['GET'],
             'ticket_widget' => ['GET'],
         ],
+        'todo' => [
+            'index'=>['GET','HEAD','POST'], 'todo'=>['POST'], 'get_by_id'=>['GET'],
+            'change_todo_status'=>['POST'], 'update_todo_items_order'=>['POST'], 'delete_todo_item'=>['POST'],
+        ],
+        'announcements' => [
+            'index'=>['GET','HEAD','POST'], 'announcement'=>['GET','HEAD','POST'], 'view'=>['GET','HEAD'], 'delete'=>['POST'],
+        ],
+        'taxes' => [
+            'index'=>['GET','HEAD','POST'], 'manage'=>['POST'], 'delete'=>['POST'], 'tax_name_exists'=>['POST'],
+        ],
+        'invoice_items' => [
+            'index'=>['GET','HEAD'], 'table'=>['POST'], 'manage'=>['POST'], 'import'=>['GET','HEAD','POST'],
+            'add_group'=>['POST'], 'update_group'=>['POST'], 'delete_group'=>['POST'], 'delete'=>['POST'],
+            'bulk_action'=>['POST'], 'search'=>['POST'], 'get_item_by_id'=>['GET'], 'copy'=>['POST'],
+        ],
     ];
 
     public static function admits(string $directory, string $module, string $controller, string $method, string $verb): bool
@@ -30,6 +45,6 @@ final class NativeCompanyRoutes
         // Do not decode or normalize attacker-controlled destinations into an admitted route.
         if (str_contains($route, '\\') || str_contains($route, '%') || str_contains($route, '?')
             || str_contains($route, '#') || preg_match('/[\x00-\x20\x7f]/', $route)) { return false; }
-        return in_array($route, ['', 'dashboard', 'dashboard/index'], true);
+        return in_array($route, ['', 'dashboard', 'dashboard/index', 'todo', 'announcements', 'taxes', 'invoice_items', 'invoice_items/import'], true);
     }
 }

@@ -22,11 +22,11 @@ abstract class CompanySalesBase
     public static function date($date):string{if(!is_string($date)||!($d=DateTimeImmutable::createFromFormat('!Y-m-d',$date))||$d->format('Y-m-d')!==$date)throw new DomainException('company_sales_invalid');return $date;}
     public static function input(array $input):array
     {
-        if(array_diff(array_keys($input),['client_id','currency','date','due_date','items','note','discount_mode','discount_value','discount_type','adjustment'])||!is_array($input['items']??null))throw new DomainException('company_sales_invalid');
-        $amounts=CompanyInvoiceLines::calculate($input['items'],array_intersect_key($input,array_flip(['discount_mode','discount_value','discount_type','adjustment'])));
+        if(array_diff(array_keys($input),['client_id','currency','date','due_date','items','note','discount_mode','discount_value','discount_type','adjustment','calculation_contract'])||!is_array($input['items']??null))throw new DomainException('company_sales_invalid');
+        $amounts=CompanyInvoiceLines::calculate($input['items'],array_intersect_key($input,array_flip(['discount_mode','discount_value','discount_type','adjustment','calculation_contract'])));
         $note=$input['note']??'';if(!is_string($note)||strlen($note)>20000||preg_match('//u',$note)!==1||preg_match('/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/',$note))throw new DomainException('company_sales_invalid');
         $date=self::date($input['date']??null);$due=self::date($input['due_date']??null);if($due<$date)throw new DomainException('company_sales_invalid');
-        return ['client_id'=>IssuerPolicy::id($input['client_id']??null),'currency'=>IssuerPolicy::id($input['currency']??null),'date'=>$date,'due_date'=>$due,'items'=>array_map(fn($r)=>['description'=>$r['description'],'qty'=>$r['qty'],'rate'=>$r['rate'],'taxes'=>$r['taxes']]+CompanyInvoiceLines::metadata($r),$amounts['items']),'note'=>trim($note),'discount_mode'=>$amounts['discount_mode'],'discount_value'=>$amounts['discount_value'],'discount_type'=>$amounts['discount_type'],'adjustment'=>$amounts['adjustment']];
+        return ['client_id'=>IssuerPolicy::id($input['client_id']??null),'currency'=>IssuerPolicy::id($input['currency']??null),'date'=>$date,'due_date'=>$due,'items'=>array_map(fn($r)=>['description'=>$r['description'],'qty'=>$r['qty'],'rate'=>$r['rate'],'taxes'=>$r['taxes']]+CompanyInvoiceLines::metadata($r),$amounts['items']),'note'=>trim($note),'discount_mode'=>$amounts['discount_mode'],'discount_value'=>$amounts['discount_value'],'discount_type'=>$amounts['discount_type'],'adjustment'=>$amounts['adjustment']]+(array_key_exists('calculation_contract',$input)?['calculation_contract'=>$input['calculation_contract']]:[]);
     }
     protected function context(int $issuer,int $actor,int $client,int $currency,string $kind='invoices'):array
     {

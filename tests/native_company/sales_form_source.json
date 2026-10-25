@@ -2,7 +2,7 @@
   {
     "name": "add_item_to_preview",
     "source": "assets/js/main.js",
-    "sha256": "9db024e515f66f38d788812473c734b8c3f12e7ee91c0d08b6d940d85520f1d8"
+    "sha256": "f1e337c3dc8b7863ed8355f4d1d4bc44888f1875db62ff8e9c66d56b8512fbf7"
   },
   {
     "name": "_set_item_preview_custom_fields_array",

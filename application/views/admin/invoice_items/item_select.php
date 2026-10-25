@@ -12,11 +12,11 @@
                 <option value=""></option>
                 <?php foreach ($items as $group_id => $_items) { ?>
                 <optgroup data-group-id="<?= e($group_id); ?>"
-                    label="<?= $_items[0]['group_name']; ?>">
+                    label="<?= e($_items[0]['group_name']); ?>">
                     <?php foreach ($_items as $item) { ?>
                     <option
                         value="<?= e($item['id']); ?>"
-                        data-subtext="<?= strip_tags(mb_substr($item['long_description'], 0, 200)) . '...'; ?>">
+                        data-subtext="<?= e(strip_tags(mb_substr($item['long_description'], 0, 200)) . '...'); ?>">
                         (<?= e(app_format_number($item['rate'])); ?>)
                         <?= e($item['description']); ?>
                     </option>

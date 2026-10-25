@@ -1,0 +1,6 @@
+<?php
+require __DIR__.'/../application/services/TaskMembersPresentation.php';
+function admin_url($p){return'/admin/'.$p;}function e($v){return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}function staff_profile_image($id,$classes,$type,$attrs){return json_encode([$id,$classes,$type,$attrs],JSON_THROW_ON_ERROR);}
+eval(file_get_contents(__DIR__.'/fixtures/native-task-members.php.txt'));$n=0;
+foreach(['md','sm']as$size)foreach([[],[['id'=>'17','name'=>'A']], [['id'=>'17','name'=>'A'],['id'=>'18','name'=>'B <unsafe>']]]as$members){$old=format_members_by_ids_and_names(implode(',',array_column($members,'id')),implode(',',array_column($members,'name')),$size);$new=TaskMembersPresentation::render($members,$size,'admin_url','staff_profile_image','e');if($new!==$old)throw new RuntimeException('Original assignee markup changed');$n++;}
+$value=TaskMembersPresentation::render([['id'=>'17','name'=>'Name, with comma']],'md','admin_url','staff_profile_image','e');if(substr_count($value,'<a href=')!==1||!str_contains($value,'Name, with comma'))throw new RuntimeException('Authorized name was split into fabricated members');echo 'Task assignee shared markup: '.$n." parity variants and comma identity passed.\n";

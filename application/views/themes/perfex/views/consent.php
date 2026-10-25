@@ -2,21 +2,26 @@
 <div class="panel_s mtop25">
     <div class="panel-body">
         <div class="col-md-12">
-            <?php if (is_client_logged_in()) { ?>
+            <?php if (empty($native_portal_consent) && is_client_logged_in()) { ?>
             <a href="<?= site_url('clients/gdpr'); ?>"
                 class="btn btn-default pull-right">
                 <?= _l('client_go_to_dashboard'); ?>
             </a>
             <?php } ?>
             <h1 class="mbot20">
-                <?= e(hooks()->apply_filters('consent_public_page_heading', get_option('companyname'))); ?>
+                <?= e(!empty($native_portal_consent)?$native_consent_heading:hooks()->apply_filters('consent_public_page_heading', get_option('companyname'))); ?>
             </h1>
             <div class="tc-content mbot20">
-                <?= get_option('gdpr_consent_public_page_top_block'); ?>
+                <?= (!empty($native_portal_consent)?$native_consent_top:get_option('gdpr_consent_public_page_top_block')); ?>
             </div>
         </div>
-        <?= form_open();
-
+        <?= form_open(); ?>
+        <?php if(!empty($native_portal_consent)){ ?>
+        <input type="hidden" name="issuer_id" value="<?= e($native_portal_issuer); ?>">
+        <input type="hidden" name="_native_portal_csrf" value="<?= e($native_portal_csrf); ?>">
+        <input type="hidden" name="native_consent_revision" value="<?= e($native_consent_revision); ?>">
+        <input type="hidden" name="native_consent_request" value="<?= e($native_consent_request); ?>">
+        <?php }
 foreach ($purposes as $purpose) { ?>
         <div class="col-md-12">
             <div class="gdpr-purpose">

@@ -29,3 +29,11 @@ allocator (new/draft), or validates the issued document plus immutable stored
 number/date and revision. The browser's `original_number` is never authority.
 Remote validation does not reserve a number and does not replace final writer
 revalidation. The updated source manifest records this intentional adaptation.
+
+The shared `add_item_to_preview` now adds the concrete invoice editor selector and
+persisted parent/revision only when the original invoice form carries its native
+hidden context. The original `items/search` AJAX initializer uses the same context;
+URLs remain unchanged. Principal/non-invoice calls retain the original wire. The
+selector is not authority: the server must resolve the parent and revalidate ACL
+and revision. The source manifest records this narrow transport delta; the Node
+regression asserts both native and unchanged principal request shapes.

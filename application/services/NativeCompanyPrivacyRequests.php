@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__.'/CompanyPortal.php';
 require_once __DIR__.'/CompanySettingsStorage.php';
 require_once __DIR__.'/NativeCompanyPrivacySchema.php';
+require_once __DIR__.'/NativeCompanyPrivacyMail.php';
 require_once __DIR__.'/NativeCompanyCustomerAudit.php';
 require_once __DIR__.'/NativeCompanyNotifications.php';
 require_once __DIR__.'/issuers/IssuerResourceAccess.php';
@@ -11,7 +12,7 @@ final class NativeCompanyPrivacyRequests
 {
     public function __construct(private$db,private string$p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');}
     private function rows(string$sql,array$args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
-    public function tables():array{return array_values(array_unique(array_merge(NativeCompanyNotifications::tables('privacy_request'),['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_clients','issuers_audit','staff','contacts','clients','gdpr_requests','company_native_gdpr_request_owners'])));}
+    public function tables():array{return array_values(array_unique(array_merge((new NativeCompanyPrivacyMail($this->db,$this->p))->tables(),NativeCompanyNotifications::tables('privacy_request'),['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_clients','issuers_audit','staff','contacts','clients','gdpr_requests','company_native_gdpr_request_owners'])));}
     private function admin(int$issuer,int$actor):void{if(!(new IssuerResourceAccess($this->db,$this->p))->administrative($issuer,$actor))throw new DomainException('company_client_access_denied');}
     public function request(CompanyPortal$portal,array$binding,int$issuer,string$description,string$key):int
     {
@@ -25,7 +26,7 @@ final class NativeCompanyPrivacyRequests
             IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'gdpr_requests(clientid,contact_id,lead_id,request_type,status,request_date,request_from,description) VALUES(?,?,0,?,?,?,?,?)',[$who['client_id'],$who['contact_id'],'account_removal','pending',$at,$name,$description]);$id=(int)$this->db->insert_id();$connection=$this->db->pdo??$this->db->conn_id??null;$countSql=$connection instanceof PDO&&$connection->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite'?'SELECT changes() n':'SELECT ROW_COUNT() n';if((int)($this->rows($countSql)[0]['n']??0)!==1)throw new RuntimeException('issuer_privacy_write_unconfirmed');
             IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_native_gdpr_request_owners(request_id,issuer_id,source_kind,source_id,revision,nonce,input_hash) VALUES(?,?,?,?,1,?,?)',[$id,$issuer,'contact',$who['contact_id'],$nonce,$hash]);
             $actual=$this->owned($issuer,$id);if($actual['nonce']!==$nonce||$actual['input_hash']!==$hash||$actual['description']!==$description||(int)$actual['clientid']!==$who['client_id']||(int)$actual['contact_id']!==$who['contact_id']||$actual['status']!=='pending'||$actual['request_date']!==$at)throw new RuntimeException('issuer_privacy_write_unconfirmed');
-            NativeCompanyCustomerAudit::record($this->db,$this->p,$issuer,0,$id,'native_contact_privacy_requested');(new NativeCompanyNotifications($this->db,$this->p))->recordPrivacyRequestInOwnedTransaction($issuer,$id);if(!$portal->invoiceIdentity($binding,$issuer,true))throw new DomainException('native_privacy_denied');return$id;
+            NativeCompanyCustomerAudit::record($this->db,$this->p,$issuer,0,$id,'native_contact_privacy_requested');(new NativeCompanyNotifications($this->db,$this->p))->recordPrivacyRequestInOwnedTransaction($issuer,$id);(new NativeCompanyPrivacyMail($this->db,$this->p))->prepareInOwned($issuer,$id);if(!$portal->invoiceIdentity($binding,$issuer,true))throw new DomainException('native_privacy_denied');return$id;
         });
     }
     private function legacy(int$issuer,int$id,bool$lock=false):?array

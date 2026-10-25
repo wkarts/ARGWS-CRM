@@ -82,18 +82,19 @@ final class NativeCompanySettingsController
             $page=$forms->page($issuer,$actor,$group);
             if($group==='email'){require_once __DIR__.'/NativeCompanyMailQueue.php';$page['queue']=(new NativeCompanyMailQueue($ci->db,db_prefix()))->page($issuer,$actor);$cron=IssuerStorage::query($ci->db,'SELECT value FROM '.db_prefix().'options WHERE name=?',['cron_has_run_from_cli'])->row_array();$page['cron_ready']=($cron['value']??'')==='1'?'1':'0';$page['command_fields']=['_native_company_csrf'=>CompanyRequestScope::nativeCsrfToken($ci),'_company_context'=>CompanyRequestScope::token(),$ci->security->get_csrf_token_name()=>$ci->security->get_csrf_hash()];}
             $ci->load->helper(['fields','form']);
-            $nativeTaxDropdown=null;$ticketStatuses=null;$ticketPriorities=null;
+            $nativeTaxDropdown=null;$ticketStatuses=null;$ticketPriorities=null;$taskStatuses=null;
+            if($group==='tasks'){require_once __DIR__.'/WorkStatusPresentation.php';$taskStatuses=WorkStatusPresentation::tasks('_l');}
             if($group==='tickets'){$catalog=new NativeCompanyTicketCatalog($ci->db,db_prefix());$ticketStatuses=$catalog->list($issuer,$actor,'status');$ticketPriorities=$catalog->list($issuer,$actor,'priority');}
             if($group==='sales_general'){
                 require_once __DIR__.'/NativeCompanyCatalogUi.php';
-                $raw=$page['values']['default_tax'];$selected=[];
-                if($raw!==''){set_error_handler(static function(){throw new DomainException('native_settings_invalid');});try{$selected=unserialize($raw,['allowed_classes'=>false]);}finally{restore_error_handler();}if(!is_array($selected)||!array_is_list($selected))throw new DomainException('native_settings_invalid');}
+                $raw=$page['values']['default_tax'];$selectedTaxes=[];
+                if($raw!==''){set_error_handler(static function(){throw new DomainException('native_settings_invalid');});try{$selectedTaxes=unserialize($raw,['allowed_classes'=>false]);}finally{restore_error_handler();}if(!is_array($selectedTaxes)||!array_is_list($selectedTaxes))throw new DomainException('native_settings_invalid');}
                 $catalog=new NativeCompanyCatalogUi($ci->db,db_prefix(),$issuer,$actor);
-                $nativeTaxDropdown=$catalog->taxDropdown('settings[default_tax][]',$selected);
+                $nativeTaxDropdown=$catalog->taxDropdown('settings[default_tax][]',$selectedTaxes);
             }
             $ci->load->view('admin/settings/all',[
                 'title'=>_l('options'),'sections'=>$sections,'group'=>$selected,'admin_tabs'=>['update','info','argws_platform'],
-                'native_settings'=>true,'native_settings_google'=>$group==='google'?$page:null,'native_settings_calendar_values'=>$group==='calendar'?$page['values']:null,'native_settings_email'=>$group==='email'?$page:null,'native_settings_ticket_values'=>$group==='tickets'?$page['values']:null,'native_settings_ticket_statuses'=>$ticketStatuses,'ticket_priorities'=>$ticketPriorities,'native_settings_issuer'=>$issuer,'native_settings_invoice_values'=>$group==='invoices'?$page['values']:null,'native_settings_tax_dropdown'=>$nativeTaxDropdown,'native_settings_revision'=>$page['revision'],'native_settings_assets'=>$page['assets'],
+                'native_settings'=>true,'native_settings_clients'=>$group==='clients'?$page:null,'native_settings_misc'=>$group==='misc'?$page:null,'roles'=>$group==='misc'?$page['roles']:[],'native_settings_task_values'=>$group==='tasks'?$page['values']:null,'task_statuses'=>$taskStatuses,'native_settings_google'=>$group==='google'?$page:null,'native_settings_calendar_values'=>$group==='calendar'?$page['values']:null,'native_settings_email'=>$group==='email'?$page:null,'native_settings_ticket_values'=>$group==='tickets'?$page['values']:null,'native_settings_ticket_statuses'=>$ticketStatuses,'ticket_priorities'=>$ticketPriorities,'native_settings_issuer'=>$issuer,'native_settings_invoice_values'=>$group==='invoices'?$page['values']:null,'native_settings_tax_dropdown'=>$nativeTaxDropdown,'native_settings_revision'=>$page['revision'],'native_settings_assets'=>$page['assets'],
                 'native_settings_can_edit'=>CompanySettingsRuntime::can('edit'),
             ]);
         }catch(DomainException $e){

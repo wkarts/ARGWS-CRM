@@ -46,22 +46,35 @@ final class NativeCompanyTicketCommands extends CompanyContractsStorage
         $out['custom_fields']=$fields['tickets']??[];
         return$out;
     }
-    private function references(int $issuer,int $actor,array $data):array
+    private function references(int $issuer,int $actor,array $data,string $cap='create'):array
     {
-        $this->authorize($issuer,$actor,'create');$prefs=(new NativeCompanyTicketPreferences($this->db,$this->p))->readInOwnedTransaction($issuer,$actor);$acl=new IssuerResourceAccess($this->db,$this->p);
+        $this->authorize($issuer,$actor,$cap);$prefs=(new NativeCompanyTicketPreferences($this->db,$this->p))->readInOwnedTransaction($issuer,$actor);$acl=new IssuerResourceAccess($this->db,$this->p);
         $staffActor=$this->rows('SELECT active,is_not_staff FROM '.$this->p.'staff WHERE staffid=?',[$actor])[0]??null;if(!$staffActor||(int)$staffActor['active']!==1||($prefs['values']['access_tickets_to_none_staff_members']==='0'&&(int)$staffActor['is_not_staff']!==0))throw new DomainException('native_ticket_access_denied');
         $departments=new NativeCompanyDepartments($this->db,$this->p);$department=$departments->get($issuer,$actor,$data['department']);
         if(!$acl->administrative($issuer,$actor)&&$prefs['values']['staff_access_only_assigned_departments']==='1'&&!in_array($department['departmentid'],array_column($departments->forStaff($issuer,$actor),'departmentid'),true))throw new DomainException('native_ticket_department_denied');
         $catalog=new NativeCompanyTicketCatalog($this->db,$this->p);$priority=$catalog->get($issuer,$actor,'priority',$data['priority']);$service=$data['service']===null?null:$catalog->get($issuer,$actor,'service',$data['service']);
         if($service!==null&&$prefs['values']['services']!=='1')throw new DomainException('native_ticket_service_disabled');
         $contact=null;$client=null;$name=$data['name'];$email=$data['email'];$origin='staff_entered';
-        if($data['contactid']!==null){$contact=(new NativeCompanyTicketContacts($this->db,$this->p))->getInOwnedTransaction($issuer,$actor,$data['contactid'],$data['userid']);$client=(int)$contact['userid'];$name=trim($contact['firstname'].' '.$contact['lastname']);$email=$contact['email'];$origin='registered_contact';if(($data['name']!==''&&$data['name']!==$name)||($data['email']!==''&&$data['email']!==$email))throw new DomainException('native_ticket_sender_mismatch');}
+        if($data['contactid']!==null){$contact=($cap==='edit'?(new NativeCompanyTicketContacts($this->db,$this->p))->getForEditInOwnedTransaction($issuer,$actor,$data['contactid'],$data['userid']):(new NativeCompanyTicketContacts($this->db,$this->p))->getInOwnedTransaction($issuer,$actor,$data['contactid'],$data['userid']));$client=(int)$contact['userid'];$name=trim($contact['firstname'].' '.$contact['lastname']);$email=$contact['email'];$origin='registered_contact';if(($data['name']!==''&&$data['name']!==$name)||($data['email']!==''&&$data['email']!==$email))throw new DomainException('native_ticket_sender_mismatch');}
         elseif($data['userid']!==null||trim($name)===''||!filter_var($email,FILTER_VALIDATE_EMAIL))throw new DomainException('native_ticket_sender_required');
         if(!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($email)>191||preg_match('/[\r\n]/',$email))throw new DomainException('native_ticket_sender_required');
         if($data['assigned']!==0){$this->responsible($issuer,$data['assigned']);$staff=$this->rows('SELECT active,is_not_staff FROM '.$this->p.'staff WHERE staffid=?',[$data['assigned']])[0]??null;if(!$staff||(int)$staff['active']!==1||($prefs['values']['access_tickets_to_none_staff_members']==='0'&&(int)$staff['is_not_staff']!==0))throw new DomainException('native_ticket_assignee_denied');}
         $project=null;if($data['project_id']!==null){$project=NativeCompanyResourceReferences::resolve($this->db,$this->p,$issuer,$actor,'project',$data['project_id']);$owned=$project['source_kind']==='company_project';$r=$this->rows('SELECT '.($owned?'client_id':'clientid').' AS client_id FROM '.$this->p.($owned?'company_projects':'projects').' WHERE id=?',[$project['source_id']])[0]??null;if(!$r||$client===null||(int)$r['client_id']!==$client)throw new DomainException('native_ticket_project_denied');}
         if($acl->primaryId()===$issuer)$status=$catalog->get($issuer,$actor,'status','1');else{$r=$this->rows('SELECT id FROM '.$this->p.NativeCompanyTicketCatalogSchema::CATALOG.' WHERE issuer_id=? AND kind=? AND code=?',[$issuer,'status','open'])[0]??null;if(!$r)throw new DomainException('native_ticket_catalog_defaults_missing');$status=$catalog->get($issuer,$actor,'status',NativeCompanyResourceId::encode('company_ticket_status',(int)$r['id']));}
-        $this->authorize($issuer,$actor,'create');return compact('prefs','department','priority','service','contact','client','name','email','origin','project','status');
+        $this->authorize($issuer,$actor,$cap);return compact('prefs','department','priority','service','contact','client','name','email','origin','project','status');
+    }
+    /** Same finite reference rules, but edit is not a synthetic create grant. No mutation occurs here. */
+    public function settingsInputInOwnedTransaction(int $issuer,int $actor,array $before,array $input):array
+    {
+        IssuerTransaction::assertOwned($this->db,$this->p,array_merge((new NativeCompanyTicketRead($this->db,$this->p))->tables(),(new NativeCompanyTicketContacts($this->db,$this->p))->tables()));
+        if((new NativeCompanyTicketRead($this->db,$this->p))->getInOwnedTransaction($issuer,$actor,$before['ticketid'])!==$before||!$before['metadata'])throw new DomainException('native_ticket_metadata_required');
+        if(array_diff(array_keys($input),['subject','contactid','userid','department','assigned','priority','service','project_id','tags','custom_fields']))throw new DomainException('native_ticket_input_invalid');
+        $input['message']=$before['message'];$input['cc']=implode(',',json_decode($before['metadata']['cc_json'],true,32,JSON_THROW_ON_ERROR));
+        $hasContact=isset($input['contactid'])&&$input['contactid']!=='';$input['name']=$hasContact?'':$before['submitter'];$input['email']=$hasContact?'':$before['ticket_email'];
+        $data=self::createInput($input);$refs=$this->references($issuer,$actor,$data,'edit');
+        // A new recipient may not inherit an existing customer's authored/public history implicitly.
+        if($before['userid']!==null&&$refs['client']!==$before['userid'])throw new DomainException('native_ticket_client_reassignment_requires_review');
+        return['data'=>$data,'refs'=>$refs];
     }
     public function createNative(int $issuer,int $actor,array $input,string $request):string
     {

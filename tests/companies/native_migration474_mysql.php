@@ -38,6 +38,8 @@ try{$db->pdo->exec('CREATE TABLE `'.$probe.'` (issuer_id INT UNSIGNED NOT NULL, 
 catch(PDOException $error){$lengthError=$error->errorInfo[1]??null;}
 if($lengthError!==1059)throw new RuntimeException('Expected synthetic MySQL identifier-length error1059');
 echo "Actual MySQL implicit foreign-key identifier limit reproduced (1059); explicit bounded names required.\n";
+$db->query('INSERT INTO '.$p.'estimate_request_forms(id,form_key,type,name,status) VALUES(1,?,?,?,1)',['synthetic-native-form-key','estimate','Preserved native form']);
+$nativeFormBefore=$db->query('SELECT id,form_key,type,name,status FROM '.$p.'estimate_request_forms ORDER BY id')->result_array();
 $before=$snapshot();$migration=new Migration_Version_474();$migration->db=$db;
 $migration->up();$migration->up();
 NativeCompanyProjectDeadlineSchema::assertValid($db,$p);
@@ -45,6 +47,14 @@ NativeCompanyTaskFormSchema::assertValid($db,$p);
 NativeCompanyTaskChecklistSchema::assertValid($db,$p);
 NativeCompanySpamSchema::assertValid($db,$p);
 NativeCompanyStandaloneFollowersSchema::assertValid($db,$p);
+NativeCompanyTicketLifecycleSchema::assertValid($db,$p);
+NativeCompanyStaffInviteSchema::assertValid($db,$p);
+NativeCompanyStaffRateSchema::assertValid($db,$p);
+NativeCompanyTaskTimerDetailsSchema::assertValid($db,$p);
+NativeCompanyTicketMergeSchema::assertValid($db,$p);
+NativeCompanyPrivacyMailSchema::assertValid($db,$p);
+NativeCompanyEstimateRequestSchema::assertValid($db,$p);
+essentialCheck($db->query('SELECT id,form_key,type,name,status FROM '.$p.'estimate_request_forms ORDER BY id')->result_array()===$nativeFormBefore&&$db->query('SELECT issuer_id FROM '.$p.'estimate_request_forms WHERE id=1')->row_array()['issuer_id']===null,'native estimate form ownership addition preserves historical IDs and fields without adoption');
 NativeCompanyTicketReplySchema::assertValid($db,$p);
 NativeCompanyTicketPublicSchema::assertValid($db,$p);
 $deadline=$db->query('SHOW FULL COLUMNS FROM '.$p.'company_projects')->result_array();

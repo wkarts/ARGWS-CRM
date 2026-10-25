@@ -157,7 +157,10 @@ final class CompanyRequestScope
             public function csrf(): string { return 'synthetic-fixture-only'; }
         };
     }
-    public static function adminUrl($application, string $path = ''): string { return NATIVE_HEADER_FIXTURE_COMPANY ? '/admin/' . $path : admin_url($path); }
+    // The browser fixture is served below /sub/admin/. Keep its captured
+    // transport destination a real same-origin URL; admin_url() intentionally
+    // returns a fragment placeholder for other presentation-only assertions.
+    public static function adminUrl($application, string $path = ''): string { return '/sub/admin/' . ltrim($path, '/'); }
 }
 
 final class CompanySettingsRuntime { public static function active(): bool { return true; } public static function canResource($feature, $cap = 'view'): bool { return !in_array($feature, ['pusher', 'connect-api-connector', 'calendar'], true); } public static function can($cap): bool { return true; } }

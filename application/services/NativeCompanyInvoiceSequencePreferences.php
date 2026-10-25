@@ -18,6 +18,21 @@ final class NativeCompanyInvoiceSequencePreferences
         $verify=function()use($issuer,$actor):void{$acl=new IssuerResourceAccess($this->db,$this->p);if($acl->primaryId()===$issuer||!$acl->can($issuer,$actor,'invoices','view')||!$acl->can($issuer,$actor,'invoices','create'))throw new DomainException('native_invoice_sequence_denied');};
         $verify();return IssuerTransaction::run($this->db,$this->p,$this->tables(),fn()=>$this->readFrame($issuer,$actor,$verify));
     }
+    /** Same create authority, inside the exact canonical issuer transaction; no nested transaction or reservation. */
+    public function readForInvoiceCreationInOwned(int $issuer,int $actor):array
+    {
+        $verify=function()use($issuer,$actor):void{$acl=new IssuerResourceAccess($this->db,$this->p);if($acl->primaryId()===$issuer||!$acl->can($issuer,$actor,'invoices','view')||!$acl->can($issuer,$actor,'invoices','create'))throw new DomainException('native_invoice_sequence_denied');};
+        $verify();return $this->readFrame($issuer,$actor,$verify);
+    }
+    /** A persisted open draft may be edited without granting permission to issue it. */
+    public function readForDraftEditor(int $issuer,int $actor,$canonicalDraft):array
+    {
+        require_once __DIR__.'/CompanyInvoiceDrafts.php';require_once __DIR__.'/NativeCompanyResourceId.php';
+        $ref=NativeCompanyResourceId::decode('invoice',$canonicalDraft);if($ref['source_kind']!=='company_invoice_draft')throw new DomainException('native_invoice_sequence_denied');
+        $drafts=new CompanyInvoiceDrafts($this->db,$this->p);
+        $verify=function()use($issuer,$actor,$ref,$drafts):void{$acl=new IssuerResourceAccess($this->db,$this->p);if($acl->primaryId()===$issuer||!$acl->can($issuer,$actor,'invoices','view')||!$acl->can($issuer,$actor,'invoices','edit'))throw new DomainException('native_invoice_sequence_denied');$draft=$drafts->documentInOwned($issuer,$actor,$ref['source_id']);if($draft['state']!=='open')throw new DomainException('company_invoice_draft_unavailable');};
+        return IssuerTransaction::run($this->db,$this->p,array_values(array_unique(array_merge($this->tables(),$drafts->tables()))),fn()=>$this->readFrame($issuer,$actor,$verify));
+    }
     private function readFrame(int $issuer,int $actor,callable $verify):array
     {
         IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());$verify();

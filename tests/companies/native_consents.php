@@ -27,6 +27,6 @@ essentialThrows(fn()=>$service->deletePurpose($a,7,$purpose,2),'native_consent_p
 $entry['purpose_revision']='1';essentialThrows(fn()=>$service->record($a,7,$id,$entry,$revision,'::1'),'company_client_stale','stale purpose revision cannot change consent for unseen meaning');
 $db->query("CREATE TRIGGER {$p}ignore_purpose BEFORE INSERT ON {$p}company_native_consent_purposes BEGIN SELECT RAISE(IGNORE); END");
 essentialThrows(fn()=>$service->savePurpose($a,7,['name'=>'Native purpose','description'=>'Updated current description']),'issuer_consent_write_unconfirmed','purpose create requires unique new write nonce, not matching previous row');$db->query("DROP TRIGGER {$p}ignore_purpose");
-$columns=$db->query('PRAGMA table_info('.$p.'company_native_consents)')->result_array();essentialCheck(count($columns)===7,'new history schema is exact and contains no credential fields');
+$columns=$db->query('PRAGMA table_info('.$p.'company_native_consents)')->result_array();essentialCheck(count($columns)===8,'new history schema is exact and contains no credential fields');
 $db->query('ALTER TABLE '.$p.'company_native_consents ADD unexpected TEXT');essentialThrows(fn()=>NativeCompanyConsentSchema::ensure($db,$p),'native_consent_schema_invalid','schema replay rejects drift rather than repairing ambiguous data');
 echo 'Native consent extended controls: 6 checks passed.'.PHP_EOL;

@@ -1,13 +1,15 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/NativeCompanyTicketVisibility.php';
 require_once __DIR__.'/NativeCompanyTicketPreferences.php';
 require_once __DIR__.'/NativeCompanyDepartments.php';
 require_once __DIR__.'/NativeCompanyTicketReplySchema.php';
+require_once __DIR__.'/NativeCompanyTicketMergeSchema.php';
 /** Ticket authority precedes subject/body/contact hydration, including generic relation consumers. */
 final class NativeCompanyTicketRead
 {
     public function __construct(private $db,private string $p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');}
-    public function tables():array{return array_values(array_unique(array_merge((new NativeCompanyTicketPreferences($this->db,$this->p))->tables(),array_keys(NativeCompanyDepartmentSchema::definitions($this->p)),array_keys(NativeCompanyTicketCatalogSchema::definitions($this->p)),[NativeCompanyTicketReplySchema::BODY,'company_tickets','company_ticket_replies','tickets','ticket_replies','issuers_clients','issuers_client_links','clients','contacts','projects','company_projects','departments','staff_departments'])));}
+    public function tables():array{return array_values(array_unique(array_merge(NativeCompanyTicketVisibility::tables($this->db,$this->p),NativeCompanyTicketMergeSchema::tables($this->db,$this->p),(new NativeCompanyTicketPreferences($this->db,$this->p))->tables(),array_keys(NativeCompanyDepartmentSchema::definitions($this->p)),array_keys(NativeCompanyTicketCatalogSchema::definitions($this->p)),[NativeCompanyTicketReplySchema::BODY,'company_tickets','company_ticket_replies','tickets','ticket_replies','issuers_clients','issuers_client_links','clients','contacts','projects','company_projects','departments','staff_departments'])));}
     private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private function access(int $issuer,int $actor):IssuerResourceAccess{$acl=new IssuerResourceAccess($this->db,$this->p);if(!$acl->can($issuer,$actor,'tickets','view'))throw new DomainException('native_ticket_denied');return$acl;}
     private function client(int $issuer,?int $client,IssuerResourceAccess $acl,bool $owned):void
@@ -19,9 +21,10 @@ final class NativeCompanyTicketRead
         elseif($owner===null&&$acl->primaryId()!==$issuer)throw new DomainException('native_ticket_denied');
         if(!$this->rows('SELECT userid FROM '.$this->p.'clients WHERE userid=?',[$client]))throw new DomainException('native_ticket_denied');
     }
-    private function authority(int $issuer,int $actor,$id,bool $referenceOnly=false):array
+    private function authority(int $issuer,int $actor,$id,bool $referenceOnly=false,bool $deletedReceipt=false):array
     {
         IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());$acl=$this->access($issuer,$actor);$lineage=$acl->primaryId();$d=NativeCompanyResourceId::decode('ticket',$id);$owned=$d['source_kind']==='company_ticket';
+        if($owned&&!$deletedReceipt)NativeCompanyTicketVisibility::assertTicket($this->db,$this->p,$issuer,$d['source_id']);
         if(!$owned&&$lineage!==$issuer)throw new DomainException('native_ticket_denied');
         $row=$owned?($this->rows('SELECT id,issuer_id,client_id,assignee_id FROM '.$this->p.'company_tickets WHERE issuer_id=? AND id=?',[$issuer,$d['source_id']])[0]??null):($this->rows('SELECT ticketid,userid,contactid,department FROM '.$this->p.'tickets WHERE ticketid=?',[$d['source_id']])[0]??null);
         if(!$row)throw new DomainException('native_ticket_denied');$client=$owned?($row['client_id']===null?null:(int)$row['client_id']):((int)$row['userid']>0?(int)$row['userid']:null);$this->client($issuer,$client,$acl,$owned);
@@ -41,6 +44,15 @@ final class NativeCompanyTicketRead
         if(!$acl->administrative($issuer,$actor)&&$policy['values']['staff_access_only_assigned_departments']==='1'&&($department===null||!in_array($department,array_column($departments->forStaff($issuer,$actor),'departmentid'),true)))throw new DomainException('native_ticket_department_denied');
         if(!$owned&&(int)$row['contactid']>0){$contact=$this->rows('SELECT userid FROM '.$this->p.'contacts WHERE id=?',[(int)$row['contactid']])[0]??null;if(!$contact||$client===null||(int)$contact['userid']!==$client)throw new DomainException('native_ticket_denied');}
         $this->access($issuer,$actor);if($lineage!==$acl->primaryId())throw new DomainException('native_ticket_denied');return compact('d','owned','row','client','metaTable','department','policy','lineage');
+    }
+    /** A matching deletion receipt permits only authority revalidation, never message hydration. */
+    public function deletionReceiptAuthority(int $issuer,int $actor,$id,string $nonce,string $hash):void
+    {
+        IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());
+        $d=NativeCompanyResourceId::decode('ticket',$id);if($d['source_kind']!=='company_ticket'||!preg_match('/^[a-f0-9]{64}$/D',$nonce)||!preg_match('/^[a-f0-9]{64}$/D',$hash)||!NativeCompanyTicketVisibility::enabled($this->db,$this->p))throw new DomainException('native_ticket_denied');
+        $r=$this->rows('SELECT * FROM '.$this->p.NativeCompanyTicketLifecycleSchema::TICKETS.' WHERE ticket_id=?',[$d['source_id']])[0]??null;
+        if(!$r||(int)$r['issuer_id']!==$issuer||(int)$r['actor_id']!==$actor||!hash_equals($r['request_key'],$nonce)||!hash_equals($r['source_hash'],$hash))throw new DomainException('native_ticket_denied');
+        $this->authority($issuer,$actor,$id,false,true);
     }
     /** References need department authority, not the full presentation settings.
      * Read again on every authority check: no object/global/transaction cache can mask revocation.
@@ -62,6 +74,24 @@ final class NativeCompanyTicketRead
         return ['source_kind'=>$a['d']['source_kind'],'source_id'=>$a['d']['source_id'],'feature'=>'tickets','name'=>$row['subject'],'url'=>'tickets/ticket/'.$canonical,'canonical_id'=>$canonical];
     }
     public function reference(int $issuer,int $actor,$id):array{return IssuerTransaction::run($this->db,$this->p,$this->tables(),fn()=>$this->referenceInOwnedTransaction($issuer,$actor,$id));}
+    /** Minimal operational metrics, authorized before reading state; no body or subject hydration. */
+    public function metricInOwnedTransaction(int $issuer,int $actor,$id):array
+    {
+        $a=$this->authority($issuer,$actor,$id);if(!$a['owned'])throw new DomainException('native_ticket_denied');$source=$a['d']['source_id'];
+        $row=$this->rows('SELECT id,assignee_id,status,created_at FROM '.$this->p.'company_tickets WHERE issuer_id=? AND id=?',[$issuer,$source])[0]??null;if(!$row)throw new DomainException('native_ticket_denied');
+        $refs=$this->rows('SELECT source_kind,source_id FROM '.$this->p.NativeCompanyTicketCatalogSchema::REFERENCES.' WHERE issuer_id=? AND ticket_id=? AND kind=?',[$issuer,$source,'status']);if(count($refs)>1)throw new DomainException('native_ticket_reference_invalid');
+        if($refs){$status=(new NativeCompanyTicketCatalog($this->db,$this->p))->get($issuer,$actor,'status',NativeCompanyResourceId::encode($refs[0]['source_kind'],(int)$refs[0]['source_id']));$code=$status['code']??('legacy_'. $status['source_id']);$label=$status['name'];}
+        else{if(!in_array($row['status'],['open','resolved','closed'],true))throw new DomainException('native_ticket_reference_invalid');$code=$row['status'];$label=match($code){'open'=>'Open (historical)','resolved'=>'Resolved (historical)','closed'=>'Closed (historical)'};}
+        $department=$a['department']===null?null:(new NativeCompanyDepartments($this->db,$this->p))->get($issuer,$actor,$a['department']);
+        if($a!==$this->authority($issuer,$actor,$id))throw new DomainException('native_ticket_changed');
+        return ['id'=>$source,'assignee_id'=>(int)$row['assignee_id'],'status_id'=>$status['native_id']??null,'status'=>$code,'status_label'=>$label,'created_at'=>$row['created_at'],'department_id'=>$a['department'],'department_name'=>$department['name']??null];
+    }
+    private function mergeState(int$i,int$a,array$authority):array{
+        $out=['merged_ticket_id'=>null,'merged_tickets'=>[]];if(!$authority['owned']||!NativeCompanyTicketMergeSchema::active($this->db,$this->p))return$out;$source=$authority['d']['source_id'];
+        $link=$this->rows('SELECT * FROM '.$this->p.NativeCompanyTicketMergeSchema::LINKS.' WHERE child_id=?',[$source])[0]??null;
+        if($link){$parent=$this->rows('SELECT issuer_id,client_id FROM '.$this->p.'company_tickets WHERE id=?',[$link['primary_id']])[0]??null;if((int)$link['issuer_id']!==$i||!$parent||(int)$parent['issuer_id']!==$i||($parent['client_id']===null?null:(int)$parent['client_id'])!==$authority['client'])throw new DomainException('native_ticket_merge_provenance_invalid');$out['merged_ticket_id']=NativeCompanyResourceId::encode('company_ticket',(int)$link['primary_id']);}
+        foreach($this->rows('SELECT child_id,issuer_id FROM '.$this->p.NativeCompanyTicketMergeSchema::LINKS.' WHERE primary_id=? ORDER BY child_id',[$source])as$r){if((int)$r['issuer_id']!==$i)throw new DomainException('native_ticket_merge_provenance_invalid');$id=NativeCompanyResourceId::encode('company_ticket',(int)$r['child_id']);try{$ref=$this->referenceInOwnedTransaction($i,$a,$id);}catch(DomainException$e){if(in_array($e->getMessage(),['native_ticket_deleted','native_ticket_department_denied'],true))continue;throw$e;}$out['merged_tickets'][]=['ticketid'=>$id,'subject'=>$ref['name']];}return$out;
+    }
     public function get(int $issuer,int $actor,$id):array{return IssuerTransaction::run($this->db,$this->p,$this->tables(),fn()=>$this->getInOwnedTransaction($issuer,$actor,$id));}
     public function getInOwnedTransaction(int $issuer,int $actor,$id):array
     {
@@ -77,13 +107,13 @@ final class NativeCompanyTicketRead
         $bodyProof=$owned?($this->rows('SELECT * FROM '.$this->p.NativeCompanyTicketReplySchema::BODY.' WHERE ticket_id=?',[$source])[0]??null):null;
         if($bodyProof&&((int)$bodyProof['issuer_id']!==$issuer||$bodyProof['body_format']!=='native_html'||(int)$bodyProof['revision']<1||!hash_equals((string)$bodyProof['content_hash'],hash('sha256',$row['body']))))throw new DomainException('native_ticket_body_provenance_invalid');
         $plain=$owned&&!$bodyProof&&$row['status']!=='native';
-        $canonical=NativeCompanyResourceId::encode($a['d']['source_kind'],$source);$revisionMetadata=$metadata;if($revisionMetadata!==null)unset($revisionMetadata['admin_read'],$revisionMetadata['staff_replying'],$revisionMetadata['staff_replying_at']);$snapshot=[$row,$revisionMetadata,$refs,$bodyProof];
+        $canonical=NativeCompanyResourceId::encode($a['d']['source_kind'],$source);$revisionMetadata=$metadata;if($revisionMetadata!==null)unset($revisionMetadata['admin_read'],$revisionMetadata['staff_replying'],$revisionMetadata['staff_replying_at']);$mergeState=$this->mergeState($issuer,$actor,$a);$snapshot=[$row,$revisionMetadata,$refs,$bodyProof,$mergeState];
         $out=['ticketid'=>$canonical,'source_kind'=>$a['d']['source_kind'],'source_id'=>$source,'subject'=>$row['subject'],'message'=>$plain?$row['body']:NativeCompanyContentHtml::purify($owned?$row['body']:$row['message']),'message_format'=>$plain?'plain_text':'native_html',
             'userid'=>$a['client'],'contactid'=>$owned?($metadata['contact_id']??null):((int)$row['contactid']?:null),'department'=>$a['department'],'status'=>$resolved['status']['native_id']??null,'priority'=>$resolved['priority']['native_id']??null,'service'=>$resolved['service']['native_id']??null,
             'catalog'=>$resolved,'historical_status'=>$owned&&!isset($resolved['status'])?$row['status']:null,'historical_priority'=>$owned&&!isset($resolved['priority'])?$row['priority']:null,
             'ticket_email'=>$owned?($metadata['sender_email']??null):$row['email'],'submitter'=>$owned?($metadata['sender_name']??null):$row['name'],'sender_origin'=>$owned?($metadata['sender_origin']??'historical_customer'):'legacy_ticket',
             'assigned'=>(int)$row[$owned?'assignee_id':'assigned'],'date'=>$row[$owned?'created_at':'date'],'revision_token'=>hash('sha256',json_encode($snapshot,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)),
-            'policy'=>$a['policy'],'metadata'=>$metadata];
+            'policy'=>$a['policy'],'metadata'=>$metadata]+$mergeState;
         if($a!==$this->authority($issuer,$actor,$id))throw new DomainException('native_ticket_denied');return$out;
     }
     /** Same canonical reply rows. Contact origin and new rich-text provenance are explicit, never inferred from actor zero. */
@@ -97,14 +127,21 @@ final class NativeCompanyTicketRead
     {
         IssuerTransaction::assertOwned($this->db,$this->p,array_merge($this->tables(),[NativeCompanyTicketReplySchema::TABLE,NativeCompanyTicketReplySchema::EDIT,'company_portal_support_replies']));
             $before=$this->getInOwnedTransaction($issuer,$actor,$id);if($before['source_kind']!=='company_ticket')throw new DomainException('native_ticket_denied');$out=[];
-            $rows=$this->rows('SELECT * FROM '.$this->p.'company_ticket_replies WHERE issuer_id=? AND ticket_id=? ORDER BY created_at,id',[$issuer,$before['source_id']]);
+            $rows=$this->rows('SELECT * FROM '.$this->p.'company_ticket_replies WHERE issuer_id=? AND ticket_id=? AND '.NativeCompanyTicketVisibility::predicate($this->db,$this->p,'issuer_id','id',true).' ORDER BY created_at,id',[$issuer,$before['source_id']]);
             foreach($rows as$row){
                 $meta=$this->rows('SELECT * FROM '.$this->p.NativeCompanyTicketReplySchema::TABLE.' WHERE reply_id=?',[$row['id']])[0]??null;
                 $contact=$this->rows('SELECT * FROM '.$this->p.'company_portal_support_replies WHERE reply_id=?',[$row['id']])[0]??null;
                 $edit=$this->rows('SELECT * FROM '.$this->p.NativeCompanyTicketReplySchema::EDIT.' WHERE reply_id=?',[$row['id']])[0]??null;
+                $merge=NativeCompanyTicketMergeSchema::active($this->db,$this->p)?($this->rows('SELECT * FROM '.$this->p.NativeCompanyTicketMergeSchema::REPLIES.' WHERE reply_id=?',[$row['id']])[0]??null):null;
                 $staff=(int)$row['actor_id'];$format='plain_text';
+                if($merge){
+                    $link=$this->rows('SELECT issuer_id,primary_id FROM '.$this->p.NativeCompanyTicketMergeSchema::LINKS.' WHERE child_id=?',[$merge['child_id']])[0]??null;
+                    if(!$link||(int)$link['issuer_id']!==$issuer||(int)$link['primary_id']!==$before['source_id']||(int)$merge['issuer_id']!==$issuer||(int)$merge['primary_id']!==$before['source_id']||$meta||$contact||(int)($merge['author_staff_id']??0)!==$staff||$merge['source_date']!==$row['created_at']||!in_array($merge['body_format'],['plain_text','native_html'],true)||(!$edit&&!hash_equals($merge['content_hash'],hash('sha256',$row['body']))))throw new DomainException('native_ticket_merge_provenance_invalid');
+                    if($staff===0&&($merge['author_contact_id']===null||$before['userid']===null||(int)$merge['client_id']!==$before['userid']))throw new DomainException('native_ticket_merge_provenance_invalid');$format=$merge['body_format'];
+                }
                 if($meta){if((int)$meta['issuer_id']!==$issuer||(int)$meta['ticket_id']!==$before['source_id']||(int)$meta['actor_id']!==$staff||$staff<1||$contact||$meta['body_format']!=='native_html'||(int)$meta['revision']<1)throw new DomainException('native_ticket_reply_provenance_invalid');$format='native_html';}
-                if($contact){
+                if($merge){$name=$merge['author_name'];$contactId=$merge['author_contact_id']===null?null:(int)$merge['author_contact_id'];}
+                elseif($contact){
                     if($staff!==0||(int)$contact['issuer_id']!==$issuer||(int)$contact['ticket_id']!==$before['source_id']||$before['userid']===null||(int)$contact['client_id']!==$before['userid'])throw new DomainException('native_ticket_reply_provenance_invalid');
                     $identity=$this->rows('SELECT id FROM '.$this->p.'contacts WHERE id=? AND userid=?',[$contact['contact_id'],$contact['client_id']])[0]??null;if(!$identity)throw new DomainException('native_ticket_reply_provenance_invalid');
                     $name=(string)$contact['author_name'];$contactId=(int)$contact['contact_id'];
@@ -114,7 +151,7 @@ final class NativeCompanyTicketRead
                 }
                 if($edit){if((int)$edit['issuer_id']!==$issuer||(int)$edit['ticket_id']!==$before['source_id']||(int)$edit['actor_id']<1||(int)$edit['revision']<1||!hash_equals((string)$edit['content_hash'],hash('sha256',$row['body'])))throw new DomainException('native_ticket_reply_provenance_invalid');$format='native_html';}
                 $message=$format==='native_html'?NativeCompanyContentHtml::purify($row['body']):$row['body'];
-                $out[]=['id'=>NativeCompanyResourceId::encode('company_ticket_reply',(int)$row['id']),'source_id'=>(int)$row['id'],'ticketid'=>$before['ticketid'],'admin'=>$staff?:null,'userid'=>$contact?$before['userid']:null,'contactid'=>$contactId,'submitter'=>$name,'message'=>$message,'message_format'=>$format,'date'=>$row['created_at'],'revision_token'=>hash('sha256',json_encode([$row,$meta,$contact,$edit],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))];
+                $out[]=['id'=>NativeCompanyResourceId::encode('company_ticket_reply',(int)$row['id']),'source_id'=>(int)$row['id'],'ticketid'=>$before['ticketid'],'admin'=>$staff?:null,'userid'=>($contact||($merge&&$staff===0))?$before['userid']:null,'contactid'=>$contactId,'submitter'=>$name,'message'=>$message,'message_format'=>$format,'date'=>$row['created_at'],'revision_token'=>hash('sha256',json_encode([$row,$meta,$contact,$edit,$merge],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))];
             }
             if($this->getInOwnedTransaction($issuer,$actor,$id)!==$before)throw new DomainException('native_ticket_changed');
             return $before['policy']['values']['ticket_replies_order']==='desc'?array_reverse($out):$out;
@@ -124,7 +161,7 @@ final class NativeCompanyTicketRead
         if(strlen($search)>200||preg_match('//u',$search)!==1||preg_match('/[\x00-\x1f\x7f]/',$search))throw new DomainException('native_ticket_input_invalid');
         return IssuerTransaction::run($this->db,$this->p,$this->tables(),function()use($issuer,$actor,$search,$selected){
             $acl=$this->access($issuer,$actor);if($selected!==null&&$selected!==''){$r=$this->referenceInOwnedTransaction($issuer,$actor,$selected);return[['id'=>$r['canonical_id'],'name'=>$r['name'],'subtext'=>'']];}
-            $lineage=$acl->primaryId();$sources=[['company_tickets','id','company_ticket','issuer_id=?',[$issuer]]];
+            $lineage=$acl->primaryId();$sources=[['company_tickets','id','company_ticket','issuer_id=? AND '.NativeCompanyTicketVisibility::predicate($this->db,$this->p,'t.issuer_id','t.id'),[$issuer]]];
             if($lineage===$issuer){
                 require_once __DIR__.'/CustomerRelationBoundary.php';
                 $sources[]=['tickets','ticketid','ticket',\app\services\CustomerRelationBoundary::sql($this->db,$this->p,'tickets','t'),[]];

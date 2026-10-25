@@ -7,6 +7,8 @@
             <?php if (isset($native_invoice_editor_items)) {
                 echo form_hidden('_native_invoice_id', $native_invoice_id ?? '');
                 echo form_hidden('_native_invoice_revision', $native_invoice_revision ?? '');
+                echo form_hidden('_native_invoice_request_key', $native_invoice_request_key);
+                echo form_hidden('_native_invoice_number_revision', $native_invoice_number_selection['revision']);
             } ?>
             <?php if (isset($invoice)) {
                 echo form_hidden('isedit');
@@ -21,7 +23,7 @@
                 <?php $this->load->view('admin/invoices/invoice_template'); ?>
             </div>
             <?= form_close(); ?>
-            <?php $this->load->view('admin/invoice_items/item'); ?>
+            <?php if(!isset($native_invoice_editor_items)||staff_can('create','items'))$this->load->view('admin/invoice_items/item'); ?>
         </div>
     </div>
 </div>
@@ -34,7 +36,7 @@
         // Project ajax search
         init_ajax_project_search_by_customer_id();
         // Maybe items ajax search
-        init_ajax_search('items', '#item_select.ajax-search', undefined, admin_url + 'items/search');
+        init_ajax_search('items', '#item_select.ajax-search', native_invoice_catalog_context(), admin_url + 'items/search');
     });
 </script>
 </body>

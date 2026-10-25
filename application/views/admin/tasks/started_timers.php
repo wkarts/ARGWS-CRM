@@ -6,11 +6,13 @@ $nativeTimers=NativeCompanyAdminPresentation::current(function_exists('get_insta
 $timerLabel=$nativeTimers?static function($key,...$args){$text=NativeCompanyAdminPresentation::label($key);return $args?vsprintf($text,$args):$text;}:static fn($key,...$args)=>_l($key,...$args);
 $timerUrl=$nativeTimers?static fn($path)=>CompanyRequestScope::adminUrl(function_exists('get_instance')?get_instance():$this,$path):static fn($path)=>admin_url($path);
 if($nativeTimers){
+    require_once APPPATH.'services/NativeCompanyResourceId.php';
     if(!isset($nativeTimerPolicy)||!is_array($nativeTimerPolicy)||!preg_match('/^[a-f0-9]{64}$/D',$nativeTimerPolicy['policy_hash']??''))throw new LogicException('native_timer_policy_missing');
     foreach(['can_edit','can_view_all','can_start_blank','auto_stop'] as $field)if(!array_key_exists($field,$nativeTimerPolicy)||!is_bool($nativeTimerPolicy[$field]))throw new LogicException('native_timer_policy_invalid');
     foreach($startedTimers as $timer){
         foreach(['id','task_id'] as $field)if(!preg_match('/^(0|[1-9][0-9]{0,15})$/D',(string)($timer[$field]??''))||(float)$timer[$field]>9007199254740991)throw new LogicException('native_timer_reference_invalid');
-        if(!isset($timer['revision'],$timer['total_seconds'],$timer['started_at_label'])||!is_int($timer['revision'])||$timer['revision']<1||!is_int($timer['total_seconds'])||$timer['total_seconds']<0||!is_string($timer['started_at_label'])||$timer['started_at_label']==='')throw new LogicException('native_timer_projection_incomplete');
+        $timerSource=NativeCompanyResourceId::decode('timer',$timer['id'])['source_kind'];$validRevision=$timerSource==='timer'?(is_string($timer['revision']??null)&&preg_match('/^[a-f0-9]{64}$/D',$timer['revision'])):(is_int($timer['revision']??null)&&$timer['revision']>=1);
+        if(!$validRevision||!isset($timer['note_revision'],$timer['total_seconds'],$timer['started_at_label'])||!is_int($timer['note_revision'])||$timer['note_revision']<0||!is_int($timer['total_seconds'])||$timer['total_seconds']<0||!is_string($timer['started_at_label'])||$timer['started_at_label']==='')throw new LogicException('native_timer_projection_incomplete');
     }
     require_once APPPATH.'services/utilities/Format.php';
 }
@@ -33,7 +35,7 @@ $i = 0;
 foreach ($startedTimers as $timer) {
     $data = '';
 
-    $data .= '<li class="timer relative" id="timer-' . $timer['id'] . '"'.($nativeTimers?' data-timer-revision="'.e($timer['revision']).'" data-policy-hash="'.e($nativeTimerPolicy['policy_hash']).'"':'').'>';
+    $data .= '<li class="timer relative" id="timer-' . $timer['id'] . '"'.($nativeTimers?' data-timer-revision="'.e($timer['revision']).'" data-note-revision="'.e($timer['note_revision']).'" data-policy-hash="'.e($nativeTimerPolicy['policy_hash']).'"':'').'>';
 
     if ($timer['task_id'] != '0') {
         $data .= '<a href="' . $timerUrl('tasks/view/' . $timer['task_id']) . '" class="_timer font-medium" onclick="init_task_modal(' . $timer['task_id'] . ');return false;">' . e($timer['task_subject']) . '</a>';

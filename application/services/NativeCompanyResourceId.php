@@ -58,8 +58,9 @@ final class NativeCompanyResourceId
         'company_task_checklist_template' => [50, 'task_checklist_template'],
         'company_staff_role' => [52, 'staff_role'],
         'company_spam_filter' => [51, 'spam_filter'],
+        'company_expense_category' => [53, 'expense_category'],
     ];
-    private const NATIVE = ['consent_purpose', 'consent', 'client', 'invoice', 'project', 'task', 'ticket', 'contract', 'lead', 'expense', 'estimate', 'proposal', 'timer', 'event', 'custom_field', 'contact', 'staff', 'credit_note', 'payment', 'project_status', 'task_status', 'ticket_status', 'ticket_department', 'ticket_priority', 'ticket_service', 'work_tag', 'todo', 'announcement', 'reminder', 'note', 'item', 'item_group', 'tax', 'filter', 'notification', 'search_history', 'kb_article', 'kb_group', 'newsfeed_post', 'newsfeed_comment', 'payment_mode', 'ticket_predefined_reply', 'ticket_reply', 'invoice_item', 'task_checklist_template', 'staff_role', 'spam_filter'];
+    private const NATIVE = ['consent_purpose', 'consent', 'client', 'invoice', 'project', 'task', 'ticket', 'contract', 'lead', 'expense', 'estimate', 'proposal', 'timer', 'event', 'custom_field', 'contact', 'staff', 'credit_note', 'payment', 'project_status', 'task_status', 'ticket_status', 'ticket_department', 'ticket_priority', 'ticket_service', 'work_tag', 'todo', 'announcement', 'reminder', 'note', 'item', 'item_group', 'tax', 'filter', 'notification', 'search_history', 'kb_article', 'kb_group', 'newsfeed_post', 'newsfeed_comment', 'payment_mode', 'ticket_predefined_reply', 'ticket_reply', 'invoice_item', 'task_checklist_template', 'staff_role', 'spam_filter', 'expense_category'];
 
     private static function integer($value): int
     {

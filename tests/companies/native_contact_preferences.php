@@ -13,4 +13,9 @@ essentialCheck($prefs->read(41,7)['permissions']===[1]&&!$prefs->read(41,7)['cal
 settingThrows(fn()=>$prefs->save(41,7,$initial['revision'],['automatic_calling_codes'=>'1']),'company_contact_preferences_stale','stale native settings cannot overwrite');
 foreach(['O:8:"stdClass":0:{}','a:1:{i:0;s:1:"7";}','a:2:{i:0;s:1:"1";i:1;i:1;}','a:1:{i:2;i:1;}','a:1:{i:0;a:0:{}}']as$bad)settingThrows(fn()=>NativeCompanyContactPreferences::permissions($bad),'company_contact_preferences_invalid','malformed/object/duplicate/out-of-range defaults denied');
 settingThrows(fn()=>NativeCompanyContactPreferences::prepare(['automatic_calling_codes'=>'true']),'company_contact_preferences_invalid','calling setting is strict bool wire value');
+$primaryBefore=$prefs->read($primary,7);$aBefore=$prefs->read(41,7);
+$prefs->save($primary,7,$primaryBefore['revision'],['default_contact_permissions'=>'a:1:{i:0;s:1:"2";}']);
+essentialCheck($prefs->read($primary,7)['permissions']===[2]&&$prefs->read(41,7)===$aBefore,'persisted principal writes original option without named inheritance');
+settingThrows(fn()=>$prefs->save($primary,7,$primaryBefore['revision'],['automatic_calling_codes'=>'0']),'company_contact_preferences_stale','principal stale revision denied');
+settingThrows(fn()=>$prefs->saveInOwnedTransaction(41,7,$aBefore['revision'],['automatic_calling_codes'=>'1']),'issuer_owned_transaction_required','aggregation participant requires actual owned transaction');
 echo 'Native contact preferences: '.($GLOBALS['essentialChecks']-$start).' checks passed.'.PHP_EOL;

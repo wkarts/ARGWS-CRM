@@ -5,7 +5,7 @@
     <div id="content">
         <div class="container">
             <div class="row">
-                <?php if(empty($native_portal))get_template_part('alerts');elseif(!empty($native_portal_message)){ ?><div class="alert alert-info" role="status"><?= e($native_portal_message); ?></div><?php } ?>
+                <?php if(empty($native_portal))get_template_part('alerts');elseif(!empty($native_portal_identity))$this->load->view('themes/perfex/template_parts/alerts',$this->data);if(!empty($native_portal)&&!empty($native_portal_message)){ ?><div class="alert alert-info" role="status"><?= e($native_portal_message); ?></div><?php } ?>
             </div>
         </div>
         <?php if (isset($knowledge_base_search)) { ?>

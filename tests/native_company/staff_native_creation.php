@@ -5,8 +5,8 @@ require __DIR__.'/staff_form_transaction.php';
 $db->pdo->sqliteCreateCollation('utf8mb4_unicode_ci',static fn($a,$b)=>strcasecmp($a,$b));
 $db->query("UPDATE {$p}staff SET email='staff'||staffid||'@example.test'");
 $db->query('CREATE UNIQUE INDEX staff_email_actual_unique ON '.$p.'staff(LOWER(TRIM(email)) COLLATE utf8mb4_unicode_ci)');
-$roleRevision=$roles->page(41,7)['revision'];$createForm=new NativeCompanyStaffForm($db,$p,41,7,[$wire],$role,$roleRevision,[$field=>'New staff field']);
-$profile=['firstname'=>'Created','lastname'=>'Native','email'=>'created.native@example.test','password'=>'synthetic-created-123','phonenumber'=>'000','hourly_rate'=>'12.00','email_signature'=>'<p>Native signature</p>','default_language'=>'portuguese_br','direction'=>'ltr','is_not_staff'=>'0'];$request=hash('sha256','native-staff-created');
+$roleRevision=$roles->page(41,7)['revision'];$createForm=new NativeCompanyStaffForm($db,$p,41,7,[$wire],$role,$roleRevision,[$field=>'New staff field'],null,null,['value'=>'12.00','revision'=>0]);
+$profile=['firstname'=>'Created','lastname'=>'Native','email'=>'created.native@example.test','password'=>'synthetic-created-123','phonenumber'=>'000','email_signature'=>'<p>Native signature</p>','default_language'=>'portuguese_br','direction'=>'ltr','is_not_staff'=>'0'];$request=hash('sha256','native-staff-created');
 $id=$service->createNative(41,7,$profile,['tasks'=>['view']],true,$request,$createForm);
 essentialCheck($id>14&&(new NativeCompanyStaffRead($db,$p))->member(41,7,$id)['member']->firstname==='Created','native real autoincrement INSERT returned persisted identity');
 essentialCheck($custom->values(41,7,'staff',$id)===[$field=>'New staff field']&&$createForm->state($id)['role']===$role,'new identity owns its role department and native custom field values');
@@ -26,3 +26,5 @@ $limitedForm=new NativeCompanyStaffForm($db,$p,41,12,[$wire],$role,$roles->page(
 $limited=$service->createNative(41,12,array_replace($profile,['email'=>'limited.native@example.test']),['tasks'=>['view']],false,hash('sha256','limited-native-create'),$limitedForm);
 essentialCheck($limited>14&&$custom->values(41,7,'staff',$limited)===[$field=>'Limited creator'],'create-only actor commits complete new native form without being promoted to edit');
 echo "Native complete staff creation: nine actual SQLite checks; no HTTP/SMTP.\n";
+
+essentialCheck((new NativeCompanyStaffRates($db,$p))->forStaff(41,7,$id)['hourly_rate']==='12.00','creation persists membership wage in same native transaction');

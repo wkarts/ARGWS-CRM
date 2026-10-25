@@ -7,6 +7,13 @@ require_once __DIR__.'/CompanyTaskTimerStopPreferences.php';
 final class NativeCompanyTimerPolicy
 {
     public function __construct(private $db,private string $p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');}
+    /** Same eligibility for the original header and Tasks endpoint; no hidden placeholders. */
+    public static function canStartBlank(array$policy,array$timers):bool
+    {
+        foreach(['can_edit','auto_stop']as$key)if(!isset($policy[$key])||!is_bool($policy[$key]))throw new DomainException('native_timer_policy_invalid');$legacy=false;
+        require_once __DIR__.'/NativeCompanyResourceId.php';foreach($timers as$timer){if(!array_key_exists('task_id',$timer))throw new DomainException('native_timer_policy_invalid');$source=NativeCompanyResourceId::decode('timer',$timer['id']??null);if((string)$timer['task_id']==='0')return false;if($source['source_kind']==='timer')$legacy=true;}
+        return$policy['can_edit']&&(!$policy['auto_stop']||!$legacy);
+    }
     public static function tables():array{return ['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','options'];}
     public function read($issuer,$actor):array
     {

@@ -2,10 +2,10 @@
 require __DIR__.'/../company_dashboard_presenter.php';
 register_shutdown_function(static function()use($db,$p):void{foreach(['leads','leads_status','ticket_replies','tickets','taskstimers','tasks','projects','contacts'] as $t)$db->query('DROP TABLE IF EXISTS '.$p.$t);});
 $db->query("CREATE TABLE {$p}company_lead_stages(id INT PRIMARY KEY,issuer_id INT NOT NULL,name VARCHAR(100) NOT NULL)");
-$db->query("CREATE TABLE {$p}projects(id INT PRIMARY KEY,clientid INT NOT NULL,status INT NOT NULL)");
+$db->query("DROP TABLE {$p}projects");$db->query("CREATE TABLE {$p}projects(id INT PRIMARY KEY,clientid INT NOT NULL,status INT NOT NULL)");
 $db->query("CREATE TABLE {$p}tasks(id INT PRIMARY KEY,status INT NOT NULL,rel_type VARCHAR(32),rel_id INT)");
-$db->query("CREATE TABLE {$p}contacts(id INT PRIMARY KEY,userid INT NOT NULL)");
-$db->query("CREATE TABLE {$p}tickets(ticketid INT PRIMARY KEY,userid INT NOT NULL,contactid INT NOT NULL,status INT NOT NULL,merged_ticket_id INT NULL)");
+
+
 $db->query("CREATE TABLE {$p}leads_status(id INT PRIMARY KEY,name VARCHAR(100) NOT NULL)");
 $db->query("CREATE TABLE {$p}leads(id INT PRIMARY KEY,status INT NOT NULL,client_id INT NOT NULL DEFAULT 0,junk INT NOT NULL DEFAULT 0,addedfrom INT NOT NULL DEFAULT 7,assigned INT NOT NULL DEFAULT 7)");
 $db->query("INSERT INTO {$p}clients VALUES(10,'Private A')");$db->query("INSERT INTO {$p}issuers_clients VALUES(10,?,'52998224725',7,'2026-10-25 12:00:00')",[$a]);

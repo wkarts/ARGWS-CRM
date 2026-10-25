@@ -166,6 +166,10 @@ class App_Email extends App_mailer
         if (class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active()) {
             throw new DomainException('company_mail_worker_context_denied');
         }
+        require_once APPPATH.'services/NativeCompanyCustomerUploadMail.php';
+        NativeCompanyCustomerUploadMail::enqueuePending($this->CI->db,db_prefix(),(string)$this->CI->config->item('base_url'),fn($v)=>$this->CI->encryption->decrypt($v));
+        require_once APPPATH.'services/NativeCompanyPrivacyMail.php';
+        NativeCompanyPrivacyMail::enqueuePending($this->CI->db,db_prefix(),(string)$this->CI->config->item('base_url'),fn($v)=>$this->CI->encryption->decrypt($v));
         $this->CI->load->config('email');
         $this->clean_up_old_queue();
         // The worker enumerates explicit durable origins; never adopts a staff session.
@@ -189,8 +193,12 @@ class App_Email extends App_mailer
                     throw new DomainException('company_mail_payload_invalid');
                 }
                 $ownedQueueHeaders = $headers;
+                NativeCompanyCustomerUploadMail::assertQueueRouting($this->CI->db,db_prefix(),$email,$headers);
+                NativeCompanyPrivacyMail::assertQueueRouting($this->CI->db,db_prefix(),$email,$headers);
                 require_once APPPATH.'services/NativeCompanyEventMail.php';
                 NativeCompanyEventMail::assertQueueRouting($this->CI->db,db_prefix(),$email,$headers);
+                require_once APPPATH.'services/NativeCompanyStaffInviteMail.php';
+                NativeCompanyStaffInviteMail::assertQueueRouting($this->CI->db,db_prefix(),$email,$headers);
                 require_once APPPATH.'services/NativePortalVerificationMail.php';
                 NativePortalVerificationMail::assertQueueRouting($this->CI->db,db_prefix(),$email,$headers);
                 require_once APPPATH.'services/NativeCompanyFileMessage.php';
@@ -211,13 +219,19 @@ class App_Email extends App_mailer
                 $transport = $legacyConfig;
                 if (isset($email->issuer_id)) {
                     require_once APPPATH . 'services/CompanyMailConfig.php';
-                    if(array_key_exists(NativeCompanyEventMail::HEADER,$headers)){
+                    if(array_key_exists(NativeCompanyCustomerUploadMail::HEADER,$headers)){
+                        $transport=NativeCompanyCustomerUploadMail::transportForQueue($this->CI->db,db_prefix(),$email,$headers,fn($v)=>$this->CI->encryption->decrypt($v),fn($v)=>$this->CI->encryption->encrypt($v));
+                    }elseif(array_key_exists(NativeCompanyPrivacyMail::HEADER,$headers)){
+                        $transport=NativeCompanyPrivacyMail::transportForQueue($this->CI->db,db_prefix(),$email,$headers,fn($v)=>$this->CI->encryption->decrypt($v),fn($v)=>$this->CI->encryption->encrypt($v));
+                    }elseif(array_key_exists(NativeCompanyEventMail::HEADER,$headers)){
                         $transport=NativeCompanyEventMail::transportForQueue($this->CI->db,db_prefix(),$email,$headers,fn($v)=>$this->CI->encryption->decrypt($v),fn($v)=>$this->CI->encryption->encrypt($v));
+                    }elseif(array_key_exists(NativeCompanyStaffInviteMail::HEADER,$headers)){
+                        $transport=NativeCompanyStaffInviteMail::transportForQueue($this->CI->db,db_prefix(),$email,$headers,(string)$this->CI->config->item('encryption_key'),fn($v)=>$this->CI->encryption->decrypt($v),fn($v)=>$this->CI->encryption->encrypt($v));
                     }elseif(array_key_exists(NativePortalVerificationMail::HEADER,$headers)){
                         $transport=NativePortalVerificationMail::transportForQueue($this->CI->db,db_prefix(),$email,$headers,(string)$this->CI->config->item('encryption_key'),fn($v)=>$this->CI->encryption->decrypt($v),fn($v)=>$this->CI->encryption->encrypt($v));
                     }elseif(array_key_exists(NativeCompanyFileMessage::HEADER,$headers)){
                         $transport=NativeCompanyFileMessage::transportForQueue($this->CI->db,db_prefix(),$email,$headers,fn($v)=>$this->CI->encryption->decrypt($v),fn($v)=>$this->CI->encryption->encrypt($v));
-                    }elseif(CompanyNativeContactMail::isMessage($headers)){
+                    }elseif(CompanyNativeContactMail::isMessage($headers)||CompanyNativeContactMail::isManaged($headers)){
                         $transport=CompanyNativeContactMail::transportForQueue($this->CI->db,db_prefix(),$email,$headers,(string)$this->CI->config->item('encryption_key'),fn($v)=>$this->CI->encryption->decrypt($v),fn($v)=>$this->CI->encryption->encrypt($v));
                     }elseif(array_key_exists(CompanyPortalRecoveryMail::HEADER,$headers)){
                         $portalKey=$headers[CompanyPortalRecoveryMail::HEADER];if(!is_string($portalKey))throw new DomainException('company_mail_payload_invalid');
@@ -260,7 +274,7 @@ class App_Email extends App_mailer
                 if(array_key_exists(CompanyPortalRecoveryMail::HEADER,$headers)){
                     (new CompanyPortalMailQueueConsumer($this->CI->db,db_prefix(),(string)$this->CI->config->item('encryption_key')))->assertDispatch($email,$headers[CompanyPortalRecoveryMail::HEADER]);unset($headers[CompanyPortalRecoveryMail::HEADER]);
                 }
-                unset($headers[NativeCompanyEventMail::HEADER],$headers[NativePortalVerificationMail::HEADER],$headers[CompanyNativeContactMail::HEADER],$headers[NativeCompanyReminderDelivery::HEADER],$headers[NativeCompanyFileMessage::HEADER]);
+                unset($headers[NativeCompanyCustomerUploadMail::HEADER],$headers[NativeCompanyPrivacyMail::HEADER],$headers[NativeCompanyEventMail::HEADER],$headers[NativeCompanyStaffInviteMail::HEADER],$headers[NativePortalVerificationMail::HEADER],$headers[CompanyNativeContactMail::HEADER],$headers[NativeCompanyReminderDelivery::HEADER],$headers[NativeCompanyFileMessage::HEADER]);
                 $this->reset_account_transport();
                 $this->set_useragent($email->engine);
                 $this->initialize($transport);
@@ -322,6 +336,9 @@ class App_Email extends App_mailer
             $filePermit = null;
             $verificationPermit = null;
             $eventPermit = null;
+            $privacyPermit = null;
+            $customerUploadPermit = null;
+            $staffInvitePermit = null;
             try {
                 $contactPermit = CompanyNativeContactMail::claimDispatch(
                     $this->CI->db, db_prefix(), $email, $ownedQueueHeaders,
@@ -331,8 +348,15 @@ class App_Email extends App_mailer
                 $filePermit = NativeCompanyFileMessage::claimDispatch($this->CI->db,db_prefix(),$email,$ownedQueueHeaders);
                 $verificationPermit = NativePortalVerificationMail::claimDispatch($this->CI->db,db_prefix(),$email,$ownedQueueHeaders,(string)$this->CI->config->item('encryption_key'));
                 $eventPermit=NativeCompanyEventMail::claimDispatch($this->CI->db,db_prefix(),$email,$ownedQueueHeaders);
+                $customerUploadPermit=NativeCompanyCustomerUploadMail::claimDispatch($this->CI->db,db_prefix(),$email,$ownedQueueHeaders);
+                $privacyPermit=NativeCompanyPrivacyMail::claimDispatch($this->CI->db,db_prefix(),$email,$ownedQueueHeaders);
+                $staffInvitePermit=NativeCompanyStaffInviteMail::claimDispatch($this->CI->db,db_prefix(),$email,$ownedQueueHeaders,(string)$this->CI->config->item('encryption_key'));
                 $sent = $this->send(true);
                 if($eventPermit!==null)NativeCompanyEventMail::completeDispatch($this->CI->db,db_prefix(),$eventPermit,$sent);
+
+                if($customerUploadPermit!==null)NativeCompanyCustomerUploadMail::completeDispatch($this->CI->db,db_prefix(),$customerUploadPermit,$sent);
+                if($privacyPermit!==null)NativeCompanyPrivacyMail::completeDispatch($this->CI->db,db_prefix(),$privacyPermit,$sent);
+                if($staffInvitePermit!==null)NativeCompanyStaffInviteMail::completeDispatch($this->CI->db,db_prefix(),$staffInvitePermit,$sent);
                 if($verificationPermit!==null)NativePortalVerificationMail::completeDispatch($this->CI->db,db_prefix(),$verificationPermit,$sent);
                 if($filePermit!==null)NativeCompanyFileMessage::completeDispatch($this->CI->db,db_prefix(),$filePermit,$sent);
                 if ($contactPermit !== null) {
@@ -344,6 +368,9 @@ class App_Email extends App_mailer
                 $status = $sent ? 'sent' : 'failed';
             } catch (Throwable $error) {
                 if($eventPermit!==null){try{NativeCompanyEventMail::completeDispatch($this->CI->db,db_prefix(),$eventPermit,false);}catch(Throwable $receiptError){log_message('error','Owned event email outcome requires review.');}}
+                if($customerUploadPermit!==null){try{NativeCompanyCustomerUploadMail::completeDispatch($this->CI->db,db_prefix(),$customerUploadPermit,false);}catch(Throwable $receiptError){log_message('error','Customer upload email outcome requires review.');}}
+                if($privacyPermit!==null){try{NativeCompanyPrivacyMail::completeDispatch($this->CI->db,db_prefix(),$privacyPermit,false);}catch(Throwable $receiptError){log_message('error','Privacy request email outcome requires review.');}}
+                if($staffInvitePermit!==null){try{NativeCompanyStaffInviteMail::completeDispatch($this->CI->db,db_prefix(),$staffInvitePermit,false);}catch(Throwable $receiptError){log_message('error','Staff invitation outcome requires review.');}}
                 if($verificationPermit!==null){try{NativePortalVerificationMail::completeDispatch($this->CI->db,db_prefix(),$verificationPermit,false);}catch(Throwable $receiptError){log_message('error','Owned verification email outcome requires review.');}}
                 if($filePermit!==null){try{NativeCompanyFileMessage::completeDispatch($this->CI->db,db_prefix(),$filePermit,false);}catch(Throwable $receiptError){log_message('error','Owned queued file outcome requires review.');}}
                 if ($contactPermit !== null) {

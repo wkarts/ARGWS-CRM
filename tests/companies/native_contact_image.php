@@ -2,7 +2,7 @@
 require __DIR__.'/native_contacts.php';
 require APPPATH.'services/NativeCompanyContactImage.php';
 $start=$GLOBALS['essentialChecks'];
-if($db->driver()==='sqlite')$db->query("CREATE TABLE {$p}company_native_contact_images(contact_id INTEGER PRIMARY KEY NOT NULL,issuer_id INT NOT NULL,client_id INT NOT NULL,revision INT NOT NULL,mime TEXT NOT NULL,byte_size INT NOT NULL,sha256 TEXT NOT NULL,content BLOB NOT NULL,updated_by INT NOT NULL,updated_at TEXT NOT NULL)");else NativeCompanyContactImageSchema::ensure($db,$p);
+NativeCompanyContactImageSchema::ensure($db,$p);
 unset($db->data_cache['table_names']);$image=imagecreatetruecolor(12,8);imagefilledrectangle($image,0,0,11,7,imagecolorallocate($image,24,60,90));ob_start();imagepng($image);$bytes=ob_get_clean();$image=null;
 $canonical=NativeCompanyContactImage::normalize($bytes.'<script>synthetic</script>');essentialCheck($canonical['mime']==='image/png'&&!str_contains($canonical['content'],'script')&&$canonical===NativeCompanyContactImage::normalize($canonical['content']),'GD decode/reencode strips trailing metadata and is canonical');
 foreach(['<svg xmlns="http://www.w3.org/2000/svg"></svg>',str_repeat('x',2097153),substr($bytes,0,20)]as$bad)essentialThrows(fn()=>NativeCompanyContactImage::normalize($bad),'company_contact_image_invalid','non-image/oversize/truncated input denied');

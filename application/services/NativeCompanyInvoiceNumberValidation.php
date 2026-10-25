@@ -23,8 +23,8 @@ final class NativeCompanyInvoiceNumberValidation
   $id=NativeCompanyResourceId::decode('invoice',$input['invoice_id']??null);$editor=NativeCompanyInvoiceEditorItems::load($this->db,$this->p,$issuer,$actor,$id['canonical_id']);
   if($id['source_kind']==='company_invoice_draft'){
    $draft=(new CompanyInvoiceDrafts($this->db,$this->p))->document($issuer,$actor,$id['source_id']);if((string)$draft['revision']!==(string)($input['revision']??''))throw new DomainException('company_invoice_draft_stale');
-   // Drafts have no reserved number. Issuing still requires create authority and a fresh allocator read.
-   $ok=$number===(new NativeCompanyInvoiceSequencePreferences($this->db,$this->p))->readForInvoiceCreation($issuer,$actor)['next_number'];$editor->assertCurrent();return$ok;
+   // Drafts have no reserved number. Display/remote validation is edit-only; issue separately requires create and CAS.
+   $ok=$number===(new NativeCompanyInvoiceSequencePreferences($this->db,$this->p))->readForDraftEditor($issuer,$actor,$id['canonical_id'])['next_number'];$editor->assertCurrent();return$ok;
   }
   $writer=new CompanyInvoices($this->db,$this->p);$revision=$writer->revision($issuer,$actor,$id['source_id']);if(!is_string($input['revision']??null)||!hash_equals($revision,$input['revision']))throw new DomainException('company_invoice_stale');
   $writer->document($issuer,$actor,$id['source_id']);

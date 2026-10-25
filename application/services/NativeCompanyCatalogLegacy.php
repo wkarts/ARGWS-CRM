@@ -8,33 +8,49 @@ final class NativeCompanyCatalogLegacy
 {
     private IssuerResourceAccess $access;
     private ?int $createdItem=null;
+    private bool $invoiceEditorRead=false;
     public function __construct(private $db,private string $p,private int $issuer,private int $actor)
     {if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');$this->access=new IssuerResourceAccess($db,$p);$this->owner();}
     private function owner():void{if(!NativeCompanyAuxiliaryLegacy::eligible($this->db,$this->p,$this->issuer,$this->actor))throw new DomainException('company_catalog_denied');}
     private function can(string $feature,string $cap):void{$this->owner();if(!$this->access->can($this->issuer,$this->actor,$feature,$cap))throw new DomainException('company_catalog_denied');}
+    private function readItems():void
+    {
+        if(!$this->invoiceEditorRead){$this->can('items','view');return;}
+        $this->owner();
+        if(!$this->access->can($this->issuer,$this->actor,'invoices','view')||(!$this->access->can($this->issuer,$this->actor,'invoices','create')&&!$this->access->can($this->issuer,$this->actor,'invoices','edit')))throw new DomainException('company_catalog_denied');
+    }
+    private function invoiceRead(callable $read):array
+    {
+        $previous=$this->invoiceEditorRead;$this->invoiceEditorRead=true;
+        try{$this->readItems();$result=$read();$this->readItems();return$result;}finally{$this->invoiceEditorRead=$previous;}
+    }
+    public function groupsForInvoiceEditor():array{return$this->invoiceRead(fn()=>$this->groups());}
+    public function itemsForInvoiceEditor(int $start,int $length,string $q=''):array{return$this->invoiceRead(fn()=>$this->itemTable($start,$length,$q));}
+    public function searchForInvoiceEditor(string $q):array{return$this->invoiceRead(fn()=>$this->search($q));}
+    public function itemForInvoiceEditor($id):array{return$this->invoiceRead(fn()=>$this->item($id));}
     private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private static function dto(string $type,array $row):array{$row['revision']=NativeCompanyAuxiliaryLegacy::fingerprint($row);$row['source_kind']=$type;$row['source_id']=(int)$row['id'];$row['id']=(string)$row['id'];return$row;}
     public function taxes():array{$this->owner();return array_map(static fn($r)=>self::dto('tax',$r),$this->rows('SELECT * FROM '.$this->p.'taxes ORDER BY name,id'));}
-    public function groups():array{$this->can('items','view');return array_map(static fn($r)=>self::dto('item_group',$r),$this->rows('SELECT * FROM '.$this->p.'items_groups ORDER BY name,id'));}
+    public function groups():array{$this->readItems();return array_map(static fn($r)=>self::dto('item_group',$r),$this->rows('SELECT * FROM '.$this->p.'items_groups ORDER BY name,id'));}
     public function item($id):array
     {
-        $this->can('items','view');$id=IssuerPolicy::id($id);$raw=$this->rows('SELECT * FROM '.$this->p.'items WHERE id=?',[$id])[0]??null;if(!$raw)throw new DomainException('company_catalog_denied');
+        $this->readItems();$id=IssuerPolicy::id($id);$raw=$this->rows('SELECT * FROM '.$this->p.'items WHERE id=?',[$id])[0]??null;if(!$raw)throw new DomainException('company_catalog_denied');
         $row=self::dto('item',$raw);$row['revision']=$this->itemRevision($raw,'view');$row['itemid']=$row['id'];
         foreach(['tax'=>['taxid','taxname','taxrate'],'tax2'=>['taxid_2','taxname_2','taxrate_2']]as$key=>$fields){
             $tax=empty($raw[$key])?null:($this->rows('SELECT id,name,taxrate FROM '.$this->p.'taxes WHERE id=?',[$raw[$key]])[0]??null);
             if(!empty($raw[$key])&&!$tax)throw new DomainException('company_catalog_denied');foreach($fields as$index=>$field)$row[$field]=$tax===null?null:$tax[['id','name','taxrate'][$index]];
         }
         $group=empty($raw['group_id'])?null:($this->rows('SELECT name FROM '.$this->p.'items_groups WHERE id=?',[$raw['group_id']])[0]??null);
-        if(!empty($raw['group_id'])&&!$group)throw new DomainException('company_catalog_denied');$row['group_name']=$group['name']??null;$this->can('items','view');return$row;
+        if(!empty($raw['group_id'])&&!$group)throw new DomainException('company_catalog_denied');$row['group_name']=$group['name']??null;$this->readItems();return$row;
     }
     public function search(string $query):array
     {
-        $this->can('items','view');if(strlen($query)>191||preg_match('//u',$query)!==1)throw new DomainException('company_catalog_invalid');$q='%'.str_replace(['!','%','_'],['!!','!%','!_'],$query).'%';
+        $this->readItems();if(strlen($query)>191||preg_match('//u',$query)!==1)throw new DomainException('company_catalog_invalid');$q='%'.str_replace(['!','%','_'],['!!','!%','!_'],$query).'%';
         $rows=$this->rows("SELECT id,rate,description AS name,long_description AS subtext FROM ".$this->p."items WHERE description LIKE ? ESCAPE '!' ORDER BY description,id LIMIT 100",[$q]);foreach($rows as&$row){$row['id']=(string)$row['id'];$row['source_kind']='item';}unset($row);return$rows;
     }
     public function itemTable(int $start,int $length,string $query=''):array
     {
-        $this->can('items','view');if($start<0||$start>100000||$length<1||$length>100||strlen($query)>191||preg_match('//u',$query)!==1)throw new DomainException('company_catalog_invalid');
+        $this->readItems();if($start<0||$start>100000||$length<1||$length>100||strlen($query)>191||preg_match('//u',$query)!==1)throw new DomainException('company_catalog_invalid');
         $where='1=1';$args=[];$total=(int)$this->rows('SELECT COUNT(*) n FROM '.$this->p.'items')[0]['n'];if($query!==''){$where.=" AND description LIKE ? ESCAPE '!'";$args[]='%'.str_replace(['!','%','_'],['!!','!%','!_'],$query).'%';}
         $filtered=(int)$this->rows('SELECT COUNT(*) n FROM '.$this->p.'items WHERE '.$where,$args)[0]['n'];$rows=[];
         foreach($this->rows('SELECT id FROM '.$this->p.'items WHERE '.$where.' ORDER BY description,id LIMIT '.$length.' OFFSET '.$start,$args)as$row)$rows[]=$this->item($row['id']);return['total'=>$total,'filtered'=>$filtered,'rows'=>$rows];
@@ -84,6 +100,7 @@ final class NativeCompanyCatalogLegacy
 
     private function itemRevision(array $row,string $cap):string
     {
+        if($this->invoiceEditorRead)return hash('sha256','invoice-editor|'.NativeCompanyAuxiliaryLegacy::fingerprint($row));
         require_once __DIR__.'/NativeCompanyCustomFields.php';$values=(new NativeCompanyCustomFields($this->db,$this->p))->values($this->issuer,$this->actor,'items_pr',(string)$row['id'],$cap);ksort($values,SORT_STRING);
         return hash('sha256',NativeCompanyAuxiliaryLegacy::fingerprint($row).'|'.json_encode($values,JSON_THROW_ON_ERROR));
     }

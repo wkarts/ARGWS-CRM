@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 require_once __DIR__.'/issuers/IssuerResourceAccess.php';
+require_once __DIR__.'/NativeCompanyTicketMetrics.php';
 
 /** Read-only native dashboard projection. Never resolves a company from caller data or globals. */
 final class CompanyDashboardPresenter
@@ -43,6 +44,8 @@ final class CompanyDashboardPresenter
             $result[(string)$row['status']]=(int)$row['n'];
         }return $result;
     }
+    private function ticketMetrics():array
+    {return (new NativeCompanyTicketMetrics($this->db,$this->prefix))->summary($this->issuer,$this->actor);}
     private function projectStatusCounts():array
     {
         require_once __DIR__.'/NativeCompanyProjectRead.php';
@@ -62,7 +65,7 @@ final class CompanyDashboardPresenter
             $standalone=$this->statuses('company_standalone_tasks',['todo','in_progress','done']);
             return ['project'=>$project,'standalone'=>$standalone,'total'=>array_sum($project??[])+array_sum($standalone),'unfinished'=>($project['todo']??0)+($project['in_progress']??0)+$standalone['todo']+$standalone['in_progress']];
         });
-        $widgets['tickets']=$this->section(['tickets'],['company_tickets'],fn():array=>$this->statuses('company_tickets',['open','resolved','closed']));
+        $widgets['tickets']=$this->section(['tickets'],['company_tickets'],fn():array=>$this->ticketMetrics()['counts']);
         $widgets['leads']=$this->section(['leads'],['company_leads','company_lead_stages'],function():array{
             $rows=$this->rows('SELECT s.id,s.name,COUNT(l.id) AS n FROM '.$this->prefix.'company_lead_stages s LEFT JOIN '.$this->prefix.'company_leads l ON l.issuer_id=s.issuer_id AND l.stage_id=s.id AND l.archived=0 WHERE s.issuer_id=? GROUP BY s.id,s.name ORDER BY s.id',[$this->issuer]);
             $counts=$this->rows('SELECT COUNT(*) AS total,COALESCE(SUM(CASE WHEN converted_client_id IS NOT NULL THEN 1 ELSE 0 END),0) AS converted FROM '.$this->prefix.'company_leads WHERE issuer_id=? AND archived=0',[$this->issuer])[0];
@@ -139,15 +142,10 @@ final class CompanyDashboardPresenter
         $view['projects_status_stats']=json_encode(self::chart($widgets['projects']['data']??[],['active'=>'Ativo','not_started'=>'Não iniciado','in_progress'=>'Em progresso','on_hold'=>'Em espera','completed'=>'Concluído','cancelled'=>'Cancelado','legacy_1'=>'Não iniciado (legado)','legacy_2'=>'Em progresso (legado)','legacy_3'=>'Em espera (legado)','legacy_4'=>'Concluído (legado)','legacy_5'=>'Cancelado (legado)']),JSON_THROW_ON_ERROR);
         $leadCounts=[];$leadLabels=[];foreach($widgets['leads']['data']['stages']??[] as $stage){$leadCounts[(string)$stage['id']]=(int)$stage['n'];$leadLabels[(string)$stage['id']]=$stage['name'];}
         $view['leads_status_stats']=json_encode(self::chart($leadCounts,$leadLabels),JSON_THROW_ON_ERROR);
-        $ticketChart=self::chart(isset($widgets['tickets']['data']['open'])?['open'=>$widgets['tickets']['data']['open']]:[],['open'=>'Aberto']);
+        $ticketChart=self::chart($widgets['tickets']['data']??[],$this->permissions['tickets']?$this->ticketMetrics()['labels']:[]);
         $view['tickets_reply_by_status_no_json']=$ticketChart;$view['tickets_reply_by_status']=json_encode($ticketChart,JSON_THROW_ON_ERROR);
-        // Historical owned tickets had no department; this is an actual unassigned population, not a fabricated department.
-        $departmentRows=[];
-        if($this->permissions['tickets']){
-            if(IssuerStorage::fieldExists($this->db,'department_id',$this->prefix.'company_tickets')){
-                $departmentRows=$this->rows('SELECT d.id,d.name,COUNT(t.id) n FROM '.$this->prefix.'company_tickets t LEFT JOIN '.$this->prefix.'company_ticket_departments d ON d.issuer_id=t.issuer_id AND d.id=t.department_id WHERE t.issuer_id=? AND t.status=? GROUP BY d.id,d.name',[$this->issuer,'open']);
-            }else{$departmentRows=[['id'=>'unassigned','name'=>'Sem departamento','n'=>$widgets['tickets']['data']['open']]];}
-        }
+        // The same owned catalog/department authority as Tickets; the native origin marker is not a status.
+        $departmentRows=$this->permissions['tickets']?$this->ticketMetrics()['departments']:[];
         $counts=[];$labels=[];foreach($departmentRows as $row){$id=$row['id']??'unassigned';$counts[$id]=(int)$row['n'];$labels[$id]=$row['name']??'Sem departamento';}
         $departmentChart=self::chart($counts,$labels);$view['tickets_awaiting_reply_by_department_no_json']=$departmentChart;$view['tickets_awaiting_reply_by_department']=json_encode($departmentChart,JSON_THROW_ON_ERROR);
         $view['weekly_payment_stats']=json_encode($this->permissions['invoices']&&$this->permissions['payments']?(new CompanyDashboardPayments($this->db,$this->prefix))->read($this->issuer,$this->actor,$base->id,'weekly',$date->format('Y-m-d')):null,JSON_THROW_ON_ERROR);
@@ -201,9 +199,8 @@ final class CompanyDashboardPresenter
             'last_year'=>[$date->setDate((int)$date->format('Y')-1,1,1),$date->setDate((int)$date->format('Y')-1,12,31)],
             default=>throw new DomainException('company_dashboard_period_invalid')};
         $bounds=[$this->issuer,$start->format('Y-m-d').' 00:00:00',$end->format('Y-m-d').' 23:59:59'];
-        $tickets=$this->rows('SELECT t.id,t.assignee_id,t.status,t.created_at,MIN(r.created_at) AS first_reply FROM '.$this->prefix.'company_tickets t LEFT JOIN '.$this->prefix.'company_ticket_replies r ON r.issuer_id=t.issuer_id AND r.ticket_id=t.id AND r.actor_id>0 WHERE t.issuer_id=? AND t.created_at>=? AND t.created_at<=? GROUP BY t.id,t.assignee_id,t.status,t.created_at ORDER BY t.id LIMIT 10001',$bounds);
-        if(count($tickets)>10000)throw new DomainException('company_dashboard_period_limit');
-        $replies=$this->rows('SELECT r.actor_id,COUNT(*) AS n FROM '.$this->prefix.'company_ticket_replies r JOIN '.$this->prefix.'company_tickets t ON t.issuer_id=r.issuer_id AND t.id=r.ticket_id WHERE r.issuer_id=? AND r.created_at>=? AND r.created_at<=? AND r.actor_id>0 GROUP BY r.actor_id',$bounds);
+        $owned=(new NativeCompanyTicketMetrics($this->db,$this->prefix))->reportSources($this->issuer,$this->actor,$bounds[1],$bounds[2]);
+        $tickets=$owned['tickets'];$replies=$owned['replies'];
         // Separate legacy lineage, admitted only to the persisted principal and still constrained by client ownership.
         if($this->primary===$this->issuer){
             require_once __DIR__.'/ClientIssuerScope.php';require_once __DIR__.'/CustomerRelationBoundary.php';

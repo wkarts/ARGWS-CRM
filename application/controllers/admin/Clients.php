@@ -251,6 +251,7 @@ class Clients extends AdminController
                     }elseif($group==='attachments')throw new DomainException('company_client_access_denied');
                     if($data['native_customer_owned']){$data['customer_tabs']['map']=['name'=>_l('customer_map'),'view'=>'admin/clients/groups/map','icon'=>'fa-solid fa-map-marker'];if($group==='map'){$coordinates=$native->maps((int)$id);$data['client']->latitude=$coordinates['latitude']??'';$data['client']->longitude=$coordinates['longitude']??'';$data['native_map_key']=$coordinates['google_api_key'];$data['native_map_revision']=$coordinates['revision'];$data['native_map_edit']=(new CompanyCustomerAccess($this->db,db_prefix()))->can($ctx->issuerId(),$ctx->staffId(),(int)$id,'edit');}}elseif($group==='map')throw new DomainException('company_client_access_denied');
                     $data['tab']=$data['customer_tabs'][$group];
+                    $data['customer_tabs']=$native->filterProfileTabs((int)$id,$data['customer_tabs']);
                 } elseif(!$capabilities['create']) {show_error('Sem permissão para criar clientes.',403);return;}
                 if($data['native_customer_owned'])$data+=$native->fieldData($id===''?null:$id);
                 $this->load->view('admin/clients/client',$data);
@@ -753,6 +754,16 @@ class Clients extends AdminController
 
     public function consents($id)
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            try{
+                if(!in_array($this->input->method(true),['GET','HEAD'],true))throw new DomainException('native_consent_invalid');
+                require_once APPPATH.'services/NativeCompanyConsents.php';require_once APPPATH.'services/NativePortalConsentCapability.php';
+                $ctx=CompanyRequestScope::context();$issuer=$ctx->issuerId();$actor=$ctx->staffId();$contact=IssuerPolicy::id($id);$service=new NativeCompanyConsents($this->db,db_prefix());$history=$service->history($issuer,$actor,$contact);$url='';
+                $store=new CompanySettingsStorage($this->db,db_prefix());if($store->get($issuer,'enable_gdpr')==='1'&&$store->get($issuer,'gdpr_enable_consent_for_contacts')==='1'){try{$key=(new NativePortalConsentCapability($this->db,db_prefix(),$this->config->item('encryption_key')))->issueForStaff($issuer,$actor,$contact);$url=site_url('consent/contact/'.$key).'?issuer_id='.$issuer;}catch(DomainException$e){if($e->getMessage()!=='native_consent_capability_denied')throw$e;}}
+                $data=['contact_id'=>$contact,'purposes'=>$service->purposes($issuer,$actor,$contact),'consents'=>$history,'native_company_consent'=>true,'native_consent_url'=>$url,'native_consent_csrf'=>CompanyRequestScope::nativeCsrfToken($this),'native_consent_revision'=>hash('sha256',json_encode($history,JSON_THROW_ON_ERROR))];
+                $this->output->set_header('Cache-Control: private, no-store');$this->load->view('admin/gdpr/contact_consent',$data);return;
+            }catch(Throwable$e){$this->nativeCompanyClientFailure($e);return;}
+        }
         if (!\app\services\ClientIssuerScope::isLegacyContact($this->db, db_prefix(), $id)) { show_404(); return; }
         if (staff_cant('view', 'customers')) {
             if (!is_customer_admin(get_user_id_by_contact_id($id))) {

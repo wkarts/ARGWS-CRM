@@ -179,6 +179,26 @@ function task_form_handler(form) {
   return false;
 }
 
+// Context is transported by the shared NativeCompanyTransport prefilter. These are CAS facts,
+// never authority: the original endpoint resolves source IDs and revalidates every write.
+function native_task_timer_request(data, frame, requestKey) {
+  var decimal = function (v, zero) { return typeof v === "string" && (zero ? /^(0|[1-9][0-9]*)$/ : /^[1-9][0-9]*$/).test(v) && Number(v) <= 2147483646; };
+  if (!/^[a-f0-9]{64}$/.test(requestKey || "") || !/^[a-f0-9]{64}$/.test(frame.policy || "")) throw new Error("native_timer_context_missing");
+  data.native_request_key = requestKey;
+  data.native_policy_hash = frame.policy;
+  if (String(data.task_id) !== "0") {
+    if (!decimal(frame.taskRevision, false)) throw new Error("native_timer_revision_missing");
+    data.native_task_revision = frame.taskRevision;
+  }
+  if (String(data.timer_id) !== "") {
+    if (!decimal(frame.timerRevision, false)) throw new Error("native_timer_revision_missing");
+    if (!decimal(frame.noteRevision, true)) throw new Error("native_timer_revision_missing");
+    data.native_timer_revision = frame.timerRevision;
+    data.native_note_revision = frame.noteRevision;
+  }
+  return data;
+}
+
 function timer_action(e, task_id, timer_id, adminStop) {
   timer_id = typeof timer_id == "undefined" ? "" : timer_id;
 
@@ -244,6 +264,28 @@ function timer_action(e, task_id, timer_id, adminStop) {
     data.note = "";
   }
   var taskModalVisible = $("#task-modal").is(":visible");
+  if (document.body.classList.contains("native-company-admin")) {
+    var $localTimer = $(e).closest("[data-native-timer-id]");
+    var $localTask = $(e).closest("[data-native-task-id]");
+    var $row = timer_id !== "" ? ($localTimer.attr("data-native-timer-id") === String(timer_id) ? $localTimer : $("#timer-" + String(timer_id))) : ($localTask.attr("data-native-task-id") === String(task_id) ? $localTask : $(e));
+    var $selected = $("#timer_add_task_id option:selected");
+    var $modal = $(".task-single-header[data-task-single-id='" + String(task_id) + "']");
+    var frame = {
+      policy: $row.attr("data-policy-hash") || $modal.attr("data-policy-hash"),
+      timerRevision: $row.attr("data-timer-revision"),
+      noteRevision: $row.attr("data-note-revision"),
+      taskRevision: $timerSelectTask.is(":visible") ? $selected.attr("data-native-task-revision") : ($row.attr("data-timer-revision") || $modal.attr("data-task-revision")),
+    };
+    var requestKey = $(e).data("native-timer-request-key");
+    if (!requestKey) {
+      if (!window.crypto || !window.crypto.getRandomValues) throw new Error("native_timer_entropy_unavailable");
+      var bytes = new Uint8Array(32); window.crypto.getRandomValues(bytes);
+      requestKey = Array.from(bytes, function (v) { return v.toString(16).padStart(2, "0"); }).join("");
+      $(e).data("native-timer-request-key", requestKey);
+    }
+    try { data = native_task_timer_request(data, frame, requestKey); }
+    catch (error) { $(e).removeClass("disabled"); throw error; }
+  }
   var reqUrl =
     admin_url + "tasks/timer_tracking?single_task=" + taskModalVisible;
   if (adminStop) {
@@ -269,7 +311,7 @@ function timer_action(e, task_id, timer_id, adminStop) {
 
     $(".popover-top-timer-note").popover("hide");
     reload_tasks_tables();
-  });
+  }).fail(function () { $(e).removeClass("disabled"); });
 }
 
 function init_task_modal(task_id, comment_id) {
@@ -598,4 +640,113 @@ function native_task_form_declaration(form, fields) {
     var unresolved=form.find('[data-native-undeclared="1"]');
     if(unresolved.length){event.preventDefault();event.stopImmediatePropagation();unresolved.first().focus();return false;}
   });
+}
+
+function task_tracking_stats(id) {
+  requestGet("tasks/task_tracking_stats/" + id).done(function (response) {
+    $("<div/>", {
+      id: "tracking-stats",
+    })
+      .appendTo("body")
+      .html(response);
+    $("#task-tracking-stats-modal").modal("toggle");
+  });
+}
+
+function init_task_tracking_stats_events() {
+  if (init_task_tracking_stats_events.bound) return;
+  init_task_tracking_stats_events.bound = true;
+  // Task single moda tracking stats close
+  $("body").on("click", ".close-task-stats", function () {
+    $("#task-tracking-stats-modal").modal("hide");
+  });
+
+  // Remove tracking status div because its appended automatically to the DOM on each click
+  $("body").on("hidden.bs.modal", "#task-tracking-stats-modal", function () {
+    $("#tracking-stats").remove();
+  });
+
+  // Task modal single chart for logged time by assigned users
+  $("body").on("show.bs.modal", "#task-tracking-stats-modal", function () {
+    var tracking_chart_selector = $("body").find("#task-tracking-stats-chart");
+    setTimeout(function () {
+      if (typeof taskTrackingChart != "undefined") {
+        taskTrackingChart.destroy();
+      }
+      taskTrackingChart = new Chart(tracking_chart_selector, {
+        type: "line",
+        data: taskTrackingStatsData,
+        options: {
+          legend: {
+            display: false,
+          },
+          responsive: true,
+          maintainAspectRatio: false,
+          tooltips: {
+            enabled: true,
+            mode: "single",
+            callbacks: {
+              label: function (tooltipItems, data) {
+                return decimalToHM(tooltipItems.yLabel);
+              },
+            },
+          },
+          scales: {
+            yAxes: [
+              {
+                ticks: {
+                  beginAtZero: true,
+                  min: 0,
+                  userCallback: function (label, index, labels) {
+                    return decimalToHM(label);
+                  },
+                },
+              },
+            ],
+          },
+        },
+      });
+    }, 800);
+  });
+}
+
+function init_rel_tasks_table(rel_id, rel_type, selector) {
+  if (typeof selector == "undefined") {
+    selector = ".table-rel-tasks";
+  }
+  var $selector = $("body").find(selector);
+  if ($selector.length === 0) {
+    return;
+  }
+
+  var TasksServerParams = {},
+    tasksRelationTableNotSortable = [0], // bulk actions
+    TasksFilters;
+
+  TasksFilters = $("body").find(
+    "._hidden_inputs._filters._tasks_filters input"
+  );
+
+  $.each(TasksFilters, function () {
+    TasksServerParams[$(this).attr("name")] =
+      '[name="' + $(this).attr("name") + '"]';
+  });
+
+  // Related task filter - used in customer profile
+  TasksServerParams['tasks_related_to'] = '[name="tasks_related_to"]'
+
+  var url = admin_url + "tasks/init_relation_tasks/" + rel_id + "/" + rel_type;
+
+  if ($selector.attr("data-new-rel-type") == "project") {
+    url += "?bulk_actions=true";
+  }
+
+  initDataTable(
+    $selector,
+    url,
+    tasksRelationTableNotSortable,
+    tasksRelationTableNotSortable,
+    TasksServerParams,
+    [$selector.find("th.duedate").index(), "asc"]
+  );
 }

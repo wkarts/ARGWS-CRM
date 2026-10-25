@@ -8,10 +8,12 @@
         "table",
         "project",
         "add_edit_members",
-        "remove_team_member"
+        "remove_team_member",
+        "get_rel_project_data",
+        "get_staff_names_for_mentions",
+        "staff_projects"
       ],
       "not_yet_contextual_wired": [
-        "staff_projects",
         "expenses",
         "add_expense",
         "gantt",
@@ -54,10 +56,8 @@
         "mass_stop_timers",
         "get_pre_invoice_project_info",
         "get_invoice_project_data",
-        "get_rel_project_data",
         "invoice_project",
-        "view_project_as_client",
-        "get_staff_names_for_mentions"
+        "view_project_as_client"
       ]
     },
     "Tasks": {
@@ -65,14 +65,16 @@
       "contextual_wired": [
         "get_staff_started_timers",
         "save_checklist_item_template",
-        "remove_checklist_item_template"
+        "remove_checklist_item_template",
+        "get_staff_names_for_mentions",
+        "task_tracking_stats",
+        "ajax_search_assign_task_to_timer"
       ],
       "not_yet_contextual_wired": [
         "index",
         "list_tasks",
         "table",
         "kanban",
-        "ajax_search_assign_task_to_timer",
         "tasks_kanban_load_more",
         "update_order",
         "switch_kanban",
@@ -81,7 +83,6 @@
         "update_task_description",
         "detailed_overview",
         "init_relation_tasks",
-        "task",
         "copy",
         "get_billable_task_data",
         "get_task_data",
@@ -89,7 +90,6 @@
         "edit_reminder",
         "delete_reminder",
         "init_checklist_items",
-        "task_tracking_stats",
         "checkbox_action",
         "add_checklist_item",
         "update_checklist_order",
@@ -122,9 +122,29 @@
         "bulk_action",
         "gantt_date_update",
         "get_task_by_id",
-        "get_staff_names_for_mentions",
         "save_checklist_assigned_staff"
-      ]
+      ],
+      "partially_contextual_wired": {
+        "task": {
+          "tested": [
+            "original GET new/edit modal",
+            "owned project and standalone POST",
+            "explicit historical declaration",
+            "tags/custom fields/assignees/followers/checklist templates",
+            "milestone selection with same owned transaction"
+          ],
+          "remaining": [
+            "raw legacy task editor",
+            "other native relation types",
+            "recurrence composition",
+            "actual uploads",
+            "authenticated HTTP/browser acceptance"
+          ]
+        }
+      },
+      "partial_methods": {
+        "timer_tracking": "Owned task start/stop and blank start/assignment use original controller/response with PHP/SQLite and shared JS tests; detail refresh, manager stop, legacy mutations and authenticated browser remain pending. Route admission remains closed until all branches are composed."
+      }
     }
   }
 }

@@ -15,7 +15,7 @@ final class NativeCompanyFilters
         if((string)($row['affected']??'')!=='1')throw new RuntimeException('native_source_insert_unconfirmed');
     }
 
-    public function __construct(private $db,private string $p,private int $issuer,private int $actor,private NativeCompanyInvoiceTable|NativeCompanyProjectTable $table)
+    public function __construct(private $db,private string $p,private int $issuer,private int $actor,private NativeCompanyInvoiceTable|NativeCompanyProjectTable|NativeCompanyTicketTable|NativeCompanyRelatedTaskTable $table)
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');
         $this->authorize();
@@ -28,6 +28,8 @@ final class NativeCompanyFilters
         $contract=match(get_class($this->table)){
             NativeCompanyInvoiceTable::class=>['feature'=>'invoices','view'=>'invoices','ids'=>['invoices','project_invoices']],
             NativeCompanyProjectTable::class=>['feature'=>'projects','view'=>'projects','ids'=>['projects']],
+            NativeCompanyTicketTable::class=>['feature'=>'tickets','view'=>'tickets','ids'=>['tickets']],
+            NativeCompanyRelatedTaskTable::class=>['feature'=>'tasks','view'=>'tasks_relations','ids'=>['related_tasks']],
             default=>throw new DomainException('native_filter_denied'),
         };
         if(!in_array($this->table->id(),$contract['ids'],true)||$this->table->viewName()!==$contract['view']

@@ -1,17 +1,17 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php init_head(); ?>
+<?php $nativeStaff=!empty($native_staff_profile);init_head(); ?>
 <div id="wrapper">
     <div class="content">
-        <?php if (($staff_p->staffid == get_staff_user_id() || is_admin()) && ! $this->input->get('notifications')) { ?>
+        <?php if (($nativeStaff?$native_profile_show_stats:($staff_p->staffid == get_staff_user_id() || is_admin())) && ! $this->input->get('notifications')) { ?>
         <?php $this->load->view('admin/staff/stats'); ?>
         <hr class="hr-separator tw-mb-10" />
         <?php } ?>
         <div class="row">
-            <?php hooks()->do_action('before_staff_myprofile'); ?>
+            <?php if(!$nativeStaff)hooks()->do_action('before_staff_myprofile'); ?>
             <div
                 class="col-md-5<?= $this->input->get('notifications') ? ' hide' : ''; ?>">
                 <h4 class="tw-mt-0 tw-font-bold tw-text-lg tw-text-neutral-700 tw-inline-flex tw-items-center">
-                    <?= staff_profile_image($staff_p->staffid, ['staff-profile-image-small tw-mr-2'], 'small'); ?>
+                    <?= ($nativeStaff?StaffAvatarPresentation::render($staff_p,(int)$staff_p->staffid,['staff-profile-image-small','tw-mr-2'],'small',[],'base_url','file_exists'):staff_profile_image($staff_p->staffid,['staff-profile-image-small tw-mr-2'],'small')); ?>
                     <?= e($staff_p->firstname . ' ' . $staff_p->lastname); ?>
                 </h4>
 
@@ -72,13 +72,13 @@
                                 </div>
                             </div>
                             <div class="tw-space-x-0.5">
-                                <?php if (! empty($staff_p->facebook)) { ?>
+                                <?php if ($nativeStaff?!empty($native_staff_social_urls['facebook']):!empty($staff_p->facebook)) { ?>
                                 <a href="<?= e($staff_p->facebook); ?>"
                                     target="_blank" class="btn btn-default btn-icon">
                                     <i class="fa-brands fa-facebook-f"></i>
                                 </a>
                                 <?php } ?>
-                                <?php if (! empty($staff_p->linkedin)) { ?>
+                                <?php if ($nativeStaff?!empty($native_staff_social_urls['linkedin']):!empty($staff_p->linkedin)) { ?>
                                 <a href="<?= e($staff_p->linkedin); ?>"
                                     class="btn btn-default btn-icon">
                                     <i class="fa-brands fa-linkedin-in"></i>
@@ -92,7 +92,7 @@
                                     <i class="fa-brands fa-skype"></i>
                                 </a>
                                 <?php } ?>
-                                <?php if (staff_can('edit', 'staff') && staff_can('view', 'staff')) { ?>
+                                <?php if ($nativeStaff?$native_profile_can_edit:(staff_can('edit', 'staff') && staff_can('view', 'staff'))) { ?>
                                 <a href="<?= admin_url('staff/member/' . $staff_p->staffid); ?>"
                                     class="btn btn-default btn-icon">
                                     <i class="fa fa-pencil-square"></i>
@@ -101,14 +101,14 @@
                             </div>
                         </div>
 
-                        <?php if (($staff_p->staffid == get_staff_user_id() || is_admin()) && ! $this->input->get('notifications')) { ?>
+                        <?php if (($nativeStaff?$native_profile_show_stats:($staff_p->staffid == get_staff_user_id() || is_admin())) && ! $this->input->get('notifications')) { ?>
                         <h4 class="tw-mt-4 tw-font-semibold tw-text-base tw-text-neutral-700">
                             <?= _l('projects'); ?>
                         </h4>
 
                         <div>
                             <div class="_filters _hidden_inputs hidden staff_projects_filter">
-                                <?= form_hidden('staff_id', $staff_p->staffid); ?>
+                                <?= $nativeStaff&&$staff_p->staffid==get_staff_user_id()?'':form_hidden('staff_id',$staff_p->staffid); ?>
                             </div>
                             <?php render_datatable([
                                 _l('project_name'),
@@ -165,7 +165,7 @@
                     $.post(admin_url + 'staff/notifications', {
                         page: page
                     }).done(function(response) {
-                        response = JSON.parse(response);
+                        response = typeof response==='string'?JSON.parse(response):response;
                         var notifications = '';
                         $.each(response, function(i, obj) {
                             notifications +=

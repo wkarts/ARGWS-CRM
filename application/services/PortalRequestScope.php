@@ -11,7 +11,7 @@ final class PortalRequestScope
   if($ci->input->is_cli_request()||defined('API')||trim((string)$ci->router->fetch_directory(),'/')!==''||$ci->router->fetch_module())return false;
   self::$class=strtolower((string)$ci->router->fetch_class());self::$method=strtolower((string)$ci->router->fetch_method());
   if(self::$class==='company_portal'&&self::$method==='index'){self::$active=true;return true;}
-  self::$candidate=(self::$class==='authentication'&&in_array(self::$method,self::AUTH,true))||(self::$class==='verification'&&in_array(self::$method,['index','verify','resend'],true))||(in_array(self::$class,['terms_and_conditions','privacy_policy'],true)&&self::$method==='index');self::$active=self::$candidate;return self::$active;
+  self::$candidate=(self::$class==='authentication'&&in_array(self::$method,self::AUTH,true))||(self::$class==='verification'&&in_array(self::$method,['index','verify','resend'],true))||(self::$class==='consent'&&self::$method==='contact')||(in_array(self::$class,['terms_and_conditions','privacy_policy'],true)&&self::$method==='index');self::$active=self::$candidate;return self::$active;
  }
  public static function active():bool{return self::$active;}
  public static function candidate():bool{return self::$candidate;}

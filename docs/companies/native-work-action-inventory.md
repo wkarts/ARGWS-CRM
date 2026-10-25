@@ -16,7 +16,7 @@ Base: `abbf6c7`. This is an internal integration inventory, not a claim of compl
 
 - `Projects::index` — connected to original manage view and explicit issuer/primary-lineage table factory; real controller/SQLite tests pass, full browser admission pending.
 - `Projects::table` — connected to native DataTables rows/filter rules, exact tenant predicates and original row markup; controller/SQLite tests pass.
-- `Projects::staff_projects` — pending native issuer adapter and route-level proof.
+- `Projects::staff_projects` — original four-column DataTable endpoint connected to exact project memberships, explicit company formatter and source-aware links. Own dashboard and administrative staff ACLs are distinct; actual controller + SQLite composition passes. Primary retains its existing legacy route; authenticated HTTP/browser admission remains pending.
 - `Projects::expenses` — pending native issuer adapter and route-level proof.
 - `Projects::add_expense` — pending native issuer adapter and route-level proof.
 - `Projects::project` — original GET form and basic create/update POST connected atomically (source/configuration/members/tags/custom fields/flags). Actual controller, original field helpers and SQLite pass. Legacy edits, estimate conversion, email dispatch, bulk task completion and recurring-task cancellation still require composition; route must not be broadly admitted.

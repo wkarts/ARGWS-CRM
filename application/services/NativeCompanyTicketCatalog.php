@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/NativeCompanyTicketCatalogSchema.php';
+require_once __DIR__.'/NativeCompanyTicketVisibility.php';
 require_once __DIR__.'/NativeCompanyResourceId.php';
 require_once __DIR__.'/NativeCompanyContentHtml.php';
 require_once __DIR__.'/issuers/IssuerResourceAccess.php';
@@ -24,7 +25,7 @@ final class NativeCompanyTicketCatalog
     {
         [$type,,$key]=self::type($kind);$source=$owned?'company_'.$type:$type;$id=(int)$row[$owned?'id':$key];$snapshot=$row;ksort($snapshot);
         $out=[$key=>NativeCompanyResourceId::encode($source,$id),'native_id'=>NativeCompanyResourceId::encode($source,$id),'source_kind'=>$source,'source_id'=>$id,'name'=>$row['name'],'revision_token'=>hash('sha256',json_encode($snapshot,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))];
-        if($owned){$out['source_revision']=(int)$row['revision'];if($out['source_revision']<1)throw new DomainException('native_ticket_catalog_revision_invalid');}
+        if($owned){$out['code']=$row['code'];$out['source_revision']=(int)$row['revision'];if($out['source_revision']<1)throw new DomainException('native_ticket_catalog_revision_invalid');}
         if($kind==='status')$out+=['isdefault'=>(int)$row[$owned?'is_default':'isdefault'],'statuscolor'=>$row[$owned?'color':'statuscolor'],'statusorder'=>(int)$row[$owned?'sort_order':'statusorder']];
         if($kind==='predefined_reply')$out['message']=NativeCompanyContentHtml::purify((string)$row['message']);
         return$out;
@@ -48,10 +49,11 @@ final class NativeCompanyTicketCatalog
     {
         $acl=$this->access($issuer,$actor,true);$primary=$acl->primaryId();$counts=[];$unclassified=[];
         foreach($this->list($issuer,$actor,'status')as$status)$counts[$status['native_id']]=0;
+        $deleted=[];if(NativeCompanyTicketVisibility::enabled($this->db,$this->p))foreach($this->rows('SELECT ticket_id FROM '.$this->p.NativeCompanyTicketLifecycleSchema::TICKETS.' WHERE issuer_id=?',[$issuer])as$r)$deleted[(int)$r['ticket_id']]=true;
         $owned=$this->rows('SELECT id,status FROM '.$this->p.'company_tickets WHERE issuer_id=?',[$issuer]);
         $refs=$this->rows('SELECT ticket_id,source_kind,source_id FROM '.$this->p.NativeCompanyTicketCatalogSchema::REFERENCES.' WHERE issuer_id=? AND kind=?',[$issuer,'status']);$byId=[];
         foreach($refs as$ref){if(isset($byId[$ref['ticket_id']]))throw new DomainException('native_ticket_catalog_reference_invalid');$id=NativeCompanyResourceId::encode($ref['source_kind'],$ref['source_id']);$this->get($issuer,$actor,'status',$id);$byId[$ref['ticket_id']]=$id;}
-        foreach($owned as$ticket){if(isset($byId[$ticket['id']])){$counts[$byId[$ticket['id']]]++;unset($byId[$ticket['id']]);}else{if(!in_array($ticket['status'],['open','resolved','closed'],true))throw new DomainException('native_ticket_catalog_reference_invalid');$unclassified[$ticket['status']]=($unclassified[$ticket['status']]??0)+1;}}
+        foreach($owned as$ticket){if(isset($deleted[(int)$ticket['id']])){unset($byId[$ticket['id']]);continue;}if(isset($byId[$ticket['id']])){$counts[$byId[$ticket['id']]]++;unset($byId[$ticket['id']]);}else{if(!in_array($ticket['status'],['open','resolved','closed'],true))throw new DomainException('native_ticket_catalog_reference_invalid');$unclassified[$ticket['status']]=($unclassified[$ticket['status']]??0)+1;}}
         if($byId)throw new DomainException('native_ticket_catalog_reference_invalid');
         if($primary===$issuer){
             require_once __DIR__.'/CustomerRelationBoundary.php';$boundary=\app\services\CustomerRelationBoundary::sql($this->db,$this->p,'tickets','t');

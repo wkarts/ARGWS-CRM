@@ -1,12 +1,12 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php init_head(); ?>
+<?php $nativeIndex=isset($native_ticket_index); if($nativeIndex&&(!CompanyRequestScope::nativeFor(get_instance())||!CompanyRequestScope::sealedFor(get_instance())))throw new DomainException('native_ticket_projection_denied'); init_head(); ?>
 <div id="wrapper">
     <div class="content">
         <div id="vueApp">
             <div class="row">
                 <div class="col-md-12">
                     <div class="tw-block md:tw-hidden">
-                        <?php $this->load->view('admin/tickets/summary', [
+                        <?php $this->load->view('admin/tickets/summary', ($nativeIndex ? ['native_ticket_summary'=>$native_ticket_summary] : []) + [
                             'hrefAttrs' => function ($status) use ($table) {
                                 return '@click.prevent="extra.ticketsRules = ' . app\services\utilities\Js::from($table->findRule('status')->setValue([(int) $status['ticketstatusid']])) . '"';
                             },
@@ -15,11 +15,11 @@
 
                     <div class="_buttons tw-mb-2">
                         <div class="md:tw-flex md:tw-items-center">
-                            <a href="<?= admin_url('tickets/add'); ?>"
+                            <?php if (!$nativeIndex || $native_ticket_index['can_create']) { ?><a href="<?= admin_url('tickets/add'); ?>"
                                 class="btn btn-primary display-block mright5">
                                 <i class="fa-regular fa-plus tw-mr-1"></i>
                                 <?= _l('new_ticket'); ?>
-                            </a>
+                            </a><?php } ?>
 
                             <a href="#" class="btn btn-default btn-with-tooltip sm:!tw-px-3" data-toggle="tooltip"
                                 data-placement="bottom"
@@ -29,7 +29,7 @@
                             </a>
 
                             <div class="tw-grow md:tw-ml-6 rtl:md:tw-mr-6 tw-hidden md:tw-block">
-                                <?php $this->load->view('admin/tickets/summary', [
+                                <?php $this->load->view('admin/tickets/summary', ($nativeIndex ? ['native_ticket_summary'=>$native_ticket_summary] : []) + [
                                     'hrefAttrs' => function ($status) use ($table) {
                                         return '@click.prevent="extra.ticketsRules = ' . app\services\utilities\Js::from($table->findRule('status')->setValue([(int) $status['ticketstatusid']])) . '"';
                                     },
@@ -65,14 +65,14 @@
                                 </div>
                             </div>
 
-                            <?php hooks()->do_action('before_render_tickets_list_table'); ?>
+                            <?php if (!$nativeIndex) hooks()->do_action('before_render_tickets_list_table'); ?>
 
                             <a href="#" data-toggle="modal" data-target="#tickets_bulk_actions"
                                 class="bulk-actions-btn table-btn hide"
                                 data-table=".table-tickets"><?= _l('bulk_actions'); ?></a>
                             <div class="clearfix"></div>
                             <div class="panel-table-full">
-                                <?= AdminTicketsTableStructure('', true); ?>
+                                <?= AdminTicketsTableStructure('', true, $nativeIndex ? $native_ticket_index['structure'] : null); ?>
                             </div>
                         </div>
                     </div>
@@ -97,7 +97,7 @@
                     <label
                         for="merge_tickets"><?= _l('merge_tickets'); ?></label>
                 </div>
-                <?php if (can_staff_delete_ticket()) { ?>
+                <?php if ($nativeIndex ? $native_ticket_index['can_delete'] : can_staff_delete_ticket()) { ?>
                 <div class="checkbox checkbox-danger mass_delete_checkbox">
                     <input type="checkbox" name="mass_delete" id="mass_delete">
                     <label
@@ -114,7 +114,7 @@
                         <input type="text" class="tagsinput" id="tags_bulk" name="tags_bulk" value=""
                             data-role="tagsinput">
                     </div>
-                    <?php if (get_option('services') == 1) { ?>
+                    <?php if (($nativeIndex ? $native_ticket_index['services'] : get_option('services')) == 1) { ?>
                     <?= render_select('move_to_service_tickets_bulk', $services, ['serviceid', 'name'], 'service'); ?>
                     <?php } ?>
                 </div>

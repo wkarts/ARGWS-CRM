@@ -39,10 +39,8 @@
         var secret = $('input[name="secret"]').val();
 
         $('#submit_2fa').prop("disabled", true);
-        $.post(admin_url + '/staff/verify_google_two_factor', {
-            code: code,
-            secret: secret,
-        }, function(response) {
+        var onVerified = function(response) {
+            if (typeof response === 'string') { try { response=JSON.parse(response); } catch (_) { return; } }
             if (response.status == 'success') {
                 $('#submit_2fa').prop("disabled", false);
                 alert_float('success', response.message);
@@ -50,6 +48,11 @@
                 $('#submit_2fa').prop("disabled", true);
                 alert_float('danger', response.message);
             }
-        });
+        };
+        <?php if(!empty($native_staff_two_factor)){ ?>
+        if (window.NativeCompanyTransport) window.NativeCompanyTransport.request('staff/verify_google_two_factor','POST',{code:code,secret:secret}).done(onVerified);
+        <?php } else { ?>
+        $.post(admin_url + '/staff/verify_google_two_factor',{code:code,secret:secret},onVerified);
+        <?php } ?>
     }
 </script>

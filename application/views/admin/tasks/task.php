@@ -432,8 +432,8 @@ $taskFormCan = static fn ($cap) => $nativeTaskForm === null ? staff_can($cap, 't
                         <?php } ?>
 
                         <?php
-                  if (isset($task)
-                     && $task->status == ($nativeTaskForm !== null ? 5 : Tasks_model::STATUS_COMPLETE)
+                  if ((isset($task) && $task->status == ($nativeTaskForm !== null ? 5 : Tasks_model::STATUS_COMPLETE)
+                     || (!isset($task) && $nativeTaskForm !== null && $nativeTaskForm['options']['default_task_status'] === 5))
                      && ($taskFormCan('create') || $taskFormCan('edit'))) {
                       echo render_datetime_input('datefinished', 'task_finished', ($nativeTaskForm !== null ? $nativeTaskForm['finished_at_label'] : _dt($task->datefinished)));
                   }
@@ -557,6 +557,11 @@ $taskFormCan = static fn ($cap) => $nativeTaskForm === null ? staff_can($cap, 't
                     $.get(admin_url + 'projects/get_rel_project_data/' + $(this).val() + '/' + taskid,
                         function(project) {
                             $("select[name='milestone']").html(project.milestones);
+                            <?php if ($nativeTaskForm) { ?>
+                            var milestoneProof = $('#task-form input[name="native_milestone_revision"]');
+                            if (!milestoneProof.length) milestoneProof = $('<input>', {type:'hidden', name:'native_milestone_revision'}).appendTo('#task-form');
+                            milestoneProof.val(project.native_milestone_revision);
+                            <?php } ?>
                             if (typeof(_milestone_selected_data) != 'undefined') {
                                 $("select[name='milestone']").val(_milestone_selected_data.id);
                                 $('input[name="duedate"]').val(_milestone_selected_data.due_date)
@@ -568,7 +573,7 @@ $taskFormCan = static fn ($cap) => $nativeTaskForm === null ? staff_can($cap, 't
                                 $("#assignees").val(_current_member);
                             }
                             $("#assignees").selectpicker('refresh')
-                            if (project.billing_type == 3) {
+                            if (project.billing_type == 3<?php if ($nativeTaskForm) { ?> || project.billing_type === null<?php } ?>) {
                                 $('.task-hours').addClass('project-task-hours');
                             } else {
                                 $('.task-hours').removeClass('project-task-hours');
@@ -608,6 +613,7 @@ $taskFormCan = static fn ($cap) => $nativeTaskForm === null ? staff_can($cap, 't
 
         _rel_type.on('changed.bs.select', function(e, clickedIndex, isSelected, previousValue) {
             if (previousValue == 'project') {
+                <?php if ($nativeTaskForm) { ?>$('#task-form input[name="native_milestone_revision"]').remove();$('select[name="milestone"]').val('').selectpicker('refresh');<?php } ?>
                 $("#assignees").html(_allAssigneeSelect);
                 if (typeof(_current_member) != 'undefined') {
                     $("#assignees").val(_current_member);

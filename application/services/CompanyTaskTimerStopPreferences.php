@@ -54,8 +54,13 @@ final class CompanyTaskTimerStopPreferences
     }
     public function save($issuer,$actor,int $revision,array $settings):void
     {
+        IssuerTransaction::run($this->db,$this->p,$this->tables(),fn()=>$this->saveInOwnedTransaction($issuer,$actor,$revision,$settings));
+    }
+    /** Compose the original policy writer into one atomic native Settings form. */
+    public function saveInOwnedTransaction($issuer,$actor,int $revision,array $settings):void
+    {
+        IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);self::prepare($settings);if($revision<0||$revision>2147483647)throw new DomainException('company_task_timer_stop_preferences_invalid');$this->authorize($issuer,$actor,'edit');
-        IssuerTransaction::run($this->db,$this->p,$this->tables(),function()use($issuer,$actor,$revision,$settings){
             (new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'edit');$row=$this->row($issuer);$doc=self::document((string)$row['settings_json']);$old=$doc->{self::NODE}??null;
             if(($old?->revision??0)!==$revision)throw new DomainException('company_task_timer_stop_preferences_stale');
             if($old&&$old->{self::AUTO_STOP}===$settings[self::AUTO_STOP])return;
@@ -69,6 +74,5 @@ final class CompanyTaskTimerStopPreferences
             $actualAudit=IssuerStorage::query($this->db,'SELECT id,actor_id,event,issuer_id,subject_id,created_at,metadata_json FROM '.$this->p.'issuers_audit WHERE id=?',[$audit])->row_array();
             if($audit<1||array_map(static fn($v)=>$v===null?null:(string)$v,$actualAudit)!==$expectedAudit)throw new RuntimeException('issuer_task_timer_stop_preferences_unconfirmed');
             self::confirmInOwnedTransaction($this->db,$this->p,$issuer,$expected);$this->authorize($issuer,$actor,'edit');
-        });
     }
 }

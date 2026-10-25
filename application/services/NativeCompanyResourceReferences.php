@@ -81,13 +81,15 @@ final class NativeCompanyResourceReferences
         if (isset(self::OWNED[$source])) {
             [$table,$key,$label]=self::OWNED[$source];
             $kind=in_array($source,['company_estimate','company_proposal'],true)?($source==='company_estimate'?'estimates':'proposals'):null;
-            $taskParent=null;
+            $taskParent=null;$standaloneParent=null;
+            if($source==='company_standalone_task'){require_once __DIR__.'/NativeCompanyTaskRelationAuthority.php';$standaloneParent=NativeCompanyTaskRelationAuthority::capture($db,$prefix,$issuer,$actor,$sourceId);}
             if($source==='company_task'){
                 if(!$acl->can($issuer,$actor,'projects','view'))throw new DomainException('native_resource_reference_denied');
                 $taskParent=IssuerStorage::query($db,"SELECT t.id,t.project_id FROM {$prefix}company_tasks t JOIN {$prefix}company_projects p ON p.id=t.project_id AND p.issuer_id=t.issuer_id WHERE t.id=? AND t.issuer_id=?",[$sourceId,$issuer])->row_array();
                 if(!$taskParent)throw new DomainException('native_resource_reference_denied');
             }
             $row=IssuerStorage::query($db,"SELECT {$key} AS source_id, {$label} AS label FROM {$prefix}{$table} WHERE {$key}=? AND issuer_id=?".($kind===null?'':' AND kind=?'),$kind===null?[$sourceId,$issuer]:[$sourceId,$issuer,$kind])->row_array();
+            if($standaloneParent!==null)NativeCompanyTaskRelationAuthority::confirm($db,$prefix,$issuer,$actor,$sourceId,$standaloneParent);
             if ($source === 'company_task' && $row) {
                 // A damaged relation must not make a task from another project visible.
                 $owner=IssuerStorage::query($db,"SELECT t.id,t.project_id FROM {$prefix}company_tasks t JOIN {$prefix}company_projects p ON p.id=t.project_id AND p.issuer_id=t.issuer_id WHERE t.id=? AND t.issuer_id=?",[$sourceId,$issuer])->row_array();
@@ -122,7 +124,7 @@ final class NativeCompanyResourceReferences
             $row=IssuerStorage::query($db,"SELECT id AS source_id,firstname AS label FROM {$prefix}contacts WHERE id=? AND userid=?",[$sourceId,$relation['userid']])->row_array();
             $path='clients/client/'.(int)$relation['userid'].'?group=contacts&contactid=';
         } elseif($type==='staff') {
-            if(!$acl->member($issuer,$sourceId))throw new DomainException('native_resource_reference_denied');
+            require_once __DIR__.'/CompanyStaff.php';try{(new CompanyStaff($db,$prefix))->assertAdministrativeTarget($issuer,$actor,$sourceId,$cap);}catch(DomainException $e){if($e->getMessage()!=='issuer_staff_denied')throw $e;throw new DomainException('native_resource_reference_denied');}
             $row=IssuerStorage::query($db,"SELECT staffid AS source_id,firstname AS label FROM {$prefix}staff WHERE staffid=?",[$sourceId])->row_array();
         } elseif($type==='payment') {
             $relation=IssuerStorage::query($db,"SELECT invoiceid FROM {$prefix}invoicepaymentrecords WHERE id=?",[$sourceId])->row_array();
@@ -138,8 +140,9 @@ final class NativeCompanyResourceReferences
             require_once __DIR__.'/TaskClientBoundary.php';
             $legacyTaskRelation=null;
             if($table==='tasks'){
-                $legacyTaskRelation=IssuerStorage::query($db,'SELECT rel_type,rel_id FROM '.$prefix.'tasks WHERE id=?',[$sourceId])->row_array();
+                $legacyTicketParent=null;$legacyTaskRelation=IssuerStorage::query($db,'SELECT rel_type,rel_id FROM '.$prefix.'tasks WHERE id=?',[$sourceId])->row_array();
                 if(!$legacyTaskRelation||($legacyTaskRelation['rel_type']==='project'&&!$acl->can($issuer,$actor,'projects','view')))throw new DomainException('native_resource_reference_denied');
+                if($legacyTaskRelation['rel_type']==='ticket')$legacyTicketParent=self::resolve($db,$prefix,$issuer,$actor,'ticket',$legacyTaskRelation['rel_id'],'view');
             }
             $alias='native_reference';$boundary='1=1';
             if(in_array($table,['contracts','projects','expenses','tickets'],true))$boundary=\app\services\CustomerRelationBoundary::sql($db,$prefix,$table,$alias);
@@ -147,8 +150,10 @@ final class NativeCompanyResourceReferences
             elseif(in_array($table,['estimates','proposals'],true)){require_once __DIR__.'/NativeCompanyLegacySalesBoundary.php';$boundary=NativeCompanyLegacySalesBoundary::sql($db,$prefix,$table,$alias);}
             elseif($table==='leads')$boundary=\app\services\ClientIssuerScope::legacySql($db,$prefix,$alias,'client_id');
             $row=IssuerStorage::query($db,"SELECT {$alias}.{$key} AS source_id, {$alias}.{$label} AS label FROM {$prefix}{$table} {$alias} WHERE {$alias}.{$key}=? AND ({$boundary})",[$sourceId])->row_array();
+            if($table==='tasks'&&$legacyTicketParent!==null&&self::resolve($db,$prefix,$issuer,$actor,'ticket',$legacyTaskRelation['rel_id'],'view')!==$legacyTicketParent)throw new DomainException('native_resource_reference_denied');
             if($table==='tasks'&&($legacyTaskRelation!==IssuerStorage::query($db,'SELECT rel_type,rel_id FROM '.$prefix.'tasks WHERE id=?',[$sourceId])->row_array()||($legacyTaskRelation['rel_type']==='project'&&!$acl->can($issuer,$actor,'projects','view'))))throw new DomainException('native_resource_reference_denied');
         }
+        if($type==='staff'){try{(new CompanyStaff($db,$prefix))->assertAdministrativeTarget($issuer,$actor,$sourceId,$cap);}catch(DomainException $e){if($e->getMessage()!=='issuer_staff_denied')throw $e;throw new DomainException('native_resource_reference_denied');}}
         if (!$row || (string)$row['source_id']!==(string)$sourceId || !$acl->can($issuer,$actor,$feature,$cap)) {
             throw new DomainException('native_resource_reference_denied');
         }

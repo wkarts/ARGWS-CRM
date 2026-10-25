@@ -1,25 +1,26 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') or exit('No direct script access allowed'); $nativeManaged=!empty($native_contacts); ?>
 <div class="tw-flex tw-justify-between tw-items-end tw-mb-3">
     <h4 class="tw-my-0 tw-font-bold tw-text-lg tw-text-neutral-700 section-heading section-heading-contact">
         <?= _l('clients_my_contact'); ?>
     </h4>
-    <a href="<?= site_url('contacts'); ?>"
+    <a href="<?= ($nativeManaged?NativePortalPresentation::url('contacts'):site_url('contacts')); ?>"
         class="btn btn-primary">
         <?= _l('clients_my_contacts'); ?>
     </a>
 </div>
 <?= form_open_multipart(
-    site_url('contacts/contact/' . (isset($my_contact) ? $my_contact->id : '')),
+    ($nativeManaged?NativePortalPresentation::url('contacts/contact/'.(isset($my_contact)?$my_contact->id:'')):site_url('contacts/contact/' . (isset($my_contact) ? $my_contact->id : ''))),
     ['id' => 'contact-form']
 );
 ?>
+<?php if($nativeManaged){ ?><input type="hidden" name="issuer_id" value="<?= e($native_portal_issuer); ?>"><input type="hidden" name="_native_portal_csrf" value="<?= e($native_portal_csrf); ?>"><input type="hidden" name="native_contact_revision" value="<?= e($native_contact_revision); ?>"><?php } ?>
 <div class="panel_s">
     <div class="panel-body">
 
         <div class="row">
             <div class="col-md-12">
                 <?php if (isset($my_contact)) { ?>
-                <img src="<?= e(contact_profile_image_url($my_contact->id, 'thumb')); ?>
+                <img src="<?= e($nativeManaged?$native_contact_image:contact_profile_image_url($my_contact->id, 'thumb')); ?>
 " id="contact-img" class="client-profile-image-thumb">
                 <?php if (! empty($my_contact->profile_image)) { ?>
                 <a href="#"
@@ -116,7 +117,7 @@
             </div>
             <hr />
             <div class="col-md-12">
-                <?php if (! isset($my_contact) && is_email_template_active('new-client-created')) { ?>
+                <?php if (! isset($my_contact) && ($nativeManaged?$native_contact_templates['new-client-created']:is_email_template_active('new-client-created'))) { ?>
                 <div class="checkbox checkbox-primary">
                     <input type="checkbox" name="donotsendwelcomeemail" id="donotsendwelcomeemail">
                     <label for="donotsendwelcomeemail">
@@ -124,7 +125,7 @@
                     </label>
                 </div>
                 <?php } ?>
-                <?php if (is_email_template_active('contact-set-password')) { ?>
+                <?php if (($nativeManaged?$native_contact_templates['contact-set-password']:is_email_template_active('contact-set-password'))) { ?>
                 <div class="checkbox checkbox-primary">
                     <input type="checkbox" name="send_set_password_email" id="send_set_password_email">
                     <label for="send_set_password_email">
@@ -137,7 +138,7 @@
             <div class="col-md-12">
                 <p class="bold mtop15">
                     <?= _l('email_notifications'); ?>
-                    <?php if (is_sms_trigger_active()) {
+                    <?php if (!$nativeManaged && is_sms_trigger_active()) {
                         echo '/SMS';
                     } ?>
                 </p>
@@ -212,6 +213,10 @@
     });
 
     function delete_contact_profile_image(contact_id) {
+        <?php if($nativeManaged){ ?>
+        var form=document.getElementById('contact-form');
+        $.post(<?= json_encode(NativePortalPresentation::url('contacts/delete_profile_image/'),JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>.replace('?issuer_id=',String(contact_id)+'?issuer_id='),{issuer_id:form.elements.issuer_id.value,_native_portal_csrf:form.elements._native_portal_csrf.value,native_contact_revision:form.elements.native_contact_revision.value}).done(function(result){if(result&&result.success===true&&/^[a-f0-9]{64}$/.test(result.revision)){form.elements.native_contact_revision.value=result.revision;$('#contact-profile-image').removeClass('hide');$('#contact-remove-img').addClass('hide');$('#contact-img').attr('src',<?= json_encode(site_url('assets/images/user-placeholder.jpg'),JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>);}});return;
+        <?php } ?>
         $.post(site_url + 'contacts/delete_profile_image/' + contact_id).done(function() {
             $('body').find('#contact-profile-image').removeClass('hide');
             $('body').find('#contact-remove-img').addClass('hide');

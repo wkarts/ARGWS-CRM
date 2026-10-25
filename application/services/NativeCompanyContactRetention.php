@@ -5,7 +5,7 @@ require_once __DIR__.'/issuers/IssuerStorage.php';
 final class NativeCompanyContactRetention
 {
     public const REFERENCES=[
-        'company_native_portal_remember'=>'contact_id','company_native_portal_registrations'=>'contact_id',
+        'company_native_notifications'=>'contact_actor_id','company_native_portal_remember'=>'contact_id','company_native_portal_registrations'=>'contact_id',
         'company_contract_discussions'=>'contact_id','company_project_discussions'=>'contact_id','company_project_discussion_posts'=>'contact_id','company_discussion_files'=>'contact_id',
         'company_portal_task_origins'=>'contact_id','company_portal_task_comments'=>'contact_id','company_portal_task_files'=>'contact_id','company_portal_task_requests'=>'contact_id',
         'company_project_contact_files'=>'contact_id','company_project_file_requests'=>'contact_id',
@@ -22,7 +22,7 @@ final class NativeCompanyContactRetention
     }
     public static function existing($db,string$p):array
     {
-        $out=[];foreach(array_merge(array_keys(self::REFERENCES),['tasks','task_assigned','company_contract_comment_requests','company_project_discussion_requests','company_discussion_receipt_seals'])as$table)if(self::present($db,$p,$table))$out[]=$table;return$out;
+        $out=[];foreach(array_merge(array_keys(self::REFERENCES),['company_native_contact_images','tasks','task_assigned','company_contract_comment_requests','company_project_discussion_requests','company_discussion_receipt_seals'])as$table)if(self::present($db,$p,$table))$out[]=$table;return$out;
     }
     public static function assertUnreferenced($db,string$p,int$contact):void
     {
@@ -33,6 +33,7 @@ final class NativeCompanyContactRetention
         foreach(['company_contract_comment_requests','company_project_discussion_requests','company_discussion_receipt_seals']as$table){
             if(self::present($db,$p,$table)&&IssuerStorage::query($db,"SELECT actor_id FROM ".$p.$table." WHERE actor_id=? AND author_type='contact' LIMIT 1",[$contact])->result_array())throw new DomainException('company_contact_history_retained');
         }
+        if(self::present($db,$p,'company_native_contact_images')&&IssuerStorage::query($db,'SELECT actor_contact_id FROM '.$p.'company_native_contact_images WHERE actor_contact_id=? AND contact_id<>? LIMIT 1',[$contact,$contact])->result_array())throw new DomainException('company_contact_history_retained');
         foreach(['tasks'=>['addedfrom','is_added_from_contact'],'task_assigned'=>['assigned_from','is_assigned_from_contact']]as$table=>$columns){
             if(!self::present($db,$p,$table))continue;
             if(IssuerStorage::query($db,'SELECT '.$columns[0].' FROM '.$p.$table.' WHERE '.$columns[0].'=? AND '.$columns[1].'=1 LIMIT 1',[$contact])->result_array())throw new DomainException('company_contact_history_retained');

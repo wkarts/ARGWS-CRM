@@ -16,7 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
-      fail-fast: true
+      # Keep both supported runtimes running to completion on the same SHA so
+      # a failure in one matrix leg does not erase the other runtime's evidence.
+      fail-fast: false
       matrix:
         include:
           - php: '8.1'

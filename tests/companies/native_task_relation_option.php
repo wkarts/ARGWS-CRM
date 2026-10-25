@@ -2,9 +2,8 @@
 require __DIR__.'/native_task_timer_read.php';
 $db->query("UPDATE {$p}issuers_staff SET can_view=1 WHERE issuer_id=? AND staff_id=51",[$a]);
 $db->query("INSERT INTO {$p}issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,51,'projects','view')",[$a]);
-$db->query("CREATE TABLE {$p}company_projects(id INT PRIMARY KEY,issuer_id INT NOT NULL,name VARCHAR(100) NOT NULL)");
-$db->query("ALTER TABLE {$p}company_tasks ADD COLUMN project_id INT NULL");
-$db->query("INSERT INTO {$p}company_projects VALUES(1,?,'Project A'),(2,?,'Project B')",[$a,$b]);
+$db->query("ALTER TABLE {$p}company_projects ADD COLUMN name VARCHAR(100) NULL");
+$db->query("UPDATE {$p}company_projects SET name=CASE id WHEN 1 THEN 'Project A' ELSE 'Project B' END");
 $db->query("UPDATE {$p}company_tasks SET project_id=id");unset($db->data_cache['table_names']);
 $owned=NativeCompanyResourceId::encode('company_task',1);$standalone=NativeCompanyResourceId::encode('company_standalone_task',1);
 $option=$reader->relationOption($a,51,$owned);

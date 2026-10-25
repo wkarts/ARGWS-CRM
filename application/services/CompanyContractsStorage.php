@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__.'/NativeCompanyTicketVisibility.php';
 require_once __DIR__.'/issuers/IssuerTransaction.php';
 require_once __DIR__.'/issuers/IssuerResourceAccess.php';
 require_once __DIR__.'/CompanyContractsSchema.php';
@@ -28,7 +29,7 @@ abstract class CompanyContractsStorage
     protected function transaction(callable $work)
     {
         CompanyContractsSchema::assertValid($this->db,$this->p);
-        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','options','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyContractsSchema::definitions($this->p)),$this->apiTables()),$this->guardedWork($work));
+        return IssuerTransaction::run($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','options','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyContractsSchema::definitions($this->p)),$this->apiTables(),$this->feature==='tickets'?NativeCompanyTicketVisibility::tables($this->db,$this->p):[]),$this->guardedWork($work));
     }
     protected static function text($value,int $max,bool $required=true):string
     {
@@ -56,7 +57,7 @@ abstract class CompanyContractsStorage
         return $this->transaction(function()use($issuer,$actor,$cap,$key,$op,$hash,$work):int{
             (new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,$cap);
             $receipt=$this->rows('SELECT issuer_id,actor_id,operation,input_hash,result_id FROM '.$this->p.$this->receiptTable().' WHERE request_key=? FOR UPDATE',[$key])[0]??null;
-            if($receipt){if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||$receipt['operation']!==$op||!hash_equals($receipt['input_hash'],$hash))throw new DomainException('company_operation_request_conflict');$table=$this->feature==='tickets'?'company_tickets':'company_contracts';if(!$this->rows('SELECT id FROM '.$this->p.$table.' WHERE issuer_id=? AND id=?',[$issuer,$receipt['result_id']]))throw new RuntimeException('issuer_operation_write_unconfirmed');return (int)$receipt['result_id'];}
+            if($receipt){if((int)$receipt['issuer_id']!==$issuer||(int)$receipt['actor_id']!==$actor||$receipt['operation']!==$op||!hash_equals($receipt['input_hash'],$hash))throw new DomainException('company_operation_request_conflict');$table=$this->feature==='tickets'?'company_tickets':'company_contracts';if($this->feature==='tickets')NativeCompanyTicketVisibility::assertMutable($this->db,$this->p,$issuer,(int)$receipt['result_id']);if(!$this->rows('SELECT id FROM '.$this->p.$table.' WHERE issuer_id=? AND id=?',[$issuer,$receipt['result_id']]))throw new RuntimeException('issuer_operation_write_unconfirmed');return (int)$receipt['result_id'];}
             $id=$work();if($id<1||$id>2147483647)throw new RuntimeException('issuer_operation_write_unconfirmed');$this->audit($issuer,$actor,$id,'company_'.$op);
             IssuerStorage::query($this->db,'INSERT INTO '.$this->p.$this->receiptTable().'(request_key,issuer_id,actor_id,input_hash,operation,result_id,created_at) VALUES(?,?,?,?,?,?,?)',[$key,$issuer,$actor,$hash,$op,$id,date('Y-m-d H:i:s')]);
             if(!$this->rows('SELECT result_id FROM '.$this->p.$this->receiptTable().' WHERE request_key=? AND issuer_id=? AND actor_id=? AND input_hash=? AND operation=? AND result_id=?',[$key,$issuer,$actor,$hash,$op,$id]))throw new RuntimeException('issuer_operation_write_unconfirmed');$this->authorize($issuer,$actor,$cap);return $id;

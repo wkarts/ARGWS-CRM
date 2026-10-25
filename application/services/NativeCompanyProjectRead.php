@@ -20,6 +20,22 @@ final class NativeCompanyProjectRead
         return ['issuer'=>$issuer,'actor'=>$actor,'primary'=>$acl->primaryId()===$issuer];
     }
     private function rows(string$sql,array$args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
+    /** Exact project member lineage for the original mention picker, not the entire staff directory. */
+    public function mentionMembers($issuer,$actor,$canonicalId):array
+    {
+        require_once __DIR__.'/NativeCompanyResourceReferences.php';require_once __DIR__.'/NativeCompanyWorkAssignments.php';
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$authority=$this->authority($issuer,$actor);$resolve=fn()=>NativeCompanyResourceReferences::resolve($this->db,$this->p,$issuer,$actor,'project',$canonicalId,'view');$reference=$resolve();
+        if($reference['source_kind']==='company_project'){
+            $service=new NativeCompanyWorkAssignments($this->db,$this->p);$members=$service->read($issuer,$actor,'project',$reference['source_id']);$rows=$members['members'];
+            $sql='SELECT responsible_id FROM '.$this->p.'company_projects WHERE issuer_id=? AND id=?';$args=[$issuer,$reference['source_id']];$source=$this->rows($sql,$args);if(count($source)!==1)throw new DomainException('native_project_snapshot_changed');
+            $memberSql='SELECT staff_id,active FROM '.$this->p.'company_project_members WHERE issuer_id=? AND project_id=? ORDER BY staff_id';$records=$this->rows($memberSql,$args);$responsible=$source[0]['responsible_id'];$extra=[];
+            if($responsible!==null&&(int)$responsible>0&&!in_array((int)$responsible,array_map('intval',array_column($records,'staff_id')),true)&&(new IssuerResourceAccess($this->db,$this->p))->can($issuer,(int)$responsible,'projects','view')){$extra=$this->rows('SELECT staffid,firstname,lastname FROM '.$this->p.'staff WHERE staffid=? AND active=1',[$responsible]);$rows=array_merge($rows,$extra);}
+            if($service->read($issuer,$actor,'project',$reference['source_id'])!==$members||$this->rows($sql,$args)!==$source||$this->rows($memberSql,$args)!==$records||($extra&&(!(new IssuerResourceAccess($this->db,$this->p))->can($issuer,(int)$responsible,'projects','view')||$this->rows('SELECT staffid,firstname,lastname FROM '.$this->p.'staff WHERE staffid=? AND active=1',[$responsible])!==$extra)))throw new DomainException('native_project_snapshot_changed');
+        }elseif($reference['source_kind']==='project'){
+            if(!$authority['primary'])throw new DomainException('native_project_access_denied');$sql='SELECT s.staffid,s.firstname,s.lastname FROM '.$this->p.'project_members m JOIN '.$this->p.'staff s ON s.staffid=m.staff_id WHERE m.project_id=? ORDER BY s.staffid LIMIT 501';$rows=$this->rows($sql,[$reference['source_id']]);if(count($rows)>500)throw new DomainException('native_project_query_refine');if($this->rows($sql,[$reference['source_id']])!==$rows)throw new DomainException('native_project_snapshot_changed');
+        }else throw new DomainException('native_project_access_denied');
+        if($resolve()!==$reference||$this->authority($issuer,$actor)!==$authority)throw new DomainException('native_project_snapshot_changed');$out=[];foreach($rows as$row)$out[(int)$row['staffid']]=['id'=>(int)$row['staffid'],'name'=>trim($row['firstname'].' '.$row['lastname'])];ksort($out,SORT_NUMERIC);return array_values($out);
+    }
     /** Project association candidates for the native invoice editor, not a declaration that work is billable. */
     public function choices($issuer,$actor,$client,string$query=''):array
     {

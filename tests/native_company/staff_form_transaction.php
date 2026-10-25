@@ -15,3 +15,13 @@ essentialCheck($db->query('SELECT * FROM '.$p.'staff WHERE staffid=14')->row_arr
 $foreign=new NativeCompanyStaffForm($db,$p,82,7,[],null,$r,[],$formRevision);settingThrows(fn()=>$service->updateNative(41,7,14,$detail['revision'],[],[],false,hash('sha256','foreign-participant'),$foreign),'issuer_staff_denied','concrete participant cannot target another issuer');
 settingThrows(fn()=>IssuerTransaction::run($db,$p,$form->tables(),fn()=>$form->assertCreatedInOwned($db,$p,41,7,'staff',14)),'native_custom_field_creation_denied','existing target cannot forge creation attestation');
 echo "Native staff form unit: seven real SQLite participant/replay/rollback/ownership checks passed.\n";
+
+settingThrows(fn()=>$foreign->state(14),'issuer_staff_denied','form reader rejects a member of a different issuer before metadata');
+settingThrows(fn()=>$form->state(999999),'issuer_staff_denied','missing staff is not an empty form snapshot');
+
+$baseForm=new NativeCompanyStaffForm($db,$p,41,7,[$wire],$role,$roles->page(41,7)['revision'],[$field=>'Synthetic value']);
+$rateForm=new NativeCompanyStaffForm($db,$p,41,7,[$wire],$role,$roles->page(41,7)['revision'],[$field=>'Synthetic value'],hash('sha256',json_encode($baseForm->state(14),JSON_THROW_ON_ERROR)),null,['value'=>'23.50','revision'=>0]);
+$detail=$service->get(41,7,14);$rateKey=hash('sha256','native-membership-rate-unit');$globalRate=$db->query('SELECT hourly_rate FROM '.$p.'staff WHERE staffid=14')->row_array();
+$service->updateNative(41,7,14,$detail['revision'],[],['tasks'=>['view']],false,$rateKey,$rateForm);
+essentialCheck($rateForm->state(14)['hourly_rate']['hourly_rate']==='23.50'&&$globalRate===$db->query('SELECT hourly_rate FROM '.$p.'staff WHERE staffid=14')->row_array(),'original form saves company wage without touching shared global rate');
+essentialCheck($service->updateNative(41,7,14,$detail['revision'],[],['tasks'=>['view']],false,$rateKey,$rateForm)===14,'membership wage participates in native idempotent command');

@@ -4217,3 +4217,7 @@ $lang['company_project_status_active'] = 'Active';
 $lang['company_ticket_status_open'] = 'Open';
 $lang['company_ticket_status_resolved'] = 'Resolved';
 $lang['company_ticket_status_closed'] = 'Closed';
+$lang['native_privacy_delivery_pending'] = 'Your request is recorded. Administrator email notifications are pending.';
+$lang['native_privacy_delivery_sent'] = 'Your request is recorded. Administrator email notifications were accepted by the configured transport.';
+$lang['native_privacy_delivery_disabled'] = 'Your request is recorded. Email notifications are disabled by the company template settings.';
+$lang['native_privacy_delivery_review'] = 'Your request is recorded. Email delivery needs review; an uncertain delivery will not be automatically repeated.';

@@ -945,58 +945,7 @@ $(function () {
     }
   });
 
-  // Task single moda tracking stats close
-  $("body").on("click", ".close-task-stats", function () {
-    $("#task-tracking-stats-modal").modal("hide");
-  });
-
-  // Remove tracking status div because its appended automatically to the DOM on each click
-  $("body").on("hidden.bs.modal", "#task-tracking-stats-modal", function () {
-    $("#tracking-stats").remove();
-  });
-
-  // Task modal single chart for logged time by assigned users
-  $("body").on("show.bs.modal", "#task-tracking-stats-modal", function () {
-    var tracking_chart_selector = $("body").find("#task-tracking-stats-chart");
-    setTimeout(function () {
-      if (typeof taskTrackingChart != "undefined") {
-        taskTrackingChart.destroy();
-      }
-      taskTrackingChart = new Chart(tracking_chart_selector, {
-        type: "line",
-        data: taskTrackingStatsData,
-        options: {
-          legend: {
-            display: false,
-          },
-          responsive: true,
-          maintainAspectRatio: false,
-          tooltips: {
-            enabled: true,
-            mode: "single",
-            callbacks: {
-              label: function (tooltipItems, data) {
-                return decimalToHM(tooltipItems.yLabel);
-              },
-            },
-          },
-          scales: {
-            yAxes: [
-              {
-                ticks: {
-                  beginAtZero: true,
-                  min: 0,
-                  userCallback: function (label, index, labels) {
-                    return decimalToHM(label);
-                  },
-                },
-              },
-            ],
-          },
-        },
-      });
-    }, 800);
-  });
+  init_task_tracking_stats_events();
 
   // In lead modal issue with reminder modal height
   $("body").on("shown.bs.modal", "#sync_data_proposal_data", function () {
@@ -2053,46 +2002,6 @@ function delete_option(child, id) {
 }
 
 // Initing relation tasks tables
-function init_rel_tasks_table(rel_id, rel_type, selector) {
-  if (typeof selector == "undefined") {
-    selector = ".table-rel-tasks";
-  }
-  var $selector = $("body").find(selector);
-  if ($selector.length === 0) {
-    return;
-  }
-
-  var TasksServerParams = {},
-    tasksRelationTableNotSortable = [0], // bulk actions
-    TasksFilters;
-
-  TasksFilters = $("body").find(
-    "._hidden_inputs._filters._tasks_filters input"
-  );
-
-  $.each(TasksFilters, function () {
-    TasksServerParams[$(this).attr("name")] =
-      '[name="' + $(this).attr("name") + '"]';
-  });
-
-  // Related task filter - used in customer profile
-  TasksServerParams['tasks_related_to'] = '[name="tasks_related_to"]'
-
-  var url = admin_url + "tasks/init_relation_tasks/" + rel_id + "/" + rel_type;
-
-  if ($selector.attr("data-new-rel-type") == "project") {
-    url += "?bulk_actions=true";
-  }
-
-  initDataTable(
-    $selector,
-    url,
-    tasksRelationTableNotSortable,
-    tasksRelationTableNotSortable,
-    TasksServerParams,
-    [$selector.find("th.duedate").index(), "asc"]
-  );
-}
 
 // Datatbles inline/offline - no serverside
 
@@ -2145,58 +2054,7 @@ function task_attachments_toggle() {
 
 
 // Called when editing member profile
-function init_roles_permissions(roleid, user_changed) {
-  roleid =
-    typeof roleid == "undefined" ? $('select[name="role"]').val() : roleid;
-  var isedit = $('.member > input[name="isedit"]');
-
-  // Check if user is edit view and user has changed the dropdown permission if not only return
-  if (
-    isedit.length > 0 &&
-    typeof roleid !== "undefined" &&
-    typeof user_changed == "undefined"
-  ) {
-    return;
-  }
-
-  // Administrators does not have permissions
-  if ($('input[name="administrator"]').prop("checked") === true) {
-    return;
-  }
-
-  // Last if the roleid is blank return
-  if (roleid === "") {
-    return;
-  }
-
-  // Get all permissions
-  var permissions = $("table.roles").find("tr");
-  requestGetJSON("staff/role_changed/" + roleid).done(function (response) {
-    permissions
-      .find(".capability")
-      .not('[data-not-applicable="true"]')
-      .prop("checked", false)
-      .trigger("change");
-
-    $.each(permissions, function () {
-      var row = $(this);
-      $.each(response, function (feature, obj) {
-        if (row.data("name") == feature) {
-          $.each(obj, function (i, capability) {
-            row
-              .find('input[id="' + feature + "_" + capability + '"]')
-              .prop("checked", true);
-            if (capability == "view") {
-              row.find("[data-can-view]").change();
-            } else if (capability == "view_own") {
-              row.find("[data-can-view-own]").change();
-            }
-          });
-        }
-      });
-    });
-  });
-}
+// Shared native staff component: init_roles_permissions (assets/js/native-admin-staff.js).
 
 // Show/hide full table
 function toggle_small_view(table, main_data) {
@@ -3780,84 +3638,9 @@ function init_table_announcements(manual) {
 }
 
 // Table tickets
-function init_table_tickets(manual) {
-  // Single ticket is for other tickets from user
-  if (
-    typeof manual == "undefined" &&
-    ($("body").hasClass("dashboard") || $("body").hasClass("single-ticket"))
-  ) {
-    return false;
-  }
-
-  if ($("body").find(".tickets-table").length === 0) {
-    return;
-  }
-
-  var TicketServerParams = {},
-    Tickets_Filters = $("._hidden_inputs._filters.tickets_filters input");
-  var tickets_date_created_index = $(
-    "table.tickets-table thead .ticket_created_column"
-  ).index();
-  $.each(Tickets_Filters, function () {
-    TicketServerParams[$(this).attr("name")] =
-      '[name="' + $(this).attr("name") + '"]';
-  });
-
-  TicketServerParams["project_id"] = '[name="project_id"]';
-
-  var ticketsTableNotSortable = [0]; // bulk actions
-  var _tickets_table_url = admin_url + "tickets";
-
-  if ($("body").hasClass("tickets-page")) {
-    _tickets_table_url += "?bulk_actions=true";
-  }
-
-  _table_api = initDataTable(
-    ".tickets-table",
-    _tickets_table_url,
-    ticketsTableNotSortable,
-    ticketsTableNotSortable,
-    TicketServerParams,
-    [tickets_date_created_index, "desc"]
-  );
-
-  if (_table_api && $("body").hasClass("dashboard")) {
-    var notVisibleDashboardDefault = [4, tickets_date_created_index, 5, 6];
-    for (var i in notVisibleDashboardDefault) {
-      _table_api.column(notVisibleDashboardDefault[i]).visible(false, false);
-    }
-    _table_api.columns.adjust();
-  }
-}
 
 // Staff projects table in staff profile
-function init_table_staff_projects(manual) {
-  if (typeof manual == "undefined" && $("body").hasClass("dashboard")) {
-    return false;
-  }
-  if ($("body").find(".table-staff-projects").length === 0) {
-    return;
-  }
-
-  var staffProjectsParams = {},
-    Staff_Projects_Filters = $(
-      "._hidden_inputs._filters.staff_projects_filter input"
-    );
-
-  $.each(Staff_Projects_Filters, function () {
-    staffProjectsParams[$(this).attr("name")] =
-      '[name="' + $(this).attr("name") + '"]';
-  });
-
-  initDataTable(
-    ".table-staff-projects",
-    admin_url + "projects/staff_projects",
-    "undefined",
-    "undefined",
-    staffProjectsParams,
-    [2, "asc"]
-  );
-}
+// Shared native staff component: init_table_staff_projects (assets/js/native-admin-staff.js).
 
 // Fix task checklist content textarea height
 // Shared native task component: do_task_checklist_items_height (assets/js/native-tasks.js).
@@ -4184,16 +3967,7 @@ function make_task_public(task_id) {
 // Shared native task component: _task_append_html (assets/js/native-tasks.js).
 
 // Tracking stats modal from task single
-function task_tracking_stats(id) {
-  requestGet("tasks/task_tracking_stats/" + id).done(function (response) {
-    $("<div/>", {
-      id: "tracking-stats",
-    })
-      .appendTo("body")
-      .html(response);
-    $("#task-tracking-stats-modal").modal("toggle");
-  });
-}
+// Shared native task component: task_tracking_stats (assets/js/native-tasks.js).
 
 // Fetches all staff timers and append to DOM
 // Shared native task component: init_timers (assets/js/native-tasks.js).

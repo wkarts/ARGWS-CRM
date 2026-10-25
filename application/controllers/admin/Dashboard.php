@@ -28,9 +28,12 @@ class Dashboard extends AdminController
         $presenter=new CompanyDashboardPresenter($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId());
         try {
             $snapshot=$presenter->snapshot();
-            $data=$snapshot['view']+['company_dashboard'=>$snapshot,'title'=>_l('dashboard_string'),'bodyclass'=>'dashboard','dashboard'=>true];
+            require_once APPPATH.'services/AdminDatabaseUpgrade.php';
+            $upgradeSuccess=AdminDatabaseUpgrade::peekContextSuccess($this,(string)$this->current_db_version);
+            $data=$snapshot['view']+['company_dashboard'=>$snapshot,'native_database_upgrade_success'=>$upgradeSuccess,'title'=>_l('dashboard_string'),'bodyclass'=>'dashboard','dashboard'=>true];
             $html=$this->load->view('admin/dashboard/dashboard',$data,true);
             $presenter->confirm();
+            if($upgradeSuccess&&!AdminDatabaseUpgrade::consumeContextSuccess($this,(string)$this->current_db_version))throw new DomainException('company_dashboard_stale');
             $this->output->set_header('Cache-Control: no-store');
             $this->output->set_output($html);
         } catch (DomainException $e) {

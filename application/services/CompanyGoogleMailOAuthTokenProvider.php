@@ -7,7 +7,7 @@ require_once __DIR__.'/CompanyGoogleMailOAuthDispatchSource.php';
 /** PHPMailer receives a short-lived credential only after the canonical job and connector are revalidated. */
 final class CompanyGoogleMailOAuthTokenProvider implements \PHPMailer\PHPMailer\OAuthTokenProvider
 {
-    public function __construct(private CompanyGoogleMailOAuth $oauth,private int $issuer,private int $epoch,private string $email,private $encrypt,private $decrypt,private CompanyGoogleMailOAuthDispatchSource|CompanyPortalMailDispatchSource|NativeCompanyFileMailDispatchSource|NativeCompanyMailTestSource|NativeCompanyEventMailSource|null $source){}
+    public function __construct(private CompanyGoogleMailOAuth $oauth,private int $issuer,private int $epoch,private string $email,private $encrypt,private $decrypt,private CompanyGoogleMailOAuthDispatchSource|CompanyPortalMailDispatchSource|NativeCompanyFileMailDispatchSource|NativeCompanyMailTestSource|NativeCompanyEventMailSource|NativeCompanyStaffInviteMailSource|NativeCompanyPrivacyMailSource|NativeCompanyCustomerUploadMailSource|null $source){}
     public function assertReady():void
     {
         if(!$this->source)throw new DomainException('company_google_mail_queue_required');$this->source->assertFor($this->issuer);$this->oauth->assertReady($this->issuer,$this->epoch);

@@ -54,6 +54,37 @@ final class NativeCompanyCatalogUi
     {
         $groups=[];foreach($this->items()as$row){$key=empty($row['group_id'])?0:$row['group_id'];$groups[$key][]=$row;}return$groups;
     }
+    /** Read selection authority from native invoice create/edit, never catalogue CRUD. */
+    /** Selection for the existing expense form; this never authorizes item/tax CRUD. */
+    public function expenseEditorTaxes():array
+    {
+        $check=function():void{$acl=new IssuerResourceAccess($this->db,$this->p);if(!$acl->can($this->issuer,$this->actor,'expenses','view')||(!$acl->can($this->issuer,$this->actor,'expenses','create')&&!$acl->can($this->issuer,$this->actor,'expenses','edit')))throw new DomainException('company_catalog_denied');};
+        $check();$taxes=$this->taxes();foreach($taxes as &$tax)$tax['taxrate']=NativeCompanyCatalog::simpleFields(['name'=>(string)$tax['name'],'taxrate'=>(string)$tax['taxrate']],true)['taxrate'];unset($tax);
+        $confirmed=$this->taxes();foreach($confirmed as &$tax)$tax['taxrate']=NativeCompanyCatalog::simpleFields(['name'=>(string)$tax['name'],'taxrate'=>(string)$tax['taxrate']],true)['taxrate'];unset($tax);
+        if($confirmed!==$taxes)throw new RuntimeException('issuer_catalog_read_inconsistent');$check();return$taxes;
+    }
+    public function expenseEditorTax($id):array
+    {
+        $ref=$this->source('tax',$id);foreach($this->expenseEditorTaxes()as$tax)if((string)$tax['id']===(string)$ref['canonical_id'])return$tax;throw new DomainException('company_catalog_denied');
+    }
+    public function invoiceEditorChoices():array
+    {
+        $source=$this->legacy??$this->owned;$groups=$source->groupsForInvoiceEditor();
+        if($this->legacy===null)$groups=array_map(static fn($r)=>self::project('item_group',$r),$groups);
+        $first=$source->itemsForInvoiceEditor(0,100);$ajax=$first['total']>200;$items=[];
+        if(!$ajax){$rows=$first['rows'];for($offset=100;count($rows)<$first['filtered'];$offset+=100){$page=$source->itemsForInvoiceEditor($offset,100);if(!$page['rows']||$page['filtered']!==$first['filtered'])throw new RuntimeException('issuer_catalog_read_inconsistent');$rows=array_merge($rows,$page['rows']);}
+            foreach($rows as$row){$row=$this->legacy===null?self::project('item',$row):$row;$items[empty($row['group_id'])?0:$row['group_id']][]=$row;}}
+        $taxes=$this->taxes();$confirmed=$source->groupsForInvoiceEditor();if($this->legacy===null)$confirmed=array_map(static fn($r)=>self::project('item_group',$r),$confirmed);if($confirmed!==$groups)throw new RuntimeException('issuer_catalog_read_inconsistent');return['items'=>$items,'items_groups'=>$groups,'ajaxItems'=>$ajax,'taxes'=>$taxes];
+    }
+    public function searchForInvoiceEditor(string $q):array
+    {
+        if($this->legacy!==null)return$this->legacy->searchForInvoiceEditor($q);
+        $rows=$this->owned->searchForInvoiceEditor($q);foreach($rows as&$r){$r['id']=self::encoded('item',$r['id']);$r['source_kind']='company_item';}unset($r);return$rows;
+    }
+    public function itemForInvoiceEditor($id):array
+    {
+        $ref=$this->source('item',$id);return$ref['source_kind']==='item'?$this->legacy->itemForInvoiceEditor($ref['source_id']):self::project('item',$this->owned->itemForInvoiceEditor($ref['source_id']));
+    }
     public function validateItemInput(array $input):array
     {
         if($this->legacy!==null)return$this->legacy->validateItemInput($input);

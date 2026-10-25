@@ -139,6 +139,22 @@ class Invoices extends AdminController
 
     public function client_change_data($customer_id, $current_invoice = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            if ($this->input->method(true) !== 'GET') { return show_error('Method not allowed', 405); }
+            try {
+                require_once APPPATH . 'services/NativeCompanyInvoiceClientData.php';
+                $context = CompanyRequestScope::context();
+                $data = (new NativeCompanyInvoiceClientData($this->db, db_prefix()))->read($context->issuerId(), $context->staffId(), $customer_id, $current_invoice);
+                $data['merge_info'] = $this->load->view('admin/invoices/merge_invoice', ['invoices_to_merge'=>$data['invoices_to_merge']], true);
+                $data['expenses_bill_info'] = $this->load->view('admin/invoices/bill_expenses', ['expenses_to_bill'=>$data['expenses_to_bill']], true);
+                unset($data['invoices_to_merge'], $data['expenses_to_bill']);
+                $this->output->set_content_type('application/json')->set_output(json_encode($data, JSON_THROW_ON_ERROR));
+                return;
+            } catch (DomainException $error) { return show_error('Invoice customer selection denied', 403); }
+              catch (Throwable $error) { return show_error('Invoice customer selection unavailable', 503); }
+        }
+
         if ($current_invoice !== '' && !\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $current_invoice)) { show_404(); }
         if ($this->input->is_ajax_request()) {
             $this->load->model('projects_model');
@@ -479,6 +495,33 @@ class Invoices extends AdminController
     /* Add new invoice or update existing */
     public function invoice($id = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                require_once APPPATH.'services/NativeCompanyInvoiceForm.php';
+                $context=CompanyRequestScope::context();$form=new NativeCompanyInvoiceForm($this->db,db_prefix());
+                // Existing documents require the separate revision-bound edit composition; no global fallback.
+                if ($id !== '') { throw new DomainException('native_invoice_existing_form_required'); }
+                $method=$this->input->method(true);
+                if ($method==='POST') {
+                    CompanyRequestScope::assertNativeMutation($this);
+                    $input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);
+                    if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                    $result=$form->create($context->issuerId(),$context->staffId(),$input);
+                    if($result['action']==='save_and_record_payment')$this->session->set_userdata('record_payment',true);
+                    set_alert('success',_l('added_successfully',_l('invoice')));
+                    redirect(admin_url('invoices/list_invoices/'.$result['result']['canonical_id']));
+                } elseif ($method==='GET') {
+                    $query=$this->input->get(null,false)?:[];
+                    if(array_diff(array_keys($query),['customer_id']))throw new DomainException('native_invoice_form_invalid');
+                    $this->load->view('admin/invoices/invoice',$form->createData($context->issuerId(),$context->staffId(),$query['customer_id']??null));
+                } else { show_error('Método não permitido.',405); }
+            } catch (DomainException $error) {
+                $key=$error->getMessage();$status=str_contains($key,'stale')||str_contains($key,'conflict')?409:(str_starts_with($key,'native_invoice_form_')?422:403);
+                show_error('Não foi possível confirmar esta operação da fatura nesta empresa.',$status);
+            } catch (Throwable $error) { show_error('Não foi possível confirmar a fatura.',503); }
+            return;
+        }
         if ($this->input->post()) {
             $invoice_data = $this->input->post();
             if ($id == '') {

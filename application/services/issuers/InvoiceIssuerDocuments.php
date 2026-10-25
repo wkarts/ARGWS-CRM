@@ -18,10 +18,10 @@ final class InvoiceIssuerDocuments
     private string $tables;
     private int $actor;
     private $authorize;
-    private ?CompanyPortalInvoices $portalSource;private ?array $portalSession;
+    private CompanyPortalInvoices|NativeCompanyPublicInvoice|null $portalSource;private ?array $portalSession;
 
     /** Authorization is mandatory; the production adapter must also enforce the rollout gate. */
-    public function __construct($db, string $prefix, $actor, callable $authorize,?CompanyPortalInvoices $portalSource=null,?array $portalSession=null)
+    public function __construct($db, string $prefix, $actor, callable $authorize,CompanyPortalInvoices|NativeCompanyPublicInvoice|null $portalSource=null,?array $portalSession=null)
     {
         if (!preg_match('/^[A-Za-z0-9_]+$/D', $prefix)) {
             throw new InvalidArgumentException('Invalid table prefix');
@@ -29,7 +29,7 @@ final class InvoiceIssuerDocuments
         $this->db = $db;
         $this->prefix = $prefix;
         $this->tables = $prefix . 'issuers_';
-        $this->actor = IssuerPolicy::id($actor);
+        $this->actor = $portalSource instanceof NativeCompanyPublicInvoice && $actor === 0 ? 0 : IssuerPolicy::id($actor);
         $this->authorize = $authorize;
         if(($portalSource===null)!==($portalSession===null))throw new InvalidArgumentException('issuer_document_portal_context_required');$this->portalSource=$portalSource;$this->portalSession=$portalSession;
     }
@@ -128,6 +128,10 @@ final class InvoiceIssuerDocuments
 
     private function requireAccess(int $issuer, string $capability): void
     {
+        if ($this->portalSource instanceof NativeCompanyPublicInvoice) {
+            if (!in_array($capability,['view_invoices','render_invoices'],true))throw new DomainException('issuer_access_denied');
+            $this->portalSource->assertIdentity($issuer,$this->portalSource->invoiceId(),$this->db,$this->prefix);
+        }
         if (($this->authorize)($issuer, $this->actor, $capability) !== true) {
             throw new DomainException('issuer_access_denied');
         }
@@ -382,12 +386,14 @@ final class InvoiceIssuerDocuments
     /** Internal DTO source. Explicit render capability; identifiers only, never caller-supplied invoice data. */
     public function readForPdf($invoice,$issuer):array
     {
+        if($this->portalSource instanceof NativeCompanyPublicInvoice)$this->portalSource->assertIdentity(IssuerPolicy::id($issuer),IssuerPolicy::id($invoice),$this->db,$this->prefix);
         $invoice=IssuerPolicy::id($invoice);$issuer=IssuerPolicy::id($issuer);$this->requireAccess($issuer,'render_invoices');$this->requireAccess($issuer,'view_invoices');
         return IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge(['issuers_lock','issuers_registry','invoices','issuers_invoice_documents','issuers_sequences','issuers_audit','currencies','company_currency_units','itemable','item_tax','countries'],(new CompanyInvoiceBalance($this->db,$this->prefix))->tables(),$this->portalSource?$this->portalSource->balanceTables():[]))),fn():array=>$this->readForPdfInOwned($invoice,$issuer));
     }
     /** Same canonical native reader, only inside the exact core-owned transaction. */
     public function readForPdfInOwned($invoice,$issuer):array
     {
+        if($this->portalSource instanceof NativeCompanyPublicInvoice)$this->portalSource->assertIdentity(IssuerPolicy::id($issuer),IssuerPolicy::id($invoice),$this->db,$this->prefix);
         $invoice=IssuerPolicy::id($invoice);$issuer=IssuerPolicy::id($issuer);IssuerTransaction::assertOwned($this->db,$this->prefix,array_values(array_unique(array_merge(['issuers_lock','issuers_registry','invoices','issuers_invoice_documents','issuers_sequences','issuers_audit','currencies','company_currency_units','itemable','item_tax','countries'],(new CompanyInvoiceBalance($this->db,$this->prefix))->tables(),$this->portalSource?$this->portalSource->balanceTables():[]))));$this->requireAccess($issuer,'render_invoices');$this->requireAccess($issuer,'view_invoices');
             // Serialize permission changes while constructing the authorized DTO, as allocation does.
             if (!$this->one("SELECT id FROM {$this->tables}lock WHERE id=1 FOR UPDATE")) {
@@ -423,6 +429,7 @@ final class InvoiceIssuerDocuments
     /** Read-only. Missing/mismatched snapshots never fall back to global identity or number. */
     public function get($invoice, $issuer): array
     {
+        if($this->portalSource instanceof NativeCompanyPublicInvoice)$this->portalSource->assertIdentity(IssuerPolicy::id($issuer),IssuerPolicy::id($invoice),$this->db,$this->prefix);
         $invoice = IssuerPolicy::id($invoice);
         $issuer = IssuerPolicy::id($issuer);
         $this->requireAccess($issuer, 'view_invoices');

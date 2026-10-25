@@ -514,6 +514,11 @@ class Misc extends AdminController
     // Check if staff email exists / ajax
     public function staff_email_exists()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffEndpoints.php';$available=NativeCompanyStaffEndpoints::emailAvailable($this);
+            $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode($available));return;
+        }
+
         if ($this->input->is_ajax_request()) {
             if ($this->input->post()) {
                 require_once APPPATH.'services/StaffEmailIdentity.php';

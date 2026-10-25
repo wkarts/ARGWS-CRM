@@ -44,6 +44,20 @@ final class AdminDatabaseUpgrade
         return self::consumeSuccess($ci->session, CompanyRequestScope::context()->staffId(), $version);
     }
 
+    /** Read-only preview: failed rendering or final ACL recheck must not consume feedback. */
+    public static function peekContextSuccess($ci, string $version): bool
+    {
+        if ($ci->input->method(true) !== 'GET' || $ci->input->is_ajax_request()
+            || !class_exists('CompanyRequestScope', false) || !CompanyRequestScope::sealedFor($ci)) {
+            return false;
+        }
+        $receipt = $ci->session->userdata(self::SUCCESS_KEY);
+        $actor = CompanyRequestScope::context()->staffId();
+        return is_array($receipt) && $actor > 0 && ($receipt['actor'] ?? null) === $actor
+            && ($receipt['version'] ?? null) === $version
+            && is_int($receipt['expires_at'] ?? null) && $receipt['expires_at'] > time();
+    }
+
     public static function token($session): string
     {
         $token = $session->userdata('admin_database_upgrade_csrf');

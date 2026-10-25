@@ -11,7 +11,7 @@ class Tickets extends AdminController
     {
         parent::__construct();
         if(CompanyRequestScope::nativeFor($this)){
-            if(in_array(strtolower((string)$this->router->fetch_method()),['change_status_ajax','edit_message','block_sender','update_staff_replying','check_staff_replying','delete_attachment'],true)){$this->nativeTicketLifecycle();return;}
+            if(in_array(strtolower((string)$this->router->fetch_method()),['bulk_action','ticket','change_status_ajax','edit_message','block_sender','update_staff_replying','check_staff_replying','delete_attachment','delete','delete_ticket_reply','update_single_ticket_settings'],true)){$this->nativeTicketLifecycle();return;}
             if(in_array(strtolower((string)$this->router->fetch_method()),['add','ticket_change_data'],true)){$this->nativeTicketPage();return;}
             if(!in_array(strtolower((string)$this->router->fetch_method()),['statuses','status','delete_ticket_status','priorities','priority','delete_priority','services','service','delete_service','predefined_replies','predefined_reply','delete_predefined_reply','get_predefined_reply_ajax'],true))throw new DomainException('native_ticket_adapter_incomplete');
             $this->nativeTicketCatalog();return;
@@ -136,6 +136,7 @@ class Tickets extends AdminController
 
     public function delete($ticketid)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyTicketLifecycleController.php'; (new NativeCompanyTicketLifecycleController($this))->deleteRecord($ticketid); return; }
         if (! $ticketid) {
             redirect(admin_url('tickets'));
         }
@@ -210,6 +211,7 @@ class Tickets extends AdminController
 
     public function ticket($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){if(strtoupper($this->input->method())==='GET'&&$this->input->get('merge_preview')!==null){$this->nativeTicketLifecycle()->mergePreview($id);return;}if(strtoupper($this->input->method())!=='POST')throw new DomainException('native_ticket_detail_adapter_incomplete');$this->nativeTicketLifecycle()->reply($id);return;}
         if (! $id) {
             redirect(admin_url('tickets/add'));
         }
@@ -313,6 +315,7 @@ class Tickets extends AdminController
 
     public function delete_ticket_reply($ticket_id, $reply_id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanyTicketLifecycleController.php'; (new NativeCompanyTicketLifecycleController($this))->deleteRecord($ticket_id,$reply_id); return; }
         if (! $reply_id) {
             redirect(admin_url('tickets'));
         }
@@ -340,6 +343,7 @@ class Tickets extends AdminController
 
     public function update_single_ticket_settings()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketLifecycle()->updateSettings();return;}
         if ($this->input->post()) {
             if ($this->input->post('merge_ticket_ids') !== 0) {
                 $ticketsToMerge = explode(',', $this->input->post('merge_ticket_ids') ?: '');
@@ -722,6 +726,7 @@ class Tickets extends AdminController
 
     public function bulk_action()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeTicketLifecycle()->bulk();return;}
         hooks()->do_action('before_do_bulk_action_for_tickets');
         if ($this->input->post()) {
             $ids                  = $this->input->post('ids');

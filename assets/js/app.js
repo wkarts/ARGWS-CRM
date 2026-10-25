@@ -202,6 +202,11 @@ $(function () {
           if (!/^[a-f0-9]{64}$/.test(parentRevision)) throw new Error("native_parent_revision_required");
           nativeData.parent_revision = parentRevision;
         }
+        var replyRevision = $(this).attr("data-native-reply-revision");
+        if (typeof replyRevision !== "undefined") {
+          if (!/^[a-f0-9]{64}$/.test(replyRevision)) throw new Error("native_reply_revision_required");
+          nativeData.reply_revision = replyRevision;
+        }
         var requestNonce = $(this).attr("data-native-request-nonce");
         if (typeof requestNonce !== "undefined") {
           if (!/^[a-f0-9]{64}$/.test(requestNonce)) throw new Error("native_nonce_required");

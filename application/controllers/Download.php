@@ -96,6 +96,25 @@ class Download extends App_Controller
 
     public function file($folder_indicator, $attachmentid = '')
     {
+        if (class_exists('PortalRequestScope', false) && PortalRequestScope::sealedFor($this)) {
+            if ($folder_indicator !== 'client' || !in_array($this->input->method(true), ['GET', 'HEAD'], true)) { show_404(); return; }
+            try {
+                require_once APPPATH . 'services/NativePortalCustomerFiles.php';
+                require_once APPPATH . 'services/NativePortalIdentity.php';
+                $issuer = PortalRequestScope::issuerId();
+                $secret = $this->config->item('encryption_key');
+                $identity = (new NativePortalIdentity($this->db, db_prefix(), $secret))->current($this->session, $issuer);
+                if (!$identity || !is_string($attachmentid)) { throw new DomainException('native_portal_files_denied'); }
+                $file = (new NativePortalCustomerFiles($this->db, db_prefix(), new CompanyPortal($this->db, db_prefix(), $secret), $identity['binding'], $issuer))->read($attachmentid);
+                $inline = $this->input->get('inline') === '1' && in_array($file['mime'], ['image/png', 'image/jpeg'], true);
+                $this->output->set_header('Cache-Control: private, no-store')->set_header('X-Content-Type-Options: nosniff')
+                    ->set_header("Content-Security-Policy: default-src 'none'; sandbox")
+                    ->set_header('Content-Disposition: ' . ($inline ? 'inline' : 'attachment') . "; filename=\"download\"; filename*=UTF-8''" . rawurlencode($file['filename']))
+                    ->set_content_type($file['mime'])->set_output($this->input->method(true) === 'HEAD' ? '' : $file['content']);
+            } catch (Throwable $error) { show_404(); }
+            return;
+        }
+
         if ($folder_indicator === 'ticket' && class_exists('CompanyRequestScope', false)
             && method_exists('CompanyRequestScope', 'nativeFor') && CompanyRequestScope::nativeFor($this)) {
             $ctx = CompanyRequestScope::context();

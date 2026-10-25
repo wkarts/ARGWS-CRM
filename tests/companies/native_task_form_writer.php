@@ -13,6 +13,9 @@ foreach([CompanyProjectsSchema::class,CompanyProjectExtrasSchema::class,CompanyS
  }
 }
 unset($db->data_cache['table_names']);NativeCompanyTaskFormSchema::ensure($db,$p);CompanyTaskPrioritySchema::ensure($db,$p);
+if($db->driver()==='sqlite'){$db->query('CREATE UNIQUE INDEX native_fixture_task_origin ON '.$p.'company_tasks(issuer_id,project_id,id)');$db->query('CREATE UNIQUE INDEX native_fixture_milestone_origin ON '.$p.'company_project_milestones(issuer_id,project_id,id)');}
+if($db->driver()==='mysql'){require_once APPPATH.'services/CompanyProjectPortalRulesSchema.php';CompanyProjectPortalRulesSchema::ensure($db,$p);}
+require_once APPPATH.'services/CompanyProjectMilestonesSchema.php';if($db->driver()==='mysql')CompanyProjectMilestonesSchema::ensure($db,$p);else foreach(CompanyProjectMilestonesSchema::definitions($p)as$table=>$parts)if(!$db->table_exists($p.$table))$db->query('CREATE TABLE '.$p.$table.'('.preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',implode(',',$parts)).')');
 require_once APPPATH.'services/NativeCompanyStandaloneFollowersSchema.php';NativeCompanyStandaloneFollowersSchema::ensure($db,$p);
 $ps=new CompanyProjects($db,$p);$tasks=new CompanyTasks($db,$p);$standalone=new CompanyStandaloneTasks($db,$p);$key=fn($v)=>hash('sha256','native-task-form-'.$v);
 $project=$ps->create($a,7,['client_id'=>$ca,'responsible_id'=>7,'name'=>'Original task form','description'=>'','start_date'=>'2026-10-01','due_date'=>'2026-12-01'],$key('project'));

@@ -11,20 +11,24 @@ require_once __DIR__.'/NativeCompanyTicketPreferences.php';
 /** Only groups consumed by the isolated company flows; never the legacy plugin catalog. */
 final class CompanySettingsCatalog
 {
+    // Compatibility-only page groups. Native tickets use Settings/includes/tickets,
+    // not a second generic form in the outgoing parallel workspace.
     public static function groups(): array
     {
-        return ['tickets'=>'Suporte','table_preferences'=>'Tabelas','knowledge_base'=>'Base de conhecimento','upload_preferences'=>'Arquivos e mídia','contact_preferences'=>'Preferências de contatos','task_timer_stop'=>'Parada do cronômetro anterior','task_timers'=>'Cronômetros das tarefas','task_operations'=>'Prioridade e acompanhamento de tarefas','task_defaults'=>'Padrões de criação de tarefas','ticket_preferences'=>'Ordem das respostas de suporte','pdf_typography'=>'Tipografia dos PDFs','project_files'=>'Arquivos de projetos','company'=>'Informações da Empresa','email'=>'Servidor SMTP','email_content'=>'Apresentação dos e-mails',
+        return ['clients'=>'Clientes','staff_defaults'=>'Padrões dos colaboradores','tickets'=>'Suporte','table_preferences'=>'Tabelas','knowledge_base'=>'Base de conhecimento','upload_preferences'=>'Arquivos e mídia','contact_preferences'=>'Preferências de contatos','task_timer_stop'=>'Parada do cronômetro anterior','task_timers'=>'Cronômetros das tarefas','task_operations'=>'Prioridade e acompanhamento de tarefas','task_defaults'=>'Padrões de criação de tarefas','ticket_preferences'=>'Ordem das respostas de suporte','pdf_typography'=>'Tipografia dos PDFs','project_files'=>'Arquivos de projetos','company'=>'Informações da Empresa','email'=>'Servidor SMTP','email_content'=>'Apresentação dos e-mails',
             'documents'=>'Faturas e créditos','sales_documents'=>'Orçamentos e propostas','document_pdf'=>'PDF de faturas, créditos e contratos','sales_pdf'=>'PDF de orçamentos e propostas','localization'=>'Data e hora'];
     }
 
     public static function fields(string $group): array
     {
         return match($group) {
+            'staff_defaults'=>['default_staff_role'],
             'table_preferences'=>['tables_pagination_limit'],
             'knowledge_base'=>['use_knowledge_base','knowledge_base_without_registration'],
             'tickets'=>NativeCompanyTicketPreferences::fields(),
             'upload_preferences'=>NativeCompanyUploadPreferences::fields(),
             'contact_preferences'=>NativeCompanyContactPreferences::fields(),
+            'clients'=>['company_requires_vat_number_field','allow_primary_contact_to_view_edit_billing_and_shipping'],
             'task_timer_stop'=>['auto_stop_tasks_timers_on_new_timer'],
             'task_timers'=>['timer_started_change_status_in_progress'],
             'task_operations'=>['default_task_priority','new_task_auto_follower_current_member'],
@@ -47,11 +51,13 @@ final class CompanySettingsCatalog
     public static function defaultValue(string $group,string $field):string
     {
         if(!in_array($field,self::fields($group),true))throw new DomainException('company_settings_invalid_input');
+        if($group==='staff_defaults')return '';
         if($group==='table_preferences')return '25';
         if($group==='knowledge_base')return '0';
         if($group==='tickets')return NativeCompanyTicketPreferences::defaultValue($field);
         if($group==='upload_preferences')return NativeCompanyUploadPreferences::defaultValue($field);
         if($group==='contact_preferences')return NativeCompanyContactPreferences::defaultValue($field);
+        if($group==='clients')return $field==='company_requires_vat_number_field'?'1':'0';
         if($group==='localization')return ['dateformat'=>'Y-m-d|%Y-%m-%d','time_format'=>'24'][$field]; // Native public installation defaults.
         if($group==='documents'&&$field==='invoice_prefix')return 'INV-'; // Public native installation default; explicit empty storage remains empty.
         if($group==='documents'&&$field==='invoice_due_after')return '30'; // Same public product default as native clean installation; not another company's option.
@@ -73,6 +79,7 @@ final class CompanySettingsCatalog
     /** Validate the entire form before encryption, SQL or audit. Returns normalized safe fragments. */
     public static function prepare(string $group,array $settings): array
     {
+        if($group==='staff_defaults'){require_once __DIR__.'/NativeCompanyStaffPreferences.php';return NativeCompanyStaffPreferences::prepare($settings);}
         if($group==='table_preferences'){
             if(array_diff(array_keys($settings),['tables_pagination_limit']))throw new DomainException('company_settings_invalid_input');
             foreach($settings as $value)if(!is_string($value)||!preg_match('/^[1-9][0-9]*$/D',$value)||strlen($value)>strlen((string)PHP_INT_MAX)||(strlen($value)===strlen((string)PHP_INT_MAX)&&strcmp($value,(string)PHP_INT_MAX)>0))throw new DomainException('company_settings_invalid_input');
@@ -90,6 +97,7 @@ final class CompanySettingsCatalog
             if(strlen($value)>$limit)throw new DomainException('company_settings_invalid_input');
             if($group!=='company'&&$name!=='smtp_password'&&!self::multiline($name)&&preg_match('/[\r\n]/',$value))throw new DomainException('company_settings_invalid_input');
         }
+        if($group==='clients')foreach($settings as$value)if(!in_array($value,['0','1'],true))throw new DomainException('company_settings_invalid_input');
         if(array_key_exists('invoice_due_after',$settings)&&!preg_match('/^(?:0|[1-9][0-9]{0,3})$/D',$settings['invoice_due_after']))throw new DomainException('company_settings_invalid_input');
         if($group==='project_files'&&(array_keys($settings)!==['allow_contact_to_delete_files']||!in_array($settings['allow_contact_to_delete_files'],['0','1'],true)))throw new DomainException('company_settings_invalid_input');
         if($group==='task_timer_stop'){require_once __DIR__.'/CompanyTaskTimerStopPreferences.php';CompanyTaskTimerStopPreferences::prepare($settings);}

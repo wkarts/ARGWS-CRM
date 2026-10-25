@@ -12,7 +12,7 @@ function _l($key,$args='',$log=true){return$key;}
 function e($v){return htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}
 function base_url($path=''){return'https://fixture.test/crm/'.$path;}
 function site_url($path=''){return base_url($path);}
-function form_open($path,$attrs=[]){$s='<form action="'.e(site_url($path)).'" method="post"';foreach($attrs as$k=>$v)$s.=' '.e($k).'="'.e($v).'"';return$s.'>';}
+function form_open($path='',$attrs=[]){$s='<form action="'.e(site_url($path)).'" method="post"';foreach($attrs as$k=>$v)$s.=' '.e($k).'="'.e($v).'"';return$s.'>';}
 function form_close(){return'</form>';}
 function form_hidden($name,$value){return'<input type="hidden" name="'.e($name).'" value="'.e($value).'">';}
 function form_error($name){return'';}

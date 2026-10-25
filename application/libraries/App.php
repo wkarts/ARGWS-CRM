@@ -298,12 +298,14 @@ class App
      */
     public function get_available_languages()
     {
-        return ['portuguese_br'];
+        require_once APPPATH.'services/NativeAvailableLanguages.php';
+        return NativeAvailableLanguages::all();
     }
 
     public function get_all_languages()
     {
-        return ['portuguese_br'];
+        require_once APPPATH.'services/NativeAvailableLanguages.php';
+        return NativeAvailableLanguages::all();
     }
 
     public function get_table_path($table, $my_prefixed = true)

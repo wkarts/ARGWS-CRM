@@ -222,7 +222,7 @@ echo render_select('default_currency', $currencies, ['id', 'name', 'symbol'], 'i
                         <?php $value = (isset($client) ? $client->zip : ''); ?>
                         <?= render_input('zip', 'client_postal_code', $value); ?>
                         <?php $countries = $native_customers ? $countries : get_all_countries();
-$customer_default_country                = ($native_customers ? 0 : get_option('customer_default_country'));
+$customer_default_country                = ($native_customers ? $native_customer_default_country : get_option('customer_default_country'));
 $selected                                = (isset($client) ? $client->country : $customer_default_country);
 echo render_select('country', $countries, ['country_id', ['short_name']], 'clients_country', $selected, ['data-none-selected-text' => _l('dropdown_non_selected_tex')]);
 ?>

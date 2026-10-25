@@ -36,8 +36,43 @@ final class NativeCompanyHeaderSchema
             ],
         ];
     }
+    private static function sqlite($db):bool
+    {
+        $pdo=$db->pdo??$db->conn_id??null;return $pdo instanceof PDO&&$pdo->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite';
+    }
+    /** SQLite executes local integration contracts only; MySQL metadata remains independently mandatory in CI. */
+    private static function sqliteDdl(string$p,string$table,array$parts):array
+    {
+        $columns=[];$indexes=[];
+        foreach($parts as$part){
+            if(str_starts_with($part,'KEY ')){preg_match('/^KEY `([^`]+)` (.+)$/D',$part,$m);$indexes[]='CREATE INDEX `'.$p.$table.'_'.$m[1].'` ON `'.$p.$table.'` '.$m[2];continue;}
+            if(str_starts_with($part,'UNIQUE KEY ')){$columns[]=preg_replace('/^UNIQUE KEY `[^`]+`/','UNIQUE',$part);continue;}
+            if(str_starts_with($part,'`id`')){$columns[]='`id` INTEGER PRIMARY KEY AUTOINCREMENT';continue;}
+            $columns[]=preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','',str_replace(['bigint unsigned','int unsigned'],['bigint','int'],$part));
+        }
+        return array_merge(['CREATE TABLE `'.$p.$table.'` ('.implode(',',$columns).')'],$indexes);
+    }
+    private static function assertSqlite($db,string$p,string$table,array$parts):void
+    {
+        $fail=static fn()=>throw new RuntimeException('issuer_native_header_schema_invalid');$name=$p.$table;
+        $actual=IssuerStorage::query($db,'PRAGMA table_info(`'.$name.'`)')->result_array();$columns=[];$indexes=[];$foreign=[];
+        foreach($parts as$part){
+            if(preg_match('/^`([^`]+)` (varchar\([0-9]+\)|bigint unsigned|int unsigned|int|datetime)(.*)$/D',$part,$m)){
+                $columns[]=['name'=>$m[1],'type'=>$m[1]==='id'?'INTEGER':strtoupper(str_replace(' unsigned','',$m[2])),'notnull'=>$m[1]==='id'?0:(str_contains($m[3],'NOT NULL')?1:0),'pk'=>$m[1]==='id'?1:0];
+            }elseif(preg_match('/^(UNIQUE )?KEY `[^`]+` \(([^)]+)\)$/D',$part,$m))$indexes[]=[($m[1]!==''?1:0),str_replace('`','',$m[2])];
+            elseif(preg_match('/^FOREIGN KEY \(`([^`]+)`\) REFERENCES `([^`]+)` \(`([^`]+)`\)$/D',$part,$m))$foreign[]=$m[1].':'.$m[2].':'.$m[3];
+        }
+        if(count($actual)!==count($columns))$fail();foreach($actual as$i=>$r){$r['type']=strtoupper((string)$r['type']);foreach($columns[$i]as$key=>$value)if((string)($r[$key]??'')!==(string)$value)$fail();if($r['dflt_value']!==null)$fail();}
+        $sql=IssuerStorage::query($db,'SELECT sql FROM sqlite_master WHERE type=? AND name=?',['table',$name])->row_array()['sql']??'';if(!str_contains(strtoupper($sql),'AUTOINCREMENT'))$fail();
+        $found=[];foreach(IssuerStorage::query($db,'PRAGMA index_list(`'.$name.'`)')->result_array()as$idx){if((int)$idx['partial']!==0||!preg_match('/^[A-Za-z0-9_]+$/D',$idx['name']))$fail();$cols=[];foreach(IssuerStorage::query($db,'PRAGMA index_xinfo(`'.$idx['name'].'`)')->result_array()as$c){if((int)$c['key']!==1)continue;if((int)$c['cid']<0||(int)$c['desc']!==0||strtoupper($c['coll'])!=='BINARY')$fail();$cols[]=$c['name'];}$found[]=[(int)$idx['unique'],implode(',',$cols)];}sort($indexes);sort($found);if($indexes!==$found)$fail();
+        $found=[];foreach(IssuerStorage::query($db,'PRAGMA foreign_key_list(`'.$name.'`)')->result_array()as$fk){if((int)$fk['seq']!==0||!in_array($fk['on_update'],['RESTRICT','NO ACTION'],true)||!in_array($fk['on_delete'],['RESTRICT','NO ACTION'],true))$fail();$found[]=$fk['from'].':'.$fk['table'].':'.$fk['to'];}sort($foreign);sort($found);if($foreign!==$found)$fail();
+    }
     public static function ensure($db,string $p):void
     {
+        if(self::sqlite($db)){
+            $missing=[];foreach(self::definitions($p)as$table=>$parts){$found=IssuerStorage::query($db,'SELECT name FROM sqlite_master WHERE type=? AND name=?',['table',$p.$table])->result_array();if($found)self::assertSqlite($db,$p,$table,$parts);else$missing[$table]=$parts;}
+            foreach($missing as$table=>$parts)foreach(self::sqliteDdl($p,$table,$parts)as$sql)IssuerStorage::query($db,$sql);self::assertValid($db,$p);return;
+        }
         // Validate existing tables BEFORE creating any missing table; never repair suspicious state.
         $missing=[];
         foreach(self::definitions($p) as $table=>$parts) {
@@ -53,6 +88,7 @@ final class NativeCompanyHeaderSchema
     }
     private static function assertTable($db,string $p,string $table,array $parts):void
     {
+            if(self::sqlite($db)){self::assertSqlite($db,$p,$table,$parts);return;}
             $name=$p.$table;$columns=[];
             foreach(IssuerStorage::query($db,'SELECT COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT,COLLATION_NAME,EXTRA FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$name])->result_array() as $r)$columns[$r['COLUMN_NAME']]=$r;
             $expected=[];

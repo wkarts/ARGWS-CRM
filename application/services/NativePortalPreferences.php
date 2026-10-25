@@ -4,7 +4,7 @@ require_once __DIR__.'/CompanySettingsStorage.php';
 /** Literal public factory defaults from versioned seed; never inherit another issuer's options. */
 final class NativePortalPreferences
 {
- public const DEFAULTS=['allow_registration'=>'0','company_is_required'=>'1','customers_register_require_confirmation'=>'0','enable_honeypot_spam_validation'=>'0','disable_language'=>'1','required_register_fields'=>'[]','use_recaptcha_customers_area'=>'0','recaptcha_site_key'=>'','recaptcha_secret_key'=>'','recaptcha_ignore_ips'=>''];
+ public const DEFAULTS=['company_requires_vat_number_field'=>'1','allow_primary_contact_to_view_edit_billing_and_shipping'=>'0','allow_registration'=>'0','company_is_required'=>'1','customers_register_require_confirmation'=>'0','enable_honeypot_spam_validation'=>'0','disable_language'=>'1','required_register_fields'=>'[]','use_recaptcha_customers_area'=>'0','recaptcha_site_key'=>'','recaptcha_secret_key'=>'','recaptcha_ignore_ips'=>''];
  public const REQUIRED=['contact_contact_phonenumber','contact_website','contact_title','company_vat','company_phonenumber','company_country','company_city','company_address','company_zip','company_state'];
  public static function fields():array{return array_keys(self::DEFAULTS);}
  public static function prepare(array$values):array{

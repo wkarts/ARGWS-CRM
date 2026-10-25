@@ -66,6 +66,9 @@ class Tasks extends AdminController
 
     public function ajax_search_assign_task_to_timer()
     {
+        if($this->nativeCompanyTasks()){
+            try{CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_company_task_denied');require_once APPPATH.'services/NativeCompanyTasksRead.php';$query=$this->input->post('q',false);if($query!==null&&!is_string($query))throw new DomainException('native_company_task_query_invalid');$rows=(new NativeCompanyTasksRead($this->db,db_prefix()))->timerAssignmentOptions($ctx->issuerId(),$ctx->staffId(),$query??'');$this->output->set_header('Cache-Control: no-store')->set_header('Content-Type: application/json; charset=utf-8')->set_output(json_encode($rows,JSON_THROW_ON_ERROR));}catch(DomainException$e){show_error('Tarefas indisponíveis neste contexto.',422);}return;
+        }
         if ($this->input->is_ajax_request()) {
             $q = $this->input->post('q');
             $q = trim($q);
@@ -131,15 +134,29 @@ class Tasks extends AdminController
     // Used in invoice add/edit
     public function get_billable_tasks_by_project($project_id)
     {
+        if ($this->nativeCompanyTasks()) { $this->nativeInvoiceBillableSelector('project', $project_id); return; }
         if ($this->input->is_ajax_request() && (staff_can('edit',  'invoices') || staff_can('create',  'invoices'))) {
             $customer_id = get_client_id_by_project_id($project_id);
             echo json_encode($this->tasks_model->get_billable_tasks($customer_id, $project_id));
         }
     }
 
+    private function nativeInvoiceBillableSelector(string $kind,$id): void
+    {
+        $this->output->set_header('Cache-Control: no-store');
+        if($this->input->method(true)!=='GET'){show_error('Método não permitido.',405);return;}
+        try{
+            require_once APPPATH.'services/NativeCompanyBillableTaskRead.php';$context=CompanyRequestScope::context();$issuer=$context->issuerId();$actor=$context->staffId();$acl=new IssuerResourceAccess($this->db,db_prefix());
+            $authorize=static function()use($acl,$issuer,$actor):void{if(!$acl->can($issuer,$actor,'invoices','view')||(!$acl->can($issuer,$actor,'invoices','create')&&!$acl->can($issuer,$actor,'invoices','edit')))throw new DomainException('native_billable_task_denied');};$authorize();
+            $reader=new NativeCompanyBillableTaskRead($this->db,db_prefix());$result=$kind==='project'?$reader->forProject($issuer,$actor,$id):$reader->forCustomer($issuer,$actor,$id);$authorize();
+            $this->output->set_content_type('application/json')->set_output(json_encode($result['items'],JSON_THROW_ON_ERROR));
+        }catch(DomainException $error){show_error('Tarefas indisponíveis nesta empresa.',str_contains($error->getMessage(),'changed')?409:403);}catch(Throwable $error){show_error('Não foi possível confirmar as tarefas.',503);}
+    }
+
     // Used in invoice add/edit
     public function get_billable_tasks_by_customer_id($customer_id)
     {
+        if ($this->nativeCompanyTasks()) { $this->nativeInvoiceBillableSelector('customer', $customer_id); return; }
         if ($this->input->is_ajax_request() && (staff_can('edit',  'invoices') || staff_can('create',  'invoices'))) {
             echo json_encode($this->tasks_model->get_billable_tasks($customer_id));
         }
@@ -285,6 +302,19 @@ class Tasks extends AdminController
 
     public function init_relation_tasks($rel_id, $rel_type)
     {
+        if ($this->nativeCompanyTasks()) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_company_task_denied');
+                require_once APPPATH.'services/NativeCompanyRelatedTaskPage.php';require_once APPPATH.'services/NativeCompanyRelatedTaskRows.php';
+                $wire=$this->input->post(null,false)?:[];unset($wire['_company_context'],$wire['_native_company_csrf']);if(isset($this->security))unset($wire[$this->security->get_csrf_token_name()]);
+                $today=date('Y-m-d');$reader=new NativeCompanyRelatedTaskPage($this->db,db_prefix());$page=$reader->read($ctx->issuerId(),$ctx->staffId(),$rel_type,$rel_id,$wire,$today);
+                $data=(new NativeCompanyRelatedTaskRows($this->db,db_prefix()))->render($ctx->issuerId(),$ctx->staffId(),$page);
+                if($reader->read($ctx->issuerId(),$ctx->staffId(),$rel_type,$rel_id,$wire,$today)!==$page)throw new DomainException('native_task_relation_stale');
+                $this->output->set_header('Content-Type: application/json; charset=utf-8')->set_output(json_encode($data,JSON_THROW_ON_ERROR));return;
+            } catch (DomainException $error) {show_error('Não foi possível confirmar as tarefas relacionadas desta empresa.',str_contains($error->getMessage(),'denied')?403:422);return;}
+              catch (RuntimeException $error) {show_error('Não foi possível confirmar o armazenamento das tarefas.',503);return;}
+        }
         if ($this->input->is_ajax_request()) {
            App_table::find('related_tasks')->output([
                 'rel_id'   => $rel_id,
@@ -441,6 +471,12 @@ class Tasks extends AdminController
 
     public function get_billable_task_data($task_id)
     {
+        if ($this->nativeCompanyTasks()) {
+            $this->output->set_header('Cache-Control: no-store');
+            if($this->input->method(true)!=='GET'){show_error('Método não permitido.',405);return;}
+            try{require_once APPPATH.'services/NativeCompanyBillableTaskPreview.php';$context=CompanyRequestScope::context();$data=(new NativeCompanyBillableTaskPreview($this->db,db_prefix()))->read($context->issuerId(),$context->staffId(),$task_id);$this->output->set_content_type('application/json')->set_output(json_encode($data,JSON_THROW_ON_ERROR));}
+            catch(DomainException $error){show_error('Tarefa indisponível nesta empresa.',str_contains($error->getMessage(),'changed')?409:403);}catch(Throwable $error){show_error('Não foi possível confirmar a tarefa.',503);}return;
+        }
         $task              = $this->tasks_model->get_billable_task_data($task_id);
         $task->description = seconds_to_time_format($task->total_seconds) . ' ' . _l('hours');
         echo json_encode($task);
@@ -552,7 +588,7 @@ class Tasks extends AdminController
                 $hasBlank=(bool)array_filter($timers,static fn($timer)=>(string)$timer['task_id']==='0');
                 $settings=new CompanySettingsStorage($this->db,db_prefix());$formats=['dateformat'=>$settings->get($ctx->issuerId(),'dateformat'),'time_format'=>$settings->get($ctx->issuerId(),'time_format')];$displayTimezone=date_default_timezone_get();
                 $renderedTimers=$timers;foreach($renderedTimers as &$renderedTimer)$renderedTimer['started_at_label']=NativeCompanyTimerPresentation::startedLabel($renderedTimer,$formats,$displayTimezone);unset($renderedTimer);
-                $nativeTimerPolicy=$policy+['can_start_blank'=>$policy['can_edit']&&!$hasBlank&&(!$policy['auto_stop']||count($timers)===0),'policy_hash'=>NativeCompanyBlankTimers::policyHash($policy)];
+                $nativeTimerPolicy=$policy+['can_start_blank'=>NativeCompanyTimerPolicy::canStartBlank($policy,$timers),'policy_hash'=>NativeCompanyBlankTimers::policyHash($policy)];
                 $html=$this->load->view('admin/tasks/started_timers',['startedTimers'=>$renderedTimers,'nativeTimerPolicy'=>$nativeTimerPolicy],true);
                 if(['dateformat'=>$settings->get($ctx->issuerId(),'dateformat'),'time_format'=>$settings->get($ctx->issuerId(),'time_format')]!==$formats||date_default_timezone_get()!==$displayTimezone)throw new DomainException('native_timer_policy_changed');
                 if($policyReader->read($ctx->issuerId(),$ctx->staffId())!==$policy)throw new DomainException('native_timer_policy_changed');
@@ -627,6 +663,11 @@ class Tasks extends AdminController
 
     public function task_tracking_stats($task_id)
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            if($this->input->method(true)!=='GET'){show_error('Método não permitido.',405);return;}
+            try{$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_resource_reference_denied');require_once APPPATH.'services/NativeCompanyTasksRead.php';require_once APPPATH.'services/utilities/Format.php';$chart=(new NativeCompanyTasksRead($this->db,db_prefix()))->trackingStats($ctx->issuerId(),$ctx->staffId(),$task_id,'_l',[\app\services\utilities\Format::class,'sec2qty']);$data=['stats'=>json_encode($chart,JSON_THROW_ON_ERROR|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)];$html=$this->load->view('admin/tasks/tracking_stats',$data,true);$this->output->set_header('Cache-Control: no-store');$this->output->set_output($html);}catch(DomainException$e){show_error('Tarefa indisponível neste contexto.',422);}return;
+        }
+
         $data['stats'] = json_encode($this->tasks_model->task_tracking_stats($task_id));
         $this->load->view('admin/tasks/tracking_stats', $data);
     }
@@ -1073,6 +1114,33 @@ class Tasks extends AdminController
 
     public function timer_tracking()
     {
+        if($this->nativeCompanyTasks()){
+            try{
+                CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();$issuer=$ctx->issuerId();$actor=$ctx->staffId();if($issuer===null)throw new DomainException('native_company_task_denied');
+                // These branches cannot mutate before the original detail/admin adapters are present.
+                if($this->input->get('single_task')==='true'||$this->input->get('admin_stop'))throw new DomainException('native_timer_detail_adapter_required');
+                require_once APPPATH.'services/CompanyTasks.php';require_once APPPATH.'services/CompanyStandaloneTasks.php';require_once APPPATH.'services/NativeCompanyBlankTimers.php';require_once APPPATH.'services/NativeCompanyResourceId.php';
+                $body=$this->input->post(null,false);if(!is_array($body))throw new DomainException('native_timer_input_invalid');
+                $integer=static function($value,bool$zero=false):int{if(!is_int($value)&&!is_string($value))throw new DomainException('native_timer_input_invalid');if(!preg_match($zero?'/^(0|[1-9][0-9]{0,9})$/D':'/^[1-9][0-9]{0,9}$/D',(string)$value)||(float)$value>2147483646)throw new DomainException('native_timer_input_invalid');return(int)$value;};
+                $task=$body['task_id']??null;$timer=$body['timer_id']??null;$note=$body['note']??'';$key=$body['native_request_key']??null;$policy=$body['native_policy_hash']??null;if(!is_string($task)||!is_string($timer)||!is_string($note)||!is_string($key)||!preg_match('/^[a-f0-9]{64}$/D',$key)||!is_string($policy)||!preg_match('/^[a-f0-9]{64}$/D',$policy))throw new DomainException('native_timer_input_invalid');
+                if($task==='0'&&$timer===''){(new NativeCompanyBlankTimers($this->db,db_prefix()))->start($issuer,$actor,$policy,$key,$note);}
+                else{
+                    $target=NativeCompanyResourceId::decode('task',$task);$writer=match($target['source_kind']){'company_task'=>new CompanyTasks($this->db,db_prefix()),'company_standalone_task'=>new CompanyStandaloneTasks($this->db,db_prefix()),default=>throw new DomainException('native_timer_legacy_adapter_required')};$taskRevision=$integer($body['native_task_revision']??null);
+                    if($timer==='')$writer->nativeTimer($issuer,$actor,$target['source_id'],$taskRevision,'start',null,0,$note,$policy,$key);
+                    else{
+                        $source=NativeCompanyResourceId::decode('timer',$timer);
+                        if($source['source_kind']==='company_blank_task_timer'){
+                            // Assignment has no automatic policy effect; nevertheless revalidate the rendered policy.
+                            if(!hash_equals($policy,NativeCompanyBlankTimers::policyHash((new NativeCompanyTimerPolicy($this->db,db_prefix()))->read($issuer,$actor))))throw new DomainException('native_timer_policy_changed');
+                            (new NativeCompanyBlankTimers($this->db,db_prefix()))->assign($issuer,$actor,$source['source_id'],$integer($body['native_timer_revision']??null),$target['source_kind'],$target['source_id'],$taskRevision,$note,$key);
+                        }else{
+                            if($source['source_kind']!==($target['source_kind']==='company_task'?'company_task_timer':'company_standalone_timer'))throw new DomainException('native_timer_input_invalid');$writer->nativeTimer($issuer,$actor,$target['source_id'],$taskRevision,'stop',$source['source_id'],$integer($body['native_note_revision']??null,true),$note,$policy,$key);
+                        }
+                    }
+                }
+                $json=json_encode(['success'=>true,'taskHtml'=>'','timers'=>$this->get_staff_started_timers(true)],JSON_THROW_ON_ERROR);$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output($json);
+            }catch(DomainException$e){show_error('Não foi possível confirmar o temporizador nesta empresa.',422);}return;
+        }
         $task_id   = $this->input->post('task_id');
         $adminStop = $this->input->get('admin_stop') && is_admin() ? true : false;
 
@@ -1307,6 +1375,11 @@ class Tasks extends AdminController
 
     public function get_staff_names_for_mentions($taskid)
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            if($this->input->method(true)!=='GET'){show_error('Método não permitido.',405);return;}
+            try{$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_resource_reference_denied');require_once APPPATH.'services/NativeCompanyTasksRead.php';$members=(new NativeCompanyTasksRead($this->db,db_prefix()))->mentionMembers($ctx->issuerId(),$ctx->staffId(),$taskid);$this->output->set_header('Cache-Control: no-store');$this->output->set_header('Content-Type: application/json');$this->output->set_output(json_encode($members,JSON_THROW_ON_ERROR));}catch(DomainException$e){show_error('Recurso indisponível neste contexto.',422);}return;
+        }
+
         if ($this->input->is_ajax_request()) {
             $taskId = $this->db->escape_str($taskid);
 

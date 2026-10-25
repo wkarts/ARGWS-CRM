@@ -38,3 +38,10 @@ essentialCheck(json_decode($controller->output->body,true)===['success'=>true]&&
 try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->remove_fv());throw new RuntimeException('Stale removal accepted');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===409,'concurrent asset edit invalidates removal revision');}
 $controller->input->verb='GET';try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->remove_signature_image());throw new RuntimeException('GET removal accepted');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===403,'GET cannot delete branding');}
 echo "Native Settings original asset removal routes POST/CAS isolation passed.\n";
+
+$db->query("CREATE TABLE {$p}company_taxes(id INTEGER PRIMARY KEY,issuer_id INT NOT NULL,name TEXT NOT NULL,taxrate DECIMAL(10,4) NOT NULL,revision INT NOT NULL)");
+$db->query("INSERT INTO {$p}company_taxes VALUES(1,?,'Tax A',5,1),(2,?,'Tax B',7,1)",[$a,$b]);
+$controller->input->verb='GET';$controller->input->query=['group'=>'sales_general'];
+CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());
+$view=end($controller->load->views);essentialCheck($view[1]['group']['view']==='admin/settings/includes/sales_general'&&is_string($view[1]['native_settings_tax_dropdown']),'sales tax selection cannot replace original settings section DTO');
+essentialCheck(str_contains($view[1]['native_settings_tax_dropdown'],'Tax A')&&!str_contains($view[1]['native_settings_tax_dropdown'],'Tax B'),'native Settings sales dropdown contains only selected company tax');

@@ -30,6 +30,16 @@ final class NativeCompanyClients
     {
         return '(o.owner_issuer_id=? OR EXISTS (SELECT 1 FROM '.$this->p.'issuers_client_links l WHERE l.client_id=c.userid AND l.issuer_id=?))';
     }
+    /** Presentation preference only: never grants a tab or changes resource authorization. */
+    public function filterProfileTabs(int $client,array $tabs):array
+    {
+        require_once __DIR__.'/NativeCompanyClientsSettings.php';
+        $check=function()use($client):void{if(!(new CompanyClients($this->db,$this->p))->get($this->issuer,$this->actor,$client))throw new DomainException('company_client_access_denied');};$check();
+        if(array_diff(array_keys($tabs),array_keys(NativeCompanyClientsSettings::TABS)))throw new DomainException('native_clients_settings_invalid');
+        $store=new CompanySettingsStorage($this->db,$this->p);$value=$store->exists($this->issuer,'visible_customer_profile_tabs')?$store->get($this->issuer,'visible_customer_profile_tabs'):'all';
+        $visible=NativeCompanyClientsSettings::visibleTabs($value);$filtered=array_filter($tabs,static fn($key)=>$visible[$key],ARRAY_FILTER_USE_KEY);
+        $check();return$filtered;
+    }
     public function summary(): array
     {
         $ids=$this->directoryIds();
@@ -144,6 +154,9 @@ final class NativeCompanyClients
         $caps=$this->capabilities($client);if(!$caps['view']&&!$caps['create']&&!$caps['edit'])throw new DomainException('company_client_access_denied');
         $data=['currencies'=>$this->rows('SELECT id,name,symbol,isdefault FROM '.$this->p.'currencies ORDER BY id'),
             'countries'=>$this->rows('SELECT country_id,short_name FROM '.$this->p.'countries ORDER BY short_name'),'groups'=>(new CompanyCustomerGroups($this->db,$this->p))->all($this->issuer,$this->actor,$client)];
+        $store=new CompanySettingsStorage($this->db,$this->p);$country=$store->exists($this->issuer,'customer_default_country')?$store->get($this->issuer,'customer_default_country'):'';
+        if(!preg_match('/^(?:|0|[1-9][0-9]{0,8})$/D',$country)||(!in_array($country,['','0'],true)&&!in_array($country,array_map('strval',array_column($data['countries'],'country_id')),true)))throw new DomainException('native_clients_settings_invalid');
+        $data['native_customer_default_country']=$country;
         $caps=$this->capabilities($client);if(!$caps['view']&&!$caps['create']&&!$caps['edit'])throw new DomainException('company_client_access_denied');return $data;
     }
     public function capabilities(?int $client=null): array

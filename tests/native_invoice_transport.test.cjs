@@ -59,7 +59,14 @@ test('native presentation metadata stays inside canonical writer and never expos
   assert(!/UPDATE |INSERT |DELETE |->query\(/.test(fields));
   assert.match(writer, /private function writeNativeFields/);
   assert.match(writer, /WHERE id=\? AND issuer_id=\?/);
-  assert.match(writer, /if\(array_key_exists\('native_fields',\$data\)\|\|array_key_exists\('native_project',\$data\)\|\|array_key_exists\('native_preferences',\$data\)\)return null/);
+  const legacy = writer.slice(writer.indexOf('private function legacyRequestHash('), writer.indexOf('private function insert('));
+  const guard = legacy.match(/if\s*\((.*?)\)\s*return\s+null\s*;/s);
+  assert(guard, 'legacy hash must reject native contracts before computing compatibility bytes');
+  const branches = guard[1].split('||').map(part => part.trim());
+  for (const field of ['native_fields', 'native_project', 'native_preferences', 'calculation_contract']) {
+    assert(branches.includes("array_key_exists('" + field + "',$data)"), field + ' cannot enter historical hash compatibility');
+  }
+  assert(branches.every(part => /^array_key_exists\('[a-z_]+',\$data\)$/.test(part)), 'each native presence must independently reject fallback');
   assert.match(writer, /company_invoice_provider_review_required/);
   assert.match(writer, /CompanyInvoiceNativeFields::input\(\$read\[0\]\)\s*!==\s*\$input/);
   const draft = read('application/services/CompanyInvoiceDraftsInput.php');

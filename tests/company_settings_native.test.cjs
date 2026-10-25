@@ -92,3 +92,11 @@ test('shared envelope validates navigation DTO and preserves trusted server form
  for(const text of ['[1280,768,390]','company_settings_native.php','company_settings_layout.php','getComputedStyle','form form','new FormData','settings-envelope-synthetic-']) assert.ok(browser.includes(text));
  assert.doesNotMatch(browser,/test\.skip|force:\s*true/);
 });
+
+test('native support settings are owned by the original Settings form, not duplicated in outgoing generic UI',()=>{
+ const forms=fs.readFileSync(path.join(root,'application/services/NativeCompanySettingsForms.php'),'utf8');
+ const native=fs.readFileSync(path.join(root,'application/views/admin/settings/includes/tickets.php'),'utf8');
+ assert.match(forms,/'tickets'=>NativeCompanyTicketPreferences::fields\(\)/);
+ assert.ok(native.includes('native_settings_ticket_values'));
+ assert.match(catalog,/'tickets'=>NativeCompanyTicketPreferences::fields\(\)/);
+});

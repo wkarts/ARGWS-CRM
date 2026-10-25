@@ -482,6 +482,11 @@ class Authentication_model extends App_Model
      */
     public function set_password($staff, $userid, $new_pass_key, $password)
     {
+        if($staff && is_string($new_pass_key) && preg_match('/^[a-f0-9]{64}$/D',$new_pass_key)){
+            require_once APPPATH.'services/NativeCompanyStaffInvite.php';
+            try{return(new NativeCompanyStaffInvite($this->db,db_prefix(),(string)$this->config->item('encryption_key')))->complete(IssuerPolicy::id($userid),$new_pass_key,$password);}
+            catch(DomainException $error){return['expired'=>true];}
+        }
         if (!$staff) return $this->completeLegacyContactPassword($userid,$new_pass_key,$password,'set');
         if (! $this->can_set_password($staff, $userid, $new_pass_key)) {
             return [
@@ -605,7 +610,7 @@ class Authentication_model extends App_Model
         if ($user) {
             // A token created before ownership changed must not re-enter global mail/identity paths.
             if (!$staff && !$this->permitsLegacyRecoveryMail($user)) return false;
-            if ($staff && !$this->is_current_unique_staff($user)) return false;
+            if ($staff && (!$this->is_current_unique_staff($user) || str_starts_with((string)$user->new_pass_key,'s1'))) return false;
             $timestamp_now_minus_1_hour = time() - (60 * 60);
             $new_pass_key_requested     = strtotime($user->new_pass_key_requested);
 
@@ -628,6 +633,10 @@ class Authentication_model extends App_Model
      */
     public function can_set_password($staff, $userid, $new_pass_key)
     {
+        if($staff && is_string($new_pass_key) && preg_match('/^[a-f0-9]{64}$/D',$new_pass_key)){
+            require_once APPPATH.'services/NativeCompanyStaffInvite.php';
+            return(new NativeCompanyStaffInvite($this->db,db_prefix(),(string)$this->config->item('encryption_key')))->canComplete(IssuerPolicy::id($userid),$new_pass_key);
+        }
         $table = db_prefix() . 'contacts';
         $_id   = 'id';
         if ($staff == true) {
@@ -640,7 +649,7 @@ class Authentication_model extends App_Model
         if ($user) {
             // A token created before ownership changed must not re-enter global mail/identity paths.
             if (!$staff && !$this->permitsLegacyRecoveryMail($user)) return false;
-            if ($staff && !$this->is_current_unique_staff($user)) return false;
+            if ($staff && (!$this->is_current_unique_staff($user) || str_starts_with((string)$user->new_pass_key,'s1'))) return false;
             $timestamp_now_minus_48_hour = time() - (3600 * 48);
             $new_pass_key_requested      = strtotime($user->new_pass_key_requested);
 

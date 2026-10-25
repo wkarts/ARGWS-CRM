@@ -1,9 +1,9 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') or exit('No direct script access allowed'); $nativeManaged=!empty($native_contacts); ?>
 <div class="tw-flex tw-justify-between tw-items-end tw-mb-3">
     <h4 class="tw-my-0 tw-font-bold tw-text-lg tw-text-neutral-700 section-heading section-heading-contacts">
         <?= _l('clients_my_contacts'); ?>
     </h4>
-    <a href="<?= site_url('contacts/contact'); ?>"
+    <a href="<?= ($nativeManaged?NativePortalPresentation::url('contacts/contact'):site_url('contacts/contact')); ?>"
         class="btn btn-primary">
         <?= _l('new_contact'); ?>
     </a>
@@ -32,7 +32,7 @@
                         <?= _l('clients_list_last_login'); ?>
                     </th>
                     <?php
-                    $custom_fields = get_custom_fields('contact', ['show_on_client_portal' => 1]);
+                    $custom_fields = $nativeManaged?$native_contacts_fields:get_custom_fields('contact', ['show_on_client_portal' => 1]);
 
 foreach ($custom_fields as $field) { ?>
                     <th><?= e($field['name']); ?>
@@ -43,16 +43,17 @@ foreach ($custom_fields as $field) { ?>
             <tbody>
                 <?php
                 foreach ($contacts as $contact) {
-                    $rowName = '<img src="' . e(contact_profile_image_url($contact['id'])) . '" class="client-profile-image-small mright5">' . e(get_contact_full_name($contact['id']));
+                    $rowName = '<img src="' . e($nativeManaged?$contact['native_image']:contact_profile_image_url($contact['id'])) . '" class="client-profile-image-small mright5">' . e(($nativeManaged?trim($contact['firstname'].' '.$contact['lastname']):get_contact_full_name($contact['id'])));
                     $rowName .= '<div class="mleft25 pleft5 row-options">';
-                    $rowName .= '<a href="' . site_url('contacts/contact/' . $contact['id']) . '">' . _l('edit') . '</a>';
-                    if ($contact['is_primary'] == 0 || ($contact['is_primary'] == 1)) {
+                    $rowName .= '<a href="' . ($nativeManaged?NativePortalPresentation::url('contacts/contact/'.$contact['id']):site_url('contacts/contact/' . $contact['id'])) . '">' . _l('edit') . '</a>';
+                    if($nativeManaged){$rowName.=' | '.form_open(NativePortalPresentation::url('contacts/delete/'.$contact['userid'].'/'.$contact['id']),['class'=>'tw-inline native-managed-contact-delete']).'<input type="hidden" name="issuer_id" value="'.e($native_portal_issuer).'"><input type="hidden" name="_native_portal_csrf" value="'.e($native_portal_csrf).'"><input type="hidden" name="native_contact_revision" value="'.e($contact['native_revision']).'"><button type="submit" class="btn btn-link text-danger">'._l('delete').'</button>'.form_close();}
+                    elseif ($contact['is_primary'] == 0 || ($contact['is_primary'] == 1)) {
                         $rowName .= ' | <a href="' . site_url('contacts/delete/' . $contact['userid'] . '/' . $contact['id']) . '" class="text-danger _delete">' . _l('delete') . '</a>';
                     }
                     $rowName .= '</div> '; ?>
                 <tr>
                     <td
-                        data-order="<?= e(get_contact_full_name($contact['id'])); ?>">
+                        data-order="<?= e(($nativeManaged?trim($contact['firstname'].' '.$contact['lastname']):get_contact_full_name($contact['id']))); ?>">
                         <?= $rowName; ?></td>
                     <td
                         data-order="<?= e($contact['email']); ?>">
@@ -69,8 +70,9 @@ foreach ($custom_fields as $field) { ?>
                     </td>
                     <td
                         data-order="<?= $contact['last_login'] ?>">
-                        <?= ! empty($aRow['last_login']) ? '<span class="text-has-action is-date" data-toggle="tooltip" data-title="' . e(_dt($aRow['last_login'])) . '">' . e(time_ago($aRow['last_login'])) . '</span>' : ''; ?>
+                        <?= ! empty(($nativeManaged?$contact:$aRow)['last_login']) ? '<span class="text-has-action is-date" data-toggle="tooltip" data-title="' . e(_dt(($nativeManaged?$contact:$aRow)['last_login'])) . '">' . e(time_ago(($nativeManaged?$contact:$aRow)['last_login'])) . '</span>' : ''; ?>
                     </td>
+                    <?php if($nativeManaged)foreach($custom_fields as$field){ ?><td><?= e($contact['native_custom_values'][$field['id']]??''); ?></td><?php } ?>
                 </tr>
                 <?php
                 } ?>
@@ -78,3 +80,4 @@ foreach ($custom_fields as $field) { ?>
         </table>
     </div>
 </div>
+<?php if($nativeManaged){ ?><script>document.querySelectorAll('.native-managed-contact-delete').forEach(function(form){form.addEventListener('submit',function(event){if(!window.confirm(<?= json_encode(_l('confirm_action_prompt'),JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>))event.preventDefault();});});</script><?php } ?>

@@ -65,42 +65,12 @@ final class CompanyInvoiceAmounts
     public static function calculate(array $items, array $options = []): array
     {
         if (PHP_INT_SIZE < 8 || count($items) < 1 || count($items) > 100
-            || array_diff(array_keys($options), ['discount_mode', 'discount_value', 'discount_type', 'adjustment'])) {
+            || array_diff(array_keys($options), ['discount_mode', 'discount_value', 'discount_type', 'adjustment', 'calculation_contract'])) {
             throw new DomainException('company_invoice_invalid_input');
         }
-        $lines = []; $prepared = []; $subtotal = 0;
-        foreach (array_values($items) as $index => $item) {
-            if (!is_array($item) || array_diff(array_keys($item), ['description', 'qty', 'rate', 'taxname', 'taxrate', 'taxes'])) {
-                throw new DomainException('company_invoice_invalid_input');
-            }
-            $qty = self::minor($item['qty'] ?? null); $rate = self::minor($item['rate'] ?? null);
-            if ($qty < 1 || $qty > 99999900 || $rate < 1 || $qty > intdiv(self::MAX * 100, $rate)) {
-                throw new DomainException('company_invoice_invalid_input');
-            }
-            $line = intdiv($qty * $rate + 50, 100);
-            if ($line < 1 || $subtotal > self::MAX - $line) { throw new DomainException('company_invoice_invalid_input'); }
-            $subtotal += $line; $lines[$index] = $line;
-            if (array_key_exists('taxes', $item)) {
-                if (isset($item['taxrate']) || isset($item['taxname']) || !is_array($item['taxes']) || count($item['taxes']) > 10) {
-                    throw new DomainException('company_invoice_invalid_input');
-                }
-                $taxes = $item['taxes'];
-            } else {
-                $taxes = [['name' => $item['taxname'] ?? '', 'rate' => $item['taxrate'] ?? '0']];
-            }
-            $normalized = []; $names = [];
-            foreach ($taxes as $tax) {
-                if (!is_array($tax) || array_diff(array_keys($tax), ['name', 'rate'])) { throw new DomainException('company_invoice_invalid_input'); }
-                $bps = self::minor($tax['rate'] ?? null); $name = self::text($tax['name'] ?? '', 100, $bps > 0);
-                if ($bps > 10000) { throw new DomainException('company_invoice_invalid_input'); }
-                if ($bps === 0) { continue; }
-                $identity = strtolower($name);
-                if (isset($names[$identity])) { throw new DomainException('company_invoice_duplicate_tax'); }
-                $names[$identity] = true; $normalized[] = ['name' => $name, 'rate' => self::decimal($bps)];
-            }
-            $prepared[] = ['description' => self::text($item['description'] ?? null, 10000, true),
-                'qty' => self::decimal($qty), 'rate' => self::decimal($rate), 'taxes' => $normalized];
-        }
+        $contract=$options['calculation_contract']??null;if(array_key_exists('calculation_contract',$options)&&$contract!=='native_sales_v1')throw new DomainException('company_invoice_calculation_contract_invalid');
+        [$prepared,$lines,$subtotal]=self::prepare($items,$contract==='native_sales_v1');
+        if(array_key_exists('calculation_contract',$options)){require_once __DIR__.'/CompanyInvoiceNativeAmounts.php';return CompanyInvoiceNativeAmounts::calculate($prepared,$lines,$subtotal,$options);}
         $mode = array_key_exists('discount_mode', $options) ? $options['discount_mode'] : 'fixed';
         $type = array_key_exists('discount_type', $options) ? $options['discount_type'] : 'after_tax';
         if (!in_array($mode, ['fixed', 'percent'], true) || !in_array($type, ['before_tax', 'after_tax'], true)) {
@@ -126,6 +96,49 @@ final class CompanyInvoiceAmounts
             'discount_mode' => $mode, 'discount_value' => self::decimal($value), 'discount_type' => $type,
             'discount_percent' => $mode === 'percent' ? self::decimal($value) : '0.00',
             'discount_total' => self::decimal($discount), 'adjustment' => self::decimal($adjustment), 'total' => self::decimal($total)];
+    }
+
+    private static function prepare(array $items,bool $allowZeroRate):array
+    {
+        $lines = []; $prepared = []; $subtotal = 0;
+        foreach (array_values($items) as $index => $item) {
+            if (!is_array($item) || array_diff(array_keys($item), ['description', 'qty', 'rate', 'taxname', 'taxrate', 'taxes'])) {
+                throw new DomainException('company_invoice_invalid_input');
+            }
+            $qty = self::minor($item['qty'] ?? null); $rate = self::minor($item['rate'] ?? null);
+            if ($qty < 1 || $qty > 99999900 || ($allowZeroRate ? $rate < 0 : $rate < 1) || ($rate > 0 && $qty > intdiv(self::MAX * 100, $rate))) {
+                throw new DomainException('company_invoice_invalid_input');
+            }
+            $line = intdiv($qty * $rate + 50, 100);
+            if (($allowZeroRate ? $line < 0 : $line < 1) || $subtotal > self::MAX - $line) { throw new DomainException('company_invoice_invalid_input'); }
+            $subtotal += $line; $lines[$index] = $line;
+            if (array_key_exists('taxes', $item)) {
+                if (isset($item['taxrate']) || isset($item['taxname']) || !is_array($item['taxes']) || count($item['taxes']) > 10) {
+                    throw new DomainException('company_invoice_invalid_input');
+                }
+                $taxes = $item['taxes'];
+            } else {
+                $taxes = [['name' => $item['taxname'] ?? '', 'rate' => $item['taxrate'] ?? '0']];
+            }
+            $normalized = []; $names = [];
+            foreach ($taxes as $tax) {
+                if (!is_array($tax) || array_diff(array_keys($tax), ['name', 'rate'])) { throw new DomainException('company_invoice_invalid_input'); }
+                $bps = self::minor($tax['rate'] ?? null); $name = self::text($tax['name'] ?? '', 100, $bps > 0);
+                if ($bps > 10000) { throw new DomainException('company_invoice_invalid_input'); }
+                if ($bps === 0) { continue; }
+                $identity = strtolower($name);
+                if (isset($names[$identity])) { throw new DomainException('company_invoice_duplicate_tax'); }
+                $names[$identity] = true; $normalized[] = ['name' => $name, 'rate' => self::decimal($bps)];
+            }
+            $prepared[] = ['description' => self::text($item['description'] ?? null, 10000, true),
+                'qty' => self::decimal($qty), 'rate' => self::decimal($rate), 'taxes' => $normalized];
+        }
+        return[$prepared,$lines,$subtotal];
+    }
+    /** Pure line validation; zero-price lines only belong to the explicit native contract. */
+    public static function normalizedItems(array $items,?string $contract=null):array
+    {
+        if($contract!==null&&$contract!=='native_sales_v1')throw new DomainException('company_invoice_calculation_contract_invalid');if(count($items)<1||count($items)>100)throw new DomainException('company_invoice_invalid_input');return self::prepare($items,$contract==='native_sales_v1')[0];
     }
 
     private static function text($value, int $max, bool $required = false): string

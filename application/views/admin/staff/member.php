@@ -1,5 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php init_head(); ?>
+<?php $nativeStaff = !empty($native_staff_form); init_head(); ?>
 <div id="wrapper">
     <div class="content">
         <div class="tw-max-w-5xl tw-mx-auto">
@@ -12,7 +12,7 @@
             <?php } ?>
             <div class="clearfix"></div>
 
-            <?php if (isset($member) && total_rows(db_prefix() . 'departments', ['email' => $member->email]) > 0) { ?>
+            <?php if (isset($member) && ($nativeStaff ? $native_staff_department_email_conflict : total_rows(db_prefix() . 'departments', ['email' => $member->email]) > 0)) { ?>
             <div class="alert alert-danger tw-mt-1">
                 The staff member email exists also as support department email, according to the docs, the
                 support
@@ -81,6 +81,7 @@
                     <div class="tab-content">
                         <div role="tabpanel" class="tab-pane active" id="tab_staff_member">
                             <?= form_open_multipart($this->uri->uri_string(), ['class' => 'staff-form', 'autocomplete' => 'off']); ?>
+                            <?php if($nativeStaff){foreach(['native_staff_revision','native_staff_form_revision','native_staff_roles_revision','native_staff_rate_revision']as$key)echo form_hidden($key,(string)($$key??''));echo form_hidden('request_key',$native_staff_request_key);} ?>
 
                             <div class="panel-full-width-tabs">
                                 <ul class="nav nav-tabs nav-tabs-horizontal tw-mb-6 !tw-bg-white" role="tablist">
@@ -100,10 +101,10 @@
                             </div>
                             <div class="tab-content">
                                 <div role="tabpanel" class="tab-pane active" id="tab_profile">
-                                    <?php if (is_admin()) { ?>
+                                    <?php if ($nativeStaff || is_admin()) { ?>
                                     <div class="checkbox checkbox-primary">
-                                        <input type="checkbox" name="administrator" id="administrator"
-                                            <?= isset($member) && ($member->staffid == get_staff_user_id() || is_admin($member->staffid)) ? 'checked' : ''; ?>>
+                                        <input type="checkbox" name="administrator" id="administrator" <?= $nativeStaff ? 'disabled' : ''; ?>
+                                            <?= isset($member) && ($nativeStaff ? (int)$member->admin===1 : ($member->staffid == get_staff_user_id() || is_admin($member->staffid))) ? 'checked' : ''; ?>>
                                         <label
                                             for="administrator"><?= _l('staff_add_edit_administrator'); ?></label>
                                     </div>
@@ -131,11 +132,11 @@
                                     <div class="form-group">
                                         <div class="row">
                                             <div class="col-md-9">
-                                                <?= staff_profile_image($member->staffid, ['img', 'img-responsive', 'staff-profile-image-thumb'], 'thumb'); ?>
+                                                <?php if($nativeStaff){require_once APPPATH.'services/StaffAvatarPresentation.php';echo StaffAvatarPresentation::render($member,$member->staffid,['img','img-responsive','staff-profile-image-thumb'],'thumb',[],'base_url','file_exists');}else{echo staff_profile_image($member->staffid,['img','img-responsive','staff-profile-image-thumb'],'thumb');} ?>
                                             </div>
                                             <div class="col-md-3 text-right">
                                                 <a
-                                                    href="<?= admin_url('staff/remove_staff_profile_image/' . $member->staffid); ?>"><i
+                                                    href="<?= admin_url('staff/remove_staff_profile_image/' . $member->staffid); ?>" <?php if($nativeStaff){ ?>onclick="return native_remove_staff_member_avatar();"<?php } ?>><i
                                                         class="fa fa-remove"></i></a>
                                             </div>
                                         </div>
@@ -153,7 +154,7 @@
                                             for="hourly_rate"><?= _l('staff_hourly_rate'); ?></label>
                                         <div class="input-group">
                                             <input type="number" name="hourly_rate"
-                                                value="<?= isset($member) ? $member->hourly_rate : 0; ?>"
+                                                value="<?= isset($member) ? e($member->hourly_rate??'') : ($nativeStaff ? '' : 0); ?>"
                                                 id="hourly_rate" class="form-control">
                                             <span class="input-group-addon">
                                                 <?= e($base_currency->symbol); ?>
@@ -195,7 +196,7 @@
                                             <option value="">
                                                 <?= _l('system_default_string'); ?>
                                             </option>
-                                            <?php foreach ($this->app->get_available_languages() as $availableLanguage) { ?>
+                                            <?php foreach (($nativeStaff ? $native_staff_languages : $this->app->get_available_languages()) as $availableLanguage) { ?>
                                             <option
                                                 value="<?= e($availableLanguage); ?>"
                                                 <?= isset($member) && $member->default_language == $availableLanguage ? 'selected' : ''; ?>>
@@ -246,7 +247,7 @@
 
                                     <div class="row">
                                         <div class="col-md-12">
-                                            <?php if (! isset($member) && is_email_template_active('new-staff-created')) { ?>
+                                            <?php if (! isset($member) && ($nativeStaff ? $native_staff_welcome_available : is_email_template_active('new-staff-created'))) { ?>
                                             <div class="checkbox checkbox-primary">
                                                 <input type="checkbox" name="send_welcome_email" id="send_welcome_email"
                                                     checked>
@@ -256,7 +257,7 @@
                                             <?php } ?>
                                         </div>
                                     </div>
-                                    <?php if (! isset($member) || is_admin() || ! is_admin() && $member->admin == 0) { ?>
+                                    <?php if ($nativeStaff ? $native_staff_profile_editable : (! isset($member) || is_admin() || ! is_admin() && $member->admin == 0)) { ?>
                                     <!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
                                     <input type="text" class="fake-autofill-field" name="fakeusernameremembered"
                                         value='' tabindex="-1" />
@@ -295,6 +296,7 @@
                                 </div>
                                 <div role="tabpanel" class="tab-pane" id="staff_permissions">
                                     <?php
+                        if($nativeStaff){$selected=$native_staff_selected_role;}else{
                         hooks()->do_action('staff_render_permissions');
                         if (function_exists('issuers_render_staff_access')) { issuers_render_staff_access(isset($member) ? $member->staffid : null); }
 $selected = '';
@@ -308,6 +310,8 @@ foreach ($roles as $role) {
         $selected = $role['roleid'];
     }
 }
+}
+
 ?>
                                     <?= render_select('role', $roles, ['roleid', 'name'], 'staff_add_edit_role', $selected); ?>
                                     <hr />
@@ -317,7 +321,7 @@ foreach ($roles as $role) {
                                     <?php $this->load->view('admin/staff/permissions', [
                                         'funcData' => ['staff_id' => $member->staffid ?? null],
                                         'member'   => $member ?? null,
-                                    ]); ?>
+                                    ] + ($nativeStaff ? compact('native_staff_permission_catalog','native_staff_permissions','native_staff_assignable','native_staff_target_master') : [])); ?>
 
                                 </div>
                             </div>
@@ -360,7 +364,7 @@ foreach ($roles as $role) {
                                     </thead>
                                     <tbody>
                                         <?php foreach ($user_notes as $note) { ?>
-                                        <tr>
+                                        <tr <?= $nativeStaff ? 'class="sales-note-wrapper" data-note-revision="'.e($note['revision']).'"' : ''; ?>>
                                             <td width="50%">
                                                 <div
                                                     data-note-description="<?= e($note['id']); ?>">
@@ -386,14 +390,14 @@ foreach ($roles as $role) {
                                             </td>
                                             <td>
                                                 <div class="tw-flex tw-items-center tw-space-x-2">
-                                                    <?php if ($note['addedfrom'] == get_staff_user_id() || staff_can('delete', 'staff')) { ?>
+                                                    <?php if ($nativeStaff ? !empty($note['can_edit']) : ($note['addedfrom'] == get_staff_user_id() || staff_can('delete', 'staff'))) { ?>
                                                     <a href="#"
                                                         onclick="toggle_edit_note(<?= e($note['id']); ?>);return false;"
                                                         class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700">
                                                         <i class="fa-regular fa-pen-to-square fa-lg"></i>
                                                     </a>
-                                                    <a href="<?= admin_url('misc/delete_note/' . $note['id']); ?>"
-                                                        class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700 _delete">
+                                                    <a href="<?= admin_url('misc/delete_note/' . $note['id']); ?>" <?php if($nativeStaff){ ?>onclick="delete_sales_note(this,<?= e($note['id']); ?>); return false;"<?php } ?>
+                                                        class="tw-text-neutral-500 hover:tw-text-neutral-700 focus:tw-text-neutral-700<?= $nativeStaff ? '' : ' _delete'; ?>">
                                                         <i class="fa-regular fa-trash-can fa-lg"></i>
                                                     </a>
                                                     <?php } ?>
@@ -466,10 +470,12 @@ foreach ($roles as $role) {
                                     <?php
                                               $total_logged_time = [];
 
-                            foreach ($timesheets as $t) { ?>
-                                    <tr>
+                            foreach ($timesheets as $t) {
+                                $nativeTimerAttributes='';if($nativeStaff&&!empty($t['native_stop'])){$nativeTimerAttributes=' data-native-timer-id="'.e($t['id']).'" data-task-id="'.e($t['task_id']).'" data-timer-revision="'.e($t['native_stop']['timer_revision']).'" data-note-revision="'.e($t['native_stop']['note_revision']).'" data-policy-hash="'.e($t['native_stop']['policy_hash']).'"';}
+                                ?>
+                                    <tr<?= $nativeTimerAttributes; ?>>
                                         <td><a href="#"
-                                                onclick="init_task_modal(<?= e($t['task_id']); ?>); return false;">
+                                                onclick="<?= $nativeStaff && empty($t['can_open_task']) ? 'return false;' : 'init_task_modal('.e($t['task_id']).'); return false;'; ?>">
                                                 <?= e($t['name']); ?>
                                             </a>
                                         </td>
@@ -479,7 +485,7 @@ foreach ($roles as $role) {
                                         </td>
                                         <td
                                             data-order="<?= e($t['end_time']); ?>">
-                                            <?php if ($t['not_finished'] && (is_admin() || $t['staff_id'] === get_staff_user_id())) { ?>
+                                            <?php if ($t['not_finished'] && ($nativeStaff ? !empty($t['native_stop']) : (is_admin() || $t['staff_id'] === get_staff_user_id()))) { ?>
                                             <a href="#" <?php
                                            // Do not show the note popover when there is no associated task
                                            // The user will be able to add note and select task in the popup window that will open
@@ -488,7 +494,7 @@ foreach ($roles as $role) {
                                                 data-html="true" data-trigger="manual"
                                                 data-title="<?= _l('note'); ?>"
                                                 data-content='<?= render_textarea('timesheet_note'); ?><button
-                                                    type="button"
+                                                    type="button"<?= $nativeTimerAttributes; ?>
                                                     onclick="timer_action(this, <?= e($t['task_id']); ?>, <?= e($t['id']); ?>, 1);"
                                                     class="btn btn-primary btn-sm"><?= _l('save'); ?></button>'
                                                 onclick="return false;"
@@ -512,12 +518,14 @@ foreach ($roles as $role) {
                                         </td>
                                         <td>
                                             <?php
+                                   if($nativeStaff){echo e($t['relation_name']);}else{
                                    $rel_data = get_relation_data($t['rel_type'], $t['rel_id']);
                                 $rel_values  = get_relation_values($rel_data, $t['rel_type']);
                                 echo '<a href="' . e($rel_values['link']) . '">' . e($rel_values['name']) . '</a>';
+                                }
                                 ?>
                                         </td>
-                                        <td><?= e(app_format_money($t['hourly_rate'], $base_currency)); ?>
+                                        <td><?= $nativeStaff && $t['hourly_rate']===null ? e(_l('native_staff_rate_not_declared')) : e(app_format_money($t['hourly_rate'], $base_currency)); ?>
                                         </td>
                                         <td>
                                             <?= '<b>' . e(seconds_to_time_format($t['end_time'] - $t['start_time'])) . '</b>'; ?>
@@ -531,10 +539,11 @@ foreach ($roles as $role) {
                                         </td>
                                         <td>
                                             <?php
-                                if (! $t['billed']) {
-                                    if (staff_can('delete', 'tasks')
+                                // Native timer deletion remains unadmitted until its canonical writer is connected.
+                                if (!$nativeStaff && !$t['billed']) {
+                                    if (($nativeStaff && !$t['can_open_task']) ? false : (staff_can('delete', 'tasks')
                                       || (staff_can('delete', 'projects') && $t['rel_type'] == 'project')
-                                      || $t['staff_id'] == get_staff_user_id()) {
+                                      || $t['staff_id'] == get_staff_user_id())) {
                                         echo '<a href="' . admin_url('tasks/delete_timesheet/' . $t['id']) . '" class="pull-right text-danger mtop5"><i class="fa fa-remove"></i></a>';
                                     }
                                 }
@@ -549,12 +558,12 @@ foreach ($roles as $role) {
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td align="right"><?= '<b>' . _l('total_by_hourly_rate') . ':</b> ' . e(app_format_money(
+                                        <td align="right"><?= '<b>' . _l('total_by_hourly_rate') . ':</b> ' . ($nativeStaff && count(array_filter($total_logged_time,static fn($x)=>$x['hourly_rate']===null))>0 ? e(_l('native_staff_rate_not_declared')) : e(app_format_money(
                                             collect($total_logged_time)->reduce(function ($carry, $item) {
                                                 return $carry + (sec2qty($item['total']) * (float) $item['hourly_rate']);
                                             }, 0),
                                             $base_currency
-                                        )); ?>
+                                        ))); ?>
                                         </td>
                                         <td align="right">
                                             <?= '<b>' . _l('total_logged_hours_by_staff') . ':</b> ' . e(seconds_to_time_format(
@@ -591,7 +600,19 @@ foreach ($roles as $role) {
     </div>
     <?php init_tail(); ?>
     <script>
+        <?php if($nativeStaff && isset($member)){ ?>
+        function native_remove_staff_member_avatar(){
+            if (!window.NativeCompanyTransport || <?= $native_staff_can_edit && $native_staff_profile_editable ? 'false' : 'true'; ?>) return false;
+            window.NativeCompanyTransport.request('staff/remove_staff_profile_image/<?= (int)$member->staffid; ?>','POST',{revision:<?= json_encode($native_staff_revision,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>,request_key:<?= json_encode($native_staff_avatar_request_key); ?>}).done(function(r){if(typeof r==='string'){try{r=JSON.parse(r);}catch(_){return;}}if(r&&r.success===true)window.location.reload();});
+            return false;
+        }
+        <?php } ?>
         $(function() {
+            <?php if($nativeStaff){ ?>
+            <?php if(!$native_staff_can_edit){ ?>$('.staff-form').find('input,select,textarea,button[type=submit]').prop('disabled',true);<?php } elseif(!$native_staff_profile_editable){ ?>
+            $('.staff-form').find('[name=firstname],[name=lastname],[name=email],[name=phonenumber],[name=facebook],[name=linkedin],[name=skype],[name=default_language],[name=email_signature],[name=direction],[name=is_not_staff],[name=profile_image],[name=password]').prop('disabled',true);
+            <?php } ?>
+            <?php } ?>
             $('select[name="role"]').on('change', function() {
                 var roleid = $(this).val();
                 init_roles_permissions(roleid, true);

@@ -3,27 +3,31 @@ declare(strict_types=1);
 require_once __DIR__.'/NativeCompanyStaffRoles.php';
 require_once __DIR__.'/NativeCompanyDepartmentSchema.php';
 require_once __DIR__.'/NativeCompanyCustomFields.php';
+require_once __DIR__.'/NativeCompanyStaffWelcome.php';
+require_once __DIR__.'/NativeCompanyStaffRates.php';
+require_once __DIR__.'/NativeCompanyStaffAvatar.php';
 /** Concrete participant for the ORIGINAL staff form; no callback/hook can add writes to this unit. */
 final class NativeCompanyStaffForm
 {
     private ?int $created=null;
     private ?CompanyStaff $writer=null;
-    public function __construct(private $db,private string $p,private int $issuer,private int $actor,private array $departments,private ?int $role,private string $roleRevision,private array $customFields,private ?string $revision=null)
+    public function __construct(private $db,private string $p,private int $issuer,private int $actor,private array $departments,private ?int $role,private string $roleRevision,private array $customFields,private ?string $revision=null,private ?NativeCompanyStaffWelcome $welcome=null,private ?array $rateChange=null,private ?NativeCompanyStaffAvatar $avatar=null)
     {
         if(($revision!==null&&!preg_match('/^[a-f0-9]{64}$/D',$revision))||!preg_match('/^[A-Za-z0-9_]+$/D',$p)||count($departments)>1000||count($departments)!==count(array_unique($departments))||!preg_match('/^[a-f0-9]{64}$/D',$roleRevision))throw new DomainException('issuer_staff_invalid');
+        if($rateChange!==null){if(array_keys($rateChange)!==['value','revision']||!is_int($rateChange['revision'])||$rateChange['revision']<0)throw new DomainException('native_staff_rate_invalid');$this->rateChange['value']=NativeCompanyStaffRates::normalize($rateChange['value']);}
         foreach($departments as$id){$ref=NativeCompanyResourceId::decode('ticket_department',$id);if($ref['source_kind']!=='company_ticket_department')throw new DomainException('issuer_staff_denied');}
     }
-    public function assertFor($db,string $p,int $issuer,int $actor):void{if($db!==$this->db||$p!==$this->p||$issuer!==$this->issuer||$actor!==$this->actor)throw new DomainException('issuer_staff_denied');}
-    public function tables():array{return array_values(array_unique(array_merge((new NativeCompanyStaffRoles($this->db,$this->p))->tables(),(new NativeCompanyCustomFields($this->db,$this->p))->tableNames(),['company_departments','company_department_members'])));}
-    public function input():array{return['departments'=>$this->departments,'role'=>$this->role,'role_revision'=>$this->roleRevision,'custom_fields'=>$this->customFields,'revision'=>$this->revision];}
+    public function assertFor($db,string $p,int $issuer,int $actor):void{if($db!==$this->db||$p!==$this->p||$issuer!==$this->issuer||$actor!==$this->actor)throw new DomainException('issuer_staff_denied');$this->welcome?->assertFor($db,$p,$issuer,$actor);$this->avatar?->assertFor($db,$p,$issuer,$actor);}
+    public function tables():array{return array_values(array_unique(array_merge((new NativeCompanyStaffRoles($this->db,$this->p))->tables(),(new NativeCompanyCustomFields($this->db,$this->p))->tableNames(),['company_departments','company_department_members','company_staff_rates'],$this->welcome?->tables()??[])));}
+    public function input():array{return['departments'=>$this->departments,'role'=>$this->role,'role_revision'=>$this->roleRevision,'custom_fields'=>$this->customFields,'revision'=>$this->revision,'hourly_rate'=>$this->rateChange,'avatar'=>$this->avatar?->input()]+($this->welcome===null?[]:['welcome'=>$this->welcome->input()]);}
     private function context():IssuerResourceAccess{$acl=new IssuerResourceAccess($this->db,$this->p);if($acl->primaryId()===$this->issuer||!$acl->can($this->issuer,$this->actor,'staff','view'))throw new DomainException('issuer_staff_denied');return$acl;}
     public function state(int $staff):array
     {
-        $this->context();$roles=(new NativeCompanyStaffRoles($this->db,$this->p))->templatesForStaff($this->issuer,$this->actor);$departments=IssuerStorage::query($this->db,'SELECT department_source_kind,department_source_id FROM '.$this->p.'company_department_members WHERE issuer_id=? AND staff_id=? ORDER BY department_source_kind,department_source_id',[$this->issuer,$staff])->result_array();$values=IssuerStorage::query($this->db,'SELECT field_source_kind,field_id,value,revision FROM '.$this->p.'company_custom_field_values WHERE issuer_id=? AND source_kind=? AND source_id=? ORDER BY field_source_kind,field_id',[$this->issuer,'staff',$staff])->result_array();return['departments'=>$departments,'role'=>$roles['assignments'][$staff]??null,'custom_fields'=>$values];
+        $acl=$this->context();(new CompanyStaff($this->db,$this->p))->assertAdministrativeTarget($this->issuer,$this->actor,$staff);$roles=(new NativeCompanyStaffRoles($this->db,$this->p))->templatesForStaffRead($this->issuer,$this->actor);$departments=IssuerStorage::query($this->db,'SELECT department_source_kind,department_source_id FROM '.$this->p.'company_department_members WHERE issuer_id=? AND staff_id=? ORDER BY department_source_kind,department_source_id',[$this->issuer,$staff])->result_array();$values=IssuerStorage::query($this->db,'SELECT field_source_kind,field_id,value,revision FROM '.$this->p.'company_custom_field_values WHERE issuer_id=? AND source_kind=? AND source_id=? ORDER BY field_source_kind,field_id',[$this->issuer,'staff',$staff])->result_array();$this->context();(new CompanyStaff($this->db,$this->p))->assertAdministrativeTarget($this->issuer,$this->actor,$staff);return['departments'=>$departments,'role'=>$roles['assignments'][$staff]??null,'custom_fields'=>$values,'hourly_rate'=>(new NativeCompanyStaffRates($this->db,$this->p))->forStaff($this->issuer,$this->actor,$staff)];
     }
     public function apply(int $staff,bool $created,CompanyStaff $writer):array
     {
-        IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());$acl=$this->context();$cap=$created?'create':'edit';if(!$acl->can($this->issuer,$this->actor,'staff',$cap)||!$acl->member($this->issuer,$staff))throw new DomainException('issuer_staff_denied');
+        IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());$acl=$this->context();$cap=$created?'create':'edit';(new CompanyStaff($this->db,$this->p))->assertAdministrativeTarget($this->issuer,$this->actor,$staff,$cap);if(!$acl->can($this->issuer,$this->actor,'staff',$cap))throw new DomainException('issuer_staff_denied');
         if($created?($this->revision!==null):($this->revision===null||!hash_equals($this->revision,hash('sha256',json_encode($this->state($staff),JSON_THROW_ON_ERROR)))))throw new DomainException('issuer_staff_stale');
         $expected=[];foreach($this->departments as$wire){$ref=NativeCompanyResourceId::decode('ticket_department',$wire);$row=IssuerStorage::query($this->db,'SELECT id FROM '.$this->p.'company_departments WHERE issuer_id=? AND id=?',[$this->issuer,$ref['source_id']])->row_array();if(!$row)throw new DomainException('issuer_staff_denied');$expected[]=['department_source_kind'=>'company_ticket_department','department_source_id'=>$ref['source_id']];}usort($expected,fn($x,$y)=>$x['department_source_id']<=>$y['department_source_id']);
         $remaining=[];foreach($expected as$r)$remaining[$r['department_source_id']]=$r;
@@ -32,8 +36,14 @@ final class NativeCompanyStaffForm
         $actual=$this->state($staff)['departments'];if(array_map(fn($r)=>[(string)$r['department_source_kind'],(string)$r['department_source_id']],$actual)!==array_map(fn($r)=>[(string)$r['department_source_kind'],(string)$r['department_source_id']],$expected))throw new RuntimeException('issuer_staff_write_unconfirmed');
         $roles=new NativeCompanyStaffRoles($this->db,$this->p);$roles->assignInOwnedTransaction($this->issuer,$this->actor,$staff,$this->role,$this->roleRevision,$created?$writer:null);
         $fields=new NativeCompanyCustomFields($this->db,$this->p);if($created){$writer->assertCreatedInOwned($this->db,$this->p,$this->issuer,$this->actor,'staff',$staff);$this->created=$staff;$this->writer=$writer;try{$fields->saveCreatedInOwnedTransaction($this->issuer,$this->actor,'staff',$staff,$this->customFields,$this);}finally{$this->created=null;$this->writer=null;}}else $fields->saveInOwnedTransaction($this->issuer,$this->actor,'staff',$staff,$this->customFields);
-        foreach($expected as$r)if(!IssuerStorage::query($this->db,'SELECT id FROM '.$this->p.'company_departments WHERE issuer_id=? AND id=?',[$this->issuer,$r['department_source_id']])->row_array())throw new DomainException('issuer_staff_denied');if(!$acl->can($this->issuer,$this->actor,'staff',$cap)||!$acl->member($this->issuer,$staff))throw new DomainException('issuer_staff_denied');return$this->state($staff);
+        if($this->rateChange!==null)(new NativeCompanyStaffRates($this->db,$this->p))->saveInOwned($this->issuer,$this->actor,$staff,$this->rateChange['value'],$this->rateChange['revision'],$created?$writer:null);
+        $this->avatar?->apply($staff,$created,$writer);
+        if($this->welcome!==null){if(!$created)throw new DomainException('native_staff_invite_denied');$this->welcome->apply($staff,$writer);}
+        foreach($expected as$r)if(!IssuerStorage::query($this->db,'SELECT id FROM '.$this->p.'company_departments WHERE issuer_id=? AND id=?',[$this->issuer,$r['department_source_id']])->row_array())throw new DomainException('issuer_staff_denied');if(!$acl->can($this->issuer,$this->actor,'staff',$cap))throw new DomainException('issuer_staff_denied');(new CompanyStaff($this->db,$this->p))->assertAdministrativeTarget($this->issuer,$this->actor,$staff,$cap);return$this->state($staff);
     }
+    public function profileMutation(int $staff,bool $created):array{return($created?($this->welcome?->profileMutation($staff)??[]):[])+($this->avatar?->mutation()??[]);}
+    public function commitFiles():void{$this->avatar?->commitFiles();}
+    public function rollbackFiles():void{$this->avatar?->rollbackFiles();}
     public function assertCreatedInOwned($db,string $p,int $issuer,int $actor,string $source,int $staff):void
     {
         if($db!==$this->db||$p!==$this->p||$issuer!==$this->issuer||$actor!==$this->actor||$source!=='staff'||$staff!==$this->created)throw new DomainException('native_custom_field_creation_denied');IssuerTransaction::assertOwned($db,$p,$this->tables());if($this->writer===null)throw new DomainException('native_custom_field_creation_denied');$this->writer->assertCreatedInOwned($db,$p,$issuer,$actor,$source,$staff);if(!(new IssuerResourceAccess($db,$p))->member($issuer,$staff))throw new DomainException('native_custom_field_creation_denied');

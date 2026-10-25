@@ -103,9 +103,9 @@ check(str_contains($expandedSearch,'<br /><small>&lt;line item&gt;</small>'),'na
 require_once APPPATH.'helpers/fields_helper.php';require_once APPPATH.'helpers/template_helper.php';
 function set_value($name,$value=''){return htmlspecialchars($value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}
 $policy=['can_edit'=>true,'can_view_all'=>true,'can_start_blank'=>false,'auto_stop'=>true,'policy_hash'=>str_repeat('a',64)];
-$timers=[['id'=>'47244640257','task_id'=>'8589934593','task_subject'=>'<task>','start_time'=>1760000000,'started_at_label'=>'09/10/2025 08:53','total_seconds'=>3661,'revision'=>3]];
+$timers=[['id'=>'47244640257','task_id'=>'8589934593','task_subject'=>'<task>','start_time'=>1760000000,'started_at_label'=>'09/10/2025 08:53','total_seconds'=>3661,'revision'=>3,'note_revision'=>2]];
 ob_start();$ci->view('admin/tasks/started_timers',['startedTimers'=>$timers,'nativeTimerPolicy'=>$policy]);$timerHtml=ob_get_clean();
-check(str_contains($timerHtml,'01:01')&&str_contains($timerHtml,'&lt;task&gt;')&&str_contains($timerHtml,'data-timer-revision="3"'),'same timer partial uses scoped elapsed/name/revision');
+check(str_contains($timerHtml,'01:01')&&str_contains($timerHtml,'&lt;task&gt;')&&str_contains($timerHtml,'data-timer-revision="3"')&&str_contains($timerHtml,'data-note-revision="2"'),'same timer partial uses scoped elapsed/name/revision');
 check(str_contains($timerHtml,'init_task_modal(8589934593)')&&str_contains($timerHtml,'timer_action(this,8589934593,47244640257)'),'same task handlers retained');
 check(!str_contains($timerHtml,'started-timers-button'),'persisted timer policy suppresses conflicting blank start');
 $policy['can_edit']=false;$policy['can_view_all']=false;

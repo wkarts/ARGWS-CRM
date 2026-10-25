@@ -400,6 +400,29 @@ final class ApiService
         return $out;
     }
 
+    /** Read-only invoice selector proof. No credentials, origin reservation, HTTP or implicit account selection. */
+    public static function permissionCandidateTables():array
+    {
+        return ['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','modules','bb_connections','bb_api_profiles','bb_api_credentials'];
+    }
+    public function permissionCandidates(int $issuer,int $actor):array
+    {
+        $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);
+        return \IssuerTransaction::run($this->db,$this->prefix,self::permissionCandidateTables(),fn()=>$this->permissionCandidatesInOwned($issuer,$actor));
+    }
+    public function permissionCandidatesInOwned(int $issuer,int $actor):array
+    {
+        \IssuerTransaction::assertOwned($this->db,$this->prefix,self::permissionCandidateTables());
+        $this->authorize($issuer,$actor,'view',true);$out=[];
+        // Do not use the paginated operations overview: an older configured profile is still a real candidate.
+        foreach($this->rows('SELECT id FROM '.$this->prefix.'bb_api_profiles WHERE issuer_id=? ORDER BY id',[$issuer])as$candidate){
+            [$profile]=$this->profile($issuer,(int)$candidate['id']);
+            $credential=$this->rows('SELECT id FROM '.$this->prefix.'bb_api_credentials WHERE profile_id=? AND issuer_id=? ORDER BY id DESC LIMIT 1',[$profile['id'],$issuer]);
+            $out[]=['profile_id'=>(int)$profile['id'],'connection_id'=>(int)$profile['connection_id'],'api_stage'=>$profile['api_stage'],'credential_configured'=>count($credential)===1,'checkout_ready'=>false];
+        }
+        $this->authorize($issuer,$actor,'view',true);return$out;
+    }
+
     public function overview($issuer,$actor):array
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);

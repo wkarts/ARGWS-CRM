@@ -75,6 +75,16 @@ class Projects extends AdminController
 
     public function staff_projects()
     {
+        if($this->nativeProjects()){
+            $this->output->set_header('Cache-Control: no-store');
+            require_once APPPATH.'services/NativeCompanyStaffProjects.php';
+            try{
+                $data=NativeCompanyStaffProjects::table($this);
+                $this->output->set_content_type('application/json')->set_output(json_encode($data,JSON_THROW_ON_ERROR));
+            }catch(DomainException $e){show_error('Projetos do colaborador indisponíveis nesta empresa.',str_contains($e->getMessage(),'invalid')?422:403);}
+            catch(Throwable $e){show_error('Não foi possível confirmar os projetos do colaborador.',503);}
+            return;
+        }
         $this->app->get_table_data('staff_projects');
     }
 
@@ -1251,6 +1261,11 @@ class Projects extends AdminController
 
     public function get_rel_project_data($id, $task_id = '')
     {
+        if($this->nativeProjects()){
+            if($this->input->method(true)!=='GET'){show_error('Método não permitido.',405);return;}
+            try{$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_task_form_denied');require_once APPPATH.'services/NativeCompanyTaskForm.php';$out=(new NativeCompanyTaskForm($this->db,db_prefix()))->projectData($ctx->issuerId(),$ctx->staffId(),$id,$task_id);$this->output->set_header('Cache-Control: no-store');$this->output->set_header('Content-Type: application/json');$this->output->set_output(json_encode($out,JSON_THROW_ON_ERROR));}catch(DomainException $e){show_error('Projeto indisponível neste contexto.',422);}return;
+        }
+
         if ($this->input->is_ajax_request()) {
             $selected_milestone = '';
             $assigned           = [];
@@ -1312,6 +1327,11 @@ class Projects extends AdminController
 
     public function get_staff_names_for_mentions($projectId)
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            if($this->input->method(true)!=='GET'){show_error('Método não permitido.',405);return;}
+            try{$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_resource_reference_denied');require_once APPPATH.'services/NativeCompanyProjectRead.php';$members=(new NativeCompanyProjectRead($this->db,db_prefix()))->mentionMembers($ctx->issuerId(),$ctx->staffId(),$projectId);$this->output->set_header('Cache-Control: no-store');$this->output->set_header('Content-Type: application/json');$this->output->set_output(json_encode($members,JSON_THROW_ON_ERROR));}catch(DomainException$e){show_error('Recurso indisponível neste contexto.',422);}return;
+        }
+
         if ($this->input->is_ajax_request()) {
             $projectId = $this->db->escape_str($projectId);
 

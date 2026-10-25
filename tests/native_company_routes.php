@@ -26,3 +26,8 @@ foreach (['/dashboard', '//evil.test', 'https://evil.test', '../dashboard', 'das
     $check(!NativeCompanyRoutes::navigation($route), 'return URL cannot expand native route authority');
 }
 echo "Native company route contracts: {$checks} checks passed.\n";
+
+$mutations=['todo'=>['todo','change_todo_status','update_todo_items_order','delete_todo_item'],'announcements'=>['delete'],'taxes'=>['manage','delete'],'invoice_items'=>['manage','add_group','update_group','delete_group','delete','bulk_action','copy']];
+foreach($mutations as$controller=>$methods)foreach($methods as$method){$check(NativeCompanyRoutes::admits('admin','',$controller,$method,'POST'),'Explicit owned writer admitted');foreach(['GET','HEAD','PUT','DELETE']as$verb)$check(!NativeCompanyRoutes::admits('admin','',$controller,$method,$verb),'Mutation never admitted through read/foreign verb');}
+foreach(['todo','announcements','taxes','invoice_items']as$controller){$check(NativeCompanyRoutes::admits('admin','',$controller,'index','GET'),'Original catalog page admitted');$check(NativeCompanyRoutes::navigation($controller),'Original navigation target admitted');$check(!NativeCompanyRoutes::admits('admin','module',$controller,'index','GET'),'Module cannot inherit native admission');$check(!NativeCompanyRoutes::admits('admin','',$controller,'unknown','POST'),'No wildcard actions');}
+echo "Native finite auxiliary admission: {$checks} total route assertions PASS; authenticated HTTP remains required.\n";

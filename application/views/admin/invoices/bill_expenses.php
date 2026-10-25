@@ -41,7 +41,22 @@ $additional_action         = ob_get_contents();
         ob_end_clean(); ?>
 <?php
     }
-    $expense['currency_data'] = $this->currencies_model->get($expense['currency']); ?>
+    if (isset($expense['native_expense_taxes'])) {
+        foreach ([0 => '', 1 => '2'] as $index => $suffix) {
+            $tax = $expense['native_expense_taxes'][$index] ?? null;
+            $expense['tax' . $suffix] = $tax !== null;
+            $expense['taxrate' . $suffix] = $tax['rate'] ?? '0.00';
+            $expense['tax_name' . $suffix] = $tax['name'] ?? '';
+        }
+    } elseif (isset($expense['native_expense_tax_rate'])) {
+        // Presence flags for the existing renderer, not invented tax catalogue identifiers.
+        $expense['tax'] = $expense['native_expense_tax_rate'] !== '0.00';
+        $expense['taxrate'] = $expense['native_expense_tax_rate'];
+        $expense['tax_name'] = _l('tax');
+        $expense['tax2'] = false;
+    } else {
+        $expense['currency_data'] = $this->currencies_model->get($expense['currency']);
+    } ?>
 <div class="checkbox">
     <input type="checkbox" name="bill_expenses[]"
         value="<?= e($expense['id']); ?>"

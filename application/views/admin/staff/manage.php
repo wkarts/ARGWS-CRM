@@ -1,10 +1,10 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php init_head(); ?>
+<?php $nativeStaff=!empty($native_staff_manage);init_head(); ?>
 <div id="wrapper">
     <div class="content">
         <div class="row">
             <div class="col-md-12">
-                <?php if (staff_can('create',  'staff')) { ?>
+                <?php if ($nativeStaff?$native_staff_can_create:staff_can('create',  'staff')) { ?>
                 <div class="tw-mb-2">
                     <a href="<?php echo admin_url('staff/member'); ?>" class="btn btn-primary">
                         <i class="fa-regular fa-plus tw-mr-1"></i>
@@ -22,7 +22,7 @@
                             _l('staff_dt_last_Login'),
                             _l('staff_dt_active'),
                         ];
-                        $custom_fields = get_custom_fields('staff', ['show_on_table' => 1]);
+                        $custom_fields = $nativeStaff?$native_staff_table_fields:get_custom_fields('staff', ['show_on_table' => 1]);
                         foreach ($custom_fields as $field) {
                             array_push($table_data, [
                                 'name'     => $field['name'],

@@ -9,6 +9,18 @@ require_once __DIR__.'/issuers/IssuerTransaction.php';
 final class NativeCompanyInvoiceCommunicationState
 {
  public function __construct(private $db,private string $p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');}
+ /** Native form source capability only: no delivery/cron claim and no global SMS fallback. */
+ public function reminderSources(int $i,int $a):array {
+  $authorize=function()use($i,$a):void{$acl=new IssuerResourceAccess($this->db,$this->p);if(!$acl->can($i,$a,'invoices','view')||(!$acl->can($i,$a,'invoices','create')&&!$acl->can($i,$a,'invoices','edit')))throw new DomainException('native_invoice_communication_denied');};
+  $authorize();require_once __DIR__.'/CompanyEmailTemplates.php';
+  return IssuerTransaction::run($this->db,$this->p,['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','emailtemplates'],function()use($i,$a,$authorize):array{
+   $authorize();$scope=CompanyEmailTemplates::scopeSql($this->db,$this->p,'t',$i);
+   $row=$this->rows('SELECT COUNT(*) AS total FROM '.$this->p.'emailtemplates t WHERE t.slug=? AND t.active=1 AND '.$scope,['invoice-overdue-notice'])[0]??null;
+   if(!$row||!isset($row['total'])||!preg_match('/^[0-9]+$/D',(string)$row['total']))throw new RuntimeException('native_invoice_communication_unconfirmed');
+   $authorize();$email=(int)$row['total']>0;
+   return ['enabled'=>$email,'email_template_active'=>$email,'sms'=>['supported'=>false,'reason'=>'issuer_sms_adapter_required'],'delivery_ready'=>false];
+  });
+ }
  public function tables():array{return ['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','clients','invoices','issuers_audit',NativeCompanyInvoiceCommandSchema::TABLE];}
  private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
  private function capture(int $i,int $a,int $id,string $cap='view'):array{

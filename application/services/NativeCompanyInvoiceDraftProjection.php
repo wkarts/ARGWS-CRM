@@ -34,7 +34,7 @@ final class NativeCompanyInvoiceDraftProjection
   if($r['revision']<1||!in_array($r['state'],['open','cancelled','issued'],true)||!hash_equals(hash('sha256',$r['payload_json']),$r['payload_hash'])||!hash_equals(hash('sha256',$r['context_json']),$r['context_hash']))self::fail();
   $payload=CompanyInvoiceDraftsInput::decode($r['payload_json']);$context=CompanyInvoiceDraftsInput::decode($r['context_json']);
   if(CompanyInvoiceDraftsInput::normalize($payload)!==$payload||$payload['client_id']!==$r['client_id']||$payload['currency']!==$r['currency_id']||($context['issuer_id']??null)!==$r['issuer_id']||($context['recipient']['client_id']??null)!==$r['client_id']||!is_string($context['recipient']['name']??null))self::fail();
-  $money=CompanyInvoiceLines::calculate($payload['items'],array_intersect_key($payload,array_flip(['discount_mode','discount_value','discount_type','adjustment'])));
+  $money=CompanyInvoiceLines::calculate($payload['items'],array_intersect_key($payload,array_flip(['discount_mode','discount_value','discount_type','adjustment','calculation_contract'])));
   return ['id'=>$r['id'],'issuer_id'=>$r['issuer_id'],'revision'=>$r['revision'],'source_hash'=>hash('sha256',CompanyInvoiceDraftsInput::json($r)),'state'=>$r['state'],'clientid'=>$r['client_id'],'sale_agent'=>$payload['native_fields']['sale_agent']??0,'project_id'=>$payload['native_project']['source_id']??0,'currency'=>$r['currency_id'],'date'=>$payload['date'],'duedate'=>$payload['due_date'],'customer'=>$context['recipient']['name'],'subtotal'=>$money['subtotal'],'total'=>$money['total'],'total_tax'=>$money['tax'],'discount_total'=>$money['discount_total'],'adjustment'=>$money['adjustment']];
  }
  private static function normalized(array$r):array

@@ -7,6 +7,9 @@ require_once __DIR__.'/NativeCompanyCustomFields.php';
 require_once __DIR__.'/CompanyAssets.php';
 require_once __DIR__.'/NativeCompanyInvoicePreferences.php';
 require_once __DIR__.'/NativeCompanyTicketPreferences.php';
+require_once __DIR__.'/NativeCompanyTaskSettings.php';
+require_once __DIR__.'/NativeCompanyMiscSettings.php';
+require_once __DIR__.'/NativeCompanyClientsSettings.php';
 require_once __DIR__.'/NativeCompanyMailSettings.php';
 require_once __DIR__.'/NativeCompanyCalendarPreferences.php';
 require_once __DIR__.'/NativeCompanyGoogleSettings.php';
@@ -24,6 +27,9 @@ final class NativeCompanySettingsForms
         return match($group){
             'invoices'=>NativeCompanyInvoicePreferences::fields(),
             'tickets'=>NativeCompanyTicketPreferences::fields(),
+            'tasks'=>NativeCompanyTaskSettings::fields(),
+            'misc'=>NativeCompanyMiscSettings::fields(),
+            'clients'=>NativeCompanyClientsSettings::fields(),
             'email'=>NativeCompanyMailSettings::fields(),
             'calendar'=>array_keys(NativeCompanyCalendarPreferences::defaults()),
             'google'=>NativeCompanyGoogleSettings::FIELDS,
@@ -51,6 +57,9 @@ final class NativeCompanySettingsForms
     public function page(int $issuer,int $actor,string $group):array
     {
         self::fields($group);$this->authorize($issuer,$actor,'view');
+        if($group==='clients')return(new NativeCompanyClientsSettings($this->db,$this->p))->page($issuer,$actor);
+        if($group==='misc')return(new NativeCompanyMiscSettings($this->db,$this->p))->page($issuer,$actor);
+        if($group==='tasks')return(new NativeCompanyTaskSettings($this->db,$this->p))->page($issuer,$actor);
         if($group==='google')return(new NativeCompanyGoogleSettings($this->db,$this->p))->page($issuer,$actor);
         if($group==='calendar')return(new NativeCompanyCalendarPreferences($this->db,$this->p))->page($issuer,$actor)+['assets'=>null,'custom_fields'=>[]];
         if($group==='email')return(new NativeCompanyMailSettings($this->db,$this->p))->page($issuer,$actor)+['assets'=>null,'custom_fields'=>[]];
@@ -59,6 +68,9 @@ final class NativeCompanySettingsForms
     public function save(int $issuer,int $actor,string $group,array $settings,array $custom,string $revision,array $uploads=[],?callable $encrypt=null,?callable $decrypt=null):array
     {
         $this->authorize($issuer,$actor,'edit');
+        if($group==='clients'){if($uploads!==[]||$custom!==[])throw new DomainException('native_settings_invalid');return(new NativeCompanyClientsSettings($this->db,$this->p))->save($issuer,$actor,$revision,$settings);}
+        if($group==='misc'){if($uploads!==[]||$custom!==[])throw new DomainException('native_settings_invalid');return(new NativeCompanyMiscSettings($this->db,$this->p))->save($issuer,$actor,$revision,$settings);}
+        if($group==='tasks'){if($uploads!==[]||$custom!==[])throw new DomainException('native_settings_invalid');return(new NativeCompanyTaskSettings($this->db,$this->p))->save($issuer,$actor,$revision,$settings);}
         if($group==='google'){if($uploads!==[]||$custom!==[]||$encrypt===null)throw new DomainException('native_settings_invalid');return(new NativeCompanyGoogleSettings($this->db,$this->p))->save($issuer,$actor,$revision,$settings,$encrypt);}
         if($group==='calendar'){
             if($uploads!==[]||$custom!==[])throw new DomainException('native_settings_invalid');
@@ -138,6 +150,8 @@ final class NativeCompanySettingsForms
     /** Narrow validation for the storage-owned transaction, not a generic principal batch bypass. */
     public static function assertStorage(string $group,array $values):void
     {
+        if($group==='misc'){NativeCompanyMiscSettings::validateExtras($values);return;}
+        if($group==='tasks'){NativeCompanyTaskSettings::validateExtras($values);return;}
         $allowed=$group==='invoices'?array_values(array_diff(self::fields($group),['next_invoice_number'])):($group==='company'?['company_info_format']:($group==='general'?['main_domain','rtl_support_admin','rtl_support_client','allowed_files']:array_values(array_diff(self::fields($group),['localization_settings']))));
         if(array_diff(array_keys($values),$allowed))throw new DomainException('native_settings_invalid');
         foreach($values as$v)if(!is_string($v)||strlen($v)>10000||preg_match('//u',$v)!==1||preg_match('/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/',$v))throw new DomainException('native_settings_invalid');

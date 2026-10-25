@@ -2,8 +2,20 @@
 // Endpoint admission and issuer authorization remain server-side; this file grants no capability.
 var lastAddedItemKey = null;
 
+function native_invoice_catalog_context() {
+  var form = $("#invoice-form");
+  var parent = form.find('[name="_native_invoice_id"]');
+  if (!parent.length) return undefined;
+  return {
+    native_editor: "invoice",
+    native_invoice_id: parent.val(),
+    native_invoice_revision: form.find('[name="_native_invoice_revision"]').val(),
+  };
+}
+
 function add_item_to_preview(id) {
-  requestGetJSON("invoice_items/get_item_by_id/" + id).done(function (
+  var context = native_invoice_catalog_context();
+  requestGetJSON("invoice_items/get_item_by_id/" + id, context ? { data: context } : undefined).done(function (
     response
   ) {
     clear_item_preview_values();

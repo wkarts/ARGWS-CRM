@@ -38,13 +38,20 @@ final class NativeCompanyInvoiceCommands
     public function createIssued(int $issuer,int $actor,array $invoice,array $metadata,string $key):array
     {
         $key=CompanyInvoiceDraftsInput::key($key);$payload=CompanyInvoiceDraftsInput::normalize($invoice);
-        if(array_diff(array_keys($metadata),['invoice_fields','line_fields','tags'])||array_diff(['invoice_fields','line_fields','tags'],array_keys($metadata))||!is_array($metadata['invoice_fields'])||!is_array($metadata['line_fields'])||!array_is_list($metadata['line_fields'])||count($metadata['line_fields'])!==count($payload['items'])||!is_array($metadata['tags'])||!array_is_list($metadata['tags']))throw new DomainException('native_invoice_metadata_invalid');
+        if(array_diff(array_keys($metadata),['invoice_fields','line_fields','tags','number_selection'])||array_diff(['invoice_fields','line_fields','tags'],array_keys($metadata))||!is_array($metadata['invoice_fields'])||!is_array($metadata['line_fields'])||!array_is_list($metadata['line_fields'])||count($metadata['line_fields'])!==count($payload['items'])||!is_array($metadata['tags'])||!array_is_list($metadata['tags']))throw new DomainException('native_invoice_metadata_invalid');
+        if(array_key_exists('number_selection',$metadata)){
+            $selection=$metadata['number_selection'];
+            if(!is_array($selection)||array_keys($selection)!==['next_number','revision']||!is_string($selection['next_number'])||!preg_match('/^[1-9][0-9]{0,19}$/D',$selection['next_number'])||!is_string($selection['revision'])||!preg_match('/^[a-f0-9]{64}$/D',$selection['revision']))throw new DomainException('native_invoice_metadata_invalid');
+        }
         $fields=new NativeCompanyCustomFields($this->db,$this->p);$fields->validateValues($issuer,$actor,'invoice',$metadata['invoice_fields'],'create');foreach($metadata['line_fields']as$line){if(!is_array($line))throw new DomainException('native_invoice_metadata_invalid');$fields->validateInvoiceItemValuesForCreation($issuer,$actor,$line);}
         NativeCompanyInvoiceCommandSchema::assertValid($this->db,$this->p);
         $hash=CompanyInvoiceDraftsInput::hash(self::canonical(['payload'=>$payload,'metadata'=>$metadata]));$operation='invoice_create';$writer=new CompanyInvoices($this->db,$this->p);$result=null;$started=false;
         $guard=function()use($issuer,$actor,$metadata,$key,$hash,$operation,$writer,$fields,&$result,&$started):void{
             $record=$this->command($issuer,$actor,$key,$operation,$hash);
-            if(!$record){$this->begin($issuer,$actor,$key,$operation,$hash);$started=true;return;}
+            if(!$record){
+                if(isset($metadata['number_selection'])){require_once __DIR__.'/NativeCompanyInvoiceSequencePreferences.php';$current=(new NativeCompanyInvoiceSequencePreferences($this->db,$this->p))->readForInvoiceCreationInOwned($issuer,$actor);if($current!==$metadata['number_selection'])throw new DomainException('native_invoice_sequence_stale');}
+                $this->begin($issuer,$actor,$key,$operation,$hash);$started=true;return;
+            }
             if($record['result_json']!==null){$result=CompanyInvoiceDraftsInput::decode($record['result_json']);return;}
             if(!$started)throw new RuntimeException('issuer_native_invoice_command_unconfirmed');
             $row=$this->rows('SELECT invoice_id FROM '.$this->p.'company_invoice_requests WHERE issuer_id=? AND request_key=?',[$issuer,$key])[0]??null;if(!$row)throw new RuntimeException('issuer_native_invoice_command_unconfirmed');$id=(int)$row['invoice_id'];

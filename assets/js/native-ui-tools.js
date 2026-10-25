@@ -157,6 +157,11 @@ function init_ajax_search(type, selector, server_data, url) {
               subtext: processData[i].subtext,
             };
           }
+          if (Object.prototype.hasOwnProperty.call(processData[i], "native_revision")) {
+            if (!Number.isInteger(processData[i].native_revision) || processData[i].native_revision < 1 || processData[i].native_revision > 2147483646) throw new Error("native_task_revision_invalid");
+            tmp_data.data = tmp_data.data || {};
+            tmp_data.data["native-task-revision"] = String(processData[i].native_revision);
+          }
           bs_data.push(tmp_data);
         }
         return bs_data;

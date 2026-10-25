@@ -30,6 +30,7 @@ $renderDashboard=function(string $container) use($scopedDashboard,$dashboardData
     <?php } ?><div class="content">
         <div class="row">
             <?php $this->load->view('admin/includes/alerts'); ?>
+            <?php if (!empty($native_database_upgrade_success)) { ?><div class="col-md-12"><div class="alert alert-success" role="status">O CRM foi atualizado com sucesso.</div></div><?php } ?>
             <?php if(!empty($company_dashboard_selection_required)) { ?><div class="col-md-12"><div class="alert alert-info" role="status">Selecione uma empresa no menu para consultar o painel. Nenhum dado de empresa foi carregado.</div></div><?php } ?>
 
             <?php if (!$scopedDashboard) { hooks()->do_action('before_start_render_dashboard_content'); } ?>

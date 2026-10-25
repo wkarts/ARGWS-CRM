@@ -27,3 +27,13 @@ reapplies the preference after a later authorized communication command.
 Manual invoice edit rejects this creation-only object rather than bypassing the
 communication revision/idempotency contract. This does not prove that named
 reminder cron or SMTP delivery is enabled or working.
+
+### Number shown in the native form
+
+A direct-issue form may include `number_selection` in the complete command
+metadata: the exact `next_number` and allocator revision read for its issuer.
+The writer checks both under its existing issuer lock before insertion. A stale
+form fails instead of silently assigning another displayed number. An exact
+successful replay returns its original durable receipt, without requiring that
+the allocator remain at the old number. Existing callers without this optional
+metadata retain their original allocator contract. Draft saving reserves nothing.

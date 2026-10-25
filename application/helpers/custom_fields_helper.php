@@ -35,19 +35,30 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
     $items_pr = isset($items_cf_params['items_pr']) && $items_cf_params['items_pr'] ? true : false;
 
     $CI = & get_instance();
-    $nativeRegistration=class_exists('PortalRequestScope',false)&&PortalRequestScope::sealedFor($CI);
-    if($nativeRegistration&&(strtolower($CI->router->fetch_class())!=='authentication'||strtolower($CI->router->fetch_method())!=='register'||!in_array($belongs_to,['customers','contacts'],true)||!in_array($rel_id,[false,'',null],true)||$where!==['show_on_client_portal'=>1]||$items_cf_params!==[]))throw new DomainException('native_custom_field_denied');
-    $nativeFields=$nativeRegistration?null:native_company_custom_fields_scope();
+    $nativePublic=class_exists('PortalRequestScope',false)&&PortalRequestScope::sealedFor($CI);
+    $nativeRegistration=$nativePublic&&strtolower($CI->router->fetch_class())==='authentication'&&strtolower($CI->router->fetch_method())==='register';
+    $nativeManaged=$nativePublic&&strtolower($CI->router->fetch_class())==='contacts'&&strtolower($CI->router->fetch_method())==='contact';
+    $nativeProfile=$nativePublic&&strtolower($CI->router->fetch_class())==='clients'&&in_array(strtolower($CI->router->fetch_method()),['profile','company'],true);
+    if($nativePublic&&(!$nativeRegistration&&!$nativeProfile&&!$nativeManaged||!in_array($belongs_to,['customers','contacts'],true)||$where!==['show_on_client_portal'=>1]||$items_cf_params!==[]))throw new DomainException('native_custom_field_denied');
+    if($nativeRegistration&&!in_array($rel_id,[false,'',null],true))throw new DomainException('native_custom_field_denied');
+    $nativeFields=$nativePublic?null:native_company_custom_fields_scope();
     if(isset($items_cf_params['native_invoice_editor'])&&!$nativeFields)throw new DomainException('native_custom_field_denied');
-    $is_admin=$nativeRegistration?false:($nativeFields?(new IssuerResourceAccess($CI->db,db_prefix()))->administrative($nativeFields[1],$nativeFields[2]):is_admin());
-    if($nativeRegistration){$rel_id=false;require_once APPPATH.'services/NativeCompanyCustomFields.php';$fields=(new NativeCompanyCustomFields($CI->db,db_prefix()))->definitionsForRegistration(PortalRequestScope::issuerId(),$belongs_to);}
+    if(isset($items_cf_params['native_invoice_catalog'])&&!$nativeFields)throw new DomainException('native_custom_field_denied');
+    $is_admin=$nativePublic?false:($nativeFields?(new IssuerResourceAccess($CI->db,db_prefix()))->administrative($nativeFields[1],$nativeFields[2]):is_admin());
+    $nativeProfileValues=[];$nativeCatalogValues=[];
+    if($nativeManaged){require_once APPPATH.'services/NativeCompanyCustomFields.php';$writer=$CI->native_portal_contacts??null;if(!is_object($writer)||get_class($writer)!=='NativePortalContacts'||$belongs_to!=='contacts')throw new DomainException('native_custom_field_denied');$store=new NativeCompanyCustomFields($CI->db,db_prefix());if(in_array($rel_id,[false,'',null],true)){$fields=$store->definitionsForManagedContactCreation(PortalRequestScope::issuerId(),$writer);}else{if((string)$writer->reference($CI->db,db_prefix(),PortalRequestScope::issuerId(),'contacts')['source_id']!==(string)$rel_id)throw new DomainException('native_custom_field_denied');$fields=$store->definitionsForPortal(PortalRequestScope::issuerId(),'contacts',$writer);$nativeProfileValues=$store->valuesForPortal(PortalRequestScope::issuerId(),'contacts',$writer);}}
+    elseif($nativeProfile){require_once APPPATH.'services/NativeCompanyCustomFields.php';$writer=$CI->native_portal_profile??null;if(!is_object($writer)||get_class($writer)!=='NativePortalProfile'||$belongs_to!==(strtolower($CI->router->fetch_method())==='profile'?'contacts':'customers')||(string)$writer->reference($CI->db,db_prefix(),PortalRequestScope::issuerId(),$belongs_to)['source_id']!==(string)$rel_id)throw new DomainException('native_custom_field_denied');$store=new NativeCompanyCustomFields($CI->db,db_prefix());$fields=$store->definitionsForPortal(PortalRequestScope::issuerId(),$belongs_to,$writer);$nativeProfileValues=$store->valuesForPortal(PortalRequestScope::issuerId(),$belongs_to,$writer);}
+    elseif($nativeRegistration){$rel_id=false;require_once APPPATH.'services/NativeCompanyCustomFields.php';$fields=(new NativeCompanyCustomFields($CI->db,db_prefix()))->definitionsForRegistration(PortalRequestScope::issuerId(),$belongs_to);}
     elseif($nativeFields){
         if(!is_array($where))throw new DomainException('native_custom_field_filter_invalid');
         if($belongs_to==='company'&&($rel_id===0||$rel_id==='0'))$rel_id=$nativeFields[1];
         $purpose=$items_cf_params['native_purpose']??'view';
         if(!in_array($purpose,['view','create','edit'],true)||($purpose==='create'&&$rel_id!==false&&$rel_id!==''&&$rel_id!==null))throw new DomainException('native_custom_field_denied');
         $nativeFilters=array_merge($where,['active'=>1]);
-        if($belongs_to==='items'&&isset($items_cf_params['native_invoice_editor'])){
+        if(isset($items_cf_params['native_invoice_catalog'])){
+            $lookup=$items_cf_params['native_invoice_catalog'];if($belongs_to!=='items'||!$items_pr||!($lookup instanceof NativeCompanyInvoiceCatalogLookup))throw new DomainException('native_custom_field_denied');
+            $lookup->assertContext($CI->db,db_prefix(),$nativeFields[1],$nativeFields[2]);$projection=$lookup->fields($rel_id);$fields=$projection['definitions'];$nativeCatalogValues=$projection['values'];
+        }elseif($belongs_to==='items'&&isset($items_cf_params['native_invoice_editor'])){
             $editor=$items_cf_params['native_invoice_editor'];
             if(!($editor instanceof NativeCompanyInvoiceEditorItems))throw new DomainException('native_custom_field_denied');
             $editor->assertContext($CI->db,db_prefix(),$nativeFields[1],$nativeFields[2]);
@@ -109,7 +120,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
 
             if ($rel_id !== false) {
                 if (!is_array($rel_id)) {
-                    $value = get_custom_field_value($rel_id, $field['id'], ($items_pr ? 'items_pr' : $belongs_to), false);
+                    $value = isset($items_cf_params['native_invoice_catalog'])?($nativeCatalogValues[$field['id']]??''):(($nativeProfile||$nativeManaged)?($nativeProfileValues[$field['id']]??''):get_custom_field_value($rel_id, $field['id'], ($items_pr ? 'items_pr' : $belongs_to), false));
                 } else {
                     if($nativeFields)throw new DomainException('native_custom_field_transfer_requires_canonical_writer');
                     if (is_custom_fields_smart_transfer_enabled()) {
@@ -156,7 +167,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                 $_input_attrs['data-custom-field-required'] = true;
             }
 
-            if ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && is_client_logged_in()) {
+            if ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && ($nativeProfile||$nativeManaged||is_client_logged_in())) {
                 $_input_attrs['disabled'] = true;
             }
 
@@ -195,7 +206,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                     $_select_attrs['data-custom-field-required'] = true;
                 }
 
-                if ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && is_client_logged_in()) {
+                if ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && ($nativeProfile||$nativeManaged||is_client_logged_in())) {
                     $_select_attrs['disabled'] = true;
                 }
 
@@ -281,7 +292,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                         $_chk_attrs['data-custom-field-required'] = true;
                     }
 
-                    if ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && is_client_logged_in()) {
+                    if ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && ($nativeProfile||$nativeManaged||is_client_logged_in())) {
                         $_chk_attrs['disabled'] = true;
                     }
                     foreach ($_chk_attrs as $key => $val) {
@@ -313,7 +324,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                 $field_template = '';
                 $field_template .= '<div id="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_popover-content" class="hide cfh-field-popover-template"><div class="form-group">';
                 $field_template .= '<div class="row"><div class="col-md-12"><label class="control-label" for="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_title">' . _l('cf_translate_input_link_title') . '</label>';
-                $field_template .= '<input type="text"' . ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && is_client_logged_in() ? ' disabled="true" ' : ' ') . 'id="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_title" value="" class="form-control">';
+                $field_template .= '<input type="text"' . ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && ($nativeProfile||$nativeManaged||is_client_logged_in()) ? ' disabled="true" ' : ' ') . 'id="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_title" value="" class="form-control">';
                 $field_template .= '</div>';
                 $field_template .= '</div>';
                 $field_template .= '</div>';
@@ -321,7 +332,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                 $field_template .= '<div class="row">';
                 $field_template .= '<div class="col-md-12">';
                 $field_template .= '<label class="control-label" for="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_link">' . _l('cf_translate_input_link_url') . '</label>';
-                $field_template .= '<div class="input-group"><input type="text"' . ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && is_client_logged_in() ? ' disabled="true" ' : ' ') . 'id="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_link" value="" class="form-control"><span class="input-group-addon"><a href="#" id="cf_hyperlink_open_' . $field['id'] . '" target="_blank"><i class="fa fa-globe"></i></a></span></div>';
+                $field_template .= '<div class="input-group"><input type="text"' . ($field['disalow_client_to_edit'] == 1 && !$nativeRegistration && ($nativeProfile||$nativeManaged||is_client_logged_in()) ? ' disabled="true" ' : ' ') . 'id="custom_fields_' . $field['fieldto'] . '_' . $field['id'] . '_link" value="" class="form-control"><span class="input-group-addon"><a href="#" id="cf_hyperlink_open_' . $field['id'] . '" target="_blank"><i class="fa fa-globe"></i></a></span></div>';
                 $field_template .= '</div>';
                 $field_template .= '</div>';
                 $field_template .= '</div>';

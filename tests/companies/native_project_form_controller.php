@@ -29,6 +29,7 @@ class CompanyRequestScope{
  public static int$issuer;public static int$actor=7;
  public static function nativeFor($ci){return true;}
  public static function context(){return new class{function issuerId(){return CompanyRequestScope::$issuer;}function staffId(){return CompanyRequestScope::$actor;}function token(){return'synthetic-context';}};}
+ public static function adminUrl($ci,$path){return admin_url($path);}
  public static function nativeCsrfToken($ci){return'synthetic-native-csrf';}
  public static function assertNativeMutation($ci){if($ci->input->method(true)!=='POST'||$ci->input->post('_native_company_csrf')!=='synthetic-native-csrf')throw new DomainException('native_mutation_denied');}
 }
@@ -38,7 +39,7 @@ class AdminController{
   $this->db=$GLOBALS['db'];$this->uri=new class{function uri_string(){return'admin/projects/project';}};
   $this->config=new class{function site_url($p){return'https://crm.invalid/sub/'.$p;}function item($k){return false;}};
   $this->input=new class{public string$verb='GET';public array$body=[],$query=[];function method($u=true){return$this->verb;}function post($k=null,$clean=false){return$k===null?$this->body:($this->body[$k]??null);}function get($k){return$this->query[$k]??null;}};
-  $this->output=new class{public string$body='';public array$headers=[];function set_header($v){$this->headers[]=$v;return$this;}function set_output($v){$this->body=$v;return$this;}};
+  $this->output=new class{public string$body='';public array$headers=[];function set_header($v){$this->headers[]=$v;return$this;}function set_content_type($v){$this->headers[]='Content-Type: '.$v;return$this;}function set_output($v){$this->body=$v;return$this;}};
   $this->security=new class{function get_csrf_token_name(){return'framework_csrf';}};
   $this->load=new class($this){function __construct(private$ci){}function model($name){throw new RuntimeException('Global model hydration');}function helper($name){if($name!=='date')throw new RuntimeException('Unexpected helper');}function view($path,$data,$return){if($path!=='admin/projects/project')throw new RuntimeException('Alternate view');return Closure::bind(function()use($path,$data){extract($data);ob_start();try{require APPPATH.'views/'.$path.'.php';return ob_get_clean();}catch(Throwable$e){ob_end_clean();throw$e;}},$this->ci)();}};
   $GLOBALS['CI']=$this;

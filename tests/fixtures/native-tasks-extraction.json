@@ -15,6 +15,9 @@
     "do_task_checklist_items_height": "eb59ba1c659b1459a23ba5bf56fb8feb704c1fff0fa48182e3ef1cbed509436f",
     "recalculate_checklist_items_progress": "9ab9bb44769a017a6cc61492afad49366d85afe2f3b64ed8e171d532cb1dea4f",
     "fix_task_modal_left_col_height": "a09e4b5e265dc7f49ad0d7785dc1affda557ba1e4ea865c2176caf939b3540f7",
-    "init_new_task_comment": "de3265e28a0b451a59371143d05d0e8b090d7417a074bd6304246893fecb685c"
+    "init_new_task_comment": "de3265e28a0b451a59371143d05d0e8b090d7417a074bd6304246893fecb685c",
+    "task_tracking_stats": "6166a54b26e83394ce9f96d65cf8287b0b79f02395d7699f28c9c4bbf4d81112",
+    "init_task_tracking_stats_events": "469b7c556c43d24772f50a939cb1a33ab2c2be9afb1cfdb01322297eec63c236",
+    "init_rel_tasks_table": "ae05a0d9bb93158f1d8a555afcf5a8373a541934a0635fdba9115c524857f76f"
   }
 }

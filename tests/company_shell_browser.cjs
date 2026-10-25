@@ -48,7 +48,7 @@ const pageHtml = () => currentHtml.replace('<!--ACTUAL_SELECTOR-->', markup[sele
     page.on('pageerror', e => errors.push(e.message));
     await page.route('**/*', async route => {
       const url = new URL(route.request().url());
-      if (url.origin === 'http://fixture.test' && url.pathname === '/admin/company_context/select') {
+      if (url.origin === 'http://fixture.test' && url.pathname === '/admin/company_selection/select') {
         assert.equal(route.request().method(), 'POST');
         const fields = new URLSearchParams(route.request().postData());
         assert.deepEqual(fields.getAll('company_id').length, 1, 'native submitter supplies one company ID');

@@ -17,7 +17,7 @@ final class CompanyTasks extends CompanyProjectsStorage
     use CompanyTaskRecurrenceOperations;
     protected function taskKind():string{return 'project';}
     use CompanyTaskBillingSourceLocks { apiTables as private taskBillingApiTables; }
-    protected function apiTables():array{return array_values(array_unique(array_merge($this->taskBillingApiTables(),CompanyTaskAutoStop::tables($this->db,$this->p),$this->nativeTaskTables())));}
+    protected function apiTables():array{return array_values(array_unique(array_merge($this->taskBillingApiTables(),CompanyTaskAutoStop::tables($this->db,$this->p),$this->nativeTaskTables(),$this->nativeTimerExtraTables(),$this->nativeStatusExtraTables())));}
     protected string $feature='tasks';
     private static function checklist($items):string
     {

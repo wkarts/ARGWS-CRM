@@ -3,6 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/NativeCompanyAuxiliarySchema.php';
 require_once __DIR__.'/NativeCompanyCurrencyReference.php';
+require_once __DIR__.'/NativeCompanyTaxRate.php';
 require_once __DIR__.'/NativeCompanyResourceId.php';
 require_once __DIR__.'/issuers/IssuerResourceAccess.php';
 require_once __DIR__.'/issuers/IssuerTransaction.php';
@@ -20,11 +21,27 @@ final class NativeCompanyCatalog
 
     private IssuerResourceAccess $access;
     private ?int $createdItem=null;
+    private bool $invoiceEditorRead=false;
     public function __construct(private $db,private string $p,private int $issuer,private int $actor)
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');
         IssuerPolicy::id($issuer);IssuerPolicy::id($actor);$this->access=new IssuerResourceAccess($db,$p);$this->member();
     }
+    private function readItems():void
+    {
+        if(!$this->invoiceEditorRead){$this->can('items','view');return;}
+        $this->member();
+        if(!$this->access->can($this->issuer,$this->actor,'invoices','view')||(!$this->access->can($this->issuer,$this->actor,'invoices','create')&&!$this->access->can($this->issuer,$this->actor,'invoices','edit')))throw new DomainException('company_catalog_denied');
+    }
+    private function invoiceRead(callable $read):array
+    {
+        $previous=$this->invoiceEditorRead;$this->invoiceEditorRead=true;
+        try{$this->readItems();$result=$read();$this->readItems();return$result;}finally{$this->invoiceEditorRead=$previous;}
+    }
+    public function groupsForInvoiceEditor():array{return$this->invoiceRead(fn()=>$this->groups());}
+    public function itemsForInvoiceEditor(int $start,int $length,string $q=''):array{return$this->invoiceRead(fn()=>$this->itemTable($start,$length,$q));}
+    public function searchForInvoiceEditor(string $q):array{return$this->invoiceRead(fn()=>$this->search($q));}
+    public function itemForInvoiceEditor($id):array{return$this->invoiceRead(fn()=>$this->item($id));}
     private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private function member():void{if(!$this->access->member($this->issuer,$this->actor))throw new DomainException('company_catalog_denied');}
     private function can(string $feature,string $cap):void{if(!$this->access->can($this->issuer,$this->actor,$feature,$cap))throw new DomainException('company_catalog_denied');}
@@ -70,8 +87,8 @@ final class NativeCompanyCatalog
     private function currencyReference():NativeCompanyCurrencyReference{return new NativeCompanyCurrencyReference($this->db,$this->p,$this->issuer,$this->actor);}
     public function currencies():array{return$this->currencyReference()->currencies();}
     public function currency($id):array{return$this->currencyReference()->currency($id);}
-    public function taxes():array{$this->member();return$this->rows('SELECT id,name,taxrate,revision FROM '.$this->p.'company_taxes WHERE issuer_id=? ORDER BY name,id',[$this->issuer]);}
-    public function groups():array{$this->can('items','view');return$this->rows('SELECT id,name,revision FROM '.$this->p.'company_item_groups WHERE issuer_id=? ORDER BY name,id',[$this->issuer]);}
+    public function taxes():array{$this->member();$rows=$this->rows('SELECT id,name,taxrate,revision FROM '.$this->p.'company_taxes WHERE issuer_id=? ORDER BY name,id',[$this->issuer]);foreach($rows as$row)NativeCompanyTaxRate::exact((string)$row['taxrate']);$this->member();return$rows;}
+    public function groups():array{$this->readItems();return$this->rows('SELECT id,name,revision FROM '.$this->p.'company_item_groups WHERE issuer_id=? ORDER BY name,id',[$this->issuer]);}
     private function reference(string $table,$id):?int
     {
         if($id===null||$id===''||$id==='0'||$id===0)return null;
@@ -79,21 +96,22 @@ final class NativeCompanyCatalog
     }
     public function item($id):array
     {
-        $this->can('items','view');$id=IssuerPolicy::id($id);
+        $this->readItems();$id=IssuerPolicy::id($id);
         $row=$this->rows('SELECT i.*,i.id AS itemid,t.name AS taxname,t.taxrate,t.id AS taxid,u.name AS taxname_2,u.taxrate AS taxrate_2,u.id AS taxid_2,g.name AS group_name FROM '.$this->p.'company_items i LEFT JOIN '.$this->p.'company_taxes t ON t.issuer_id=i.issuer_id AND t.id=i.tax LEFT JOIN '.$this->p.'company_taxes u ON u.issuer_id=i.issuer_id AND u.id=i.tax2 LEFT JOIN '.$this->p.'company_item_groups g ON g.issuer_id=i.issuer_id AND g.id=i.group_id WHERE i.issuer_id=? AND i.id=?',[$this->issuer,$id])[0]??null;
         if(!$row)throw new DomainException('company_catalog_denied');
+        foreach(['taxrate','taxrate_2']as$taxRate)if($row[$taxRate]!==null)NativeCompanyTaxRate::exact((string)$row[$taxRate]);
         $rates=json_decode($row['currency_rates_json'],true,16,JSON_THROW_ON_ERROR);if(!is_array($rates))throw new RuntimeException('issuer_catalog_data_invalid');
         foreach($rates as$currency=>$rate){$live=$this->currency($currency);require_once __DIR__.'/CompanyCurrencyUnits.php';if((new CompanyCurrencyUnits($this->db,$this->p))->resolveRead($currency)['iso_code']!==$live['name'])throw new DomainException('company_currency_catalog_changed');$row['rate_currency_'.$currency]=self::decimal($rate);}
-        unset($row['currency_rates_json'],$row['issuer_id']);$this->can('items','view');return$row;
+        unset($row['currency_rates_json'],$row['issuer_id']);$this->readItems();return$row;
     }
     public function search(string $query):array
     {
-        $this->can('items','view');$query=self::text($query,191,true);$q='%'.str_replace(['!','%','_'],['!!','!%','!_'],$query).'%';
-        $rows=$this->rows("SELECT id,rate,description AS name,long_description AS subtext FROM ".$this->p."company_items WHERE issuer_id=? AND description LIKE ? ESCAPE '!' ORDER BY description,id LIMIT 100",[$this->issuer,$q]);$this->can('items','view');return$rows;
+        $this->readItems();$query=self::text($query,191,true);$q='%'.str_replace(['!','%','_'],['!!','!%','!_'],$query).'%';
+        $rows=$this->rows("SELECT id,rate,description AS name,long_description AS subtext FROM ".$this->p."company_items WHERE issuer_id=? AND description LIKE ? ESCAPE '!' ORDER BY description,id LIMIT 100",[$this->issuer,$q]);$this->readItems();return$rows;
     }
     public function itemTable(int $start,int $length,string $query=''):array
     {
-        $this->can('items','view');if($start<0||$start>100000||$length<1||$length>100)throw new DomainException('company_catalog_invalid');
+        $this->readItems();if($start<0||$start>100000||$length<1||$length>100)throw new DomainException('company_catalog_invalid');
         $where='issuer_id=?';$args=[$this->issuer];$total=(int)$this->rows('SELECT COUNT(*) AS n FROM '.$this->p.'company_items WHERE '.$where,$args)[0]['n'];
         if($query!==''){$query=self::text($query,191);$where.=" AND description LIKE ? ESCAPE '!'";$args[]='%'.str_replace(['!','%','_'],['!!','!%','!_'],$query).'%';}
         $filtered=(int)$this->rows('SELECT COUNT(*) AS n FROM '.$this->p.'company_items WHERE '.$where,$args)[0]['n'];$rows=[];
@@ -136,7 +154,7 @@ final class NativeCompanyCatalog
     {
         if(array_diff(array_keys($input),$tax?['name','taxrate']:['name']))throw new DomainException('company_catalog_invalid');
         $name=self::text($input['name']??null,191);if($tax&&str_contains($name,'|'))throw new DomainException('company_catalog_invalid');
-        return$tax?['name'=>$name,'taxrate'=>self::decimal($input['taxrate']??null,6)]:['name'=>$name];
+        return$tax?['name'=>$name,'taxrate'=>self::decimal(NativeCompanyTaxRate::exact($input['taxrate']??null),6)]:['name'=>$name];
     }
     private function saveSimple(string $table,string $feature,array $input,$id,$revision):int
     {

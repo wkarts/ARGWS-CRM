@@ -40,6 +40,12 @@ final class NativeCompanyCustomFields
         if(!in_array($cap,['view','create','edit'],true))throw new DomainException('native_custom_field_denied');
         return $this->readDefinitions($issuer,$actor,$fieldto,$filters,fn()=>$this->authorize($issuer,$actor,$fieldto,$cap));
     }
+    /** Settings catalog contains definitions only, never any customer values or grants. */
+    public function definitionsForClientSettings(int $issuer,int $actor):array
+    {
+        $verify=function()use($issuer,$actor):void{if(!(new IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'settings','view'))throw new DomainException('native_custom_field_denied');};
+        return $this->readDefinitions($issuer,$actor,'customers',['active'=>1],$verify);
+    }
     public function definitionsForResource(int$issuer,int$actor,string$fieldto,$id,array$filters=[],string$cap='view'):array
     {
         if(!in_array($cap,['view','edit'],true))throw new DomainException('native_custom_field_denied');
@@ -57,6 +63,17 @@ final class NativeCompanyCustomFields
     {
         if($invoice===null)return$this->invoiceItemDefinitions($issuer,$actor,null,$filters,'create');
         return$this->readDefinitions($issuer,$actor,'items',$filters,fn()=>$this->resource($issuer,$actor,'invoice',$invoice,'edit'));
+    }
+    /** Catalogue selection reads values only under a concrete live invoice editor authority. */
+    public function invoiceCatalogItem(int $issuer,int $actor,$id,NativeCompanyInvoiceCatalogLookup $lookup):array
+    {
+        $lookup->assertContext($this->db,$this->p,$issuer,$actor);$item=$lookup->item($id);$ref=NativeCompanyResourceId::decode('item',$id);
+        $verify=function()use($lookup,$id,$item):void{$lookup->assertCurrent();if($lookup->item($id)!==$item)throw new DomainException('native_invoice_editor_mismatch');};
+        $defs=$this->readDefinitions($issuer,$actor,'items',['active'=>1],$verify);$values=[];
+        foreach($defs as$d){$row=IssuerStorage::query($this->db,'SELECT value FROM '.$this->p.'company_custom_field_values WHERE issuer_id=? AND field_source_kind=? AND field_id=? AND source_kind=? AND source_id=?',[$issuer,$d['field_source_kind'],$d['source_field_id'],$ref['source_kind'],$ref['source_id']])->row_array();
+            if(!$row&&$d['field_source_kind']==='custom_field'&&$ref['source_kind']==='item'&&(new IssuerResourceAccess($this->db,$this->p))->primaryId()===$issuer)$row=IssuerStorage::query($this->db,'SELECT value FROM '.$this->p.'customfieldsvalues WHERE fieldid=? AND fieldto=? AND relid=?',[$d['source_field_id'],'items_pr',$ref['source_id']])->row_array();
+            if($row)$values[(string)$d['id']]=(string)$row['value'];
+        }$verify();return['definitions'=>$defs,'values'=>$values];
     }
     public function definitionsForClientContacts(int$issuer,int$actor,int$client,array$filters=[],string$cap='view'):array
     {
@@ -363,6 +380,11 @@ final class NativeCompanyCustomFields
         if(!in_array($fieldto,['customers','contacts'],true))throw new DomainException('native_custom_field_denied');
         require_once __DIR__.'/NativePortalPreferences.php';$preferences=new NativePortalPreferences($this->db,$this->p);
         if($preferences->publicValues($issuer)['allow_registration']!=='1')throw new DomainException('native_custom_field_denied');
+        $out=$this->readPublishedDefinitions($issuer,$fieldto);
+        if($preferences->publicValues($issuer)['allow_registration']!=='1')throw new DomainException('native_custom_field_denied');return$out;
+    }
+    private function readPublishedDefinitions(int$issuer,string$fieldto):array
+    {
         NativeCompanyCustomFieldSchema::assertValid($this->db,$this->p);$out=[];
         foreach(IssuerStorage::query($this->db,'SELECT id,fieldto,slug,definition_json,revision FROM '.$this->p.'company_custom_fields WHERE issuer_id=? AND fieldto=? ORDER BY id',[$issuer,$fieldto])->result_array()as$r){
             $d=json_decode($r['definition_json'],true,32,JSON_THROW_ON_ERROR);if(!is_array($d)||self::definition($d)!==$d||$d['fieldto']!==$fieldto||(int)$r['revision']<1)throw new RuntimeException('native_custom_field_corrupt');
@@ -371,7 +393,36 @@ final class NativeCompanyCustomFields
         if((new CompanySettingsStorage($this->db,$this->p))->isPrimary($issuer))foreach(IssuerStorage::query($this->db,'SELECT * FROM '.$this->p.'customfields WHERE fieldto=? ORDER BY field_order,id',[$fieldto])->result_array()as$r){$r['source_field_id']=(int)$r['id'];$r['field_source_kind']='custom_field';$r['revision']=null;$out[]=$r;}
         $out=array_values(array_filter($out,static fn($d)=>(int)$d['active']===1&&(int)$d['only_admin']===0&&(int)$d['show_on_client_portal']===1));
         usort($out,static fn($a,$b)=>[(int)$a['field_order'],(string)$a['id']]<=>[(int)$b['field_order'],(string)$b['id']]);
-        if($preferences->publicValues($issuer)['allow_registration']!=='1')throw new DomainException('native_custom_field_denied');return$out;
+        return$out;
+    }
+    public function definitionsForPortal(int$issuer,string$fieldto,object$writer,bool$editable=false):array
+    {
+        if(!((get_class($writer)==='NativePortalProfile'&&in_array($fieldto,['customers','contacts'],true))||(get_class($writer)==='NativePortalContacts'&&$fieldto==='contacts')))throw new DomainException('native_custom_field_denied');
+        $writer->reference($this->db,$this->p,$issuer,$fieldto,$editable);$out=$this->readPublishedDefinitions($issuer,$fieldto);
+        if($editable)$out=array_values(array_filter($out,static fn($d)=>(int)$d['disalow_client_to_edit']===0));
+        $writer->reference($this->db,$this->p,$issuer,$fieldto,$editable);return$out;
+    }
+    public function definitionsForManagedContactCreation(int$issuer,object$writer):array
+    {
+        if(get_class($writer)!=='NativePortalContacts')throw new DomainException('native_custom_field_denied');
+        $writer->assertCreationAuthority($this->db,$this->p,$issuer);
+        $out=array_values(array_filter($this->readPublishedDefinitions($issuer,'contacts'),static fn($d)=>(int)$d['disalow_client_to_edit']===0));
+        $writer->assertCreationAuthority($this->db,$this->p,$issuer);return$out;
+    }
+    public function valuesForPortal(int$issuer,string$fieldto,object$writer):array
+    {
+        $defs=$this->definitionsForPortal($issuer,$fieldto,$writer);$ref=$writer->reference($this->db,$this->p,$issuer,$fieldto,false);$out=[];
+        foreach($defs as$d){$row=IssuerStorage::query($this->db,'SELECT value FROM '.$this->p.'company_custom_field_values WHERE issuer_id=? AND field_source_kind=? AND field_id=? AND source_kind=? AND source_id=?',[$issuer,$d['field_source_kind'],$d['source_field_id'],$ref['source_kind'],$ref['source_id']])->row_array();
+            if(!$row&&$d['field_source_kind']==='custom_field'&&(new CompanySettingsStorage($this->db,$this->p))->isPrimary($issuer))$row=IssuerStorage::query($this->db,'SELECT value FROM '.$this->p.'customfieldsvalues WHERE fieldid=? AND fieldto=? AND relid=?',[$d['source_field_id'],$fieldto,$ref['source_id']])->row_array();
+            if($row)$out[(string)$d['id']]=(string)$row['value'];
+        }$writer->reference($this->db,$this->p,$issuer,$fieldto,false);return$out;
+    }
+    public function savePortalInOwnedTransaction(int$issuer,string$fieldto,array$submitted,object$writer):void
+    {
+        if(!((get_class($writer)==='NativePortalProfile'&&in_array($fieldto,['customers','contacts'],true))||(get_class($writer)==='NativePortalContacts'&&$fieldto==='contacts')))throw new DomainException('native_custom_field_denied');
+        IssuerTransaction::assertOwned($this->db,$this->p,['issuers_lock','company_custom_fields','company_custom_field_values']);
+        $writer->assertMutationInOwned($this->db,$this->p,$issuer,$fieldto);$ref=$writer->reference($this->db,$this->p,$issuer,$fieldto,true);$defs=$this->definitionsForPortal($issuer,$fieldto,$writer,true);
+        $this->writeVerifiedValues($issuer,$fieldto,$ref,$submitted,fn()=>$writer->assertMutationInOwned($this->db,$this->p,$issuer,$fieldto),$defs);
     }
     public function validateRegistration(int$issuer,string$fieldto,array$submitted):array
     {return self::validateDefined($this->definitionsForRegistration($issuer,$fieldto),$submitted);}
@@ -392,6 +443,11 @@ final class NativeCompanyCustomFields
         $writer->assertRegisteredInOwned($this->db,$this->p,$issuer,$kind,$id);
     }
     private function writeValues(int $issuer,int $actor,string $fieldto,array $ref,array $submitted,callable $verify,array $definitions):void
+    {
+        $this->writeVerifiedValues($issuer,$fieldto,$ref,$submitted,$verify,$definitions);
+    }
+    /** Shared storage primitive; authority is supplied only by closed staff/contact callers above. */
+    private function writeVerifiedValues(int$issuer,string$fieldto,array$ref,array$submitted,callable$verify,array$definitions):void
     {
         $verify();$defs=[];foreach($definitions as$d)$defs[(string)$d['id']]=$d;
         foreach($submitted as$field=>$v)if(!isset($defs[(string)$field]))throw new DomainException('native_custom_field_denied');

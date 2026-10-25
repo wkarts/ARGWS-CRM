@@ -11,6 +11,13 @@ class Staff extends AdminController
     /* List all staff members */
     public function index()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffTable.php';$this->output->set_header('Cache-Control: no-store');
+            if($this->input->is_ajax_request()){$result=NativeCompanyStaffTable::endpoint($this);$this->output->set_content_type('application/json')->set_output(json_encode($result));return;}
+            if(strtoupper((string)$this->input->method())!=='GET')throw new DomainException('issuer_staff_denied');$c=CompanyRequestScope::context();if((int)get_staff_user_id()!==$c->staffId())throw new DomainException('issuer_staff_denied');$page=(new NativeCompanyStaffTable($this->db,db_prefix()))->read($c->issuerId(),$c->staffId());
+            $this->load->view('admin/staff/manage',['native_staff_manage'=>true,'native_staff_can_create'=>$page['can_create'],'native_staff_table_fields'=>$page['fields'],'staff_members'=>array_values(array_filter($page['rows'],static fn($r)=>(int)$r['active']===1)),'title'=>_l('staff_members')]);return;
+        }
+
         if (staff_cant('view', 'staff')) {
             access_denied('staff');
         }
@@ -25,6 +32,12 @@ class Staff extends AdminController
     /* Add new staff member or edit existing */
     public function member($id = '')
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffMember.php';
+            if(strtoupper((string)$this->input->method())==='POST'){$saved=NativeCompanyStaffMember::save($this,$id);set_alert('success',_l($id===''?'added_successfully':'updated_successfully',_l('staff_member')));redirect(CompanyRequestScope::adminUrl($this,'staff/member/'.$saved));return;}
+            $this->output->set_header('Cache-Control: no-store');$this->load->view('admin/staff/member',NativeCompanyStaffMember::page($this,$id));return;
+        }
+
         if (staff_cant('view', 'staff')) {
             access_denied('staff');
         }
@@ -136,6 +149,10 @@ class Staff extends AdminController
     /* Get role permission for specific role id */
     public function role_changed($id)
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffEndpoints.php';
+            $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(NativeCompanyStaffEndpoints::roleChanged($this,$id),JSON_THROW_ON_ERROR));return;
+        }
         if (staff_cant('view', 'staff')) {
             ajax_access_denied('staff');
         }
@@ -194,6 +211,9 @@ class Staff extends AdminController
 
     public function save_hidden_table_columns()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffEndpoints.php';NativeCompanyStaffEndpoints::hiddenColumns($this);$this->output->set_header('Cache-Control: no-store');return;
+        }
         hooks()->do_action('before_save_hidden_table_columns');
         $data   = $this->input->post();
         $id     = $data['id'];
@@ -258,6 +278,17 @@ class Staff extends AdminController
     /* When staff edit his profile */
     public function edit_profile()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffEndpoints.php';
+            if(strtoupper((string)$this->input->method())==='POST'){
+                try{NativeCompanyStaffEndpoints::ownSave($this);set_alert('success',_l('staff_profile_updated'));}
+                catch(DomainException $error){set_alert('warning',_l('issuer_staff_profile_field_denied'));}
+                redirect(admin_url('staff/edit_profile'));return;
+            }
+            $data=NativeCompanyStaffEndpoints::ownPage($this);$data['title']=$data['member']->firstname.' '.$data['member']->lastname;
+            $this->output->set_header('Cache-Control: no-store');$this->load->view('admin/staff/profile',$data);return;
+        }
+
         hooks()->do_action('edit_logged_in_staff_profile');
 
         if ($this->input->post()) {
@@ -312,6 +343,11 @@ class Staff extends AdminController
     /* Remove staff profile image / ajax */
     public function remove_staff_profile_image($id = '')
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffEndpoints.php';$revision=NativeCompanyStaffEndpoints::removeAvatar($this,$id);
+            $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['success'=>true,'revision'=>$revision],JSON_THROW_ON_ERROR));return;
+        }
+
         $staff_id = get_staff_user_id();
         if (is_numeric($id) && (staff_can('create',  'staff') || staff_can('edit',  'staff'))) {
             $staff_id = $id;
@@ -336,6 +372,13 @@ class Staff extends AdminController
     /* When staff change his password */
     public function change_password_profile()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffEndpoints.php';
+            try{NativeCompanyStaffEndpoints::ownPassword($this);set_alert('success',_l('staff_password_changed'));}
+            catch(DomainException $error){set_alert('warning',_l($error->getMessage()==='native_staff_old_password_invalid'?'staff_old_password_incorrect':'staff_problem_changing_password'));}
+            redirect(admin_url('staff/edit_profile'));return;
+        }
+
         if ($this->input->post()) {
             $response = $this->staff_model->change_password($this->input->post(null, false), get_staff_user_id());
             if (is_array($response) && isset($response[0]['passwordnotmatch'])) {
@@ -354,6 +397,10 @@ class Staff extends AdminController
     /* View public profile. If id passed view profile by staff id else current user*/
     public function profile($id = '')
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffProfile.php';$c=CompanyRequestScope::context();if((int)get_staff_user_id()!==$c->staffId())throw new DomainException('issuer_staff_denied');$subject=$id===''?$c->staffId():IssuerPolicy::id($id);$data=(new NativeCompanyStaffProfile($this->db,db_prefix()))->page($c->issuerId(),$c->staffId(),$subject);$data['title']=_l('staff_profile_string').' - '.$data['staff_p']->firstname.' '.$data['staff_p']->lastname;$this->output->set_header('Cache-Control: no-store');$this->load->view('admin/staff/myprofile',$data);return;
+        }
+
         if ($id == '') {
             $id = get_staff_user_id();
         }
@@ -382,6 +429,7 @@ class Staff extends AdminController
     /* Change status to staff active or inactive / ajax */
     public function change_staff_status($id, $status)
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyStaffEndpoints.php';$result=NativeCompanyStaffEndpoints::status($this,$id,$status);$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode($result));return;}
         if (staff_can('edit',  'staff')) {
             if ($this->input->is_ajax_request()) {
                 try { $this->staff_model->change_staff_status($id, $status); }
@@ -397,6 +445,8 @@ class Staff extends AdminController
     /* Logged in staff notifications*/
     public function notifications()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){require_once APPPATH.'services/NativeCompanyStaffProfile.php';$result=NativeCompanyStaffProfile::notifications($this);$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode($result));return;}
+
         $this->load->model('misc_model');
         if ($this->input->post()) {
             $page   = $this->input->post('page');
@@ -451,6 +501,13 @@ class Staff extends AdminController
 
     public function update_two_factor()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffEndpoints.php';
+            try{NativeCompanyStaffEndpoints::ownTwoFactor($this);set_alert('success',_l('set_two_factor_authentication_successful'));}
+            catch(DomainException $error){set_alert('warning',_l('set_two_factor_authentication_failed'));}
+            redirect(admin_url('staff/edit_profile'));return;
+        }
+
         $fail_reason = _l('set_two_factor_authentication_failed');
         if ($this->input->post()) {
             $this->load->library('form_validation');
@@ -487,6 +544,11 @@ class Staff extends AdminController
 
     public function verify_google_two_factor()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffEndpoints.php';$valid=NativeCompanyStaffEndpoints::verifyGoogleSetup($this);
+            $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output(json_encode(['status'=>$valid?'success':'failed','message'=>_l($valid?'google_2fa_code_valid':'google_2fa_code_invalid')],JSON_THROW_ON_ERROR));return;
+        }
+
         if (!$this->input->is_ajax_request()) {
             show_404();
             die;

@@ -4235,3 +4235,9 @@ $lang['asaas_company_method_boleto'] = 'Boleto';
 $lang['asaas_company_method_card'] = 'Cartão hospedado à vista';
 
 $lang['native_ticket_historical_statuses_notice'] = 'Tickets históricos com estado textual original preservado, sem conversão automática para os status configurados:';
+$lang['native_privacy_delivery_pending'] = 'Sua solicitação está registrada. As notificações por email aos administradores estão pendentes.';
+$lang['native_privacy_delivery_sent'] = 'Sua solicitação está registrada. As notificações por email aos administradores foram aceitas pelo transporte configurado.';
+$lang['native_privacy_delivery_disabled'] = 'Sua solicitação está registrada. As notificações por email estão desativadas na configuração de modelos da empresa.';
+$lang['native_privacy_delivery_review'] = 'Sua solicitação está registrada. A entrega por email precisa de revisão; uma entrega incerta não será repetida automaticamente.';
+
+$lang['native_staff_rate_not_declared'] = 'Taxa histórica não declarada';

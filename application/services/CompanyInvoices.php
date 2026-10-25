@@ -66,7 +66,7 @@ final class CompanyInvoices
     public static function decimal(int $value):string{return CompanyInvoiceAmounts::decimal($value);}
     private static function input(array $input):array
     {
-        $optionNames=['discount_mode','discount_value','discount_type','adjustment'];
+        $optionNames=['discount_mode','discount_value','discount_type','adjustment','calculation_contract'];
         if(array_diff(array_keys($input),array_merge(['client_id','date','due_date','currency','items','note','native_fields','native_project','native_preferences'],$optionNames))
             ||!isset($input['items'])||!is_array($input['items']))throw new DomainException('company_invoice_invalid_input');
         $amounts=CompanyInvoiceLines::calculate($input['items'],array_intersect_key($input,array_flip($optionNames)));
@@ -95,8 +95,9 @@ final class CompanyInvoices
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input);
         if(!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new DomainException('company_invoice_invalid_input');
+        $nativeModes=$data['native_preferences']['allowed_payment_modes']??null;if($nativeModes!==null){require_once __DIR__.'/NativeCompanyInvoicePaymentChoices.php';$guardTables=array_values(array_unique(array_merge($guardTables,NativeCompanyInvoicePaymentChoices::validationTables($nativeModes))));}
         $hash=hash('sha256',json_encode($data,JSON_THROW_ON_ERROR));$legacyHash=$this->legacyRequestHash($data,$input);
-        return $this->transaction(function()use($issuer,$actor,$data,$requestKey,$hash,$legacyHash,$originGuard):int{
+        return $this->transaction(function()use($issuer,$actor,$data,$requestKey,$hash,$legacyHash,$originGuard,$nativeModes):int{
             $this->authorize($issuer,$actor,'create');$this->authorize($issuer,$actor,'view');
             if($originGuard!==null)$originGuard();
             $receipt=$this->rows('SELECT * FROM '.$this->prefix.'company_invoice_requests WHERE request_key=? FOR UPDATE',[$requestKey])[0]??null;
@@ -110,14 +111,16 @@ final class CompanyInvoices
             if(!(new IssuerResourceAccess($this->db,$this->prefix))->can($issuer,$actor,'customers','view'))throw new DomainException('company_invoice_recipient_denied');
             if(!$this->rows('SELECT c.userid FROM '.$this->prefix.'clients c JOIN '.$this->prefix.'issuers_clients o ON o.client_id=c.userid WHERE c.userid=? AND c.active=1 AND (o.owner_issuer_id=? OR EXISTS(SELECT 1 FROM '.$this->prefix.'issuers_client_links l WHERE l.client_id=c.userid AND l.issuer_id=?)) FOR UPDATE',[$client,$issuer,$issuer]))throw new DomainException('company_invoice_recipient_denied');
             $unit=(new CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($data['currency']);
-            $fields=['issuer_id'=>$issuer,'clientid'=>$client,'number'=>0,'prefix'=>'','number_format'=>1,'datecreated'=>date('Y-m-d H:i:s'),'date'=>$data['date'],'duedate'=>$data['due_date'],'currency'=>$data['currency'],'subtotal'=>$data['subtotal'],'total_tax'=>$data['tax'],'total'=>$data['total'],'adjustment'=>$data['adjustment'],'addedfrom'=>$actor,'hash'=>bin2hex(random_bytes(16)),'status'=>1,'clientnote'=>$data['note'],'discount_type'=>$data['discount_type'],'discount_percent'=>$data['discount_percent'],'discount_total'=>$data['discount_total'],'include_shipping'=>0,'show_shipping_on_invoice'=>0,'cancel_overdue_reminders'=>1,'allowed_payment_modes'=>serialize([]),'billing_street'=>'','billing_city'=>'','billing_state'=>'','billing_zip'=>'','billing_country'=>0,'shipping_street'=>'','shipping_city'=>'','shipping_state'=>'','shipping_zip'=>'','shipping_country'=>0];
+            if($nativeModes!==null)(new NativeCompanyInvoicePaymentChoices($this->db,$this->prefix))->validateInOwned($issuer,$actor,$nativeModes);
+            $issuedStatus=isset($data['calculation_contract'])&&self::cents($data['total'])===0?2:1;
+            $fields=['issuer_id'=>$issuer,'clientid'=>$client,'number'=>0,'prefix'=>'','number_format'=>1,'datecreated'=>date('Y-m-d H:i:s'),'date'=>$data['date'],'duedate'=>$data['due_date'],'currency'=>$data['currency'],'subtotal'=>$data['subtotal'],'total_tax'=>$data['tax'],'total'=>$data['total'],'adjustment'=>$data['adjustment'],'addedfrom'=>$actor,'hash'=>bin2hex(random_bytes(16)),'status'=>$issuedStatus,'clientnote'=>$data['note'],'discount_type'=>$data['discount_type'],'discount_percent'=>$data['discount_percent'],'discount_total'=>$data['discount_total'],'include_shipping'=>0,'show_shipping_on_invoice'=>0,'cancel_overdue_reminders'=>1,'allowed_payment_modes'=>serialize($nativeModes??[]),'billing_street'=>'','billing_city'=>'','billing_state'=>'','billing_zip'=>'','billing_country'=>0,'shipping_street'=>'','shipping_city'=>'','shipping_state'=>'','shipping_zip'=>'','shipping_country'=>0];
             $this->insert('invoices',$fields);$id=(int)$this->db->insert_id();if($id<1)throw new RuntimeException('issuer_invoice_write_unconfirmed');
             $doc=$this->documents($issuer,$actor)->allocateInOwnedTransaction($id,$issuer,'INV',$this->profile($issuer,$actor,$data['date']));
             if(strlen($doc['number'])>10||(int)$doc['number']>2147483647)throw new DomainException('company_invoice_sequence_exhausted');
             IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'invoices SET number=?,prefix=?,formatted_number=?,number_format=?,terms=? WHERE id=? AND issuer_id=?',[$doc['number'],$doc['prefix'],$doc['formatted_number'],$doc['identity']['number_format']??1,$doc['identity']['terms'],$id,$issuer]);
             if(isset($data['native_fields']))$this->writeNativeFields($issuer,$actor,$id,$data['native_fields']);
             if(array_key_exists('native_project',$data))$this->writeNativeProject($issuer,$actor,$id,$client,$data['native_project']);
-            $createdLineIds=$this->items($id,$data['items']);$this->confirmLines($id,$data['items']);
+            $createdLineIds=$this->items($id,$data['items']);$this->confirmLines($id,$data['items'],$data['calculation_contract']??null);
             $this->insert('company_invoice_requests',['request_key'=>$requestKey,'issuer_id'=>$issuer,'actor_id'=>$actor,'input_hash'=>$hash,'invoice_id'=>$id,'created_at'=>date('Y-m-d H:i:s')]);
             $receipt=$this->rows('SELECT invoice_id,input_hash FROM '.$this->prefix.'company_invoice_requests WHERE request_key=?',[$requestKey])[0]??[];
             if((int)($receipt['invoice_id']??0)!==$id||($receipt['input_hash']??null)!==$hash)throw new RuntimeException('issuer_invoice_write_unconfirmed');
@@ -128,21 +131,22 @@ final class CompanyInvoices
             if((int)($stored['issuer_id']??0)!==$issuer||self::cents($stored['total']??null)!==self::cents($data['total'])||($stored['formatted_number']??null)!==$doc['formatted_number'])throw new RuntimeException('issuer_invoice_write_unconfirmed');
             if(isset($data['native_preferences'])){
                 require_once __DIR__.'/NativeCompanyInvoiceCommunicationState.php';
-                $this->nativeCreatedLines=['issuer'=>$issuer,'actor'=>$actor,'invoice'=>$id,'request_key'=>$requestKey,'items'=>$data['items'],'ids'=>$createdLineIds];
+                $this->nativeCreatedLines=['issuer'=>$issuer,'actor'=>$actor,'invoice'=>$id,'request_key'=>$requestKey,'items'=>$data['items'],'ids'=>$createdLineIds,'calculation_contract'=>$data['calculation_contract']??null];
                 try{(new NativeCompanyInvoiceCommunicationState($this->db,$this->prefix))->setCreatedPreferenceInOwned($issuer,$actor,$id,$data['native_preferences']['cancel_overdue_reminders'],$this);}finally{$this->nativeCreatedLines=null;}
             }
-            $this->journal($issuer,$actor,$id,$data['currency'],'invoice_issued',[],['date'=>$data['date'],'total'=>$data['total'],'status'=>1,'revision'=>$this->fingerprint($issuer,$id)],$data['date'],hash('sha256','company-journal:invoice-issued:'.$requestKey));
+            $this->journal($issuer,$actor,$id,$data['currency'],'invoice_issued',[],['date'=>$data['date'],'total'=>$data['total'],'status'=>$issuedStatus,'revision'=>$this->fingerprint($issuer,$id)]+(isset($data['calculation_contract'])?['calculation_contract'=>$data['calculation_contract']]:[]),$data['date'],hash('sha256','company-journal:invoice-issued:'.$requestKey));
             if($originGuard!==null){
-                $this->nativeCreatedLines=['issuer'=>$issuer,'actor'=>$actor,'invoice'=>$id,'request_key'=>$requestKey,'items'=>$data['items'],'ids'=>$createdLineIds];
+                $this->nativeCreatedLines=['issuer'=>$issuer,'actor'=>$actor,'invoice'=>$id,'request_key'=>$requestKey,'items'=>$data['items'],'ids'=>$createdLineIds,'calculation_contract'=>$data['calculation_contract']??null];
                 try{$originGuard();}finally{$this->nativeCreatedLines=null;}
             }
             if(isset($data['native_preferences'])){
                 $preference=$this->rows('SELECT cancel_overdue_reminders FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$id,$issuer])[0]??null;
                 if(!$preference||(int)$preference['cancel_overdue_reminders']!==$data['native_preferences']['cancel_overdue_reminders'])throw new RuntimeException('issuer_native_invoice_communication_unconfirmed');
             }
+            if($nativeModes!==null){(new NativeCompanyInvoicePaymentChoices($this->db,$this->prefix))->validateInOwned($issuer,$actor,$nativeModes);$storedModes=$this->rows('SELECT allowed_payment_modes FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$id,$issuer])[0]??[];if(($storedModes['allowed_payment_modes']??null)!==serialize($nativeModes))throw new RuntimeException('issuer_native_invoice_payment_modes_unconfirmed');}
             if(isset($data['native_fields']))$this->confirmNativeFields($issuer,$actor,$id,$data['native_fields']);
             if(array_key_exists('native_project',$data))$this->confirmNativeProject($issuer,$actor,$id,$client,$data['native_project']);
-            $this->confirmLines($id,$data['items']);if($this->documents($issuer,$actor)->get($id,$issuer)!==$doc)throw new RuntimeException('issuer_invoice_write_unconfirmed');return $id;
+            $this->confirmLines($id,$data['items'],$data['calculation_contract']??null);if($this->documents($issuer,$actor)->get($id,$issuer)!==$doc)throw new RuntimeException('issuer_invoice_write_unconfirmed');return $id;
         },$guardTables);
     }
     private function nativeProjectRow(int $issuer,int $invoice):?array
@@ -214,7 +218,7 @@ final class CompanyInvoices
     /** Pre-417 receipts remain retryable; no monetary option is silently discarded. */
     private function legacyRequestHash(array $data,array $input):?string
     {
-        if(array_key_exists('native_fields',$data)||array_key_exists('native_project',$data)||array_key_exists('native_preferences',$data))return null;
+        if(array_key_exists('calculation_contract',$data)||array_key_exists('native_fields',$data)||array_key_exists('native_project',$data)||array_key_exists('native_preferences',$data))return null;
         if($data['discount_total']!=='0.00'||$data['adjustment']!=='0.00'||$data['discount_percent']!=='0.00'||$data['discount_type']!=='after_tax')return null;
         $items=[];
         foreach($data['items'] as $i=>$item){
@@ -231,15 +235,15 @@ final class CompanyInvoices
         IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.$table.' (`'.implode('`,`',array_keys($fields)).'`) VALUES ('.implode(',',array_fill(0,count($fields),'?')).')',array_values($fields));
     }
     /** Parent is checked by the caller before any body; exact canonical rows are bounded and normalized. */
-    private function storedLines(int $invoice):array
+    private function storedLines(int $invoice,?string $contract=null):array
     {
-        $bounds=$this->rows("SELECT (SELECT COUNT(*) FROM ".$this->prefix."itemable WHERE rel_id=? AND rel_type='invoice') items,(SELECT COUNT(*) FROM ".$this->prefix."item_tax WHERE rel_id=? AND rel_type='invoice') taxes",[$invoice,$invoice])[0];if((int)$bounds['items']<1||(int)$bounds['items']>100||(int)$bounds['taxes']>1000)throw new DomainException('company_invoice_invalid_input');$rows=$this->rows("SELECT id,description,qty,rate,long_description,unit,is_optional,is_selected,item_order FROM ".$this->prefix."itemable WHERE rel_id=? AND rel_type='invoice' ORDER BY item_order,id LIMIT 101 FOR UPDATE",[$invoice]);$taxes=$this->rows("SELECT t.itemid,t.taxname,t.taxrate FROM ".$this->prefix."item_tax t JOIN ".$this->prefix."itemable i ON i.id=t.itemid AND i.rel_id=t.rel_id AND i.rel_type=t.rel_type WHERE t.rel_id=? AND t.rel_type='invoice' ORDER BY t.id LIMIT 1001 FOR UPDATE",[$invoice]);if(count($rows)!==(int)$bounds['items']||count($taxes)!==(int)$bounds['taxes'])throw new RuntimeException('issuer_invoice_write_unconfirmed');$by=[];foreach($taxes as $tax)$by[(int)$tax['itemid']][]=['name'=>$tax['taxname'],'rate'=>(string)$tax['taxrate']];$input=[];foreach($rows as $row)$input[]=['description'=>$row['description'],'qty'=>(string)$row['qty'],'rate'=>(string)$row['rate'],'taxes'=>$by[(int)$row['id']]??[]]+CompanyInvoiceLines::metadata($row,true);return CompanyInvoiceLines::normalize($input);
+        $bounds=$this->rows("SELECT (SELECT COUNT(*) FROM ".$this->prefix."itemable WHERE rel_id=? AND rel_type='invoice') items,(SELECT COUNT(*) FROM ".$this->prefix."item_tax WHERE rel_id=? AND rel_type='invoice') taxes",[$invoice,$invoice])[0];if((int)$bounds['items']<1||(int)$bounds['items']>100||(int)$bounds['taxes']>1000)throw new DomainException('company_invoice_invalid_input');$rows=$this->rows("SELECT id,description,qty,rate,long_description,unit,is_optional,is_selected,item_order FROM ".$this->prefix."itemable WHERE rel_id=? AND rel_type='invoice' ORDER BY item_order,id LIMIT 101 FOR UPDATE",[$invoice]);$taxes=$this->rows("SELECT t.itemid,t.taxname,t.taxrate FROM ".$this->prefix."item_tax t JOIN ".$this->prefix."itemable i ON i.id=t.itemid AND i.rel_id=t.rel_id AND i.rel_type=t.rel_type WHERE t.rel_id=? AND t.rel_type='invoice' ORDER BY t.id LIMIT 1001 FOR UPDATE",[$invoice]);if(count($rows)!==(int)$bounds['items']||count($taxes)!==(int)$bounds['taxes'])throw new RuntimeException('issuer_invoice_write_unconfirmed');$by=[];foreach($taxes as $tax)$by[(int)$tax['itemid']][]=['name'=>$tax['taxname'],'rate'=>(string)$tax['taxrate']];$input=[];foreach($rows as $row)$input[]=['description'=>$row['description'],'qty'=>(string)$row['qty'],'rate'=>(string)$row['rate'],'taxes'=>$by[(int)$row['id']]??[]]+CompanyInvoiceLines::metadata($row,true);return CompanyInvoiceLines::normalize($input,$contract);
     }
-    private function confirmLines(int $invoice,array $expected):void{if($this->storedLines($invoice)!==$expected)throw new RuntimeException('issuer_invoice_write_unconfirmed');}
+    private function confirmLines(int $invoice,array $expected,?string $contract=null):void{if($this->storedLines($invoice,$contract)!==$expected)throw new RuntimeException('issuer_invoice_write_unconfirmed');}
     /** Complete staff editor, including unselected optional rows which the PDF intentionally excludes. */
     public function editorItems($issuer,$actor,$invoice):array
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$invoice=IssuerPolicy::id($invoice);return $this->transaction(function()use($issuer,$actor,$invoice):array{$this->authorize($issuer,$actor,'view');$this->authorize($issuer,$actor,'edit');if(!$this->rows('SELECT i.id FROM '.$this->prefix.'invoices i JOIN '.$this->prefix.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE i.id=? AND i.issuer_id=? FOR UPDATE',[$invoice,$issuer]))throw new DomainException('company_invoice_access_denied');$lines=$this->storedLines($invoice);$this->authorize($issuer,$actor,'view');$this->authorize($issuer,$actor,'edit');if($lines!==$this->storedLines($invoice))throw new RuntimeException('issuer_invoice_write_unconfirmed');return $lines;});
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$invoice=IssuerPolicy::id($invoice);return $this->transaction(function()use($issuer,$actor,$invoice):array{$this->authorize($issuer,$actor,'view');$this->authorize($issuer,$actor,'edit');if(!$this->rows('SELECT i.id FROM '.$this->prefix.'invoices i JOIN '.$this->prefix.'issuers_invoice_documents d ON d.invoice_id=i.id AND d.issuer_id=i.issuer_id WHERE i.id=? AND i.issuer_id=? FOR UPDATE',[$invoice,$issuer]))throw new DomainException('company_invoice_access_denied');$lines=$this->storedLines($invoice,$this->calculationOptions($issuer,$actor,$invoice)['calculation_contract']??null);$this->authorize($issuer,$actor,'view');$this->authorize($issuer,$actor,'edit');if($lines!==$this->storedLines($invoice,$this->calculationOptions($issuer,$actor,$invoice)['calculation_contract']??null))throw new RuntimeException('issuer_invoice_write_unconfirmed');return $lines;});
     }
     /** Same persisted rows as the editor, including unselected optional lines, with view-only authority. */
     public function previewItems(int $issuer,int $actor,int $invoice):array
@@ -247,10 +251,10 @@ final class CompanyInvoices
         $this->authorize($issuer,$actor,'view');
         return $this->transaction(function()use($issuer,$actor,$invoice){
             $this->authorize($issuer,$actor,'view');if(!$this->rows('SELECT id FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer]))throw new DomainException('company_invoice_access_denied');
-            $lines=$this->storedLines($invoice);$ids=$this->rows("SELECT id FROM ".$this->prefix."itemable WHERE rel_id=? AND rel_type='invoice' ORDER BY item_order,id",[$invoice]);
+            $lines=$this->storedLines($invoice,$this->calculationOptions($issuer,$actor,$invoice)['calculation_contract']??null);$ids=$this->rows("SELECT id FROM ".$this->prefix."itemable WHERE rel_id=? AND rel_type='invoice' ORDER BY item_order,id",[$invoice]);
             if(count($ids)!==count($lines))throw new RuntimeException('issuer_invoice_write_unconfirmed');$out=[];
             foreach($lines as$index=>$line)$out[]=['id'=>(int)$ids[$index]['id']]+$line;
-            $this->authorize($issuer,$actor,'view');if($this->storedLines($invoice)!==$lines)throw new RuntimeException('issuer_invoice_write_unconfirmed');return$out;
+            $this->authorize($issuer,$actor,'view');if($this->storedLines($invoice,$this->calculationOptions($issuer,$actor,$invoice)['calculation_contract']??null)!==$lines)throw new RuntimeException('issuer_invoice_write_unconfirmed');return$out;
         });
     }
     private function items(int $invoice,array $items):array
@@ -271,7 +275,7 @@ final class CompanyInvoices
         $frame=$this->nativeCreatedLines;
         if(!$frame||$frame['issuer']!==$issuer||$frame['actor']!==$actor||$frame['invoice']!==$invoice||!hash_equals($frame['request_key'],$requestKey))throw new DomainException('company_invoice_creation_proof_required');
         $this->authorize($issuer,$actor,'view');$this->authorize($issuer,$actor,'create');
-        $this->confirmLines($invoice,$frame['items']);
+        $this->confirmLines($invoice,$frame['items'],$frame['calculation_contract']??null);
         $actual=$this->rows("SELECT id FROM ".$this->prefix."itemable WHERE rel_id=? AND rel_type='invoice' ORDER BY item_order,id",[$invoice]);
         if(array_map('intval',array_column($actual,'id'))!==$frame['ids'])throw new RuntimeException('issuer_invoice_write_unconfirmed');
         return array_map(static fn($id,$item)=>['itemable_id'=>$id,'line'=>$item,'line_hash'=>hash('sha256',json_encode($item,JSON_THROW_ON_ERROR))],$frame['ids'],$frame['items']);
@@ -310,8 +314,9 @@ final class CompanyInvoices
         $this->authorize($issuer,$actor,'view');
         $percent=CompanyInvoiceAmounts::minor((string)($row['discount_percent']??'0'));
         return ['discount_type'=>$row['discount_type'],'discount_mode'=>$percent>0?'percent':'fixed',
-            'discount_value'=>$percent>0?CompanyInvoiceAmounts::decimal($percent):(string)$row['discount_total'],'adjustment'=>(string)$row['adjustment']];
+            'discount_value'=>$percent>0?CompanyInvoiceAmounts::decimal($percent):(string)$row['discount_total'],'adjustment'=>(string)$row['adjustment']]+$this->calculationOptions($issuer,$actor,$invoice);
     }
+    private function calculationOptions(int $i,int $a,int $invoice):array{require_once __DIR__.'/CompanyInvoiceCalculationContract.php';return CompanyInvoiceCalculationContract::options($this->db,$this->prefix,$i,$a,$invoice);}
     /** Current position keeps provider reductions apart from cash and the issued invoice total. */
     public function position($issuer,$actor,$invoice):array
     {
@@ -369,6 +374,7 @@ final class CompanyInvoices
             $this->authorize($issuer,$actor,'edit');$this->authorize($issuer,$actor,'view');
             $row=$this->rows('SELECT id,clientid,currency,status,date,total FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
             if(!$row)throw new DomainException('company_invoice_access_denied');
+            if($data!==null&&array_intersect_key($data,['calculation_contract'=>true])!==$this->calculationOptions($issuer,$actor,$invoice))throw new DomainException('company_invoice_calculation_contract_immutable');
             if(!$this->rows('SELECT invoice_id FROM '.$this->prefix.'company_invoice_requests WHERE invoice_id=? AND issuer_id=?',[$invoice,$issuer]))throw new DomainException('company_invoice_immutable');
             if($data===null&&(int)$row['status']===5)return; // Repeated cancellation does not erase history.
             if(!hash_equals($revision,$this->fingerprint($issuer,$invoice)))throw new DomainException('company_invoice_stale');
@@ -392,12 +398,12 @@ final class CompanyInvoices
             $this->audit($issuer,$actor,$invoice,$data===null?'company_invoice_cancelled':'company_invoice_updated');$this->authorize($issuer,$actor,'edit');
             $stored=$this->rows('SELECT total,status FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=?',[$invoice,$issuer])[0]??[];
             if(!$stored||($data===null?(int)$stored['status']!==5:self::cents($stored['total'])!==self::cents($data['total'])))throw new RuntimeException('issuer_invoice_write_unconfirmed');
-            if($data!==null)$this->confirmLines($invoice,$data['items']);
+            if($data!==null)$this->confirmLines($invoice,$data['items'],$data['calculation_contract']??null);
             $after=['date'=>$data===null?$row['date']:$data['date'],'total'=>self::decimal(self::cents($stored['total'])),'status'=>(int)$stored['status'],'revision'=>$this->fingerprint($issuer,$invoice)];
             $this->journal($issuer,$actor,$invoice,(int)$row['currency'],$data===null?'invoice_cancelled':'invoice_updated',$before,$after,$data===null?gmdate('Y-m-d'):$data['date'],hash('sha256','company-journal:invoice-'.($data===null?'cancelled':'updated').':'.$issuer.':'.$invoice.':'.$revision));
             if($data!==null&&isset($data['native_fields']))$this->confirmNativeFields($issuer,$actor,$invoice,$data['native_fields']);
             if($data!==null&&array_key_exists('native_project',$data))$this->confirmNativeProject($issuer,$actor,$invoice,(int)$row['clientid'],$data['native_project']);
-            if($data!==null)$this->confirmLines($invoice,$data['items']);if($this->documents($issuer,$actor)->get($invoice,$issuer)!==$documentBefore)throw new RuntimeException('issuer_invoice_write_unconfirmed');
+            if($data!==null)$this->confirmLines($invoice,$data['items'],$data['calculation_contract']??null);if($this->documents($issuer,$actor)->get($invoice,$issuer)!==$documentBefore)throw new RuntimeException('issuer_invoice_write_unconfirmed');
         });
     }
     /** Presentation order only. Exact owned item set, current content CAS, no monetary/journal rewrite. */

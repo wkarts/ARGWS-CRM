@@ -30,3 +30,12 @@ foreach(['HEAD','POST'] as $verb){AdminDatabaseUpgrade::recordSuccess($s,17,'436
 $ci->input->verb='GET';$ci->input->ajax=true;verify(!AdminDatabaseUpgrade::consumeContextSuccess($ci,'436'),'Background GET cannot consume feedback');verify(isset($s->data['admin_database_upgrade_success']),'Background GET preserves receipt');$ci->input->ajax=false;CompanyRequestScope::$owner=null;verify(!AdminDatabaseUpgrade::consumeContextSuccess($ci,'436'),'Unattested context cannot consume');verify(isset($s->data['admin_database_upgrade_success']),'Unattested context preserves receipt');CompanyRequestScope::$owner=$ci;CompanyRequestScope::$actor=18;verify(!AdminDatabaseUpgrade::consumeContextSuccess($ci,'436'),'Different scoped staff cannot consume another actor receipt');
 AdminDatabaseUpgrade::recordSuccess($s,17,'436',time());CompanyRequestScope::$actor=17;verify(!AdminDatabaseUpgrade::consumeContextSuccess($ci,'435'),'Scoped destination must match persisted version');AdminDatabaseUpgrade::recordSuccess($s,17,'436',time());verify(AdminDatabaseUpgrade::consumeContextSuccess($ci,'436'),'Attested exact GET consumes');verify(!AdminDatabaseUpgrade::consumeContextSuccess($ci,'436'),'Context feedback is single-use');
 echo 'Native upgrade actor/version/TTL/single-use feedback '.$checks.' checks passed.'.PHP_EOL;
+
+AdminDatabaseUpgrade::recordSuccess($s,17,'474',time());
+$before=$s->data;verify(AdminDatabaseUpgrade::peekContextSuccess($ci,'474'),'Native dashboard previews exact receipt');verify($s->data===$before,'Preview never consumes before render/ACL confirmation');
+foreach(['HEAD','POST']as$verb){$ci->input->verb=$verb;verify(!AdminDatabaseUpgrade::peekContextSuccess($ci,'474'),'Non-document preview denied');verify($s->data===$before,'Non-document preview preserves receipt');}
+$ci->input->verb='GET';$ci->input->ajax=true;verify(!AdminDatabaseUpgrade::peekContextSuccess($ci,'474'),'XHR preview denied');$ci->input->ajax=false;
+CompanyRequestScope::$actor=18;verify(!AdminDatabaseUpgrade::peekContextSuccess($ci,'474'),'Other actor preview denied');CompanyRequestScope::$actor=17;
+verify(!AdminDatabaseUpgrade::peekContextSuccess($ci,'473'),'Wrong version preview denied');verify($s->data===$before,'Rejected preview has no session mutation');
+verify(AdminDatabaseUpgrade::consumeContextSuccess($ci,'474'),'Confirmed render consumes once');verify(!AdminDatabaseUpgrade::peekContextSuccess($ci,'474'),'Replay has no banner');
+echo "Native dashboard feedback read-only preview and final consumption: PASS.\n";

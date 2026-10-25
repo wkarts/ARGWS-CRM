@@ -53,7 +53,7 @@ final class CompanyBankReceiptComponents
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$invoice=IssuerPolicy::id($invoice);$this->boundary($issuer,$actor,false);$parent=$this->invoice($issuer,$invoice);$rows=$this->rows('SELECT * FROM '.$this->p.'company_bank_receipt_components WHERE issuer_id=? AND invoice_id=? ORDER BY payment_id FOR UPDATE',[$issuer,$invoice]);$result=[];foreach($rows as $row)$result[(int)$row['payment_id']]=$this->decode($issuer,$invoice,$row,$parent)->data();return $result;
     }
     /** Final native portal authority; contacts are never treated as staff or passed as arbitrary grants. */
-    public function forPortalInOwned(CompanyPortalInvoices $portal,array $session,$issuer,$invoice):array
+    public function forPortalInOwned(CompanyPortalInvoices|NativeCompanyPublicInvoice $portal,array $session,$issuer,$invoice):array
     {
         $issuer=IssuerPolicy::id($issuer);$invoice=IssuerPolicy::id($invoice);IssuerTransaction::assertOwned($this->db,$this->p,array_values(array_unique(array_merge($this->tables(),$portal->balanceTables()))));CompanyBankComponentsSchema::assertValid($this->db,$this->p);$identity=$portal->balanceIdentityInOwnedTransaction($session,$issuer,$invoice,$this->db,$this->p);$parent=$this->invoice($issuer,$invoice);$rows=$this->rows('SELECT * FROM '.$this->p.'company_bank_receipt_components WHERE issuer_id=? AND invoice_id=? ORDER BY payment_id FOR UPDATE',[$issuer,$invoice]);$result=[];foreach($rows as $row)$result[(int)$row['payment_id']]=$this->decode($issuer,$invoice,$row,$parent)->data();if($identity!==$portal->balanceIdentityInOwnedTransaction($session,$issuer,$invoice,$this->db,$this->p))throw new DomainException('company_portal_invoice_unavailable');return $result;
     }

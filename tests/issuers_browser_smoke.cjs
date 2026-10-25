@@ -182,7 +182,7 @@ async function captureRealScreens(page, routes) {
         let response = await page.goto(url + '/admin');
         assert.equal(response.status(), 200, 'native recovery screen is available for an authenticated administrator');
         await waitForUpgradeForm(page);
-        const companyResponse = await context.request.get(url + '/admin/company_context');
+        const companyResponse = await context.request.get(url + '/admin/company_selection/select');
         assert.equal(companyResponse.status(), 503, 'company selection remains blocked while the native core is invalid');
         const bancoBrasilResponse = await context.request.get(url + '/admin/banco_brasil');
         assert(bancoBrasilResponse.status() >= 400, 'Banco do Brasil module stays unavailable during native recovery');
@@ -261,8 +261,17 @@ async function captureRealScreens(page, routes) {
         assert((await wizard.locator('[role=status]').innerText()).includes('Empresa criada'));
       }
       const secondaryCompany = sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
-      await page.goto(url + '/admin/company_context');
+      await page.goto(url + '/admin');
       await selectCompanyOption(page, secondaryCompany);
+      assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), '/admin', 'company switch stays on the original CRM dashboard URL');
+      await shell(page);
+      assert.equal(await page.locator('#side-menu .menu-item-dashboard').count(), 1, 'original dashboard menu remains present for the selected company');
+      assert.equal(await page.locator('#wrapper .content').count(), 1, 'one native application content root, not a parallel workspace');
+      await page.screenshot({path: output + '/native-secondary-dashboard-desktop.png', fullPage:true});
+      await page.setViewportSize({width:390,height:844});await page.reload();
+      assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'selected-company native dashboard fits mobile');
+      await page.screenshot({path: output + '/native-secondary-dashboard-mobile.png', fullPage:true});
+      await page.setViewportSize({width:1280,height:900});
 
       assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany);
       sql('DELETE FROM tblissuers_lock WHERE id=1');
@@ -275,10 +284,10 @@ async function captureRealScreens(page, routes) {
         secondaryTransportStatus = post.status();
         secondaryTransportHeaders = post.headers();
         if (post.status() === 303) {
-          const poll = await context.request.get(url + '/admin/company_context', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+          const poll = await context.request.get(url + '/admin', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
           assert.equal(poll.status(), 200, 'secondary isolated background poll remains available');
           assert(!(await poll.text()).includes('O CRM foi atualizado com sucesso.'), 'XHR does not consume or display native success');
-          assert.equal((await context.request.head(url + '/admin/company_context')).status(), 200, 'HEAD preserves native success for the document');
+          assert.equal((await context.request.head(url + '/admin')).status(), 200, 'HEAD preserves native success for the document');
         }
         await route.fulfill({ response: post });
       }, { times: 1 });
@@ -288,7 +297,7 @@ async function captureRealScreens(page, routes) {
       assert.equal(secondaryResponse.request().method(), 'POST');
       assert.equal(secondaryTransportStatus, 303);
       assert.equal(secondaryTransportHeaders.refresh, undefined);
-      assert.equal(new URL(page.url()).pathname, '/admin/company_context');
+      assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), '/admin');
       assert((await page.content()).includes('atualizado com sucesso'), 'native success alert is delivered');
       await page.locator('[role=status].alert-success').waitFor({ state: 'visible' });
       assert.equal(sql('SELECT COUNT(*) FROM tblissuers_lock WHERE id=1'), '1');

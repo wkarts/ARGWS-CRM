@@ -5,6 +5,20 @@ require_once __DIR__.'/CompanyPortalTaskWriteStorage.php';require_once __DIR__.'
 /** Native contact actions on published project tasks. No staff impersonation, status, assignee or checklist writes. */
 final class CompanyPortalTaskWrite extends CompanyPortalTaskWriteStorage
 {
+ private bool $nativeFileRemoval=false;
+ public function tables():array{return array_values(array_unique(array_merge(parent::tables(),['options'])));}
+ protected function context(array $session,int $issuer,int $project,string $flag,bool $writing=true):array
+ {
+  $context=parent::context($session,$issuer,$project,$flag,$writing);
+  if($this->nativeFileRemoval){require_once __DIR__.'/CompanySettingsStorage.php';if((new CompanySettingsStorage($this->db,$this->p))->get($issuer,'allow_contact_to_delete_files')!=='1')throw new DomainException('company_portal_task_unavailable');}
+  return$context;
+ }
+ public function hideNative(array$session,$issuer,$project,$task,$revision,string$file,string$key):array
+ {
+  $this->nativeFileRemoval=true;
+  try{return$this->hide($session,$issuer,$project,$task,$revision,$file,$key);}finally{$this->nativeFileRemoval=false;}
+ }
+
  private static function input(array $input):array
  {
   if(array_diff(array_keys($input),['name','description','due_date']))throw new DomainException('company_portal_task_invalid');$date=$input['due_date']??null;if(!is_string($date)||!preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/D',$date)||!($d=DateTimeImmutable::createFromFormat('!Y-m-d',$date))||$d->format('Y-m-d')!==$date)throw new DomainException('company_portal_task_invalid');return ['name'=>self::text($input['name']??null,191),'description'=>self::text($input['description']??'',4000,false),'due_date'=>$date];

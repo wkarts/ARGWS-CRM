@@ -6,6 +6,10 @@ require_once __DIR__.'/CompanySalesBase.php';require_once __DIR__.'/CompanyInvoi
 /** Owned schedule storage;425 series live in different tables and are never adopted. */
 abstract class CompanyInvoiceRecurringStorage extends CompanySalesBase
 {
+    public static function input(array $input):array
+    {
+        if(!array_key_exists('calculation_contract',$input))return parent::input($input);if(array_diff(array_keys($input),['client_id','currency','date','due_date','items','note','discount_mode','discount_value','discount_type','adjustment','calculation_contract']))throw new DomainException('company_sales_invalid');require_once __DIR__.'/CompanyInvoiceDraftsInput.php';$base=CompanyInvoiceDraftsInput::normalize($input);self::date($base['due_date']);return$base;
+    }
     public function tables():array
     {
         $tables=array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','issuers_clients','issuers_client_links','clients','currencies','company_currency_units','options','issuers_audit','company_invoice_requests','invoices','issuers_invoice_documents','itemable','item_tax'],array_keys(CompanyInvoiceRecurringSchema::definitions()));$tables=array_merge($tables,(new CompanyInvoiceRecurringModes($this->db,$this->prefix))->tables());

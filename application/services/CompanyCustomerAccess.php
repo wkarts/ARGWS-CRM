@@ -18,6 +18,13 @@ final class CompanyCustomerAccess
         if($this->acl->can($issuer,$actor,'customers',$global))return true;
         return $this->exists()&&(bool)$this->rows('SELECT staff_id FROM '.$this->p.'company_customer_admins WHERE issuer_id=? AND client_id=? AND staff_id=?',[$issuer,$client,$actor]);
     }
+    /** Read-only historical customer authority, restricted to the persisted installation principal. */
+    public function canReadHistorical(int$issuer,int$actor,int$client):bool
+    {
+        if($this->acl->primaryId()!==$issuer||!$this->acl->member($issuer,$actor)||!$this->rows('SELECT c.userid FROM '.$this->p.'clients c LEFT JOIN '.$this->p.'issuers_clients o ON o.client_id=c.userid WHERE c.userid=? AND o.client_id IS NULL',[$client]))return false;
+        if($this->acl->can($issuer,$actor,'customers','view'))return true;
+        return(bool)$this->rows('SELECT staff_id FROM '.$this->p.'customer_admins WHERE customer_id=? AND staff_id=?',[$client,$actor]);
+    }
     public function canReadDirectory(int$issuer,int$actor):bool
     {
         if(!$this->acl->member($issuer,$actor))return false;if($this->acl->can($issuer,$actor,'customers','view'))return true;

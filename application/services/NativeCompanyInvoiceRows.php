@@ -70,7 +70,7 @@ final class NativeCompanyInvoiceRows
         require_once __DIR__.'/CompanyInvoiceDrafts.php';
         $drafts=new CompanyInvoiceDrafts($this->db,$this->p);$draft=$drafts->document($issuer,$actor,$source['source_id']);
         if($draft['state']!=='open')throw new DomainException('company_invoice_draft_unavailable');
-        $payload=$draft['payload'];$context=$draft['context'];$money=CompanyInvoiceLines::calculate($payload['items'],array_intersect_key($payload,array_flip(['discount_mode','discount_value','discount_type','adjustment'])));
+        $payload=$draft['payload'];$context=$draft['context'];$money=CompanyInvoiceLines::calculate($payload['items'],array_intersect_key($payload,array_flip(['discount_mode','discount_value','discount_type','adjustment','calculation_contract'])));
         $currency=(new CompanyCurrencyUnits($this->db,$this->p))->resolveRead($payload['currency']);
         $projectId=isset($payload['native_project']['source_id'])?NativeCompanyResourceId::encode('company_project',$payload['native_project']['source_id']):0;
         $aRow=['id'=>$source['canonical_id'],'issuer_id'=>$issuer,'clientid'=>$payload['client_id'],'total'=>$money['total'],'total_tax'=>$money['tax'],

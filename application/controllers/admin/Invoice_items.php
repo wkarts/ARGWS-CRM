@@ -251,11 +251,22 @@ class Invoice_items extends AdminController
         }
     }
 
+    private function nativeInvoiceCatalogLookup(bool $post): ?NativeCompanyInvoiceCatalogLookup
+    {
+        $read=$post?'post':'get';$mode=$this->input->$read('native_editor');if($mode===null)return null;
+        if($mode!=='invoice')throw new DomainException('company_catalog_invalid');
+        if($post)CompanyRequestScope::assertNativeMutation($this);
+        $id=$this->input->$read('native_invoice_id');$revision=$this->input->$read('native_invoice_revision');
+        if(!is_string($id)||!is_string($revision))throw new DomainException('company_invoice_stale');
+        require_once APPPATH.'services/NativeCompanyInvoiceCatalogLookup.php';$ctx=CompanyRequestScope::context();
+        return new NativeCompanyInvoiceCatalogLookup($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),$id,$revision);
+    }
+
     public function search()
     {
         if($this->companyCatalog!==null){
             $q=$this->input->post('q');if(!is_string($q))throw new DomainException('company_catalog_invalid');
-            echo json_encode($this->companyCatalog->search($q),JSON_THROW_ON_ERROR);return;
+            $lookup=$this->nativeInvoiceCatalogLookup(true);echo json_encode($lookup?$lookup->search($q):$this->companyCatalog->search($q),JSON_THROW_ON_ERROR);return;
         }
         if ($this->input->post() && $this->input->is_ajax_request()) {
             echo json_encode($this->invoice_items_model->search($this->input->post('q')));
@@ -266,8 +277,9 @@ class Invoice_items extends AdminController
     public function get_item_by_id($id)
     {
         if($this->companyCatalog!==null){
-            $item=(object)$this->companyCatalog->item($id);$item->long_description=nl2br(htmlspecialchars($item->long_description,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'));
-            $item->custom_fields_html=render_custom_fields('items',$id,[],['items_pr'=>true]);$item->custom_fields=[];
+            $lookup=$this->nativeInvoiceCatalogLookup(false);$item=(object)($lookup?$lookup->item($id):$this->companyCatalog->item($id));$item->long_description=nl2br(htmlspecialchars($item->long_description,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'));
+            $item->custom_fields_html=render_custom_fields('items',$id,[],['items_pr'=>true]+($lookup?['native_invoice_catalog'=>$lookup]:[]));$item->custom_fields=[];
+            if($lookup){$projection=$lookup->fields($id);foreach($projection['definitions']as$field){$field['value']=$projection['values'][$field['id']]??'';$item->custom_fields[]=$field;}$lookup->assertCurrent();echo json_encode($item,JSON_THROW_ON_ERROR);return;}
             foreach(get_custom_fields('items')as$field){$field['value']=get_custom_field_value($id,$field['id'],'items_pr');$item->custom_fields[]=$field;}
             echo json_encode($item,JSON_THROW_ON_ERROR);return;
         }

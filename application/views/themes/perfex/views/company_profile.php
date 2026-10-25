@@ -1,9 +1,10 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') or exit('No direct script access allowed');$nativeCompany=isset($native_portal)&&$native_portal; ?>
 <div class="row">
     <div class="col-md-12">
-        <?= form_open_multipart('clients/company', ['id' => 'company-profile-form']); ?>
+        <?= form_open_multipart($nativeCompany?NativePortalPresentation::url('clients/company'):'clients/company', ['id' => 'company-profile-form']); ?>
         <!-- Required hidden field -->
         <?= form_hidden('company_form', true); ?>
+        <?php if($nativeCompany){echo form_hidden('issuer_id',$native_portal_issuer).form_hidden('_native_portal_csrf',$native_portal_csrf).form_hidden('native_company_revision',$native_company_revision);} ?>
         <h4 class="tw-mt-0 tw-font-bold tw-text-lg tw-text-neutral-700 section-text section-heading-company-profile">
             <?= _l('clients_profile_heading'); ?>
         </h4>
@@ -19,7 +20,7 @@
 if (! empty($company_val)) {
     // Check if is realy empty client company so we can set this field to empty
     // The query where fetch the client auto populate firstname and lastname if company is empty
-    if (is_empty_customer_company($client->userid)) {
+    if (!$nativeCompany&&is_empty_customer_company($client->userid)) {
         $company_val = '';
     }
 }
@@ -28,7 +29,7 @@ if (! empty($company_val)) {
                                 value="<?= set_value('company', $company_val); ?>">
                             <?= form_error('company'); ?>
                         </div>
-                        <?php if (get_option('company_requires_vat_number_field') == 1) { ?>
+                        <?php if (($nativeCompany?$native_company_profile_policy['company_requires_vat_number_field']:get_option('company_requires_vat_number_field')) == 1) { ?>
                         <div class="form-group company-profile-vat-group">
                             <label for="vat"
                                 class="control-label"><?= _l('clients_vat'); ?></label>
@@ -55,7 +56,7 @@ if (! empty($company_val)) {
                                 data-none-selected-text="<?= _l('dropdown_non_selected_tex'); ?>"
                                 data-live-search="true" name="country" class="form-control" id="country">
                                 <option value=""></option>
-                                <?php foreach (get_all_countries() as $country) { ?>
+                                <?php foreach (($nativeCompany?$native_company_profile_countries:get_all_countries()) as $country) { ?>
                                 <?php
         $selected = '';
                                     if ($client->country == $country['country_id']) {
@@ -96,7 +97,7 @@ if (! empty($company_val)) {
                             <input type="text" class="form-control" name="state" id="state"
                                 value="<?= e($client->state); ?>">
                         </div>
-                        <?php if (! is_language_disabled()) { ?>
+                        <?php if (($nativeCompany?$native_company_profile_policy['disable_language']==='0':!is_language_disabled())) { ?>
                         <div class="form-group company-profile-language-group">
                             <label for="default_language"
                                 class="control-label"><?= _l('localization_default_language'); ?>
@@ -108,7 +109,7 @@ if (! empty($company_val)) {
                                     echo 'selected';
                                 } ?>><?= _l('system_default_string'); ?>
                                 </option>
-                                <?php foreach ($this->app->get_available_languages() as $availableLanguage) {
+                                <?php foreach (($nativeCompany?$native_company_profile_languages:$this->app->get_available_languages()) as $availableLanguage) {
                                     $selected = '';
                                     if ($client->default_language == $availableLanguage) {
                                         $selected = 'selected';
@@ -127,7 +128,7 @@ if (! empty($company_val)) {
                     <div class="col-md-12 custom-fields">
                         <?= render_custom_fields('customers', $client->userid, ['show_on_client_portal' => 1]); ?>
                     </div>
-                    <?php if (get_option('allow_primary_contact_to_view_edit_billing_and_shipping') == 1 && is_primary_contact()) { ?>
+                    <?php if (($nativeCompany?$native_company_profile_policy['allow_primary_contact_to_view_edit_billing_and_shipping']==='1'&&(int)$contact->is_primary===1:get_option('allow_primary_contact_to_view_edit_billing_and_shipping') == 1 && is_primary_contact())) { ?>
                     <div class="col-md-12">
                         <h3 class="company-profile-billing-shipping-heading">
                             <?= _l('billing_shipping'); ?>
@@ -135,7 +136,7 @@ if (! empty($company_val)) {
                         <hr class="no-mbot" />
                     </div>
                     <div class="col-md-6">
-                        <?php $countries = get_all_countries(); ?>
+                        <?php $countries = ($nativeCompany?$native_company_profile_countries:get_all_countries()); ?>
                         <h4 class="mbot15 mtop20 company-profile-billing-address-heading">
                             <?= _l('billing_address'); ?>
                         </h4>

@@ -12,3 +12,9 @@ CompanyRequestScope::$issuer=82;settingThrows(fn()=>NativeCompanyRolesEndpoints:
 $input->data=['revision'=>$page['native_staff_roles_revision']];CompanyRequestScope::$valid=false;settingThrows(fn()=>NativeCompanyRolesEndpoints::delete($ci,$wire),'native_mutation_denied','CSRF denied before storage');CompanyRequestScope::$valid=true;$input->postAllowed=false;settingThrows(fn()=>NativeCompanyRolesEndpoints::delete($ci,$wire),'native_mutation_denied','GET delete denied');$input->postAllowed=true;
 NativeCompanyRolesEndpoints::delete($ci,$wire);essentialCheck($s->page(41,7)['roles']===[],'native deletion succeeds with revisioned POST');
 echo "Native original roles endpoint/permission partial: six real SQLite checks, request-boundary double.\n";
+
+foreach(['Zulu','Alpha']as$name){$page=NativeCompanyRolesEndpoints::page($ci);$input->data=['name'=>$name,'permissions'=>[],'revision'=>$page['native_staff_roles_revision']];NativeCompanyRolesEndpoints::save($ci);}
+$input->data=['draw'=>'2','length'=>'1','order'=>[['column'=>'0','dir'=>'desc']]];$table=NativeCompanyRolesEndpoints::table($ci);
+essentialCheck($table['aaData'][0][0]==='Zulu'&&$table['iTotalRecords']===2,'original role table honors sorting and bounded pagination');
+essentialCheck(str_contains($table['aaData'][0][1],'onsubmit="return confirm_delete();"')&&str_contains($table['aaData'][0][1],'method="post"'),'role deletion retains native confirmation with POST');
+$input->data=['order'=>[['column'=>'1','dir'=>'desc']]];settingThrows(fn()=>NativeCompanyRolesEndpoints::table($ci),'native_staff_role_invalid','non-sortable options column rejected');

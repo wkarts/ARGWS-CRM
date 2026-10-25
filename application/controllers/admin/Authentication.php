@@ -12,6 +12,12 @@ class Authentication extends App_Controller
     public function __construct()
     {
         parent::__construct();
+        // Only a route sealed by the native dispatcher may bypass legacy authentication hydration.
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            if($this->router->fetch_method()!=='get_qr')throw new DomainException('native_staff_two_factor_route_denied');
+            return;
+        }
+
 
         // Authentication/logout must stay reachable while a native upgrade is
         // pending. AdminController checks the live administrator before DDL.
@@ -200,6 +206,22 @@ class Authentication extends App_Controller
 
     public function set_password($staff, $userid, $new_pass_key)
     {
+        if((string)$staff==='1' && $new_pass_key==='native'){
+            $this->output->set_header('Cache-Control: no-store')->set_header('Referrer-Policy: no-referrer');
+            if(!is_scalar($userid)||!preg_match('/^[1-9][0-9]*$/D',(string)$userid)){show_404();return;}
+            $data=['native_staff_invitation'=>true,'native_staff_invitation_token'=>''];
+            if(strtoupper($this->input->method(true))==='POST'){
+                $token=$this->input->post('native_staff_invitation_token',false);
+                $password=$this->input->post('password',false);$repeat=$this->input->post('passwordr',false);
+                if(!is_string($token)||!preg_match('/^[a-f0-9]{64}$/D',$token)||!is_string($password)||!is_string($repeat)||!hash_equals($password,$repeat)||strlen($password)<12||strlen($password)>128||str_contains($password,"\0")){
+                    set_alert('danger',_l('password_reset_message_fail'));redirect(admin_url('authentication'));return;
+                }
+                $result=$this->Authentication_model->set_password(true,$userid,$token,$password);
+                set_alert($result===true?'success':'danger',_l($result===true?'password_reset_message':'password_reset_key_expired'));redirect(admin_url('authentication'));return;
+            }
+            if(strtoupper($this->input->method(true))!=='GET'){show_404();return;}
+            $this->load->view('authentication/set_password',$data);return;
+        }
         if (! $this->Authentication_model->can_set_password($staff, $userid, $new_pass_key)) {
             set_alert('danger', _l('password_reset_key_expired'));
             if ($staff == 1) {
@@ -255,6 +277,11 @@ class Authentication extends App_Controller
 
     public function get_qr()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffEndpoints.php';$data=NativeCompanyStaffEndpoints::googleSetup($this);
+            $this->output->set_header('Cache-Control: no-store');$this->load->view('admin/includes/google_two_factor',$data);return;
+        }
+
         if (! is_staff_logged_in()) {
             ajax_access_denied();
         }
