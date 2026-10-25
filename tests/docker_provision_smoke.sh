@@ -100,6 +100,12 @@ if [ "$healthy" -ne 1 ]; then
     exit 1
 fi
 
+# Verify the real MySQL batch transport before any application provisioning or long browser suite.
+# SELECT-only derived fixtures; no application tables, credentials, or production endpoint.
+ISSUERS_BROWSER_DB_CONTAINER="$database" ISSUERS_BROWSER_DB_NAME="$database_name" \
+ISSUERS_BROWSER_DB_USER="$database_user" ISSUERS_BROWSER_DB_PASSWORD="$database_password" \
+node tests/installed_master_proof.mysql.cjs
+
 docker run -d --name "$web" --network "$network" \
     -e ARGWS_DB_HOST="$database" \
     -e ARGWS_DB_NAME="$database_name" \

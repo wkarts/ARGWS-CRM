@@ -8,9 +8,9 @@ const root = path.join(__dirname, '..');
 const files = ['hr_http_fixture','hr_tokens_http_fixture','hr_cli_http_fixture','leads_http_fixture','purchases_http_fixture','task_recurring_http_fixture'];
 const meta = {proof:'installation_owner_attestation',confirmation_reference:'test:explicit-owner-confirmation',primary_issuer_id:1};
 function run(identity=[17,1,'owner_attestation'], audits=[[0,17,null,JSON.stringify(meta)]]) {
-  assertAttestedMaster(query => JSON.stringify(query.includes('JSON_ARRAYAGG') ? audits : identity));
+  assertAttestedMaster(query => query.includes('JSON_ARRAYAGG') ? Buffer.from(JSON.stringify(audits),'utf8').toString('hex') : JSON.stringify(identity));
 }
-test('exact fixture identity and single durable maintenance audit pass', () => run());
+test('exact fixture identity and single durable maintenance audit pass for string and object metadata', () => { run(); run(undefined, [[0,17,null,meta]]); });
 test('wrong identities and arbitrary or historical source are rejected for this upgrade', () => {
   for (const identity of [[1,1,'owner_attestation'],[17,2,'owner_attestation'],[17,1,'installer'],[17,1,'legacy_designation'],[17,1,'other'],[null,1,'owner_attestation']]) assert.throws(()=>run(identity));
 });
@@ -38,5 +38,19 @@ test('producer binds exact owner proof before both downstream browsers', () => {
   for(const file of ['resume_439_native_staff_browser.cjs','companies/staff_browser.cjs']) {
     assert(shell.indexOf('node tests/companies_onboarding_browser.cjs') < shell.indexOf('node tests/'+file));
     assert.match(fs.readFileSync(path.join(root,'tests',file),'utf8'),/assertAttestedMaster\(sql\)/);
+  }
+});
+
+test('batch transport reproduces nested JSON escaping; hex preserves exact UTF-8 bytes', () => {
+  const json = JSON.stringify([[0,17,null,JSON.stringify(meta)]]);
+  const batch = json.replaceAll('\\', '\\\\');
+  assert.throws(() => JSON.parse(batch), SyntaxError, 'old unencoded batch text is not JSON');
+  assertAttestedMaster(query => query.includes('HEX(') ? Buffer.from(json).toString('hex').toUpperCase() : '[17,1,"owner_attestation"]');
+  const changed = {...meta, confirmation_reference:'test:quote" backslash\\ newline\n tab\t ação'};
+  assert.throws(() => run(undefined, [[0,17,null,JSON.stringify(changed)]]), /deep-equal/, 'transport does not normalize mismatched proof');
+});
+test('malformed, truncated, non-UTF8 and oversized encoded audits fail closed', () => {
+  for (const encoded of ['', 'NULL', '0', 'GG', '00\n00', 'warning: 5B5D', 'FF', 'E282', '7B', 'AA'.repeat(1024*1024+1)]) {
+    assert.throws(() => assertAttestedMaster(query => query.includes('HEX(') ? encoded : '[17,1,"owner_attestation"]'));
   }
 });

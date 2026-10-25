@@ -19,3 +19,15 @@ test('browser tooling uses the dedicated lockfile, not application build depende
  assert.match(workflow,/NODE_PATH=\$RUNNER_TEMP\/ci-browser\/node_modules/);
  assert.doesNotMatch(workflow,/npm install|npx playwright|continue-on-error/);
 });
+test('real MySQL batch proof runs after database health and before application provisioning',()=>{
+ const shell=fs.readFileSync(path.join(__dirname,'docker_provision_smoke.sh'),'utf8');
+ const command='node tests/installed_master_proof.mysql.cjs';
+ assert.equal(shell.split(command).length-1,1);
+ const position=shell.indexOf(command);
+ assert(position>shell.indexOf('if [ "$healthy" -ne 1 ]'));
+ assert(position<shell.indexOf('docker run -d --name "$web"'));
+ const block=shell.slice(shell.lastIndexOf('ISSUERS_BROWSER_DB_CONTAINER=',position),position);
+ for(const key of ['CONTAINER="$database"','NAME="$database_name"','USER="$database_user"','PASSWORD="$database_password"']) assert(block.includes('ISSUERS_BROWSER_DB_'+key));
+ assert.match(shell,/^set -euo pipefail$/m);
+ assert.doesNotMatch(shell.slice(position,position+command.length+20),/\|\| true/);
+});
