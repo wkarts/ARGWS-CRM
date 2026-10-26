@@ -764,6 +764,10 @@
     ],
     [
       "php",
+      "tests/native_company/calendar_endpoints.php"
+    ],
+    [
+      "php",
       "tests/native_company/calendar_event_mail.php"
     ],
     [

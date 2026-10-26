@@ -9,6 +9,19 @@ $db->query('CREATE TABLE '.$p.'company_native_mail_dispatch_fences(queue_id INTE
 foreach(CompanyPortalMailSchema::definitions()as$table=>$fields){$parts=[];foreach($fields as$key=>$type)$parts[]=$key.' '.$type.' NOT NULL';$parts[]='PRIMARY KEY('.array_key_first($fields).')';$db->query('CREATE TABLE '.$p.$table.' ('.implode(',',$parts).')');}
 $db->query('CREATE TABLE '.$p.'emailtemplates(emailtemplateid INTEGER PRIMARY KEY,issuer_id INT,slug TEXT,language TEXT,active INT,message TEXT,subject TEXT,fromname TEXT,plaintext INT)');
 $db->query('INSERT INTO '.$p.'emailtemplates VALUES(1,41,?,?,?,?,?,?,?)',['event-notification-to-staff','portuguese_br',1,'{staff_firstname}: {event_title} {event_start_date} {event_link}','Event {event_title}','Synthetic',0]);
+$db->query('INSERT INTO '.$p.'emailtemplates VALUES(2,NULL,?,?,?,?,?,?,?)',['installation-only','portuguese_br',1,'Synthetic installation template','Installation','Synthetic',0]);
+$db->query('INSERT INTO '.$p.'emailtemplates VALUES(3,82,?,?,?,?,?,?,?)',['other-company-only','portuguese_br',1,'Synthetic company template','Other company','Synthetic',0]);
+require_once APPPATH.'helpers/email_templates_helper.php';
+CompanySettingsRuntime::run($db,$p,41,12,function(){
+essentialCheck(is_email_template_active('event-notification-to-staff'),'official email template helper sees the active company template');
+essentialCheck(!is_email_template_active('installation-only')&&!is_email_template_active('other-company-only'),'official email template helper does not borrow installation or another company template');
+});
+CompanySettingsRuntime::run($db,$p,82,12,function(){
+essentialCheck(is_email_template_active('other-company-only')&&!is_email_template_active('event-notification-to-staff'),'official email template helper changes only its company-scoped availability');
+});
+CompanySettingsRuntime::run($db,$p,$primary,7,function(){
+essentialCheck(is_email_template_active('installation-only')&&!is_email_template_active('event-notification-to-staff'),'principal uses its legacy template source without exposing secondary templates');
+});
 if(!$db->table_exists($p.'contacts'))$db->query('CREATE TABLE '.$p.'contacts(id INT PRIMARY KEY)');
 $parts=NativeCompanyHeaderSchema::definitions($p)[NativeCompanyHeaderSchema::NOTIFICATIONS];$parts=array_values(array_filter($parts,static fn($x)=>!str_starts_with($x,'KEY ')&&$x!=='PRIMARY KEY (`id`)'));foreach($parts as&$part){$part=preg_replace('/ CHARACTER SET [a-z0-9]+ COLLATE [a-z0-9_]+/','',$part);$part=preg_replace('/UNIQUE KEY `[^`]+`/','UNIQUE',$part);if(str_starts_with($part,'`id`'))$part='`id` INTEGER PRIMARY KEY AUTOINCREMENT';}unset($part);$db->query('CREATE TABLE '.$p.NativeCompanyHeaderSchema::NOTIFICATIONS.' ('.implode(',',$parts).')');
 $store=new CompanySettingsStorage($db,$p);$store->updateBatch(41,7,['mail_engine'=>'codeigniter','email_protocol'=>'smtp','smtp_host'=>'smtp.example.test','smtp_port'=>'587','smtp_email'=>'from@example.test','dateformat'=>'Y-m-d|%Y-%m-%d','time_format'=>'24','default_timezone'=>'America/Sao_Paulo']);

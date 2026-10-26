@@ -85,6 +85,7 @@ require APPPATH . 'controllers/admin/Settings.php';
 require APPPATH . 'controllers/admin/Issuers.php';
 function redirect($url, $method = '', $code = 302) { $GLOBALS['redirects'][] = [$url, $method, $code]; }
 function show_error($message, $status = 500) { throw new CompanyRequestDenied(strip_tags($message), $status); }
+if (!function_exists('_l')) { function _l($line, ...$arguments) { return (string) $line; } }
 function list_files($path) { return []; }
 function e($value) { return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 function html_escape($value) { return e($value); }

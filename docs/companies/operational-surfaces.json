@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "e7fffed955e74cc007ba835106f777c3f14ac5b5544fc7dfccc9f2d432ed7f5c",
+    "source_manifest_sha256": "5d1ac1eb0ecfa9661b02de5889863e1065de2997c0cf216ddb0819c270ac2163",
     "counts": {
         "modules": 38,
-        "source_files": 4602,
+        "source_files": 4601,
         "literal_option_keys": 681,
         "dynamic_option_references": 158,
         "controllers": 256,
@@ -10646,7 +10646,7 @@
         },
         {
             "path": "application/controllers/admin/Dashboard.php",
-            "source_sha256": "3b52850cb97c759b4ccc0cd7edeb9ba54153fe565daa670d5fdac69be01f3529",
+            "source_sha256": "9c0f41d899a1d2ec4adbb3155260b07f6d85a44c8d72fc151614d5d5cb3395f4",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -11564,7 +11564,7 @@
         },
         {
             "path": "application/controllers/admin/Issuers.php",
-            "source_sha256": "a9b20c50a7466158016d72c6e880e493dbe1f46d8a5585c78e754d8597d0ba61",
+            "source_sha256": "eb883a8025a797539445b5c960c862000de68726cb83465391e9968b04b2a029",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -28794,7 +28794,7 @@
         {
             "name": "emailtemplates",
             "state": "not_verified",
-            "reference_count": 64
+            "reference_count": 65
         },
         {
             "name": "estimate_request_forms",

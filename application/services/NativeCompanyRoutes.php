@@ -53,6 +53,12 @@ final class NativeCompanyRoutes
             'add_group'=>['POST'], 'update_group'=>['POST'], 'delete_group'=>['POST'], 'delete'=>['POST'],
             'bulk_action'=>['POST'], 'search'=>['POST'], 'get_item_by_id'=>['GET'], 'copy'=>['POST'],
         ],
+        // The original Utilities calendar controller and views have explicit
+        // issuer scoped readers/writers; keep every action and verb finite.
+        'utilities' => [
+            'calendar'=>['GET','HEAD','POST'], 'get_calendar_data'=>['GET'],
+            'view_event'=>['GET','HEAD'], 'delete_event'=>['POST'],
+        ],
     ];
 
     public static function admits(string $directory, string $module, string $controller, string $method, string $verb): bool
@@ -67,6 +73,6 @@ final class NativeCompanyRoutes
         // Do not decode or normalize attacker-controlled destinations into an admitted route.
         if (str_contains($route, '\\') || str_contains($route, '%') || str_contains($route, '?')
             || str_contains($route, '#') || preg_match('/[\x00-\x20\x7f]/', $route)) { return false; }
-        return in_array($route, ['', 'dashboard', 'dashboard/index', 'issuers', 'todo', 'announcements', 'taxes', 'departments', 'tickets', 'invoice_items', 'invoice_items/import', 'settings'], true);
+        return in_array($route, ['', 'dashboard', 'dashboard/index', 'issuers', 'todo', 'announcements', 'taxes', 'departments', 'tickets', 'invoice_items', 'invoice_items/import', 'settings', 'utilities/calendar'], true);
     }
 }

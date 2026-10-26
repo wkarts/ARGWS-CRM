@@ -22,7 +22,8 @@ test('request seal and pre-emission authorization retained',()=>{
 
 test('original dashboard alerts use issuer-scoped announcements and POST dismissal in native requests',()=>{
  const controller=read('application/controllers/admin/Dashboard.php');assert.match(controller,/\$auxiliary->dashboardAnnouncements\(\)/);assert.match(controller,/company_dashboard_can_edit_announcements/);
- assert.match(controller,/\$this->load->helper\(\['func','widgets','invoices','estimates','proposals','sales','settings','fields','template','custom_fields','tickets'\]\)/);
+ assert.match(controller,/\$this->load->helper\(\['func','widgets','invoices','estimates','proposals','sales','settings','fields','template','email_templates','custom_fields','tickets'\]\)/);
+ const emailTemplates=read('application/helpers/email_templates_helper.php');assert.match(emailTemplates,/CompanyRequestScope::context\(\)/);assert.match(emailTemplates,/CompanySettingsRuntime::active\(\)/);assert.match(emailTemplates,/CompanyEmailTemplates::scopeSql/);assert.match(emailTemplates,/active_template\.slug=\? AND active_template\.active=1/);
  const service=read('application/services/NativeCompanyAuxiliaryUi.php');assert.match(service,/function dashboardAnnouncements\(int \$limit=100\)/);assert.match(service,/\$this->owned->dashboardAnnouncements\(\$limit\)/);assert.match(service,/\$this->legacy->dashboardAnnouncements\(\$limit\)/);
  const view=read('application/views/admin/includes/alerts.php');assert.match(view,/CompanyRequestScope::nativeFor\(get_instance\(\)\)/);assert.match(view,/\$nativeCompanyDashboard\?\(is_array\(\$company_dashboard_announcements/);assert.match(view,/form_open\(CompanyRequestScope::adminUrl\(get_instance\(\),'misc\/dismiss_announcement/);assert.match(view,/if\(!\$nativeCompanyDashboard\)\{hooks\(\)->do_action/);
  const routes=read('application/services/NativeCompanyRoutes.php');assert.match(routes,/'misc'\s*=>\s*\[\s*'dismiss_announcement'=>\['POST'\]/);

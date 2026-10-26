@@ -14,6 +14,10 @@ $check(NativeCompanyRoutes::admits('admin/','','issuers','index','HEAD'),'origin
 $check(NativeCompanyRoutes::admits('admin/','','issuers','save','POST'),'original company registry writer admitted through its membership and CSRF checks');
 foreach(['POST','PUT','PATCH','DELETE'] as $verb)$check(!NativeCompanyRoutes::admits('admin/','','issuers','index',$verb),'company registry reads never mutate');
 foreach(['GET','HEAD','PUT','PATCH','DELETE'] as $verb)$check(!NativeCompanyRoutes::admits('admin/','','issuers','save',$verb),'company registry mutations require POST');
+foreach(['GET','HEAD','POST'] as $verb)$check(NativeCompanyRoutes::admits('admin/','','utilities','calendar',$verb),'original Utilities calendar is connected to its scoped page or writer');
+foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb)$check(NativeCompanyRoutes::admits('admin/','','utilities','get_calendar_data',$verb)===($verb==='GET'),'native calendar feed is read-only GET');
+foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb)$check(NativeCompanyRoutes::admits('admin/','','utilities','view_event',$verb)===in_array($verb,['GET','HEAD'],true),'native calendar event detail is read-only');
+foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb)$check(NativeCompanyRoutes::admits('admin/','','utilities','delete_event',$verb)===($verb==='POST'),'native calendar event deletion requires POST and native CSRF');
 foreach (['GET','HEAD','POST'] as $verb) {
     $check(NativeCompanyRoutes::admits('admin/','','settings','index',$verb),'existing Settings route admitted only for its explicit native adapter');
 }
@@ -44,7 +48,7 @@ foreach ([['admin', 'third_party', 'dashboard', 'index'], ['public', '', 'dashbo
     ['admin', '', 'company_context', 'index'], ['admin', '', 'authentication', 'index']] as $route) {
     $check(!NativeCompanyRoutes::admits(...array_merge($route, ['GET'])), 'unadapted or non-native route denied');
 }
-foreach (['', 'dashboard', 'dashboard/index','issuers','settings','departments'] as $route) {
+foreach (['', 'dashboard', 'dashboard/index','issuers','settings','departments','utilities/calendar'] as $route) {
     $check(NativeCompanyRoutes::navigation($route), 'canonical native navigation accepted');
 }
 foreach (['/dashboard', '//evil.test', 'https://evil.test', '../dashboard', 'dashboard/../invoices',
