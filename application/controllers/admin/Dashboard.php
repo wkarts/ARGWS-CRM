@@ -57,11 +57,21 @@ class Dashboard extends AdminController
             $stage = 'view_composition';
             $viewData = $snapshot['view'] ?? null;
             if (!is_array($viewData)) { throw new UnexpectedValueException('company_dashboard_snapshot_view_invalid'); }
+            $ticketPresentation = null;
+            $ticketStructure = null;
+            if (!empty($snapshot['permissions']['tickets'])) {
+                require_once APPPATH.'services/NativeCompanyTicketIndexPresentation.php';
+                $ticketPresentation = new NativeCompanyTicketIndexPresentation($this->db, db_prefix());
+                $ticketIndex = $ticketPresentation->read($ctx->issuerId(), $ctx->staffId());
+                $ticketStructure = $ticketIndex['native_ticket_index']['structure'];
+                $viewData['native_dashboard_ticket_structure'] = $ticketStructure;
+            }
             require_once APPPATH.'services/NativeCompanyAuxiliaryUi.php';
             $auxiliary=new NativeCompanyAuxiliaryUi($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),$this);
             $announcementAlerts=$auxiliary->dashboardAnnouncements();
             $canEditAnnouncements=$auxiliary->allowed('announcements','edit');
             $title = NativeCompanyAdminPresentation::label('dashboard_string');
+            $snapshot['view'] = $viewData;
             $data=$viewData+['company_dashboard'=>$snapshot,'company_dashboard_announcements'=>$announcementAlerts,'company_dashboard_can_edit_announcements'=>$canEditAnnouncements,'native_database_upgrade_success'=>$upgradeSuccess,'title'=>$title,'bodyclass'=>'dashboard','dashboard'=>true];
             // The original dashboard widgets use this official pure presentation helper.
             // Their native data still comes only from the sealed company snapshot above.
@@ -69,6 +79,10 @@ class Dashboard extends AdminController
             $stage = 'template_render';
             $html=$this->load->view('admin/dashboard/dashboard',$data,true);
             $stage = 'snapshot_confirmation';
+            if ($ticketPresentation !== null
+                && $ticketPresentation->read($ctx->issuerId(), $ctx->staffId())['native_ticket_index']['structure'] !== $ticketStructure) {
+                throw new DomainException('company_dashboard_stale');
+            }
             $presenter->confirm();
             if($upgradeSuccess&&!AdminDatabaseUpgrade::consumeContextSuccess($this,(string)$this->current_db_version))throw new DomainException('company_dashboard_stale');
             $this->output->set_header('Cache-Control: no-store');

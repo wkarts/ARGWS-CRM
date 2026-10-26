@@ -10,7 +10,7 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "28d86075ab28fccbfa246793aa8ca5cf9489e562a765ce52ba5c48470f507518",
+    "source_manifest_sha256": "c0223b6c7a964437d67acac57485ac3f996fa3d3702b3db73b428d5c2ad82513",
     "counts": {
         "modules": 38,
         "source_files": 4602,
@@ -10646,7 +10646,7 @@
         },
         {
             "path": "application/controllers/admin/Dashboard.php",
-            "source_sha256": "75dd78bdf556333cc7f33c5228afaab3f78977684edf5f801ba355d5bc5297be",
+            "source_sha256": "ae2e277a1f178f6e016f4a13d35974b358cfa2d70717b82908b3d236a0d8d467",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -10658,22 +10658,22 @@
                 },
                 {
                     "method": "index",
-                    "line": 110,
+                    "line": 124,
                     "visibility": "public"
                 },
                 {
                     "method": "weekly_payments_statistics",
-                    "line": 197,
+                    "line": 211,
                     "visibility": "public"
                 },
                 {
                     "method": "monthly_payments_statistics",
-                    "line": 208,
+                    "line": 222,
                     "visibility": "public"
                 },
                 {
                     "method": "ticket_widget",
-                    "line": 218,
+                    "line": 232,
                     "visibility": "public"
                 }
             ],

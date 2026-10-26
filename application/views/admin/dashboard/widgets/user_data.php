@@ -2,6 +2,13 @@
 $nativeDashboardTasks = !isset($company_dashboard) || $company_dashboard['permissions']['tasks'];
 $nativeDashboardProjects = !isset($company_dashboard) || $company_dashboard['permissions']['projects'];
 $nativeDashboardInitialTab = $nativeDashboardTasks ? 'home_tab_tasks' : ($nativeDashboardProjects ? 'home_my_projects' : 'home_my_reminders');
+$nativeDashboardTicketStructure = null;
+if (isset($company_dashboard) && !empty($company_dashboard['permissions']['tickets'])) {
+    $nativeDashboardTicketStructure = $native_dashboard_ticket_structure ?? null;
+    if (!is_array($nativeDashboardTicketStructure)) {
+        throw new DomainException('native_dashboard_ticket_structure_required');
+    }
+}
 ?>
 <div class="widget" id="widget-<?php echo create_widget_id(); ?>" data-name="<?php echo _l('user_widget'); ?>">
     <div class="panel_s user-data">
@@ -102,7 +109,7 @@ $nativeDashboardInitialTab = $nativeDashboardTasks ? 'home_tab_tasks' : ($native
                            echo form_hidden('ticket_status_4', true);
                            ?>
                     </div>
-                    <?php echo AdminTicketsTableStructure(); ?>
+                    <?php echo AdminTicketsTableStructure('', false, $nativeDashboardTicketStructure); ?>
                 </div>
                 <?php } ?>
                 <?php if ($nativeDashboardProjects) { ?>
