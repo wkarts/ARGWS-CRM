@@ -15,6 +15,29 @@ class Dashboard extends AdminController
         return class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this);
     }
 
+    /** Turn only well-known PHP engine errors into safe diagnostic tokens. */
+    private static function companyDashboardErrorCode(Throwable $error): string
+    {
+        $message = $error->getMessage();
+        if ($message === 'company_dashboard_snapshot_view_invalid') { return 'snapshot_view_invalid'; }
+        if (preg_match('/^Call to undefined function ([A-Za-z_\\\\][A-Za-z0-9_\\\\]*)\\(\\)$/D', $message, $match)) {
+            return 'undefined_function_' . str_replace('\\', '_', $match[1]);
+        }
+        if (preg_match('/^Call to undefined method ([A-Za-z_\\\\][A-Za-z0-9_\\\\]*::[A-Za-z_][A-Za-z0-9_]*)\\(\\)$/D', $message, $match)) {
+            return 'undefined_method_' . str_replace(['\\', '::'], '_', $match[1]);
+        }
+        if (preg_match('/^Cannot use object of type ([A-Za-z_\\\\][A-Za-z0-9_\\\\]*) as array$/D', $message, $match)) {
+            return 'object_as_array_' . str_replace('\\', '_', $match[1]);
+        }
+        if (preg_match('/^Cannot access offset of type (?:array|bool|float|int|object|resource|string) on (?:array|bool|float|int|object|resource|string|null)$/D', $message)) {
+            return 'offset_type_invalid';
+        }
+        if (preg_match('/^Unsupported operand types(?:: (?:array|bool|float|int|object|resource|string|null) [^ ]+ (?:array|bool|float|int|object|resource|string|null))?$/D', $message)) {
+            return 'operand_types_invalid';
+        }
+        return 'unclassified';
+    }
+
     private function renderCompanyDashboard(): void
     {
         if (!CompanyRequestScope::nativeFor($this)) { show_error('Contexto de empresa indisponível.', 503); return; }
@@ -26,12 +49,19 @@ class Dashboard extends AdminController
             $this->load->view('admin/dashboard/dashboard',['company_dashboard_selection_required'=>true,'title'=>_l('dashboard_string'),'bodyclass'=>'dashboard','dashboard'=>true]); return;
         }
         $presenter=new CompanyDashboardPresenter($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId());
+        $stage = 'snapshot';
         try {
             $snapshot=$presenter->snapshot();
             require_once APPPATH.'services/AdminDatabaseUpgrade.php';
             $upgradeSuccess=AdminDatabaseUpgrade::peekContextSuccess($this,(string)$this->current_db_version);
-            $data=$snapshot['view']+['company_dashboard'=>$snapshot,'native_database_upgrade_success'=>$upgradeSuccess,'title'=>_l('dashboard_string'),'bodyclass'=>'dashboard','dashboard'=>true];
+            $stage = 'view_composition';
+            $viewData = $snapshot['view'] ?? null;
+            if (!is_array($viewData)) { throw new UnexpectedValueException('company_dashboard_snapshot_view_invalid'); }
+            $title = _l('dashboard_string');
+            $data=$viewData+['company_dashboard'=>$snapshot,'native_database_upgrade_success'=>$upgradeSuccess,'title'=>$title,'bodyclass'=>'dashboard','dashboard'=>true];
+            $stage = 'template_render';
             $html=$this->load->view('admin/dashboard/dashboard',$data,true);
+            $stage = 'snapshot_confirmation';
             $presenter->confirm();
             if($upgradeSuccess&&!AdminDatabaseUpgrade::consumeContextSuccess($this,(string)$this->current_db_version))throw new DomainException('company_dashboard_stale');
             $this->output->set_header('Cache-Control: no-store');
@@ -44,13 +74,12 @@ class Dashboard extends AdminController
             log_message('error', $safeMessage);
             show_error('Não foi possível confirmar os dados e permissões desta empresa. Recarregue a página.', $e->getMessage()==='company_dashboard_stale'?409:403);
         } catch (Throwable $error) {
-            $reason = (string) $error->getMessage();
-            $diagnostic = preg_match('/^[a-z][a-z0-9_]{0,99}$/D', $reason) ? $reason : 'unclassified';
+            $diagnostic = self::companyDashboardErrorCode($error);
             $sourceFile = basename((string) $error->getFile());
             if (!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D', $sourceFile)) { $sourceFile = 'unknown'; }
             $errorClass = get_class($error);
             if (!preg_match('/^[A-Za-z0-9_\\\\]{1,128}$/D', $errorClass)) { $errorClass = 'Throwable'; }
-            $safeMessage = 'Native company dashboard failed [' . $diagnostic . ']: ' . $errorClass
+            $safeMessage = 'Native company dashboard failed [' . $stage . ':' . $diagnostic . ']: ' . $errorClass
                 . ' @ ' . $sourceFile . ':' . (int) $error->getLine() . '.';
             error_log($safeMessage);
             log_message('error', $safeMessage);
