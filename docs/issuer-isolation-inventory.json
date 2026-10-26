@@ -622,7 +622,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Dashboard.php": {
-      "sha256": "de4cb7988e57d3bfc337a3edcd54735b896c11f9673a03a3d26f24416e936fa2",
+      "sha256": "63123e1156b476a2be7112d9b1e2534e5847f6312dd81967f85a6b69dee692e1",
       "categories": [
         "invoice_table"
       ],
