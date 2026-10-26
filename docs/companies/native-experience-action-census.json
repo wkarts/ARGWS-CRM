@@ -1390,22 +1390,22 @@
             "methods": [
                 {
                     "method": "index",
-                    "line": 110,
+                    "line": 124,
                     "classification": "review_required"
                 },
                 {
                     "method": "weekly_payments_statistics",
-                    "line": 197,
+                    "line": 211,
                     "classification": "review_required"
                 },
                 {
                     "method": "monthly_payments_statistics",
-                    "line": 208,
+                    "line": 222,
                     "classification": "review_required"
                 },
                 {
                     "method": "ticket_widget",
-                    "line": 218,
+                    "line": 232,
                     "classification": "review_required"
                 }
             ]

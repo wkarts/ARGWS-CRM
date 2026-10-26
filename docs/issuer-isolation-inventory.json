@@ -10,7 +10,8 @@
     "PR52 f94f84bf changes the shared general helper for isolated native presentation; its source hash and signal line were regenerated while its review state remains unreviewed. Operational rollout remains blocked.",
     "PR52 follow-up: native Dashboard alerts now use the company-scoped announcement adapter and the original Misc dismissal action is POST-only under the native route policy. The changed source remains unreviewed here; company boundary and financial rollout gates remain blocked pending full consumer and runtime coverage.",
     "PR52 Dashboard fix: the official dashboard renderer now explicitly loads settings_helper for the scoped sales formatter. The changed Dashboard source remains unreviewed by this conservative inventory; this does not close broader controller, route, view, or tenant-isolation work.",
-    "PR52 Dashboard table render: the shared Dashboard now loads the canonical custom-fields and tickets helpers used by the official task table. Dashboard remains unreviewed by this conservative inventory; no company-boundary or operational rollout gate is closed by helper loading."
+    "PR52 Dashboard table render: the shared Dashboard now loads the canonical custom-fields and tickets helpers used by the official task table. Dashboard remains unreviewed by this conservative inventory; no company-boundary or operational rollout gate is closed by helper loading.",
+    "PR52 Dashboard ticket widget: the official table now receives the issuer-scoped table order, visibility, service setting and field labels. The Dashboard PHP source remains unreviewed in this conservative inventory; broader route, view, controller and tenant-isolation coverage remains incomplete."
   ],
   "files": {
     "application/config/autoload.php": {
@@ -624,12 +625,12 @@
       "evidence": ""
     },
     "application/controllers/admin/Dashboard.php": {
-      "sha256": "75dd78bdf556333cc7f33c5228afaab3f78977684edf5f801ba355d5bc5297be",
+      "sha256": "ae2e277a1f178f6e016f4a13d35974b358cfa2d70717b82908b3d236a0d8d467",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        68
+        78
       ],
       "state": "unreviewed",
       "evidence": ""
