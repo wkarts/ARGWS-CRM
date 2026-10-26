@@ -5,6 +5,7 @@ require_once __DIR__.'/NativeCompanyTicketTable.php';
 require_once __DIR__.'/NativeCompanyDataTableWire.php';
 require_once __DIR__.'/NativeCompanyCustomFields.php';
 require_once __DIR__.'/NativeCompanyResourceTags.php';
+require_once __DIR__.'/NativeCompanyResourceReferences.php';
 /** Native index selection: authorize identities before filter/count/private row projection. */
 final class NativeCompanyTicketIndexRead
 {
@@ -12,15 +13,36 @@ final class NativeCompanyTicketIndexRead
     public function __construct(private$db,private string$p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');}
     private function rows(string$sql,array$args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private function offset(string$source):int{return(int)NativeCompanyResourceId::encode($source,1)-1;}
-    public function page(int$i,int$a,array$request,array$builder,NativeCompanyTicketTable$table):array
+    private function normalizeScope(array$scope):array
     {
+        $allowed=['customer'=>'client','project'=>'project','via_ticket'=>'ticket','status'=>'ticket_status'];
+        foreach($scope as$kind=>$id){
+            if(!isset($allowed[$kind])||(!is_string($id)&&!is_int($id)))throw new DomainException('native_ticket_scope_invalid');
+            try{$scope[$kind]=NativeCompanyResourceId::decode($allowed[$kind],$id)['canonical_id'];}catch(DomainException$e){throw new DomainException('native_ticket_scope_invalid',0,$e);}
+        }
+        return$scope;
+    }
+    public function page(int$i,int$a,array$request,array$builder,NativeCompanyTicketTable$table,array$scope=[]):array
+    {
+        $scope=$this->normalizeScope($scope);
         $reader=new NativeCompanyTicketRead($this->db,$this->p);$fields=new NativeCompanyCustomFields($this->db,$this->p);$definitions=$fields->definitions($i,$a,'tickets',['active'=>1,'show_on_table'=>1]);$names=self::COLUMNS;$types=array_fill(0,count($names),'');foreach($definitions as$d){$names[]='cf_'.$d['id'];$types[]=$d['type'];}
+        $customer=$scope['customer']??null;$customerRef=$customer===null?null:NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$a,'client',$customer,'view');
+        $project=$scope['project']??null;$projectRef=$project===null?null:NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$a,'project',$project,'view');
+        $status=$scope['status']??null;$statusCatalog=$status===null?null:(new NativeCompanyTicketCatalog($this->db,$this->p))->list($i,$a,'status');if($status!==null&&!in_array($status,array_column($statusCatalog,'ticketstatusid'),true))throw new DomainException('native_ticket_status_invalid');
         $wire=NativeCompanyDataTableWire::request($request,$names,$types);if($table->contextIdentity()!==['issuer_id'=>$i,'actor_id'=>$a])throw new DomainException('native_ticket_denied');$builder=$table->normalizeBuilder($builder);
         $tables=array_values(array_unique(array_merge($reader->tables(),NativeCompanyResourceTags::tableNames(),['company_custom_fields','company_custom_field_values','customfields','customfieldsvalues'])));
-        return IssuerTransaction::run($this->db,$this->p,$tables,function()use($i,$a,$reader,$fields,$definitions,$wire,$builder,$table,$names){
+        $result=IssuerTransaction::run($this->db,$this->p,$tables,function()use($i,$a,$reader,$fields,$definitions,$wire,$builder,$table,$names,$scope,$customerRef,$projectRef,$status,$statusCatalog){
             $acl=new IssuerResourceAccess($this->db,$this->p);if(!$acl->can($i,$a,'tickets','view')||$acl->primaryId()===$i||$table->contextIdentity()!==['issuer_id'=>$i,'actor_id'=>$a])throw new DomainException('native_ticket_denied');
+            $via=$scope['via_ticket']??null;$viaTicket=$via===null?null:$reader->getInOwnedTransaction($i,$a,$via);
             NativeCompanyTicketCatalogSchema::assertValid($this->db,$this->p);$candidates=$this->rows('SELECT t.id FROM '.$this->p.'company_tickets t WHERE t.issuer_id=? AND '.NativeCompanyTicketVisibility::predicate($this->db,$this->p,'t.issuer_id','t.id').' ORDER BY t.id LIMIT 10001',[$i]);if(count($candidates)>10000)throw new DomainException('native_ticket_index_limit');$allowed=[];$references=[];
-            foreach($candidates as$c){$id=NativeCompanyResourceId::encode('company_ticket',(int)$c['id']);try{$ref=$reader->referenceInOwnedTransaction($i,$a,$id);}catch(DomainException$e){if($e->getMessage()==='native_ticket_department_denied')continue;throw$e;}$allowed[]=(int)$c['id'];$references[$id]=$ref;}
+            foreach($candidates as$c){$id=NativeCompanyResourceId::encode('company_ticket',(int)$c['id']);try{$ref=$reader->referenceInOwnedTransaction($i,$a,$id);}catch(DomainException$e){if($e->getMessage()==='native_ticket_department_denied')continue;throw$e;}
+                if($customerRef!==null||$projectRef!==null||$viaTicket!==null||$status!==null){$ticket=$reader->getInOwnedTransaction($i,$a,$id);
+                    if($status!==null&&(string)$ticket['status']!==$status)continue;
+                    if($customerRef!==null&&(int)($ticket['userid']??0)!==(int)$customerRef['source_id'])continue;
+                    if($viaTicket!==null){if(($ticket['ticketid']??null)===($viaTicket['ticketid']??null))continue;$viaClient=(int)($viaTicket['userid']??0);$ticketClient=(int)($ticket['userid']??0);if($viaClient>0){if($ticketClient!==$viaClient)continue;}elseif($ticketClient>0||trim((string)($viaTicket['ticket_email']??''))===''||strcasecmp(trim((string)($ticket['ticket_email']??'')),trim((string)$viaTicket['ticket_email']))!==0)continue;}
+                    if($projectRef!==null){$meta=$this->rows('SELECT project_source_kind,project_source_id FROM '.$this->p.NativeCompanyDepartmentSchema::TICKETS.' WHERE issuer_id=? AND ticket_id=?',[$i,(int)$c['id']])[0]??null;if(!$meta||$meta['project_source_kind']!==$projectRef['source_kind']||(int)$meta['project_source_id']!==(int)$projectRef['source_id'])continue;}
+                }
+                $allowed[]=(int)$c['id'];$references[$id]=$ref;}
             $pdo=$this->db->pdo??$this->db->conn_id??null;$sqlite=$pdo instanceof PDO&&$pdo->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite';$contact=$sqlite?"TRIM(COALESCE(c.firstname,'') || ' ' || COALESCE(c.lastname,''))":"TRIM(CONCAT(COALESCE(c.firstname,''),' ',COALESCE(c.lastname,'')))";
             $columns=['t.id AS source_id',($this->offset('company_ticket')).'+t.id AS ticketid','t.subject','t.assignee_id AS assigned','t.created_at AS date','m.contact_id','t.client_id AS userid','m.sender_name AS ticket_opened_by_name','m.sender_email AS email','m.admin_read AS adminread','v.company',$contact.' AS contact_full_name','d.name AS department_name','svc.name AS service_name','st.color AS statuscolor','st.name AS status_name','pr.name AS priority_name','merged.primary_id AS merged_ticket_id'];
             $params=[];
@@ -38,7 +60,12 @@ final class NativeCompanyTicketIndexRead
             $where=$conditions?' WHERE '.implode(' AND ',$conditions):'';$filtered=(int)$this->rows('SELECT COUNT(*) n FROM ('.$base.') q'.$where,$queryParams)[0]['n'];$order=[];foreach($wire['orders']as$o)$order[]='q.'.($o['field']==='bulk'?'ticketid':$o['field']).' '.strtoupper($o['direction']);$order[]='q.ticketid ASC';$limit=$wire['length']===-1?'':' LIMIT '.$wire['length'].' OFFSET '.$wire['start'];
             $rows=$this->rows('SELECT q.* FROM ('.$base.') q'.$where.' ORDER BY '.implode(',',$order).$limit,$queryParams);$out=[];$tags=new NativeCompanyResourceTags($this->db,$this->p);
             foreach($rows as$row){$id=NativeCompanyResourceId::encode('company_ticket',(int)$row['source_id']);$dto=$reader->getInOwnedTransaction($i,$a,$id);$tag=$tags->read($i,$a,'ticket',$id);$values=$fields->values($i,$a,'tickets',$id);$out[]=['source'=>$dto,'row'=>$row,'tags'=>$tag,'custom_values'=>$values];}
-            foreach($references as$id=>$ref)if($reader->referenceInOwnedTransaction($i,$a,(string)$id)!==$ref)throw new DomainException('native_ticket_changed');if($fields->definitions($i,$a,'tickets',['active'=>1,'show_on_table'=>1])!==$definitions||$table->contextIdentity()!==['issuer_id'=>$i,'actor_id'=>$a])throw new DomainException('native_ticket_changed');return['draw'=>$wire['draw'],'iTotalRecords'=>$total,'iTotalDisplayRecords'=>$filtered,'rows'=>$out,'custom_fields'=>$definitions];
+            foreach($references as$id=>$ref)if($reader->referenceInOwnedTransaction($i,$a,(string)$id)!==$ref)throw new DomainException('native_ticket_changed');
+            if($viaTicket!==null&&$reader->getInOwnedTransaction($i,$a,$via)!==$viaTicket)throw new DomainException('native_ticket_changed');if($statusCatalog!==null&&(new NativeCompanyTicketCatalog($this->db,$this->p))->list($i,$a,'status')!==$statusCatalog)throw new DomainException('native_ticket_changed');
+            if($fields->definitions($i,$a,'tickets',['active'=>1,'show_on_table'=>1])!==$definitions||$table->contextIdentity()!==['issuer_id'=>$i,'actor_id'=>$a])throw new DomainException('native_ticket_changed');return['draw'=>$wire['draw'],'iTotalRecords'=>$total,'iTotalDisplayRecords'=>$filtered,'rows'=>$out,'custom_fields'=>$definitions];
         });
+        if($customerRef!==null&&NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$a,'client',$customer,'view')!==$customerRef)throw new DomainException('native_ticket_changed');
+        if($projectRef!==null&&NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$a,'project',$project,'view')!==$projectRef)throw new DomainException('native_ticket_changed');
+        return$result;
     }
 }

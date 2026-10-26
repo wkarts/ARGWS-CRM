@@ -15,7 +15,7 @@ foreach($sections as $sectionId=>$section) {
         $children[]=['id'=>$child['id'],'name'=>$child['name'],'url'=>admin_url('settings?group='.$child['id']),
             'icon'=>$child['icon']??'fa-regular fa-circle-question','badge'=>$child['badge']??[]];
     }
-    if($sectionId==='general') {
+    if($sectionId==='general' && !$isNativeSettings) {
         $children[]=['id'=>'update','name'=>_l('settings_update'),'url'=>admin_url('settings?group=update'),'icon'=>'fa-solid fa-hammer'];
         if(is_admin()) {
             $children[]=['id'=>'argws_platform','name'=>'Plataforma','url'=>admin_url('settings?group=argws_platform'),'icon'=>'fa-solid fa-sliders'];
@@ -228,7 +228,7 @@ unset($settingsPresentation,$settingsNavigation);
         }
     });
 </script>
-<?php hooks()->do_action('settings_group_end', $group); ?>
+<?php if(!$isNativeSettings)hooks()->do_action('settings_group_end', $group); ?>
 </body>
 
 </html>

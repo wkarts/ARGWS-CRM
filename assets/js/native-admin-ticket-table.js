@@ -23,6 +23,8 @@ function init_table_tickets(manual) {
   });
 
   TicketServerParams["project_id"] = '[name="project_id"]';
+  TicketServerParams["userid"] = '[name="userid"]';
+  TicketServerParams["via_ticket"] = '[name="via_ticket"]';
 
   var ticketsTableNotSortable = [0]; // bulk actions
   var _tickets_table_url = admin_url + "tickets";

@@ -11,6 +11,7 @@ class Emails extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if (class_exists('CompanyRequestScope',false) && method_exists('CompanyRequestScope','nativeFor') && CompanyRequestScope::nativeFor($this)) { return; }
         if ($this->isolated_company() && (!class_exists('CompanyRequestScope',false) || !CompanyRequestScope::sealedFor($this))) { show_error('Acesso negado.',403); return; }
         $this->load->model('emails_model');
     }

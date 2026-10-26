@@ -12,16 +12,26 @@ final class NativeCompanyTicketIndexController
     {
         if(!is_string($status)&&!is_int($status))throw new DomainException('native_ticket_status_invalid');$status=(string)$status;
         // Do not silently turn a client/project/other-ticket view into the complete company list.
-        $scope=[];if($userid!==''&&$userid!==null)$scope['customer']=$userid;
+        $scope=[];if($userid!==false&&$userid!==''&&$userid!==null&&(string)$userid!=='0')$scope['customer']=$userid;
         $this->ci->output->set_header('Cache-Control: no-store');$method=strtoupper($this->ci->input->method());
         if($method==='GET'&&!$this->ci->input->is_ajax_request()){
-            if($scope)throw new DomainException('native_ticket_context_scope_pending');
-            $data=(new NativeCompanyTicketIndexPresentation($this->ci->db,db_prefix()))->read($this->i,$this->a,$status);NativeCompanyAdminPresentation::prepare($this->ci);$this->authorize();$this->ci->load->view('admin/tickets/list',$data);return;
+            $project=method_exists($this->ci->input,'get')?$this->ci->input->get('project_id',false):false;if($project!==false&&$project!==''&&$project!==null&&(string)$project!=='0')$scope['project']=$project;
+            $via=method_exists($this->ci->input,'get')?$this->ci->input->get('via_ticket',false):false;if($via!==false&&$via!==''&&$via!==null)$scope['via_ticket']=$via;
+            $data=(new NativeCompanyTicketIndexPresentation($this->ci->db,db_prefix()))->read($this->i,$this->a,$status,$scope);$data['userid']=$scope['customer']??'';NativeCompanyAdminPresentation::prepare($this->ci);$this->authorize();$this->ci->load->view('admin/tickets/list',$data);return;
         }
         if($method!=='POST'||!$this->ci->input->is_ajax_request())throw new DomainException('native_ticket_method_invalid');CompanyRequestScope::assertNativeMutation($this->ci);$this->authorize();$input=$this->ci->input->post(null,false);if(!is_array($input))throw new DomainException('native_ticket_input_invalid');unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->ci->security))unset($input[$this->ci->security->get_csrf_token_name()]);
-        $factory=new NativeCompanyTicketTableFactory($this->ci->db,db_prefix());$table=$factory->make($this->i,$this->a);$catalog=(new NativeCompanyTicketCatalog($this->ci->db,db_prefix()))->list($this->i,$this->a,'status');$ids=array_column($catalog,'ticketstatusid');if($status!==''&&!in_array($status,$ids,true))throw new DomainException('native_ticket_status_invalid');
+        $factory=new NativeCompanyTicketTableFactory($this->ci->db,db_prefix());$table=$factory->make($this->i,$this->a);$catalog=(new NativeCompanyTicketCatalog($this->ci->db,db_prefix()))->list($this->i,$this->a,'status');$ids=array_column($catalog,'ticketstatusid');if($status!==''&&!in_array($status,$ids,true))throw new DomainException('native_ticket_status_invalid');if($status!=='')$scope['status']=$status;
         foreach($input as$key=>$value)if(str_starts_with((string)$key,'ticket_status_')){if(!in_array(substr($key,14),$ids,true)||(!is_string($value)&&!is_int($value))||!in_array((string)$value,['','1',substr($key,14)],true))throw new DomainException('native_ticket_input_invalid');unset($input[$key]);}
-        if(isset($input['project_id'])&&$input['project_id']!=='')$scope['project']=$input['project_id'];unset($input['project_id']);
+        if(isset($input['userid'])&&$input['userid']!==''){
+            if(isset($scope['customer'])&&NativeCompanyResourceId::decode('client',$scope['customer'])!==NativeCompanyResourceId::decode('client',$input['userid']))throw new DomainException('native_ticket_scope_invalid');
+            $scope['customer']=$input['userid'];
+        }
+        unset($input['userid']);
+        if(isset($input['project_id'])&&$input['project_id']!==''){
+            if(isset($scope['project'])&&NativeCompanyResourceId::decode('project',$scope['project'])!==NativeCompanyResourceId::decode('project',$input['project_id']))throw new DomainException('native_ticket_scope_invalid');
+            $scope['project']=$input['project_id'];
+        }
+        unset($input['project_id']);
         if(isset($input['via_ticket'])&&$input['via_ticket']!==''){
             $via=(new NativeCompanyTicketRead($this->ci->db,db_prefix()))->get($this->i,$this->a,$input['via_ticket']);$scope['via_ticket']=$via['ticketid'];
             if(isset($input['via_ticket_userid'])&&(string)$input['via_ticket_userid']!==(string)($via['userid']??0))throw new DomainException('native_ticket_scope_invalid');

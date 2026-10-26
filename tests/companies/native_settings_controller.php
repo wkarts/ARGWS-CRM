@@ -21,12 +21,15 @@ $controller->security=new class{function get_csrf_token_name(){return'csrf_token
 $controller->load=new class{public array $views=[];function helper($names){}function model($name){throw new RuntimeException('Global settings model must not load');}function view($name,$data){$this->views[]=[$name,$data];}};
 CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());
 $view=end($controller->load->views);essentialCheck($view[0]==='admin/settings/all'&&$view[1]['group']['view']==='admin/settings/includes/localization','same existing native form and shell selected');
+$visible=[];foreach($view[1]['sections']as$section)foreach($section['children']as$child)$visible[]=$child['id'];sort($visible);$supported=NativeCompanySettingsForms::availableGroups();sort($supported);essentialCheck($visible===$supported,'native Settings navigation exposes exactly groups with owned native form adapters');
+essentialCheck(!in_array('proposals',$visible,true)&&!in_array('payment_gateways',$visible,true),'unadapted native Settings links are not rendered as dead forms');
 $controller->input->verb='POST';$controller->input->body=['settings'=>$locale,'native_settings_revision'=>$view[1]['native_settings_revision']];
 try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());throw new RuntimeException('Missing CSRF accepted');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===403,'native controller rejects missing CSRF');}
 $controller->input->body['_native_company_csrf']='fixture-csrf';$controller->input->body['settings']['time_format']='12';
 CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());
 essentialCheck($GLOBALS['settingsRedirect']===['https://fixture.invalid/admin/settings?group=localization',303]&&$store->get($a,'time_format')==='12','original native POST commits then303 same route');
 try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());throw new RuntimeException('Stale accepted');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===409,'stale browser form rejected');}
+$controller->input->verb='GET';$controller->input->query=['group'=>'payment_gateways'];try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());throw new RuntimeException('Unadapted group rendered');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===403,'unadapted gateway group is denied before rendering a global provider form');}
 CompanyRequestScope::$issuer=$b;
 try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());throw new RuntimeException('Mismatched lease accepted');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===403,'request and options lease must agree before read/write');}
 echo "Native Settings actual controller uses original views, lease isolation, POST CSRF/revision and303 passed.\n";

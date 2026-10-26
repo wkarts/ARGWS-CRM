@@ -648,6 +648,10 @@
     ],
     [
       "php",
+      "tests/company_context.php"
+    ],
+    [
+      "php",
       "tests/companies/native_settings_forms.php"
     ],
     [
@@ -2032,6 +2036,14 @@
     ],
     [
       "php",
+      "tests/native_company/ticket_index_scope.php"
+    ],
+    [
+      "php",
+      "tests/native_company/ticket_index_controller.php"
+    ],
+    [
+      "php",
       "tests/native_company/ticket_row_projection.php"
     ],
     [
@@ -2061,6 +2073,14 @@
     [
       "php",
       "tests/native_task_row_presentation.php"
+    ],
+    [
+      "php",
+      "tests/crm_ui_language.php"
+    ],
+    [
+      "php",
+      "tests/invoice_issuer_discovery.php"
     ]
   ],
   "node": [

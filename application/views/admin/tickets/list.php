@@ -1,17 +1,18 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php $nativeIndex=isset($native_ticket_index); if($nativeIndex&&(!CompanyRequestScope::nativeFor(get_instance())||!CompanyRequestScope::sealedFor(get_instance())))throw new DomainException('native_ticket_projection_denied'); init_head(); ?>
+<?php if($nativeIndex&&$native_ticket_index['scope']){ ?><div class="_filters _hidden_inputs hidden tickets_filters"><?php foreach(['customer'=>'userid','project'=>'project_id','via_ticket'=>'via_ticket'] as $scopeKey=>$field){if(isset($native_ticket_index['scope'][$scopeKey])){ ?><input type="hidden" name="<?= e($field); ?>" value="<?= e($native_ticket_index['scope'][$scopeKey]); ?>"><?php }} ?></div><?php } ?>
 <div id="wrapper">
     <div class="content">
         <div id="vueApp">
             <div class="row">
                 <div class="col-md-12">
-                    <div class="tw-block md:tw-hidden">
+                    <?php if(!$nativeIndex||!$native_ticket_index['scoped']){ ?><div class="tw-block md:tw-hidden">
                         <?php $this->load->view('admin/tickets/summary', ($nativeIndex ? ['native_ticket_summary'=>$native_ticket_summary] : []) + [
                             'hrefAttrs' => function ($status) use ($table) {
                                 return '@click.prevent="extra.ticketsRules = ' . app\services\utilities\Js::from($table->findRule('status')->setValue([(int) $status['ticketstatusid']])) . '"';
                             },
                         ]); ?>
-                    </div>
+                    </div><?php } ?>
 
                     <div class="_buttons tw-mb-2">
                         <div class="md:tw-flex md:tw-items-center">
@@ -21,20 +22,20 @@
                                 <?= _l('new_ticket'); ?>
                             </a><?php } ?>
 
-                            <a href="#" class="btn btn-default btn-with-tooltip sm:!tw-px-3" data-toggle="tooltip"
+                            <?php if(!$nativeIndex||!$native_ticket_index['scoped']){ ?><a href="#" class="btn btn-default btn-with-tooltip sm:!tw-px-3" data-toggle="tooltip"
                                 data-placement="bottom"
                                 data-title="<?= _l('tickets_chart_weekly_opening_stats'); ?>"
                                 onclick="slideToggle('.weekly-ticket-opening', init_tickets_weekly_chart); return false;">
                                 <i class="fa fa-bar-chart"></i>
-                            </a>
+                            </a><?php } ?>
 
-                            <div class="tw-grow md:tw-ml-6 rtl:md:tw-mr-6 tw-hidden md:tw-block">
+                            <?php if(!$nativeIndex||!$native_ticket_index['scoped']){ ?><div class="tw-grow md:tw-ml-6 rtl:md:tw-mr-6 tw-hidden md:tw-block">
                                 <?php $this->load->view('admin/tickets/summary', ($nativeIndex ? ['native_ticket_summary'=>$native_ticket_summary] : []) + [
                                     'hrefAttrs' => function ($status) use ($table) {
                                         return '@click.prevent="extra.ticketsRules = ' . app\services\utilities\Js::from($table->findRule('status')->setValue([(int) $status['ticketstatusid']])) . '"';
                                     },
                                 ]); ?>
-                            </div>
+                            </div><?php } ?>
                             <div class="ltr:tw-ml-auto rtl:tw-mr-auto">
                                 <app-filters
                                     id="<?= $table->id(); ?>"
@@ -49,7 +50,7 @@
 
                     <div class="panel_s">
                         <div class="panel-body">
-                            <div class="weekly-ticket-opening no-shadow tw-mb-10" style="display:none;">
+                            <?php if(!$nativeIndex||!$native_ticket_index['scoped']){ ?><div class="weekly-ticket-opening no-shadow tw-mb-10" style="display:none;">
                                 <h4 class="tw-font-semibold tw-mb-8 tw-flex tw-items-center tw-text-lg">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.5" stroke="currentColor"
@@ -63,13 +64,13 @@
                                 <div class="relative" style="max-height:350px;">
                                     <canvas class="chart" id="weekly-ticket-openings-chart" height="350"></canvas>
                                 </div>
-                            </div>
+                            </div><?php } ?>
 
                             <?php if (!$nativeIndex) hooks()->do_action('before_render_tickets_list_table'); ?>
 
-                            <a href="#" data-toggle="modal" data-target="#tickets_bulk_actions"
+                            <?php if(!$nativeIndex||$native_ticket_index['can_edit']){ ?><a href="#" data-toggle="modal" data-target="#tickets_bulk_actions"
                                 class="bulk-actions-btn table-btn hide"
-                                data-table=".table-tickets"><?= _l('bulk_actions'); ?></a>
+                                data-table=".table-tickets"><?= _l('bulk_actions'); ?></a><?php } ?>
                             <div class="clearfix"></div>
                             <div class="panel-table-full">
                                 <?= AdminTicketsTableStructure('', true, $nativeIndex ? $native_ticket_index['structure'] : null); ?>
@@ -81,7 +82,7 @@
         </div>
     </div>
 </div>
-<div class="modal fade bulk_actions" id="tickets_bulk_actions" tabindex="-1" role="dialog">
+<?php if(!$nativeIndex||$native_ticket_index['can_edit']){ ?><div class="modal fade bulk_actions" id="tickets_bulk_actions" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -158,8 +159,9 @@
             </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+</div><!-- /.modal --><?php } ?>
 <?php init_tail(); ?>
+<?php if(!$nativeIndex||!$native_ticket_index['scoped']){ ?>
 <script>
     var chart;
     var chart_data = <?= $weekly_tickets_opening_statistics; ?> ;
@@ -189,6 +191,7 @@
         });
     }
 </script>
+<?php } ?>
 </body>
 
 </html>

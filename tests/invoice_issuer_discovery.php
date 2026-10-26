@@ -1,4 +1,5 @@
 <?php
+if(!defined('APPPATH'))define('APPPATH',dirname(__DIR__).'/application/');
 ob_start();require __DIR__.'/invoice_issuer_scope.php';ob_end_clean();
 require __DIR__.'/../application/models/Misc_model.php';
 require __DIR__.'/../application/models/Subscriptions_model.php';

@@ -10,12 +10,13 @@ defined('BASEPATH') or exit('No direct script access allowed');
 function AdminTicketsTableStructure($name = '', $bulk_action = false, ?array $native = null)
 {
     if ($native !== null && (!class_exists('CompanyRequestScope', false) || !CompanyRequestScope::nativeFor(get_instance()) || !CompanyRequestScope::sealedFor(get_instance()))) throw new DomainException('native_ticket_projection_denied');
+    if ($native !== null) $bulk_action = $bulk_action && !empty($native['can_edit']);
     $table = '<table class="table customizable-table number-index-' . ($bulk_action ? '2' : '1') . ' dt-table-loading ' . ($name == '' ? 'tickets-table' : $name) . ' table-tickets" id="tickets" data-last-order-identifier="tickets" data-default-order="' . ($native !== null ? e($native['order']) : get_table_last_order('tickets')) . '">';
     $table .= '<thead>';
     $table .= '<tr>';
 
     $table .= '<th class="' . ($bulk_action == true ? '' : 'not_visible') . '">';
-    $table .= '<span class="hide"> - </span><div class="checkbox mass_select_all_wrap"><input type="checkbox" id="mass_select_all" data-to-table="tickets"><label></label></div>';
+    if ($native === null || !empty($native['can_edit'])) $table .= '<span class="hide"> - </span><div class="checkbox mass_select_all_wrap"><input type="checkbox" id="mass_select_all" data-to-table="tickets"><label></label></div>';
     $table .= '</th>';
 
     $table .= '<th class="toggleable" id="th-number">' . _l('the_number_sign') . '</th>';

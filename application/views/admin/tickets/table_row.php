@@ -13,7 +13,7 @@ for ($i = 0; $i < count($aColumns); $i++) {
     }
 
     if ($aColumns[$i] == '1') {
-        $_data = '<div class="checkbox"><input type="checkbox" value="' . $aRow['ticketid'] . '" data-name="' . e($aRow['subject']) . '" data-status="' . $aRow['status'] . '"' . ($nativeTicketRow ? ' data-ticket-revision="'.e($native_ticket_row['revision']).'" data-tags-revision="'.e($native_ticket_row['tags_revision']).'"' : '') . '><label></label></div>';
+        $_data = (!$nativeTicketRow || $native_ticket_row['can_edit']) ? '<div class="checkbox"><input type="checkbox" value="' . $aRow['ticketid'] . '" data-name="' . e($aRow['subject']) . '" data-status="' . $aRow['status'] . '"' . ($nativeTicketRow ? ' data-ticket-revision="'.e($native_ticket_row['revision']).'" data-tags-revision="'.e($native_ticket_row['tags_revision']).'"' : '') . '><label></label></div>' : '';
     } elseif ($aColumns[$i] == 'lastreply') {
         if ($aRow[$aColumns[$i]] == null) {
             $_data = _l('ticket_no_reply_yet');

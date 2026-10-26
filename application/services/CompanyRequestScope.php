@@ -103,8 +103,7 @@ final class CompanyRequestScope
             );
             if (self::$nativePresentation) { self::$isolated = true; }
             // Only the native Settings renderer proven to avoid legacy hooks/transports is admitted.
-            if ($native && !self::$context->isPrimary() && (($class === 'settings' && $method === 'index')
-                || ($class === 'issuers' && in_array($method, ['index', 'save'], true))
+            if ($native && !self::$context->isPrimary() && (($class === 'issuers' && in_array($method, ['index', 'save'], true))
                 || ($class === 'emails' && in_array($method, ['index', 'email_template'], true)))) {
                 self::$isolated = true;
             }

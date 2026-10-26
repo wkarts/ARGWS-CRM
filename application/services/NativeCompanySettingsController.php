@@ -53,7 +53,10 @@ final class NativeCompanySettingsController
             if($issuer!==CompanySettingsRuntime::issuerId()||$actor!==CompanySettingsRuntime::staffId())throw new DomainException('native_settings_denied');
             $forms=new NativeCompanySettingsForms($ci->db,db_prefix());$forms->authorize($issuer,$actor,'view');
             $group=$ci->input->get('group')?:'general';if(!is_string($group))throw new DomainException('native_settings_invalid');
-            $sections=NativeSettingsSections::collect();$selected=null;
+            $supported=array_fill_keys(NativeCompanySettingsForms::availableGroups(),true);
+            $sections=NativeSettingsSections::collect();
+            foreach($sections as$key=>$section){$section['children']=array_values(array_filter($section['children'],static fn($child)=>isset($supported[$child['id']])));if($section['children']===[])unset($sections[$key]);else$sections[$key]=$section;}
+            $selected=null;
             foreach($sections as$section)foreach($section['children']as$child)if($child['id']===$group)$selected=$child;
             if($selected===null)throw new DomainException('native_settings_group_unavailable');
             NativeCompanySettingsForms::fields($group);

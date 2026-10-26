@@ -13,7 +13,7 @@ assert.match(selector, /type="submit" name="company_id"/);
 assert.match(selector, /data-company-choice/);
 assert.doesNotMatch(selector, /<select|Confirmar empresa selecionada/);
 assert.match(selector, /name="_company_switch_csrf"/);
-assert.match(selector, /company_context\/select/);
+assert.match(selector, /company_selection\/select/);
 assert.match(selector, /form_open/);
 assert.match(selector, /CompanySettingsIdentity/);
 assert.match(selector, /->displayName\(\$company\['id'\]\)/);

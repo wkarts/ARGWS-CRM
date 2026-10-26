@@ -13,6 +13,7 @@ class Tickets extends AdminController
         if(CompanyRequestScope::nativeFor($this)){
             if(in_array(strtolower((string)$this->router->fetch_method()),['bulk_action','ticket','change_status_ajax','edit_message','block_sender','update_staff_replying','check_staff_replying','delete_attachment','delete','delete_ticket_reply','update_single_ticket_settings'],true)){$this->nativeTicketLifecycle();return;}
             if(in_array(strtolower((string)$this->router->fetch_method()),['add','ticket_change_data'],true)){$this->nativeTicketPage();return;}
+            if(strtolower((string)$this->router->fetch_method())==='index')return;
             if(!in_array(strtolower((string)$this->router->fetch_method()),['statuses','status','delete_ticket_status','priorities','priority','delete_priority','services','service','delete_service','predefined_replies','predefined_reply','delete_predefined_reply','get_predefined_reply_ajax'],true))throw new DomainException('native_ticket_adapter_incomplete');
             $this->nativeTicketCatalog();return;
         }
@@ -28,11 +29,22 @@ class Tickets extends AdminController
     private function nativeTicketPage():NativeCompanyTicketPageController
     {require_once APPPATH.'services/NativeCompanyTicketPageController.php';return new NativeCompanyTicketPageController($this);}
 
+    private function nativeTicketIndex():NativeCompanyTicketIndexController
+    {require_once APPPATH.'services/NativeCompanyTicketIndexController.php';return new NativeCompanyTicketIndexController($this);}
+
     private function nativeTicketLifecycle():NativeCompanyTicketLifecycleController
     {require_once APPPATH.'services/NativeCompanyTicketLifecycleController.php';return new NativeCompanyTicketLifecycleController($this);}
 
     public function index($status = '', $userid = '')
     {
+        if(CompanyRequestScope::nativeFor($this)){
+            try{$this->nativeTicketIndex()->index($status,$userid);}
+            catch(DomainException $error){
+                if(in_array($error->getMessage(),['native_ticket_access_denied','native_ticket_denied'],true)){show_404();return;}
+                show_error('Não foi possível carregar os tickets desta empresa.',422);return;
+            }
+            return;
+        }
         close_setup_menu();
 
         if (! is_numeric($status)) {

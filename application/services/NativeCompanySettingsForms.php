@@ -18,6 +18,11 @@ require_once __DIR__.'/NativeCompanyInvoiceSequencePreferences.php';
 final class NativeCompanySettingsForms
 {
     public function __construct(private $db,private string $p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');}
+    /** Groups whose existing Settings partial has a complete owned read/write adapter. */
+    public static function availableGroups():array
+    {
+        return ['general','company','localization','email','sales_general','invoices','clients','tasks','tickets','google','calendar','misc'];
+    }
     public function authorize(int $issuer,int $actor,string $cap):void
     {
         if(!in_array($cap,['view','edit'],true)||!(new IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'settings',$cap))throw new DomainException('native_settings_denied');

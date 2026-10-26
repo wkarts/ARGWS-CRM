@@ -26,6 +26,17 @@ final class NativeCompanyRoutes
         'taxes' => [
             'index'=>['GET','HEAD','POST'], 'manage'=>['POST'], 'delete'=>['POST'], 'tax_name_exists'=>['POST'],
         ],
+        'tickets' => [
+            'index'=>['GET','HEAD','POST'], 'bulk_action'=>['POST'],
+        ],
+        // Settings::index is the original native Settings route. Its bounded
+        // form adapters decide which groups and writes are available.
+        'settings' => [
+            'index'=>['GET','HEAD','POST'],
+        ],
+        'emails' => [
+            'sent_smtp_test_email'=>['POST'], 'delete_queued_email'=>['POST'], 'clear_queued_emails'=>['POST'],
+        ],
         'invoice_items' => [
             'index'=>['GET','HEAD'], 'table'=>['POST'], 'manage'=>['POST'], 'import'=>['GET','HEAD','POST'],
             'add_group'=>['POST'], 'update_group'=>['POST'], 'delete_group'=>['POST'], 'delete'=>['POST'],
@@ -45,6 +56,6 @@ final class NativeCompanyRoutes
         // Do not decode or normalize attacker-controlled destinations into an admitted route.
         if (str_contains($route, '\\') || str_contains($route, '%') || str_contains($route, '?')
             || str_contains($route, '#') || preg_match('/[\x00-\x20\x7f]/', $route)) { return false; }
-        return in_array($route, ['', 'dashboard', 'dashboard/index', 'todo', 'announcements', 'taxes', 'invoice_items', 'invoice_items/import'], true);
+        return in_array($route, ['', 'dashboard', 'dashboard/index', 'todo', 'announcements', 'taxes', 'tickets', 'invoice_items', 'invoice_items/import', 'settings'], true);
     }
 }
