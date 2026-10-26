@@ -5,6 +5,49 @@ declare(strict_types=1);
 /** Additive native core storage. Historical grants/global credentials are never copied. */
 final class IssuerAccessSchema
 {
+    public static function legacyResourcePermissionsTable(string $prefix): string
+    {
+        if(!preg_match('/^[A-Za-z0-9_]+$/D',$prefix)) { throw new InvalidArgumentException('Invalid table prefix'); }
+        $table=$prefix.'issuers_resource_permissions_legacy';
+        if(strlen($table)>64) { throw new RuntimeException('issuer_access_legacy_permissions_table_name_invalid'); }
+        return $table;
+    }
+
+    private static function invalidateTableMetadata($db,string ...$tables): void
+    {
+        if(!property_exists($db,'data_cache'))return;
+        unset($db->data_cache['table_names']);
+        foreach($tables as$table)unset($db->data_cache['field_names'][$table]);
+    }
+
+    /** Preserve the old table before creating the company-scoped ACL table. */
+    private static function stageLegacyResourcePermissions($db,string $prefix): void
+    {
+        $source=$prefix.'issuers_resource_permissions';
+        $legacy=self::legacyResourcePermissionsTable($prefix);
+        self::invalidateTableMetadata($db,$source,$legacy);
+        if(!$db->table_exists($source))return;
+
+        $columns=self::rows($db,'SELECT COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$source]);
+        $byName=[];foreach($columns as$column)$byName[$column['COLUMN_NAME']]=$column;
+        if(isset($byName['issuer_id']))return;
+
+        $expected=['staff_id','feature','capability'];$actual=array_keys($byName);sort($actual);sort($expected);
+        $valid=$actual===$expected;
+        foreach(['staff_id'=>['int','NO'],'feature'=>['varchar(100)','NO'],'capability'=>['varchar(100)','NO']]as$name=>[$type,$nullable]){
+            $column=$byName[$name]??[];
+            $actualType=preg_replace('/^int\\([0-9]+\\)/','int',strtolower((string)($column['COLUMN_TYPE']??'')));
+            if($actualType!==$type||($column['IS_NULLABLE']??null)!==$nullable)$valid=false;
+        }
+        if(!$valid)throw new RuntimeException('issuer_access_legacy_permissions_schema_unrecognized');
+        if($db->table_exists($legacy))throw new RuntimeException('issuer_access_legacy_permissions_archive_conflict');
+
+        $quotedSource='`'.str_replace('`','``',$source).'`';
+        $quotedLegacy='`'.str_replace('`','``',$legacy).'`';
+        if($db->query('ALTER TABLE '.$quotedSource.' RENAME TO '.$quotedLegacy)===false)throw new RuntimeException('issuer_access_legacy_permissions_archive_failed');
+        self::invalidateTableMetadata($db,$source,$legacy);
+    }
+
     public static function statements(string $prefix): array
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$prefix)) { throw new InvalidArgumentException('Invalid table prefix'); }
@@ -33,9 +76,17 @@ final class IssuerAccessSchema
     }
     public static function ensure($db,string $prefix): void
     {
+        self::stageLegacyResourcePermissions($db,$prefix);
         foreach(self::statements($prefix) as $sql) {
             if($db->query($sql)===false) { throw new RuntimeException('issuer_access_schema_failed'); }
         }
+        $identity=$prefix.'issuers_installation_identity';
+        self::invalidateTableMetadata($db,$identity);
+        if(!$db->field_exists('legacy_resource_permissions_migrated_at',$identity)
+            &&$db->query("ALTER TABLE `{$identity}` ADD `legacy_resource_permissions_migrated_at` datetime DEFAULT NULL")===false) {
+            throw new RuntimeException('issuer_access_schema_failed');
+        }
+        self::invalidateTableMetadata($db,$identity);
         $audit=$prefix.'issuers_audit';
         if(property_exists($db,'data_cache')) { unset($db->data_cache['field_names'][$audit]); }
         if(!$db->field_exists('metadata_json',$audit)&&$db->query("ALTER TABLE `{$audit}` ADD `metadata_json` longtext DEFAULT NULL")===false) { throw new RuntimeException('issuer_access_schema_failed'); }
@@ -50,7 +101,7 @@ final class IssuerAccessSchema
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$prefix)) { throw new InvalidArgumentException('Invalid table prefix'); }
         $definitions=[
             'resource_permissions'=>['issuer_id'=>['int unsigned','NO',null],'staff_id'=>['int','NO',null],'feature'=>['varchar(100)','NO','ascii_bin'],'capability'=>['varchar(100)','NO','ascii_bin']],
-            'installation_identity'=>['id'=>['int','NO',null],'master_staff_id'=>['int','YES',null],'primary_issuer_id'=>['int unsigned','YES',null],'source'=>['varchar(32)','NO',null],'resolved_at'=>['datetime','YES',null]],
+            'installation_identity'=>['id'=>['int','NO',null],'master_staff_id'=>['int','YES',null],'primary_issuer_id'=>['int unsigned','YES',null],'source'=>['varchar(32)','NO',null],'resolved_at'=>['datetime','YES',null],'legacy_resource_permissions_migrated_at'=>['datetime','YES',null]],
         ];
         $primary=['resource_permissions'=>['issuer_id','staff_id','feature','capability'],'installation_identity'=>['id']];
         foreach($definitions as $suffix=>$expected) {
