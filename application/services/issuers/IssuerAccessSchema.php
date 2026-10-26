@@ -42,7 +42,7 @@ final class IssuerAccessSchema
         if(property_exists($db,'data_cache')) { unset($db->data_cache['field_names'][$audit]); }
         $metadata=self::rows($db,'SELECT COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$audit]);
         $metadata=array_values(array_filter($metadata,static fn($column)=>$column['COLUMN_NAME']==='metadata_json'));
-        if(count($metadata)!==1||strtolower($metadata[0]['COLUMN_TYPE'])!=='longtext'||$metadata[0]['IS_NULLABLE']!=='YES') { throw new RuntimeException('issuer_access_schema_invalid'); }
+        if(count($metadata)!==1||strtolower($metadata[0]['COLUMN_TYPE'])!=='longtext'||$metadata[0]['IS_NULLABLE']!=='YES') { throw new RuntimeException('issuer_access_audit_schema_invalid'); }
         self::assertValid($db,$prefix);
     }
     public static function assertValid($db,string $prefix): void
@@ -61,12 +61,12 @@ final class IssuerAccessSchema
             foreach($expected as $name=>[$type,$nullable,$collation]) {
                 $column=$found[$name]??[];
                 $actual=preg_replace('/^int\([0-9]+\)/','int',strtolower((string)($column['COLUMN_TYPE']??'')));
-                if($actual!==$type||($column['IS_NULLABLE']??null)!==$nullable||($collation!==null&&($column['COLLATION_NAME']??null)!==$collation)) { throw new RuntimeException('issuer_access_schema_invalid'); }
+                if($actual!==$type||($column['IS_NULLABLE']??null)!==$nullable||($collation!==null&&($column['COLLATION_NAME']??null)!==$collation)) { throw new RuntimeException('issuer_access_column_schema_invalid'); }
             }
             $indexes=self::rows($db,'SELECT COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND INDEX_NAME=\'PRIMARY\' ORDER BY SEQ_IN_INDEX',[$table]);
-            if(array_column($indexes,'COLUMN_NAME')!==$primary[$suffix]) { throw new RuntimeException('issuer_access_schema_invalid'); }
+            if(array_column($indexes,'COLUMN_NAME')!==$primary[$suffix]) { throw new RuntimeException('issuer_access_primary_key_invalid'); }
             $engines=self::rows($db,'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$table]);
-            if(count($engines)!==1||strtoupper((string)$engines[0]['ENGINE'])!=='INNODB') { throw new RuntimeException('issuer_access_schema_invalid'); }
+            if(count($engines)!==1||strtoupper((string)$engines[0]['ENGINE'])!=='INNODB') { throw new RuntimeException('issuer_access_engine_invalid'); }
         }
         foreach(['resource_permissions'=>['issuer_id'=>'issuer_id','staff_id'=>'staff_id'],'installation_identity'=>['primary_issuer_id'=>'id']] as $suffix=>$keys) {
             $table=$prefix.'issuers_'.$suffix;
@@ -74,7 +74,7 @@ final class IssuerAccessSchema
             $rows=self::rows($db,'SELECT CONSTRAINT_NAME,COLUMN_NAME,REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME,ORDINAL_POSITION FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND REFERENCED_TABLE_SCHEMA=DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL ORDER BY CONSTRAINT_NAME,ORDINAL_POSITION',[$table]);
             $groups=[];
             foreach($rows as $row) { if($row['REFERENCED_TABLE_NAME']===$target) { $groups[$row['CONSTRAINT_NAME']][$row['COLUMN_NAME']]=$row['REFERENCED_COLUMN_NAME']; } }
-            if(!in_array($keys,$groups,true)) { throw new RuntimeException('issuer_access_schema_invalid'); }
+            if(!in_array($keys,$groups,true)) { throw new RuntimeException('issuer_access_foreign_key_invalid'); }
         }
     }
 }
