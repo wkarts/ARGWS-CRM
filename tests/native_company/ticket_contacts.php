@@ -4,7 +4,7 @@ require __DIR__.'/knowledge_read.php';require_once __DIR__.'/../../application/s
 $db->query('ALTER TABLE tblstaff ADD COLUMN is_not_staff INTEGER NOT NULL DEFAULT 0');
 $db->query("ALTER TABLE tblissuers_registry ADD COLUMN settings_json TEXT NOT NULL DEFAULT '{}'");
 foreach(['options'=>'id INTEGER PRIMARY KEY,name TEXT,value TEXT','clients'=>'userid INTEGER PRIMARY KEY,active INTEGER','contacts'=>'id INTEGER PRIMARY KEY,userid INTEGER,active INTEGER,firstname TEXT,lastname TEXT,email TEXT,ticket_emails INTEGER NOT NULL DEFAULT 1','issuers_clients'=>'client_id INTEGER PRIMARY KEY,owner_issuer_id INTEGER','company_customer_admins'=>'issuer_id INTEGER,client_id INTEGER,staff_id INTEGER','customer_admins'=>'customer_id INTEGER,staff_id INTEGER']as$t=>$ddl)$db->query('CREATE TABLE tbl'.$t.'('.$ddl.')');
-$db->pdo->sqliteCreateFunction('CONCAT',static fn(...$parts)=>implode('',$parts));
+TestPdo::registerSqliteFunction($db->pdo,'CONCAT',static fn(...$parts)=>implode('',$parts));
 $db->query("INSERT INTO tblclients VALUES(1,1),(2,1),(3,1),(4,0)");$db->query('INSERT INTO tblissuers_clients VALUES(2,2),(3,3),(4,2)');
 $db->query("INSERT INTO tblcontacts(id,userid,active,firstname,lastname,email) VALUES(1,1,1,'Historical','One','primary@example.invalid'),(2,2,1,'Own','Two','a@example.invalid'),(3,3,1,'Private','Three','b@example.invalid'),(4,2,0,'Inactive','Contact','off@example.invalid'),(5,4,1,'Inactive','Client','off-client@example.invalid')");
 foreach([1,2]as$i)foreach(['view','create']as$cap)$db->query("INSERT INTO tblissuers_resource_permissions VALUES(?,17,'tickets',?)",[$i,$cap]);

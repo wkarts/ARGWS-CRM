@@ -13,6 +13,7 @@ set_error_handler(function ($severity, $message, $file, $line) {
 });
 define('BASEPATH', dirname(__DIR__) . '/system/');
 define('APPPATH', dirname(__DIR__) . '/application/');
+require __DIR__ . '/support/TestPdo.php';
 require APPPATH . 'services/InvoiceIssuerScope.php';
 require APPPATH . 'services/RecurringInvoiceDates.php';
 require APPPATH . 'services/RecurringInvoiceLock.php';
@@ -77,10 +78,11 @@ function fixture(bool $withScope, string $method): array
 {
     $db = DB(['dbdriver' => 'pdo', 'subdriver' => 'sqlite', 'dsn' => 'sqlite::memory:',
         'db_debug' => false, 'pconnect' => false, 'save_queries' => true], true);
+    $db->conn_id = TestPdo::connect('sqlite::memory:');
     $db->conn_id->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $locks = (object) ['acquired' => 0, 'released' => 0];
-    $db->conn_id->sqliteCreateFunction('GET_LOCK', function ($name, $timeout) use ($locks) { ++$locks->acquired; return 1; }, 2);
-    $db->conn_id->sqliteCreateFunction('RELEASE_LOCK', function ($name) use ($locks) { ++$locks->released; return 1; }, 1);
+    TestPdo::registerSqliteFunction($db->conn_id, 'GET_LOCK', function ($name, $timeout) use ($locks) { ++$locks->acquired; return 1; }, 2);
+    TestPdo::registerSqliteFunction($db->conn_id, 'RELEASE_LOCK', function ($name) use ($locks) { ++$locks->released; return 1; }, 1);
     $db->query('CREATE TABLE test_invoices (id INTEGER PRIMARY KEY' . ($withScope ? ', issuer_id INTEGER NULL' : '') . ',
         recurring INTEGER, date TEXT, last_recurring_date TEXT NULL, number INTEGER, duedate TEXT NULL,
         recurring_type TEXT NULL, custom_recurring INTEGER, addedfrom INTEGER, sale_agent INTEGER, clientid INTEGER,

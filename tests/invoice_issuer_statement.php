@@ -6,9 +6,9 @@ class IssuerStatement extends Statement_model { public function __construct() {}
 class IssuerCredits extends Credit_notes_model { public function __construct() {} }
 function invoices_statuses_available_for_credits() { return [1,3,4]; }
 if($pdo->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite') {
- @$pdo->sqliteCreateFunction('CONCAT',fn(...$parts)=>implode('',$parts));
- @$pdo->sqliteCreateFunction('LOCATE',fn($needle,$haystack)=>strpos($haystack,$needle)+1);
- @$pdo->sqliteCreateFunction('RIGHT_FN',fn($text,$count)=>substr($text,-$count));
+ TestPdo::registerSqliteFunction($pdo,'CONCAT',fn(...$parts)=>implode('',$parts));
+ TestPdo::registerSqliteFunction($pdo,'LOCATE',fn($needle,$haystack)=>strpos($haystack,$needle)+1);
+ TestPdo::registerSqliteFunction($pdo,'RIGHT_FN',fn($text,$count)=>substr($text,-$count));
 }
 foreach(['duedate','datecreated'] as $field) $db->query("ALTER TABLE {$prefix}invoices ADD $field VARCHAR(20)");
 $db->query("UPDATE {$prefix}invoices SET duedate='2026-10-20',datecreated='2026-10-18 09:00:00'");

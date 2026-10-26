@@ -22,6 +22,12 @@ final class NativeCompanyConsentSchema
         ];
     }
     private static function sqlite($db):bool{$c=$db->pdo??$db->conn_id??null;return$c instanceof PDO&&$c->getAttribute(PDO::ATTR_DRIVER_NAME)==='sqlite';}
+    /** The caller supplies the complete physical name; table_exists() adds dbprefix again. */
+    private static function tableExists($db,string $table):bool
+    {
+        if(self::sqlite($db))return IssuerStorage::query($db,"SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",[$table])->result_array()!==[];
+        return IssuerStorage::query($db,'SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$table])->result_array()!==[];
+    }
     private static function sqliteDefinitions(string $p):array
     {
         return [
@@ -33,8 +39,8 @@ final class NativeCompanyConsentSchema
     {
         IssuerTransaction::assertIndependent($db);if(property_exists($db,'data_cache'))unset($db->data_cache['table_names']);self::upgradePurposeSource($db,$p);$defs=self::definitions($p);if(self::sqlite($db))$defs=self::sqliteDefinitions($p);
         // Never 'repair' pre-existing ambiguous data or columns during a migration.
-        foreach($defs as$t=>$sql)if($db->table_exists($p.$t))self::validateTable($db,$p,$t);
-        foreach($defs as$t=>$sql)if(!$db->table_exists($p.$t)){IssuerStorage::query($db,$sql);if(property_exists($db,'data_cache'))unset($db->data_cache['table_names']);self::validateTable($db,$p,$t);}
+        foreach($defs as$t=>$sql)if(self::tableExists($db,$p.$t))self::validateTable($db,$p,$t);
+        foreach($defs as$t=>$sql)if(!self::tableExists($db,$p.$t)){IssuerStorage::query($db,$sql);if(property_exists($db,'data_cache'))unset($db->data_cache['table_names']);self::validateTable($db,$p,$t);}
         self::assertValid($db,$p);
     }
     private static function upgradePurposeSource($db,string$p):void

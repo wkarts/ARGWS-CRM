@@ -5,6 +5,7 @@
  */
 define('BASEPATH', __DIR__);
 define('APPPATH', dirname(__DIR__) . '/application/');
+require_once __DIR__ . '/support/TestPdo.php';
 #[AllowDynamicProperties] class App_Model {}
 class StaffAuthResult {
     public function __construct(private array $rows) {}
@@ -17,7 +18,7 @@ class StaffAuthDb {
     public bool $db_debug = false, $save_queries = false;
     private array $where = [], $values = [];
     private int $affected = 0;
-    public function __construct() { $this->pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]); $this->pdo->sqliteCreateCollation('utf8mb4_unicode_ci', static fn($a,$b)=>strcasecmp($a,$b)); }
+    public function __construct() { $this->pdo = TestPdo::connect('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]); TestPdo::registerSqliteCollation($this->pdo, 'utf8mb4_unicode_ci', static fn($a,$b)=>strcasecmp($a,$b)); }
     public function query($sql, $params=[]) {
         $st = $this->pdo->prepare($sql); $st->execute($params); $this->affected=$st->rowCount();
         return new StaffAuthResult($st->columnCount() ? $st->fetchAll(PDO::FETCH_ASSOC) : []);

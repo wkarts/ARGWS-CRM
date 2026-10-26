@@ -31,7 +31,7 @@ if(!class_exists('AdminController',false)){class AdminController{public $db;publ
 require APPPATH.'controllers/admin/Invoice_items.php';
 $controller=(new ReflectionClass(Invoice_items::class))->newInstanceWithoutConstructor();$controller->db=$db;
 $controller->input=new class{public array $data=[];public function get($key){return$this->data[$key]??null;}public function post($key){return$this->data[$key]??null;}};
-$property=new ReflectionProperty(Invoice_items::class,'companyCatalog');$property->setAccessible(true);$property->setValue($controller,new NativeCompanyCatalogUi($db,$p,41,12,$controller));
+$property=new ReflectionProperty(Invoice_items::class,'companyCatalog');$property->setValue($controller,new NativeCompanyCatalogUi($db,$p,41,12,$controller));
 $controller->input->data=['native_editor'=>'invoice','native_invoice_id'=>'','native_invoice_revision'=>'','q'=>'Secondary'];$GLOBALS['lookupPost']=true;
 ob_start();$controller->search();$json=ob_get_clean();essentialCheck(in_array($id,array_column(json_decode($json,true,32,JSON_THROW_ON_ERROR),'id'),true),'actual search action keeps same URL and invoice-only catalogue authority');
 ob_start();$controller->get_item_by_id($id);$json=ob_get_clean();$decoded=json_decode($json,true,32,JSON_THROW_ON_ERROR);essentialCheck($decoded['custom_fields'][0]['value']==='Owned selection value'&&str_contains($decoded['custom_fields_html'],'Owned selection value'),'actual item action supplies original customfields JSON and HTML');

@@ -20,8 +20,13 @@ essentialCheck(ob_get_level() === $renderLevel, 'fatal renderer restores output 
 essentialCheck(str_contains($html, 'company-native-settings'), 'native Settings composition is rendered');
 essentialCheck(str_contains($html, 'panel-footer text-right'), 'save action is in native panel footer');
 essentialCheck(!str_contains($html, 'class="company-settings-nav"'), 'no parallel horizontal settings navigation');
-foreach ($renderData['groups'] as $key => $label) {
+// Only routes with an explicit URL are admitted by this compatibility renderer.
+// The shared native Settings route has its own independently tested group catalog.
+foreach (array_intersect_key($renderData['groups'], $renderData['company_urls']) as $key => $label) {
     essentialCheck(substr_count($html, 'class="settings-group-'.$key.'"') === 1, 'each admitted settings group occurs once: '.$key);
+}
+foreach (array_diff_key($renderData['groups'], $renderData['company_urls']) as $key => $label) {
+    essentialCheck(!str_contains($html, 'class="settings-group-'.$key.'"'), 'unrouted compatibility group is not advertised: '.$key);
 }
 essentialCheck(substr_count($html, 'aria-current="page"') === 1, 'exactly the active settings group is selected');
 essentialCheck(substr_count($html, '<form id="company-settings-form"') === 1, 'one settings form');

@@ -7,6 +7,7 @@
  * Run with ISSUERS_TEST_DSN/USER/PASSWORD for an isolated MySQL test database.
  */
 declare(strict_types=1);
+require_once __DIR__.'/support/TestPdo.php';
 require_once __DIR__.'/issuers_test_support.php';
 
 define('BASEPATH', dirname(__DIR__) . '/system/');
@@ -212,7 +213,7 @@ function essentialThrows(callable $operation, string $message, string $label): v
 function essentialFixture(?string $version = null, int $active = 0, bool $available = true, int $coreVersion = 447): object
 {
     $prefix = 'essential_' . bin2hex(random_bytes(5)) . '_';
-    $pdo = new PDO(getenv('ISSUERS_TEST_DSN') ?: 'sqlite::memory:', getenv('ISSUERS_TEST_USER') ?: null, getenv('ISSUERS_TEST_PASSWORD') ?: null);
+    $pdo = TestPdo::connect(getenv('ISSUERS_TEST_DSN') ?: 'sqlite::memory:', getenv('ISSUERS_TEST_USER') ?: null, getenv('ISSUERS_TEST_PASSWORD') ?: null);
     if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') { $pdo->exec('PRAGMA foreign_keys=ON'); }
     $db = new EssentialTestDb($pdo, $prefix);
     // Synthetic pre-priority boundary: this minimal fixture does not install the mandatory 448 sidecars.

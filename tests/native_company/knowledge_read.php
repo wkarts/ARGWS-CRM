@@ -1,11 +1,12 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/../support/TestPdo.php';
 require_once __DIR__.'/../../application/services/NativeCompanyKnowledge.php';
 function kc(bool $ok,string $name):void{if(!$ok)throw new RuntimeException($name);}
 final class KnowledgeRows{public function __construct(private array $rows){}public function result_array():array{return $this->rows;}public function row_array():array{return $this->rows[0]??[];}}
 final class KnowledgeDb{
  public array $queries=[];public PDO $pdo;public bool $db_debug=true,$save_queries=true;
- public function __construct(){$this->pdo=new PDO('sqlite::memory:');$this->pdo->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);}
+ public function __construct(){$this->pdo=TestPdo::connect('sqlite::memory:');$this->pdo->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);}
  public function query($sql,$params=[]){$this->queries[]=$sql;$s=$this->pdo->prepare(str_replace(' FOR UPDATE','',$sql));$s->execute($params);return new KnowledgeRows($s->columnCount()?$s->fetchAll(PDO::FETCH_ASSOC):[]);}
  public function table_exists($table){return (bool)$this->query("SELECT name FROM sqlite_master WHERE type='table' AND name=?",[$table])->row_array();}
  public function field_exists($field,$table){foreach($this->query('PRAGMA table_info('.$table.')')->result_array() as $r)if($r['name']===$field)return true;return false;}

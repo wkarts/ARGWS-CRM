@@ -1,6 +1,6 @@
 <?php
 require __DIR__.'/staff_self_endpoint.php';
-$db->pdo->sqliteCreateCollation('utf8mb4_unicode_ci',static fn($a,$b)=>strcasecmp($a,$b));
+TestPdo::registerSqliteCollation($db->pdo,'utf8mb4_unicode_ci',static fn($a,$b)=>strcasecmp($a,$b));
 $db->query('INSERT INTO '.$p.'issuers_resource_permissions VALUES(41,12,?,?)',['staff','edit']);$db->query('INSERT INTO '.$p.'issuers_resource_permissions VALUES(41,12,?,?)',['staff','view']);
 $ci->input->data=['memberid'=>'14','email'=>'unused-staff@example.test'];essentialCheck(NativeCompanyStaffEndpoints::emailAvailable($ci),'authorized original email validation checks global login uniqueness');
 $ci->input->data['email']='synthetic@example.test';essentialCheck(!NativeCompanyStaffEndpoints::emailAvailable($ci),'existing global login email is not duplicated');

@@ -2,6 +2,7 @@ const { selectCompanyOption, ensureCompanySidebar } = require('./helpers/company
 // Synthetic UI contract: no application login, database, or production requests.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const http = require('node:http');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
@@ -41,6 +42,16 @@ let currentHtml = '', selected = '1';
 const submissions = [];
 const pageHtml = () => currentHtml.replace('<!--ACTUAL_SELECTOR-->', markup[selected]);
 (async () => {
+  const dashboard = http.createServer((request, response) => {
+    if (request.method === 'GET' && request.url === '/sub/admin/') {
+      response.writeHead(200, {'content-type':'text/html; charset=utf-8'});
+      response.end(pageHtml());
+      return;
+    }
+    response.writeHead(404); response.end();
+  });
+  await new Promise(resolve => dashboard.listen(0, '127.0.0.1', resolve));
+  const fixtureOrigin = `http://127.0.0.1:${dashboard.address().port}`;
   const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
   try {
     const page = await browser.newPage();
@@ -48,7 +59,7 @@ const pageHtml = () => currentHtml.replace('<!--ACTUAL_SELECTOR-->', markup[sele
     page.on('pageerror', e => errors.push(e.message));
     await page.route('**/*', async route => {
       const url = new URL(route.request().url());
-      if (url.origin === 'http://fixture.test' && url.pathname === '/sub/admin/company_selection/select') {
+      if (url.origin === fixtureOrigin && url.pathname === '/sub/admin/company_selection/select') {
         assert.equal(route.request().method(), 'POST');
         const fields = new URLSearchParams(route.request().postData());
         assert.deepEqual(fields.getAll('company_id').length, 1, 'native submitter supplies one company ID');
@@ -58,18 +69,18 @@ const pageHtml = () => currentHtml.replace('<!--ACTUAL_SELECTOR-->', markup[sele
         submissions.push(Object.fromEntries(fields)); selected = fields.get('company_id');
         return route.fulfill({status:303, headers:{location:'/sub/admin/'}, body:''});
       }
-      if (url.origin === 'http://fixture.test' && url.pathname === '/sub/admin/' && route.request().method()==='GET') {
+      if (url.origin === fixtureOrigin && url.pathname === '/sub/admin/' && route.request().method()==='GET') {
         return route.fulfill({status:200, contentType:'text/html', body:pageHtml()});
       }
       const rel = decodeURIComponent(url.pathname).replace(/^\//, '');
       const file = path.resolve(root, rel);
-      if (url.hostname !== 'fixture.test' || !file.startsWith(root + path.sep) || !rel.startsWith('assets/') || !fs.existsSync(file)) return route.abort();
+      if (url.origin !== fixtureOrigin || !file.startsWith(root + path.sep) || !rel.startsWith('assets/') || !fs.existsSync(file)) return route.abort();
       const ext = path.extname(file);
       await route.fulfill({ body: fs.readFileSync(file), contentType: { '.css': 'text/css', '.js': 'text/javascript', '.woff2': 'font/woff2', '.woff': 'font/woff' }[ext] || 'application/octet-stream' });
     });
     for (const mode of ['isolated', 'native']) {
       const menu = `<aside id="menu" class="sidebar" aria-label="Menu do CRM" ${mode === 'native' ? 'style="display:block;position:fixed;top:57px;width:230px"' : ''}><div class="company-sidebar-account"><!--ACTUAL_SELECTOR--><div class="sidebar-user-profile company-user-profile"><span class="company-user-avatar">U</span><span class="company-user-identity"><strong>Usuário sintético</strong><small>teste@example.invalid</small></span></div></div><ul class="nav metis-menu" id="side-menu">${Array.from({length:15},(_,i)=>`<li><details open><summary>Grupo ${i}</summary><ul class="nav nav-second-level"><li><a href="#item-${i}">Recurso ${i}</a></li></ul></details></li>`).join('')}</ul></aside>`;
-      const html = `<!doctype html><html><head><base href="http://fixture.test/">${assets.filter(a => mode === 'isolated' || !a.endsWith('company-shell.css')).map(a => `<link rel="stylesheet" href="${a}">`).join('')}</head><body class="admin ${mode === 'isolated' ? 'company-context-shell' : ''}"><header id="header"><button class="company-menu-toggle" aria-controls="menu" aria-expanded="true">Menu</button><span class="installation-name">CRM</span></header>${menu}<div id="wrapper"><main class="content"><section class="company-settings-card"><h1>Clientes</h1><h2>Lista de clientes</h2><form><label for="client-search">Buscar nome ou documento</label><input class="form-control" id="client-search"><button class="btn btn-default">Buscar</button></form></section></main></div>${scripts.map(s=>`<script src="${s}"></script>`).join('')}</body></html>`;
+      const html = `<!doctype html><html><head><base href="${fixtureOrigin}/">${assets.filter(a => mode === 'isolated' || !a.endsWith('company-shell.css')).map(a => `<link rel="stylesheet" href="${a}">`).join('')}</head><body class="admin ${mode === 'isolated' ? 'company-context-shell' : ''}"><header id="header"><button class="company-menu-toggle" aria-controls="menu" aria-expanded="true">Menu</button><span class="installation-name">CRM</span></header>${menu}<div id="wrapper"><main class="content"><section class="company-settings-card"><h1>Clientes</h1><h2>Lista de clientes</h2><form><label for="client-search">Buscar nome ou documento</label><input class="form-control" id="client-search"><button class="btn btn-default">Buscar</button></form></section></main></div>${scripts.map(s=>`<script src="${s}"></script>`).join('')}</body></html>`;
       for (const width of [1440, 390]) {
         await page.setViewportSize({ width, height: 900 });
         selected = '1'; submissions.length = 0; currentHtml = html;
@@ -119,13 +130,13 @@ const pageHtml = () => currentHtml.replace('<!--ACTUAL_SELECTOR-->', markup[sele
     }
     // Regression: use the real native toggle handler, not the isolated shell toggle.
     // Native page-small starts offscreen without hide-sidebar; one click must open it. No hidden-control forcing.
-    const mainSource = fs.readFileSync(path.join(root, 'assets/js/main.js'), 'utf8');
-    const handlerStart = mainSource.indexOf('  $(".hide-menu").click(function (e) {');
-    const handlerEnd = mainSource.indexOf('  // Hide sidebar on content click on mobile', handlerStart);
+    const navigationSource = fs.readFileSync(path.join(root, 'assets/js/native-admin-navigation.js'), 'utf8');
+    const handlerStart = navigationSource.indexOf('  $(".hide-menu").click(function (e) {');
+    const handlerEnd = navigationSource.indexOf('  // Hide sidebar on content click on mobile', handlerStart);
     assert.ok(handlerStart >= 0 && handlerEnd > handlerStart, 'real native sidebar handler is available');
-    const nativeHandler = mainSource.slice(handlerStart, handlerEnd);
+    const nativeHandler = navigationSource.slice(handlerStart, handlerEnd);
     await page.setViewportSize({width:390,height:844});
-    currentHtml = `<!doctype html><html><head><base href="http://fixture.test/">${assets.filter(asset => !asset.endsWith('company-shell.css')).map(asset => `<link rel="stylesheet" href="${asset}">`).join('')}</head><body class="admin page-small"><div id="header"><button class="hide-menu">Menu</button></div><aside id="menu" class="sidebar"><div class="${nativeAccountClasses}"><!--ACTUAL_SELECTOR--></div></aside><div id="wrapper"><main class="content">Synthetic native content</main></div>${scripts.filter(script => !script.endsWith('company-shell.js')).map(script => `<script src="${script}"></script>`).join('')}<script>$(function(){const setup_menu=$('#setup-menu');$('.selectpicker').selectpicker();${nativeHandler}});</script></body></html>`;
+    currentHtml = `<!doctype html><html><head><base href="${fixtureOrigin}/">${assets.filter(asset => !asset.endsWith('company-shell.css')).map(asset => `<link rel="stylesheet" href="${asset}">`).join('')}</head><body class="admin page-small"><div id="header"><button class="hide-menu">Menu</button></div><aside id="menu" class="sidebar"><div class="${nativeAccountClasses}"><!--ACTUAL_SELECTOR--></div></aside><div id="wrapper"><main class="content">Synthetic native content</main></div>${scripts.filter(script => !script.endsWith('company-shell.js')).map(script => `<script src="${script}"></script>`).join('')}<script>$(function(){const setup_menu=$('#setup-menu');$('.selectpicker').selectpicker();${nativeHandler}});</script></body></html>`;
     selected = '1'; submissions.length = 0; await page.setContent(pageHtml(), {waitUntil:'load'});
     assert.equal(await page.locator('body').evaluate(body => body.classList.contains('hide-sidebar')), false);
     assert.ok((await page.locator('.company-selector [data-company-selector-toggle]').boundingBox()).x < 0, 'actual native sidebar starts offscreen');
@@ -159,5 +170,5 @@ const pageHtml = () => currentHtml.replace('<!--ACTUAL_SELECTOR-->', markup[sele
     }
     assert.deepEqual(errors, []);
     console.log('PASS: isolated/native sidebar, desktop/mobile, explicit company POST, asset order and scroll contracts');
-  } finally { await browser.close(); }
+  } finally { await browser.close(); await new Promise(resolve => dashboard.close(resolve)); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

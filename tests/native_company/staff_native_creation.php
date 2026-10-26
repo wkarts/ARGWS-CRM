@@ -2,7 +2,7 @@
 // Native production staffid is AUTO_INCREMENT. Only this fixture opts into its real SQLite equivalent.
 define('ESSENTIAL_NATIVE_STAFF_AUTOINCREMENT',true);
 require __DIR__.'/staff_form_transaction.php';
-$db->pdo->sqliteCreateCollation('utf8mb4_unicode_ci',static fn($a,$b)=>strcasecmp($a,$b));
+TestPdo::registerSqliteCollation($db->pdo,'utf8mb4_unicode_ci',static fn($a,$b)=>strcasecmp($a,$b));
 $db->query("UPDATE {$p}staff SET email='staff'||staffid||'@example.test'");
 $db->query('CREATE UNIQUE INDEX staff_email_actual_unique ON '.$p.'staff(LOWER(TRIM(email)) COLLATE utf8mb4_unicode_ci)');
 $roleRevision=$roles->page(41,7)['revision'];$createForm=new NativeCompanyStaffForm($db,$p,41,7,[$wire],$role,$roleRevision,[$field=>'New staff field'],null,null,['value'=>'12.00','revision'=>0]);
