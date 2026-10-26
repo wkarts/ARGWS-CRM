@@ -8,7 +8,8 @@
     "PR49 reviewed lexical removal: application/views/admin/issuers/manage.php now delegates to application/views/admin/companies/registry_grid.php; its old invoice navigation signal is gone. The new grid projects the authorized company catalog and posts status/onboarding actions with context tokens, but neither wrapper nor grid currently matches this invoice/customer lexical scanner. Removal is not isolation closure; controller/service and transitive-view authorization still require separate coverage.",
     "PR51 refresh: runner inventory regenerated after the native settings and Efí boundary changes. All changed/new entries remain unreviewed; existing partial states are not promoted. Operational rollout remains blocked and the inventory is not proof of complete financial isolation.",
     "PR52 f94f84bf changes the shared general helper for isolated native presentation; its source hash and signal line were regenerated while its review state remains unreviewed. Operational rollout remains blocked.",
-    "PR52 follow-up: native Dashboard alerts now use the company-scoped announcement adapter and the original Misc dismissal action is POST-only under the native route policy. The changed source remains unreviewed here; company boundary and financial rollout gates remain blocked pending full consumer and runtime coverage."
+    "PR52 follow-up: native Dashboard alerts now use the company-scoped announcement adapter and the original Misc dismissal action is POST-only under the native route policy. The changed source remains unreviewed here; company boundary and financial rollout gates remain blocked pending full consumer and runtime coverage.",
+    "PR52 Dashboard fix: the official dashboard renderer now explicitly loads settings_helper for the scoped sales formatter. The changed Dashboard source remains unreviewed by this conservative inventory; this does not close broader controller, route, view, or tenant-isolation work."
   ],
   "files": {
     "application/config/autoload.php": {
@@ -622,7 +623,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Dashboard.php": {
-      "sha256": "63123e1156b476a2be7112d9b1e2534e5847f6312dd81967f85a6b69dee692e1",
+      "sha256": "9be458fb363091c1b7ec8abfba3cad224fb2f6f4d03a6be12de5b2f4d3d9eed6",
       "categories": [
         "invoice_table"
       ],
