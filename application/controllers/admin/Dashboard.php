@@ -43,6 +43,18 @@ class Dashboard extends AdminController
             error_log($safeMessage);
             log_message('error', $safeMessage);
             show_error('Não foi possível confirmar os dados e permissões desta empresa. Recarregue a página.', $e->getMessage()==='company_dashboard_stale'?409:403);
+        } catch (Throwable $error) {
+            $reason = (string) $error->getMessage();
+            $diagnostic = preg_match('/^[a-z][a-z0-9_]{0,99}$/D', $reason) ? $reason : 'unclassified';
+            $sourceFile = basename((string) $error->getFile());
+            if (!preg_match('/^[A-Za-z0-9_.-]{1,128}$/D', $sourceFile)) { $sourceFile = 'unknown'; }
+            $errorClass = get_class($error);
+            if (!preg_match('/^[A-Za-z0-9_\\\\]{1,128}$/D', $errorClass)) { $errorClass = 'Throwable'; }
+            $safeMessage = 'Native company dashboard failed [' . $diagnostic . ']: ' . $errorClass
+                . ' @ ' . $sourceFile . ':' . (int) $error->getLine() . '.';
+            error_log($safeMessage);
+            log_message('error', $safeMessage);
+            show_error('Não foi possível abrir o painel desta empresa. Recarregue a página.', 500);
         }
     }
 

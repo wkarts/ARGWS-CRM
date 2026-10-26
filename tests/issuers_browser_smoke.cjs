@@ -277,11 +277,25 @@ async function captureRealScreens(page, routes) {
       assert.equal(sql('SELECT COUNT(*) FROM tblissuers_registry WHERE id=' + Number(secondaryCompany) + ' AND tax_id IS NULL'), '1', 'company selection does not depend on a CNPJ');
       await page.goto(url + '/admin');
       assertNativePermissionSchema('immediately before secondary company selection');
+      const selectionTrace=[];
+      const recordSelectionResponse=response=>{
+        const request=response.request();
+        const pathname=new URL(response.url()).pathname.replace(/\/$/,'')||'/';
+        if(pathname!=='/admin/company_selection/select'&&pathname!=='/admin')return;
+        const location=response.headers().location;
+        let locationPath='';
+        if(location){try{locationPath=new URL(location,url).pathname.replace(/\/$/,'')||'/';}catch(_){locationPath='invalid';}}
+        selectionTrace.push({method:request.method(),path:pathname,status:response.status(),locationPath});
+      };
+      page.on('response',recordSelectionResponse);
       try {
         await selectCompanyOption(page, secondaryCompany);
       } catch (error) {
+        console.error('Native company selection HTTP trace: ' + JSON.stringify(selectionTrace));
         console.error('Native company ACL schema after selection response: ' + permissionSchemaSnapshot());
         throw error;
+      } finally {
+        page.off('response',recordSelectionResponse);
       }
       assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), '/admin', 'company switch stays on the original CRM dashboard URL');
       await shell(page);

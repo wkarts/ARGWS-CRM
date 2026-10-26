@@ -301,7 +301,7 @@ if [ "${ARGWS_ISSUER_BROWSER_SMOKE:-0}" = "1" ]; then
         ISSUERS_BROWSER_DB_CONTAINER="$database" ISSUERS_BROWSER_DB_USER="$database_user" \
         ISSUERS_BROWSER_DB_PASSWORD="$database_password" node tests/issuers_browser_smoke.cjs; then
         # Print only fixed-format safe diagnostics; never dump application/request data.
-        docker logs "$web" 2>&1 | grep -E 'Native company dashboard denied \[[a-z][a-z0-9_]{0,99}\]\.|Falha na atualização nativa \[' | tail -n 8 >&2 || true
+        docker logs "$web" 2>&1 | grep -E 'Native company dashboard (denied|failed) \[[a-z][a-z0-9_]{0,99}\]|Falha na atualização nativa \[' | tail -n 8 >&2 || true
         exit 1
     fi
 fi
