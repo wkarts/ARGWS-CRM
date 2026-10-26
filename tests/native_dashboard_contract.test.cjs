@@ -14,6 +14,7 @@ test('native charts and financial template retain canonical APIs',()=>{
 });
 test('request seal and pre-emission authorization retained',()=>{
  const c=read('application/controllers/admin/Dashboard.php');assert.match(c,/CompanyRequestScope::nativeFor\(\$this\)/);assert.match(c,/\$presenter->confirm\(\)/);assert.match(c,/\$reader->confirm\(\)/);assert.match(c,/Cache-Control: no-store/);
+ const nativeRender=c.split('private function renderCompanyDashboard(): void')[1].split('private function companyPaymentChart')[0];assert.match(nativeRender,/NativeCompanyAdminPresentation::label\('dashboard_string'\)/);assert.doesNotMatch(nativeRender,/_l\(/,'isolated dashboard must not call global translation helpers that are intentionally not loaded');
  assert.match(c,/preg_match\('\/\^\[a-z\]\[a-z0-9_\]\{0,99\}\$\/D', \$reason\)/);assert.match(c,/error_log\(\$safeMessage\)/);
  const preview=c.indexOf('AdminDatabaseUpgrade::peekContextSuccess($this');const render=c.indexOf("$this->load->view('admin/dashboard/dashboard',$data,true)");const confirm=c.indexOf('$presenter->confirm()');const consume=c.indexOf('AdminDatabaseUpgrade::consumeContextSuccess($this');assert.ok(preview>=0&&render>preview&&confirm>render&&consume>confirm,'upgrade feedback remains on the native Dashboard path and consumes only after render plus scope recheck');
  const p=read('application/services/CompanyDashboardPresenter.php');assert.match(p,/company_dashboard_schema_unavailable/);assert.match(p,/company_dashboard_stale/);
