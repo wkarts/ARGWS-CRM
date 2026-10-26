@@ -44,8 +44,13 @@ $db->trans_begin();settingThrows(fn()=>$a->deleteTodo($id,3),'issuer_outer_trans
 $announcement=$a->saveAnnouncement(['name'=>'Only A','message'=>'<p>Visible</p><script>alert(1)</script>','showtostaff'=>'1']);
 essentialCheck(count($a->announcements())===1&&$b->announcements()===[],'announcements do not cross companies');
 essentialCheck(!str_contains($a->announcement($announcement)['message'],'<script'),'announcement parser removes executable markup');
-$a->dismissAnnouncement($announcement);$a->dismissAnnouncement($announcement);
-essentialCheck($a->undismissedAnnouncementsCount()===0&&$other->undismissedAnnouncementsCount()===1,'dismissal idempotent and private to actor');
+require_once APPPATH.'services/NativeCompanyAuxiliaryUi.php';
+$ui=new NativeCompanyAuxiliaryUi($db,$p,41,12);$otherUi=new NativeCompanyAuxiliaryUi($db,$p,41,14);$hiddenAnnouncement=$a->saveAnnouncement(['name'=>'Hidden A','message'=>'<p>Hidden</p>','showtostaff'=>'0']);
+$alerts=$ui->dashboardAnnouncements();essentialCheck(count($alerts)===1&&$alerts[0]['announcementid']===NativeCompanyResourceId::encode('company_announcement',$announcement),'original dashboard alert uses canonical owned announcement identity');
+essentialCheck(count($ui->dashboardAnnouncements(1))===1&&count($otherUi->dashboardAnnouncements())===1,'dashboard alert lineage remains bound to the actor dismissal, not just shared company data');
+$ui->dismissAnnouncement($alerts[0]['announcementid']);$ui->dismissAnnouncement($alerts[0]['announcementid']);
+essentialCheck($ui->dashboardAnnouncements()===[]&&$a->undismissedAnnouncementsCount()===0&&$other->undismissedAnnouncementsCount()===1,'dismissal is idempotent and private to actor');
+essentialCheck($a->announcement($hiddenAnnouncement)['showtostaff']==='0','dashboard excludes hidden staff announcements without deleting them');
 $catalogA=new NativeCompanyCatalog($db,$p,41,12);$catalogB=new NativeCompanyCatalog($db,$p,82,12);
 $tax=$catalogA->saveTax(['name'=>'A tax','taxrate'=>'7.5']);$group=$catalogA->saveGroup(['name'=>'A group']);
 $item=$catalogA->saveItem(['description'=>'Owned item','rate'=>'123.4567','tax'=>$tax,'group_id'=>$group]);
@@ -54,9 +59,7 @@ essentialCheck($catalogB->search('Owned')===[],'catalogue search filters issuer'
 settingThrows(fn()=>$catalogB->item($item),'company_catalog_denied','guessed item cannot hydrate foreign catalogue');
 settingThrows(fn()=>$catalogB->saveItem(['description'=>'Forbidden tax','rate'=>'1','tax'=>$tax]),'company_catalog_denied','cross-company tax reference rejected');
 settingThrows(fn()=>$catalogA->saveTax(['name'=>'Bad|name','taxrate'=>'1']),'company_catalog_invalid','tax delimiter cannot inject another choice');
-require_once APPPATH.'services/NativeCompanyAuxiliaryUi.php';
 require_once APPPATH.'services/NativeCompanyCatalogUi.php';
-$ui=new NativeCompanyAuxiliaryUi($db,$p,41,12);
 $encoded=NativeCompanyResourceId::encode('company_todo',$id);
 essentialCheck($ui->todo($encoded)['todoid']===$encoded,'browser DTO uses canonical namespace without altering stored ID');
 settingThrows(fn()=>$ui->todo($id),'company_auxiliary_access_denied','native legacy ID cannot alias owned row');

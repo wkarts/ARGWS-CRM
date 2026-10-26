@@ -46,7 +46,7 @@ class Dashboard extends AdminController
         $ctx=CompanyRequestScope::context();
         if ($ctx->issuerId()===null) {
             $this->output->set_header('Cache-Control: no-store');
-            $this->load->view('admin/dashboard/dashboard',['company_dashboard_selection_required'=>true,'title'=>NativeCompanyAdminPresentation::label('dashboard_string'),'bodyclass'=>'dashboard','dashboard'=>true]); return;
+            $this->load->view('admin/dashboard/dashboard',['company_dashboard_selection_required'=>true,'company_dashboard_announcements'=>[],'company_dashboard_can_edit_announcements'=>false,'title'=>NativeCompanyAdminPresentation::label('dashboard_string'),'bodyclass'=>'dashboard','dashboard'=>true]); return;
         }
         $presenter=new CompanyDashboardPresenter($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId());
         $stage = 'snapshot';
@@ -57,8 +57,12 @@ class Dashboard extends AdminController
             $stage = 'view_composition';
             $viewData = $snapshot['view'] ?? null;
             if (!is_array($viewData)) { throw new UnexpectedValueException('company_dashboard_snapshot_view_invalid'); }
+            require_once APPPATH.'services/NativeCompanyAuxiliaryUi.php';
+            $auxiliary=new NativeCompanyAuxiliaryUi($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),$this);
+            $announcementAlerts=$auxiliary->dashboardAnnouncements();
+            $canEditAnnouncements=$auxiliary->allowed('announcements','edit');
             $title = NativeCompanyAdminPresentation::label('dashboard_string');
-            $data=$viewData+['company_dashboard'=>$snapshot,'native_database_upgrade_success'=>$upgradeSuccess,'title'=>$title,'bodyclass'=>'dashboard','dashboard'=>true];
+            $data=$viewData+['company_dashboard'=>$snapshot,'company_dashboard_announcements'=>$announcementAlerts,'company_dashboard_can_edit_announcements'=>$canEditAnnouncements,'native_database_upgrade_success'=>$upgradeSuccess,'title'=>$title,'bodyclass'=>'dashboard','dashboard'=>true];
             $stage = 'template_render';
             $html=$this->load->view('admin/dashboard/dashboard',$data,true);
             $stage = 'snapshot_confirmation';

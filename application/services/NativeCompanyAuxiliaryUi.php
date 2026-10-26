@@ -73,6 +73,13 @@ final class NativeCompanyAuxiliaryUi
         foreach([$this->owned,$this->legacy]as$source){for($pos=0;$pos<$need;$pos+=100){$part=$source->announcementTable($pos,min(100,$need-$pos),$search);if($pos===0){$total+=$part['total'];$filtered+=$part['filtered'];}foreach($part['rows']as$row)$rows[]=$source===$this->owned?self::row('announcement',$row):$row;if(count($part['rows'])<min(100,$need-$pos))break;}}
         usort($rows,static fn($a,$b)=>strcmp($b['dateadded'],$a['dateadded'])?:((int)$b['announcementid']<=>(int)$a['announcementid']));return['total'=>$total,'filtered'=>$filtered,'rows'=>array_slice($rows,$start,$length)];
     }
+    /** Original Dashboard alert partial, backed only by this actor's active company and its historical lineage. */
+    public function dashboardAnnouncements(int $limit=100):array
+    {
+        if($limit<1||$limit>100)throw new DomainException('company_auxiliary_invalid_page');
+        $rows=$this->announcementTable(0,$limit)['rows'];
+        return array_values(array_filter($rows,static fn($row)=>(int)($row['showtostaff']??0)===1&&empty($row['is_dismissed'])));
+    }
     public function undismissedAnnouncementsCount():int{return$this->owned->undismissedAnnouncementsCount()+($this->legacy!==null?$this->legacy->undismissedAnnouncementsCount():0);}
     public function saveAnnouncement(array $input,$id=null,$revision=null):string
     {

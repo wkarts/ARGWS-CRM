@@ -41,6 +41,9 @@ final class NativeCompanyRoutes
         'emails' => [
             'sent_smtp_test_email'=>['POST'], 'delete_queued_email'=>['POST'], 'clear_queued_emails'=>['POST'],
         ],
+        'misc' => [
+            'dismiss_announcement'=>['POST'],
+        ],
         'invoice_items' => [
             'index'=>['GET','HEAD'], 'table'=>['POST'], 'manage'=>['POST'], 'import'=>['GET','HEAD','POST'],
             'add_group'=>['POST'], 'update_group'=>['POST'], 'delete_group'=>['POST'], 'delete'=>['POST'],

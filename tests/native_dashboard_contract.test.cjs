@@ -20,6 +20,13 @@ test('request seal and pre-emission authorization retained',()=>{
  const p=read('application/services/CompanyDashboardPresenter.php');assert.match(p,/company_dashboard_schema_unavailable/);assert.match(p,/company_dashboard_stale/);
 });
 
+test('original dashboard alerts use issuer-scoped announcements and POST dismissal in native requests',()=>{
+ const controller=read('application/controllers/admin/Dashboard.php');assert.match(controller,/\$auxiliary->dashboardAnnouncements\(\)/);assert.match(controller,/company_dashboard_can_edit_announcements/);
+ const service=read('application/services/NativeCompanyAuxiliaryUi.php');assert.match(service,/function dashboardAnnouncements\(int \$limit=100\)/);assert.match(service,/\$row\['showtostaff'\].*empty\(\$row\['is_dismissed'\]\)/);
+ const view=read('application/views/admin/includes/alerts.php');assert.match(view,/CompanyRequestScope::nativeFor\(get_instance\(\)\)/);assert.match(view,/\$nativeCompanyDashboard\?\(is_array\(\$company_dashboard_announcements/);assert.match(view,/form_open\(CompanyRequestScope::adminUrl\(get_instance\(\),'misc\/dismiss_announcement/);assert.match(view,/if\(!\$nativeCompanyDashboard\)\{hooks\(\)->do_action/);
+ const routes=read('application/services/NativeCompanyRoutes.php');assert.match(routes,/'misc'\s*=>\s*\[\s*'dismiss_announcement'=>\['POST'\]/);
+});
+
 test('isolated native shell loads shared view helpers and scoped PT-BR labels without forcing HTML responses',()=>{
  const admin=read('application/core/AdminController.php');assert.match(admin,/load->helper\(\['admin', 'general', 'app_branding'\]\)/);
  const presentation=read('application/services/NativeCompanyAdminPresentation.php');assert.match(presentation,/\$ci->lang->language=array_merge\(\$ci->lang->language,self::\$language\)/);

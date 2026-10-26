@@ -25,6 +25,8 @@ foreach (['GET','HEAD','PUT','PATCH','DELETE','OPTIONS'] as $verb) {
     $check(!NativeCompanyRoutes::admits('admin/','','emails','sent_smtp_test_email',$verb),'native SMTP test never runs without explicit POST');
 }
 $check(NativeCompanyRoutes::admits('admin/','','emails','sent_smtp_test_email','POST'),'native SMTP test endpoint is connected to its scoped writer');
+$check(NativeCompanyRoutes::admits('admin/','','misc','dismiss_announcement','POST'),'native announcement dismissal uses the original scoped POST action');
+$check(!NativeCompanyRoutes::admits('admin/','','misc','dismiss_announcement','GET'),'native announcement dismissal never mutates through GET');
 foreach (['delete_queued_email','clear_queued_emails'] as $method) {
     $check(NativeCompanyRoutes::admits('admin/','','emails',$method,'POST'),'native queue deletion uses original POST route');
     $check(!NativeCompanyRoutes::admits('admin/','','emails',$method,'GET'),'native queue deletion never uses GET');
