@@ -52,19 +52,22 @@ window.NativeAdminCalendar={init:function(){
             params["calendar_filters"] = true;
           }
 
-          var query=$.extend({},params,{start:info.startStr,end:info.endStr});
+          // This endpoint reads calendar days, with an exclusive end. The
+          // shipped FullCalendar can emit offset-free timestamps for named
+          // zones (UTC-coercion); never reinterpret those as server instants.
+          var query=$.extend({},params,{start:info.startStr.slice(0,10),end:info.endStr.slice(0,10)});
           var pending=native?NativeCompanyTransport.request("utilities/get_calendar_data","GET",query,{dataType:"json"}):$.getJSON(admin_url+"utilities/get_calendar_data",query);
           return pending.then(function (data) {
             successCallback(
               data.map(function (e) {
                 return $.extend({}, e, {
-                  url: native && e.native_path ? admin_url + e.native_path : e.url,
+                  url: e.native_path ? admin_url + e.native_path : e.url,
                   start: e.start || e.date,
                   end: e.end || e.date,
                 });
               })
             );
-          });
+          }, failureCallback);
         },
       ],
 
@@ -188,7 +191,7 @@ function view_event(id) {
   }
   var native=$("body").hasClass("native-company-admin");
   if(native&&!window.NativeCompanyTransport)throw new Error("native_calendar_transport_required");
-  var pending=native?NativeCompanyTransport.request("utilities/view_event/"+id,"GET",{}, {dataType:"html"}):$.post(admin_url+"utilities/view_event/"+id);
+  var pending=native?NativeCompanyTransport.request("utilities/view_event/"+id,"GET",{}, {dataType:"html"}):$.get(admin_url+"utilities/view_event/"+id);
   return pending.done(function (response) {
     $("#event").html(response);
     $("#viewEvent").modal("show");
@@ -203,7 +206,8 @@ function delete_event(id) {
   if (confirm_delete()) {
     var native=$("body").hasClass("native-company-admin");
     if(native&&!window.NativeCompanyTransport)throw new Error("native_calendar_transport_required");
-    var pending=native?NativeCompanyTransport.request("utilities/delete_event/"+id,"POST",{revision:$("#viewEvent input[name=revision]").val()},{dataType:"json"}):requestGetJSON("utilities/delete_event/"+id);
+    var revision={revision:$("#viewEvent input[name=revision]").val()};
+    var pending=native?NativeCompanyTransport.request("utilities/delete_event/"+id,"POST",revision,{dataType:"json"}):$.post(admin_url+"utilities/delete_event/"+id,revision);
     return pending.done(function (response) {
       if (response.success === true || response.success == "true") {
         window.location.reload();

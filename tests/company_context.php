@@ -294,12 +294,22 @@ $ci=contextEnvironment($f,$s,'utilities','calendar');hooks()->trace=[];CompanyRe
 essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===41,'principal calendar enters the same native adapters before legacy hydration');
 essentialCheck(hooks()->trace===[],'principal calendar admission dispatches no global hooks');
 $principalCalendarToken=CompanyRequestScope::token();$principalCalendarCsrf=CompanyRequestScope::nativeCsrfToken($ci);CompanyRequestScope::finish();
+$ci=contextEnvironment($f,$s,'utilities','delete_event','GET');expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),405);
+$ci=contextEnvironment($f,$s,'utilities','view_event','POST');$_POST=['_company_context'=>$principalCalendarToken,'_native_company_csrf'=>$principalCalendarCsrf];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),405);
 $ci=contextEnvironment($f,$s,'utilities','calendar','POST');$_POST=['_company_context'=>$principalCalendarToken];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
 $ci=contextEnvironment($f,$s,'utilities','calendar','POST');$_POST=['_company_context'=>$principalCalendarToken,'_native_company_csrf'=>$principalCalendarCsrf];CompanyRequestScope::beforeHydration($ci);
 essentialCheck(CompanyRequestScope::nativeFor($ci)&&!isset($_POST['_company_context'],$_POST['_native_company_csrf']),'principal calendar POST enforces and strips both native boundary tokens');CompanyRequestScope::finish();
 $ci = contextEnvironment($f, $s, 'invoices', 'index'); $ci->load->initialize();
 essentialCheck(CompanySettingsRuntime::issuerId() === 41 && !CompanyRequestScope::isolated(), 'primary legacy request resolves before standard libraries');
 essentialCheck(in_array('app', $ci->load->autoload['libraries'], true), 'primary preserves legacy autoload');
+$legacyNativeCsrf=CompanyRequestScope::nativeCsrfToken($ci);
+essentialCheck(is_string($legacyNativeCsrf)&&hash_equals($principalCalendarCsrf,$legacyNativeCsrf),'principal legacy document carries its current context-bound native mutation token');
+essentialCheck(CompanyRequestScope::nativeCsrfToken(new stdClass())===null&&!CompanyRequestScope::nativeFor($ci),'token delivery neither attests another object nor promotes the legacy document to native presentation');
+essentialCheck(str_contains(form_open('https://crm.example.test/admin/utilities/calendar'),'name="_native_company_csrf" value="'.$legacyNativeCsrf.'"'),'server form on principal legacy document can submit to shared calendar without dropping its extra CSRF');
+$legacyTransport=(new ContextViewRenderer())->render('admin/includes/company_context_script');
+essentialCheck(str_contains($legacyTransport,$legacyNativeCsrf),'existing same-origin XHR/fetch bootstrap also captures the principal document native mutation token');
+essentialCheck(!str_contains(form_open('https://foreign.invalid/endpoint'),'_native_company_csrf'),'native CSRF is never relayed to an external form');
+essentialCheck(!str_contains(form_open('https://crm.example.test/public-form'),'_native_company_csrf')&&!str_contains(form_open('https://crm.example.test/admin-foreign/form'),'_company_context'),'context and native CSRF stay inside the exact installation admin path, including same-origin forms');
 require APPPATH . 'libraries/App.php';
 class ContextObservedApp extends App
 {

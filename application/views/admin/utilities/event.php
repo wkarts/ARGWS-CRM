@@ -7,7 +7,7 @@
             aria-hidden="true">&times;</span></button>
         <h4 class="modal-title"><?= e($event->title); ?></h4>
       </div>
-      <?= form_open('admin/utilities/calendar', ['id' => 'calendar-event-form']); ?>
+      <?= form_open('admin/utilities/calendar', ['id' => 'calendar-event-edit-form']); ?>
       <div class="modal-body">
         <div class="row">
           <div class="col-md-12">
@@ -18,7 +18,7 @@
             <?php } ?>
             <?php if ($event->userid == (!empty($native_calendar) ? $native_calendar_actor : get_staff_user_id()) || (!empty($native_calendar) ? $native_calendar_can_edit : is_admin())) { ?>
             <?= form_hidden('eventid', $event->eventid); ?>
-            <?php if(!empty($native_calendar)){echo form_hidden('revision',$native_calendar_revision);echo form_hidden('_native_company_csrf',$native_calendar_csrf);} ?>
+            <?php if(!empty($native_calendar))echo form_hidden('revision',$native_calendar_revision); ?>
             <?= render_input('title', 'utility_calendar_new_event_placeholder', $event->title); ?>
             <?= render_textarea('description', 'event_description', $event->description, ['rows' => 5]); ?>
             <?= render_datetime_input('start', 'utility_calendar_new_event_start_date', _dt($event->start), ['data-step' => 30]); ?>

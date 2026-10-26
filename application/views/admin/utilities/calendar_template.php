@@ -7,7 +7,6 @@
         <h4 class="modal-title"><?php echo _l('utility_calendar_new_event_title'); ?></h4>
       </div>
       <?php echo form_open('admin/utilities/calendar', ['id' => 'calendar-event-form']); ?>
-      <?php if(!empty($native_calendar))echo form_hidden('_native_company_csrf',$native_calendar_csrf); ?>
       <div class="modal-body">
         <div class="row">
           <div class="col-md-12">

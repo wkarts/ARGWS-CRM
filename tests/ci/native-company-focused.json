@@ -2301,6 +2301,11 @@
       "node",
       "--test",
       "tests/native_related_task_init.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_company/calendar_handlers.test.cjs"
     ]
   ],
   "mysql": [

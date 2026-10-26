@@ -257,11 +257,43 @@ async function captureRealScreens(page, routes) {
       assert.match(installerAdminId, /^[1-9]\d*$/);
       assert.equal(identityBeforeSecondary.split(':')[0], installerAdminId, 'fresh installer master is already identified as the authenticated administrator before secondary recovery');
       const primaryCompany = sql('SELECT primary_issuer_id FROM tblissuers_installation_identity WHERE id=1');
+      // The original principal dashboard is also a caller of these shared
+      // endpoints. Exercise its real form, not only a request assembled by a test.
+      const eventTitle='Synthetic principal calendar '+Date.now();
+      const eventStart=await page.evaluate(()=>new DateFormatter().formatDate(new Date(2026,9,26,10,0),app.options.date_format+(app.options.time_format==24?' H:i':' g:i A')));
+      await page.goto(url+'/admin?new_event=1&date='+encodeURIComponent(eventStart));
+      const widgetModal=page.locator('#newEventModal');await widgetModal.waitFor({state:'visible'});
+      await widgetModal.locator('[name=title]').fill(eventTitle);
+      await widgetModal.locator('[name=description]').fill('Synthetic local calendar event; no notification transport');
+      if(await widgetModal.locator('[name=reminder_before]').count())await widgetModal.locator('[name=reminder_before]').fill('0');
+      assert.equal(await widgetModal.locator('[name=_native_company_csrf]').count(),1,'principal dashboard form carries the shared endpoint CSRF');
+      const widgetSave=page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname==='/admin/utilities/calendar');
+      await widgetModal.locator('button[type=submit]').click();const widgetSaved=await widgetSave;
+      assert.equal(widgetSaved.status(),200,'principal widget saves through the same native calendar controller');
+      assert.equal((await widgetSaved.json()).success,true);
+      assert.equal(sql("SELECT COUNT(*) FROM tblcompany_events WHERE issuer_id="+Number(primaryCompany)+" AND title='"+eventTitle+"'"),'1','widget writes only the principal company event lineage');
+      await page.waitForURL(u=>u.pathname.replace(/\/$/,'')==='/admin'&&u.search==='');
       const primaryCalendarFeed=page.waitForResponse(r=>new URL(r.url()).pathname==='/admin/utilities/get_calendar_data');
       assert.equal((await page.goto(url+'/admin/utilities/calendar')).status(),200,'principal uses the original native calendar route');
       assert.equal((await primaryCalendarFeed).status(),200,'principal historical feed uses the shared authenticated endpoint');
       assert.equal(await page.locator('body.native-company-admin').count(),1,'principal calendar has the same native presentation as secondary companies');
       assert.equal(await page.locator('#newEventModal').count(),1,'one original event modal and no competing calendar shell');
+      assert.equal(await page.locator('#newEventModal [name=_native_company_csrf]').count(),1,'native new-event form also carries one CSRF field rather than duplicate serialization');
+      const eventRead=page.waitForResponse(r=>r.request().method()==='GET'&&new URL(r.url()).pathname.startsWith('/admin/utilities/view_event/'));
+      await page.locator('#calendar .fc-event-title').filter({hasText:eventTitle}).click();assert.equal((await eventRead).status(),200,'native page opens the event created by the original principal dashboard');
+      const eventModal=page.locator('#viewEvent');await eventModal.waitFor({state:'visible'});assert.equal(await eventModal.locator('[name=revision]').inputValue(),'1');
+      assert.equal(await eventModal.locator('[name=_native_company_csrf]').count(),1,'native edit serializes one CSRF value');
+      assert.equal(await page.locator('#calendar-event-form').count(),1);assert.equal(await page.locator('#calendar-event-edit-form').count(),1,'new and edit forms have independent DOM IDs');
+      await eventModal.locator('[name=description]').fill('Edited through original native calendar modal');
+      if(await eventModal.locator('[name=reminder_before]').count())await eventModal.locator('[name=reminder_before]').fill('0');
+      const nativeEventSave=page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname==='/admin/utilities/calendar');
+      await Promise.all([page.waitForNavigation({waitUntil:'load'}),eventModal.locator('button[type=submit]').click()]);
+      assert.equal((await nativeEventSave).status(),200);assert.equal(sql("SELECT revision FROM tblcompany_events WHERE issuer_id="+Number(primaryCompany)+" AND title='"+eventTitle+"'"),'2','same original modal commits the native edit with its matching revision');
+      await page.locator('#calendar .fc-event-title').filter({hasText:eventTitle}).click();await eventModal.waitFor({state:'visible'});assert.equal(await eventModal.locator('[name=revision]').inputValue(),'2');
+      page.once('dialog',dialog=>dialog.accept());
+      const eventDeletion=page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname.startsWith('/admin/utilities/delete_event/'));
+      await Promise.all([page.waitForNavigation({waitUntil:'load'}),eventModal.locator('button.btn-danger').click()]);
+      assert.equal((await eventDeletion).status(),200);assert.equal(sql("SELECT COUNT(*) FROM tblcompany_events WHERE issuer_id="+Number(primaryCompany)+" AND title='"+eventTitle+"'"),'0','revision-checked native modal deletion removes only that event');
       const oldCalendarForm=await page.locator('#calendar-event-form').evaluate(node=>Object.fromEntries(new FormData(node).entries()));
       await captureRealScreens(page,[['native-principal-calendar',url+'/admin/utilities/calendar']]);
       if (sql("SELECT COUNT(*) FROM tblissuers_registry WHERE tax_id='52998224725'") === '0') {

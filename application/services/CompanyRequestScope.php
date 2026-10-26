@@ -100,11 +100,13 @@ final class CompanyRequestScope
             // Utilities' finite calendar actions share the same adapters for the
             // principal and named companies, including historical event lineage.
             // Other Utilities actions retain their existing admission policy.
-            $sharedCalendar = $native && $class === 'utilities';
+            $sharedCalendar = $native && $class === 'utilities'
+                && in_array($method,['calendar','get_calendar_data','view_event','delete_event'],true);
             self::$nativePresentation = (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar) && NativeCompanyRoutes::admits(
                 (string) $ci->router->fetch_directory(), $module, $class, $method, $verb
             );
             if($companyScopedBbRoute&&!self::$nativePresentation)self::deny($ci,'company_context_route_not_isolated',403);
+            if($sharedCalendar&&!self::$nativePresentation)self::deny($ci,'native_calendar_method_invalid',405);
             if (self::$nativePresentation) { self::$isolated = true; }
             // Only the native Settings renderer proven to avoid legacy hooks/transports is admitted.
             if ($native && !self::$context->isPrimary() && (($class === 'issuers' && in_array($method, ['index', 'save'], true))
@@ -172,7 +174,12 @@ final class CompanyRequestScope
     }
     public static function nativeCsrfToken($ci): ?string
     {
-        return self::nativeFor($ci) ? self::$context->nativeCsrf() : null;
+        // An existing principal page may submit a native calendar/module action.
+        // Deliver the context-bound token to that authenticated document too;
+        // possession does not attest nativeFor() or admit any route. The target
+        // still requires its native seal, verb, both tokens and current ACL.
+        return self::$prepared && self::$owner === $ci && self::$context !== null
+            ? self::$context->nativeCsrf() : null;
     }
     public static function assertNativeMutation($ci): void
     {
