@@ -47,15 +47,19 @@ final class NativeCompanyTicketCustomerSchema
             if(array_diff(array_keys($columns),$expected))throw new RuntimeException('issuer_native_ticket_customer_schema_invalid');
             $engine=IssuerStorage::query($db,'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$name])->row_array();if(strtoupper($engine['ENGINE']??'')!=='INNODB')throw new RuntimeException('issuer_native_ticket_customer_schema_invalid');
             $indexes=[];foreach(IssuerStorage::query($db,'SELECT INDEX_NAME,COLUMN_NAME,NON_UNIQUE,SUB_PART FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? ORDER BY INDEX_NAME,SEQ_IN_INDEX',[$name])->result_array() as $r){if($r['SUB_PART']!==null)throw new RuntimeException('issuer_native_ticket_customer_schema_invalid');if(isset($indexes[$r['INDEX_NAME']]['non_unique'])&&$indexes[$r['INDEX_NAME']]['non_unique']!==(int)$r['NON_UNIQUE'])throw new RuntimeException('issuer_native_ticket_customer_schema_invalid');$indexes[$r['INDEX_NAME']]['columns'][]=$r['COLUMN_NAME'];$indexes[$r['INDEX_NAME']]['non_unique']=(int)$r['NON_UNIQUE'];}
-            // MySQL may materialize a separate single-column issuer_id index for
-            // the FK even though ticket_owner already starts with issuer_id.
-            // Accept only that exact non-unique support index; client_id's FK
-            // support index remains mandatory after making it nullable.
-            $supportIndexes=['client_id'=>true,'issuer_id'=>false];
+            // These support indexes are created before core474 by the native
+            // portal-support schema. Keep their exact shapes while making the
+            // customer nullable; the composite unique key is the target of the
+            // portal support ownership foreign keys.
+            $supportIndexes=[
+                'client_id'=>[['client_id'],1,true],
+                'issuer_id'=>[['issuer_id'],1,false],
+                'portal_support_client'=>[['issuer_id','id','client_id'],0,true],
+            ];
             $expectedIndexes=array_keys($supportIndexes);
-            foreach($supportIndexes as $key=>$required){
+            foreach($supportIndexes as $key=>[$columns,$nonUnique,$required]){
                 if(!isset($indexes[$key])){if($required)throw new RuntimeException('issuer_native_ticket_customer_schema_invalid');continue;}
-                if(($indexes[$key]['columns']??[])!==[$key]||($indexes[$key]['non_unique']??null)!==1)throw new RuntimeException('issuer_native_ticket_customer_schema_invalid');
+                if(($indexes[$key]['columns']??[])!==$columns||($indexes[$key]['non_unique']??null)!==$nonUnique)throw new RuntimeException('issuer_native_ticket_customer_schema_invalid');
             }
             foreach($parts as $definition){
                 if(preg_match('/^(UNIQUE )?KEY `([^`]+)` \(([^)]+)\)$/D',$definition,$m)){$key=$m[2];$cols=explode(',',str_replace('`','',$m[3]));$unique=$m[1]!==''?0:1;}

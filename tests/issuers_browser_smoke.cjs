@@ -261,6 +261,9 @@ async function captureRealScreens(page, routes) {
         assert((await wizard.locator('[role=status]').innerText()).includes('Empresa criada'));
       }
       const secondaryCompany = sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
+      assert.match(secondaryCompany, /^[1-9]\d*$/, 'the secondary company has a stable native identity before selection');
+      sql('UPDATE tblissuers_registry SET tax_id=NULL WHERE id=' + Number(secondaryCompany));
+      assert.equal(sql('SELECT COUNT(*) FROM tblissuers_registry WHERE id=' + Number(secondaryCompany) + ' AND tax_id IS NULL'), '1', 'company selection does not depend on a CNPJ');
       await page.goto(url + '/admin');
       await selectCompanyOption(page, secondaryCompany);
       assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), '/admin', 'company switch stays on the original CRM dashboard URL');
@@ -274,6 +277,16 @@ async function captureRealScreens(page, routes) {
       await page.setViewportSize({width:1280,height:900});
 
       assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany);
+      const nativeRoutes = ['todo','announcements','taxes','departments','tickets','invoice_items','settings?group=company'];
+      for (const route of nativeRoutes) {
+        const response = await page.goto(url + '/admin/' + route, {waitUntil:'load'});
+        assert.equal(response.status(), 200, 'selected company uses the original CRM route /admin/' + route);
+        await shell(page);
+        assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany, 'native route keeps the selected company: ' + route);
+        assert.equal(await page.locator('#wrapper .content').count(), 1, 'native route keeps one original CRM content root: ' + route);
+      }
+      await page.goto(url + '/admin');
+      await shell(page);
       sql('DELETE FROM tblissuers_lock WHERE id=1');
       await page.goto(url + '/admin');
       await waitForUpgradeForm(page);
