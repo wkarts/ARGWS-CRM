@@ -28,6 +28,9 @@ $native=file_get_contents(dirname(__DIR__,2).'/install/database.sql');
 $nativeCreated=NativeInstalledSchemaFixture::apply($db,$p,$native);
 if(!in_array('customers_groups',$nativeCreated,true))throw new RuntimeException('Missing native group prerequisite');
 require_once APPPATH.'services/CompanyContractsSchema.php';CompanyContractsSchema::ensure($db,$p);
+// Migration 430 is already installed before 474 and adds this exact parent key
+// for the portal support ownership FKs. Recreate its schema prerequisite here.
+require_once APPPATH.'services/CompanyPortalSupportWriteSchema.php';CompanyPortalSupportWriteSchema::ensure($db,$p);
 require_once APPPATH.'services/CompanyOperationFilesSchema.php';CompanyOperationFilesSchema::ensure($db,$p);
 // Migration 424 is part of the installed baseline; 474 upgrades its expense
 // scalar and adds owned-form metadata without adopting or rewriting expenses.
