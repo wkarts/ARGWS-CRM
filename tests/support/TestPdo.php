@@ -26,7 +26,7 @@ final class TestPdo
         $pdo->sqliteCreateFunction($name, $callback, $arguments, $flags);
     }
 
-    public static function registerSqliteCollation(PDO $pdo, string $name, callable $callback, int $flags = 0): void
+    public static function registerSqliteCollation(PDO $pdo, string $name, callable $callback): void
     {
         if (class_exists('Pdo\\Sqlite')) {
             $class = 'Pdo\\Sqlite';
@@ -36,6 +36,6 @@ final class TestPdo
             $pdo->createCollation($name, $callback);
             return;
         }
-        $pdo->sqliteCreateCollation($name, $callback, $flags);
+        $pdo->sqliteCreateCollation($name, $callback);
     }
 }

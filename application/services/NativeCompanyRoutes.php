@@ -26,6 +26,10 @@ final class NativeCompanyRoutes
         'taxes' => [
             'index'=>['GET','HEAD','POST'], 'manage'=>['POST'], 'delete'=>['POST'], 'tax_name_exists'=>['POST'],
         ],
+        'departments' => [
+            'index'=>['GET','HEAD','POST'], 'department'=>['POST'], 'delete'=>['POST'], 'email_exists'=>['POST'],
+            'folders'=>['POST'], 'test_imap_connection'=>['POST'],
+        ],
         'tickets' => [
             'index'=>['GET','HEAD','POST'], 'bulk_action'=>['POST'],
         ],
@@ -56,6 +60,6 @@ final class NativeCompanyRoutes
         // Do not decode or normalize attacker-controlled destinations into an admitted route.
         if (str_contains($route, '\\') || str_contains($route, '%') || str_contains($route, '?')
             || str_contains($route, '#') || preg_match('/[\x00-\x20\x7f]/', $route)) { return false; }
-        return in_array($route, ['', 'dashboard', 'dashboard/index', 'todo', 'announcements', 'taxes', 'tickets', 'invoice_items', 'invoice_items/import', 'settings'], true);
+        return in_array($route, ['', 'dashboard', 'dashboard/index', 'todo', 'announcements', 'taxes', 'departments', 'tickets', 'invoice_items', 'invoice_items/import', 'settings'], true);
     }
 }

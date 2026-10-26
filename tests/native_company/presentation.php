@@ -23,7 +23,7 @@ class CompanyRequestScope {
  static function context(){return new class {function issuerId(){return CompanyRequestScope::$issuer;}function staffId(){return 17;}};}
  static function token(){return self::$token;}
  static function nativeCsrfToken($ci){return 'synthetic-native-csrf';}
- static function nativeRouteAllowed($ci,$route){return in_array($route,['','clients','clients/client','invoices','projects','tasks','tasks/task','settings','todo'],true);}
+ static function nativeRouteAllowed($ci,$route){return in_array($route,['','clients','clients/client','invoices','projects','tasks','tasks/task','settings','todo','departments'],true);}
  static function adminUrl($ci,$path=''){return admin_url($path);}
 }
 class CompanySettingsCatalog {static function defaultValue($group,$field){check($group==='localization','only public localization defaults');return ['dateformat'=>'Y-m-d|%Y-%m-%d','time_format'=>'24'][$field];}}
@@ -53,7 +53,7 @@ class NativeCompanyAuxiliaryUi {
  function __construct($db,$prefix,$issuer,$actor){check($issuer===2&&$actor===17,'todo header actor/issuer');}
  function todoCounts(){return [0=>5,1=>2];}
 }
-class IssuerResourceAccess {function __construct(...$args){} function can($issuer,$actor,$feature,$cap){return $issuer===2 && in_array($feature,['customers','invoices','projects','tasks','settings'],true);}}
+class IssuerResourceAccess {public static bool $administrative=true;function __construct(...$args){} function administrative($issuer,$actor){return $issuer===2&&self::$administrative;} function can($issuer,$actor,$feature,$cap){return $issuer===2 && in_array($feature,['customers','invoices','projects','tasks','settings','tickets'],true);}}
 class IssuerStorage {static function query($db,$sql,$params=[]){check(!str_contains($sql,'options'),'theme inactive must not fetch options');return new class($sql){function __construct(private $sql){}function row_array(){return str_contains($this->sql,'staffid,firstname')?['staffid'=>17,'firstname'=>'<Alice>','lastname'=>'A','email'=>'synthetic@example.test']:['active'=>0];}};}}
 class Fixture {
  public $config; public $security; public $load; public $db; public $router; public $agent; public $session; public array $vars=[];
@@ -74,6 +74,10 @@ $data=NativeCompanyAdminPresentation::current($ci);
 check($data['logo']==='data:image/png;base64,Qg=='&&$data['favicon']==='data:image/png;base64,Qw==','native dark-logo priority and issuer favicon');
 $ci->config->csrf=true;$browser=NativeCompanyAdminPresentation::browserConfig($ci);check($browser['frameworkCsrf']===['name'=>'fixture_csrf','value'=>'fixture-framework-hash'],'framework token available without header providers for all native forms');$ci->config->csrf=false;
 check(isset($data['sidebar_menu']['customers']) && isset($data['sidebar_menu']['sales']['children'][0]),'authorized native menu entries');
+check(count(array_filter($data['setup_menu']['support']['children'],static fn($child)=>$child['slug']==='departments'&&str_ends_with($child['href'],'/admin/departments')))===1,'the original Departments setup route appears only for its administrator policy');
+IssuerResourceAccess::$administrative=false;NativeCompanyAdminPresentation::prepare($ci);$limited=NativeCompanyAdminPresentation::current($ci);
+check(count(array_filter($limited['setup_menu']['support']['children']??[],static fn($child)=>$child['slug']==='departments'))===0,'Departments is hidden when the actor is not an administrator');
+IssuerResourceAccess::$administrative=true;NativeCompanyAdminPresentation::prepare($ci);$data=NativeCompanyAdminPresentation::current($ci);
 check(!isset($data['sidebar_menu']['subscriptions']),'unauthorized/unimplemented entries absent');
 $app=NativeCompanyAdminPresentation::appConfig($ci);
 check($app['options']['tables_pagination_limit']==='37' && $app['options']['decimal_places']===2 && isset($app['lang']['datatables']['paginate']['next']),'real native tables payload without global hooks');

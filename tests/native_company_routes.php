@@ -12,6 +12,15 @@ foreach (['GET', 'HEAD'] as $verb) {
 foreach (['GET','HEAD','POST'] as $verb) {
     $check(NativeCompanyRoutes::admits('admin/','','settings','index',$verb),'existing Settings route admitted only for its explicit native adapter');
 }
+foreach (['GET','HEAD','POST'] as $verb) {
+    $check(NativeCompanyRoutes::admits('admin/','','departments','index',$verb),'original native Departments list and DataTables methods admitted');
+}
+foreach (['department','delete','email_exists','folders','test_imap_connection'] as $method) {
+    $check(NativeCompanyRoutes::admits('admin/','','departments',$method,'POST'),'native Departments endpoint uses its original POST route: '.$method);
+    foreach (['GET','HEAD','PUT','PATCH','DELETE','OPTIONS'] as $verb) {
+        $check(!NativeCompanyRoutes::admits('admin/','','departments',$method,$verb),'native Departments endpoint denies alternate verb: '.$method.'/'.$verb);
+    }
+}
 foreach (['GET','HEAD','PUT','PATCH','DELETE','OPTIONS'] as $verb) {
     $check(!NativeCompanyRoutes::admits('admin/','','emails','sent_smtp_test_email',$verb),'native SMTP test never runs without explicit POST');
 }
@@ -28,7 +37,7 @@ foreach ([['admin', 'third_party', 'dashboard', 'index'], ['public', '', 'dashbo
     ['admin', '', 'company_context', 'index'], ['admin', '', 'authentication', 'index']] as $route) {
     $check(!NativeCompanyRoutes::admits(...array_merge($route, ['GET'])), 'unadapted or non-native route denied');
 }
-foreach (['', 'dashboard', 'dashboard/index','settings'] as $route) {
+foreach (['', 'dashboard', 'dashboard/index','settings','departments'] as $route) {
     $check(NativeCompanyRoutes::navigation($route), 'canonical native navigation accepted');
 }
 foreach (['/dashboard', '//evil.test', 'https://evil.test', '../dashboard', 'dashboard/../invoices',

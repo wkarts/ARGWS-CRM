@@ -36,7 +36,11 @@ final class NativeCompanyAdminPresentation
         foreach(NativeAdminMenuCatalog::entries() as $entry) {
             if($issuer === null) { continue; }
             if ($entry['route'] !== null && !CompanyRequestScope::nativeRouteAllowed($ci,$entry['route'])) { continue; }
-            if ($entry['feature'] !== '' && !$acl->can($issuer,$actor,$entry['feature'],'view')) { continue; }
+            // The original Departments controller is administrator-only. Do not
+            // advertise its native route to ticket viewers who cannot enter it.
+            if ($entry['slug'] === 'departments') {
+                if (!$acl->administrative($issuer,$actor)) { continue; }
+            } elseif ($entry['feature'] !== '' && !$acl->can($issuer,$actor,$entry['feature'],'view')) { continue; }
             $item=['slug'=>$entry['slug'],'name'=>self::label($entry['label']),'href'=>$entry['route'] === null ? '#' : CompanyRequestScope::adminUrl($ci,$entry['route']), 'icon'=>$entry['icon'],'position'=>$entry['position'],'children'=>[]];
             if($entry['collapse']) { $item['collapse']=true; }
             if($entry['kind']==='sidebar_children') { $children['sidebar'][$entry['parent']][]=$item; }
