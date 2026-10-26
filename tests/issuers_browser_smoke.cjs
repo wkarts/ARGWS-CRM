@@ -17,6 +17,14 @@ function sql(query) {
   return execFileSync('docker', ['exec', '-e', 'MYSQL_PWD', dbContainer, 'mysql', '--protocol=tcp', '--host=127.0.0.1', '--user=' + process.env.ISSUERS_BROWSER_DB_USER, dbName, '--batch', '--skip-column-names', '-e', query],
     { env: { ...process.env, MYSQL_PWD: process.env.ISSUERS_BROWSER_DB_PASSWORD }, encoding: 'utf8' }).trim();
 }
+function permissionSchemaSnapshot() {
+  return sql("SELECT COALESCE(GROUP_CONCAT(CONCAT(COLUMN_NAME,':',LOWER(COLUMN_TYPE),':',IS_NULLABLE,':',COALESCE(COLLATION_NAME,'none')) ORDER BY ORDINAL_POSITION SEPARATOR '|'),'table_missing') FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='tblissuers_resource_permissions'");
+}
+function assertNativePermissionSchema(stage) {
+  const expected='issuer_id:int unsigned:NO:none|staff_id:int:NO:none|feature:varchar(100):NO:ascii_bin|capability:varchar(100):NO:ascii_bin';
+  const actual=permissionSchemaSnapshot();
+  assert.equal(actual,expected,stage+': native ACL schema snapshot');
+}
 async function login(page) {
   const response = await page.goto(url + '/admin/authentication');
   assert.equal(response.status(), 200, 'login remains available before core upgrade');
@@ -198,6 +206,7 @@ async function captureRealScreens(page, routes) {
         assert(await page.locator('#submit_btn').isEnabled(), 'failure preserves an enabled retry');
         assert(!(await page.content()).includes('invalid_schema'), 'SQL details are not exposed');
         sql('DROP TABLE tblissuers_resource_permissions; RENAME TABLE tblissuers_resource_permissions_smoke_backup TO tblissuers_resource_permissions; DELETE FROM tblissuers_lock WHERE id=1');
+        assertNativePermissionSchema('restored after synthetic invalid-schema rejection');
         restored = true;
         // The missing singleton still requires authorized repair, after the
         // genuine incompatibility has been corrected by the administrator.
@@ -229,6 +238,7 @@ async function captureRealScreens(page, routes) {
         assert((await page.content()).includes('atualizado com sucesso'), 'native success alert is delivered');
         await page.getByText('O CRM foi atualizado com sucesso.', { exact: true }).waitFor({ state: 'visible' });
         assert.equal(sql('SELECT COUNT(*) FROM tblissuers_lock WHERE id=1'), '1');
+        assertNativePermissionSchema('after authorized native recovery');
         await page.reload();
         assert.equal(await page.locator('#upgrade_db_form').count(), 0, 'completed update never reopens a wizard');
         assert(!(await page.content()).includes('O CRM foi atualizado com sucesso.'), 'success feedback is delivered only once');
@@ -262,10 +272,17 @@ async function captureRealScreens(page, routes) {
       }
       const secondaryCompany = sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
       assert.match(secondaryCompany, /^[1-9]\d*$/, 'the secondary company has a stable native identity before selection');
+      assertNativePermissionSchema('after secondary company creation');
       sql('UPDATE tblissuers_registry SET tax_id=NULL WHERE id=' + Number(secondaryCompany));
       assert.equal(sql('SELECT COUNT(*) FROM tblissuers_registry WHERE id=' + Number(secondaryCompany) + ' AND tax_id IS NULL'), '1', 'company selection does not depend on a CNPJ');
       await page.goto(url + '/admin');
-      await selectCompanyOption(page, secondaryCompany);
+      assertNativePermissionSchema('immediately before secondary company selection');
+      try {
+        await selectCompanyOption(page, secondaryCompany);
+      } catch (error) {
+        console.error('Native company ACL schema after selection response: ' + permissionSchemaSnapshot());
+        throw error;
+      }
       assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), '/admin', 'company switch stays on the original CRM dashboard URL');
       await shell(page);
       assert.equal(await page.locator('#side-menu .menu-item-dashboard').count(), 1, 'original dashboard menu remains present for the selected company');
