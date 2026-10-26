@@ -628,7 +628,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Dashboard.php": {
-      "sha256": "2f8de0c00d5f433af053dfa37acb1fbf3c16d87431e97a017fbd6584049ef457",
+      "sha256": "3b52850cb97c759b4ccc0cd7edeb9ba54153fe565daa670d5fdac69be01f3529",
       "categories": [
         "invoice_table"
       ],
@@ -636,7 +636,7 @@
         78
       ],
       "state": "partial",
-      "evidence": "Manual review: the native Dashboard now loads the existing fields helper used by the official admin/todos/_todo.php template. PHP 8.1 lint and dashboard widget ACL/DOM tests pass; authenticated stack browser rerun is pending. This does not prove broader dashboard consumer isolation."
+      "evidence": "PR #52: the native Dashboard loads the existing fields helper used by the official todo modal and explicitly loads the official template helper required by fields_helper.php. The Node dashboard contract covers that helper dependency; authenticated stack browser proof is pending. This does not prove broader dashboard consumer isolation, invoice authorization, or company-wide route/view convergence; operational rollout remains blocked."
     },
     "application/controllers/admin/Email_schedule_invoice.php": {
       "sha256": "8016a17ca263e738d3db7e6ed49bf1b9856657dc7b58dafd690100295341ed65",
