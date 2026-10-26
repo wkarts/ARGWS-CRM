@@ -13,7 +13,8 @@
     "PR52 Dashboard table render: the shared Dashboard now loads the canonical custom-fields and tickets helpers used by the official task table. Dashboard remains unreviewed by this conservative inventory; no company-boundary or operational rollout gate is closed by helper loading.",
     "PR52 Dashboard ticket widget: the official table now receives the issuer-scoped table order, visibility, service setting and field labels. The Dashboard PHP source remains unreviewed in this conservative inventory; broader route, view, controller and tenant-isolation coverage remains incomplete.",
     "PR52 beea5839 adds a one-time archive and primary-company copy for legacy resource ACLs. IssuerCore remains unreviewed; the source table is retained and the inventory does not establish migration safety or full company isolation.",
-    "PR52 native dashboard project-table preference fix: the official my-projects identifier now resolves through the existing project ACL and a per-company preference key; only local SQLite preference behavior is evidenced and the operational rollout gate stays blocked."
+    "PR52 native dashboard project-table preference fix: the official my-projects identifier now resolves through the existing project ACL and a per-company preference key; only local SQLite preference behavior is evidenced and the operational rollout gate stays blocked.",
+    "PR52 Dashboard helper fix: native rendering loads the existing fields helper required by the original todo modal; local PHP 8.1 lint and widget tests pass, with full authenticated stack browser proof pending. The operational rollout gate stays blocked."
   ],
   "files": {
     "application/config/autoload.php": {
@@ -627,15 +628,15 @@
       "evidence": ""
     },
     "application/controllers/admin/Dashboard.php": {
-      "sha256": "ae2e277a1f178f6e016f4a13d35974b358cfa2d70717b82908b3d236a0d8d467",
+      "sha256": "2f8de0c00d5f433af053dfa37acb1fbf3c16d87431e97a017fbd6584049ef457",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
         78
       ],
-      "state": "unreviewed",
-      "evidence": ""
+      "state": "partial",
+      "evidence": "Manual review: the native Dashboard now loads the existing fields helper used by the official admin/todos/_todo.php template. PHP 8.1 lint and dashboard widget ACL/DOM tests pass; authenticated stack browser rerun is pending. This does not prove broader dashboard consumer isolation."
     },
     "application/controllers/admin/Email_schedule_invoice.php": {
       "sha256": "8016a17ca263e738d3db7e6ed49bf1b9856657dc7b58dafd690100295341ed65",
