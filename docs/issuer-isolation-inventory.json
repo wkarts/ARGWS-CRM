@@ -4828,13 +4828,13 @@
       "evidence": ""
     },
     "application/services/NativeCompanyCalendarFeed.php": {
-      "sha256": "c2084baacc5931cbff9e701cb61b3b0cf80cd45ce2a3ae810717b32e966aa9ad",
+      "sha256": "23d6ceb9d2e4c6579af0dcf9195d164af06582e018b24556b360cb0f79b8c3b6",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        13,
-        28
+        14,
+        29
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5287,6 +5287,21 @@
         30,
         41,
         45
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
+    "application/services/NativeCompanyLegacyCalendarRead.php": {
+      "sha256": "cff80c0904bc2aeb30f24ac868a2ffdcdd71e272c22a1e1d04be1f231f6c831a",
+      "categories": [
+        "customer_privacy",
+        "invoice_table"
+      ],
+      "signal_lines": [
+        21,
+        30,
+        41,
+        46
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8187,7 +8202,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/controllers/Banco_brasil.php": {
-      "sha256": "b4777580bed1771a07a9d62ef14de6f5619f8a00def5524a14f07c3fdcd6c2bb",
+      "sha256": "b8d67677ad63adc60595457816ecb0a40e7b1522d5806adae88781ea10de5a69",
       "categories": [
         "invoice_table"
       ],

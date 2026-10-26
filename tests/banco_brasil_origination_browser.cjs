@@ -48,6 +48,9 @@ async function next(page) { await navigate(page, page.locator('section form butt
   let capturedChannelA;
   for(const id of [a,b]){
    await select(id);await page.goto(url+'/admin/banco_brasil?issuer_id='+id);
+   assert.equal(await page.locator('body.native-company-admin #header').count(),1,'BB uses the original CRM header');
+   assert.equal(await page.locator('body.company-context-shell').count(),0,'BB no longer uses the company application shell');
+   assert.equal(await page.locator('#bb_issuer').count(),0,'sidebar is the sole company selector');
    await page.locator('#bb-tab-auth').click();
    for(const channel of ['api','cnab']){
     const form=page.locator('form[action*="save_channel_preferences"]').filter({has:page.locator('input[name=channel][value="'+channel+'"]')});

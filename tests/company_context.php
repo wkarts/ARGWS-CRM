@@ -248,14 +248,16 @@ essentialCheck(($s->data['company_registry_notice']['type']??null)==='success','
 $ci=contextEnvironment($f,$s,'banco_brasil','index');$ci->router->module='banco_brasil';
 CompanyRequestScope::beforeHydration($ci);
 essentialCheck(CompanyRequestScope::isolated()&&CompanyRequestScope::context()->issuerId()===54&&CompanySettingsRuntime::issuerId()===54,'BB GET is sealed to selected company B before hydration');
-$bbContextToken=CompanyRequestScope::token();
+$bbContextToken=CompanyRequestScope::token();$bbNativeCsrf=CompanyRequestScope::nativeCsrfToken($ci);
+essentialCheck(CompanyRequestScope::nativeFor($ci)&&is_string($bbNativeCsrf),'BB module uses the official native presentation attestation');
 $bbImportForm=form_open_multipart('https://crm.example.test/admin/banco_brasil/import_return');
 essentialCheck(str_contains($bbImportForm,'name="_company_context" value="'.$bbContextToken.'"'),'BB multipart POST form carries the selected company token');
 CompanyRequestScope::finish();
-$ci=contextEnvironment($f,$s,'banco_brasil','register_connection','POST');$ci->router->module='banco_brasil';$_POST=['_company_context'=>$bbContextToken];
+$ci=contextEnvironment($f,$s,'banco_brasil','register_connection','POST');$ci->router->module='banco_brasil';$_POST=['_company_context'=>$bbContextToken,'_native_company_csrf'=>$bbNativeCsrf];
 CompanyRequestScope::beforeHydration($ci);
-essentialCheck(CompanyRequestScope::isolated()&&CompanyRequestScope::context()->issuerId()===54&&!isset($_POST['_company_context']),'BB POST validates and strips company metadata before controller hydration');
+essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===54&&!isset($_POST['_company_context'],$_POST['_native_company_csrf']),'BB POST validates and strips company metadata before controller hydration');
 CompanyRequestScope::finish();
+$ci=contextEnvironment($f,$s,'banco_brasil','register_connection','POST');$ci->router->module='banco_brasil';$_POST=['_company_context'=>$bbContextToken];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
 $ci=contextEnvironment($f,$s,'banco_brasil','register_connection','POST');$ci->router->module='banco_brasil';$_POST=['_company_context'=>$tokenA];
 expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),409);
 $ci=contextEnvironment($f,$s,'banco_brasil','index');$ci->router->module='banco_brasil';$ci->router->directory='../../modules/banco_brasil/controllers/';
@@ -266,7 +268,7 @@ $ci=contextEnvironment($f,$s,'banco_brasil','index');$ci->router->module='banco_
 CompanyRequestScope::beforeHydration($ci);
 essentialCheck(!CompanyRequestScope::isolated(),'unreviewed module directory cannot opt into the isolated route set');
 CompanyRequestScope::finish();
-$ci=contextEnvironment($f,$s,'banco_brasil','send_to_bank','POST');$ci->router->module='banco_brasil';$_POST=['_company_context'=>$bbContextToken];
+$ci=contextEnvironment($f,$s,'banco_brasil','send_to_bank','POST');$ci->router->module='banco_brasil';$_POST=['_company_context'=>$bbContextToken,'_native_company_csrf'=>$bbNativeCsrf];
 expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
 $ci = contextEnvironment($f, $s, 'settings', 'email_test'); expectStatus(fn() => new Settings(), 403);
 // Group-level rejection uses the actual Settings controller fixture in

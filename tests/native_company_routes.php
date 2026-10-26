@@ -62,3 +62,14 @@ $mutations=['todo'=>['todo','change_todo_status','update_todo_items_order','dele
 foreach($mutations as$controller=>$methods)foreach($methods as$method){$check(NativeCompanyRoutes::admits('admin','',$controller,$method,'POST'),'Explicit owned writer admitted');foreach(['GET','HEAD','PUT','DELETE']as$verb)$check(!NativeCompanyRoutes::admits('admin','',$controller,$method,$verb),'Mutation never admitted through read/foreign verb');}
 foreach(['todo','announcements','taxes','tickets','invoice_items']as$controller){$check(NativeCompanyRoutes::admits('admin','',$controller,'index','GET'),'Original catalog page admitted');$check(NativeCompanyRoutes::navigation($controller),'Original navigation target admitted');$check(!NativeCompanyRoutes::admits('admin','module',$controller,'index','GET'),'Module cannot inherit native admission');$check(!NativeCompanyRoutes::admits('admin','',$controller,'unknown','POST'),'No wildcard actions');}
 echo "Native finite auxiliary admission: {$checks} total route assertions PASS; authenticated HTTP remains required.\n";
+
+foreach(['admin/','../../modules/banco_brasil/controllers/']as$directory){
+ $check(NativeCompanyRoutes::admits($directory,'banco_brasil','banco_brasil','index','GET'),'BB shares native presentation in both MX directory forms');
+ foreach(['register_connection','generate_remittance','save_channel_preferences','issue_api','preview_checkout','publish_checkout']as$method){
+  $check(NativeCompanyRoutes::admits($directory,'banco_brasil','banco_brasil',$method,'POST'),'explicit BB writer uses native company CSRF');
+  $check(!NativeCompanyRoutes::admits($directory,'banco_brasil','banco_brasil',$method,'GET'),'BB writer cannot run through GET');
+ }
+ $check(!NativeCompanyRoutes::admits($directory,'banco_brasil','banco_brasil','unknown','POST'),'BB has no wildcard module action');
+}
+$check(NativeCompanyRoutes::navigation('banco_brasil'),'single native module navigation');
+echo "BB native finite admission: {$checks} total assertions passed.\n";

@@ -63,6 +63,12 @@ final class NativeCompanyRoutes
 
     public static function admits(string $directory, string $module, string $controller, string $method, string $verb): bool
     {
+        if(strtolower($module)==='banco_brasil'&&strtolower($controller)==='banco_brasil'
+            &&in_array(trim($directory,'/'),['admin','../../modules/banco_brasil/controllers'],true)){
+            $actions=['index'=>['GET','HEAD'],'local_noncash'=>['GET','HEAD','POST']];
+            foreach(['save_channel_preferences','register_connection','register_layout','import_return','declare_contract','generate_remittance','retry_remittance','download_remittance','report_transmission','link_event','review_event','settle_event','settle_components_event','settle_tariff_event','declare_external_reversal','declare_api_profile','save_api_credentials','issue_api','resume_api_issue','query_api','cancel_api','settle_api','amend_api_due','amend_api_abatement','amend_api_reference','amend_api_address','amend_api_discount','amend_api_receipt_window','cancel_api_discount','assign_api_discount','configure_api_webhook','query_api_movements','preview_checkout','publish_checkout']as$action)$actions[$action]=['POST'];
+            return in_array(strtoupper($verb),$actions[strtolower($method)]??[],true);
+        }
         if (trim($directory, '/') !== 'admin' || $module !== '') { return false; }
         return in_array(strtoupper($verb), self::ACTIONS[strtolower($controller)][strtolower($method)] ?? [], true);
     }
@@ -73,6 +79,6 @@ final class NativeCompanyRoutes
         // Do not decode or normalize attacker-controlled destinations into an admitted route.
         if (str_contains($route, '\\') || str_contains($route, '%') || str_contains($route, '?')
             || str_contains($route, '#') || preg_match('/[\x00-\x20\x7f]/', $route)) { return false; }
-        return in_array($route, ['', 'dashboard', 'dashboard/index', 'issuers', 'todo', 'announcements', 'taxes', 'departments', 'tickets', 'invoice_items', 'invoice_items/import', 'settings', 'utilities/calendar'], true);
+        return in_array($route, ['', 'dashboard', 'dashboard/index', 'issuers', 'todo', 'announcements', 'taxes', 'departments', 'tickets', 'invoice_items', 'invoice_items/import', 'settings', 'utilities/calendar', 'banco_brasil'], true);
     }
 }

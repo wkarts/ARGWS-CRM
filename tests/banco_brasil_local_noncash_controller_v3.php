@@ -1,5 +1,6 @@
 <?php
 require __DIR__.'/banco_brasil_local_noncash_api_v3.php';
+function init_head(){echo '<div id="header"></div>'; }function init_tail(){echo '<!-- native footer I/O double -->';}
 class AdminController{public$input,$session,$db,$load,$output;}
 class V3HttpStop extends RuntimeException{}
 function admin_url($path){return'/admin/'.$path;}function show_error($message,$status){throw new V3HttpStop($message,$status);}function access_denied($feature){throw new V3HttpStop('denied',403);}function get_staff_user_id(){return$GLOBALS['v3ControllerActor'];}function issuer_resource_can($i,$a,$f,$c){global$db,$p;return(new IssuerResourceAccess($db,$p))->can($i,$a,$f,$c);}function redirect($url,...$unused){$GLOBALS['v3Redirect']=$url;}function set_alert($kind,$message){$GLOBALS['v3Alert']=[$kind,$message];}function html_escape($v){return htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}function form_open($url,...$unused){return'<form method="post" action="'.html_escape($url).'"><input type="hidden" name="_company_context" value="'.html_escape(CompanyRequestScope::token()).'">';}function form_close(){return'</form>';}

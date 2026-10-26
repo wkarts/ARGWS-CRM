@@ -4,6 +4,7 @@ require_once __DIR__.'/NativeCompanyCalendarPreferences.php';
 require_once __DIR__.'/NativeCompanyCalendar.php';
 require_once __DIR__.'/NativeCompanyAuxiliary.php';
 require_once __DIR__.'/CompanyCalendarRead.php';
+require_once __DIR__.'/NativeCompanyLegacyCalendarRead.php';
 /** Original FullCalendar event DTO; reads only, with no provider request or notification write. */
 final class NativeCompanyCalendarFeed
 {
@@ -19,7 +20,7 @@ final class NativeCompanyCalendarFeed
     }
     public function read(int $i,int $a,array $input):array
     {
-        $f=self::filters($input);$acl=new IssuerResourceAccess($this->db,$this->p);if($acl->primaryId()===$i)throw new DomainException('native_calendar_primary_uses_historical_model');
+        $f=self::filters($input);
         $prefs=new NativeCompanyCalendarPreferences($this->db,$this->p);$snapshot=$prefs->page($i,$a);$v=$snapshot['values'];$out=[];
         $enabled=static fn(string $key)=>!$f['filtered']||isset($f['flags'][$key]);
         if($enabled('events'))foreach((new NativeCompanyCalendar($this->db,$this->p))->range($i,$a,$f['start'],$f['end'])as$r)$out[]=['title'=>$r['title'],'start'=>$r['start'],'end'=>$r['end']?:null,'color'=>$r['color'],'eventid'=>$r['eventid'],'id'=>'event:'.$r['eventid'],'_tooltip'=>$r['description']];
@@ -28,6 +29,7 @@ final class NativeCompanyCalendarFeed
         foreach($page['events']as$r){[$source,$id]=explode(':',$r['id'],2);$kind=match($source){'invoices'=>'invoice','estimates'=>'company_estimate','proposals'=>'company_proposal','projects'=>'company_project','project_tasks'=>'company_task','standalone_tasks'=>'company_standalone_task','contracts'=>'company_contract'};$canonical=NativeCompanyResourceId::encode($kind,$id);$path=match($source){'invoices'=>'invoices/list_invoices/','estimates'=>'estimates/list_estimates/','proposals'=>'proposals/list_proposals/','projects'=>'projects/view/','project_tasks','standalone_tasks'=>'tasks/view/','contracts'=>'contracts/contract/'}.$canonical;$out[]=['id'=>$r['id'],'title'=>$r['title'],'start'=>$r['date'],'allDay'=>true,'color'=>$r['color'],'native_path'=>$path];}
         $aux=new NativeCompanyAuxiliary($this->db,$this->p,$i,$a);
         foreach($aux->calendarReminders($f['start']->format('Y-m-d H:i:s'),$f['end']->format('Y-m-d H:i:s'),$v['hide_notified_reminders_from_calendar']==='1')as$r){$type=$r['rel_type'];if(!in_array($type,NativeCompanyCalendarPreferences::REMINDERS,true)||$v['show_'.$type.'_reminders_on_calendar']!=='1'||!$enabled($type.'_reminders'))continue;$title=($a!==(int)$r['staff']?'('.$r['firstname'].' '.$r['lastname'].') ':'').mb_substr($r['description'],0,60).'...';$out[]=['id'=>'reminder:'.$r['id'],'title'=>$title,'start'=>$r['date'],'color'=>$v['calendar_reminder_color'],'native_path'=>$r['relation']['url']];}
-        $documents->confirm($i,$a);if($prefs->page($i,$a)!==$snapshot)throw new DomainException('native_calendar_preferences_stale');if(count($out)>1500)throw new DomainException('native_calendar_range_too_large');return$out;
+        $legacy=new NativeCompanyLegacyCalendarRead($this->db,$this->p);$out=array_merge($out,$legacy->read($i,$a,$f,$v));
+        $documents->confirm($i,$a);$legacy->confirm($i,$a);if($prefs->page($i,$a)!==$snapshot)throw new DomainException('native_calendar_preferences_stale');if(count($out)>1500)throw new DomainException('native_calendar_range_too_large');return$out;
     }
 }

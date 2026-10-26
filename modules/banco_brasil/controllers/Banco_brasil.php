@@ -374,7 +374,7 @@ class Banco_brasil extends AdminController
             $detail=(new \BancoBrasil\LocalNoncashReview($this->db,db_prefix()))->read($id,$this->staffId(),$invoice);
         }catch(DomainException|InvalidArgumentException$e){$this->output->set_status_header(str_contains($e->getMessage(),'denied')?403:(str_contains($e->getMessage(),'stale')||str_contains($e->getMessage(),'conflict')?409:422));$error='Operação LOCAL não confirmada. Reabra a revisão e confira conta, consulta, autorização, saldo e evidência independente.';}
         catch(Throwable$e){$this->output->set_status_header(503);log_message('error','LOCAL noncash review unavailable; private financial input omitted.');$error='Resultado LOCAL não confirmado. Preserve a chave e reabra esta mesma fatura antes de retomar.';}
-        $this->load->view('banco_brasil/local_noncash',['detail'=>$detail,'selected'=>$selected,'error'=>$error,'csrf'=>$this->csrfToken(),'company_context_token'=>class_exists('CompanyRequestScope',false)?CompanyRequestScope::token():null,'action_url'=>$this->url('banco_brasil/local_noncash'),'back_url'=>$this->url('banco_brasil?issuer_id='.$id),'request_key'=>bin2hex(random_bytes(32))]);
+        $this->load->view('banco_brasil/local_noncash',['title'=>'Revisão financeira LOCAL','detail'=>$detail,'selected'=>$selected,'error'=>$error,'csrf'=>$this->csrfToken(),'company_context_token'=>class_exists('CompanyRequestScope',false)?CompanyRequestScope::token():null,'action_url'=>$this->url('banco_brasil/local_noncash'),'back_url'=>$this->url('banco_brasil?issuer_id='.$id),'request_key'=>bin2hex(random_bytes(32))]);
     }
     private function staffId():int
     {

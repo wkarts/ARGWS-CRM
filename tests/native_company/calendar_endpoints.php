@@ -27,6 +27,13 @@ $db->query('INSERT INTO '.$p.'company_department_members VALUES(1,?,49,?,1)',[$a
 $db->query('INSERT INTO '.$p.'company_department_members VALUES(2,?,49,?,2)',[$a,'company_ticket_department']);
 $store=new CompanySettingsStorage($db,$p);$store->updateBatch($a,49,['dateformat'=>'Y-m-d|%Y-%m-%d','time_format'=>'24','default_timezone'=>'America/Sao_Paulo']);
 if(!$db->table_exists($p.'emailtemplates'))$db->query('CREATE TABLE '.$p.'emailtemplates(emailtemplateid INT PRIMARY KEY,issuer_id INT,slug TEXT,language TEXT,active INT,message TEXT)');elseif(!IssuerStorage::fieldExists($db,'issuer_id',$p.'emailtemplates'))$db->query('ALTER TABLE '.$p.'emailtemplates ADD issuer_id INT');
+$store->mutate($a,49,'delete','default_timezone');
+$unconfigured=NativeCompanyCalendarEndpoints::page($ci);
+essentialCheck($unconfigured['native_calendar_config']['options']['timezone']==='UTC','new company renders calendar with public UTC default without global inheritance');
+$store->mutate($a,49,'update','default_timezone','Brazil/East');
+essentialCheck(NativeCompanyCalendarEndpoints::page($ci)['native_calendar_config']['options']['timezone']==='Brazil/East','calendar accepts timezone aliases accepted by the native Settings validator');
+$store->mutate($a,49,'update','default_timezone','not/a/timezone');essentialThrows(fn()=>NativeCompanyCalendarEndpoints::page($ci),'native_calendar_configuration_invalid','explicit invalid timezone remains an error');
+$store->mutate($a,49,'update','default_timezone','America/Sao_Paulo');
 $page=NativeCompanyCalendarEndpoints::page($ci);
 essentialCheck($page['native_calendar_config']['calendar_ids']===['a-calendar@example.test'],'calendar-only member sees own department source, corrupted cross-issuer membership is ignored');
 essentialCheck($page['native_calendar_config']['options']['timezone']==='America/Sao_Paulo'&&$page['native_calendar_config']['options']['date_format']==='Y-m-d','native FullCalendar gets actual scoped timezone and format');

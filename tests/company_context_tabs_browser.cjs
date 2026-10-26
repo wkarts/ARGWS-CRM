@@ -7,10 +7,10 @@ const root = path.resolve(__dirname, '..');
 const keys = ['auth', 'environment', 'agreement', 'account', 'billing', 'remittance', 'return', 'webhook'];
 const shellTail = fs.readFileSync(path.join(root, 'application/views/admin/companies/layout_tail.php'), 'utf8');
 const bbView = fs.readFileSync(path.join(root, 'modules/banco_brasil/views/index.php'), 'utf8');
-const tabsScript = path.join(root, 'assets/js/company-context-tabs.js');
+const tabsScript = path.join(root, 'assets/js/native-admin-tabs.js');
 const bootstrapCss = path.join(root, 'assets/plugins/bootstrap/css/bootstrap.min.css');
 
-assert.match(shellTail, /assets\/js\/company-context-tabs\.js/);
+assert.match(shellTail, /assets\/js\/native-admin-tabs\.js/);
 assert.equal((bbView.match(/name="_company_context"/g) || []).length, 0, 'BB view delegates company context injection to the native form helper');
 assert.ok(bbView.includes('id="bb-tab-<?php echo $key; ?>"'), 'BB tabs have stable IDs');
 for (const key of keys) {
@@ -20,12 +20,13 @@ for (const key of keys) {
 (async () => {
     const browser = await chromium.launch({ headless: true });
     try {
-        const page = await browser.newPage();
+        for(const bodyClass of ['company-context-shell','app admin native-company-admin'])for(const width of [1280,768,390]){
+        const page = await browser.newPage({viewport:{width,height:850}});
         const pageErrors = [];
         page.on('pageerror', error => pageErrors.push(error.message));
         const links = keys.map((key, index) => `<li role="presentation" class="${index === 0 ? 'active' : ''}"><a id="bb-tab-${key}" href="#bb-${key}" aria-controls="bb-${key}" aria-selected="${index === 0}" tabindex="${index === 0 ? '0' : '-1'}" role="tab" data-toggle="tab">${key}</a></li>`).join('');
         const panels = keys.map((key, index) => `<div role="tabpanel" class="tab-pane${index === 0 ? ' active' : ''}" id="bb-${key}" aria-labelledby="bb-tab-${key}" aria-hidden="${index !== 0}" tabindex="0">${key} panel</div>`).join('');
-        await page.setContent(`<body class="company-context-shell"><div class="panel-body"><ul id="bb-tabs" class="nav nav-tabs" role="tablist" aria-label="Configurações Banco do Brasil">${links}</ul><div class="tab-content">${panels}</div></div></body>`);
+        await page.setContent(`<body class="${bodyClass}"><div class="panel-body"><ul id="bb-tabs" class="nav nav-tabs" role="tablist" aria-label="Configurações Banco do Brasil">${links}</ul><div class="tab-content">${panels}</div></div></body>`);
         await page.addStyleTag({ path: bootstrapCss });
         await page.addScriptTag({ path: tabsScript });
 
@@ -46,7 +47,10 @@ for (const key of keys) {
         await page.evaluate(() => { window.location.hash = '#bb-remittance'; });
         await page.waitForFunction(() => document.getElementById('bb-tab-remittance').getAttribute('aria-selected') === 'true');
         assert.equal(await page.locator('#bb-remittance').getAttribute('aria-hidden'), 'false', 'POST redirect fragment opens the remittance tab');
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,'tabs remain within '+width+'px viewport');
         assert.deepEqual(pageErrors, []);
+        await page.close();
+        }
     } finally {
         await browser.close();
     }

@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__.'/NativeCompanyCalendarFeed.php';require_once __DIR__.'/NativeCompanyEvents.php';require_once __DIR__.'/NativeCompanyGoogleCalendarPreferences.php';require_once __DIR__.'/CompanyEmailTemplates.php';require_once __DIR__.'/CompanySettingsFormats.php';
+require_once __DIR__.'/CompanySettingsCatalog.php';require_once __DIR__.'/NativeCompanyCalendarFeed.php';require_once __DIR__.'/NativeCompanyEvents.php';require_once __DIR__.'/NativeCompanyGoogleCalendarPreferences.php';require_once __DIR__.'/CompanyEmailTemplates.php';require_once __DIR__.'/CompanySettingsFormats.php';
 /** Adapters for the original Utilities routes and views, never a parallel calendar screen. */
 final class NativeCompanyCalendarEndpoints
 {
@@ -10,8 +10,13 @@ final class NativeCompanyCalendarEndpoints
     }
     public static function page($ci):array
     {
-        [$i,$a]=self::context($ci);$prefs=(new NativeCompanyCalendarPreferences($ci->db,db_prefix()))->page($i,$a);$store=new CompanySettingsStorage($ci->db,db_prefix());$formats=['dateformat'=>$store->get($i,'dateformat'),'time_format'=>$store->get($i,'time_format')];CompanySettingsFormats::validate($formats);
-        $timezone=$store->get($i,'default_timezone');if(!in_array($timezone,DateTimeZone::listIdentifiers(),true))throw new DomainException('native_calendar_configuration_invalid');
+        [$i,$a]=self::context($ci);$prefs=(new NativeCompanyCalendarPreferences($ci->db,db_prefix()))->page($i,$a);$store=new CompanySettingsStorage($ci->db,db_prefix());$formats=[];
+        foreach(['dateformat','time_format']as$key)$formats[$key]=$store->exists($i,$key)?$store->get($i,$key):CompanySettingsCatalog::defaultValue('localization',$key);
+        CompanySettingsFormats::validate($formats);
+        // UTC is an explicit product default for an unconfigured company. Never
+        // inherit another company's timezone or the PHP process's mutable timezone.
+        $timezone=$store->get($i,'default_timezone');if($timezone==='')$timezone='UTC';
+        if(!in_array($timezone,DateTimeZone::listIdentifiers(DateTimeZone::ALL_WITH_BC),true))throw new DomainException('native_calendar_configuration_invalid');
         $google=(new NativeCompanyGoogleCalendarPreferences($ci->db,db_prefix()))->browserSources($i,$a);
         $language=$store->get($i,'active_language');$template=CompanyEmailTemplates::findForIssuer($ci->db,db_prefix(),$i,'event-notification-to-staff',$language===''?'portuguese_br':$language);
         return['native_calendar'=>true,'native_calendar_values'=>$prefs['values'],'native_calendar_config'=>['options'=>$prefs['values']+['date_format'=>CompanySettingsFormats::dates()[$formats['dateformat']],'time_format'=>$formats['time_format'],'timezone'=>$timezone,'google_api'=>$google['api_key']],'calendar_ids'=>$google['calendar_ids']], 'native_calendar_email_active'=>$template!==null&&(int)$template->active===1,'native_calendar_actor'=>$a,'native_calendar_csrf'=>CompanyRequestScope::nativeCsrfToken($ci),'title'=>_l('calendar')];

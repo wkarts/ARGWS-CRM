@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "abd5a987db64d0d510ca295c9648aa39abcefebec2bb8e905ab582474a009d9a",
+    "source_manifest_sha256": "03bede2484f9e3a8df0ce9a3b73e30cbe77f8d603b091913e862d8c5aea70378",
     "counts": {
         "modules": 38,
-        "source_files": 4605,
+        "source_files": 4607,
         "literal_option_keys": 681,
         "dynamic_option_references": 158,
         "controllers": 256,
@@ -572,7 +572,7 @@
         {
             "name": "banco_brasil",
             "entry": "modules/banco_brasil/banco_brasil.php",
-            "version": "1.2.8",
+            "version": "1.2.9",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -17027,7 +17027,7 @@
         },
         {
             "path": "modules/banco_brasil/controllers/Banco_brasil.php",
-            "source_sha256": "b4777580bed1771a07a9d62ef14de6f5619f8a00def5524a14f07c3fdcd6c2bb",
+            "source_sha256": "b8d67677ad63adc60595457816ecb0a40e7b1522d5806adae88781ea10de5a69",
             "module": "banco_brasil",
             "base_class": "AdminController",
             "surface": "admin",
@@ -29984,7 +29984,7 @@
         {
             "name": "modules",
             "state": "not_verified",
-            "reference_count": 99
+            "reference_count": 100
         },
         {
             "name": "mrp_manufacturing_orders",
@@ -30494,7 +30494,7 @@
         {
             "name": "reminders",
             "state": "not_verified",
-            "reference_count": 44
+            "reference_count": 48
         },
         {
             "name": "request",
@@ -30684,7 +30684,7 @@
         {
             "name": "staff",
             "state": "not_verified",
-            "reference_count": 491
+            "reference_count": 492
         },
         {
             "name": "staff_contract",
@@ -30804,7 +30804,7 @@
         {
             "name": "task_assigned",
             "state": "not_verified",
-            "reference_count": 52
+            "reference_count": 53
         },
         {
             "name": "task_checklist_items",

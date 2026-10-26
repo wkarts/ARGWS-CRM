@@ -37,7 +37,7 @@ test('rejects missing or unsafe loopback/DB/container identity before browser la
 });
 
 test('permits only exact native GET pages and local static assets', () => {
-  for (const pathname of ['/admin/authentication', '/admin/authentication/admin', '/admin', '/admin/', '/admin/company_asaas', '/admin/company_asaas?invoice=12', '/admin/company_asaas#company-asaas-profile-production', '/assets/js/company-context-tabs.js?v=4.0.4', '/assets/builds/vendor-admin.css', '/assets/plugins/inter/Inter-Regular.woff2', '/uploads/company/synthetic-logo.png']) {
+  for (const pathname of ['/admin/authentication', '/admin/authentication/admin', '/admin', '/admin/', '/admin/company_asaas', '/admin/company_asaas?invoice=12', '/admin/company_asaas#company-asaas-profile-production', '/assets/js/native-admin-tabs.js?v=4.0.4', '/assets/builds/vendor-admin.css', '/assets/plugins/inter/Inter-Regular.woff2', '/uploads/company/synthetic-logo.png']) {
     assert.equal(decision(pathname), 'allow', pathname);
     assert.equal(decision(pathname, 'HEAD'), 'allow', pathname);
   }
