@@ -300,8 +300,8 @@ if [ "${ARGWS_ISSUER_BROWSER_SMOKE:-0}" = "1" ]; then
     if ! ISSUERS_BROWSER_URL="$url" ISSUERS_BROWSER_PASSWORD="$admin_password" \
         ISSUERS_BROWSER_DB_CONTAINER="$database" ISSUERS_BROWSER_DB_USER="$database_user" \
         ISSUERS_BROWSER_DB_PASSWORD="$database_password" node tests/issuers_browser_smoke.cjs; then
-        # Print only the fixed-format migration category written by App::upgrade_database_silent.
-        docker logs "$web" 2>&1 | grep -F "Falha na atualização nativa [" | tail -n 8 >&2 || true
+        # Print only fixed-format safe diagnostics; never dump application/request data.
+        docker logs "$web" 2>&1 | grep -E 'Native company dashboard denied \[[a-z][a-z0-9_]{0,99}\]\.|Falha na atualização nativa \[' | tail -n 8 >&2 || true
         exit 1
     fi
 fi
