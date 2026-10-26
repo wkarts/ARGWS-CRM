@@ -10,7 +10,7 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "c0223b6c7a964437d67acac57485ac3f996fa3d3702b3db73b428d5c2ad82513",
+    "source_manifest_sha256": "a66fd60218b466e35833711ba4b66be7805bb12e4e14406720f04b44c0cabc24",
     "counts": {
         "modules": 38,
         "source_files": 4602,
@@ -20,7 +20,7 @@
         "hook_candidates": 555,
         "job_file_candidates": 70,
         "report_file_candidates": 296,
-        "table_name_candidates": 906,
+        "table_name_candidates": 907,
         "database_call_candidates": 12533
     },
     "infrastructure_options": [
@@ -27009,7 +27009,7 @@
         {
             "name": "audit",
             "state": "not_verified",
-            "reference_count": 6
+            "reference_count": 7
         },
         {
             "name": "b",
@@ -29464,7 +29464,7 @@
         {
             "name": "installation_identity",
             "state": "not_verified",
-            "reference_count": 13
+            "reference_count": 16
         },
         {
             "name": "inventory_manage",
@@ -29524,7 +29524,7 @@
         {
             "name": "issuers_",
             "state": "not_verified",
-            "reference_count": 19
+            "reference_count": 20
         },
         {
             "name": "issuers_audit",
@@ -29544,7 +29544,7 @@
         {
             "name": "issuers_installation_identity",
             "state": "not_verified",
-            "reference_count": 56
+            "reference_count": 57
         },
         {
             "name": "issuers_invoice_documents",
@@ -29569,7 +29569,12 @@
         {
             "name": "issuers_resource_permissions",
             "state": "not_verified",
-            "reference_count": 13
+            "reference_count": 14
+        },
+        {
+            "name": "issuers_resource_permissions_legacy",
+            "state": "not_verified",
+            "reference_count": 1
         },
         {
             "name": "issuers_sequences",
@@ -30504,7 +30509,7 @@
         {
             "name": "resource_permissions",
             "state": "not_verified",
-            "reference_count": 2
+            "reference_count": 3
         },
         {
             "name": "rolepermissions",
@@ -30674,7 +30679,7 @@
         {
             "name": "staff",
             "state": "not_verified",
-            "reference_count": 490
+            "reference_count": 491
         },
         {
             "name": "staff_contract",
