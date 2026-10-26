@@ -15,7 +15,7 @@ final class CompanyStandaloneTasks extends CompanyProjectsStorage
     use CompanyTaskPriorityOperations;
     use CompanyTaskRecurrenceOperations;
     protected function taskKind():string{return 'standalone';}
-    protected string $feature='tasks';
+    protected string $feature='tasks'; public function copyTransactionParticipants():array{return $this->apiTables();}
     protected function apiTables():array{return array_values(array_unique(array_merge(parent::apiTables(),CompanyStandaloneBillingFence::tables($this->db,$this->p),CompanyTaskAutoStop::tables($this->db,$this->p),$this->nativeTaskTables(),$this->nativeTimerExtraTables(),$this->nativeStatusExtraTables())));}
     private function assertBillingMutable(int $issuer,int $actor,int $task):void{CompanyStandaloneBillingFence::assertAvailableInOwned($this->db,$this->p,$issuer,$actor,$task);}
     protected function receiptResourceTable(string $operation):string{return 'company_standalone_tasks';}

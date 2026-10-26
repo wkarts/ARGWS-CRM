@@ -46,7 +46,7 @@ final class NativeCompanyEvents
     {
         $input=self::prepare($input);
         return$this->transaction($issuer,$actor,function()use($issuer,$actor,$input,$id,$revision){
-            if($id===null){$columns=array_keys($input);IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_events(issuer_id,userid,'.implode(',',$columns).',isstartnotified,revision) VALUES(?,?,' . implode(',',array_fill(0,count($columns),'?')).',0,1)',array_merge([$issuer,$actor],array_values($input)));$this->assertInserted();$id=NativeCompanyResourceId::encode('company_event',$this->db->insert_id());$next=1;}
+            if($id===null){$columns=array_keys($input);IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_events(issuer_id,userid,'.implode(',',$columns).',isstartnotified,revision) VALUES(?,?,' . implode(',',array_fill(0,count($columns),'?')).',0,1)',array_merge([$issuer,$actor],array_values($input)));$createdId=$this->db->insert_id();$this->assertInserted();$id=NativeCompanyResourceId::encode('company_event',$createdId);$next=1;}
             else{[$ref,$table,$where,$args,$old]=$this->ownedRow($issuer,$actor,$id);if($revision===null||!hash_equals(self::revision($old,$ref['source_kind']),$revision))throw new DomainException('native_event_stale');
                 $next=$ref['source_kind']==='company_event'?(int)$old['revision']+1:null;if($next!==null&&$next>2147483647)throw new DomainException('native_event_revision_overflow');
                 $sets=[];foreach(array_keys($input)as$key)$sets[]=$key.'=?';$values=array_values($input);if((int)$old['isstartnotified']===1&&$input['start']>$old['start'])$sets[]='isstartnotified=0';if($next!==null){$sets[]='revision=?';$values[]=$next;$where.=' AND revision=?';$args[]=$old['revision'];}

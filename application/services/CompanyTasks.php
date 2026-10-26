@@ -18,7 +18,7 @@ final class CompanyTasks extends CompanyProjectsStorage
     protected function taskKind():string{return 'project';}
     use CompanyTaskBillingSourceLocks { apiTables as private taskBillingApiTables; }
     protected function apiTables():array{return array_values(array_unique(array_merge($this->taskBillingApiTables(),CompanyTaskAutoStop::tables($this->db,$this->p),$this->nativeTaskTables(),$this->nativeTimerExtraTables(),$this->nativeStatusExtraTables())));}
-    protected string $feature='tasks';
+    protected string $feature='tasks'; public function copyTransactionParticipants():array{return $this->apiTables();}
     private static function checklist($items):string
     {
         if(!is_array($items)||count($items)>30||!array_is_list($items))throw new DomainException('company_project_invalid_input');$result=[];foreach($items as $item){if(!is_array($item)||array_diff(array_keys($item),['text','done'])||!in_array($item['done']??null,[0,1,'0','1'],true))throw new DomainException('company_project_invalid_input');$result[]=['text'=>self::text($item['text']??null,191),'done'=>(int)$item['done']];}return json_encode($result,JSON_THROW_ON_ERROR);

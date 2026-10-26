@@ -14,7 +14,7 @@ final class CompanyProjectCopies
     private static function text($v,int $max,bool $required=true):string{if(!is_string($v)||strlen($v)>$max||preg_match('//u',$v)!==1||preg_match('/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/',$v)||($required&&trim($v)===''))throw new DomainException('company_project_copy_invalid');return trim($v);}
     private function copyBillingTables():array
     {
-        $t=CompanyTaskAutoStop::tables($this->db,$this->p);
+        $t=array_merge(CompanyTaskAutoStop::tables($this->db,$this->p),(new CompanyTasks($this->db,$this->p))->copyTransactionParticipants());
         if($this->db->table_exists($this->p.'company_task_billing_links')){CompanyTaskBillingSchema::assertValid($this->db,$this->p);$t=array_merge($t,['company_task_billing_links','company_task_billing_origins']);}
         return array_values(array_unique($t));
     }

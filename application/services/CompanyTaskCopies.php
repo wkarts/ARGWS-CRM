@@ -20,7 +20,7 @@ final class CompanyTaskCopies
     {
         $t=array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),CompanyTaskPrioritySchema::tables($this->db,$this->p),array_keys(CompanyTaskCopiesSchema::definitions($this->p)),CompanyTaskTimeBillingFence::tables($this->db,$this->p),CompanyProjectFixedBillingFence::tables($this->db,$this->p),CompanyStandaloneBillingFence::tables($this->db,$this->p));
         if($this->db->table_exists($this->p.'company_task_billing_links')){CompanyTaskBillingSchema::assertValid($this->db,$this->p);$t=array_merge($t,['company_task_billing_links','company_task_billing_origins']);}
-        return array_values(array_unique($t));
+        return array_values(array_unique(array_merge($t,(new CompanyTasks($this->db,$this->p))->copyTransactionParticipants(),(new CompanyStandaloneTasks($this->db,$this->p))->copyTransactionParticipants())));
     }
     private function tx(callable $work){CompanyTaskCopiesSchema::assertValid($this->db,$this->p);CompanyProjectsSchema::assertValid($this->db,$this->p);CompanyProjectExtrasSchema::assertValid($this->db,$this->p);CompanyStandaloneTasksSchema::assertValid($this->db,$this->p);return IssuerTransaction::run($this->db,$this->p,$this->tables(),$work);}
     private function authorize(int $issuer,int $actor,string $kind):void

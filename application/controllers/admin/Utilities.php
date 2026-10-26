@@ -62,7 +62,7 @@ class Utilities extends AdminController
         try{$data=$id===null?NativeCompanyCalendarEndpoints::$method($this):NativeCompanyCalendarEndpoints::$method($this,$id);return $this->output->set_content_type('application/json')->set_header('Cache-Control: no-store')->set_output(json_encode($data,JSON_THROW_ON_ERROR));}
         catch(DomainException $error){
             $reason=preg_match('/^(?:native|company|issuer)_[a-z0-9_]{1,100}$/D',$error->getMessage())?$error->getMessage():'unclassified_domain';
-            log_message('error','Native calendar '.$method.' rejected ['.$reason.']; request values omitted.');
+            $safeMessage='Native calendar '.$method.' rejected ['.$reason.']; request values omitted.';error_log($safeMessage);log_message('error',$safeMessage);
             return $this->output->set_status_header(409)->set_content_type('application/json')->set_header('Cache-Control: no-store')->set_output(json_encode(['success'=>false,'message'=>_l('something_went_wrong')]));
         }
     }

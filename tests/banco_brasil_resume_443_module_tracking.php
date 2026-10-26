@@ -53,10 +53,20 @@ essentialCheck($marker()['installed_version']===$installVersion&&(int)$marker()[
 if($baseline!==null){$available=$property->getValue($modules);$available['banco_brasil']['headers']=$headers;$available['banco_brasil']['installed_version']=$baseline;$property->setValue($modules,$available);essentialCheck((new App_module_migration('banco_brasil'))->find_migrations()!==[],'historical fixture will upgrade using real shipped migration files');}
 unset($db->data_cache['table_names']);essentialCheck($db->table_exists($p.'bb_api_operations')&&$db->table_exists($p.'bb_api_cnab_contracts'),'actual fresh activation creates required operational and API/CNAB ledgers');
 foreach($beforeCore as$table=>$data)essentialCheck($rows($table)===$data,'fresh activation preserves original core rows '.$table);
-// Store real nonempty historical BB rows using the unchanged original400 importer.
+// Current installs use the actual importer. Historical baselines need synthetic
+// pre130 rows: the current importer correctly requires the not-yet-installed archive.
 require __DIR__.'/banco_brasil_cnab400.php';require_once __DIR__.'/support/BbPdoDatabase.php';$store=new BancoBrasil\ModuleStore(new BbPdoDatabase($db->pdo),$p);
-$connection=$store->createConnection($a,7,['id'=>$a,'tax_id'=>'12345678000195','legal_name'=>'Invoice A'],['account_id'=>'001:00452-3:000000123873-X','environment'=>'sandbox','agreement_number'=>'1234567','wallet'=>'17','variation'=>'019']);$connectionRow=$store->connection($connection,$a);$binding=$store->registerLayout($connectionRow,7,BancoBrasil\LayoutCatalog::CNAB400);$agreement=BancoBrasil\ModuleStore::agreement($connectionRow);$wire=bb400Fixture($agreement);$import=$store->importReturn($connectionRow,7,$wire,$binding);
-essentialCheck(!$import['duplicate']&&$import['events']===1,'historical fixture contains a real imported parent400 and provenance');$oldRows=$snapshotRows();$schema=$snapshotSchema();$replayRows=$oldRows;$replaySchema=$schema;$routes=[];
+$connection=$store->createConnection($a,7,['id'=>$a,'tax_id'=>'12345678000195','legal_name'=>'Invoice A'],['account_id'=>'001:00452-3:000000123873-X','environment'=>'sandbox','agreement_number'=>'1234567','wallet'=>'17','variation'=>'019']);$connectionRow=$store->connection($connection,$a);$binding=$store->registerLayout($connectionRow,7,BancoBrasil\LayoutCatalog::CNAB400);$agreement=BancoBrasil\ModuleStore::agreement($connectionRow);$wire=bb400Fixture($agreement);
+if($baseline===null){$import=$store->importReturn($connectionRow,7,$wire,$binding);}
+else{
+ essentialCheck(!$db->table_exists($p.'bb_return_originals'),'historical baseline really predates mandatory original retention');
+ $beforeRejectedImport=$snapshotRows();
+ essentialThrows(fn()=>$store->importReturn($connectionRow,7,$wire,$binding),'bb_innodb_required','current importer rejects the old schema before any return/history write');
+ essentialCheck($snapshotRows()===$beforeRejectedImport,'missing130 archive rejection preserves every historical/core row');
+ require_once __DIR__.'/support/BbHistoricalReturnFixture.php';
+ $import=seedHistoricalBb400Return(new BbPdoDatabase($db->pdo),$p,$connectionRow,$store->layoutBinding($binding,$connectionRow),7,$wire);
+}
+essentialCheck(!$import['duplicate']&&$import['events']===1,'fixture persists a decoded parent400 and provenance under its actual native schema');$oldRows=$snapshotRows();$schema=$snapshotSchema();$replayRows=$oldRows;$replaySchema=$schema;$routes=[];
 foreach($baseline===null?[]:[$baseline]as$from){
  if(version_compare($from,$target,'>='))continue;$routes[]=$from.'→'.$target;
  $db->query("UPDATE {$p}modules SET installed_version=? WHERE module_name='banco_brasil'",[$from]);$before=count($db->queries);$freshHistoricalSchema=!$db->table_exists($p.'bb_checkout_publications')||!$db->table_exists($p.'bb_api_origin_policy');$db->failVersion=$target;$result=(new App_module_migration('banco_brasil'))->to_latest();$db->failVersion=null;
@@ -64,18 +74,18 @@ foreach($baseline===null?[]:[$baseline]as$from){
  $ddl=array_values(array_filter(array_slice($db->queries,$before),static fn($q)=>preg_match('/^\s*(?:CREATE|ALTER|DROP|TRUNCATE|RENAME)\b/i',$q[0])));
  if($freshHistoricalSchema){
   $ddlSql=array_map(static fn($q)=>(string)$q[0],$ddl);
-  $newTableDdl=array_filter($ddlSql,static fn($sql)=>str_contains($sql,$p.'bb_checkout_publications')||str_contains($sql,$p.'bb_api_origin_policy'));
-  essentialCheck(count($ddlSql)===2&&count($newTableDdl)===2,$from.' first historical upgrade creates only the new 124/125 tables');
-  // A historical install predates tables124/125. Their first creation is
+  $expectedNewTables=[$p.'bb_api_origin_policy',$p.'bb_checkout_publications',$p.'bb_return_originals'];sort($expectedNewTables,SORT_STRING);
+  $newTableDdl=array_filter($ddlSql,static function($sql)use($expectedNewTables){foreach($expectedNewTables as$table)if(str_contains($sql,$table))return true;return false;});
+  essentialCheck(count($ddlSql)===3&&count($newTableDdl)===3,$from.' first historical upgrade creates only the new124/125/130 tables');
+  // A historical install predates tables124/125/130. Their first creation is
   // additive even when final tracking fails; it is not a mutation of old rows.
   // Prove the entire historical state before recording the post-DDL replay state.
   $afterRows=$snapshotRows();$afterSchema=$snapshotSchema();
   foreach($oldRows as$table=>$data)essentialCheck(isset($afterRows[$table])&&$afterRows[$table]===$data,$from.' first upgrade preserves every historical row '.$table);
   foreach($schema as$table=>$definition)essentialCheck(isset($afterSchema[$table])&&$afterSchema[$table]===$definition,$from.' first upgrade preserves every historical table definition '.$table);
-  $expectedNewTables=[$p.'bb_api_origin_policy',$p.'bb_checkout_publications'];sort($expectedNewTables,SORT_STRING);
   $addedRows=array_keys(array_diff_key($afterRows,$oldRows));sort($addedRows,SORT_STRING);
   $addedSchema=array_keys(array_diff_key($afterSchema,$schema));sort($addedSchema,SORT_STRING);
-  essentialCheck($addedRows===$expectedNewTables&&$addedSchema===$expectedNewTables,$from.' first upgrade adds exactly the declared 124/125 tables');
+  essentialCheck($addedRows===$expectedNewTables&&$addedSchema===$expectedNewTables,$from.' first upgrade adds exactly the declared124/125/130 tables');
   foreach($expectedNewTables as$table)essentialCheck($afterRows[$table]===[],$from.' new upgrade table contains no invented data '.$table);
   $replayRows=$afterRows;$replaySchema=$afterSchema;
  }
@@ -96,5 +106,13 @@ foreach($baseline===null?[]:[$baseline]as$from){
 if($baseline!==null)essentialCheck($routes===[$baseline.'→'.$target],'historical child exercises its actually installed baseline');
 require APP_MODULES_PATH.'banco_brasil/install.php';essentialCheck($marker()['installed_version']===$target&&(int)$marker()['active']===1,'shipped install replay validates every real native step and current tracking');essentialCheck($snapshotRows()===$replayRows&&$snapshotSchema()===$replaySchema,'install replay preserves historical rows and complete original schema');
 essentialCheck($store->importReturn($connectionRow,7,$wire,$binding)['duplicate'],'historical return remains readable and idempotent after target upgrade/install replay');
+if($baseline!==null){
+ $file=$db->query('SELECT * FROM '.$p.'bb_return_files WHERE id=?',[$import['id']])->row_array();
+ $retained=(new BancoBrasil\ReturnOriginalArchive(new BbPdoDatabase($db->pdo),$p))->read($file);
+ essentialCheck($retained!==null&&$retained['content']===$wire&&(int)$retained['byte_count']===strlen($wire),'exact historical bytes are retained only when the operator reimports them after130');
+ $afterRecovery=$snapshotRows();foreach($replayRows as$table=>$data)if($table!==$p.'bb_return_originals')essentialCheck($afterRecovery[$table]===$data,'original recovery preserves historical row bytes '.$table);
+ essentialCheck(count($afterRecovery[$p.'bb_return_originals'])===1,'historical reimport creates exactly one private original, not another event or payment');
+ essentialCheck($store->importReturn($connectionRow,7,$wire,$binding)['duplicate']&&$snapshotRows()===$afterRecovery,'reimport of recovered original is fully idempotent');
+}
 if($baseline===null){foreach(['1.2.0','1.2.1','1.2.2']as$from){if(version_compare($from,$target,'>='))continue;$pipes=[];$process=proc_open([PHP_BINARY,__FILE__,'--baseline='.$from],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);if(!is_resource($process))throw new RuntimeException('bb_historical_fixture_worker_unavailable');fclose($pipes[0]);$output=stream_get_contents($pipes[1]);$errors=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);$exit=proc_close($process);echo$output;if($exit!==0||$errors!=='')fwrite(STDERR,'Native BB child '.$from.' exit='.(string)$exit.PHP_EOL.$errors.PHP_EOL);essentialCheck($exit===0&&$errors==='','independent real fresh native'.$from.'→'.$target.' child passes');$routes[]=$from.'→'.$target;}essentialCheck($routes!==[],'at least one real historical child route executed');if(version_compare($target,'1.2.2','>=')){ $expectedRoutes=array_map(static fn($from)=>$from.'→'.$target,array_values(array_filter(['1.2.0','1.2.1','1.2.2'],static fn($from)=>version_compare($from,$target,'<'))));essentialCheck($routes===$expectedRoutes,'every supported native120/121/122 baseline actually upgrades to the current target');}}
 echo 'BB native current-header '.$target.' (minimum core'.$targetCore.') activation/install/tracking: '.($GLOBALS['essentialChecks']-$nativeBbStart).' added checks; actual routes '.implode(', ',$routes).'; synthetic MariaDB only.'.PHP_EOL;

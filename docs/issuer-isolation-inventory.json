@@ -1006,7 +1006,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Utilities.php": {
-      "sha256": "91cbc91c4c86840f691b5dc706f632a6aa407165d90d9b562b34bdf8f08b648a",
+      "sha256": "075118d4bd184a2563f494e322a827f1155991ce3240b00bec63073558865bff",
       "categories": [
         "invoice_model",
         "invoice_table"
@@ -4290,7 +4290,7 @@
       "evidence": ""
     },
     "application/services/CompanyProjectCopies.php": {
-      "sha256": "f0b77825f4db0a9b0a2c2df7fbf32716d96f3b144bf29433f682e110791399e3",
+      "sha256": "fd0ce0de76b0b9f9976002e03304fc9c32af8a1012d62ab72c5ecbd1cc702256",
       "categories": [
         "customer_privacy"
       ],
@@ -4556,7 +4556,7 @@
       "evidence": ""
     },
     "application/services/CompanyStandaloneTasks.php": {
-      "sha256": "9d2b81acb8f10040a6231b17e53452040e3b3e02d93f2fc24b994ca67a15c5f9",
+      "sha256": "d607dbc873ea9e25cd88f6911fcafeca1ae7e3e3cece8951d48d28c462362508",
       "categories": [
         "customer_privacy"
       ],
@@ -4594,7 +4594,7 @@
       "evidence": ""
     },
     "application/services/CompanyTaskCopies.php": {
-      "sha256": "37c050c470e372e60e8be6425b83940132d58d79e676d7b72f45fa1b3e89bbf9",
+      "sha256": "aa4bab2a311ab3bb77745bf7da630e0563d25db246674d4ba56e7db710ccf9ad",
       "categories": [
         "customer_privacy"
       ],
@@ -4662,7 +4662,7 @@
       "evidence": ""
     },
     "application/services/CompanyTasks.php": {
-      "sha256": "eeddf72bd4dcbf3d04400066556395d009a22a4123d9c14ea7d55587ead077e1",
+      "sha256": "76f1ea3c382da3e4cdfb1df9b009a1193882b167f2d002a6490a6a9d54406007",
       "categories": [
         "customer_privacy"
       ],
