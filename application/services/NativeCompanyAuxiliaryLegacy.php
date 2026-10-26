@@ -89,6 +89,13 @@ final class NativeCompanyAuxiliaryLegacy
         foreach($rows as&$row){$row=self::dto('announcement',$row);$row['is_dismissed']=(bool)$this->rows('SELECT announcementid FROM '.$this->p.'dismissed_announcements WHERE announcementid=? AND userid=? AND staff=1',[$row['announcementid'],$this->actor]);}unset($row);
         return['total'=>$total,'filtered'=>$filtered,'rows'=>$rows];
     }
+    /** Principal-history staff alerts for this actor, filtered before applying the dashboard limit. */
+    public function dashboardAnnouncements(int $limit=100):array
+    {
+        $this->assertOwner();if($limit<1||$limit>100)throw new DomainException('company_auxiliary_invalid_page');
+        $rows=$this->rows('SELECT a.* FROM '.$this->p.'announcements a WHERE a.showtostaff=1 AND NOT EXISTS(SELECT 1 FROM '.$this->p.'dismissed_announcements d WHERE d.announcementid=a.announcementid AND d.userid=? AND d.staff=1) ORDER BY a.dateadded DESC,a.announcementid DESC LIMIT '.$limit,[$this->actor]);
+        $this->assertOwner();return array_map(static fn($row)=>self::dto('announcement',$row),$rows);
+    }
     public function dismissAnnouncement($id):void
     {
         $id=IssuerPolicy::id($id);IssuerTransaction::run($this->db,$this->p,['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','announcements','dismissed_announcements'],function()use($id){

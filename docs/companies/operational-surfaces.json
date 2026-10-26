@@ -10,7 +10,7 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "ef9ad8a2e323ae646f23e9f3efb6c9062a333c157d2064652fdbdb110771ea82",
+    "source_manifest_sha256": "d5452fd37b69987a62c14099d7561fb042f42734e4a18dcc44bd65ff177de514",
     "counts": {
         "modules": 38,
         "source_files": 4603,
@@ -10675,7 +10675,7 @@
         },
         {
             "path": "application/controllers/admin/Dashboard.php",
-            "source_sha256": "832b03fb76eb29c94a84356ce7417c831f2c5f603235639ed713e38abe325c4d",
+            "source_sha256": "967ad813619284d42e941c9e9b9f6cfa237c58785ad99fce85249b86f254e4a8",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -10687,22 +10687,22 @@
                 },
                 {
                     "method": "index",
-                    "line": 107,
+                    "line": 110,
                     "visibility": "public"
                 },
                 {
                     "method": "weekly_payments_statistics",
-                    "line": 194,
+                    "line": 197,
                     "visibility": "public"
                 },
                 {
                     "method": "monthly_payments_statistics",
-                    "line": 205,
+                    "line": 208,
                     "visibility": "public"
                 },
                 {
                     "method": "ticket_widget",
-                    "line": 215,
+                    "line": 218,
                     "visibility": "public"
                 }
             ],
@@ -26888,7 +26888,7 @@
         {
             "name": "announcements",
             "state": "not_verified",
-            "reference_count": 30
+            "reference_count": 31
         },
         {
             "name": "argws_connect_manager_instances",
@@ -27278,12 +27278,12 @@
         {
             "name": "company_announcement_dismissals",
             "state": "not_verified",
-            "reference_count": 4
+            "reference_count": 5
         },
         {
             "name": "company_announcements",
             "state": "not_verified",
-            "reference_count": 18
+            "reference_count": 19
         },
         {
             "name": "company_api_token_requests",
@@ -28758,7 +28758,7 @@
         {
             "name": "dismissed_announcements",
             "state": "not_verified",
-            "reference_count": 20
+            "reference_count": 21
         },
         {
             "name": "dismissedannouncements",

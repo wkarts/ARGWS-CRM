@@ -77,8 +77,10 @@ final class NativeCompanyAuxiliaryUi
     public function dashboardAnnouncements(int $limit=100):array
     {
         if($limit<1||$limit>100)throw new DomainException('company_auxiliary_invalid_page');
-        $rows=$this->announcementTable(0,$limit)['rows'];
-        return array_values(array_filter($rows,static fn($row)=>(int)($row['showtostaff']??0)===1&&empty($row['is_dismissed'])));
+        $rows=self::rows('announcement',$this->owned->dashboardAnnouncements($limit));
+        if($this->legacy!==null)$rows=array_merge($rows,$this->legacy->dashboardAnnouncements($limit));
+        usort($rows,static fn($a,$b)=>strcmp($b['dateadded'],$a['dateadded'])?:((int)$b['announcementid']<=>(int)$a['announcementid']));
+        return array_slice($rows,0,$limit);
     }
     public function undismissedAnnouncementsCount():int{return$this->owned->undismissedAnnouncementsCount()+($this->legacy!==null?$this->legacy->undismissedAnnouncementsCount():0);}
     public function saveAnnouncement(array $input,$id=null,$revision=null):string

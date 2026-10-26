@@ -63,6 +63,9 @@ class Dashboard extends AdminController
             $canEditAnnouncements=$auxiliary->allowed('announcements','edit');
             $title = NativeCompanyAdminPresentation::label('dashboard_string');
             $data=$viewData+['company_dashboard'=>$snapshot,'company_dashboard_announcements'=>$announcementAlerts,'company_dashboard_can_edit_announcements'=>$canEditAnnouncements,'native_database_upgrade_success'=>$upgradeSuccess,'title'=>$title,'bodyclass'=>'dashboard','dashboard'=>true];
+            // The original dashboard widgets use this official pure presentation helper.
+            // Their native data still comes only from the sealed company snapshot above.
+            $this->load->helper(['func','widgets']);
             $stage = 'template_render';
             $html=$this->load->view('admin/dashboard/dashboard',$data,true);
             $stage = 'snapshot_confirmation';

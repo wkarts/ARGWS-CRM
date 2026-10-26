@@ -47,10 +47,10 @@ essentialCheck(!str_contains($a->announcement($announcement)['message'],'<script
 require_once APPPATH.'services/NativeCompanyAuxiliaryUi.php';
 $ui=new NativeCompanyAuxiliaryUi($db,$p,41,12);$otherUi=new NativeCompanyAuxiliaryUi($db,$p,41,14);$hiddenAnnouncement=$a->saveAnnouncement(['name'=>'Hidden A','message'=>'<p>Hidden</p>','showtostaff'=>'0']);
 $alerts=$ui->dashboardAnnouncements();essentialCheck(count($alerts)===1&&$alerts[0]['announcementid']===NativeCompanyResourceId::encode('company_announcement',$announcement),'original dashboard alert uses canonical owned announcement identity');
-essentialCheck(count($ui->dashboardAnnouncements(1))===1&&count($otherUi->dashboardAnnouncements())===1,'dashboard alert lineage remains bound to the actor dismissal, not just shared company data');
+$limitedAlerts=$ui->dashboardAnnouncements(1);essentialCheck(count($limitedAlerts)===1&&$limitedAlerts[0]['announcementid']===NativeCompanyResourceId::encode('company_announcement',$announcement)&&count($otherUi->dashboardAnnouncements())===1,'hidden alerts do not consume the dashboard limit and visible alert dismissal remains actor scoped');
 $ui->dismissAnnouncement($alerts[0]['announcementid']);$ui->dismissAnnouncement($alerts[0]['announcementid']);
-essentialCheck($ui->dashboardAnnouncements()===[]&&$a->undismissedAnnouncementsCount()===0&&$other->undismissedAnnouncementsCount()===1,'dismissal is idempotent and private to actor');
-essentialCheck($a->announcement($hiddenAnnouncement)['showtostaff']==='0','dashboard excludes hidden staff announcements without deleting them');
+essentialCheck($ui->dashboardAnnouncements()===[]&&count($otherUi->dashboardAnnouncements())===1&&$a->undismissedAnnouncementsCount()===0&&$other->undismissedAnnouncementsCount()===1,'dismissal is idempotent and private to actor');
+essentialCheck((int)$a->announcement($hiddenAnnouncement)['showtostaff']===0,'dashboard excludes hidden staff announcements without deleting them');
 $catalogA=new NativeCompanyCatalog($db,$p,41,12);$catalogB=new NativeCompanyCatalog($db,$p,82,12);
 $tax=$catalogA->saveTax(['name'=>'A tax','taxrate'=>'7.5']);$group=$catalogA->saveGroup(['name'=>'A group']);
 $item=$catalogA->saveItem(['description'=>'Owned item','rate'=>'123.4567','tax'=>$tax,'group_id'=>$group]);

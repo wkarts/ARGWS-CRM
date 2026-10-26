@@ -171,6 +171,13 @@ final class NativeCompanyAuxiliary
         $rows=$this->rows('SELECT a.*,EXISTS(SELECT 1 FROM '.$this->p.'company_announcement_dismissals d WHERE d.issuer_id=a.issuer_id AND d.announcementid=a.announcementid AND d.actor_id=?) AS is_dismissed FROM '.$this->p.'company_announcements a WHERE '.$where.' ORDER BY a.dateadded DESC,a.announcementid DESC LIMIT '.$length.' OFFSET '.$start,array_merge([$this->actor],$args));
         $this->member();return ['total'=>$total,'filtered'=>$filtered,'rows'=>$rows];
     }
+    /** Published staff alerts for the active actor, filtered before limiting the dashboard page. */
+    public function dashboardAnnouncements(int $limit=100):array
+    {
+        self::page($limit,0);$this->member();
+        $rows=$this->rows('SELECT a.* FROM '.$this->p.'company_announcements a WHERE a.issuer_id=? AND a.showtostaff=1 AND NOT EXISTS(SELECT 1 FROM '.$this->p.'company_announcement_dismissals d WHERE d.issuer_id=a.issuer_id AND d.announcementid=a.announcementid AND d.actor_id=?) ORDER BY a.dateadded DESC,a.announcementid DESC LIMIT '.$limit,[$this->issuer,$this->actor]);
+        $this->member();return$rows;
+    }
     public function announcements(int $limit = 100, int $offset = 0): array
     {
         self::page($limit,$offset); $this->member();
