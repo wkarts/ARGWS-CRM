@@ -195,7 +195,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
 
     // Positive isolated customer directory, with actual HTTP/CSRF and durable receipts.
     async function switchCompany(id) {
-      await page.goto(url + '/admin/company_context');
+      await page.goto(url + '/admin/');
       await selectCompanyOption(page, id);
 
     }

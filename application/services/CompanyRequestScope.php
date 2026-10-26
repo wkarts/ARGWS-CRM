@@ -64,7 +64,6 @@ final class CompanyRequestScope
         $native = $admin && !$module;
         $companyScopedBbRoute = self::companyBbRoute($ci);
         self::$isolated = ($native && $class === 'issuers' && $method === 'lookup')
-            || ($native && $class === 'company_context' && in_array($method, ['index', 'select'], true))
             || ($native && $class === 'company_selection' && $method === 'select')
             || ($native && $class === 'company_onboarding' && $method === 'index')
             || ($native && $class === 'company_clients' && in_array($method,['index','lookup'],true))
@@ -96,7 +95,7 @@ final class CompanyRequestScope
             $verb = strtoupper($ci->input->method(true));
             $nativeDashboard = $native && $class === 'dashboard' && $method === 'index' && in_array($verb, ['GET', 'HEAD'], true);
             $recover = $nativeDashboard || (self::$isolated && $method === 'index' && in_array($verb, ['GET', 'HEAD'], true));
-            self::$context->resolve($recover, $nativeDashboard || (self::$isolated && in_array($class, ['company_context', 'company_selection'], true)));
+            self::$context->resolve($recover, $nativeDashboard || (self::$isolated && $class === 'company_selection'));
             // Exact native actions use company data adapters, never the legacy hydration path.
             self::$nativePresentation = !self::$context->isPrimary() && NativeCompanyRoutes::admits(
                 (string) $ci->router->fetch_directory(), $module, $class, $method, $verb

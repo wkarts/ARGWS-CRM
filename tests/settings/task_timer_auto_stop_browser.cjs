@@ -13,7 +13,7 @@ async function fields(form){return form.evaluate(el=>Object.fromEntries(new Form
  await context.route('**/*',r=>new URL(r.request().url()).origin===base?r.continue():r.abort());page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.goto(base+'/admin/authentication');await page.locator('[name=email]').fill(env.ISSUERS_BROWSER_USERNAME||'admin-ci@example.invalid');await page.locator('[name=password]').fill(env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));
-  async function select(owner){await page.goto(base+'/admin/company_context');await selectCompanyOption(page, String(owner));}
+  async function select(owner){await page.goto(base+'/admin/');await selectCompanyOption(page, String(owner));}
   const route=base+'/admin/settings?group=task_timer_stop',setting='#company-setting-auto_stop_tasks_timers_on_new_timer';
   async function policy(value){await page.goto(route);await page.locator(setting).selectOption(value);await nav(page,page.locator('form').filter({has:page.locator(setting)}).locator('button[type=submit]'));assert.match(await page.locator('body').innerText(),/Definições salvas/);}
   function detail(kind,id){return base+'/admin/'+(kind==='tasks'?'company_tasks':'company_standalone_tasks')+'?task='+id;}

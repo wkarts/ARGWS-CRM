@@ -3312,17 +3312,6 @@
       "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
     },
     {
-      "path": "application/controllers/admin/Company_context.php",
-      "public_methods": [
-        "__construct",
-        "index",
-        "select"
-      ],
-      "view_refs": [],
-      "presentation": "views",
-      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
-    },
-    {
       "path": "application/controllers/admin/Company_contracts.php",
       "public_methods": [
         "index"

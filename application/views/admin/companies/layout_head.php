@@ -58,7 +58,7 @@ foreach (['assets/css/reset.min.css', 'assets/plugins/inter/inter.css', 'assets/
 </head><body class="admin company-context-shell">
 <header id="header">
 <button type="button" class="company-menu-toggle btn btn-default" aria-controls="menu" aria-expanded="true" aria-label="Alternar menu"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
-<a class="logo company-installation-logo" href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this, $companyLayoutPrimary ? '' : 'company_context')); ?>"><img src="<?= $companyLayoutEscape(base_url('assets/images/argws/logo-dark.png')); ?>" alt="<?= $companyLayoutEscape(crm_app_display_name()); ?>"></a>
+<a class="logo company-installation-logo" href="<?= $companyLayoutEscape(CompanyRequestScope::adminUrl($this)); ?>"><img src="<?= $companyLayoutEscape(base_url('assets/images/argws/logo-dark.png')); ?>" alt="<?= $companyLayoutEscape(crm_app_display_name()); ?>"></a>
 <div class="company-header-search"><i class="fa-solid fa-search" aria-hidden="true"></i><input type="search" data-company-menu-search placeholder="Procurar no menu..." aria-label="Procurar no menu desta empresa" autocomplete="off"></div>
 <?php if ($companyLayoutCan('customers') || $companyLayoutCan('invoices') || $companyLayoutCan('tasks')) { ?>
 <details class="company-quick-menu"><summary aria-label="Acessos rápidos da empresa" title="Acessos rápidos da empresa" class="tw-bg-primary-600 tw-text-white"><i class="fa-solid fa-plus" aria-hidden="true"></i></summary><ul>

@@ -29,7 +29,7 @@ async function submit(page,button) { await Promise.all([page.waitForNavigation({
     assert.match(id,/^[1-9]\d*$/); assert.equal(sql("SELECT COUNT(*) FROM tblissuers_registry WHERE tax_id='"+tax+"'"),'1');
    }
    created[label]=Number(id);
-   await page.goto(url+'/admin/company_context'); await selectCompanyOption(page, id);
+   await page.goto(url+'/admin/'); await selectCompanyOption(page, id);
    for (const route of ['company_staff','company_task_recurring?kind=project','company_task_recurring?kind=standalone']) { assert.equal((await page.goto(url+'/admin/'+route)).status(),200,route+' usable for existing master'); }
   }
   assert.equal(sql("SELECT CONCAT(master_staff_id,':',primary_issuer_id,':',source) FROM tblissuers_installation_identity WHERE id=1"),identity); assert.deepEqual(errors,[]);

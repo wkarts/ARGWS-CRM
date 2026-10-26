@@ -45,9 +45,9 @@ function requestDecision(requestUrl, method, origin, permittedPost = null) {
   // Match canonical paths only: aliases, encoded slashes and extra segments are not admitted.
   const pathname = url.pathname;
   if (method === 'POST' && pathname === permittedPost &&
-      ['/admin/authentication', '/admin/authentication/admin', '/admin/company_context/select'].includes(pathname)) return 'allow';
+      ['/admin/authentication', '/admin/authentication/admin', '/admin/company_selection/select'].includes(pathname)) return 'allow';
   if (!['GET', 'HEAD'].includes(method)) return 'mutation';
-  if (['/admin', '/admin/', '/admin/authentication', '/admin/authentication/admin', '/admin/company_context', '/admin/company_asaas'].includes(pathname)) return 'allow';
+  if (['/admin', '/admin/', '/admin/authentication', '/admin/authentication/admin', '/admin/company_asaas'].includes(pathname)) return 'allow';
   if (/^\/(?:assets|uploads|modules)\/[a-zA-Z0-9_./-]+\.(?:css|js|png|jpe?g|gif|svg|ico|woff2?|ttf|eot|webp)$/i.test(pathname)) return 'allow';
   return 'navigation';
 }
@@ -57,7 +57,7 @@ async function withNativeSessionPermit(form, origin, permit, interact) {
   assert.equal(await form.count(), 1, 'one native session form is required');
   const target = new URL(await form.getAttribute('action'), origin);
   assert.ok(target.origin === origin && !target.username && !target.password && !target.search && !target.hash &&
-    ['/admin/authentication', '/admin/authentication/admin', '/admin/company_context/select'].includes(target.pathname), 'only exact native login/context forms may be submitted');
+    ['/admin/authentication', '/admin/authentication/admin', '/admin/company_selection/select'].includes(target.pathname), 'only exact native login/context forms may be submitted');
   assert.equal((await form.getAttribute('method') || '').toLowerCase(), 'post', 'native session form must use POST');
   assert.equal(permit.path, null, 'session permits cannot overlap');
   permit.path = target.pathname;
@@ -73,7 +73,7 @@ function safePath(value, origin) {
   try {
     const url = new URL(value, origin);
     if (url.origin !== origin || url.username || url.password) return '[external]';
-    const known = ['/admin', '/admin/', '/admin/authentication', '/admin/authentication/admin', '/admin/company_context', '/admin/company_context/select', '/admin/company_asaas', '/admin/dashboard', '/admin/misc/my_reminders', '/admin/misc/notifications_check', '/admin/misc/get_notifications', '/admin/tasks/table'];
+    const known = ['/admin', '/admin/', '/admin/authentication', '/admin/authentication/admin', '/admin/company_selection/select', '/admin/company_asaas', '/admin/dashboard', '/admin/misc/my_reminders', '/admin/misc/notifications_check', '/admin/misc/get_notifications', '/admin/tasks/table'];
     return known.includes(url.pathname) ? url.pathname : '[other-local]';
   } catch { return '[invalid]'; }
 }
@@ -219,7 +219,7 @@ async function run(env = process.env) {
         for (const owner of owners) {
           phase = 'select real company context: ' + owner.letter;
           observePageErrors = false;
-          await navigate(config.url + '/admin/company_context');
+          await navigate(config.url + '/admin/');
           await submitSession(page.locator('.company-selector-form'), () => selectCompanyOption(page, owner.issuer));
           check(await page.locator('.company-selector').getAttribute('data-company-current') === owner.issuer, 'native context selection is confirmed before Asaas navigation');
           observePageErrors = true;

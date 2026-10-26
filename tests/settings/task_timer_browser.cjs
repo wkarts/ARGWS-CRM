@@ -11,7 +11,7 @@ async function fields(form){return form.evaluate(el=>Object.fromEntries(new Form
 (async()=>{const setup=fixture('inspect');assert(setup.native_marker>=449&&setup.read_only);const browser=await chromium.launch({headless:true,...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH?{executablePath:process.env.ISSUERS_BROWSER_EXECUTABLE_PATH}:{})}),context=await browser.newContext();await context.route('**/*',r=>new URL(r.request().url()).origin===base?r.continue():r.abort());const page=await workspacePage(context),errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.goto(base+'/admin/authentication');await page.locator('[name=email]').fill(process.env.ISSUERS_BROWSER_USERNAME||'admin-ci@example.invalid');await page.locator('[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await nav(page,page.locator('button[type=submit]'));
- async function select(owner){await page.goto(base+'/admin/company_context');await selectCompanyOption(page, String(owner));}
+ async function select(owner){await page.goto(base+'/admin/');await selectCompanyOption(page, String(owner));}
  const route=base+'/admin/settings?group=task_timers';async function policy(value){await page.goto(route);await page.locator('#company-setting-timer_started_change_status_in_progress').selectOption(value);await nav(page,page.locator('form').filter({has:page.locator('#company-setting-timer_started_change_status_in_progress')}).locator('button[type=submit]'));assert.match(await page.locator('body').innerText(),/Definições salvas/);}
  await select(setup.owners.primary);await page.goto(route);const initial=fixture('snapshot');
  for(const[label,owner]of Object.entries(setup.owners)){

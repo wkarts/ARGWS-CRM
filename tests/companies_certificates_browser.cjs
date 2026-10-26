@@ -29,7 +29,7 @@ async function upload(page, file, password = file.password) {
   await navigate(page, page.locator('#issuer-certificate-upload button[type=submit]'));
 }
 async function select(page, issuer) {
-  await page.goto(url + '/admin/company_context');
+  await page.goto(url + '/admin/');
   await selectCompanyOption(page, issuer);
 
   await page.goto(url + '/admin/company_certificates/index/' + issuer);

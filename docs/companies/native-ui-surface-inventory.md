@@ -51,7 +51,7 @@ implementação evolui sob os testes específicos de fidelidade do shell.
 
 | Família | Representantes reais | Desktop/mobile e invariantes |
 |---|---|---|
-| Contexto/empresas | company_context, issuers, onboarding | 1280×900 e 390×900; header/sidebar/logo/avatar, seleção explícita, modal, cancelar/voltar/reabrir/foco |
+| Seleção/empresas | company_selection, issuers, onboarding | 1280×900 e 390×900; header/sidebar/logo/avatar, seleção explícita, modal, cancelar/voltar/reabrir/foco |
 | Configuração sensível | Google/Microsoft OAuth, certificados, API tokens | botões/controles nativos, segredos mascarados; nenhum connect/revoke/upload automático; ACL view/edit |
 | Financeiro | Asaas, despesas, faturas/rascunhos, créditos | tabelas responsivas, validação campos, POST ownership/CSRF, sem API financeira real |
 | Projetos/tarefas | projects, standalone_tasks, project_portal_rules | includes condicionais, tabulação, datas/selects/checkboxes e estados vazios/cheios |
@@ -94,7 +94,6 @@ excluídos). Zero não prova ausência de HTML gerado dinamicamente.
 | `admin/companies/client_imports.php` | company-shell | 0/2/0/0/0 |
 | `admin/companies/clients.php` | company-shell | 0/0/0/0/0 |
 | `admin/companies/connect_api.php` | company-shell | 0/14/0/0/0 |
-| `admin/companies/context.php` | company-shell | 0/0/0/0/0 |
 | `admin/companies/contract_discussion.php` | partial | 0/2/0/0/1 |
 | `admin/companies/contracts.php` | company-shell | 0/7/0/0/0 |
 | `admin/companies/contracts_fields.php` | partial | 0/0/0/0/0 |
@@ -196,7 +195,7 @@ Métodos listados não significam GET autorizado: conferir guardas, verbs e runt
 | `application/controllers/admin/Company_client_imports.php` | `admin/companies/client_imports` | `index` |
 | `application/controllers/admin/Company_clients.php` | `admin/companies/clients` | `index`, `lookup` |
 | `application/controllers/admin/Company_connect_api.php` | `admin/companies/connect_api` | `index` |
-| `application/controllers/admin/Company_context.php` | `admin/companies/context` | `__construct`, `index`, `select` |
+| `application/controllers/admin/Company_selection.php` | `admin/company_selection/select` | `__construct`, `select` — endpoint técnico POST sem página própria |
 | `application/controllers/admin/Company_contracts.php` | `admin/companies/contracts` | `index` |
 | `application/controllers/admin/Company_credits.php` | `admin/companies/credits` | `index` |
 | `application/controllers/admin/Company_expense_copies.php` | `admin/companies/expense_copies` | `index` |

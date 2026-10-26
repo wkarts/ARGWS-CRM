@@ -14,7 +14,7 @@ async function go(page,button){await Promise.all([page.waitForNavigation({waitUn
  await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort());page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.goto(url+'/admin/authentication');if(await page.locator('input[name=email]').count()!==1)throw new Error('Native login page missing: '+(await page.locator('body').innerText()).slice(0,1000));await page.locator('input[name=email]').fill('admin-ci@example.invalid');await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);await go(page,page.locator('button[type=submit]'));
-  async function select(issuer){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, String(issuer));}
+  async function select(issuer){await page.goto(url+'/admin/');await selectCompanyOption(page, String(issuer));}
   for(const[label,o]of Object.entries(setup.owners)){
    const ownSettings=sql('SELECT settings_json FROM tblissuers_registry WHERE id='+Number(o.issuer)),operationPreferences=JSON.parse(ownSettings).task_operation_preferences,follow=operationPreferences?.new_task_auto_follower_current_member??'0';assert(['0','1'].includes(follow),'own auto-follow policy must be explicit or the documented OFF default');
    await select(o.issuer);await page.goto(url+'/admin/company_projects');await page.locator('#project-client').selectOption(String(o.client));await page.locator('#project-new-name').fill('Recurrence native '+label);await page.locator('#project-new-start').fill('2000-01-01');await page.locator('#project-new-due').fill('2099-12-31');await go(page,page.getByRole('button',{name:'Criar projeto',exact:true}));const project=Number(new URL(page.url()).searchParams.get('project'));

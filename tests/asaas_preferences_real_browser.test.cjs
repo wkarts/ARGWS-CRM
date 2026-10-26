@@ -37,10 +37,11 @@ test('rejects missing or unsafe loopback/DB/container identity before browser la
 });
 
 test('permits only exact native GET pages and local static assets', () => {
-  for (const pathname of ['/admin/authentication', '/admin/authentication/admin', '/admin', '/admin/', '/admin/company_context', '/admin/company_asaas', '/admin/company_asaas?invoice=12', '/admin/company_asaas#company-asaas-profile-production', '/assets/js/company-context-tabs.js?v=4.0.4', '/assets/builds/vendor-admin.css', '/assets/plugins/inter/Inter-Regular.woff2', '/uploads/company/synthetic-logo.png']) {
+  for (const pathname of ['/admin/authentication', '/admin/authentication/admin', '/admin', '/admin/', '/admin/company_asaas', '/admin/company_asaas?invoice=12', '/admin/company_asaas#company-asaas-profile-production', '/assets/js/company-context-tabs.js?v=4.0.4', '/assets/builds/vendor-admin.css', '/assets/plugins/inter/Inter-Regular.woff2', '/uploads/company/synthetic-logo.png']) {
     assert.equal(decision(pathname), 'allow', pathname);
     assert.equal(decision(pathname, 'HEAD'), 'allow', pathname);
   }
+  assert.equal(decision('/admin/company_context'), 'navigation', 'removed parallel company page is never an allowed landing route');
 });
 
 test('blocks all external origins including both providers, another port and userinfo', () => {
@@ -50,13 +51,14 @@ test('blocks all external origins including both providers, another port and use
 });
 
 test('requires a temporary exact login/context POST permit', () => {
-  for (const pathname of ['/admin/authentication', '/admin/authentication/admin', '/admin/company_context/select']) {
+  for (const pathname of ['/admin/authentication', '/admin/authentication/admin', '/admin/company_selection/select']) {
     assert.equal(decision(pathname, 'POST'), 'mutation');
     assert.equal(decision(pathname, 'POST', pathname), 'allow');
     assert.equal(decision(pathname, 'PATCH', pathname), 'mutation');
     assert.equal(decision(pathname + '/extra', 'POST', pathname), 'mutation');
   }
-  assert.equal(decision('/admin/company_context/select', 'POST', '/admin/authentication'), 'mutation');
+  assert.equal(decision('/admin/company_selection/select', 'POST', '/admin/authentication'), 'mutation');
+  assert.equal(decision('/admin/company_context/select', 'POST', '/admin/company_context/select'), 'mutation', 'removed page cannot authorize company selection');
 });
 
 test('cannot grant write permission to financial/settings routes by passing their path', () => {
@@ -76,7 +78,7 @@ test('blocks non-GET method overrides and ambiguous paths before they reach CRM'
 });
 
 test('GET cannot invoke provider callback, cron, module mutation or uploaded PHP', () => {
-  for (const pathname of ['/cron/index', '/company_asaas_callback/integration/synthetic', '/admin/asaas/rotate_integration_token', '/admin/modules/activate/asaas', '/uploads/synthetic.php', '/modules/asaas/run.php', '/assets/script.php.js/execute', '/admin/company_context/select']) {
+  for (const pathname of ['/cron/index', '/company_asaas_callback/integration/synthetic', '/admin/asaas/rotate_integration_token', '/admin/modules/activate/asaas', '/uploads/synthetic.php', '/modules/asaas/run.php', '/assets/script.php.js/execute', '/admin/company_selection/select']) {
     assert.equal(decision(pathname), 'navigation');
   }
 });
@@ -178,15 +180,15 @@ test('blocked request evidence is bounded, deduplicated and cannot disclose arbi
 test('direct company choice is preauthorized once before its native POST and cleared after navigation', async () => {
   const {withNativeSessionPermit,consumeSessionDecision}=require('./companies/asaas_preferences_real_browser.cjs');
   const permit={path:null}, events=[];
-  const form={count:async()=>1,getAttribute:async name=>name==='action'?url('/admin/company_context/select'):'post'};
-  assert.equal(consumeSessionDecision(url('/admin/company_context/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation');
+  const form={count:async()=>1,getAttribute:async name=>name==='action'?url('/admin/company_selection/select'):'post'};
+  assert.equal(consumeSessionDecision(url('/admin/company_selection/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation');
   const result=await withNativeSessionPermit(form,fixture.ISSUERS_BROWSER_URL,permit,async()=>{
     events.push('genuine choice click');
-    assert.equal(permit.path,'/admin/company_context/select','permit precedes submitter click');
+    assert.equal(permit.path,'/admin/company_selection/select','permit precedes submitter click');
     assert.equal(consumeSessionDecision(url('/admin/company_asaas'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation');
-    assert.equal(consumeSessionDecision('https://outside.invalid/admin/company_context/select','POST',fixture.ISSUERS_BROWSER_URL,permit),'external');
-    assert.equal(consumeSessionDecision(url('/admin/company_context/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'allow');
-    assert.equal(consumeSessionDecision(url('/admin/company_context/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation','second POST is refused before navigation completes');
+    assert.equal(consumeSessionDecision('https://outside.invalid/admin/company_selection/select','POST',fixture.ISSUERS_BROWSER_URL,permit),'external');
+    assert.equal(consumeSessionDecision(url('/admin/company_selection/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'allow');
+    assert.equal(consumeSessionDecision(url('/admin/company_selection/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation','second POST is refused before navigation completes');
     events.push('GET navigation'); return 'response';
   });
   assert.equal(result,'response');assert.equal(permit.path,null);assert.deepEqual(events,['genuine choice click','GET navigation']);
@@ -196,12 +198,12 @@ test('direct company choice is preauthorized once before its native POST and cle
 });
 test('session permit rejects wrong forms and is revoked when actual interaction fails', async () => {
   const {withNativeSessionPermit}=require('./companies/asaas_preferences_real_browser.cjs');
-  for(const [action,method,count] of [[url('/admin/company_asaas'),'post',1],['https://outside.invalid/admin/company_context/select','post',1],[url('/admin/company_context/select?override=1'),'post',1],[url('/admin/company_context/select'),'get',1],[url('/admin/company_context/select'),'post',2]]) {
+  for(const [action,method,count] of [[url('/admin/company_asaas'),'post',1],['https://outside.invalid/admin/company_selection/select','post',1],[url('/admin/company_selection/select?override=1'),'post',1],[url('/admin/company_selection/select'),'get',1],[url('/admin/company_selection/select'),'post',2]]) {
     const permit={path:null},form={count:async()=>count,getAttribute:async name=>name==='action'?action:method};
     await assert.rejects(()=>withNativeSessionPermit(form,fixture.ISSUERS_BROWSER_URL,permit,async()=>{throw Error('must not click');}));
     assert.equal(permit.path,null);
   }
-  const permit={path:null},form={count:async()=>1,getAttribute:async name=>name==='action'?url('/admin/company_context/select'):'post'};
+  const permit={path:null},form={count:async()=>1,getAttribute:async name=>name==='action'?url('/admin/company_selection/select'):'post'};
   await assert.rejects(()=>withNativeSessionPermit(form,fixture.ISSUERS_BROWSER_URL,permit,async()=>{throw Error('native choice failed');}),/native choice failed/);
   assert.equal(permit.path,null);
 });

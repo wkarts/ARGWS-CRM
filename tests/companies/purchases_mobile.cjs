@@ -33,7 +33,7 @@ fs.mkdirSync(artifacts, {recursive: true});
     await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD);
     await submit(page.locator('form').filter({has: page.locator('input[name=email]')}));
     assert(!new URL(page.url()).pathname.includes('authentication'));
-    await page.goto(url + '/admin/company_context');
+    await page.goto(url + '/admin/');
     await selectCompanyOption(page, String(owner.issuer));
     for (const width of [390, 320]) {
       await page.setViewportSize({width, height: 844});

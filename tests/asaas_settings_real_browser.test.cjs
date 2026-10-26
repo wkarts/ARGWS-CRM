@@ -39,7 +39,7 @@ test('presentation cannot submit settings or financial mutations', () => {
     assert.equal(financialMutation(fixture.ISSUERS_BROWSER_URL + url, 'GET'), false);
   }
   assert.equal(financialMutation(fixture.ISSUERS_BROWSER_URL + '/admin/authentication', 'POST'), false);
-  assert.equal(financialMutation(fixture.ISSUERS_BROWSER_URL + '/admin/company_context', 'POST'), false);
+  assert.equal(financialMutation(fixture.ISSUERS_BROWSER_URL + '/admin/', 'POST'), false);
 });
 test('real browser runs after Asaas native installation, with existing artifact capture', () => {
   const shell = fs.readFileSync(__dirname + '/issuers_standalone_http_smoke.sh', 'utf8');

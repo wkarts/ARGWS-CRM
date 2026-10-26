@@ -74,7 +74,7 @@ async function captureRealScreens(page, routes) {
   await login(page,'admin-ci@example.invalid',process.env.ISSUERS_BROWSER_PASSWORD);
   const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
   const clients={};clients[a]=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client a'");clients[b]=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client b'");
-  async function select(id){await page.goto(url+'/admin/company_context');await selectCompanyOption(page, id);}
+  async function select(id){await page.goto(url+'/admin/');await selectCompanyOption(page, id);}
   async function fields(form){return form.locator('input[type=hidden]').evaluateAll(xs=>Object.fromEntries(xs.filter(x=>x.name).map(x=>[x.name,x.value])));}
   const ids={};
   for(const [issuer,letter]of[[a,'a'],[b,'b']]){

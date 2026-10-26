@@ -9,9 +9,10 @@ Os caminhos abaixo foram extraídos dos controllers e templates reais. Métodos 
 
 Contrato do pedido: uma apresentação CRM; Empresas em grid; seletor acima do perfil; wizard modal **somente para criar**; configuração cotidiana nas telas normais da empresa ativa. Não há downgrade de serviços, migrations ou regras financeiras.
 
-## Controllers (49)
+## Controllers (48)
 
 Prefixo público habitual `/admin/`; respeitar `CompanyRequestScope::adminUrl` para instalações com admin URI customizado.
+`Company_selection::select` permanece como endpoint técnico POST em `admin/company_selection/select`; ele não mantém página própria nem shell alternativo.
 
 | Rota | Controller | Métodos públicos (sem construtor) | View(s) raiz | Revisão de apresentação/fluxo |
 |---|---|---|---|---|
@@ -24,7 +25,6 @@ Prefixo público habitual `/admin/`; respeitar `CompanyRequestScope::adminUrl` p
 | `company_client_imports` | `application/controllers/admin/Company_client_imports.php` | index | `admin/companies/client_imports` | Fluxo específico de revisão/confirmação; não converter em CRUD genérico. |
 | `company_clients` | `application/controllers/admin/Company_clients.php` | index, lookup | `admin/companies/clients` | Lista primeiro; criar/editar por ação explícita; detalhes preservam permissões e revisão. |
 | `company_connect_api` | `application/controllers/admin/Company_connect_api.php` | index | `admin/companies/connect_api` | Agrupar configuração/operações/histórico; preservar cada formulário e confirmação. |
-| `company_context` | `application/controllers/admin/Company_context.php` | index, select | `admin/companies/context` | Seletor sidebar; POST explícito; destino seguro e rotação contextual. |
 | `company_contracts` | `application/controllers/admin/Company_contracts.php` | index | `admin/companies/contracts` | Lista primeiro; criar/editar por ação explícita; detalhes preservam permissões e revisão. |
 | `company_credits` | `application/controllers/admin/Company_credits.php` | index | `admin/companies/credits` | Lista primeiro; criar/editar por ação explícita; detalhes preservam permissões e revisão. |
 | `company_expense_copies` | `application/controllers/admin/Company_expense_copies.php` | index | `admin/companies/expense_copies` | Fluxo específico de revisão/confirmação; não converter em CRUD genérico. |
@@ -78,7 +78,6 @@ A lista inclui referências por `__DIR__`, não somente `APPPATH`. `calendar.php
 - `application/views/admin/companies/client_imports.php`
 - `application/views/admin/companies/clients.php`
 - `application/views/admin/companies/connect_api.php`
-- `application/views/admin/companies/context.php`
 - `application/views/admin/companies/contracts.php`
 - `application/views/admin/companies/credits.php`
 - `application/views/admin/companies/expense_copies.php`
@@ -123,7 +122,7 @@ A lista inclui referências por `__DIR__`, não somente `APPPATH`. `calendar.php
 - `application/views/admin/emails/company_scoped.php`
 - `application/views/admin/settings/company_scoped.php`
 
-Além dos 49 controllers, `Issuers::index` escolhe `admin/issuers/manage` para principal e `admin/companies/registry` para contexto isolado; `Settings` usa `admin/settings/company_scoped`, e `Emails` usa `admin/emails/company_scoped` em contexto secundário. `Company_master` é exceção deliberada: usa `admin/issuers/master_resolution` e shell nativo de recuperação. Fragmentos incluídos pelas views (itens, discussões, arquivos, identidade e ações) não são páginas independentes e não devem receber um segundo shell.
+Além dos 48 controllers, `Issuers::index` escolhe `admin/issuers/manage` para principal e `admin/companies/registry` para contexto isolado; `Settings` usa `admin/settings/company_scoped`, e `Emails` usa `admin/emails/company_scoped` em contexto secundário. `Company_master` é exceção deliberada: usa `admin/issuers/master_resolution` e shell nativo de recuperação. Fragmentos incluídos pelas views (itens, discussões, arquivos, identidade e ações) não são páginas independentes e não devem receber um segundo shell.
 
 ## Divergências comprovadas no baseline
 

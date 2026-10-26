@@ -32,7 +32,7 @@ async function hidden(form){return form.locator('input[type=hidden]').evaluateAl
   const b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
   assert.match(a,/^[1-9]\d*$/);assert.match(b,/^[1-9]\d*$/);
   const cashBefore=sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords');
-  async function select(issuer){await page.goto(base+'/admin/company_context');await selectCompanyOption(page, issuer);}
+  async function select(issuer){await page.goto(base+'/admin/');await selectCompanyOption(page, issuer);}
   async function makeTimer(table,task,seconds){
    await submit(page,page.getByRole('button',{name:'Iniciar meu cronômetro',exact:true}));
    assert.equal(sql('SELECT COUNT(*) FROM '+table+' WHERE task_id='+task+' AND stopped_at IS NULL'),'1');

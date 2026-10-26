@@ -74,7 +74,6 @@ class CI_Controller
 }
 require APPPATH . 'core/App_Controller.php';
 require APPPATH . 'core/AdminController.php';
-require APPPATH . 'controllers/admin/Company_context.php';
 require APPPATH . 'controllers/admin/Company_selection.php';
 #[AllowDynamicProperties]
 class CI_Model { public function __construct() {} public function __get($key) { return $GLOBALS['CI']->{$key}; } }
@@ -104,10 +103,10 @@ function expectContext(callable $call, string $reason): void
 function expectStatus(callable $call, int $status): void
 {
     try { $call(); throw new LogicException('missing expected HTTP rejection: ' . $status); }
-    catch (CompanyRequestDenied $error) { essentialCheck($error->getCode() === $status, 'HTTP status ' . $status); }
+    catch (CompanyRequestDenied $error) { essentialCheck($error->getCode() === $status, 'HTTP status ' . $status . ' (received ' . $error->getCode() . ')'); }
     finally { CompanyRequestScope::finish(); }
 }
-function contextEnvironment($f, ContextSession $session, string $class = 'company_context', string $method = 'index', string $verb = 'GET'): object
+function contextEnvironment($f, ContextSession $session, string $class = 'dashboard', string $method = 'index', string $verb = 'GET'): object
 {
     CompanyRequestScope::finish(); $_POST = [];
     $ci = (object) ['db' => $f->db, 'session' => $session, 'router' => new ContextRouter(), 'input' => new ContextInput(), 'config' => new ContextConfig(), 'load' => new ContextLoader(), 'encryption' => new class { public function encrypt($value) { return 'synthetic-cipher:' . base64_encode($value); } public function decrypt($value) { return str_starts_with((string) $value, 'synthetic-cipher:') ? base64_decode(substr($value, 17), true) : false; } }, 'output' => new class { public int $status=200; public function set_status_header($status) { $this->status = $status; } }];
@@ -149,35 +148,36 @@ $recovery = new CompanyContext($db, $p, $s, 8);
 essentialCheck($recovery->resolve(true) === 41, 'GET recovery selects only validated default');
 $db->query("UPDATE {$p}issuers_staff SET can_view=1 WHERE issuer_id=54 AND staff_id=8");
 $recovery->select(54, $recovery->csrf(), $recovery->token());
-// Execute real App_Controller and real autoload.php, with CI I/O doubles only.
+// Execute the one technical switch controller and real autoload.php, with CI I/O doubles only.
 $db->queries = []; hooks()->trace = [];
-$ci = contextEnvironment($f, $s); $controller = new Company_context();
+$selectorContext = new CompanyContext($db, $p, $s, 8); $selectorContext->resolve();
+$ci = contextEnvironment($f, $s, 'company_selection', 'select', 'POST');
+$_POST = ['company_id'=>'54','_company_context'=>$selectorContext->token(),'_company_switch_csrf'=>$selectorContext->csrf()];
+$controller = new Company_selection();
 essentialCheck(CompanyRequestScope::sealedFor($controller), 'isolated attestation is bound to the real controller object');
-essentialCheck(!in_array('library:user_agent',$controller->load->trace,true),'legacy context redirect does not hydrate a presentation-only browser helper');
+essentialCheck(CompanyRequestScope::isolated()&&!CompanyRequestScope::nativeFor($controller), 'technical selector remains separate from company application routes');
+essentialCheck(!in_array('library:user_agent',$controller->load->trace,true),'technical selector does not hydrate a presentation-only browser helper');
 essentialCheck(!CompanyRequestScope::sealedFor(new stdClass()), 'HTTP-like/unrelated objects cannot attest isolated request');
-essentialCheck($controller->load->autoload['libraries'] === [] && $controller->load->autoload['model'] === [], 'isolated real autoload has no App/email/gateways/models');
-essentialCheck($controller->load->autoload['helper'] === ['url','form'], 'isolated real autoload does not load optional module hooks/helpers');
+essentialCheck($controller->load->autoload['libraries'] === [] && $controller->load->autoload['model'] === [], 'technical selection autoload has no App/email/gateways/models');
+essentialCheck($controller->load->autoload['helper'] === ['url','form'], 'technical selection does not load optional module hooks/helpers');
 essentialCheck(CompanySettingsRuntime::issuerId() === 54 && CompanySettingsRuntime::staffId() === 8, 'settings runtime exists before any hydration');
 essentialCheck(CompanySettingsRuntime::get('smtp_password') === '', 'B never inherits global SMTP secret');
 essentialCheck(!array_filter($db->queries, static fn($query) => str_contains($query[0], 'FROM ' . $GLOBALS['essentialPrefix'] . 'options')), 'secondary bootstrap never hydrates global options');
-essentialCheck(hooks()->trace === [], 'secondary App_Controller never dispatches module/app/language hooks');
+essentialCheck(hooks()->trace === [], 'technical selection never dispatches module/app/language hooks');
 $html = (new ContextViewRenderer())->render('admin/includes/company_selector');
 essentialCheck(str_contains($html, 'method="post"') && str_contains($html, 'name="_company_switch_csrf"'), 'actual selector HTML submits POST plus independent CSRF');
 essentialCheck(str_contains($html, 'name="_company_context" value="' . CompanyRequestScope::token() . '"'), 'actual form helper emits server-side original context token');
 essentialCheck(strpos($html, 'value="41"') < strpos($html, 'value="54"'), 'actual selector HTML shows primary first');
 essentialCheck(!str_contains(form_open('https://foreign.invalid/endpoint'), '_company_context'), 'form helper never transmits context token cross origin');
 essentialCheck(!str_contains(form_open('https://crm.example.test/admin/read', ['method'=>'get']), '_company_context'), 'GET form does not put a token into URL');
-$controller->index(); essentialCheck($controller->load->views===[]&&end($GLOBALS['redirects'])===['https://crm.example.test/admin/','location',303], 'legacy context entry returns to the native CRM dashboard');
-// The compatibility entrypoint redirects into the real Dashboard route. It must
-// leave the receipt untouched; Dashboard owns preview, render, ACL recheck, consume.
-require_once APPPATH.'services/AdminDatabaseUpgrade.php';
-AdminDatabaseUpgrade::recordSuccess($s,8,'436');
-$ci->input->ajax=true;$controller->index();essentialCheck($controller->load->views===[]&&isset($s->data['admin_database_upgrade_success']),'legacy XHR entry redirects without consuming native dashboard feedback');
-$ci->input->ajax=false;$ci->input->verb='HEAD';$controller->index();essentialCheck($controller->load->views===[]&&isset($s->data['admin_database_upgrade_success']),'legacy HEAD entry redirects without consuming native dashboard feedback');
-$ci->input->verb='GET';$controller->index();essentialCheck(end($GLOBALS['redirects'])===['https://crm.example.test/admin/','location',303]&&isset($s->data['admin_database_upgrade_success']),'legacy GET reaches native dashboard without consuming its receipt');
 
 $tokenB = CompanyRequestScope::token(); $csrfB = CompanyRequestScope::context()->csrf();
 CompanyRequestScope::finish(); essentialCheck(!CompanySettingsRuntime::active(), 'request finalization clears settings runtime'); CompanyRequestScope::finish();
+$ci = contextEnvironment($f, $s, 'company_context', 'index', 'GET');
+expectStatus(fn() => CompanyRequestScope::beforeHydration($ci), 403);
+essentialCheck(!file_exists(APPPATH . 'controllers/admin/Company_context.php'), 'parallel company_context controller is removed');
+essentialCheck(!str_contains(file_get_contents(APPPATH . 'views/admin/companies/layout_head.php'), "'company_context'")
+    && !str_contains(file_get_contents(APPPATH . 'views/admin/issuers/certificate_link.php'), "'company_context'"), 'active presentation links no longer target the retired company_context route');
 $ci = contextEnvironment($f, $s, 'invoices', 'invoice');
 expectStatus(fn() => $ci->load->initialize(), 403);
 essentialCheck(!in_array('autoload_returned', $ci->load->trace, true), 'secondary finance denied before hydration/config autoload returns');

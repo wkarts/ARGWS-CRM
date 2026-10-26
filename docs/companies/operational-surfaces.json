@@ -10,13 +10,13 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "d5452fd37b69987a62c14099d7561fb042f42734e4a18dcc44bd65ff177de514",
+    "source_manifest_sha256": "5f61f60f219262907caabfeddbbc37818c66bf6f98e4041b7b8a70cf032405c6",
     "counts": {
         "modules": 38,
-        "source_files": 4603,
+        "source_files": 4602,
         "literal_option_keys": 681,
         "dynamic_option_references": 158,
-        "controllers": 257,
+        "controllers": 256,
         "hook_candidates": 555,
         "job_file_candidates": 70,
         "report_file_candidates": 296,
@@ -9465,35 +9465,6 @@
             "operational_ready": false
         },
         {
-            "path": "application/controllers/admin/Company_context.php",
-            "source_sha256": "35512615898579c0e5faa1f86c5d1c7b8407c0e0300bb743d3bebc991429144c",
-            "module": null,
-            "base_class": "App_Controller",
-            "surface": "admin",
-            "method_candidates": [
-                {
-                    "method": "__construct",
-                    "line": 8,
-                    "visibility": "public"
-                },
-                {
-                    "method": "index",
-                    "line": 14,
-                    "visibility": "public"
-                },
-                {
-                    "method": "select",
-                    "line": 22,
-                    "visibility": "public"
-                }
-            ],
-            "http_verbs": "requires_dispatch_review",
-            "authentication": "requires_entry_point_review",
-            "company_origin": "requires_persisted_origin_review",
-            "state": "not_verified",
-            "operational_ready": false
-        },
-        {
             "path": "application/controllers/admin/Company_contracts.php",
             "source_sha256": "f0d1957de8786f5d54846a49e2d1e5a1b40388cc16cee70abd3a18d60c45fed1",
             "module": null,
@@ -10675,7 +10646,7 @@
         },
         {
             "path": "application/controllers/admin/Dashboard.php",
-            "source_sha256": "967ad813619284d42e941c9e9b9f6cfa237c58785ad99fce85249b86f254e4a8",
+            "source_sha256": "de4cb7988e57d3bfc337a3edcd54735b896c11f9673a03a3d26f24416e936fa2",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",

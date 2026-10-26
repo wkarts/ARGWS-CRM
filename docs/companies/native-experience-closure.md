@@ -4,7 +4,9 @@
 
 The selected company must change data and authorization, not the existing CRM's routes, controllers, views, menu or components. The parallel `company_context` landing page and related presentation must be removed, not hidden behind an alias. Company selection remains a technical POST operation. No company records or historical financial data are deleted by this work.
 
-This branch is **not ready for release or merge**. Internal commits and a future draft PR are validation mechanisms, not staged user deliveries. Existing guards remain closed until their replacement has a tested native data contract. A service or rendered fragment passing tests does not establish that its HTTP action is admitted or that all neighboring actions work.
+This branch and PR #52 are **not ready for release or merge**. The obsolete `Company_context` controller and its native admission were removed; the selector now uses the shared CRM dashboard and the technical `Company_selection::select` POST. The other parallel company controllers and views remain open work. Existing guards remain closed until their replacement has a tested native data contract. A service or rendered fragment passing tests does not establish that its HTTP action is admitted or that all neighboring actions work.
+
+The refreshed source census still lists **49 parallel company controllers**. The boundary review lists **15,076 unresolved PHP files** and keeps `operational_ready=false`; removal of the old selector route is only one checkpoint, not full application convergence.
 
 ## Finite source boundary
 

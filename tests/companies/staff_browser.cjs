@@ -32,7 +32,7 @@ async function submit(page, button) { return (await Promise.all([page.waitForNav
 async function values(form) { return form.evaluate(node=>Object.fromEntries(new FormData(node).entries())); }
 async function hidden(form) { return form.locator('input[type=hidden][name]').evaluateAll(nodes=>Object.fromEntries(nodes.map(node=>[node.name,node.value]))); }
 async function selectCompany(page,id) {
-  await page.goto(url+'/admin/company_context');
+  await page.goto(url+'/admin/');
   await selectCompanyOption(page, String(id));
 
   // The primary native dashboard starts its task-table XHR after DOMContentLoaded.
