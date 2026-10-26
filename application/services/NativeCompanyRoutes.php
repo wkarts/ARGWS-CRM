@@ -16,6 +16,10 @@ final class NativeCompanyRoutes
             'monthly_payments_statistics' => ['GET'],
             'ticket_widget' => ['GET'],
         ],
+        'issuers' => [
+            'index' => ['GET', 'HEAD'],
+            'save' => ['POST'],
+        ],
         'todo' => [
             'index'=>['GET','HEAD','POST'], 'todo'=>['POST'], 'get_by_id'=>['GET'],
             'change_todo_status'=>['POST'], 'update_todo_items_order'=>['POST'], 'delete_todo_item'=>['POST'],
@@ -63,6 +67,6 @@ final class NativeCompanyRoutes
         // Do not decode or normalize attacker-controlled destinations into an admitted route.
         if (str_contains($route, '\\') || str_contains($route, '%') || str_contains($route, '?')
             || str_contains($route, '#') || preg_match('/[\x00-\x20\x7f]/', $route)) { return false; }
-        return in_array($route, ['', 'dashboard', 'dashboard/index', 'todo', 'announcements', 'taxes', 'departments', 'tickets', 'invoice_items', 'invoice_items/import', 'settings'], true);
+        return in_array($route, ['', 'dashboard', 'dashboard/index', 'issuers', 'todo', 'announcements', 'taxes', 'departments', 'tickets', 'invoice_items', 'invoice_items/import', 'settings'], true);
     }
 }

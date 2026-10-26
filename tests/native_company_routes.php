@@ -9,6 +9,11 @@ $check = static function (bool $condition, string $message) use (&$checks): void
 foreach (['GET', 'HEAD'] as $verb) {
     $check(NativeCompanyRoutes::admits('admin/', '', 'Dashboard', 'index', $verb), 'native dashboard read admitted');
 }
+$check(NativeCompanyRoutes::admits('admin/','','issuers','index','GET'),'original company registry page admitted through its issuer-scoped reader');
+$check(NativeCompanyRoutes::admits('admin/','','issuers','index','HEAD'),'original company registry supports HEAD');
+$check(NativeCompanyRoutes::admits('admin/','','issuers','save','POST'),'original company registry writer admitted through its membership and CSRF checks');
+foreach(['POST','PUT','PATCH','DELETE'] as $verb)$check(!NativeCompanyRoutes::admits('admin/','','issuers','index',$verb),'company registry reads never mutate');
+foreach(['GET','HEAD','PUT','PATCH','DELETE'] as $verb)$check(!NativeCompanyRoutes::admits('admin/','','issuers','save',$verb),'company registry mutations require POST');
 foreach (['GET','HEAD','POST'] as $verb) {
     $check(NativeCompanyRoutes::admits('admin/','','settings','index',$verb),'existing Settings route admitted only for its explicit native adapter');
 }
@@ -39,12 +44,12 @@ foreach ([['admin', 'third_party', 'dashboard', 'index'], ['public', '', 'dashbo
     ['admin', '', 'company_context', 'index'], ['admin', '', 'authentication', 'index']] as $route) {
     $check(!NativeCompanyRoutes::admits(...array_merge($route, ['GET'])), 'unadapted or non-native route denied');
 }
-foreach (['', 'dashboard', 'dashboard/index','settings','departments'] as $route) {
+foreach (['', 'dashboard', 'dashboard/index','issuers','settings','departments'] as $route) {
     $check(NativeCompanyRoutes::navigation($route), 'canonical native navigation accepted');
 }
 foreach (['/dashboard', '//evil.test', 'https://evil.test', '../dashboard', 'dashboard/../invoices',
     'dashboard?issuer_id=2', 'dashboard#fragment', 'dashboard%2findex', "dashboard\0", "dashboard\n", 'dashboard\\index',
-    'company_context', 'company_invoices', 'dashboard/ticket_widget', 'invoices/15'] as $route) {
+    'company_context', 'company_issuers', 'company_invoices', 'dashboard/ticket_widget', 'invoices/15'] as $route) {
     $check(!NativeCompanyRoutes::navigation($route), 'return URL cannot expand native route authority');
 }
 echo "Native company route contracts: {$checks} checks passed.\n";
