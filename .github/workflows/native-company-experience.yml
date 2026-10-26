@@ -68,6 +68,9 @@ jobs:
         run: python3 scripts/ci/run-native-company-focused.py sqlite
       - name: Render actual native templates in Chromium
         run: python3 scripts/ci/run-native-company-focused.py browser
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.4
       - name: Verify reproducible compiled native assets
         if: matrix.php == '8.1'
         run: |
