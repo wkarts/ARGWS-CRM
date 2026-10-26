@@ -11,7 +11,8 @@
     "PR52 follow-up: native Dashboard alerts now use the company-scoped announcement adapter and the original Misc dismissal action is POST-only under the native route policy. The changed source remains unreviewed here; company boundary and financial rollout gates remain blocked pending full consumer and runtime coverage.",
     "PR52 Dashboard fix: the official dashboard renderer now explicitly loads settings_helper for the scoped sales formatter. The changed Dashboard source remains unreviewed by this conservative inventory; this does not close broader controller, route, view, or tenant-isolation work.",
     "PR52 Dashboard table render: the shared Dashboard now loads the canonical custom-fields and tickets helpers used by the official task table. Dashboard remains unreviewed by this conservative inventory; no company-boundary or operational rollout gate is closed by helper loading.",
-    "PR52 Dashboard ticket widget: the official table now receives the issuer-scoped table order, visibility, service setting and field labels. The Dashboard PHP source remains unreviewed in this conservative inventory; broader route, view, controller and tenant-isolation coverage remains incomplete."
+    "PR52 Dashboard ticket widget: the official table now receives the issuer-scoped table order, visibility, service setting and field labels. The Dashboard PHP source remains unreviewed in this conservative inventory; broader route, view, controller and tenant-isolation coverage remains incomplete.",
+    "PR52 beea5839 adds a one-time archive and primary-company copy for legacy resource ACLs. IssuerCore remains unreviewed; the source table is retained and the inventory does not establish migration safety or full company isolation."
   ],
   "files": {
     "application/config/autoload.php": {
@@ -5955,13 +5956,13 @@
       "evidence": ""
     },
     "application/services/issuers/IssuerCore.php": {
-      "sha256": "6fc343b1b77c205c2d99139ff18024e23ce2f1a0ab42cbecd017f6363b07adbf",
+      "sha256": "f55102d8ba2773e8fd377b96ede1407fdcd0bdd3209dfcf25ceb9d039539435a",
       "categories": [
         "documents_numbering"
       ],
       "signal_lines": [
-        95,
-        97
+        96,
+        98
       ],
       "state": "unreviewed",
       "evidence": ""
