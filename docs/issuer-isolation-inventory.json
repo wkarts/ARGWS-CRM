@@ -3452,15 +3452,16 @@
       "evidence": ""
     },
     "application/services/CompanyDashboardPayments.php": {
-      "sha256": "b5dd82755ea2ec4cc4f9d841103076e1945c3cfadfbbbfa3572b5acd94866abc",
+      "sha256": "39869ec0377c81a3118b4ad026821bb20caa3d6b08e3ef558b05a774f8163a6e",
       "categories": [
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
         14,
-        26,
-        39
+        33,
+        51,
+        64
       ],
       "state": "unreviewed",
       "evidence": ""
