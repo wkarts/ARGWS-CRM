@@ -6,7 +6,7 @@ namespace BancoBrasil;
 /** Exact reviewed runtime release; neither old nor future tracking authorizes this code. */
 final class ModuleRelease
 {
-    public const VERSION = '1.2.9';
-    public const MIGRATION = 129;
+    public const VERSION = '1.3.0';
+    public const MIGRATION = 130;
     public const MINIMUM_CORE = '4.7.4';
 }

@@ -62,3 +62,26 @@ CNAB400 operacional, preservação integral do retorno original, administração
 empresas sem procedimento legado e aceite completo das demais integrações
 continuam pendentes. API/CNAB independentes e PWA corrigido são preservados.
 Não houve operação financeira, SMTP ou chamada externa real. PR em rascunho.
+
+## Rodada2ca23de e correções seguintes
+
+- Interface nativa40404438669 e catálogo40404438522 aprovados; geradores PHP
+  confirmaram os inventários. O menu Staff deixou de ser o ponto de falha.
+- Focused push40404430518/PR40404438429 falharam no novo cenário de timezone:
+  seu ator de edição não possuía exclusão de settings. A recusa agora tem prova
+  negativa própria; somente o preparo do estado sem timezone usa o master7.
+- Stack40404438524 falhou na assertion de largura móvel do dashboard. Artefato
+  12689628814, SHA256754c120ba3ecd9653a3fef4c3c49fe3420fa849847073c13bc272d343a28c08e,
+  conferido e inspecionado: captura dita desktop estava em viewport móvel e
+  documento514px. Controles do gráfico agora quebram linha com utilities já
+  compiladas; a próxima rodada salva geometria e screenshot antes da assertion,
+  mantém a exigência de largura e usa viewport desktop explícita.
+- Os passos posteriores de criação Staff ainda não foram alcançados. Não há
+  aprovação antecipada deles. Empresas40404438397 teve shards cancelados;
+  BB40404438563 teve unitários8.1/8.5 e checkout aprovados, bancos cancelados.
+  Cancelamento não é aprovação. Nenhum cancelamento foi solicitado por este
+  executor e o HEAD continuou2ca23de na reconciliação posterior.
+
+A preservação privada do retorno BB é implementada separadamente na versão1.3.0;
+consulte `docs/banco-brasil-return-originals.md`. Não substitui as pendências de
+remoção dos controllers paralelos ou de CNAB400 operacional.

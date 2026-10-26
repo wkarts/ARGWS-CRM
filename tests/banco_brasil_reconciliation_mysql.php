@@ -22,6 +22,24 @@ function importCredit(string $paid,string $fee='0.00',string $code='06',?string 
     return (int)$db->query("SELECT return_event_id FROM {$p}bb_return_file_events WHERE return_file_id=?",[$result['id']])->row()->return_event_id;
 }
 $reconcile=new \BancoBrasil\Reconciliation($db,$p);$e1=importCredit('40.00');
+$returnFileId=(int)$db->query('SELECT return_file_id FROM '.$p.'bb_return_events WHERE id=?',[$e1])->row()->return_file_id;
+$original=$store->downloadReturn($a,7,$returnFileId);
+essentialCheck($original['content']===syntheticCreditReturn('40.00')&&$original['hash']===hash('sha256',$original['content']),'authorized native original download preserves bytes and integrity');
+essentialThrows(fn()=>$store->downloadReturn($b,7,$returnFileId),'bb_return_original_unavailable','other company cannot download by coincident/direct file ID');
+$archiveAuditTrigger=$p.'change_archive_audit';
+$db->query('CREATE TRIGGER '.$archiveAuditTrigger.' BEFORE INSERT ON '.$p."bb_audit FOR EACH ROW SET NEW.action=IF(NEW.action='return_original_downloaded','archive_audit_changed',NEW.action)");
+essentialThrows(fn()=>$store->downloadReturn($a,7,$returnFileId),'bb_return_download_audit_unconfirmed','ignored audit semantics cannot release private bank bytes');
+$db->query('DROP TRIGGER '.$archiveAuditTrigger);
+$storedOriginal=$db->query('SELECT * FROM '.$p.'bb_return_originals WHERE return_file_id=?',[$returnFileId])->row_array();
+$db->query('UPDATE '.$p.'bb_return_originals SET content=? WHERE return_file_id=?',['corrupt',$returnFileId]);
+essentialThrows(fn()=>$store->downloadReturn($a,7,$returnFileId),'bb_return_original_corrupt','corrupt original is refused before response');
+$db->query('UPDATE '.$p.'bb_return_originals SET content=? WHERE return_file_id=?',[$storedOriginal['content'],$returnFileId]);
+$actorBefore=$db->query('SELECT active FROM '.$p.'staff WHERE staffid=7')->row_array();
+$db->query('UPDATE '.$p.'staff SET active=0 WHERE staffid=7');
+try{$store->downloadReturn($a,7,$returnFileId);throw new RuntimeException('revoked actor downloaded bank original');}catch(DomainException $e){essentialCheck(true,'revoked actor cannot download a private bank original');}
+$db->query('UPDATE '.$p.'staff SET active=? WHERE staffid=7',[$actorBefore['active']]);
+essentialCheck($store->downloadReturn($a,7,$returnFileId)['content']===$original['content'],'authorized download recovers without rewriting original history');
+
 $evidence=['credit_confirmed'=>'1','reason'=>'Synthetic bank credit independently reviewed','reference'=>'SYNTHETIC STATEMENT A'];
 $apply=fn($event,$proof)=>$writer->recordCompanyProviderReceipt($a,7,new \BancoBrasil\ReviewedReceipt($event,$proof));
 essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}invoicepaymentrecords WHERE invoiceid=?",[$origin['invoice_id']])->row()->n===0,'return import is observational even after exact origin exists');

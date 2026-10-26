@@ -3,7 +3,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: Banco do Brasil - Cobrança e CNAB 240/400
 Description: Conexões isoladas por emitente, perfis CNAB 240/400 e revisão de retornos. Operação bancária depende de contrato validado e homologação.
-Version: 1.2.9
+Version: 1.3.0
 Requires at least: 4.7.4
 */
 define('BANCO_BRASIL_MODULE_NAME','banco_brasil');

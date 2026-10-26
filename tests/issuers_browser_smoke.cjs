@@ -90,7 +90,7 @@ async function waitForUpgradeForm(page) {
 async function captureRealScreens(page, routes) {
   const originalUrl = page.url(), originalViewport = page.viewportSize();
   try {
-    for (const [name, route] of routes) for (const [size, viewport] of [['desktop', {width:1440,height:960}], ['mobile', {width:390,height:844}]]) {
+    for (const [name, route] of routes) for (const [size, viewport] of [['desktop', {width:1440,height:960}], ['tablet', {width:834,height:1112}], ['mobile', {width:390,height:844}]]) {
       await page.setViewportSize(viewport);
       const response = await page.goto(route, {waitUntil:'load'});
       assert.equal(response.status(), 200, name + ' evidence uses an authorized real document');
@@ -301,9 +301,15 @@ async function captureRealScreens(page, routes) {
       await shell(page);
       assert.equal(await page.locator('#side-menu .menu-item-dashboard').count(), 1, 'original dashboard menu remains present for the selected company');
       assert.equal(await page.locator('#wrapper .content').count(), 1, 'one native application content root, not a parallel workspace');
+      await page.setViewportSize({width:1440,height:960});await page.reload();
       await page.screenshot({path: output + '/native-secondary-dashboard-desktop.png', fullPage:true});
       await page.setViewportSize({width:390,height:844});await page.reload();
-      assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'selected-company native dashboard fits mobile');
+      await page.waitForFunction(()=>document.body.classList.contains('page-small'));
+      await page.evaluate(async()=>{await document.fonts.ready;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));});
+      const mobileGeometry=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,overflow:Array.from(document.querySelectorAll('#header *,#wrapper *')).map(el=>({tag:el.tagName,classes:typeof el.className==='string'?el.className:'',right:el.getBoundingClientRect().right,width:el.getBoundingClientRect().width})).filter(r=>r.right>innerWidth+1&&r.width>0).slice(0,40)}));
+      fs.writeFileSync(output+'/native-secondary-dashboard-mobile-geometry.json',JSON.stringify(mobileGeometry,null,2));
+      await page.screenshot({path:output+'/native-secondary-dashboard-mobile.png',fullPage:true});
+      assert(mobileGeometry.scrollWidth<=mobileGeometry.width+1,'selected-company native dashboard fits mobile: '+JSON.stringify(mobileGeometry));
       await page.screenshot({path: output + '/native-secondary-dashboard-mobile.png', fullPage:true});
       await page.setViewportSize({width:1280,height:900});
 

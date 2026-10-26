@@ -30,7 +30,7 @@ function nativeWire(array $c,string $sequence='000010',bool $conflicting=false,s
 }
 if(($argv[1]??'')==='worker'){
  $db=nativeDb();$db->query('SET SESSION innodb_lock_wait_timeout=8');
- $store=new \BancoBrasil\ModuleStore($db,'bb_native_');$c=$store->connection(1,1);$format=$argv[4]??'240';$wanted=$format==='400'?\BancoBrasil\LayoutCatalog::CNAB400:\BancoBrasil\Agreement::LAYOUT_ID;
+$store=new \BancoBrasil\ModuleStore($db,'bb_native_');$c=$store->connection(1,1);$format=$argv[4]??'240';$wanted=$format==='400'?\BancoBrasil\LayoutCatalog::CNAB400:\BancoBrasil\Agreement::LAYOUT_ID;
  $binding=0;foreach($store->layoutBindings(1) as $b)if($b['layout_id']===$wanted)$binding=(int)$b['id'];
  echo 'READY:'.$db->query('SELECT CONNECTION_ID() AS id')->row_array()['id']."\n";flush();
  try{$r=$store->importReturn($c,9,nativeWire($c,$argv[2],($argv[3]??'')==='conflict',$format),$binding);echo $r['duplicate']?"DUPLICATE\n":"IMPORTED\n";}
@@ -40,6 +40,9 @@ if(($argv[1]??'')==='worker'){
 $n=0;$db=nativeDb();
 foreach(\BancoBrasil\ModuleSchema::statements('bb_native_') as $sql)check($db->query($sql)!==false,'native DDL');
 \BancoBrasil\LayoutSchema::upgrade($db,'bb_native_');\BancoBrasil\SchemaValidator::assertCompatible($db,'bb_native_',\BancoBrasil\LayoutSchema::requirements());check(true,'native mysqli schema verified');
+require_once dirname(__DIR__).'/modules/banco_brasil/libraries/BancoBrasil/ReturnArchiveSchema.php';
+\BancoBrasil\ReturnArchiveSchema::upgrade($db,'bb_native_');
+\BancoBrasil\ReturnArchiveSchema::upgrade($db,'bb_native_'); // Additive replay.
 $store=new \BancoBrasil\ModuleStore($db,'bb_native_');
 $data=['account_id'=>'001:00452-3:000000123873-X','environment'=>'sandbox','agreement_number'=>'1234567','wallet'=>'17','variation'=>'019'];
 check($store->createConnection(1,9,['id'=>1,'tax_id'=>'12ABC34501DE35','legal_name'=>'EMPRESA SINTETICA'],$data)===1,'native connection write');

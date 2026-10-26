@@ -27,11 +27,17 @@ essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE modul
 essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='116','actual116 additive schema retries through native runner');
 essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native116 replay is stable');
 essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'bb_api_cnab_contracts')->row()->n===0,'native116 never backfills a contract for an existing origin');
-// The current129 runtime keeps the historical116 checks above, then advances
+// The current130 runtime keeps the historical116 checks above, then advances
 // through every new native step before any current operational service is used.
-foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119','1.2.0'=>'120','1.2.1'=>'121','1.2.2'=>'122','1.2.3'=>'123','1.2.4'=>'124','1.2.5'=>'125','1.2.6'=>'126','1.2.7'=>'127','1.2.8'=>'128','1.2.9'=>'129'] as $nativeVersion439=>$nativeStep439){
+foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119','1.2.0'=>'120','1.2.1'=>'121','1.2.2'=>'122','1.2.3'=>'123','1.2.4'=>'124','1.2.5'=>'125','1.2.6'=>'126','1.2.7'=>'127','1.2.8'=>'128','1.2.9'=>'129','1.3.0'=>'130'] as $nativeVersion439=>$nativeStep439){
     $GLOBALS['CI']->app_modules=new class($nativeVersion439){public function __construct(private string $version){}function get($name){return ['headers'=>['version'=>$this->version]];}};
     $previousVersion439=$db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version;
+    if($nativeStep439==='130'){
+        $db->failOn='CREATE TABLE IF NOT EXISTS `'.$p.'bb_return_originals`';essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_return_archive_migration_failed','130 DDL failure cannot advance native tracking');$db->failOn=null;
+        essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version===$previousVersion439,'failed130 DDL preserves129 tracking');
+        $db->trans_begin();essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_return_archive_outer_transaction_not_allowed','130 never implicitly commits caller transaction');
+        essentialCheck($db->pdo->inTransaction(),'130 preserves caller transaction');$db->trans_rollback();
+    }
     $db->failVersion=$nativeVersion439;
     essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native'.$nativeStep439.' tracking failure cannot authorize current runtime');
     $db->failVersion=null;
@@ -40,7 +46,7 @@ foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119','1.2.0'=>'120','1.2.1'=>'1
     essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version===$nativeVersion439,'native'.$nativeStep439.' readback confirms its exact version');
     essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native'.$nativeStep439.' replay preserves current tracking');
 }
-essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.2.9','final129 marker follows independently verified128');
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.3.0','final130 marker follows independently verified129');
 essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'bb_api_origin_policy')->row()->n===0,'125 never backfills bridge ownership');
 \BancoBrasil\OriginationSchema::assertValid($db,$p);
 $GLOBALS['CI']->app_modules=$realModules;

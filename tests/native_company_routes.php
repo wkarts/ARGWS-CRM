@@ -84,3 +84,6 @@ echo "Native Staff admission: {$checks} total assertions passed.\n";
 foreach(['add_note','edit_note','delete_note']as$method){$check(NativeCompanyRoutes::admits('admin','','misc',$method,'POST'),'scoped Staff notes have native mutation admission');$check(!NativeCompanyRoutes::admits('admin','','misc',$method,'GET'),'notes never mutate by GET');}
 $check(NativeCompanyRoutes::admits('admin','','tasks','timer_tracking','POST'),'own scoped timer action is available to Staff report');
 $check(!NativeCompanyRoutes::admits('admin','','tasks','delete_timesheet','GET'),'legacy timesheet deletion remains denied');
+
+$check(NativeCompanyRoutes::admits('admin','banco_brasil','banco_brasil','download_return','POST'),'private original return download uses original module POST route');
+$check(!NativeCompanyRoutes::admits('admin','banco_brasil','banco_brasil','download_return','GET'),'bank originals cannot be fetched by unprotected GET');

@@ -119,6 +119,13 @@ async function next(page) { await navigate(page, page.locator('section form butt
   const multipart={...hiddenReturn,connection_id:connection,layout_binding_id:binding,return_file:{name:'synthetic.ret',mimeType:'application/octet-stream',buffer:returned}};
   const imported=await context.request.post(url+'/admin/banco_brasil/import_return',{multipart});assert.equal(imported.status(),200);assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+invoice),'0','upload cannot become an automatic payment');
   await page.reload();await page.locator('#bb-tab-return').click();const event=sql('SELECT id FROM tblbb_return_events WHERE issuer_id='+a);assert.match(event,/^[1-9]\d*$/);
+  const originalForm=page.locator('form[action*="download_return"]').first();
+  const originalFields=await originalForm.evaluate(el=>Object.fromEntries(new FormData(el).entries()));
+  const originalResponse=await context.request.post(url+'/admin/banco_brasil/download_return',{form:originalFields});
+  assert.equal(originalResponse.status(),200);assert.deepEqual(await originalResponse.body(),returned,'private original download retains every uploaded byte');
+  assert.match(originalResponse.headers()['cache-control'],/no-store/);assert.match(originalResponse.headers()['content-disposition'],/^attachment;/);
+  assert.equal((await context.request.get(url+'/admin/banco_brasil/download_return')).status(),403,'original download requires scoped POST');
+
   let detail=page.locator('details').filter({has:page.locator('input[name=event_id][value="'+event+'"]')});await detail.locator('summary').click();await navigate(page,detail.locator('form[action*="link_event"] button'));
   assert.equal(sql('SELECT COUNT(*) FROM tblbb_event_links WHERE event_id='+event),'1');detail=page.locator('details').filter({has:page.locator('input[name=event_id][value="'+event+'"]')});await detail.locator('summary').click();
   const settle=detail.locator('form[action*="settle_event"]');await settle.locator('input[type=checkbox]').check();await settle.locator('input[name="settlement[reason]"]').fill('Synthetic credit independently reviewed');await settle.locator('input[name="settlement[reference]"]').fill('SYNTHETIC CI CREDIT ONLY');
@@ -151,6 +158,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   assert.equal(sql('SELECT COUNT(*) FROM tblbb_api_receipts WHERE origin_id='+creditFixture.origin),'1','API credit and canonical provenance commit together');
   await context.request.post(url+'/admin/banco_brasil/settle_api',{form:apiCreditFields});assert.equal(sql('SELECT COUNT(*) FROM tblinvoicepaymentrecords WHERE invoiceid='+creditFixture.invoice),'1','browser retry does not duplicate API payment');
   await select(b);response=await context.request.post(url+'/admin/banco_brasil/download_remittance',{form:data});assert.equal(response.status(),409,'stale context rejected before old batch download');
+  assert.equal((await context.request.post(url+'/admin/banco_brasil/download_return',{form:originalFields})).status(),409,'old original download form is rejected after switching company');
   const cross=await page.goto(url+'/admin/banco_brasil?issuer_id='+a);assert.equal(cross.status(),403,'selected B cannot request A banking history');
   // Complete positive UI credit path for B, with a distinct account/agreement/profile.
   await page.goto(url+'/admin/banco_brasil?issuer_id='+b);await page.locator('#bb-tab-account').click();
