@@ -13,3 +13,27 @@ ob_start();include __DIR__.'/../application/views/admin/dashboard/widgets/top_st
 check(str_contains($projectText,'1 / 3'),'native top statistic counts one actual in-progress row, not two historically active rows');
 check($xpath->query('//*[contains(@class,"quick-stats-invoices") or contains(@class,"quick-stats-leads")]')->length===0,'denied counters do not hydrate legacy data');
 echo "Native top stats real DOM: $checks cumulative checks passed.\n";
+
+function init_head(){echo '<!doctype html><html><head></head><body>';}
+function init_tail(){}
+final class DashboardCalendarCompositionRender
+{
+    public object $load;public array $loaded=[];public array $widgetData=[];
+    public function __construct(){$this->load=$this;}
+    public function view($path,$data=[]):void{$this->loaded[]=$path;if($path==='admin/dashboard/widgets/calendar')$this->widgetData=$data;}
+    public function render(bool $allowed,bool $configured,bool $selected=true):string
+    {
+        $company_dashboard=['permissions'=>['calendar'=>$allowed],'widget_order'=>[],'view'=>['native_calendar'=>$configured]];
+        $native_calendar=$configured;$native_calendar_config=['options'=>['timezone'=>'America/Bahia'],'calendar_ids'=>[]];
+        if(!$selected){unset($company_dashboard);$company_dashboard_selection_required=true;}
+        ob_start();include __DIR__.'/../application/views/admin/dashboard/dashboard.php';return ob_get_clean();
+    }
+}
+foreach([[false,false],[false,true],[true,false],[true,true]]as[$allowed,$configured]){
+    $page=new DashboardCalendarCompositionRender;$html=$page->render($allowed,$configured);
+    check(in_array('admin/utilities/calendar_template',$page->loaded,true)===($allowed&&$configured),'original dashboard modal requires both a current calendar grant and scoped configuration');
+    if($allowed&&$configured)check(str_contains($html,'window.nativeCalendarConfig=')&&($page->widgetData['native_calendar']??null)===true,'same dashboard page and original calendar widget receive scoped calendar configuration');
+}
+$page=new DashboardCalendarCompositionRender;$page->render(false,false,false);
+check(!in_array('admin/utilities/calendar_template',$page->loaded,true),'no company selected never composes the event mutation form');
+echo "Dashboard calendar composition: $checks cumulative checks; actual dashboard PHP, framework/partial I/O doubled.\n";

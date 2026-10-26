@@ -76,10 +76,12 @@ $renderDashboard=function(string $container) use($scopedDashboard,$dashboardData
     </div>
 </div>
 <script>
+    <?php if(!empty($native_calendar)){ ?>window.nativeCalendarConfig=<?= json_encode($native_calendar_config,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?>;<?php }else{ ?>
     app.calendarIDs = '<?= json_encode($google_ids_calendars ?? []); ?>';
+    <?php } ?>
 </script>
 <?php init_tail(); ?>
-<?php if(empty($company_dashboard_selection_required))$this->load->view('admin/utilities/calendar_template'); ?>
+<?php if(!$scopedDashboard || (!empty($native_calendar) && !empty($company_dashboard['permissions']['calendar'])))$this->load->view('admin/utilities/calendar_template'); ?>
 <?php $this->load->view('admin/dashboard/dashboard_js'); ?>
 </body>
 

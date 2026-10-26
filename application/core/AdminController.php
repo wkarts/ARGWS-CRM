@@ -15,7 +15,7 @@ class AdminController extends App_Controller
                 // Shared native views use these pure presentation helpers. The
                 // general translation helper checks the sealed company scope
                 // and skips global module hooks in this path.
-                $this->load->helper(['admin', 'general', 'app_branding']);
+                $this->load->helper(['admin', 'general', 'app_branding', 'misc']);
                 require_once APPPATH . 'services/NativeCompanyAdminPresentation.php';
                 NativeCompanyAdminPresentation::prepare($this);
             }

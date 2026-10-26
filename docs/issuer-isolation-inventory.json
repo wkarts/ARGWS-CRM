@@ -4,17 +4,7 @@
   "limitations": [
     "Conservative lexical inventory, not complete call-graph or SQL authorization proof.",
     "Vendor/assets/language/historical migrations and install scripts excluded from runtime inventory.",
-    "Dynamic tables, aliases and extensions require additional manual/runtime coverage.",
-    "PR49 reviewed lexical removal: application/views/admin/issuers/manage.php now delegates to application/views/admin/companies/registry_grid.php; its old invoice navigation signal is gone. The new grid projects the authorized company catalog and posts status/onboarding actions with context tokens, but neither wrapper nor grid currently matches this invoice/customer lexical scanner. Removal is not isolation closure; controller/service and transitive-view authorization still require separate coverage.",
-    "PR51 refresh: runner inventory regenerated after the native settings and Efí boundary changes. All changed/new entries remain unreviewed; existing partial states are not promoted. Operational rollout remains blocked and the inventory is not proof of complete financial isolation.",
-    "PR52 f94f84bf changes the shared general helper for isolated native presentation; its source hash and signal line were regenerated while its review state remains unreviewed. Operational rollout remains blocked.",
-    "PR52 follow-up: native Dashboard alerts now use the company-scoped announcement adapter and the original Misc dismissal action is POST-only under the native route policy. The changed source remains unreviewed here; company boundary and financial rollout gates remain blocked pending full consumer and runtime coverage.",
-    "PR52 Dashboard fix: the official dashboard renderer now explicitly loads settings_helper for the scoped sales formatter. The changed Dashboard source remains unreviewed by this conservative inventory; this does not close broader controller, route, view, or tenant-isolation work.",
-    "PR52 Dashboard table render: the shared Dashboard now loads the canonical custom-fields and tickets helpers used by the official task table. Dashboard remains unreviewed in this conservative inventory; no company-boundary or operational rollout gate is closed by helper loading.",
-    "PR52 Dashboard ticket widget: the official table now receives the issuer-scoped table order, visibility, service setting and field labels. The Dashboard PHP source remains unreviewed in this conservative inventory; broader route, view, controller and tenant-isolation coverage remains incomplete.",
-    "PR52 beea5839 adds a one-time archive and primary-company copy for legacy resource ACLs. IssuerCore remains unreviewed; the source table is retained and the inventory does not establish migration safety or full company isolation.",
-    "PR52 native dashboard project-table preference fix: the official my-projects identifier now resolves through the existing project ACL and a per-company preference key; only local SQLite preference behavior is evidenced and the operational rollout gate stays blocked.",
-    "PR52 dashboard template/calendar route fix: the original dashboard calendar helper uses the active request/runtime issuer, and the existing Utilities controller's scoped page/feed/event endpoints are now admitted with explicit verbs. The affected boundaries remain unreviewed; authenticated browser proof is pending."
+    "Dynamic tables, aliases and extensions require additional manual/runtime coverage."
   ],
   "files": {
     "application/config/autoload.php": {
@@ -628,12 +618,12 @@
       "evidence": ""
     },
     "application/controllers/admin/Dashboard.php": {
-      "sha256": "9c0f41d899a1d2ec4adbb3155260b07f6d85a44c8d72fc151614d5d5cb3395f4",
+      "sha256": "a3797b93e1c6d9a1f4b54d50d9b970d53a8f0cd4f2f0ee5485689ec672e22908",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        78
+        84
       ],
       "state": "unreviewed",
       "evidence": ""

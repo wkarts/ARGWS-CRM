@@ -92,7 +92,12 @@ function html_escape($value) { return e($value); }
 function base_url($path) { return 'https://crm.example.test/' . $path; }
 function config_item($name) { return $name === 'charset' ? 'UTF-8' : null; }
 function is_admin($staffid = '') { return false; }
-function init_head($aside = true) { echo '<!doctype html><html><head></head><body><div id="header"></div>'; }
+function init_head($aside = true) {
+    echo '<!doctype html><html><head></head><body><div id="header"></div>';
+    // Framework chrome is doubled; compose the actual selector that the native
+    // sidebar renders. The DOM assertions below still inspect both real forms.
+    if ($aside) { echo '<aside id="menu">'.(new ContextViewRenderer())->render('admin/includes/company_selector').'</aside>'; }
+}
 function init_tail() { echo '<!-- synthetic CRM asset footer -->'; }
 require APPPATH . 'helpers/App_form_helper.php';
 require BASEPATH . 'helpers/form_helper.php';

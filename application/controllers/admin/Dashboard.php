@@ -70,6 +70,12 @@ class Dashboard extends AdminController
             $auxiliary=new NativeCompanyAuxiliaryUi($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),$this);
             $announcementAlerts=$auxiliary->dashboardAnnouncements();
             $canEditAnnouncements=$auxiliary->allowed('announcements','edit');
+            if (!empty($snapshot['permissions']['calendar'])) {
+                require_once APPPATH.'services/NativeCompanyCalendarEndpoints.php';
+                $calendarData=NativeCompanyCalendarEndpoints::page($this);
+                unset($calendarData['title']);
+                $viewData=array_replace($viewData,$calendarData);
+            }
             $title = NativeCompanyAdminPresentation::label('dashboard_string');
             $snapshot['view'] = $viewData;
             $data=$viewData+['company_dashboard'=>$snapshot,'company_dashboard_announcements'=>$announcementAlerts,'company_dashboard_can_edit_announcements'=>$canEditAnnouncements,'native_database_upgrade_success'=>$upgradeSuccess,'title'=>$title,'bodyclass'=>'dashboard','dashboard'=>true];

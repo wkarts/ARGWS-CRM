@@ -30,7 +30,7 @@ test('original dashboard alerts use issuer-scoped announcements and POST dismiss
 });
 
 test('isolated native shell loads shared view helpers and scoped PT-BR labels without forcing HTML responses',()=>{
- const admin=read('application/core/AdminController.php');assert.match(admin,/load->helper\(\['admin', 'general', 'app_branding'\]\)/);
+ const admin=read('application/core/AdminController.php');assert.match(admin,/load->helper\(\['admin', 'general', 'app_branding', 'misc'\]\)/);
  const presentation=read('application/services/NativeCompanyAdminPresentation.php');assert.match(presentation,/\$ci->lang->language=array_merge\(\$ci->lang->language,self::\$language\)/);
  const general=read('application/helpers/general_helper.php');assert.match(general,/\$nativeIsolatedRequest=.*CompanyRequestScope/s);assert.match(general,/if\(!\$nativeIsolatedRequest\)header\('Content-Type: text\/html; charset=utf-8'\)/);
 });
@@ -40,3 +40,16 @@ test('dashboard preferences stay actor + issuer bound and use native CSRF',()=>{
 });
 
 test('in-progress widget never aliases historically active projects',()=>{const widget=fs.readFileSync('application/views/admin/dashboard/widgets/top_stats.php','utf8');assert.match(widget,/\$total_projects_in_progress=\(\$counts\['in_progress'\]\?\?0\)\+\(\$counts\['legacy_2'\]\?\?0\)/);assert.doesNotMatch(widget,/\$total_projects_in_progress=\$counts\['active'\]/);});
+
+test('dashboard composes the original calendar DTO before widgets and respects its permission',()=>{
+ const controller=read('application/controllers/admin/Dashboard.php');
+ const calendar=controller.indexOf('NativeCompanyCalendarEndpoints::page($this)');
+ const composition=controller.indexOf("$snapshot['view'] = $viewData",calendar);
+ assert.ok(calendar>0&&composition>calendar,'calendar settings reach the same snapshot used by original widget partials');
+ assert.match(controller,/if \(!empty\(\$snapshot\['permissions'\]\['calendar'\]\)\)/);
+ const view=read('application/views/admin/dashboard/dashboard.php');
+ assert.match(view,/window\.nativeCalendarConfig=/);
+ assert.match(view,/if\(!\$scopedDashboard \|\| \(!empty\(\$native_calendar\) && !empty\(\$company_dashboard\['permissions'\]\['calendar'\]\)\)\)/);
+ const assets=read('application/services/NativeCompanyAdminPresentation.php');
+ assert.match(assets,/self::dashboardPage\(\$ci\).*->can\(self::\$issuer,CompanyRequestScope::context\(\)->staffId\(\),'calendar','view'\)/);
+});
