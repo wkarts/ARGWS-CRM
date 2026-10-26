@@ -10,7 +10,7 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "cf41588e43c959ea69ff587f46ad259d17d169cbfd3a4867b6b2119e8574ddea",
+    "source_manifest_sha256": "d72e53676e04cb7fb0a853d97b6f9b4cfeb13c44580dd0c2a239d1528465eb00",
     "counts": {
         "modules": 38,
         "source_files": 4603,
@@ -10081,7 +10081,7 @@
         },
         {
             "path": "application/controllers/admin/Company_selection.php",
-            "source_sha256": "9eba1382216705d1c47e97b6cec6f0fc5108676f8e36b8690f25d9d179816324",
+            "source_sha256": "f7d2e497dcde0fbb3bb506b4b13458d66125141cd112bcad3f620fdc29606bab",
             "module": null,
             "base_class": "App_Controller",
             "surface": "admin",
@@ -10675,7 +10675,7 @@
         },
         {
             "path": "application/controllers/admin/Dashboard.php",
-            "source_sha256": "f86604057b85243f9d37acad39e199d91c58c9fd62dec63d99f429c559be716d",
+            "source_sha256": "5985a0cf2ae08ffa8ad63ee152561f9d323ad47b00bd40ff5784f179d3f7b1ed",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -10687,22 +10687,22 @@
                 },
                 {
                     "method": "index",
-                    "line": 74,
+                    "line": 103,
                     "visibility": "public"
                 },
                 {
                     "method": "weekly_payments_statistics",
-                    "line": 161,
+                    "line": 190,
                     "visibility": "public"
                 },
                 {
                     "method": "monthly_payments_statistics",
-                    "line": 172,
+                    "line": 201,
                     "visibility": "public"
                 },
                 {
                     "method": "ticket_widget",
-                    "line": 182,
+                    "line": 211,
                     "visibility": "public"
                 }
             ],

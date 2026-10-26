@@ -24,13 +24,17 @@ jobs:
       - name: Validar inventário operacional e mostrar diferenças
         run: |
           php scripts/company-surface-inventory.php --output /tmp/company-operational-surfaces.json
+          php scripts/native-experience-inventory.php > /tmp/native-experience-action-census.json
           diff -u --label a/docs/companies/operational-surfaces.json --label b/docs/companies/operational-surfaces.json docs/companies/operational-surfaces.json /tmp/company-operational-surfaces.json
+          diff -u --label a/docs/companies/native-experience-action-census.json --label b/docs/companies/native-experience-action-census.json docs/companies/native-experience-action-census.json /tmp/native-experience-action-census.json
       - name: Preservar inventário gerado para reconciliação
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: company-operational-surfaces-generated
-          path: /tmp/company-operational-surfaces.json
+          path: |
+            /tmp/company-operational-surfaces.json
+            /tmp/native-experience-action-census.json
           if-no-files-found: error
           retention-days: 7
       - name: Sintaxe PHP e contratos estáticos
