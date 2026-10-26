@@ -77,7 +77,14 @@ jobs:
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           PATH="$PWD/node_modules/.bin:$PATH" ./node_modules/.bin/mix --production
-          git -C "$GITHUB_WORKSPACE" diff --exit-code -- assets/builds assets/js/main.min.js assets/js/native-tasks.min.js assets/js/native-ui-tools.min.js assets/js/tickets.min.js mix-manifest.json
+      - name: Verify compiled assets against the checked out repository
+        if: matrix.php == '8.1'
+        working-directory: ${{ github.workspace }}
+        run: |
+          printf 'working directory: %s\nGitHub workspace: %s\n' "$PWD" "${GITHUB_WORKSPACE:-unset}"
+          ls -ld .git
+          git rev-parse --show-toplevel
+          git diff --exit-code -- assets/builds assets/js/main.min.js assets/js/native-tasks.min.js assets/js/native-ui-tools.min.js assets/js/tickets.min.js mix-manifest.json
       - name: Preserve focused receipts and synthetic screenshots
         if: always()
         uses: actions/upload-artifact@v4
