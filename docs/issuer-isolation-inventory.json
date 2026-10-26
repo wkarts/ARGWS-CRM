@@ -621,6 +621,17 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "application/controllers/admin/Dashboard.php": {
+      "sha256": "de4cb7988e57d3bfc337a3edcd54735b896c11f9673a03a3d26f24416e936fa2",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        68
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/controllers/admin/Email_schedule_invoice.php": {
       "sha256": "8016a17ca263e738d3db7e6ed49bf1b9856657dc7b58dafd690100295341ed65",
       "categories": [
@@ -6127,7 +6138,7 @@
       "evidence": ""
     },
     "application/views/admin/companies/layout_head.php": {
-      "sha256": "5d7c9d7fb255f5ca88dd810340a176944229ad1d3dc5937e85e5291fb533eaff",
+      "sha256": "c736e3686cf40a07f231d15d594cf4e9d34ce152bcfa1b4287f22f7850579faf",
       "categories": [
         "invoice_table"
       ],
