@@ -21,4 +21,10 @@ $m=new Migration_Version_474;$m->db=new stdClass;$GLOBALS['calls']=[];$GLOBALS['
 if(array_column($GLOBALS['tail_calls'],0)!==$tail)throw new RuntimeException('Backfill order omitted');
 foreach($GLOBALS['tail_calls']as$c)if($c[1]!==$m->db||$c[2]!=='synthetic_')throw new RuntimeException('Wrong backfill context');
 if(array_column($GLOBALS['calls'],0)!==$schemas)throw new RuntimeException('Incomplete or reordered schema dispatch');
-if($GLOBALS['currency_calls']!==[[$m->db,'synthetic_']])throw new RuntimeException('Currency preparation mis
+if($GLOBALS['currency_calls']!==[[$m->db,'synthetic_']])throw new RuntimeException('Currency preparation missing or wrong connection');
+foreach($GLOBALS['calls']as$c)if($c[1]!==$m->db||$c[2]!=='synthetic_')throw new RuntimeException('Wrong database or prefix');
+$GLOBALS['calls']=[];$m->up();if(count($GLOBALS['calls'])!==count($schemas))throw new RuntimeException('Replay omitted validation');
+foreach($schemas as$i=>$schema){$GLOBALS['fail']=$schema;$GLOBALS['calls']=[];$failed=false;try{$m->up();}catch(RuntimeException $e){$failed=$e->getMessage()==='synthetic schema failure';}if(!$failed||array_column($GLOBALS['calls'],0)!==array_slice($schemas,0,$i+1))throw new RuntimeException('Failure swallowed or later schema executed');}
+foreach($tail as$i=>$name){$GLOBALS['fail']=$name;$GLOBALS['tail_calls']=[];$GLOBALS['currency_calls']=[];$failed=false;try{$m->up();}catch(RuntimeException $e){$failed=$e->getMessage()==='synthetic schema failure';}if(!$failed||array_column($GLOBALS['tail_calls'],0)!==array_slice($tail,0,$i+1)||$GLOBALS['currency_calls']!==[])throw new RuntimeException('Backfill failure swallowed or later work executed');}
+try{$m->down();throw new LogicException('Unsafe downgrade accepted');}catch(RuntimeException $e){if($e->getMessage()!=='native_company_schema_downgrade_requires_review')throw$e;}
+echo "Native 474 orchestration: replay, exact connection/prefix, all schema failure boundaries and non-destructive downgrade passed; real MySQL remains required.\n";

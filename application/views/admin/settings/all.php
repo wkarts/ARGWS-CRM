@@ -93,4 +93,144 @@ unset($settingsPresentation,$settingsNavigation);
                 $('.protocol-google').addClass('hide');
 
                 if ($('input[name="settings[email_protocol]"]:checked').val() == 'microsoft') {
-                    $('#smtp').prop('
+                    $('#smtp').prop('checked', true)
+                    $('#microsoft').trigger('change')
+                }
+
+                if ($('input[name="settings[email_protocol]"]:checked').val() == 'google') {
+                    $('#smtp').prop('checked', true)
+                    $('#google').trigger('change')
+                }
+            } else {
+                $('.protocol-microsoft').removeClass('hide');
+                $('.protocol-google').removeClass('hide');
+            }
+        });
+
+        $('input[name="settings[email_protocol]"]').on('change', function() {
+            var $inputHost = $('input[name="settings[smtp_host]"]');
+            var $inputPort = $('input[name="settings[smtp_port]"]');
+            var $selectEnc = $('select[name="settings[smtp_encryption]"]');
+
+            var resetFields = function() {
+                if ($selectEnc.hasClass('_modified')) {
+                    $selectEnc.selectpicker('val', '');
+                    $selectEnc.removeClass('_modified');
+                }
+
+                if ($inputPort.hasClass('_modified')) {
+                    $inputPort.val('');
+                    $inputPort.removeClass('_modified');
+                }
+
+                if ($inputHost.hasClass('_modified')) {
+                    $inputHost.val('');
+                    $inputHost.removeClass('_modified');
+                }
+            }
+
+            if ($(this).val() == 'mail') {
+                $('.xoauth-hide').addClass('hide');
+                $('.smtp-fields').addClass('hide');
+                $('.xoauth-microsoft-show').addClass('hide');
+                $('.xoauth-google-show').addClass('hide');
+                resetFields();
+            } else if ($(this).val() === 'microsoft' || $(this).val() === 'google') {
+                $('.smtp-fields').removeClass('hide');
+                $('.xoauth-hide').addClass('hide');
+                $('.xoauth-microsoft-show').addClass('hide');
+                $('.xoauth-google-show').addClass('hide');
+
+                if ($(this).val() === 'microsoft') {
+                    $('.xoauth-microsoft-show').removeClass('hide');
+                    if ($inputHost.val() == '') {
+                        $inputHost.val('smtp.office365.com')
+                        $inputHost.addClass('_modified');
+                    }
+                }
+
+                if ($(this).val() === 'google') {
+                    $('.xoauth-google-show').removeClass('hide');
+                    if ($inputHost.val() == '') {
+                        $inputHost.val('smtp.gmail.com')
+                        $inputHost.addClass('_modified');
+                    }
+                }
+
+                if ($inputPort.val() == '') {
+                    $inputPort.val('587')
+                    $inputPort.addClass('_modified');
+                    if ($selectEnc.selectpicker('val') == '') {
+                        $selectEnc.selectpicker('val', 'tls');
+                        $selectEnc.addClass('_modified');
+                    }
+                }
+            } else {
+                $('.smtp-fields').removeClass('hide');
+                $('.xoauth-hide').removeClass('hide');
+                $('.xoauth-microsoft-show').addClass('hide');
+                $('.xoauth-google-show').addClass('hide');
+                resetFields();
+            }
+        });
+
+        $('.sms_gateway_active input').on('change', function() {
+            if ($(this).val() == '1') {
+                $('body .sms_gateway_active').not($(this).parents('.sms_gateway_active')[0]).find(
+                    'input[value="0"]').prop('checked', true);
+            }
+        });
+
+        <?php if ($group['id'] == 'pusher') {
+            if (get_option('desktop_notifications') == '1') { ?>
+        // Let's check if the browser supports notifications
+        if (!("Notification" in window)) {
+            $('#pusherHelper').html(
+                '<div class="alert alert-danger">Your browser does not support desktop notifications, please disable this option or use more modern browser.</div>'
+            );
+        } else if (Notification.permission == "denied") {
+            $('#pusherHelper').html(
+                '<div class="alert alert-danger">Desktop notifications not allowed in browser settings, search on Google "How to allow desktop notifications for <?= $this->agent->browser(); ?>"</div>'
+            );
+        }
+        <?php } ?>
+        <?php if (get_option('pusher_realtime_notifications') == '0') { ?>
+        $('input[name="settings[desktop_notifications]"]').prop('disabled', true);
+        <?php } ?>
+        <?php } ?>
+
+        $('input[name="settings[pusher_realtime_notifications]"]').on('change', function() {
+            if ($(this).val() == '1') {
+                $('input[name="settings[desktop_notifications]"]').prop('disabled', false);
+            } else {
+                $('input[name="settings[desktop_notifications]"]').prop('disabled', true);
+                $('input[name="settings[desktop_notifications]"][value="0"]').prop('checked', true);
+            }
+        });
+
+        $('.test_email').on('click', function() {
+            var email = $('input[name="test_email"]').val();
+            if (email != '') {
+                $(this).attr('disabled', true);
+                $.post(admin_url + 'emails/sent_smtp_test_email', {
+                    test_email: email
+                }).done(function(data) {
+                    window.location.reload();
+                });
+            }
+        });
+
+    });
+
+    $('input[name="settings[reminder_for_completed_but_not_billed_tasks]"]').on('change', function() {
+        if ($(this).val() == '1') {
+            $('.staff_notify_completed_but_not_billed_tasks_fields').removeClass('hide');
+        } else {
+            $('.staff_notify_completed_but_not_billed_tasks_fields').addClass('hide');
+        }
+    });
+</script>
+<?php if(!$isNativeSettings)hooks()->do_action('settings_group_end', $group); ?>
+</body>
+
+</html>
