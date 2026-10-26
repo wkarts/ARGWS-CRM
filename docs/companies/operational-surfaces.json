@@ -10687,22 +10687,22 @@
                 },
                 {
                     "method": "index",
-                    "line": 60,
+                    "line": 62,
                     "visibility": "public"
                 },
                 {
                     "method": "weekly_payments_statistics",
-                    "line": 147,
+                    "line": 149,
                     "visibility": "public"
                 },
                 {
                     "method": "monthly_payments_statistics",
-                    "line": 158,
+                    "line": 160,
                     "visibility": "public"
                 },
                 {
                     "method": "ticket_widget",
-                    "line": 168,
+                    "line": 170,
                     "visibility": "public"
                 }
             ],
