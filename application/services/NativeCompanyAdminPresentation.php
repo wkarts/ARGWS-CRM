@@ -32,6 +32,10 @@ final class NativeCompanyAdminPresentation
         if (!$staff || (int)$staff['staffid'] !== $actor) { throw new DomainException('native_company_staff_unavailable'); }
         // Trusted product translation only; _l() runs global hooks and is intentionally not used.
         self::$language=(static function(){ $lang=[]; require APPPATH.'language/portuguese_br/portuguese_br_lang.php'; return $lang; })();
+        if(!isset($ci->lang)||!is_object($ci->lang)||!isset($ci->lang->language)||!is_array($ci->lang->language))throw new LogicException('native_company_language_unavailable');
+        // The shared native controllers and views call _l(); seed CI's core
+        // language object from the same trusted catalog used by our own labels.
+        $ci->lang->language=array_merge($ci->lang->language,self::$language);
         $menus=['sidebar'=>[], 'setup'=>[]]; $children=[];
         foreach(NativeAdminMenuCatalog::entries() as $entry) {
             if($issuer === null) { continue; }

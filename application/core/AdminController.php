@@ -12,6 +12,10 @@ class AdminController extends App_Controller
         // Isolated company routes must not hydrate legacy menus, models or hooks.
         if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::sealedFor($this)) {
             if (CompanyRequestScope::nativeFor($this)) {
+                // Shared native views use these pure presentation helpers. The
+                // general translation helper checks the sealed company scope
+                // and skips global module hooks in this path.
+                $this->load->helper(['admin', 'general', 'app_branding']);
                 require_once APPPATH . 'services/NativeCompanyAdminPresentation.php';
                 NativeCompanyAdminPresentation::prepare($this);
             }

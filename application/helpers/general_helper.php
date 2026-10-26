@@ -6,7 +6,9 @@ use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Collection;
 
 defined('BASEPATH') or exit('No direct script access allowed');
-header('Content-Type: text/html; charset=utf-8');
+$nativeIsolatedRequest=class_exists('CompanyRequestScope',false)
+    &&method_exists('CompanyRequestScope','isolated')&&CompanyRequestScope::isolated();
+if(!$nativeIsolatedRequest)header('Content-Type: text/html; charset=utf-8');
 
 /**
  * Load custom lang for the given language

@@ -19,6 +19,12 @@ test('request seal and pre-emission authorization retained',()=>{
  const preview=c.indexOf('AdminDatabaseUpgrade::peekContextSuccess($this');const render=c.indexOf("$this->load->view('admin/dashboard/dashboard',$data,true)");const confirm=c.indexOf('$presenter->confirm()');const consume=c.indexOf('AdminDatabaseUpgrade::consumeContextSuccess($this');assert.ok(preview>=0&&render>preview&&confirm>render&&consume>confirm,'upgrade feedback remains on the native Dashboard path and consumes only after render plus scope recheck');
  const p=read('application/services/CompanyDashboardPresenter.php');assert.match(p,/company_dashboard_schema_unavailable/);assert.match(p,/company_dashboard_stale/);
 });
+
+test('isolated native shell loads shared view helpers and scoped PT-BR labels without forcing HTML responses',()=>{
+ const admin=read('application/core/AdminController.php');assert.match(admin,/load->helper\(\['admin', 'general', 'app_branding'\]\)/);
+ const presentation=read('application/services/NativeCompanyAdminPresentation.php');assert.match(presentation,/\$ci->lang->language=array_merge\(\$ci->lang->language,self::\$language\)/);
+ const general=read('application/helpers/general_helper.php');assert.match(general,/\$nativeIsolatedRequest=.*CompanyRequestScope/s);assert.match(general,/if\(!\$nativeIsolatedRequest\)header\('Content-Type: text\/html; charset=utf-8'\)/);
+});
 test('dashboard preferences stay actor + issuer bound and use native CSRF',()=>{
  const service=read('application/services/NativeCompanyDashboardPreferences.php');assert.match(service,/'company_dashboard:'\.\$this->issuer/);assert.match(service,/WHERE staff_id=\? AND meta_key=\?/);assert.ok(!service.includes('unserialize('));assert.match(service,/IssuerTransaction::run/);
  const c=read('application/controllers/admin/Staff.php');assert.match(c,/CompanyRequestScope::assertNativeMutation\(\$this\)/);
