@@ -7,7 +7,7 @@ require_once __DIR__.'/issuers/IssuerTransaction.php';
 /** Existing DataTables preference, isolated by company and authenticated actor. */
 final class NativeCompanyTableOrder
 {
-    private const TABLES=['projects'=>'projects','invoices'=>'invoices','project_invoices'=>'invoices','kb-articles'=>'knowledge_base','tickets'=>'tickets','tasks'=>'tasks'];
+    private const TABLES=['projects'=>'projects','my-projects'=>'projects','invoices'=>'invoices','project_invoices'=>'invoices','kb-articles'=>'knowledge_base','tickets'=>'tickets','tasks'=>'tasks'];
     public function __construct(private $db,private string $p,private int $issuer,private int $actor)
     {if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');IssuerPolicy::id($issuer);IssuerPolicy::id($actor);}
     private function key(string $identifier):string
