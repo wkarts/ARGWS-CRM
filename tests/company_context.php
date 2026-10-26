@@ -13,6 +13,7 @@ final class ContextSession
     public function userdata($key) { ++$this->reads; return $this->data[$key] ?? null; }
     public function set_userdata($key, $value = null): void { if (is_array($key)) { $this->data = array_replace($this->data, $key); } else { $this->data[$key] = $value; } }
     public function unset_userdata($key): void { unset($this->data[$key]); }
+    public function has_userdata($key): bool { return array_key_exists($key,$this->data); }
     public function flashdata($key){$value=$this->data[$key]??null;unset($this->data[$key]);return $value;}
     public function set_flashdata($key,$value){$this->data[$key]=$value;}
 }
@@ -43,11 +44,12 @@ final class ContextConfig
 }
 final class ContextLoader
 {
-    public array $autoload = []; public array $trace = []; public array $views = [];
+    public array $autoload = []; public array $trace = []; public array $views = []; public array $variables = [];
     public function database(): void { $this->trace[] = 'database'; }
     public function driver($name): void { $this->trace[] = 'driver:' . $name; }
     public function helper($name): void { $this->trace[] = 'helper:' . (is_array($name) ? implode(',', $name) : $name); }
     public function initialize(): void { include APPPATH . 'config/autoload.php'; $this->autoload = $autoload; $this->trace[] = 'autoload_returned'; }
+    public function vars($variables): void { $this->variables = array_replace($this->variables,$variables); }
     public function library($name): void
     {
         $this->trace[] = 'library:' . $name;
@@ -88,6 +90,9 @@ function e($value) { return htmlspecialchars((string) $value, ENT_QUOTES | ENT_S
 function html_escape($value) { return e($value); }
 function base_url($path) { return 'https://crm.example.test/' . $path; }
 function config_item($name) { return $name === 'charset' ? 'UTF-8' : null; }
+function is_admin($staffid = '') { return false; }
+function init_head($aside = true) { echo '<!doctype html><html><head></head><body><div id="header"></div>'; }
+function init_tail() { echo '<!-- synthetic CRM asset footer -->'; }
 require APPPATH . 'helpers/App_form_helper.php';
 require BASEPATH . 'helpers/form_helper.php';
 final class ContextViewRenderer
@@ -109,7 +114,7 @@ function expectStatus(callable $call, int $status): void
 function contextEnvironment($f, ContextSession $session, string $class = 'dashboard', string $method = 'index', string $verb = 'GET'): object
 {
     CompanyRequestScope::finish(); $_POST = [];
-    $ci = (object) ['db' => $f->db, 'session' => $session, 'router' => new ContextRouter(), 'input' => new ContextInput(), 'config' => new ContextConfig(), 'load' => new ContextLoader(), 'encryption' => new class { public function encrypt($value) { return 'synthetic-cipher:' . base64_encode($value); } public function decrypt($value) { return str_starts_with((string) $value, 'synthetic-cipher:') ? base64_decode(substr($value, 17), true) : false; } }, 'output' => new class { public int $status=200; public function set_status_header($status) { $this->status = $status; } }];
+    $ci = (object) ['db' => $f->db, 'session' => $session, 'router' => new ContextRouter(), 'input' => new ContextInput(), 'config' => new ContextConfig(), 'load' => new ContextLoader(), 'lang' => (object)['language'=>[]], 'encryption' => new class { public function encrypt($value) { return 'synthetic-cipher:' . base64_encode($value); } public function decrypt($value) { return str_starts_with((string) $value, 'synthetic-cipher:') ? base64_decode(substr($value, 17), true) : false; } }, 'output' => new class { public int $status=200; public function set_status_header($status) { $this->status = $status; } }];
     $ci->router->controller = $class; $ci->router->method = $method; $ci->input->verb = $verb;
     $GLOBALS['CI'] = $GLOBALS['contextEnvironment'] = $ci;
     return $ci;
@@ -120,6 +125,11 @@ $db->query("INSERT INTO {$p}issuers_registry(id,legal_name,tax_id,active,setting
 $db->query("INSERT INTO {$p}options VALUES('company_vat','12345678000195')");
 IssuerCore::reconcile($db, $p); IssuerCore::bindInstallationMaster($db, $p, 7);
 $db->query("INSERT INTO {$p}staff VALUES(8,1,0,NULL),(1,1,1,NULL),(9,0,1,NULL)");
+$db->query("ALTER TABLE {$p}staff ADD COLUMN firstname VARCHAR(100) NOT NULL DEFAULT ''");
+$db->query("ALTER TABLE {$p}staff ADD COLUMN lastname VARCHAR(100) NOT NULL DEFAULT ''");
+$db->query("ALTER TABLE {$p}staff ADD COLUMN email VARCHAR(191) NOT NULL DEFAULT ''");
+$db->query("ALTER TABLE {$p}staff ADD COLUMN profile_image VARCHAR(191) NULL");
+$db->query("UPDATE {$p}staff SET firstname='Synthetic',lastname='Staff',email='synthetic@example.test'");
 $db->query("INSERT INTO {$p}issuers_registry(id,legal_name,tax_id,active,settings_json,created_by,created_at,identity_status) VALUES(54,'Secondary synthetic','11222333000181',1,'{}',7,'2026-10-18','complete'),(55,'Forbidden synthetic','11444777000161',1,'{}',7,'2026-10-18','complete')");
 $db->query("INSERT INTO {$p}issuers_staff(issuer_id,staff_id,can_view) VALUES(41,8,1),(54,8,1),(54,1,0)");
 $db->query("INSERT INTO {$p}issuers_staff_defaults(staff_id,issuer_id) VALUES(8,41),(1,54)");
@@ -194,16 +204,17 @@ $ci=contextEnvironment($f,$s,'settings','index','PUT');$_POST=['_company_context
 essentialCheck(!CompanySettingsRuntime::active(),'unsupported Settings verb is denied before the legacy company form can hydrate');
 $ci = contextEnvironment($f, $s, 'issuers', 'index');$companies=new Issuers();$companies->index(54);
 $companyView=end($companies->load->views);
-essentialCheck($companyView[0]==='admin/companies/registry','secondary company registry uses isolated native renderer');
+essentialCheck($companyView[0]==='admin/issuers/manage','secondary company registry uses the original CRM route and view');
 essentialCheck($companyView[1]['can_manage'] && !$companyView[1]['can_create'],'company settings editor cannot create companies as implicit global administrator');
 $companyHtml=(new ContextViewRenderer())->render($companyView[0],$companyView[1]);
 essentialCheck(str_contains($companyHtml,'id="header"') && str_contains($companyHtml,'name="issuers_csrf"'),'company form retains layout and dedicated CSRF');
 essentialCheck(!str_contains($companyHtml,'Forbidden synthetic'),'company catalog does not expose unauthorized company');
 $dom=new DOMDocument();$previous=libxml_use_internal_errors(true);$dom->loadHTML($companyHtml);libxml_clear_errors();libxml_use_internal_errors($previous);$xpath=new DOMXPath($dom);
 essentialCheck($xpath->query('//form')->length===2 && $xpath->query('//form//form')->length===0,'company selector and status form are independent balanced forms');
-essentialCheck($xpath->query('//*[@id="wrapper"]//main//form')->length===1,'company status form remains inside CRM content wrapper');
+essentialCheck($xpath->query('//*[@id="wrapper"]//form')->length===1,'company status form remains inside CRM content wrapper');
 essentialCheck($xpath->query('//form[input[@name="action" and @value="issuer_status"] and input[@name="issuer_id" and @value="54"] and input[@name="issuers_csrf"]]')->length===1,'authorized secondary has dedicated CSRF-protected status action');
 essentialCheck($xpath->query('//form[input[@name="action" and @value="issuer_status"]]/input[@name="_company_context" and @value="'.CompanyRequestScope::token().'"]')->length>=1,'status action retains original company context token');
+essentialCheck($xpath->query('//form[input[@name="action" and @value="issuer_status"]]/input[@name="_native_company_csrf" and @value="'.CompanyRequestScope::nativeCsrfToken($ci).'"]')->length===1,'official registry POST form carries native context CSRF');
 essentialCheck($xpath->query('//form/input[@name="issuer_id" and (@value="41" or @value="55")]')->length===0,'principal and unauthorized company have no status mutation control');
 essentialCheck($xpath->query('//*[@data-company-identity or @data-new-company]')->length===0,'grid exposes neither parallel identity editor nor creation to non-master');
 // The grid renders the authorized catalog projection, not the former selected/profile editor.
@@ -221,7 +232,8 @@ essentialCheck(!in_array('model:issuers_model',$companies->load->trace,true),'is
 $companyToken=CompanyRequestScope::token();$registryCsrf=$s->userdata('issuers_csrf');
 expectStatus(fn()=>$companies->index(55),403);
 $ci=contextEnvironment($f,$s,'issuers','save','POST');
-$_POST=['_company_context'=>$companyToken,'issuers_csrf'=>$registryCsrf,'action'=>'issuer','issuer_id'=>'54','legal_name'=>'Company B edited in native registry','tax_id'=>'11222333000181','active'=>'1','company_profile'=>['invoice_company_city'=>'City B']];
+$nativeRegistryContext=new CompanyContext($db,$p,$s,8);$nativeRegistryContext->resolve();
+$_POST=['_company_context'=>$companyToken,'_native_company_csrf'=>$nativeRegistryContext->nativeCsrf(),'issuers_csrf'=>$registryCsrf,'action'=>'issuer','issuer_id'=>'54','legal_name'=>'Company B edited in native registry','tax_id'=>'11222333000181','active'=>'1','company_profile'=>['invoice_company_city'=>'City B']];
 $companies=new Issuers();$companies->save();
 essentialCheck(CompanySettingsRuntime::get('invoice_company_name')==='Company B edited in native registry','secondary registry write is immediately visible in Settings source');
 essentialCheck(CompanySettingsRuntime::get('invoice_company_city')==='City B','secondary registry profile uses shared identity writer');

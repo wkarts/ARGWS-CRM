@@ -1220,7 +1220,6 @@
         "application/views/admin/companies/post_refund.php",
         "application/views/admin/companies/pusher.php",
         "application/views/admin/companies/asaas.php",
-        "application/views/admin/companies/registry.php",
         "application/views/admin/companies/time_billing.php",
         "application/views/admin/companies/purchases.php",
         "application/views/admin/companies/invoice_copies.php",
@@ -1300,7 +1299,6 @@
         "application/views/admin/companies/post_refund.php",
         "application/views/admin/companies/pusher.php",
         "application/views/admin/companies/asaas.php",
-        "application/views/admin/companies/registry.php",
         "application/views/admin/companies/time_billing.php",
         "application/views/admin/companies/purchases.php",
         "application/views/admin/companies/invoice_copies.php",
@@ -2224,42 +2222,10 @@
       }
     },
     {
-      "path": "application/views/admin/companies/registry.php",
-      "kind": "company-shell",
-      "reason": "Página interna usa shell administrativo isolado e ativos públicos nativos, sem hidratar hooks legados.",
-      "owners": [
-        "application/controllers/admin/Issuers.php",
-        "application/views/admin/issuers/manage.php"
-      ],
-      "literal_controls": {
-        "table": {
-          "literal_tags": 0,
-          "classless_presentation_candidates": 0
-        },
-        "button": {
-          "literal_tags": 0,
-          "classless_presentation_candidates": 0
-        },
-        "input": {
-          "literal_tags": 0,
-          "classless_presentation_candidates": 0
-        },
-        "select": {
-          "literal_tags": 0,
-          "classless_presentation_candidates": 0
-        },
-        "textarea": {
-          "literal_tags": 0,
-          "classless_presentation_candidates": 0
-        }
-      }
-    },
-    {
       "path": "application/views/admin/companies/registry_grid.php",
       "kind": "partial",
       "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
       "owners": [
-        "application/views/admin/companies/registry.php",
         "application/views/admin/issuers/manage.php"
       ],
       "literal_controls": {
@@ -3780,7 +3746,6 @@
       ],
       "view_refs": [
         "admin/companies/identity_modal",
-        "admin/companies/registry",
         "admin/issuers/manage"
       ],
       "presentation": "views",

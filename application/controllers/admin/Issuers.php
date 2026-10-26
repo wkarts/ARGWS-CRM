@@ -243,6 +243,9 @@ class Issuers extends AdminController
         if (!in_array($this->input->method(true), ['GET','HEAD'], true)) { show_error('Use GET para consultar empresas.',405); return; }
         $actor=CompanyRequestScope::context()->staffId();
         try {
+            // Keep the existing CRM company registry route and shell. Company
+            // context changes the data and permissions, never the destination.
+            $available=$this->registry->available($actor);
             $catalog=$this->registry->catalog($actor);
             $selected=null;
             if ($issuerId !== null) {
@@ -257,7 +260,8 @@ class Issuers extends AdminController
             }
             $token=$this->session->userdata('issuers_csrf');
             if(!is_string($token)||strlen($token)!==64){$token=bin2hex(random_bytes(32));$this->session->set_userdata('issuers_csrf',$token);}
-            $this->load->view('admin/companies/registry',[
+            $this->load->view('admin/issuers/manage',[
+                'title'=>_l('issuers_title'),'available'=>$available,
                 'catalog'=>$catalog,'selected'=>$selected,'profile'=>$profile,'issuers_csrf'=>$token,
                 'status_permissions'=>$this->statusPermissions($catalog,$actor),
                 'edit_permissions'=>$this->editPermissions($catalog,$actor),

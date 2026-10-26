@@ -68,6 +68,9 @@ final class NativeCompanyAdminPresentation
         $publicOptions=$issuer===null?null:NativeCompanyPresentationOptions::capture($issuer,$actor);
         $quickActions=$issuer===null?[]:self::quickActions($ci,$acl,$issuer,$actor,$publicOptions);
         $uploadPreferences=null;$calendarPreferences=null;
+        $issuerRegistryRoute=$issuer!==null
+            && strtolower((string)$ci->router->fetch_class())==='issuers'
+            && in_array(strtolower((string)$ci->router->fetch_method()),['index','save'],true);
         if($issuer!==null){
             if(!class_exists('NativeCompanyUploadPreferences',false))require_once __DIR__.'/NativeCompanyUploadPreferences.php';
             $uploadPreferences=NativeCompanyUploadPreferences::read($ci->db,db_prefix(),$issuer,$actor);
@@ -100,7 +103,7 @@ final class NativeCompanyAdminPresentation
         }
         if($issuer!==null && self::headerEndpointsAvailable('notifications'))self::refreshNotifications($ci);
         if($issuer!==null && self::timerEndpointsAvailable())self::$data=array_merge(self::$data,self::timerProjection($ci));
-        if($issuer!==null){
+        if($issuer!==null&&!$issuerRegistryRoute){
             if(!class_exists('NativeCompanyWorkTags',false))require_once __DIR__.'/NativeCompanyWorkTags.php';
             $tags=(new NativeCompanyWorkTags($ci->db,db_prefix()))->catalog($issuer,$actor);
             if(!isset($tags['available_tags'],$tags['available_tags_ids'])||!is_array($tags['available_tags'])||!is_array($tags['available_tags_ids'])||count($tags['available_tags'])!==count($tags['available_tags_ids']))throw new LogicException('native_tags_projection_invalid');

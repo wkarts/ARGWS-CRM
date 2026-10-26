@@ -2,10 +2,8 @@
 
 ## Escopo e natureza da evidência
 
-Baseline de código: `5ebcd8da`. Inventário **estático**, não captura de tela nem
-prova de execução PHP, permissão, responsividade, carregamento de assets ou visual.
-São 98 views e 54 controllers/endpoints; nenhum valor de configuração, token,
-certificado ou dado de produção foi consultado.
+Inventário atualizado em 2026-10-26 a partir da árvore do PR #52. É **estático**, não captura de tela nem prova de execução PHP, permissão, responsividade, carregamento de assets ou visual.
+São 101 views e 56 controllers/endpoints; nenhum valor de configuração, token, certificado ou dado de produção foi consultado.
 
 O manifesto `tests/fixtures/company_ui_surfaces.json` registra caminho, contrato,
 justificativa, proprietários literais, métodos públicos e contagem de marcação
@@ -25,12 +23,12 @@ implementação evolui sob os testes específicos de fidelidade do shell.
 
 ## Contratos e gaps
 
-- 52 páginas internas: par `admin/companies/layout_head.php` / `layout_tail.php`.
+- 51 páginas internas: par `admin/companies/layout_head.php` / `layout_tail.php`.
   O shell usa assets públicos nativos; não deve chamar `init_head` e hidratar
   menus/hooks globais num contexto empresarial isolado.
 - 2 páginas legadas (`issuers/manage`, `issuers/master_resolution`): par nativo
   `init_head` / `init_tail`, com contexto/autorização a verificar no runtime.
-- 40 fragments: herdaram layout da página proprietária; adicionar shell próprio
+- 42 fragments: herdaram layout da página proprietária; adicionar shell próprio
   geraria duplicação. Seus proprietários estão no manifesto.
 - Onboarding: documento do modal same-origin com CSS nativo e script de contexto;
   não deve duplicar sidebar/header. Exige teste próprio de modal, fechamento e foco.
@@ -99,6 +97,7 @@ excluídos). Zero não prova ausência de HTML gerado dinamicamente.
 | `admin/companies/contracts_fields.php` | partial | 0/0/0/0/0 |
 | `admin/companies/credit_movement_fields.php` | partial | 0/0/0/0/0 |
 | `admin/companies/credits.php` | company-shell | 0/9/0/0/0 |
+| `admin/companies/efi.php` | company-shell | 0/0/0/0/0 |
 | `admin/companies/expense_billing.php` | partial | 0/3/2/1/0 |
 | `admin/companies/expense_copies.php` | company-shell | 0/2/0/0/0 |
 | `admin/companies/expense_fields.php` | partial | 0/0/0/0/0 |
@@ -110,6 +109,7 @@ excluídos). Zero não prova ausência de HTML gerado dinamicamente.
 | `admin/companies/hr_records.php` | partial | 0/4/0/0/0 |
 | `admin/companies/identity_fields.php` | partial | 0/0/0/0/0 |
 | `admin/companies/identity_input.php` | partial | 0/0/0/0/0 |
+| `admin/companies/identity_modal.php` | modal-document | 0/0/0/0/0 |
 | `admin/companies/imports.php` | company-shell | 0/2/0/0/0 |
 | `admin/companies/invoice_adjustment_fields.php` | partial | 0/0/0/0/0 |
 | `admin/companies/invoice_copies.php` | company-shell | 0/1/0/0/0 |
@@ -149,7 +149,6 @@ excluídos). Zero não prova ausência de HTML gerado dinamicamente.
 | `admin/companies/purchases_workspace.php` | partial | 0/11/5/0/0 |
 | `admin/companies/pusher.php` | company-shell | 0/7/0/0/0 |
 | `admin/companies/recurring.php` | company-shell | 0/3/0/0/0 |
-| `admin/companies/registry.php` | company-shell | 0/0/0/0/0 |
 | `admin/companies/registry_grid.php` | partial | 0/0/0/0/0 |
 | `admin/companies/reports.php` | company-shell | 0/0/0/0/0 |
 | `admin/companies/sales.php` | company-shell | 0/5/0/0/0 |
@@ -178,6 +177,9 @@ excluídos). Zero não prova ausência de HTML gerado dinamicamente.
 | `admin/issuers/staff_access.php` | partial | 0/0/0/0/0 |
 | `admin/settings/company_scoped.php` | company-shell | 0/0/0/0/0 |
 | `admin/settings/includes/company.php` | partial | 0/0/0/0/0 |
+| `admin/settings/includes/company_identity_fields.php` | partial | 0/0/0/0/0 |
+| `admin/settings/presentation_layout.php` | partial | 0/0/0/0/0 |
+| `modules/pige_bridge/views/settings.php` | native-shell | 0/0/0/0/0 |
 
 ## Controllers: dispatch literal e rotas públicas
 
@@ -185,7 +187,7 @@ Métodos listados não significam GET autorizado: conferir guardas, verbs e runt
 
 | Controller | Views literais | Métodos públicos |
 |---|---|---|
-| `application/controllers/Argws_provisioning.php` | Sem view literal; endpoint não visual | `complete_installation`, `apply_migrations`, `authorize_company_master` |
+| `application/controllers/Argws_provisioning.php` | Sem view literal; endpoint não visual | `complete_installation`, `apply_migrations`, `authorize_company_master`, `original_administrator` |
 | `application/controllers/admin/Company_ai.php` | `admin/companies/ai` | `index` |
 | `application/controllers/admin/Company_api_tokens.php` | `admin/companies/api_tokens` | `index` |
 | `application/controllers/admin/Company_asaas.php` | `admin/companies/asaas` | `__construct`, `index` |
@@ -195,9 +197,9 @@ Métodos listados não significam GET autorizado: conferir guardas, verbs e runt
 | `application/controllers/admin/Company_client_imports.php` | `admin/companies/client_imports` | `index` |
 | `application/controllers/admin/Company_clients.php` | `admin/companies/clients` | `index`, `lookup` |
 | `application/controllers/admin/Company_connect_api.php` | `admin/companies/connect_api` | `index` |
-| `application/controllers/admin/Company_selection.php` | `admin/company_selection/select` | `__construct`, `select` — endpoint técnico POST sem página própria |
 | `application/controllers/admin/Company_contracts.php` | `admin/companies/contracts` | `index` |
 | `application/controllers/admin/Company_credits.php` | `admin/companies/credits` | `index` |
+| `application/controllers/admin/Company_efi.php` | `admin/companies/efi` | `index` |
 | `application/controllers/admin/Company_expense_copies.php` | `admin/companies/expense_copies` | `index` |
 | `application/controllers/admin/Company_expenses.php` | `admin/companies/expenses` | `index` |
 | `application/controllers/admin/Company_google_mail_oauth.php` | `admin/companies/google_mail_oauth` | `index` |
@@ -224,6 +226,7 @@ Métodos listados não significam GET autorizado: conferir guardas, verbs e runt
 | `application/controllers/admin/Company_recurring.php` | `admin/companies/recurring` | `index` |
 | `application/controllers/admin/Company_reports.php` | `admin/companies/ledger`, `admin/companies/reports` | `index` |
 | `application/controllers/admin/Company_sales.php` | `admin/companies/sales` | `index` |
+| `application/controllers/admin/Company_selection.php` | Sem view literal; endpoint não visual | `__construct`, `select` |
 | `application/controllers/admin/Company_staff.php` | `admin/companies/staff` | `index` |
 | `application/controllers/admin/Company_standalone_billing.php` | `admin/companies/standalone_billing` | `index` |
 | `application/controllers/admin/Company_standalone_tasks.php` | `admin/companies/standalone_tasks` | `index` |
@@ -235,10 +238,11 @@ Métodos listados não significam GET autorizado: conferir guardas, verbs e runt
 | `application/controllers/admin/Company_tickets.php` | `admin/companies/tickets` | `index` |
 | `application/controllers/admin/Company_time_batches.php` | `admin/companies/time_batches` | `index` |
 | `application/controllers/admin/Company_time_billing.php` | `admin/companies/time_billing` | `index` |
-| `application/controllers/admin/Issuers.php` | `admin/companies/registry`, `admin/issuers/manage` | `__construct`, `index`, `save`, `lookup` |
+| `application/controllers/admin/Issuers.php` | `admin/companies/identity_modal`, `admin/issuers/manage` | `__construct`, `index`, `save`, `lookup` |
 | `application/controllers/admin/Smtp_oauth_google.php` | Sem view literal; endpoint não visual | `token` |
 | `application/controllers/admin/Smtp_oauth_microsoft.php` | Sem view literal; endpoint não visual | `token` |
-| `modules/pige_bridge/controllers/Bridge.php` | Sem view literal; endpoint não visual | `requests` |
+| `modules/pige_bridge/controllers/Bridge.php` | Sem view literal; endpoint não visual | `requests`, `diagnostics`, `invoices`, `invoice_status`, `charges`, `charge_status`, `charge_sync`, `charge_instruments`, `charge_reconcile` |
+| `modules/pige_bridge/controllers/Settings.php` | `pige_bridge/settings` | `__construct`, `index`, `save`, `mapping`, `external` |
 
 ## Incremento 4.7.3 — navegação e editor existente
 
