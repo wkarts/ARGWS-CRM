@@ -34,7 +34,7 @@ foreach([
  static function($d){$d->metadata['foreign'][1]['REFERENCED_TABLE_NAME']='other_clients';},
  static function($d){$d->metadata['rules'][1]['DELETE_RULE']='CASCADE';},
  static function($d){$d->metadata['engine'][0]['ENGINE']='MyISAM';},
-]as$mutation){$d=new TicketCustomerSchemaDb();$mutation($d);try{NativeCompanyTicketCustomerSchema::ensure($d,'tbl');throw new LogicException('unexpected metadata accepted');}catch(RuntimeException$e){ticketCatalogSchemaCheck($e->getMessage()==='issuer_native_ticket_customer_schema_invalid'&&!$d->writes,'invalid shape rejected before ALTER');}}
+ ]as$mutation){$d=new TicketCustomerSchemaDb();$mutation($d);try{NativeCompanyTicketCustomerSchema::ensure($d,'tbl');throw new LogicException('unexpected metadata accepted');}catch(RuntimeException$e){ticketCatalogSchemaCheck(str_starts_with($e->getMessage(),'issuer_native_ticket_customer_schema_invalid')&&!$d->writes,'invalid shape rejected before ALTER');}}
 foreach(['mutate','skipAlter']as$mode){$d=new TicketCustomerSchemaDb();$d->$mode=true;try{NativeCompanyTicketCustomerSchema::ensure($d,'tbl');throw new LogicException('unconfirmed ALTER accepted');}catch(RuntimeException$e){ticketCatalogSchemaCheck(in_array($e->getMessage(),['issuer_native_ticket_customer_rows_changed','issuer_native_ticket_customer_schema_invalid'],true),'row/schema postcondition rejects unconfirmed change');}}
 ticketCatalogSchemaCheck(in_array('`client_id` int NOT NULL',CompanyContractsSchema::definitions('tbl')['company_tickets'],true),'historical definitions unchanged');
 echo "Ticket email nullable migration contract: exact shape, row fingerprint, replay, ten pre-DDL negatives and two postconditions passed with metadata double. Real MySQL remains mandatory.\n";

@@ -35,7 +35,7 @@ final class SalesWorkerMailer extends App_Email
 }
 
 $before=(int)$db->query("SELECT COUNT(*) n FROM ".$p."mail_queue WHERE status='pending'")->row()->n;
-$workerCi=(object)['db'=>new SalesWorkerDb($db),'config'=>(object)['config'=>[]],'encryption'=>new class{function decrypt($value){return 'synthetic:'.$value;}},'load'=>new class{function config($name){}}];
+$workerCi=(object)['db'=>new SalesWorkerDb($db),'config'=>new class($base){public array$config=[];public function __construct(private string$base){}public function item($name){if($name!=='base_url')throw new LogicException('unexpected worker config');return$this->base;}},'encryption'=>new class{function decrypt($value){return 'synthetic:'.$value;}},'load'=>new class{function config($name){}}];
 $mailer=new SalesWorkerMailer($workerCi);$mailer->send_queue();essentialCheck(count($mailer->sent)===$before-1,'production worker dispatches only confirmed own-origin synthetic sales notifications');
 essentialCheck($db->query('SELECT status FROM '.$p.'mail_queue WHERE id=?',[$staleQueue])->row()->status==='failed','production worker marks stale sales revision failed before dispatch');
 foreach($mailer->sent as $sent){essentialCheck(!array_key_exists(CompanySalesDelivery::HEADER,$sent['headers']),'internal sales receipt header is stripped before SMTP');essentialCheck(in_array($sent['transport']['smtp_host'],['smtp-sales-'.$a.'.invalid','smtp-sales-'.$b.'.invalid'],true),'worker initializes SMTP only from persisted company origin');}
