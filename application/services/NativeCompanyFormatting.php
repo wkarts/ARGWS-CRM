@@ -27,6 +27,14 @@ final class NativeCompanyFormatting
         $store=new CompanySettingsStorage($ci->db,$p);$values=[];foreach(['dateformat','time_format']as$key)$values[$key]=$store->exists($issuer,$key)?$store->get($issuer,$key):CompanySettingsCatalog::defaultValue('localization',$key);
         CompanySettingsFormats::validate($values);$check();return new self(CompanySettingsFormats::dates()[$values['dateformat']],$values['time_format']);
     }
+    public static function money($value,object $currency):string
+    {
+        if(!is_numeric($value)||!is_finite((float)$value))throw new DomainException('native_money_invalid');
+        foreach(['symbol','decimal_separator','thousand_separator','placement']as$key)if(!isset($currency->$key)||!is_string($currency->$key))throw new DomainException('native_money_invalid');
+        if(!in_array($currency->placement,['before','after'],true))throw new DomainException('native_money_invalid');
+        $formatted=number_format((float)$value,2,$currency->decimal_separator,$currency->thousand_separator);
+        return$currency->placement==='before'?$currency->symbol.$formatted:$formatted.$currency->symbol;
+    }
     private static function parse(string $value,string $format):?DateTimeImmutable
     {
         $parsed=DateTimeImmutable::createFromFormat('!'.$format,$value);

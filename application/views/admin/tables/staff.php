@@ -82,7 +82,7 @@ foreach ($rResult as $aRow) {
             // For exporting
             $_data .= '<span class="hide">' . ($checked == 'checked' ? _l('is_active_export') : _l('is_not_active_export')) . '</span>';
         } elseif ($aColumns[$i] == 'firstname') {
-            $_data = '<a href="' . ($nativeStaff?CompanyRequestScope::adminUrl($native_staff_ci,'staff/profile/'.$aRow['staffid']):admin_url('staff/profile/'.$aRow['staffid'])) . '">' . ($nativeStaff?StaffAvatarPresentation::render((object)$aRow,(int)$aRow['staffid'],['staff-profile-image-small'],'small',[],'base_url','file_exists'):staff_profile_image($aRow['staffid'],['staff-profile-image-small'])) . '</a>';
+            $_data = '<a href="' . ($nativeStaff?CompanyRequestScope::adminUrl($native_staff_ci,'staff/member/'.$aRow['staffid']):admin_url('staff/profile/'.$aRow['staffid'])) . '">' . ($nativeStaff?StaffAvatarPresentation::render((object)$aRow,(int)$aRow['staffid'],['staff-profile-image-small'],'small',[],'base_url','file_exists'):staff_profile_image($aRow['staffid'],['staff-profile-image-small'])) . '</a>';
             $_data .= ' <a href="' . ($nativeStaff?CompanyRequestScope::adminUrl($native_staff_ci,'staff/member/'.$aRow['staffid']):admin_url('staff/member/'.$aRow['staffid'])) . '" class="tw-font-medium">' . e($aRow['firstname'] . ' ' . $aRow['lastname']) . '</a>';
 
             $_data .= '<div class="row-options">';

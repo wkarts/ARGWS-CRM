@@ -819,7 +819,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Misc.php": {
-      "sha256": "11204709702db4b90f2988d72eeea947bea339ea5954c0d8dfab63c45333a3db",
+      "sha256": "86a2678d3907f773c288a37800732a71e706e2930723c37b23fc11fa49c89bbd",
       "categories": [
         "customer_privacy",
         "invoice_table",

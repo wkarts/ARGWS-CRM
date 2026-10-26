@@ -73,3 +73,14 @@ foreach(['admin/','../../modules/banco_brasil/controllers/']as$directory){
 }
 $check(NativeCompanyRoutes::navigation('banco_brasil'),'single native module navigation');
 echo "BB native finite admission: {$checks} total assertions passed.\n";
+
+$check(NativeCompanyRoutes::navigation('staff'),'native original Staff navigation is available');
+foreach(['index','member']as$method)foreach(['GET','HEAD','POST']as$verb)$check(NativeCompanyRoutes::admits('admin','','staff',$method,$verb),'native staff table/form finite admission');
+foreach(['change_staff_status','save_hidden_table_columns','remove_staff_profile_image']as$method){$check(NativeCompanyRoutes::admits('admin','','staff',$method,'POST'),'scoped staff action uses POST');$check(!NativeCompanyRoutes::admits('admin','','staff',$method,'GET'),'staff mutation refuses GET');}
+$check(!NativeCompanyRoutes::admits('admin','','staff','delete','POST'),'global staff deletion is not admitted to a named company');
+$check(NativeCompanyRoutes::admits('admin','','misc','staff_email_exists','POST'),'native member form can validate email under its current context');
+echo "Native Staff admission: {$checks} total assertions passed.\n";
+
+foreach(['add_note','edit_note','delete_note']as$method){$check(NativeCompanyRoutes::admits('admin','','misc',$method,'POST'),'scoped Staff notes have native mutation admission');$check(!NativeCompanyRoutes::admits('admin','','misc',$method,'GET'),'notes never mutate by GET');}
+$check(NativeCompanyRoutes::admits('admin','','tasks','timer_tracking','POST'),'own scoped timer action is available to Staff report');
+$check(!NativeCompanyRoutes::admits('admin','','tasks','delete_timesheet','GET'),'legacy timesheet deletion remains denied');

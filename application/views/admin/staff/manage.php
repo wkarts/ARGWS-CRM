@@ -37,7 +37,7 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="delete_staff" tabindex="-1" role="dialog">
+<?php if(!$nativeStaff){ ?><div class="modal fade" id="delete_staff" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <?php echo form_open(admin_url('staff/delete', ['delete_staff_form'])); ?>
         <div class="modal-content">
@@ -62,7 +62,7 @@
         </div><!-- /.modal-content -->
         <?php echo form_close(); ?>
     </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+</div><!-- /.modal --><?php } ?>
 <?php init_tail(); ?>
 <script>
 $(function() {

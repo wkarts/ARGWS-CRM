@@ -2,7 +2,7 @@ name: Interface nativa multiempresa
 on:
   pull_request:
     branches: [main, develop]
-    paths: ['application/**', 'assets/**', 'tests/company_*', 'tests/helpers/**', '.github/workflows/company-native-ui.yml']
+    paths: ['application/**', 'assets/**', 'modules/**', 'docs/companies/**', 'tests/company_*', 'tests/helpers/**', '.github/workflows/company-native-ui.yml']
 permissions:
   contents: read
 jobs:

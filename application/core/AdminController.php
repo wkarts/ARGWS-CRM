@@ -16,6 +16,7 @@ class AdminController extends App_Controller
                 // general translation helper checks the sealed company scope
                 // and skips global module hooks in this path.
                 $this->load->helper(['admin', 'general', 'app_branding', 'misc']);
+                if(strtolower((string)$this->router->fetch_class())==='staff')$this->load->helper(['fields','datatables','custom_fields','func','template','language']);
                 require_once APPPATH . 'services/NativeCompanyAdminPresentation.php';
                 NativeCompanyAdminPresentation::prepare($this);
             }

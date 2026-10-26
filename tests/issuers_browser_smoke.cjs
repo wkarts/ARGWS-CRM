@@ -308,7 +308,7 @@ async function captureRealScreens(page, routes) {
       await page.setViewportSize({width:1280,height:900});
 
       assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany);
-      const nativeRoutes = ['todo','announcements','taxes','departments','tickets','invoice_items','settings?group=company'];
+      const nativeRoutes = ['todo','announcements','taxes','departments','tickets','invoice_items','settings?group=company','staff','staff/member'];
       for (const route of nativeRoutes) {
         const response = await page.goto(url + '/admin/' + route, {waitUntil:'load'});
         assert.equal(response.status(), 200, 'selected company uses the original CRM route /admin/' + route);
@@ -316,6 +316,32 @@ async function captureRealScreens(page, routes) {
         assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany, 'native route keeps the selected company: ' + route);
         assert.equal(await page.locator('#wrapper .content').count(), 1, 'native route keeps one original CRM content root: ' + route);
       }
+      // Same production controller/views and DataTable transport, under the selected company.
+      const staffRows = page.waitForResponse(r => r.request().method()==='POST' && new URL(r.url()).pathname==='/admin/staff');
+      assert.equal((await page.goto(url+'/admin/staff')).status(),200);
+      const staffTableResponse=await staffRows;assert.equal(staffTableResponse.status(),200);
+      const staffTable=await staffTableResponse.json();assert(Array.isArray(staffTable.aaData));
+      await page.goto(url+'/admin/staff/member');
+      const nativeStaffForm=page.locator('.staff-form');
+      assert.equal(await nativeStaffForm.locator('input[name=native_staff_form_revision]').count(),1);
+      await nativeStaffForm.locator('input[name=firstname]').fill('Synthetic native');
+      await nativeStaffForm.locator('input[name=lastname]').fill('Staff');
+      const nativeStaffEmail='native-stack-'+secondaryCompany+'@example.invalid';
+      await nativeStaffForm.locator('input[name=email]').fill(nativeStaffEmail);
+      await nativeStaffForm.locator('input[name=password]').fill('synthetic-native-stack-password');
+      if(await nativeStaffForm.locator('input[name=send_welcome_email]').count()) await nativeStaffForm.locator('input[name=send_welcome_email]').uncheck();
+      const oldStaffForm=await nativeStaffForm.evaluate(node=>Object.fromEntries(new FormData(node).entries()));
+      const createdStaffResponse=await Promise.all([page.waitForNavigation({waitUntil:'load'}),nativeStaffForm.locator('button[type=submit]').click()]);
+      assert.equal(createdStaffResponse[0].status(),200,'native create returns to the same original member form');
+      const nativeStaffId=sql("SELECT staffid FROM tblstaff WHERE email='"+nativeStaffEmail+"'");
+      assert.match(nativeStaffId,/^[1-9]\d*$/);assert.equal(new URL(page.url()).pathname,'/admin/staff/member/'+nativeStaffId);
+      assert.equal(sql('SELECT issuer_id FROM tblissuers_staff WHERE staff_id='+nativeStaffId),secondaryCompany,'creation belongs only to the selected company');
+      assert.equal(sql('SELECT admin FROM tblstaff WHERE staffid='+nativeStaffId),'0','company creation grants no global administrator');
+      await selectCompanyOption(page,primaryCompany);
+      assert.equal((await context.request.post(url+'/admin/staff/member',{form:oldStaffForm,maxRedirects:0})).status(),409,'old native Staff form cannot write after a company switch');
+      await selectCompanyOption(page,secondaryCompany);
+      assert.equal((await page.goto(url+'/admin/staff/member/'+nativeStaffId)).status(),200);
+      await captureRealScreens(page,[['native-staff-table',url+'/admin/staff'],['native-staff-member',url+'/admin/staff/member/'+nativeStaffId]]);
       await page.goto(url + '/admin');
       await shell(page);
       sql('DELETE FROM tblissuers_lock WHERE id=1');

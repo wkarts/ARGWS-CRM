@@ -2,12 +2,12 @@ name: Native company experience focused
 on:
   pull_request:
     branches: [main, develop]
-    paths: ['application/**', 'assets/**', 'resources/**', 'tests/**', 'scripts/**', 'package*.json', 'webpack.mix.js', '.github/workflows/native-company-experience.yml']
+    paths: ['application/**', 'assets/**', 'modules/**', 'docs/companies/**', 'resources/**', 'tests/**', 'scripts/**', 'package*.json', 'webpack.mix.js', '.github/workflows/native-company-experience.yml']
   push:
     # Temporary pre-PR bootstrap branch; remove this exact branch after the first
     # successful focused checkpoint. PR/main coverage below remains permanent.
     branches: [main, develop, fix/native-company-experience]
-    paths: ['application/**', 'assets/**', 'resources/**', 'tests/**', 'scripts/**', 'package*.json', 'webpack.mix.js', '.github/workflows/native-company-experience.yml']
+    paths: ['application/**', 'assets/**', 'modules/**', 'docs/companies/**', 'resources/**', 'tests/**', 'scripts/**', 'package*.json', 'webpack.mix.js', '.github/workflows/native-company-experience.yml']
   workflow_dispatch:
 permissions:
   contents: read

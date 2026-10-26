@@ -46,7 +46,14 @@ final class NativeCompanyRoutes
             'sent_smtp_test_email'=>['POST'], 'delete_queued_email'=>['POST'], 'clear_queued_emails'=>['POST'],
         ],
         'misc' => [
-            'dismiss_announcement'=>['POST'],
+            'dismiss_announcement'=>['POST'], 'staff_email_exists'=>['POST'],
+            'add_note'=>['POST'], 'edit_note'=>['POST'], 'delete_note'=>['POST'],
+        ],
+        'tasks'=>['timer_tracking'=>['POST']],
+        'staff'=>[
+            'index'=>['GET','HEAD','POST'], 'member'=>['GET','HEAD','POST'],
+            'role_changed'=>['GET'], 'change_staff_status'=>['POST'],
+            'save_hidden_table_columns'=>['POST'], 'remove_staff_profile_image'=>['POST'],
         ],
         'invoice_items' => [
             'index'=>['GET','HEAD'], 'table'=>['POST'], 'manage'=>['POST'], 'import'=>['GET','HEAD','POST'],
@@ -79,6 +86,6 @@ final class NativeCompanyRoutes
         // Do not decode or normalize attacker-controlled destinations into an admitted route.
         if (str_contains($route, '\\') || str_contains($route, '%') || str_contains($route, '?')
             || str_contains($route, '#') || preg_match('/[\x00-\x20\x7f]/', $route)) { return false; }
-        return in_array($route, ['', 'dashboard', 'dashboard/index', 'issuers', 'todo', 'announcements', 'taxes', 'departments', 'tickets', 'invoice_items', 'invoice_items/import', 'settings', 'utilities/calendar', 'banco_brasil'], true);
+        return in_array($route, ['', 'dashboard', 'dashboard/index', 'issuers', 'todo', 'announcements', 'taxes', 'departments', 'tickets', 'invoice_items', 'invoice_items/import', 'settings', 'utilities/calendar', 'banco_brasil', 'staff', 'staff/member'], true);
     }
 }

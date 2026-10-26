@@ -14,7 +14,7 @@ class Staff extends AdminController
         if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
             require_once APPPATH.'services/NativeCompanyStaffTable.php';$this->output->set_header('Cache-Control: no-store');
             if($this->input->is_ajax_request()){$result=NativeCompanyStaffTable::endpoint($this);$this->output->set_content_type('application/json')->set_output(json_encode($result));return;}
-            if(strtoupper((string)$this->input->method())!=='GET')throw new DomainException('issuer_staff_denied');$c=CompanyRequestScope::context();if((int)get_staff_user_id()!==$c->staffId())throw new DomainException('issuer_staff_denied');$page=(new NativeCompanyStaffTable($this->db,db_prefix()))->read($c->issuerId(),$c->staffId());
+            if(!in_array(strtoupper((string)$this->input->method()),['GET','HEAD'],true))throw new DomainException('issuer_staff_denied');$c=CompanyRequestScope::context();if((int)get_staff_user_id()!==$c->staffId())throw new DomainException('issuer_staff_denied');$page=(new NativeCompanyStaffTable($this->db,db_prefix()))->read($c->issuerId(),$c->staffId());
             $this->load->view('admin/staff/manage',['native_staff_manage'=>true,'native_staff_can_create'=>$page['can_create'],'native_staff_table_fields'=>$page['fields'],'staff_members'=>array_values(array_filter($page['rows'],static fn($r)=>(int)$r['active']===1)),'title'=>_l('staff_members')]);return;
         }
 

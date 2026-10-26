@@ -525,7 +525,7 @@ foreach ($roles as $role) {
                                 }
                                 ?>
                                         </td>
-                                        <td><?= $nativeStaff && $t['hourly_rate']===null ? e(_l('native_staff_rate_not_declared')) : e(app_format_money($t['hourly_rate'], $base_currency)); ?>
+                                        <td><?= $nativeStaff && $t['hourly_rate']===null ? e(_l('native_staff_rate_not_declared')) : e($nativeStaff?NativeCompanyFormatting::money($t['hourly_rate'],$base_currency):app_format_money($t['hourly_rate'],$base_currency)); ?>
                                         </td>
                                         <td>
                                             <?= '<b>' . e(seconds_to_time_format($t['end_time'] - $t['start_time'])) . '</b>'; ?>
@@ -558,7 +558,7 @@ foreach ($roles as $role) {
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td align="right"><?= '<b>' . _l('total_by_hourly_rate') . ':</b> ' . ($nativeStaff && count(array_filter($total_logged_time,static fn($x)=>$x['hourly_rate']===null))>0 ? e(_l('native_staff_rate_not_declared')) : e(app_format_money(
+                                        <td align="right"><?= '<b>' . _l('total_by_hourly_rate') . ':</b> ' . ($nativeStaff && count(array_filter($total_logged_time,static fn($x)=>$x['hourly_rate']===null))>0 ? e(_l('native_staff_rate_not_declared')) : e(($nativeStaff ? [NativeCompanyFormatting::class,'money'] : 'app_format_money')(
                                             collect($total_logged_time)->reduce(function ($carry, $item) {
                                                 return $carry + (sec2qty($item['total']) * (float) $item['hourly_rate']);
                                             }, 0),

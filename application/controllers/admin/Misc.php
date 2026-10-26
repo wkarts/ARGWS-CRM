@@ -377,7 +377,7 @@ class Misc extends AdminController
             $this->companyAuxiliary->saveNote($rel_type,$rel_id,['description'=>$this->input->post('description',false)]);
             $context=CompanyRequestScope::context();
             $ref=NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$context->issuerId(),$context->staffId(),$rel_type,$rel_id);
-            redirect($ref['url'],'location',303); return;
+            redirect($rel_type==='staff'?CompanyRequestScope::adminUrl($this,'staff/member/'.$ref['source_id']):$ref['url'],'location',303); return;
         }
         if ($this->input->post()) {
             $success = $this->misc_model->add_note($this->input->post(), $rel_type, $rel_id);
