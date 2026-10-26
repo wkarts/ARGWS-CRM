@@ -61,7 +61,7 @@ final class IssuerAccessSchema
             foreach($expected as $name=>[$type,$nullable,$collation]) {
                 $column=$found[$name]??[];
                 $actual=preg_replace('/^int\([0-9]+\)/','int',strtolower((string)($column['COLUMN_TYPE']??'')));
-                if($actual!==$type||($column['IS_NULLABLE']??null)!==$nullable||($collation!==null&&($column['COLLATION_NAME']??null)!==$collation)) { throw new RuntimeException('issuer_access_column_schema_invalid'); }
+                if($actual!==$type||($column['IS_NULLABLE']??null)!==$nullable||($collation!==null&&($column['COLLATION_NAME']??null)!==$collation)) { throw new RuntimeException('issuer_access_column_'.$suffix.'_'.$name.'_invalid'); }
             }
             $indexes=self::rows($db,'SELECT COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND INDEX_NAME=\'PRIMARY\' ORDER BY SEQ_IN_INDEX',[$table]);
             if(array_column($indexes,'COLUMN_NAME')!==$primary[$suffix]) { throw new RuntimeException('issuer_access_primary_key_invalid'); }
