@@ -13,7 +13,8 @@ async function submit(page,button) { await Promise.all([page.waitForNavigation({
  await context.route('**/*',r=>new URL(r.request().url()).origin===url?r.continue():r.abort()); page.on('pageerror',e=>errors.push(e.message));
  try {
   await page.goto(url+'/admin/authentication'); await page.locator('input[name=email]').fill('admin-ci@example.invalid'); await page.locator('input[name=password]').fill(process.env.ISSUERS_BROWSER_PASSWORD); await submit(page,page.locator('button[type=submit]'));
-  await page.goto(url+'/admin/company_master'); assert.equal(await page.locator('#authorization_code').count(),0,'existing master needs no new CLI authorization');
+  assert.equal((await context.request.get(url+'/admin/company_master')).status(),404,'retired responsibility controller is physically absent');
+  assert.equal((await page.goto(url+'/admin/issuers')).status(),200);assert.equal(await page.locator('[data-new-company]').count(),1,'persisted installer master administers companies from the original registry without another procedure');
   const created={};
   for (const [label,tax] of [['a','11222333000181'],['b','52998224725']]) {
    let id=sql("SELECT id FROM tblissuers_registry WHERE tax_id='"+tax+"'");

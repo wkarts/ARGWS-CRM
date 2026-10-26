@@ -53,3 +53,13 @@ test('dashboard composes the original calendar DTO before widgets and respects i
  const assets=read('application/services/NativeCompanyAdminPresentation.php');
  assert.match(assets,/self::dashboardPage\(\$ci\).*->can\(self::\$issuer,CompanyRequestScope::context\(\)->staffId\(\),'calendar','view'\)/);
 });
+
+
+test('native controllers share complete presentation dependencies and original body selectors', () => {
+  const admin=fs.readFileSync(path.join(root,'application/core/AdminController.php'),'utf8');
+  const native=admin.slice(admin.indexOf('if (CompanyRequestScope::nativeFor($this))'),admin.indexOf('$nativeUpgradeOnly'));
+  assert.match(native,/load->helper\(\['fields', 'datatables', 'custom_fields', 'func', 'template', 'language'\]\)/);
+  assert(!native.includes("fetch_class())==='staff'"),'presentation helpers are shared by Todo, catalogues, departments and Staff');
+  const head=fs.readFileSync(path.join(root,'application/views/admin/includes/head.php'),'utf8');
+  assert.match(head,/NativeCompanyAdminPresentation::bodyClasses/);
+});

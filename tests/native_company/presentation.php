@@ -72,6 +72,10 @@ $ci=new Fixture;$GLOBALS['fixture']=$ci;CompanyRequestScope::$ci=$ci;
 NativeCompanyAdminPresentation::prepare($ci);
 check(($ci->lang->language['dashboard_string']??null)==='Painel','shared CI language object receives the trusted native PT-BR catalog');
 $data=NativeCompanyAdminPresentation::current($ci);
+$nativeBodyClasses=explode(' ',NativeCompanyAdminPresentation::bodyClasses($ci,'main-todo-page'));
+check(in_array(strtolower((string)$ci->router->fetch_class()),$nativeBodyClasses,true)&&in_array('main-todo-page',$nativeBodyClasses,true),'same native body preserves controller and view selectors without global hooks');
+try{NativeCompanyAdminPresentation::bodyClasses($ci,'bad" onclick="bad');throw new RuntimeException('unsafe body class accepted');}catch(DomainException $e){check($e->getMessage()==='native_body_class_invalid','body class projection rejects attribute injection');}
+
 check($data['logo']==='data:image/png;base64,Qg=='&&$data['favicon']==='data:image/png;base64,Qw==','native dark-logo priority and issuer favicon');
 $ci->config->csrf=true;$browser=NativeCompanyAdminPresentation::browserConfig($ci);check($browser['frameworkCsrf']===['name'=>'fixture_csrf','value'=>'fixture-framework-hash'],'framework token available without header providers for all native forms');$ci->config->csrf=false;
 check(isset($data['sidebar_menu']['customers']) && isset($data['sidebar_menu']['sales']['children'][0]),'authorized native menu entries');

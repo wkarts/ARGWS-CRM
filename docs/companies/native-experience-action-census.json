@@ -702,19 +702,6 @@
             ]
         },
         {
-            "path": "application/controllers/admin/Company_master.php",
-            "controller": "Company_master",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 8,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
             "path": "application/controllers/admin/Company_microsoft_mail_oauth.php",
             "controller": "Company_microsoft_mail_oauth",
             "owner": "central",

@@ -134,6 +134,18 @@ final class NativeCompanyAdminPresentation
         }
         return self::$data;
     }
+    /** Preserve the original route/view CSS and JS selectors without calling global body hooks. */
+    public static function bodyClasses($ci,string $extra=''):string
+    {
+        $data=self::current($ci);if($data===null)throw new LogicException('native_company_presentation_not_attested');
+        $classes=['app','admin','h-full','native-company-admin'];
+        foreach(array_merge([(string)$ci->router->fetch_class(),(string)$ci->router->fetch_method()],preg_split('/\s+/',trim($extra),-1,PREG_SPLIT_NO_EMPTY))as$class){
+            if(!preg_match('/^[a-zA-Z][a-zA-Z0-9_-]{0,79}$/D',$class))throw new DomainException('native_body_class_invalid');
+            $classes[]=strtolower($class);
+        }
+        if($data['is_mobile']){$classes[]='mobile';$classes[]='hide-sidebar';}
+        return implode(' ',array_unique($classes));
+    }
     private static function quickActions($ci,$acl,int $issuer,int $actor,array $options):array
     {
         $formats=NativeCompanyPresentationOptions::formats($options);

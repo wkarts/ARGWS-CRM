@@ -2951,36 +2951,6 @@
       }
     },
     {
-      "path": "application/views/admin/issuers/master_resolution.php",
-      "kind": "native-shell",
-      "reason": "Read-only native-shell notice for the retired responsibility wizard; no hosting code, password or mutation form remains.",
-      "owners": [
-        "application/controllers/admin/Company_master.php"
-      ],
-      "literal_controls": {
-        "table": {
-          "literal_tags": 0,
-          "classless_presentation_candidates": 0
-        },
-        "button": {
-          "literal_tags": 0,
-          "classless_presentation_candidates": 0
-        },
-        "input": {
-          "literal_tags": 0,
-          "classless_presentation_candidates": 0
-        },
-        "select": {
-          "literal_tags": 0,
-          "classless_presentation_candidates": 0
-        },
-        "textarea": {
-          "literal_tags": 0,
-          "classless_presentation_candidates": 0
-        }
-      }
-    },
-    {
       "path": "application/views/admin/issuers/staff_access.php",
       "kind": "partial",
       "reason": "Fragmento compartilhado incluído por página proprietária; não deve criar segundo shell nem formulário exterior.",
@@ -3424,17 +3394,6 @@
       ],
       "view_refs": [
         "admin/companies/leads"
-      ],
-      "presentation": "views",
-      "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."
-    },
-    {
-      "path": "application/controllers/admin/Company_master.php",
-      "public_methods": [
-        "index"
-      ],
-      "view_refs": [
-        "admin/issuers/master_resolution"
       ],
       "presentation": "views",
       "reason": "Renderiza views listadas; autorização e métodos precisam verificação de runtime."

@@ -317,6 +317,11 @@ async function captureRealScreens(page, routes) {
       const nativeRoutes = ['todo','announcements','taxes','departments','tickets','invoice_items','settings?group=company','staff','staff/member'];
       for (const route of nativeRoutes) {
         const response = await page.goto(url + '/admin/' + route, {waitUntil:'load'});
+        if(response.status()!==200){
+          const responseHtml=await response.text();
+          const missing=/undefined function ([a-zA-Z0-9_]+)/i.exec(responseHtml);
+          fs.writeFileSync(output+'/native-route-failure.json',JSON.stringify({route,status:response.status(),category:missing?'undefined_presentation_helper':'native_route_failed',helper:missing?missing[1]:null},null,2));
+        }
         assert.equal(response.status(), 200, 'selected company uses the original CRM route /admin/' + route);
         await shell(page);
         assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany, 'native route keeps the selected company: ' + route);

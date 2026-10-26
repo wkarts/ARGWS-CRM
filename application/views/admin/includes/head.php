@@ -52,5 +52,5 @@ $nativeLabel=$nativeCompany ? static fn($key, ...$unused)=>NativeCompanyAdminPre
     <?php $this->load->view('includes/pwa'); ?>
 </head>
 
-<body <?= $nativeCompany ? 'data-native-mobile="'.($nativeCompany['is_mobile']?'true':'false').'"' : ''; ?> <?= $nativeCompany ? 'class="app admin h-full native-company-admin"' : admin_body_class($bodyclass ?? ''); ?>>
+<body <?= $nativeCompany ? 'data-native-mobile="'.($nativeCompany['is_mobile']?'true':'false').'"' : ''; ?> <?= $nativeCompany ? 'class="'.e(NativeCompanyAdminPresentation::bodyClasses(function_exists('get_instance') ? get_instance() : $this,$bodyclass ?? '')).'"' : admin_body_class($bodyclass ?? ''); ?>>
     <?php if(!$nativeCompany) { hooks()->do_action('after_body_start'); } ?>

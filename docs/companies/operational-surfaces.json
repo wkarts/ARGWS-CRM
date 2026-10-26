@@ -10,13 +10,13 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "4cd0d8b78f5a1b2eb5add01eba74bb80d52443505e28f6bb29691537a380780b",
+    "source_manifest_sha256": "e12550d29da0f2863ae3f665e715425c8784ea49e2270250e00aa4b6a07db16d",
     "counts": {
         "modules": 38,
-        "source_files": 4610,
+        "source_files": 4608,
         "literal_option_keys": 681,
         "dynamic_option_references": 158,
-        "controllers": 256,
+        "controllers": 255,
         "hook_candidates": 555,
         "job_file_candidates": 70,
         "report_file_candidates": 296,
@@ -9738,25 +9738,6 @@
                 {
                     "method": "export",
                     "line": 51,
-                    "visibility": "public"
-                }
-            ],
-            "http_verbs": "requires_dispatch_review",
-            "authentication": "requires_entry_point_review",
-            "company_origin": "requires_persisted_origin_review",
-            "state": "not_verified",
-            "operational_ready": false
-        },
-        {
-            "path": "application/controllers/admin/Company_master.php",
-            "source_sha256": "5b71d4e25e9b204cee750734899f2f5cf81c3ef4e78792afdef765711705198d",
-            "module": null,
-            "base_class": "AdminController",
-            "surface": "admin",
-            "method_candidates": [
-                {
-                    "method": "index",
-                    "line": 8,
                     "visibility": "public"
                 }
             ],
