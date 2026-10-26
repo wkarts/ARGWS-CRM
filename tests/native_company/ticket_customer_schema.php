@@ -9,6 +9,7 @@ final class TicketCustomerSchemaDb
         $method=new ReflectionMethod(TicketCatalogSchemaDb::class,'metadata');$this->metadata=$method->invoke(null,CompanyContractsSchema::definitions('tbl')['company_tickets']);
         $this->metadata['indexes'][]=['INDEX_NAME'=>'client_id','COLUMN_NAME'=>'client_id','NON_UNIQUE'=>1,'SUB_PART'=>null];
         $this->metadata['indexes'][]=['INDEX_NAME'=>'issuer_id','COLUMN_NAME'=>'issuer_id','NON_UNIQUE'=>1,'SUB_PART'=>null];
+        foreach(['issuer_id','id','client_id'] as $column)$this->metadata['indexes'][]=['INDEX_NAME'=>'portal_support_client','COLUMN_NAME'=>$column,'NON_UNIQUE'=>0,'SUB_PART'=>null];
         $this->rows=[['id'=>1,'issuer_id'=>2,'client_id'=>8,'subject'=>'Synthetic A'],['id'=>2,'issuer_id'=>3,'client_id'=>9,'subject'=>'Synthetic B']];
     }
     public function query($sql,$params=[]){
@@ -28,13 +29,14 @@ foreach([
  static function($d){$d->metadata['columns'][2]['COLUMN_TYPE']='int unsigned';},
  static function($d){$d->metadata['columns'][2]['COLUMN_DEFAULT']='0';},
  static function($d){$d->metadata['columns'][3]['IS_NULLABLE']='YES';},
- static function($d){$d->metadata['indexes'][count($d->metadata['indexes'])-1]['NON_UNIQUE']=0;},
- static function($d){$d->metadata['indexes'][count($d->metadata['indexes'])-2]['NON_UNIQUE']=0;},
+ static function($d){foreach($d->metadata['indexes'] as &$index)if($index['INDEX_NAME']==='client_id')$index['NON_UNIQUE']=0;unset($index);},
+ static function($d){foreach($d->metadata['indexes'] as &$index)if($index['INDEX_NAME']==='issuer_id')$index['NON_UNIQUE']=0;unset($index);},
  static function($d){$d->metadata['indexes'][]=['INDEX_NAME'=>'unexpected','COLUMN_NAME'=>'subject','NON_UNIQUE'=>1,'SUB_PART'=>null];},
+ static function($d){foreach($d->metadata['indexes'] as &$index)if($index['INDEX_NAME']==='portal_support_client'&&$index['COLUMN_NAME']==='id')$index['COLUMN_NAME']='unexpected';unset($index);},
  static function($d){$d->metadata['foreign'][1]['REFERENCED_TABLE_NAME']='other_clients';},
  static function($d){$d->metadata['rules'][1]['DELETE_RULE']='CASCADE';},
  static function($d){$d->metadata['engine'][0]['ENGINE']='MyISAM';},
  ]as$mutation){$d=new TicketCustomerSchemaDb();$mutation($d);try{NativeCompanyTicketCustomerSchema::ensure($d,'tbl');throw new LogicException('unexpected metadata accepted');}catch(RuntimeException$e){ticketCatalogSchemaCheck(str_starts_with($e->getMessage(),'issuer_native_ticket_customer_schema_invalid')&&!$d->writes,'invalid shape rejected before ALTER');}}
 foreach(['mutate','skipAlter']as$mode){$d=new TicketCustomerSchemaDb();$d->$mode=true;try{NativeCompanyTicketCustomerSchema::ensure($d,'tbl');throw new LogicException('unconfirmed ALTER accepted');}catch(RuntimeException$e){ticketCatalogSchemaCheck(in_array($e->getMessage(),['issuer_native_ticket_customer_rows_changed','issuer_native_ticket_customer_schema_invalid'],true),'row/schema postcondition rejects unconfirmed change');}}
 ticketCatalogSchemaCheck(in_array('`client_id` int NOT NULL',CompanyContractsSchema::definitions('tbl')['company_tickets'],true),'historical definitions unchanged');
-echo "Ticket email nullable migration contract: exact shape, row fingerprint, replay, ten pre-DDL negatives and two postconditions passed with metadata double. Real MySQL remains mandatory.\n";
+echo "Ticket email nullable migration contract: exact shape, row fingerprint, replay, eleven pre-DDL negatives and two postconditions passed with metadata double. Real MySQL remains mandatory.\n";

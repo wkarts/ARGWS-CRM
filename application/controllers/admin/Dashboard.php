@@ -37,6 +37,9 @@ class Dashboard extends AdminController
             $this->output->set_header('Cache-Control: no-store');
             $this->output->set_output($html);
         } catch (DomainException $e) {
+            $reason = $e->getMessage();
+            $diagnostic = preg_match('/^[a-z][a-z0-9_]{0,99}$/D', $reason) ? $reason : 'unclassified';
+            log_message('error', 'Native company dashboard denied [' . $diagnostic . '].');
             show_error('Não foi possível confirmar os dados e permissões desta empresa. Recarregue a página.', $e->getMessage()==='company_dashboard_stale'?409:403);
         }
     }
