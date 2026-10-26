@@ -27,9 +27,9 @@ essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE modul
 essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='116','actual116 additive schema retries through native runner');
 essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native116 replay is stable');
 essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'bb_api_cnab_contracts')->row()->n===0,'native116 never backfills a contract for an existing origin');
-// The current127 runtime keeps the historical116 checks above, then advances
+// The current128 runtime keeps the historical116 checks above, then advances
 // through every new native step before any current operational service is used.
-foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119','1.2.0'=>'120','1.2.1'=>'121','1.2.2'=>'122','1.2.3'=>'123','1.2.4'=>'124','1.2.5'=>'125','1.2.6'=>'126','1.2.7'=>'127'] as $nativeVersion439=>$nativeStep439){
+foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119','1.2.0'=>'120','1.2.1'=>'121','1.2.2'=>'122','1.2.3'=>'123','1.2.4'=>'124','1.2.5'=>'125','1.2.6'=>'126','1.2.7'=>'127','1.2.8'=>'128'] as $nativeVersion439=>$nativeStep439){
     $GLOBALS['CI']->app_modules=new class($nativeVersion439){public function __construct(private string $version){}function get($name){return ['headers'=>['version'=>$this->version]];}};
     $previousVersion439=$db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version;
     $db->failVersion=$nativeVersion439;
@@ -40,7 +40,7 @@ foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119','1.2.0'=>'120','1.2.1'=>'1
     essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version===$nativeVersion439,'native'.$nativeStep439.' readback confirms its exact version');
     essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native'.$nativeStep439.' replay preserves current tracking');
 }
-essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.2.7','final127 marker follows independently verified126');
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.2.8','final128 marker follows independently verified127');
 essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'bb_api_origin_policy')->row()->n===0,'125 never backfills bridge ownership');
 \BancoBrasil\OriginationSchema::assertValid($db,$p);
 $GLOBALS['CI']->app_modules=$realModules;
@@ -55,10 +55,19 @@ function bbSyntheticConnection(int $issuer,string $agreement='1234567',string $a
     $connection=(int)$db->insert_id();$scope=new \BancoBrasil\Scope($issuer,$connection,$account,$environment,$agreement);
     $catalog=\BancoBrasil\LayoutCatalog::get(\BancoBrasil\Agreement::LAYOUT_ID);
     $db->query("INSERT INTO {$p}bb_layout_bindings(issuer_id,connection_id,scope_key,layout_id,profile_hash,connection_hash,remittance_source_hash,return_source_hash,date_window,declared_currency,created_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,7,?)",[$issuer,$connection,$scope->key(),\BancoBrasil\Agreement::LAYOUT_ID,\BancoBrasil\LayoutCatalog::fingerprint(\BancoBrasil\Agreement::LAYOUT_ID),$configuration,$catalog['remittance_sha256'],$catalog['return_sha256'],$catalog['date_window'],$catalog['currency'],date('Y-m-d H:i:s')]);
-    return [$connection,(int)$db->insert_id()];
+    $binding=(int)$db->insert_id();
+    // Explicit operator opt-in in this disposable fixture, never inferred by a migration.
+    $channels=new \BancoBrasil\ChannelPreferences($db,$p);
+    $state=$channels->page($issuer,7);
+    $state=$channels->setEnabled($issuer,7,'api',true,$state['revision']);
+    $channels->setEnabled($issuer,7,'cnab',true,$state['revision']);
+    return [$connection,$binding];
 }
 [$connection,$binding]=bbSyntheticConnection($a);
 $bank=new \BancoBrasil\Origination($db,$p);
+$channels=new \BancoBrasil\ChannelPreferences($db,$p);
+$enabled=$channels->page($a,7);
+essentialCheck($enabled['api']&&$enabled['cnab'],'both channels coexist only after explicit fixture opt-in');
 $contract=['beneficiary_name'=>'INVOICE A','first_number'=>'100','last_number'=>'999','first_file'=>'1','reference'=>'SYNTHETIC CONTRACT ONLY','interest_exempt'=>'1','exclusive_range'=>'1','test_exchange'=>'1'];
 $decl=$bank->declareContract($a,7,$connection,$binding,$contract);
 essentialCheck($bank->declareContract($a,7,$connection,$binding,$contract)===$decl,'same declaration idempotent without resetting range');
@@ -69,6 +78,13 @@ $fresh=$s->create($a,7,$input,str_repeat('9',64));
 $title=['invoice_id'=>$fresh,'payer_name'=>'PRIVATE A','payer_address'=>'SYNTHETIC STREET','payer_district'=>'CENTRO','payer_zip'=>'40000000','payer_city'=>'SALVADOR','payer_state'=>'BA','species'=>'02','acceptance'=>'N'];
 $batch=$bank->generate($a,7,$connection,$binding,'2026-10-19',[$title],str_repeat('b',64));
 essentialCheck($bank->generate($a,7,$connection,$binding,'2026-10-19',[$title],str_repeat('b',64))===$batch,'retry returns same batch and numbers');
+$disabled=$channels->setEnabled($a,7,'cnab',false,$channels->page($a,7)['revision']);
+essentialCheck($disabled['api']&&!$disabled['cnab'],'disabling CNAB leaves API enabled');
+essentialCheck($bank->generate($a,7,$connection,$binding,'2026-10-19',[$title],str_repeat('b',64))===$batch,'disabled CNAB keeps idempotent historical request readable');
+$blocked=$s->create($a,7,$input,str_repeat('7',64));
+essentialThrows(fn()=>$bank->generate($a,7,$connection,$binding,'2026-10-19',[array_replace($title,['invoice_id'=>$blocked])],str_repeat('6',64)),'bb_channel_disabled','disabled CNAB cannot reserve a new obligation');
+essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}bb_origins WHERE invoice_id=?",[$blocked])->row()->n===0,'disabled CNAB leaves no origin or number');
+$channels->setEnabled($a,7,'cnab',true,$disabled['revision']);
 $origin=$db->query("SELECT * FROM {$p}bb_origins WHERE invoice_id=?",[$fresh])->row_array();
 essentialCheck($origin['remote_id']==='12345670000000100'&&(int)$origin['layout_binding_id']===$binding,'immutable bank number and explicit origin profile saved');
 essentialCheck((int)$db->query("SELECT next_number FROM {$p}bb_number_reservations")->row()->next_number===101,'durable reservation advances exactly once');

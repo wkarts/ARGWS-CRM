@@ -2085,6 +2085,10 @@
     [
       "php",
       "tests/invoice_issuer_discovery.php"
+    ],
+    [
+      "php",
+      "tests/companies/bb_channel_preferences.php"
     ]
   ],
   "node": [

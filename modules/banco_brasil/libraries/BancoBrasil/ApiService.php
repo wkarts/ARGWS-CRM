@@ -3,6 +3,7 @@
 declare(strict_types=1);
 namespace BancoBrasil;
 require_once __DIR__.'/ModuleRelease.php';
+require_once __DIR__.'/ChannelPreferences.php';
 require_once __DIR__.'/ApiOriginPolicy.php';
 require_once __DIR__.'/Origination.php';
 require_once __DIR__.'/ApiSchema.php';
@@ -124,6 +125,7 @@ final class ApiService
             $this->authorize($issuer,$actor,'api_issue',true);[$p,$definition,$c,$a]=$this->profile($issuer,$profile);if($originReference!==null)foreach(['interest_policy','discount_policy','receipt_window_policy','discount_assignment_policy'] as $term)if(isset($definition[$term]))throw new \DomainException('bb_api_bridge_profile_requires_review');if(isset($definition['interest_policy']))$this->authorize($issuer,$actor,'api_charges',true);if(isset($definition['discount_policy']))$this->authorize($issuer,$actor,'api_discount',true);if(isset($definition['receipt_window_policy']))$this->authorize($issuer,$actor,'api_receipt_window',true);if(isset($definition['discount_assignment_policy']))$this->authorize($issuer,$actor,'api_assign_discount',true);
             $old=$this->rows('SELECT o.origin_id,o.input_hash,b.issuer_id FROM '.$this->prefix.'bb_api_origins o JOIN '.$this->prefix.'bb_origins b ON b.id=o.origin_id WHERE o.request_key=? FOR UPDATE',[$requestKey])[0]??null;
             if($old){if((int)$old['issuer_id']!==$issuer||!hash_equals($old['input_hash'],$inputHash))throw new \DomainException('bb_api_request_conflict');ApiOriginPolicy::guard($this->db,$this->prefix,$issuer,(int)$old['origin_id'],$originReference,$originGuard,$guardTables);return (int)$old['origin_id'];}
+            (new ChannelPreferences($this->db,$this->prefix))->assertEnabledInOwned($issuer,$actor,'api');
             if(!$this->rows('SELECT id FROM '.$this->prefix.'bb_api_credentials WHERE profile_id=? AND issuer_id=?',[$profile,$issuer]))throw new \DomainException('bb_api_credentials_required');
             $record=$this->rows('SELECT i.id,i.issuer_id,i.clientid,i.total,i.status,i.date,i.duedate,i.currency currency_id FROM '.$this->prefix.'invoices i WHERE i.id=? AND i.issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
             if($record){$record['currency']=(new \CompanyCurrencyUnits($this->db,$this->prefix))->assertWrite($record['currency_id'])['iso_code'];}
@@ -201,6 +203,7 @@ final class ApiService
             if($op&&$op['status']==='authenticating'&&$op['locked_until']>gmdate('Y-m-d H:i:s'))return ['id'=>(int)$op['id'],'execute'=>false];
             $this->assertUnmovedFinancialPosition($issuer,$actor,$origin,$operation);
             if($operation==='issue'){
+                (new ChannelPreferences($this->db,$this->prefix))->assertEnabledInOwned($issuer,$actor,'api');
                 if(!in_array($origin['state'],['api_reserved','api_auth_failed'],true))throw new \DomainException('bb_api_issue_requires_query');
                 $current=$this->rows('SELECT total,status FROM '.$this->prefix.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$origin['invoice_id'],$issuer])[0]??null;
                 if(!$current||!in_array((int)$current['status'],[1,4],true)||\app\services\InvoicePaymentWriter::minorUnits($current['total'])!==\app\services\InvoicePaymentWriter::minorUnits($snapshot['invoice']['total']))throw new \DomainException('bb_api_invoice_not_eligible');
@@ -236,7 +239,7 @@ final class ApiService
             $token=$this->client->token($prepared['profile']['api_stage'],$credentials,$operation);
             $run(function()use($issuer,$actor,$originId,$operation,$prepared,$id):void{
                 $this->assertReferenceActivityInOwned($issuer,$actor,$originId,$operation,$prepared,'authenticating');
-                $this->authorizeOperation($issuer,$actor,$operation);$op=$this->rows('SELECT claim_token,status,actor_id FROM '.$this->prefix.'bb_api_operations WHERE id=? AND origin_id=? FOR UPDATE',[$id,$originId])[0]??[];
+                $this->authorizeOperation($issuer,$actor,$operation);if($operation==='issue')(new ChannelPreferences($this->db,$this->prefix))->assertEnabledInOwned($issuer,$actor,'api');$op=$this->rows('SELECT claim_token,status,actor_id FROM '.$this->prefix.'bb_api_operations WHERE id=? AND origin_id=? FOR UPDATE',[$id,$originId])[0]??[];
                 if(($op['claim_token']??null)!==$prepared['claim']||($op['status']??null)!=='authenticating'||(int)$op['actor_id']!==$actor)throw new \DomainException('bb_api_claim_superseded');
                 [$currentOrigin]=$this->loadOrigin($issuer,$originId);$this->assertUnmovedFinancialPosition($issuer,$actor,$currentOrigin,$operation);if($operation==='issue'&&in_array(ApiClient::decodeExact($prepared['stored']['payload_json'])['jurosMora']['tipo']??null,['1','2'],true))$this->authorize($issuer,$actor,'api_charges',true);if($operation==='issue'&&in_array(ApiClient::decodeExact($prepared['stored']['payload_json'])['desconto']['tipo']??null,['1','2'],true))$this->authorize($issuer,$actor,'api_discount',true);
                 if($operation==='issue'){$issuedPayload=ApiClient::decodeExact($prepared['stored']['payload_json']);if(($issuedPayload['indicadorAceiteTituloVencido']??null)==='S')$this->authorize($issuer,$actor,'api_receipt_window',true);[, $definition]=$this->profile($issuer,(int)$prepared['profile']['id']);if(isset($definition['discount_assignment_policy']))$this->authorize($issuer,$actor,'api_assign_discount',true);}

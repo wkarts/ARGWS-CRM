@@ -22,5 +22,14 @@ foreach($before as$table=>$snapshot)essentialCheck($db->query('SELECT * FROM '.$
 $db->trans_begin();try{essentialThrows(fn()=>$service->permissionCandidates($a,7),'issuer_outer_transaction_not_allowed','standalone reader cannot adopt arbitrary external transaction');}finally{$db->trans_rollback();}
 $db->query('UPDATE '.$p.'modules SET active=0 WHERE module_name=?',['banco_brasil']);essentialThrows(fn()=>$service->permissionCandidates($a,7),'bb_api_access_denied','disabled module cannot supply selectable gateway');$db->query('UPDATE '.$p.'modules SET active=1 WHERE module_name=?',['banco_brasil']);
 require_once APPPATH.'services/NativeCompanyInvoicePaymentChoices.php';NativeCompanyPaymentModesSchema::ensure($db,$p);
-$modes=(new NativeCompanyInvoicePaymentChoices($db,$p))->listing($a,7);$bb=array_column($modes,null,'id')['banco_brasil'];essentialCheck($bb['selection_available']&&!$bb['checkout_ready'],'original invoice selector consumes full BB candidate proof without asserting checkout');
+$choices=new NativeCompanyInvoicePaymentChoices($db,$p);
+$disabled=array_column($choices->listing($a,7),null,'id');
+essentialCheck(!$disabled['banco_brasil_api']['selection_available']&&!$disabled['banco_brasil_cnab']['selection_available']&&!isset($disabled['banco_brasil']),'two explicit catalog entries start disabled; historical generic ID is not offered');
+$channels=new BancoBrasil\ChannelPreferences($db,$p);$state=$channels->page($a,7);$channels->setEnabled($a,7,'api',true,$state['revision']);
+$modes=array_column($choices->listing($a,7),null,'id');$bb=$modes['banco_brasil_api'];
+essentialCheck($bb['selection_available']&&!$bb['checkout_ready']&&!$modes['banco_brasil_cnab']['selection_available'],'original invoice selector consumes enabled API candidate proof without enabling CNAB or claiming checkout');
+essentialCheck($choices->validate($a,7,['banco_brasil_api'])===['banco_brasil_api'],'native invoice can select the explicit API channel');
+$validated=IssuerTransaction::run($db,$p,NativeCompanyInvoicePaymentChoices::validationTables(['banco_brasil_api']),fn()=>$choices->validateInOwned($a,7,['banco_brasil_api']));
+essentialCheck($validated===['banco_brasil_api'],'API selection is revalidated in the invoice transaction');
+essentialThrows(fn()=>$choices->validate($a,7,['banco_brasil_cnab']),'native_invoice_payment_mode_denied','disabled CNAB cannot be forged as invoice selection');
 echo 'BB permission candidates actual SQLite/native DDL: '.$GLOBALS['essentialChecks']." cumulative PASS; no bank call or bank approval.\n";

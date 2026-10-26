@@ -3,6 +3,7 @@
 declare(strict_types=1);
 namespace BancoBrasil;
 require_once __DIR__.'/ModuleRelease.php';
+require_once __DIR__.'/ChannelPreferences.php';
 require_once __DIR__.'/Agreement.php';
 require_once __DIR__.'/LayoutCatalog.php';
 require_once __DIR__.'/Cnab240Generator.php';
@@ -40,7 +41,7 @@ final class Origination
     private function transaction(callable $work)
     {
         OriginationSchema::assertValid($this->db,$this->prefix);
-        $tables=['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','modules','invoices','issuers_invoice_documents','currencies','company_currency_units','company_financial_events','invoicepaymentrecords','credits','bb_connections','bb_layout_bindings','bb_origins','bb_batches','bb_audit','bb_number_reservations','bb_contract_declarations','bb_origin_snapshots','bb_batch_origins','bb_batch_actions'];
+        $tables=['issuers_audit','issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','modules','invoices','issuers_invoice_documents','currencies','company_currency_units','company_financial_events','invoicepaymentrecords','credits','bb_connections','bb_layout_bindings','bb_origins','bb_batches','bb_audit','bb_number_reservations','bb_contract_declarations','bb_origin_snapshots','bb_batch_origins','bb_batch_actions'];
         if($this->db->table_exists($this->prefix.'asaas_payment_origins'))$tables[]='asaas_payment_origins';
         if($this->db->table_exists($this->prefix.'efi_company_origins'))$tables[]='efi_company_origins';
         return \IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge($tables,(new \CompanyInvoiceBalance($this->db,$this->prefix))->tables()))),$work);
@@ -111,6 +112,7 @@ final class Origination
             $this->authorize($issuer,$actor,'generate',true);[$c,$a,$layout]=$this->connection($issuer,$connection,$binding);
             $old=$this->rows('SELECT id,payload_hash FROM '.$this->prefix.'bb_batches WHERE scope_key=? AND idempotency_key=? FOR UPDATE',[$a->scope->key(),$requestKey])[0]??null;
             if($old){if(!hash_equals($old['payload_hash'],$hash))throw new \DomainException('bb_batch_request_conflict');return (int)$old['id'];}
+            (new ChannelPreferences($this->db,$this->prefix))->assertEnabledInOwned($issuer,$actor,'cnab');
             $contract=$this->rows('SELECT * FROM '.$this->prefix.'bb_contract_declarations WHERE issuer_id=? AND connection_id=? AND layout_binding_id=? ORDER BY id DESC LIMIT 1 FOR UPDATE',[$issuer,$connection,$binding])[0]??null;
             if(!$contract)throw new \DomainException('bb_contract_declaration_required');
             $declared=json_decode($contract['declaration_json'],true,16,JSON_THROW_ON_ERROR);

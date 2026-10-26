@@ -220,7 +220,7 @@ essentialCheck($xpath->query('//form')->length===2 && $xpath->query('//form//for
 essentialCheck($xpath->query('//*[@id="wrapper"]//form')->length===1,'company status form remains inside CRM content wrapper');
 essentialCheck($xpath->query('//form[input[@name="action" and @value="issuer_status"] and input[@name="issuer_id" and @value="54"] and input[@name="issuers_csrf"]]')->length===1,'authorized secondary has dedicated CSRF-protected status action');
 essentialCheck($xpath->query('//form[input[@name="action" and @value="issuer_status"]]/input[@name="_company_context" and @value="'.CompanyRequestScope::token().'"]')->length>=1,'status action retains original company context token');
-essentialCheck($xpath->query('//form[input[@name="action" and @value="issuer_status"]]/input[@name="_native_company_csrf" and @value="'.CompanyRequestScope::nativeCsrfToken($ci).'"]')->length===1,'official registry POST form carries native context CSRF');
+essentialCheck($xpath->query('//form[input[@name="action" and @value="issuer_status"]]/input[@name="_native_company_csrf" and @value="'.CompanyRequestScope::nativeCsrfToken($companies).'"]')->length===1,'official registry POST form carries native context CSRF');
 essentialCheck($xpath->query('//form/input[@name="issuer_id" and (@value="41" or @value="55")]')->length===0,'principal and unauthorized company have no status mutation control');
 essentialCheck($xpath->query('//*[@data-company-identity or @data-new-company]')->length===0,'grid exposes neither parallel identity editor nor creation to non-master');
 // The grid renders the authorized catalog projection, not the former selected/profile editor.

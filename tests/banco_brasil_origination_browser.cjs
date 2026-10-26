@@ -45,7 +45,26 @@ async function next(page) { await navigate(page, page.locator('section form butt
   execFileSync('docker',['cp','tests/support/BbPdoDatabase.php',app+':/app/tests/support/BbPdoDatabase.php']);
   execFileSync('docker',['exec','-e','ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci',app,'php','tests/banco_brasil_http_fixture.php'],{stdio:'pipe'});
   async function select(id){await page.goto(url+'/admin/');await selectCompanyOption(page, id);}
-  await select(a);
+  let capturedChannelA;
+  for(const id of [a,b]){
+   await select(id);await page.goto(url+'/admin/banco_brasil?issuer_id='+id);
+   await page.locator('#bb-tab-auth').click();
+   for(const channel of ['api','cnab']){
+    const form=page.locator('form[action*="save_channel_preferences"]').filter({has:page.locator('input[name=channel][value="'+channel+'"]')});
+    assert.equal(await form.count(),1,'each company has two independent native channel controls');
+    if(id===a&&channel==='api')capturedChannelA=await form.evaluate(el=>Object.fromEntries(new FormData(el).entries()));
+    if(await form.locator('input[name=enabled]').inputValue()==='1')await navigate(page,form.locator('button'));
+   }
+   assert.equal(sql("SELECT JSON_EXTRACT(settings_json,'$.bb_payment_channels.api') FROM tblissuers_registry WHERE id="+id),'true');
+   assert.equal(sql("SELECT JSON_EXTRACT(settings_json,'$.bb_payment_channels.cnab') FROM tblissuers_registry WHERE id="+id),'true');
+   if(id===b)assert.equal((await context.request.post(url+'/admin/banco_brasil/save_channel_preferences',{form:capturedChannelA})).status(),409,'A channel form cannot change B after company switch');
+  }
+  await select(a);await page.goto(url+'/admin/banco_brasil?issuer_id='+a);
+  const apiToggle=()=>page.locator('form[action*="save_channel_preferences"]').filter({has:page.locator('input[name=channel][value=api]')});
+  await navigate(page,apiToggle().locator('button'));
+  assert.equal(sql("SELECT JSON_EXTRACT(settings_json,'$.bb_payment_channels.api') FROM tblissuers_registry WHERE id="+a),'false');
+  assert.equal(sql("SELECT JSON_EXTRACT(settings_json,'$.bb_payment_channels.cnab') FROM tblissuers_registry WHERE id="+a),'true','CNAB remains enabled without API');
+  await navigate(page,apiToggle().locator('button'));
   // CPF is a source field of the invoice snapshot, never a remittance form override.
   const client=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client a'");
   await page.goto(url+'/admin/company_clients?client='+client);

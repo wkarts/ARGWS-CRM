@@ -14,7 +14,7 @@ class Banco_brasil extends AdminController
     public function index()
     {
         $companyId=$this->companyContextId();
-        $data=['checkout_preview'=>$this->checkoutPreview,'title'=>'Banco do Brasil','issuers'=>[],'selected'=>null,'connections'=>[],
+        $data=['channel_preferences'=>null,'channel_preferences_error'=>false,'checkout_preview'=>$this->checkoutPreview,'title'=>'Banco do Brasil','issuers'=>[],'selected'=>null,'connections'=>[],
             'returns'=>[],'events'=>[],'layout_bindings'=>[],'layouts'=>\BancoBrasil\LayoutCatalog::all(),'can_manage'=>false,'can_import'=>false,'resource_acl_ready'=>false,'storage_error'=>false,'isolated'=>false,'company_context_token'=>null,'api_ready'=>false,'api_webhook_ready'=>false,'api_webhook_receivers'=>[],'api_notifications'=>[],'api_profiles'=>[],'api_origins'=>[],'api_operations'=>[],'api_receipts'=>[],'can_api_charges'=>false,'can_api_discount'=>false,'can_api_amend'=>false,'can_api_amend_abatement'=>false,'can_api_amend_reference'=>false,'can_api_amend_address'=>false,'can_api_amend_discount'=>false,'can_api_amend_window'=>false,'can_api_receipt_window'=>false,'can_api_cancel_discount'=>false,'can_api_assign_discount'=>false,'can_api_issue'=>false,'can_api_query'=>false,'can_api_cancel'=>false,'reconciliations'=>[],'reconciliation_ready'=>false,'can_reconcile'=>false,'can_settle'=>false,'can_settle_components'=>false,'can_settle_tariff'=>false,'can_settle_api_components'=>false,'api_cnab_ready'=>false,'can_api_return'=>false,'can_api_return_components'=>false,'api_cnab_contracts'=>[],'can_external_reverse'=>false,'api_reversal_ready'=>false,'api_reversal_positions'=>[],'can_external_reverse_api_components'=>false,'receipt_reversal_ready'=>false,'receipt_reversal_positions'=>[],'batches'=>[],'origination_ready'=>false,'can_generate'=>false,'can_download'=>false,'request_key'=>bin2hex(random_bytes(32)),'admin_base_url'=>$this->url(''),'notice'=>$this->session->userdata('bb_notice'),'csrf'=>$this->csrfToken(),'matrix'=>\BancoBrasil\CapabilityPolicy::matrix()];
         if(class_exists('CompanyRequestScope',false)){
             $data['isolated']=\CompanyRequestScope::sealedFor($this);
@@ -36,6 +36,8 @@ class Banco_brasil extends AdminController
             if($raw!==null && $raw!==''){
                 $id=$this->positiveId($raw);$issuer=$this->issuer($id,'view');
                 $data['selected']=$issuer;
+                require_once dirname(__DIR__).'/libraries/BancoBrasil/ChannelPreferences.php';
+                try{$data['channel_preferences']=(new \BancoBrasil\ChannelPreferences($this->db,db_prefix()))->page($id,$this->staffId());}catch(Throwable $error){$data['channel_preferences_error']=true;}
                 try{
                 $data['connections']=$this->store->connections($id);
                 $data['layout_bindings']=$this->store->layoutBindings($id);
@@ -48,12 +50,25 @@ class Banco_brasil extends AdminController
                 if($data['api_ready']&&$data['can_reconcile']&&$this->allowed($id,'reconcile_api_return')){try{$data['api_cnab_contracts']=$this->apiCnab()->overview($id,$this->staffId());$data['api_cnab_ready']=true;$data['can_api_return']=true;$data['can_api_return_components']=$this->allowed($id,'reconcile_components');}catch(Throwable $error){$data['api_cnab_ready']=false;}}
                 if($data['api_ready']&&$data['can_reconcile']&&$this->allowed($id,'reconcile_api_components')){try{require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiReceiptReversalOverview.php';$data['api_reversal_positions']=(new \BancoBrasil\ApiReceiptReversalOverview($this->db,db_prefix()))->forIssuer($id,$this->staffId());$data['api_reversal_ready']=true;$data['can_external_reverse_api_components']=$this->allowed($id,'external_reverse_api_components')&&(new \IssuerResourceAccess($this->db,db_prefix()))->can($id,$this->staffId(),'payments','delete');}catch(Throwable $error){$data['api_reversal_ready']=false;}}
                 if($data['api_ready']&&$data['can_manage']){try{require_once dirname(__DIR__).'/libraries/BancoBrasil/ApiWebhook.php';$wh=(new \BancoBrasil\ApiWebhook($this->db,db_prefix()))->overview($id,$this->staffId());$data['api_webhook_ready']=true;$data['api_webhook_receivers']=$wh['receivers'];$data['api_notifications']=$wh['events'];}catch(Throwable $error){$data['api_webhook_ready']=false;}}
-                $data['can_generate']=$data['origination_ready']&&$this->allowed($id,'generate');$data['can_download']=$data['origination_ready']&&$this->allowed($id,'download');
+                $data['can_api_issue']=$data['can_api_issue']&&($data['channel_preferences']['api']??false);
+                $data['can_generate']=($data['channel_preferences']['cnab']??false)&&$data['origination_ready']&&$this->allowed($id,'generate');$data['can_download']=$data['origination_ready']&&$this->allowed($id,'download');
             }
         }
         $this->output->set_header('Cache-Control: no-store');
         $this->session->unset_userdata('bb_notice');
         $this->load->view('banco_brasil/index',$data);
+    }
+    public function save_channel_preferences()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'manage');
+        try{
+            $channel=$this->input->post('channel');$enabled=$this->input->post('enabled');$revision=$this->input->post('revision');
+            if(!is_string($channel)||!is_string($revision)||!in_array($enabled,['0','1'],true))throw new DomainException('bb_channel_invalid');
+            require_once dirname(__DIR__).'/libraries/BancoBrasil/ChannelPreferences.php';
+            (new \BancoBrasil\ChannelPreferences($this->db,db_prefix()))->setEnabled($id,$this->staffId(),$channel,$enabled==='1',$revision);
+            $this->flash('success','Meio de pagamento atualizado somente nesta empresa. O histórico e o outro canal foram preservados.');
+        }catch(Throwable $error){$this->flash('warning','Alteração não confirmada. Recarregue a configuração e confira suas permissões.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id));
     }
     public function register_connection()
     {

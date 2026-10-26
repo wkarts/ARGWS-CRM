@@ -5,7 +5,7 @@ R=Path(__file__).resolve().parents[1]
 B=R/'modules/banco_brasil'
 class Bridge125(unittest.TestCase):
  def test_native_release(self):
-  self.assertIn('Version: 1.2.7',(B/'banco_brasil.php').read_text())
+  self.assertIn('Version: 1.2.8',(B/'banco_brasil.php').read_text())
   self.assertIn('ApiOriginPolicy::ensure',(B/'migrations/125_version_125.php').read_text())
  def test_policy_is_persistent(self):
   s=(B/'libraries/BancoBrasil/ApiOriginPolicy.php').read_text()

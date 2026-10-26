@@ -24,7 +24,20 @@ if ($bbIsolated) {
 <li role="presentation" class="<?php echo $key==='auth'?'active':''; ?>"><a id="bb-tab-<?php echo $key; ?>" href="#bb-<?php echo $key; ?>" aria-controls="bb-<?php echo $key; ?>" aria-selected="<?php echo $key==='auth'?'true':'false'; ?>" tabindex="<?php echo $key==='auth'?'0':'-1'; ?>" role="tab" data-toggle="tab"><?php echo $label; ?></a></li><?php endforeach; ?></ul>
 <?php if(!$resource_acl_ready): ?><p class="alert alert-info">Permissões por recurso indisponíveis. Confirme a versão de Empresas emitentes e as concessões explícitas; nenhuma permissão antiga será herdada.</p><?php endif; ?>
 <div class="tab-content tw-mt-4">
-<div role="tabpanel" class="tab-pane active" id="bb-auth" aria-labelledby="bb-tab-auth" aria-hidden="false" tabindex="0"><h2 class="tw-text-lg">Autenticação e contrato API</h2><?php require __DIR__.'/api_configuration.php'; ?></div>
+<div role="tabpanel" class="tab-pane active" id="bb-auth" aria-labelledby="bb-tab-auth" aria-hidden="false" tabindex="0">
+<?php if(!empty($channel_preferences_error)){ ?><p class="alert alert-danger">Não foi possível confirmar os meios de pagamento desta empresa. Nenhuma ativação foi presumida.</p><?php } ?>
+<?php if($selected&&is_array($channel_preferences??null)){ ?>
+<h2 class="tw-text-lg">Meios de pagamento da empresa</h2>
+<p>API e CNAB são independentes. Habilitar permite novas cobranças somente com configuração e permissões válidas; não registra títulos nem confirma homologação bancária.</p>
+<?php foreach(['api'=>'Banco do Brasil — API','cnab'=>'Banco do Brasil — CNAB']as$channel=>$label){ ?>
+<div class="panel panel-default"><div class="panel-body"><h3 class="tw-text-base"><?= html_escape($label); ?></h3><p><?= $channel_preferences[$channel]?'Habilitado nesta empresa':'Desabilitado nesta empresa'; ?></p>
+<?php if($can_manage){echo form_open($bbAdminUrl('banco_brasil/save_channel_preferences')); ?>
+<input type="hidden" name="csrf_bb" value="<?= html_escape($csrf); ?>"><input type="hidden" name="issuer_id" value="<?= (int)$selected['id']; ?>">
+<input type="hidden" name="channel" value="<?= $channel; ?>"><input type="hidden" name="enabled" value="<?= $channel_preferences[$channel]?'0':'1'; ?>"><input type="hidden" name="revision" value="<?= html_escape($channel_preferences['revision']); ?>">
+<button type="submit" class="btn btn-default"><?= $channel_preferences[$channel]?'Desabilitar':'Habilitar'; ?></button><?= form_close(); } ?>
+</div></div><?php } ?>
+<?php } ?>
+<h2 class="tw-text-lg">Autenticação e contrato API</h2><?php require __DIR__.'/api_configuration.php'; ?></div>
 <div role="tabpanel" class="tab-pane" id="bb-environment" aria-labelledby="bb-tab-environment" aria-hidden="true" tabindex="0"><h2 class="tw-text-lg">Ambiente</h2><p>Homologação [sandbox] e Produção são vínculos separados e imutáveis. O marcador TS no lote de teste não substitui a alteração do intercâmbio para TESTE pelo banco. Confirme esse procedimento com o BB antes de enviar arquivos. O CBR643 não contém evidência inequívoca do ambiente remoto. Selecionar Homologação ou Produção declara o contexto local; não comprova a origem bancária do arquivo.</p></div>
 <div role="tabpanel" class="tab-pane" id="bb-agreement" aria-labelledby="bb-tab-agreement" aria-hidden="true" tabindex="0"><h2 class="tw-text-lg">Convênio</h2><p>Recorte implementado no codec: convênio de 7 posições, carteira 17 simples, moeda Real, CNAB 240 P/Q (junho/2026; 084/043) ou CNAB 400 CBR641/643 (remessa julho/2026 e retorno julho/2023). Outros perfis são recusados.</p><p>Juros, multa, desconto, protesto e pagamento parcial não são inferidos. A isenção de juros depende também do cadastro da carteira no BB. O cadastro local não confirma contrato ou titularidade.</p></div>
 <div role="tabpanel" class="tab-pane" id="bb-account" aria-labelledby="bb-tab-account" aria-hidden="true" tabindex="0"><h2 class="tw-text-lg">Conta e vínculo</h2>

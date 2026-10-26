@@ -41,6 +41,8 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           coverage: none
+          extensions: pdo_sqlite, mbstring
+      - run: php tests/companies/bb_channel_preferences.php
       - run: find modules/banco_brasil -name '*.php' -print0 | xargs -0 -n1 php -l
       - run: php tests/banco_brasil_checkout_legacy_guard.php
       - run: php tests/banco_brasil_admin.php

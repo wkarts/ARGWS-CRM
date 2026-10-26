@@ -2595,7 +2595,7 @@
       "evidence": ""
     },
     "application/models/Payments_model.php": {
-      "sha256": "db9cd5b2d5003fa40f4c4f31210d25d736236d1f969e9822c4727a0b92ec6d05",
+      "sha256": "4402603de0ce83bc9a0448ac1633d1af30217cf83ba4bad4c236361d93e1295a",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -5175,14 +5175,14 @@
       "evidence": ""
     },
     "application/services/NativeCompanyInvoicePaymentChoices.php": {
-      "sha256": "b6dc38743c52a1dbc3a2cd5eccbba558ea0b4fc5ec258e09696936ad44ff657b",
+      "sha256": "d38764e81396489d3b3c4e7bc932d3f367af9da09fcb0eccaceeef8ccc6d2cf4",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
         9,
-        38,
-        65
+        49,
+        78
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8187,13 +8187,13 @@
       "evidence": ""
     },
     "modules/banco_brasil/controllers/Banco_brasil.php": {
-      "sha256": "38fda295833591b6b3dfba62dfd0f70b0001c2c30b22daa905f54527cb0eaeff",
+      "sha256": "b4777580bed1771a07a9d62ef14de6f5619f8a00def5524a14f07c3fdcd6c2bb",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        46,
-        47
+        48,
+        49
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8256,22 +8256,22 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/ApiService.php": {
-      "sha256": "1e7869209bd2f8843bdd71f85506a9bcff050247cc744c783b4827699229bb59",
+      "sha256": "0ba78bb156637ccf9281d55780b4d84054f80b8c08d54e11debfd797d31d0eb9",
       "categories": [
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
-        42,
-        53,
-        128,
-        132,
-        137,
-        205,
-        296,
-        297,
-        368,
-        374
+        43,
+        54,
+        130,
+        134,
+        139,
+        208,
+        299,
+        300,
+        371,
+        377
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -8302,17 +8302,17 @@
       "evidence": ""
     },
     "modules/banco_brasil/libraries/BancoBrasil/Origination.php": {
-      "sha256": "102470590ce8863bd6488dac25f86b689c18ba5008ca418e207993c88a73a2b2",
+      "sha256": "7c8ec69792ca4c37cb38cec3caa6c2b31571a86efdd2949fdc6ca66edbff70ce",
       "categories": [
         "invoice_table",
         "payments"
       ],
       "signal_lines": [
-        38,
-        43,
-        122,
+        39,
+        44,
         124,
-        128
+        126,
+        130
       ],
       "state": "unreviewed",
       "evidence": ""
