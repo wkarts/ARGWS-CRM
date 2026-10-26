@@ -275,7 +275,18 @@ async function captureRealScreens(page, routes) {
       await page.waitForURL(u=>u.pathname.replace(/\/$/,'')==='/admin'&&u.search==='');
       const primaryCalendarFeed=page.waitForResponse(r=>new URL(r.url()).pathname==='/admin/utilities/get_calendar_data');
       assert.equal((await page.goto(url+'/admin/utilities/calendar')).status(),200,'principal uses the original native calendar route');
-      assert.equal((await primaryCalendarFeed).status(),200,'principal historical feed uses the shared authenticated endpoint');
+      const primaryFeedResponse=await primaryCalendarFeed;
+      if(primaryFeedResponse.status()!==200){
+        const query=new URL(primaryFeedResponse.url()).searchParams,known=new Set(['start','end','calendar_filters','events','tasks','projects','invoices','estimates','proposals','contracts','lead_reminders','customer_reminders','estimate_reminders','invoice_reminders','proposal_reminders','expense_reminders','task_reminders','credit_note_reminders','ticket_reminders']);
+        const frameworkName=await page.evaluate(()=>window.NativeCompanyHeaderConfig?.frameworkCsrf?.name||null),fields={},unknown=[];
+        for(const[key,value]of query){
+          if(known.has(key))fields[key]=(key==='start'||key==='end')&&/^\d{4}-\d{2}-\d{2}(?:T[0-9:+Z.-]+)?$/.test(value)?value:{length:value.length,boolean:['true','1'].includes(value)};
+          else unknown.push(key==='_'?'jquery_cache_buster':key==='_company_context'?'context_in_url':key==='_native_company_csrf'?'native_csrf_in_url':key===frameworkName?'framework_csrf_in_url':'other');
+        }
+        const evidence={status:primaryFeedResponse.status(),method:primaryFeedResponse.request().method(),fields,unknown};
+        fs.writeFileSync(output+'/native-calendar-feed-failure.json',JSON.stringify(evidence,null,2));console.error('Native calendar feed request shape; no token/body values: '+JSON.stringify(evidence));
+      }
+      assert.equal(primaryFeedResponse.status(),200,'principal historical feed uses the shared authenticated endpoint');
       assert.equal(await page.locator('body.native-company-admin').count(),1,'principal calendar has the same native presentation as secondary companies');
       assert.equal(await page.locator('#newEventModal').count(),1,'one original event modal and no competing calendar shell');
       assert.equal(await page.locator('#newEventModal [name=_native_company_csrf]').count(),1,'native new-event form also carries one CSRF field rather than duplicate serialization');

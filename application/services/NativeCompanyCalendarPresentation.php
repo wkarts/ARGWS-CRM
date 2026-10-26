@@ -12,7 +12,7 @@ final class NativeCompanyCalendarPresentation
             $acl->lockFinancialIdentity($issuer,$actor);if(!$acl->member($issuer,$actor)||$acl->primaryId()!==$primary)throw new DomainException('native_calendar_presentation_denied');
             $snapshot=CompanyCalendarPreferences::readInOwnedTransaction($db,$p,$issuer);
             $value=$snapshot['values']['calendar_first_day'];$source=$snapshot['revision']>0?'owned_override':'owned_default';
-            if($snapshot['revision']===0&&$primary===$issuer){
+            if($primary===$issuer){
                 $rows=IssuerStorage::query($db,'SELECT value FROM '.$p.'options WHERE name=?',['calendar_first_day'])->result_array();
                 if(count($rows)>1)throw new DomainException('native_calendar_presentation_invalid');
                 $value=$rows?$rows[0]['value']:'0';$source=$rows?'principal_legacy':'principal_default';

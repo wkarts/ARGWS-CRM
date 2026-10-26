@@ -3201,7 +3201,7 @@
       "evidence": ""
     },
     "application/services/CompanyCalendarRead.php": {
-      "sha256": "eaef7cfd82ffb5742e6fef619dafdaccf53a9ec781f78a8bdb2bd3fa62591468",
+      "sha256": "e970f3519748ca9ce9ea10bf2f70ecac9786b88434b875f58c194ec281e19fcf",
       "categories": [
         "customer_privacy",
         "invoice_table"
@@ -3210,7 +3210,7 @@
         19,
         33,
         46,
-        59
+        66
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -4828,7 +4828,7 @@
       "evidence": ""
     },
     "application/services/NativeCompanyCalendarFeed.php": {
-      "sha256": "23d6ceb9d2e4c6579af0dcf9195d164af06582e018b24556b360cb0f79b8c3b6",
+      "sha256": "ee9d0cd698d06d586351eb54f6da0aaed91d711e45d0ac19b8fa60526249566c",
       "categories": [
         "invoice_table"
       ],

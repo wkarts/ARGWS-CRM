@@ -7,7 +7,7 @@ require_once __DIR__.'/CompanyInvoices.php';require_once __DIR__.'/CompanySales.
 final class CompanyCalendarRead
 {
     private ?array $frame=null;
-    public function __construct(private $db,private string $p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');}
+    public function __construct(private $db,private string $p,private bool $nativePreferences=false){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');}
     private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private static function date($v):string{if(!is_string($v)||!($d=DateTimeImmutable::createFromFormat('!Y-m-d',$v))||$d->format('Y-m-d')!==$v)throw new DomainException('company_calendar_invalid');return$v;}
     public static function filters(array $input):array
@@ -16,7 +16,7 @@ final class CompanyCalendarRead
     }
     private function tables():array
     {
-        $t=(new CompanyCalendarPreferences($this->db,$this->p))->tables();foreach(['invoices','issuers_invoice_documents','company_sales_documents','company_sales_revisions','company_sales_copy_requests','company_projects','company_tasks','company_standalone_tasks','company_contracts','clients','issuers_clients','issuers_client_links']as$name)if($this->db->table_exists($this->p.$name))$t[]=$name;return array_values(array_unique($t));
+        $t=(new CompanyCalendarPreferences($this->db,$this->p))->tables();if($this->nativePreferences)$t[]='options';foreach(['invoices','issuers_invoice_documents','company_sales_documents','company_sales_revisions','company_sales_copy_requests','company_projects','company_tasks','company_standalone_tasks','company_contracts','clients','issuers_clients','issuers_client_links']as$name)if($this->db->table_exists($this->p.$name))$t[]=$name;return array_values(array_unique($t));
     }
     private function transaction(callable $work){return IssuerTransaction::run($this->db,$this->p,$this->tables(),$work);}
     private function clientFilter(int $issuer,int $actor,?int $client):void
@@ -48,9 +48,16 @@ final class CompanyCalendarRead
         elseif($source==='project_tasks'){$parent=$this->rows('SELECT id,issuer_id,client_id,revision FROM '.$this->p.'company_projects WHERE id=? AND issuer_id=? FOR UPDATE',[$row['project_id'],$issuer]);if(count($parent)!==1)throw new DomainException('company_calendar_denied');$parts[]=$parent;}
         return hash('sha256',json_encode($parts,JSON_THROW_ON_ERROR));
     }
+    /** The official feed consumes the same Settings snapshot inside this owned transaction. */
+    private function preferences(int $issuer,int $actor):array
+    {
+        if(!$this->nativePreferences)return CompanyCalendarPreferences::readInOwnedTransaction($this->db,$this->p,$issuer);
+        require_once __DIR__.'/NativeCompanyCalendarPreferences.php';$snapshot=(new NativeCompanyCalendarPreferences($this->db,$this->p))->valuesInOwnedTransaction($issuer,$actor);
+        return ['revision'=>$snapshot['revision'],'values'=>array_replace($snapshot['calendar_values'],$snapshot['values']),'native_snapshot'=>$snapshot];
+    }
     private function capture(int $issuer,int $actor,array $f):array
     {
-        return$this->transaction(function()use($issuer,$actor,$f){$acl=new IssuerResourceAccess($this->db,$this->p);$acl->lockFinancialIdentity($issuer,$actor);CompanyCalendarPreferences::authorize($this->db,$this->p,$issuer,$actor);$prefs=CompanyCalendarPreferences::readInOwnedTransaction($this->db,$this->p,$issuer);$this->clientFilter($issuer,$actor,$f['client_id']);$available=[];foreach(CompanyCalendarSources::definitions()as$source=>$definition)if($prefs['values'][$definition['toggle']]==='1'&&CompanyCalendarSources::allowed($this->db,$this->p,$issuer,$actor,$source))$available[]=$source;$ids=$this->candidates($issuer,$actor,$f,$prefs['values']);$frames=[];foreach($ids as$source=>$list)foreach($list as$id)$frames[$source.':'.$id]=$this->sourceFrame($issuer,$actor,$source,$id);CompanyCalendarPreferences::confirmInOwnedTransaction($this->db,$this->p,$issuer,$prefs);$this->clientFilter($issuer,$actor,$f['client_id']);foreach(array_keys($ids)as$source)if(!CompanyCalendarSources::allowed($this->db,$this->p,$issuer,$actor,$source))throw new DomainException('company_calendar_denied');CompanyCalendarPreferences::authorize($this->db,$this->p,$issuer,$actor);return['issuer'=>$issuer,'actor'=>$actor,'filters'=>$f,'preferences'=>$prefs,'ids'=>$ids,'sources'=>$frames,'available'=>$available];});
+        return$this->transaction(function()use($issuer,$actor,$f){$acl=new IssuerResourceAccess($this->db,$this->p);$acl->lockFinancialIdentity($issuer,$actor);CompanyCalendarPreferences::authorize($this->db,$this->p,$issuer,$actor);$prefs=$this->preferences($issuer,$actor);$this->clientFilter($issuer,$actor,$f['client_id']);$available=[];foreach(CompanyCalendarSources::definitions()as$source=>$definition)if($prefs['values'][$definition['toggle']]==='1'&&CompanyCalendarSources::allowed($this->db,$this->p,$issuer,$actor,$source))$available[]=$source;$ids=$this->candidates($issuer,$actor,$f,$prefs['values']);$frames=[];foreach($ids as$source=>$list)foreach($list as$id)$frames[$source.':'.$id]=$this->sourceFrame($issuer,$actor,$source,$id);if($this->preferences($issuer,$actor)!==$prefs)throw new DomainException('company_calendar_stale');$this->clientFilter($issuer,$actor,$f['client_id']);foreach(array_keys($ids)as$source)if(!CompanyCalendarSources::allowed($this->db,$this->p,$issuer,$actor,$source))throw new DomainException('company_calendar_denied');CompanyCalendarPreferences::authorize($this->db,$this->p,$issuer,$actor);return['issuer'=>$issuer,'actor'=>$actor,'filters'=>$f,'preferences'=>$prefs,'ids'=>$ids,'sources'=>$frames,'available'=>$available];});
     }
     private static function title($v):string{if(!is_string($v)||strlen($v)<1||strlen($v)>240||preg_match('//u',$v)!==1||preg_match('/[\x00-\x1f\x7f]/',$v))throw new DomainException('company_calendar_snapshot_invalid');return$v;}
     private function hydrate(int $issuer,int $actor,string $source,int $id):array
