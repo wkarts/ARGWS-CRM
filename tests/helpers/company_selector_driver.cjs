@@ -38,8 +38,17 @@ async function selectCompanyOption(page, value) {
         page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
         choice.click()
     ]);
-    assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), expected,
-        'server-rendered context matches the one authorized company choice');
+    const selected = await root.getAttribute('data-company-current').catch(() => null);
+    if (selected === null) {
+        const diagnostic = {
+            responseStatus: response ? response.status() : null,
+            path: new URL(page.url()).pathname,
+            title: await page.title().catch(() => ''),
+            body: (await page.locator('body').innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 300),
+        };
+        throw new Error('Company selection did not render the native selector: ' + JSON.stringify(diagnostic));
+    }
+    assert.equal(selected, expected, 'server-rendered context matches the one authorized company choice');
     return response;
 }
 module.exports = { selectCompanyOption, ensureCompanySidebar };
