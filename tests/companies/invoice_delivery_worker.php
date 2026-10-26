@@ -35,7 +35,7 @@ final class InvoiceWorkerMailer extends App_Email
 }
 $validA=$delivery->queue($a,7,$ia,101,$s->revision($a,7,$ia),hash('sha256','worker-a'),$base,$decrypt);
 $validB=$delivery->queue($b,7,$ib,202,$revisionB,hash('sha256','worker-b'),$base,$decrypt);
-$workerCi=(object)['db'=>new InvoiceWorkerDb($db),'config'=>(object)['config'=>[]],'encryption'=>new class{function decrypt($value){return 'synthetic:'.$value;}},'load'=>new class{function config($name){}}];
+$workerCi=(object)['db'=>new InvoiceWorkerDb($db),'config'=>new class($base){public array$config=[];public function __construct(private string$base){}public function item($name){if($name==='base_url')return$this->base;throw new LogicException('unexpected worker config');}},'encryption'=>new class{function decrypt($value){return 'synthetic:'.$value;}},'load'=>new class{function config($name){}}];
 $mailer=new InvoiceWorkerMailer($workerCi);$mailer->send_queue();
 essentialCheck(count($mailer->sent)===2,'native worker sends two valid owner-bound synthetic notifications and rejects stale earlier invoice');
 essentialCheck(array_column(array_column($mailer->sent,'transport'),'smtp_host')===['smtp-a.invalid','smtp-b.invalid'],'worker constructs independent origin SMTP configuration');
