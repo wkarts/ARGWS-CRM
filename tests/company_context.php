@@ -290,6 +290,13 @@ $ci=contextEnvironment($f,$s,'company_selection','select','POST');$_POST=['compa
 (new Company_selection())->select();essentialCheck(end($GLOBALS['redirects'])===['https://crm.example.test/admin/','location',303],'repeated native switch returns to the same dashboard after a safe 303');
 essentialCheck((new CompanyContext($db,$p,$s,8))->resolve()===54,'repeated native switch changes only the next request company');
 $returnToPrimary=new CompanyContext($db,$p,$s,8);$returnToPrimary->resolve();$ci=contextEnvironment($f,$s,'company_selection','select','POST');$_POST=['company_id'=>'41','_company_context'=>$returnToPrimary->token(),'_company_switch_csrf'=>$returnToPrimary->csrf()];(new Company_selection())->select();
+$ci=contextEnvironment($f,$s,'utilities','calendar');hooks()->trace=[];CompanyRequestScope::beforeHydration($ci);
+essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===41,'principal calendar enters the same native adapters before legacy hydration');
+essentialCheck(hooks()->trace===[],'principal calendar admission dispatches no global hooks');
+$principalCalendarToken=CompanyRequestScope::token();$principalCalendarCsrf=CompanyRequestScope::nativeCsrfToken($ci);CompanyRequestScope::finish();
+$ci=contextEnvironment($f,$s,'utilities','calendar','POST');$_POST=['_company_context'=>$principalCalendarToken];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
+$ci=contextEnvironment($f,$s,'utilities','calendar','POST');$_POST=['_company_context'=>$principalCalendarToken,'_native_company_csrf'=>$principalCalendarCsrf];CompanyRequestScope::beforeHydration($ci);
+essentialCheck(CompanyRequestScope::nativeFor($ci)&&!isset($_POST['_company_context'],$_POST['_native_company_csrf']),'principal calendar POST enforces and strips both native boundary tokens');CompanyRequestScope::finish();
 $ci = contextEnvironment($f, $s, 'invoices', 'index'); $ci->load->initialize();
 essentialCheck(CompanySettingsRuntime::issuerId() === 41 && !CompanyRequestScope::isolated(), 'primary legacy request resolves before standard libraries');
 essentialCheck(in_array('app', $ci->load->autoload['libraries'], true), 'primary preserves legacy autoload');

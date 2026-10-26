@@ -97,7 +97,11 @@ final class CompanyRequestScope
             $recover = $nativeDashboard || (self::$isolated && $method === 'index' && in_array($verb, ['GET', 'HEAD'], true));
             self::$context->resolve($recover, $nativeDashboard || (self::$isolated && $class === 'company_selection'));
             // Exact native actions use company data adapters, never the legacy hydration path.
-            self::$nativePresentation = (!self::$context->isPrimary() || $companyScopedBbRoute) && NativeCompanyRoutes::admits(
+            // Utilities' finite calendar actions share the same adapters for the
+            // principal and named companies, including historical event lineage.
+            // Other Utilities actions retain their existing admission policy.
+            $sharedCalendar = $native && $class === 'utilities';
+            self::$nativePresentation = (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar) && NativeCompanyRoutes::admits(
                 (string) $ci->router->fetch_directory(), $module, $class, $method, $verb
             );
             if($companyScopedBbRoute&&!self::$nativePresentation)self::deny($ci,'company_context_route_not_isolated',403);

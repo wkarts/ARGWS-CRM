@@ -22,11 +22,19 @@ final class NativeCompanyCalendarEndpoints
         return['native_calendar'=>true,'native_calendar_values'=>$prefs['values'],'native_calendar_config'=>['options'=>$prefs['values']+['date_format'=>CompanySettingsFormats::dates()[$formats['dateformat']],'time_format'=>$formats['time_format'],'timezone'=>$timezone,'google_api'=>$google['api_key']],'calendar_ids'=>$google['calendar_ids']], 'native_calendar_email_active'=>$template!==null&&(int)$template->active===1,'native_calendar_actor'=>$a,'native_calendar_csrf'=>CompanyRequestScope::nativeCsrfToken($ci),'title'=>_l('calendar')];
     }
     public static function feed($ci):array{[$i,$a]=self::context($ci);return(new NativeCompanyCalendarFeed($ci->db,db_prefix()))->read($i,$a,$ci->input->get());}
+    /** Reauthorize the buffered original view before any private HTML is emitted. */
+    public static function confirm($ci,array $prepared,$eventId=null):void
+    {
+        $current=$eventId===null?self::page($ci):self::event($ci,$eventId);
+        // Event DTOs contain stdClass values; compare their typed content, not
+        // the identity of separately hydrated PHP objects.
+        if(json_encode($prepared,JSON_THROW_ON_ERROR)!==json_encode($current,JSON_THROW_ON_ERROR))throw new DomainException('native_calendar_stale');
+    }
     public static function event($ci,$id):array
     {
         [$i,$a]=self::context($ci);$data=self::page($ci);$row=(new NativeCompanyCalendar($ci->db,db_prefix()))->event($i,$a,$id);$acl=new IssuerResourceAccess($ci->db,db_prefix());
-        if(!$acl->member($i,(int)$row['userid']))throw new DomainException('native_event_denied');$author=IssuerStorage::query($ci->db,'SELECT firstname,lastname FROM '.db_prefix().'staff WHERE staffid=? AND active=1',[$row['userid']])->row_array();if(!$author||!$acl->member($i,(int)$row['userid']))throw new DomainException('native_event_denied');
-        $data['event']=(object)$row;$data['native_calendar_can_edit']=(int)$row['userid']===$a||$acl->administrative($i,$a);$data['native_calendar_author']=trim($author['firstname'].' '.$author['lastname']);$data['native_calendar_revision']=NativeCompanyEvents::revision($row,$row['source_kind']);return$data;
+        if(!$acl->member($i,(int)$row['userid']))throw new DomainException('native_event_denied');$author=IssuerStorage::query($ci->db,'SELECT staffid,firstname,lastname,profile_image FROM '.db_prefix().'staff WHERE staffid=? AND active=1',[$row['userid']])->row_array();if(!$author||!$acl->member($i,(int)$row['userid']))throw new DomainException('native_event_denied');
+        $data['event']=(object)$row;$data['native_calendar_can_edit']=(int)$row['userid']===$a||$acl->administrative($i,$a);$data['native_calendar_author']=trim($author['firstname'].' '.$author['lastname']);$data['native_calendar_author_data']=$author;$data['native_calendar_revision']=NativeCompanyEvents::revision($row,$row['source_kind']);return$data;
     }
     public static function save($ci):array
     {

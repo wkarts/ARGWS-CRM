@@ -257,6 +257,13 @@ async function captureRealScreens(page, routes) {
       assert.match(installerAdminId, /^[1-9]\d*$/);
       assert.equal(identityBeforeSecondary.split(':')[0], installerAdminId, 'fresh installer master is already identified as the authenticated administrator before secondary recovery');
       const primaryCompany = sql('SELECT primary_issuer_id FROM tblissuers_installation_identity WHERE id=1');
+      const primaryCalendarFeed=page.waitForResponse(r=>new URL(r.url()).pathname==='/admin/utilities/get_calendar_data');
+      assert.equal((await page.goto(url+'/admin/utilities/calendar')).status(),200,'principal uses the original native calendar route');
+      assert.equal((await primaryCalendarFeed).status(),200,'principal historical feed uses the shared authenticated endpoint');
+      assert.equal(await page.locator('body.native-company-admin').count(),1,'principal calendar has the same native presentation as secondary companies');
+      assert.equal(await page.locator('#newEventModal').count(),1,'one original event modal and no competing calendar shell');
+      const oldCalendarForm=await page.locator('#calendar-event-form').evaluate(node=>Object.fromEntries(new FormData(node).entries()));
+      await captureRealScreens(page,[['native-principal-calendar',url+'/admin/utilities/calendar']]);
       if (sql("SELECT COUNT(*) FROM tblissuers_registry WHERE tax_id='52998224725'") === '0') {
         await page.goto(url + '/admin/company_onboarding');
         await page.locator('#company-create-modal').waitFor({state:'visible'});
@@ -314,7 +321,10 @@ async function captureRealScreens(page, routes) {
       await page.setViewportSize({width:1280,height:900});
 
       assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany);
-      const nativeRoutes = ['todo','announcements','taxes','departments','tickets','invoice_items','settings?group=company','staff','staff/member'];
+      const calendarEventsBeforeStale=sql('SELECT COUNT(*) FROM tblcompany_events');
+      assert.equal((await context.request.post(url+'/admin/utilities/calendar',{form:oldCalendarForm,maxRedirects:0})).status(),409,'principal calendar form cannot write after selecting a secondary company');
+      assert.equal(sql('SELECT COUNT(*) FROM tblcompany_events'),calendarEventsBeforeStale,'stale calendar submission creates no event');
+      const nativeRoutes = ['todo','announcements','taxes','departments','tickets','invoice_items','settings?group=company','utilities/calendar','staff','staff/member'];
       for (const route of nativeRoutes) {
         const response = await page.goto(url + '/admin/' + route, {waitUntil:'load'});
         if(response.status()!==200){

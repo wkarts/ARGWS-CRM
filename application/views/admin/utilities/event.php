@@ -13,7 +13,7 @@
           <div class="col-md-12">
             <?php if ($event->userid != (!empty($native_calendar) ? $native_calendar_actor : get_staff_user_id())) { ?>
             <div class="alert alert-info">
-              <?= _l('event_created_by', '<a href="' . admin_url('profile/' . $event->userid) . '" target="_blank" class="alert-link">' . e((!empty($native_calendar) ? $native_calendar_author : get_staff_full_name($event->userid)))) . '</a>'; ?>
+              <?= !empty($native_calendar) ? _l('event_created_by', e($native_calendar_author)) : _l('event_created_by', '<a href="' . admin_url('profile/' . $event->userid) . '" target="_blank" class="alert-link">' . e(get_staff_full_name($event->userid))) . '</a>'; ?>
             </div>
             <?php } ?>
             <?php if ($event->userid == (!empty($native_calendar) ? $native_calendar_actor : get_staff_user_id()) || (!empty($native_calendar) ? $native_calendar_can_edit : is_admin())) { ?>
@@ -92,9 +92,11 @@
                 for="event_public"><?= _l('utility_calendar_new_event_make_public'); ?></label>
             </div>
             <?php } else { ?>
+            <?php if(!empty($native_calendar)){require_once APPPATH.'services/StaffAvatarPresentation.php';echo StaffAvatarPresentation::render((object)$native_calendar_author_data,$event->userid,['staff-profile-xs-image'],'small',[],'base_url','file_exists');echo ' '.e($native_calendar_author);}else{ ?>
             <a
               href="<?= admin_url('profile/' . $event->userid); ?>"><?= staff_profile_image($event->userid, ['staff-profile-xs-image']); ?>
               <?= e((!empty($native_calendar) ? $native_calendar_author : get_staff_full_name($event->userid))); ?></a>
+            <?php } ?>
             <hr />
             <h5 class="bold">
               <?= _l('event_description'); ?>

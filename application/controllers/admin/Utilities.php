@@ -63,12 +63,32 @@ class Utilities extends AdminController
         catch(DomainException $error){return $this->output->set_status_header(409)->set_content_type('application/json')->set_header('Cache-Control: no-store')->set_output(json_encode(['success'=>false,'message'=>_l('something_went_wrong')]));}
     }
 
+    private function nativeCalendarView(string $view,$eventId=null)
+    {
+        require_once APPPATH.'services/NativeCompanyCalendarEndpoints.php';
+        $this->output->set_header('Cache-Control: no-store')->set_header('Pragma: no-cache');
+        try {
+            $data=$eventId===null?NativeCompanyCalendarEndpoints::page($this):NativeCompanyCalendarEndpoints::event($this,$eventId);
+            // NativeCompanyAdminPresentation already selects the original
+            // FullCalendar bundle/locale once. app_scripts belongs to legacy App.
+            $html=$this->load->view($view,$data,true);
+            NativeCompanyCalendarEndpoints::confirm($this,$data,$eventId);
+            return $this->output->set_output($html);
+        } catch(DomainException $error) {
+            $status=in_array($error->getMessage(),['company_calendar_denied','native_event_denied'],true)?403:409;
+            show_error('O calendário ou suas permissões mudaram. Reabra a página.', $status);
+        } catch(Throwable $error) {
+            log_message('error','Native calendar view unconfirmed; private HTML and exception details omitted.');
+            show_error('Calendário indisponível. Nenhum conteúdo foi confirmado.',503);
+        }
+    }
+
     /* Calendar functions */
     public function calendar()
     {
         if (CompanyRequestScope::nativeFor($this)) {
             if (strtoupper($this->input->method())==='POST') return $this->nativeCalendarJson('save');
-            require_once APPPATH.'services/NativeCompanyCalendarEndpoints.php';$data=NativeCompanyCalendarEndpoints::page($this);add_calendar_assets();return $this->load->view('admin/utilities/calendar',$data);
+            return $this->nativeCalendarView('admin/utilities/calendar');
         }
         if ($this->input->post() && $this->input->is_ajax_request()) {
             $data = $this->input->post();
@@ -114,7 +134,7 @@ class Utilities extends AdminController
     public function view_event($id)
     {
         if (CompanyRequestScope::nativeFor($this)) {
-            require_once APPPATH.'services/NativeCompanyCalendarEndpoints.php';return $this->load->view('admin/utilities/event',NativeCompanyCalendarEndpoints::event($this,$id));
+            return $this->nativeCalendarView('admin/utilities/event',$id);
         }
         $data['event'] = $this->utilities_model->get_event($id);
         if ($data['event']->public == 1 && !is_staff_member()

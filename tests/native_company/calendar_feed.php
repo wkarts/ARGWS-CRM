@@ -3,6 +3,7 @@ require __DIR__.'/../settings/calendar_setup.php';
 require_once APPPATH.'services/NativeCompanyCalendarFeed.php';require_once APPPATH.'services/NativeCompanyEvents.php';
 NativeCompanyEventSchema::ensure($db,$p);
 foreach(['firstname','lastname']as$column)if(!IssuerStorage::fieldExists($db,$column,$p.'staff'))$db->query('ALTER TABLE '.$p.'staff ADD '.$column.' varchar(80)');
+if(!IssuerStorage::fieldExists($db,'profile_image',$p.'staff'))$db->query('ALTER TABLE '.$p.'staff ADD profile_image varchar(191) NULL');
 $db->query("UPDATE {$p}staff SET firstname='Synthetic',lastname='Staff'");
 if($db->driver()==='sqlite'){$parts=NativeCompanyAuxiliarySchema::definitions($p)['company_reminders'];$parts=array_values(array_filter($parts,static fn($x)=>!str_starts_with($x,'KEY ')&&$x!=='PRIMARY KEY (`id`)'));foreach($parts as&$part){$part=str_replace(' CHARACTER SET utf8mb4 COLLATE utf8mb4_bin','',$part);$part=preg_replace('/UNIQUE KEY `[^`]+`/','UNIQUE',$part);if(str_starts_with($part,'`id`'))$part='`id` INTEGER PRIMARY KEY AUTOINCREMENT';}unset($part);$db->query('CREATE TABLE '.$p.'company_reminders ('.implode(',',$parts).')');}else NativeCompanyAuxiliarySchema::ensure($db,$p);
 foreach([$a,$b]as$i)$calendarPreferences->save($i,49,0,$calendarAll);

@@ -103,12 +103,25 @@ final class NativeCompanyDepartments
     public function calendarSources(int $issuer,int $actor):array
     {
         $acl=$this->access($issuer,$actor);if(!$acl->can($issuer,$actor,'calendar','view'))throw new DomainException('native_department_denied');
-        if($acl->primaryId()===$issuer)throw new DomainException('native_calendar_primary_uses_historical_model');
+        $primary=$acl->primaryId();
         $admin=$acl->administrative($issuer,$actor);$where='d.issuer_id=?';$args=[$issuer];
         if(!$admin){$where.=' AND EXISTS(SELECT 1 FROM '.$this->p.NativeCompanyDepartmentSchema::MEMBERS.' m WHERE m.issuer_id=d.issuer_id AND m.department_source_kind=? AND m.department_source_id=d.id AND m.staff_id=?)';$args[]='company_ticket_department';$args[]=$actor;}
-        $sql='SELECT d.id,d.calendar_id FROM '.$this->p.NativeCompanyDepartmentSchema::DEPARTMENTS.' d WHERE '.$where.' ORDER BY d.id';$rows=$this->rows($sql,$args);$ids=[];
+        $sql='SELECT d.id,d.calendar_id FROM '.$this->p.NativeCompanyDepartmentSchema::DEPARTMENTS.' d WHERE '.$where.' ORDER BY d.id';
+        $reads=[[$sql,$args]];
+        if($primary===$issuer){
+            // Historical departments belong only to the persisted principal.
+            // Ordinary calendar viewers still need their own department link.
+            $legacy='SELECT d.departmentid AS id,d.calendar_id FROM '.$this->p.'departments d';$legacyArgs=[];
+            if(!$admin){
+                $legacy.=' WHERE EXISTS(SELECT 1 FROM '.$this->p.'staff_departments m WHERE m.departmentid=d.departmentid AND m.staffid=?) OR EXISTS(SELECT 1 FROM '.$this->p.NativeCompanyDepartmentSchema::MEMBERS.' m WHERE m.issuer_id=? AND m.department_source_kind=? AND m.department_source_id=d.departmentid AND m.staff_id=?)';
+                $legacyArgs=[$actor,$issuer,'ticket_department',$actor];
+            }
+            $reads[]=[$legacy.' ORDER BY d.departmentid',$legacyArgs];
+        }
+        $frames=[];$rows=[];foreach($reads as[$statement,$bindings]){$frame=$this->rows($statement,$bindings);$frames[]=$frame;$rows=array_merge($rows,$frame);}$ids=[];
         foreach($rows as$row){$id=$row['calendar_id'];if(!is_string($id)||strlen($id)>65535||preg_match('/[\x00-\x20\x7f]/',$id))throw new DomainException('native_calendar_google_invalid');if($id!=='')$ids[]=$id;}
-        $this->access($issuer,$actor);if(!$acl->can($issuer,$actor,'calendar','view')||$admin!==$acl->administrative($issuer,$actor)||$rows!==$this->rows($sql,$args))throw new DomainException('native_department_denied');
+        $this->access($issuer,$actor);if(!$acl->can($issuer,$actor,'calendar','view')||$admin!==$acl->administrative($issuer,$actor)||$primary!==$acl->primaryId())throw new DomainException('native_department_denied');
+        foreach($reads as$index=>[$statement,$bindings])if($frames[$index]!==$this->rows($statement,$bindings))throw new DomainException('native_department_denied');
         return array_values(array_unique($ids));
     }
     public function forStaff(int $issuer,int $actor):array

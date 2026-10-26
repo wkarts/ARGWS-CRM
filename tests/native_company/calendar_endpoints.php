@@ -35,7 +35,14 @@ $store->mutate($a,49,'update','default_timezone','Brazil/East');
 essentialCheck(NativeCompanyCalendarEndpoints::page($ci)['native_calendar_config']['options']['timezone']==='Brazil/East','calendar accepts timezone aliases accepted by the native Settings validator');
 $store->mutate($a,49,'update','default_timezone','not/a/timezone');essentialThrows(fn()=>NativeCompanyCalendarEndpoints::page($ci),'native_calendar_configuration_invalid','explicit invalid timezone remains an error');
 $store->mutate($a,49,'update','default_timezone','America/Sao_Paulo');
+$preparedEvent=NativeCompanyCalendarEndpoints::event($ci,$event['eventid']);NativeCompanyCalendarEndpoints::confirm($ci,$preparedEvent,$event['eventid']);
+$eventSource=NativeCompanyResourceId::decode('event',$event['eventid']);$db->query('UPDATE '.$p.'company_events SET title=? WHERE issuer_id=? AND eventid=?',['Changed after render',$a,$eventSource['source_id']]);
+essentialThrows(fn()=>NativeCompanyCalendarEndpoints::confirm($ci,$preparedEvent,$event['eventid']),'native_calendar_stale','buffered event content is revalidated before HTML delivery');
+$db->query('UPDATE '.$p.'company_events SET title=? WHERE issuer_id=? AND eventid=?',[$preparedEvent['event']->title,$a,$eventSource['source_id']]);
 $page=NativeCompanyCalendarEndpoints::page($ci);
+NativeCompanyCalendarEndpoints::confirm($ci,$page);
+$store->mutate($a,49,'update','default_timezone','UTC');essentialThrows(fn()=>NativeCompanyCalendarEndpoints::confirm($ci,$page),'native_calendar_stale','buffered original calendar cannot emit a superseded configuration');
+$store->mutate($a,49,'update','default_timezone','America/Sao_Paulo');
 essentialCheck($page['native_calendar_config']['calendar_ids']===['a-calendar@example.test'],'calendar-only member sees own department source, corrupted cross-issuer membership is ignored');
 essentialCheck($page['native_calendar_config']['options']['timezone']==='America/Sao_Paulo'&&$page['native_calendar_config']['options']['date_format']==='Y-m-d','native FullCalendar gets actual scoped timezone and format');
 echo "Calendar page adapter: 2 additional actual storage checks passed.\n";
@@ -43,4 +50,23 @@ $db->query('INSERT INTO '.$p.'company_departments VALUES(3,?,?)',[$a,'other-depa
 essentialCheck($departments->calendarSources($a,49)===['a-calendar@example.test'],'calendar grant alone does not broaden department assignment');
 essentialCheck(count($departments->calendarSources($a,7))===2,'installation administrator sees all calendars of selected issuer only');
 $db->query("DELETE FROM {$p}issuers_resource_permissions WHERE issuer_id=? AND staff_id=49 AND feature='calendar'",[$a]);essentialThrows(fn()=>$departments->calendarSources($a,49),'native_department_denied','revoked calendar grant denies department source lookup');
+essentialThrows(fn()=>NativeCompanyCalendarEndpoints::confirm($ci,$page),'company_calendar_denied','permission revoked after rendering prevents buffered calendar/modal delivery');
+essentialThrows(fn()=>NativeCompanyCalendarEndpoints::confirm($ci,$preparedEvent,$event['eventid']),'company_calendar_denied','permission revoked after event rendering prevents private modal delivery');
 echo "Calendar department sources: 3 additional actual authority checks passed.\n";
+// Principal retains historical departments under the same page adapter. Calendar
+// permission alone never grants another department or a secondary company's key.
+$db->query('CREATE TABLE '.$p.'departments(departmentid INT PRIMARY KEY,calendar_id TEXT)');
+$db->query('CREATE TABLE '.$p.'staff_departments(departmentid INT,staffid INT)');
+$db->query("INSERT INTO {$p}departments VALUES(11,'principal-own@example.test'),(12,'principal-other@example.test')");
+$db->query('INSERT INTO '.$p.'staff_departments VALUES(11,49)');
+$db->query('INSERT INTO '.$p.'company_department_members VALUES(4,?,49,?,12)',[$b,'ticket_department']);
+CompanyRequestScope::$issuer=$calendarPrimary;
+foreach(['google_api_key'=>'principal-browser-key','google_calendar_main_calendar'=>'principal-main@example.test','dateformat'=>'Y-m-d|%Y-%m-%d','time_format'=>'24','default_timezone'=>'America/Bahia','active_language'=>'portuguese_br']as$key=>$value){
+ if($db->query('SELECT name FROM '.$p.'options WHERE name=?',[$key])->row_array())$db->query('UPDATE '.$p.'options SET value=? WHERE name=?',[$value,$key]);else$db->query('INSERT INTO '.$p.'options(name,value) VALUES(?,?)',[$key,$value]);
+}
+$principalPage=NativeCompanyCalendarEndpoints::page($ci);NativeCompanyCalendarEndpoints::confirm($ci,$principalPage);
+essentialCheck($principalPage['native_calendar_config']['calendar_ids']===['principal-own@example.test','principal-main@example.test'],'principal shared page retains assigned historical department and own main calendar only');
+essentialCheck($principalPage['native_calendar_config']['options']['google_api']==='principal-browser-key','principal browser key is explicit and never the secondary key');
+essentialCheck($departments->calendarSources($calendarPrimary,7)===['principal-own@example.test','principal-other@example.test'],'proven installation administrator sees principal historical department calendars');
+CompanyRequestScope::$issuer=$b;essentialCheck(!str_contains(json_encode(NativeCompanyCalendarEndpoints::page($ci)),'principal-browser-key'),'secondary page never inherits principal key or historical departments');
+echo "Calendar principal page: shared adapter, historical assignment, administrator, A/B configuration and final reauthorization passed.\n";

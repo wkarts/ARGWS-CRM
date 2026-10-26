@@ -10,7 +10,7 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "e12550d29da0f2863ae3f665e715425c8784ea49e2270250e00aa4b6a07db16d",
+    "source_manifest_sha256": "85eb5a531d9ff3268baf2657d39902fc9ada8fbfdf507046bb83f26b8e640950",
     "counts": {
         "modules": 38,
         "source_files": 4608,
@@ -13967,7 +13967,7 @@
         },
         {
             "path": "application/controllers/admin/Utilities.php",
-            "source_sha256": "a51322cc4add7fc1c8447807dd89009780fa4376dd36492562df9191d6b4e7c0",
+            "source_sha256": "cf4738d117d49c9ef0abbb4a278008d0b9523c21db11c364f14f660a4769ef7c",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -13999,37 +13999,37 @@
                 },
                 {
                     "method": "calendar",
-                    "line": 67,
+                    "line": 87,
                     "visibility": "public"
                 },
                 {
                     "method": "get_calendar_data",
-                    "line": 99,
+                    "line": 119,
                     "visibility": "public"
                 },
                 {
                     "method": "view_event",
-                    "line": 114,
+                    "line": 134,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_event",
-                    "line": 127,
+                    "line": 147,
                     "visibility": "public"
                 },
                 {
                     "method": "media",
-                    "line": 154,
+                    "line": 174,
                     "visibility": "public"
                 },
                 {
                     "method": "media_connector",
-                    "line": 171,
+                    "line": 191,
                     "visibility": "public"
                 },
                 {
                     "method": "bulk_pdf_exporter",
-                    "line": 297,
+                    "line": 317,
                     "visibility": "public"
                 }
             ],
@@ -28721,7 +28721,7 @@
         {
             "name": "departments",
             "state": "not_verified",
-            "reference_count": 71
+            "reference_count": 72
         },
         {
             "name": "dismissed_announcements",
@@ -30696,7 +30696,7 @@
         {
             "name": "staff_departments",
             "state": "not_verified",
-            "reference_count": 89
+            "reference_count": 90
         },
         {
             "name": "staff_permissions",
