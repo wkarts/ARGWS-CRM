@@ -16,7 +16,7 @@ final class NativeMailTestQueueCapture extends App_Email{
     public function initialize($config=[]){$this->transportCount++;return$this;}
 }
 if(!function_exists('log_message')){function log_message($level,$text){}}
-$ci=(object)['db'=>new NativeMailTestWorkerDb($db),'config'=>(object)['config'=>[]],'load'=>new class{function config($key){}}];$worker=new NativeMailTestQueueCapture($ci);
+$ci=(object)['db'=>new NativeMailTestWorkerDb($db),'config'=>new class{public array$config=[];public function item($name){return$name==='base_url'?'https://crm.example.invalid/':null;}},'load'=>new class{function config($key){}}];$worker=new NativeMailTestQueueCapture($ci);
 $queue=$db->query('SELECT id FROM '.$p.'mail_queue ORDER BY id')->result_array();
 foreach($queue as$row)$db->query('UPDATE '.$p.'mail_queue SET status=?,headers=? WHERE id=?',['pending',serialize([]),$row['id']]);
 $worker->send_queue();essentialCheck($worker->sentCount===0&&$worker->transportCount===0,'cron refuses all smtp_test receipts before credentials/transport despite pending reset and absent header');

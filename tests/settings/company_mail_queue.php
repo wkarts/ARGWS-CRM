@@ -40,7 +40,7 @@ $db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id=82");
 foreach([41=>'a',82=>'b'] as $issuer=>$label){foreach(['mail_engine'=>'codeigniter','email_protocol'=>'smtp','smtp_host'=>"{$label}.invalid",'smtp_port'=>'587','smtp_password'=>"synthetic-{$label}"] as $name=>$value){$store->mutate($issuer,7,'update',$name,$value,null);}}
 $q=new QueueFixtureDb($db);
 foreach([1=>41,2=>82,3=>null] as $id=>$issuer){$q->rows[$id]=['id'=>$id,'issuer_id'=>$issuer,'status'=>'pending','engine'=>'codeigniter','email'=>'synthetic@example.invalid','cc'=>'','bcc'=>'','headers'=>serialize([]),'attachments'=>'','message'=>'synthetic','alt_message'=>''];}
-$ci=(object)['db'=>$q,'config'=>(object)['config'=>['smtp_host'=>'legacy.invalid','smtp_pass'=>'synthetic-legacy']],'encryption'=>new class{function decrypt($v){return 'decoded:'.$v;}},'load'=>new class{function config($name){}}];
+$ci=(object)['db'=>$q,'config'=>new class{public array$config=['smtp_host'=>'legacy.invalid','smtp_pass'=>'synthetic-legacy'];public function item($name){return$name==='base_url'?'https://crm.example.invalid/':($this->config[$name]??null);}},'encryption'=>new class{function decrypt($v){return 'decoded:'.$v;}},'load'=>new class{function config($name){}}];
 $mail=new QueueFixtureMailer($ci);
 $mail->send_queue();
 essentialCheck(in_array($p.'company_portal_mail_deliveries',$q->tablesChecked,true)&&in_array($p.'company_google_mail_accounts',$q->tablesChecked,true)&&in_array($p.'company_expense_recurring',$q->tablesChecked,true),'actual queue routing guards inspect real optional schema presence through the fixture adapter');
