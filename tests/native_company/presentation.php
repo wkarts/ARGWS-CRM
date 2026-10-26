@@ -56,8 +56,8 @@ class NativeCompanyAuxiliaryUi {
 class IssuerResourceAccess {public static bool $administrative=true;function __construct(...$args){} function administrative($issuer,$actor){return $issuer===2&&self::$administrative;} function can($issuer,$actor,$feature,$cap){return $issuer===2 && in_array($feature,['customers','invoices','projects','tasks','settings','tickets'],true);}}
 class IssuerStorage {static function query($db,$sql,$params=[]){check(!str_contains($sql,'options'),'theme inactive must not fetch options');return new class($sql){function __construct(private $sql){}function row_array(){return str_contains($this->sql,'staffid,firstname')?['staffid'=>17,'firstname'=>'<Alice>','lastname'=>'A','email'=>'synthetic@example.test']:['active'=>0];}};}}
 class Fixture {
- public $config; public $security; public $load; public $db; public $router; public $agent; public $session; public array $vars=[];
- function __construct(){ $this->config=new class {public bool $csrf=false;function item($key){check($key==='csrf_protection','only infrastructure CSRF config');return $this->csrf;}};$this->security=new class {function get_csrf_token_name(){return 'fixture_csrf';}function get_csrf_hash(){return 'fixture-framework-hash';}};$this->db=new stdClass; $this->session=new class {function has_userdata($key){check($key==='setup-menu-open','only actor UI session key');return true;}function userdata($key){return false;}}; $this->load=$this; $this->router=new class {function fetch_class(){return 'dashboard';}function fetch_method(){return 'index';}}; }
+ public $config; public $security; public $load; public $db; public $router; public $agent; public $session; public $lang; public array $vars=[];
+ function __construct(){ $this->config=new class {public bool $csrf=false;function item($key){check($key==='csrf_protection','only infrastructure CSRF config');return $this->csrf;}};$this->security=new class {function get_csrf_token_name(){return 'fixture_csrf';}function get_csrf_hash(){return 'fixture-framework-hash';}};$this->db=new stdClass; $this->session=new class {function has_userdata($key){check($key==='setup-menu-open','only actor UI session key');return true;}function userdata($key){return false;}}; $this->lang=(object)['language'=>[]];$this->load=$this; $this->router=new class {function fetch_class(){return 'dashboard';}function fetch_method(){return 'index';}}; }
  function vars($vars){$this->vars=$vars;}
  function library($name){check($name==='user_agent','only pure user-agent parser');$this->agent=new class {function is_mobile(){return false;}function browser(){return 'Chrome';}};}
  function view($name,$extra=[]){
@@ -70,6 +70,7 @@ class Fixture {
 require APPPATH.'services/NativeCompanyAdminPresentation.php';
 $ci=new Fixture;$GLOBALS['fixture']=$ci;CompanyRequestScope::$ci=$ci;
 NativeCompanyAdminPresentation::prepare($ci);
+check(($ci->lang->language['dashboard_string']??null)==='Painel','shared CI language object receives the trusted native PT-BR catalog');
 $data=NativeCompanyAdminPresentation::current($ci);
 check($data['logo']==='data:image/png;base64,Qg=='&&$data['favicon']==='data:image/png;base64,Qw==','native dark-logo priority and issuer favicon');
 $ci->config->csrf=true;$browser=NativeCompanyAdminPresentation::browserConfig($ci);check($browser['frameworkCsrf']===['name'=>'fixture_csrf','value'=>'fixture-framework-hash'],'framework token available without header providers for all native forms');$ci->config->csrf=false;

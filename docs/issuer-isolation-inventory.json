@@ -6,7 +6,8 @@
     "Vendor/assets/language/historical migrations and install scripts excluded from runtime inventory.",
     "Dynamic tables, aliases and extensions require additional manual/runtime coverage.",
     "PR49 reviewed lexical removal: application/views/admin/issuers/manage.php now delegates to application/views/admin/companies/registry_grid.php; its old invoice navigation signal is gone. The new grid projects the authorized company catalog and posts status/onboarding actions with context tokens, but neither wrapper nor grid currently matches this invoice/customer lexical scanner. Removal is not isolation closure; controller/service and transitive-view authorization still require separate coverage.",
-    "PR51 refresh: runner inventory regenerated after the native settings and Efí boundary changes. All changed/new entries remain unreviewed; existing partial states are not promoted. Operational rollout remains blocked and the inventory is not proof of complete financial isolation."
+    "PR51 refresh: runner inventory regenerated after the native settings and Efí boundary changes. All changed/new entries remain unreviewed; existing partial states are not promoted. Operational rollout remains blocked and the inventory is not proof of complete financial isolation.",
+    "PR52 f94f84bf changes the shared general helper for isolated native presentation; the current source hash and signal line were regenerated while its review state remains unreviewed. Operational rollout remains blocked."
   ],
   "files": {
     "application/config/autoload.php": {
@@ -1306,12 +1307,12 @@
       "evidence": ""
     },
     "application/helpers/general_helper.php": {
-      "sha256": "8f3e4f285ba36488879d51b3881dee49f573b05449dcd589645a4c30d58f16c4",
+      "sha256": "b18c239baa89e29c1ddc42e6bf77d6572273cf9d2455a79ef07983f67a76e61c",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        269
+        271
       ],
       "state": "unreviewed",
       "evidence": ""
