@@ -10,6 +10,7 @@ test('same dashboard controller and native thirteen partials; no alternative pan
 test('native charts and financial template retain canonical APIs',()=>{
  const finance=read('application/views/admin/dashboard/widgets/finance_overview.php');assert.ok(finance.includes('admin/invoices/invoices_total_template'));
  const charts=read('application/services/CompanyDashboardPayments.php');assert.match(charts,/->payments\(\$issuer,\$actor/);assert.match(charts,/i\.issuer_id=\?/);assert.match(charts,/i\.issuer_id IS NULL/);assert.match(charts,/current_effective_local_receipts_by_original_receipt_date_not_bank_cashflow/);
+ assert.match(charts,/private function displayCurrency\(int \$issuer,int \$currency\)/);assert.match(charts,/company_currency_snapshot_required/);assert.match(charts,/SELECT id FROM '\.\$this->p\.'invoices WHERE issuer_id=\? AND currency=\?/,'missing snapshot only falls back when this issuer has no invoice in that currency');assert.match(charts,/catalog_display_only/);
 });
 test('request seal and pre-emission authorization retained',()=>{
  const c=read('application/controllers/admin/Dashboard.php');assert.match(c,/CompanyRequestScope::nativeFor\(\$this\)/);assert.match(c,/\$presenter->confirm\(\)/);assert.match(c,/\$reader->confirm\(\)/);assert.match(c,/Cache-Control: no-store/);

@@ -10,7 +10,7 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "fcfa314f32495483d518d302ffb2398d256471ab28cf853f44bc22182a4ec86f",
+    "source_manifest_sha256": "ed4499fa2851044d3119531ac77fa9795b5c19d1c51a28b45c7909388eaf7322",
     "counts": {
         "modules": 38,
         "source_files": 4603,
@@ -28678,7 +28678,7 @@
         {
             "name": "currencies",
             "state": "not_verified",
-            "reference_count": 98
+            "reference_count": 100
         },
         {
             "name": "currency_rate_logs",
@@ -29538,7 +29538,7 @@
         {
             "name": "invoices",
             "state": "not_verified",
-            "reference_count": 596
+            "reference_count": 597
         },
         {
             "name": "issuer_certificate_audit",

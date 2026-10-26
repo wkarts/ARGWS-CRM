@@ -13,6 +13,31 @@ final class CompanyDashboardPayments
         $acl=new IssuerResourceAccess($this->db,$this->p);
         if(!$acl->can($issuer,$actor,'invoices','view')||!$acl->can($issuer,$actor,'payments','view'))throw new DomainException('company_dashboard_denied');
     }
+    /**
+     * A dashboard with no named-company invoices in its base currency can still
+     * render an empty chart (and principal-company legacy receipts). In that
+     * case the catalog name is presentation metadata, not evidence about a
+     * financial document. Once this issuer has an invoice in that currency,
+     * the immutable snapshot remains mandatory.
+     */
+    private function displayCurrency(int $issuer,int $currency):array
+    {
+        $units=new CompanyCurrencyUnits($this->db,$this->p);$unit=null;
+        try{$unit=$units->resolveRead($currency);}catch(DomainException $error){if($error->getMessage()!=='company_currency_snapshot_required')throw $error;}
+        $catalog=IssuerStorage::query($this->db,'SELECT id,name FROM '.$this->p.'currencies WHERE id=?',[$currency])->result_array();
+        if(count($catalog)!==1||!preg_match('/^[A-Z]{3}$/D',(string)$catalog[0]['name']))throw new DomainException('company_dashboard_currency_required');
+        if($unit!==null){
+            if($unit['iso_code']!==$catalog[0]['name'])throw new DomainException('company_currency_catalog_changed');
+            return $unit;
+        }
+        $sql='SELECT id FROM '.$this->p.'invoices WHERE issuer_id=? AND currency=? ORDER BY id LIMIT 1';
+        $owned=IssuerStorage::query($this->db,$sql,[$issuer,$currency])->result_array();
+        if($owned)throw new DomainException('company_currency_snapshot_required');
+        $afterCatalog=IssuerStorage::query($this->db,'SELECT id,name FROM '.$this->p.'currencies WHERE id=?',[$currency])->result_array();
+        $afterOwned=IssuerStorage::query($this->db,$sql,[$issuer,$currency])->result_array();
+        if($afterCatalog!==$catalog||$afterOwned!==$owned)throw new DomainException('company_dashboard_stale');
+        return ['currency_id'=>$currency,'iso_code'=>$catalog[0]['name'],'basis'=>'catalog_display_only'];
+    }
     public function read($issuer,$actor,$currency,string $period,?string $today=null):array
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$this->authorize($issuer,$actor);
@@ -20,7 +45,7 @@ final class CompanyDashboardPayments
             $units=IssuerStorage::query($this->db,'SELECT id FROM '.$this->p.'currencies WHERE isdefault=1')->result_array();
             if(count($units)!==1)throw new DomainException('company_dashboard_currency_required');$currency=$units[0]['id'];
         }
-        $currency=IssuerPolicy::id($currency);$unit=(new CompanyCurrencyUnits($this->db,$this->p))->resolveRead($currency);
+        $currency=IssuerPolicy::id($currency);$unit=$this->displayCurrency($issuer,$currency);
         $date=self::date($today??gmdate('Y-m-d'));
         [$start,$end]=self::range($date,$period);
         $candidates=IssuerStorage::query($this->db,'SELECT DISTINCT i.id FROM '.$this->p.'invoices i JOIN '.$this->p.'invoicepaymentrecords p ON p.invoiceid=i.id WHERE i.issuer_id=? AND i.currency=? AND i.status NOT IN (5,6) AND p.date>=? AND p.date<=? ORDER BY i.id LIMIT 1001',[$issuer,$currency,$start,$end])->result_array();
