@@ -47,27 +47,27 @@ test('PNG fallback dimensions, masks and native views',()=>{
     assert.match(fs.readFileSync(`application/views/${file}`,'utf8'),/load->view\('includes\/pwa'\)/);
   }
 });
-test('insecure origin does not register; install UI uses user gesture; update never reloads',async()=>{
+test('browser owns install eligibility, dismissal and standalone; duplicate includes register once',async()=>{
   const source=fs.readFileSync('assets/pwa/install.js','utf8');
-  function harness(secure) {
-    const events={}, nodes=[], registrations=[];
-    const element=()=>({style:{},children:[],setAttribute(){},appendChild(x){this.children.push(x)},replaceChildren(){this.children=[]},addEventListener(n,fn){this[n]=fn},remove(){this.removed=true}});
-    const document={currentScript:{dataset:{pwaRoot:'https://crm.test/sub/'}},body:{appendChild:e=>nodes.push(e)},createElement:element};
-    const registration={waiting:null,addEventListener(n,f){this[n]=f}};
-    const navigator={serviceWorker:{register:async(url,options)=>{registrations.push({url,options});return registration}}};
-    vm.runInNewContext(source,{window:{isSecureContext:secure,addEventListener:(n,f)=>events[n]=f},document,navigator,location:{href:'https://crm.test/sub/admin',origin:'https://crm.test'},URL});
-    return {events,nodes,registrations,registration};
+  function harness({secure=true,root='https://crm.test/sub/',worker=true,standalone=false}={}) {
+    const events={}, registrations=[];
+    const registration={waiting:{state:'installed'}};
+    const document={currentScript:{dataset:{pwaRoot:root}},createElement(){assert.fail('must not create install/update panels')},body:{appendChild(){assert.fail('must not add per-route UI')}}};
+    const window={isSecureContext:secure,matchMedia:()=>({matches:standalone}),addEventListener:(n,f)=>events[n]=f};
+    const navigator=worker?{standalone,serviceWorker:{register:async(url,options)=>{registrations.push({url,options});return registration}}}:{};
+    const context=vm.createContext({window,document,navigator,location:{href:'https://crm.test/sub/admin',origin:'https://crm.test'},URL});
+    const run=()=>vm.runInContext(source,context);run();
+    return {events,registrations,run};
   }
-  assert.equal(harness(false).registrations.length,0);
-  const h=harness(true); await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(h.registrations[0].url,'https://crm.test/sub/pwa.php?resource=worker');
-  assert.equal(h.registrations[0].options.scope,'/sub/');
-  let prompted=0;
-  h.events.beforeinstallprompt({preventDefault(){},prompt:async()=>prompted++,userChoice:Promise.resolve({outcome:'accepted'})});
-  assert.equal(prompted,0); await h.nodes[0].children[1].click(); assert.equal(prompted,1);
-  const worker={state:'installing',addEventListener(n,f){this[n]=f}};
-  h.registration.installing=worker; h.registration.updatefound();
-  assert.equal(typeof worker.statechange,'function');
+  for (const options of [{secure:false},{root:'https://foreign.test/'},{root:'http://['},{worker:false}]) assert.equal(harness(options).registrations.length,0);
+  for (const standalone of [false,true]) {
+    const h=harness({standalone});h.run();h.run();await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(h.registrations.length,1,'one registration even if a layout repeats the script');
+    assert.equal(h.registrations[0].url,'https://crm.test/sub/pwa.php?resource=worker');
+    assert.equal(h.registrations[0].options.scope,'/sub/');
+    assert.equal(h.registrations[0].options.updateViaCache,'none');
+    assert.deepEqual(Object.keys(h.events),[],'no installation interception or update invitations');
+  }
 });
 
 test('real HTTP browser gate is mandatory, pinned and has no dependency installation or mocked fetch',()=>{

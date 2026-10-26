@@ -31,42 +31,54 @@ ou migração própria. Composição da versão/migration do núcleo pertence ao
 ## Instalação e atualização
 
 HTTPS obrigatório em produção; localhost é permitido pelo navegador para testes.
-Chrome/Edge/Android mostram “Instalar aplicativo” quando o navegador emite
-`beforeinstallprompt`. Em Safari/iOS use Compartilhar → Adicionar à Tela de Início.
-Instalação nunca dispara sem gesto do usuário; indisponibilidade do worker não
-bloqueia o CRM. Nome/ícones já instalados podem exigir reinstalação conforme o OS.
+A instalação usa exclusivamente os mecanismos normais do navegador (menu/ícone
+de instalação no Chrome/Edge/Android; Compartilhar → Adicionar à Tela de Início no
+Safari/iOS). O CRM não captura nem cancela `beforeinstallprompt`, não chama
+`prompt()` e não cria banner, modal, aviso de atualização ou convite por rota.
+Elegibilidade, dispensa e execução instalada/standalone ficam com o navegador.
+Não há preferência de instalação armazenada pelo CRM nem convite próprio a repetir.
 
-Atualização avisa o usuário para salvar e fechar todas as abas/janelas do CRM antes
-de reabrir. Sem `skipWaiting`, reload forçado ou interrupção de formulários.
+O registro é idempotente por URL/escopo. Uma promessa por documento impede repetir
+o registro quando o mesmo asset aparece duas vezes no layout. Falha de registro
+não interrompe o CRM. Atualizações aguardam o ciclo normal do service worker e o
+fechamento dos clientes; sem `skipWaiting` ou recarga de formulários não salvos.
 O endpoint do worker deve ser servido como JavaScript, não redirecionado ao login.
 Nginx/CloudPanel precisa permitir o PHP público `pwa.php` como permite `index.php`;
 verificar antes da ativação. Não ampliar allowlist global de scripts PHP.
 
-## Validação
+## Validação desta correção
 
-Executado localmente: `node --test tests/native_pwa.test.cjs` (5 testes),
-`node --check assets/pwa/worker.js`, `node --check assets/pwa/install.js`,
-`git diff --check`. Também passaram 18 regressões em
-`tests/crm_ui_policy.test.cjs`, `tests/argws_platform_contract.test.cjs` e
-`tests/crm_ptbr_resources_contract.test.cjs`. Testes cobrem navegação rede/offline, proibições, scope,
-PNG192/512/maskable, instalação por gesto, HTTPS e views nativas.
+Executados localmente sobre o código da PR 52 reconciliado com
+`77f8a081bf664b20adee88d58af0640e93b04d31`:
 
-Implementado: `python3 tests/test_native_pwa_http.py` inicia PHP real em servidor
-local descartável; valida MIME/headers, métodos, raiz/subpath e ícones HTTP.
-**Não executado aqui: runtime PHP ausente (3 skips explícitos).** Workflow
-`native-pwa.yml` prepara lint/HTTP em PHP 8.1/8.5; CI ainda não publicado/executado.
+- `node --test tests/native_pwa.test.cjs`: 8 testes aprovados. Cobrem rede/offline,
+  escopo, ausência de persistência/replay, ícones, HTTPS, nenhum listener de convite,
+  estado standalone simulado e registro único mesmo com include repetido.
+- Verificação de sintaxe Node dos cinco scripts PWA/testes e `git diff --check`.
+- PHP/HTTP/manifest real não executados localmente: PHP não está instalado.
+- Chromium local não executou os casos: o processo foi encerrado na inicialização
+  porque `socket()` foi recusado pelo sandbox. Não foram usados flags ou permissões
+  para contornar essa recusa. Isso é limitação do executor, não falha da aplicação.
 
-Homologação pendente em navegador real sobre HTTPS: instalar Android/desktop/iOS;
-abrir standalone; alternar duas empresas e logout online; desconectar e verificar
-503 sem conteúdo privado; POST falha sem replay; confirmar zero CacheStorage;
-atualizar worker com formulário aberto e verificar aviso sem reload. Repetir em
-`/` e `/crm/`. Os mocks Node não substituem essa homologação.
+`native-pwa.yml` mantém o gate PHP 8.1/8.5 e o browser PHP/Chromium. Além disso roda
+`node tests/native_pwa_navigation.browser.cjs`: servidor HTTP Node descartável,
+JS/worker publicados sem interceptar requisições, seis navegações em raiz/subpath
+nas larguras 1280/768/390, include duplicado, evento sintético sem cancelamento,
+nenhum painel, atualização sem recarga e POST offline sem replay. Esse gate é
+específico dos assets; nomes de telas na fixture não provam autenticação, logout ou
+troca de empresa do CRM real. `PWA_CHROMIUM_EXECUTABLE` permite usar um Chromium já
+instalado, sem download; o CI usa o navegador pareado da imagem fixada por digest.
+
+Permanecem pendentes: instalação real pelo menu do sistema, standalone em dispositivo,
+Safari/iOS e navegação autenticada com empresa principal → secundária → principal,
+login/logout e formulários anteriores à troca. Resultados do SHA final devem ser
+consultados nos runs da PR; um teste de assets não satisfaz o aceite integral.
 
 ## Integração e rollback
 
-Nenhum merge, deploy ou publicação realizado. Aplicar commit local na composição
-central somente após revisão/autorização; manter versão/migration central. Validar
-configuração do servidor e testes acima antes de liberar. Reverter views remove
+A alteração integra a mesma branch da PR 52, que permanece em rascunho. Merge e
+deploy não estão autorizados. Validar configuração do servidor e os testes acima
+antes de liberar; a versão/migration é a da composição central da PR. Reverter views remove
 novas instalações, mas clientes já instalados mantêm worker até atualização:
 para desativação controlada, servir no MESMO URL um worker de retirada revisado
 que desregistre a própria registration, manter o endpoint acessível até migrar
@@ -95,9 +107,9 @@ instalação em dispositivo. Nesta preparação, somente contratos Node e sintax
 YAML foram executados localmente; execução PHP/Chromium continua pendente no CI.
 
 Evidências visuais: a matriz raiz/subpath × 1280/390 px salva PNGs identificados
-como `synthetic-*` de manifesto real, UI de instalação acionada por **evento
+como `synthetic-*` de manifesto real, ausência de UI de instalação após **evento
 sintético**, atualização aguardando fechamento e página offline. O evento não é
-um prompt de instalação do navegador/OS; testa somente a UI real da aplicação.
+um prompt de instalação do navegador/OS; verifica que a aplicação deixa o evento com o navegador.
 Controles são mascarados. Em falha, JSON registra apenas fase, tipo de erro e
 geometria, sem valores/HTML/respostas. O artifact `native-pwa-synthetic-browser`
 é recolhido com `always()`; ausência por falha anterior não é prova visual.

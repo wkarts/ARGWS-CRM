@@ -80,19 +80,23 @@ async function emptyStores(page) {
         assert.match(await page.evaluate(async prefix=>(await fetch(prefix+'api/private')).text(),prefix),/PRIVATE_FIXTURE/);
         await emptyStores(page);
         phase='synthetic-install-ui';
-        // Exercise the real application UI via a clearly synthetic event. This is
-        // NOT evidence of Chromium/OS install eligibility or native installation.
-        await page.evaluate(()=>{
-          window.fixturePromptCalls=0;
-          const event=new Event('beforeinstallprompt',{cancelable:true});
-          Object.defineProperties(event,{prompt:{value:async()=>{window.fixturePromptCalls++;}},userChoice:{value:Promise.resolve({outcome:'dismissed'})}});
-          window.dispatchEvent(event);
-        });
-        await page.getByRole('button',{name:'Instalar aplicativo',exact:true}).waitFor();
-        assert.equal(await page.evaluate(()=>window.fixturePromptCalls),0);
+        // Synthetic events prove only that CRM never intercepts the browser or
+        // creates an invitation; native OS installation remains a manual gate.
+        for(const screen of ['invoices','settings','companies','logout','login']) {
+          await page.goto(url+'?screen='+screen);
+          await page.evaluate(()=>{
+            window.fixturePromptCalls=0;
+            const event=new Event('beforeinstallprompt',{cancelable:true});
+            Object.defineProperties(event,{prompt:{value:async()=>{window.fixturePromptCalls++;}},userChoice:{value:Promise.resolve({outcome:'dismissed'})}});
+            window.fixtureInstallEventAllowed=window.dispatchEvent(event);
+          });
+          assert.equal(await page.evaluate(()=>window.fixtureInstallEventAllowed),true,'normal browser prompt is not cancelled');
+          assert.equal(await page.evaluate(()=>window.fixturePromptCalls),0,'CRM never invokes prompt automatically');
+          assert.equal(await page.getByRole('button',{name:'Instalar aplicativo',exact:true}).count(),0);
+          assert.equal(await page.locator('aside[aria-label="Aplicativo"]').count(),0);
+          assert.equal(await page.evaluate(async()=>{const regs=await navigator.serviceWorker.getRegistrations();return regs.filter(r=>r.scope===new URL(document.querySelector('script[data-pwa-root]').dataset.pwaRoot,location.href).href).length;}),1);
+        }
         await capture(page,label+'-install-ui-SYNTHETIC-EVENT');
-        await page.getByRole('button',{name:'Instalar aplicativo',exact:true}).click();
-        assert.equal(await page.evaluate(()=>window.fixturePromptCalls),1);
         phase='update';
         // Change only the disposable copy. A byte-different worker must WAIT,
         // not take over/reload a page with unsaved form state.
@@ -101,7 +105,7 @@ async function emptyStores(page) {
         fs.appendFileSync(path.join(tmp,'assets/pwa/worker.js'),'\n// disposable update '+prefix+'\n');
         await page.evaluate(async()=>{const r=await navigator.serviceWorker.ready;await r.update();});
         await page.waitForFunction(async()=>!!(await navigator.serviceWorker.getRegistration()).waiting);
-        await page.getByText('Nova versão disponível.',{exact:false}).waitFor();
+        assert.equal(await page.locator('aside[aria-label="Aplicativo"]').count(),0,'update does not open an unsolicited panel');
         assert.equal(await page.locator('input').inputValue(),'still-unsaved');assert.equal(await page.evaluate(()=>window.fixtureControllerChanges),0);
         await capture(page,label+'-update');
         phase='offline';await context.setOffline(true);
