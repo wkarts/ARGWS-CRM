@@ -14,4 +14,6 @@ check(in_array('assets/plugins/Chart.js/Chart.bundle.min.js',$scripts,true),'nat
 check(count(array_keys($scripts,'assets/plugins/Chart.js/Chart.bundle.min.js',true))===1,'dashboard does not duplicate Chart.js');
 $calendarGranted=(new IssuerResourceAccess($ci->db,db_prefix()))->can(CompanyRequestScope::$issuer,17,'calendar','view');
 check(in_array($plugin,$scripts,true)===$calendarGranted,'dashboard FullCalendar follows current calendar permission');
+ob_start();require APPPATH.'views/admin/utilities/event_mount.php';$eventMount=ob_get_clean();check(substr_count($eventMount,'id="event"')===1,'shared original event mount has exactly one empty host');
+foreach(['scripts.php','helpers_bottom.php']as$footer){$source=file_get_contents(APPPATH.'views/admin/includes/'.$footer);check(substr_count($source,"views/admin/utilities/event_mount.php")===1&&!str_contains($source,'id="event"'),'native and legacy footer each reuse the same original mount rather than duplicate modal markup');}
 echo "Native calendar asset wiring passed: exact attested route, shared source, original plugin/locale/CSS, no global main. Adapter and browser remain separate gates.\n";

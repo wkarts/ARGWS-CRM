@@ -60,11 +60,16 @@ window.NativeAdminCalendar={init:function(){
           return pending.then(function (data) {
             successCallback(
               data.map(function (e) {
-                return $.extend({}, e, {
-                  url: e.native_path ? admin_url + e.native_path : e.url,
+                var mapped = $.extend({}, e, {
                   start: e.start || e.date,
                   end: e.end || e.date,
                 });
+                // FullCalendar refines an own `url: undefined` to the literal
+                // string "undefined", making personal events false links.
+                if (e.native_path) mapped.url = admin_url + e.native_path;
+                else if (typeof e.url === "string" && e.url) mapped.url = e.url;
+                else delete mapped.url;
+                return mapped;
               })
             );
           }, failureCallback);

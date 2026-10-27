@@ -5,7 +5,7 @@ $nativeCompany=NativeCompanyAdminPresentation::current(function_exists('get_inst
 $nativeLabel=$nativeCompany ? static fn($key, ...$unused)=>NativeCompanyAdminPresentation::label((string)$key) : static fn($key, ...$args)=>_l($key,...$args);
 ?>
 
-<?php if($nativeCompany) { ?>
+<?php if($nativeCompany) { require APPPATH.'views/admin/utilities/event_mount.php'; ?>
 <script>window.NativeCompanyHeaderConfig=<?= json_encode(NativeCompanyAdminPresentation::browserConfig(function_exists('get_instance') ? get_instance() : $this),JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?>;</script>
 <?php foreach(NativeCompanyAdminPresentation::scripts(function_exists('get_instance') ? get_instance() : $this) as $asset) { ?>
 <script src="<?= e(base_url($asset).'?v='.(defined('ARGWS_VERSION')?ARGWS_VERSION:'core')); ?>"></script>

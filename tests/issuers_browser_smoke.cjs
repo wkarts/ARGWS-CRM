@@ -288,13 +288,15 @@ async function captureRealScreens(page, routes) {
         fs.writeFileSync(output+'/native-calendar-feed-failure.json',JSON.stringify(evidence,null,2));console.error('Native calendar feed request shape; no token/body values: '+JSON.stringify(evidence));
       }
       assert.equal(primaryFeedResponse.status(),200,'principal historical feed uses the shared authenticated endpoint');
+      const primaryCalendarRows=await primaryFeedResponse.json();assert(Array.isArray(primaryCalendarRows)&&primaryCalendarRows.some(row=>row.title===eventTitle&&row.eventid),'the shared feed contains the real event just created by this principal widget');
       const nativeCalendarHeaders=await primaryFeedResponse.request().allHeaders(),nativeCalendarDocumentContext=await page.evaluate(()=>window.NativeCompanyHeaderConfig?.context||null);
       assert(typeof nativeCalendarDocumentContext==='string'&&nativeCalendarHeaders['x-company-context']===nativeCalendarDocumentContext,'native feed sends exactly the captured document context once; tokens omitted');
       assert.equal(await page.locator('body.native-company-admin').count(),1,'principal calendar has the same native presentation as secondary companies');
       assert.equal(await page.locator('#newEventModal').count(),1,'one original event modal and no competing calendar shell');
+      assert.equal(await page.locator('#event').count(),1,'native footer provides the same single mount as the legacy CRM for its original event modal');
       assert.equal(await page.locator('#newEventModal [name=_native_company_csrf]').count(),1,'native new-event form also carries one CSRF field rather than duplicate serialization');
-      const eventRead=page.waitForResponse(r=>r.request().method()==='GET'&&new URL(r.url()).pathname.startsWith('/admin/utilities/view_event/'));
-      await page.locator('#calendar .fc-event-title').filter({hasText:eventTitle}).click();assert.equal((await eventRead).status(),200,'native page opens the event created by the original principal dashboard');
+      await page.screenshot({path:output+'/native-principal-calendar-before-event.png',fullPage:true,mask:[page.locator('input,textarea')]});
+      const [eventRead]=await Promise.all([page.waitForResponse(r=>r.request().method()==='GET'&&new URL(r.url()).pathname.startsWith('/admin/utilities/view_event/')),page.locator('#calendar .fc-event-title').filter({hasText:eventTitle}).click()]);assert.equal(eventRead.status(),200,'native page opens the event created by the original principal dashboard');
       const eventModal=page.locator('#viewEvent');await eventModal.waitFor({state:'visible'});assert.equal(await eventModal.locator('[name=revision]').inputValue(),'1');
       assert.equal(await eventModal.locator('[name=_native_company_csrf]').count(),1,'native edit serializes one CSRF value');
       assert.equal(await page.locator('#calendar-event-form').count(),1);assert.equal(await page.locator('#calendar-event-edit-form').count(),1,'new and edit forms have independent DOM IDs');
