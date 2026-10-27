@@ -65,7 +65,36 @@ async function next(page) { await navigate(page, page.locator('section form butt
       await form.locator('input[name="settings[smtp_email]"]').fill(letter+'@example.invalid');
       await form.locator('input[name="settings[smtp_username]"]').fill('synthetic-'+letter);
       await form.locator('input[name="settings[smtp_password]"]').fill('synthetic-secret-'+letter);
+      // The fixture reports only fixed field names, counts and validation outcomes.
+      // Values, credentials, tokens and arbitrary submitted names never enter CI logs.
+      const mailDiagnostics=await form.evaluate(node=>{
+        const data=new FormData(node);
+        const fields=['mail_engine','email_protocol','smtp_host','smtp_port','smtp_encryption','smtp_email','smtp_username','smtp_password','smtp_email_charset','bcc_emails','email_signature','email_header','email_footer','email_queue_enabled','email_queue_skip_with_attachments','google_mail_client_id','google_mail_client_secret','microsoft_mail_client_id','microsoft_mail_client_secret','microsoft_mail_azure_tenant_id'];
+        const names=new Set(fields.map(name=>'settings['+name+']'));
+        const value=name=>data.get('settings['+name+']');
+        const host=value('smtp_host'),port=value('smtp_port'),encryption=value('smtp_encryption'),email=value('smtp_email');
+        const csrfName=typeof window.csrfData?.token_name==='string'?window.csrfData.token_name:null;
+        const topNames=new Set(['fakeusernameremembered','fakepasswordremembered','test_email','native_settings_revision','_native_company_csrf','_company_context']);
+        if(csrfName)topNames.add(csrfName);
+        return {
+          present:fields.filter(name=>data.has('settings['+name+']')),
+          missing:fields.filter(name=>!data.has('settings['+name+']')),
+          extraSettingsCount:Array.from(data.keys()).filter(name=>name.startsWith('settings[')&&!names.has(name)).length,
+          extraTopLevelCount:Array.from(data.keys()).filter(name=>!name.startsWith('settings[')&&!topNames.has(name)).length,
+          revisionPresent:data.has('native_settings_revision'),
+          companyContextPresent:data.has('_company_context'),
+          companyCsrfPresent:data.has('_native_company_csrf'),
+          csrfNameAvailable:csrfName!==null,
+          frameworkCsrfPresent:csrfName!==null&&data.has(csrfName),
+          smtpHostValid:typeof host==='string'&&(host===''||/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9.-]{0,251}[a-zA-Z0-9])?|\[[a-fA-F0-9:]+\])$/.test(host)),
+          smtpPortValid:typeof port==='string'&&(port===''||(/^[0-9]+$/.test(port)&&Number(port)>=1&&Number(port)<=65535)),
+          smtpEncryptionValid:typeof encryption==='string'&&['','ssl','tls'].includes(encryption),
+          // A browser-side indication, not a replacement for PHP FILTER_VALIDATE_EMAIL.
+          smtpEmailBasicValid:typeof email==='string'&&(email===''||/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        };
+      });
       const saved=await navigate(page,form.locator('button[type=submit]'));
+      if(saved.status()===422)console.error('Synthetic SMTP form diagnostics:',JSON.stringify(mailDiagnostics));
       assert.equal(saved.status(),200,'native settings POST redirects to its saved form');
       assert(new URL(page.url()).searchParams.get('group')==='email');
       assert.equal(await form.locator('input[name="settings[smtp_host]"]').inputValue(),'smtp-'+letter+'.example.invalid','SMTP settings persist in the selected company');

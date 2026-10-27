@@ -74,10 +74,13 @@ foreach($baseline===null?[]:[$baseline]as$from){
  $ddl=array_values(array_filter(array_slice($db->queries,$before),static fn($q)=>preg_match('/^\s*(?:CREATE|ALTER|DROP|TRUNCATE|RENAME)\b/i',$q[0])));
  if($freshHistoricalSchema){
   $ddlSql=array_map(static fn($q)=>(string)$q[0],$ddl);
-  $expectedNewTables=[$p.'bb_api_origin_policy',$p.'bb_checkout_publications',$p.'bb_return_originals'];sort($expectedNewTables,SORT_STRING);
-  $newTableDdl=array_filter($ddlSql,static function($sql)use($expectedNewTables){foreach($expectedNewTables as$table)if(str_contains($sql,$table))return true;return false;});
-  essentialCheck(count($ddlSql)===3&&count($newTableDdl)===3,$from.' first historical upgrade creates only the new124/125/130 tables');
-  // A historical install predates tables124/125/130. Their first creation is
+  // Every historical baseline here predates 124/125/130/133. The target may
+  // evolve, so only require tables whose real migration is within this upgrade.
+  $introduced=['bb_checkout_publications'=>124,'bb_api_origin_policy'=>125,'bb_return_originals'=>130,'bb_return_rejections'=>133];
+  $expectedNewTables=[];foreach($introduced as$name=>$migration)if($migration>(int)str_replace('.','',$from)&&$migration<=$step)$expectedNewTables[]=$p.$name;sort($expectedNewTables,SORT_STRING);
+  $newTableDdl=[];foreach($ddlSql as$sql){if(!preg_match('/^\s*CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+`([^`]+)`/i',$sql,$match))throw new RuntimeException('bb_historical_upgrade_unexpected_ddl');$newTableDdl[]=$match[1];}sort($newTableDdl,SORT_STRING);
+  essentialCheck($newTableDdl===$expectedNewTables,$from.' first historical upgrade creates exactly the declared additive tables');
+  // A historical install predates these tables. Their first creation is
   // additive even when final tracking fails; it is not a mutation of old rows.
   // Prove the entire historical state before recording the post-DDL replay state.
   $afterRows=$snapshotRows();$afterSchema=$snapshotSchema();
@@ -85,7 +88,7 @@ foreach($baseline===null?[]:[$baseline]as$from){
   foreach($schema as$table=>$definition)essentialCheck(isset($afterSchema[$table])&&$afterSchema[$table]===$definition,$from.' first upgrade preserves every historical table definition '.$table);
   $addedRows=array_keys(array_diff_key($afterRows,$oldRows));sort($addedRows,SORT_STRING);
   $addedSchema=array_keys(array_diff_key($afterSchema,$schema));sort($addedSchema,SORT_STRING);
-  essentialCheck($addedRows===$expectedNewTables&&$addedSchema===$expectedNewTables,$from.' first upgrade adds exactly the declared124/125/130 tables');
+  essentialCheck($addedRows===$expectedNewTables&&$addedSchema===$expectedNewTables,$from.' first upgrade adds exactly the declared additive tables');
   foreach($expectedNewTables as$table)essentialCheck($afterRows[$table]===[],$from.' new upgrade table contains no invented data '.$table);
   $replayRows=$afterRows;$replaySchema=$afterSchema;
  }
