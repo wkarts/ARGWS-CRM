@@ -1006,7 +1006,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Utilities.php": {
-      "sha256": "a55709bf62750d2cd044b8e1803d7eb70299caf23221fa8f653e8cb8ac499d17",
+      "sha256": "5a752ea8e6e72048f6ce63555a684d65eddbeba4975724f80e5021c5ee8f2bec",
       "categories": [
         "invoice_model",
         "invoice_table"
@@ -4828,13 +4828,13 @@
       "evidence": ""
     },
     "application/services/NativeCompanyCalendarFeed.php": {
-      "sha256": "e199141d0b2eca3ecffc48beb13cbcb12b706d3a59f987e858ce97aaf2558a46",
+      "sha256": "91990228e6082f4d910388699383d8d83d0186b284d68f65066c71c613dd93a0",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        16,
-        31
+        14,
+        33
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -7264,7 +7264,7 @@
       "evidence": ""
     },
     "application/views/admin/utilities/calendar_filters.php": {
-      "sha256": "8be13efe465909ac7f5eeaba26f16135d03c5a74bc58691e7b5b5a3edd2cb403",
+      "sha256": "f0aa4fe9b684b766bd5f2c937a68ab8aeb3c09030d2a29d651208fab44f21d26",
       "categories": [
         "invoice_table"
       ],

@@ -30,6 +30,13 @@ final class NativeCompanyCalendarEndpoints
         parse_str($query??'',$input);return $input;
     }
     public static function feed($ci):array{[$i,$a]=self::context($ci);return(new NativeCompanyCalendarFeed($ci->db,db_prefix()))->read($i,$a,self::feedQuery($ci));}
+    /** Bounded controller-log metadata only; never a public diagnostic response. */
+    public static function queryDiagnostics($ci):array
+    {
+        try{self::context($ci);$keys=array_keys(self::feedQuery($ci));$probe=[];parse_str('start=2000-01-01&end=2000-01-02',$probe);return ['contract'=>'http_target_v1','query_parser'=>array_keys($probe)===['start','end']?'canonical':'noncanonical','key_count'=>count($keys),'key_fingerprints'=>array_map(static fn($key)=>substr(hash('sha256','ARGWS-calendar-key:'.(string)$key),0,16),array_slice($keys,0,16))];}catch(Throwable $ignored){return ['contract'=>'unavailable'];}
+    }
+    /** Original filter form: guarded POST, with no persistent setting or event write. */
+    public static function filter($ci):void{CompanyRequestScope::assertNativeMutation($ci);self::context($ci);$input=$ci->input->post();if(!is_array($input)||!isset(NativeCompanyCalendarFeed::selection($input)['calendar_filters']))throw new DomainException('native_calendar_filter_invalid');}
     /** Reauthorize the buffered original view before any private HTML is emitted. */
     public static function confirm($ci,array $prepared,$eventId=null):void
     {

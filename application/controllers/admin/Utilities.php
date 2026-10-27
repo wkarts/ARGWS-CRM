@@ -62,17 +62,17 @@ class Utilities extends AdminController
         try{$data=$id===null?NativeCompanyCalendarEndpoints::$method($this):NativeCompanyCalendarEndpoints::$method($this,$id);return $this->output->set_content_type('application/json')->set_header('Cache-Control: no-store')->set_output(json_encode($data,JSON_THROW_ON_ERROR));}
         catch(DomainException $error){
             $reason=preg_match('/^(?:native|company|issuer)_[a-z0-9_]{1,100}$/D',$error->getMessage())?$error->getMessage():'unclassified_domain';
-            $stage=$error->getPrevious()?->getMessage();if($reason==='native_calendar_range_invalid'&&in_array($stage,['native_calendar_stage_query_keys','native_calendar_stage_date_syntax','native_calendar_stage_timestamp','native_calendar_stage_date_value','native_calendar_stage_date_order','native_calendar_stage_filter_flag','native_calendar_stage_events','native_calendar_stage_reminders'],true))$reason.='_'.substr($stage,22);$safeMessage='Native calendar '.$method.' rejected ['.$reason.']; request values omitted.';error_log($safeMessage);log_message('error',$safeMessage);
+            $stage=$error->getPrevious()?->getMessage();if($reason==='native_calendar_range_invalid'&&in_array($stage,['native_calendar_stage_query_keys','native_calendar_stage_date_syntax','native_calendar_stage_timestamp','native_calendar_stage_date_value','native_calendar_stage_date_order','native_calendar_stage_filter_flag','native_calendar_stage_events','native_calendar_stage_reminders'],true))$reason.='_'.substr($stage,22);$safeMessage='Native calendar '.$method.' rejected ['.$reason.']; request values omitted.';if($method==='feed'&&$stage==='native_calendar_stage_query_keys')$safeMessage.=' query_contract='.json_encode(NativeCompanyCalendarEndpoints::queryDiagnostics($this),JSON_THROW_ON_ERROR);error_log($safeMessage);log_message('error',$safeMessage);
             return $this->output->set_status_header(409)->set_content_type('application/json')->set_header('Cache-Control: no-store')->set_output(json_encode(['success'=>false,'message'=>_l('something_went_wrong')]));
         }
     }
 
-    private function nativeCalendarView(string $view,$eventId=null)
+    private function nativeCalendarView(string $view,$eventId=null,bool $filter=false)
     {
         require_once APPPATH.'services/NativeCompanyCalendarEndpoints.php';
         $this->output->set_header('Cache-Control: no-store')->set_header('Pragma: no-cache');
         try {
-            $data=$eventId===null?NativeCompanyCalendarEndpoints::page($this):NativeCompanyCalendarEndpoints::event($this,$eventId);
+            if($filter)NativeCompanyCalendarEndpoints::filter($this);$data=$eventId===null?NativeCompanyCalendarEndpoints::page($this):NativeCompanyCalendarEndpoints::event($this,$eventId);
             // NativeCompanyAdminPresentation already selects the original
             // FullCalendar bundle/locale once. app_scripts belongs to legacy App.
             $html=$this->load->view($view,$data,true);
@@ -91,7 +91,7 @@ class Utilities extends AdminController
     public function calendar()
     {
         if (CompanyRequestScope::nativeFor($this)) {
-            if (strtoupper($this->input->method())==='POST') return $this->nativeCalendarJson('save');
+            if (strtoupper($this->input->method())==='POST') return $this->input->post('calendar_filters')!==null?$this->nativeCalendarView('admin/utilities/calendar',null,true):$this->nativeCalendarJson('save');
             return $this->nativeCalendarView('admin/utilities/calendar');
         }
         if ($this->input->post() && $this->input->is_ajax_request()) {

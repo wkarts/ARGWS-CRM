@@ -84,6 +84,12 @@
                 <label for="cf_invoices_reminders"><?php echo _l('show_invoice_reminders_on_calendar'); ?></label>
             </div>
         <?php } ?>
+        <?php if($calendarOption('show_task_reminders_on_calendar') == 1){ ?>
+            <div class="checkbox">
+                <input type="checkbox" value="1" name="task_reminders" id="cf_task_reminders"<?php if($this->input->post('task_reminders')){echo ' checked';} ?>>
+                <label for="cf_task_reminders"><?php echo _l('tasks').' · '._l('reminders'); ?></label>
+            </div>
+        <?php } ?>
         <?php if($calendarOption('show_credit_note_reminders_on_calendar') == 1){ ?>
             <div class="checkbox">
                 <input type="checkbox" value="1" name="credit_note_reminders" id="cf_credit_note_reminders"<?php if($this->input->post('credit_note_reminders')){echo ' checked';} ?>>

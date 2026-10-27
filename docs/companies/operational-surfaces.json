@@ -10,7 +10,7 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "c7316bdc0d020fd66c3d6b0a0d0b5052c105a888bf32c9e7a96a383a6f804fe6",
+    "source_manifest_sha256": "e6d5fb4cd4a631b360de70faaec6ac1eafc39d0a11069ba9e2e11ea039b86a64",
     "counts": {
         "modules": 38,
         "source_files": 4608,
@@ -6971,7 +6971,7 @@
         {
             "path": "application/views/admin/utilities/calendar_filters.php",
             "line": 2,
-            "source_sha256": "8be13efe465909ac7f5eeaba26f16135d03c5a74bc58691e7b5b5a3edd2cb403",
+            "source_sha256": "f0aa4fe9b684b766bd5f2c937a68ab8aeb3c09030d2a29d651208fab44f21d26",
             "call": "get_option",
             "expression": "$name",
             "state": "requires_call_site_review"
@@ -13967,7 +13967,7 @@
         },
         {
             "path": "application/controllers/admin/Utilities.php",
-            "source_sha256": "a55709bf62750d2cd044b8e1803d7eb70299caf23221fa8f653e8cb8ac499d17",
+            "source_sha256": "5a752ea8e6e72048f6ce63555a684d65eddbeba4975724f80e5021c5ee8f2bec",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",

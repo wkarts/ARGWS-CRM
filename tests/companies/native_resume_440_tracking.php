@@ -44,8 +44,9 @@ $shippedMarker=(int)($shippedParts[1].$shippedParts[2].$shippedParts[3]);
 resume440Check(($config['migration_version']??null)===$shippedMarker&&$shippedMarker>=440,'shipped configuration exactly matches canonical source and supports historical440');
 $config['migration_version']=440; // Explicit historical boundary, using the real production executor.
 
-$db->query('CREATE TABLE `'.$p.'migrations` (version bigint NOT NULL) ENGINE=InnoDB');
-$db->insert($p.'migrations', ['version'=>439]);
+// Isolated historical preparation, before snapshots and fault injection; not a production downgrade.
+require_once dirname(__DIR__).'/support/NativeHistoricalTrackingFixture.php';
+NativeHistoricalTrackingFixture::prepare($db,$p,439,'resume440Check');
 $GLOBALS['resume440Hooks'] = new class { public array $trace = []; public function do_action($name, ...$args) { $this->trace[] = $name; } };
 $ci = (object)['db'=>$db]; $GLOBALS['resume440CI'] = $ci;
 $ci->config = new class($config) { public function __construct(private array $values) {} public function item($name) { return $this->values[$name] ?? null; } };

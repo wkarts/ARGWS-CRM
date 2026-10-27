@@ -300,6 +300,14 @@ async function captureRealScreens(page, routes) {
       const nativeEventSave=page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname==='/admin/utilities/calendar');
       await Promise.all([page.waitForNavigation({waitUntil:'load'}),eventModal.locator('button[type=submit]').click()]);
       assert.equal((await nativeEventSave).status(),200);assert.equal(sql("SELECT revision FROM tblcompany_events WHERE issuer_id="+Number(primaryCompany)+" AND title='"+eventTitle+"'"),'2','same original modal commits the native edit with its matching revision');
+      const beforeCalendarFilter=sql('SELECT SHA2(settings_json,256) FROM tblissuers_registry WHERE id='+Number(primaryCompany)),eventsBeforeFilter=sql('SELECT COUNT(*) FROM tblcompany_events');
+      await page.locator('.fc-calendarFilter-button').click();await page.locator('#calendar_filters [name=events]').check();
+      const filteredCalendarFeed=page.waitForResponse(r=>new URL(r.url()).pathname==='/admin/utilities/get_calendar_data'&&new URL(r.url()).searchParams.get('calendar_filters')==='true');
+      const filterNavigation=await Promise.all([page.waitForNavigation({waitUntil:'load'}),page.locator('#calendar_filters button[type=submit]').click()]);
+      assert.equal(filterNavigation[0].status(),200,'original filter form POST renders the same native calendar rather than invoking event creation');
+      const filterFeed=await filteredCalendarFeed;assert.equal(filterFeed.status(),200);const filteredEvents=await filterFeed.json();assert(filteredEvents.some(row=>row.title===eventTitle)&&filteredEvents.every(row=>Object.hasOwn(row,'eventid')),'original events checkbox reaches the real feed');
+      assert.equal(sql('SELECT SHA2(settings_json,256) FROM tblissuers_registry WHERE id='+Number(primaryCompany)),beforeCalendarFilter,'display filtering does not rewrite company settings');assert.equal(sql('SELECT COUNT(*) FROM tblcompany_events'),eventsBeforeFilter,'display filtering creates no event');
+      const oldCalendarFilterForm=await page.locator('#calendar_filters form').evaluate(node=>Object.fromEntries(new FormData(node).entries()));
       await page.locator('#calendar .fc-event-title').filter({hasText:eventTitle}).click();await eventModal.waitFor({state:'visible'});assert.equal(await eventModal.locator('[name=revision]').inputValue(),'2');
       page.once('dialog',dialog=>dialog.accept());
       const eventDeletion=page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname.startsWith('/admin/utilities/delete_event/'));
@@ -366,6 +374,7 @@ async function captureRealScreens(page, routes) {
       assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany);
       const calendarEventsBeforeStale=sql('SELECT COUNT(*) FROM tblcompany_events');
       assert.equal((await context.request.post(url+'/admin/utilities/calendar',{form:oldCalendarForm,maxRedirects:0})).status(),409,'principal calendar form cannot write after selecting a secondary company');
+      assert.equal((await context.request.post(url+'/admin/utilities/calendar',{form:oldCalendarFilterForm,maxRedirects:0})).status(),409,'old filter form cannot emit a primary company page after selecting a secondary company');
       assert.equal(sql('SELECT COUNT(*) FROM tblcompany_events'),calendarEventsBeforeStale,'stale calendar submission creates no event');
       const nativeRoutes = ['todo','announcements','taxes','departments','tickets','invoice_items','settings?group=company','utilities/calendar','staff','staff/member'];
       for (const route of nativeRoutes) {

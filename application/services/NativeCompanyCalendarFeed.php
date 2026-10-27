@@ -11,13 +11,15 @@ final class NativeCompanyCalendarFeed
     public function __construct(private $db,private string $p){}
     private static function rejectRange(string $stage,?DomainException $cause=null):never{throw new DomainException('native_calendar_range_invalid',0,new LogicException('native_calendar_stage_'.$stage,0,$cause));}
     private static function rangeSource(string $stage,callable $read):array{try{return $read();}catch(DomainException $error){if($error->getMessage()==='native_calendar_range_invalid')self::rejectRange($stage,$error);throw $error;}}
+    private static function selectionKeys():array{$keys=['calendar_filters','events','tasks','projects','invoices','estimates','proposals','contracts'];foreach(NativeCompanyCalendarPreferences::REMINDERS as$type)$keys[]=$type.'_reminders';return $keys;}
+    public static function selection(array $input):array{if(array_diff(array_keys($input),self::selectionKeys()))self::rejectRange('query_keys');$flags=[];foreach($input as$key=>$value){if(!in_array($value,[true,1,'1','true'],true))self::rejectRange('filter_flag');$flags[$key]=true;}return $flags;}
     public static function filters(array $input):array
     {
-        $keys=['start','end','calendar_filters','events','tasks','projects','invoices','estimates','proposals','contracts'];foreach(NativeCompanyCalendarPreferences::REMINDERS as$t)$keys[]=$t.'_reminders';
+        $keys=array_merge(['start','end'],self::selectionKeys());
         if(array_diff(array_keys($input),$keys))self::rejectRange('query_keys');
         $dates=[];foreach(['start','end']as$k){$v=$input[$k]??null;if(!is_string($v)||!preg_match('/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2}))?$/D',$v))self::rejectRange('date_syntax');if(strlen($v)>10){try{$stamp=new DateTimeImmutable($v);}catch(Throwable $e){self::rejectRange('timestamp');}if($stamp->format('Y-m-d\TH:i:s')!==substr($v,0,19))self::rejectRange('timestamp');}$d=DateTimeImmutable::createFromFormat('!Y-m-d',substr($v,0,10));if(!$d||$d->format('Y-m-d')!==substr($v,0,10))self::rejectRange('date_value');$dates[$k]=$d;}
         if($dates['end']<=$dates['start']||$dates['start']->diff($dates['end'])->days>63)self::rejectRange('date_order');
-        $flags=[];foreach(array_diff($keys,['start','end'])as$k)if(array_key_exists($k,$input)){if(!in_array($input[$k],[true,1,'1','true'],true))self::rejectRange('filter_flag');$flags[$k]=true;}
+        $flags=self::selection(array_diff_key($input,['start'=>true,'end'=>true]));
         return ['start'=>$dates['start'],'end'=>$dates['end'],'flags'=>$flags,'filtered'=>isset($flags['calendar_filters'])];
     }
     public function read(int $i,int $a,array $input):array

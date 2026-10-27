@@ -23,7 +23,9 @@ $config=[];require APPPATH.'config/migration.php';$shippedVersion=trim(file_get_
 native445Check(preg_match('/^(\d)\.(\d)\.(\d)$/D',$shippedVersion,$shippedParts)===1,'canonical shipped native version shape');$shippedMarker=(int)($shippedParts[1].$shippedParts[2].$shippedParts[3]);
 native445Check(($config['migration_version']??null)===$shippedMarker&&$shippedMarker>=445,'shipped configuration matches canonical VERSION and supports historical445');
 $config['migration_version']=445; // Explicit historical target, also valid when shipped by a later source tree.
-native445Check($db->query('CREATE TABLE `'.$p.'migrations` (version bigint NOT NULL) ENGINE=InnoDB')!==false,'actual tracking fixture table');native445Check($db->insert($p.'migrations',['version'=>444]),'actual persisted starting marker444');
+// Isolated historical preparation, before snapshots and fault injection; not a production downgrade.
+require_once dirname(__DIR__).'/support/NativeHistoricalTrackingFixture.php';
+NativeHistoricalTrackingFixture::prepare($db,$p,444,'native445Check');
 $GLOBALS['native445Hooks']=new class{public array$trace=[];public function do_action($name,...$args){$this->trace[]=$name;}};
 $ci=(object)['db'=>$db];$GLOBALS['native445CI']=$ci;$ci->config=new class($config){public function __construct(private array$values){}public function item($name){return$this->values[$name]??null;}};$ci->load=new class{public function config($name){}public function library($name,$options){}};
 $reflection=new ReflectionClass(App_Migration::class);$migration=$reflection->newInstanceWithoutConstructor();foreach(['_migration_type'=>'sequential','_migration_path'=>APPPATH.'migrations/','_migration_version'=>445,'_migration_table'=>$p.'migrations','_migration_regex'=>'/^\\d{3}_(\\w+)$/']as$key=>$value)$reflection->getProperty($key)->setValue($migration,$value);$ci->migration=$migration;

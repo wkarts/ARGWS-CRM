@@ -23,7 +23,9 @@ $shippedMarker=(int)($shippedParts[1].$shippedParts[2].$shippedParts[3]);
 native443Check(($config['migration_version']??null)===$shippedMarker&&$shippedMarker>=443,'shipped configuration exactly matches canonical source and supports historical443');
 $config['migration_version']=443; // Explicit historical boundary, using the real production executor.
 
-native443Check($db->query('CREATE TABLE `'.$p.'migrations` (version bigint NOT NULL) ENGINE=InnoDB')!==false,'actual tracking table');$db->insert($p.'migrations',['version'=>442]);
+// Isolated historical preparation, before snapshots and fault injection; not a production downgrade.
+require_once dirname(__DIR__).'/support/NativeHistoricalTrackingFixture.php';
+NativeHistoricalTrackingFixture::prepare($db,$p,442,'native443Check');
 $GLOBALS['native443Hooks']=new class{public array$trace=[];public function do_action($name,...$args){$this->trace[]=$name;}};
 $ci=(object)['db'=>$db];$GLOBALS['native443CI']=$ci;$ci->config=new class($config){public function __construct(private array$values){}public function item($name){return$this->values[$name]??null;}};$ci->load=new class{public function config($name){}public function library($name,$options){}};
 $reflection=new ReflectionClass(App_Migration::class);$migration=$reflection->newInstanceWithoutConstructor();foreach(['_migration_type'=>'sequential','_migration_path'=>APPPATH.'migrations/','_migration_version'=>443,'_migration_table'=>$p.'migrations','_migration_regex'=>'/^\\d{3}_(\\w+)$/']as$key=>$value)$reflection->getProperty($key)->setValue($migration,$value);$ci->migration=$migration;
