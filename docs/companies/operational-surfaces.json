@@ -11298,7 +11298,7 @@
         },
         {
             "path": "application/controllers/admin/Invoice_items.php",
-            "source_sha256": "be35188b88f803a26dc827c45ae3379aac21d405c65d29f25d59fecbd760136d",
+            "source_sha256": "1fdc260a5dc814643b17e5b0b62e53ac7f38a01c4b114051dbe463c7df164185",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -11315,57 +11315,57 @@
                 },
                 {
                     "method": "table",
-                    "line": 44,
+                    "line": 45,
                     "visibility": "public"
                 },
                 {
                     "method": "manage",
-                    "line": 67,
+                    "line": 68,
                     "visibility": "public"
                 },
                 {
                     "method": "import",
-                    "line": 115,
+                    "line": 116,
                     "visibility": "public"
                 },
                 {
                     "method": "add_group",
-                    "line": 163,
+                    "line": 164,
                     "visibility": "public"
                 },
                 {
                     "method": "update_group",
-                    "line": 174,
+                    "line": 175,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_group",
-                    "line": 185,
+                    "line": 186,
                     "visibility": "public"
                 },
                 {
                     "method": "delete",
-                    "line": 199,
+                    "line": 200,
                     "visibility": "public"
                 },
                 {
                     "method": "bulk_action",
-                    "line": 223,
+                    "line": 224,
                     "visibility": "public"
                 },
                 {
                     "method": "search",
-                    "line": 265,
+                    "line": 266,
                     "visibility": "public"
                 },
                 {
                     "method": "get_item_by_id",
-                    "line": 277,
+                    "line": 278,
                     "visibility": "public"
                 },
                 {
                     "method": "copy",
-                    "line": 308,
+                    "line": 309,
                     "visibility": "public"
                 }
             ],

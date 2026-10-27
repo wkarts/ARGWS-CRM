@@ -12,7 +12,7 @@ class Invoice_items extends AdminController
         parent::__construct();
         if(CompanyRequestScope::nativeFor($this)){
             require_once APPPATH.'services/NativeCompanyCatalogUi.php';$context=CompanyRequestScope::context();
-            $this->companyCatalog=new NativeCompanyCatalogUi($this->db,db_prefix(),$context->issuerId(),$context->staffId(),$this);return;
+            try{$this->companyCatalog=new NativeCompanyCatalogUi($this->db,db_prefix(),$context->issuerId(),$context->staffId(),$this);return;}catch(Throwable $error){error_log('Native item catalogue construction unconfirmed: '.get_class($error).'@'.basename($error->getFile()).':'.$error->getLine().'; no messages or request values logged.');throw $error;}
         }
         $this->load->model('invoice_items_model');
     }
@@ -21,8 +21,9 @@ class Invoice_items extends AdminController
     public function index()
     {
         if($this->companyCatalog!==null){
-            if(!$this->companyCatalog->allowed('items','view'))throw new DomainException('company_catalog_denied');
-            $this->load->view('admin/invoice_items/manage',['taxes'=>$this->companyCatalog->taxes(),'items_groups'=>$this->companyCatalog->groups(),'currencies'=>$this->companyCatalog->currencies(),'base_currency'=>(object)$this->companyCatalog->baseCurrency(),'title'=>_l('invoice_items')]);return;
+            $this->output->set_header('Cache-Control: no-store');$level=ob_get_level();try{if(!$this->companyCatalog->allowed('items','view'))throw new DomainException('company_catalog_denied');
+            $html=$this->load->view('admin/invoice_items/manage',['taxes'=>$this->companyCatalog->taxes(),'items_groups'=>$this->companyCatalog->groups(),'currencies'=>$this->companyCatalog->currencies(),'base_currency'=>(object)$this->companyCatalog->baseCurrency(),'title'=>_l('invoice_items')],true);if(!$this->companyCatalog->allowed('items','view'))throw new DomainException('company_catalog_denied');$this->output->set_output($html);return;
+            }catch(Throwable $error){while(ob_get_level()>$level)ob_end_clean();error_log('Native item catalogue response unconfirmed: '.get_class($error).'@'.basename($error->getFile()).':'.$error->getLine().'; no messages or request values logged.');throw $error;}
         }
         if (staff_cant('view', 'items')) {
             access_denied('Invoice Items');
