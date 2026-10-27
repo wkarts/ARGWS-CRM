@@ -92,7 +92,7 @@
                             <?= render_custom_fields('items'); ?>
                         </div>
                         <?= render_select('group_id', $items_groups, ['id', 'name'], 'item_group'); ?>
-                        <?php hooks()->do_action('before_invoice_item_modal_form_close'); ?>
+                        <?php if(!CompanyRequestScope::nativeFor($this))hooks()->do_action('before_invoice_item_modal_form_close'); ?>
                     </div>
                 </div>
             </div>
@@ -101,8 +101,8 @@
                     data-dismiss="modal"><?= _l('close'); ?></button>
                 <button type="submit"
                     class="btn btn-primary"><?= _l('submit'); ?></button>
-                <?= form_close(); ?>
             </div>
+            <?= form_close(); ?>
         </div>
     </div>
 </div>

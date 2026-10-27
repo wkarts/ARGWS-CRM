@@ -133,7 +133,11 @@ async function captureRealScreens(page, routes) {
     const callable = /^([A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*){0,5}) is not a function$/.exec(error.message);
     const assets = [...String(error.stack || '').matchAll(/\/(assets\/[A-Za-z0-9_./-]+\.js):(\d+):(\d+)/g)]
       .slice(0,5).map(match => ({path:match[1],line:Number(match[2]),column:Number(match[3])}));
-    errorDiagnostics.push({stage:nativeCalendarStage,
+    const boundaryCode = /^(?:native|company|issuer)_[a-z0-9_]{1,100}$/.test(error.message)?error.message:null;
+    const dataTable = /^DataTables warning: table id=([A-Za-z0-9_-]{1,80}) - /.exec(error.message);
+    const tableCategory = dataTable?['Cannot reinitialise DataTable','Requested unknown parameter','Incorrect column count','Ajax error','Invalid JSON response'].find(label=>error.message.includes(label))||'other_table_error':null;
+    errorDiagnostics.push({stage:nativeCalendarStage,boundary_code:boundaryCode,
+      table:dataTable?dataTable[1]:null,table_category:tableCategory,
       kind:['Error','TypeError','ReferenceError','SyntaxError','RangeError'].includes(error.name)?error.name:'OtherError',
       missing:missing?.[1]||null,property:property?.[1]||null,callable:callable?.[1]||null,assets});
   });
@@ -441,10 +445,13 @@ async function captureRealScreens(page, routes) {
       const nativeRoutes = ['todo','announcements','taxes','departments','tickets','invoice_items','settings?group=company','utilities/calendar','staff','staff/member'];
       for (const route of nativeRoutes) {
         calendarStage('native_route_'+route.split('?')[0].replaceAll('/','_'));
-        let initialTicketTable=null;
+        let initialTicketTable=null,initialItemTable=null;
+        const isItemTable=response=>response.request().method()==='POST'&&new URL(response.url()).pathname==='/admin/invoice_items/table';
+        const rememberItemTable=response=>{if(isItemTable(response)&&!initialItemTable)initialItemTable=response;};
         const isTicketTable=response=>response.request().method()==='POST'&&new URL(response.url()).pathname==='/admin/tickets';
         const rememberTicketTable=response=>{if(isTicketTable(response)&&!initialTicketTable)initialTicketTable=response;};
         if(route==='tickets')page.on('response',rememberTicketTable);
+        if(route==='invoice_items')page.on('response',rememberItemTable);
         const response = await page.goto(url + '/admin/' + route, {waitUntil:'load'});
         if(response.status()!==200){
           const responseHtml=await response.text();
@@ -488,6 +495,40 @@ async function captureRealScreens(page, routes) {
         assert.equal(await page.locator('#wrapper .content').count(), 1, 'native route keeps one original CRM content root: ' + route);
         await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
         assert.equal(await page.locator('.company-selector-form').evaluate(form=>!!window.jQuery(form).data('validator')),false,'business form validators never claim the company selector: '+route);
+        if(route==='invoice_items'){
+          const tableResponse=initialItemTable||await page.waitForResponse(isItemTable);page.off('response',rememberItemTable);
+          assert.equal(tableResponse.status(),200,'original item DataTable uses the guarded company endpoint');
+          assert(Array.isArray((await tableResponse.json()).aaData));
+          const modal=page.locator('#sales_item_modal'),form=modal.locator('#invoice_item_form');
+          await page.locator('#wrapper ._buttons [data-target="#sales_item_modal"]').click();
+          await modal.waitFor({state:'visible'});
+          await form.locator('[name=description]').fill('Synthetic native catalog');
+          await form.locator('[name=rate]').fill('17.50');
+          await form.locator('[name=unit]').fill('un');
+          const isItemSave=response=>response.request().method()==='POST'&&new URL(response.url()).pathname==='/admin/invoice_items/manage';
+          const created=await Promise.all([page.waitForResponse(isItemSave),form.locator('button[type=submit]').click()]);
+          assert.equal(created[0].status(),200,'item creation posts the original form');
+          const receipt=await created[0].json();assert.equal(receipt.success,true);
+          const itemId=String(receipt.item.id);assert.match(itemId,/^[1-9][0-9]{0,15}$/);
+          await modal.waitFor({state:'hidden'});
+          const itemRead=page.waitForResponse(response=>response.request().method()==='GET'&&new URL(response.url()).pathname==='/admin/invoice_items/get_item_by_id/'+itemId);
+          await page.locator('.table-invoice-items a[data-id="'+itemId+'"]').click();
+          assert.equal((await itemRead).status(),200,'typed item identity opens the original editor');
+          await modal.waitFor({state:'visible'});
+          assert.equal(await form.locator('[name=description]').inputValue(),'Synthetic native catalog');
+          const oldItemForm=await form.evaluate(node=>Object.fromEntries(new FormData(node).entries()));
+          await form.locator('[name=description]').fill('Synthetic native catalog edited');
+          const edited=await Promise.all([page.waitForResponse(isItemSave),form.locator('button[type=submit]').click()]);
+          assert.equal(edited[0].status(),200,'item editing posts the same original form');
+          const editedReceipt=await edited[0].json();assert.equal(editedReceipt.success,true);
+          assert.notEqual(String(editedReceipt.item.revision),String(receipt.item.revision),'native editor advances the actual item revision');
+          await modal.waitFor({state:'hidden'});
+          assert.equal(sql("SELECT COUNT(*) FROM tblcompany_items WHERE issuer_id="+secondaryCompany+" AND description='Synthetic native catalog edited'"),'1');
+          assert.equal(sql("SELECT COUNT(*) FROM tblcompany_items WHERE issuer_id="+primaryCompany+" AND description='Synthetic native catalog edited'"),'0','secondary item never appears in the primary catalogue');
+          await selectCompanyOption(page,primaryCompany);
+          assert.equal((await context.request.post(url+'/admin/invoice_items/manage',{form:oldItemForm,maxRedirects:0})).status(),409,'old original item form cannot mutate after a company switch');
+          await selectCompanyOption(page,secondaryCompany);
+        }
         if(route==='departments'){
           await selectCompanyOption(page,primaryCompany);
           assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'),primaryCompany,'company selection from Departments performs the real native POST');
