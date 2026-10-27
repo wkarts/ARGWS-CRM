@@ -1006,7 +1006,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Utilities.php": {
-      "sha256": "075118d4bd184a2563f494e322a827f1155991ce3240b00bec63073558865bff",
+      "sha256": "a55709bf62750d2cd044b8e1803d7eb70299caf23221fa8f653e8cb8ac499d17",
       "categories": [
         "invoice_model",
         "invoice_table"
@@ -4828,19 +4828,19 @@
       "evidence": ""
     },
     "application/services/NativeCompanyCalendarFeed.php": {
-      "sha256": "ee9d0cd698d06d586351eb54f6da0aaed91d711e45d0ac19b8fa60526249566c",
+      "sha256": "e199141d0b2eca3ecffc48beb13cbcb12b706d3a59f987e858ce97aaf2558a46",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        14,
-        29
+        16,
+        31
       ],
       "state": "unreviewed",
       "evidence": ""
     },
     "application/services/NativeCompanyCatalog.php": {
-      "sha256": "d78195be57a934c5993308a871849f9110cecf228d36f738e7a176b24ec6877c",
+      "sha256": "c7b15a1da24e499ed31e5f7fbc43a9d04c0ba7f7d1aca17aa81c72696c7f8b72",
       "categories": [
         "invoice_table"
       ],
@@ -4941,7 +4941,7 @@
       "evidence": ""
     },
     "application/services/NativeCompanyFilters.php": {
-      "sha256": "9dc8458da23d10fc7239db068fd2137e395365472a05733c286409b730ed0cfa",
+      "sha256": "bcfa7eaebc2611d6e2a2d7a71af654038e8ad0885c2dd4015d1b1275a72fbb3d",
       "categories": [
         "invoice_table"
       ],
@@ -5361,7 +5361,7 @@
       "evidence": ""
     },
     "application/services/NativeCompanyPaymentModes.php": {
-      "sha256": "45b8e445d32e98330d310a6c36e4b0e1d75838f15ea02388a813569b0eaa1a07",
+      "sha256": "ce415e69e28b7ed22feac2f4a690573ecb5340ffe367fbb553ee7e9831227997",
       "categories": [
         "invoice_table",
         "payments"

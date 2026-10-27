@@ -6,7 +6,7 @@ The selected company must change data and authorization, not the existing CRM's 
 
 This branch and PR #52 are **not ready for release or merge**. The obsolete `Company_context` controller and its native admission were removed; the selector now uses the shared CRM dashboard and the technical `Company_selection::select` POST. The other parallel company controllers and views remain open work. Existing guards remain closed until their replacement has a tested native data contract. A service or rendered fragment passing tests does not establish that its HTTP action is admitted or that all neighboring actions work.
 
-The refreshed source census still lists **49 parallel company controllers**. The boundary review lists **15,075 unresolved PHP files** and keeps `operational_ready=false`; removal of the old selector route is only one checkpoint, not full application convergence.
+The source census at1539097 still lists **48 parallel company controllers**. The boundary review lists **15,082 unresolved source files** and keeps `operational_ready=false`; these counts include dependency boundaries and are not a completion percentage. Company_context, Company_master, their retired context/registry views and master_resolution.php have been removed. These removals and the native selector are checkpoints, not full application convergence.
 
 ## Finite source boundary
 
@@ -43,9 +43,9 @@ The census is regenerated after composition. No source method may disappear from
 
 ## Evidence available locally
 
-PHP 8.4 and SQLite execute actual service, controller-seam, native PHP-view and PDF tests. Negative tests cover cross-company access, stale forms, revocation, rollback and ignored audit inserts. These are not substitutes for the supported PHP matrix, MySQL locking/DDL or browser interaction.
+An earlier executor reported PHP8.4/SQLite service, controller-seam, native PHP-view and PDF checks. That is historical evidence, not the current local runtime. This executor has no local PHP, Docker or database. Focused pull_request40422558652 passed PHP8.1/8.5 on1539097; its native calendar feed ran23 added SQLite assertions. Negative tests cover cross-company access, stale forms, revocation, rollback and ignored audit inserts. These are not substitutes for complete MySQL/MariaDB locking/DDL or authenticated browser interaction.
 
-The local MySQL/MariaDB server could not open its Unix socket under the execution policy. Chromium likewise could not create its required socket. Those operations are not retried through another route. Final CI must establish MySQL/locking, native HTTP routes, desktop/tablet/mobile rendering, keyboard/scroll behavior and no cross-company leakage.
+Local runtime and Chromium restrictions have not been bypassed. CI2650e95 proved the original principal widget creates exactly one company-owned event, but its subsequent shared feed failed409 and remains unaccepted. Its MySQL/PHP8.1 task-copy composition passed1179 cumulative assertions before the larger matrix was cancelled without this executor requesting cancellation. Final CI must establish complete MySQL/MariaDB results, native HTTP routes, desktop/tablet/mobile rendering, keyboard/scroll behavior and no cross-company leakage. The old11 unpublished files and the previous physical worktree were unavailable; neither has been claimed recovered or discarded.
 
 ## Exit gates
 

@@ -107,7 +107,7 @@ final class NativeCompanyAuxiliary
         return $this->tx(function () use ($description,$id,$revision): int {
             if ($id === null) {
                 IssuerStorage::query($this->db, 'INSERT INTO '.$this->p.'company_todos(issuer_id,staffid,description,finished,item_order,dateadded,datefinished,revision) VALUES(?,?,?,0,0,?,NULL,1)', [$this->issuer,$this->actor,$description,gmdate('Y-m-d H:i:s')]);
-                $this->assertInserted();$id = (int)$this->db->insert_id();
+                $id = (int)$this->db->insert_id();$this->assertInserted();
             } else {
                 $row = $this->todoRow($id);
                 if ((int)$row['revision'] !== $revision) { throw new DomainException('company_auxiliary_stale'); }
@@ -242,7 +242,7 @@ final class NativeCompanyAuxiliary
                 if(!$author)throw new DomainException('company_auxiliary_access_denied');
                 $authorName=mb_substr(trim($author['firstname'].' '.$author['lastname']),0,100);
                 IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_announcements(issuer_id,name,message,showtousers,showtostaff,showname,userid,actor_id,dateadded,revision) VALUES(?,?,?,?,?,?,?,?,?,1)',[$this->issuer,$name,$message,$flags['showtousers'],$flags['showtostaff'],$flags['showname'],$authorName,$this->actor,gmdate('Y-m-d H:i:s')]);
-                $this->assertInserted();$id=(int)$this->db->insert_id();
+                $id=(int)$this->db->insert_id();$this->assertInserted();
             }else{
                 $row=$this->announcement($id);if((int)$row['revision']!==$revision)throw new DomainException('company_auxiliary_stale');
                 IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_announcements SET name=?,message=?,showtousers=?,showtostaff=?,showname=?,revision=revision+1 WHERE issuer_id=? AND announcementid=? AND revision=?',[$name,$message,$flags['showtousers'],$flags['showtostaff'],$flags['showname'],$this->issuer,$id,$revision]);
@@ -289,7 +289,7 @@ final class NativeCompanyAuxiliary
         return$this->tx(function()use($type,$relId,$description,$id,$revision):int{
             $ref=$this->relation($type,$relId,'edit');
             if($id===null){
-                IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_notes(issuer_id,rel_type,rel_id,source_kind,source_id,description,addedfrom,dateadded,date_contacted,revision) VALUES(?,?,?,?,?,?,?,?,NULL,1)',[$this->issuer,$type,$ref['canonical_id'],$ref['source_kind'],$ref['source_id'],$description,$this->actor,gmdate('Y-m-d H:i:s')]);$this->assertInserted();$id=(int)$this->db->insert_id();
+                IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_notes(issuer_id,rel_type,rel_id,source_kind,source_id,description,addedfrom,dateadded,date_contacted,revision) VALUES(?,?,?,?,?,?,?,?,NULL,1)',[$this->issuer,$type,$ref['canonical_id'],$ref['source_kind'],$ref['source_id'],$description,$this->actor,gmdate('Y-m-d H:i:s')]);$id=(int)$this->db->insert_id();$this->assertInserted();
             }else{
                 $row=$this->note($id);$this->author($row,'addedfrom');if($row['rel_type']!==$type||(string)$row['rel_id']!==(string)$ref['canonical_id']||(int)$row['revision']!==$revision)throw new DomainException('company_auxiliary_stale');
                 IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_notes SET description=?,revision=revision+1 WHERE issuer_id=? AND id=? AND revision=?',[$description,$this->issuer,$id,$revision]);
@@ -370,7 +370,7 @@ final class NativeCompanyAuxiliary
             $ref=$this->relation($type,$relId,'edit');if(!$this->access->can($this->issuer,$staff,$ref['feature'],'view'))throw new DomainException('company_auxiliary_access_denied');
             $recipientRef=NativeCompanyResourceReferences::resolve($this->db,$this->p,$this->issuer,$staff,$type,$relId,'view');if($recipientRef['source_kind']!==$ref['source_kind']||$recipientRef['source_id']!==$ref['source_id'])throw new DomainException('company_auxiliary_access_denied');
             if($id===null){
-                IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_reminders(issuer_id,rel_type,rel_id,source_kind,source_id,staff,creator,description,date,isnotified,notify_by_email,revision) VALUES(?,?,?,?,?,?,?,?,?,0,?,1)',[$this->issuer,$type,$ref['canonical_id'],$ref['source_kind'],$ref['source_id'],$staff,$this->actor,$description,$date,$notify]);$this->assertInserted();$id=(int)$this->db->insert_id();
+                IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_reminders(issuer_id,rel_type,rel_id,source_kind,source_id,staff,creator,description,date,isnotified,notify_by_email,revision) VALUES(?,?,?,?,?,?,?,?,?,0,?,1)',[$this->issuer,$type,$ref['canonical_id'],$ref['source_kind'],$ref['source_id'],$staff,$this->actor,$description,$date,$notify]);$id=(int)$this->db->insert_id();$this->assertInserted();
             }else{
                 $row=$this->reminder($id);$this->author($row,'creator');if($row['rel_type']!==$type||(string)$row['rel_id']!==(string)$ref['canonical_id']||(int)$row['revision']!==$revision||(int)$row['isnotified']!==0)throw new DomainException('company_auxiliary_stale');
                 IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_reminders SET description=?,date=?,staff=?,notify_by_email=?,revision=revision+1 WHERE issuer_id=? AND id=? AND revision=? AND isnotified=0',[$description,$date,$staff,$notify,$this->issuer,$id,$revision]);

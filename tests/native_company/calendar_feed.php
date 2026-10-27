@@ -11,6 +11,7 @@ $event=(new NativeCompanyEvents($db,$p))->save($a,49,['title'=>'Own native event
 $db->query('INSERT INTO '.$p.'company_reminders(issuer_id,rel_type,rel_id,source_kind,source_id,staff,creator,description,date,isnotified,notify_by_email,revision) VALUES(?,?,?,?,?,?,?,?,?,0,0,1)',[$a,'invoice',$calendarRows[$a]['invoices'],'invoice',$calendarRows[$a]['invoices'],49,49,'Calendar reminder','2026-10-23 14:00:00']);
 $feed=new NativeCompanyCalendarFeed($db,$p);$query=['start'=>'2026-10-01T00:00:00-03:00','end'=>'2026-11-01T00:00:00-03:00'];$rows=$feed->read($a,49,$query);
 essentialCheck(count($rows)===9,'seven real document sources plus actual event and reminder');
+essentialCheck(count($feed->read($a,49,['start'=>'2026-09-27','end'=>'2026-11-08']))===9,'exact six-week civil range observed in the authenticated browser keeps all nine own entries');
 essentialCheck(!str_contains(json_encode($rows),'company_'),'native feed does not expose parallel route/source links');
 essentialCheck(count(array_filter($rows,fn($r)=>isset($r['native_path'])&&str_starts_with($r['native_path'],'invoices/list_invoices/')))===2,'document and reminder link to original invoice route');
 essentialCheck(count($feed->read($b,49,$query))===7,'company B cannot see A event or reminder');
@@ -26,6 +27,7 @@ $db->query('INSERT INTO '.$p.'invoices(clientid,number,datecreated,date,duedate,
 // legacy-looking invoice must never be exposed through that same table.
 $db->query('INSERT INTO '.$p.'invoices(clientid,number,datecreated,date,duedate,currency,subtotal,total,hash,discount_type,include_shipping,status) VALUES(?,?,?,?,?,1,7,7,?,?,0,1)',[$ca,902,'2026-10-01 00:00:00','2026-10-01','2026-10-23',str_repeat('d',32),'after_tax']);$foreignLegacy=(int)$db->insert_id();
 $principal=$feed->read($calendarPrimary,49,$query);$ids=array_column($principal,'id');
+essentialCheck(array_column($feed->read($calendarPrimary,49,['start'=>'2026-09-27','end'=>'2026-11-08']),'id')===$ids,'actual six-week principal range uses the same canonical and historical lineage');
 foreach($calendarRows[$calendarPrimary]as$source=>$sourceId)essentialCheck(in_array($source.':'.$sourceId,$ids,true),'official principal Settings expose each authorized canonical source '.$source);
 $nativeReader=new CompanyCalendarRead($db,$p,true);$nativeReader->page($calendarPrimary,49,$calendarFilter);
 $db->query('UPDATE '.$p.'options SET value=? WHERE name=?',['0','show_invoices_on_calendar']);

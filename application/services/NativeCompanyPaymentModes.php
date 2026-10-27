@@ -62,7 +62,7 @@ final class NativeCompanyPaymentModes
     private function audit(int$i,int$a,string$event,array$ref,string$hash):void
     {
         $stamp=gmdate('Y-m-d H:i:s');$metadata=json_encode(['source_kind'=>$ref['source_kind'],'source_id'=>$ref['source_id'],'hash'=>$hash,'receipt'=>bin2hex(random_bytes(16))],JSON_THROW_ON_ERROR);
-        IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(issuer_id,actor_id,subject_id,event,created_at,metadata_json) VALUES(?,?,?,?,?,?)',[$i,$a,$ref['source_id'],$event,$stamp,$metadata]);$this->assertInserted();$id=(int)$this->db->insert_id();
+        IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(issuer_id,actor_id,subject_id,event,created_at,metadata_json) VALUES(?,?,?,?,?,?)',[$i,$a,$ref['source_id'],$event,$stamp,$metadata]);$id=(int)$this->db->insert_id();$this->assertInserted();
         if(!$this->rows('SELECT id FROM '.$this->p.'issuers_audit WHERE id=? AND issuer_id=? AND actor_id=? AND subject_id=? AND event=? AND created_at=? AND metadata_json=?',[$id,$i,$a,$ref['source_id'],$event,$stamp,$metadata]))throw new RuntimeException('native_payment_mode_audit_unconfirmed');
     }
     public function save(int$i,int$a,array$input,$id=null,?string$expected=null):array
@@ -73,7 +73,7 @@ final class NativeCompanyPaymentModes
             if($id===null){
                 if($expected!==null)throw new DomainException('native_payment_mode_invalid');$fields=$input+['issuer_id'=>$i,'revision'=>1,'created_by'=>$a];
                 IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_payment_modes('.implode(',',array_keys($fields)).') VALUES('.implode(',',array_fill(0,count($fields),'?')).')',array_values($fields));
-                $this->assertInserted();$expectedRevision=1;$source=(int)$this->db->insert_id();if($source<1)throw new RuntimeException('native_payment_mode_write_unconfirmed');$id=NativeCompanyResourceId::encode('company_payment_mode',$source);
+                $source=(int)$this->db->insert_id();$this->assertInserted();$expectedRevision=1;if($source<1)throw new RuntimeException('native_payment_mode_write_unconfirmed');$id=NativeCompanyResourceId::encode('company_payment_mode',$source);
             }else{
                 [$ref,$before,$dto]=$this->row($i,$id);if(!is_string($expected)||!hash_equals($dto['revision'],$expected))throw new DomainException('native_payment_mode_stale');
                 $table=$ref['source_kind']==='company_payment_mode'?'company_payment_modes':'payment_modes';$values=$input;$expectedRevision=null;
