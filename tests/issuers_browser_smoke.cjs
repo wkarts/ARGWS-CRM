@@ -477,7 +477,11 @@ async function captureRealScreens(page, routes) {
           assert(labels.newFilter&&labels.newFilter!=='filter_new'&&labels.apply&&labels.apply!=='filter_apply','native filter labels come from the trusted PT-BR catalog');
           const filterToggle=page.locator('#vueApp button.dropdown-toggle').filter({has:page.locator('.fa-filter')});
           await filterToggle.click();
+          const clearFilterResponse=page.waitForResponse(isTicketTable);
           await page.locator('#vueApp .dropdown-menu').getByRole('link',{name:labels.newFilter,exact:true}).click();
+          const clearFilter=await clearFilterResponse;
+          assert.equal(clearFilter.status(),200,'clearing the original Vue filter accepts the actual form-encoded empty rules');
+          assert(Array.isArray((await clearFilter.json()).aaData));
           const filterModal=page.locator('.filters-modal#tickets');await filterModal.waitFor({state:'visible'});
           const rules=filterModal.locator('#ticketsRules'),rulePicker=filterModal.locator('.bootstrap-select').filter({has:page.locator('#ticketsRules')});
           const subjectLabel=(await rules.locator('option[value=subject]').textContent()).trim();

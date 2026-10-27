@@ -39,6 +39,9 @@ final class NativeCompanyTicketIndexController
         }elseif(isset($input['via_ticket_userid'])||isset($input['via_ticket_email']))throw new DomainException('native_ticket_scope_invalid');
         unset($input['via_ticket'],$input['via_ticket_userid'],$input['via_ticket_email']);
         $order=$input['last_order_identifier']??null;if($order!==null&&$order!=='tickets')throw new DomainException('native_ticket_input_invalid');unset($input['last_order_identifier']);$builder=$input['filters']??['match_type'=>'and','rules'=>[]];unset($input['filters']);if(!is_array($builder))throw new DomainException('native_ticket_input_invalid');
+        // jQuery form encoding omits an empty rules array when clearing the original Vue filter.
+        // Normalize only its exact empty transport shape; domain/saved-filter validation stays strict.
+        if(array_keys($builder)===['match_type']&&in_array($builder['match_type'],['and','or'],true))$builder['rules']=[];
         $result=(new NativeCompanyTicketIndexRead($this->ci->db,db_prefix()))->page($this->i,$this->a,$input,$builder,$table,$scope);$projection=new NativeCompanyTicketRowPresentation($this->ci->db,db_prefix());$rows=[];foreach($result['rows']as$entry){$variables=$projection->project($this->i,$this->a,$entry,$result['custom_fields']);$rows[]=self::row($variables);}
         if($order!==null)(new NativeCompanyTableOrder($this->ci->db,db_prefix(),$this->i,$this->a))->save('tickets',$input['order']??[['column'=>0,'dir'=>'asc']],count(NativeCompanyTicketIndexRead::COLUMNS)+count($result['custom_fields']));$this->authorize();$this->ci->output->set_content_type('application/json');echo json_encode(['draw'=>$result['draw'],'iTotalRecords'=>$result['iTotalRecords'],'iTotalDisplayRecords'=>$result['iTotalDisplayRecords'],'aaData'=>$rows],JSON_THROW_ON_ERROR|JSON_INVALID_UTF8_SUBSTITUTE);
     }
