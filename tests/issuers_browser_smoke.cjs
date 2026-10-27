@@ -428,6 +428,10 @@ async function captureRealScreens(page, routes) {
       assert.equal(sql('SELECT COUNT(*) FROM tblcompany_events'),calendarEventsBeforeStale,'stale calendar submission creates no event');
       const nativeRoutes = ['todo','announcements','taxes','departments','tickets','invoice_items','settings?group=company','utilities/calendar','staff','staff/member'];
       for (const route of nativeRoutes) {
+        let initialTicketTable=null;
+        const isTicketTable=response=>response.request().method()==='POST'&&new URL(response.url()).pathname==='/admin/tickets';
+        const rememberTicketTable=response=>{if(isTicketTable(response)&&!initialTicketTable)initialTicketTable=response;};
+        if(route==='tickets')page.on('response',rememberTicketTable);
         const response = await page.goto(url + '/admin/' + route, {waitUntil:'load'});
         if(response.status()!==200){
           const responseHtml=await response.text();
@@ -442,6 +446,31 @@ async function captureRealScreens(page, routes) {
         }
         assert.equal(response.status(), 200, 'selected company uses the original CRM route /admin/' + route);
         await shell(page);
+        if(route==='tickets'){
+          const tableResponse=initialTicketTable||await page.waitForResponse(isTicketTable);
+          page.off('response',rememberTicketTable);
+          assert.equal(tableResponse.status(),200,'native ticket table responds through the real guarded POST');
+          assert(Array.isArray((await tableResponse.json()).aaData),'native Tickets returns the original DataTable rows');
+          await page.waitForFunction(()=>!!document.querySelector('#vueApp')?.__vue_app__&&typeof window.vNewApp==='function');
+          assert.equal(await page.locator('#vueApp app-filters').count(),0,'the original Vue bundle hydrates the existing filter component');
+          const labels=await page.evaluate(()=>({newFilter:app.lang.filter_new,apply:app.lang.filter_apply}));
+          assert(labels.newFilter&&labels.newFilter!=='filter_new'&&labels.apply&&labels.apply!=='filter_apply','native filter labels come from the trusted PT-BR catalog');
+          const filterToggle=page.locator('#vueApp button.dropdown-toggle').filter({has:page.locator('.fa-filter')});
+          await filterToggle.click();
+          await page.locator('#vueApp .dropdown-menu').getByRole('link',{name:labels.newFilter,exact:true}).click();
+          const filterModal=page.locator('.filters-modal#tickets');await filterModal.waitFor({state:'visible'});
+          const rules=filterModal.locator('#ticketsRules'),rulePicker=filterModal.locator('.bootstrap-select').filter({has:page.locator('#ticketsRules')});
+          const subjectLabel=(await rules.locator('option[value=subject]').textContent()).trim();
+          await rulePicker.locator('button.dropdown-toggle').click();
+          await rulePicker.getByRole('option',{name:subjectLabel,exact:true}).click();
+          const subject=filterModal.locator('input[type=text]:visible');
+          assert.equal(await subject.count(),1,'new subject rule uses the original text input');
+          await subject.fill('Synthetic native filter');
+          const filteredTable=page.waitForResponse(isTicketTable);
+          await filterModal.locator('.modal-footer button.btn-primary').click();
+          const filteredResponse=await filteredTable;assert.equal(filteredResponse.status(),200,'original Vue filter reaches the company-scoped ticket query');
+          assert(Array.isArray((await filteredResponse.json()).aaData));await filterModal.waitFor({state:'hidden'});
+        }
         assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany, 'native route keeps the selected company: ' + route);
         assert.equal(await page.locator('#wrapper .content').count(), 1, 'native route keeps one original CRM content root: ' + route);
         await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));

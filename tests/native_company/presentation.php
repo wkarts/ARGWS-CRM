@@ -89,7 +89,11 @@ check($app['options']['tables_pagination_limit']==='37' && $app['options']['deci
 check($app['options']['date_format']==='d/m/Y' && $app['options']['has_permission_create_task']===true,'native app uses persisted formatting and actual create ACL');
 check($app['lang']['search_tasks']==='Buscar Tarefas' && $app['tinymce_lang']==='pt_BR','native app trusted locale');
 check($app['available_tags']===['<tag A>']&&$app['available_tags_ids']===['94489280513'],'tag catalog preserves actual labels and canonical IDs');
-foreach(['user_is_admin'] as $unknown)check(!array_key_exists($unknown,$app),'no fabricated or global app field '.$unknown);
+check($app['user_is_admin']===1,'filter administrative affordance derives from current issuer policy');
+IssuerResourceAccess::$administrative=false;check(NativeCompanyAdminPresentation::appConfig($ci)['user_is_admin']===0,'revoked company administration does not retain an admin filter affordance');IssuerResourceAccess::$administrative=true;
+foreach(['filter_new','filter_apply','filters'] as $key)check(isset($app['lang'][$key])&&$app['lang'][$key]!==$key,'original filter label uses trusted PT-BR '.$key);
+$originalRouter=$ci->router;$ci->router=new class{function fetch_class(){return 'tickets';}function fetch_method(){return 'index';}};
+$ticketScripts=NativeCompanyAdminPresentation::scripts($ci);check(count(array_keys($ticketScripts,'assets/builds/app.js',true))===1&&array_search('assets/builds/app.js',$ticketScripts,true)>array_search('assets/js/tickets.js',$ticketScripts,true),'ticket index reuses one original Vue bundle after native handlers');$ci->router=$originalRouter;
 check($app['options']['allowed_files']==='.pdf' && (int)$app['max_php_ini_upload_size_bytes']>0,'upload preferences and actual PHP cap projected');check(!array_key_exists('google_api',$app['options']),'no provider settings');
 check($data['total_unfinished_todos']===5,'actual todo provider count not fabricated');
 check(count($data['quick_actions'])===2,'quick actions use explicit create ACL and native route catalog');
@@ -125,10 +129,12 @@ $reflection->setValue(null,$original);
 
 CompanyRequestScope::$token='changed';try{NativeCompanyAdminPresentation::current($ci);throw new RuntimeException('stale accepted');}catch(LogicException $e){check($e->getMessage()==='native_company_presentation_stale','stale token blocked');}
 CompanyRequestScope::$issuer=3;CompanyRequestScope::$token='3:revision';NativeCompanyAdminPresentation::prepare($ci);$data=NativeCompanyAdminPresentation::current($ci);check(!isset($data['sidebar_menu']['customers']),'A grants not reused for B');check(NativeCompanyAdminPresentation::appConfig($ci)['available_tags']===['B'],'A tags not reused for B');check(!isset($data['total_unfinished_todos']),'A todo data not reused for B');check($data['quick_actions']===[],'A quick actions not reused for B');check(NativeCompanyAdminPresentation::appConfig($ci)['options']['has_permission_create_task']===false,'A app permission not reused for B');check(NativeCompanyAdminPresentation::appConfig($ci)['options']['allowed_files']==='.txt','A upload policy not reused for B');
+check(NativeCompanyAdminPresentation::appConfig($ci)['user_is_admin']===0,'A administrative affordance never leaks into company B');
 check($data['logo']==='data:image/png;base64,QQ=='&&$data['favicon']===base_url('assets/images/argws/favicon.png'),'B uses its own logo and public favicon fallback');
 CompanyAssets::$invalid=true;try{NativeCompanyAdminPresentation::prepare($ci);throw new RuntimeException('remote branding accepted');}catch(LogicException $e){check($e->getMessage()==='native_branding_projection_invalid','remote URL rejected');}CompanyAssets::$invalid=false;$brandingCalls=CompanyAssets::$calls;
 CompanyRequestScope::$issuer=null;CompanyRequestScope::$token='17:0';NativeCompanyAdminPresentation::prepare($ci);$data=NativeCompanyAdminPresentation::current($ci);check($data['sidebar_menu']===[] && $data['setup_menu']===[],'no selection has no resource links');
 check(CompanyAssets::$calls===$brandingCalls&&$data['logo']===base_url('assets/images/argws/logo-dark.png'),'no selection does not read company branding');
 ob_start();foreach(['head','header','setup_menu','aside','scripts'] as $name)$ci->view('admin/includes/'.$name);$empty=ob_get_clean();check(str_contains($empty,'data-fixture-selector'),'selection remains available');
+check(NativeCompanyAdminPresentation::appConfig($ci)['user_is_admin']===0,'unselected context has no administrative affordance');
 CompanyRequestScope::$native=false;check(NativeCompanyAdminPresentation::current($ci)===null,'legacy path remains separate');
 echo "Native presentation real templates and A/B/null/stale negative dependencies passed.\n";

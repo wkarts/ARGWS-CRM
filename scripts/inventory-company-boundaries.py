@@ -86,7 +86,8 @@ def main() -> int:
     if args.check:
         if not output.exists() or output.read_text() != encoded:
             print('Inventory is stale; regenerate and review changed boundaries.')
-            print('Expected boundary source_sha256: ' + report['source_sha256'])
+            if not args.full:
+                print('Expected boundary source_sha256: ' + report['source_sha256'])
             return 1
     else:
         output.parent.mkdir(parents=True, exist_ok=True); output.write_text(encoded)
