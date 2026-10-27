@@ -263,7 +263,7 @@ async function captureRealScreens(page, routes) {
       // endpoints. Exercise its real form, not only a request assembled by a test.
       calendarStage('principal_widget_create');
       const eventTitle='Synthetic principal calendar '+Date.now();
-      const eventStart=await page.evaluate(()=>new DateFormatter().formatDate(new Date(2026,9,26,10,0),app.options.date_format+(app.options.time_format==24?' H:i':' g:i A')));
+      const eventStart=await page.evaluate(()=>new DateFormatter().formatDate((()=>{const day=new Date();day.setHours(10,0,0,0);return day;})(),app.options.date_format+(app.options.time_format==24?' H:i':' g:i A')));
       await page.goto(url+'/admin?new_event=1&date='+encodeURIComponent(eventStart));
       const widgetModal=page.locator('#newEventModal');await widgetModal.waitFor({state:'visible'});
       await widgetModal.locator('[name=title]').fill(eventTitle);
@@ -301,14 +301,19 @@ async function captureRealScreens(page, routes) {
       assert.equal(await page.locator('#newEventModal [name=_native_company_csrf]').count(),1,'native new-event form also carries one CSRF field rather than duplicate serialization');
       await page.screenshot({path:output+'/native-principal-calendar-before-event.png',fullPage:true,mask:[page.locator('input,textarea')]});
       calendarStage('original_modal_read');
-      const eventTarget=page.locator('#calendar .fc-event-title').filter({hasText:eventTitle});
+      // The time/dot remain tappable when FullCalendar shrinks its title to
+      // zero width in the mobile month grid. Click the actual owned event.
+      const eventTarget=page.locator('#calendar .fc-event').filter({has:page.locator('.fc-event-title').filter({hasText:eventTitle})});
+      assert.equal(await eventTarget.count(),1,'one actual owned event is the interaction target');
+      assert(await eventTarget.isVisible(),'the original event card is visible at the retained mobile viewport');
       const interaction=await eventTarget.evaluate(node=>{
         const event=node.closest('.fc-event'),jq=window.jQuery,listeners=event&&jq&&jq._data?jq._data(event,'events'):null;
         return {event_found:!!event,click_handlers:listeners&&listeners.click?listeners.click.length:0,
           has_href:!!event?.getAttribute('href'),native_body:document.body.classList.contains('native-company-admin'),
           small_body:document.body.classList.contains('page-small'),sidebar_shown:document.body.classList.contains('show-sidebar'),
           view_handler:typeof window.view_event,transport:typeof window.NativeCompanyTransport?.request,
-          ancestor_link:!!node.closest('a[href]')};
+          ancestor_link:!!node.closest('a[href]'),viewport_width:innerWidth,
+          card_width:event?.getBoundingClientRect().width||0,title_width:event?.querySelector('.fc-event-title')?.getBoundingClientRect().width||0};
       });
       const calendarRequests=[];
       const recordCalendarRequest=request=>{
@@ -321,7 +326,12 @@ async function captureRealScreens(page, routes) {
       fs.writeFileSync(output+'/native-calendar-interaction.json',JSON.stringify({interaction,requests:calendarRequests},null,2));
       let eventRead;
       try {
-        [eventRead]=await Promise.all([page.waitForResponse(r=>r.request().method()==='GET'&&new URL(r.url()).pathname.startsWith('/admin/utilities/view_event/')),eventTarget.click()]);
+        const interactionResults=await Promise.allSettled([page.waitForResponse(r=>r.request().method()==='GET'&&new URL(r.url()).pathname.startsWith('/admin/utilities/view_event/')),eventTarget.click()]);
+        // If both waits expire, preserve Playwright's actual click/actionability
+        // error instead of losing it behind the earlier response timer.
+        if(interactionResults[1].status==='rejected')throw interactionResults[1].reason;
+        if(interactionResults[0].status==='rejected')throw interactionResults[0].reason;
+        eventRead=interactionResults[0].value;
       } finally {
         page.off('request',recordCalendarRequest);
         console.log('Native calendar interaction requests: '+JSON.stringify(calendarRequests));
@@ -347,7 +357,7 @@ async function captureRealScreens(page, routes) {
       assert.equal(sql('SELECT SHA2(settings_json,256) FROM tblissuers_registry WHERE id='+Number(primaryCompany)),beforeCalendarFilter,'display filtering does not rewrite company settings');assert.equal(sql('SELECT COUNT(*) FROM tblcompany_events'),eventsBeforeFilter,'display filtering creates no event');
       const oldCalendarFilterForm=await page.locator('#calendar_filters form').evaluate(node=>Object.fromEntries(new FormData(node).entries()));
       calendarStage('original_modal_delete');
-      await page.locator('#calendar .fc-event-title').filter({hasText:eventTitle}).click();await eventModal.waitFor({state:'visible'});assert.equal(await eventModal.locator('[name=revision]').inputValue(),'2');
+      await eventTarget.click();await eventModal.waitFor({state:'visible'});assert.equal(await eventModal.locator('[name=revision]').inputValue(),'2');
       page.once('dialog',dialog=>dialog.accept());
       const eventDeletion=page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname.startsWith('/admin/utilities/delete_event/'));
       await Promise.all([page.waitForNavigation({waitUntil:'load'}),eventModal.locator('button.btn-danger').click()]);
