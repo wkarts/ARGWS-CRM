@@ -283,7 +283,8 @@ async function captureRealScreens(page, routes) {
           if(known.has(key))fields[key]=(key==='start'||key==='end')&&/^\d{4}-\d{2}-\d{2}(?:T[0-9:+Z.-]+)?$/.test(value)?value:{length:value.length,boolean:['true','1'].includes(value)};
           else unknown.push(key==='_'?'jquery_cache_buster':key==='_company_context'?'context_in_url':key==='_native_company_csrf'?'native_csrf_in_url':key===frameworkName?'framework_csrf_in_url':'other');
         }
-        const evidence={status:primaryFeedResponse.status(),method:primaryFeedResponse.request().method(),fields,unknown};
+        let responseKind='unreadable';try{const type=primaryFeedResponse.headers()['content-type']||'';if(type.includes('application/json')){const body=await primaryFeedResponse.json();responseKind=body&&body.success===false?'native_json_rejection':'other_json';}else{const body=await primaryFeedResponse.text();responseKind=body.includes('A empresa desta aba mudou.')?'company_context_changed':body.includes('Esta operação não está disponível no contexto de empresa atual.')?'company_context_denied':'other_document';}}catch{}
+        const requestHeaders=await primaryFeedResponse.request().allHeaders();const evidence={status:primaryFeedResponse.status(),method:primaryFeedResponse.request().method(),fields,unknown,response_kind:responseKind,company_context_header_present:typeof requestHeaders['x-company-context']==='string'};
         fs.writeFileSync(output+'/native-calendar-feed-failure.json',JSON.stringify(evidence,null,2));console.error('Native calendar feed request shape; no token/body values: '+JSON.stringify(evidence));
       }
       assert.equal(primaryFeedResponse.status(),200,'principal historical feed uses the shared authenticated endpoint');

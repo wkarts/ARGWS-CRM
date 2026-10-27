@@ -18,6 +18,8 @@ mysqli_report(MYSQLI_REPORT_OFF);
 $bootstrap=DB(nativeParams(),true);$bootstrap->close();
 class BbNativeDatabase extends CI_DB_mysqli_driver {
  public $beforeCommit=null;
+ public int $ddlCalls=0;
+ public function query($sql,$binds=false,$return_object=null){if(preg_match('/^\s*(?:CREATE|ALTER|DROP|TRUNCATE|RENAME)\b/i',$sql))++$this->ddlCalls;return parent::query($sql,$binds,$return_object);}
  public function trans_commit(){if($this->beforeCommit){$cb=$this->beforeCommit;$this->beforeCommit=null;$cb();}return parent::trans_commit();}
 }
 function nativeDb():BbNativeDatabase{$db=new BbNativeDatabase(nativeParams());if(!$db->initialize())throw new RuntimeException('mysql_unavailable');return $db;}
@@ -41,8 +43,17 @@ $n=0;$db=nativeDb();
 foreach(\BancoBrasil\ModuleSchema::statements('bb_native_') as $sql)check($db->query($sql)!==false,'native DDL');
 \BancoBrasil\LayoutSchema::upgrade($db,'bb_native_');\BancoBrasil\SchemaValidator::assertCompatible($db,'bb_native_',\BancoBrasil\LayoutSchema::requirements());check(true,'native mysqli schema verified');
 require_once dirname(__DIR__).'/modules/banco_brasil/libraries/BancoBrasil/ReturnArchiveSchema.php';
+require_once dirname(__DIR__).'/modules/banco_brasil/libraries/BancoBrasil/CheckoutSchema.php';
+require_once dirname(__DIR__).'/modules/banco_brasil/libraries/BancoBrasil/ApiOriginPolicy.php';
+check($db->query('SELECT 1 AS absent WHERE 1=0')->row_array()===null,'actual CI3 empty row is NULL, not the PDO fixture empty array');
+$beforeNativeAdditions=$db->ddlCalls;
+\BancoBrasil\CheckoutSchema::ensure($db,'bb_native_');\BancoBrasil\ApiOriginPolicy::ensure($db,'bb_native_');
 \BancoBrasil\ReturnArchiveSchema::upgrade($db,'bb_native_');
+check($db->ddlCalls===$beforeNativeAdditions+3,'actual mysqli creates exactly checkout, origin policy and return archive on absence');
+$nativeArchiveDdl=$db->ddlCalls;
+\BancoBrasil\CheckoutSchema::ensure($db,'bb_native_');\BancoBrasil\ApiOriginPolicy::ensure($db,'bb_native_');
 \BancoBrasil\ReturnArchiveSchema::upgrade($db,'bb_native_'); // Additive replay.
+check($db->ddlCalls===$nativeArchiveDdl,'actual mysqli replay of all three ledgers validates metadata with zero extra DDL');
 $store=new \BancoBrasil\ModuleStore($db,'bb_native_');
 $data=['account_id'=>'001:00452-3:000000123873-X','environment'=>'sandbox','agreement_number'=>'1234567','wallet'=>'17','variation'=>'019'];
 check($store->createConnection(1,9,['id'=>1,'tax_id'=>'12ABC34501DE35','legal_name'=>'EMPRESA SINTETICA'],$data)===1,'native connection write');

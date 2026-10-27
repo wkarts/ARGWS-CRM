@@ -219,6 +219,7 @@ final class CompanyRequestScope
     }
     private static function deny($ci, string $reason, int $status): void
     {
+        if(PHP_SAPI!=='cli'&&strtolower((string)$ci->router->fetch_class())==='utilities'&&in_array(strtolower((string)$ci->router->fetch_method()),['calendar','get_calendar_data','view_event','delete_event'],true))error_log('Native calendar boundary rejected ['.(in_array($reason,['company_context_mismatch','native_calendar_method_invalid','native_company_csrf_invalid','native_company_csrf_mismatch','company_context_unavailable','company_context_route_not_isolated'],true)?$reason:'unclassified_boundary').']; no request values logged.');
         // A provider callback denied before controller hydration must also discard its query.
         $mailCallback=trim((string)$ci->router->fetch_directory(),'/')==='admin'&&!$ci->router->fetch_module()
             &&in_array(strtolower((string)$ci->router->fetch_class()),['company_google_mail_oauth','company_microsoft_mail_oauth'],true)

@@ -1,4 +1,4 @@
-# Originais de retorno Banco do Brasil —1.3.1 / migrations130–131
+# Originais de retorno Banco do Brasil —1.3.2 / migrations130–132
 
 O importador atual valida o perfil240/400 declarado antes de registrar o arquivo.
 Além do hash e das observações existentes, passa a reter os bytes exatos, incluindo
@@ -12,8 +12,8 @@ bancária.
 A migration130 cria somente uma tabela InnoDB adicional, com chave única completa
 por arquivo. Valida tipos, nulabilidade e constraints existentes; não corrige
 silenciosamente uma tabela incompatível. Repetição é permitida. DDL dentro de
-transação alheia ou com configuração incompatível é recusado. Migrations101–130
-permanecem intactas; a versão exata1.3.1 só autoriza serviços após tracking nativo.
+transação alheia ou com configuração incompatível é recusado. Migrations101–131
+permanecem intactas; a versão exata1.3.2 só autoriza serviços após tracking nativo.
 
 Original, arquivo, eventos, vínculos e auditoria são gravados na mesma transação
 de importação. Falha ou INSERT ignorado do original aborta o conjunto. Hash,
