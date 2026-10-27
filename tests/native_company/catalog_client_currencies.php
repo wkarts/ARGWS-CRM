@@ -14,11 +14,14 @@ echo "Native item currency references: three real SQLite checks passed.\n";
 // CodeIgniter renderer/output are doubles; they expose a revocation during render.
 if(class_exists('CompanyRequestScope',false)||class_exists('AdminController',false))throw new LogicException('catalogue controller fixture has unexpected framework owner');
 if(!function_exists('_l')){function _l($key,...$arguments){return$key;}}
+if(!class_exists('CompanyRequestScope',false)){
 class CompanyRequestScope {
     public static int $issuer=41;
     static function nativeFor($ci){return$ci===($GLOBALS['catalogPageOwner']??null);}
     static function context(){return new class {function issuerId(){return CompanyRequestScope::$issuer;}function staffId(){return 7;}};}
 }
+}
+if(!class_exists('AdminController',false)){
 class AdminController {
     public $db,$load,$output;
     function __construct(){
@@ -36,6 +39,7 @@ class AdminController {
             }
         };
     }
+}
 }
 $GLOBALS['catalogPageDb']=$db;
 require APPPATH.'controllers/admin/Invoice_items.php';
