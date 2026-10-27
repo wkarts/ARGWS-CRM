@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/calendar_feed.php';require_once APPPATH.'services/NativeCompanyCalendarEndpoints.php';
+require __DIR__.'/calendar_feed.php';require_once APPPATH.'services/NativeCompanyCalendarEndpoints.php';$nativeEndpointStart=$GLOBALS['essentialChecks'];
 if(!function_exists('db_prefix')){function db_prefix(){return $GLOBALS['p'];}}
 if(!function_exists('_l')){function _l($k){return $k;}}
 if(!function_exists('to_sql_date')){function to_sql_date($v,$time=false){return $v;}}
@@ -10,7 +10,13 @@ final class CompanyRequestScope{
     public static function nativeCsrfToken($ci){return 'synthetic-token';}
     public static function assertNativeMutation($ci){self::$calls++;if(!$ci->input->postAllowed||!self::$valid)throw new DomainException('native_mutation_denied');}
 }
-$input=new class{public array $data=[];public bool $postAllowed=true;function post($k=null){return $k===null?$this->data:($this->data[$k]??null);}function get(){return $GLOBALS['query'];}};$ci=(object)['db'=>$db,'input'=>$input];CompanyRequestScope::$issuer=$a;
+$input=new class{public array $data=[];public bool $postAllowed=true;public ?string $target=null;function post($k=null){return $k===null?$this->data:($this->data[$k]??null);}function get(){return $GLOBALS['query']+['_framework_route'=>'synthetic ambient metadata'];}function server($key,$clean=false){return $key==='REQUEST_URI'?$this->target:null;}};$ci=(object)['db'=>$db,'input'=>$input];CompanyRequestScope::$issuer=$a;
+$input->target='/admin/utilities/get_calendar_data?'.http_build_query(['start'=>'2026-09-27','end'=>'2026-11-08']);
+essentialCheck(count(NativeCompanyCalendarEndpoints::feed($ci))===9,'exact browser target reads all owned sources despite unrelated ambient framework input');
+$input->target.='&issuer_id='.$b;$beforeQueryReject=count($db->queries);essentialThrows(fn()=>NativeCompanyCalendarEndpoints::feed($ci),'native_calendar_range_invalid','unknown real HTTP company parameter is rejected even if framework input omits it');
+$rejectedQueries=array_slice($db->queries,$beforeQueryReject);essentialCheck(!array_filter($rejectedQueries,fn($q)=>preg_match('/FROM '.preg_quote($p,'/').'(?:invoices|company_events|company_reminders|company_sales_documents)\\b/i',$q[0])),'unknown HTTP query is rejected before reading any source content');
+foreach([null,'https://other.example/admin/utilities/get_calendar_data?start=2026-09-27&end=2026-11-08','/admin/utilities/get_calendar_data?'.str_repeat('end=2026-11-08&',65)]as$badTarget){$input->target=$badTarget;essentialThrows(fn()=>NativeCompanyCalendarEndpoints::feed($ci),'native_calendar_request_target_invalid','missing absolute or excessive target has no ambient-input fallback');}
+$input->target='/admin/utilities/get_calendar_data?'.http_build_query($query);
 $input->data=['title'=>'Native form event','description'=>'Synthetic','start'=>'2026-10-24 10:00:00','end'=>'','color'=>'#123456','reminder_before'=>'10','reminder_before_type'=>'minutes'];
 $result=NativeCompanyCalendarEndpoints::save($ci);essentialCheck($result['success']===true&&$result['revision']==='1','original form fields save real owned event');
 $input->data['eventid']=$result['eventid'];$input->data['revision']='1';$input->data['title']='Edited native form';$edited=NativeCompanyCalendarEndpoints::save($ci);essentialCheck($edited['revision']==='2','original event form edits through revision guard');
@@ -19,7 +25,7 @@ CompanyRequestScope::$issuer=$b;$input->data=['revision'=>'2'];essentialThrows(f
 CompanyRequestScope::$valid=false;essentialThrows(fn()=>NativeCompanyCalendarEndpoints::delete($ci,$result['eventid']),'native_mutation_denied','CSRF fails before delete service');CompanyRequestScope::$valid=true;
 $input->postAllowed=false;essentialThrows(fn()=>NativeCompanyCalendarEndpoints::delete($ci,$result['eventid']),'native_mutation_denied','GET delete forbidden');$input->postAllowed=true;
 essentialCheck(NativeCompanyCalendarEndpoints::delete($ci,$result['eventid'])['success']===true,'POST deletes original modal event after matching revision');
-echo "Calendar original endpoint adapters: 7 real SQLite checks; boundary double explicit, no HTTP claim.\n";
+echo 'Calendar original endpoint adapters: '.($GLOBALS['essentialChecks']-$nativeEndpointStart).' added checks ('.$db->driver().'); boundary double explicit, no HTTP claim.'.PHP_EOL;
 if(!$db->table_exists($p.'company_departments'))$db->query('CREATE TABLE '.$p.'company_departments(id INT PRIMARY KEY,issuer_id INT,calendar_id TEXT)');
 if(!$db->table_exists($p.'company_department_members'))$db->query('CREATE TABLE '.$p.'company_department_members(id INT PRIMARY KEY,issuer_id INT,staff_id INT,department_source_kind TEXT,department_source_id INT)');
 $db->query('INSERT INTO '.$p.'company_departments VALUES(1,?,?)',[$a,'a-calendar@example.test']);$db->query('INSERT INTO '.$p.'company_departments VALUES(2,?,?)',[$b,'b-calendar@example.test']);

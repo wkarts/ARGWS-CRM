@@ -21,7 +21,15 @@ final class NativeCompanyCalendarEndpoints
         $language=$store->get($i,'active_language');$template=CompanyEmailTemplates::findForIssuer($ci->db,db_prefix(),$i,'event-notification-to-staff',$language===''?'portuguese_br':$language);
         return['native_calendar'=>true,'native_calendar_values'=>$prefs['values'],'native_calendar_config'=>['options'=>$prefs['values']+['date_format'=>CompanySettingsFormats::dates()[$formats['dateformat']],'time_format'=>$formats['time_format'],'timezone'=>$timezone,'google_api'=>$google['api_key']],'calendar_ids'=>$google['calendar_ids']], 'native_calendar_email_active'=>$template!==null&&(int)$template->active===1,'native_calendar_actor'=>$a,'native_calendar_csrf'=>CompanyRequestScope::nativeCsrfToken($ci),'title'=>_l('calendar')];
     }
-    public static function feed($ci):array{[$i,$a]=self::context($ci);return(new NativeCompanyCalendarFeed($ci->db,db_prefix()))->read($i,$a,$ci->input->get());}
+    /** Read the origin-form HTTP target, not an ambient framework GET bag. */
+    private static function feedQuery($ci):array
+    {
+        $target=$ci->input->server('REQUEST_URI',false);
+        if(!is_string($target)||strlen($target)>8192||!str_starts_with($target,'/')||str_starts_with($target,'//')||str_contains($target,'#')||preg_match('/[\\x00-\\x20\\x7f]/',$target))throw new DomainException('native_calendar_request_target_invalid');
+        $query=parse_url($target,PHP_URL_QUERY);if($query===false||($query!==null&&substr_count($query,'&')+substr_count($query,';')>=64))throw new DomainException('native_calendar_request_target_invalid');
+        parse_str($query??'',$input);return $input;
+    }
+    public static function feed($ci):array{[$i,$a]=self::context($ci);return(new NativeCompanyCalendarFeed($ci->db,db_prefix()))->read($i,$a,self::feedQuery($ci));}
     /** Reauthorize the buffered original view before any private HTML is emitted. */
     public static function confirm($ci,array $prepared,$eventId=null):void
     {
