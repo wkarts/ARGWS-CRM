@@ -115,4 +115,4 @@ $db->query('ALTER TABLE '.$p.'bb_return_rejections DROP INDEX bb_return_rejectio
 try{essentialThrows(fn()=>BancoBrasil\ReturnRejectionSchema::upgrade($db,$p),'bb_schema_incompatible','weak rejection identity is never certified or repaired silently');}
 finally{$db->query('ALTER TABLE '.$p.'bb_return_rejections ADD UNIQUE KEY bb_return_rejection_identity(scope_key,layout_binding_id,content_hash,reason_code)');}
 essentialCheck($rejectionRows()===$schemaRows,'invalid schema validation preserves all private originals and diagnostics');
-echo 'BB rejected return originals: '.($GLOBALS['essentialChecks']-$rejectionStart).' actual MySQL/MariaDB checks; no bank calls or financial operations.'.PHP_EOL;
+echo 'BB rejected return originals: '.($GLOBALS['essentialChecks']-$rejectionStart).' actual MySQL/MariaDB checks; no bank calls; refusal scenarios preserve accepted and financial state.'.PHP_EOL;
