@@ -10628,7 +10628,7 @@
         },
         {
             "path": "application/controllers/admin/Dashboard.php",
-            "source_sha256": "a3797b93e1c6d9a1f4b54d50d9b970d53a8f0cd4f2f0ee5485689ec672e22908",
+            "source_sha256": "266bb4b5312547afaf83be95ee92224c6c249d6a88e80a5bd2f1635077849ce4",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",

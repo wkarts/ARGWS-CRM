@@ -87,3 +87,11 @@ $check(!NativeCompanyRoutes::admits('admin','','tasks','delete_timesheet','GET')
 
 $check(NativeCompanyRoutes::admits('admin','banco_brasil','banco_brasil','download_return','POST'),'private original return download uses original module POST route');
 $check(!NativeCompanyRoutes::admits('admin','banco_brasil','banco_brasil','download_return','GET'),'bank originals cannot be fetched by unprotected GET');
+
+foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb){
+ $check(NativeCompanyRoutes::admits('admin','','projects','staff_projects',$verb)===($verb==='POST'),'staff projects adapter is exposed only through its guarded native POST');
+}
+foreach(['index','view','project','delete','unknown']as$method)$check(!NativeCompanyRoutes::admits('admin','','projects',$method,'POST'),'staff table admission never opens other project endpoints');
+$check(!NativeCompanyRoutes::admits('admin','foreign','projects','staff_projects','POST'),'module cannot reuse native staff project admission');
+$check(!NativeCompanyRoutes::navigation('projects/staff_projects'),'table endpoint cannot become an arbitrary return destination');
+echo "Original Staff projects: finite POST-only admission preserved.\n";

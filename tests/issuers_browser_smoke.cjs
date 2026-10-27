@@ -253,7 +253,8 @@ async function captureRealScreens(page, routes) {
         assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), '/admin', 'valid principal context returns to the native CRM dashboard');
         assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), recoveryPrimary, 'successful repair preserves the principal context');
         assert.equal(sql("SELECT CONCAT(master_staff_id,':',primary_issuer_id,':',source) FROM tblissuers_installation_identity WHERE id=1"), recoveryIdentity, 'repair never changes persisted master or principal identity');
-        assert((await page.content()).includes('atualizado com sucesso'), 'native success alert is delivered');
+        calendarStage('primary_native_upgrade_feedback');
+      assert((await page.content()).includes('atualizado com sucesso'), 'native success alert is delivered');
         await page.getByText('O CRM foi atualizado com sucesso.', { exact: true }).waitFor({ state: 'visible' });
         assert.equal(sql('SELECT COUNT(*) FROM tblissuers_lock WHERE id=1'), '1');
         assertNativePermissionSchema('after authorized native recovery');
@@ -552,11 +553,13 @@ async function captureRealScreens(page, routes) {
           assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'),secondaryCompany,'principal to secondary return remains native after Departments');
         }
       }
+      calendarStage('native_staff_table');
       // Same production controller/views and DataTable transport, under the selected company.
       const staffRows = page.waitForResponse(r => r.request().method()==='POST' && new URL(r.url()).pathname==='/admin/staff');
       assert.equal((await page.goto(url+'/admin/staff')).status(),200);
       const staffTableResponse=await staffRows;assert.equal(staffTableResponse.status(),200);
       const staffTable=await staffTableResponse.json();assert(Array.isArray(staffTable.aaData));
+      calendarStage('native_staff_create_form');
       await page.goto(url+'/admin/staff/member');
       const nativeStaffForm=page.locator('.staff-form');
       assert.equal(await nativeStaffForm.locator('input[name=native_staff_form_revision]').count(),1);
@@ -567,19 +570,27 @@ async function captureRealScreens(page, routes) {
       await nativeStaffForm.locator('input[name=password]').fill('synthetic-native-stack-password');
       if(await nativeStaffForm.locator('input[name=send_welcome_email]').count()) await nativeStaffForm.locator('input[name=send_welcome_email]').uncheck();
       const oldStaffForm=await nativeStaffForm.evaluate(node=>Object.fromEntries(new FormData(node).entries()));
+      calendarStage('native_staff_create_post');
+      const staffProjectsRows=page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname==='/admin/projects/staff_projects');
       const createdStaffResponse=await Promise.all([page.waitForNavigation({waitUntil:'load'}),nativeStaffForm.locator('button[type=submit]').click()]);
       assert.equal(createdStaffResponse[0].status(),200,'native create returns to the same original member form');
       const nativeStaffId=sql("SELECT staffid FROM tblstaff WHERE email='"+nativeStaffEmail+"'");
       assert.match(nativeStaffId,/^[1-9]\d*$/);assert.equal(new URL(page.url()).pathname,'/admin/staff/member/'+nativeStaffId);
       assert.equal(sql('SELECT issuer_id FROM tblissuers_staff WHERE staff_id='+nativeStaffId),secondaryCompany,'creation belongs only to the selected company');
       assert.equal(sql('SELECT admin FROM tblstaff WHERE staffid='+nativeStaffId),'0','company creation grants no global administrator');
+      calendarStage('native_staff_projects');
+      const staffProjectsResponse=await staffProjectsRows;assert.equal(staffProjectsResponse.status(),200,'original member projects table uses the existing company-scoped endpoint');
+      assert(Array.isArray((await staffProjectsResponse.json()).aaData),'original member projects table receives real authorized rows');
+      calendarStage('native_staff_stale_form');
       await selectCompanyOption(page,primaryCompany);
       assert.equal((await context.request.post(url+'/admin/staff/member',{form:oldStaffForm,maxRedirects:0})).status(),409,'old native Staff form cannot write after a company switch');
       await selectCompanyOption(page,secondaryCompany);
       assert.equal((await page.goto(url+'/admin/staff/member/'+nativeStaffId)).status(),200);
+      calendarStage('native_staff_responsive_evidence');
       await captureRealScreens(page,[['native-staff-table',url+'/admin/staff'],['native-staff-member',url+'/admin/staff/member/'+nativeStaffId]]);
       await page.goto(url + '/admin');
       await shell(page);
+      calendarStage('secondary_native_upgrade');
       sql('DELETE FROM tblissuers_lock WHERE id=1');
       await page.goto(url + '/admin');
       await waitForUpgradeForm(page);
@@ -604,6 +615,7 @@ async function captureRealScreens(page, routes) {
       assert.equal(secondaryTransportStatus, 303);
       assert.equal(secondaryTransportHeaders.refresh, undefined);
       assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), '/admin');
+      calendarStage('secondary_native_upgrade_feedback');
       assert((await page.content()).includes('atualizado com sucesso'), 'native success alert is delivered');
       await page.locator('[role=status].alert-success').waitFor({ state: 'visible' });
       assert.equal(sql('SELECT COUNT(*) FROM tblissuers_lock WHERE id=1'), '1');

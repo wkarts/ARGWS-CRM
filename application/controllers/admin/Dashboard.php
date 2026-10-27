@@ -52,8 +52,8 @@ class Dashboard extends AdminController
         $stage = 'snapshot';
         try {
             $snapshot=$presenter->snapshot();
-            require_once APPPATH.'services/AdminDatabaseUpgrade.php';
-            $upgradeSuccess=AdminDatabaseUpgrade::peekContextSuccess($this,(string)$this->current_db_version);
+            require_once APPPATH.'services/AdminDatabaseUpgrade.php';$upgradeVersion=AdminDatabaseUpgrade::contextVersion($this);
+            $upgradeSuccess=AdminDatabaseUpgrade::peekContextSuccess($this,$upgradeVersion);
             $stage = 'view_composition';
             $viewData = $snapshot['view'] ?? null;
             if (!is_array($viewData)) { throw new UnexpectedValueException('company_dashboard_snapshot_view_invalid'); }
@@ -90,7 +90,7 @@ class Dashboard extends AdminController
                 throw new DomainException('company_dashboard_stale');
             }
             $presenter->confirm();
-            if($upgradeSuccess&&!AdminDatabaseUpgrade::consumeContextSuccess($this,(string)$this->current_db_version))throw new DomainException('company_dashboard_stale');
+            if($upgradeSuccess&&!AdminDatabaseUpgrade::consumeContextSuccess($this,$upgradeVersion))throw new DomainException('company_dashboard_stale');
             $this->output->set_header('Cache-Control: no-store');
             $this->output->set_output($html);
         } catch (DomainException $e) {

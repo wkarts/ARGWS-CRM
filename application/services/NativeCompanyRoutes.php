@@ -49,7 +49,7 @@ final class NativeCompanyRoutes
             'dismiss_announcement'=>['POST'], 'staff_email_exists'=>['POST'],
             'add_note'=>['POST'], 'edit_note'=>['POST'], 'delete_note'=>['POST'],
         ],
-        'tasks'=>['timer_tracking'=>['POST']],
+        'tasks'=>['timer_tracking'=>['POST']], 'projects'=>['staff_projects'=>['POST']],
         'staff'=>[
             'index'=>['GET','HEAD','POST'], 'member'=>['GET','HEAD','POST'],
             'role_changed'=>['GET'], 'change_staff_status'=>['POST'],

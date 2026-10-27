@@ -44,6 +44,21 @@ final class AdminDatabaseUpgrade
         return self::consumeSuccess($ci->session, CompanyRequestScope::context()->staffId(), $version);
     }
 
+    /** Persisted migration metadata, read only after the exact request owner was attested. */
+    public static function contextVersion($ci): string
+    {
+        if (!class_exists('CompanyRequestScope', false) || !CompanyRequestScope::sealedFor($ci)) {
+            throw new DomainException('native_upgrade_context_denied');
+        }
+        require_once __DIR__.'/issuers/IssuerStorage.php';
+        $rows = IssuerStorage::query($ci->db, 'SELECT version FROM '.db_prefix().'migrations LIMIT 2')->result_array();
+        if (count($rows) !== 1 || (!is_int($rows[0]['version'] ?? null) && !is_string($rows[0]['version'] ?? null))
+            || !preg_match('/^[0-9]+$/D', (string)$rows[0]['version'])) {
+            throw new RuntimeException('native_upgrade_version_unconfirmed');
+        }
+        return (string)$rows[0]['version'];
+    }
+
     /** Read-only preview: failed rendering or final ACL recheck must not consume feedback. */
     public static function peekContextSuccess($ci, string $version): bool
     {
