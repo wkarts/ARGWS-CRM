@@ -4,15 +4,16 @@ on:
     branches: [main, develop]
     paths: ['application/**', 'assets/**', 'modules/**', 'docs/companies/**', 'resources/**', 'tests/**', 'scripts/**', 'package*.json', 'webpack.mix.js', '.github/workflows/native-company-experience.yml']
   push:
-    # Temporary pre-PR bootstrap branch; remove this exact branch after the first
-    # successful focused checkpoint. PR/main coverage below remains permanent.
-    branches: [main, develop, fix/native-company-experience]
+    branches: [main, develop]
     paths: ['application/**', 'assets/**', 'modules/**', 'docs/companies/**', 'resources/**', 'tests/**', 'scripts/**', 'package*.json', 'webpack.mix.js', '.github/workflows/native-company-experience.yml']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   focused:
+    # The existing matrix checks must also gate the separate Node job.
+    needs: node-contracts
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -41,6 +42,14 @@ jobs:
       NATIVE_COMPANY_EVIDENCE: /tmp/native-company-focused
       NATIVE_COMPANY_SCREENSHOT_DIR: /tmp/native-company-focused/screenshots
     steps:
+      - name: Require successful Node contracts
+        env:
+          NODE_RESULT: ${{ needs.node-contracts.result }}
+        run: |
+          if [ "$NODE_RESULT" != success ]; then
+            echo "Node contracts did not succeed: $NODE_RESULT" >&2
+            exit 1
+          fi
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
@@ -56,8 +65,12 @@ jobs:
           php scripts/company-surface-inventory.php --check
           python3 scripts/inventory-company-boundaries.py --check
           python3 tests/company_ui_surface_inventory.py
-      - name: Test shared native UI contracts without browser
-        run: python3 scripts/ci/run-native-company-focused.py node
+      - name: Test Node contracts that execute PHP with PHP 8.5
+        if: matrix.php == '8.5'
+        run: |
+          node --test tests/companies/native_file_message_ui.test.cjs
+          node --test tests/native_header_overflow.test.cjs
+          node --test tests/native_company/invoice_calculation_differential.test.cjs
       - name: Test actual MySQL additive migration and schema metadata
         env:
           ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_native_module_audit;charset=utf8mb4
@@ -92,5 +105,30 @@ jobs:
         with:
           name: native-company-focused-php-${{ matrix.php }}
           path: /tmp/native-company-focused
+          if-no-files-found: warn
+          retention-days: 3
+  node-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+    env:
+      NATIVE_COMPANY_EVIDENCE: /tmp/native-company-node
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify pinned CI runtime
+        env:
+          EXPECTED_PHP: '8.1'
+        run: argws-ci-smoke
+      - name: Test shared native UI contracts without browser
+        run: python3 scripts/ci/run-native-company-focused.py node
+      - name: Preserve Node contract receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-company-focused-node
+          path: /tmp/native-company-node
           if-no-files-found: warn
           retention-days: 3

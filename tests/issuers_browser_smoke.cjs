@@ -526,8 +526,15 @@ async function captureRealScreens(page, routes) {
           calendarStage('native_items_read');
           const itemRead=page.waitForResponse(response=>response.request().method()==='GET'&&new URL(response.url()).pathname==='/admin/invoice_items/get_item_by_id/'+itemId);
           await page.locator('.table-invoice-items a[data-id="'+itemId+'"]').click();
-          assert.equal((await itemRead).status(),200,'typed item identity opens the original editor');
+          const itemReadResponse=await itemRead;
+          assert.equal(itemReadResponse.status(),200,'typed item identity opens the original editor');
+          const itemReadBody=await itemReadResponse.json();
+          assert.equal(itemReadBody.description,'Synthetic native catalog','the editor receives the created item from the server');
           await modal.waitFor({state:'visible'});
+          // A response event and the Bootstrap modal becoming visible can both
+          // precede jQuery's asynchronous .done() handler populating the form.
+          // Wait for that observable application state instead of racing it.
+          await page.waitForFunction(expected => document.querySelector('#invoice_item_form [name=description]')?.value === expected, 'Synthetic native catalog');
           assert.equal(await form.locator('[name=description]').inputValue(),'Synthetic native catalog');
           assert.equal(await form.locator('[name=long_description]').inputValue(),itemDetails,'native edit retains literal characters and line breaks');
           const oldItemForm=await form.evaluate(node=>Object.fromEntries(new FormData(node).entries()));
