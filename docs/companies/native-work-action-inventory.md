@@ -73,12 +73,12 @@ Base: `abbf6c7`. This is an internal integration inventory, not a claim of compl
 - `Tasks::list_tasks` — pending native issuer adapter and route-level proof.
 - `Tasks::table` — pending native issuer adapter and route-level proof.
 - `Tasks::kanban` — pending native issuer adapter and route-level proof.
-- `Tasks::ajax_search_assign_task_to_timer` — pending native issuer adapter and route-level proof.
+- `Tasks::ajax_search_assign_task_to_timer` — the existing scoped adapter is admitted for POST only. It requires the native company context and CSRF, resolves current actor assignments and source lineage, and excludes ineligible or cross-company candidates. The existing controller/SQLite fixture exercises these boundaries with a context double; authenticated HTTP, browser interaction and final-SHA evidence remain pending. This admission does not open the remaining task actions.
 - `Tasks::tasks_kanban_load_more` — pending native issuer adapter and route-level proof.
 - `Tasks::update_order` — pending native issuer adapter and route-level proof.
 - `Tasks::switch_kanban` — pending native issuer adapter and route-level proof.
-- `Tasks::get_billable_tasks_by_project` — pending native issuer adapter and route-level proof.
-- `Tasks::get_billable_tasks_by_customer_id` — pending native issuer adapter and route-level proof.
+- `Tasks::get_billable_tasks_by_project` — the original read-only GET endpoint is admitted to the existing issuer-bound selection adapter. The controller requires invoice view plus create or edit; the reader also checks task/customer/invoice views, source ownership and live snapshots. Controller/SQLite tests cover empty and denied selections, and the reader suite covers populated results; authenticated HTTP/browser and final-SHA proof remain pending. Selection does not authorize invoicing.
+- `Tasks::get_billable_tasks_by_customer_id` — same finite GET admission and selection-only guard; foreign customers and stale or unsupported lineage are denied. Authenticated HTTP/browser and final-SHA proof remain pending.
 - `Tasks::update_task_description` — pending native issuer adapter and route-level proof.
 - `Tasks::detailed_overview` — pending native issuer adapter and route-level proof.
 - `Tasks::init_relation_tasks` — pending native issuer adapter and route-level proof.

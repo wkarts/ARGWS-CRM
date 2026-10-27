@@ -49,7 +49,16 @@ final class NativeCompanyRoutes
             'dismiss_announcement'=>['POST'], 'staff_email_exists'=>['POST'],
             'add_note'=>['POST'], 'edit_note'=>['POST'], 'delete_note'=>['POST'],
         ],
-        'tasks'=>['timer_tracking'=>['POST']], 'projects'=>['staff_projects'=>['POST']],
+        'tasks'=>[
+            'timer_tracking'=>['POST'],
+            // This original picker has its own issuer/actor-bound reader and
+            // native CSRF guard; it does not admit the remaining Tasks actions.
+            'ajax_search_assign_task_to_timer'=>['POST'],
+            // Original invoice selectors are read-only, independently
+            // authorize invoice editing and resolve all customer/task lineage.
+            'get_billable_tasks_by_project'=>['GET'],
+            'get_billable_tasks_by_customer_id'=>['GET'],
+        ], 'projects'=>['staff_projects'=>['POST']],
         'staff'=>[
             'index'=>['GET','HEAD','POST'], 'member'=>['GET','HEAD','POST'],
             'role_changed'=>['GET'], 'change_staff_status'=>['POST'],

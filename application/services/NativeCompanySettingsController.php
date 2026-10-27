@@ -6,6 +6,25 @@ require_once __DIR__.'/NativeSettingsSections.php';
 /** Adapter for Settings::index and the existing admin/settings/all template only. */
 final class NativeCompanySettingsController
 {
+    /** Known form failures have stable HTTP meanings; unknown errors remain denied. */
+    private static function domainStatus(string $reason):int
+    {
+        return match($reason){
+            'native_settings_stale','native_clients_settings_stale','native_google_settings_stale',
+            'native_calendar_preferences_stale','native_mail_settings_stale','native_ticket_preferences_stale',
+            'native_invoice_sequence_stale','company_task_preferences_stale','company_task_operation_preferences_stale',
+            'company_task_timer_preferences_stale','company_task_timer_stop_preferences_stale','company_ticket_preferences_stale'=>409,
+            'native_settings_invalid','company_settings_invalid_input','issuer_invalid_name','issuer_invalid_tax_id',
+            'native_custom_field_required','native_clients_settings_invalid','native_google_settings_invalid',
+            'native_calendar_preferences_invalid','native_mail_settings_invalid','native_misc_settings_invalid',
+            'native_task_settings_invalid','native_ticket_preferences_invalid','native_invoice_sequence_invalid',
+            'company_task_preferences_invalid','company_task_operation_preferences_invalid',
+            'company_task_timer_preferences_invalid','company_task_timer_stop_preferences_invalid',
+            'company_ticket_preferences_invalid'=>422,
+            'company_settings_write_unconfirmed'=>503,
+            default=>403,
+        };
+    }
     public static function testMail($ci):void
     {
         try{
@@ -101,8 +120,12 @@ final class NativeCompanySettingsController
                 'native_settings_can_edit'=>CompanySettingsRuntime::can('edit'),
             ]);
         }catch(DomainException $e){
-            $status=$e->getMessage()==='native_settings_stale'?409:(in_array($e->getMessage(),['native_settings_invalid','company_settings_invalid_input','issuer_invalid_name','issuer_invalid_tax_id','native_custom_field_required'],true)?422:403);
-            show_error('Não foi possível concluir esta operação nas definições da empresa selecionada. Recarregue o formulário e confira suas permissões.',$status);
+            show_error('Não foi possível concluir esta operação nas definições da empresa selecionada. Recarregue o formulário e confira suas permissões.',self::domainStatus($e->getMessage()));
+        }catch(RuntimeException $e){
+            // Only recognized persistence/transaction failures are mapped. An
+            // unexpected programming error must not be silently reclassified.
+            if(!in_array($e->getMessage(),['issuer_storage_failed','issuer_commit_unconfirmed','issuer_transactional_storage_required'],true))throw $e;
+            show_error('Não foi possível confirmar a gravação das definições. Recarregue a página antes de tentar novamente.',503);
         }
     }
 }

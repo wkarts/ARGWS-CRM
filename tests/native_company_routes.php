@@ -83,6 +83,18 @@ echo "Native Staff admission: {$checks} total assertions passed.\n";
 
 foreach(['add_note','edit_note','delete_note']as$method){$check(NativeCompanyRoutes::admits('admin','','misc',$method,'POST'),'scoped Staff notes have native mutation admission');$check(!NativeCompanyRoutes::admits('admin','','misc',$method,'GET'),'notes never mutate by GET');}
 $check(NativeCompanyRoutes::admits('admin','','tasks','timer_tracking','POST'),'own scoped timer action is available to Staff report');
+foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb){
+ $check(NativeCompanyRoutes::admits('admin','','tasks','ajax_search_assign_task_to_timer',$verb)===($verb==='POST'),'timer task picker is admitted only as guarded POST');
+}
+$check(!NativeCompanyRoutes::admits('admin','foreign','tasks','ajax_search_assign_task_to_timer','POST'),'other modules cannot reuse the native timer picker');
+$check(!NativeCompanyRoutes::navigation('tasks/ajax_search_assign_task_to_timer'),'timer picker is not a navigation or return destination');
+foreach(['get_billable_tasks_by_project','get_billable_tasks_by_customer_id'] as $method){
+ foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb){
+  $check(NativeCompanyRoutes::admits('admin','','tasks',$method,$verb)===($verb==='GET'),'invoice task selector is read-only GET: '.$method.'/'.$verb);
+ }
+ $check(!NativeCompanyRoutes::admits('admin','foreign','tasks',$method,'GET'),'other modules cannot reuse invoice task selector');
+ $check(!NativeCompanyRoutes::navigation('tasks/'.$method),'invoice task selector is not a navigation destination');
+}
 $check(!NativeCompanyRoutes::admits('admin','','tasks','delete_timesheet','GET'),'legacy timesheet deletion remains denied');
 
 $check(NativeCompanyRoutes::admits('admin','banco_brasil','banco_brasil','download_return','POST'),'private original return download uses original module POST route');
