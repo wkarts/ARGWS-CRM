@@ -122,6 +122,8 @@ async function captureRealScreens(page, routes) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
   const page = await context.newPage();
   const errors = [];
+  let nativeCalendarStage = 'not_started';
+  const calendarStage = stage => { nativeCalendarStage = stage; console.log('Native calendar browser stage: ' + stage); };
   page.on('pageerror', error => errors.push(error.message));
   // Keep test traffic local; synthetic installation has no integration configured.
   await context.route('**/*', route => new URL(route.request().url()).origin === url ? route.continue() : route.abort());
@@ -259,6 +261,7 @@ async function captureRealScreens(page, routes) {
       const primaryCompany = sql('SELECT primary_issuer_id FROM tblissuers_installation_identity WHERE id=1');
       // The original principal dashboard is also a caller of these shared
       // endpoints. Exercise its real form, not only a request assembled by a test.
+      calendarStage('principal_widget_create');
       const eventTitle='Synthetic principal calendar '+Date.now();
       const eventStart=await page.evaluate(()=>new DateFormatter().formatDate(new Date(2026,9,26,10,0),app.options.date_format+(app.options.time_format==24?' H:i':' g:i A')));
       await page.goto(url+'/admin?new_event=1&date='+encodeURIComponent(eventStart));
@@ -273,6 +276,7 @@ async function captureRealScreens(page, routes) {
       assert.equal((await widgetSaved.json()).success,true);
       assert.equal(sql("SELECT COUNT(*) FROM tblcompany_events WHERE issuer_id="+Number(primaryCompany)+" AND title='"+eventTitle+"'"),'1','widget writes only the principal company event lineage');
       await page.waitForURL(u=>u.pathname.replace(/\/$/,'')==='/admin'&&u.search==='');
+      calendarStage('principal_feed');
       const primaryCalendarFeed=page.waitForResponse(r=>new URL(r.url()).pathname==='/admin/utilities/get_calendar_data');
       assert.equal((await page.goto(url+'/admin/utilities/calendar')).status(),200,'principal uses the original native calendar route');
       const primaryFeedResponse=await primaryCalendarFeed;
@@ -296,15 +300,18 @@ async function captureRealScreens(page, routes) {
       assert.equal(await page.locator('#event').count(),1,'native footer provides the same single mount as the legacy CRM for its original event modal');
       assert.equal(await page.locator('#newEventModal [name=_native_company_csrf]').count(),1,'native new-event form also carries one CSRF field rather than duplicate serialization');
       await page.screenshot({path:output+'/native-principal-calendar-before-event.png',fullPage:true,mask:[page.locator('input,textarea')]});
+      calendarStage('original_modal_read');
       const [eventRead]=await Promise.all([page.waitForResponse(r=>r.request().method()==='GET'&&new URL(r.url()).pathname.startsWith('/admin/utilities/view_event/')),page.locator('#calendar .fc-event-title').filter({hasText:eventTitle}).click()]);assert.equal(eventRead.status(),200,'native page opens the event created by the original principal dashboard');
       const eventModal=page.locator('#viewEvent');await eventModal.waitFor({state:'visible'});assert.equal(await eventModal.locator('[name=revision]').inputValue(),'1');
       assert.equal(await eventModal.locator('[name=_native_company_csrf]').count(),1,'native edit serializes one CSRF value');
       assert.equal(await page.locator('#calendar-event-form').count(),1);assert.equal(await page.locator('#calendar-event-edit-form').count(),1,'new and edit forms have independent DOM IDs');
       await eventModal.locator('[name=description]').fill('Edited through original native calendar modal');
       if(await eventModal.locator('[name=reminder_before]').count())await eventModal.locator('[name=reminder_before]').fill('0');
+      calendarStage('original_modal_edit');
       const nativeEventSave=page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname==='/admin/utilities/calendar');
       await Promise.all([page.waitForNavigation({waitUntil:'load'}),eventModal.locator('button[type=submit]').click()]);
       assert.equal((await nativeEventSave).status(),200);assert.equal(sql("SELECT revision FROM tblcompany_events WHERE issuer_id="+Number(primaryCompany)+" AND title='"+eventTitle+"'"),'2','same original modal commits the native edit with its matching revision');
+      calendarStage('original_filters');
       const beforeCalendarFilter=sql('SELECT SHA2(settings_json,256) FROM tblissuers_registry WHERE id='+Number(primaryCompany)),eventsBeforeFilter=sql('SELECT COUNT(*) FROM tblcompany_events');
       await page.locator('.fc-calendarFilter-button').click();await page.locator('#calendar_filters [name=events]').check();
       const filteredCalendarFeed=page.waitForResponse(r=>new URL(r.url()).pathname==='/admin/utilities/get_calendar_data'&&new URL(r.url()).searchParams.get('calendar_filters')==='true');
@@ -313,12 +320,14 @@ async function captureRealScreens(page, routes) {
       const filterFeed=await filteredCalendarFeed;assert.equal(filterFeed.status(),200);const filteredEvents=await filterFeed.json();assert(filteredEvents.some(row=>row.title===eventTitle)&&filteredEvents.every(row=>Object.hasOwn(row,'eventid')),'original events checkbox reaches the real feed');
       assert.equal(sql('SELECT SHA2(settings_json,256) FROM tblissuers_registry WHERE id='+Number(primaryCompany)),beforeCalendarFilter,'display filtering does not rewrite company settings');assert.equal(sql('SELECT COUNT(*) FROM tblcompany_events'),eventsBeforeFilter,'display filtering creates no event');
       const oldCalendarFilterForm=await page.locator('#calendar_filters form').evaluate(node=>Object.fromEntries(new FormData(node).entries()));
+      calendarStage('original_modal_delete');
       await page.locator('#calendar .fc-event-title').filter({hasText:eventTitle}).click();await eventModal.waitFor({state:'visible'});assert.equal(await eventModal.locator('[name=revision]').inputValue(),'2');
       page.once('dialog',dialog=>dialog.accept());
       const eventDeletion=page.waitForResponse(r=>r.request().method()==='POST'&&new URL(r.url()).pathname.startsWith('/admin/utilities/delete_event/'));
       await Promise.all([page.waitForNavigation({waitUntil:'load'}),eventModal.locator('button.btn-danger').click()]);
       assert.equal((await eventDeletion).status(),200);assert.equal(sql("SELECT COUNT(*) FROM tblcompany_events WHERE issuer_id="+Number(primaryCompany)+" AND title='"+eventTitle+"'"),'0','revision-checked native modal deletion removes only that event');
       const oldCalendarForm=await page.locator('#calendar-event-form').evaluate(node=>Object.fromEntries(new FormData(node).entries()));
+      calendarStage('responsive_evidence');
       await captureRealScreens(page,[['native-principal-calendar',url+'/admin/utilities/calendar']]);
       if (sql("SELECT COUNT(*) FROM tblissuers_registry WHERE tax_id='52998224725'") === '0') {
         await page.goto(url + '/admin/company_onboarding');
@@ -462,7 +471,16 @@ async function captureRealScreens(page, routes) {
       assert.ok(selectedCompanyLabel.replace(/\(principal\)/g, '').trim(), 'empty optional display identity retains the authorized canonical company name');
       await captureRealScreens(page, [['companies-grid',url + '/admin/issuers'], ['company-settings',url + '/admin/settings?group=company']]);
     }
+    calendarStage('completed');
     assert.deepEqual(errors, [], 'no uncaught JavaScript errors in native shell');
     console.log('Issuer browser smoke passed: native shell/menu, installation/upgrade, errors/retry, desktop/mobile.');
+  } catch (error) {
+    // Closed stage names locate an actual browser failure without logging form,
+    // response, URL query, company context, CSRF or credential values.
+    const diagnostic = {calendar_stage:nativeCalendarStage, page_error_count:errors.length,
+      missing_identifiers:errors.map(message => /^([A-Za-z_$][A-Za-z0-9_$]{0,79}) is not defined$/.exec(message)?.[1]).filter(Boolean)};
+    console.error('Native browser failure stage: ' + JSON.stringify(diagnostic));
+    fs.writeFileSync(output + '/native-browser-failure-stage.json', JSON.stringify(diagnostic,null,2));
+    throw error;
   } finally { await browser.close(); }
 })().catch(error => { console.error(error.message); process.exitCode = 1; });
