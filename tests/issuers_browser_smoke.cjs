@@ -122,9 +122,21 @@ async function captureRealScreens(page, routes) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
   const page = await context.newPage();
   const errors = [];
+  const errorDiagnostics = [];
   let nativeCalendarStage = 'not_started';
   const calendarStage = stage => { nativeCalendarStage = stage; console.log('Native calendar browser stage: ' + stage); };
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', error => {
+    errors.push(error.message);
+    // Only code identifiers/static asset locations; never messages, URLs or values.
+    const missing = /^([A-Za-z_$][A-Za-z0-9_$]{0,79}) is not defined$/.exec(error.message);
+    const property = /\(reading '([A-Za-z_$][A-Za-z0-9_$]{0,79})'\)/.exec(error.message);
+    const callable = /^([A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*){0,5}) is not a function$/.exec(error.message);
+    const assets = [...String(error.stack || '').matchAll(/\/(assets\/[A-Za-z0-9_./-]+\.js):(\d+):(\d+)/g)]
+      .slice(0,5).map(match => ({path:match[1],line:Number(match[2]),column:Number(match[3])}));
+    errorDiagnostics.push({stage:nativeCalendarStage,
+      kind:['Error','TypeError','ReferenceError','SyntaxError','RangeError'].includes(error.name)?error.name:'OtherError',
+      missing:missing?.[1]||null,property:property?.[1]||null,callable:callable?.[1]||null,assets});
+  });
   // Keep test traffic local; synthetic installation has no integration configured.
   await context.route('**/*', route => new URL(route.request().url()).origin === url ? route.continue() : route.abort());
   try {
@@ -428,6 +440,7 @@ async function captureRealScreens(page, routes) {
       assert.equal(sql('SELECT COUNT(*) FROM tblcompany_events'),calendarEventsBeforeStale,'stale calendar submission creates no event');
       const nativeRoutes = ['todo','announcements','taxes','departments','tickets','invoice_items','settings?group=company','utilities/calendar','staff','staff/member'];
       for (const route of nativeRoutes) {
+        calendarStage('native_route_'+route.split('?')[0].replaceAll('/','_'));
         let initialTicketTable=null;
         const isTicketTable=response=>response.request().method()==='POST'&&new URL(response.url()).pathname==='/admin/tickets';
         const rememberTicketTable=response=>{if(isTicketTable(response)&&!initialTicketTable)initialTicketTable=response;};
@@ -462,7 +475,7 @@ async function captureRealScreens(page, routes) {
           const rules=filterModal.locator('#ticketsRules'),rulePicker=filterModal.locator('.bootstrap-select').filter({has:page.locator('#ticketsRules')});
           const subjectLabel=(await rules.locator('option[value=subject]').textContent()).trim();
           await rulePicker.locator('button.dropdown-toggle').click();
-          await rulePicker.getByRole('option',{name:subjectLabel,exact:true}).click();
+          await rulePicker.locator('.dropdown-menu a[role=option]').getByText(subjectLabel,{exact:true}).click();
           const subject=filterModal.locator('input[type=text]:visible');
           assert.equal(await subject.count(),1,'new subject rule uses the original text input');
           await subject.fill('Synthetic native filter');
@@ -557,7 +570,7 @@ async function captureRealScreens(page, routes) {
     // Closed stage names locate an actual browser failure without logging form,
     // response, URL query, company context, CSRF or credential values.
     const diagnostic = {calendar_stage:nativeCalendarStage, page_error_count:errors.length,
-      missing_identifiers:errors.map(message => /^([A-Za-z_$][A-Za-z0-9_$]{0,79}) is not defined$/.exec(message)?.[1]).filter(Boolean)};
+      missing_identifiers:errors.map(message => /^([A-Za-z_$][A-Za-z0-9_$]{0,79}) is not defined$/.exec(message)?.[1]).filter(Boolean), error_diagnostics:errorDiagnostics};
     console.error('Native browser failure stage: ' + JSON.stringify(diagnostic));
     fs.writeFileSync(output + '/native-browser-failure-stage.json', JSON.stringify(diagnostic,null,2));
     throw error;
