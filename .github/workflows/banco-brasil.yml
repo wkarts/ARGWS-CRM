@@ -81,6 +81,8 @@ jobs:
           coverage: none
       - run: |
           set -x # Trace test entrypoints only; no credential values or banking payloads.
+          # Test native install/upgrade early before lengthy independent SQL suites.
+          php tests/banco_brasil_resume_443_module_tracking.php
           php tests/banco_brasil_mysql.php
           php tests/banco_brasil_layout_mysql.php
           php tests/banco_brasil_return_rejections_mysql.php
@@ -131,7 +133,6 @@ jobs:
           php tests/banco_brasil_cnab400_aux_mysql.php
           php tests/banco_brasil_cnab400_aux_controller.php
           php tests/banco_brasil_cnab400_aux_concurrency.php
-          php tests/banco_brasil_resume_443_module_tracking.php
           #447: explicit tariff basis and closed LOCAL cycle, real SQL/faults/concurrency/readers.
           php tests/banco_brasil_tariff_readers.php
           php tests/banco_brasil_tariff_controller.php
@@ -181,6 +182,8 @@ jobs:
           ISSUERS_TEST_PASSWORD: synthetic-ci-password
         run: |
           set -x # Preserve the exact test at a failure/cancellation.
+          # Test native install/upgrade early before lengthy independent SQL suites.
+          php tests/banco_brasil_resume_443_module_tracking.php
           php tests/banco_brasil_mysql.php
           php tests/banco_brasil_layout_mysql.php
           php tests/banco_brasil_return_rejections_mysql.php
@@ -243,7 +246,6 @@ jobs:
           php tests/banco_brasil_cnab400_aux_mysql.php
           php tests/banco_brasil_cnab400_aux_controller.php
           php tests/banco_brasil_cnab400_aux_concurrency.php
-          php tests/banco_brasil_resume_443_module_tracking.php
           #447: explicit tariff basis and closed LOCAL cycle, real SQL/faults/concurrency/readers.
           php tests/banco_brasil_tariff_readers.php
           php tests/banco_brasil_tariff_controller.php

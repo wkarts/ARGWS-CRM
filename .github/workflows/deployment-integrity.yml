@@ -18,7 +18,7 @@ jobs:
         run: |
           ruby -e 'require "yaml"; ARGV.each { |path| YAML.load_file(path, aliases: true); puts path }' .github/workflows/*.yml
       - name: Validar ordem dos preflights e isolamento das ferramentas
-        run: node --test tests/ci_preflight_order.test.cjs
+        run: node --test tests/ci_preflight_order.test.cjs tests/native_company/mail_queue_form.test.cjs
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

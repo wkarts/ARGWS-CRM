@@ -323,6 +323,12 @@ echo render_input('settings[smtp_password]', 'settings_email_password', $ps, 'pa
 <script>
 (function(){
  var commandFields=<?= json_encode($native_settings_email['command_fields'],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?>;
+ // DataTables creates a named pagination select inside the surrounding Settings
+ // form. It controls only the queue display and is not a Settings POST field.
+ var settingsForm=document.getElementById('settings-form');
+ if(settingsForm)settingsForm.addEventListener('submit',function(){
+  settingsForm.querySelectorAll('#email_queue .dataTables_length select[name]').forEach(function(select){select.removeAttribute('name');});
+ });
  document.querySelectorAll('.native-mail-command').forEach(function(button){button.addEventListener('click',function(){
   if(button.disabled)return;var target=new URL(button.dataset.url,window.location.href);if(target.origin!==window.location.origin)return;
   var form=document.createElement('form');form.method='POST';form.action=target.href;

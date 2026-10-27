@@ -59,6 +59,16 @@ async function next(page) { await navigate(page, page.locator('section form butt
     async function configure(id,letter){
       await select(id);await page.goto(url+'/admin/settings?group=email');
       const form=page.locator('#settings-form');
+      await form.locator('a[href="#email_queue"]').click();
+      const pagination=form.locator('#email_queue .dataTables_length select[name]');
+      await pagination.waitFor({state:'visible'});
+      const paginationName=await pagination.getAttribute('name');
+      assert.match(paginationName || '', /^DataTables_Table_\d+_length$/);
+      const nextLength=await pagination.evaluate(select=>Array.from(select.options).find(option=>option.value!==select.value && /^\d+$/.test(option.value))?.value);
+      assert.ok(nextLength,'queue offers another page length');
+      await pagination.selectOption(nextLength);
+      assert.equal(await form.locator('#email_queue table.dt-table').evaluate(table=>window.jQuery(table).DataTable().page.len()),Number(nextLength),'queue pagination remains functional');
+      await form.locator('a[href="#email_config"]').click();
       if (!await form.locator('#smtp').isChecked()) await form.locator('label[for="smtp"]').click();
       await form.locator('input[name="settings[smtp_host]"]').fill('smtp-'+letter+'.example.invalid');
       await form.locator('input[name="settings[smtp_port]"]').fill('587');
@@ -93,7 +103,12 @@ async function next(page) { await navigate(page, page.locator('section form butt
           smtpEmailBasicValid:typeof email==='string'&&(email===''||/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
         };
       });
-      const saved=await navigate(page,form.locator('button[type=submit]'));
+      const actionPath=await form.evaluate(node=>new URL(node.action).pathname);
+      const saveRequest=page.waitForRequest(request=>request.method()==='POST'&&new URL(request.url()).pathname===actionPath);
+      const [saved,submitted]=await Promise.all([navigate(page,form.locator('button[type=submit]')),saveRequest]);
+      const submittedBody=submitted.postData();
+      assert.equal(typeof submittedBody,'string','Settings submission has a request body');
+      assert(!submittedBody.includes('name="'+paginationName+'"')&&!submittedBody.includes(encodeURIComponent(paginationName)+'='),'queue pagination is not submitted as a Settings option');
       if(saved.status()===422)console.error('Synthetic SMTP form diagnostics:',JSON.stringify(mailDiagnostics));
       assert.equal(saved.status(),200,'native settings POST redirects to its saved form');
       assert(new URL(page.url()).searchParams.get('group')==='email');
