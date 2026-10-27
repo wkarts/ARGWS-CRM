@@ -1,6 +1,10 @@
 <?php
 require __DIR__.'/../settings/resume_439_support.php';
 require_once APPPATH.'services/NativeCompanyMailQueue.php';
+$db->resetInsertIdAfterRead=true; // Exercise real operations under strict mysqli-like ID lifetime.
+$db->query('INSERT INTO '.$p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,NULL,?)',[12,'synthetic_queue_insert_id',41,gmdate('Y-m-d H:i:s')]);
+essentialCheck($db->insert_id()>0,'strict queue fixture reads the generated audit id immediately');
+$db->query('SELECT 1');essentialCheck($db->insert_id()===0,'strict queue fixture resets insert id after a read');
 $db->query('CREATE TABLE '.$p.'mail_queue(id INTEGER PRIMARY KEY,issuer_id INTEGER NULL,email TEXT,headers TEXT,status TEXT,message TEXT)');
 foreach([[1,41,'a@example.invalid'],[2,82,'b@example.invalid'],[3,null,'principal@example.invalid']]as[$id,$issuer,$email])$db->query('INSERT INTO '.$p.'mail_queue VALUES(?,?,?,?,?,?)',[$id,$issuer,$email,serialize(['subject'=>'Owned subject '.$id,'syntheticSecret'=>'must-not-enter-view']),'pending','private body']);
 $queue=new NativeCompanyMailQueue($db,$p);$rows=$queue->page(41,12);

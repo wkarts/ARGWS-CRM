@@ -1,6 +1,7 @@
 <?php
 require __DIR__.'/settings_email.php';
 require_once APPPATH.'services/NativeCompanyMailTest.php';
+essentialCheck($db->resetInsertIdAfterRead,'SMTP test exercises strict mysqli-like insert-id lifetime');
 $db->query('CREATE TABLE '.$p.'mail_queue(id INTEGER PRIMARY KEY AUTOINCREMENT,engine TEXT,email TEXT,cc TEXT,bcc TEXT,message TEXT,alt_message TEXT,headers TEXT,attachments TEXT,status TEXT,date TEXT,issuer_id INTEGER)');
 $db->query('CREATE TABLE '.$p.'company_native_mail_dispatch_fences(queue_id INTEGER PRIMARY KEY,issuer_id INT NOT NULL,kind TEXT NOT NULL,binding_hash TEXT NOT NULL,state TEXT NOT NULL,attempt_key TEXT,created_at TEXT NOT NULL,dispatched_at TEXT,completed_at TEXT,UNIQUE(issuer_id,queue_id))');
 $current=$mail->page(41,7);$mail->save(41,7,$current['revision'],$current['values'],$seal439,$open439);

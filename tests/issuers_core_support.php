@@ -70,6 +70,8 @@ final class EssentialTestDb
     public ?string $failVersion = null;
     public ?int $failActive = null;
     public bool $failInsert = false;
+    /** Optional mysqli-like behavior for tests: a read invalidates insert_id(). */
+    public bool $resetInsertIdAfterRead = false;
     public bool $pretendVersionWrite = false;
     public ?int $pretendActiveWrite = null;
     public bool $db_debug = true;
@@ -167,7 +169,10 @@ final class EssentialTestDb
     public function trans_commit(): bool { return $this->pdo->commit(); }
     public function trans_rollback(): bool { return $this->pdo->inTransaction()?$this->pdo->rollBack():true; }
     public function trans_status(): bool { return true; }
-    public function insert_id(): int { return (int)$this->pdo->lastInsertId(); }
+    public function insert_id(): int {
+        $last = $this->queries === [] ? '' : $this->queries[array_key_last($this->queries)][0];
+        return $this->resetInsertIdAfterRead && preg_match('/^\s*SELECT\b/i', $last) ? 0 : (int)$this->pdo->lastInsertId();
+    }
     public function writes(): array
     {
         return array_values(array_filter($this->queries, static fn($query) => (bool) preg_match('/^(?:INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|FAILED|IGNORED)\b/i', $query[0])));

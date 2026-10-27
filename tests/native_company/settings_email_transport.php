@@ -1,8 +1,15 @@
 <?php
 require __DIR__.'/settings_email.php';
+// PDO SQLite preserves lastInsertId() across SELECT, while mysqli may reset it.
+// Enable strict driver behavior before testing the actual atomic composition.
+$db->resetInsertIdAfterRead=true;
+$db->query('INSERT INTO '.$p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,NULL,?)',[7,'synthetic_insert_id_driver',41,gmdate('Y-m-d H:i:s')]);
+essentialCheck($db->insert_id()>0,'strict insert-id fixture observes immediate audit identity');
+$db->query('SELECT 1');essentialCheck($db->insert_id()===0,'strict insert-id fixture invalidates identity after a read');
 $current=$mail->page(41,7);$selection=$current['values'];$selection['email_protocol']='google';
 $selected=$mail->save(41,7,$current['revision'],$selection,$seal439,$open439);
 essentialCheck($selected['transport']['mode']==='google'&&$selected['portal']['mode']==='google','same native protocol selection controls both bounded delivery policies');
+$replayed=$mail->save(41,7,$selected['revision'],$selected['values'],$seal439,$open439);essentialCheck($replayed===$selected,'repeated native save keeps the selected configuration stable under strict insert-id semantics');
 $policy=new CompanyMailTransportPolicy($db,$p);$portal=new CompanyPortalMailConfig($db,$p);
 settingThrows(fn()=>IssuerTransaction::run($db,$p,$mail->tables(),fn()=>$policy->stateInOwnedTransaction(41)),'company_google_mail_connection_required','configured account selection does not grant document dispatch before OAuth');
 settingThrows(fn()=>IssuerTransaction::run($db,$p,$mail->tables(),fn()=>$portal->stateInOwnedTransaction(41)),'company_google_mail_connection_required','configured account selection does not grant portal dispatch before OAuth');

@@ -36,7 +36,7 @@ final class NativeCompanyMailQueue
             // Delete only queue projections, never delivery receipts or append-only audit/history.
             IssuerStorage::query($this->db,'DELETE FROM '.$this->p.'mail_queue WHERE '.$where,$args);
             $this->affected(count($rows));
-            $event='native_mail_queue_removed';$stamp=gmdate('Y-m-d H:i:s');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,?,?)',[$a,$event,$i,$id,$stamp]);$this->affected(1);$audit=(int)$this->db->insert_id();
+            $event='native_mail_queue_removed';$stamp=gmdate('Y-m-d H:i:s');IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'issuers_audit(actor_id,event,issuer_id,subject_id,created_at) VALUES(?,?,?,?,?)',[$a,$event,$i,$id,$stamp]);$audit=(int)$this->db->insert_id();$this->affected(1);
             if($audit<1||!IssuerStorage::query($this->db,'SELECT id FROM '.$this->p.'issuers_audit WHERE id=? AND actor_id=? AND issuer_id=? AND event=? AND created_at=?',[$audit,$a,$i,$event,$stamp])->row_array())throw new RuntimeException('issuer_native_mail_queue_write_unconfirmed');
             $this->auth($i,$a,'edit');
         });
