@@ -152,7 +152,7 @@
 <script>
     $(function() {
         initDataTable('.table-departments', window.location.href, [4], [4], undefined, [1, 'asc']);
-        appValidateForm($('form'), {
+        appValidateForm($('#department-form'), {
             name: 'required',
             email: {
                 email: true,

@@ -70,7 +70,7 @@ $(function() {
 
     initDataTable('.table-taxes', window.location.href, [3], [3], undefined, [2, 'asc']);
 
-    appValidateForm($('form'), {
+    appValidateForm($('#tax_form'), {
         name: {
             required: true,
             remote: {

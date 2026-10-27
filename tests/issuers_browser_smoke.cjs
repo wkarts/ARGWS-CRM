@@ -444,6 +444,14 @@ async function captureRealScreens(page, routes) {
         await shell(page);
         assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany, 'native route keeps the selected company: ' + route);
         assert.equal(await page.locator('#wrapper .content').count(), 1, 'native route keeps one original CRM content root: ' + route);
+        await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+        assert.equal(await page.locator('.company-selector-form').evaluate(form=>!!window.jQuery(form).data('validator')),false,'business form validators never claim the company selector: '+route);
+        if(route==='departments'){
+          await selectCompanyOption(page,primaryCompany);
+          assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'),primaryCompany,'company selection from Departments performs the real native POST');
+          await selectCompanyOption(page,secondaryCompany);
+          assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'),secondaryCompany,'principal to secondary return remains native after Departments');
+        }
       }
       // Same production controller/views and DataTable transport, under the selected company.
       const staffRows = page.waitForResponse(r => r.request().method()==='POST' && new URL(r.url()).pathname==='/admin/staff');

@@ -72,7 +72,7 @@
 </div>
 <div class="modal fade" id="ticket_status" tabindex="-1" role="dialog">
     <div class="modal-dialog">
-        <?= form_open(admin_url('tickets/status')); ?>
+        <?= form_open(admin_url('tickets/status'), ['id' => 'ticket-status-form']); ?>
         <?php if(!empty($native_ticket_catalog)){ ?><input type="hidden" name="_company_context" value="<?= e($native_ticket_context); ?>"><input type="hidden" name="_native_company_csrf" value="<?= e($native_ticket_csrf); ?>"><?php } ?>
         <div class="modal-content">
             <div class="modal-header">
@@ -108,7 +108,7 @@
 <?php init_tail(); ?>
 <script>
     $(function() {
-        appValidateForm($('form'), {
+        appValidateForm($('#ticket-status-form'), {
             name: 'required'
         }, manage_ticket_statuses);
         $('#ticket_status').on('hidden.bs.modal', function(event) {

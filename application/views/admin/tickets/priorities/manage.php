@@ -65,7 +65,7 @@
 </div>
 <div class="modal fade" id="priority" tabindex="-1" role="dialog">
     <div class="modal-dialog">
-        <?= form_open(admin_url('tickets/priority')); ?>
+        <?= form_open(admin_url('tickets/priority'), ['id' => 'ticket-priority-form']); ?>
         <?php if(!empty($native_ticket_catalog)){ ?><input type="hidden" name="_company_context" value="<?= e($native_ticket_context); ?>"><input type="hidden" name="_native_company_csrf" value="<?= e($native_ticket_csrf); ?>"><?php } ?>
         <div class="modal-content">
             <div class="modal-header">
@@ -99,7 +99,7 @@
 <?php init_tail(); ?>
 <script>
     $(function() {
-        appValidateForm($('form'), {
+        appValidateForm($('#ticket-priority-form'), {
             name: 'required'
         }, manage_ticket_priorities);
         $('#priority').on('hidden.bs.modal', function(event) {

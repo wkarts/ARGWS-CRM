@@ -16,7 +16,7 @@
             </div>
             <div class="panel_s">
                 <div class="panel-body">
-                    <?= form_open($this->uri->uri_string()); ?>
+                    <?= form_open($this->uri->uri_string(), ['id' => 'predefined-reply-form']); ?>
         <?php if(!empty($native_ticket_catalog)){ ?><input type="hidden" name="_company_context" value="<?= e($native_ticket_context); ?>"><input type="hidden" name="_native_company_csrf" value="<?= e($native_ticket_csrf); ?>"><?php } ?>
                     <?php if(!empty($native_ticket_catalog)&&isset($predefined_reply)){ ?><input type="hidden" name="revision" value="<?= e($predefined_reply->revision_token); ?>"><?php } ?>
                     <?php $value = (isset($predefined_reply) ? $predefined_reply->name : ''); ?>
@@ -38,7 +38,7 @@ if (isset($predefined_reply)) {
 <?php init_tail(); ?>
 <script>
     $(function() {
-        appValidateForm($('form'), {
+        appValidateForm($('#predefined-reply-form'), {
             name: 'required'
         });
     });
