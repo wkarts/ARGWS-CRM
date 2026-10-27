@@ -1,0 +1,38 @@
+{
+  "oldDom": {
+    "validations": 0,
+    "bindings": 1,
+    "polls": 0,
+    "cleared": 0,
+    "initialized": false
+  },
+  "oldLoad": {
+    "validations": 0,
+    "bindings": 1,
+    "polls": 1,
+    "cleared": 0,
+    "initialized": false
+  },
+  "next": {
+    "validations": 1,
+    "bindings": 4,
+    "polls": 0,
+    "cleared": 0,
+    "initialized": true
+  },
+  "replaced": {
+    "validations": 2,
+    "bindings": 4,
+    "polls": 0,
+    "cleared": 0,
+    "initialized": true
+  },
+  "late": {
+    "validations": 1,
+    "bindings": 4,
+    "polls": 1,
+    "cleared": 1,
+    "initialized": true
+  },
+  "kind": "Actual inline scripts; explicit DOM/jQuery doubles in V8, no PHP/browser/network"
+}

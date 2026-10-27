@@ -32,7 +32,11 @@ class AdminController {
             function model($name){throw new LogicException('global model forbidden');}
             function view($name,$data,$return=false){
                 essentialCheck($name==='admin/invoice_items/manage'&&$return===true,'original catalogue view must be buffered');
-                essentialCheck(array_column($data['taxes'],'name')===(CompanyRequestScope::$issuer===41?['Secondary tax']:[])&&array_column($data['items_groups'],'name')===(CompanyRequestScope::$issuer===41?['Secondary group']:[]),'original controller reads the real selected catalogue only');
+                foreach(['taxes'=>['company_taxes','company_tax'],'items_groups'=>['company_item_groups','company_item_group']]as$field=>[$table,$kind]){
+                    $expected=[];foreach($GLOBALS['catalogPageDb']->query('SELECT id,name FROM '.db_prefix().$table.' WHERE issuer_id=?',[CompanyRequestScope::$issuer])->result_array()as$row)$expected[NativeCompanyResourceId::encode($kind,$row['id'])]=$row['name'];
+                    $actual=array_column($data[$field],'name','id');ksort($expected,SORT_STRING);ksort($actual,SORT_STRING);
+                    essentialCheck($actual===$expected&&count($actual)===count($data[$field]),'original controller returns every selected-company '.$field.' identity/name and no foreign or aliased row');
+                }
                 $this->views[]=$name;ob_start();echo 'synthetic-private-catalogue';
                 if($this->onRender!==null)($this->onRender)($data);
                 return ob_get_clean();
@@ -82,6 +86,7 @@ foreach([41,82]as$modalIssuer){
     };
     $modalPage->index();
     essentialCheck(str_contains($modalHtml,'name="revision"'),'original modal emits its revision even in actual loader scope');
+    essentialCheck(preg_match('/<input[^>]*type="number"[^>]*name="rate"[^>]*step="any"/',$modalHtml)===1,'original base price retains fractional HTML input validity');
     essentialCheck(str_contains($modalHtml,'name="rate_currency_2"')===($modalIssuer===41),'non-default currency fields use only the active company customer catalogue');
     essentialCheck(substr_count($modalHtml,'<form ')===1&&substr_count($modalHtml,'</form>')===1,'shared original modal retains one balanced action form');
 }

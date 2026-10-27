@@ -26,7 +26,7 @@
                         <div class="form-group">
                             <label for="rate" class="control-label">
                                 <?= _l('invoice_item_add_edit_rate_currency', e($base_currency->name) . ' <small>(' . _l('base_currency_string') . ')</small>'); ?></label>
-                            <input type="number" id="rate" name="rate" class="form-control" value="">
+                            <input type="number" id="rate" name="rate" class="form-control" step="any" value="">
                         </div>
                         <?php
                             $nativeItemCurrencies = null;
@@ -45,7 +45,7 @@
                             <input type="number"
                                 id="rate_currency_<?= e($currency['id']); ?>"
                                 name="rate_currency_<?= e($currency['id']); ?>"
-                                class="form-control" value="">
+                                class="form-control" step="any" value="">
                         </div>
                         <?php }
                                 }
@@ -107,19 +107,25 @@
     </div>
 </div>
 <script>
-    // Maybe in modal? Eq convert to invoice or convert proposal to estimate/invoice
-    if (typeof(jQuery) != 'undefined') {
-        init_item_js();
-    } else {
-        window.addEventListener('load', function() {
-            var initItemsJsInterval = setInterval(function() {
-                if (typeof(jQuery) != 'undefined') {
-                    init_item_js();
-                    clearInterval(initItemsJsInterval);
-                }
+    // The view precedes footer dependencies. Bind at DOM readiness, without
+    // delaying a usable modal until window.load plus the first polling tick.
+    (function () {
+        function ready() {
+            if (typeof jQuery === 'undefined' || typeof appValidateForm !== 'function') return false;
+            init_item_js();
+            return true;
+        }
+        function initialize() {
+            if (ready()) return;
+            var interval = setInterval(function () {
+                if (ready()) clearInterval(interval);
             }, 1000);
-        });
-    }
+        }
+        if (!ready()) {
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, {once:true});
+            else initialize();
+        }
+    })();
     // Items add/edit
     function manage_invoice_items(form) {
         var data = $(form).serialize();
@@ -177,8 +183,11 @@
     }
 
     function init_item_js() {
+        var form = $('#invoice_item_form');
+        if (!form.length || form.data('invoiceItemInitialized')) return;
+        validate_item_form();
         // Add item to preview from the dropdown for invoices estimates
-        $("body").on('change', 'select[name="item_select"]', function() {
+        $("body").off('change.invoiceItem', 'select[name="item_select"]').on('change.invoiceItem', 'select[name="item_select"]', function() {
             var itemid = $(this).selectpicker('val');
             if (itemid != '') {
                 add_item_to_preview(itemid);
@@ -186,7 +195,7 @@
         });
 
         // Items modal show action
-        $("body").on('show.bs.modal', '#sales_item_modal', function(event) {
+        $("body").off('show.bs.modal.invoiceItem', '#sales_item_modal').on('show.bs.modal.invoiceItem', '#sales_item_modal', function(event) {
 
             $('.affect-warning').addClass('hide');
 
@@ -238,11 +247,11 @@
             }
         });
 
-        $("body").on("hidden.bs.modal", '#sales_item_modal', function(event) {
+        $("body").off("hidden.bs.modal.invoiceItem", '#sales_item_modal').on("hidden.bs.modal.invoiceItem", '#sales_item_modal', function(event) {
             $('#item_select').selectpicker('val', '');
         });
 
-        validate_item_form();
+        form.data('invoiceItemInitialized', true);
     }
 
     function validate_item_form() {

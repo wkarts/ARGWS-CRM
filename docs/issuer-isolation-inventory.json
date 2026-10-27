@@ -6397,7 +6397,7 @@
       "evidence": ""
     },
     "application/views/admin/invoice_items/item.php": {
-      "sha256": "df623b8ad8983d76ac9849b2c7f19359c7eea591a2db231622d7d3d7ace1d7f3",
+      "sha256": "fb543197bc26f976c92fd3237551d6c4f32cebb7eeb94ccbeb1947a45eeb7bfc",
       "categories": [
         "customer_privacy"
       ],

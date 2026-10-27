@@ -500,21 +500,27 @@ async function captureRealScreens(page, routes) {
         await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
         assert.equal(await page.locator('.company-selector-form').evaluate(form=>!!window.jQuery(form).data('validator')),false,'business form validators never claim the company selector: '+route);
         if(route==='invoice_items'){
+          calendarStage('native_items_table');
           const tableResponse=initialItemTable||await page.waitForResponse(isItemTable);page.off('response',rememberItemTable);
           assert.equal(tableResponse.status(),200,'original item DataTable uses the guarded company endpoint');
           assert(Array.isArray((await tableResponse.json()).aaData));
           const modal=page.locator('#sales_item_modal'),form=modal.locator('#invoice_item_form');
+          await page.waitForFunction(()=>!!window.jQuery&&!!jQuery('#invoice_item_form').data('validator'));
+          calendarStage('native_items_create_form');
           await page.locator('#wrapper ._buttons [data-target="#sales_item_modal"]').click();
           await modal.waitFor({state:'visible'});
           await form.locator('[name=description]').fill('Synthetic native catalog');
           await form.locator('[name=rate]').fill('17.50');
+          assert.equal(await form.locator('[name=rate]').evaluate(node=>node.validity.stepMismatch),false,'original price input accepts cents through native HTML validity');
           await form.locator('[name=unit]').fill('un');
           const isItemSave=response=>response.request().method()==='POST'&&new URL(response.url()).pathname==='/admin/invoice_items/manage';
+          calendarStage('native_items_create_post');
           const created=await Promise.all([page.waitForResponse(isItemSave),form.locator('button[type=submit]').click()]);
           assert.equal(created[0].status(),200,'item creation posts the original form');
           const receipt=await created[0].json();assert.equal(receipt.success,true);
           const itemId=String(receipt.item.id);assert.match(itemId,/^[1-9][0-9]{0,15}$/);
           await modal.waitFor({state:'hidden'});
+          calendarStage('native_items_read');
           const itemRead=page.waitForResponse(response=>response.request().method()==='GET'&&new URL(response.url()).pathname==='/admin/invoice_items/get_item_by_id/'+itemId);
           await page.locator('.table-invoice-items a[data-id="'+itemId+'"]').click();
           assert.equal((await itemRead).status(),200,'typed item identity opens the original editor');
@@ -522,6 +528,7 @@ async function captureRealScreens(page, routes) {
           assert.equal(await form.locator('[name=description]').inputValue(),'Synthetic native catalog');
           const oldItemForm=await form.evaluate(node=>Object.fromEntries(new FormData(node).entries()));
           await form.locator('[name=description]').fill('Synthetic native catalog edited');
+          calendarStage('native_items_edit_post');
           const edited=await Promise.all([page.waitForResponse(isItemSave),form.locator('button[type=submit]').click()]);
           assert.equal(edited[0].status(),200,'item editing posts the same original form');
           const editedReceipt=await edited[0].json();assert.equal(editedReceipt.success,true);
@@ -529,6 +536,7 @@ async function captureRealScreens(page, routes) {
           await modal.waitFor({state:'hidden'});
           assert.equal(sql("SELECT COUNT(*) FROM tblcompany_items WHERE issuer_id="+secondaryCompany+" AND description='Synthetic native catalog edited'"),'1');
           assert.equal(sql("SELECT COUNT(*) FROM tblcompany_items WHERE issuer_id="+primaryCompany+" AND description='Synthetic native catalog edited'"),'0','secondary item never appears in the primary catalogue');
+          calendarStage('native_items_stale_form');
           await selectCompanyOption(page,primaryCompany);
           assert.equal((await context.request.post(url+'/admin/invoice_items/manage',{form:oldItemForm,maxRedirects:0})).status(),409,'old original item form cannot mutate after a company switch');
           await selectCompanyOption(page,secondaryCompany);

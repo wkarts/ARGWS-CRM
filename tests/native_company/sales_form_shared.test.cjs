@@ -75,3 +75,26 @@ test('original item lookup sends concrete invoice parent without changing legacy
  }
  assert.ok(read('application/views/admin/invoices/invoice.php').includes("init_ajax_search('items', '#item_select.ajax-search', native_invoice_catalog_context(), admin_url + 'items/search')"));
 });
+
+test('original item modal binds on DOM readiness and keeps one set of delegates (explicit DOM doubles)', () => {
+  const inline=read('application/views/admin/invoice_items/item.php').match(/<script>([\s\S]*?)<\/script>/)[1];
+  function probe(){
+    const callbacks={},timers=[],cleared=[],bindings=[{event:'change.other',selector:'select[name="item_select"]'}];let cache={},validations=0;
+    const form={length:1,data(key,value){if(arguments.length===2){cache[key]=value;return this;}return cache[key];}};
+    const body={off(event,selector){for(let i=bindings.length-1;i>=0;i--)if(bindings[i].event===event&&bindings[i].selector===selector)bindings.splice(i,1);return this;},on(event,selector,handler){bindings.push({event,selector,handler});return this;}};
+    const $=selector=>{if(selector==='#invoice_item_form')return form;if(selector==='body')return body;throw new Error('unexpected eager modal dependency');};
+    const context={window:{addEventListener:(name,fn)=>{(callbacks[name]??=[]).push(fn);}},document:{readyState:'loading',addEventListener:(name,fn)=>{(callbacks[name]??=[]).push(fn);}},$,
+      appValidateForm(target,rules){assert.equal(target,form);assert.equal(rules.description,'required');assert.equal(rules.rate.required,true);validations++;cache.validator={};},
+      setInterval(fn){timers.push(fn);return timers.length;},clearInterval(id){cleared.push(id);}};
+    vm.runInNewContext(inline,context);
+    return{context,timers,cleared,bindings,inject(){context.jQuery=$;},emit(name){(callbacks[name]||[]).forEach(fn=>fn());},state(){return{validations,bindings:bindings.length,polls:timers.length,initialized:cache.invoiceItemInitialized===true};},replaceForm(){cache={};}};
+  }
+  const page=probe();page.inject();page.emit('DOMContentLoaded');page.emit('load');page.context.init_item_js();
+  assert.deepEqual(page.state(),{validations:1,bindings:4,polls:0,initialized:true});
+  page.replaceForm();page.context.init_item_js();
+  assert.deepEqual(page.state(),{validations:2,bindings:4,polls:0,initialized:true});
+  const delayed=probe();delayed.emit('DOMContentLoaded');assert.equal(delayed.timers.length,1);
+  delayed.inject();delayed.timers[0]();delayed.context.init_item_js();
+  assert.deepEqual(delayed.state(),{validations:1,bindings:4,polls:1,initialized:true});
+  assert.equal(delayed.cleared.length,1);
+});
