@@ -63,7 +63,10 @@ class Fixture {
  function view($name,$extra=[]){
   if($name==='admin/includes/company_selector'){echo '<div data-fixture-selector></div>';return;}
   if($name==='admin/includes/company_context_script'){echo '<script data-fixture-context></script>';return;}
-  extract($this->vars);extract($extra);require APPPATH.'views/'.$name.'.php';
+  // MX_Loader includes templates in loader scope, not controller scope.
+  $host=new class($this){function __construct(private $owner){}function __get($key){return$this->owner->$key;}function __isset($key){return isset($this->owner->$key);}};
+  check(!CompanyRequestScope::nativeFor($host),'a view loader cannot attest as the controller');
+  (function($view,$extra,$variables){extract($variables);extract($extra);require APPPATH.'views/'.$view.'.php';})->call($host,$name,$extra,$this->vars);
  }
  function __get($name){throw new RuntimeException('Global dependency forbidden: '.$name);}
 }

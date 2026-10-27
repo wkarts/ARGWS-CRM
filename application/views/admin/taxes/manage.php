@@ -40,7 +40,7 @@
             </div>
             <?php echo form_open('admin/taxes/manage', ['id' => 'tax_form']); ?>
             <?php echo form_hidden('taxid'); ?>
-            <?php if(CompanyRequestScope::nativeFor($this))echo form_hidden('revision'); ?>
+            <?php if(CompanyRequestScope::nativeFor(get_instance()))echo form_hidden('revision'); ?>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-12">
@@ -52,7 +52,7 @@
                         </div>
                         <?php echo render_input('name', 'tax_add_edit_name'); ?>
                         <?php echo render_input('taxrate', 'tax_add_edit_rate', '', 'number'); ?>
-                        <?php if(!CompanyRequestScope::nativeFor($this))hooks()->do_action('before_taxes_modal_form_close'); ?>
+                        <?php if(!CompanyRequestScope::nativeFor(get_instance()))hooks()->do_action('before_taxes_modal_form_close'); ?>
                     </div>
                 </div>
             </div>

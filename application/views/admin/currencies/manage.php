@@ -36,7 +36,7 @@
             </div>
             <?php echo form_open('admin/currencies/manage', ['id' => 'currency_form']); ?>
             <?php echo form_hidden('currencyid'); ?>
-            <?php if(CompanyRequestScope::nativeFor($this)){echo form_hidden('_company_context',CompanyRequestScope::token());echo form_hidden('_native_company_csrf',CompanyRequestScope::nativeCsrfToken($this));} ?>
+            <?php if(CompanyRequestScope::nativeFor(get_instance())){echo form_hidden('_company_context',CompanyRequestScope::token());echo form_hidden('_native_company_csrf',CompanyRequestScope::nativeCsrfToken(get_instance()));} ?>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-12">

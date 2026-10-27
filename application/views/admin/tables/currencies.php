@@ -50,7 +50,7 @@ foreach ($rResult as $aRow) {
 
     if(isset($native_currency_rows)){
         foreach(['make_base_currency'=>'fa-star','delete'=>'fa-trash-can']as$method=>$icon){if($method==='make_base_currency'&&$aRow['isdefault']==1)continue;
-            $options.='<form method="post" action="'.e(admin_url('currencies/'.$method.'/'.$aRow['id'])).'"><input type="hidden" name="_company_context" value="'.e(CompanyRequestScope::token()).'"><input type="hidden" name="_native_company_csrf" value="'.e(CompanyRequestScope::nativeCsrfToken($this)).'"><button type="submit" class="btn btn-link" aria-label="'.e(_l($method==='delete'?'delete':'make_base_currency')).'"><i class="fa-regular '.$icon.' fa-lg"></i></button></form>';
+            $options.='<form method="post" action="'.e(admin_url('currencies/'.$method.'/'.$aRow['id'])).'"><input type="hidden" name="_company_context" value="'.e(CompanyRequestScope::token()).'"><input type="hidden" name="_native_company_csrf" value="'.e(CompanyRequestScope::nativeCsrfToken(get_instance())).'"><button type="submit" class="btn btn-link" aria-label="'.e(_l($method==='delete'?'delete':'make_base_currency')).'"><i class="fa-regular '.$icon.' fa-lg"></i></button></form>';
         }
     }else{
     if ($aRow['isdefault'] == 0) {

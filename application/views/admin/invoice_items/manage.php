@@ -41,7 +41,7 @@
                 <!-- /.modal -->
                 <?php } ?>
 
-                <?php if(!CompanyRequestScope::nativeFor($this))hooks()->do_action('before_items_page_content'); ?>
+                <?php if(!CompanyRequestScope::nativeFor(get_instance()))hooks()->do_action('before_items_page_content'); ?>
 
                 <div class="tw-mb-3">
                     <h4 class="tw-my-0 tw-font-bold tw-text-xl">
@@ -165,9 +165,9 @@ render_datatable($table_data, 'invoice-items'); ?>
                                             </a>
                                             <?php } ?>
                                             <?php if (staff_can('delete', 'items')) { ?>
-                                            <?php if (CompanyRequestScope::nativeFor($this)) { ?>
+                                            <?php if (CompanyRequestScope::nativeFor(get_instance())) { ?>
                                             <form method="post" class="tw-inline" action="<?= e(admin_url('invoice_items/delete_group/' . $group['id'])); ?>">
-                                                <input type="hidden" name="_native_company_csrf" value="<?= e(CompanyRequestScope::nativeCsrfToken($this)); ?>">
+                                                <input type="hidden" name="_native_company_csrf" value="<?= e(CompanyRequestScope::nativeCsrfToken(get_instance())); ?>">
                                                 <input type="hidden" name="_company_context" value="<?= e(CompanyRequestScope::token()); ?>">
                                                 <input type="hidden" name="revision" value="<?= e($group['revision']); ?>">
                                                 <button type="submit" class="btn btn-link text-danger"><?= _l('delete'); ?></button>

@@ -14,7 +14,7 @@
             </div>
             <?= form_open('admin/invoice_items/manage', ['id' => 'invoice_item_form']); ?>
             <?= form_hidden('itemid'); ?>
-            <?php if(CompanyRequestScope::nativeFor($this))echo form_hidden('revision'); ?>
+            <?php if(CompanyRequestScope::nativeFor(get_instance()))echo form_hidden('revision'); ?>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-12">
@@ -30,7 +30,7 @@
                         </div>
                         <?php
                             $nativeItemCurrencies = null;
-                            if (CompanyRequestScope::nativeFor($this)) {
+                            if (CompanyRequestScope::nativeFor(get_instance())) {
                                 require_once APPPATH.'services/NativeCompanyCurrencyReference.php';
                                 $itemContext=CompanyRequestScope::context();
                                 $nativeItemCurrencies=(new NativeCompanyCurrencyReference($this->db,db_prefix(),$itemContext->issuerId(),$itemContext->staffId()))->clientCurrencyIds();
@@ -92,7 +92,7 @@
                             <?= render_custom_fields('items'); ?>
                         </div>
                         <?= render_select('group_id', $items_groups, ['id', 'name'], 'item_group'); ?>
-                        <?php if(!CompanyRequestScope::nativeFor($this))hooks()->do_action('before_invoice_item_modal_form_close'); ?>
+                        <?php if(!CompanyRequestScope::nativeFor(get_instance()))hooks()->do_action('before_invoice_item_modal_form_close'); ?>
                     </div>
                 </div>
             </div>
