@@ -25,10 +25,11 @@ class CompanyRequestScope {
 }
 if(!class_exists('AdminController',false)){
 class AdminController {
-    public $db,$load,$output;
+    public $db,$load,$output,$input;
     function __construct(){
         $GLOBALS['catalogPageOwner']=$this;$GLOBALS['CI']=$this;$this->db=$GLOBALS['catalogPageDb'];
-        $this->output=new class {public array$headers=[];public string$body='';function set_header($header){$this->headers[]=$header;return$this;}function set_output($body){$this->body=$body;return$this;}};
+        $this->output=new class {public array$headers=[];public string$body='';public string$mime='text/html';function set_header($header){$this->headers[]=$header;return$this;}function set_output($body){$this->body=$body;return$this;}function set_content_type($value){$this->mime=$value;return$this;}};
+        $this->input=new class {public array$data=[];function get($name=null,$xss=false){return$this->data[$name]??null;}};
         $this->load=new class {
             public $onRender=null;public array$views=[];
             function model($name){throw new LogicException('global model forbidden');}
@@ -100,7 +101,8 @@ echo "Original item modal in distinct loader scope: canonical owner/revision, A/
 
 // Catalogue metadata and invoice-line metadata share definitions, not identities.
 CompanyRequestScope::$issuer=41;$catalogFieldsPage=new Invoice_items();
-$catalogItemId=$namedCatalog->saveItem(['description'=>'Catalogue helper resource','rate'=>'4.25']);
+$catalogDescription='Literal <tag> & "quote"'.PHP_EOL.'Next line';
+$catalogItemId=$namedCatalog->saveItem(['description'=>'Catalogue helper resource','rate'=>'4.25','long_description'=>$catalogDescription]);
 essentialCheck(render_custom_fields('items',$catalogItemId,[],['items_pr'=>true])==='','actual production helper can read a catalogue item even when it has no custom fields');
 $customDefinition=NativeCompanyCustomFields::definition(['fieldto'=>'items','name'=>'Catalogue metadata','type'=>'input','active'=>1]);
 $db->query('INSERT INTO '.$p.'company_custom_fields(issuer_id,fieldto,slug,definition_json,revision) VALUES(?,?,?,?,1)',[41,'items','catalogue_metadata_probe',json_encode($customDefinition,JSON_THROW_ON_ERROR)]);
@@ -120,4 +122,15 @@ try{settingThrows(fn()=>render_custom_fields('items',$catalogItemId,[],['items_p
 finally{$db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id=41");}
 echo "Real catalogue custom-field helper: empty/value reads, escaped values, disjoint invoice namespace, principal/foreign IDs and revoked issuer passed.\n";
 
+// Real native JSON endpoint: raw textarea text and escaped preview coexist.
+$catalogJsonPage=new Invoice_items();ob_start();
+try{$catalogJsonPage->get_item_by_id($catalogItemId);$jsonWire=ob_get_contents();}finally{ob_end_clean();}
+$catalogJson=json_decode($jsonWire,true,32,JSON_THROW_ON_ERROR);
+essentialCheck($catalogJsonPage->output->mime==='application/json'&&in_array('Cache-Control: no-store',$catalogJsonPage->output->headers,true),'native catalogue read emits non-cacheable JSON');
+essentialCheck($catalogJson['long_description_text']===$catalogDescription&&str_contains($catalogJson['long_description'],'&lt;tag&gt;'),'native read keeps exact edit text and a separately escaped preview');
+essentialCheck(!str_contains($jsonWire,'<'),'JSON wire never embeds executable HTML delimiters');
+CompanyRequestScope::$issuer=82;$foreignJsonPage=new Invoice_items();ob_start();
+try{settingThrows(fn()=>$foreignJsonPage->get_item_by_id($catalogItemId),'company_catalog_denied','native JSON controller refuses a foreign company item');$foreignJson=ob_get_contents();}finally{ob_end_clean();}
+essentialCheck($foreignJson==='','foreign JSON read emits no payload');
+CompanyRequestScope::$issuer=41;
 $GLOBALS['essentialHooks']=$catalogHooksBefore;

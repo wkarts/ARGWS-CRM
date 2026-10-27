@@ -510,6 +510,8 @@ async function captureRealScreens(page, routes) {
           await page.locator('#wrapper ._buttons [data-target="#sales_item_modal"]').click();
           await modal.waitFor({state:'visible'});
           await form.locator('[name=description]').fill('Synthetic native catalog');
+          const itemDetails='Literal <tag> & "quote"\nNext line';
+          await form.locator('[name=long_description]').fill(itemDetails);
           await form.locator('[name=rate]').fill('17.50');
           assert.equal(await form.locator('[name=rate]').evaluate(node=>node.validity.stepMismatch),false,'original price input accepts cents through native HTML validity');
           await form.locator('[name=unit]').fill('un');
@@ -526,6 +528,7 @@ async function captureRealScreens(page, routes) {
           assert.equal((await itemRead).status(),200,'typed item identity opens the original editor');
           await modal.waitFor({state:'visible'});
           assert.equal(await form.locator('[name=description]').inputValue(),'Synthetic native catalog');
+          assert.equal(await form.locator('[name=long_description]').inputValue(),itemDetails,'native edit retains literal characters and line breaks');
           const oldItemForm=await form.evaluate(node=>Object.fromEntries(new FormData(node).entries()));
           await form.locator('[name=description]').fill('Synthetic native catalog edited');
           calendarStage('native_items_edit_post');
@@ -533,6 +536,7 @@ async function captureRealScreens(page, routes) {
           assert.equal(edited[0].status(),200,'item editing posts the same original form');
           const editedReceipt=await edited[0].json();assert.equal(editedReceipt.success,true);
           assert.notEqual(String(editedReceipt.item.revision),String(receipt.item.revision),'native editor advances the actual item revision');
+          assert.equal(editedReceipt.item.long_description,itemDetails,'editing the label preserves the stored description verbatim');
           await modal.waitFor({state:'hidden'});
           assert.equal(sql("SELECT COUNT(*) FROM tblcompany_items WHERE issuer_id="+secondaryCompany+" AND description='Synthetic native catalog edited'"),'1');
           assert.equal(sql("SELECT COUNT(*) FROM tblcompany_items WHERE issuer_id="+primaryCompany+" AND description='Synthetic native catalog edited'"),'0','secondary item never appears in the primary catalogue');

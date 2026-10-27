@@ -132,7 +132,7 @@
 
         var url = form.action;
         $.post(url, data).done(function(response) {
-            response = JSON.parse(response);
+            response = typeof response === 'string' ? JSON.parse(response) : response;
             if (response.success == true) {
                 var item_select = $('#item_select');
                 if ($("body").find('.accounting-template').length > 0) {
@@ -220,7 +220,7 @@
                 requestGetJSON('invoice_items/get_item_by_id/' + id).done(function(response) {
                     $itemModal.find('input[name="revision"]').val(response.revision || '');
                     $itemModal.find('input[name="description"]').val(response.description);
-                    $itemModal.find('textarea[name="long_description"]').val(response.long_description
+                    $itemModal.find('textarea[name="long_description"]').val(typeof response.long_description_text === 'string' ? response.long_description_text : response.long_description
                         .replace(/(<|<)br\s*\/*(>|>)/g, " "));
                     $itemModal.find('input[name="rate"]').val(response.rate);
                     $itemModal.find('input[name="unit"]').val(response.unit);

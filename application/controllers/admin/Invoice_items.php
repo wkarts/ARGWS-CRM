@@ -69,8 +69,8 @@ class Invoice_items extends AdminController
     {
         if($this->companyCatalog!==null){
             CompanyRequestScope::assertNativeMutation($this);$input=$this->input->post();$id=$input['itemid']??null;$revision=$input['revision']??null;unset($input['itemid'],$input['revision']);
-            $saved=$this->companyCatalog->saveItem($input,$id,$revision);
-            echo json_encode(['success'=>true,'message'=>_l('updated_successfully',_l('sales_item')),'item'=>$this->companyCatalog->item($saved)],JSON_THROW_ON_ERROR);return;
+            $saved=$this->companyCatalog->saveItem($input,$id,$revision);$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json');
+            echo json_encode(['success'=>true,'message'=>_l('updated_successfully',_l('sales_item')),'item'=>$this->companyCatalog->item($saved)],JSON_THROW_ON_ERROR|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT);return;
         }
         if (staff_can('view',  'items')) {
             if ($this->input->post()) {
@@ -278,11 +278,11 @@ class Invoice_items extends AdminController
     public function get_item_by_id($id)
     {
         if($this->companyCatalog!==null){
-            $lookup=$this->nativeInvoiceCatalogLookup(false);$item=(object)($lookup?$lookup->item($id):$this->companyCatalog->item($id));$item->long_description=nl2br(htmlspecialchars($item->long_description,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'));
+            $lookup=$this->nativeInvoiceCatalogLookup(false);$item=(object)($lookup?$lookup->item($id):$this->companyCatalog->item($id));$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json');$item->long_description_text=$item->long_description;$item->long_description=nl2br(htmlspecialchars($item->long_description,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'));
             $item->custom_fields_html=render_custom_fields('items',$id,[],['items_pr'=>true]+($lookup?['native_invoice_catalog'=>$lookup]:[]));$item->custom_fields=[];
-            if($lookup){$projection=$lookup->fields($id);foreach($projection['definitions']as$field){$field['value']=$projection['values'][$field['id']]??'';$item->custom_fields[]=$field;}$lookup->assertCurrent();echo json_encode($item,JSON_THROW_ON_ERROR);return;}
+            if($lookup){$projection=$lookup->fields($id);foreach($projection['definitions']as$field){$field['value']=$projection['values'][$field['id']]??'';$item->custom_fields[]=$field;}$lookup->assertCurrent();echo json_encode($item,JSON_THROW_ON_ERROR|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT);return;}
             foreach(get_custom_fields('items')as$field){$field['value']=get_custom_field_value($id,$field['id'],'items_pr');$item->custom_fields[]=$field;}
-            echo json_encode($item,JSON_THROW_ON_ERROR);return;
+            echo json_encode($item,JSON_THROW_ON_ERROR|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT);return;
         }
         if ($this->input->is_ajax_request()) {
             $item                     = $this->invoice_items_model->get($id);

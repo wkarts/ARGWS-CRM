@@ -11298,7 +11298,7 @@
         },
         {
             "path": "application/controllers/admin/Invoice_items.php",
-            "source_sha256": "1fdc260a5dc814643b17e5b0b62e53ac7f38a01c4b114051dbe463c7df164185",
+            "source_sha256": "596d7565360c703a25895da334bb518cb68ba619f485c5c8ac9a92f42349c7ee",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",

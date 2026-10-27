@@ -213,7 +213,7 @@ render_datatable($table_data, 'invoice-items'); ?>
             requestGetJSON('invoice_items/get_item_by_id/' + id).done(function(response) {
                 $itemModal.find('input[name="revision"]').val(response.revision || '');
                     $itemModal.find('input[name="description"]').val(response.description);
-                $itemModal.find('textarea[name="long_description"]').val(response.long_description
+                $itemModal.find('textarea[name="long_description"]').val(typeof response.long_description_text === 'string' ? response.long_description_text : response.long_description
                     .replace(
                         /(<|<)br\s*\/*(>|>)/g, " "));
                 $itemModal.find('input[name="rate"]').val(response.rate);
