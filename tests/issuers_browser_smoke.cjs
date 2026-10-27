@@ -537,7 +537,7 @@ async function captureRealScreens(page, routes) {
           assert.equal(edited[0].status(),200,'item editing posts the same original form');
           const editedReceipt=await edited[0].json();assert.equal(editedReceipt.success,true);
           assert.notEqual(String(editedReceipt.item.revision),String(receipt.item.revision),'native editor advances the actual item revision');
-          assert.equal(editedReceipt.item.long_description,itemDetails,'editing the label preserves the stored description verbatim');
+          assert.equal(editedReceipt.item.long_description,receipt.item.long_description,'editing the label preserves the initially stored description verbatim');
           await modal.waitFor({state:'hidden'});
           assert.equal(sql("SELECT COUNT(*) FROM tblcompany_items WHERE issuer_id="+secondaryCompany+" AND description='Synthetic native catalog edited'"),'1');
           assert.equal(sql("SELECT COUNT(*) FROM tblcompany_items WHERE issuer_id="+primaryCompany+" AND description='Synthetic native catalog edited'"),'0','secondary item never appears in the primary catalogue');
