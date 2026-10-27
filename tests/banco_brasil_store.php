@@ -70,3 +70,10 @@ check(!isset($store->recentEvents(1)[0]['observation_json']),'UI projection not 
 foreach(['engine'=>'MyISAM','autocommit'=>'0','completion'=>'1','rawTransaction'=>true] as $key=>$value){$d=new BbDb();$d->$key=$value;rejects(fn()=>Transaction::run($d,'t_',['bb_audit'],fn()=>true),'own transaction guard '.$key);check($d->rollbacks===0,'no alien rollback '.$key);}
 $d=new BbDb();$d->outer();rejects(fn()=>Transaction::run($d,'t_',['bb_audit'],fn()=>true),'CI nested transaction refused');check($d->rollbacks===0,'nested transaction untouched');
 echo "OK {$n} Banco do Brasil store/transaction checks\n";
+
+$failure=\BancoBrasil\ReturnValidationFailure::from(new UnexpectedValueException('bb_return_account_mismatch'));
+check($failure->getMessage()==='bb_return_account_mismatch','known parser reason retains its closed identifier');
+$unknownFailure=\BancoBrasil\ReturnValidationFailure::from(new UnexpectedValueException('synthetic untrusted payload'));
+check($unknownFailure->getMessage()==='bb_return_validation_unclassified','unrecognized parser text never enters persisted diagnostics or responses');
+check(!str_contains(json_encode(\BancoBrasil\ReturnValidationFailure::labels()),'synthetic untrusted payload'),'diagnostic labels contain no exception payload');
+foreach(array_keys(\BancoBrasil\ReturnValidationFailure::labels())as$code)check(strlen($code)<=64&&preg_match('/^bb[a-z0-9_]+$/D',$code)===1,'all persisted reason codes fit the strict closed contract');

@@ -54,6 +54,12 @@ $nativeArchiveDdl=$db->ddlCalls;
 \BancoBrasil\CheckoutSchema::ensure($db,'bb_native_');\BancoBrasil\ApiOriginPolicy::ensure($db,'bb_native_');
 \BancoBrasil\ReturnArchiveSchema::upgrade($db,'bb_native_'); // Additive replay.
 check($db->ddlCalls===$nativeArchiveDdl,'actual mysqli replay of all three ledgers validates metadata with zero extra DDL');
+require_once dirname(__DIR__).'/modules/banco_brasil/libraries/BancoBrasil/ReturnRejectionSchema.php';
+$beforeRejectionsDdl=$db->ddlCalls;
+\BancoBrasil\ReturnRejectionSchema::upgrade($db,'bb_native_');
+check($db->ddlCalls===$beforeRejectionsDdl+1,'actual mysqli creates the separate rejection ledger on absence');
+\BancoBrasil\ReturnRejectionSchema::upgrade($db,'bb_native_');
+check($db->ddlCalls===$beforeRejectionsDdl+1,'actual mysqli rejection migration replay performs zero extra DDL');
 $store=new \BancoBrasil\ModuleStore($db,'bb_native_');
 $data=['account_id'=>'001:00452-3:000000123873-X','environment'=>'sandbox','agreement_number'=>'1234567','wallet'=>'17','variation'=>'019'];
 check($store->createConnection(1,9,['id'=>1,'tax_id'=>'12ABC34501DE35','legal_name'=>'EMPRESA SINTETICA'],$data)===1,'native connection write');

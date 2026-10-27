@@ -83,6 +83,7 @@ jobs:
           set -x # Trace test entrypoints only; no credential values or banking payloads.
           php tests/banco_brasil_mysql.php
           php tests/banco_brasil_layout_mysql.php
+          php tests/banco_brasil_return_rejections_mysql.php
           php tests/banco_brasil_mysql_driver.php
           php tests/banco_brasil_components_concurrency.php
           php tests/banco_brasil_api_monthly_interest.php
@@ -185,6 +186,7 @@ jobs:
           set -x # Preserve the exact test at a failure/cancellation.
           php tests/banco_brasil_mysql.php
           php tests/banco_brasil_layout_mysql.php
+          php tests/banco_brasil_return_rejections_mysql.php
           php tests/banco_brasil_mysql_driver.php
           php tests/issuers_core.php
           php tests/companies/clients.php

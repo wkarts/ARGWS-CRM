@@ -7,6 +7,7 @@ require_once __DIR__.'/Cnab400ReturnParser.php';
 require_once __DIR__.'/LayoutCatalog.php';
 require_once __DIR__.'/Transaction.php';
 require_once __DIR__.'/ReturnOriginalArchive.php';
+require_once __DIR__.'/ReturnRejections.php';
 
 /** Call only after actor/issuer capability checks; credentials never enter this store; original bank files stay in scoped private storage. */
 final class ModuleStore
@@ -137,14 +138,24 @@ final class ModuleStore
         if(!$row)throw new \DomainException('bb400_main_profile_required');
         return $this->layoutBinding((int)$row['id'],$connection);
     }
-    public function importReturn(array $connection,int $actor,string $bytes,int $layoutBindingId): array
+    /** Native upload orchestration; parser refusal is retained separately from accepted files. */
+    public function receiveReturn(array $connection,int $actor,string $bytes,int $layoutBindingId):array
+    {
+        try{return $this->importReturn($connection,$actor,$bytes,$layoutBindingId,true);}
+        catch(ReturnValidationFailure $failure){return(new ReturnRejections($this->db,$this->prefix))->retain($connection,$actor,$bytes,$layoutBindingId,$failure);}
+    }
+    public function importReturn(array $connection,int $actor,string $bytes,int $layoutBindingId,bool $nativeAuthority=false): array
     {
         if($actor<1)throw new \InvalidArgumentException('bb_actor_required');
         $a=self::agreement($connection);$binding=$this->layoutBinding($layoutBindingId,$connection);
         $auxEnvelope=$binding['layout_id']===LayoutCatalog::CNAB400_AUX;
         $parentBinding=$auxEnvelope?$this->main400Binding($connection):$binding;
         $parser=in_array($binding['layout_id'],[LayoutCatalog::CNAB400,LayoutCatalog::CNAB400_AUX],true)?new Cnab400ReturnParser():new Cnab240ReturnParser();
-        $parsed=$parser instanceof Cnab400ReturnParser?$parser->parse($a,$bytes,$binding['layout_id']):$parser->parse($a,$bytes);
+        try{
+            $width=$parser instanceof Cnab400ReturnParser?400:240;
+            if(substr_count($bytes,"\r\n")>intdiv(16*1024*1024,$width+2))throw new \UnexpectedValueException('bb_return_record_limit');
+            $parsed=$parser instanceof Cnab400ReturnParser?$parser->parse($a,$bytes,$binding['layout_id']):$parser->parse($a,$bytes);
+        }catch(\UnexpectedValueException|\InvalidArgumentException $error){throw ReturnValidationFailure::from($error);}
         $tables=['bb_connections','bb_layout_bindings','bb_return_files','bb_return_originals','bb_return_events','bb_return_file_events','bb_audit'];
         $provenance=['declared_environment'=>$a->scope->environment,'environment_evidence'=>$parsed['environment_evidence']??'lot_marker_matches_declared_profile',
             'authenticity'=>'not_verified','issuer_tax_id_evidence'=>$parsed['issuer_tax_id_evidence']??'matches_file',
@@ -152,8 +163,9 @@ final class ModuleStore
             'trailer_total_interpretation'=>$parsed['trailer_total_interpretation']??null];
         if($auxEnvelope){$provenance['auxiliary_contract']=Cnab400Auxiliary::CONTRACT;$provenance['parent_layout_binding_id']=(int)$parentBinding['id'];$provenance['return_only']=true;}
         $provenanceJson=json_encode($provenance,JSON_THROW_ON_ERROR);
-        $work=function()use($a,$parsed,$actor,$binding,$parentBinding,$auxEnvelope,$provenanceJson,$bytes){
-            if($auxEnvelope)$this->auxiliaryImportAccess($a->scope->issuerId,$actor);
+        $guarded=$auxEnvelope||$nativeAuthority;
+        $work=function()use($a,$parsed,$actor,$binding,$parentBinding,$auxEnvelope,$provenanceJson,$bytes,$guarded){
+            if($guarded)$this->auxiliaryImportAccess($a->scope->issuerId,$actor);
             $locked=$this->db->query("SELECT * FROM `{$this->prefix}bb_connections` WHERE id=? AND issuer_id=? FOR UPDATE",[$a->scope->connectionId,$a->scope->issuerId]);
             if(!$locked||!$locked->row_array())throw new \RuntimeException('bb_connection_unavailable');
             $current=self::agreement($locked->row_array());
@@ -198,6 +210,7 @@ final class ModuleStore
                 }
                 // Exact bytes may recover a pre-retention history entry; never reconstruct an original.
                 (new ReturnOriginalArchive($this->db,$this->prefix))->retain($old,$actor,$bytes);
+                if($guarded){$confirmReferences();$this->auxiliaryImportAccess($a->scope->issuerId,$actor);}
                 return ['id'=>(int)$old['id'],'duplicate'=>true,'events'=>(int)$old['event_count'],'financial_effect'=>'not_applied'];
             }
             $now=date('Y-m-d H:i:s');$file=['issuer_id'=>$a->scope->issuerId,'connection_id'=>$a->scope->connectionId,'scope_key'=>$a->scope->key(),
@@ -246,9 +259,10 @@ final class ModuleStore
                 $this->confirmAuxiliarySet($id,count($parsed['events']),$newEventIds);$confirmReferences();$this->auxiliaryImportAccess($a->scope->issuerId,$actor);
             }
             if($archive->read($archiveFile)!==$archiveProof)throw new \RuntimeException('bb_return_original_write_unconfirmed');
+            if($guarded){$confirmReferences();$this->auxiliaryImportAccess($a->scope->issuerId,$actor);}
             return ['id'=>$id,'duplicate'=>false,'events'=>count($parsed['events']),'financial_effect'=>'not_applied'];
         };
-        if($auxEnvelope){require_once APPPATH.'services/issuers/IssuerTransaction.php';return \IssuerTransaction::run($this->db,$this->prefix,array_merge($tables,['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','modules']),$work);}
+        if($guarded){require_once APPPATH.'services/issuers/IssuerTransaction.php';return \IssuerTransaction::run($this->db,$this->prefix,array_merge($tables,['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','modules']),$work);}
         return Transaction::run($this->db,$this->prefix,$tables,$work);
     }
     /** Authorized private download, including original connection scope and audit, never an HTTP cache. */
