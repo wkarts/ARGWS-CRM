@@ -301,7 +301,33 @@ async function captureRealScreens(page, routes) {
       assert.equal(await page.locator('#newEventModal [name=_native_company_csrf]').count(),1,'native new-event form also carries one CSRF field rather than duplicate serialization');
       await page.screenshot({path:output+'/native-principal-calendar-before-event.png',fullPage:true,mask:[page.locator('input,textarea')]});
       calendarStage('original_modal_read');
-      const [eventRead]=await Promise.all([page.waitForResponse(r=>r.request().method()==='GET'&&new URL(r.url()).pathname.startsWith('/admin/utilities/view_event/')),page.locator('#calendar .fc-event-title').filter({hasText:eventTitle}).click()]);assert.equal(eventRead.status(),200,'native page opens the event created by the original principal dashboard');
+      const eventTarget=page.locator('#calendar .fc-event-title').filter({hasText:eventTitle});
+      const interaction=await eventTarget.evaluate(node=>{
+        const event=node.closest('.fc-event'),jq=window.jQuery,listeners=event&&jq&&jq._data?jq._data(event,'events'):null;
+        return {event_found:!!event,click_handlers:listeners&&listeners.click?listeners.click.length:0,
+          has_href:!!event?.getAttribute('href'),native_body:document.body.classList.contains('native-company-admin'),
+          small_body:document.body.classList.contains('page-small'),sidebar_shown:document.body.classList.contains('show-sidebar'),
+          view_handler:typeof window.view_event,transport:typeof window.NativeCompanyTransport?.request,
+          ancestor_link:!!node.closest('a[href]')};
+      });
+      const calendarRequests=[];
+      const recordCalendarRequest=request=>{
+        const target=new URL(request.url());
+        const kind=target.pathname.startsWith('/admin/utilities/view_event/')?'event_read':target.pathname==='/admin/utilities/calendar'?'calendar_page':target.pathname==='/admin/utilities/get_calendar_data'?'feed':null;
+        if(kind&&calendarRequests.length<16)calendarRequests.push({kind,method:request.method(),same_origin:target.origin===url});
+      };
+      page.on('request',recordCalendarRequest);
+      console.log('Native calendar interaction metadata: '+JSON.stringify(interaction));
+      fs.writeFileSync(output+'/native-calendar-interaction.json',JSON.stringify({interaction,requests:calendarRequests},null,2));
+      let eventRead;
+      try {
+        [eventRead]=await Promise.all([page.waitForResponse(r=>r.request().method()==='GET'&&new URL(r.url()).pathname.startsWith('/admin/utilities/view_event/')),eventTarget.click()]);
+      } finally {
+        page.off('request',recordCalendarRequest);
+        console.log('Native calendar interaction requests: '+JSON.stringify(calendarRequests));
+        fs.writeFileSync(output+'/native-calendar-interaction.json',JSON.stringify({interaction,requests:calendarRequests},null,2));
+      }
+      assert.equal(eventRead.status(),200,'native page opens the event created by the original principal dashboard');
       const eventModal=page.locator('#viewEvent');await eventModal.waitFor({state:'visible'});assert.equal(await eventModal.locator('[name=revision]').inputValue(),'1');
       assert.equal(await eventModal.locator('[name=_native_company_csrf]').count(),1,'native edit serializes one CSRF value');
       assert.equal(await page.locator('#calendar-event-form').count(),1);assert.equal(await page.locator('#calendar-event-edit-form').count(),1,'new and edit forms have independent DOM IDs');
