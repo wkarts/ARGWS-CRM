@@ -6,7 +6,7 @@ The selected company must change data and authorization, not the existing CRM's 
 
 This branch and PR #52 are **not ready for release or merge**. The obsolete `Company_context` controller and its native admission were removed; the selector now uses the shared CRM dashboard and the technical `Company_selection::select` POST. The other parallel company controllers and views remain open work. Existing guards remain closed until their replacement has a tested native data contract. A service or rendered fragment passing tests does not establish that its HTTP action is admitted or that all neighboring actions work.
 
-The source census at1539097 still lists **48 parallel company controllers**. The boundary review lists **15,082 unresolved source files** and keeps `operational_ready=false`; these counts include dependency boundaries and are not a completion percentage. Company_context, Company_master, their retired context/registry views and master_resolution.php have been removed. These removals and the native selector are checkpoints, not full application convergence.
+The source census still lists **48 parallel company controllers**. Reconciliation including the new BB131 migration lists **15,083 unresolved source files** and keeps `operational_ready=false`; the official CI generators must confirm these counts. They include dependency boundaries and are not a completion percentage. Company_context, Company_master, their retired context/registry views and master_resolution.php have been removed. These removals and the native selector are checkpoints, not full application convergence.
 
 ## Finite source boundary
 

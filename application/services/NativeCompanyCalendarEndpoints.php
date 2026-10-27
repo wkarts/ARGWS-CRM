@@ -27,13 +27,20 @@ final class NativeCompanyCalendarEndpoints
         $target=$ci->input->server('REQUEST_URI',false);
         if(!is_string($target)||strlen($target)>8192||!str_starts_with($target,'/')||str_starts_with($target,'//')||str_contains($target,'#')||preg_match('/[\\x00-\\x20\\x7f]/',$target))throw new DomainException('native_calendar_request_target_invalid');
         $query=parse_url($target,PHP_URL_QUERY);if($query===false||($query!==null&&substr_count($query,'&')+substr_count($query,';')>=64))throw new DomainException('native_calendar_request_target_invalid');
-        parse_str($query??'',$input);return $input;
+        // The feed accepts flat fields only. Do not let parse_str normalize
+        // names, collapse duplicate fields or depend on arg_separator.input.
+        $input=[];foreach($query===null||$query===''?[]:explode('&',$query)as$pair){if($pair===''||preg_match('/%(?![a-f0-9]{2})/i',$pair))throw new DomainException('native_calendar_request_target_invalid');$parts=explode('=',$pair,2);$key=urldecode($parts[0]);$value=urldecode($parts[1]??'');if(strlen($key)>128||strlen($value)>2048||array_key_exists($key,$input))throw new DomainException('native_calendar_request_target_invalid');$input[$key]=$value;}
+        // Framework authentication metadata is not a calendar source. Consume
+        // only its configured name and an exact current hash; never arbitrary
+        // unknown fields or company/native tokens from the URL.
+        if(isset($ci->security)&&method_exists($ci->security,'get_csrf_token_name')){$name=$ci->security->get_csrf_token_name();if(!is_string($name)||!preg_match('/^[a-z_][a-z0-9_]{0,127}$/iD',$name)||in_array($name,['start','end','calendar_filters','events','tasks','projects','invoices','estimates','proposals','contracts','_company_context','_native_company_csrf'],true)||str_ends_with($name,'_reminders'))throw new DomainException('native_calendar_configuration_invalid');if(array_key_exists($name,$input)){$expected=$ci->security->get_csrf_hash();if(!is_string($expected)||$expected===''||!hash_equals($expected,$input[$name]))throw new DomainException('native_calendar_framework_csrf_invalid');unset($input[$name]);}}
+        return $input;
     }
     public static function feed($ci):array{[$i,$a]=self::context($ci);return(new NativeCompanyCalendarFeed($ci->db,db_prefix()))->read($i,$a,self::feedQuery($ci));}
     /** Bounded controller-log metadata only; never a public diagnostic response. */
     public static function queryDiagnostics($ci):array
     {
-        try{self::context($ci);$keys=array_keys(self::feedQuery($ci));$probe=[];parse_str('start=2000-01-01&end=2000-01-02',$probe);return ['contract'=>'http_target_v1','query_parser'=>array_keys($probe)===['start','end']?'canonical':'noncanonical','key_count'=>count($keys),'key_fingerprints'=>array_map(static fn($key)=>substr(hash('sha256','ARGWS-calendar-key:'.(string)$key),0,16),array_slice($keys,0,16))];}catch(Throwable $ignored){return ['contract'=>'unavailable'];}
+        try{self::context($ci);$keys=array_keys(self::feedQuery($ci));return ['contract'=>'http_target_framework_csrf_v2','key_count'=>count($keys),'key_fingerprints'=>array_map(static fn($key)=>substr(hash('sha256','ARGWS-calendar-key:'.(string)$key),0,16),array_slice($keys,0,16))];}catch(Throwable $ignored){return ['contract'=>'unavailable'];}
     }
     /** Original filter form: guarded POST, with no persistent setting or event write. */
     public static function filter($ci):void{CompanyRequestScope::assertNativeMutation($ci);self::context($ci);$input=$ci->input->post();if(!is_array($input)||!isset(NativeCompanyCalendarFeed::selection($input)['calendar_filters']))throw new DomainException('native_calendar_filter_invalid');}

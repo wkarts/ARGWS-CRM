@@ -1,4 +1,4 @@
-# Originais de retorno Banco do Brasil —1.3.0 / migration130
+# Originais de retorno Banco do Brasil —1.3.1 / migrations130–131
 
 O importador atual valida o perfil240/400 declarado antes de registrar o arquivo.
 Além do hash e das observações existentes, passa a reter os bytes exatos, incluindo
@@ -12,8 +12,8 @@ bancária.
 A migration130 cria somente uma tabela InnoDB adicional, com chave única completa
 por arquivo. Valida tipos, nulabilidade e constraints existentes; não corrige
 silenciosamente uma tabela incompatível. Repetição é permitida. DDL dentro de
-transação alheia ou com configuração incompatível é recusado. Migrations101–129
-permanecem intactas; a versão exata1.3.0 só autoriza serviços após tracking nativo.
+transação alheia ou com configuração incompatível é recusado. Migrations101–130
+permanecem intactas; a versão exata1.3.1 só autoriza serviços após tracking nativo.
 
 Original, arquivo, eventos, vínculos e auditoria são gravados na mesma transação
 de importação. Falha ou INSERT ignorado do original aborta o conjunto. Hash,
@@ -62,3 +62,7 @@ ocorrências bancárias. A integração400 com faturas e a conciliação complet
 continuam bloqueadas pelas pendências internas e documentais registradas na PR.
 Não foi enviado arquivo ao banco, registrada cobrança real ou criada liquidação
 externa para testar. PR permanece em rascunho.
+
+## Repetição sem DDL —1.3.1
+
+O reconciliador de130 verifica primeiro uma tabela existente e sua metadata exata, mantendo a recusa de transação externa/configuração incompatível. Se válida, retorna sem CREATE/ALTER; se incompatível, recusa sem DDL. Somente a ausência real permite criação aditiva. A nova131 é NOOP com validação da tabela: não reescreve130, origens, arquivos, eventos ou pagamentos. Os contratos SQL de upgrade120/121/122, marker ignorado/falho, retry e replay continuam exigindo ausência de DDL adicional.

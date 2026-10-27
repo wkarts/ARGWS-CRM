@@ -24,6 +24,11 @@ final class ReturnArchiveSchema
         $mode=$db->query('SELECT @@SESSION.autocommit AS autocommit, @@SESSION.completion_type AS completion_type');
         $state=$mode?$mode->row_array():[];
         if((string)($state['autocommit']??'')!=='1'||!in_array((string)($state['completion_type']??''),['0','NO_CHAIN'],true))throw new \RuntimeException('bb_return_archive_transaction_configuration_invalid');
+        // Replay validates the existing private ledger without taking a DDL
+        // metadata lock or risking an implicit commit after an earlier retry.
+        $existing=$db->query('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?',[$p.'bb_return_originals']);
+        if(!$existing)throw new \RuntimeException('bb_return_archive_migration_failed');
+        if($existing->row_array()!==[]){SchemaValidator::assertCompatible($db,$p,self::requirements());return;}
         if(!$db->query("CREATE TABLE IF NOT EXISTS `{$p}bb_return_originals` (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             return_file_id BIGINT UNSIGNED NOT NULL,

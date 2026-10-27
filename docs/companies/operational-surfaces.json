@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "e6d5fb4cd4a631b360de70faaec6ac1eafc39d0a11069ba9e2e11ea039b86a64",
+    "source_manifest_sha256": "9f0f1c81a1a20b8e6f3926aa2c60ce5587ed9940569d2f21b3b8c1efcb7be120",
     "counts": {
         "modules": 38,
-        "source_files": 4608,
+        "source_files": 4609,
         "literal_option_keys": 681,
         "dynamic_option_references": 158,
         "controllers": 255,
@@ -572,7 +572,7 @@
         {
             "name": "banco_brasil",
             "entry": "modules/banco_brasil/banco_brasil.php",
-            "version": "1.3.0",
+            "version": "1.3.1",
             "deployment_enabled": "not_observed",
             "state": "not_verified",
             "operational_ready": false,
@@ -27146,7 +27146,7 @@
         {
             "name": "bb_return_originals",
             "state": "not_verified",
-            "reference_count": 4
+            "reference_count": 5
         },
         {
             "name": "bonus_discipline",
