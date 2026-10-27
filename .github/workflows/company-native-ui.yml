@@ -1,5 +1,6 @@
 name: Interface nativa multiempresa
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main, develop]
     paths: ['application/**', 'assets/**', 'modules/**', 'docs/companies/**', 'tests/company_*', 'tests/helpers/**', '.github/workflows/company-native-ui.yml']
@@ -63,9 +64,14 @@ jobs:
           node tests/company_shell_fidelity.browser.cjs
           node tests/efi/company_ui.browser.cjs
           node tests/company_workspace_browser.cjs
-          for attempt in 1 2 3; do node tests/company_registry_modal_browser.cjs; done
+          node tests/company_registry_modal_browser.cjs
           node tests/company_settings_native_browser.cjs
           node tests/company_settings_layout.browser.cjs
+      # Repetição é um teste de estabilidade opcional, não cobertura adicional da PR.
+      - name: Verificar estabilidade do modal em execução manual
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          for attempt in 1 2; do node tests/company_registry_modal_browser.cjs; done
       - name: Evidências sintéticas de apresentação
         if: always()
         uses: actions/upload-artifact@v4

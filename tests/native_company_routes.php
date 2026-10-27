@@ -114,3 +114,13 @@ foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb){
 $check(!NativeCompanyRoutes::admits('admin','foreign','clients','get_customer_billing_and_shipping_details','GET'),'modules cannot reuse customer billing projection');
 $check(!NativeCompanyRoutes::navigation('clients/get_customer_billing_and_shipping_details'),'billing projection is not a navigation destination');
 foreach(['index','client','table','delete','change_client_status','unknown']as$method)foreach(['GET','POST']as$verb)$check(!NativeCompanyRoutes::admits('admin','','clients',$method,$verb),'billing projection does not admit adjacent customer actions');
+
+// Read-only helpers do not imply that the surrounding project/task flows are admitted.
+foreach(['tasks'=>'task_tracking_stats','projects'=>'get_rel_project_data'] as $controller=>$method){
+ foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb)
+  $check(NativeCompanyRoutes::admits('admin','',$controller,$method,$verb)===($verb==='GET'),'isolated work reader accepts only GET: '.$controller.'/'.$method.'/'.$verb);
+ $check(!NativeCompanyRoutes::admits('admin','foreign',$controller,$method,'GET'),'module cannot reuse isolated work reader');
+ $check(!NativeCompanyRoutes::navigation($controller.'/'.$method),'isolated work reader is not a return destination');
+}
+foreach(['tasks','projects'] as $controller)foreach(['index','table','delete'] as $method)foreach(['GET','POST'] as $verb)
+ $check(!NativeCompanyRoutes::admits('admin','',$controller,$method,$verb),'isolated reader never admits neighboring work actions');

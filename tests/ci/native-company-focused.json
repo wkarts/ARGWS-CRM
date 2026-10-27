@@ -2306,6 +2306,11 @@
       "node",
       "--test",
       "tests/native_company/calendar_handlers.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_mentions_contract.test.cjs"
     ]
   ],
   "mysql": [
@@ -2358,6 +2363,10 @@
     [
       "node",
       "tests/native_company/presentation.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/native_mentions_tinymce.browser.cjs"
     ]
   ]
 }

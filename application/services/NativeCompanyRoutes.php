@@ -58,7 +58,13 @@ final class NativeCompanyRoutes
             // authorize invoice editing and resolve all customer/task lineage.
             'get_billable_tasks_by_project'=>['GET'],
             'get_billable_tasks_by_customer_id'=>['GET'],
-        ], 'projects'=>['staff_projects'=>['POST']],
+            // Read-only chart for a task whose company and access are resolved by the reader.
+            'task_tracking_stats'=>['GET'],
+        ], 'projects'=>[
+            'staff_projects'=>['POST'],
+            // The task form's scoped project metadata selector, not project navigation.
+            'get_rel_project_data'=>['GET'],
+        ],
         // Read-only private billing projection; customer pages and mutations
         // remain closed until their complete native contracts are admitted.
         'clients'=>[

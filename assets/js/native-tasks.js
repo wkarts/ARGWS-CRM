@@ -541,7 +541,7 @@ function init_new_task_comment(manual) {
       return $.getJSON(
         admin_url + "tasks/get_staff_names_for_mentions/" + taskid     
       )
-    })
+    }, { namesHtmlEncoded: true })
   };
 
   init_editor("#task_comment", editorConfig)

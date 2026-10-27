@@ -62,7 +62,7 @@ Base: `abbf6c7`. This is an internal integration inventory, not a claim of compl
 - `Projects::mass_stop_timers` — pending native issuer adapter and route-level proof.
 - `Projects::get_pre_invoice_project_info` — pending native issuer adapter and route-level proof.
 - `Projects::get_invoice_project_data` — pending native issuer adapter and route-level proof.
-- `Projects::get_rel_project_data` — pending native issuer adapter and route-level proof.
+- `Projects::get_rel_project_data` — original scoped task-form selector admitted for GET only; tests exercise source and issuer ownership and POST rejection at a controller seam. Authenticated HTTP/browser evidence remains pending; the project and task forms are not admitted by this change.
 - `Projects::invoice_project` — pending native issuer adapter and route-level proof.
 - `Projects::view_project_as_client` — pending native issuer adapter and route-level proof.
 - `Projects::get_staff_names_for_mentions` — pending native issuer adapter and route-level proof.
@@ -92,7 +92,7 @@ Base: `abbf6c7`. This is an internal integration inventory, not a claim of compl
 - `Tasks::save_checklist_item_template` — pending native issuer adapter and route-level proof.
 - `Tasks::remove_checklist_item_template` — pending native issuer adapter and route-level proof.
 - `Tasks::init_checklist_items` — pending native issuer adapter and route-level proof.
-- `Tasks::task_tracking_stats` — pending native issuer adapter and route-level proof.
+- `Tasks::task_tracking_stats` — original scoped task statistics admitted for GET only; tests exercise issuer ownership, historical lineage and POST rejection at a controller seam. Authenticated HTTP/browser evidence remains pending; this does not admit task navigation or editing.
 - `Tasks::checkbox_action` — pending native issuer adapter and route-level proof.
 - `Tasks::add_checklist_item` — pending native issuer adapter and route-level proof.
 - `Tasks::update_checklist_order` — pending native issuer adapter and route-level proof.

@@ -2,7 +2,7 @@
     <label class="control-label"
         for="estimate_prefix"><?= _l('settings_sales_estimate_prefix'); ?></label>
     <input type="text" name="settings[estimate_prefix]" class="form-control"
-        value="<?= get_option('estimate_prefix'); ?>">
+        value="<?= htmlspecialchars((string) get_option('estimate_prefix'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>">
 </div>
 <hr />
 <i class="fa-regular fa-circle-question pull-left tw-mt-0.5 tw-mr-1" data-toggle="tooltip"

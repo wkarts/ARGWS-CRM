@@ -4961,7 +4961,7 @@ function fetch_notifications(callback) { return NativeAdminNotifications.fetch(c
 
 // Shared native task component: init_new_task_comment (assets/js/native-tasks.js).
 
-function initializeTinyMceMentions(editor, usersCallback) {
+function initializeTinyMceMentions(editor, usersCallback, options = {}) {
   if(!Object.hasOwn(editor, 'perfexCommands')) {
     editor.perfexCommands = {}
   }
@@ -4975,9 +4975,18 @@ function initializeTinyMceMentions(editor, usersCallback) {
 
     let users = await usersCallback()
 
+    // The task endpoint has historically returned HTML-encoded names; project
+    // endpoints return text. Normalize only the declared encoded contract so a
+    // literal "&lt;" in a project name is not silently changed.
+    const decodeName = value => {
+      if (!options.namesHtmlEncoded) return String(value);
+      const decoder = editor.getDoc().createElement('textarea');
+      decoder.innerHTML = String(value);
+      return decoder.value;
+    };
     cachedUsers = users.map(u=>({
       value: u.id.toString(),
-      text: u.name,
+      text: decodeName(u.name),
     }));
 
     return cachedUsers
@@ -4986,13 +4995,14 @@ function initializeTinyMceMentions(editor, usersCallback) {
     // Insert in to the editor
     editor.selection.setRng(rng || 0)
 
-    editor.insertContent((
-      '<span class="mention" contenteditable="false" data-mention-id="' +
-      id +
-      '">@' +
-      name +
-      "</span>&nbsp;"
-    ))
+    // Text and attribute values are serialized by the DOM, never concatenated
+    // into HTML received from the user directory.
+    const mention = editor.getDoc().createElement('span');
+    mention.className = 'mention';
+    mention.setAttribute('contenteditable', 'false');
+    mention.setAttribute('data-mention-id', String(id));
+    mention.textContent = '@' + String(name);
+    editor.insertContent(mention.outerHTML + '&nbsp;');
   }
 
   editor.ui.registry.addAutocompleter('mentions', {
