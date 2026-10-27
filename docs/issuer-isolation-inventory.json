@@ -5583,13 +5583,13 @@
       "evidence": ""
     },
     "application/services/NativeCompanySettingsController.php": {
-      "sha256": "f34f5f36ffde9e59c2bfe3fc219a83cc103d841168da9312c6a4e06cfa5f1aac",
+      "sha256": "55fde7b3c89962ab399f7150230e7a367f2d6662e10f31b69114f4e32bd3ce12",
       "categories": [
         "customer_privacy",
         "invoice_table"
       ],
       "signal_lines": [
-        100
+        119
       ],
       "state": "unreviewed",
       "evidence": ""

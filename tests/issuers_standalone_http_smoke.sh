@@ -39,7 +39,7 @@ collect_smoke_failure() {
             echo "PHP=".PHP_VERSION." memory_limit=".ini_get("memory_limit").PHP_EOL;
             $files=array_merge(["/tmp/issuer-http-error.log"],array_slice(glob("/app/application/logs/log-*.php")?:[],-3));
             foreach($files as $file){if(!is_file($file)||!is_readable($file))continue;$handle=fopen($file,"rb");if($handle===false)continue;$size=filesize($file);if($size>262144)fseek($handle,-262144,SEEK_END);echo PHP_EOL."--- ".basename($file)." (bounded tail) ---".PHP_EOL;echo stream_get_contents($handle,262144);fclose($handle);}
-        ' 2>&1 | sanitize_smoke_failure_log > "$evidence/$container-application.log" || true
+        ' 2>&1 | python3 tests/ci/classify_php_error_log.py > "$evidence/$container-application.log" || true
     done
 }
 cleanup() {
@@ -275,6 +275,20 @@ ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/companies_certificates_browser.cjs
+# Enable error logging only in this checked disposable database for the browser smokes.
+docker exec "$upgrade" php -r '
+defined("BASEPATH") || define("BASEPATH", "/app/system/");
+$config = "/app/application/config/app-config.php";
+require $config;
+if (APP_DB_NAME !== "argws_upgrade_ci") { exit(2); }
+if (defined("APP_LOG_THRESHOLD")) { if (APP_LOG_THRESHOLD !== 1) { exit(2); } }
+else {
+    $source = file_get_contents($config);
+    if (substr($source, 0, 5) !== "<?php") { exit(2); }
+    if (file_put_contents($config, substr_replace($source, "\ndefine(\"APP_LOG_THRESHOLD\", 1);\n", 5, 0)) === false) { exit(2); }
+}
+'
+
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
@@ -681,19 +695,7 @@ ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_S
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/settings/task_preferences_browser.cjs
 
-# Log only in the synthetic calendar smoke, so technical rejection codes survive production defaults.
-docker exec "$upgrade" php -r '
-defined("BASEPATH") || define("BASEPATH", "/app/system/");
-$config = "/app/application/config/app-config.php";
-require $config;
-if (APP_DB_NAME !== "argws_upgrade_ci") { exit(2); }
-if (defined("APP_LOG_THRESHOLD")) { if (APP_LOG_THRESHOLD !== 1) { exit(2); } }
-else {
-    $source = file_get_contents($config);
-    if (substr($source, 0, 5) !== "<?php") { exit(2); }
-    if (file_put_contents($config, substr_replace($source, "\ndefine(\"APP_LOG_THRESHOLD\", 1);\n", 5, 0)) === false) { exit(2); }
-}
-'
+# Synthetic error logging was enabled before the portal smoke.
 
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
