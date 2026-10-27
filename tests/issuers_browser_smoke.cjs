@@ -434,6 +434,12 @@ async function captureRealScreens(page, routes) {
           const missing=/undefined function ([a-zA-Z0-9_]+)/i.exec(responseHtml);
           fs.writeFileSync(output+'/native-route-failure.json',JSON.stringify({route,status:response.status(),category:missing?'undefined_presentation_helper':'native_route_failed',helper:missing?missing[1]:null},null,2));
         }
+        if(response.status()!==200){
+          const document=await response.text(),missing=/Call to undefined function ([A-Za-z_][A-Za-z0-9_]{0,79})\(/.exec(document);
+          const diagnostic={route:route.split('?')[0],status:response.status(),missing_function:missing?missing[1]:null};
+          console.error('Native route document failure: '+JSON.stringify(diagnostic));
+          fs.writeFileSync(output+'/native-route-failure.json',JSON.stringify(diagnostic,null,2));
+        }
         assert.equal(response.status(), 200, 'selected company uses the original CRM route /admin/' + route);
         await shell(page);
         assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), secondaryCompany, 'native route keeps the selected company: ' + route);

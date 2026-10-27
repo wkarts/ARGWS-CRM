@@ -147,7 +147,7 @@ if(!$full){
 }
 $encoded=json_encode($result,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR)."\n";
 if($check){
-    if(!is_file($target)||file_get_contents($target)!==$encoded){fwrite(STDERR,"Operational surface inventory is stale. Run php scripts/company-surface-inventory.php.\n");exit(1);}
+    if(!is_file($target)||file_get_contents($target)!==$encoded){fwrite(STDERR,"Operational surface inventory is stale. Run php scripts/company-surface-inventory.php.\n");fwrite(STDERR,"Expected operational source_manifest_sha256: ".$manifest."\n");exit(1);}
 }else file_put_contents($target,$encoded);
 echo json_encode($result['counts'],JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n";
 echo $check?"Inventory matches; operational readiness remains blocked.\n":"Inventory written; operational readiness remains blocked.\n";

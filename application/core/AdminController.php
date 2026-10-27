@@ -16,6 +16,14 @@ class AdminController extends App_Controller
                 // general translation helper checks the sealed company scope
                 // and skips global module hooks in this path.
                 $this->load->helper(['admin', 'general', 'app_branding', 'misc']);
+                if (CompanyRequestScope::context()->issuerId() !== null) {
+                    if (!CompanySettingsRuntime::active()
+                        || CompanySettingsRuntime::issuerId() !== CompanyRequestScope::context()->issuerId()
+                        || CompanySettingsRuntime::staffId() !== CompanyRequestScope::context()->staffId()) {
+                        throw new LogicException('native_admin_settings_scope_mismatch');
+                    }
+                    $this->load->helper('settings');
+                }
                 $this->load->helper(['fields', 'datatables', 'custom_fields', 'func', 'template', 'language']);
                 require_once APPPATH . 'services/NativeCompanyAdminPresentation.php';
                 NativeCompanyAdminPresentation::prepare($this);
