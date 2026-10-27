@@ -27,14 +27,17 @@ CompanyRequestScope::$issuer=41;CompanyRequestScope::$native=false;settingThrows
 echo "Invoice catalogue original helper: three real-renderer checks, primitive input seam, no browser.\n";
 
 CompanyRequestScope::$native=true;
-if(!class_exists('AdminController',false)){class AdminController{public $db;public $input;}}
+if(!class_exists('AdminController',false)){class AdminController{public $db;public $input;public $output;}}
 require APPPATH.'controllers/admin/Invoice_items.php';
 $controller=(new ReflectionClass(Invoice_items::class))->newInstanceWithoutConstructor();$controller->db=$db;
+// Explicit CI output boundary double: production endpoint still owns the headers.
+$controller->output=new class{public array $headers=[];public string $mime='';public function set_header($value){$this->headers[]=$value;return$this;}public function set_content_type($value){$this->mime=$value;return$this;}};
 $controller->input=new class{public array $data=[];public function get($key){return$this->data[$key]??null;}public function post($key){return$this->data[$key]??null;}};
 $property=new ReflectionProperty(Invoice_items::class,'companyCatalog');$property->setValue($controller,new NativeCompanyCatalogUi($db,$p,41,12,$controller));
 $controller->input->data=['native_editor'=>'invoice','native_invoice_id'=>'','native_invoice_revision'=>'','q'=>'Secondary'];$GLOBALS['lookupPost']=true;
 ob_start();$controller->search();$json=ob_get_clean();essentialCheck(in_array($id,array_column(json_decode($json,true,32,JSON_THROW_ON_ERROR),'id'),true),'actual search action keeps same URL and invoice-only catalogue authority');
 ob_start();$controller->get_item_by_id($id);$json=ob_get_clean();$decoded=json_decode($json,true,32,JSON_THROW_ON_ERROR);essentialCheck($decoded['custom_fields'][0]['value']==='Owned selection value'&&str_contains($decoded['custom_fields_html'],'Owned selection value'),'actual item action supplies original customfields JSON and HTML');
+essentialCheck($controller->output->mime==='application/json'&&in_array('Cache-Control: no-store',$controller->output->headers,true),'invoice-only lookup uses the same original non-cacheable JSON response contract');
 CompanyRequestScope::$csrf=false;settingThrows(fn()=>$controller->search(),'lookup_boundary_denied','actual search rejects CSRF before lookup');CompanyRequestScope::$csrf=true;$GLOBALS['lookupPost']=false;settingThrows(fn()=>$controller->search(),'lookup_boundary_denied','actual search rejects GET transport before lookup');
 $controller->input->data['native_editor']='arbitrary';settingThrows(fn()=>$controller->get_item_by_id($id),'company_catalog_invalid','unknown authority discriminator cannot elevate catalogue');
-echo "Original Invoice_items controller: five real-service/SQLite checks, framework transport doubles.\n";
+echo "Original Invoice_items controller: six real-service/SQLite checks, framework transport doubles.\n";

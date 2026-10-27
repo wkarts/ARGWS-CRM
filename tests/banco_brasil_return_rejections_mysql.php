@@ -2,11 +2,22 @@
 /** Real native ACL/transactions and isolated MySQL/MariaDB; no bank or network. */
 require __DIR__.'/banco_brasil_origination_mysql.php';
 require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/ReturnRejections.php';
+require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/ModuleStore.php';
+require_once __DIR__.'/support/BbPdoDatabase.php';
+class BbRejectionSql extends BbPdoDatabase
+{
+    public ?string $failOn=null;
+    public function query($sql,$bind=[]){
+        if($this->failOn!==null&&str_contains($sql,$this->failOn))return false;
+        return parent::query($sql,$bind);
+    }
+}
+$rejectionSql=new BbRejectionSql($db->pdo);
 $rejectionStart=$GLOBALS['essentialChecks'];
 // Reuse shipped synthetic codec vectors without overwriting the composed issuer/invoice variables.
 (static function(){ob_start();try{require __DIR__.'/banco_brasil_cnab240.php';require __DIR__.'/banco_brasil_cnab400.php';}finally{ob_end_clean();}})();
-$rejectionStore=new BancoBrasil\ModuleStore($db,$p);
-$rejectionArchive=new BancoBrasil\ReturnRejections($db,$p);
+$rejectionStore=new BancoBrasil\ModuleStore($rejectionSql,$p);
+$rejectionArchive=new BancoBrasil\ReturnRejections($rejectionSql,$p);
 $rejectionConnection=$rejectionStore->connection($connection,$a);
 $rejectionAgreement=BancoBrasil\ModuleStore::agreement($rejectionConnection);
 $rejection400Binding=$rejectionStore->registerLayout($rejectionConnection,7,BancoBrasil\LayoutCatalog::CNAB400);
@@ -79,8 +90,8 @@ $db->query("CREATE TRIGGER rejection_corrupt_original BEFORE INSERT ON {$p}bb_re
 try{essentialThrows(fn()=>$rejectionStore->receiveReturn($rejectionConnection,7,$invalid240.'corrupt-trigger',$binding),'bb_return_rejection_corrupt','last original-byte mutation rejects the transaction');}
 finally{$db->query('DROP TRIGGER rejection_corrupt_original');}
 essentialCheck([$rejectionRows(),$rejectionAudit(),$rejectionState()]===$beforeFault,'corrupt retention rolls back the entire private row/audit without accepted or financial changes');
-$db->failOn='INSERT INTO '.$p.'bb_audit';
-try{essentialThrows(fn()=>$rejectionStore->receiveReturn($rejectionConnection,7,$invalid240.'audit-fault',$binding),'issuer_storage_failed','audit failure rejects rather than claiming retention');}finally{$db->failOn=null;}
+$rejectionSql->failOn='INSERT INTO '.$p.'bb_audit';
+try{essentialThrows(fn()=>$rejectionStore->receiveReturn($rejectionConnection,7,$invalid240.'audit-fault',$binding),'issuer_storage_failed','audit failure rejects rather than claiming retention');}finally{$rejectionSql->failOn=null;}
 essentialCheck([$rejectionRows(),$rejectionAudit(),$rejectionState()]===$beforeFault,'audit failure leaves no orphan private original');
 $db->query('CREATE TABLE '.$p.'rejection_witness(hit INT NOT NULL) ENGINE=MyISAM');
 $db->query("CREATE TRIGGER rejection_revoke_actor AFTER INSERT ON {$p}bb_audit FOR EACH ROW BEGIN IF NEW.action='return_rejected_archived' AND NEW.actor_id={$rejectionActor} THEN INSERT INTO {$p}rejection_witness VALUES(1); UPDATE {$p}staff SET active=0 WHERE staffid={$rejectionActor}; END IF; END");

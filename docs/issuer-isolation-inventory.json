@@ -8213,7 +8213,7 @@
       "evidence": ""
     },
     "modules/banco_brasil/controllers/Banco_brasil.php": {
-      "sha256": "2a808581b5cefd0e4ede0fb3ffba084da145578b2d05c7e8d8f74e57c5f6f2df",
+      "sha256": "267693e076e9fd148968cf5f9a217c866efd3798f4169e1e746327a5c504e841",
       "categories": [
         "invoice_table"
       ],

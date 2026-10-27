@@ -192,7 +192,11 @@ async function next(page) { await navigate(page, page.locator('section form butt
     const switched = await hidden(page);
     const staleCompany = await context.request.post(draftUrl, { form: { ...completion, ...switched, action: 'complete', _company_context: oldContext } });
     assert.equal(staleCompany.status(), 409, 'company switch refuses old-tab submission before mutation');
-    assert.equal((await context.request.get(url + '/admin/staff')).status(), 403, 'unadapted secondary route remains closed');
+    assert.equal((await context.request.get(url + '/admin/invoices')).status(), 403, 'unadapted invoice route remains closed');
+    assert.equal((await page.goto(url + '/admin/staff')).status(), 200, 'adapted original Staff route is available in the newly created company');
+    assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), created, 'original Staff retains the newly selected company');
+    assert.equal(await page.locator('#wrapper .content').count(), 1, 'adapted Staff uses one official CRM content root');
+    assert.equal(await page.locator('[data-company-workspace]').count(), 0, 'adapted Staff contains no parallel workspace');
 
     // Positive isolated customer directory, with actual HTTP/CSRF and durable receipts.
     async function switchCompany(id) {

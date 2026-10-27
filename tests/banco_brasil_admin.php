@@ -52,6 +52,7 @@ $n=0;$ci=$GLOBALS['adminCI'];$controller=new Banco_brasil();$controller->index()
 check($ci->load->viewData['selected']['id']===1,'native company context selects the current company without an ID parameter');check(strlen($ci->session->data['bb_admin_csrf'])===64,'own CSRF established');
 $csrf=$ci->session->data['bb_admin_csrf'];$ci->input->gets=['issuer_id'=>'1'];$controller->index();check($ci->load->viewData['selected']['tax_id']==='12ABC34501DE35','authorized issuer identity');
 check($ci->load->viewData['can_manage']===true,'AND permissions allowed');
+check($ci->load->viewData['returns_rejected_error']===true&&!$ci->load->viewData['storage_error'],'unsupported diagnostic transport is explicit and cannot veto unrelated configuration permissions');
 $GLOBALS['issuerGrant']=false;$controller->index();check($ci->load->viewData['can_manage']===false,'view does not imply manage');
 $ci->input->verb='POST';$ci->input->posts=$data+['issuer_id'=>'1','csrf_bb'=>$csrf];rejects(fn()=>$controller->register_connection(),'admin without issuer grant blocked');check(!$ci->db->tables,'no write without grant');
 $GLOBALS['issuerGrant']=true;$GLOBALS['permissions']['manage']=false;$controller->index();check($ci->load->viewData['can_manage']===true,'contextual grant not vetoed by global deny');check(!$ci->db->tables,'GET remains read only');$GLOBALS['permissions']['manage']=true;
