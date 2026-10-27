@@ -59,6 +59,11 @@ final class NativeCompanyRoutes
             'get_billable_tasks_by_project'=>['GET'],
             'get_billable_tasks_by_customer_id'=>['GET'],
         ], 'projects'=>['staff_projects'=>['POST']],
+        // Read-only private billing projection; customer pages and mutations
+        // remain closed until their complete native contracts are admitted.
+        'clients'=>[
+            'get_customer_billing_and_shipping_details'=>['GET','HEAD'],
+        ],
         'staff'=>[
             'index'=>['GET','HEAD','POST'], 'member'=>['GET','HEAD','POST'],
             'role_changed'=>['GET'], 'change_staff_status'=>['POST'],

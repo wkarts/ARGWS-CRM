@@ -107,3 +107,10 @@ foreach(['index','view','project','delete','unknown']as$method)$check(!NativeCom
 $check(!NativeCompanyRoutes::admits('admin','foreign','projects','staff_projects','POST'),'module cannot reuse native staff project admission');
 $check(!NativeCompanyRoutes::navigation('projects/staff_projects'),'table endpoint cannot become an arbitrary return destination');
 echo "Original Staff projects: finite POST-only admission preserved.\n";
+
+foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb){
+ $check(NativeCompanyRoutes::admits('admin','','clients','get_customer_billing_and_shipping_details',$verb)===in_array($verb,['GET','HEAD'],true),'private customer billing projection is read-only: '.$verb);
+}
+$check(!NativeCompanyRoutes::admits('admin','foreign','clients','get_customer_billing_and_shipping_details','GET'),'modules cannot reuse customer billing projection');
+$check(!NativeCompanyRoutes::navigation('clients/get_customer_billing_and_shipping_details'),'billing projection is not a navigation destination');
+foreach(['index','client','table','delete','change_client_status','unknown']as$method)foreach(['GET','POST']as$verb)$check(!NativeCompanyRoutes::admits('admin','','clients',$method,$verb),'billing projection does not admit adjacent customer actions');

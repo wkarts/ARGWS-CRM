@@ -52,15 +52,15 @@
     ],
     [
       "php",
+      "tests/companies/native_client_billing_controller.php"
+    ],
+    [
+      "php",
       "tests/companies/native_client_status.php"
     ],
     [
       "php",
       "tests/companies/native_clients.php"
-    ],
-    [
-      "php",
-      "tests/companies/native_clients_controller.php"
     ],
     [
       "php",
