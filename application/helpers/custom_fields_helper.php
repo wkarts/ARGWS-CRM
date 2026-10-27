@@ -65,7 +65,7 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
             $fields=$editor->definitions();
         }elseif($rel_id!==false&&$rel_id!==''&&$rel_id!==null){
             if(is_array($rel_id))throw new DomainException('native_custom_field_transfer_requires_canonical_writer');
-            $fields=$nativeFields[0]->definitionsForResource($nativeFields[1],$nativeFields[2],$belongs_to,$rel_id,$nativeFilters,$purpose);
+            $fields=$nativeFields[0]->definitionsForResource($nativeFields[1],$nativeFields[2],$belongs_to==='items'&&$items_pr?'items_pr':$belongs_to,$rel_id,$nativeFilters,$purpose);
         }elseif($belongs_to==='contacts'&&$purpose==='create'&&isset($items_cf_params['native_client_id'])){
             $nativeClient=$items_cf_params['native_client_id'];
             if(!(is_int($nativeClient)&&$nativeClient>0))throw new DomainException('native_custom_field_denied');

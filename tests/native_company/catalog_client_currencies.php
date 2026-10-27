@@ -10,6 +10,8 @@ $ids=$ref->clientCurrencyIds();essentialCheck($ids===[2],'issuer currency usage 
 $other=new NativeCompanyCurrencyReference($db,$p,82,7);essentialCheck($other->clientCurrencyIds()===[],'other issuer never inherits currency from unrelated customer');
 echo "Native item currency references: three real SQLite checks passed.\n";
 
+$catalogHooksBefore=$GLOBALS['essentialHooks'];
+$GLOBALS['essentialHooks']=new class {function __call($name,$arguments){throw new LogicException('catalog_global_hooks_forbidden');}};
 // Exercise the ORIGINAL controller against this real catalogue/ACL. Only the
 // CodeIgniter renderer/output are doubles; they expose a revocation during render.
 if(class_exists('CompanyRequestScope',false)||class_exists('AdminController',false))throw new LogicException('catalogue controller fixture has unexpected framework owner');
@@ -25,7 +27,7 @@ if(!class_exists('AdminController',false)){
 class AdminController {
     public $db,$load,$output;
     function __construct(){
-        $GLOBALS['catalogPageOwner']=$this;$this->db=$GLOBALS['catalogPageDb'];
+        $GLOBALS['catalogPageOwner']=$this;$GLOBALS['CI']=$this;$this->db=$GLOBALS['catalogPageDb'];
         $this->output=new class {public array$headers=[];public string$body='';function set_header($header){$this->headers[]=$header;return$this;}function set_output($body){$this->body=$body;return$this;}};
         $this->load=new class {
             public $onRender=null;public array$views=[];
@@ -62,7 +64,7 @@ echo "Original item catalogue controller: real selected data, no global models, 
 
 // Real shared modal executed with a distinct loader host, as MX_Loader does.
 // Pure form-helper doubles do not authorize data; currency usage reads real PDO.
-if(!function_exists('get_instance')){function get_instance(){return$GLOBALS['catalogPageOwner'];}}
+if(!function_exists('get_instance')){function &get_instance(){return$GLOBALS['catalogPageOwner'];}}
 if(!function_exists('e')){function e($value){return htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}}
 if(!function_exists('form_open')){function form_open($action,$attrs=[]){return'<form action="'.e($action).'" id="'.e($attrs['id']??'').'">';}}
 if(!function_exists('form_close')){function form_close(){return'</form>';}}
@@ -70,9 +72,12 @@ if(!function_exists('form_hidden')){function form_hidden($name,$value=''){return
 if(!function_exists('render_input')){function render_input($name,$label,$value='',$type='text'){return'<input type="'.e($type).'" name="'.e($name).'" value="'.e($value).'">';}}
 if(!function_exists('render_textarea')){function render_textarea($name,$label){return'<textarea name="'.e($name).'"></textarea>';}}
 if(!function_exists('render_select')){function render_select($name,$rows,$fields,$label){return'<select name="'.e($name).'"></select>';}}
-if(!function_exists('render_custom_fields')){function render_custom_fields($field){essentialCheck($field==='items','only the original item custom-field slot');return'';}}
+if(!function_exists('form_error')){function form_error($name){return'';}}
+if(!function_exists('admin_url')){function admin_url($path=''){return'http://fixture.test/admin/'.$path;}}
 if(!function_exists('hooks')){function hooks(){throw new LogicException('catalog_global_hooks_forbidden');}}
 if(!function_exists('total_rows')){function total_rows(...$arguments){throw new LogicException('catalog_global_customer_count_forbidden');}}
+require_once APPPATH.'services/NativeCompanyAdminPresentation.php';
+require APPPATH.'helpers/custom_fields_helper.php';
 foreach([41,82]as$modalIssuer){
     CompanyRequestScope::$issuer=$modalIssuer;$modalPage=new Invoice_items();$modalHtml=null;
     $modalPage->load->onRender=static function($data)use($modalPage,&$modalHtml){
@@ -92,3 +97,27 @@ foreach([41,82]as$modalIssuer){
 }
 CompanyRequestScope::$issuer=41;
 echo "Original item modal in distinct loader scope: canonical owner/revision, A/B real currency usage and forbidden global hooks/customer counts passed.\n";
+
+// Catalogue metadata and invoice-line metadata share definitions, not identities.
+CompanyRequestScope::$issuer=41;$catalogFieldsPage=new Invoice_items();
+$catalogItemId=$namedCatalog->saveItem(['description'=>'Catalogue helper resource','rate'=>'4.25']);
+essentialCheck(render_custom_fields('items',$catalogItemId,[],['items_pr'=>true])==='','actual production helper can read a catalogue item even when it has no custom fields');
+$customDefinition=NativeCompanyCustomFields::definition(['fieldto'=>'items','name'=>'Catalogue metadata','type'=>'input','active'=>1]);
+$db->query('INSERT INTO '.$p.'company_custom_fields(issuer_id,fieldto,slug,definition_json,revision) VALUES(?,?,?,?,1)',[41,'items','catalogue_metadata_probe',json_encode($customDefinition,JSON_THROW_ON_ERROR)]);
+$fieldSource=(int)$db->insert_id();$fieldWire=NativeCompanyResourceId::encode('company_custom_field',$fieldSource);
+$catalogReference=NativeCompanyResourceId::decode('item',$catalogItemId);
+$db->query('INSERT INTO '.$p.'company_custom_field_values(issuer_id,field_source_kind,field_id,source_kind,source_id,value,revision) VALUES(?,?,?,?,?,?,1)',[41,'company_custom_field',$fieldSource,'company_item',$catalogReference['source_id'],'Catalogue <literal>']);
+$catalogHtml=render_custom_fields('items',$catalogItemId,[],['items_pr'=>true]);
+essentialCheck(str_contains($catalogHtml,'name="custom_fields[items]['.$fieldWire.']"')&&str_contains($catalogHtml,'value="Catalogue &lt;literal&gt;"'),'real helper renders only the authorized catalogue value with the shared form taxonomy and escaping');
+settingThrows(fn()=>render_custom_fields('items',$catalogItemId),'native_resource_namespace_mismatch','catalogue identity cannot masquerade as an invoice line');
+settingThrows(fn()=>render_custom_fields('items',NativeCompanyResourceId::encode('company_invoice_draft_line',1),[],['items_pr'=>true]),'native_resource_namespace_mismatch','invoice draft line cannot masquerade as a catalogue item');
+settingThrows(fn()=>render_custom_fields('items','1',[],['items_pr'=>true]),'native_custom_field_denied','secondary helper cannot use a principal raw catalogue ID');
+CompanyRequestScope::$issuer=82;$foreignCatalogPage=new Invoice_items();
+settingThrows(fn()=>render_custom_fields('items',$catalogItemId,[],['items_pr'=>true]),'native_custom_field_denied','another company cannot read the item custom-field definitions or values');
+CompanyRequestScope::$issuer=41;$activeCatalogPage=new Invoice_items();
+$db->query("UPDATE {$p}issuers_registry SET active=0 WHERE id=41");
+try{settingThrows(fn()=>render_custom_fields('items',$catalogItemId,[],['items_pr'=>true]),'native_custom_field_denied','revoked issuer cannot hydrate catalogue custom fields');}
+finally{$db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id=41");}
+echo "Real catalogue custom-field helper: empty/value reads, escaped values, disjoint invoice namespace, principal/foreign IDs and revoked issuer passed.\n";
+
+$GLOBALS['essentialHooks']=$catalogHooksBefore;
