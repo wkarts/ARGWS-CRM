@@ -29,7 +29,8 @@ async function navigate(page, button) {
   // Diagnose a missing control before starting a navigation that cannot occur.
   // The workspace driver still reveals hidden panels through their real buttons on click.
   await button.waitFor({ state: 'attached' });
-  await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), button.click()]);
+  const [response] = await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), button.click()]);
+  return response;
 }
 async function hidden(page) {
   return page.locator('input[type=hidden]').evaluateAll(inputs => Object.fromEntries(inputs.filter(x => x.name && !x.name.startsWith('wizard[')).map(x => [x.name, x.value])));
@@ -57,14 +58,19 @@ async function next(page) { await navigate(page, page.locator('section form butt
     async function select(id){await page.goto(url+'/admin/');await selectCompanyOption(page, id);}
     async function configure(id,letter){
       await select(id);await page.goto(url+'/admin/settings?group=email');
-      await page.locator('#company-setting-smtp_host').fill('smtp-'+letter+'.example.invalid');
-      await page.locator('#company-setting-smtp_port').fill('587');
-      await page.locator('#company-setting-smtp_email').fill(letter+'@example.invalid');
-      await page.locator('#company-setting-smtp_username').fill('synthetic-'+letter);
-      await page.locator('#company-smtp-password').fill('synthetic-secret-'+letter);
-      await navigate(page,page.locator('#company-settings-form button[type=submit]'));
-      assert((await page.locator('[role=status]').innerText()).includes('Definições salvas'));
-      assert.equal(await page.locator('#company-smtp-password').inputValue(),'','GUI never echoes SMTP password');
+      const form=page.locator('#settings-form');
+      if (!await form.locator('#smtp').isChecked()) await form.locator('label[for="smtp"]').click();
+      await form.locator('input[name="settings[smtp_host]"]').fill('smtp-'+letter+'.example.invalid');
+      await form.locator('input[name="settings[smtp_port]"]').fill('587');
+      await form.locator('input[name="settings[smtp_email]"]').fill(letter+'@example.invalid');
+      await form.locator('input[name="settings[smtp_username]"]').fill('synthetic-'+letter);
+      await form.locator('input[name="settings[smtp_password]"]').fill('synthetic-secret-'+letter);
+      const saved=await navigate(page,form.locator('button[type=submit]'));
+      assert.equal(saved.status(),200,'native settings POST redirects to its saved form');
+      assert(new URL(page.url()).searchParams.get('group')==='email');
+      assert.equal(await form.locator('input[name="settings[smtp_host]"]').inputValue(),'smtp-'+letter+'.example.invalid','SMTP settings persist in the selected company');
+      assert.equal(await form.locator('input[name="settings[smtp_email]"]').inputValue(),letter+'@example.invalid');
+      assert.equal(await form.locator('input[name="settings[smtp_password]"]').inputValue(),'','GUI never echoes SMTP password');
     }
     const clients={};
     for(const [id,letter] of [[a,'a'],[b,'b']]){
