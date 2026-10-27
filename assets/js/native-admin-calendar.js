@@ -210,7 +210,9 @@ function delete_event(id) {
     var pending=native?NativeCompanyTransport.request("utilities/delete_event/"+id,"POST",revision,{dataType:"json"}):$.post(admin_url+"utilities/delete_event/"+id,revision);
     return pending.done(function (response) {
       if (response.success === true || response.success == "true") {
-        window.location.reload();
+        // The original filter form may have produced this document by POST.
+        // Follow deletion with GET, without replaying that form or eventid.
+        window.location.href = window.location.href.split("?")[0];
       }
     });
   }

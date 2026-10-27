@@ -7,6 +7,9 @@
     const token = <?= json_encode($companyPageToken, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     const nativeCsrf = <?= json_encode(function_exists('get_instance') && method_exists('CompanyRequestScope', 'nativeCsrfToken') ? CompanyRequestScope::nativeCsrfToken(get_instance()) : null, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     const root = new URL(<?= json_encode(CompanyRequestScope::adminUrl($this), JSON_HEX_TAG | JSON_HEX_AMP); ?>, location.href);
+    // NativeCompanyTransport owns native network headers. The shared head keeps
+    // form stamping, but two XHR owners would append the same header twice.
+    const ownsNetwork = <?= json_encode(!(function_exists('get_instance') && method_exists('CompanyRequestScope', 'nativeFor') && CompanyRequestScope::nativeFor(get_instance()))); ?>;
     const scoped = value => { try { const u = new URL(value || location.href, location.href); return u.origin === root.origin && (u.pathname === root.pathname.replace(/\/$/, '') || u.pathname.startsWith(root.pathname)); } catch (_) { return false; } };
     const stamp = form => {
         if (!scoped(form.action) || (form.method || 'get').toLowerCase() === 'get') return;
@@ -23,6 +26,7 @@
     new MutationObserver(stampAll).observe(document.documentElement, {childList:true, subtree:true});
     const nativeSubmit = HTMLFormElement.prototype.submit;
     HTMLFormElement.prototype.submit = function () { stamp(this); return nativeSubmit.call(this); };
+    if (!ownsNetwork) return;
     const open = XMLHttpRequest.prototype.open, send = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.open = function (method, url) { this.__companyScoped = scoped(url); return open.apply(this, arguments); };
     XMLHttpRequest.prototype.send = function () { if (this.__companyScoped) { this.setRequestHeader('X-Company-Context', token); if (nativeCsrf) this.setRequestHeader('X-Native-Company-CSRF', nativeCsrf); } return send.apply(this, arguments); };

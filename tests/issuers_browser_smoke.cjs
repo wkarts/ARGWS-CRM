@@ -288,6 +288,8 @@ async function captureRealScreens(page, routes) {
         fs.writeFileSync(output+'/native-calendar-feed-failure.json',JSON.stringify(evidence,null,2));console.error('Native calendar feed request shape; no token/body values: '+JSON.stringify(evidence));
       }
       assert.equal(primaryFeedResponse.status(),200,'principal historical feed uses the shared authenticated endpoint');
+      const nativeCalendarHeaders=await primaryFeedResponse.request().allHeaders(),nativeCalendarDocumentContext=await page.evaluate(()=>window.NativeCompanyHeaderConfig?.context||null);
+      assert(typeof nativeCalendarDocumentContext==='string'&&nativeCalendarHeaders['x-company-context']===nativeCalendarDocumentContext,'native feed sends exactly the captured document context once; tokens omitted');
       assert.equal(await page.locator('body.native-company-admin').count(),1,'principal calendar has the same native presentation as secondary companies');
       assert.equal(await page.locator('#newEventModal').count(),1,'one original event modal and no competing calendar shell');
       assert.equal(await page.locator('#newEventModal [name=_native_company_csrf]').count(),1,'native new-event form also carries one CSRF field rather than duplicate serialization');

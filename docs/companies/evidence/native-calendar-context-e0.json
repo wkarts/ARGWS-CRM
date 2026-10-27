@@ -1,0 +1,18 @@
+{
+  "source_commit": "e0f0ef657a4024590d62eca4bf04502f96108018",
+  "run_id": 40433128248,
+  "job_id": 121955368259,
+  "artifact_id": 12702294071,
+  "artifact_zip_sha256": "641ff39f8dd565401a682f5237fd09a75f071b91caf9b3b5e61fb8153c01f01a",
+  "observed_failure": {
+    "status": 409,
+    "method": "GET",
+    "fields": {
+      "start": "2026-09-27",
+      "end": "2026-11-08"
+    },
+    "unknown": [],
+    "response_kind": "company_context_changed",
+    "company_context_header_present": true
+  }
+}
