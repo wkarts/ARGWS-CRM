@@ -4,7 +4,7 @@ Os geradores oficiais executados no checkout completo de42d46736b585247d9877b578
 
 - Operational source_manifest_sha256: 87ab65c608fb5a6e1a15de7ae9d900a97ffc6e965dafd4d32c576edb5b489038. Dois focados push8.1/8.5 (run40452693240/jobs122018847965/122018848224) concordaram. NativeUI40452699157/job122018867477 gerou o JSON completo e o diff confirmou apenas esse campo; contadores inalterados. As referências/linhas do controller preparadas em5d corresponderam ao gerador.
 - Boundary source_sha256: 7ae0b8e1607f3d4d760eae12f450deeea80c26baab61f1615e163004bb7b61ac, Empresas40452699072/job122018866910. Testes Python passaram, --check recusou o resumo antigo e informou o esperado.
-- Auditor do modal já atualizado no42, preservando unreviewed/647 itens/rollout blocked; demais647 registros/classificações não foram fechados. Censo mantém os métodos existentes e linhas atuais, sem inventar ações prontas.
+- Auditor do modal já atualizado no42, preservando unreviewed/647 itens/rollout blocked; os demais registros/classificações não foram fechados. Censo mantém os métodos existentes e linhas atuais, sem inventar ações prontas.
 
 Este incremento substitui somente os2 digests dos resumos. Não executa/repara um gate automaticamente, não muda saída de erro nem afirma a conclusão funcional. A geração/check oficiais devem passar no SHA resultante.
 
