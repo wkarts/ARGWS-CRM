@@ -386,499 +386,6 @@
             ]
         },
         {
-            "path": "application/controllers/admin/Company_ai.php",
-            "controller": "Company_ai",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 7,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_api_tokens.php",
-            "controller": "Company_api_tokens",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 8,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_asaas.php",
-            "controller": "Company_asaas",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 25,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_connect_api.php",
-            "controller": "Company_connect_api",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 6,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_credits.php",
-            "controller": "Company_credits",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 8,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_efi.php",
-            "controller": "Company_efi",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 11,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_expense_copies.php",
-            "controller": "Company_expense_copies",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 6,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_expenses.php",
-            "controller": "Company_expenses",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 8,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_google_mail_oauth.php",
-            "controller": "Company_google_mail_oauth",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 8,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_hr.php",
-            "controller": "Company_hr",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 32,
-                    "classification": "parallel_to_remove"
-                },
-                {
-                    "method": "file",
-                    "line": 81,
-                    "classification": "parallel_to_remove"
-                },
-                {
-                    "method": "pdf",
-                    "line": 85,
-                    "classification": "parallel_to_remove"
-                },
-                {
-                    "method": "export",
-                    "line": 89,
-                    "classification": "parallel_to_remove"
-                },
-                {
-                    "method": "mine",
-                    "line": 93,
-                    "classification": "parallel_to_remove"
-                },
-                {
-                    "method": "mine_file",
-                    "line": 100,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_imports.php",
-            "controller": "Company_imports",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 8,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_invoices.php",
-            "controller": "Company_invoices",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 6,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_microsoft_mail_oauth.php",
-            "controller": "Company_microsoft_mail_oauth",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 8,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_onboarding.php",
-            "controller": "Company_onboarding",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 7,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_post_refund.php",
-            "controller": "Company_post_refund",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 5,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_post_refund_manual.php",
-            "controller": "Company_post_refund_manual",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 5,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_project_billing_rates.php",
-            "controller": "Company_project_billing_rates",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 5,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_project_copies.php",
-            "controller": "Company_project_copies",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 7,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_project_extras.php",
-            "controller": "Company_project_extras",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 6,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_project_fixed_billing.php",
-            "controller": "Company_project_fixed_billing",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 7,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_project_portal_rules.php",
-            "controller": "Company_project_portal_rules",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 7,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_projects.php",
-            "controller": "Company_projects",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 6,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_purchases.php",
-            "controller": "Company_purchases",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 6,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_pusher.php",
-            "controller": "Company_pusher",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 6,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_sales.php",
-            "controller": "Company_sales",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 6,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_selection.php",
-            "controller": "Company_selection",
-            "owner": "central",
-            "parallel": false,
-            "methods": [
-                {
-                    "method": "select",
-                    "line": 14,
-                    "classification": "review_required"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_standalone_billing.php",
-            "controller": "Company_standalone_billing",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 7,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_standalone_tasks.php",
-            "controller": "Company_standalone_tasks",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 6,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_task_billing.php",
-            "controller": "Company_task_billing",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 7,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_task_copies.php",
-            "controller": "Company_task_copies",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 7,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_task_recurring.php",
-            "controller": "Company_task_recurring",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 7,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_tasks.php",
-            "controller": "Company_tasks",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 6,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_ticket_connect.php",
-            "controller": "Company_ticket_connect",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 6,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_tickets.php",
-            "controller": "Company_tickets",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 6,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_time_batches.php",
-            "controller": "Company_time_batches",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 7,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
-            "path": "application/controllers/admin/Company_time_billing.php",
-            "controller": "Company_time_billing",
-            "owner": "central",
-            "parallel": true,
-            "methods": [
-                {
-                    "method": "index",
-                    "line": 6,
-                    "classification": "parallel_to_remove"
-                }
-            ]
-        },
-        {
             "path": "application/controllers/admin/Contracts.php",
             "controller": "Contracts",
             "owner": "central",
@@ -1461,122 +968,122 @@
                 },
                 {
                     "method": "estimate",
-                    "line": 77,
+                    "line": 78,
                     "classification": "review_required"
                 },
                 {
                     "method": "clear_signature",
-                    "line": 170,
+                    "line": 171,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_number_settings",
-                    "line": 179,
+                    "line": 180,
                     "classification": "review_required"
                 },
                 {
                     "method": "validate_estimate_number",
-                    "line": 204,
+                    "line": 205,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 230,
+                    "line": 231,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_estimate_data_ajax",
-                    "line": 243,
+                    "line": 244,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_estimates_total",
-                    "line": 295,
+                    "line": 296,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_note",
-                    "line": 327,
+                    "line": 328,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_notes",
-                    "line": 335,
+                    "line": 336,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_action_status",
-                    "line": 343,
+                    "line": 344,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_expiry_reminder",
-                    "line": 361,
+                    "line": 362,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 386,
+                    "line": 387,
                     "classification": "review_required"
                 },
                 {
                     "method": "convert_to_invoice",
-                    "line": 423,
+                    "line": 424,
                     "classification": "review_required"
                 },
                 {
                     "method": "copy",
-                    "line": 451,
+                    "line": 452,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 477,
+                    "line": 478,
                     "classification": "review_required"
                 },
                 {
                     "method": "clear_acceptance_info",
-                    "line": 496,
+                    "line": 497,
                     "classification": "review_required"
                 },
                 {
                     "method": "pdf",
-                    "line": 507,
+                    "line": 508,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_pipeline",
-                    "line": 554,
+                    "line": 555,
                     "classification": "review_required"
                 },
                 {
                     "method": "pipeline_open",
-                    "line": 562,
+                    "line": 565,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_pipeline",
-                    "line": 578,
+                    "line": 583,
                     "classification": "review_required"
                 },
                 {
                     "method": "pipeline",
-                    "line": 585,
+                    "line": 590,
                     "classification": "review_required"
                 },
                 {
                     "method": "pipeline_load_more",
-                    "line": 600,
+                    "line": 605,
                     "classification": "review_required"
                 },
                 {
                     "method": "set_estimate_pipeline_autoload",
-                    "line": 621,
+                    "line": 628,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_due_date",
-                    "line": 637,
+                    "line": 644,
                     "classification": "review_required"
                 }
             ]
@@ -1588,93 +1095,98 @@
             "parallel": false,
             "methods": [
                 {
+                    "method": "purchases",
+                    "line": 12,
+                    "classification": "review_required"
+                },
+                {
                     "method": "index",
-                    "line": 18,
+                    "line": 22,
                     "classification": "review_required"
                 },
                 {
                     "method": "list_expenses",
-                    "line": 28,
+                    "line": 32,
                     "classification": "review_required"
                 },
                 {
                     "method": "table",
-                    "line": 52,
+                    "line": 56,
                     "classification": "review_required"
                 },
                 {
                     "method": "expense",
-                    "line": 67,
+                    "line": 71,
                     "classification": "review_required"
                 },
                 {
                     "method": "import",
-                    "line": 140,
+                    "line": 144,
                     "classification": "review_required"
                 },
                 {
                     "method": "bulk_action",
-                    "line": 175,
+                    "line": 179,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_expenses_total",
-                    "line": 222,
+                    "line": 226,
                     "classification": "review_required"
                 },
                 {
                     "method": "pdf",
-                    "line": 246,
+                    "line": 250,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 259,
+                    "line": 263,
                     "classification": "review_required"
                 },
                 {
                     "method": "copy",
-                    "line": 281,
+                    "line": 285,
                     "classification": "review_required"
                 },
                 {
                     "method": "convert_to_invoice",
-                    "line": 301,
+                    "line": 305,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_expense_data_ajax",
-                    "line": 333,
+                    "line": 337,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_customer_change_data",
-                    "line": 359,
+                    "line": 363,
                     "classification": "review_required"
                 },
                 {
                     "method": "categories",
-                    "line": 367,
+                    "line": 371,
                     "classification": "review_required"
                 },
                 {
                     "method": "category",
-                    "line": 379,
+                    "line": 383,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_category",
-                    "line": 404,
+                    "line": 408,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_expense_attachment",
-                    "line": 423,
+                    "line": 427,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_expense_attachment",
-                    "line": 431,
+                    "line": 435,
                     "classification": "review_required"
                 }
             ]
@@ -1840,158 +1352,163 @@
             "parallel": false,
             "methods": [
                 {
+                    "method": "standalone_billing",
+                    "line": 10,
+                    "classification": "review_required"
+                },
+                {
                     "method": "index",
-                    "line": 18,
+                    "line": 22,
                     "classification": "review_required"
                 },
                 {
                     "method": "list_invoices",
-                    "line": 24,
+                    "line": 28,
                     "classification": "review_required"
                 },
                 {
                     "method": "recurring",
-                    "line": 66,
+                    "line": 70,
                     "classification": "review_required"
                 },
                 {
                     "method": "table",
-                    "line": 88,
+                    "line": 92,
                     "classification": "review_required"
                 },
                 {
                     "method": "client_change_data",
-                    "line": 145,
+                    "line": 149,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_number_settings",
-                    "line": 192,
+                    "line": 196,
                     "classification": "review_required"
                 },
                 {
                     "method": "validate_invoice_number",
-                    "line": 218,
+                    "line": 222,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_note",
-                    "line": 258,
+                    "line": 262,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_notes",
-                    "line": 270,
+                    "line": 274,
                     "classification": "review_required"
                 },
                 {
                     "method": "pause_overdue_reminders",
-                    "line": 331,
+                    "line": 335,
                     "classification": "review_required"
                 },
                 {
                     "method": "resume_overdue_reminders",
-                    "line": 342,
+                    "line": 346,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_as_cancelled",
-                    "line": 353,
+                    "line": 357,
                     "classification": "review_required"
                 },
                 {
                     "method": "unmark_as_cancelled",
-                    "line": 394,
+                    "line": 398,
                     "classification": "review_required"
                 },
                 {
                     "method": "copy",
-                    "line": 427,
+                    "line": 431,
                     "classification": "review_required"
                 },
                 {
                     "method": "drafts",
-                    "line": 451,
+                    "line": 455,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_merge_data",
-                    "line": 461,
+                    "line": 465,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_bill_expense_data",
-                    "line": 497,
+                    "line": 501,
                     "classification": "review_required"
                 },
                 {
                     "method": "invoice",
-                    "line": 517,
+                    "line": 521,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_invoice_data_ajax",
-                    "line": 662,
+                    "line": 666,
                     "classification": "review_required"
                 },
                 {
                     "method": "apply_credits",
-                    "line": 753,
+                    "line": 757,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_invoices_total",
-                    "line": 774,
+                    "line": 778,
                     "classification": "review_required"
                 },
                 {
                     "method": "record_invoice_payment_ajax",
-                    "line": 811,
+                    "line": 815,
                     "classification": "review_required"
                 },
                 {
                     "method": "record_payment",
-                    "line": 839,
+                    "line": 843,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 875,
+                    "line": 879,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_payment",
-                    "line": 922,
+                    "line": 926,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 941,
+                    "line": 945,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 959,
+                    "line": 963,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_overdue_notice",
-                    "line": 987,
+                    "line": 991,
                     "classification": "review_required"
                 },
                 {
                     "method": "pdf",
-                    "line": 1008,
+                    "line": 1012,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_as_sent",
-                    "line": 1077,
+                    "line": 1081,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_due_date",
-                    "line": 1098,
+                    "line": 1102,
                     "classification": "review_required"
                 }
             ]
@@ -2013,8 +1530,18 @@
                     "classification": "review_required"
                 },
                 {
+                    "method": "select",
+                    "line": 117,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "onboarding",
+                    "line": 153,
+                    "classification": "review_required"
+                },
+                {
                     "method": "lookup",
-                    "line": 116,
+                    "line": 209,
                     "classification": "review_required"
                 }
             ]
@@ -2802,263 +2329,293 @@
             "parallel": false,
             "methods": [
                 {
+                    "method": "extras",
+                    "line": 14,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "portal_rules",
+                    "line": 15,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "billing_rates",
+                    "line": 16,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "fixed_billing",
+                    "line": 17,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "copies",
+                    "line": 18,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "time_billing",
+                    "line": 19,
+                    "classification": "review_required"
+                },
+                {
                     "method": "index",
-                    "line": 44,
+                    "line": 53,
                     "classification": "review_required"
                 },
                 {
                     "method": "table",
-                    "line": 54,
+                    "line": 63,
                     "classification": "review_required"
                 },
                 {
                     "method": "staff_projects",
-                    "line": 76,
+                    "line": 85,
                     "classification": "review_required"
                 },
                 {
                     "method": "expenses",
-                    "line": 91,
+                    "line": 100,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_expense",
-                    "line": 103,
+                    "line": 112,
                     "classification": "review_required"
                 },
                 {
                     "method": "project",
-                    "line": 165,
+                    "line": 174,
                     "classification": "review_required"
                 },
                 {
                     "method": "gantt",
-                    "line": 230,
+                    "line": 239,
                     "classification": "review_required"
                 },
                 {
                     "method": "view",
-                    "line": 280,
+                    "line": 289,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_as",
-                    "line": 497,
+                    "line": 506,
                     "classification": "review_required"
                 },
                 {
                     "method": "file",
-                    "line": 519,
+                    "line": 528,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_file_data",
-                    "line": 535,
+                    "line": 544,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_external_file",
-                    "line": 542,
+                    "line": 551,
                     "classification": "review_required"
                 },
                 {
                     "method": "download_all_files",
-                    "line": 555,
+                    "line": 564,
                     "classification": "review_required"
                 },
                 {
                     "method": "export_project_data",
-                    "line": 578,
+                    "line": 587,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_task_milestone",
-                    "line": 585,
+                    "line": 594,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_milestones_order",
-                    "line": 592,
+                    "line": 601,
                     "classification": "review_required"
                 },
                 {
                     "method": "pin_action",
-                    "line": 599,
+                    "line": 608,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_edit_members",
-                    "line": 619,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "discussions",
                     "line": 628,
                     "classification": "review_required"
                 },
                 {
+                    "method": "discussions",
+                    "line": 637,
+                    "classification": "review_required"
+                },
+                {
                     "method": "discussion",
-                    "line": 639,
+                    "line": 648,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_discussion_comments",
-                    "line": 672,
+                    "line": 681,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_discussion_comment",
-                    "line": 677,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "update_discussion_comment",
                     "line": 686,
                     "classification": "review_required"
                 },
                 {
+                    "method": "update_discussion_comment",
+                    "line": 695,
+                    "classification": "review_required"
+                },
+                {
                     "method": "delete_discussion_comment",
-                    "line": 691,
+                    "line": 700,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_discussion",
-                    "line": 696,
+                    "line": 705,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_milestone_color",
-                    "line": 714,
+                    "line": 723,
                     "classification": "review_required"
                 },
                 {
                     "method": "upload_file",
-                    "line": 721,
+                    "line": 730,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_file_visibility",
-                    "line": 738,
+                    "line": 747,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_activity_visibility",
-                    "line": 745,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "remove_file",
                     "line": 754,
                     "classification": "review_required"
                 },
                 {
+                    "method": "remove_file",
+                    "line": 763,
+                    "classification": "review_required"
+                },
+                {
                     "method": "milestones_kanban",
-                    "line": 770,
+                    "line": 779,
                     "classification": "review_required"
                 },
                 {
                     "method": "milestones_kanban_load_more",
-                    "line": 793,
+                    "line": 802,
                     "classification": "review_required"
                 },
                 {
                     "method": "milestones",
-                    "line": 811,
+                    "line": 820,
                     "classification": "review_required"
                 },
                 {
                     "method": "milestone",
-                    "line": 822,
+                    "line": 831,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_milestone",
-                    "line": 854,
+                    "line": 863,
                     "classification": "review_required"
                 },
                 {
                     "method": "bulk_action_files",
-                    "line": 864,
+                    "line": 873,
                     "classification": "review_required"
                 },
                 {
                     "method": "timesheets",
-                    "line": 888,
+                    "line": 897,
                     "classification": "review_required"
                 },
                 {
                     "method": "timesheet",
-                    "line": 899,
+                    "line": 908,
                     "classification": "review_required"
                 },
                 {
                     "method": "timesheet_task_assignees",
-                    "line": 933,
+                    "line": 942,
                     "classification": "review_required"
                 },
                 {
                     "method": "remove_team_member",
-                    "line": 961,
+                    "line": 970,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_note",
-                    "line": 973,
+                    "line": 982,
                     "classification": "review_required"
                 },
                 {
                     "method": "edit_note",
-                    "line": 1001,
+                    "line": 1010,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_note",
-                    "line": 1019,
+                    "line": 1028,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 1041,
+                    "line": 1050,
                     "classification": "review_required"
                 },
                 {
                     "method": "copy",
-                    "line": 1056,
+                    "line": 1077,
                     "classification": "review_required"
                 },
                 {
                     "method": "mass_stop_timers",
-                    "line": 1070,
+                    "line": 1095,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_pre_invoice_project_info",
-                    "line": 1103,
+                    "line": 1128,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_invoice_project_data",
-                    "line": 1132,
+                    "line": 1157,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_rel_project_data",
-                    "line": 1309,
+                    "line": 1334,
                     "classification": "review_required"
                 },
                 {
                     "method": "invoice_project",
-                    "line": 1352,
+                    "line": 1377,
                     "classification": "review_required"
                 },
                 {
                     "method": "view_project_as_client",
-                    "line": 1367,
+                    "line": 1392,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_staff_names_for_mentions",
-                    "line": 1375,
+                    "line": 1400,
                     "classification": "review_required"
                 }
             ]
@@ -3086,167 +2643,167 @@
                 },
                 {
                     "method": "proposal_relations",
-                    "line": 76,
+                    "line": 77,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 84,
+                    "line": 86,
                     "classification": "review_required"
                 },
                 {
                     "method": "clear_signature",
-                    "line": 94,
+                    "line": 96,
                     "classification": "review_required"
                 },
                 {
                     "method": "sync_data",
-                    "line": 103,
+                    "line": 105,
                     "classification": "review_required"
                 },
                 {
                     "method": "proposal",
-                    "line": 138,
+                    "line": 140,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_template",
-                    "line": 206,
+                    "line": 208,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_expiry_reminder",
-                    "line": 212,
+                    "line": 214,
                     "classification": "review_required"
                 },
                 {
                     "method": "clear_acceptance_info",
-                    "line": 236,
+                    "line": 238,
                     "classification": "review_required"
                 },
                 {
                     "method": "pdf",
-                    "line": 246,
+                    "line": 248,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_proposal_data_ajax",
-                    "line": 289,
+                    "line": 291,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_note",
-                    "line": 329,
+                    "line": 331,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_notes",
-                    "line": 337,
+                    "line": 339,
                     "classification": "review_required"
                 },
                 {
                     "method": "convert_to_estimate",
-                    "line": 345,
+                    "line": 347,
                     "classification": "review_required"
                 },
                 {
                     "method": "convert_to_invoice",
-                    "line": 376,
+                    "line": 378,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_invoice_convert_data",
-                    "line": 408,
+                    "line": 410,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_estimate_convert_data",
-                    "line": 447,
+                    "line": 449,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 504,
+                    "line": 506,
                     "classification": "review_required"
                 },
                 {
                     "method": "copy",
-                    "line": 545,
+                    "line": 547,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_action_status",
-                    "line": 565,
+                    "line": 567,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 583,
+                    "line": 585,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_relation_data_values",
-                    "line": 597,
+                    "line": 599,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_proposal_comment",
-                    "line": 602,
+                    "line": 604,
                     "classification": "review_required"
                 },
                 {
                     "method": "edit_comment",
-                    "line": 611,
+                    "line": 613,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_proposal_comments",
-                    "line": 621,
+                    "line": 623,
                     "classification": "review_required"
                 },
                 {
                     "method": "remove_comment",
-                    "line": 627,
+                    "line": 629,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_proposal_data",
-                    "line": 648,
+                    "line": 650,
                     "classification": "review_required"
                 },
                 {
                     "method": "pipeline",
-                    "line": 676,
+                    "line": 678,
                     "classification": "review_required"
                 },
                 {
                     "method": "pipeline_open",
-                    "line": 691,
+                    "line": 693,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_pipeline",
-                    "line": 700,
+                    "line": 704,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_pipeline",
-                    "line": 707,
+                    "line": 711,
                     "classification": "review_required"
                 },
                 {
                     "method": "pipeline_load_more",
-                    "line": 715,
+                    "line": 721,
                     "classification": "review_required"
                 },
                 {
                     "method": "set_proposal_pipeline_autoload",
-                    "line": 736,
+                    "line": 744,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_due_date",
-                    "line": 751,
+                    "line": 759,
                     "classification": "review_required"
                 }
             ]
@@ -3298,11 +2855,6 @@
                 {
                     "method": "knowledge_base_articles",
                     "line": 43,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "tax_summary",
-                    "line": 52,
                     "classification": "review_required"
                 },
                 {
@@ -3412,43 +2964,78 @@
             "parallel": false,
             "methods": [
                 {
-                    "method": "index",
+                    "method": "pusher",
+                    "line": 13,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "asaas",
+                    "line": 14,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "imports",
+                    "line": 15,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "efi",
+                    "line": 16,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "microsoft_mail_oauth",
+                    "line": 17,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "google_mail_oauth",
+                    "line": 18,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "api_tokens",
                     "line": 19,
                     "classification": "review_required"
                 },
                 {
+                    "method": "index",
+                    "line": 29,
+                    "classification": "review_required"
+                },
+                {
                     "method": "delete_tag",
-                    "line": 352,
+                    "line": 362,
                     "classification": "review_required"
                 },
                 {
                     "method": "remove_signature_image",
-                    "line": 370,
+                    "line": 380,
                     "classification": "review_required"
                 },
                 {
                     "method": "company_asset",
-                    "line": 388,
+                    "line": 398,
                     "classification": "review_required"
                 },
                 {
                     "method": "remove_company_logo",
-                    "line": 399,
+                    "line": 409,
                     "classification": "review_required"
                 },
                 {
                     "method": "remove_fv",
-                    "line": 422,
+                    "line": 432,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_option",
-                    "line": 436,
+                    "line": 446,
                     "classification": "review_required"
                 },
                 {
                     "method": "clear_sessions",
-                    "line": 447,
+                    "line": 457,
                     "classification": "review_required"
                 }
             ]
@@ -3509,98 +3096,128 @@
             "parallel": false,
             "methods": [
                 {
+                    "method": "hr",
+                    "line": 15,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "hr_file",
+                    "line": 16,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "hr_pdf",
+                    "line": 17,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "hr_export",
+                    "line": 18,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "hr_mine",
+                    "line": 19,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "hr_mine_file",
+                    "line": 20,
+                    "classification": "review_required"
+                },
+                {
                     "method": "index",
-                    "line": 12,
+                    "line": 21,
                     "classification": "review_required"
                 },
                 {
                     "method": "member",
-                    "line": 34,
+                    "line": 43,
                     "classification": "review_required"
                 },
                 {
                     "method": "role_changed",
-                    "line": 157,
+                    "line": 166,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_dashboard_widgets_order",
-                    "line": 187,
+                    "line": 196,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_dashboard_widgets_visibility",
-                    "line": 201,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "reset_dashboard",
                     "line": 210,
                     "classification": "review_required"
                 },
                 {
-                    "method": "save_hidden_table_columns",
+                    "method": "reset_dashboard",
                     "line": 219,
                     "classification": "review_required"
                 },
                 {
+                    "method": "save_hidden_table_columns",
+                    "line": 228,
+                    "classification": "review_required"
+                },
+                {
                     "method": "change_language",
-                    "line": 231,
+                    "line": 240,
                     "classification": "review_required"
                 },
                 {
                     "method": "timesheets",
-                    "line": 242,
+                    "line": 251,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 272,
+                    "line": 281,
                     "classification": "review_required"
                 },
                 {
                     "method": "edit_profile",
-                    "line": 301,
+                    "line": 310,
                     "classification": "review_required"
                 },
                 {
                     "method": "remove_staff_profile_image",
-                    "line": 366,
+                    "line": 375,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_password_profile",
-                    "line": 395,
+                    "line": 404,
                     "classification": "review_required"
                 },
                 {
                     "method": "profile",
-                    "line": 420,
+                    "line": 429,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_staff_status",
-                    "line": 452,
+                    "line": 461,
                     "classification": "review_required"
                 },
                 {
                     "method": "notifications",
-                    "line": 468,
+                    "line": 477,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_two_factor",
-                    "line": 524,
+                    "line": 533,
                     "classification": "review_required"
                 },
                 {
                     "method": "verify_google_two_factor",
-                    "line": 567,
+                    "line": 576,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_completed_checklist_visibility",
-                    "line": 602,
+                    "line": 611,
                     "classification": "review_required"
                 }
             ]
@@ -3665,308 +3282,333 @@
             "parallel": false,
             "methods": [
                 {
+                    "method": "copies",
+                    "line": 18,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "recurring",
+                    "line": 19,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "standalone",
+                    "line": 20,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "billing",
+                    "line": 21,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "time_batches",
+                    "line": 22,
+                    "classification": "review_required"
+                },
+                {
                     "method": "index",
-                    "line": 27,
+                    "line": 35,
                     "classification": "review_required"
                 },
                 {
                     "method": "list_tasks",
-                    "line": 33,
+                    "line": 41,
                     "classification": "review_required"
                 },
                 {
                     "method": "table",
-                    "line": 153,
+                    "line": 161,
                     "classification": "review_required"
                 },
                 {
                     "method": "kanban",
-                    "line": 185,
+                    "line": 193,
                     "classification": "review_required"
                 },
                 {
                     "method": "ajax_search_assign_task_to_timer",
-                    "line": 190,
+                    "line": 198,
                     "classification": "review_required"
                 },
                 {
                     "method": "tasks_kanban_load_more",
-                    "line": 212,
+                    "line": 220,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_order",
-                    "line": 235,
+                    "line": 243,
                     "classification": "review_required"
                 },
                 {
                     "method": "switch_kanban",
-                    "line": 240,
+                    "line": 248,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_billable_tasks_by_project",
-                    "line": 258,
+                    "line": 266,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_billable_tasks_by_customer_id",
-                    "line": 280,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "update_task_description",
                     "line": 288,
                     "classification": "review_required"
                 },
                 {
+                    "method": "update_task_description",
+                    "line": 296,
+                    "classification": "review_required"
+                },
+                {
                     "method": "detailed_overview",
-                    "line": 302,
+                    "line": 310,
                     "classification": "review_required"
                 },
                 {
                     "method": "init_relation_tasks",
-                    "line": 426,
+                    "line": 434,
                     "classification": "review_required"
                 },
                 {
                     "method": "task",
-                    "line": 452,
+                    "line": 460,
                     "classification": "review_required"
                 },
                 {
                     "method": "copy",
-                    "line": 577,
+                    "line": 585,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_billable_task_data",
-                    "line": 597,
+                    "line": 605,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_task_data",
-                    "line": 615,
+                    "line": 623,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_reminder",
-                    "line": 667,
+                    "line": 675,
                     "classification": "review_required"
                 },
                 {
                     "method": "edit_reminder",
-                    "line": 685,
+                    "line": 693,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_reminder",
-                    "line": 698,
+                    "line": 706,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_staff_started_timers",
-                    "line": 714,
+                    "line": 722,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_checklist_item_template",
-                    "line": 751,
+                    "line": 759,
                     "classification": "review_required"
                 },
                 {
                     "method": "remove_checklist_item_template",
-                    "line": 768,
+                    "line": 776,
                     "classification": "review_required"
                 },
                 {
                     "method": "init_checklist_items",
-                    "line": 785,
+                    "line": 793,
                     "classification": "review_required"
                 },
                 {
                     "method": "task_tracking_stats",
-                    "line": 805,
+                    "line": 813,
                     "classification": "review_required"
                 },
                 {
                     "method": "checklist_visibility",
-                    "line": 816,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "checklist_command",
                     "line": 824,
                     "classification": "review_required"
                 },
                 {
+                    "method": "checklist_command",
+                    "line": 832,
+                    "classification": "review_required"
+                },
+                {
                     "method": "checkbox_action",
-                    "line": 847,
+                    "line": 855,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_checklist_item",
-                    "line": 865,
+                    "line": 873,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_checklist_order",
-                    "line": 876,
+                    "line": 884,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_checklist_item",
-                    "line": 885,
+                    "line": 893,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_checklist_item",
-                    "line": 897,
+                    "line": 905,
                     "classification": "review_required"
                 },
                 {
                     "method": "make_public",
-                    "line": 909,
+                    "line": 917,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_external_attachment",
-                    "line": 923,
+                    "line": 931,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_task_comment",
-                    "line": 935,
+                    "line": 943,
                     "classification": "review_required"
                 },
                 {
                     "method": "download_files",
-                    "line": 983,
+                    "line": 991,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_task_followers",
-                    "line": 1014,
+                    "line": 1022,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_task_assignees",
-                    "line": 1028,
+                    "line": 1036,
                     "classification": "review_required"
                 },
                 {
                     "method": "edit_comment",
-                    "line": 1041,
+                    "line": 1049,
                     "classification": "review_required"
                 },
                 {
                     "method": "remove_comment",
-                    "line": 1063,
-                    "classification": "review_required"
-                },
-                {
-                    "method": "remove_assignee",
                     "line": 1071,
                     "classification": "review_required"
                 },
                 {
+                    "method": "remove_assignee",
+                    "line": 1079,
+                    "classification": "review_required"
+                },
+                {
                     "method": "remove_follower",
-                    "line": 1091,
+                    "line": 1099,
                     "classification": "review_required"
                 },
                 {
                     "method": "unmark_complete",
-                    "line": 1111,
+                    "line": 1119,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_as",
-                    "line": 1141,
+                    "line": 1149,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_priority",
-                    "line": 1210,
+                    "line": 1218,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_milestone",
-                    "line": 1254,
+                    "line": 1262,
                     "classification": "review_required"
                 },
                 {
                     "method": "task_single_inline_update",
-                    "line": 1275,
+                    "line": 1283,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_task",
-                    "line": 1293,
+                    "line": 1301,
                     "classification": "review_required"
                 },
                 {
                     "method": "remove_task_attachment",
-                    "line": 1322,
+                    "line": 1330,
                     "classification": "review_required"
                 },
                 {
                     "method": "upload_file",
-                    "line": 1346,
+                    "line": 1354,
                     "classification": "review_required"
                 },
                 {
                     "method": "timer_tracking",
-                    "line": 1383,
+                    "line": 1391,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_user_unfinished_timesheet",
-                    "line": 1431,
+                    "line": 1439,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_timesheet",
-                    "line": 1442,
+                    "line": 1450,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_timesheet",
-                    "line": 1458,
+                    "line": 1466,
                     "classification": "review_required"
                 },
                 {
                     "method": "log_time",
-                    "line": 1485,
+                    "line": 1493,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_tags",
-                    "line": 1504,
+                    "line": 1512,
                     "classification": "review_required"
                 },
                 {
                     "method": "bulk_action",
-                    "line": 1519,
+                    "line": 1527,
                     "classification": "review_required"
                 },
                 {
                     "method": "gantt_date_update",
-                    "line": 1616,
+                    "line": 1624,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_task_by_id",
-                    "line": 1627,
+                    "line": 1635,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_staff_names_for_mentions",
-                    "line": 1665,
+                    "line": 1673,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_checklist_assigned_staff",
-                    "line": 1687,
+                    "line": 1695,
                     "classification": "review_required"
                 }
             ]
@@ -4034,138 +3676,153 @@
             "parallel": false,
             "methods": [
                 {
+                    "method": "ai",
+                    "line": 13,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "connect_api",
+                    "line": 14,
+                    "classification": "review_required"
+                },
+                {
+                    "method": "connect",
+                    "line": 15,
+                    "classification": "review_required"
+                },
+                {
                     "method": "index",
-                    "line": 46,
+                    "line": 53,
                     "classification": "review_required"
                 },
                 {
                     "method": "add",
-                    "line": 101,
+                    "line": 108,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 157,
+                    "line": 164,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 185,
+                    "line": 192,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_staff_replying",
-                    "line": 207,
+                    "line": 214,
                     "classification": "review_required"
                 },
                 {
                     "method": "check_staff_replying",
-                    "line": 217,
+                    "line": 224,
                     "classification": "review_required"
                 },
                 {
                     "method": "ticket",
-                    "line": 232,
+                    "line": 239,
                     "classification": "review_required"
                 },
                 {
                     "method": "edit_message",
-                    "line": 326,
+                    "line": 333,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_ticket_reply",
-                    "line": 355,
+                    "line": 362,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_status_ajax",
-                    "line": 375,
+                    "line": 382,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_single_ticket_settings",
-                    "line": 383,
+                    "line": 390,
                     "classification": "review_required"
                 },
                 {
                     "method": "priorities",
-                    "line": 429,
+                    "line": 436,
                     "classification": "review_required"
                 },
                 {
                     "method": "priority",
-                    "line": 441,
+                    "line": 448,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_priority",
-                    "line": 468,
+                    "line": 475,
                     "classification": "review_required"
                 },
                 {
                     "method": "predefined_replies",
-                    "line": 489,
+                    "line": 496,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_predefined_reply_ajax",
-                    "line": 518,
+                    "line": 525,
                     "classification": "review_required"
                 },
                 {
                     "method": "ticket_change_data",
-                    "line": 524,
+                    "line": 531,
                     "classification": "review_required"
                 },
                 {
                     "method": "predefined_reply",
-                    "line": 537,
+                    "line": 544,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_predefined_reply",
-                    "line": 584,
+                    "line": 591,
                     "classification": "review_required"
                 },
                 {
                     "method": "statuses",
-                    "line": 604,
+                    "line": 611,
                     "classification": "review_required"
                 },
                 {
                     "method": "status",
-                    "line": 616,
+                    "line": 623,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_ticket_status",
-                    "line": 643,
+                    "line": 650,
                     "classification": "review_required"
                 },
                 {
                     "method": "services",
-                    "line": 666,
+                    "line": 673,
                     "classification": "review_required"
                 },
                 {
                     "method": "service",
-                    "line": 697,
+                    "line": 704,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_service",
-                    "line": 733,
+                    "line": 740,
                     "classification": "review_required"
                 },
                 {
                     "method": "block_sender",
-                    "line": 753,
+                    "line": 760,
                     "classification": "review_required"
                 },
                 {
                     "method": "bulk_action",
-                    "line": 766,
+                    "line": 773,
                     "classification": "review_required"
                 }
             ]
