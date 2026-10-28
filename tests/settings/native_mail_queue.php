@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/company_settings.php';
+require __DIR__ . '/native_settings.php';
 require APPPATH . 'services/CompanyMailConfig.php';
 class CI_Email {}
 require APPPATH . 'libraries/App_Email.php';

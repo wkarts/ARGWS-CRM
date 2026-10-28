@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/../settings/company_settings.php';
+require __DIR__.'/../settings/native_settings.php';
 require_once BASEPATH.'core/Model.php';
 class CompanyRequestScope{
  public static bool $native=true;public static int $issuer=41;

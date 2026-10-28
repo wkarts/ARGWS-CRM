@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/company_registry_identity.php';
+require __DIR__.'/native_registry_identity.php';
 $start=$GLOBALS['essentialChecks'];
 $profile=['company_trade_name'=>'Loja sintética','company_state_registration'=>'ISENTO','invoice_company_address'=>'Rua sintética','company_address_number'=>'42','company_address_complement'=>'Sala 2','company_address_district'=>'Centro','invoice_company_city'=>'Cidade teste','company_state'=>'SP','invoice_company_country_code'=>'BR','invoice_company_postal_code'=>'01001-000'];
 $identity->save($new,7,['profile'=>$profile]);

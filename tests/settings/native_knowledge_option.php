@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/company_settings.php';
+require __DIR__.'/native_settings.php';
 require_once APPPATH.'services/CompanySettingsCatalog.php';
 essentialCheck(CompanySettingsCatalog::fields('knowledge_base')===['use_knowledge_base','knowledge_base_without_registration'],'two distinct native publication options preserved');
 essentialCheck(CompanySettingsCatalog::defaultValue('knowledge_base','use_knowledge_base')==='0','new company publication default disabled');

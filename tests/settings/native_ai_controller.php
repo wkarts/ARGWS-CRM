@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/company_ai_setup.php';$start=$GLOBALS['essentialChecks'];
+require __DIR__.'/native_ai_setup.php';$start=$GLOBALS['essentialChecks'];
 class CompanyRequestScope{public static bool$sealed=true;public static int$issuer;public static int$actor=7;static function sealedFor($o){return self::$sealed;}static function context(){return new class{function issuerId(){return CompanyRequestScope::$issuer;}function staffId(){return CompanyRequestScope::$actor;}function isPrimary(){return false;}function available(){return[];}function csrf(){return'synthetic';}};}static function adminUrl($o,$p=''){return'https://synthetic.invalid/admin/'.$p;}static function invalidateCaches($o){}static function token(){return'current-context';}}
 class AdminController{function __get($k){return$GLOBALS['CI']->$k;}}
 function show_error($s,$status=500){$GLOBALS['CI']->output->status=$status;}function redirect($u,$m='location',$code=302){$GLOBALS['CI']->output->status=$code;}

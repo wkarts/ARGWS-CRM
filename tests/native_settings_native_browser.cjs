@@ -19,7 +19,7 @@ async function recordLayout(page,width,errors,failedAssets) {
  await page.screenshot({path:path.join(output,`settings-${width}.png`),fullPage:true});
  return evidence;
 }
-const rendered = JSON.parse(execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'company_settings_native.php'), '--html-json'], { encoding: 'utf8' }));
+const rendered = JSON.parse(execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'native_settings_native.php'), '--html-json'], { encoding: 'utf8' }));
 (async () => {
   const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
   try {

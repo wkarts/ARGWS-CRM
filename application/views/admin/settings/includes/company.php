@@ -17,7 +17,7 @@
         $companyIdentityOption=static fn($name)=>$native_settings_company_values[$name]??'';
         $companyIdentityNative=true;
     }else{$companyIdentityOption=static fn($name)=>get_option($name);}
-    require __DIR__.'/company_identity_fields.php'; unset($companyIdentityOption,$companyIdentityNative);
+    require __DIR__.'/identity_fields.php'; unset($companyIdentityOption,$companyIdentityNative);
     ?>
     <?php echo render_custom_fields('company', 0); ?>
     <hr />

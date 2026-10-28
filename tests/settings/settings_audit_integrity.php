@@ -1,6 +1,6 @@
 <?php
 /** A successful INSERT with a changed audit is not a confirmed settings change. */
-require __DIR__.'/../support/TestPdo.php';require __DIR__.'/company_settings.php';
+require __DIR__.'/../support/TestPdo.php';require __DIR__.'/native_settings.php';
 $auditStart=$GLOBALS['essentialChecks'];$observe=getenv('SETTINGS_FENCE_OBSERVE_BASELINE')==='1';
 function settingsAuditSnapshot($db,string $p):array
 {

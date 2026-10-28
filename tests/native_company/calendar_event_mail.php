@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/../settings/company_settings.php';require_once APPPATH.'services/NativeCompanyEventWorker.php';require_once APPPATH.'services/NativeCompanyEvents.php';
+require __DIR__.'/../settings/native_settings.php';require_once APPPATH.'services/NativeCompanyEventWorker.php';require_once APPPATH.'services/NativeCompanyEvents.php';
 NativeCompanyEventSchema::ensure($db,$p);NativeCompanyEventMailSchema::ensure($db,$p);NativeCompanyEventMailSchema::ensure($db,$p);
 foreach(['firstname'=>'TEXT','lastname'=>'TEXT','email'=>'TEXT','is_not_staff'=>'INT']as$column=>$type)if(!IssuerStorage::fieldExists($db,$column,$p.'staff'))$db->query('ALTER TABLE '.$p.'staff ADD '.$column.' '.$type);
 $db->query("UPDATE {$p}staff SET firstname='Synthetic',lastname='Staff',email='staff@example.test',is_not_staff=0");$db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id=82");

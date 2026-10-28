@@ -1,6 +1,6 @@
 <?php
 /** Real PDO service tests, synthetic companies. SQLite is NOT MySQL DDL proof. */
-require dirname(__DIR__).'/settings/company_settings.php';
+require dirname(__DIR__).'/settings/native_settings.php';
 require_once APPPATH.'services/NativeCompanyAuxiliary.php';
 require_once APPPATH.'services/NativeCompanyCatalog.php';
 $db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id=82");

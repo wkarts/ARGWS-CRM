@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/../company_dashboard_presenter.php';
+require __DIR__.'/../native_dashboard_presenter.php';
 $db->query("ALTER TABLE {$p}staff ADD firstname VARCHAR(100) NOT NULL DEFAULT 'Synthetic'");$db->query("ALTER TABLE {$p}staff ADD lastname VARCHAR(100) NOT NULL DEFAULT 'Staff'");
 $db->query("SELECT assignee_id,created_at FROM {$p}company_tickets WHERE 1=0");$db->query("UPDATE {$p}company_tickets SET created_at='2026-10-01 12:00:00'");
 $db->query("SELECT id,issuer_id,ticket_id,actor_id,body,created_at FROM {$p}company_ticket_replies WHERE 1=0");

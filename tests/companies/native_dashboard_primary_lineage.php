@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/../company_dashboard_presenter.php';
+require __DIR__.'/../native_dashboard_presenter.php';
 register_shutdown_function(static function()use($db,$p):void{foreach(['leads','leads_status','ticket_replies','tickets','taskstimers','tasks','projects','contacts'] as $t)$db->query('DROP TABLE IF EXISTS '.$p.$t);});
 $db->query("CREATE TABLE {$p}company_lead_stages(id INT PRIMARY KEY,issuer_id INT NOT NULL,name VARCHAR(100) NOT NULL)");
 $db->query("DROP TABLE {$p}projects");$db->query("CREATE TABLE {$p}projects(id INT PRIMARY KEY,clientid INT NOT NULL,status INT NOT NULL)");

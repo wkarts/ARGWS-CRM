@@ -1,6 +1,6 @@
 <?php
 /** Wizard composition contract: actual PDO rollback and the production identity adapter. */
-require __DIR__.'/company_settings.php';
+require __DIR__.'/native_settings.php';
 $tables=['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','issuers_audit','staff'];
 $input=['legal_name'=>'Unified wizard identity','profile'=>['invoice_company_city'=>'Synthetic city']];
 settingThrows(fn()=>$identity->saveInOwnedTransaction(41,12,$input),'issuer_owned_transaction_required','identity writer rejects unowned transaction');

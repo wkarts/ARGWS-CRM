@@ -122,7 +122,7 @@ hooks()->add_action('after_contact_modal_content_loaded',function (){
  */
 hooks()->add_action('after_custom_profile_tab_content',function (){
 
-    require_once __DIR__ . '/includes/company_modal.php';
+    require_once __DIR__ . '/includes/modal.php';
 
 });
 

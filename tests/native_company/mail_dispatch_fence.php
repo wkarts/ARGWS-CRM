@@ -1,5 +1,5 @@
 <?php
-require dirname(__DIR__).'/settings/company_settings.php';
+require dirname(__DIR__).'/settings/native_settings.php';
 require_once APPPATH.'services/NativeCompanyMailDispatchFence.php';
 $db->query("CREATE TABLE {$p}mail_queue(id INT PRIMARY KEY,issuer_id INT UNSIGNED,status varchar(16))");
 $db->query("INSERT INTO {$p}mail_queue VALUES(1,41,'pending'),(2,41,'pending'),(3,82,'pending'),(4,41,'pending')");

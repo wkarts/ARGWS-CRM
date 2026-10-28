@@ -1,6 +1,6 @@
 <?php
 /** Real origin resolver + real company mail configuration, synthetic storage/decryption. No SMTP or queue dispatch. */
-require __DIR__.'/company_settings.php';
+require __DIR__.'/native_settings.php';
 require APPPATH.'services/PortalClientIdentity.php';
 require APPPATH.'services/CompanyMailConfig.php';
 use app\services\PortalClientIdentity;

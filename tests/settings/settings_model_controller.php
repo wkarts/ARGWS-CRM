@@ -1,6 +1,6 @@
 <?php
 /** Official Settings integration for the seven former company-scoped policy forms. */
-require __DIR__.'/company_settings.php';
+require __DIR__.'/native_settings.php';
 require_once dirname(__DIR__).'/support/StrictViewFixture.php';
 require_once APPPATH.'services/NativeCompanySettingsForms.php';
 require_once APPPATH.'services/NativeSettingsSections.php';

@@ -1,7 +1,7 @@
 <?php
 /** Native formatting functions with synthetic company storage, never production data. */
 ob_start();
-require __DIR__.'/company_settings.php';
+require __DIR__.'/native_settings.php';
 $db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id=82");
 require APPPATH.'helpers/settings_helper.php';
 require APPPATH.'helpers/general_helper.php';

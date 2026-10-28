@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/company_settings.php';
+require __DIR__ . '/native_settings.php';
 require APPPATH . 'services/CompanyMailConfig.php';
 $start = $GLOBALS['essentialChecks'];
 $db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id=82");

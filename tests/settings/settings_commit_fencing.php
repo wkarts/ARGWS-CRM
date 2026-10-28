@@ -1,6 +1,6 @@
 <?php
 /** Final-write SQL witnesses. Fixtures only; the original isolation suite remains intact. */
-require __DIR__.'/../support/TestPdo.php';require __DIR__.'/company_settings.php';
+require __DIR__.'/../support/TestPdo.php';require __DIR__.'/native_settings.php';
 $fencingStart=$GLOBALS['essentialChecks'];
 $observe=getenv('SETTINGS_FENCE_OBSERVE_BASELINE')==='1';
 $observed=[];

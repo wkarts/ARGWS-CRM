@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/../settings/company_settings.php';
+require __DIR__.'/../settings/native_settings.php';
 require_once APPPATH.'services/NativeCompanyStaffRoles.php';
 $db->query('UPDATE '.$p.'issuers_registry SET active=1 WHERE id=82');
 $s=new NativeCompanyStaffRoles($db,$p);$page=$s->page(41,7);$before=$db->query('SELECT * FROM '.$p.'staff')->result_array();

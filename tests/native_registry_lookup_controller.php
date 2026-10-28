@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/settings/company_registry_identity.php';
+require __DIR__.'/settings/native_registry_identity.php';
 $start=$GLOBALS['essentialChecks'];
 class CompanyRequestScope{public static int $actor=7;static function sealedFor($c){return true;}static function context(){return new class{function staffId(){return CompanyRequestScope::$actor;}};}}
 class AdminController{function __get($key){return $GLOBALS['CI']->$key;}}

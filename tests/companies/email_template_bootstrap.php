@@ -1,5 +1,5 @@
 <?php
-require dirname(__DIR__).'/company_context.php';
+require dirname(__DIR__).'/native_context.php';
 require APPPATH.'models/Emails_model.php';
 require APPPATH.'controllers/admin/Emails.php';
 $c=new CompanyContext($db,$p,$s,8);$c->resolve();$c->select(54,$c->csrf(),$c->token());

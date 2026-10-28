@@ -1,5 +1,5 @@
 <?php
-require dirname(__DIR__).'/settings/company_settings.php';
+require dirname(__DIR__).'/settings/native_settings.php';
 require APPPATH.'services/NativeCompanyCustomFields.php';
 NativeCompanyCustomFieldSchema::ensure($db,$p);unset($db->data_cache['table_names']);
 $db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id=82");

@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/settings/company_settings.php';
+require __DIR__.'/settings/native_settings.php';
 require_once APPPATH.'services/NativeCompanyUploadPreferences.php';
 require_once APPPATH.'services/CompanySettingsCatalog.php';
 $fields=NativeCompanyUploadPreferences::fields();

@@ -1,6 +1,6 @@
 <?php
 /** Actual PDO schema/replay checks; SQLite does not establish MySQL DDL behavior. */
-require __DIR__.'/settings/company_settings.php';
+require __DIR__.'/settings/native_settings.php';
 require_once APPPATH.'services/NativeCompanyFilterSchema.php';
 NativeCompanyFilterSchema::ensure($db,$p);NativeCompanyFilterSchema::ensure($db,$p);
 $db->query("INSERT INTO {$p}company_native_filters(issuer_id,staff_id,identifier,view_name,name,is_shared,builder_json,revision) VALUES(41,12,'invoices','invoices','Synthetic',0,'{}',1)");

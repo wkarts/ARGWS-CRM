@@ -1,6 +1,6 @@
 <?php
 /** Real production helpers against disposable SQLite/MySQL; never sends email. */
-require __DIR__.'/company_settings.php';
+require __DIR__.'/native_settings.php';
 require_once APPPATH.'services/EmailTemplateReconciler.php';
 $start=$GLOBALS['essentialChecks'];
 $idDefinition=$db->driver()==='sqlite'?'INTEGER PRIMARY KEY AUTOINCREMENT':'INT NOT NULL AUTO_INCREMENT PRIMARY KEY';

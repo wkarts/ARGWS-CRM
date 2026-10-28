@@ -9785,7 +9785,7 @@
       "evidence": ""
     },
     "modules/multiple_companies/multiple_companies.php": {
-      "sha256": "f731ea6be091478092f06b85a048256940db7377a16cba1550fc665824840389",
+      "sha256": "e23d45104be89147f257ddbcc1ed0866eb1218bcee429b3c320eea687dcddc33",
       "categories": [
         "customer_privacy",
         "invoice_table"

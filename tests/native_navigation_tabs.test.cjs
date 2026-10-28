@@ -32,7 +32,7 @@ test('existing editor is scoped, CSRF protected and revision guarded before writ
 });
 test('official company Settings uses one native field component with explicit issuer adapter',()=>{
  const native=read('application/views/admin/settings/includes/company.php'),fields=read('application/views/admin/settings/includes/identity_fields.php'),controller=read('application/services/NativeCompanySettingsController.php');
- assert.ok(native.includes("require __DIR__.'/company_identity_fields.php'"));
+ assert.ok(native.includes("require __DIR__.'/identity_fields.php'"));
  assert.ok(native.includes('$companyIdentityNative=true'));
  assert.ok(controller.includes("'native_settings_company_values'=>\$group==='company'?\$page['values']:null"));
  assert.ok(fields.includes("echo render_input('settings['.$name.']',$label,$companyIdentityOption($name))"));

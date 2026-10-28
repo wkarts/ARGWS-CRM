@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/company_settings.php';
+require __DIR__ . '/native_settings.php';
 require APPPATH . 'helpers/settings_helper.php';
 require APPPATH . 'libraries/App.php';
 require APPPATH . 'helpers/admin_helper.php';

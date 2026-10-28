@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/company_identity_transaction.php';
+require __DIR__.'/native_identity_transaction.php';
 require_once APPPATH.'services/issuers/IssuerRegistry.php';
 $registry=new IssuerRegistry($db,$p);
 essentialCheck(!$registry->canCreate(13),'ordinary administrator cannot create companies implicitly');

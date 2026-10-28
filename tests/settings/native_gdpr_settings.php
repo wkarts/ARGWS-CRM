@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/company_settings.php';
+require __DIR__.'/native_settings.php';
 require_once APPPATH.'services/NativeCompanyGdprSettings.php';
 $db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id=82");
 $service=new NativeCompanyGdprSettings($db,$p);$before=essentialLegacy($f);

@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/../company_dashboard_presenter.php';
+require __DIR__.'/../native_dashboard_presenter.php';
 require_once APPPATH.'services/NativeCompanyProjectRead.php';
 register_shutdown_function(static function()use($db,$p):void{$db->query('DROP TABLE IF EXISTS '.$p.'projects');});
 $db->query("SELECT id,clientid,status FROM {$p}projects WHERE 1=0"); // Shared fixture already declares this exact source.

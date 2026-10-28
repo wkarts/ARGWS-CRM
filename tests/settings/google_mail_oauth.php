@@ -1,6 +1,6 @@
 <?php
 /** OAuth/SMTP protocol transport is synthetic. Every receipt/state/role uses real PDO storage. */
-require __DIR__.'/company_settings.php';
+require __DIR__.'/native_settings.php';
 require_once APPPATH.'vendor/autoload.php';
 require_once APPPATH.'services/CompanyGoogleMailOAuth.php';
 require_once APPPATH.'services/CompanyMailConfig.php';

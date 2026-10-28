@@ -1,5 +1,5 @@
 <?php
-require dirname(__DIR__).'/settings/company_settings.php';
+require dirname(__DIR__).'/settings/native_settings.php';
 require_once APPPATH.'services/NativeCompanyRelationDirectory.php';
 $db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id=82");
 $db->query("ALTER TABLE {$p}clients ADD active INT DEFAULT 1");

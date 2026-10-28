@@ -1,6 +1,6 @@
 <?php
 /** Recreated S3 real SQL last-write boundaries; S2 REDs preserved outside this overlay. */
-require __DIR__.'/company_ai_setup.php';
+require __DIR__.'/native_ai_setup.php';
 aiGrant($a,12);$db->query('UPDATE '.$p.'issuers_staff SET can_view=1 WHERE issuer_id=? AND staff_id=12',[$a]);
 function aiFinalState():array{global$db,$p;$out=[];foreach(['issuers_registry','issuers_audit','company_ai_requests','company_tickets','company_ticket_replies','staff','issuers_staff','issuers_resource_permissions','clients','issuers_clients','issuers_client_links','issuers_installation_identity','options']as$t)$out[$t]=$db->query('SELECT * FROM '.$p.$t.' ORDER BY 1')->result_array();return$out;}
 function aiFinalTrigger(string$table,string$verb,string$condition,string$sql):void{global$db,$p;$db->query($db->driver()==='mysql'?"CREATE TRIGGER {$p}ai_final AFTER {$verb} ON {$p}{$table} FOR EACH ROW BEGIN IF {$condition} THEN {$sql}; END IF; END":"CREATE TRIGGER {$p}ai_final AFTER {$verb} ON {$p}{$table} WHEN {$condition} BEGIN {$sql}; END");}

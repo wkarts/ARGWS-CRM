@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/settings/company_settings.php';
+require __DIR__.'/settings/native_settings.php';
 require_once APPPATH.'services/NativeCompanyResourceReferences.php';
 $db->query("UPDATE {$p}issuers_registry SET active=1 WHERE id IN(41,82)");
 foreach([41,82]as$issuer)foreach(['customers','projects','tasks','staff']as$feature)foreach(['view','edit']as$cap)$db->query("INSERT INTO {$p}issuers_resource_permissions VALUES(?,12,?,?)",[$issuer,$feature,$cap]);

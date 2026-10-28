@@ -5,7 +5,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
-const render = mode => execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'company_identity_fixture.php'), mode], { encoding: 'utf8' });
+const render = mode => execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'native_identity_fixture.php'), mode], { encoding: 'utf8' });
 for (const mode of ['registry', 'onboarding']) {
   const html = render(mode);
   for (const key of ['company_trade_name', 'company_state_registration', 'company_address_number', 'company_address_complement', 'company_address_district']) assert(html.includes(`data-company-field="${key}"`));

@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/settings/company_settings.php';
+require __DIR__.'/settings/native_settings.php';
 require_once APPPATH.'services/CompanySettingsCatalog.php';
 $seed=file_get_contents(dirname(__DIR__).'/install/database.sql');
 foreach(['dateformat'=>['localization','Y-m-d|%Y-%m-%d'],'time_format'=>['localization','24'],'invoice_due_after'=>['documents','30']]as$key=>[$group,$default]){
