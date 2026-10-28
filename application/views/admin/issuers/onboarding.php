@@ -28,14 +28,14 @@ $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',
 <script>window.parent.postMessage({type:'company-onboarding-complete'},window.location.origin);</script>
 <?php }else{?>
 <?= form_open($url($base)); ?>
-<input type="hidden" name="issuers/onboarding_csrf" value="<?= $esc($issuers/onboarding_csrf); ?>">
+<input type="hidden" name="company_onboarding_csrf" value="<?= $esc($company_onboarding_csrf); ?>">
 <?php if($draft){?><input type="hidden" name="revision" value="<?= (int)$draft['revision']; ?>"><input type="hidden" name="step" value="<?= $step; ?>"><?php } ?>
 <input type="hidden" name="action" value="<?= $step===0?'begin':($step===5?'complete':'advance'); ?>">
 <?php if($step===0){?>
 <p>Cadastre a nova empresa dentro do CRM. O rascunho é salvo a cada etapa e pode ser retomado por você. A empresa principal existente será preservada.</p>
 <button type="submit" class="btn btn-primary">Iniciar cadastro</button>
 <?php }elseif($step===1){$identity=$payload[1]??[];?>
-<?php $identity_mode='onboarding';$identity_values=$identity;$lookup_url=$url('issuers/lookup');$lookup_token=$issuers/onboarding_csrf;$identity_profile_disabled=false;require __DIR__.'/identity_fields.php'; ?>
+<?php $identity_mode='onboarding';$identity_values=$identity;$lookup_url=$url('issuers/lookup');$lookup_token=$company_onboarding_csrf;$identity_profile_disabled=false;require __DIR__.'/identity_fields.php'; ?>
 <?php }elseif($step===2){$preferences=$payload[2]??[];?>
 <div class="form-group"><label for="dateformat">Formato de data</label><select class="form-control" id="dateformat" name="wizard[dateformat]">
 <?php foreach(CompanySettingsFormats::dates() as $value=>$label){?><option value="<?= $esc($value); ?>" <?= ($preferences['dateformat']??'d/m/Y|%d/%m/%Y')===$value?'selected':''; ?>><?= $esc($label); ?></option><?php } ?></select></div>

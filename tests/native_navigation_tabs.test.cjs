@@ -6,7 +6,7 @@ test('wizard uses native navigation without bypassing draft step guards',()=>{
  assert.match(view,/class="nav nav-tabs company-onboarding-steps"/);
  assert.ok(view.includes('$number<=min((int)($draft[\'step\']??0),5)'));
  assert.ok(view.includes('aria-disabled="true"'));
- for(const field of ['issuers/onboarding_csrf','name="revision"','name="step"','name="action"'])assert.ok(view.includes(field));
+ for(const field of ['name="company_onboarding_csrf"','name="revision"','name="step"','name="action"'])assert.ok(view.includes(field));
  for(const action of ['Consultar CNPJ','Salvar e continuar','Criar empresa e aplicar permissões'])assert.ok((view+read('application/views/admin/issuers/identity_fields.php')).includes(action));
 });
 test('shared identity tabs preserve fields and support history and keyboard',()=>{
