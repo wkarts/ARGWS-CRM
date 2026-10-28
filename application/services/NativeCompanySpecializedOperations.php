@@ -42,19 +42,20 @@ require_once APPPATH.'services/CompanyTaskTimeBilling.php';
 require_once APPPATH.'services/CompanyTasks.php';
 require_once APPPATH.'services/CompanyTicketConnect.php';
 require_once APPPATH.'services/CompanyUiTranslation.php';
-require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyFeeExpense.php';
-require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyHostedLinks.php';
-require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyPayers.php';
-require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyReceivedReceipt.php';
-require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyRefunds.php';
-require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyRemoteOperations.php';
-require_once FCPATH.'modules/asaas/libraries/Asaas/CompanyService.php';
-require_once FCPATH.'modules/asaas/libraries/Asaas/ConfirmedFullRefund.php';
-require_once FCPATH.'modules/asaas/libraries/Asaas/SettingsPresentation.php';
-require_once FCPATH.'modules/asaas/libraries/Asaas/WebhookAdminPresentation.php';
-require_once FCPATH.'modules/gerencianet_gateway/services/CompanyAccounts.php';
-require_once FCPATH.'modules/gerencianet_gateway/services/CompanyCheckout.php';
-require_once FCPATH.'modules/gerencianet_gateway/services/CompanyTransport.php';
+$nativeCompanyRoot = defined('FCPATH') ? FCPATH : dirname(APPPATH).DIRECTORY_SEPARATOR;
+require_once $nativeCompanyRoot.'modules/asaas/libraries/Asaas/CompanyFeeExpense.php';
+require_once $nativeCompanyRoot.'modules/asaas/libraries/Asaas/CompanyHostedLinks.php';
+require_once $nativeCompanyRoot.'modules/asaas/libraries/Asaas/CompanyPayers.php';
+require_once $nativeCompanyRoot.'modules/asaas/libraries/Asaas/CompanyReceivedReceipt.php';
+require_once $nativeCompanyRoot.'modules/asaas/libraries/Asaas/CompanyRefunds.php';
+require_once $nativeCompanyRoot.'modules/asaas/libraries/Asaas/CompanyRemoteOperations.php';
+require_once $nativeCompanyRoot.'modules/asaas/libraries/Asaas/CompanyService.php';
+require_once $nativeCompanyRoot.'modules/asaas/libraries/Asaas/ConfirmedFullRefund.php';
+require_once $nativeCompanyRoot.'modules/asaas/libraries/Asaas/SettingsPresentation.php';
+require_once $nativeCompanyRoot.'modules/asaas/libraries/Asaas/WebhookAdminPresentation.php';
+require_once $nativeCompanyRoot.'modules/gerencianet_gateway/services/CompanyAccounts.php';
+require_once $nativeCompanyRoot.'modules/gerencianet_gateway/services/CompanyCheckout.php';
+require_once $nativeCompanyRoot.'modules/gerencianet_gateway/services/CompanyTransport.php';
 
 /**
  * Native actions composed into the original CRM controllers.
