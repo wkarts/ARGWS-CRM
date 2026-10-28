@@ -1,6 +1,6 @@
 'use strict';
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
-const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
+const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,database=process.env.ISSUERS_BROWSER_DB_NAME,artifacts=process.env.ISSUERS_BROWSER_ARTIFACTS;
 assert.match(url||'',/^http:\/\/127\.0\.0\.1:\d+$/);assert.match(app||'',/^argws-crm-(upgrade|fresh)-\d+$/);assert(['argws_upgrade_ci','argws_fresh_ci'].includes(database));assert(artifacts&&path.isAbsolute(artifacts));fs.mkdirSync(artifacts,{recursive:true});

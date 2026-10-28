@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
+const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
 // Real CRM routes/CSRF/context, MariaDB, Chromium, TCPDF and bearer API; synthetic bank evidence only.
 const assert=require('node:assert/strict');
 const fs=require('node:fs');

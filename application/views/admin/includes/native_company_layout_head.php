@@ -56,7 +56,7 @@ foreach (['assets/css/reset.min.css', 'assets/plugins/inter/inter.css', 'assets/
 <link rel="stylesheet" href="<?= $companyLayoutEscape(base_url($companyLayoutAsset).'?v='.$companyLayoutVersion); ?>">
 <?php } ?>
 <?php if ($companyLayoutTheme !== '') { ?><style data-company-native-theme><?= $companyLayoutTheme; ?></style><?php } ?>
-<?php require APPPATH.'views/admin/includes/company_context_script.php'; ?>
+<?php require APPPATH.'views/admin/includes/context_script.php'; ?>
 </head><body class="admin company-context-shell">
 <header id="header">
 <button type="button" class="company-menu-toggle btn btn-default" aria-controls="menu" aria-expanded="true" aria-label="Alternar menu"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
@@ -75,7 +75,7 @@ foreach (['assets/css/reset.min.css', 'assets/plugins/inter/inter.css', 'assets/
 </header>
 <aside id="menu" class="sidebar" aria-label="Menu do CRM">
 <div class="company-sidebar-account">
-<?php require APPPATH.'views/admin/includes/company_selector.php'; ?>
+<?php require APPPATH.'views/admin/includes/selector.php'; ?>
 <div class="sidebar-user-profile company-user-profile">
 <img class="company-user-avatar staff-profile-image-small" src="<?= $companyLayoutEscape(base_url('assets/images/user-placeholder.jpg')); ?>" alt="">
 <span class="company-user-identity"><strong><?= $companyLayoutEscape($companyLayoutName); ?></strong><small><?= $companyLayoutEscape($companyLayoutStaff['email']); ?></small></span>

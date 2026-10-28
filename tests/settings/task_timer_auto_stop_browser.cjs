@@ -1,6 +1,6 @@
 'use strict';
-const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 // Native settings and task actions; the PHP fixture only inspects the isolated database.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright');
 const env=process.env,base=env.ISSUERS_BROWSER_URL,php=env.ISSUERS_BROWSER_PHP_BINARY||'php',fixturePath=env.TASK_TIMER_STOP_BROWSER_FIXTURE_PHP,output=env.ISSUERS_BROWSER_ARTIFACTS;

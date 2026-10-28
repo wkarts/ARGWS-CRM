@@ -25,7 +25,7 @@ function base_url($path){return 'https://synthetic.invalid/'.$path;}
 $harness=new class {
     public object $config;public object $security;public object $db;public object $router;
     public function __construct(){$this->db=$GLOBALS['CI']->db;$this->router=new class{public function fetch_class():string{return 'company_asaas';}};$this->config=new class {public function item($name){return $name==='csrf_protection';}};$this->security=new class {public function get_csrf_token_name(){return 'synthetic_csrf';}public function get_csrf_hash(){return 'synthetic-csrf-hash';}};}
-    public function render(array $data):string{return strictFixtureRender(function()use($data):void{extract($data);include APPPATH.'views/admin/companies/asaas.php';});}
+    public function render(array $data):string{return strictFixtureRender(function()use($data):void{extract($data);include APPPATH.'views/admin/settings/native_asaas.php';});}
 };
 require_once APPPATH.'services/CompanyUiTranslation.php';
 $data=$asaas->overview($b,7)+['translate'=>CompanyUiTranslation::translator('portuguese_br'),'error'=>null,'saved'=>null,'one_time'=>null,'invoice'=>null,'can_configure'=>true,'can_settle'=>true,'can_fee'=>true,'can_issue'=>true,'context_token'=>'synthetic-context-token','action_url'=>'https://synthetic.invalid/admin/settings/asaas','callback_urls'=>[],'can_webhook'=>true,'webhook_csrf'=>str_repeat('c',64)];

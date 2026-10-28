@@ -1,6 +1,6 @@
 'use strict';
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
-const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
+const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
 // Native HTTP/Chromium proof against the disposable standalone-upgrade fixture only.
 const assert=require('node:assert/strict');const{execFileSync}=require('node:child_process');const{chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;

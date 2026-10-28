@@ -39,7 +39,7 @@ final class NativeCompanySalesSequencePreferences
     private function authorize(int $issuer, int $actor, string $capability): void
     {
         $acl = new IssuerResourceAccess($this->db, $this->prefix);
-        if ($acl->primaryId() === $issuer || !$acl->can($issuer, $actor, 'settings', $capability)) {
+        if (!$acl->can($issuer, $actor, 'settings', $capability)) {
             throw new DomainException('native_sales_sequence_denied');
         }
     }
@@ -69,7 +69,7 @@ final class NativeCompanySalesSequencePreferences
         self::series($kind);
         $verify=function()use($issuer,$actor,$kind):void{
             $acl=new IssuerResourceAccess($this->db,$this->prefix);
-            if($acl->primaryId()===$issuer||!$acl->can($issuer,$actor,$kind,'view')||!$acl->can($issuer,$actor,$kind,'create'))throw new DomainException('native_sales_sequence_denied');
+            if(!$acl->can($issuer,$actor,$kind,'view')||!$acl->can($issuer,$actor,$kind,'create'))throw new DomainException('native_sales_sequence_denied');
         };
         return $this->readFrame($issuer,$actor,$kind,$verify);
     }

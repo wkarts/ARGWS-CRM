@@ -6,8 +6,8 @@ const active=dir=>fs.readdirSync(path.join(root,dir)).filter(name=>name.endsWith
 
 test('specialized company operations are composed into canonical controllers',()=>{
   assert.deepEqual(active('application/controllers/admin').filter(name=>name.startsWith('Company_')),[]);
-  const companyViews=active('application/views/admin/companies');
-  assert.deepEqual(companyViews,[]);
+  assert.equal(fs.existsSync(path.join(root,'application/views/admin/companies')),false,'parallel company view tree must be physically absent');
+  for(const view of ['application/views/admin/projects/manage.php','application/views/admin/tasks/manage.php','application/views/admin/tickets/list.php','application/views/admin/invoices/manage.php','application/views/admin/expenses/manage.php','application/views/admin/settings/all.php','application/views/admin/staff/manage.php']) assert.equal(fs.existsSync(path.join(root,view)),true,view+' must remain an official renderer');
   const trait=read('application/services/NativeCompanySpecializedOperations.php');
   for(const method of ['nativeProjectExtras','nativeProjectPortalRules','nativeProjectBillingRates','nativeProjectFixedBilling','nativeProjectCopies','nativeProjectTimeBilling','nativeTaskCopies','nativeTaskRecurring','nativeTaskStandalone','nativeTaskBilling','nativeTaskTimeBatches','nativeTicketAi','nativeTicketConnect','nativeTicketConnectApi','nativeInvoiceStandaloneBilling','nativeExpensePurchases','nativeSettingsPusher','nativeSettingsAsaas','nativeSettingsImports','nativeSettingsEfi','nativeSettingsGoogleMailOauth','nativeSettingsMicrosoftMailOauth','nativeSettingsApiTokens','nativeHr','nativeHrFile','nativeHrPdf','nativeHrExport','nativeHrMine','nativeHrMine_file']) assert.match(trait,new RegExp('function '+method+'\\b'));
   for(const controller of ['Projects.php','Tasks.php','Tickets.php','Invoices.php','Expenses.php','Settings.php','Staff.php']) assert.match(read('application/controllers/admin/'+controller),/use NativeCompanySpecializedOperations;/);

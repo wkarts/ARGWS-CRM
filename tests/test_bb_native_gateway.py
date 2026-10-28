@@ -33,6 +33,6 @@ class NativeGateway(unittest.TestCase):
   for method in ['preview_checkout','publish_checkout']:
    body=code.split('public function '+method+'()')[1].split('public function ')[0]
    self.assertIn('$this->post()',body); self.assertIn("$this->issuer($issuer,'manage')",body)
-  portal=(R/'application/controllers/Company_portal.php').read_text()
+  portal=(R/'application/controllers/Portal.php').read_text()
   self.assertLess(portal.index('hash_equals($csrf,$posted)'),portal.index("$action==='invoice_bb_checkout'"))
 if __name__=='__main__':unittest.main()

@@ -119,7 +119,7 @@ final class NativeCompanyExpenseCopiesController
             $error = 'Não foi possível confirmar esta tentativa. Consulte o recibo desta chave antes de iniciar outra cópia.';
         }
 
-        $ci->load->view('admin/expenses/company_copy', compact('issuer', 'source', 'preview', 'review', 'receipt', 'error', 'attempt', 'values') + [
+        $ci->load->view('admin/expenses/copy', compact('issuer', 'source', 'preview', 'review', 'receipt', 'error', 'attempt', 'values') + [
             'request_key' => bin2hex(random_bytes(32)),
             'native_expense_copy_csrf' => $csrf,
         ]);

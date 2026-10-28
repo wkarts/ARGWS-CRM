@@ -249,7 +249,7 @@ docker exec "$upgrade" mkdir -p /app/tests/companies /app/tests/certificates
 docker cp tests/certificates/browser_fixture.php "$upgrade:/app/tests/certificates/browser_fixture.php"
 docker cp tests/certificates/support.php "$upgrade:/app/tests/certificates/support.php"
 docker cp tests/issuers_test_support.php "$upgrade:/app/tests/issuers_test_support.php"
-for fixture in post_refund_manual_cycle_tls_state.php post_refund_manual_cycle_synthetic_protocol.php post_refund_manual_cycle_tls_probe.php company_ai_tls_probe.php; do
+for fixture in post_refund_manual_cycle_tls_state.php post_refund_manual_cycle_synthetic_protocol.php post_refund_manual_cycle_tls_probe.php native_ai_tls_probe.php; do
     docker cp "tests/companies/$fixture" "$upgrade:/app/tests/companies/$fixture"
 done
 upgrade_port="$(docker port "$upgrade" 8080/tcp | awk -F: 'END {print $NF}')"
@@ -652,7 +652,7 @@ ai_before_calls="$(python3 -c 'import json,sys;print(sum(json.loads(x).get("kind
 [ "$ai_before_calls" = 3 ]
 ai_probe_status=0
 docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$upgrade" php -d curl.cainfo= -d openssl.cafile= \
-    /app/tests/companies/company_ai_tls_probe.php "$ai_probe_owner" >"$work/untrusted-ai-probe.log" 2>&1 || ai_probe_status=$?
+    /app/tests/companies/native_ai_tls_probe.php "$ai_probe_owner" >"$work/untrusted-ai-probe.log" 2>&1 || ai_probe_status=$?
 [ "$ai_probe_status" = 1 ]
 python3 - "$work/provider-events.jsonl" "$ai_before_calls" <<'PY_AI_UNTRUSTED'
 import json,sys
@@ -660,7 +660,7 @@ assert sum(json.loads(x).get('kind')=='synthetic_completion' for x in open(sys.a
 PY_AI_UNTRUSTED
 docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$upgrade" php \
     -d curl.cainfo=/tmp/finance-provider-ca.pem -d openssl.cafile=/tmp/finance-provider-ca.pem \
-    /app/tests/companies/company_ai_tls_probe.php "$ai_probe_owner"
+    /app/tests/companies/native_ai_tls_probe.php "$ai_probe_owner"
 python3 - "$work/provider-events.jsonl" <<'PY_DUAL_TLS'
 import json,sys
 rows=[json.loads(x) for x in open(sys.argv[1])]

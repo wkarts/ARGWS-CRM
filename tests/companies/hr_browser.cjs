@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const url=process.env.ISSUERS_BROWSER_URL,database=process.env.ISSUERS_BROWSER_DB_NAME,artifacts=process.env.ISSUERS_BROWSER_ARTIFACTS,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,localApp=process.env.ISSUERS_HR_HTTP_APP;
 const source=process.env.ISSUERS_BROWSER_SOURCE_ROOT||process.cwd(),php=process.env.ISSUERS_HR_HTTP_PHP||'php';

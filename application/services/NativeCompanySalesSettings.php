@@ -101,7 +101,7 @@ final class NativeCompanySalesSettings
     private function authorize(int $issuer, int $actor, string $capability): void
     {
         $acl = new IssuerResourceAccess($this->db, $this->prefix);
-        if ($acl->primaryId()===$issuer || !$acl->can($issuer,$actor,'settings',$capability)) {
+        if (!$acl->can($issuer,$actor,'settings',$capability)) {
             throw new DomainException('native_sales_settings_denied');
         }
     }

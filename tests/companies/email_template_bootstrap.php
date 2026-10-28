@@ -12,7 +12,7 @@ essentialCheck(hooks()->trace===[],'actual email model constructor does not call
 essentialCheck(CompanySettingsRuntime::canResource('email_templates','edit'),'resource ACL permits this company editor');
 $token=CompanyRequestScope::token();
 $data=['company_identity'=>['legal_name'=>'Company <script>unsafe</script>'],'selected'=>(object)['emailtemplateid'=>10,'name'=>'<b>Reset</b>','subject'=>'Subject','fromname'=>'','fromemail'=>'','message'=>'</textarea><script>unsafe()</script>','active'=>1,'plaintext'=>0],'templates'=>[],'can_edit'=>true,'saved'=>false,'error'=>null,'context_token'=>$token,'list_url'=>CompanyRequestScope::adminUrl($editor,'emails'),'edit_url'=>CompanyRequestScope::adminUrl($editor,'emails/email_template/')];
-$html=(new ContextViewRenderer())->render('admin/emails/company_scoped',$data);
+$html=(new ContextViewRenderer())->render('admin/emails/scoped',$data);
 essentialCheck(str_contains($html,'id="header"') && str_contains($html,'id="menu"'),'actual editor retains CRM layout');
 essentialCheck(!str_contains($html,'<script>unsafe') && str_contains($html,'&lt;/textarea&gt;'),'stored template and identity HTML are escaped in editor');
 essentialCheck(str_contains($html,'name="_company_context" value="'.$token.'"'),'editor POST carries original company token');

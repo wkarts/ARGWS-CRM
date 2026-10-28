@@ -168,7 +168,7 @@ final class NativeCompanyContractsController
             require_once __DIR__.'/CompanyClients.php';$clients=(new CompanyClients($this->ci->db,db_prefix()))->page($this->issuer,$this->actor,0,100,$clientSearch)['items'];
         }
         if($head){$this->ci->output->set_output('');return;}
-        $this->ci->load->view('admin/contracts/company_native',[
+        $this->ci->load->view('admin/contracts/native',[
             'contract'=>$contract,'contract_id'=>$id===null?null:$this->canonical($id),'discussion'=>$discussion,
             'operation_files'=>$operationFiles,'portal_controls'=>$portalControls,'directory'=>$directory,'clients'=>$clients,
             'native_contracts_csrf'=>$this->csrf(),'request_key'=>bin2hex(random_bytes(32)),

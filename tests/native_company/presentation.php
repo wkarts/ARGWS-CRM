@@ -61,8 +61,8 @@ class Fixture {
  function vars($vars){$this->vars=$vars;}
  function library($name){check($name==='user_agent','only pure user-agent parser');$this->agent=new class {function is_mobile(){return false;}function browser(){return 'Chrome';}};}
  function view($name,$extra=[]){
-  if($name==='admin/includes/company_selector'){echo '<div data-fixture-selector></div>';return;}
-  if($name==='admin/includes/company_context_script'){echo '<script data-fixture-context></script>';return;}
+  if($name==='admin/includes/selector'){echo '<div data-fixture-selector></div>';return;}
+  if($name==='admin/includes/context_script'){echo '<script data-fixture-context></script>';return;}
   // MX_Loader includes templates in loader scope, not controller scope.
   $host=new class($this){function __construct(private $owner){}function __get($key){return$this->owner->$key;}function __isset($key){return isset($this->owner->$key);}};
   check(!CompanyRequestScope::nativeFor($host),'a view loader cannot attest as the controller');

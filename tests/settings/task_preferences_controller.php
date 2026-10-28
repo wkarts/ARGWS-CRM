@@ -5,7 +5,7 @@ require_once APPPATH.'services/CompanyTaskPreferences.php';
 $controllerStart=$GLOBALS['essentialChecks'];$preferences=new CompanyTaskPreferences($db,$p);$v=static fn(string$s='todo',string$a='1')=>['default_task_status'=>$s,'new_task_auto_assign_current_member'=>$a];
 foreach([$a,$b,$primary]as$owner){
  CompanyRequestScope::$issuer=$owner;$preferences->save($owner,7,0,$v('in_progress','0'));$project=$ps->create($owner,7,array_replace($input,['client_id'=>[$a=>$ca,$b=>$cb,$primary=>$cp][$owner],'name'=>'Default HTTP target '.$owner]),$key('defaults-controller-project-'.$owner));
- foreach(['tasks'=>new Company_tasks(),'standalone_tasks'=>new Company_standalone_tasks()]as$kind=>$controller){
+ foreach(['tasks'=>new Tasks(),'standalone_tasks'=>new Tasks()]as$kind=>$controller){
   $http->verb='GET';$http->posts=[];$http->gets=$kind==='tasks'?['project'=>(string)$project]:[];$GLOBALS['CI']->output->status=200;$controller->index();$data=end($GLOBALS['CI']->load->views)[1];$html=$harness->render($kind,$data);$dom=new DOMDocument();@$dom->loadHTML($html);$xp=new DOMXPath($dom);
   essentialCheck($data['creation_defaults']===['revision'=>1]+$v('in_progress','0')&&$xp->query('//select[@id="task-new-status"]/option[@value="in_progress" and @selected]')->length===1&&$xp->query('//select[@id="task-new-status"]/option[@value="done"]')->length===0,'A B principal actual both new forms consume own bounded status');
   essentialCheck($xp->query('//select[@id="task-new-assignee"]/option[@selected]')->length===0,'assignment0 leaves required blank placeholder instead of selecting master');
@@ -15,5 +15,5 @@ foreach([$a,$b,$primary]as$owner){
   $http->posts['task']['assignee_id']='';$http->posts['request_key']=$key('defaults-controller-blank-'.$kind.'-'.$owner);$controller->index();essentialCheck($GLOBALS['CI']->output->status===409,'HTTP explicit empty assignee retains existing task controller conflict contract');
  }
 }
-$preferences->save($b,7,1,$v('todo'));CompanyRequestScope::$issuer=$b;$http->verb='GET';$http->posts=[];$http->gets=[];$c=new Company_standalone_tasks();$c->index();$data=end($GLOBALS['CI']->load->views)[1];$html=$harness->render('standalone_tasks',$data);$dom=new DOMDocument();@$dom->loadHTML($html);$xp=new DOMXPath($dom);essentialCheck($xp->query('//select[@id="task-new-assignee"]/option[@value="7" and @selected]')->length===1,'assignment1 preselects actual current actor');
+$preferences->save($b,7,1,$v('todo'));CompanyRequestScope::$issuer=$b;$http->verb='GET';$http->posts=[];$http->gets=[];$c=new Tasks();$c->index();$data=end($GLOBALS['CI']->load->views)[1];$html=$harness->render('standalone_tasks',$data);$dom=new DOMDocument();@$dom->loadHTML($html);$xp=new DOMXPath($dom);essentialCheck($xp->query('//select[@id="task-new-assignee"]/option[@value="7" and @selected]')->length===1,'assignment1 preselects actual current actor');
 echo 'Own task defaults native adapters/forms: '.($GLOBALS['essentialChecks']-$controllerStart).' added / '.$GLOBALS['essentialChecks'].' cumulative ('.$db->driver().').'.PHP_EOL;

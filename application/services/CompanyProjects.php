@@ -95,6 +95,22 @@ final class CompanyProjects extends CompanyProjectsStorage
         IssuerTransaction::assertOwned($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),$this->apiTables()));
         return ($this->guardedWork(function()use($issuer,$actor,$data):int{(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'create');$id=$this->insertCreatedInOwned($issuer,$actor,$data);$this->audit($issuer,$actor,$id,'company_project_created');$this->authorize($issuer,$actor,'create');return $id;}))();
     }
+    /** Cancel a project through the canonical writer, preserving all rows and history. */
+    public function delete($issuer,$actor,$id,$revision,string $key):int
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=self::revision($revision);
+        return $this->operation($issuer,$actor,'delete',$key,'project_deleted',[$id,$revision],function()use($issuer,$actor,$id,$revision):int{
+            $old=$this->row($issuer,$id);
+            if((int)$old['revision']!==$revision)throw new DomainException('company_project_stale');
+            if($old['status']!=='active')throw new DomainException('company_project_closed');
+            $this->assertProjectNoPendingBilling($issuer,$id);
+            if($this->rows('SELECT id FROM '.$this->p.'company_tasks WHERE issuer_id=? AND project_id=? AND status<>? LIMIT 1 FOR UPDATE',[$issuer,$id,'done']))throw new DomainException('company_project_open_tasks');
+            IssuerStorage::query($this->db,'UPDATE '.$this->p.'company_projects SET status=?,revision=revision+1,updated_at=? WHERE issuer_id=? AND id=? AND revision=?',['cancelled',date('Y-m-d H:i:s'),$issuer,$id,$revision]);
+            $stored=$this->row($issuer,$id);
+            if((int)$stored['revision']!==$revision+1||$stored['status']!=='cancelled')throw new RuntimeException('issuer_project_write_unconfirmed');
+            return $id;
+        });
+    }
     public function update($issuer,$actor,$id,$revision,array $input,string $key):int
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=self::revision($revision);$data=self::input($input);

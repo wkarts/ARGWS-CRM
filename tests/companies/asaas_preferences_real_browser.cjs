@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 // Real authenticated CRM/MySQL/native assets only. No HTML, provider or response fixtures.
 // Run unselected immediately after the existing native installer, before A/B account fixtures;
 // run selected after companies_asaas_browser.cjs. Both reuse existing A/B invoices and never seed.

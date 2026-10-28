@@ -12,7 +12,7 @@ class IssuerCore {
  public static function ready($db,$prefix):bool { return self::$mode==='ok'; }
 }
 // Explicit context collaborator. Real membership/default resolution is covered by
-// tests/company_context.php; here we assert fresh post-migration orchestration.
+// tests/native_context.php; here we assert fresh post-migration orchestration.
 class CompanyContext {
  public static string $mode='empty';
  public static int $instances=0;

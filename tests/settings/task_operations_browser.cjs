@@ -1,6 +1,6 @@
 'use strict';
-const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 // Product mutations only through native GUI/HTTP. The fixture executes read-only SQL in a disposable native448.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),fs=require('node:fs'),path=require('node:path'),{chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL,fixturePath=process.env.TASK_OPERATIONS_BROWSER_FIXTURE_PHP,php=process.env.ISSUERS_BROWSER_PHP_BINARY||'php',artifacts=process.env.ISSUERS_BROWSER_ARTIFACTS;

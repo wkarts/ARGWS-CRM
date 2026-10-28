@@ -23,8 +23,8 @@ $ci->output=new class {public int $status=200;public array $headers=[];public st
 $ci->session=new class {public array $values=[];public function userdata($k){return $this->values[$k]??null;}public function set_userdata($k,$v){$this->values[$k]=$v;}};
 $ci->load=new class {public array $views=[];public function library($name){if($name!=='encryption')throw new LogicException('unexpected framework library');}public function view($n,$data){$this->views[]=[$n,$data];}};
 $ci->encryption=new class {public function encrypt($v){return 'sealed:'.base64_encode($v);}public function decrypt($v){return str_starts_with($v,'sealed:')?base64_decode(substr($v,7),true):false;}};
-$harness=new class {public function __get($name){return $GLOBALS['CI']->$name;}public function render(array $data):string{extract($data);ob_start();try{include APPPATH.'views/admin/companies/pusher.php';return ob_get_clean();}catch(Throwable $e){ob_end_clean();throw $e;}}};
-require APPPATH.'controllers/admin/Company_pusher.php';$controller=new Company_pusher();
+$harness=new class {public function __get($name){return $GLOBALS['CI']->$name;}public function render(array $data):string{extract($data);ob_start();try{include APPPATH.'views/admin/settings/includes/pusher.php';return ob_get_clean();}catch(Throwable $e){ob_end_clean();throw $e;}}};
+require APPPATH.'controllers/admin/Settings.php';$controller=new Settings();
 // Three distinct non-master roles in B; none has access to A.
 foreach([13,14,15]as$staff){$db->query('INSERT INTO '.$p.'staff(staffid,active,admin,firstname,lastname) VALUES(?,1,0,?,?)',[$staff,'Synthetic','Recovery '.$staff]);$db->query('INSERT INTO '.$p.'issuers_staff(issuer_id,staff_id,can_view) VALUES(?,?,1)',[$b,$staff]);}
 $grants=[13=>[['settings','view'],['settings','edit'],['pusher','view'],['pusher','configure'],['tasks','view'],['projects','view']],14=>[['pusher','view'],['tasks','view'],['projects','view']],15=>[['settings','view'],['settings','edit'],['pusher','view'],['pusher','configure']]];

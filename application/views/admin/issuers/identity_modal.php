@@ -5,7 +5,7 @@ $url=fn($path)=>CompanyRequestScope::adminUrl($this,$path);
 ?>
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Editar empresa</title>
 <?php foreach(['assets/css/reset.min.css','assets/plugins/inter/inter.css','assets/plugins/bootstrap/css/bootstrap.min.css','assets/builds/tailwind.css','assets/css/style.min.css','assets/css/company-registry.css'] as $asset){?><link rel="stylesheet" href="<?= $esc(base_url($asset)); ?>"><?php } ?>
-<?php require APPPATH.'views/admin/includes/company_context_script.php'; ?>
+<?php require APPPATH.'views/admin/includes/context_script.php'; ?>
 </head><body class="company-onboarding-modal-body">
 <section class="company-settings-card"><h1 tabindex="-1">Editar empresa</h1>
 <?php if(is_string($notice)&&$notice!==''){?><p class="alert alert-success" role="status"><?= $esc($notice); ?></p><script>window.parent.postMessage({type:'company-identity-saved'},window.location.origin);</script><?php } ?>

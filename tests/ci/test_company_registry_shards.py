@@ -22,9 +22,9 @@ class RegistryShardsTest(unittest.TestCase):
         self.assertEqual(len(commands), 472)
         self.assertEqual(commands[0], ['php', 'tests/issuers_original_administrator.php'])
         self.assertEqual(hashlib.sha256(json.dumps(commands[1:], separators=(',', ':')).encode()).hexdigest(),
-                         '20b94d371d8dd0a2dd58170b6f34611f2c644a07d0a1f729b3264863e86de877')
+                         'ce9d16a30581ef32234d4696afc1f3d98d6d17d86a0290d80d9e98e9a7b3e7cd')
         self.assertEqual(hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest(),
-                         'bb4d99bc6a7363393204bf3099f1079fc95b78af17cef87dc2ed81b95c0d1fbc')
+                         'a15ee1f915255e533a2ea0ae797f152e44e5dd9874ba68f398e0ce98794dfc99')
 
     def test_union_exact_once_and_order_preserved(self):
         commands = runner.load_commands()
@@ -81,9 +81,9 @@ class RegistryShardsTest(unittest.TestCase):
                 ['php', 'tests/efi/intent_contract.php'],
                 ['php', 'tests/efi_adoption_http.php'],
                 ['php', 'tests/efi_checkout_preflight.php'],
-                ['php', 'tests/efi/company_accounts_contract.php'],
-                ['php', 'tests/efi/company_controller_contract.php'],
-                ['php', 'tests/efi/company_proof_contract.php'],
+                ['php', 'tests/efi/native_accounts_contract.php'],
+                ['php', 'tests/efi/native_controller_contract.php'],
+                ['php', 'tests/efi/native_proof_contract.php'],
                 ['php', 'tests/issuers_controller.php'],
                 ['php', 'tests/issuers_admin_upgrade_gate.php'],
                 ['php', 'tests/issuers_integration_view.php'],
@@ -193,7 +193,7 @@ class RegistryShardsTest(unittest.TestCase):
         self.assertEqual(expected['assignments'][0], 2, 'unmeasured command fills retired shard capacity')
         self.assertEqual(expected['retired'], baseline['retired'])
         self.assertEqual(hashlib.sha256((json.dumps(old, indent=2)+'\n').encode()).hexdigest(),
-                         '3a04c64d8e09ddd66340542dacf73cd0e55e16355868c7e38b259c143c932eee')
+                         '16503a60a61942303257d72386271696d7c05a46c67aef4385041acac521ec6b')
         self.assertEqual([len(t) for t in baseline['milliseconds'].values()], [472,472], 'no invented timing')
         self.assertEqual(retired['argv'], ['php', 'tests/settings/calendar_controller.php'])
         self.assertNotIn(retired['argv'], commands)

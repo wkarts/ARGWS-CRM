@@ -231,7 +231,7 @@ class Emails extends AdminController
         require_once APPPATH.'services/CompanySettingsIdentity.php';
         require_once APPPATH.'services/EmailTemplateLocale.php';
         $identity=(new CompanySettingsIdentity($this->db,db_prefix()))->read(CompanySettingsRuntime::issuerId());
-        $this->load->view('admin/emails/company_scoped',[
+        $this->load->view('admin/emails/scoped',[
             'company_identity'=>$identity,'selected'=>$selected,'templates'=>$selected?[]:$this->emails_model->get(['language'=>'portuguese_br']),
             'can_edit'=>CompanySettingsRuntime::canResource('email_templates','edit'),'saved'=>$saved,'error'=>$error,
             'context_token'=>CompanyRequestScope::token(),'list_url'=>CompanyRequestScope::adminUrl($this,'emails'),

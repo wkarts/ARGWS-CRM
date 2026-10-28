@@ -32,8 +32,8 @@ const results = Object.fromEntries(outcomes.map(outcome => {
 process.stdout.write(JSON.stringify(results));
 """
         cases = {
-            "company-shell-synthetic-ui": ("node tests/company_shell_browser.cjs", "ignore"),
-            "company-identity-presentation": ("node tests/company_identity_browser.cjs", "warn"),
+            "company-shell-synthetic-ui": ("node tests/native_shell_browser.cjs", "ignore"),
+            "company-identity-presentation": ("node tests/native_identity_browser.cjs", "warn"),
             "client-identity-presentation": ("node tests/companies/client_identity_browser.cjs", "error"),
             "asaas-native-settings-presentation": ("node tests/asaas_settings_tabs.browser.cjs", "error"),
             "issuer-native-browser": ("bash tests/docker_provision_smoke.sh", "ignore"),

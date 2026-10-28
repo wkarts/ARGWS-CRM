@@ -166,7 +166,7 @@ final class CompanyRequestScope
                 && in_array($method,['calendar','get_calendar_data','view_event','delete_event'],true);
             // Recurring invoices have one canonical implementation on Invoices::recurring.
             // It is a shared native action for the principal and named companies alike;
-            // the retired Company_invoice_recurring controller is deliberately not admitted.
+            // the retired parallel invoice-recurring surface is deliberately not admitted.
             $sharedInvoiceRecurring = $native && $class === 'invoices' && $method === 'recurring';
             // Settings uses the same bounded, issuer-owned forms for the
             // principal and named companies, including asset actions.

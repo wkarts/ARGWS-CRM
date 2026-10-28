@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 // Existing installer master creates companies through the normal wizard, with no new designation.
 const assert=require('node:assert/strict'), {execFileSync}=require('node:child_process'), fs=require('node:fs'), {chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL, db=process.env.ISSUERS_BROWSER_DB_CONTAINER;

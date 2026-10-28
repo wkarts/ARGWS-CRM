@@ -17,7 +17,7 @@ $render=static function(string $locale,bool $ready=true):string{
     $preferences=['ready'=>$ready,'active_environment'=>null,'revision'=>$zero,'profiles'=>['production'=>$profile,'sandbox'=>$profile]];
     $preferences_active_tab=null;$accounts=[];$can_configure=true;$action_url='http://127.0.0.1:48000/admin/settings/asaas';$preferences_csrf='synthetic-csrf';
     $hidden=static function(array $values=[]):void{foreach($values as $key=>$value)echo '<input type="hidden" name="'.htmlspecialchars($key,ENT_QUOTES).'" value="'.htmlspecialchars((string)$value,ENT_QUOTES).'">';};
-    ob_start();include APPPATH.'views/admin/companies/asaas_preferences.php';return ob_get_clean();
+    ob_start();include APPPATH.'views/admin/settings/native_asaas_preferences.php';return ob_get_clean();
 };
 $pt=$render('portuguese_br');$en=$render('english');
 isolatedCheck(str_contains($pt,'Preferências por ambiente')&&str_contains($pt,'Homologação')&&str_contains($pt,'Nenhum selecionado'),'real empty-account preferences render PT-BR in a clean process');

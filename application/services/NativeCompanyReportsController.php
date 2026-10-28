@@ -20,8 +20,8 @@ final class NativeCompanyReportsController
     private static function position($ci,int $issuer,int $actor):void
     {
         require_once APPPATH.'services/CompanyReports.php';$service=new CompanyReports($ci->db,db_prefix());
-        try{if($ci->input->get('export',false)==='csv'){$csv=$service->csv($issuer,$actor);$ci->output->set_header('X-Content-Type-Options: nosniff');$ci->output->set_header('Content-Disposition: attachment; filename="posicao-financeira-empresa-'.(int)$issuer.'.csv"');$ci->output->set_content_type('text/csv','UTF-8')->set_output($csv);return;}$report=$service->financialPosition($issuer,$actor);$ci->load->view('admin/reports/company_financial',['issuer'=>$issuer,'report'=>$report,'error'=>null]);}
-        catch(DomainException $e){if($e->getMessage()==='company_report_access_denied'){self::denied();return;}$ci->output->set_status_header(422);$ci->load->view('admin/reports/company_financial',['issuer'=>$issuer,'report'=>null,'error'=>'Os dados financeiros exigem revisão. Nenhum saldo ou arquivo foi disponibilizado nesta tentativa.']);}
+        try{if($ci->input->get('export',false)==='csv'){$csv=$service->csv($issuer,$actor);$ci->output->set_header('X-Content-Type-Options: nosniff');$ci->output->set_header('Content-Disposition: attachment; filename="posicao-financeira-empresa-'.(int)$issuer.'.csv"');$ci->output->set_content_type('text/csv','UTF-8')->set_output($csv);return;}$report=$service->financialPosition($issuer,$actor);$ci->load->view('admin/reports/financial',['issuer'=>$issuer,'report'=>$report,'error'=>null]);}
+        catch(DomainException $e){if($e->getMessage()==='company_report_access_denied'){self::denied();return;}$ci->output->set_status_header(422);$ci->load->view('admin/reports/financial',['issuer'=>$issuer,'report'=>null,'error'=>'Os dados financeiros exigem revisão. Nenhum saldo ou arquivo foi disponibilizado nesta tentativa.']);}
         catch(Throwable $e){log_message('error','Company financial report failed; no financial data logged.');show_error('Não foi possível confirmar os dados do relatório. Recarregue antes de tentar novamente.',503);}
     }
 
@@ -58,6 +58,6 @@ final class NativeCompanyReportsController
             if($e->getMessage()==='company_ledger_access_denied'){self::denied();return;}
             $ci->output->set_status_header(422);$error=match($e->getMessage()){'company_ledger_invalid_filter'=>'Confira as datas, o corte UTC e o marcador da consulta. O intervalo deve ser de até 366 dias e o corte não pode estar no futuro.','company_ledger_period_limit'=>'O período excede 10.000 eventos. Reduza o intervalo antes de consultar ou exportar. Nenhum arquivo foi gerado.',default=>'Os eventos financeiros exigem revisão. Nenhum total ou arquivo foi disponibilizado nesta tentativa.'};
         }catch(Throwable $e){log_message('error','Company event journal failed; no financial data logged.');show_error('Não foi possível confirmar os eventos do relatório. Recarregue antes de tentar novamente.',503);return;}
-        $ci->load->view('admin/reports/company_ledger',['issuer'=>$issuer,'ledger'=>$report,'filters'=>$filters,'error'=>$error]);
+        $ci->load->view('admin/reports/ledger',['issuer'=>$issuer,'ledger'=>$report,'filters'=>$filters,'error'=>$error]);
     }
 }

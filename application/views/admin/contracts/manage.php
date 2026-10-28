@@ -66,7 +66,7 @@
 
                 </div>
 
-                <?php if(!empty($company_owned_contracts)){ $this->load->view('admin/contracts/company_owned_directory',['company_owned_contracts'=>$company_owned_contracts]); } ?>
+                <?php if(!empty($company_owned_contracts)){ $this->load->view('admin/contracts/owned_directory',['company_owned_contracts'=>$company_owned_contracts]); } ?>
 
                 <div class="row tw-my-2">
                     <div class="col-md-6">

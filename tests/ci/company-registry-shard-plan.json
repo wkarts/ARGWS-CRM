@@ -1,7 +1,7 @@
 {
   "model": "frozen-paired-lpt-retired-plus-unmeasured-count-v2",
-  "manifest_sha256": "bb4d99bc6a7363393204bf3099f1079fc95b78af17cef87dc2ed81b95c0d1fbc",
-  "baseline_sha256": "121e5276c5c763832e2da3277bc4b0e29cd1f2245ad1c88d25de58b3213aead1",
+  "manifest_sha256": "a15ee1f915255e533a2ea0ae797f152e44e5dd9874ba68f398e0ce98794dfc99",
+  "baseline_sha256": "0471decd3b02721ae8a35dce36fe2b23241ac7d314f66dcae2ac3e36d6b26851",
   "assignments": [
     2,
     4,
@@ -476,7 +476,7 @@
     1,
     2
   ],
-  "measured_manifest_sha256": "1565aaa69234abd5ab9d7eec11fbbd912a93fdb75e0dfd919de0b913e408c835",
+  "measured_manifest_sha256": "fdd301fc98866bbecfe0cdf76e64324ff657d3171cd3863598f0b27110725b50",
   "retired": [
     {
       "index": 406,

@@ -34,7 +34,7 @@ essentialCheck(!in_array($contractIds[$a],array_column($owned['directory']['item
 $canonical=NativeCompanyResourceId::encode('company_contract',(string)$primaryId);
 $db->query("INSERT INTO {$p}contracts(id,issuer_id,subject) VALUES(?,?,?)",[$primaryId,null,'Same raw ID historical contract']);
 $legacyBefore=$db->query("SELECT * FROM {$p}contracts WHERE id=?",[$primaryId])->row_array();
-$harness=new class{public function render(array$data):string{extract($data);ob_start();include APPPATH.'views/admin/contracts/company_owned_directory.php';return ob_get_clean();}};
+$harness=new class{public function render(array$data):string{extract($data);ob_start();include APPPATH.'views/admin/contracts/owned_directory.php';return ob_get_clean();}};
 $html=$harness->render(['company_owned_contracts'=>$owned]);
 essentialCheck(str_contains($html,'/admin/contracts/contract/'.$canonical)&&str_contains($html,'contracts/contract?source=company'),'principal union emits typed detail and explicit owned-create routes');
 essentialCheck(!str_contains($html,'/admin/company_contracts'),'principal union has no parallel controller link');

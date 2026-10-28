@@ -648,7 +648,7 @@
     ],
     [
       "php",
-      "tests/company_context.php"
+      "tests/native_context.php"
     ],
     [
       "php",
@@ -736,11 +736,11 @@
     ],
     [
       "php",
-      "tests/company_dashboard_payments.php"
+      "tests/native_dashboard_payments.php"
     ],
     [
       "php",
-      "tests/company_dashboard_presenter.php"
+      "tests/native_dashboard_presenter.php"
     ],
     [
       "php",
@@ -1440,7 +1440,7 @@
     ],
     [
       "php",
-      "tests/settings/company_assets.php"
+      "tests/settings/native_assets.php"
     ],
     [
       "php",
@@ -2699,7 +2699,7 @@
     [
       "node",
       "--test",
-      "tests/company_portal_files.test.cjs"
+      "tests/native_portal_files.test.cjs"
     ],
     [
       "node",

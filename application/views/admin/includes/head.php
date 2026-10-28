@@ -20,7 +20,7 @@ $nativeLabel=$nativeCompany ? static fn($key, ...$unused)=>NativeCompanyAdminPre
         <?= e(crm_app_page_title($title ?? null)); ?>
     </title>
 
-    <?php $this->load->view('admin/includes/company_context_script'); ?>
+    <?php $this->load->view('admin/includes/context_script'); ?>
     <?php if($nativeCompany) { foreach(NativeCompanyAdminPresentation::css(function_exists('get_instance') ? get_instance() : $this) as $asset) { ?>
     <link rel="stylesheet" href="<?= e(base_url($asset).'?v='.(defined('ARGWS_VERSION')?ARGWS_VERSION:'core')); ?>">
     <?php } ?><style><?= $nativeCompany['theme']; ?></style><?php } else { echo app_compile_css(); } ?>

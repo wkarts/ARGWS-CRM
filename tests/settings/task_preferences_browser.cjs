@@ -1,6 +1,6 @@
 'use strict';
-const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 // All positive mutations use real native forms/controllers. Fixture is read-only; trigger is a disposable fault witness.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright'),path=require('node:path');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;

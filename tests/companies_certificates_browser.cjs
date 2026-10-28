@@ -1,6 +1,6 @@
 'use strict';
-const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
-const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
+const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
+const { workspacePage } = require('./helpers/native_workspace_driver.cjs');
 // Real controller, multipart upload, CRM context middleware, MySQL and browser.
 // Run after companies_onboarding_browser in the disposable native-upgrade fixture.
 const assert = require('node:assert/strict');

@@ -1,6 +1,6 @@
 'use strict';
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
-const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
+const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
 // Official staff and contact contract routes with private publication. Disposable fixture only.
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');

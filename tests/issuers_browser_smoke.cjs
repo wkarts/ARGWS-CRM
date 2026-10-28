@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption, ensureCompanySidebar } = require('./helpers/company_selector_driver.cjs');
+const { selectCompanyOption, ensureCompanySidebar } = require('./helpers/native_selector_driver.cjs');
 // Real browser + real isolated CRM. This script refuses a public/production URL.
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');

@@ -5,7 +5,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 /*
 Module Name: Gestão de Compras 2024 v1.5.1
 Description: O Módulo de Gerenciamento de Compras é uma ferramenta para gerenciar as compras diárias. Ele é equipado com todos os recursos necessários para qualquer empresa que precise adquirir matéria-prima para fabricação ou produtos acabados para comercialização.
-Version: 1.5.2
+Version: 1.5.3
 Requires at least: 2.3.*
 Author:Wkarts
 Author URI: https://t.me/wkartspro

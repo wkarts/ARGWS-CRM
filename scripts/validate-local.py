@@ -50,8 +50,12 @@ def run_check(name: str, command: list[str], *, required: list[str] | None = Non
 def main() -> int:
     EVIDENCE.mkdir(parents=True, exist_ok=True)
     checks = [
-        run_check("node-contracts", ["node", "--test", "tests/*.test.cjs"], required=["node"]),
-        run_check("ui-inventory", ["python3", "tests/company_ui_surface_inventory.py"], required=["python3"]),
+        # The contract suite includes deliberate PHP-backed differential and
+        # rendered-view checks. Without PHP, do not convert those checks into a
+        # misleading failure or silently skip individual assertions; record the
+        # whole suite as blocked and let the pinned CI image execute it intact.
+        run_check("node-contracts", ["node", "--test", "tests/*.test.cjs"], required=["node", "php"]),
+        run_check("ui-inventory", ["python3", "tests/native_ui_surface_inventory.py"], required=["python3"]),
         run_check("focused-ci-contract", ["python3", "tests/ci/test_native_company_focused.py"], required=["python3"]),
         run_check("workflow-ownership", ["python3", "-c", (
             "from pathlib import Path; import re; "

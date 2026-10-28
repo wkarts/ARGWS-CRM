@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 // Actual authenticated CRM/HTTP/MySQL and native assets. No HTML fixture or provider calls.
 const assert = require('node:assert/strict');
 const {execFileSync} = require('node:child_process');

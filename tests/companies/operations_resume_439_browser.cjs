@@ -1,6 +1,6 @@
 'use strict';
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
-const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
+const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
 // Rebuilt recovery proof. Business objects and declarations are created through the CRM UI.
 // The only SQL mutation adjusts a synthetic running timer's start, avoiding a real one-hour wait.
 const assert=require('node:assert/strict');

@@ -1,6 +1,6 @@
 'use strict';
-const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 // Native own calendar forms and JSON datasource. All seven synthetic sources through native GUI; fixture enforces READ ONLY and seeds no grants/settings/schema/marker.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright'),path=require('node:path'),fs=require('node:fs');
 const base=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,db=process.env.ISSUERS_BROWSER_DB_CONTAINER,output=process.env.ISSUERS_BROWSER_ARTIFACTS||'/tmp/issuer-browser-evidence';fs.mkdirSync(output,{recursive:true});assert.match(base||'',/^http:\/\/127\.0\.0\.1:\d+$/);assert.match(app||'',/^argws-crm-upgrade-\d+$/);assert.equal(process.env.ISSUERS_BROWSER_DB_NAME,'argws_upgrade_ci');

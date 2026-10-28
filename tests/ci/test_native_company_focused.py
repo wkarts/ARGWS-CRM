@@ -54,7 +54,7 @@ class FocusedContract(unittest.TestCase):
   owners={
    'tests/companies/bb_channel_preferences.php':'.github/workflows/banco-brasil.yml',
    'tests/crm_ui_language.php':'.github/workflows/crm-ui-policy.yml',
-   'tests/company_shell_controls.test.cjs':'.github/workflows/company-native-ui.yml',
+   'tests/native_shell_controls.test.cjs':'.github/workflows/company-native-ui.yml',
    'tests/native_sidebar_toggle.test.cjs':'.github/workflows/company-native-ui.yml',
    'tests/native_header_overflow.test.cjs':'.github/workflows/native-header-layout.yml',
   }
@@ -101,9 +101,9 @@ class FocusedContract(unittest.TestCase):
    ('php','tests/companies/contracts_controller.php'),
    ('php','tests/companies/invoice_drafts.php'),
    ('php','tests/companies/portal_operations_controller.php'),
-   ('php','tests/company_context.php'),
+   ('php','tests/native_context.php'),
    ('php','tests/issuers_core_upgrade.php'),
-   ('php','tests/settings/company_assets.php'),
+   ('php','tests/settings/native_assets.php'),
    ('php','tests/settings/google_mail_worker.php'),
   }
   self.assertEqual(focused_commands&registry,sqlite_overlap)
@@ -118,6 +118,6 @@ class FocusedContract(unittest.TestCase):
   self.assertEqual(workflow.count('scripts/native-experience-inventory.php'),1)
   self.assertNotIn('scripts/company-surface-inventory.php',workflow)
   self.assertNotIn('scripts/inventory-company-boundaries.py',workflow)
-  self.assertNotIn('tests/company_ui_surface_inventory.py',workflow)
+  self.assertNotIn('tests/native_ui_surface_inventory.py',workflow)
   self.assertRegex(workflow,r"(?s)- uses: actions/setup-node@v4\s+if: matrix\.php == '8\.1'")
 if __name__=='__main__':unittest.main()

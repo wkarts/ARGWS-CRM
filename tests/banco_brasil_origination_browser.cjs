@@ -1,6 +1,6 @@
 'use strict';
-const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
-const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
+const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
+const { workspacePage } = require('./helpers/native_workspace_driver.cjs');
 // Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
 const assert = require('node:assert/strict');
 const { execFileSync, spawnSync } = require('node:child_process');

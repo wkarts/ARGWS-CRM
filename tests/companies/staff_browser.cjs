@@ -1,6 +1,6 @@
 'use strict';
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
-const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
+const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
 // Real HTTP/Chromium forms, native login and a deliberately isolated upgraded database.
 const assert = require('node:assert/strict');
 const { assertAttestedMaster } = require('../helpers/installed_master_proof.cjs');

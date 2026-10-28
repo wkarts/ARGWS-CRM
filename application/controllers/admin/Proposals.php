@@ -62,6 +62,7 @@ class Proposals extends AdminController
 
     public function table()
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->table('proposals', null); return; }
         if (
             staff_cant('view', 'proposals')
             && staff_cant('view_own', 'proposals')
@@ -75,6 +76,7 @@ class Proposals extends AdminController
 
     public function proposal_relations($rel_id, $rel_type)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->relations('proposals', $rel_id, $rel_type); return; }
         $this->app->get_table_data('proposals_relations', [
             'rel_id'   => $rel_id,
             'rel_type' => $rel_type,
@@ -690,6 +692,8 @@ class Proposals extends AdminController
 
     public function pipeline_open($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->pipeline('proposals', $id); return; }
+
         if (staff_can('view',  'proposals') || staff_can('view_own',  'proposals') || get_option('allow_staff_view_proposals_assigned') == 1) {
             $data['proposal']      = $this->get_proposal_data_ajax($id, true);
             $data['proposal_data'] = $this->proposals_model->get($id);
@@ -706,6 +710,8 @@ class Proposals extends AdminController
 
     public function get_pipeline()
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->pipeline('proposals'); return; }
+
         if (staff_can('view',  'proposals') || staff_can('view_own',  'proposals') || get_option('allow_staff_view_proposals_assigned') == 1) {
             $data['statuses'] = $this->proposals_model->get_statuses();
             $this->load->view('admin/proposals/pipeline/pipeline', $data);
@@ -714,6 +720,8 @@ class Proposals extends AdminController
 
     public function pipeline_load_more()
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->table('proposals', null); return; }
+
         $status = $this->input->get('status');
         $page   = $this->input->get('page');
 

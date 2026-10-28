@@ -53,7 +53,7 @@
   ],
   [
     "php",
-    "tests/company_context.php"
+    "tests/native_context.php"
   ],
   [
     "php",
@@ -949,7 +949,7 @@
   ],
   [
     "php",
-    "tests/settings/company_assets.php"
+    "tests/settings/native_assets.php"
   ],
   [
     "php",
@@ -957,7 +957,7 @@
   ],
   [
     "php",
-    "tests/settings/company_settings.php"
+    "tests/settings/native_settings.php"
   ],
   [
     "php",
@@ -981,19 +981,19 @@
   ],
   [
     "php",
-    "tests/settings/company_presentation.php"
+    "tests/settings/native_presentation.php"
   ],
   [
     "php",
-    "tests/settings/company_presentation_delivery.php"
+    "tests/settings/native_presentation_delivery.php"
   ],
   [
     "php",
-    "tests/settings/company_options_helpers.php"
+    "tests/settings/native_options_helpers.php"
   ],
   [
     "php",
-    "tests/settings/company_identity_transaction.php"
+    "tests/settings/native_identity_transaction.php"
   ],
   [
     "php",
@@ -1005,11 +1005,11 @@
   ],
   [
     "php",
-    "tests/settings/company_registry_identity.php"
+    "tests/settings/native_registry_identity.php"
   ],
   [
     "php",
-    "tests/settings/company_registry_profile.php"
+    "tests/settings/native_registry_profile.php"
   ],
   [
     "php",
@@ -1025,27 +1025,27 @@
   ],
   [
     "php",
-    "tests/companies/company_identity_documents.php"
+    "tests/companies/native_identity_documents.php"
   ],
   [
     "php",
-    "tests/company_registry_lookup.php"
+    "tests/native_registry_lookup.php"
   ],
   [
     "php",
-    "tests/company_registry_lookup_controller.php"
+    "tests/native_registry_lookup_controller.php"
   ],
   [
     "php",
-    "tests/settings/company_mail_config.php"
+    "tests/settings/native_mail_config.php"
   ],
   [
     "php",
-    "tests/settings/company_mail_queue.php"
+    "tests/settings/native_mail_queue.php"
   ],
   [
     "php",
-    "tests/settings/company_mail_schema.php"
+    "tests/settings/native_mail_schema.php"
   ],
   [
     "php",
@@ -1061,7 +1061,7 @@
   ],
   [
     "php",
-    "tests/settings/company_formatting.php"
+    "tests/settings/native_formatting.php"
   ],
   [
     "php",
@@ -1073,7 +1073,7 @@
   ],
   [
     "php",
-    "tests/settings/company_email_templates.php"
+    "tests/settings/native_email_templates.php"
   ],
   [
     "php",
@@ -1481,35 +1481,35 @@
   ],
   [
     "php",
-    "tests/settings/company_ai.php"
+    "tests/settings/native_ai.php"
   ],
   [
     "php",
-    "tests/settings/company_ai_boundaries.php"
+    "tests/settings/native_ai_boundaries.php"
   ],
   [
     "php",
-    "tests/settings/company_ai_final_boundaries.php"
+    "tests/settings/native_ai_final_boundaries.php"
   ],
   [
     "php",
-    "tests/settings/company_ai_client.php"
+    "tests/settings/native_ai_client.php"
   ],
   [
     "php",
-    "tests/settings/company_ai_concurrency.php"
+    "tests/settings/native_ai_concurrency.php"
   ],
   [
     "php",
-    "tests/settings/company_ai_controller.php"
+    "tests/settings/native_ai_controller.php"
   ],
   [
     "php",
-    "tests/settings/company_ai_schema.php"
+    "tests/settings/native_ai_schema.php"
   ],
   [
     "php",
-    "tests/settings/company_ai_transport.php"
+    "tests/settings/native_ai_transport.php"
   ],
   [
     "php",

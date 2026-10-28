@@ -8,7 +8,7 @@ $db->query("CREATE TABLE {$p}emailtemplates(emailtemplateid {$idDefinition},issu
 unset($db->data_cache['table_names']);
 $insert=function(array $row)use($db,$p){$columns=array_keys($row);$db->query('INSERT INTO '.$p.'emailtemplates (`'.implode('`,`',$columns).'`) VALUES ('.implode(',',array_fill(0,count($columns),'?')).')',array_values($row));return $db->insert_id();};
 $get=function($issuer,$slug,$language)use($db,$p){return $db->query('SELECT * FROM '.$p.'emailtemplates WHERE '.($issuer===null?'issuer_id IS NULL':'issuer_id='.(int)$issuer).' AND slug=? AND language=?',[$slug,$language])->row_array();};
-$defaults=json_decode(file_get_contents(APPPATH.'services/email_templates_ptbr/company_defaults.json'),true,512,JSON_THROW_ON_ERROR);
+$defaults=json_decode(file_get_contents(APPPATH.'services/email_templates_ptbr/defaults.json'),true,512,JSON_THROW_ON_ERROR);
 foreach($defaults as $row)$insert($row+['issuer_id'=>null]);
 essentialCheck(EmailTemplateReconciler::upgrade($db,$p)===82,'fresh source seed creates all 82 PT-BR variants');
 essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}emailtemplates")->row()->n===164,'English is retained alongside PT-BR');

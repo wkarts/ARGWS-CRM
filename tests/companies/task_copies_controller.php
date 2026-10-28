@@ -22,9 +22,9 @@ $ci->output=new class {public int $status=200;public array $headers=[];public st
 $ci->session=new class {public array $values=[];public function userdata($k){return $this->values[$k]??null;}public function set_userdata($k,$v){$this->values[$k]=$v;}};
 $ci->load=new class {public array $views=[];public function library($name){if($name!=='encryption')throw new LogicException('unexpected framework library');}public function view($n,$data){$this->views[]=[$n,$data];}};
 $ci->encryption=new class {public function encrypt($v){return 'sealed:'.base64_encode($v);}public function decrypt($v){return str_starts_with($v,'sealed:')?base64_decode(substr($v,7),true):false;}};
-$harness=new class {public function __get($name){return $GLOBALS['CI']->$name;}public function render(array $data):string{extract($data);ob_start();try{include APPPATH.'views/admin/companies/task_copies.php';return ob_get_clean();}catch(Throwable $e){ob_end_clean();throw $e;}}};
+$harness=new class {public function __get($name){return $GLOBALS['CI']->$name;}public function render(array $data):string{extract($data);ob_start();try{include APPPATH.'views/admin/tasks/native_copies.php';return ob_get_clean();}catch(Throwable $e){ob_end_clean();throw $e;}}};
 
-require APPPATH.'controllers/admin/Company_task_copies.php';$http=new Company_task_copies();CompanyRequestScope::$issuer=$b;
+require APPPATH.'controllers/admin/Tasks.php';$http=new Tasks();CompanyRequestScope::$issuer=$b;
 foreach(['project'=>$tb,'standalone'=>$sourceStandalone[$b]]as$kind=>$source){
  $ci->input->verb='GET';$ci->input->posts=[];$ci->input->gets=['kind'=>$kind,'source'=>$source];$ci->output->status=200;$http->index();$view=end($ci->load->views);$html=$harness->render($view[1]);
  essentialCheck($view[0]==='admin/companies/task_copies'&&$view[1]['preview']['source']['task']['id']==$source,'real controller resolves both finite own namespaces');

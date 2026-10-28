@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
+const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
 // Reads prepared disposable fixture JSON. All requests stay on the named loopback CRM.
 const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require('node:crypto');
 const {chromium}=require('playwright');const {execFileSync}=require('node:child_process');

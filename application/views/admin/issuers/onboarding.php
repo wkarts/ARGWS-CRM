@@ -8,7 +8,7 @@ $labels=[1=>'Identidade',2=>'Preferências',3=>'Colaboradores',4=>'Privacidade',
 ?>
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nova empresa</title>
 <?php foreach(['assets/css/reset.min.css','assets/plugins/inter/inter.css','assets/plugins/bootstrap/css/bootstrap.min.css','assets/builds/tailwind.css','assets/css/style.min.css','assets/css/company-registry.css'] as $asset){ ?><link rel="stylesheet" href="<?= $esc(base_url($asset)); ?>"><?php } ?>
-<?php require APPPATH.'views/admin/includes/company_context_script.php'; ?>
+<?php require APPPATH.'views/admin/includes/context_script.php'; ?>
 </head><body class="company-onboarding-modal-body">
 <link rel="stylesheet" href="<?= $esc(base_url('assets/css/company-identity.css')); ?>">
 <section class="company-settings-card" aria-labelledby="wizard-title">

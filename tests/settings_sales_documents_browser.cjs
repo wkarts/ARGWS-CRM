@@ -1,6 +1,6 @@
 'use strict';
-const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
-const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
+const { workspacePage } = require('./helpers/native_workspace_driver.cjs');
+const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
 // Future overlay suite, after existing native sales/browser fixtures. No external providers or mail dispatch.
 const assert=require('node:assert/strict'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright');
 const url=process.env.ISSUERS_BROWSER_URL,app=process.env.ISSUERS_BROWSER_APP_CONTAINER,db=process.env.ISSUERS_BROWSER_DB_CONTAINER;

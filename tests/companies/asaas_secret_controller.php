@@ -7,11 +7,11 @@ if(!defined('APP_BASE_URL'))define('APP_BASE_URL','https://crm.example.test/subd
 class AdminController {public $db,$load,$input,$session,$output,$config,$encryption;public function __construct(){}}
 class CompanyRequestScope {public static function sealedFor($owner){return true;}public static function token(){return 'company-fixture-context';}public static function adminUrl($owner,$path){return 'https://crm.example.test/admin/'.$path;}}
 function show_error($message,$status){$GLOBALS['controllerDenied']=$status;}
-require APPPATH.'controllers/admin/Company_asaas.php';
+require APPPATH.'controllers/admin/Settings.php';
 $controllerStart=$GLOBALS['essentialChecks'];
 // Only this capability suite advances its disposable tracking; financial151/152/153 fixtures retain their own checkpoints.
 \Asaas\CompanyCheckoutSchema::ensure($db,$p);unset($db->data_cache['table_names']);$secretControllerVersion=$db->query('SELECT installed_version FROM '.$p.'modules WHERE module_name=?',['asaas'])->row()->installed_version;$db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',['1.5.4','asaas']);
-$controller=(new ReflectionClass(Company_asaas::class))->newInstanceWithoutConstructor();$controller->db=$db;
+$controller=(new ReflectionClass(Settings::class))->newInstanceWithoutConstructor();$controller->db=$db;
 $controller->input=new class{public string $verb='GET';public array $posted=[];public function method($upper){return $this->verb;}public function post($name=null,$clean=false){return $name===null?$this->posted:($this->posted[$name]??null);}public function get($name){return null;}};
 $controller->session=new class{public array $data=[];public function userdata($key){return $this->data[$key]??null;}public function set_userdata($key,$value){$this->data[$key]=$value;}};
 $controller->output=new class{public array $headers=[];public int $status=200;public function set_header($value){$this->headers[]=$value;}public function set_status_header($value){$this->status=$value;}};

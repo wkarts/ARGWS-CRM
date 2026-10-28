@@ -18,9 +18,9 @@ on:
       - scripts/build-ma-email-templates-ptbr.py
       - scripts/check-ma-email-assets.py
       - tests/issuers*.php
-      - tests/company_registry_lookup*.php
-      - tests/company_context.php
-      - tests/company_email_catalog.test.cjs
+      - tests/native_registry_lookup*.php
+      - tests/native_context.php
+      - tests/native_email_catalog.test.cjs
       - scripts/generate-company-email-catalog.cjs
       - install/database.sql
       - tests/settings/**
@@ -57,9 +57,9 @@ on:
       - scripts/build-ma-email-templates-ptbr.py
       - scripts/check-ma-email-assets.py
       - tests/issuers*.php
-      - tests/company_registry_lookup*.php
-      - tests/company_context.php
-      - tests/company_email_catalog.test.cjs
+      - tests/native_registry_lookup*.php
+      - tests/native_context.php
+      - tests/native_email_catalog.test.cjs
       - scripts/generate-company-email-catalog.cjs
       - install/database.sql
       - tests/settings/**
@@ -89,7 +89,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test tests/company_email_catalog.test.cjs tests/email_templates_ptbr.test.cjs tests/email_template_interface.test.cjs tests/email_template_completeness.test.cjs tests/ma_email_interface.test.cjs
+      - run: node --test tests/native_email_catalog.test.cjs tests/email_templates_ptbr.test.cjs tests/email_template_interface.test.cjs tests/email_template_completeness.test.cjs tests/ma_email_interface.test.cjs
   boundary-inventory:
     runs-on: ubuntu-latest
     steps:
@@ -170,9 +170,9 @@ jobs:
           php tests/efi/intent_contract.php
           php tests/efi_adoption_http.php
           php tests/efi_checkout_preflight.php
-          php tests/efi/company_accounts_contract.php
-          php tests/efi/company_controller_contract.php
-          php tests/efi/company_proof_contract.php
+          php tests/efi/native_accounts_contract.php
+          php tests/efi/native_controller_contract.php
+          php tests/efi/native_proof_contract.php
           php tests/issuers_controller.php
           php tests/issuers_admin_upgrade_gate.php
           php tests/issuers_integration_view.php

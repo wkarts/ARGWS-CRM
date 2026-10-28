@@ -1049,6 +1049,18 @@ class Projects extends AdminController
 
     public function delete($project_id)
     {
+        if($this->nativeProjects()){
+            try{
+                CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();
+                $revision=$this->input->post('revision',false);$key=$this->input->post('request_key',false);
+                if(!is_string($revision)||!is_string($key))throw new DomainException('company_project_invalid_input');
+                require_once APPPATH.'services/CompanyProjects.php';
+                (new CompanyProjects($this->db,db_prefix()))->delete($ctx->issuerId(),$ctx->staffId(),$project_id,$revision,$key);
+                CompanyRequestScope::invalidateCaches($this);set_alert('success',_l('deleted',_l('project')));
+                redirect(CompanyRequestScope::adminUrl($this,'projects'),'location',303);return;
+            }catch(DomainException $error){show_error('Não foi possível cancelar o projeto ou confirmar sua revisão e permissões.',str_contains($error->getMessage(),'stale')?409:422);return;}
+            catch(RuntimeException $error){show_error('Não foi possível confirmar o armazenamento do projeto.',503);return;}
+        }
         if (staff_can('delete', 'projects')) {
             $project = $this->projects_model->get($project_id);
             $success = $this->projects_model->delete($project_id);
@@ -1064,6 +1076,10 @@ class Projects extends AdminController
 
     public function copy($project_id)
     {
+        if($this->nativeProjects()){
+            if(!in_array(strtoupper($this->input->method(true)),['GET','HEAD'],true)) { show_error('Método não permitido.',405); return; }
+            redirect(CompanyRequestScope::adminUrl($this,'projects/copies?source='.(int)$project_id),'location',303);return;
+        }
         if (staff_can('create', 'projects')) {
             $id = $this->projects_model->copy($project_id, $this->input->post());
             if ($id) {

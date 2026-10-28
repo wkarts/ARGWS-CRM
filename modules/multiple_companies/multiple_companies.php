@@ -7,7 +7,7 @@ Module Name: Múltiplas Empresas
 Description: Cria múltiplas empresas com o mesmo e-mail de contato principal
 Author: WKARTS
 Author URI: https://t.me/wkartspro
-Version: 1.0.6
+Version: 1.0.7
 */
 
 

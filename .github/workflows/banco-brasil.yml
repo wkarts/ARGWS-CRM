@@ -2,10 +2,10 @@ name: Banco do Brasil module
 on:
   pull_request:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
-    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'tests/support/BbPdoDatabase.php', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/support/BbCnab400PreparationWorker.php', 'tests/test_bb_native_gateway.py', 'application/controllers/Company_portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', 'docs/modules/banco-brasil*', 'docs/banco-brasil*', '.github/workflows/banco-brasil.yml']
+    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'tests/support/BbPdoDatabase.php', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/support/BbCnab400PreparationWorker.php', 'tests/test_bb_native_gateway.py', 'application/controllers/Portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', 'docs/modules/banco-brasil*', 'docs/banco-brasil*', '.github/workflows/banco-brasil.yml']
   push:
     branches: [main]
-    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'tests/test_bb_native_gateway.py', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/support/BbCnab400PreparationWorker.php', 'application/controllers/Company_portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', '.github/workflows/banco-brasil.yml']
+    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'tests/test_bb_native_gateway.py', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/support/BbCnab400PreparationWorker.php', 'application/controllers/Portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', '.github/workflows/banco-brasil.yml']
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,5 +1,5 @@
 'use strict';
-const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
+const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
 // Actual CRM/HTTP/MySQL/Chromium; protocol responses are injected only by the CLI service fixture.
 const assert=require('node:assert/strict');const {execFileSync}=require('node:child_process');const fs=require('node:fs');
 

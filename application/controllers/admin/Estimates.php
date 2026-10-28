@@ -64,6 +64,7 @@ class Estimates extends AdminController
 
     public function table($clientid = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->table('estimates', $clientid); return; }
         if (staff_cant('view', 'estimates') && staff_cant('view_own', 'estimates') && get_option('allow_staff_view_estimates_assigned') == '0') {
             ajax_access_denied();
         }
@@ -553,6 +554,8 @@ class Estimates extends AdminController
     // Pipeline
     public function get_pipeline()
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->pipeline('estimates'); return; }
+
         if (staff_can('view',  'estimates') || staff_can('view_own',  'estimates') || get_option('allow_staff_view_estimates_assigned') == '1') {
             $data['estimate_statuses'] = $this->estimates_model->get_statuses();
             $this->load->view('admin/estimates/pipeline/pipeline', $data);
@@ -561,6 +564,8 @@ class Estimates extends AdminController
 
     public function pipeline_open($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->pipeline('estimates', $id); return; }
+
         $canView = user_can_view_estimate($id);
         if (!$canView) {
             access_denied('Estimates');
@@ -599,6 +604,8 @@ class Estimates extends AdminController
 
     public function pipeline_load_more()
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->table('estimates', null); return; }
+
         $status = $this->input->get('status');
         $page   = $this->input->get('page');
 

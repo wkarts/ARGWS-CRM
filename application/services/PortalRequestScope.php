@@ -11,7 +11,7 @@ final class PortalRequestScope
   self::$active=self::$candidate=self::$resolved=self::$native=self::$unsupported=self::$invalidSession=false;self::$issuer=null;self::$identity=null;self::$owner=$ci;
   if($ci->input->is_cli_request()||defined('API')||trim((string)$ci->router->fetch_directory(),'/')!==''||$ci->router->fetch_module())return false;
   self::$class=strtolower((string)$ci->router->fetch_class());self::$method=strtolower((string)$ci->router->fetch_method());
-  if(self::$class==='company_portal'&&self::$method==='index'){self::$active=true;return true;}
+  if(in_array(self::$class,['portal','company_portal'],true)&&self::$method==='index'){self::$active=true;return true;}
   // CI loads autoload.php before its configured session driver. Start only the
   // normal session driver for public customer/download controllers so an
   // existing native binding cannot fall through to global hydration merely

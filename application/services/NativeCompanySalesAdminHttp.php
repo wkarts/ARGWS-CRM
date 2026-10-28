@@ -15,6 +15,33 @@ final class NativeCompanySalesAdminHttp
         return match($kind){'estimates'=>'estimates','proposals'=>'proposals',default=>throw new DomainException('company_sales_denied')};
     }
 
+    /** DataTables and pipeline readers reuse the same issuer-owned directory; no legacy model is hydrated. */
+    public function table(string $kind,$clientId=''):void
+    {
+        if(!CompanyRequestScope::sealedFor($this->ci)){show_error('Tabela indisponível nesta empresa.',403);return;}
+        try{
+            CompanyRequestScope::assertNativeMutation($this->ci);$context=CompanyRequestScope::context();$issuer=$context->issuerId();$actor=$context->staffId();
+            $acl=new IssuerResourceAccess($this->ci->db,db_prefix());if(!$acl->can($issuer,$actor,$kind,'view'))throw new DomainException('company_sales_denied');
+            $post=$this->ci->input->post(null,false)?:[];$search=$post['search']['value']??($post['search']??'');if(!is_string($search))throw new DomainException('company_sales_invalid');
+            $after=$post['after']??0;$directory=(new CompanySales($this->ci->db,db_prefix()))->page($issuer,$actor,$kind,$after,$search);
+            $this->ci->output->set_content_type('application/json')->set_output(json_encode(['draw'=>(int)($post['draw']??0),'recordsTotal'=>count($directory['items']),'recordsFiltered'=>count($directory['items']),'data'=>$directory['items'],'next'=>$directory['next']],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE));
+        }catch(DomainException $error){show_error('Tabela indisponível nesta empresa.',str_contains($error->getMessage(),'invalid')?422:403);}catch(Throwable $error){show_error('Não foi possível confirmar a tabela desta empresa.',503);}
+    }
+
+    public function relations(string $kind,$id,$type='customer'):void
+    {
+        if(!CompanyRequestScope::sealedFor($this->ci)){show_error('Relações indisponíveis nesta empresa.',403);return;}
+        try{$context=CompanyRequestScope::context();$issuer=$context->issuerId();$actor=$context->staffId();$search=(string)($this->ci->input->get('search',false)??'');$rows=(new CompanySales($this->ci->db,db_prefix()))->relationOptions($issuer,$actor,$kind,$search);$this->ci->output->set_content_type('application/json')->set_output(json_encode(['data'=>$rows,'rel_id'=>(int)$id,'rel_type'=>$type],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE));}
+        catch(DomainException $error){show_error('Relações indisponíveis nesta empresa.',str_contains($error->getMessage(),'invalid')?422:403);}catch(Throwable $error){show_error('Não foi possível confirmar as relações.',503);}
+    }
+
+    public function pipeline(string $kind,$selected=null):void
+    {
+        // Pipeline cards and the table are one official workspace. Query filters are
+        // read by the adapter and never reach the legacy pipeline/model.
+        $this->index($kind,$selected);
+    }
+
     public function index(string $kind,$selected=null,bool $forcePdf=false):void
     {
         if(!CompanyRequestScope::sealedFor($this->ci)){show_error('Documento indisponível nesta empresa.',403);return;}

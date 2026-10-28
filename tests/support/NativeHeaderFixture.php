@@ -212,7 +212,7 @@ final class NativeHeaderFixtureApplication
                     'admin/settings/native_google_mail_oauth',
                     'admin/settings/native_microsoft_mail_oauth',
                     'admin/settings/native_efi',
-                    'admin/includes/company_selector',
+                    'admin/includes/selector',
                     'admin/includes/notifications',
                     'admin/tasks/started_timers',
                     'admin/includes/setup_menu',
@@ -259,7 +259,7 @@ if (NATIVE_HEADER_FIXTURE_COMPANY) {
     exit;
 }
 if (NATIVE_HEADER_FIXTURE_SELECTOR_ONLY) {
-    $fixtureApplication->load->view('admin/includes/company_selector');
+    $fixtureApplication->load->view('admin/includes/selector');
     exit;
 }
 $fixtureApplication->load->view('admin/includes/header');

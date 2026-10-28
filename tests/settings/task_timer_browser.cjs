@@ -1,6 +1,6 @@
 'use strict';
-const { workspacePage } = require('../helpers/company_workspace_driver.cjs');
-const { selectCompanyOption } = require('../helpers/company_selector_driver.cjs');
+const { workspacePage } = require('../helpers/native_workspace_driver.cjs');
+const { selectCompanyOption } = require('../helpers/native_selector_driver.cjs');
 // Native settings/tasks/timer actions only; the fixture reads the isolated DB in READ ONLY mode.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('node:child_process'),{chromium}=require('playwright');
 const base=process.env.ISSUERS_BROWSER_URL,php=process.env.ISSUERS_BROWSER_PHP_BINARY||'php',fixturePath=process.env.TASK_TIMER_BROWSER_FIXTURE_PHP,output=process.env.ISSUERS_BROWSER_ARTIFACTS;

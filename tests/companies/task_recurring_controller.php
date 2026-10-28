@@ -51,12 +51,12 @@ $render=new class {
     public function __get($name) { return $GLOBALS['CI']->$name; }
     public function view(array $data): string {
         extract($data); ob_start();
-        try { include APPPATH.'views/admin/companies/task_recurring.php'; return ob_get_clean(); }
+        try { include APPPATH.'views/admin/tasks/native_recurring.php'; return ob_get_clean(); }
         catch (Throwable $e) { ob_end_clean(); throw $e; }
     }
 };
-require APPPATH.'controllers/admin/Company_task_recurring.php';
-$http=new Company_task_recurring(); $schedules=[];
+require APPPATH.'controllers/admin/Tasks.php';
+$http=new Tasks(); $schedules=[];
 foreach ([$a,$b,$primary] as $issuer) {
     CompanyRequestScope::$issuer=$issuer;
     foreach (['project','standalone'] as $kind) {

@@ -74,9 +74,9 @@ if ($mode === 'context') {
     ksort($value);
 } elseif ($mode === 'sources') {
     $paths = array_merge(glob(APPPATH . 'services/CompanyHr*.php'), [
-        APPPATH . 'controllers/admin/Company_hr.php', APPPATH . 'controllers/Company_hr_access.php',
-        APPPATH . 'views/admin/companies/hr.php', APPPATH . 'views/admin/companies/hr_mine.php', APPPATH . 'views/admin/companies/hr_records.php', APPPATH . 'views/hr_access.php',
-        APPPATH . 'views/admin/companies/api_tokens.php', APPPATH . 'controllers/admin/Company_api_tokens.php', APPPATH . 'services/CompanyApiTokens.php', __FILE__,
+        APPPATH . 'controllers/admin/Staff.php', APPPATH . 'controllers/Hr_access.php',
+        APPPATH . 'views/admin/staff/native_hr.php', APPPATH . 'views/admin/staff/native_hr_mine.php', APPPATH . 'views/admin/staff/native_hr_records.php', APPPATH . 'views/hr_access.php',
+        APPPATH . 'views/admin/settings/native_api_tokens.php', APPPATH . 'controllers/admin/Api_tokens.php', APPPATH . 'services/CompanyApiTokens.php', __FILE__,
     ]);
     $value = [];
     foreach ($paths as $path) $value[substr($path, strlen(FCPATH))] = hash_file('sha256', $path);

@@ -40,7 +40,7 @@ essentialCheck(essentialLegacy($f)===$legacyBefore,'official policy forms never 
 $sections=NativeSettingsSections::collect();$visible=[];
 foreach($sections as$section)foreach($section['children']as$child)$visible[$child['id']]=$child;
 foreach(array_keys($groups)as$group){
-    essentialCheck(isset($visible[$group])&&$visible[$group]['view']==='admin/settings/includes/company_policy',$group.' is registered in the official Settings navigation');
+    essentialCheck(isset($visible[$group])&&$visible[$group]['view']==='admin/settings/includes/policy',$group.' is registered in the official Settings navigation');
 }
 
 $viewHarness=new class {
@@ -53,7 +53,7 @@ $viewHarness=new class {
     {
         return strictFixtureRender(function()use($group,$values):void{
             $native_settings=true;$native_settings_policy_values=$values;$group=['id'=>$group];
-            include APPPATH.'views/admin/settings/includes/company_policy.php';
+            include APPPATH.'views/admin/settings/includes/policy.php';
         });
     }
 };
@@ -77,7 +77,7 @@ $settingsSource=file_get_contents(APPPATH.'controllers/admin/Settings.php');
 $scopeSource=file_get_contents(APPPATH.'services/CompanyRequestScope.php');
 essentialCheck(!str_contains($settingsSource,'isolated_index')&&!str_contains($settingsSource,'company_scoped'),'Settings controller has no parallel renderer or fallback');
 essentialCheck(str_contains($scopeSource,'$sharedSettings')&&str_contains($scopeSource,'$sharedSettings ||'),'principal and named companies enter the same native Settings controller');
-$legacySettingsView=APPPATH.'views/admin/settings/company_scoped.php';
+$legacySettingsView=APPPATH.'views/admin/settings/scoped.php';
 essentialCheck(!is_file($legacySettingsView)||str_starts_with(trim((string)@file_get_contents($legacySettingsView)),'<?php // Removed.'),'parallel Settings view is absent or inert');
 essentialUse($f);
 echo 'Official Settings policy integration: '.$GLOBALS['essentialChecks'].' cumulative checks passed ('.$db->driver().').'.PHP_EOL;

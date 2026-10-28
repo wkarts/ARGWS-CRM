@@ -116,7 +116,7 @@ final class NativeCompanyRoutes
             'get_rel_project_data'=>['GET'],
             'get_staff_names_for_mentions'=>['GET'],
             'extras'=>['GET','HEAD','POST'], 'portal_rules'=>['GET','HEAD','POST'], 'billing_rates'=>['GET','HEAD','POST'],
-            'fixed_billing'=>['GET','HEAD','POST'], 'copies'=>['GET','HEAD','POST'], 'time_billing'=>['GET','HEAD','POST'],
+            'fixed_billing'=>['GET','HEAD','POST'], 'copies'=>['GET','HEAD','POST'], 'copy'=>['GET','HEAD'], 'delete'=>['POST'], 'time_billing'=>['GET','HEAD','POST'],
         ],
         // Read-only private billing projection; customer pages and mutations
         // remain closed until their complete native contracts are admitted.
@@ -173,12 +173,12 @@ final class NativeCompanyRoutes
             // NativeCompanySalesAdminHttp owns the complete official workspace
             // for the list/form/detail mutations; no legacy estimates_model is
             // loaded when this route is admitted.
-            'index'=>['GET','HEAD','POST'], 'list_estimates'=>['GET','HEAD','POST'],
-            'estimate'=>['GET','HEAD','POST'], 'pdf'=>['GET','HEAD'], 'get_due_date'=>['POST'],
+            'index'=>['GET','HEAD','POST'], 'list_estimates'=>['GET','HEAD','POST'], 'table'=>['POST'],
+            'estimate'=>['GET','HEAD','POST'], 'pdf'=>['GET','HEAD'], 'get_due_date'=>['POST'], 'get_pipeline'=>['GET','HEAD'], 'pipeline_open'=>['GET','HEAD'], 'pipeline'=>['GET','HEAD','POST'], 'pipeline_load_more'=>['GET','HEAD'],
         ],
         'proposals'=>[
-            'index'=>['GET','HEAD','POST'], 'list_proposals'=>['GET','HEAD','POST'],
-            'proposal'=>['GET','HEAD','POST'], 'pdf'=>['GET','HEAD'], 'get_due_date'=>['POST'],
+            'index'=>['GET','HEAD','POST'], 'list_proposals'=>['GET','HEAD','POST'], 'table'=>['POST'], 'proposal_relations'=>['GET','HEAD','POST'],
+            'proposal'=>['GET','HEAD','POST'], 'pdf'=>['GET','HEAD'], 'get_due_date'=>['POST'], 'get_pipeline'=>['GET','HEAD'], 'pipeline_open'=>['GET','HEAD'], 'pipeline'=>['GET','HEAD','POST'], 'pipeline_load_more'=>['GET','HEAD'],
         ],
         'credit_notes'=>[
             'index'=>['GET','HEAD','POST'], 'list_credit_notes'=>['GET','HEAD','POST'],
