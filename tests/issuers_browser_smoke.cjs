@@ -208,7 +208,7 @@ async function captureRealScreens(page, routes) {
         let response = await page.goto(url + '/admin');
         assert.equal(response.status(), 200, 'native recovery screen is available for an authenticated administrator');
         await waitForUpgradeForm(page);
-        const companyResponse = await context.request.get(url + '/admin/company_selection/select');
+        const companyResponse = await context.request.get(url + '/admin/issuers/select');
         assert.equal(companyResponse.status(), 503, 'company selection remains blocked while the native core is invalid');
         const bancoBrasilResponse = await context.request.get(url + '/admin/banco_brasil');
         assert(bancoBrasilResponse.status() >= 400, 'Banco do Brasil module stays unavailable during native recovery');
@@ -383,7 +383,7 @@ async function captureRealScreens(page, routes) {
       calendarStage('responsive_evidence');
       await captureRealScreens(page,[['native-principal-calendar',url+'/admin/utilities/calendar']]);
       if (sql("SELECT COUNT(*) FROM tblissuers_registry WHERE tax_id='52998224725'") === '0') {
-        await page.goto(url + '/admin/company_onboarding');
+        await page.goto(url + '/admin/issuers/onboarding');
         await page.locator('#company-create-modal').waitFor({state:'visible'});
         const wizard = page.frame({name:'company-create-frame'});
         await wizard.locator('section form button[type=submit]').waitFor();
@@ -406,7 +406,7 @@ async function captureRealScreens(page, routes) {
       const recordSelectionResponse=response=>{
         const request=response.request();
         const pathname=new URL(response.url()).pathname.replace(/\/$/,'')||'/';
-        if(pathname!=='/admin/company_selection/select'&&pathname!=='/admin')return;
+        if(pathname!=='/admin/issuers/select'&&pathname!=='/admin')return;
         const location=response.headers().location;
         let locationPath='';
         if(location){try{locationPath=new URL(location,url).pathname.replace(/\/$/,'')||'/';}catch(_){locationPath='invalid';}}

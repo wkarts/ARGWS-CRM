@@ -9,6 +9,7 @@ class Estimates extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if (CompanyRequestScope::nativeFor($this)) { return; } // Only explicitly adapted actions may enter.
         $this->load->model('estimates_model');
     }
 
@@ -21,6 +22,7 @@ class Estimates extends AdminController
     /* List all estimates datatables */
     public function list_estimates($id = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('estimates',$id); return; }
         if (staff_cant('view', 'estimates') && staff_cant('view_own', 'estimates') && get_option('allow_staff_view_estimates_assigned') == '0') {
             access_denied('estimates');
         }
@@ -74,6 +76,7 @@ class Estimates extends AdminController
     /* Add new estimate or update existing */
     public function estimate($id = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('estimates',$id); return; }
         if ($this->input->post()) {
             $estimate_data = $this->input->post();
 
@@ -503,6 +506,7 @@ class Estimates extends AdminController
     /* Generates estimate PDF and senting to email  */
     public function pdf($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('estimates',$id,true); return; }
         $canView = user_can_view_estimate($id);
         if (!$canView) {
             access_denied('Estimates');
@@ -632,6 +636,22 @@ class Estimates extends AdminController
 
     public function get_due_date()
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);
+                require_once APPPATH.'services/NativeCompanySalesDates.php';
+                $post=$this->input->post(null,false);$csrf=$this->security->get_csrf_token_name();
+                if(!is_array($post)||array_diff(array_keys($post),['date','_company_context','_native_company_csrf',$csrf]))throw new DomainException('native_sales_date_invalid');
+                $ctx=CompanyRequestScope::context();
+                $date=(new NativeCompanySalesDates($this->db,db_prefix()))->dueDate($ctx->issuerId(),$ctx->staffId(),'estimates',$post['date']??null);
+                $this->output->set_content_type('text/plain')->set_output($date);
+            } catch(DomainException $error) {
+                $status=$error->getMessage()==='native_sales_date_invalid'?422:($error->getMessage()==='native_sales_date_changed'?409:403);
+                show_error('Não foi possível calcular o vencimento nesta empresa.',$status);
+            } catch(Throwable $error) { show_error('Não foi possível confirmar o vencimento.',503); }
+            return;
+        }
         if ($this->input->post()) {
             $date    = $this->input->post('date');
             $duedate = '';

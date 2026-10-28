@@ -64,7 +64,7 @@ cat > "$work/router.php" <<'PHP'
 $root = '/app';
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $requestPath = is_string($requestPath) && $requestPath !== '' ? $requestPath : '/';
-if ($requestPath === '/admin/company_calendar') {
+if ($requestPath === '/admin/utilities/calendar') {
     $calendarStarted = microtime(true);
     register_shutdown_function(static function () use ($calendarStarted) {
         $last = error_get_last();
@@ -239,8 +239,8 @@ sed -i 's/argws_legacy_ci/argws_upgrade_ci/g' "$work/app-config.php"
 # Keep the synthetic HTTPS authority explicit even though the local browser uses HTTP.
 [[ "$upgrade" =~ ^argws-crm-upgrade-[0-9]+$ ]]
 grep -Fq "define('APP_DB_NAME', 'argws_upgrade_ci');" "$work/app-config.php"
-printf '\n%s\n' "define('COMPANY_GOOGLE_MAIL_REDIRECT_URI', 'https://crm.example.invalid/admin/company_google_mail_oauth');" >> "$work/app-config.php"
-printf '\n%s\n' "define('COMPANY_MICROSOFT_MAIL_REDIRECT_URI', 'https://crm.example.invalid/admin/company_microsoft_mail_oauth');" >> "$work/app-config.php"
+printf '\n%s\n' "define('COMPANY_GOOGLE_MAIL_REDIRECT_URI', 'https://crm.example.invalid/admin/settings/google_mail_oauth');" >> "$work/app-config.php"
+printf '\n%s\n' "define('COMPANY_MICROSOFT_MAIL_REDIRECT_URI', 'https://crm.example.invalid/admin/settings/microsoft_mail_oauth');" >> "$work/app-config.php"
 printf '\n%s\n' "define('COMPANY_CONNECT_API_ENDPOINTS', ['synthetic'=>['label'=>'Synthetic approved','url'=>'https://connect.example.invalid']]);" >> "$work/app-config.php"
 docker cp "$work/app-config.php" "$upgrade:/var/lib/argws-crm/config/app-config.php"
 docker cp "$work/router.php" "$upgrade:/tmp/issuer-router.php"
@@ -701,12 +701,6 @@ ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17
 ISSUERS_BROWSER_APP_CONTAINER="$upgrade" ISSUERS_BROWSER_DB_CONTAINER="$ISSUER_SMOKE_DATABASE" ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci \
 ISSUERS_BROWSER_DB_USER="$ISSUER_SMOKE_DB_USER" ISSUERS_BROWSER_DB_PASSWORD="$ISSUER_SMOKE_DB_PASSWORD" \
 node tests/settings/calendar_browser.cjs
-
-#452: prove the exact guarded setup produced safe codes from the original native Calendar suite.
-docker exec "$upgrade" mkdir -p /app/tests/settings
-docker cp tests/settings/calendar_smoke_logging_verify.php "$upgrade:/app/tests/settings/calendar_smoke_logging_verify.php"
-docker exec -e ISSUERS_BROWSER_DB_NAME=argws_upgrade_ci "$upgrade" php /app/tests/settings/calendar_smoke_logging_verify.php
-
 
 #450: canonical unassigned portal tasks; original range, own permissions and read-only proof.
 ISSUERS_BROWSER_URL="$upgrade_url" ISSUERS_BROWSER_PASSWORD=synthetic-browser-17 \

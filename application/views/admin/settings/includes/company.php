@@ -5,7 +5,7 @@
     if ($settingsCertificateContext && $settingsCertificateContext->issuerId() !== null
         && class_exists('CompanySettingsRuntime', false) && CompanySettingsRuntime::active() && CompanySettingsRuntime::can('edit')) {
     ?>
-    <p><a class="btn btn-default" href="<?= htmlspecialchars(CompanyRequestScope::adminUrl($this, 'company_certificates'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>">Certificado A1</a></p>
+    <p><a class="btn btn-default" href="<?= htmlspecialchars(CompanyRequestScope::adminUrl($this, 'settings?group=certificates'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>">Certificado A1</a></p>
     <?php } ?>
     <div class="alert alert-info">
         <?php echo _l('settings_sales_company_info_note'); ?>

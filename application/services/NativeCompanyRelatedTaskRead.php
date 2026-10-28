@@ -13,9 +13,9 @@ final class NativeCompanyRelatedTaskRead
     private function access(int$i,int$a):void{if(!(new IssuerResourceAccess($this->db,$this->p))->can($i,$a,'tasks','view'))throw new DomainException('native_company_task_denied');}
     public function read(int$i,int$a,string$type,$canonical):array
     {
-        $this->access($i,$a);if($type!=='ticket')throw new DomainException('native_task_relation_writer_required');
+        $this->access($i,$a);if($type==='project')return$this->project($i,$a,$canonical);if(!in_array($type,['ticket','invoice'],true))throw new DomainException('native_task_relation_writer_required');
         $parent=NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$a,$type,$canonical,'view');
-        if($parent['source_kind']!=='company_ticket')throw new DomainException('native_task_legacy_relation_projection_required');
+        if(!in_array($parent['source_kind'],$type==='ticket'?['company_ticket']:['invoice','company_invoice_draft'],true))throw new DomainException('native_task_legacy_relation_projection_required');
         $pdo=$this->db->conn_id??$this->db->pdo??null;$driver=$pdo instanceof PDO?$pdo->getAttribute(PDO::ATTR_DRIVER_NAME):(string)($this->db->dbdriver??'');
         if(!in_array($driver,['mysql','mysqli','sqlite'],true))throw new DomainException('native_task_relation_storage_required');
         $extract=static fn($key)=>($driver==='sqlite'?'json_extract(native_fields_json,\'$.'.$key.'\')':'JSON_UNQUOTE(JSON_EXTRACT(native_fields_json,\'$.'.$key.'\'))');
@@ -28,7 +28,8 @@ final class NativeCompanyRelatedTaskRead
             $members=(new NativeCompanyWorkAssignments($this->db,$this->p))->read($i,$a,'standalone',$id);$tags=(new NativeCompanyResourceTags($this->db,$this->p))->read($i,$a,'task',$taskId);
             $followers=$this->rows('SELECT staff_id FROM '.$this->p.'company_standalone_followers WHERE issuer_id=? AND task_id=? ORDER BY staff_id',[$i,$id]);
             $schedules=$this->rows('SELECT * FROM '.$this->p.'company_task_schedules WHERE issuer_id=? AND kind=? AND source_id=? ORDER BY id',[$i,'standalone',$id]);foreach($schedules as$schedule)(new CompanyTaskRecurring($this->db,$this->p))->get($i,$a,'standalone',(int)$schedule['id']);
-            $items[]=['id'=>$taskId,'source_kind'=>'company_standalone_task','source_id'=>$id,'reference'=>$reference,'row'=>$row,'fields'=>$fields,'assignees'=>$members['members'],'followers'=>array_map('intval',array_column($followers,'staff_id')),'tags'=>$tags['tags'],'schedules'=>$schedules];
+            $tableRow=$row;unset($tableRow['comments'],$tableRow['timers']);
+            $items[]=['id'=>$taskId,'source_kind'=>'company_standalone_task','source_id'=>$id,'reference'=>$reference,'row'=>$tableRow,'fields'=>$fields,'assignees'=>$members['members'],'followers'=>array_map('intval',array_column($followers,'staff_id')),'tags'=>$tags['tags'],'schedules'=>$schedules];
             $proofs[]=[$id,$reference,$row,$members,$tags,$followers,$schedules];
         }
         foreach($proofs as[$id,$reference,$row,$members,$tags,$followers,$schedules]){
@@ -37,5 +38,19 @@ final class NativeCompanyRelatedTaskRead
         }
         if($this->rows($sql,$args)!==$selected||NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$a,$type,$canonical,'view')!==$parent)throw new DomainException('native_task_relation_stale');$this->access($i,$a);
         return['parent'=>$parent,'items'=>$items];
+    }
+    private function project(int$i,int$a,$canonical):array
+    {
+        $parent=NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$a,'project',$canonical,'view');
+        // Do not omit historical tasks of a legacy project or infer ownership.
+        if($parent['source_kind']!=='company_project')throw new DomainException('native_task_legacy_relation_projection_required');
+        require_once __DIR__.'/NativeCompanyTaskIndexProjection.php';$projection=new NativeCompanyTaskIndexProjection($this->db,$this->p);
+        $pdo=$this->db->conn_id??$this->db->pdo??null;$driver=$pdo instanceof PDO?$pdo->getAttribute(PDO::ATTR_DRIVER_NAME):(string)($this->db->dbdriver??'');if(!in_array($driver,['mysql','mysqli','sqlite'],true))throw new DomainException('native_task_relation_storage_required');
+        $extract=static fn($key)=>($driver==='sqlite'?'json_extract(native_fields_json,\'$.'.$key.'\')':'JSON_UNQUOTE(JSON_EXTRACT(native_fields_json,\'$.'.$key.'\'))');
+        $invalid='SELECT id FROM '.$this->p.'company_standalone_tasks WHERE issuer_id=? AND native_fields_json IS NOT NULL AND '.$extract('relation_type').'=? AND '.$extract('relation_source_kind').'=? AND CAST('.$extract('relation_source_id').' AS CHAR)=? LIMIT 1';$invalidArgs=[$i,'project','company_project',(string)$parent['source_id']];
+        if($this->rows($invalid,$invalidArgs))throw new DomainException('native_task_relation_writer_required');
+        $query='SELECT id FROM '.$this->p.'company_tasks WHERE issuer_id=? AND project_id=? ORDER BY id LIMIT 10001';$args=[$i,$parent['source_id']];$selected=$this->rows($query,$args);if(count($selected)>10000)throw new DomainException('native_task_relation_limit');$items=[];
+        foreach($selected as$row){$id=NativeCompanyResourceId::encode('company_task',$row['id']);$item=$projection->readOne($i,$a,$id);if((int)$item['row']['project_id']!==(int)$parent['source_id'])throw new DomainException('native_task_relation_stale');$items[]=$item;}
+        if($this->rows($invalid,$invalidArgs)||$this->rows($query,$args)!==$selected||NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$a,'project',$canonical,'view')!==$parent)throw new DomainException('native_task_relation_stale');foreach($items as$item)if($projection->readOne($i,$a,$item['id'])!==$item)throw new DomainException('native_task_relation_stale');$this->access($i,$a);return['parent'=>$parent,'items'=>$items];
     }
 }

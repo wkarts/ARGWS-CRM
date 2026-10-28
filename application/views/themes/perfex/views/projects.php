@@ -1,4 +1,16 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if(isset($native_portal_projects)&&is_array($native_portal_projects)){
+    $portalUrl=static fn(string$path)=>NativePortalPresentation::url($path);
+    $statusLabels=['active'=>'Ativo','completed'=>'Concluído','cancelled'=>'Cancelado']; ?>
+<section id="native-portal-project-list">
+    <div class="tw-flex tw-items-center tw-justify-between tw-mb-3"><h4 class="tw-my-0 tw-font-bold tw-text-lg"><?= e(_l('clients_my_projects')); ?></h4></div>
+    <div class="tw-flex tw-gap-2 tw-mb-4"><a class="btn btn-default" href="<?= e($portalUrl('clients/projects')); ?>">Todos</a><?php foreach($statusLabels as$key=>$label){ ?><a class="btn btn-default" href="<?= e($portalUrl('clients/projects/'.$key)); ?>"><?= e($label); ?></a><?php } ?></div>
+    <div class="panel_s"><div class="panel-body"><div class="table-responsive"><table class="table table-projects"><thead><tr><th><?= e(_l('project_name')); ?></th><th><?= e(_l('project_start_date')); ?></th><th><?= e(_l('project_deadline')); ?></th><th><?= e(_l('project_status')); ?></th></tr></thead><tbody>
+    <?php foreach($native_portal_projects['items']as$project){ ?><tr><td><a href="<?= e($portalUrl('clients/project/'.$project['canonical_id'])); ?>"><?= e($project['name']); ?></a></td><td><?= e($project['start_date']); ?></td><td><?= e($project['due_date']??''); ?></td><td><?= e($statusLabels[$project['status']]??$project['status']); ?></td></tr><?php } ?>
+    <?php if(!$native_portal_projects['items']){ ?><tr><td colspan="4"><?= e(_l('no_records_found')); ?></td></tr><?php } ?></tbody></table></div>
+    <?php if($native_portal_projects['next']!==null){ ?><a class="btn btn-default" href="<?= e($portalUrl('clients/projects').'&after='.(int)$native_portal_projects['next']); ?>">Próxima página</a><?php } ?></div></div>
+</section>
+<?php return; } ?>
 
 <h4 class="tw-mt-0 tw-font-bold tw-text-lg tw-text-neutral-700 tickets-summary-heading">
     <?= _l('projects_summary'); ?>

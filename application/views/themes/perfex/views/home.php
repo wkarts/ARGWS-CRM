@@ -1,4 +1,27 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if (!empty($native_portal_home)) {
+    $home=$native_portal_home;
+    $invoiceNames=[1=>'invoice_status_unpaid',2=>'invoice_status_paid',3=>'invoice_status_not_paid_completely',4=>'invoice_status_overdue'];
+    $months=[];for($month=1;$month<=12;$month++)$months[]=_l(date('F',mktime(0,0,0,$month,1)));
+    $chartConfig=['data'=>$home['invoice_chart'],'months'=>$months,'labels'=>array_map('_l',$invoiceNames)];
+?>
+<div class="row"><div class="col-md-12 section-client-dashboard">
+    <h3 id="greeting" class="tw-font-semibold tw-mt-0"><?= e($home['identity']['firstname']); ?></h3>
+    <?php if ($home['permissions']['invoices']) { ?>
+    <div class="tw-mb-3"><h3 class="invoices-quick-info-heading tw-text-neutral-700 tw-font-medium tw-text-lg tw-mt-7 tw-mb-0"><?= e(_l('clients_quick_invoice_info')); ?></h3></div>
+    <div class="panel_s"><div class="panel-body"><div class="row text-left invoice-quick-info invoices-stats">
+        <?php foreach($invoiceNames as $status=>$label) { $count=$home['invoice_counts'][$status];$total=$home['invoice_total'];$percent=$total>0?round($count*100/$total,2):0; ?>
+        <div class="col-md-3"><div class="row"><div class="col-md-8 stats-status"><a href="<?= e(NativePortalPresentation::url('clients/invoices/'.$status)); ?>"><?= e(_l($label)); ?></a></div><div class="col-md-4 text-right stats-numbers"><?= (int)$count; ?> / <?= (int)$total; ?></div><div class="col-md-12 tw-mt-1.5"><div class="progress"><div class="progress-bar progress-bar-<?= $status===2?'success':($status===1?'danger':'warning'); ?>" role="progressbar" aria-valuenow="<?= e((string)$percent); ?>" aria-valuemin="0" aria-valuemax="100" style="width:<?= e((string)$percent); ?>%"></div></div></div></div></div>
+        <?php } ?>
+    </div><hr><div class="row"><div class="col-md-3">
+        <?php if($home['invoice_years']) { ?><label for="payments_year"><?= e(_l('year')); ?></label><select class="form-control" id="payments_year" name="payments_years"><?php foreach($home['invoice_years'] as $year){ ?><option value="<?= e((string)$year); ?>"<?= (string)$year===date('Y')?' selected':''; ?>><?= e((string)$year); ?></option><?php } ?></select><?php } ?>
+        <?php if($home['invoice_currencies']) { ?><label for="currency"><?= e(_l('currency')); ?></label><select class="form-control" id="currency" name="currency"><?php foreach($home['invoice_currencies'] as $currency){ ?><option value="<?= (int)$currency['id']; ?>"><?= e($currency['symbol'].' - '.$currency['name']); ?></option><?php } ?></select><?php } ?>
+    </div><div class="col-md-12"><div class="relative" style="max-height:400px"><canvas id="client-home-chart" height="400" class="animated fadeIn"></canvas></div></div></div></div></div>
+    <script id="native-portal-home-chart" type="application/json"><?= json_encode($chartConfig,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?></script>
+    <script src="<?= e(base_url('assets/plugins/Chart.js/Chart.min.js')); ?>"></script><script src="<?= e(base_url('assets/js/companies/native-portal-home.js')); ?>"></script>
+    <?php } ?>
+</div></div>
+<?php return; } ?>
 <div class="row">
     <div class="col-md-12 section-client-dashboard">
         <h3 id="greeting" class="tw-font-semibold tw-mt-0"></h3>

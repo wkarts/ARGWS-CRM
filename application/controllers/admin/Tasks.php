@@ -4,6 +4,7 @@ use app\services\utilities\Date;
 use app\services\tasks\TasksKanban;
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH.'services/NativeCompanySpecializedOperations.php';
 
 /**
  * @property-read Staff_model $staff_model
@@ -12,6 +13,13 @@ defined('BASEPATH') or exit('No direct script access allowed');
  */
 class Tasks extends AdminController
 {
+    use NativeCompanySpecializedOperations;
+
+    public function copies() { $this->nativeTaskCopies(); }
+    public function recurring() { $this->nativeTaskRecurring(); }
+    public function standalone() { $this->nativeTaskStandalone(); }
+    public function billing() { $this->nativeTaskBilling(); }
+    public function time_batches() { $this->nativeTaskTimeBatches(); }
     public function __construct()
     {
         parent::__construct();
@@ -32,6 +40,10 @@ class Tasks extends AdminController
     /* List all tasks */
     public function list_tasks($id = '')
     {
+        if ($this->nativeCompanyTasks()) {
+            $this->nativeTaskIndex($id);
+            return;
+        }
         close_setup_menu();
         // If passed from url
         $data['custom_view'] = $this->input->get('custom_view') ? $this->input->get('custom_view') : '';
@@ -54,8 +66,127 @@ class Tasks extends AdminController
         $this->load->view('admin/tasks/manage', $data);
     }
 
+    private function nativeTaskIndex($id): void
+    {
+        $this->output->set_header('Cache-Control: no-store');
+        try {
+            if (!in_array(strtoupper($this->input->method(true)), ['GET', 'HEAD'], true)) throw new DomainException('native_task_method_invalid');
+            $context = CompanyRequestScope::context();
+            if ($context->issuerId() === null) throw new DomainException('native_company_task_denied');
+            if ($this->input->get('kanban') || $this->input->get('project_id')) throw new DomainException('native_task_index_mode_not_composed');
+            require_once APPPATH.'services/NativeCompanyTaskScopedDb.php';
+            require_once APPPATH.'services/NativeCompanyTaskIndexProjection.php';
+            require_once APPPATH.'services/NativeCompanyRelatedTaskTable.php';
+            require_once APPPATH.'services/TaskPriorityPresentation.php';
+            require_once APPPATH.'services/NativeCompanyFilters.php';
+            require_once APPPATH.'services/NativeCompanyCustomFields.php';
+            $scoped = new NativeCompanyTaskScopedDb($this->db, db_prefix());
+            $issuer = $context->issuerId(); $actor = $context->staffId();
+            $acl = new IssuerResourceAccess($scoped, db_prefix());
+            if ($id !== '') NativeCompanyResourceReferences::resolve($scoped, db_prefix(), $issuer, $actor, 'task', $id, 'view');
+            $projection = new NativeCompanyTaskIndexProjection($scoped, db_prefix());
+            $items = $projection->captureForComparison($issuer, $actor);
+            $statuses = WorkStatusPresentation::tasks('_l');
+            $summary = [];
+            foreach ($statuses as $status) $summary[$status['id']] = ['status_id'=>$status['id'], 'name'=>$status['name'], 'color'=>$status['color'], 'total_tasks'=>0, 'total_my_tasks'=>0];
+            foreach ($items as $item) {
+                $status = $item['fields']['workflow_status'];
+                if (!isset($summary[$status])) throw new DomainException('native_work_status_unknown');
+                $summary[$status]['total_tasks']++;
+                if (in_array($actor, array_map('intval', array_column($item['assignees'], 'staffid')), true)) $summary[$status]['total_my_tasks']++;
+            }
+            $assigned = [];
+            foreach ($items as $item) foreach ($item['assignees'] as $member) {
+                $staffId = IssuerPolicy::id($member['staffid']);
+                $assigned[$staffId] = ['value'=>(string)$staffId, 'label'=>trim($member['firstname'].' '.$member['lastname'])];
+            }
+            ksort($assigned, SORT_NUMERIC);
+            $options = [
+                'status'=>array_map(static fn($status)=>['value'=>(string)$status['id'],'label'=>$status['name']],$statuses),
+                'priority'=>array_map(static fn($priority)=>['value'=>(string)$priority['id'],'label'=>$priority['name']],TaskPriorityPresentation::definitions('_l')),
+                'assigned'=>array_values($assigned),
+            ];
+            $table = new NativeCompanyRelatedTaskTable($scoped, db_prefix(), $issuer, $actor, $options, [], 'tasks');
+            $saved = (new NativeCompanyFilters($scoped, db_prefix(), $issuer, $actor, $table))->listing();
+            $table = new NativeCompanyRelatedTaskTable($scoped, db_prefix(), $issuer, $actor, $options, $saved, 'tasks');
+            $permissions = []; foreach (['view','create','edit','delete'] as $capability) $permissions[$capability] = $acl->can($issuer, $actor, 'tasks', $capability);
+            $bulkStaff = $permissions['edit'] ? (new CompanyStandaloneTasks($scoped, db_prefix()))->staffOptions($issuer, $actor) : [];
+            $definitions = (new NativeCompanyCustomFields($scoped, db_prefix()))->definitions($issuer, $actor, 'tasks', ['active'=>1,'show_on_table'=>1]);
+            $data = ['title'=>_l('tasks'), 'taskid'=>$id, 'custom_view'=>'', 'switch_kanban'=>false, 'bodyclass'=>'tasks-page',
+                'task_statuses'=>$statuses, 'tasks_table'=>$table, 'native_task_index'=>['summary'=>array_values($summary), 'permissions'=>$permissions, 'custom_fields'=>$definitions, 'bulk_staff'=>$bulkStaff]];
+            NativeCompanyAdminPresentation::prepare($this);
+            $html = $this->load->view('admin/tasks/manage', $data, true);
+            if ($projection->captureForComparison($issuer, $actor) !== $items) throw new DomainException('native_task_index_changed');
+            $scoped->confirm();
+            $this->output->set_output($html);
+        } catch (DomainException $error) {
+            show_error('Não foi possível confirmar a lista e as permissões das tarefas desta empresa.', str_contains($error->getMessage(), 'denied') ? 403 : 422);
+        } catch (RuntimeException $error) {
+            show_error('Não foi possível confirmar o armazenamento das tarefas.', 503);
+        }
+    }
+
+    private function nativeTaskDetailHtml($taskid): string
+    {
+        $context = CompanyRequestScope::context();
+        if ($context->issuerId() === null) throw new DomainException('native_company_task_denied');
+        require_once APPPATH.'services/NativeCompanyTaskDetailPresentation.php';
+        $clock = time();
+        $presentation = new \NativeCompanyTaskDetailPresentation($this->db, db_prefix());
+        $snapshot = $presentation->read($context->issuerId(), $context->staffId(), $taskid, $clock, '_l');
+        $data = [
+            'native_task_detail'=>$snapshot,
+            'native_task_context'=>$context->token(),
+            'native_task_csrf'=>CompanyRequestScope::nativeCsrfToken($this),
+            'native_task_request_key'=>bin2hex(random_bytes(32)),
+        ];
+        $html = $this->load->view('admin/tasks/view_task_template', $data, true);
+        if ($presentation->read($context->issuerId(), $context->staffId(), $taskid, $clock, '_l') !== $snapshot) {
+            throw new DomainException('native_task_detail_changed');
+        }
+        return $html;
+    }
+
+    private function nativeTaskWriter(array $reference)
+    {
+        require_once APPPATH.'services/CompanyTasks.php';
+        require_once APPPATH.'services/CompanyStandaloneTasks.php';
+        return match ($reference['source_kind']) {
+            'company_task' => new CompanyTasks($this->db, db_prefix()),
+            'company_standalone_task' => new CompanyStandaloneTasks($this->db, db_prefix()),
+            default => throw new DomainException('native_task_legacy_writer_required'),
+        };
+    }
+
     public function table()
     {
+        if ($this->nativeCompanyTasks()) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);
+                $context = CompanyRequestScope::context();
+                if ($context->issuerId() === null) throw new DomainException('native_company_task_denied');
+                require_once APPPATH . 'services/NativeCompanyRelatedTaskPage.php';
+                require_once APPPATH . 'services/NativeCompanyRelatedTaskRows.php';
+                require_once APPPATH . 'services/NativeCompanyTaskScopedDb.php';
+                $scoped = new NativeCompanyTaskScopedDb($this->db, db_prefix());
+                $input = $this->input->post(null, false) ?: [];
+                unset($input['_company_context'], $input['_native_company_csrf']);
+                if (isset($this->security)) unset($input[$this->security->get_csrf_token_name()]);
+                $reader = new NativeCompanyRelatedTaskPage($scoped, db_prefix());
+                $today = date('Y-m-d');
+                $page = $reader->readIndex($context->issuerId(), $context->staffId(), $input, $today, true);
+                $data = (new NativeCompanyRelatedTaskRows($scoped, db_prefix()))->render($context->issuerId(), $context->staffId(), $page);
+                if ($reader->readIndex($context->issuerId(), $context->staffId(), $input, $today, true) !== $page) throw new DomainException('native_task_index_changed');
+                $scoped->confirm();
+                $this->output->set_header('Content-Type: application/json; charset=utf-8')->set_output(json_encode($data, JSON_THROW_ON_ERROR));
+            } catch (DomainException $error) {
+                show_error('Não foi possível confirmar as tarefas desta empresa.', str_contains($error->getMessage(), 'denied') ? 403 : 422);
+            } catch (RuntimeException $error) {
+                show_error('Não foi possível confirmar o armazenamento das tarefas.', 503);
+            }
+            return;
+        }
         App_table::find('tasks')->output();
     }
 
@@ -308,9 +439,11 @@ class Tasks extends AdminController
                 CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_company_task_denied');
                 require_once APPPATH.'services/NativeCompanyRelatedTaskPage.php';require_once APPPATH.'services/NativeCompanyRelatedTaskRows.php';
                 $wire=$this->input->post(null,false)?:[];unset($wire['_company_context'],$wire['_native_company_csrf']);if(isset($this->security))unset($wire[$this->security->get_csrf_token_name()]);
-                $today=date('Y-m-d');$reader=new NativeCompanyRelatedTaskPage($this->db,db_prefix());$page=$reader->read($ctx->issuerId(),$ctx->staffId(),$rel_type,$rel_id,$wire,$today);
-                $data=(new NativeCompanyRelatedTaskRows($this->db,db_prefix()))->render($ctx->issuerId(),$ctx->staffId(),$page);
+                $today=date('Y-m-d');$scoped=null;$readDb=$this->db;if(in_array($rel_type,['project','invoice'],true)){require_once APPPATH.'services/NativeCompanyTaskScopedDb.php';$scoped=new NativeCompanyTaskScopedDb($this->db,db_prefix());$readDb=$scoped;}
+                $reader=new NativeCompanyRelatedTaskPage($readDb,db_prefix());$page=$reader->read($ctx->issuerId(),$ctx->staffId(),$rel_type,$rel_id,$wire,$today);
+                $data=(new NativeCompanyRelatedTaskRows($readDb,db_prefix()))->render($ctx->issuerId(),$ctx->staffId(),$page);
                 if($reader->read($ctx->issuerId(),$ctx->staffId(),$rel_type,$rel_id,$wire,$today)!==$page)throw new DomainException('native_task_relation_stale');
+                if($scoped!==null)$scoped->confirm();
                 $this->output->set_header('Content-Type: application/json; charset=utf-8')->set_output(json_encode($data,JSON_THROW_ON_ERROR));return;
             } catch (DomainException $error) {show_error('Não foi possível confirmar as tarefas relacionadas desta empresa.',str_contains($error->getMessage(),'denied')?403:422);return;}
               catch (RuntimeException $error) {show_error('Não foi possível confirmar o armazenamento das tarefas.',503);return;}
@@ -489,6 +622,18 @@ class Tasks extends AdminController
      */
     public function get_task_data($taskid, $return = false)
     {
+        if($this->nativeCompanyTasks()){
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                if ($return !== false || strtoupper($this->input->method(true)) !== 'GET') throw new DomainException('native_task_method_invalid');
+                $this->output->set_output($this->nativeTaskDetailHtml($taskid));
+            } catch (DomainException $error) {
+                show_error('Não foi possível confirmar os detalhes e as permissões desta tarefa.', str_contains($error->getMessage(), 'denied') ? 403 : 422);
+            } catch (RuntimeException $error) {
+                show_error('Não foi possível confirmar o armazenamento da tarefa.', 503);
+            }
+            return;
+        }
         $tasks_where = [];
 
         if (staff_cant('view', 'tasks')) {
@@ -647,6 +792,10 @@ class Tasks extends AdminController
 
     public function init_checklist_items()
     {
+        if($this->nativeCompanyTasks()){
+            try{CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();$data=$this->input->post(null,false);if(!is_array($data))throw new DomainException('native_task_checklist_invalid');unset($data['_company_context'],$data['_native_company_csrf']);if(isset($this->security))unset($data[$this->security->get_csrf_token_name()]);if(array_keys($data)!==['taskid'])throw new DomainException('native_task_checklist_invalid');require_once APPPATH.'services/NativeCompanyTaskChecklistPresentation.php';$reader=new NativeCompanyTaskChecklistPresentation($this->db,db_prefix());$view=$reader->read($ctx->issuerId(),$ctx->staffId(),$data['taskid']);$html=$this->load->view('admin/tasks/checklist_items_template',$view,true);if($reader->read($ctx->issuerId(),$ctx->staffId(),$data['taskid'])!==$view)throw new DomainException('native_task_checklist_changed');$this->output->set_header('Cache-Control: no-store')->set_output($html);}
+            catch(DomainException $error){show_error('Não foi possível confirmar os itens desta tarefa.',str_contains($error->getMessage(),'denied')?403:422);}catch(RuntimeException $error){show_error('Não foi possível confirmar os itens desta tarefa.',503);}return;
+        }
         if ($this->input->is_ajax_request()) {
             if ($this->input->post()) {
                 $post_data                       = $this->input->post();
@@ -670,6 +819,37 @@ class Tasks extends AdminController
 
         $data['stats'] = json_encode($this->tasks_model->task_tracking_stats($task_id));
         $this->load->view('admin/tasks/tracking_stats', $data);
+    }
+
+    public function checklist_visibility($taskId)
+    {
+        if(!$this->nativeCompanyTasks()){show_error('Método não permitido.',405);return;}
+        try{CompanyRequestScope::assertNativeMutation($this);$context=CompanyRequestScope::context();$data=$this->input->post(null,false);if(!is_array($data))throw new DomainException('native_checklist_visibility_invalid');unset($data['_company_context'],$data['_native_company_csrf']);if(isset($this->security))unset($data[$this->security->get_csrf_token_name()]);if(array_keys($data)!==['hide'])throw new DomainException('native_checklist_visibility_invalid');require_once APPPATH.'services/NativeCompanyTaskChecklistVisibility.php';$value=(new NativeCompanyTaskChecklistVisibility($this->db,db_prefix()))->save($context->issuerId(),$context->staffId(),$taskId,$data['hide']);$this->output->set_header('Cache-Control: no-store')->set_header('Content-Type: application/json; charset=utf-8')->set_output(json_encode(['success'=>true,'hide'=>$value],JSON_THROW_ON_ERROR));}
+        catch(DomainException $error){show_error('Não foi possível confirmar a preferência desta tarefa.',str_contains($error->getMessage(),'denied')?403:422);}catch(RuntimeException $error){show_error('Não foi possível salvar a preferência desta tarefa.',503);}
+    }
+
+    /** Finite scoped checklist command used by the original task detail. */
+    public function checklist_command($taskId)
+    {
+        if(!$this->nativeCompanyTasks()){show_error('Método não permitido.',405);return;}
+        try{
+            CompanyRequestScope::assertNativeMutation($this);$context=CompanyRequestScope::context();if($context->issuerId()===null)throw new DomainException('native_task_checklist_denied');
+            $data=$this->input->post(null,false);if(!is_array($data))throw new DomainException('native_task_checklist_invalid');unset($data['_company_context'],$data['_native_company_csrf']);if(isset($this->security))unset($data[$this->security->get_csrf_token_name()]);
+            if(array_diff(array_keys($data),['action','task_revision','checklist_revision','request_key','item_id','item_revision','text','finished','assigned_id','ids'])||!is_string($data['action']??null)||!isset($data['task_revision'])||!is_string($data['request_key']??null)||!preg_match('/^[a-f0-9]{64}$/D',$data['request_key']))throw new DomainException('native_task_checklist_invalid');
+            require_once APPPATH.'services/NativeCompanyResourceReferences.php';require_once APPPATH.'services/CompanyTasks.php';require_once APPPATH.'services/CompanyStandaloneTasks.php';require_once APPPATH.'services/NativeCompanyTaskItems.php';
+            $ref=NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$context->issuerId(),$context->staffId(),'task',$taskId,'edit');$writer=match($ref['source_kind']){'company_task'=>new CompanyTasks($this->db,db_prefix()),'company_standalone_task'=>new CompanyStandaloneTasks($this->db,db_prefix()),default=>throw new DomainException('native_task_legacy_writer_required')};
+            $action=$data['action'];if($action==='initialize'){
+                if(array_diff(array_keys($data),['action','task_revision','request_key']))throw new DomainException('native_task_checklist_invalid');$writer->initializeNativeChecklist($context->issuerId(),$context->staffId(),$ref['source_id'],$data['task_revision'],$data['request_key']);
+            }else{
+                if(!isset($data['checklist_revision']))throw new DomainException('native_task_checklist_invalid');$map=match($action){'add'=>['text'=>'text'],'edit'=>['item_id'=>'id','item_revision'=>'revision','text'=>'text'],'complete'=>['item_id'=>'id','item_revision'=>'revision','finished'=>'finished'],'assign'=>['item_id'=>'id','item_revision'=>'revision','assigned_id'=>'assigned_id'],'delete'=>['item_id'=>'id','item_revision'=>'revision'],'reorder'=>['ids'=>'ids'],default=>throw new DomainException('native_task_checklist_invalid')};
+                if(array_diff(array_keys($data),array_merge(['action','task_revision','checklist_revision','request_key'],array_keys($map))))throw new DomainException('native_task_checklist_invalid');$command=['action'=>$action];foreach($map as$wire=>$field){if(!array_key_exists($wire,$data))throw new DomainException('native_task_checklist_invalid');$command[$field]=$data[$wire]===''&&$field==='assigned_id'?null:$data[$wire];}
+                $writer->changeNativeChecklist($context->issuerId(),$context->staffId(),$ref['source_id'],$data['task_revision'],$data['checklist_revision'],$command,$data['request_key']);
+            }
+            $reader=new NativeCompanyTaskItems($this->db,db_prefix());$snapshot=$reader->read($context->issuerId(),$context->staffId(),$taskId);$row=$writer->get($context->issuerId(),$context->staffId(),$ref['source_id']);
+            if($reader->read($context->issuerId(),$context->staffId(),$taskId)!==$snapshot||!hash_equals($snapshot['source_hash'],hash('sha256',$row['checklist_json']))||NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$context->issuerId(),$context->staffId(),'task',$taskId,'edit')!==$ref)throw new DomainException('native_task_checklist_stale');
+            $this->output->set_header('Cache-Control: no-store')->set_header('Content-Type: application/json; charset=utf-8')->set_output(json_encode(['success'=>true,'task_revision'=>(int)$row['revision'],'checklist'=>$snapshot],JSON_THROW_ON_ERROR));
+        }catch(DomainException $error){$reason=$error->getMessage();show_error('Não foi possível confirmar os itens desta tarefa.',str_contains($reason,'stale')?409:(str_contains($reason,'denied')?403:422));}
+         catch(RuntimeException $error){show_error('Não foi possível confirmar os itens desta tarefa.',503);}
     }
 
     public function checkbox_action($listid, $value)
@@ -762,6 +942,20 @@ class Tasks extends AdminController
     /* Add new task comment / ajax */
     public function add_task_comment()
     {
+        if ($this->nativeCompanyTasks()) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);$context=CompanyRequestScope::context();if($context->issuerId()===null)throw new DomainException('native_company_task_denied');
+                $input=$this->input->post(null,false);if(!is_array($input))throw new DomainException('native_task_comment_invalid');unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                if(array_diff(array_keys($input),['taskid','content','no_editor','native_revision','native_request_key'])||!isset($input['taskid'],$input['content'],$input['native_revision'],$input['native_request_key'])||!is_string($input['content'])||!is_string($input['native_request_key'])||!preg_match('/^[a-f0-9]{64}$/D',$input['native_request_key']))throw new DomainException('native_task_comment_invalid');
+                foreach($_FILES as$upload){$errors=$upload['error']??null;if($errors===null)throw new DomainException('native_task_comment_invalid');$iterator=new RecursiveIteratorIterator(new RecursiveArrayIterator(is_array($errors)?$errors:[$errors]));foreach($iterator as$error)if((int)$error!==UPLOAD_ERR_NO_FILE)throw new DomainException('native_task_comment_attachments_separate');}
+                $body=trim(strip_tags(html_purify($input['content'])));if($body==='')throw new DomainException('native_task_comment_invalid');
+                require_once APPPATH.'services/NativeCompanyResourceReferences.php';$reference=NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$context->issuerId(),$context->staffId(),'task',$input['taskid'],'edit');$writer=$this->nativeTaskWriter($reference);$writer->activity($context->issuerId(),$context->staffId(),$reference['source_id'],$input['native_revision'],'comment',$input['native_request_key'],$body);
+                $this->output->set_content_type('application/json')->set_output(json_encode(['success'=>true,'taskHtml'=>$this->nativeTaskDetailHtml($reference['canonical_id'])],JSON_THROW_ON_ERROR));
+            } catch (DomainException $error) {show_error('Não foi possível confirmar o comentário, a revisão ou as permissões desta tarefa.',str_contains($error->getMessage(),'stale')?409:(str_contains($error->getMessage(),'denied')?403:422));}
+              catch (RuntimeException $error) {show_error('Não foi possível armazenar o comentário da tarefa.',503);}
+            return;
+        }
         $data            = $this->input->post();
         $data['content'] = html_purify($this->input->post('content', false));
         if ($this->input->post('no_editor')) {
@@ -954,6 +1148,43 @@ class Tasks extends AdminController
 
     public function mark_as($status, $id)
     {
+        if ($this->nativeCompanyTasks()) {
+            try {
+                CompanyRequestScope::assertNativeMutation($this);
+                $context = CompanyRequestScope::context();
+                if ($context->issuerId() === null) throw new DomainException('native_task_status_denied');
+                $input = $this->input->post(null, false);
+                if (!is_array($input)) throw new DomainException('native_task_status_invalid');
+                unset($input['_company_context'], $input['_native_company_csrf']);
+                if (isset($this->security)) unset($input[$this->security->get_csrf_token_name()]);
+                if (array_diff(array_keys($input), ['native_revision','native_fields_revision','native_request_key'])
+                    || !isset($input['native_revision'], $input['native_request_key'])
+                    || !is_string($input['native_request_key']) || !preg_match('/^[a-f0-9]{64}$/D', $input['native_request_key'])) {
+                    throw new DomainException('native_task_status_invalid');
+                }
+                require_once APPPATH.'services/NativeCompanyResourceReferences.php';
+                require_once APPPATH.'services/CompanyTasks.php';
+                require_once APPPATH.'services/CompanyStandaloneTasks.php';
+                $reference = NativeCompanyResourceReferences::resolve($this->db, db_prefix(), $context->issuerId(), $context->staffId(), 'task', $id, 'view');
+                $writer = match ($reference['source_kind']) {
+                    'company_task' => new CompanyTasks($this->db, db_prefix()),
+                    'company_standalone_task' => new CompanyStandaloneTasks($this->db, db_prefix()),
+                    default => throw new DomainException('native_task_legacy_writer_required'),
+                };
+                $fieldsRevision = $input['native_fields_revision'] ?? null;
+                if ($fieldsRevision === '') $fieldsRevision = null;
+                $writer->markNativeStatus($context->issuerId(), $context->staffId(), $reference['source_id'], $input['native_revision'], $fieldsRevision, $status, $input['native_request_key']);
+                $taskHtml=$this->input->get('single_task')==='true'?$this->nativeTaskDetailHtml($reference['canonical_id']):'';
+                $this->output->set_header('Cache-Control: no-store')->set_header('Content-Type: application/json; charset=utf-8')
+                    ->set_output(json_encode(['success'=>true,'message'=>_l('updated_successfully',_l('task')),'taskHtml'=>$taskHtml],JSON_THROW_ON_ERROR));
+            } catch (DomainException $error) {
+                $reason = $error->getMessage();
+                show_error('Não foi possível confirmar o estado ou as permissões desta tarefa.', str_contains($reason,'stale') ? 409 : (str_contains($reason,'denied') ? 403 : 422));
+            } catch (RuntimeException $error) {
+                show_error('Não foi possível confirmar o armazenamento da tarefa.',503);
+            }
+            return;
+        }
         if (
             $this->tasks_model->is_task_assignee(get_staff_user_id(), $id)
             || $this->tasks_model->is_task_creator(get_staff_user_id(), $id)
@@ -986,6 +1217,24 @@ class Tasks extends AdminController
 
     public function change_priority($priority_id, $id)
     {
+        if ($this->nativeCompanyTasks()) {
+            try {
+                CompanyRequestScope::assertNativeMutation($this);$context=CompanyRequestScope::context();
+                if($context->issuerId()===null)throw new DomainException('native_task_priority_denied');
+                $input=$this->input->post(null,false);if(!is_array($input))throw new DomainException('native_task_priority_invalid');
+                unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                if(array_diff(array_keys($input),['native_revision','native_fields_revision','native_request_key'])||!isset($input['native_revision'],$input['native_request_key'])||!is_string($input['native_request_key'])||!preg_match('/^[a-f0-9]{64}$/D',$input['native_request_key']))throw new DomainException('native_task_priority_invalid');
+                require_once APPPATH.'services/NativeCompanyResourceReferences.php';require_once APPPATH.'services/CompanyTasks.php';require_once APPPATH.'services/CompanyStandaloneTasks.php';
+                $reference=NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$context->issuerId(),$context->staffId(),'task',$id,'view');
+                $writer=match($reference['source_kind']){'company_task'=>new CompanyTasks($this->db,db_prefix()),'company_standalone_task'=>new CompanyStandaloneTasks($this->db,db_prefix()),default=>throw new DomainException('native_task_legacy_writer_required')};
+                $fieldsRevision=$input['native_fields_revision']??null;if($fieldsRevision==='')$fieldsRevision=null;
+                $writer->changeNativePriority($context->issuerId(),$context->staffId(),$reference['source_id'],$input['native_revision'],$fieldsRevision,$priority_id,$input['native_request_key']);
+                $taskHtml=$this->input->get('single_task')==='true'?$this->nativeTaskDetailHtml($reference['canonical_id']):'';
+                $this->output->set_header('Cache-Control: no-store')->set_header('Content-Type: application/json; charset=utf-8')->set_output(json_encode(['success'=>true,'taskHtml'=>$taskHtml],JSON_THROW_ON_ERROR));
+            }catch(DomainException $error){$reason=$error->getMessage();show_error('Não foi possível confirmar a prioridade ou as permissões desta tarefa.',str_contains($reason,'stale')?409:(str_contains($reason,'denied')?403:422));}
+             catch(RuntimeException $error){show_error('Não foi possível confirmar o armazenamento da tarefa.',503);}
+            return;
+        }
         if (staff_can('edit',  'tasks')) {
             $data = hooks()->apply_filters('before_update_task', ['priority' => $priority_id], $id);
 
@@ -1080,6 +1329,19 @@ class Tasks extends AdminController
      */
     public function remove_task_attachment($id)
     {
+        if ($this->nativeCompanyTasks()) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);$context=CompanyRequestScope::context();if($context->issuerId()===null)throw new DomainException('native_company_task_denied');
+                $input=$this->input->post(null,false);if(!is_array($input))throw new DomainException('company_project_file_invalid');unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                if(array_diff(array_keys($input),['taskid','native_revision','native_request_key'])||!isset($input['taskid'],$input['native_revision'])||!is_string($input['native_request_key']??null)||!preg_match('/^[a-f0-9]{64}$/D',$input['native_request_key']))throw new DomainException('company_project_file_invalid');
+                require_once APPPATH.'services/NativeCompanyResourceReferences.php';$reference=NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$context->issuerId(),$context->staffId(),'task',$input['taskid'],'edit');if($reference['source_kind']!=='company_task')throw new DomainException('company_project_access_denied');
+                require_once APPPATH.'services/CompanyProjectExtras.php';(new CompanyProjectExtras($this->db,db_prefix()))->hide($context->issuerId(),$context->staffId(),'task',$reference['source_id'],$input['native_revision'],(string)$id,$input['native_request_key']);
+                $this->output->set_content_type('application/json')->set_output(json_encode(['success'=>true,'taskHtml'=>$this->nativeTaskDetailHtml($reference['canonical_id'])],JSON_THROW_ON_ERROR));
+            } catch (DomainException $error) {show_error('Não foi possível confirmar o arquivo, a revisão ou as permissões desta tarefa.',str_contains($error->getMessage(),'stale')?409:(str_contains($error->getMessage(),'denied')?403:422));}
+              catch (RuntimeException $error) {show_error('Não foi possível atualizar o arquivo da tarefa.',503);}
+            return;
+        }
         if ($this->input->is_ajax_request()) {
             echo json_encode($this->tasks_model->remove_task_attachment($id));
         }
@@ -1091,6 +1353,20 @@ class Tasks extends AdminController
      */
     public function upload_file()
     {
+        if ($this->nativeCompanyTasks()) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);$context=CompanyRequestScope::context();if($context->issuerId()===null)throw new DomainException('native_company_task_denied');
+                $input=$this->input->post(null,false);if(!is_array($input))throw new DomainException('company_project_file_invalid');unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                if(array_diff(array_keys($input),['taskid','native_revision','native_request_key'])||!isset($input['taskid'],$input['native_revision'])||!is_string($input['native_request_key']??null)||!preg_match('/^[a-f0-9]{64}$/D',$input['native_request_key']))throw new DomainException('company_project_file_invalid');
+                require_once APPPATH.'services/NativeCompanyResourceReferences.php';$reference=NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$context->issuerId(),$context->staffId(),'task',$input['taskid'],'edit');if($reference['source_kind']!=='company_task')throw new DomainException('company_project_access_denied');
+                $file=$_FILES['file']??null;if(!is_array($file)||is_array($file['name']??null)||!isset($file['name'],$file['tmp_name'],$file['error'])||(int)$file['error']!==UPLOAD_ERR_OK||!is_string($file['name'])||!is_string($file['tmp_name'])||(!is_uploaded_file($file['tmp_name'])&&PHP_SAPI!=='cli'))throw new DomainException('company_project_file_invalid');$bytes=file_get_contents($file['tmp_name']);if(!is_string($bytes))throw new DomainException('company_project_file_invalid');
+                require_once APPPATH.'services/CompanyProjectExtras.php';(new CompanyProjectExtras($this->db,db_prefix()))->uploadNative($context->issuerId(),$context->staffId(),'task',$reference['source_id'],$input['native_revision'],$input['native_request_key'],$file['name'],$bytes);
+                $this->output->set_content_type('application/json')->set_output(json_encode(['success'=>true,'taskHtml'=>$this->nativeTaskDetailHtml($reference['canonical_id'])],JSON_THROW_ON_ERROR));
+            } catch (DomainException $error) {show_error('Não foi possível confirmar o arquivo, a revisão ou as permissões desta tarefa.',str_contains($error->getMessage(),'stale')?409:(str_contains($error->getMessage(),'denied')?403:422));}
+              catch (RuntimeException $error) {show_error('Não foi possível armazenar o arquivo da tarefa.',503);}
+            return;
+        }
         if ($this->input->post()) {
             $taskid  = $this->input->post('taskid');
             $files   = handle_task_attachments_array($taskid, 'file');
@@ -1117,8 +1393,7 @@ class Tasks extends AdminController
         if($this->nativeCompanyTasks()){
             try{
                 CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();$issuer=$ctx->issuerId();$actor=$ctx->staffId();if($issuer===null)throw new DomainException('native_company_task_denied');
-                // These branches cannot mutate before the original detail/admin adapters are present.
-                if($this->input->get('single_task')==='true'||$this->input->get('admin_stop'))throw new DomainException('native_timer_detail_adapter_required');
+                if($this->input->get('admin_stop'))throw new DomainException('native_timer_admin_stop_denied');
                 require_once APPPATH.'services/CompanyTasks.php';require_once APPPATH.'services/CompanyStandaloneTasks.php';require_once APPPATH.'services/NativeCompanyBlankTimers.php';require_once APPPATH.'services/NativeCompanyResourceId.php';
                 $body=$this->input->post(null,false);if(!is_array($body))throw new DomainException('native_timer_input_invalid');
                 $integer=static function($value,bool$zero=false):int{if(!is_int($value)&&!is_string($value))throw new DomainException('native_timer_input_invalid');if(!preg_match($zero?'/^(0|[1-9][0-9]{0,9})$/D':'/^[1-9][0-9]{0,9}$/D',(string)$value)||(float)$value>2147483646)throw new DomainException('native_timer_input_invalid');return(int)$value;};
@@ -1138,7 +1413,8 @@ class Tasks extends AdminController
                         }
                     }
                 }
-                $json=json_encode(['success'=>true,'taskHtml'=>'','timers'=>$this->get_staff_started_timers(true)],JSON_THROW_ON_ERROR);$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output($json);
+                $taskHtml=$this->input->get('single_task')==='true'&&$task!=='0'?$this->nativeTaskDetailHtml($task):'';
+                $json=json_encode(['success'=>true,'taskHtml'=>$taskHtml,'timers'=>$this->get_staff_started_timers(true)],JSON_THROW_ON_ERROR);$this->output->set_header('Cache-Control: no-store')->set_content_type('application/json')->set_output($json);
             }catch(DomainException$e){show_error('Não foi possível confirmar o temporizador nesta empresa.',422);}return;
         }
         $task_id   = $this->input->post('task_id');
@@ -1358,6 +1634,27 @@ class Tasks extends AdminController
 
     public function get_task_by_id($id)
     {
+        if ($this->nativeCompanyTasks()) {
+            if (strtoupper($this->input->method(true)) !== 'GET') {
+                show_error('Método não permitido.', 405);
+                return;
+            }
+            try {
+                $ctx = CompanyRequestScope::context();
+                if ($ctx->issuerId() === null) throw new DomainException('native_company_task_denied');
+                require_once APPPATH . 'services/NativeCompanyTasksRead.php';
+                $task = (new NativeCompanyTasksRead($this->db, db_prefix()))->relationOption(
+                    $ctx->issuerId(), $ctx->staffId(), $id
+                );
+                // The native timer needs only the authorized identity and name.
+                $this->output->set_header('Cache-Control: no-store');
+                $this->output->set_header('Content-Type: application/json; charset=utf-8');
+                $this->output->set_output(json_encode(['id' => $task['id'], 'name' => $task['name']], JSON_THROW_ON_ERROR));
+            } catch (DomainException $error) {
+                show_error('Tarefa indisponível neste contexto.', 422);
+            }
+            return;
+        }
         if ($this->input->is_ajax_request()) {
             $tasks_where = [];
             if (staff_cant('view', 'tasks')) {

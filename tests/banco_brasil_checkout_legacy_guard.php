@@ -17,7 +17,7 @@ class AdminController {public $input;public $session;}
 class CheckoutHttpStop extends RuntimeException {}
 function show_error($message,$status){throw new CheckoutHttpStop('guard', $status);}
 require dirname(__DIR__).'/modules/banco_brasil/controllers/Banco_brasil.php';
-foreach(['preview_checkout','publish_checkout','save_channel_preferences'] as $action){
+foreach(['preview_checkout','publish_checkout','save_channel_preferences','compare_cnab400','prepare_cnab400','recover_cnab400','reserve_cnab400','candidate_cnab400','settle_cnab400','declare_cnab400_approval','generate_cnab400','download_cnab400','report_cnab400'] as $action){
     foreach([['GET',str_repeat('a',64),405],['POST','invalid',403],['POST',null,403]] as [$method,$token,$expected]){
         $controller=(new ReflectionClass(Banco_brasil::class))->newInstanceWithoutConstructor();
         $controller->input=new class($method,$token){function __construct(private $verb,private $token){}function method(){return $this->verb;}function post($name){if($name!=='csrf_bb')throw new RuntimeException('unauthorized field read');return $this->token;}};

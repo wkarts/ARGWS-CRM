@@ -1,6 +1,19 @@
-# Banco do Brasil 1.0.2: perfis explícitos CNAB 240 e 400
+# Banco do Brasil: perfis explícitos CNAB 240 e 400
+
+
+## Preparação e reserva vinculada à fatura — módulo 1.3.5
+
+A origem 400 pode ser preparada localmente a partir de fatura e identidade já autorizadas da empresa, da conexão e de um perfil CBR641/643 explícito. A preparação preserva um snapshot privado imutável, uma chave de idempotência e o hash da fonte. Uma repetição recupera a mesma preparação; se os dados da fatura mudarem, a fonte é marcada como desatualizada. Não há arquivo, número ou efeito financeiro nessa etapa.
+
+Após declaração explícita de faixa exclusiva e confirmação do operador, a reserva vincula uma origem CNAB400 à fatura e usa a mesma sequência de Nosso Número e arquivo compartilhada com a API e CNAB240. A reserva é permanente e idempotente; tentativas concorrentes ou por outro canal não devem gerar uma segunda origem. O lote inicia em `awaiting_layout`, sem conteúdo, transmissão ou pagamento, e não pode ser retomado pelo codificador 240. É possível validar um candidato em memória. A geração e o download 400 somente são liberados após uma declaração imutável do operador, específica da preparação, sobre a moeda BRL da cobrança e da conta, a ausência de juros padrão no cadastro bancário e a homologação, com referências. O campo 85–86 é fixado em branco pelo perfil BRL e não recebe bytes livres do operador. Essa declaração não verifica automaticamente os documentos bancários. O envio é manual e seu relato não é aceite do banco. A migração135 cria apenas o ledger aditivo de preparação; ela não cria reservas nem altera dados históricos.
+
+Na revisão de retorno400, a comparação entre uma observação e uma fatura autorizada mostra documento, vencimento e valor nominal, e avalia ocorrência, parcialidade e ajustes observados, sem autenticar o arquivo, inferir moeda ou registrar vínculo/pagamento. A presença de uma origem reservada sem arquivo gerado não é apresentada como coincidência comprovada de origem.
+
+A vinculação do retorno exige a mesma declaração íntegra e específica do lote, verificada novamente após a auditoria. O adaptador nominal assistido exige arquivo 400 gerado, envio declarado, origem vinculada, declaração de homologação por lote e crédito/moeda conferidos independentemente. Ele não comprova homologação ou autenticidade bancária. A confirmação documental dos campos e a homologação real junto ao banco continuam necessárias; os testes locais usam apenas evidências sintéticas. SQLite não comprova bloqueios InnoDB e somente testes de MySQL/MariaDB reais podem validá-los.
 
 ## Composição436 — fontes operacionais e recuperação
+
+Esta seção e a seguinte registram o estado histórico dos incrementos, anterior ao módulo 1.3.5 descrito acima.
 
 Núcleo4.3.6/436, BB1.1.6/116 e Asaas1.5.2/152 estão em validação sobre435. API16 por componentes integrais e vínculo declarado de retorno240 à mesma origem API usam o writer existente e a mesma identidade canônica; não criam remessa, outro canal ou pagamento automático. Alteração/baixa incerta anterior ou posterior à consulta veta um novo recebimento. Recuperação de processo morto após sending usa consulta independente autorizada, sem reenviar POST/PATCH nem fabricar sucesso pelo vencimento da reserva. A [validação436](companies/pr45-validation-436.md) discrimina fonte congelada, instalação/tracking, testes e CI do próprio SHA.
 
@@ -18,7 +31,22 @@ A disputa financeira API20/CNAB17 passou com duas fontes finais reais/two-proces
 
 A versão 102 acrescenta o retorno observacional CBR643 e um **codificador de candidato** CBR641. Também exige seleção explícita de perfil para novas importações 240/400. Não representa homologação do BB nem uma integração bancária completa. Este parágrafo descreve o incremento102. Para originação240, retorno assistido e executor API108, consulte a [matriz atual](companies/pr45-status.md). Nenhum desses incrementos libera a remessa400 nem demonstra homologação.
 
-A remessa 400 não fica disponível na interface. O método de teste `Cnab400Generator::candidate` retorna `operational=false` e as pendências, além do conteúdo sintético. Não existe código monetário BRL presumido: o chamador de testes precisa informar os dois caracteres candidatos. O manual atual só enumera 02/dólar e 14/euro; ambos são recusados no recorte BRL. **Esse candidato não deve ser enviado ao banco.** A confirmação escrita do banco sobre o campo, os juros da carteira e a homologação por conta/convênio continuam obrigatórias antes da entrega operacional.
+A validação em memória usa `Cnab400Generator::candidate`, que retorna `operational=false` e não disponibiliza seus bytes. A geração e o download posteriores exigem declaração específica e rastreável do operador, que não substitui a confirmação documental nem a homologação pelo banco. O CBR641 atual define as posições 85–86 como `X(002)` e enumera somente 02/dólar e 14/euro. Para o recorte exclusivamente BRL, o codec grava dois brancos, representando ausência de marcador de moeda estrangeira, e não aceita conteúdo fornecido pelo formulário. O manual não nomeia explicitamente um código BRL; portanto, a aceitação desse preenchimento pelo convênio continua sendo confirmada na homologação externa. **Um candidato em memória não deve ser enviado ao banco.**
+
+### Campos monetários e de juros conferidos
+
+| Arquivo | Posições | Campo | Política implementada |
+|---|---:|---|---|
+| CBR641 remessa | 85–86 | Tipo de moeda | Dois brancos no perfil BRL; `02` e `14` ficam fora do perfil |
+| CBR641 remessa | 127–139 | Valor do título | `9(011)v99`, centavos inteiros, sem truncamento |
+| CBR641 remessa | 161–173 | Juros de mora por dia | Treze zeros; exige confirmação independente de que o beneficiário não possui taxa padrão |
+| CBR641 remessa | 180–192 | Desconto | Treze zeros no perfil simples sem desconto |
+| CBR641 remessa | 193–205 | IOF | Treze zeros no perfil simples |
+| CBR641 remessa | 206–218 | Abatimento | Treze zeros no perfil simples |
+| CBR643 retorno | 153–165 | Valor nominal | Preservado separadamente |
+| CBR643 retorno | 182–318 | Tarifa, despesas, juros do desconto, IOF, abatimento, desconto, recebido, juros, outros recebimentos, abatimento não aproveitado e lançamento | Cada faixa é lida na posição e largura documentadas; nenhum campo substitui outro |
+
+No CBR641, a nota 10 informa que juros ausentes no título podem herdar a taxa padrão do beneficiário. Por isso, zeros no arquivo não provam isenção: o contrato local e a declaração do lote exigem evidência independente do cadastro bancário. No CBR643, o parser mantém `valor recebido` (254–266), `juros de mora` (267–279) e `valor do lançamento` (306–318) separados; o último não é rotulado como valor líquido.
 
 ## Fontes primárias verificadas
 
@@ -45,15 +73,18 @@ mencionada na verificação histórica acima.
 
 No CBR641 de julho/2026, página 10, o trailer da **remessa** é inequívoco:
 registro 9; posições 2–394 em branco; sequência 395–400. Esse é o contrato já
-codificado pelo candidato. A nota 30 continua listando apenas 02/dólar e 14/euro;
-não autoriza inferir código BRL. A nota 10 confirma que juros zerados/omitidos
-podem herdar a taxa do beneficiário no banco.
+codificado pelo candidato. A nota 30 continua listando apenas 02/dólar e 14/euro
+e não nomeia um código BRL. O perfil BRL usa brancos para não declarar uma moeda
+estrangeira e exige confirmação no convênio/homologação; não aceita mais dois
+caracteres arbitrários informados pelo operador. A nota 10 confirma que juros
+zerados/omitidos podem herdar a taxa do beneficiário no banco.
 
 A divergência de picture é do trailer de **retorno CBR643**: posições 26–39
 compreendem 14 caracteres, mas a tabela descreve `9(013) v99`. O parser preserva
 os 14 caracteres brutos e declara a interpretação não verificada. Não converter
 essa inconsistência em valor financeiro nem confundi-la com o trailer CBR641.
-Permanece necessária confirmação do banco sobre o picture e o campo BRL.
+Permanece necessária homologação do preenchimento BRL e confirmação do banco sobre
+o picture divergente do trailer de retorno.
 
 Histórico da busca anterior (superado para a API pelo contrato3.2.2 no handoff):
 a página de Cobrança apontava para `https://apoio.developers.bb.com.br/apis/5?versaoApi=2`,
@@ -96,7 +127,7 @@ Não há backfill de perfis: registros 101 conservam vínculo NULL e continuam v
 
 Falha de DDL/validação impede avançar o tracking. DDL parcialmente concluído é aditivo e pode ser retomado depois da correção administrativa do schema. Não existe downgrade destrutivo. Para suspender a importação, retirar a permissão apropriada ou desativar o módulo; manter as tabelas para preservar histórico. Não voltar ao código 101 para contornar a seleção explícita.
 
-## Testes
+## Testes históricos da versão 102
 
 PHP 8.1 e 8.5, local: 412 verificações distintas (240 118; store 48; admin 63; 400 82; vínculos 38; migration101 36; migration102 27). Lint de 33 arquivos PHP e `git diff --check` passaram.
 
@@ -106,7 +137,7 @@ Atualização413: a especificação primária API foi recuperada e o executor é
 do candidato400. Consulte o [handoff](banco-brasil-handoff.md). Os bloqueios BRL/juros
 CBR641 e a divergência de picture CBR643 continuam válidos.
 
-## Continuação111: insumos específicos ainda necessários
+## Histórico da continuação111: insumos então necessários
 
 A busca primária desta continuação reabriu o retorno CBR643 julho/2023 no endereço
 oficial acima: a página16 continua apresentando26–39 (14 posições) com picture
@@ -126,7 +157,7 @@ escrita correta e trabalho técnico de integração posterior, separado da
 homologação bancária externa.
 
 
-## Situação no núcleo427 / BB113
+## Situação histórica no núcleo427 / BB113
 
 A composição financeira427 pertence somente ao perfil assistido CNAB240. Não
 transforma o candidato400 em canal operacional, não resolve BRL85–86 ou picture

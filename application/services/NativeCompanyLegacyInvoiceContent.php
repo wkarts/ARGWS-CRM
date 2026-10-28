@@ -5,8 +5,16 @@ final class NativeCompanyLegacyInvoiceContent
 {
     public static function read(int $invoice,string $name):array
     {
-        if($invoice<1||!defined('INVOICE_ATTACHMENTS_FOLDER')||$name===''||basename($name)!==$name||strlen($name)>191||preg_match('/[\x00-\x1f\x7f\\\\\/]/',$name))throw new DomainException('native_invoice_file_denied');
-        $configured=rtrim(INVOICE_ATTACHMENTS_FOLDER,DIRECTORY_SEPARATOR);$root=realpath($configured);if($root===false||is_link($configured))throw new DomainException('native_invoice_file_denied');
+        return self::readFrom('INVOICE_ATTACHMENTS_FOLDER',$invoice,$name);
+    }
+    public static function readEstimate(int $estimate,string $name):array
+    {
+        return self::readFrom('ESTIMATE_ATTACHMENTS_FOLDER',$estimate,$name);
+    }
+    private static function readFrom(string $constant,int $invoice,string $name):array
+    {
+        if($invoice<1||!defined($constant)||$name===''||basename($name)!==$name||strlen($name)>191||preg_match('/[\x00-\x1f\x7f\\\\\/]/',$name))throw new DomainException('native_invoice_file_denied');
+        $configured=rtrim((string)constant($constant),DIRECTORY_SEPARATOR);$root=realpath($configured);if($root===false||is_link($configured))throw new DomainException('native_invoice_file_denied');
         $directory=$root.DIRECTORY_SEPARATOR.$invoice;$path=$directory.DIRECTORY_SEPARATOR.$name;
         if(is_link($directory)||is_link($path)||realpath($directory)!==$directory||realpath($path)!==$path||!is_file($path))throw new DomainException('native_invoice_file_denied');
         $before=lstat($path);if(!$before||$before['size']<1||$before['size']>20971520)throw new DomainException('native_invoice_file_denied');$handle=fopen($path,'rb');if($handle===false)throw new DomainException('native_invoice_file_denied');

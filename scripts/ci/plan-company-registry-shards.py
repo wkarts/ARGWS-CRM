@@ -34,22 +34,48 @@ def measured_commands(commands, unmeasured):
     return [argv for argv in commands if argv not in additions]
 
 
+def historical_measured_commands(commands, unmeasured, baseline):
+    """Reconstruct the immutable command list represented by timing artifacts.
+
+    Retiring a test must stop executing it, but cannot rewrite the original ZIP
+    receipts or pretend that a new timing sample exists.  Retired entries retain
+    their historical index solely while verifying/replaying the old LPT evidence.
+    """
+    historical = list(measured_commands(commands, unmeasured))
+    retired = baseline.get('retired', [])
+    if not isinstance(retired, list):
+        raise ValueError('Invalid retired command inventory')
+    for entry in sorted(retired, key=lambda item: item.get('index', -1)):
+        if set(entry) != {'index', 'argv', 'reason'} or type(entry['index']) is not int or not entry['reason']:
+            raise ValueError('Invalid retired command entry')
+        argv = entry['argv']
+        if not isinstance(argv, list) or not argv or argv in commands or argv in historical:
+            raise ValueError('Retired command must be absent and unique')
+        if entry['index'] not in range(len(historical) + 1):
+            raise ValueError('Retired command index out of range')
+        historical.insert(entry['index'], argv)
+    return historical
+
+
 def build_plan(commands, baseline, unmeasured=None):
     if unmeasured is None:
         unmeasured = json.loads(UNMEASURED.read_text())
     measured = measured_commands(commands, unmeasured)
     # Preserve the exact historical argv/order and paired observations. Unknown
     # durations are not zero-duration samples and must never enter the LPT model.
-    base = build_measured_plan(measured, baseline)
-    assignment_by_argv = {tuple(argv): shard for argv, shard in zip(measured, base['assignments'])}
-    counts = [base['assignments'].count(shard) for shard in range(1, 5)]
+    historical = historical_measured_commands(commands, unmeasured, baseline)
+    base = build_measured_plan(historical, baseline)
+    historical_assignment = {tuple(argv): shard for argv, shard in zip(historical, base['assignments'])}
+    assignment_by_argv = {tuple(argv): historical_assignment[tuple(argv)] for argv in measured}
+    counts = [list(assignment_by_argv.values()).count(shard) for shard in range(1, 5)]
     for entry in unmeasured:
         target = min(range(4), key=lambda shard: (counts[shard], shard))
         assignment_by_argv[tuple(entry['argv'])] = target + 1
         counts[target] += 1
-    return {**base, 'model': 'frozen-paired-lpt-plus-unmeasured-count-v1',
+    return {**base, 'model': 'frozen-paired-lpt-retired-plus-unmeasured-count-v2',
             'manifest_sha256': hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest(),
             'measured_manifest_sha256': base['manifest_sha256'],
+            'retired': baseline.get('retired', []),
             'unmeasured': unmeasured,
             'assignments': [assignment_by_argv[tuple(argv)] for argv in commands]}
 
@@ -70,7 +96,7 @@ def build_measured_plan(commands, baseline):
             'assignments': balanced_assignment(weights)}
 
 
-def verify_artifacts(directory, commands, baseline):
+def verify_artifacts(directory, historical_commands, baseline):
     for artifact in baseline['artifacts']:
         matches = list(Path(directory).glob('*/' + artifact['zip']))
         if len(matches) != 1:
@@ -85,12 +111,12 @@ def verify_artifacts(directory, commands, baseline):
         if hashlib.sha256(lines).hexdigest() != artifact['jsonl_sha256']:
             raise ValueError('Artifact JSONL digest mismatch')
         rows = [json.loads(line) for line in lines.splitlines()]
-        expected_indices = [i for i in range(len(commands)) if i % 4 == artifact['shard'] - 1]
+        expected_indices = [i for i in range(len(historical_commands)) if i % 4 == artifact['shard'] - 1]
         if [row['index'] for row in rows] != expected_indices:
             raise ValueError('Missing, duplicated or reordered timing evidence')
         for row in rows:
             index = row['index']
-            if row['argv'] != commands[index] or row['exit_code'] != 0 or row['shard'] != artifact['shard']:
+            if row['argv'] != historical_commands[index] or row['exit_code'] != 0 or row['shard'] != artifact['shard']:
                 raise ValueError('Timing argv/status/shard mismatch')
             if int(Decimal(str(row['seconds'])) * 1000) != baseline['milliseconds'][artifact['php']][index]:
                 raise ValueError('Timing duration mismatch')
@@ -103,22 +129,24 @@ def main():
     args = parser.parse_args()
     commands = json.loads((ROOT / 'tests/ci/company-registry-commands.json').read_text())
     baseline = json.loads(BASELINE.read_text())
+    unmeasured = json.loads(UNMEASURED.read_text())
     if args.verify_artifacts:
-        verify_artifacts(args.verify_artifacts, measured_commands(commands, json.loads(UNMEASURED.read_text())), baseline)
+        verify_artifacts(args.verify_artifacts, historical_measured_commands(commands, unmeasured, baseline), baseline)
     plan = build_plan(commands, baseline)
     if args.check:
         if json.loads(PLAN.read_text()) != plan:
             raise SystemExit('Frozen shard plan does not match the committed evidence')
     else:
         PLAN.write_text(json.dumps(plan, indent=2) + '\n')
-    measured = measured_commands(commands, plan['unmeasured'])
-    measured_assignments = [plan['assignments'][commands.index(argv)] for argv in measured]
+    historical = historical_measured_commands(commands, plan['unmeasured'], baseline)
+    historical_plan = build_measured_plan(historical, baseline)
     for php, times in baseline['milliseconds'].items():
         old = [sum(t for i, t in enumerate(times) if i % 4 == shard) / 1000 for shard in range(4)]
-        new = [sum(t for i, t in enumerate(times) if measured_assignments[i] == shard) / 1000 for shard in range(1, 5)]
+        new = [sum(t for i, t in enumerate(times) if historical_plan['assignments'][i] == shard and historical[i] not in [entry['argv'] for entry in plan['retired']]) / 1000 for shard in range(1, 5)]
         print(json.dumps({'php': php, 'observed_round_robin_command_seconds': old,
                           'estimated_replay_balanced_command_seconds': new,
                           'unmeasured_commands_excluded': plan['unmeasured'],
+                          'retired_commands_excluded': plan['retired'],
                           'partial_historical_replay_not_current_total': True, 'not_a_new_run': True}))
 
 

@@ -88,7 +88,7 @@ test('nested role-filter audit stays explicit, including dotted page aliases', (
     }, 'new nested role filters require a visibility audit; constructor coverage is not visibility proof');
     assert.deepEqual(aliases, {'settings/task_timer_auto_stop_browser.cjs':['button','button','button','button'],'settings/task_timer_browser.cjs':['start']}, 'indirect role locators also require review; both timer aliases are in the selected-record default panel');
     const sales=fs.readFileSync(__dirname+'/companies_sales_extras_browser.cjs','utf8');
-    const selected=sales.slice(sales.indexOf("await page.goto(url+'/admin/company_sales?kind=estimates&document='+sources[a])"));
+    const selected=sales.slice(sales.indexOf("await page.goto(url+'/admin/estimates?document='+sources[a])"));
     const tab=selected.indexOf("getByRole('tab',{name:'Acesso no portal por contato',exact:true}).click()");
     const visible=selected.indexOf("getByRole('link',{name:'sales-browser-a.pdf',exact:true}).isVisible()");
     const row=selected.indexOf("const row=page.locator('li').filter({has:page.getByRole");
@@ -121,7 +121,7 @@ test('sales review navigation finishes native DOM initialization before editor a
         let listening=false, loaded=false, resolveNavigation;
         const page={
             waitForNavigation:options=>{assert.equal(options.waitUntil,'domcontentloaded');listening=true;return new Promise(resolve=>{resolveNavigation=resolve;});},
-            url:()=> 'http://127.0.0.1:1234/admin/company_sales?document=17&review='+mode,
+            url:()=> 'http://127.0.0.1:1234/admin/estimates?document=17&review='+mode,
             locator:selector=>selector==='#sales-'+mode+'-link'?{click:async()=>{assert.ok(listening);setImmediate(()=>{loaded=true;resolveNavigation({status:()=>200});});}}:{count:async()=>{assert.equal(selector,'#sales-mutation-editor');assert.ok(loaded,'editor lookup must follow native DOMContentLoaded');return 1;}}
         };
         await openReview(page,mode);assert.ok(loaded);

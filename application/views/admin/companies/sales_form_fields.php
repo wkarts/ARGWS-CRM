@@ -1,7 +1,1 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<label for="invoice-client">Cliente autorizado</label><select class="form-control" id="invoice-client" name="invoice[client_id]" required><option value="">Selecione</option><?php foreach($clients as $client){?><option value="<?= (int)$client['userid']; ?>"><?= $esc($client['company']); ?></option><?php } ?></select>
-<label for="invoice-currency">Moeda</label><select class="form-control" id="invoice-currency" name="invoice[currency]" required><?php foreach($currencies as $currency){?><option value="<?= (int)$currency['id']; ?>"><?= $esc($currency['name']); ?></option><?php } ?></select>
-<label for="invoice-date"><?= $recurring_form?'Primeira emissão':'Emissão'; ?></label><input class="form-control" id="invoice-date" type="date" name="invoice[date]" value="<?= date('Y-m-d'); ?>" required><label for="invoice-due"><?= $recurring_form?'Primeiro vencimento':'Validade / vencimento da fatura'; ?></label><input class="form-control" id="invoice-due" type="date" name="invoice[due_date]" value="<?= date('Y-m-d',time()+30*86400); ?>" required>
-<div id="sales-items"><?php $index=0;$item=['description'=>'','quantity'=>'1.00','rate'=>'','taxes'=>[]];$editing=false;require APPPATH.'views/admin/companies/invoice_item_fields.php'; ?></div><button type="button" data-invoice-add="sales-items">Adicionar item</button>
-<?php $fieldPrefix='sales-';$adjustments=[];require APPPATH.'views/admin/companies/invoice_adjustment_fields.php'; ?>
-<label for="invoice-note">Observação</label><textarea id="invoice-note" class="form-control" name="invoice[note]" maxlength="20000"></textarea>
+<?php // Removed. Canonical native estimates/proposals forms own this component.

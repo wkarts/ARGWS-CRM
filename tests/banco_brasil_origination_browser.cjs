@@ -70,10 +70,10 @@ async function next(page) { await navigate(page, page.locator('section form butt
   await navigate(page,apiToggle().locator('button'));
   // CPF is a source field of the invoice snapshot, never a remittance form override.
   const client=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client a'");
-  await page.goto(url+'/admin/company_clients?client='+client);
+  await page.goto(url+'/admin/clients/client/'+client);
   const vat=page.locator('#edit_vat');await vat.fill('11144477735');
   await navigate(page,vat.locator('xpath=ancestor::form').locator('button[type=submit]'));
-  await page.goto(url+'/admin/company_invoices');await page.locator('#invoice-client').selectOption(client);await page.locator('#invoice-currency').selectOption({label:'BRL'});
+  await page.goto(url+'/admin/invoices');await page.locator('#invoice-client').selectOption(client);await page.locator('#invoice-currency').selectOption({label:'BRL'});
   // A bank credit cannot predate invoice issuance: choose the bank's business date explicitly, independent of the PHP default timezone.
   await page.locator('#invoice-date').fill(new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date()));
   await page.locator('#invoice-item-0-description').fill('SYNTHETIC BB SERVICE');await page.locator('#invoice-item-0-qty').fill('1');await page.locator('#invoice-item-0-rate').fill('100.00');

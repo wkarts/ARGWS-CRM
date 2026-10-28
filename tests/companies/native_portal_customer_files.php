@@ -1,16 +1,20 @@
 <?php
 require __DIR__.'/native_customer_files.php';
 require APPPATH.'services/NativePortalCustomerFiles.php';
+if(!$db->field_exists('email_verified_at',$p.'contacts'))$db->query('ALTER TABLE '.$p.'contacts ADD email_verified_at TEXT');
+$db->query("UPDATE {$p}contacts SET email_verified_at='2026-01-01 00:00:00' WHERE id IN (901,902)");
 $reader=new NativePortalCustomerFiles($db,$p,$portalFiles,$binding,41);$start=$GLOBALS['essentialChecks'];
 $page=$reader->page();essentialCheck(array_column($page['files'],'id')===[$portalFile],'actual bound contact sees only explicitly shared active files');
 essentialCheck($reader->read($portalDto['attachment_key'])['content']===$bytes,'actual private storage bytes use same native opaque download key');
 essentialThrows(fn()=>(new NativePortalCustomerFiles($db,$p,$portalFiles,$binding,82))->page(),'native_portal_files_denied','binding cannot be reused for issuer B');
 essentialThrows(fn()=>$reader->read(str_repeat('f',32)),'native_portal_files_denied','unknown key reveals no customer files');
+$db->query("UPDATE {$p}contacts SET email_verified_at=NULL WHERE id=901");essentialThrows(fn()=>$reader->page(),'native_portal_verification_required','service rechecks verification even for a previously authenticated binding');$db->query("UPDATE {$p}contacts SET email_verified_at='2026-01-01 00:00:00' WHERE id=901");
 $db->query("UPDATE {$p}contacts SET active=0 WHERE id=901");essentialThrows(fn()=>$reader->page(),'native_portal_files_denied','revoked contact cannot use cached page');$db->query("UPDATE {$p}contacts SET active=1 WHERE id=901");
 essentialThrows(fn()=>NativeCompanyFileRows::insertContactInOwned($db,$p,[],new stdClass()),'native_file_row_invalid','caller cannot fabricate portal allocation proof');
 essentialThrows(fn()=>$reader->assertFileAllocationInOwned($db,$p,[]),'native_portal_file_allocation_denied','retained reader is not a create authorization');
 echo 'Native portal customer file readers: '.($GLOBALS['essentialChecks']-$start).' actual SQLite checks passed; upload/controller still pending.'.PHP_EOL;
 $primary=(new IssuerResourceAccess($db,$p))->primaryId();$db->query("INSERT INTO {$p}clients(userid,company,vat,active,datecreated) VALUES(99991,'Historical principal customer','',1,'2026-10-25 00:00:00')");$db->query("INSERT INTO {$p}contacts(id,userid,active,is_primary,firstname,lastname,email,password) VALUES(903,99991,1,1,'Principal','Contact','principal-file@example.invalid',?)",[password_hash($password,PASSWORD_DEFAULT)]);
+$db->query("UPDATE {$p}contacts SET email_verified_at='2026-01-01 00:00:00' WHERE id=903");
 $primaryBinding=$portalFiles->login($primary,'principal-file@example.invalid',$password,'password_verify');essentialCheck(is_array($primaryBinding),'principal contact is resolved by persisted installation lineage');
 $root=sys_get_temp_dir().'/native-client-files-'.bin2hex(random_bytes(8));mkdir($root);mkdir($root.'/99991');define('CLIENT_ATTACHMENTS_FOLDER',$root.'/');file_put_contents($root.'/99991/history.pdf',$bytes);
 $db->query("INSERT INTO {$p}files(rel_id,rel_type,file_name,filetype,visible_to_customer,attachment_key,external,external_link,thumbnail_link,staffid,contact_id,task_comment_id,dateadded) VALUES(99991,'customer','history.pdf','application/pdf',1,?,'','','',0,903,0,'2026-10-25 00:00:00')",[str_repeat('a',32)]);$historicId=(int)$db->insert_id();$db->query("INSERT INTO {$p}shared_customer_files(file_id,contact_id) VALUES(?,903)",[$historicId]);$principalReader=new NativePortalCustomerFiles($db,$p,$portalFiles,$primaryBinding,$primary);

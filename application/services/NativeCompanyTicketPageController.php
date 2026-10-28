@@ -35,18 +35,15 @@ final class NativeCompanyTicketPageController
     {
         if (strtoupper($this->ci->input->method()) === 'POST') {
             $data = $this->input();
-            // No upload may disappear into a successful ticket creation before its adapter exists.
-            foreach ($_FILES as $upload) {
-                foreach ((array) ($upload['error'] ?? []) as $error) if ($error !== UPLOAD_ERR_NO_FILE) throw new DomainException('native_ticket_attachments_unavailable');
-            }
+            require_once __DIR__.'/NativeCompanyTicketMultipart.php';$files=NativeCompanyTicketMultipart::attachments();
             $request = $data['_native_ticket_request'] ?? null;
             unset($data['_native_ticket_request']);
             if (!is_string($request) || !preg_match('/^[a-f0-9]{64}$/D', $request)) throw new DomainException('native_ticket_request_invalid');
-            $id = (new NativeCompanyTicketCommands($this->ci->db, db_prefix()))->createNative($this->issuer, $this->actor, $data, $request);
+            $id = (new NativeCompanyTicketCommands($this->ci->db, db_prefix()))->createNative($this->issuer, $this->actor, $data, $request,$files);
             redirect(CompanyRequestScope::adminUrl($this->ci, 'tickets/ticket/'.$id), 'location', 303);
             return;
         }
-        if (strtoupper($this->ci->input->method()) !== 'GET') throw new DomainException('native_ticket_method_invalid');
+        if (!in_array(strtoupper($this->ci->input->method()), ['GET','HEAD'], true)) throw new DomainException('native_ticket_method_invalid');
         $presentation = new NativeCompanyTicketPresentation($this->ci->db, db_prefix());
         $data = $presentation->add($this->issuer, $this->actor);
         $project = $this->ci->input->get('project_id');

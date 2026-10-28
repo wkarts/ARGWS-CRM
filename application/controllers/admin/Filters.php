@@ -6,14 +6,14 @@ class Filters extends AdminController
 {
     private function nativeStore($identifier,$view):array
     {
-        if(!is_string($identifier)||!is_string($view)||!((in_array($identifier,['invoices','project_invoices'],true)&&$view==='invoices')||($identifier==='projects'&&$view==='projects')||($identifier==='tickets'&&$view==='tickets')||($identifier==='related_tasks'&&$view==='tasks_relations')))throw new DomainException('native_filter_invalid');
+        if(!is_string($identifier)||!is_string($view)||!((in_array($identifier,['invoices','project_invoices'],true)&&$view==='invoices')||($identifier==='projects'&&$view==='projects')||($identifier==='tickets'&&$view==='tickets')||($identifier==='related_tasks'&&$view==='tasks_relations')||($identifier==='tasks'&&$view==='tasks')))throw new DomainException('native_filter_invalid');
         $this->output->set_header('Cache-Control: no-store')->set_content_type('application/json');
         require_once APPPATH.'services/NativeCompanyFilters.php';
         $ctx=CompanyRequestScope::context();
         if($identifier==='tickets'){
             require_once APPPATH.'services/NativeCompanyTicketTableFactory.php';
             $table=(new NativeCompanyTicketTableFactory($this->db,db_prefix()))->make($ctx->issuerId(),$ctx->staffId(),$identifier);
-        }elseif($identifier==='related_tasks'){
+        }elseif(in_array($identifier,['related_tasks','tasks'],true)){
             require_once APPPATH.'services/NativeCompanyRelatedTaskTableFactory.php';
             $table=(new NativeCompanyRelatedTaskTableFactory($this->db,db_prefix()))->make($ctx->issuerId(),$ctx->staffId(),$identifier);
         }elseif($identifier==='projects'){

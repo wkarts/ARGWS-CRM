@@ -7,6 +7,7 @@
 <script>
 Dropzone.options.clientAttachmentsUpload = false;
 var customer_id = $('input[name="userid"]').val();
+var customer_tab_active = get_url_param('tab');
 $(function() {
     $(document).on('click', '[data-native-admin-remove]', function(event) {
         event.preventDefault();
@@ -37,11 +38,11 @@ $(function() {
     }
 
     // Save button not hidden if passed from url ?tab= we need to re-click again
-    if (tab_active) {
-        $('body').find('.nav-tabs [href="#' + tab_active + '"]').click();
+    if (customer_tab_active) {
+        $('body').find('.nav-tabs [href="#' + customer_tab_active + '"]').click();
     }
 
-    if(tab_active === 'customer_admins') {
+    if(customer_tab_active === 'customer_admins') {
         $('#profile-save-section').addClass('hide');
     }
 
@@ -79,6 +80,17 @@ $(function() {
     }
 
     <?php if(!empty($native_customers)){ ?>
+    $('body').on('submit','.native-customer-activate',function(event){
+        event.preventDefault();var form=$(this),button=form.find('button[type="submit"]');
+        if(form.data('nativeBusy'))return false;form.data('nativeBusy',true);button.prop('disabled',true);
+        $.post(form.attr('action'),form.serialize()).done(function(result){
+            if(typeof result==='string'){try{result=JSON.parse(result);}catch(error){result=null;}}
+            if(result&&result.success===true)window.location.reload();
+            else alert_float('danger',<?= json_encode(_l('access_denied')); ?>);
+        }).fail(function(){alert_float('danger',<?= json_encode(_l('access_denied')); ?>);})
+          .always(function(){form.data('nativeBusy',false);button.prop('disabled',false);});
+        return false;
+    });
     $('#send_file').on('show.bs.modal',function(event){var el=$(event.relatedTarget),modal=$(this),bytes=new Uint8Array(32);window.crypto.getRandomValues(bytes);modal.find('[name="native_file_id"]').val(el.attr('data-native-file-id'));modal.find('[name="native_file_revision"]').val(el.attr('data-native-file-revision'));modal.find('[name="request_key"]').val(Array.from(bytes).map(function(v){return v.toString(16).padStart(2,'0');}).join(''));});
     // Native file submission returns a durable queue receipt, not a delivery claim.
     $('#send_file form').on('submit.nativeFileQueue',function(event){
@@ -134,8 +146,13 @@ $(function() {
     /* Customer profile tickets table */
     $('.table-tickets-single').find('#th-submitter').removeClass('toggleable');
 
+    <?php if(!empty($native_customers)){ ?>
+    initDataTable('.table-tickets-single', admin_url + 'tickets/index', undefined,
+        undefined, {userid:'input[name="userid"]'}, [$('table thead .ticket_created_column').index(), 'desc']);
+    <?php }else{ ?>
     initDataTable('.table-tickets-single', admin_url + 'tickets/index/false/' + customer_id, undefined,
         undefined, 'undefined', [$('table thead .ticket_created_column').index(), 'desc']);
+    <?php } ?>
 
     /* Customer profile contracts table */
     initDataTable('.table-contracts-single-client', admin_url + 'contracts/table/' + customer_id, undefined,
@@ -211,7 +228,7 @@ $(function() {
         <?php echo !empty($native_customers)?json_encode([5,'asc']):hooks()->apply_filters('projects_table_default_order', json_encode([5, 'asc'])); ?>);
 
     var vRules = {};
-    if (app.options.company_is_required == 1) {
+    if (<?= !empty($native_customers)?json_encode($native_customer_company_required??'1'): 'app.options.company_is_required'; ?> == 1) {
         vRules = {
             company: 'required',
         }
@@ -342,7 +359,7 @@ function validate_contact_form() {
             // Use this hook only if the contacts are not logging into the customers area and you are not using support tickets piping.
             <?php if (!empty($native_customers) || hooks()->apply_filters('contact_email_unique', 'true') === 'true') { ?>
             remote: {
-                url: admin_url + "misc/contact_email_exists",
+                url: admin_url + <?= json_encode(!empty($native_customers)?'clients/contact_email_exists':'misc/contact_email_exists'); ?>,
                 type: 'post',
                 data: {
                     email: function() {
@@ -441,6 +458,17 @@ function contact(client_id, contact_id) {
         alert_float('danger', response.message);
     });
 }
+
+<?php if(!empty($native_customers)){ ?>
+// Same native modal action, made available without loading the global main.js.
+function view_contact_consent(id) {
+    requestGet('clients/consents/' + id).done(function(response) {
+        $('#consent_data').html(response);
+        initDataTableInline($('#consentHistoryTable'));
+        $('#consentModal').modal('show');
+    });
+}
+<?php } ?>
 
 
 function update_all_proposal_emails_linked_to_contact(contact_id) {

@@ -3,22 +3,39 @@
 use app\services\utilities\Arr;
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH.'services/NativeCompanySpecializedOperations.php';
 
 class Expenses extends AdminController
 {
+    use NativeCompanySpecializedOperations;
+
+    public function purchases() { $this->nativeExpensePurchases(); }
     public function __construct()
     {
         parent::__construct();
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
+            return;
+        }
         $this->load->model('expenses_model');
     }
 
     public function index($id = '')
     {
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyExpensesController.php';
+            NativeCompanyExpensesController::handle($this);
+            return;
+        }
         $this->list_expenses($id);
     }
 
     public function list_expenses($id = '')
     {
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyExpensesController.php';
+            NativeCompanyExpensesController::handle($this);
+            return;
+        }
         close_setup_menu();
 
         if (staff_cant('view', 'expenses') && staff_cant('view_own', 'expenses')) {
@@ -265,8 +282,13 @@ class Expenses extends AdminController
         redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
     }
 
-    public function copy($id)
+    public function copy($id = '')
     {
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyExpenseCopiesController.php';
+            NativeCompanyExpenseCopiesController::handle($this);
+            return;
+        }
         if (staff_cant('create', 'expenses')) {
             access_denied('expenses');
         }

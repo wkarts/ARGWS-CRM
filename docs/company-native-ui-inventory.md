@@ -9,7 +9,12 @@ Os caminhos abaixo foram extraídos dos controllers e templates reais. Métodos 
 
 Contrato do pedido: uma apresentação CRM; Empresas em grid; seletor acima do perfil; wizard modal **somente para criar**; configuração cotidiana nas telas normais da empresa ativa. Não há downgrade de serviços, migrations ou regras financeiras.
 
-## Controllers (48)
+## Controllers paralelos ainda pendentes (40)
+
+O censo atual é gerado do workspace e mantém somente os fluxos ainda não
+migrados. Clientes, Leads e Settings já usam os controllers/views oficiais do
+CRM (`admin/clients`, `admin/leads` e `admin/settings/all.php`) e não aparecem
+mais nesta lista.
 
 Prefixo público habitual `/admin/`; respeitar `CompanyRequestScope::adminUrl` para instalações com admin URI customizado.
 `Company_selection::select` permanece como endpoint técnico POST em `admin/company_selection/select`; ele não mantém página própria nem shell alternativo.
@@ -19,14 +24,9 @@ Prefixo público habitual `/admin/`; respeitar `CompanyRequestScope::adminUrl` p
 | `company_ai` | `application/controllers/admin/Company_ai.php` | index | `admin/companies/ai` | Consulta/resultado primeiro; manter ações específicas autorizadas. |
 | `company_api_tokens` | `application/controllers/admin/Company_api_tokens.php` | index | `admin/companies/api_tokens` | Agrupar configuração/operações/histórico; preservar cada formulário e confirmação. |
 | `company_asaas` | `application/controllers/admin/Company_asaas.php` | index | `admin/companies/asaas` | Agrupar configuração/operações/histórico; preservar cada formulário e confirmação. |
-| `company_assets` | `application/controllers/admin/Company_assets.php` | index | `admin/companies/assets` | Formulário contextual normal; sem wizard de empresa. |
-| `company_calendar` | `application/controllers/admin/Company_calendar.php` | index | `admin/companies/calendar` | Formulário contextual normal; sem wizard de empresa. |
-| `company_certificates` | `application/controllers/admin/Company_certificates.php` | index | `admin/companies/certificates` | Formulário contextual normal; sem wizard de empresa. |
-| `company_client_imports` | `application/controllers/admin/Company_client_imports.php` | index | `admin/companies/client_imports` | Fluxo específico de revisão/confirmação; não converter em CRUD genérico. |
-| `company_clients` | `application/controllers/admin/Company_clients.php` | index, lookup | `admin/companies/clients` | Lista primeiro; criar/editar por ação explícita; detalhes preservam permissões e revisão. |
 | `company_connect_api` | `application/controllers/admin/Company_connect_api.php` | index | `admin/companies/connect_api` | Agrupar configuração/operações/histórico; preservar cada formulário e confirmação. |
-| `company_contracts` | `application/controllers/admin/Company_contracts.php` | index | `admin/companies/contracts` | Lista primeiro; criar/editar por ação explícita; detalhes preservam permissões e revisão. |
 | `company_credits` | `application/controllers/admin/Company_credits.php` | index | `admin/companies/credits` | Lista primeiro; criar/editar por ação explícita; detalhes preservam permissões e revisão. |
+| `company_efi` | `application/controllers/admin/Company_efi.php` | index | `admin/companies/efi` | Configuração e operação Efí continuam em revisão para migração à rota oficial. |
 | `company_expense_copies` | `application/controllers/admin/Company_expense_copies.php` | index | `admin/companies/expense_copies` | Fluxo específico de revisão/confirmação; não converter em CRUD genérico. |
 | `company_expenses` | `application/controllers/admin/Company_expenses.php` | index | `admin/companies/expenses` | Lista primeiro; criar/editar por ação explícita; detalhes preservam permissões e revisão. |
 | `company_google_mail_oauth` | `application/controllers/admin/Company_google_mail_oauth.php` | index | `admin/companies/google_mail_oauth` | Formulário contextual normal; sem wizard de empresa. |
@@ -34,10 +34,7 @@ Prefixo público habitual `/admin/`; respeitar `CompanyRequestScope::adminUrl` p
 | `company_imports` | `application/controllers/admin/Company_imports.php` | index | `admin/companies/imports` | Fluxo específico de revisão/confirmação; não converter em CRUD genérico. |
 | `company_invoice_copies` | `application/controllers/admin/Company_invoice_copies.php` | index | `admin/companies/invoice_copies` | Fluxo específico de revisão/confirmação; não converter em CRUD genérico. |
 | `company_invoice_drafts` | `application/controllers/admin/Company_invoice_drafts.php` | index | `admin/companies/invoice_drafts` | Fluxo específico de revisão/confirmação; não converter em CRUD genérico. |
-| `company_invoice_recurring` | `application/controllers/admin/Company_invoice_recurring.php` | index | `admin/companies/invoice_recurring` | Lista primeiro; criar/editar por ação explícita; detalhes preservam permissões e revisão. |
 | `company_invoices` | `application/controllers/admin/Company_invoices.php` | index | `admin/companies/invoices` | Lista primeiro; criar/editar por ação explícita; detalhes preservam permissões e revisão. |
-| `company_leads` | `application/controllers/admin/Company_leads.php` | index, file, export | `admin/companies/leads` | Lista primeiro; criar/editar por ação explícita; detalhes preservam permissões e revisão. |
-| `company_master` | `application/controllers/admin/Company_master.php` | index | `admin/issuers/master_resolution` | Recuperação administrativa nativa, não confundir com criar empresa. |
 | `company_microsoft_mail_oauth` | `application/controllers/admin/Company_microsoft_mail_oauth.php` | index | `admin/companies/microsoft_mail_oauth` | Formulário contextual normal; sem wizard de empresa. |
 | `company_onboarding` | `application/controllers/admin/Company_onboarding.php` | index | `admin/companies/onboarding` | Modal exclusivamente de criação; rascunho/revisão/retomada/idempotência. |
 | `company_post_refund` | `application/controllers/admin/Company_post_refund.php` | index | `admin/companies/post_refund` | Fluxo específico de revisão/confirmação; não converter em CRUD genérico. |
@@ -51,7 +48,6 @@ Prefixo público habitual `/admin/`; respeitar `CompanyRequestScope::adminUrl` p
 | `company_purchases` | `application/controllers/admin/Company_purchases.php` | index | `admin/companies/purchases` | Agrupar configuração/operações/histórico; preservar cada formulário e confirmação. |
 | `company_pusher` | `application/controllers/admin/Company_pusher.php` | index | `admin/companies/pusher` | Agrupar configuração/operações/histórico; preservar cada formulário e confirmação. |
 | `company_recurring` | `application/controllers/admin/Company_recurring.php` | index | `admin/companies/recurring` | Lista primeiro; criar/editar por ação explícita; detalhes preservam permissões e revisão. |
-| `company_reports` | `application/controllers/admin/Company_reports.php` | index | `admin/companies/reports`<br>`admin/companies/ledger` | Consulta/resultado primeiro; manter ações específicas autorizadas. |
 | `company_sales` | `application/controllers/admin/Company_sales.php` | index | `admin/companies/sales` | Lista primeiro; criar/editar por ação explícita; detalhes preservam permissões e revisão. |
 | `company_staff` | `application/controllers/admin/Company_staff.php` | index | `admin/companies/staff` | Lista primeiro; criar/editar por ação explícita; detalhes preservam permissões e revisão. |
 | `company_standalone_billing` | `application/controllers/admin/Company_standalone_billing.php` | index | `admin/companies/standalone_billing` | Fluxo específico de revisão/confirmação; não converter em CRUD genérico. |
@@ -67,19 +63,14 @@ Prefixo público habitual `/admin/`; respeitar `CompanyRequestScope::adminUrl` p
 
 ## Templates que compõem diretamente o shell isolado
 
-A lista inclui referências por `__DIR__`, não somente `APPPATH`. `calendar.php` e `project_portal_rules.php` também compartilham o shell.
+A lista inclui referências por `__DIR__`, não somente `APPPATH`. `project_portal_rules.php` também compartilham o shell.
 
 - `application/views/admin/companies/ai.php`
 - `application/views/admin/companies/api_tokens.php`
 - `application/views/admin/companies/asaas.php`
-- `application/views/admin/companies/assets.php`
-- `application/views/admin/companies/calendar.php`
-- `application/views/admin/companies/certificates.php`
-- `application/views/admin/companies/client_imports.php`
-- `application/views/admin/companies/clients.php`
 - `application/views/admin/companies/connect_api.php`
-- `application/views/admin/companies/contracts.php`
 - `application/views/admin/companies/credits.php`
+- `application/views/admin/companies/efi.php`
 - `application/views/admin/companies/expense_copies.php`
 - `application/views/admin/companies/expenses.php`
 - `application/views/admin/companies/google_mail_oauth.php`
@@ -88,14 +79,11 @@ A lista inclui referências por `__DIR__`, não somente `APPPATH`. `calendar.php
 - `application/views/admin/companies/imports.php`
 - `application/views/admin/companies/invoice_copies.php`
 - `application/views/admin/companies/invoice_drafts.php`
-- `application/views/admin/companies/invoice_recurring.php`
 - `application/views/admin/companies/invoices.php`
-- `application/views/admin/companies/leads.php`
-- `application/views/admin/companies/ledger.php`
 - `application/views/admin/companies/microsoft_mail_oauth.php`
 - `application/views/admin/companies/onboarding.php`
 - `application/views/admin/companies/post_refund.php`
-- `application/views/admin/companies/post_refund_manual.php`
+- `application/views/admin/companies/post_refund_manual.php
 - `application/views/admin/companies/project_billing_rates.php`
 - `application/views/admin/companies/project_copies.php`
 - `application/views/admin/companies/project_extras.php`
@@ -106,7 +94,6 @@ A lista inclui referências por `__DIR__`, não somente `APPPATH`. `calendar.php
 - `application/views/admin/companies/pusher.php`
 - `application/views/admin/companies/recurring.php`
 - `application/views/admin/companies/registry.php`
-- `application/views/admin/companies/reports.php`
 - `application/views/admin/companies/sales.php`
 - `application/views/admin/companies/staff.php`
 - `application/views/admin/companies/standalone_billing.php`
@@ -120,9 +107,8 @@ A lista inclui referências por `__DIR__`, não somente `APPPATH`. `calendar.php
 - `application/views/admin/companies/time_batches.php`
 - `application/views/admin/companies/time_billing.php`
 - `application/views/admin/emails/company_scoped.php`
-- `application/views/admin/settings/company_scoped.php`
 
-Além dos 48 controllers, `Issuers::index` escolhe `admin/issuers/manage` para principal e `admin/companies/registry` para contexto isolado; `Settings` usa `admin/settings/company_scoped`, e `Emails` usa `admin/emails/company_scoped` em contexto secundário. `Company_master` é exceção deliberada: usa `admin/issuers/master_resolution` e shell nativo de recuperação. Fragmentos incluídos pelas views (itens, discussões, arquivos, identidade e ações) não são páginas independentes e não devem receber um segundo shell.
+Além dos controllers ainda pendentes, `Issuers::index` mantém o cadastro canônico; `Settings` usa `admin/settings/all.php` tanto para a empresa principal quanto para a selecionada. Clientes e Leads entram pelos controllers oficiais `Clients` e `Leads`, com adapters por empresa, e a importação de clientes/contratos continua nas views oficiais. Fragmentos incluídos pelas views (itens, discussões, arquivos, identidade e ações) não são páginas independentes e não devem receber um segundo shell.
 
 ## Divergências comprovadas no baseline
 
@@ -130,7 +116,7 @@ Além dos 48 controllers, `Issuers::index` escolhe `admin/issuers/manage` para p
 - `companies/invoices.php` empilha documento, recebimento, edição, listagem e emissão. `invoices/manage.php` / `invoices/list_template.php` da 4.0.2 separam toolbar, filtros, grid e detalhe.
 - Lista e criação também coexistem em clientes, contratos, créditos, despesas, leads, projetos, vendas, equipe, tarefas e chamados. Alterar só CSS do shell não completa esses fluxos.
 - Integrações possuem múltiplos formulários de ações distintas: Asaas, Connect, RH e Compras exigem agrupamento sem eliminar ações/revisões. A contagem literal de `form_open` não inclui necessariamente formulários em fragmentos.
-- `settings/company_scoped.php` usa navegação horizontal própria, diferente da navegação lateral por categorias em `settings/all.php` da referência.
+- Settings usa a navegação lateral oficial por categorias em `settings/all.php`; a antiga view paralela foi removida.
 - `Company_onboarding` já possui backend de etapas e frontend; `canCreate` é master-only no modelo nativo. Ausência de botão não autoriza transformar admin genérico em master.
 
 ## Guardas inegociáveis
@@ -169,9 +155,6 @@ Leitura lexical do baseline, não DOM renderizado. `[dinâmico]` representa PHP.
 | `ai` | Conteúdo exato da solicitação → Histórico privado desta pessoa → Resultado para revisão humana | `ticket`, `operation`, `result` |
 | `api_tokens` | Token criado — copie agora → Criar token → Seus tokens nesta empresa → Endpoints disponíveis | Ver controller/fragmentos |
 | `asaas` | Contas e ambientes → Credenciais protegidas → Webhooks locais → Emissão avulsa → Cobranças e recebimentos → Conciliação em segundo plano → Eventos e revisão | `invoice`, `refund_origin` |
-| `assets` | [dinâmico] | `download` |
-| `calendar` | [dinâmico] | Ver controller/fragmentos |
-| `certificates` | [dinâmico] → Remover material armazenado | Ver controller/fragmentos |
 | `client_imports` | Exportar identidades próprias → Lote [dinâmico] → Gerar preview obrigatório → Seus lotes recentes nesta empresa | `export`, `after`, `batch` |
 | `clients` | [dinâmico] → Lista de clientes → Novo cliente privado | `client`, `after`, `search` |
 | `connect_api` | Parear a instância própria por QR → Reinício da instância própria → Aviso privado de fatura | `after`, `invoice` |
@@ -186,10 +169,9 @@ Leitura lexical do baseline, não DOM renderizado. `[dinâmico]` representa PHP.
 | `imports` | Exportar despesas próprias → Lote [dinâmico] → Gerar preview obrigatório → Seus lotes recentes nesta empresa | `export`, `after`, `batch` |
 | `invoice_copies` | Origem [dinâmico] — [dinâmico] → Nova fatura [dinâmico] emitida | `source`, `receipt` |
 | `invoice_drafts` | Copiar [dinâmico] para rascunho privado → [dinâmico] #[dinâmico] → [dinâmico] → Lista privada da empresa | `draft`, `copy_invoice`, `attempt`, `after` |
-| `invoice_recurring` | Série [dinâmico] → Séries desta empresa → Nova série com a origem atual | `schedule` |
+| `invoice_recurring` | `admin/invoices/recurring` — Série [dinâmico] → Séries desta empresa → Nova série com a origem atual | `schedule` |
 | `invoices` | [dinâmico] — [dinâmico] → Lista da empresa → Emitir fatura | `invoice`, `attachment`, `preview`, `pdf`, `after` |
 | `leads` | [dinâmico] → Kanban e lista → Novo lead → Importar CSV → Minha caixa interna → Status e fontes desta empresa | `search`, `state`, `stage`, `lead`, `batch`, `after`, `notice_after` |
-| `ledger` | Consulta preservada → Cobertura do histórico → Efeitos dos eventos originais capturados → Eventos desta página | Ver controller/fragmentos |
 | `microsoft_mail_oauth` | Notificações de documentos desta empresa → Recuperação de acesso do portal desta empresa | `state`, `code`, `error` |
 | `onboarding` | Recursos da empresa → Clientes privados por padrão → Confira antes de criar | `step` |
 | `post_refund` | Fatura [dinâmico] | `invoice` |

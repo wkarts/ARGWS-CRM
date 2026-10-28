@@ -125,7 +125,7 @@ class Banco_brasil extends AdminController
         $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'manage');
         try{
             $input=$this->input->post('contract',false);if(!is_array($input))throw new InvalidArgumentException('invalid_contract');
-            $channel=$this->input->post('contract_channel',false);if($channel==='api_return'){$this->issuer($id,'reconcile_api_return');$this->apiCnab()->declare($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$this->positiveId($this->input->post('layout_binding_id')),$input);}else{if($channel!==null&&$channel!=='')throw new DomainException('bb_contract_channel_invalid');$this->origination()->declareContract($id,$this->staffId(),$this->positiveId($this->input->post('connection_id')),$this->positiveId($this->input->post('layout_binding_id')),$input);}
+            $channel=$this->input->post('contract_channel',false);if($channel==='api_return'){$this->issuer($id,'reconcile_api_return');$this->apiCnab()->declare($id,$this->staffId(),$this->positiveId($this->input->post('origin_id')),$this->positiveId($this->input->post('layout_binding_id')),$input);}else{if(!in_array($channel,[null,'','cnab400'],true))throw new DomainException('bb_contract_channel_invalid');$layout=$channel==='cnab400'?\BancoBrasil\LayoutCatalog::CNAB400:\BancoBrasil\Agreement::LAYOUT_ID;$this->origination()->declareContract($id,$this->staffId(),$this->positiveId($this->input->post('connection_id')),$this->positiveId($this->input->post('layout_binding_id')),$input,$layout);}
             $this->flash('success','Declaração do operador registrada. Isso não comprova contrato ou homologação pelo banco. A faixa reservada não pode ser reiniciada.');
         }catch(Throwable $e){$this->flash('warning','Declaração não confirmada. Confira contrato, perfil, isenção, intercâmbio de teste e faixa exclusiva já utilizada; não reduza nem reutilize números.');}
         redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
@@ -181,11 +181,109 @@ class Banco_brasil extends AdminController
         catch(Throwable $e){$this->flash('warning','Vínculo não confirmado. Confira a origem imutável; valor ou nome não permitem forçar um vínculo.');}
         redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-return');
     }
+    public function prepare_cnab400()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'generate');
+        try{
+            require_once dirname(__DIR__).'/libraries/BancoBrasil/Cnab400Preparation.php';
+            $key=$this->input->post('request_key',false);if(!is_string($key))throw new DomainException('bb400_preparation_request_invalid');
+            $result=(new \BancoBrasil\Cnab400Preparation($this->db,db_prefix()))->prepare($id,$this->staffId(),$this->positiveId($this->input->post('connection_id')),$this->positiveId($this->input->post('layout_binding_id')),$this->positiveId($this->input->post('invoice_id')),$key);
+            $this->flash($result['stale']?'warning':'success','Preparação #'.$result['id'].' da fatura #'.$result['invoice_id'].($result['stale']?' está desatualizada; faça uma nova preparação.': ' preservada.').($result['remittance_generated']?' Arquivo já gerado; nenhum pagamento foi criado.':($result['bank_number_reserved']?' Número já reservado; nenhum arquivo ou pagamento foi criado.':' Nenhum número foi reservado e nenhum arquivo ou pagamento foi criado.')));
+        }catch(Throwable $error){$this->flash('warning','Preparação não confirmada. Confira empresa, permissão, fatura, conexão, perfil400 e chave da solicitação.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function declare_cnab400_approval()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'manage');
+        try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Cnab400Preparation.php';$input=$this->input->post('approval400',false);if(!is_array($input))throw new InvalidArgumentException('bb400_approval_invalid');$result=(new \BancoBrasil\Cnab400Preparation($this->db,db_prefix()))->declareApproval($id,$this->staffId(),$this->positiveId($this->input->post('preparation_id')),$input);$this->flash('success','Declaração do operador registrada para a preparação #'.$result['id'].'. A aplicação não verificou automaticamente o documento bancário nem transmitiu arquivo.');}
+        catch(Throwable $error){$this->flash('warning','Declaração não registrada. Confira empresa, origem, referências, isenção de juros, homologação e autorização.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function generate_cnab400()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'generate');
+        try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Cnab400Preparation.php';$date=$this->input->post('generation_date',false);$payer=$this->input->post('payer',false);if(!is_string($date)||!is_array($payer))throw new InvalidArgumentException('bb400_candidate_invalid_input');$result=(new \BancoBrasil\Cnab400Preparation($this->db,db_prefix()))->generate($id,$this->staffId(),$this->positiveId($this->input->post('preparation_id')),$date,$payer);$this->flash('success','Arquivo 400 da origem #'.$result['origin_id'].' gerado conforme declaração do operador. Não foi enviado ou aceito pelo banco.');}
+        catch(Throwable $error){$this->flash('warning','Arquivo não gerado. Confira origem, declaração, data e dados do pagador; a reserva existente foi preservada.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function download_cnab400()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'download');
+        try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Cnab400Preparation.php';$file=(new \BancoBrasil\Cnab400Preparation($this->db,db_prefix()))->download($id,$this->staffId(),$this->positiveId($this->input->post('preparation_id')));$this->output->set_header('Cache-Control: private, no-store, max-age=0');$this->output->set_header('Pragma: no-cache');$this->output->set_header('X-Content-Type-Options: nosniff');$this->output->set_header('Content-Disposition: attachment; filename="'.$file['filename'].'"');$this->output->set_content_type('application/octet-stream')->set_output($file['content']);}
+        catch(Throwable $error){show_error('Arquivo indisponível ou integridade não confirmada. Nenhum envio foi realizado.',403);}
+    }
+    public function report_cnab400()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'generate');
+        try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Cnab400Preparation.php';$reference=$this->input->post('submission_reference',false);if(!is_string($reference))throw new InvalidArgumentException('invalid_reference');(new \BancoBrasil\Cnab400Preparation($this->db,db_prefix()))->reportTransmission($id,$this->staffId(),$this->positiveId($this->input->post('preparation_id')),$reference);$this->flash('success','Envio manual declarado. A aplicação não confirmou entrega, aceite ou recebimento no banco.');}
+        catch(Throwable $error){$this->flash('warning','Envio não registrado. Confira a preparação, o arquivo baixado e a referência.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function candidate_cnab400()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'generate');
+        try{
+            require_once dirname(__DIR__).'/libraries/BancoBrasil/Cnab400Preparation.php';
+            $date=$this->input->post('generation_date',false);$payer=$this->input->post('payer',false);
+            if(!is_string($date)||!is_array($payer))throw new DomainException('bb400_candidate_invalid_input');
+            $result=(new \BancoBrasil\Cnab400Preparation($this->db,db_prefix()))->candidate($id,$this->staffId(),$this->positiveId($this->input->post('preparation_id')),$date,$payer);
+            $this->flash('info','Candidato da origem #'.$result['origin_id'].' validado em memória (SHA-256 '.$result['content_sha256'].'). Não foi armazenado nem disponibilizado; a isenção de juros do cadastro bancário e a homologação permanecem pendentes.');
+        }catch(Throwable $error){$this->flash('warning','Candidato não validado. Confira origem, data, nome/endereço ASCII, carteira, campos e informação bancária declarada. Nenhum arquivo foi criado.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function reserve_cnab400()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'generate');
+        try{
+            require_once dirname(__DIR__).'/libraries/BancoBrasil/Cnab400Preparation.php';
+            $confirmed=$this->input->post('reserve_confirmed',false);if(!is_string($confirmed))throw new DomainException('bb400_reservation_confirmation_required');
+            $result=(new \BancoBrasil\Cnab400Preparation($this->db,db_prefix()))->reserve($id,$this->staffId(),$this->positiveId($this->input->post('preparation_id')),$confirmed);
+            $this->flash('success','Origem #'.$result['origin_id'].' vinculada à fatura #'.$result['invoice_id'].'; reserva do número preservada. Nenhuma remessa ou pagamento foi gerado.');
+        }catch(Throwable $error){$this->flash('warning','Reserva não confirmada. Confira preparação, fonte atual, faixa exclusiva, conta e permissões; não reutilize número anteriormente reservado.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function recover_cnab400()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'generate');
+        try{
+            require_once dirname(__DIR__).'/libraries/BancoBrasil/Cnab400Preparation.php';
+            $result=(new \BancoBrasil\Cnab400Preparation($this->db,db_prefix()))->recover($id,$this->staffId(),$this->positiveId($this->input->post('preparation_id')));
+            $this->flash($result['stale']?'warning':'info','Preparação #'.$result['id'].' da fatura #'.$result['invoice_id'].($result['stale']?' está desatualizada.':' permanece íntegra.').($result['remittance_generated']?' Arquivo gerado; nenhum pagamento foi criado.':($result['bank_number_reserved']?' Número reservado; arquivo e pagamento não foram gerados.':' Não há número reservado, arquivo ou pagamento.')));
+        }catch(Throwable $error){$this->flash('warning','Preparação indisponível. Confira empresa, permissões, identificador e histórico.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
+    }
+    public function compare_cnab400()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'reconcile');
+        try{
+            require_once dirname(__DIR__).'/libraries/BancoBrasil/Reconciliation.php';
+            $result=(new \BancoBrasil\Reconciliation($this->db,db_prefix()))->compareCnab400($id,$this->staffId(),$this->positiveId($this->input->post('event_id')),$this->positiveId($this->input->post('invoice_id')));
+            $status=static fn(bool $ok):string=>$ok?'coincide':'diverge';
+            $checks=$result['checks'];
+            $message='Fatura #'.$result['invoice_id'].': documento '.$status($checks['document']).'; vencimento '.$status($checks['due_date']).'; nominal '.$status($checks['nominal_amount']).'. '
+                .($result['origin_matches_invoice']?'Origem CNAB400 correspondente identificada. ':'Nenhuma origem CNAB400 correspondente foi identificada. ')
+                .($result['receipt_assessment']['settlement_reported']?' Ocorrência de recebimento relatada.':' Ocorrência exige revisão.').' Comparação sem vínculo ou baixa; o arquivo não comprova moeda, crédito ou autenticidade.';
+            $this->flash('info',$message);
+        }catch(Throwable $error){$this->flash('warning','Comparação não disponível. Confira a empresa, evento, fatura, permissões e dados preservados.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-return');
+    }
     public function review_event()
     {
         $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'reconcile');
         try{require_once dirname(__DIR__).'/libraries/BancoBrasil/Reconciliation.php';$input=$this->input->post('review',false);if(!is_array($input))throw new InvalidArgumentException('invalid_review');(new \BancoBrasil\Reconciliation($this->db,db_prefix()))->review($id,$this->staffId(),$this->positiveId($this->input->post('event_id')),$input);$this->flash('success','Revisão e evidência registradas no histórico. A revisão não criou nem estornou pagamento.');}
         catch(Throwable $e){$this->flash('warning','Revisão não confirmada. Confira empresa, evento, permissões, motivo e referência.');}
+        redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-return');
+    }
+    public function settle_cnab400()
+    {
+        $this->post();$id=$this->positiveId($this->input->post('issuer_id'));$this->issuer($id,'reconcile');
+        try{
+            require_once dirname(__DIR__).'/libraries/BancoBrasil/Cnab400ReviewedReceipt.php';
+            $input=$this->input->post('settlement400',false);if(!is_array($input))throw new InvalidArgumentException('invalid_settlement');
+            $source=new \BancoBrasil\Cnab400ReviewedReceipt($this->positiveId($this->input->post('event_id')),$input);
+            $payment=(new \app\services\InvoicePaymentWriter($this->db))->recordCompanyProviderReceipt($id,$this->staffId(),$source);
+            $this->flash('success','Recebimento #'.$payment.' registrado após conferência independente. A declaração local não autentica automaticamente o arquivo ou o banco.');
+        }catch(Throwable $error){$this->flash('warning','Recebimento 400 não confirmado. Exige origem vinculada, lote enviado e declaração de homologação, valor e moeda conferidos independentemente, sem ajustes ou divergências.');}
         redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-return');
     }
     public function settle_event()

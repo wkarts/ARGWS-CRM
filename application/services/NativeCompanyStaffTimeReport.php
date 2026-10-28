@@ -22,6 +22,17 @@ final class NativeCompanyStaffTimeReport
     }
     private function guard(int $i,int $a,bool $all):IssuerResourceAccess
     {$acl=new IssuerResourceAccess($this->db,$this->p);if(!$acl->member($i,$a)||$acl->primaryId()===$i||($all&&!$acl->can($i,$a,'reports','view-timesheets')))throw new DomainException('native_timesheet_report_denied');return$acl;}
+    public function filters(int $i,int $a,bool $all):array
+    {
+        $this->guard($i,$a,$all);$authority=new NativeCompanyTimesheetReportAuthority($this->db,$this->p);$subjects=$all?$authority->subjects($i,$a):[['staff_id'=>$a,'name'=>null]];
+        $projectSql='SELECT p.id,p.name,p.client_id FROM '.$this->p.'company_projects p JOIN '.$this->p.'issuers_clients c ON c.client_id=p.client_id AND c.owner_issuer_id=p.issuer_id WHERE p.issuer_id=? ORDER BY p.name,p.id';
+        $clientSql='SELECT c.client_id,l.company FROM '.$this->p.'issuers_clients c JOIN '.$this->p.'clients l ON l.userid=c.client_id WHERE c.owner_issuer_id=? ORDER BY l.company,c.client_id';
+        $projectRows=IssuerStorage::query($this->db,$projectSql,[$i])->result_array();$clientRows=IssuerStorage::query($this->db,$clientSql,[$i])->result_array();
+        $projects=array_map(static fn($r)=>['id'=>NativeCompanyResourceId::encode('company_project',(int)$r['id']),'name'=>$r['name'],'client_id'=>(int)$r['client_id']],$projectRows);
+        $clients=array_map(static fn($r)=>['id'=>(int)$r['client_id'],'name'=>$r['company']],$clientRows);
+        $this->guard($i,$a,$all);if($projectRows!==IssuerStorage::query($this->db,$projectSql,[$i])->result_array()||$clientRows!==IssuerStorage::query($this->db,$clientSql,[$i])->result_array()||($all&&$subjects!==$authority->subjects($i,$a)))throw new DomainException('native_staff_timesheet_stale');
+        return['subjects'=>$subjects,'projects'=>$projects,'clients'=>$clients];
+    }
     public function read(int $i,int $a,bool $all,array $input=[],?int $now=null):array
     {
         $acl=$this->guard($i,$a,$all);$now??=time();$range=$this->range($input,$now);$preferences=$this->preferences($i);$authority=new NativeCompanyTimesheetReportAuthority($this->db,$this->p);$subjects=$all?$authority->subjects($i,$a):[['staff_id'=>$a,'name'=>null]];
@@ -34,7 +45,7 @@ final class NativeCompanyStaffTimeReport
         if($client!==null){$owner=IssuerStorage::query($this->db,'SELECT owner_issuer_id FROM '.$this->p.'issuers_clients WHERE client_id=?',[$client])->row_array();$filterProof[]=['SELECT owner_issuer_id FROM '.$this->p.'issuers_clients WHERE client_id=?',[$client],$owner];if(!$owner||(int)$owner['owner_issuer_id']!==$i)throw new DomainException('native_staff_timesheet_filter_invalid');}
         $reader=new NativeCompanyStaffTimesheets($this->db,$this->p,$this->zone->getName());$tags=new NativeCompanyResourceTags($this->db,$this->p);$rows=[];$proof=[];$tagProof=[];$statusProof=[];
         foreach($subjects as$subject){$id=$subject['staff_id'];$snapshot=$all?$reader->report($i,$a,$id,['period-from'=>$range['from'],'period-to'=>$range['to']],$now):$reader->reportOwn($i,$a,['period-from'=>$range['from'],'period-to'=>$range['to']],$now);$proof[]=[$id,$snapshot];
-            foreach($snapshot['timesheets']as$row){if($row['task_id']===0)continue;if($projectIds&&!isset($projectIds[$row['project_id']]))continue;if(!$projectIds&&$client!==null&&$row['client_id']!==$client)continue;
+            foreach($snapshot['timesheets']as$row){if($row['task_id']===0)continue;$projectId=$row['project_id'];if($projectIds&&($projectId===null||!isset($projectIds[$projectId])))continue;if(!$projectIds&&$client!==null&&$row['client_id']!==$client)continue;
                 $taskIdentity=NativeCompanyResourceId::decode('task',$row['task_id']);$taskTable=$taskIdentity['source_kind']==='company_task'?'company_tasks':'company_standalone_tasks';$statusSql='SELECT status FROM '.$this->p.$taskTable.' WHERE issuer_id=? AND id=?';$statusArgs=[$i,$taskIdentity['source_id']];$status=IssuerStorage::query($this->db,$statusSql,$statusArgs)->row_array();if(!$status||!in_array($status['status'],['todo','in_progress','awaiting_feedback','testing','done'],true))throw new DomainException('native_staff_timesheet_invalid');$statusProof[]=[$statusSql,$statusArgs,$status];$row['task_status']=$status['status'];
                 $decoration=$tags->read($i,$a,'timesheet',$row['id']);$tagProof[]=[$row['id'],$decoration];$row['tags']=$decoration['tags'];$row['tags_revision']=$decoration['revision'];$row['staff_name']=$subject['name'];$rows[]=$row;
             }

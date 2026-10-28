@@ -23,6 +23,7 @@ class Clients extends ClientsController
 
     public function index()
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalHomeHttp.php';(new NativePortalHomeHttp($this))->index();return;}
         $data['is_home'] = true;
         $this->load->model('reports_model');
         $data['payments_years'] = $this->reports_model->get_distinct_customer_invoices_years();
@@ -77,6 +78,7 @@ class Clients extends ClientsController
 
     public function projects($status = '')
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalProjectsHttp.php';(new NativePortalProjectsHttp($this))->index($status);return;}
         if (!has_contact_permission('projects')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -110,6 +112,7 @@ class Clients extends ClientsController
 
     public function project($id)
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalProjectsHttp.php';(new NativePortalProjectsHttp($this))->detail($id);return;}
         if (!has_contact_permission('projects')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -629,6 +632,7 @@ class Clients extends ClientsController
 
     public function tickets($status = '')
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalTicketsHttp.php';(new NativePortalTicketsHttp($this))->index($status);return;}
         if (!has_contact_permission('support')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -671,6 +675,7 @@ class Clients extends ClientsController
 
     public function proposals()
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalProposalsHttp.php';try{(new NativePortalProposalsHttp($this))->index();}catch(DomainException$denied){show_404();}return;}
         if (!has_contact_permission('proposals')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -697,6 +702,7 @@ class Clients extends ClientsController
 
     public function open_ticket()
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalTicketsHttp.php';(new NativePortalTicketsHttp($this))->open();return;}
         if (!has_contact_permission('support')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -753,6 +759,7 @@ class Clients extends ClientsController
 
     public function ticket($id)
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalTicketsHttp.php';(new NativePortalTicketsHttp($this))->detail($id);return;}
         if (!has_contact_permission('support')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -796,8 +803,13 @@ class Clients extends ClientsController
         $this->layout();
     }
 
-    public function contracts()
+    public function contracts($id = '')
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativePortalContractsHttp.php';
+            (new NativePortalContractsHttp($this))->index($id);
+            return;
+        }
         if (!has_contact_permission('contracts')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -817,6 +829,7 @@ class Clients extends ClientsController
 
     public function invoices($status = false)
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalInvoicesHttp.php';(new NativePortalInvoicesHttp($this))->index($status);return;}
         if (!has_contact_permission('invoices')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -963,6 +976,7 @@ class Clients extends ClientsController
 
     public function estimates($status = '')
     {
+        if(class_exists('PortalRequestScope',false)&&PortalRequestScope::nativeFor($this)){require_once APPPATH.'services/NativePortalEstimatesHttp.php';try{(new NativePortalEstimatesHttp($this))->index($status);}catch(DomainException$denied){show_404();}return;}
         if (!has_contact_permission('estimates')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());

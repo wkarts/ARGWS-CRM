@@ -11,7 +11,30 @@ class Payments extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
+            return;
+        }
         $this->load->model('payments_model');
+    }
+
+    public function post_refund()
+    {
+        if (!class_exists('CompanyRequestScope', false) || !CompanyRequestScope::nativeFor($this)) {
+            show_404();
+            return;
+        }
+        require_once APPPATH.'services/NativeCompanyPostRefundController.php';
+        NativeCompanyPostRefundController::handle($this);
+    }
+
+    public function post_refund_manual()
+    {
+        if (!class_exists('CompanyRequestScope', false) || !CompanyRequestScope::nativeFor($this)) {
+            show_404();
+            return;
+        }
+        require_once APPPATH.'services/NativeCompanyPostRefundManualController.php';
+        NativeCompanyPostRefundManualController::handle($this);
     }
 
     public function batch_payment_modal() {

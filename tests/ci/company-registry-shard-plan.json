@@ -1,9 +1,9 @@
 {
-  "model": "frozen-paired-lpt-plus-unmeasured-count-v1",
-  "manifest_sha256": "c016827e69a73fe5a1f09aa14b4f24bcb74d9df40e6d5b5db697e013c25bb413",
-  "baseline_sha256": "d4e854b3ac541573672fa4ca5e2e45071bfc14672ecf618e2e1314936a7f5625",
+  "model": "frozen-paired-lpt-retired-plus-unmeasured-count-v2",
+  "manifest_sha256": "bb4d99bc6a7363393204bf3099f1079fc95b78af17cef87dc2ed81b95c0d1fbc",
+  "baseline_sha256": "121e5276c5c763832e2da3277bc4b0e29cd1f2245ad1c88d25de58b3213aead1",
   "assignments": [
-    1,
+    2,
     4,
     3,
     1,
@@ -410,7 +410,6 @@
     3,
     2,
     4,
-    2,
     2,
     3,
     1,
@@ -478,6 +477,16 @@
     2
   ],
   "measured_manifest_sha256": "1565aaa69234abd5ab9d7eec11fbbd912a93fdb75e0dfd919de0b913e408c835",
+  "retired": [
+    {
+      "index": 406,
+      "argv": [
+        "php",
+        "tests/settings/calendar_controller.php"
+      ],
+      "reason": "Parallel Company_calendar controller retired; coverage moved to official Settings and Utilities HTTP flows."
+    }
+  ],
   "unmeasured": [
     {
       "argv": [

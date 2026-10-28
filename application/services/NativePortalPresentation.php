@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/PortalRequestScope.php';
 require_once __DIR__.'/NativePortalPreferences.php';
+require_once __DIR__.'/NativePortalIdentity.php';
 require_once __DIR__.'/utilities/Locale.php';
 /** Explicit data/assets for the existing perfex template, not a second public theme. */
 final class NativePortalPresentation
@@ -19,10 +20,10 @@ final class NativePortalPresentation
   $ci->lang->language=array_replace(is_array($fallback)?$fallback:[],is_array($translated)?$translated:[]);$ci->lang->set_last_loaded_language($language);
   $locale='en';foreach(\app\services\utilities\Locale::app()as$name=>$code)if(strtolower($name)===strtolower($language)||str_starts_with(strtolower($language),strtolower($name).'_'))$locale=$code;$GLOBALS['language']=$language;$GLOBALS['locale']=$locale;
   $ci->form_validation->set_error_delimiters('<p class="text-danger alert-validation">','</p>');
-  foreach(['companyname'=>'','enable_gdpr'=>'0','gdpr_show_terms_and_conditions_in_footer'=>'0','gdpr_enable_terms_and_conditions'=>'0','show_gdpr_link_in_footer'=>'0','company_requires_vat_number_field'=>'1','customer_default_country'=>'','rtl_support_client'=>'0']as$k=>$default)$options[$k]=$store->exists($issuer,$k)?$store->get($issuer,$k):$default;
+  foreach(['companyname'=>'','enable_gdpr'=>'0','gdpr_show_terms_and_conditions_in_footer'=>'0','gdpr_enable_terms_and_conditions'=>'0','show_gdpr_link_in_footer'=>'0','show_gdpr_in_customers_menu'=>'0','company_requires_vat_number_field'=>'1','customer_default_country'=>'','rtl_support_client'=>'0']as$k=>$default)$options[$k]=$store->exists($issuer,$k)?$store->get($issuer,$k):$default;
   require_once __DIR__.'/CompanyAssets.php';$branding=(new CompanyAssets($ci->db,db_prefix()))->brandingForPortal($ci,$issuer);
   $announcements=[];if(PortalRequestScope::identity()!==null&&strtolower($ci->router->fetch_class())==='clients'){require_once __DIR__.'/NativeCompanyPortalAnnouncements.php';require_once __DIR__.'/NativeCompanyContentHtml.php';$reader=new NativeCompanyPortalAnnouncements($ci->db,db_prefix(),new CompanyPortal($ci->db,db_prefix(),$ci->config->item('encryption_key')));foreach($reader->all(PortalRequestScope::identity()['binding'],$issuer)as$row)if(!(int)$row['is_dismissed']){$row['message']=NativeCompanyContentHtml::purify($row['message']);$announcements[]=$row;}}
-  return['native_portal_announcements'=>$announcements,'native_portal_logo'=>$branding['logo_dark']!==''?$branding['logo_dark']:($branding['logo']!==''?$branding['logo']:base_url('assets/images/argws/logo-dark.png')),'native_portal'=>true,'native_portal_issuer'=>$issuer,'native_portal_options'=>$options,'native_portal_csrf'=>PortalRequestScope::csrfToken($ci),'native_portal_identity'=>PortalRequestScope::identity(),'locale'=>$locale,'language'=>$language,'isRTL'=>($options['rtl_support_client']==='1'?'true':'false'),'native_portal_languages'=>$languages,'menu'=>self::anonymousMenu($options),'navigationEnabled'=>true,'subMenuEnabled'=>false];
+  return['native_portal_announcements'=>$announcements,'native_portal_logo'=>$branding['logo_dark']!==''?$branding['logo_dark']:($branding['logo']!==''?$branding['logo']:base_url('assets/images/argws/logo-dark.png')),'native_portal'=>true,'native_portal_issuer'=>$issuer,'native_portal_options'=>$options,'native_portal_csrf'=>PortalRequestScope::csrfToken($ci),'native_portal_identity'=>PortalRequestScope::identity(),'locale'=>$locale,'language'=>$language,'isRTL'=>($options['rtl_support_client']==='1'?'true':'false'),'native_portal_languages'=>$languages,'menu'=>self::menu($options,$ci),'navigationEnabled'=>true,'subMenuEnabled'=>false];
  }
  public static function legal($ci,string$key):void{
   if(!PortalRequestScope::sealedFor($ci)||!in_array($key,['terms_and_conditions','privacy_policy'],true)||strtolower($ci->router->fetch_class())!==$key||strtolower($ci->router->fetch_method())!=='index'||!in_array($ci->input->method(true),['GET','HEAD'],true))throw new DomainException('native_portal_context_invalid');
@@ -40,9 +41,32 @@ final class NativePortalPresentation
  }
  public static function url(string$path=''):string{
   if(preg_match('/[\x00-\x20?#\\\\]/',$path)||str_contains($path,'..')||str_starts_with($path,'/'))throw new DomainException('native_portal_url_invalid');
-  return site_url($path).'?issuer_id='.PortalRequestScope::issuerId();
+  // The download controller is shared with authenticated staff; distinguish
+  // the contact-bound client-file path without changing its canonical route.
+  $portalDownload=str_starts_with($path,'download/file/client/')||str_starts_with($path,'download/file/sales_attachment/')||str_starts_with($path,'download/file/project/');
+  return site_url($path).'?issuer_id='.PortalRequestScope::issuerId().($portalDownload?'&_native_portal=1':'');
  }
- private static function anonymousMenu(array$options):array{
+ public static function menu(array$options,$ci=null):array{
+  $identity=PortalRequestScope::identity();
+  if($identity!==null){
+   $menu=['home'=>['name'=>_l('dashboard_string'),'href'=>self::url('clients')]];
+   if($ci!==null){
+    if(!PortalRequestScope::sealedFor($ci))throw new DomainException('native_portal_context_required');
+    $contact=$identity['binding']['contact_id'];$rows=IssuerStorage::query($ci->db,'SELECT permission_id,COUNT(*) n FROM '.db_prefix().'contact_permissions WHERE userid=? AND permission_id IN (1,2,3,4,5,6) GROUP BY permission_id',[$contact])->result_array();$grants=[];
+    foreach($rows as$row){if((int)$row['n']!==1)throw new DomainException('native_portal_context_invalid');$grants[(int)$row['permission_id']]=true;}
+    // Only canonical routes with complete contact-bound controllers are
+    // advertised. Other grants remain enforceable by dedicated readers but
+    // never create links to URLs the pre-hydration guard rejects.
+    foreach([1=>['invoices','clients_nav_invoices'],2=>['estimates','clients_nav_estimates'],3=>['contracts','clients_nav_contracts'],4=>['proposals','proposals'],5=>['tickets','clients_nav_support'],6=>['projects','clients_nav_projects']]as$id=>[$route,$label])if(isset($grants[$id]))$menu[$route]=['name'=>_l($label),'href'=>self::url('clients/'.$route)];
+    $primary=IssuerStorage::query($ci->db,'SELECT is_primary FROM '.db_prefix().'contacts WHERE id=? AND userid=?',[$contact,$identity['binding']['client_id']])->result_array();if(count($primary)!==1)throw new DomainException('native_portal_context_invalid');
+    $menu['profile']=['name'=>_l('clients_nav_profile'),'href'=>self::url('clients/profile')];
+    if((int)$primary[0]['is_primary']===1){$menu['company']=['name'=>_l('client_company_info'),'href'=>self::url('clients/company')];$store=new CompanySettingsStorage($ci->db,db_prefix());if($store->exists(PortalRequestScope::issuerId(),'allow_primary_contact_to_manage_other_contacts')&&$store->get(PortalRequestScope::issuerId(),'allow_primary_contact_to_manage_other_contacts')==='1')$menu['contacts']=['name'=>_l('clients_nav_contacts'),'href'=>self::url('contacts')];}
+    if(($options['enable_gdpr']??'0')==='1'&&($options['show_gdpr_in_customers_menu']??'0')==='1')$menu['gdpr']=['name'=>_l('gdpr_short'),'href'=>self::url('clients/gdpr')];
+    $menu['announcements']=['name'=>_l('announcements'),'href'=>self::url('clients/announcements')];
+    $secret=$ci->config->item('encryption_key');if((new NativePortalIdentity($ci->db,db_prefix(),$secret))->current($ci->session,PortalRequestScope::issuerId())!==$identity)throw new DomainException('native_portal_context_invalid');
+   }
+   $menu['files']=['name'=>_l('customer_profile_files'),'href'=>self::url('clients/files')];return $menu;
+  }
   $menu=['login'=>['name'=>_l('clients_nav_login'),'href'=>self::url('authentication/login')]];
   if($options['allow_registration']==='1')$menu['register']=['name'=>_l('clients_register_string'),'href'=>self::url('authentication/register')];return$menu;
  }

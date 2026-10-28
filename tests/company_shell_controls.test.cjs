@@ -36,7 +36,7 @@ test('unstyled table receives native responsive wrapper without cloning rows or 
 });
 
 test('shared sidebar uses complete icon families from native menu definitions, never forced solid',()=>{
- const head=fs.readFileSync(path.join(__dirname,'../application/views/admin/companies/layout_head.php'),'utf8');
+ const head=fs.readFileSync(path.join(__dirname,'../application/views/admin/includes/native_company_layout_head.php'),'utf8');
  const menu=fs.readFileSync(path.join(__dirname,'../application/helpers/menu_helper.php'),'utf8');
  const catalog=fs.readFileSync(path.join(__dirname,'../application/services/NativeAdminMenuCatalog.php'),'utf8');
  for(const [label,slug] of Object.entries({Clientes:'customers',Vendas:'sales',Despesas:'expenses',Contratos:'contracts',Projetos:'projects',Tarefas:'tasks',Suporte:'support',Leads:'leads','Relatórios':'reports'})){

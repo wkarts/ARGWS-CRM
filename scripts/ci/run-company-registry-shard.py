@@ -35,7 +35,7 @@ def load_commands(path=MANIFEST):
 def load_assignment(commands, path=PLAN):
     plan = json.loads(Path(path).read_text())
     digest = hashlib.sha256(json.dumps(commands, separators=(',', ':')).encode()).hexdigest()
-    if plan.get('manifest_sha256') != digest or plan.get('model') != 'frozen-paired-lpt-plus-unmeasured-count-v1':
+    if plan.get('manifest_sha256') != digest or plan.get('model') != 'frozen-paired-lpt-retired-plus-unmeasured-count-v2':
         raise ValueError('Frozen shard plan does not match command manifest/model')
     assignments = plan.get('assignments')
     if not isinstance(assignments, list) or len(assignments) != len(commands) or any(type(s) is not int or s not in range(1, SHARDS + 1) for s in assignments) or sorted(assignments.count(s) for s in range(1, SHARDS + 1)) != sorted(len(commands) // SHARDS + (s < len(commands) % SHARDS) for s in range(SHARDS)):

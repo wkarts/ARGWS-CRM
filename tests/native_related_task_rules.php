@@ -7,5 +7,17 @@ foreach([['status','in',['6']],['priority','in',['0']],['assigned','in',['1 OR 1
 $localized=NativeCompanyRelatedTaskRules::normalizeBuilder($rule('startdate','equal','25/10/2026'),'d/m/Y|%d/%m/%Y');$check($localized['rules'][0]['value']==='2026-10-25');
 $check(NativeCompanyRelatedTaskRules::matches(['match_type'=>'and','rules'=>[]],[],'2026-10-25'));echo 'Related native task filters: '.$n." checks passed.\n";
 
-foreach(['todays_tasks','duedate_passed','upcoming_tasks']as$id){$facts=[$id=>false,'status'=>5,'startdate'=>'2026-10-24','duedate'=>'2026-10-26'];$check(!NativeCompanyRelatedTaskRules::matches($rule($id,'equal','0'),$facts,'2026-10-25'));}
-$facts=['upcoming_tasks'=>false,'status'=>1,'startdate'=>'2026-10-24','duedate'=>null];$check(!NativeCompanyRelatedTaskRules::matches($rule('upcoming_tasks','equal','0'),$facts,'2026-10-25'));$facts['duedate']='2026-10-25';$check(!NativeCompanyRelatedTaskRules::matches($rule('upcoming_tasks','equal','0'),$facts,'2026-10-25'));$facts['duedate']='2026-10-26';$check(NativeCompanyRelatedTaskRules::matches($rule('upcoming_tasks','equal','0'),$facts,'2026-10-25'));echo 'Native raw Boolean SQL semantics: 6 more checks passed.\n';
+// Match the original task concepts against actual SQLite comparisons. A task
+// without the relevant date or already completed does not match either value.
+$pdo=new PDO('sqlite::memory:');$pdo->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);
+$pdo->exec('CREATE TABLE task_filter_fixture(startdate TEXT, duedate TEXT, status INTEGER NOT NULL)');
+$insert=$pdo->prepare('INSERT INTO task_filter_fixture VALUES(?,?,?)');
+foreach([['2026-10-24','2026-10-24',1],['2026-10-25','2026-10-25',1],['2026-10-26','2026-10-26',1],[null,null,1],['2026-10-24','2026-10-24',5],['2026-10-26','2026-10-26',5]]as$row)$insert->execute($row);
+$rows=$pdo->query('SELECT rowid,startdate,duedate,status FROM task_filter_fixture')->fetchAll(PDO::FETCH_ASSOC);
+$comparisons=['todays_tasks'=>['startdate','=','!='],'duedate_passed'=>['duedate','<','>='],'upcoming_tasks'=>['startdate','>','<=']];
+foreach($comparisons as$id=>[$column,$positive,$negative])foreach(['equal','not_equal']as$operator)foreach(['0','1']as$value){
+ $effective=($value==='1')!==($operator==='not_equal');$comparator=$effective?$positive:$negative;
+ $q=$pdo->prepare('SELECT CASE WHEN status != 5 AND '.$column.' '.$comparator.' ? THEN 1 ELSE 0 END FROM task_filter_fixture WHERE rowid=?');
+ foreach($rows as$row){$q->execute(['2026-10-25',$row['rowid']]);$expected=(bool)$q->fetchColumn();$facts=['status'=>(int)$row['status'],'startdate'=>$row['startdate'],'duedate'=>$row['duedate'],$id=>false];$check(NativeCompanyRelatedTaskRules::matches($rule($id,$operator,$value),$facts,'2026-10-25')===$expected);}
+}
+echo 'Task date filters match SQLite for prior/current/future, missing and completed tasks: '.$n." cumulative checks passed.\n";

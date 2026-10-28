@@ -28,7 +28,7 @@ $harness=new class {
     public function render(array $data):string{return strictFixtureRender(function()use($data):void{extract($data);include APPPATH.'views/admin/companies/asaas.php';});}
 };
 require_once APPPATH.'services/CompanyUiTranslation.php';
-$data=$asaas->overview($b,7)+['translate'=>CompanyUiTranslation::translator('portuguese_br'),'error'=>null,'saved'=>null,'one_time'=>null,'invoice'=>null,'can_configure'=>true,'can_settle'=>true,'can_fee'=>true,'can_issue'=>true,'context_token'=>'synthetic-context-token','action_url'=>'https://synthetic.invalid/admin/company_asaas','callback_urls'=>[],'can_webhook'=>true,'webhook_csrf'=>str_repeat('c',64)];
+$data=$asaas->overview($b,7)+['translate'=>CompanyUiTranslation::translator('portuguese_br'),'error'=>null,'saved'=>null,'one_time'=>null,'invoice'=>null,'can_configure'=>true,'can_settle'=>true,'can_fee'=>true,'can_issue'=>true,'context_token'=>'synthetic-context-token','action_url'=>'https://synthetic.invalid/admin/settings/asaas','callback_urls'=>[],'can_webhook'=>true,'webhook_csrf'=>str_repeat('c',64)];
 $data['accounts'][0]['account_id']='wallet <script>injected</script>';$html=$harness->render($data);
 essentialCheck(str_contains($html,'name="_company_context" value="synthetic-context-token"')&&str_contains($html,'name="synthetic_csrf" value="synthetic-csrf-hash"'),'all actual forms retain company scope and native CSRF');
 essentialCheck(!str_contains($html,'<script>injected</script>')&&str_contains($html,'&lt;script&gt;injected'),'account identifiers are escaped in actual native renderer');

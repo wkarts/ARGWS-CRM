@@ -63,7 +63,8 @@ class Utilities extends AdminController
         catch(DomainException $error){
             $reason=preg_match('/^(?:native|company|issuer)_[a-z0-9_]{1,100}$/D',$error->getMessage())?$error->getMessage():'unclassified_domain';
             $stage=$error->getPrevious()?->getMessage();if($reason==='native_calendar_range_invalid'&&in_array($stage,['native_calendar_stage_query_keys','native_calendar_stage_date_syntax','native_calendar_stage_timestamp','native_calendar_stage_date_value','native_calendar_stage_date_order','native_calendar_stage_filter_flag','native_calendar_stage_events','native_calendar_stage_reminders'],true))$reason.='_'.substr($stage,22);$safeMessage='Native calendar '.$method.' rejected ['.$reason.']; request values omitted.';if($method==='feed'&&$stage==='native_calendar_stage_query_keys')$safeMessage.=' query_contract='.json_encode(NativeCompanyCalendarEndpoints::queryDiagnostics($this),JSON_THROW_ON_ERROR);error_log($safeMessage);log_message('error',$safeMessage);
-            return $this->output->set_status_header(409)->set_content_type('application/json')->set_header('Cache-Control: no-store')->set_output(json_encode(['success'=>false,'message'=>_l('something_went_wrong')]));
+            $status=in_array($error->getMessage(),['company_calendar_denied','native_event_denied'],true)?403:409;
+            return $this->output->set_status_header($status)->set_content_type('application/json')->set_header('Cache-Control: no-store')->set_output(json_encode(['success'=>false,'message'=>_l('something_went_wrong')]));
         }
     }
 

@@ -7,14 +7,14 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
 const selector = fs.readFileSync(path.join(root, 'application/views/admin/includes/company_selector.php'), 'utf8');
-const head = fs.readFileSync(path.join(root, 'application/views/admin/companies/layout_head.php'), 'utf8');
-const tail = fs.readFileSync(path.join(root, 'application/views/admin/companies/layout_tail.php'), 'utf8');
+const head = fs.readFileSync(path.join(root, 'application/views/admin/includes/native_company_layout_head.php'), 'utf8');
+const tail = fs.readFileSync(path.join(root, 'application/views/admin/includes/native_company_layout_tail.php'), 'utf8');
 assert.match(selector, /data-company-selector-toggle/);
 assert.match(selector, /type="submit" name="company_id"/);
 assert.match(selector, /data-company-choice/);
 assert.doesNotMatch(selector, /<select|Confirmar empresa selecionada/);
 assert.match(selector, /name="_company_switch_csrf"/);
-assert.match(selector, /company_selection\/select/);
+assert.match(selector, /issuers\/select/);
 assert.match(selector, /form_open/);
 assert.match(selector, /CompanySettingsIdentity/);
 assert.match(selector, /->displayName\(\$company\['id'\]\)/);
@@ -59,7 +59,7 @@ const pageHtml = () => currentHtml.replace('<!--ACTUAL_SELECTOR-->', markup[sele
     page.on('pageerror', e => errors.push(e.message));
     await page.route('**/*', async route => {
       const url = new URL(route.request().url());
-      if (url.origin === fixtureOrigin && url.pathname === '/sub/admin/company_selection/select') {
+      if (url.origin === fixtureOrigin && url.pathname === '/sub/admin/issuers/select') {
         assert.equal(route.request().method(), 'POST');
         const fields = new URLSearchParams(route.request().postData());
         assert.deepEqual(fields.getAll('company_id').length, 1, 'native submitter supplies one company ID');

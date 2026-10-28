@@ -14,6 +14,14 @@ require_once __DIR__.'/NativeCompanyMailSettings.php';
 require_once __DIR__.'/NativeCompanyCalendarPreferences.php';
 require_once __DIR__.'/NativeCompanyGoogleSettings.php';
 require_once __DIR__.'/NativeCompanyInvoiceSequencePreferences.php';
+require_once __DIR__.'/NativeCompanySalesSettings.php';
+require_once __DIR__.'/CompanyProjectFileSettings.php';
+require_once __DIR__.'/CompanyPdfTypography.php';
+require_once __DIR__.'/CompanyTicketPreferences.php';
+require_once __DIR__.'/CompanyTaskPreferences.php';
+require_once __DIR__.'/CompanyTaskTimerPreferences.php';
+require_once __DIR__.'/CompanyTaskTimerStopPreferences.php';
+require_once __DIR__.'/CompanyTaskOperationPreferences.php';
 /** Writers for existing Settings forms. No new URL, UI, inferred issuer or global option fallback. */
 final class NativeCompanySettingsForms
 {
@@ -21,7 +29,8 @@ final class NativeCompanySettingsForms
     /** Groups whose existing Settings partial has a complete owned read/write adapter. */
     public static function availableGroups():array
     {
-        return ['general','company','localization','email','sales_general','invoices','clients','tasks','tickets','google','calendar','misc'];
+        return ['general','company','localization','certificates','email','sales_general','invoices','estimates','proposals','clients','tasks','tickets','google','calendar','misc',
+            'task_timer_stop','task_timers','task_operations','task_defaults','ticket_preferences','pdf_typography','project_files'];
     }
     public function authorize(int $issuer,int $actor,string $cap):void
     {
@@ -31,12 +40,21 @@ final class NativeCompanySettingsForms
     {
         return match($group){
             'invoices'=>NativeCompanyInvoicePreferences::fields(),
+            'estimates','proposals'=>NativeCompanySalesSettings::fields($group),
             'tickets'=>NativeCompanyTicketPreferences::fields(),
             'tasks'=>NativeCompanyTaskSettings::fields(),
             'misc'=>NativeCompanyMiscSettings::fields(),
             'clients'=>NativeCompanyClientsSettings::fields(),
             'email'=>NativeCompanyMailSettings::fields(),
             'calendar'=>array_keys(NativeCompanyCalendarPreferences::defaults()),
+            'certificates'=>[],
+            'task_timer_stop'=>[CompanyTaskTimerStopPreferences::AUTO_STOP],
+            'task_timers'=>[CompanyTaskTimerPreferences::TRANSITION],
+            'task_operations'=>[CompanyTaskOperationPreferences::PRIORITY,CompanyTaskOperationPreferences::FOLLOW],
+            'task_defaults'=>[CompanyTaskPreferences::STATUS,CompanyTaskPreferences::ASSIGN],
+            'ticket_preferences'=>[CompanyTicketPreferences::KEY],
+            'pdf_typography'=>CompanyPdfTypography::FIELDS,
+            'project_files'=>[CompanyProjectFileSettings::KEY],
             'google'=>NativeCompanyGoogleSettings::FIELDS,
             'sales_general'=>['decimal_separator','thousand_separator','number_padding_prefixes','automatically_set_logged_in_staff_sales_agent','show_tax_per_item','remove_tax_name_from_item_table','items_table_amounts_exclude_currency_symbol','default_tax','remove_decimals_on_zero','total_to_words_enabled','total_to_words_lowercase'],
             'general'=>['companyname','main_domain','rtl_support_admin','rtl_support_client','allowed_files'],
@@ -62,6 +80,8 @@ final class NativeCompanySettingsForms
     public function page(int $issuer,int $actor,string $group):array
     {
         self::fields($group);$this->authorize($issuer,$actor,'view');
+        if(self::isPolicyGroup($group))return$this->policyPage($issuer,$actor,$group);
+        if(in_array($group,['estimates','proposals'],true))return(new NativeCompanySalesSettings($this->db,$this->p))->page($issuer,$actor,$group)+['assets'=>null,'custom_fields'=>[]];
         if($group==='clients')return(new NativeCompanyClientsSettings($this->db,$this->p))->page($issuer,$actor);
         if($group==='misc')return(new NativeCompanyMiscSettings($this->db,$this->p))->page($issuer,$actor);
         if($group==='tasks')return(new NativeCompanyTaskSettings($this->db,$this->p))->page($issuer,$actor);
@@ -73,6 +93,11 @@ final class NativeCompanySettingsForms
     public function save(int $issuer,int $actor,string $group,array $settings,array $custom,string $revision,array $uploads=[],?callable $encrypt=null,?callable $decrypt=null):array
     {
         $this->authorize($issuer,$actor,'edit');
+        if(self::isPolicyGroup($group)){
+            if($uploads!==[]||$custom!==[]||!preg_match('/^(?:0|[1-9][0-9]{0,9})$/D',$revision)||(int)$revision>2147483647||array_keys($settings)!==self::fields($group))throw new DomainException('native_settings_invalid');
+            $service=$this->policyService($group);$service->save($issuer,$actor,(int)$revision,$settings);return$this->policyPage($issuer,$actor,$group);
+        }
+        if(in_array($group,['estimates','proposals'],true)){if($uploads!==[]||$custom!==[])throw new DomainException('native_settings_invalid');return(new NativeCompanySalesSettings($this->db,$this->p))->save($issuer,$actor,$group,$revision,$settings)+['assets'=>null,'custom_fields'=>[]];}
         if($group==='clients'){if($uploads!==[]||$custom!==[])throw new DomainException('native_settings_invalid');return(new NativeCompanyClientsSettings($this->db,$this->p))->save($issuer,$actor,$revision,$settings);}
         if($group==='misc'){if($uploads!==[]||$custom!==[])throw new DomainException('native_settings_invalid');return(new NativeCompanyMiscSettings($this->db,$this->p))->save($issuer,$actor,$revision,$settings);}
         if($group==='tasks'){if($uploads!==[]||$custom!==[])throw new DomainException('native_settings_invalid');return(new NativeCompanyTaskSettings($this->db,$this->p))->save($issuer,$actor,$revision,$settings);}
@@ -88,7 +113,7 @@ final class NativeCompanySettingsForms
         }
         if($group==='email'){if($uploads!==[]||$custom!==[]||$encrypt===null||$decrypt===null)throw new DomainException('native_settings_invalid');return(new NativeCompanyMailSettings($this->db,$this->p))->save($issuer,$actor,$revision,$settings,$encrypt,$decrypt)+['assets'=>null,'custom_fields'=>[]];}
         if(!preg_match('/^[a-f0-9]{64}$/D',$revision)||array_diff(array_keys($settings),self::fields($group)))throw new DomainException('native_settings_invalid');
-        if($uploads!==[]&&($group!=='general'||array_diff(array_keys($uploads),['logo','logo_dark','favicon'])))throw new DomainException('native_settings_invalid');
+        if($uploads!==[]&&($group!=='general'||array_diff(array_keys($uploads),['logo','logo_dark','favicon','signature'])))throw new DomainException('native_settings_invalid');
         if($group!=='company'&&$custom!==[])throw new DomainException('native_settings_invalid');
         foreach($settings as$name=>$value){
             if($group==='sales_general'&&$name==='default_tax'){if(!is_array($value))throw new DomainException('native_settings_invalid');continue;}
@@ -130,6 +155,29 @@ final class NativeCompanySettingsForms
             $this->authorize($issuer,$actor,'edit');return$this->capture($issuer,$actor,$group);
         });
     }
+    private static function isPolicyGroup(string $group):bool
+    {
+        return in_array($group,['task_timer_stop','task_timers','task_operations','task_defaults','ticket_preferences','pdf_typography','project_files'],true);
+    }
+    private function policyService(string $group):object
+    {
+        return match($group){
+            'task_timer_stop'=>new CompanyTaskTimerStopPreferences($this->db,$this->p),
+            'task_timers'=>new CompanyTaskTimerPreferences($this->db,$this->p),
+            'task_operations'=>new CompanyTaskOperationPreferences($this->db,$this->p),
+            'task_defaults'=>new CompanyTaskPreferences($this->db,$this->p),
+            'ticket_preferences'=>new CompanyTicketPreferences($this->db,$this->p),
+            'pdf_typography'=>new CompanyPdfTypography($this->db,$this->p),
+            'project_files'=>new CompanyProjectFileSettings($this->db,$this->p),
+            default=>throw new DomainException('native_settings_group_unavailable'),
+        };
+    }
+    private function policyPage(int $issuer,int $actor,string $group):array
+    {
+        $page=$this->policyService($group)->page($issuer,$actor);$values=[];
+        foreach(self::fields($group)as$field)$values[$field]=$page[$field];
+        return['values'=>$values,'revision'=>(string)$page['revision'],'assets'=>null,'custom_fields'=>[]];
+    }
     private static function sales(array $values,bool $stored):void
     {
         foreach($values as$key=>$value){
@@ -155,6 +203,7 @@ final class NativeCompanySettingsForms
     /** Narrow validation for the storage-owned transaction, not a generic principal batch bypass. */
     public static function assertStorage(string $group,array $values):void
     {
+        if(in_array($group,['estimates','proposals'],true)){NativeCompanySalesSettings::validate($group,$values,false);return;}
         if($group==='misc'){NativeCompanyMiscSettings::validateExtras($values);return;}
         if($group==='tasks'){NativeCompanyTaskSettings::validateExtras($values);return;}
         $allowed=$group==='invoices'?array_values(array_diff(self::fields($group),['next_invoice_number'])):($group==='company'?['company_info_format']:($group==='general'?['main_domain','rtl_support_admin','rtl_support_client','allowed_files']:array_values(array_diff(self::fields($group),['localization_settings']))));

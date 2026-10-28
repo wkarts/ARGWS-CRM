@@ -9,7 +9,7 @@ const output = process.env.COMPANY_SHELL_SCREENSHOT_DIR || '/tmp/company-shell-f
 fs.mkdirSync(output, { recursive: true });
 const render = (...flags) => execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'support/NativeHeaderFixture.php'), ...flags], { encoding: 'utf8' });
 const company = { google: render('--company-google'), microsoft: render('--company-microsoft') };
-const head = fs.readFileSync(path.join(root, 'application/views/admin/companies/layout_head.php'), 'utf8');
+const head = fs.readFileSync(path.join(root, 'application/views/admin/includes/native_company_layout_head.php'), 'utf8');
 const assets = [...head.matchAll(/'(assets\/[^']+\.css)'/g)].map(m => m[1]).filter(a => !a.includes('company-shell') && !a.includes('company-workspace'));
 const native = '<!doctype html><html lang="pt-BR" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + assets.map(a => `<link rel="stylesheet" href="/${a}">`).join('') + '<style>.btn-primary{background-color:#32c977;border-color:#32c977}</style></head><body class="admin">' + render('--full-shell') + '<div id="wrapper"><main class="content"><div class="panel_s"><div class="panel-body"><button class="btn btn-primary" id="native-save">Salvar Configurações</button></div></div></main></div></body></html>';
 const assertHeaderContents = async page => {

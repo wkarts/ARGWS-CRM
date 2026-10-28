@@ -9,6 +9,17 @@ test('native routes use scoped services and original renderers, not parallel red
  assert.match(branch,/admin\/clients\/client/);assert.doesNotMatch(branch,/redirect\([^\n]*company_clients/);
  assert.match(branch,/_native_company_csrf/);
 });
+test('primary company-owned customer entry stays on the official Clients route',()=>{
+ const scope=read('application/services/CompanyRequestScope.php');
+ const clients=read('application/controllers/admin/Clients.php');
+ const manage=read('application/views/admin/clients/manage.php');
+ const profile=read('application/views/admin/clients/groups/profile.php');
+ assert.match(scope,/ownedClientRoute/);assert.match(scope,/source.*company/);assert.match(scope,/native_company_csrf/);
+ assert.match(clients,/native_customer_action/);assert.match(clients,/source.*company/);
+ assert.match(manage,/clients\/client\?source=company/);assert.match(profile,/native_customer_action/);
+ assert.doesNotMatch(read('application/views/admin/leads/native.php'),/company_clients/);
+ assert.doesNotMatch(read('application/controllers/admin/Leads.php'),/Company_leads|admin\/companies\/leads/);
+});
 test('native field writes keep authorization and readback in owner transaction',()=>{
  const s=read('application/services/CompanyClientNativeFields.php');
  assert.match(s,/IssuerTransaction::assertOwned/);assert.match(s,/owner_issuer_id=\?/);

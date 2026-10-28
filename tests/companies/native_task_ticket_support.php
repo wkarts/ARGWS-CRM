@@ -6,6 +6,11 @@ require_once APPPATH.'services/CompanyContractsSchema.php';
 $GLOBALS['dashboardTicketFixtureTables']=[];$GLOBALS['dashboardTicketFixtureDb']=$db;
 $createTicketFixtureTable=static function(string$table,array$parts)use($db,$p):void{
     if($db->driver()==='sqlite'){$parts=array_values(array_filter($parts,static fn($part)=>str_starts_with($part,'`')));$parts=array_map(static fn($part)=>preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','',$part),$parts);}
+    else foreach($parts as $index=>$part)if(str_starts_with($part,'FOREIGN KEY ')){
+        // Synthetic prefixes can make InnoDB's generated names exceed 64 bytes.
+        // Explicit unique test names do not alter the referenced columns/rules.
+        $parts[$index]='CONSTRAINT `fixture_fk_'.substr(hash('sha256',$p.$table.':'.$index),0,20).'` '.$part;
+    }
     if($db->table_exists($p.$table))return;
     $db->query('CREATE TABLE `'.$p.$table.'` ('.implode(',',$parts).') ENGINE=InnoDB');$GLOBALS['dashboardTicketFixtureTables'][]=$p.$table;
 };

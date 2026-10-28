@@ -36,7 +36,7 @@ foreach($invalid as $tail){
     try{opsBootAutoload(opsBootCi('company_operations_api',$tail[0],$segments),$segments);}catch(DomainException $e){$denied=$e->getMessage()==='native_machine_404';}
     opsBootCheck($denied&&!CompanyOperationsApiScope::active(),'Malformed lead path rejected before legacy hydration');
 }
-foreach(['admin/company_leads','admin/company_leads/file','admin/company_leads/export','company_operations_api/lead_files','company_operations_api/lead_files/23/bad','company_operations_api/lead_exports/23','company_operations_api/lead_imports/'.str_repeat('a',32).'/extra','company_operations_api_evil/leads'] as $uri){
+foreach(['admin/leads','admin/leads/file','admin/leads/export','company_operations_api/lead_files','company_operations_api/lead_files/23/bad','company_operations_api/lead_exports/23','company_operations_api/lead_imports/'.str_repeat('a',32).'/extra','company_operations_api_evil/leads'] as $uri){
     opsBootCheck(!array_filter($leadPatterns,static fn($pattern)=>preg_match('#^'.$pattern.'$#D',$uri)===1),'GUI and malformed paths retain their CSRF boundary');
 }
 $segments=['company_operations_api','leads'];$denied=false;

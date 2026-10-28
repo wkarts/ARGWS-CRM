@@ -5,19 +5,17 @@ require_once __DIR__.'/Fields400.php';
 require_once __DIR__.'/Record400.php';
 require_once __DIR__.'/LayoutCatalog.php';
 
-/** Candidate codec only. No operational download/transmission endpoint is registered. */
+/** Narrow CBR641 codec for BRL, wallet 17 simple, no protest or partial receipt. */
 final class Cnab400Generator
 {
     /**
-     * BRL's wire code is not specified by CBR641 July/2026 note 30. The caller must
-     * supply a raw candidate explicitly; this method never certifies it as bank-approved.
-     * It is deliberately absent from the administrative operational capabilities.
+     * Positions 85-86 are fixed blank for this BRL-only profile. CBR641 July/2026
+     * note 30 reserves 02 and 14 for Dollar and Euro; callers cannot inject a
+     * different currency marker. Bank-profile interest exemption and homologation
+     * remain explicit external gates around generated files.
      */
-    public function candidate(Agreement $a, int $fileSequence, string $date, array $titles, string $currencyField): array
+    public function candidate(Agreement $a, int $fileSequence, string $date, array $titles): array
     {
-        if (!preg_match('/^[A-Z0-9 ]{2}$/D', $currencyField) || in_array($currencyField,['02','14'],true)) {
-            throw new \InvalidArgumentException('bb400_brl_candidate_invalid');
-        }
         if ($fileSequence < 1 || $fileSequence > 9999999 || !$titles || count($titles) > 99997) throw new \InvalidArgumentException('bb_batch_invalid');
         [$branch,$branchDv,$account,$accountDv] = Fields400::account($a);
         $header = (new Record400())->put(1,2,'01')->put(3,9,$a->scope->environment==='sandbox'?'TESTE  ':'REMESSA')
@@ -44,12 +42,12 @@ final class Cnab400Generator
                 ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'],true))throw new \InvalidArgumentException('bb_payer_address_invalid');
             $line=(new Record400())->put(1,1,'7')->put(2,3,strlen($a->taxId)===11?'01':'02')->put(4,17,Fields::taxField($a->taxId,14))
                 ->put(18,21,$branch)->put(22,22,$branchDv)->put(23,30,$account)->put(31,31,$accountDv)->put(32,38,$a->scope->agreement)
-                ->put(39,63,$control)->put(64,80,$number)->put(81,84,'0000')->put(85,86,$currencyField)
+                ->put(39,63,$control)->put(64,80,$number)->put(81,84,'0000')->put(85,86,LayoutCatalog::CNAB400_BRL_CURRENCY_FIELD)
                 ->put(92,94,$a->variation)->put(95,101,'0000000')->put(107,108,'17')->put(109,110,'01')
                 ->put(111,120,Fields::alpha($t['document'],10,true))->put(121,126,Fields400::date($t['due_date']))
                 ->put(127,139,Fields400::money($t['amount']))->put(140,146,'0010000')->put(148,149,$t['species'])
                 ->put(150,150,$t['acceptance'])->put(151,156,Fields400::date($t['issue_date']))->put(157,160,'0700')
-                ->put(161,218,str_repeat('0',58))->put(219,220,strlen($tax)===11?'01':'02')->put(221,234,Fields::taxField($tax,14))
+                ->put(161,173,LayoutCatalog::CNAB400_DAILY_INTEREST_FIELD)->put(174,218,str_repeat('0',45))->put(219,220,strlen($tax)===11?'01':'02')->put(221,234,Fields::taxField($tax,14))
                 ->put(235,271,Fields::alpha($t['payer_name'],37,true))->put(275,314,Fields::alpha($t['payer_address'],40,true))
                 ->put(315,326,Fields::alpha($t['payer_district'],12,true))->put(327,334,$t['payer_zip'])
                 ->put(335,349,Fields::alpha($t['payer_city'],15,true))->put(350,351,$t['payer_state'])
@@ -59,6 +57,6 @@ final class Cnab400Generator
         $lines[]=(string)(new Record400())->put(1,1,'9')->put(395,400,Fields::digits((string)++$seq,6));
         return ['content'=>implode("\r\n",$lines)."\r\n",'layout'=>LayoutCatalog::CNAB400,
             'state'=>'candidate_requires_bank_confirmation','operational'=>false,
-            'unresolved'=>['brl_currency_wire_code','interest_inherited_from_agreement','homologation_per_connection']];
+            'unresolved'=>['interest_exemption_requires_bank_profile','homologation_per_connection']];
     }
 }

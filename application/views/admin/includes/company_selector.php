@@ -24,7 +24,7 @@
 ?>
 <link rel="stylesheet" href="<?= e(base_url('assets/css/company-selector.css') . '?v=' . $companySelectorVersion); ?>">
 <div class="company-selector dropdown sidebar-user-profile" data-company-current="<?= e($selectedCompanyId ?? ''); ?>" aria-label="Empresa atual">
-    <?= form_open(CompanyRequestScope::adminUrl($this, 'company_selection/select'), ['class' => 'company-selector-form']); ?>
+    <?= form_open(CompanyRequestScope::adminUrl($this, 'issuers/select'), ['class' => 'company-selector-form']); ?>
     <button type="button" id="company-selector-toggle" data-company-selector-toggle data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-controls="company-selector-menu" <?= !$companies ? 'disabled' : ''; ?>
         class="dropdown-toggle profile -tw-mt-1 tw-font-medium tw-border tw-border-solid tw-rounded-lg tw-bg-white tw-py-2 tw-px-2.5 tw-block tw-shadow-xs <?= $companySelectorDark ? 'tw-text-white tw-border-white/10 hover:tw-border-white/30 focus:tw-border-white/30 hover:tw-text-white focus:tw-text-white hover:tw-bg-neutral-900/10 focus:tw-bg-neutral-900/10' : 'tw-border-neutral-300 tw-text-neutral-700 hover:tw-text-neutral-800 focus:tw-text-neutral-800 hover:tw-bg-neutral-900/5 focus:tw-bg-neutral-900/5'; ?>">
         <span class="company-selector-card tw-inline-flex tw-items-center tw-gap-x-3 tw-pt-0.5">

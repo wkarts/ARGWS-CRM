@@ -19,13 +19,20 @@
             <div class="alert alert-warning">
                 <?= _l('customer_inactive_message'); ?>
                 <br />
-                <a href="<?= admin_url('clients/mark_as_active/' . $client->userid); ?>"
-                    class="alert-link">
-                    <?= _l('mark_as_active'); ?>
-                </a>
+                <?php if($native_customers){ ?>
+                    <?php if($native_customer_owned&&$native_customer_capabilities['edit']){ ?>
+                    <?= form_open(admin_url('clients/change_client_status/'.$client->userid.'/1'),['class'=>'native-customer-activate']); ?>
+                    <?= form_hidden('_native_company_csrf',$company_clients_csrf); ?>
+                    <?= form_hidden('revision',$native_customer_revision); ?>
+                    <button type="submit" class="btn btn-link alert-link"><?= e(_l('mark_as_active')); ?></button>
+                    <?= form_close(); ?>
+                    <?php } ?>
+                <?php }else{ ?>
+                <a href="<?= admin_url('clients/mark_as_active/' . $client->userid); ?>" class="alert-link"><?= _l('mark_as_active'); ?></a>
+                <?php } ?>
             </div>
             <?php } ?>
-            <?php if (isset($client) && (staff_cant('view', 'customers') && is_customer_admin($client->userid))) {?>
+            <?php if (isset($client) && !$native_customers && (staff_cant('view', 'customers') && is_customer_admin($client->userid))) {?>
             <div class="alert alert-info">
                 <?= e(_l('customer_admin_login_as_client_message', get_staff_full_name(get_staff_user_id()))); ?>
             </div>
@@ -112,7 +119,7 @@
                     </div>
                     <?php if ($group == 'profile' && (!$native_customers || ($native_customer_owned && (!isset($client) ? $native_customer_capabilities['create'] : $native_customer_capabilities['edit'])))) { ?>
                     <div class="panel-footer text-right tw-space-x-1" id="profile-save-section">
-                        <?php if (! isset($client) && !$native_customers) { ?>
+                        <?php if (! isset($client)) { ?>
                         <button class="btn btn-default save-and-add-contact customer-form-submiter">
                             <?= _l('save_customer_and_add_contact'); ?>
                         </button>

@@ -19,7 +19,7 @@ async function submit(page,button) { await Promise.all([page.waitForNavigation({
   for (const [label,tax] of [['a','11222333000181'],['b','52998224725']]) {
    let id=sql("SELECT id FROM tblissuers_registry WHERE tax_id='"+tax+"'");
    if (!id) {
-    await page.goto(url+'/admin/company_onboarding');
+    await page.goto(url+'/admin/issuers/onboarding');
     await page.locator('#company-create-modal').waitFor({state:'visible'});
     const wizard = page.frame({name:'company-create-frame'});
     await wizard.locator('section form button[type=submit]').waitFor();
@@ -31,7 +31,7 @@ async function submit(page,button) { await Promise.all([page.waitForNavigation({
    }
    created[label]=Number(id);
    await page.goto(url+'/admin/'); await selectCompanyOption(page, id);
-   for (const route of ['company_staff','company_task_recurring?kind=project','company_task_recurring?kind=standalone']) { assert.equal((await page.goto(url+'/admin/'+route)).status(),200,route+' usable for existing master'); }
+   for (const route of ['staff','company_task_recurring?kind=project','company_task_recurring?kind=standalone']) { assert.equal((await page.goto(url+'/admin/'+route)).status(),200,route+' usable for existing master'); }
   }
   assert.equal(sql("SELECT CONCAT(master_staff_id,':',primary_issuer_id,':',source) FROM tblissuers_installation_identity WHERE id=1"),identity); assert.deepEqual(errors,[]);
   if(process.env.ISSUERS_BROWSER_ARTIFACTS){fs.mkdirSync(process.env.ISSUERS_BROWSER_ARTIFACTS,{recursive:true});fs.writeFileSync(process.env.ISSUERS_BROWSER_ARTIFACTS+'/installed-master.json',JSON.stringify({identity,created,result:'PASS'},null,2)+'\n');await page.screenshot({path:process.env.ISSUERS_BROWSER_ARTIFACTS+'/installed-master-companies.png',fullPage:true});}

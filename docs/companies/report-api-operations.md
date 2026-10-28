@@ -2,7 +2,7 @@
 
 ## Posição atual e CSV privado
 
-`CompanyReports` e a tela selada `admin/company_reports` apresentam uma posição
+`CompanyReports` e a tela selada `admin/reports` apresentam uma posição
 financeira atual por moeda congelada, sem conversão: faturas emitidas, recebimentos
 nominais após estornos, créditos aplicados, saldo a receber, créditos emitidos/disponíveis,
 reembolsos líquidos registrados e despesas/tributos registrados. Cancelamentos

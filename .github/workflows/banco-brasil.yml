@@ -2,10 +2,10 @@ name: Banco do Brasil module
 on:
   pull_request:
     branches: [main, develop, feat/banco-brasil-billing-cnab240]
-    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'tests/support/BbPdoDatabase.php', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/test_bb_native_gateway.py', 'application/controllers/Company_portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', 'docs/modules/banco-brasil*', 'docs/banco-brasil*', '.github/workflows/banco-brasil.yml']
+    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'tests/support/BbPdoDatabase.php', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/support/BbCnab400PreparationWorker.php', 'tests/test_bb_native_gateway.py', 'application/controllers/Company_portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', 'docs/modules/banco-brasil*', 'docs/banco-brasil*', '.github/workflows/banco-brasil.yml']
   push:
     branches: [main]
-    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'tests/test_bb_native_gateway.py', 'tests/support/BancoBrasilCheckoutFixture.php', 'application/controllers/Company_portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', '.github/workflows/banco-brasil.yml']
+    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'tests/test_bb_native_gateway.py', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/support/BbCnab400PreparationWorker.php', 'application/controllers/Company_portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', '.github/workflows/banco-brasil.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -47,7 +47,8 @@ jobs:
       - run: php tests/banco_brasil_checkout_legacy_guard.php
       - run: php tests/banco_brasil_admin.php
       - run: php tests/banco_brasil_cnab240.php
-      - run: php tests/banco_brasil_cnab400.php
+      # Includes the existing parser suite plus invoice comparison; no duplicate run.
+      - run: php tests/banco_brasil_cnab400_invoice_comparison.php
       - run: php tests/banco_brasil_store.php
       - run: php tests/banco_brasil_layouts.php
       - run: php tests/banco_brasil_layout_migration.php
@@ -85,7 +86,7 @@ jobs:
           php tests/banco_brasil_resume_443_module_tracking.php
           php tests/banco_brasil_mysql.php
           php tests/banco_brasil_layout_mysql.php
-          php tests/banco_brasil_return_rejections_mysql.php
+          php tests/banco_brasil_cnab400_receipt_mysql.php
           php tests/banco_brasil_mysql_driver.php
           php tests/banco_brasil_components_concurrency.php
           php tests/banco_brasil_api_monthly_interest.php
@@ -186,7 +187,7 @@ jobs:
           php tests/banco_brasil_resume_443_module_tracking.php
           php tests/banco_brasil_mysql.php
           php tests/banco_brasil_layout_mysql.php
-          php tests/banco_brasil_return_rejections_mysql.php
+          php tests/banco_brasil_cnab400_receipt_mysql.php
           php tests/banco_brasil_mysql_driver.php
           php tests/issuers_core.php
           php tests/companies/clients.php

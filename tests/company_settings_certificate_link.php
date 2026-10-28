@@ -29,8 +29,8 @@ foreach ($cases as [$current, $enabled, $edit, $expected]) {
     CompanySettingsRuntime::$enabled = $enabled;
     CompanySettingsRuntime::$edit = $edit;
     $html = $renderer->render();
-    if (str_contains($html, 'href="/admin/company_certificates"') !== $expected) { throw new RuntimeException('Certificate link authorization mismatch'); }
-    if (str_contains($html, 'company_certificates/index/')) { throw new RuntimeException('Certificate link must use selected company'); }
+    if (str_contains($html, 'href="/admin/settings?group=certificates"') !== $expected) { throw new RuntimeException('Official Settings certificate link authorization mismatch'); }
+    if (str_contains($html, 'company_certificates')) { throw new RuntimeException('Parallel certificate route must not be rendered'); }
 }
 $context->issuer = null;
 if (str_contains($renderer->render(), 'Certificado A1')) { throw new RuntimeException('Missing selected company must not expose certificate action'); }

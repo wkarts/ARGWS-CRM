@@ -51,7 +51,7 @@ final class NativeCompanyTicketPresentation
                 'actor'=>$actor, 'options'=>$options, 'default_priority'=>$options['email_piping_default_priority'],
                 'inline_service'=>$acl->administrative($issuer, $actor), 'knowledge_groups'=>array_values($groups),
                 'ai_available'=>false,
-                'limitations'=>'IA e envio de notificações não estão disponíveis neste contexto. Anexos aguardam integração e são recusados, sem descarte silencioso.',
+                'limitations'=>'IA e envio de notificações não estão disponíveis neste contexto. Os anexos aceitos são PDF, PNG e JPG, com até 2 MB por arquivo.',
             ],
         ];
         if (!$acl->can($issuer, $actor, 'tickets', 'view') || !$acl->can($issuer, $actor, 'tickets', 'create')) throw new DomainException('native_ticket_create_denied');

@@ -6,14 +6,15 @@ class CompanyRequestScope
 {
     public static int$issuer;public static int$actor=7;public static bool$admitted=true;
     public static function nativeFor($ci){return self::$admitted;}
-    public static function context(){return new class{public function issuerId(){return CompanyRequestScope::$issuer;}public function staffId(){return CompanyRequestScope::$actor;}};}
+    public static function context(){return new class{public function issuerId(){return CompanyRequestScope::$issuer;}public function staffId(){return CompanyRequestScope::$actor;}public function token(){return'synthetic-project-context';}};}
+    public static function nativeCsrfToken($ci){return'synthetic-project-csrf';}
     public static function assertNativeMutation($ci){if($ci->input->method(true)!=='POST'||($ci->input->post('_native_company_csrf')??'')!=='synthetic-context-proof')throw new DomainException('native_mutation_denied');}
 }
 class AdminController
 {
     public$db;public$input;public$output;public$load;public$security;
     public function __construct(){
-        $this->db=$GLOBALS['db'];$this->input=new class{public string$verb='POST';public array$body=[];public function method($upper=true){return$this->verb;}public function post($key=null,$clean=false){return$key===null?$this->body:($this->body[$key]??null);}public function is_ajax_request(){return true;}};
+        $this->db=$GLOBALS['db'];$this->input=new class{public string$verb='POST';public array$body=[],$query=[];public function method($upper=true){return$this->verb;}public function post($key=null,$clean=false){return$key===null?$this->body:($this->body[$key]??null);}public function get($key){return$this->query[$key]??null;}public function is_ajax_request(){return true;}};
         $this->output=new class{public string$body='';public array$headers=[];public function set_header($v){$this->headers[]=$v;return$this;}public function set_content_type($v){return$this;}public function set_output($v){$this->body=$v;return$this;}};
         $this->load=new class{public array$views=[];public function view($path,$data,$return=false){$this->views[]=[$path,$data];return 'framework-rendered-native-projects';}public function model($name){throw new RuntimeException('Global model hydrated');}public function helper($name){if($name!=='date')throw new RuntimeException('Unexpected helper');}};
         $this->security=new class{public function get_csrf_token_name(){return'framework_csrf';}};

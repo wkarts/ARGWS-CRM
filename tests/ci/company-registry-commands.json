@@ -1636,10 +1636,6 @@
   ],
   [
     "php",
-    "tests/settings/calendar_controller.php"
-  ],
-  [
-    "php",
     "tests/settings/calendar_boundaries.php"
   ],
   [

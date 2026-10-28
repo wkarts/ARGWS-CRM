@@ -450,30 +450,6 @@
       "state": "unreviewed",
       "evidence": ""
     },
-    "application/controllers/admin/Company_invoice_copies.php": {
-      "sha256": "5c29192cb2acef28c08df967d33717d8cc4d88267fec25ceb4d95946b1531be9",
-      "categories": [
-        "invoice_table"
-      ],
-      "signal_lines": [
-        11
-      ],
-      "state": "unreviewed",
-      "evidence": ""
-    },
-    "application/controllers/admin/Company_invoice_drafts.php": {
-      "sha256": "bec6068e1ed672e9a95e98019423f82913084c0bca7e207c828dcfa75d453de2",
-      "categories": [
-        "customer_privacy",
-        "invoice_table"
-      ],
-      "signal_lines": [
-        11,
-        25
-      ],
-      "state": "unreviewed",
-      "evidence": ""
-    },
     "application/controllers/admin/Company_invoice_recurring.php": {
       "sha256": "bc6e2b69f9d26f12ee117797dcd655feecb99aba96bd9d9f833a146b9f635613",
       "categories": [
@@ -533,19 +509,6 @@
       ],
       "signal_lines": [
         29
-      ],
-      "state": "unreviewed",
-      "evidence": ""
-    },
-    "application/controllers/admin/Company_recurring.php": {
-      "sha256": "3801d42604ae119b8efa7fe766f051d7a8b5e4e15775eb2a458fd141ef66c29f",
-      "categories": [
-        "customer_privacy",
-        "invoice_table"
-      ],
-      "signal_lines": [
-        9,
-        17
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -5554,12 +5517,12 @@
       "evidence": ""
     },
     "application/services/NativeCompanyRoutes.php": {
-      "sha256": "33429eb45aed7cc111698567fc64bd7cd5c12ea0c566e935134e166ff59d0a01",
+      "sha256": "9e76c18cd73eef98ab252e6c25f054a22858b07cf8e2e85b37dbccddd110a666",
       "categories": [
         "customer_privacy"
       ],
       "signal_lines": [
-        70
+        64
       ],
       "state": "unreviewed",
       "evidence": ""

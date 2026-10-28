@@ -14,6 +14,12 @@ final class CompanyPortal
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$prefix)||strlen($secret)<32)throw new RuntimeException('company_portal_configuration_required');
     }
     private function rows(string $sql,array $params=[]): array{return IssuerStorage::query($this->db,$sql,$params)->result_array();}
+    /** Opaque route identifier only; authentication and resource grants are still mandatory. */
+    public function salesLinkHash(int $issuer,int $document,string $originHash):string
+    {
+        IssuerPolicy::id($issuer);IssuerPolicy::id($document);if(!preg_match('/^[a-f0-9]{64}$/D',$originHash))throw new DomainException('company_portal_sales_unavailable');
+        return substr(hash_hmac('sha256',json_encode(['sales',$issuer,$document,$originHash],JSON_THROW_ON_ERROR),$this->secret),0,32);
+    }
     private function transaction(callable $operation,array $extra=[])
     {
         return IssuerTransaction::run($this->db,$this->prefix,array_merge(['issuers_lock','issuers_registry','issuers_installation_identity','issuers_clients','contacts','clients','company_portal_tokens','issuers_audit'],$extra),$operation);

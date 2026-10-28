@@ -8,7 +8,11 @@ abstract class CompanyInvoiceRecurringStorage extends CompanySalesBase
 {
     public static function input(array $input):array
     {
-        if(!array_key_exists('calculation_contract',$input))return parent::input($input);if(array_diff(array_keys($input),['client_id','currency','date','due_date','items','note','discount_mode','discount_value','discount_type','adjustment','calculation_contract']))throw new DomainException('company_sales_invalid');require_once __DIR__.'/CompanyInvoiceDraftsInput.php';$base=CompanyInvoiceDraftsInput::normalize($input);self::date($base['due_date']);return$base;
+        if(!array_key_exists('calculation_contract',$input)&&!array_key_exists('native_preferences',$input))return parent::input($input);
+        if(array_diff(array_keys($input),['client_id','currency','date','due_date','items','note','discount_mode','discount_value','discount_type','adjustment','calculation_contract','native_fields','native_project','native_preferences']))throw new DomainException('company_sales_invalid');
+        require_once __DIR__.'/CompanyInvoiceDraftsInput.php';
+        try{$base=CompanyInvoiceDraftsInput::normalize($input);self::date($base['due_date']);return$base;}
+        catch(DomainException $error){throw new DomainException('company_sales_invalid',0,$error);}
     }
     public function tables():array
     {

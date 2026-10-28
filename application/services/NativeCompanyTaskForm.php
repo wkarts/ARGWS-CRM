@@ -27,7 +27,7 @@ final class NativeCompanyTaskForm
     private function baseForm(int$i,int$a,array$query,string$today,string$cap):array
     {
         $this->authorize($i,$a,$cap);NativeCompanyTaskFormValues::date($today);
-        if(array_diff(array_keys($query),['rel_type','rel_id','start_date'])||(!empty($query['rel_type'])&&!in_array($query['rel_type'],['project','ticket'],true)))throw new DomainException('native_task_relation_writer_required');
+        if(array_diff(array_keys($query),['rel_type','rel_id','start_date'])||(!empty($query['rel_type'])&&!in_array($query['rel_type'],['project','ticket','invoice'],true)))throw new DomainException('native_task_relation_writer_required');
         require_once __DIR__.'/NativeCompanyTaskFormPreferences.php';require_once __DIR__.'/NativeCompanyUploadPreferences.php';require_once __DIR__.'/NativeCompanyTaskChecklistTemplates.php';require_once __DIR__.'/WorkStatusPresentation.php';
         $project=null;$selected=null;$milestoneRevision=null;$milestones=[];$end=[];$writer=new CompanyStandaloneTasks($this->db,$this->p);
         if(($query['rel_type']??'')==='project'){
@@ -37,6 +37,8 @@ final class NativeCompanyTaskForm
             if($project['due_date']!==null)$end=['data-date-end-date'=>$project['due_date']];
         }elseif(($query['rel_type']??'')==='ticket'){
             $selected=NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$a,'ticket',$query['rel_id']??'','view');
+        }elseif(($query['rel_type']??'')==='invoice'){
+            $selected=NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$a,'invoice',$query['rel_id']??'','view');if(!in_array($selected['source_kind'],['invoice','company_invoice_draft'],true))throw new DomainException('native_task_relation_writer_required');
         }elseif(!empty($query['rel_id']))throw new DomainException('native_task_relation_writer_required');
         $preferences=IssuerTransaction::run($this->db,$this->p,(new CompanyTaskOperationPreferences($this->db,$this->p))->tables(),function()use($i,$a,$cap){(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($i,$a);$this->authorize($i,$a,$cap);return[CompanyTaskPreferences::readInOwnedTransaction($this->db,$this->p,$i),CompanyTaskOperationPreferences::readInOwnedTransaction($this->db,$this->p,$i)];});[$defaults,$operations]=$preferences;
         $options=NativeCompanyTaskFormPreferences::read($this->db,$this->p,$i,$a)+NativeCompanyUploadPreferences::read($this->db,$this->p,$i,$a)+[CompanyTaskPreferences::ASSIGN=>$defaults[CompanyTaskPreferences::ASSIGN],CompanyTaskOperationPreferences::PRIORITY=>$operations[CompanyTaskOperationPreferences::PRIORITY],CompanyTaskOperationPreferences::FOLLOW=>$operations[CompanyTaskOperationPreferences::FOLLOW],'default_task_status'=>CompanyTaskPreferences::toNativeStatus($defaults[CompanyTaskPreferences::STATUS])];
@@ -118,6 +120,8 @@ final class NativeCompanyTaskForm
             $ref=NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$a,'project',$relation,'view');if($ref['source_kind']!=='company_project')throw new DomainException('native_task_relation_writer_required');$writer=new CompanyTasks($this->db,$this->p);$source='company_task';$project=$ref['source_id'];
         }elseif($type==='ticket'){
             $ref=NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$a,'ticket',$relation,'view');$writer=new CompanyStandaloneTasks($this->db,$this->p);$source='company_standalone_task';$project=null;
+        }elseif($type==='invoice'){
+            $ref=NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$a,'invoice',$relation,'view');if(!in_array($ref['source_kind'],['invoice','company_invoice_draft'],true))throw new DomainException('native_task_relation_writer_required');$writer=new CompanyStandaloneTasks($this->db,$this->p);$source='company_standalone_task';$project=null;
         }elseif($type===''&&($relation===''||$relation===null)){$writer=new CompanyStandaloneTasks($this->db,$this->p);$source='company_standalone_task';$project=null;}
         else throw new DomainException('native_task_relation_writer_required');
         if($identity!==null&&$identity['source_kind']!==$source)throw new DomainException('company_project_reference_denied');

@@ -1,11 +1,39 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/NativeCompanyTicketReadState.php';
+require_once __DIR__.'/NativeCompanyTicketThreadPresentation.php';
+require_once __DIR__.'/NativeCompanyTicketSettingsPresentation.php';
 final class NativeCompanyTicketDetailController
 {
     private int$i;private int$a;
     public function __construct(private$ci){if(!CompanyRequestScope::nativeFor($ci)||!CompanyRequestScope::sealedFor($ci))throw new DomainException('native_ticket_access_denied');$c=CompanyRequestScope::context();$this->i=(int)$c->issuerId();$this->a=(int)$c->staffId();$this->authorize();}
     private function authorize():void{if(!CompanyRequestScope::nativeFor($this->ci)||!CompanyRequestScope::sealedFor($this->ci)||(int)CompanyRequestScope::context()->issuerId()!==$this->i||(int)CompanyRequestScope::context()->staffId()!==$this->a||!(new IssuerResourceAccess($this->ci->db,db_prefix()))->can($this->i,$this->a,'tickets','view'))throw new DomainException('native_ticket_access_denied');}
+    /**
+     * Render the existing Tickets/single route from issuer-owned projections.
+     * The original template has a finite native branch; no global ticket model,
+     * option lookup, hook, note or reminder query is allowed into this request.
+     */
+    public function show($id):void
+    {
+        if(!in_array(strtoupper($this->ci->input->method()),['GET','HEAD'],true))throw new DomainException('native_ticket_method_invalid');
+        $this->authorize();
+        $thread=(new NativeCompanyTicketThreadPresentation($this->ci->db,db_prefix()))->read($this->i,$this->a,$id);
+        $ticket=$thread['ticket'];$metadata=(array)($ticket->metadata??[]);$status=(array)($ticket->catalog['status']??[]);
+        if(!$status||!isset($status['native_id'],$status['name'],$status['statuscolor']))throw new DomainException('native_ticket_status_unavailable');
+        $ticket->ticketstatusid=$status['native_id'];$ticket->statuscolor=$status['statuscolor'];$ticket->status_name=$status['name'];
+        $ticket->merged_ticket_id=$metadata['merged_ticket_id']??null;$merged=$metadata['merged_tickets']??[];
+        if(!is_array($merged))throw new DomainException('native_ticket_merge_provenance_invalid');
+        $ticket->staff_id_replying=isset($metadata['staff_replying'])&&$metadata['staff_replying']!==null?(int)$metadata['staff_replying']:null;
+        $ticket->adminread=isset($metadata['admin_read'])?(int)$metadata['admin_read']:0;
+        $settings=null;try{$settings=(new NativeCompanyTicketSettingsPresentation($this->ci->db,db_prefix()))->read($this->i,$this->a,$id);}catch(DomainException$error){if(!in_array($error->getMessage(),['native_ticket_update_denied'],true))throw$error;}
+        $catalog=new NativeCompanyTicketCatalog($this->ci->db,db_prefix());$statuses=$catalog->list($this->i,$this->a,'status');
+        $data=$thread+['ticket'=>$ticket,'merged_tickets'=>$merged,'statuses'=>$statuses,'native_ticket_settings'=>$settings,'title'=>$ticket->subject,
+            'native_ticket_page'=>['context_token'=>CompanyRequestScope::token(),'csrf_token'=>CompanyRequestScope::nativeCsrfToken($this->ci),'request_nonce'=>bin2hex(random_bytes(32))]];
+        if($settings!==null){foreach(['staff','departments','priorities','services']as$key)$data[$key]=$settings[$key];$data['native_ticket_presentation']=array_replace($thread['native_ticket_presentation'],$settings['native_ticket_presentation']);}
+        NativeCompanyAdminPresentation::prepare($this->ci);$this->authorize();
+        $this->ci->load->view('admin/tickets/single',$data);
+        $this->authorize();
+    }
     public function markRead($id):void
     {
         if(strtoupper($this->ci->input->method())!=='POST')throw new DomainException('native_ticket_method_invalid');CompanyRequestScope::assertNativeMutation($this->ci);$this->authorize();$data=$this->ci->input->post(null,false);if(!is_array($data))throw new DomainException('native_ticket_input_invalid');unset($data['_company_context'],$data['_native_company_csrf']);if(isset($this->ci->security))unset($data[$this->ci->security->get_csrf_token_name()]);

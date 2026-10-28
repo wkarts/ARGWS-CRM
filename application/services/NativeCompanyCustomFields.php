@@ -46,6 +46,13 @@ final class NativeCompanyCustomFields
         $verify=function()use($issuer,$actor):void{if(!(new IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'settings','view'))throw new DomainException('native_custom_field_denied');};
         return $this->readDefinitions($issuer,$actor,'customers',['active'=>1],$verify);
     }
+    /** Sales settings may list their own field definitions; no global field values are exposed. */
+    public function definitionsForSalesSettings(int $issuer,int $actor,string $fieldto):array
+    {
+        if($fieldto!=='proposal')throw new DomainException('native_custom_field_denied');
+        $verify=function()use($issuer,$actor):void{if(!(new IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'settings','view'))throw new DomainException('native_custom_field_denied');};
+        return $this->readDefinitions($issuer,$actor,$fieldto,['active'=>1],$verify);
+    }
     public function definitionsForResource(int$issuer,int$actor,string$fieldto,$id,array$filters=[],string$cap='view'):array
     {
         if(!in_array($cap,['view','edit'],true))throw new DomainException('native_custom_field_denied');
@@ -361,7 +368,7 @@ final class NativeCompanyCustomFields
     /** Only the real final native writer can attest its own freshly inserted resource. */
     public function saveCreatedInOwnedTransaction(int $issuer,int $actor,string $fieldto,$id,array $submitted,object $writer):void
     {
-        $expected=['staff'=>['NativeCompanyStaffForm','staff'],'customers'=>['CompanyClients','client'],'contacts'=>['CompanyNativeContacts','contact'],'tickets'=>['NativeCompanyTicketCommands','company_ticket'],'invoice'=>['CompanyInvoiceDrafts','company_invoice_draft'],'items'=>['CompanyInvoiceDrafts','company_invoice_draft_line']][$fieldto]??null;
+        $expected=['staff'=>['NativeCompanyStaffForm','staff'],'customers'=>['CompanyClients','client'],'contacts'=>['CompanyNativeContacts','contact'],'tickets'=>['NativeCompanyTicketCommands','company_ticket'],'invoice'=>['CompanyInvoiceDrafts','company_invoice_draft'],'items'=>['CompanyInvoiceDrafts','company_invoice_draft_line'],'estimate'=>['CompanySales','company_estimate']][$fieldto]??null;
         if(in_array($fieldto,['invoice','items'],true)&&get_class($writer)==='CompanyInvoices')$expected=['CompanyInvoices',$fieldto==='invoice'?'invoice':'invoice_item'];
         if($fieldto==='items_pr')$expected=['NativeCompanyCatalog'=>['NativeCompanyCatalog','company_item'],'NativeCompanyCatalogLegacy'=>['NativeCompanyCatalogLegacy','item']][get_class($writer)]??null;
         if(!$expected||get_class($writer)!==$expected[0])throw new DomainException('native_custom_field_creation_denied');

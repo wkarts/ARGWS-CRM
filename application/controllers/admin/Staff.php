@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH.'services/NativeCompanySpecializedOperations.php';
 
 /**
  * @property-read Authentication_model $authentication_model
@@ -8,14 +9,23 @@ defined('BASEPATH') or exit('No direct script access allowed');
  */
 class Staff extends AdminController
 {
+    use NativeCompanySpecializedOperations;
     /* List all staff members */
+
+    public function hr() { $this->nativeHr(); }
+    public function hr_file() { $this->nativeHrFile(); }
+    public function hr_pdf() { $this->nativeHrPdf(); }
+    public function hr_export() { $this->nativeHrExport(); }
+    public function hr_mine() { $this->nativeHrMine(); }
+    public function hr_mine_file() { $this->nativeHrMine_file(); }
     public function index()
     {
         if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
             require_once APPPATH.'services/NativeCompanyStaffTable.php';$this->output->set_header('Cache-Control: no-store');
             if($this->input->is_ajax_request()){$result=NativeCompanyStaffTable::endpoint($this);$this->output->set_content_type('application/json')->set_output(json_encode($result));return;}
             if(!in_array(strtoupper((string)$this->input->method()),['GET','HEAD'],true))throw new DomainException('issuer_staff_denied');$c=CompanyRequestScope::context();if((int)get_staff_user_id()!==$c->staffId())throw new DomainException('issuer_staff_denied');$page=(new NativeCompanyStaffTable($this->db,db_prefix()))->read($c->issuerId(),$c->staffId());
-            $this->load->view('admin/staff/manage',['native_staff_manage'=>true,'native_staff_can_create'=>$page['can_create'],'native_staff_table_fields'=>$page['fields'],'staff_members'=>array_values(array_filter($page['rows'],static fn($r)=>(int)$r['active']===1)),'title'=>_l('staff_members')]);return;
+            require_once APPPATH.'services/NativeCompanyStaffMembershipEndpoints.php';
+            $this->load->view('admin/staff/manage',array_merge(['native_staff_manage'=>true,'native_staff_can_create'=>$page['can_create'],'native_staff_table_fields'=>$page['fields'],'staff_members'=>array_values(array_filter($page['rows'],static fn($r)=>(int)$r['active']===1)),'title'=>_l('staff_members')],NativeCompanyStaffMembershipEndpoints::linkForm($this)));return;
         }
 
         if (staff_cant('view', 'staff')) {
@@ -34,7 +44,13 @@ class Staff extends AdminController
     {
         if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
             require_once APPPATH.'services/NativeCompanyStaffMember.php';
-            if(strtoupper((string)$this->input->method())==='POST'){$saved=NativeCompanyStaffMember::save($this,$id);set_alert('success',_l($id===''?'added_successfully':'updated_successfully',_l('staff_member')));redirect(CompanyRequestScope::adminUrl($this,'staff/member/'.$saved));return;}
+            if(strtoupper((string)$this->input->method())==='POST'){
+                if($id===''&&$this->input->post('native_staff_operation',false)==='link'){
+                    require_once APPPATH.'services/NativeCompanyStaffMembershipEndpoints.php';
+                    $saved=NativeCompanyStaffMembershipEndpoints::link($this);
+                }else{$saved=NativeCompanyStaffMember::save($this,$id);}
+                set_alert('success',_l($id===''?'added_successfully':'updated_successfully',_l('staff_member')));redirect(CompanyRequestScope::adminUrl($this,'staff/member/'.$saved));return;
+            }
             $this->output->set_header('Cache-Control: no-store');$this->load->view('admin/staff/member',NativeCompanyStaffMember::page($this,$id));return;
         }
 
@@ -234,6 +250,15 @@ class Staff extends AdminController
 
     public function timesheets()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffTimeReport.php';$context=CompanyRequestScope::context();
+            if((int)get_staff_user_id()!==$context->staffId())throw new DomainException('native_timesheet_report_denied');
+            $all=$this->input->get('view')==='all';$input=[];foreach(['range','period-from','period-to','staff_id','clientid']as$key){$value=$this->input->get($key,false);if($value!==null&&$value!==false&&$value!=='')$input[$key]=$value;}
+            $projects=$this->input->get('project_id',false);if($projects!==null&&$projects!==false&&$projects!=='')$input['project_id']=is_array($projects)?array_values($projects):[$projects];
+            $service=new NativeCompanyStaffTimeReport($this->db,db_prefix(),date_default_timezone_get());$report=$service->read($context->issuerId(),$context->staffId(),$all,$input);$filters=$service->filters($context->issuerId(),$context->staffId(),$all);
+            $data=array_merge($report,$filters,['native_staff_timesheets'=>true,'title'=>_l('timesheets_overview')]);$this->output->set_header('Cache-Control: no-store');
+            if(strtoupper((string)$this->input->method())==='HEAD')return;$this->load->view('admin/staff/timesheets',$data);return;
+        }
         $data['view_all'] = false;
         if (staff_can('view-timesheets', 'reports') && $this->input->get('view') == 'all') {
             $data['staff_members_with_timesheets'] = $this->db->query('SELECT DISTINCT staff_id FROM ' . db_prefix() . 'taskstimers WHERE staff_id !=' . get_staff_user_id())->result_array();
@@ -255,6 +280,12 @@ class Staff extends AdminController
 
     public function delete()
     {
+        if(class_exists('CompanyRequestScope',false)&&CompanyRequestScope::nativeFor($this)){
+            require_once APPPATH.'services/NativeCompanyStaffMembershipEndpoints.php';
+            NativeCompanyStaffMembershipEndpoints::revoke($this);
+            set_alert('success',_l('deleted',_l('staff_member')));
+            redirect(CompanyRequestScope::adminUrl($this,'staff'),'location',303);return;
+        }
         if (!is_admin() && is_admin($this->input->post('id'))) {
             die('Busted, you can\'t delete administrators');
         }

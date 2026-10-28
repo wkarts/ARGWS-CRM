@@ -45,6 +45,19 @@ final class CompanyCredits
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$credit=IssuerPolicy::id($credit);IssuerTransaction::assertOwned($this->db,$this->p,['issuers_registry','issuers_installation_identity','issuers_staff','issuers_resource_permissions','staff','creditnotes','credits','creditnote_refunds','invoices','issuers_invoice_documents','company_credit_documents','company_credit_entries','currencies','company_currency_units']);$this->authorize($issuer,$actor);$result=$this->document($issuer,$credit);$this->authorize($issuer,$actor);return $result;
     }
     public function get($issuer,$actor,$credit):array{$issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$credit=IssuerPolicy::id($credit);return $this->transaction($issuer,$actor,fn():array=>$this->document($issuer,$credit));}
+    /** Scoped, reconciled credit applications for the original invoice preview. */
+    public function appliedToInvoice($issuer,$actor,$invoice):array
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$invoice=IssuerPolicy::id($invoice);
+        return $this->transaction($issuer,$actor,function()use($issuer,$actor,$invoice):array{
+            if(!$this->acl->can($issuer,$actor,'invoices','view'))throw new DomainException('company_credit_access_denied');
+            $position=(new CompanyInvoiceBalance($this->db,$this->p))->inOwned($issuer,$actor,$invoice);
+            $rows=$this->rows('SELECT c.id,c.credit_id,c.invoice_id,c.date,c.amount FROM '.$this->p.'credits c JOIN '.$this->p.'invoices i ON i.id=c.invoice_id AND i.issuer_id=? JOIN '.$this->p.'creditnotes n ON n.id=c.credit_id AND n.issuer_id=i.issuer_id WHERE c.invoice_id=? ORDER BY c.id FOR UPDATE',[$issuer,$invoice]);
+            $out=[];$sum=0;foreach($rows as$row){$document=$this->document($issuer,(int)$row['credit_id']);$amount=self::minor((string)$row['amount']);$sum+=$amount;if($sum>CompanyInvoiceAmounts::MAX)throw new DomainException('company_credit_balance_review');$out[]=['id'=>(int)$row['id'],'credit_id'=>(int)$row['credit_id'],'invoice_id'=>$invoice,'date'=>$row['date'],'amount'=>CompanyInvoiceAmounts::decimal($amount),'credit_number'=>$document['number']];}
+            if($sum!==self::minor($position['applied_credit'])||!$this->acl->can($issuer,$actor,'invoices','view'))throw new DomainException('company_credit_balance_review');
+            return $out;
+        });
+    }
     public function page($issuer,$actor,$after=0,int $limit=50):array
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$after=$after===0?0:IssuerPolicy::id($after);if($limit<1||$limit>100)throw new DomainException('company_credit_invalid_input');return $this->transaction($issuer,$actor,function()use($issuer,$after,$limit):array{$rows=$this->rows('SELECT c.id,c.formatted_number,c.date,c.total,c.status,c.currency currency_id FROM '.$this->p.'creditnotes c JOIN '.$this->p.'company_credit_documents d ON d.credit_id=c.id AND d.issuer_id=c.issuer_id WHERE c.issuer_id=? AND c.id>? ORDER BY c.id LIMIT '.($limit+1),[$issuer,$after]);foreach($rows as &$row){$unit=(new CompanyCurrencyUnits($this->db,$this->p))->resolveRead($row['currency_id']);$row['currency']=$unit['iso_code'];$row['currency_basis']=$unit['basis'];unset($row['currency_id']);}unset($row);$more=count($rows)>$limit;if($more)array_pop($rows);return ['items'=>$rows,'next'=>$more?(int)$rows[count($rows)-1]['id']:null];});

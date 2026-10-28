@@ -13,8 +13,10 @@ final class NativeCompanyNotifications
     public function __construct($db,string $prefix){if(!preg_match('/^[A-Za-z0-9_]+$/D',$prefix))throw new InvalidArgumentException('Invalid prefix');$this->db=$db;$this->p=$prefix;}
     public static function tables(string $kind):array
     {
-        if(!in_array($kind,['reminder','announcement','privacy_request','registration','event','customer_file','task_status'],true))throw new DomainException('issuer_notification_source_invalid');
+        if(!in_array($kind,['reminder','announcement','privacy_request','registration','event','customer_file','task_status','estimate_decision'],true))throw new DomainException('issuer_notification_source_invalid');
         $base=['issuers_lock','issuers_registry','staff','issuers_staff','issuers_installation_identity','issuers_resource_permissions',NativeCompanyHeaderSchema::NOTIFICATIONS];
+        if($kind==='task_status')return $base;
+        if($kind==='estimate_decision')return array_merge($base,['issuers_audit','company_sales_documents','contacts','clients','issuers_clients']);
         if($kind==='event')return array_merge($base,['company_events']);
         if($kind==='customer_file')return array_merge($base,['files','company_customer_file_contents','contacts','clients','issuers_clients','company_customer_admins','customer_admins']);
         if($kind==='registration')return array_merge($base,['contacts','clients','issuers_clients','company_native_portal_registrations']);
@@ -38,6 +40,7 @@ final class NativeCompanyNotifications
     {
         $this->member($issuer,$recipient);
         if($kind==='task_status'){require_once __DIR__.'/NativeCompanyTaskStatusNotice.php';return(new NativeCompanyTaskStatusNotice($this->db,$this->p))->source($issuer,$recipient,$id);}
+        if($kind==='estimate_decision'){require_once __DIR__.'/NativeCompanyEstimateDecisionNotice.php';return(new NativeCompanyEstimateDecisionNotice($this->db,$this->p))->source($issuer,$recipient,$id);}
         if($kind==='reminder'){
             $row=IssuerStorage::query($this->db,'SELECT * FROM '.$this->p.'company_reminders WHERE issuer_id=? AND id=? AND staff=?',[$issuer,$id,$recipient])->row_array();
             if(!$row)throw new DomainException('issuer_notification_source_denied');

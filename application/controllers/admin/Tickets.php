@@ -1,19 +1,34 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH.'services/NativeCompanySpecializedOperations.php';
 
 /**
  * @property Tickets_model $tickets_model
  */
 class Tickets extends AdminController
 {
+    use NativeCompanySpecializedOperations;
+
+    public function ai() { $this->nativeTicketAi(); }
+    public function connect_api() { $this->nativeTicketConnectApi(); }
+    public function connect() { $this->nativeTicketConnect(); }
     public function __construct()
     {
         parent::__construct();
         if(CompanyRequestScope::nativeFor($this)){
-            if(in_array(strtolower((string)$this->router->fetch_method()),['bulk_action','ticket','change_status_ajax','edit_message','block_sender','update_staff_replying','check_staff_replying','delete_attachment','delete','delete_ticket_reply','update_single_ticket_settings'],true)){$this->nativeTicketLifecycle();return;}
+            $method = strtolower((string) $this->router->fetch_method());
+            if ($method === 'ticket') {
+                // Reading a ticket and marking it read require view access only.
+                // Mutating replies or merging still re-authorizes edit in their handler.
+                require_once APPPATH . 'services/NativeCompanyTicketDetailController.php';
+                new NativeCompanyTicketDetailController($this);
+                return;
+            }
+            if(in_array($method,['bulk_action','change_status_ajax','edit_message','block_sender','update_staff_replying','check_staff_replying','delete_attachment','delete','delete_ticket_reply','update_single_ticket_settings'],true)){$this->nativeTicketLifecycle();return;}
             if(in_array(strtolower((string)$this->router->fetch_method()),['add','ticket_change_data'],true)){$this->nativeTicketPage();return;}
             if(strtolower((string)$this->router->fetch_method())==='index')return;
+            if(in_array(strtolower((string)$this->router->fetch_method()),['ai','connect','connect_api'],true))return;
             if(!in_array(strtolower((string)$this->router->fetch_method()),['statuses','status','delete_ticket_status','priorities','priority','delete_priority','services','service','delete_service','predefined_replies','predefined_reply','delete_predefined_reply','get_predefined_reply_ajax'],true))throw new DomainException('native_ticket_adapter_incomplete');
             $this->nativeTicketCatalog();return;
         }
@@ -223,7 +238,26 @@ class Tickets extends AdminController
 
     public function ticket($id)
     {
-        if(CompanyRequestScope::nativeFor($this)){if(strtoupper($this->input->method())==='GET'&&$this->input->get('merge_preview')!==null){$this->nativeTicketLifecycle()->mergePreview($id);return;}if(strtoupper($this->input->method())!=='POST')throw new DomainException('native_ticket_detail_adapter_incomplete');$this->nativeTicketLifecycle()->reply($id);return;}
+        if (CompanyRequestScope::nativeFor($this)) {
+            $method = strtoupper($this->input->method());
+            if ($method === 'GET' && $this->input->get('merge_preview') !== null) {
+                $this->nativeTicketLifecycle()->mergePreview($id);
+                return;
+            }
+            if (in_array($method, ['GET','HEAD'], true)) {
+                require_once APPPATH . 'services/NativeCompanyTicketDetailController.php';
+                (new NativeCompanyTicketDetailController($this))->show($id);
+                return;
+            }
+            if ($method !== 'POST') throw new DomainException('native_ticket_method_invalid');
+            if ($this->input->post('native_ticket_command', false) === 'mark_read') {
+                require_once APPPATH . 'services/NativeCompanyTicketDetailController.php';
+                (new NativeCompanyTicketDetailController($this))->markRead($id);
+                return;
+            }
+            $this->nativeTicketLifecycle()->reply($id);
+            return;
+        }
         if (! $id) {
             redirect(admin_url('tickets/add'));
         }

@@ -22,22 +22,6 @@ jobs:
           node -e 'console.log("Playwright " + require("playwright/package.json").version); console.log("Chromium executable: " + require("playwright").chromium.executablePath())'
       - name: Validar rota ativa com o loader nativo real
         run: php tests/support/CompanyShellRouteFixture.php
-      - name: Validar inventário operacional e mostrar diferenças
-        run: |
-          php scripts/company-surface-inventory.php --output /tmp/company-operational-surfaces.json
-          php scripts/native-experience-inventory.php > /tmp/native-experience-action-census.json
-          diff -u --label a/docs/companies/operational-surfaces.json --label b/docs/companies/operational-surfaces.json docs/companies/operational-surfaces.json /tmp/company-operational-surfaces.json
-          diff -u --label a/docs/companies/native-experience-action-census.json --label b/docs/companies/native-experience-action-census.json docs/companies/native-experience-action-census.json /tmp/native-experience-action-census.json
-      - name: Preservar inventário gerado para reconciliação
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: company-operational-surfaces-generated
-          path: |
-            /tmp/company-operational-surfaces.json
-            /tmp/native-experience-action-census.json
-          if-no-files-found: error
-          retention-days: 7
       - name: Sintaxe PHP e contratos estáticos
         run: |
           find application/views/admin/companies application/views/admin/includes application/views/admin/settings application/views/admin/issuers -name '*.php' -print0 | xargs -0 -n1 php -l
@@ -48,8 +32,10 @@ jobs:
           node --check assets/js/company-registry.js
           node --check assets/js/company-shell.js
           node --check assets/js/company-onboarding-modal.js
-          node --test tests/company_settings_native.test.cjs tests/company_workspace_driver.test.cjs tests/company_selector_driver.test.cjs tests/native_header_overflow.test.cjs tests/native_sidebar_toggle.test.cjs
-          php tests/company_settings_native.php
+          # Header rendering is owned by native-header-layout.yml; keep this
+          # job focused on company navigation/settings contracts so the same
+          # fixture is not executed twice for one SHA.
+          node --test tests/company_settings_native.test.cjs tests/company_workspace_driver.test.cjs tests/company_selector_driver.test.cjs tests/native_sidebar_toggle.test.cjs
           php tests/company_settings_layout.php
           php tests/company_shell_presentation.php
           node --test tests/company_shell_controls.test.cjs tests/company_navigation_tabs.test.cjs
@@ -65,7 +51,6 @@ jobs:
           node tests/efi/company_ui.browser.cjs
           node tests/company_workspace_browser.cjs
           node tests/company_registry_modal_browser.cjs
-          node tests/company_settings_native_browser.cjs
           node tests/company_settings_layout.browser.cjs
       # Repetição é um teste de estabilidade opcional, não cobertura adicional da PR.
       - name: Verificar estabilidade do modal em execução manual

@@ -7,6 +7,7 @@ function show_error($message,$status=500){throw new NativeSettingsHttpError('htt
 function _l($key){return$key;}
 function admin_url($path=''){return'https://fixture.invalid/admin/'.$path;}
 function redirect($url,$method='location',$status=302){$GLOBALS['settingsRedirect']=[$url,$status];}
+function set_alert($type,$message){$GLOBALS['settingsAlerts'][]=[$type,$message];}
 class CompanyRequestScope{
     public static int $issuer;public static bool $sealed=true;
     public static function nativeFor($ci){return self::$sealed;}
@@ -16,7 +17,7 @@ class CompanyRequestScope{
 }
 require APPPATH.'controllers/admin/Settings.php';
 CompanyRequestScope::$issuer=$a;$controller=new Settings();$controller->db=$db;
-$controller->input=new class{public string $verb='GET';public array $query=['group'=>'localization'],$body=[];function method($upper=true){return$this->verb;}function get($name){return$this->query[$name]??null;}function post($name=null,$filter=false){return$name===null?$this->body:($this->body[$name]??null);}};
+$controller->input=new class{public string $verb='GET';public array $query=['group'=>'localization'],$body=[];function method($upper=true){return$this->verb;}function get($name,$filter=false){return$this->query[$name]??null;}function post($name=null,$filter=false){return$name===null?$this->body:($this->body[$name]??null);}};
 $controller->security=new class{function get_csrf_token_name(){return'csrf_token';}};
 $controller->load=new class{public array $views=[];function helper($names){}function model($name){throw new RuntimeException('Global settings model must not load');}function view($name,$data){$this->views[]=[$name,$data];}};
 CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());
@@ -46,6 +47,11 @@ $controller->output=new class{public string $body='';function set_header($v){ret
 CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->remove_company_logo('dark'));
 essentialCheck(json_decode($controller->output->body,true)===['success'=>true]&&!isset((new CompanyAssets($db,$p))->view($a,7)['assets']['logo_dark']),'original native remove route uses explicit POST and owned asset');
 try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->remove_fv());throw new RuntimeException('Stale removal accepted');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===409,'concurrent asset edit invalidates removal revision');}
+$signature=(new CompanyAssets($db,$p))->view($a,7);$controller->input->verb='GET';$controller->input->query=['revision'=>$signature['revision']];$controller->output->body='';
+CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->company_asset('signature'));
+essentialCheck(str_starts_with($controller->output->body,"\x89PNG"),'official Settings asset download returns the selected company signature bytes');
+$controller->input->verb='HEAD';$controller->output->body='body-must-be-cleared';CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->company_asset('signature'));essentialCheck($controller->output->body==='','official Settings asset HEAD emits no private body');
+$controller->input->verb='GET';CompanyRequestScope::$issuer=$b;try{CompanySettingsRuntime::run($db,$p,$b,7,fn()=>$controller->company_asset('signature'));throw new RuntimeException('Cross-company asset accepted');}catch(NativeSettingsHttpError$e){essentialCheck(in_array($e->getCode(),[403,409],true),'official Settings asset download rejects another company revision');}CompanyRequestScope::$issuer=$a;
 $controller->input->verb='GET';try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->remove_signature_image());throw new RuntimeException('GET removal accepted');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===403,'GET cannot delete branding');}
 echo "Native Settings original asset removal routes POST/CAS isolation passed.\n";
 

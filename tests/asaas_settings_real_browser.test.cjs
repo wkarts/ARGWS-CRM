@@ -34,7 +34,7 @@ test('browser requests stay on the exact admitted loopback origin', () => {
   }
 });
 test('presentation cannot submit settings or financial mutations', () => {
-  for (const url of ['/admin/settings?group=payment_gateways', '/admin/asaas/rotate_integration_token', '/admin/company_asaas', '/asaas/gateways/callback/integration/example', '/company_asaas_callback/integration/example']) {
+  for (const url of ['/admin/settings?group=payment_gateways', '/admin/asaas/rotate_integration_token', '/admin/settings/asaas', '/asaas/gateways/callback/integration/example', '/company_asaas_callback/integration/example']) {
     assert.ok(financialMutation(fixture.ISSUERS_BROWSER_URL + url, 'POST'));
     assert.equal(financialMutation(fixture.ISSUERS_BROWSER_URL + url, 'GET'), false);
   }

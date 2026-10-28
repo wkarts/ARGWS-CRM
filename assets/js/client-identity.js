@@ -36,7 +36,7 @@
         var data = new URLSearchParams();
         form.querySelectorAll('input[type=hidden]').forEach(function (input) { if (input.name && !input.name.includes('[')) data.set(input.name, input.value); });
         if (root.dataset.nativeCompanyCsrf) data.set('_native_company_csrf', root.dataset.nativeCompanyCsrf);
-        data.set('_company_context', root.dataset.companyContext); data.set('lookup_csrf', root.dataset.lookupToken); data.set('client_id', root.dataset.clientId); data.set('kind', button.dataset.clientLookup); data.set('value', originalQuery);
+        data.set('_company_context', root.dataset.companyContext); data.set('client_id', root.dataset.clientId); data.set('kind', button.dataset.clientLookup); data.set('value', originalQuery);
         busy = true; button.disabled = true; status.textContent = 'Consultando. Seus dados serão preservados.';
         var abort = new AbortController(), timer = setTimeout(function () { abort.abort(); }, 12000);
         try {

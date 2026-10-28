@@ -1,3 +1,4 @@
+<?php $nativeOverview=$native_project_overview??null; if($nativeOverview!==null){$nativeFacts=$nativeOverview['facts'];$nativeFinance=$nativeOverview['finance'];$nativeCurrency=$nativeOverview['currency'];} ?>
 <dl class="tw-grid tw-grid-cols-1 tw-gap-x-4 tw-gap-y-3 sm:tw-grid-cols-2">
     <div class="sm:tw-col-span-1 project-overview-id">
         <dt class="tw-text-sm tw-font-normal tw-text-neutral-500">
@@ -5,7 +6,7 @@
             <?= _l('the_number_sign'); ?>
         </dt>
         <dd class="tw-mt-1 tw-text-sm tw-text-neutral-700 tw-font-medium">
-            <?= e($project->id); ?>
+            <?= e($nativeOverview!==null?$nativeFacts['reference']['canonical_id']:$project->id); ?>
         </dd>
     </div>
 
@@ -15,21 +16,21 @@
         </dt>
         <dd class="tw-mt-1 tw-text-sm tw-text-neutral-700 tw-font-medium">
             <a
-                href="<?= admin_url(); ?>clients/client/<?= e($project->clientid); ?>">
-                <?= e($project->client_data->company); ?>
+                href="<?= admin_url(); ?>clients/client/<?= e($nativeOverview!==null?$nativeFacts['customer']['canonical_id']:$project->clientid); ?>">
+                <?= e($nativeOverview!==null?$nativeFacts['customer']['name']:$project->client_data->company); ?>
             </a>
         </dd>
     </div>
 
-    <?php if (staff_can('edit', 'projects')) { ?>
+    <?php if ($nativeOverview!==null ? $nativeFinance!==null : staff_can('edit', 'projects')) { ?>
     <div class="sm:tw-col-span-1 project-overview-billing">
         <dt class="tw-text-sm tw-font-normal tw-text-neutral-500">
             <?= _l('project_billing_type'); ?>
         </dt>
         <dd class="tw-mt-1 tw-text-sm tw-text-neutral-700 tw-font-medium">
-            <?php if ($project->billing_type == 1) {
+            <?php $billingType=$nativeOverview!==null?(int)$nativeFinance['billing_type']:$project->billing_type; if ($billingType == 1) {
                 $type_name = 'project_billing_type_fixed_cost';
-            } elseif ($project->billing_type == 2) {
+            } elseif ($billingType == 2) {
                 $type_name = 'project_billing_type_project_hours';
             } else {
                 $type_name = 'project_billing_type_project_task_hours';
@@ -37,21 +38,21 @@
             <?= _l($type_name); ?>
         </dd>
     </div>
-    <?php if ($project->billing_type == 1 || $project->billing_type == 2) { ?>
+    <?php if ($billingType == 1 || $billingType == 2) { ?>
     <div class="sm:tw-col-span-1 project-overview-amount">
-        <?php if ($project->billing_type == 1) { ?>
+        <?php if ($billingType == 1) { ?>
         <dt class="tw-text-sm tw-font-normal tw-text-neutral-500">
             <?= _l('project_total_cost'); ?>
         </dt>
         <dd class="tw-mt-1 tw-text-sm tw-text-neutral-700 tw-font-medium">
-            <?= e(app_format_money($project->project_cost, $currency)); ?>
+            <?= e(app_format_money($nativeOverview!==null?$nativeFinance['project_cost']:$project->project_cost, $nativeOverview!==null?(object)$nativeCurrency:$currency)); ?>
         </dd>
         <?php } else { ?>
         <dt class="tw-text-sm tw-font-normal tw-text-neutral-500">
             <?= _l('project_rate_per_hour'); ?>
         </dt>
         <dd class="tw-mt-1 tw-text-sm tw-text-neutral-700 tw-font-medium">
-            <?= e(app_format_money($project->project_rate_per_hour, $currency)); ?>
+            <?= e(app_format_money($nativeOverview!==null?$nativeFinance['project_rate_per_hour']:$project->project_rate_per_hour, $nativeOverview!==null?(object)$nativeCurrency:$currency)); ?>
         </dd>
         <?php } ?>
     </div>
@@ -63,7 +64,7 @@
             <?= _l('project_status'); ?>
         </dt>
         <dd class="tw-mt-1 tw-text-sm tw-text-neutral-700 tw-font-medium">
-            <?= e($project_status['name']); ?>
+            <?= e($nativeOverview!==null?$nativeOverview['status']['name']:$project_status['name']); ?>
         </dd>
     </div>
 
@@ -72,7 +73,7 @@
             <?= _l('project_datecreated'); ?>
         </dt>
         <dd class="tw-mt-1 tw-text-sm tw-text-neutral-700 tw-font-medium">
-            <?= e(_d($project->project_created)); ?>
+            <?= e($nativeOverview!==null?$nativeOverview['date_labels']['created_at']:_d($project->project_created)); ?>
         </dd>
     </div>
     <div class="sm:tw-col-span-1 project-overview-start-date">
@@ -80,21 +81,21 @@
             <?= _l('project_start_date'); ?>
         </dt>
         <dd class="tw-mt-1 tw-text-sm tw-text-neutral-700 tw-font-medium">
-            <?= e(_d($project->start_date)); ?>
+            <?= e($nativeOverview!==null?$nativeOverview['date_labels']['start_date']:_d($project->start_date)); ?>
         </dd>
     </div>
-    <?php if ($project->deadline) { ?>
+    <?php if ($nativeOverview!==null?$nativeOverview['date_labels']['due_date']!=='':$project->deadline) { ?>
     <div class="sm:tw-col-span-1 project-overview-deadline">
         <dt class="tw-text-sm tw-font-normal tw-text-neutral-500">
             <?= _l('project_deadline'); ?>
         </dt>
         <dd class="tw-mt-1 tw-text-sm tw-text-neutral-700 tw-font-medium">
-            <?= e(_d($project->deadline)); ?>
+            <?= e($nativeOverview!==null?$nativeOverview['date_labels']['due_date']:_d($project->deadline)); ?>
         </dd>
     </div>
     <?php } ?>
 
-    <?php if ($project->date_finished) { ?>
+    <?php if ($nativeOverview===null && $project->date_finished) { ?>
     <div class="sm:tw-col-span-1 project-overview-date-finished">
         <dt class="tw-text-sm tw-font-normal tw-text-neutral-500">
             <?= _l('project_completed_date'); ?>
@@ -105,30 +106,30 @@
     </div>
     <?php } ?>
 
-    <?php if ($project->estimated_hours && $project->estimated_hours != '0') { ?>
+    <?php $estimated=$nativeOverview!==null?($nativeFinance['estimated_hours']??null):$project->estimated_hours; if ($estimated && $estimated != '0') { ?>
     <div class="sm:tw-col-span-1 project-overview-estimated-hours">
         <dt class="tw-text-sm tw-font-normal tw-text-neutral-500">
             <?= _l('estimated_hours'); ?>
         </dt>
         <dd
-            class="tw-mt-1 tw-text-sm <?= hours_to_seconds_format($project->estimated_hours) < (int) $project_total_logged_time ? 'text-warning' : 'text-neutral-900'; ?>">
-            <?= e(str_replace('.', ':', $project->estimated_hours)); ?>
+            class="tw-mt-1 tw-text-sm <?= ($nativeOverview!==null?$nativeOverview['logged_seconds']!==null&&hours_to_seconds_format($estimated)<$nativeOverview['logged_seconds']:hours_to_seconds_format($estimated)<(int)$project_total_logged_time) ? 'text-warning' : 'text-neutral-900'; ?>">
+            <?= e(str_replace('.', ':', $estimated)); ?>
         </dd>
     </div>
     <?php } ?>
 
-    <div class="sm:tw-col-span-1 project-overview-total-logged-hours">
+    <?php if($nativeOverview===null||$nativeOverview['logged_seconds']!==null){ ?><div class="sm:tw-col-span-1 project-overview-total-logged-hours">
         <dt class="tw-text-sm tw-font-normal tw-text-neutral-500">
             <?= _l('project_overview_total_logged_hours'); ?>
         </dt>
         <dd class="tw-mt-1 tw-text-sm tw-text-neutral-700 tw-font-medium">
-            <?= e(seconds_to_time_format($project_total_logged_time)); ?>
+            <?= e(seconds_to_time_format($nativeOverview!==null?$nativeOverview['logged_seconds']:$project_total_logged_time)); ?>
         </dd>
-    </div>
-    <?php $custom_fields = get_custom_fields('projects'); ?>
+    </div><?php } ?>
+    <?php $custom_fields = $nativeOverview!==null?$nativeFacts['custom_definitions']:get_custom_fields('projects'); ?>
     <?php if (count($custom_fields) > 0) { ?>
     <?php foreach ($custom_fields as $field) { ?>
-    <?php $value = get_custom_field_value($project->id, $field['id'], 'projects');
+    <?php $value = $nativeOverview!==null?($nativeFacts['custom_values'][(string)$field['id']]??''):get_custom_field_value($project->id, $field['id'], 'projects');
         if ($value == '') {
             continue;
         } ?>
@@ -137,20 +138,20 @@
             <?= e(ucfirst($field['name'])); ?>
         </dt>
         <dd class="tw-mt-1 tw-text-sm tw-text-neutral-700 tw-font-medium">
-            <?= $value; ?>
+            <?= $nativeOverview!==null?e($value):$value; ?>
         </dd>
     </div>
     <?php } ?>
     <?php } ?>
 
-    <?php $tags = get_tags_in($project->id, 'project'); ?>
+    <?php $tags = $nativeOverview!==null?$nativeOverview['tags']:get_tags_in($project->id, 'project'); ?>
     <?php if (count($tags) > 0) { ?>
     <div class="sm:tw-col-span-1 project-overview-tags">
         <dt class="tw-text-sm tw-font-normal tw-text-neutral-500">
             <?= _l('tags'); ?>
         </dt>
         <dd class="tw-mt-1 tw-text-sm tw-text-neutral-700 tw-font-medium">
-            <?= render_tags($tags); ?>
+            <?php if($nativeOverview!==null){require_once APPPATH.'services/TagPresentation.php';echo TagPresentation::render($tags);}else echo render_tags($tags); ?>
         </dd>
     </div>
     <?php } ?>
@@ -160,12 +161,12 @@
             <?= _l('project_description'); ?>
         </dt>
         <dd class="tw-mt-1 tw-space-y-5 tw-text-sm tw-text-neutral-500">
-            <?php if (empty($project->description)) { ?>
+            <?php $description=$nativeOverview!==null?$nativeFacts['project']['description']:$project->description; if ($nativeOverview!==null?$description==='':empty($description)) { ?>
             <p class="tw-text-neutral-400 tw-mb-0">
                 <?= _l('no_description_project'); ?>
             </p>
             <?php } ?>
-            <?= check_for_links($project->description); ?>
+            <?= $nativeOverview!==null?nl2br(e($description)):check_for_links($description); ?>
         </dd>
     </div>
 </dl>

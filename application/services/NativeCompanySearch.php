@@ -110,7 +110,7 @@ final class NativeCompanySearch
         require_once __DIR__.'/CompanySales.php';
         $result=[];$after=0;$sales=new CompanySales($this->db,$this->p);
         do{
-            $candidates=IssuerStorage::query($this->db,'SELECT id FROM '.$this->p."company_sales_documents WHERE issuer_id=? AND kind='estimates' AND id>? AND payload_json LIKE ? ESCAPE '!' ORDER BY id LIMIT 50",[$issuer,$after,$needle])->result_array();
+            $candidates=IssuerStorage::query($this->db,'SELECT id FROM '.$this->p."company_sales_documents WHERE issuer_id=? AND kind='estimates' AND id>? AND (CASE WHEN json_valid(payload_json) THEN json_extract(payload_json,'$.items') ELSE '' END) LIKE ? ESCAPE '!' ORDER BY id LIMIT 50",[$issuer,$after,$needle])->result_array();
             foreach($candidates as $candidate){
                 $after=(int)$candidate['id'];
                 try{

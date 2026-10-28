@@ -81,9 +81,9 @@ final class NativeCompanyTicketLifecycleController
         CompanyRequestScope::assertNativeMutation($this->ci);$this->authorize();$d=$this->ci->input->post(null,false);if(!is_array($d))throw new DomainException('native_ticket_input_invalid');unset($d['_company_context'],$d['_native_company_csrf']);if(isset($this->ci->security))unset($d[$this->ci->security->get_csrf_token_name()]);
         if(array_diff(array_keys($d),['ticketid','message','status','cc','assign_to_current_user','ticket_add_response_and_back_to_list','revision','request_nonce'])||(string)($d['ticketid']??'')!==(string)$ticket||!is_string($d['message']??null)||!is_string($d['revision']??null)||!is_string($d['request_nonce']??null))throw new DomainException('native_ticket_input_invalid');
         foreach(['assign_to_current_user','ticket_add_response_and_back_to_list']as$key)if(isset($d[$key])&&!in_array($d[$key],['1','on'],true))throw new DomainException('native_ticket_input_invalid');
-        foreach($_FILES as$upload){if(!is_array($upload)||!array_key_exists('error',$upload))throw new DomainException('native_ticket_attachments_unavailable');foreach((array)$upload['error']as$error)if($error!==UPLOAD_ERR_NO_FILE)throw new DomainException('native_ticket_attachments_unavailable');}
+        require_once __DIR__.'/NativeCompanyTicketMultipart.php';$files=NativeCompanyTicketMultipart::attachments();
         $options=['assign_to_current_user'=>isset($d['assign_to_current_user'])];if(array_key_exists('cc',$d))$options['cc']=$d['cc'];$status=$d['status']??null;if($status==='')$status=null;
-        (new NativeCompanyTicketUpdates($this->ci->db,db_prefix()))->reply($this->issuer,$this->actor,$ticket,$d['message'],$status,$d['revision'],$d['request_nonce'],$options);$this->authorize();
+        (new NativeCompanyTicketUpdates($this->ci->db,db_prefix()))->reply($this->issuer,$this->actor,$ticket,$d['message'],$status,$d['revision'],$d['request_nonce'],$options,$files);$this->authorize();
         redirect(CompanyRequestScope::adminUrl($this->ci,isset($d['ticket_add_response_and_back_to_list'])?'tickets':'tickets/ticket/'.$ticket),'location',303);
     }
     public function mergePreview($ticket):void{

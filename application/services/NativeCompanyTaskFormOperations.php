@@ -6,6 +6,8 @@ require_once __DIR__.'/NativeCompanyTaskRelationAuthority.php';
 /** Explicit native form entrypoints on the existing task writers, with the same transaction and billing fences. */
 trait NativeCompanyTaskFormOperations
 {
+    private bool $nativeChecklistActive=false;
+    private ?array $nativeChecklistContext=null;
     private ?array $nativeStatusContext=null;
     private function nativeStatusExtraTables():array
     {
@@ -63,6 +65,60 @@ trait NativeCompanyTaskFormOperations
             if($norm($after)!==$norm($expected)||array_map($norm,$actualTimers)!==array_map($norm,$expectedTimers)||$this->nativeStatusAuthority($issuer,$actor,$id)!==$authority)throw new RuntimeException('native_task_status_unconfirmed');
             $this->nativeStatusContext+=['source_kind'=>$this->taskKind()==='project'?'company_task':'company_standalone_task','source_id'=>$id,'from'=>$from,'to'=>$to,'result_revision'=>(int)$after['revision'],'date_finished'=>$to==='done'?($fields['date_finished']??($from!==$to?$now:null)):null,'closed_timer_ids'=>$closed];return$id;
         });}finally{$this->nativeStatusContext=null;}
+    }
+    /** Priority changes retain the original edit permission, canonical identity and billing fence. */
+    public function changeNativePriority($issuer,$actor,$id,$revision,$fieldsRevision,$priority,string$key):int
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=self::revision($revision);$fieldsRevision=$fieldsRevision===null?null:self::revision($fieldsRevision);$priority=CompanyTaskPriority::value($priority);
+        NativeCompanyTaskFormSchema::assertValid($this->db,$this->p);$kind=$this->taskKind();$op=$kind==='project'?'task_native_priority':'standalone_task_native_priority';
+        return $this->operation($issuer,$actor,'edit',$key,$op,[$id,$revision,$fieldsRevision,$priority],function()use($issuer,$actor,$id,$revision,$fieldsRevision,$priority,$kind):int{
+            $this->rememberNativeTaskParent($issuer,$actor,$id);$before=$this->row($issuer,$id);
+            if((int)$before['revision']!==$revision||($before['native_fields_revision']===null?null:(int)$before['native_fields_revision'])!==$fieldsRevision)throw new DomainException('company_project_stale');
+            if($kind==='project')$this->assertTaskUnclaimed($issuer,$actor,$id);else$this->assertBillingMutable($issuer,$actor,$id);
+            $expected=$before;
+            if((int)$before['priority']!==$priority){
+                $table=$kind==='project'?'company_tasks':'company_standalone_tasks';$expected['revision']=$revision+1;$expected['updated_at']=date('Y-m-d H:i:s');$expected['priority']=$priority;
+                IssuerStorage::query($this->db,'UPDATE '.$this->p.$table.' SET revision=?,updated_at=? WHERE issuer_id=? AND id=? AND revision=?',[$expected['revision'],$expected['updated_at'],$issuer,$id,$revision]);
+                CompanyTaskPriority::save($this->db,$this->p,$kind,$issuer,$id,$priority,false);
+            }
+            $normalize=static fn($row)=>array_map(static fn($v)=>$v===null?null:(string)$v,$row);
+            if($normalize($this->row($issuer,$id))!==$normalize($expected))throw new RuntimeException('issuer_task_priority_unconfirmed');
+            return$id;
+        });
+    }
+    /** Assign stable IDs to the current historical JSON exactly once, without rewriting it. */
+    public function initializeNativeChecklist($issuer,$actor,$id,$revision,string$key):int
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=self::revision($revision);require_once __DIR__.'/NativeCompanyTaskItems.php';NativeCompanyTaskItemSchema::assertValid($this->db,$this->p);
+        $kind=$this->taskKind();$op=$kind==='project'?'task_native_checklist_init':'standalone_task_native_checklist_init';$this->nativeChecklistActive=true;
+        try{return$this->operation($issuer,$actor,'edit',$key,$op,[$id,$revision],function()use($issuer,$actor,$id,$revision,$kind):int{
+            $this->rememberNativeTaskParent($issuer,$actor,$id);$row=$this->row($issuer,$id);if((int)$row['revision']!==$revision)throw new DomainException('company_project_stale');
+            if($kind==='project')$this->assertTaskUnclaimed($issuer,$actor,$id);else$this->assertBillingMutable($issuer,$actor,$id);
+            (new NativeCompanyTaskItems($this->db,$this->p))->initializeInOwned($issuer,$id,$kind,$row['checklist_json']);
+            foreach(NativeCompanyTaskItems::tables($kind)as$table){$query='SELECT * FROM '.$this->p.$table.' WHERE issuer_id=? AND task_id=? ORDER BY '.(str_ends_with($table,'_items')?'position,id':'issuer_id').' FOR UPDATE';$args=[$issuer,$id];$this->nativeTaskRelatedFrames[]=['query'=>$query,'args'=>$args,'rows'=>$this->rows($query,$args)];}
+            return$id;
+        });}finally{$this->nativeChecklistActive=false;}
+    }
+    /** A checklist command changes its item projection and task JSON in one audited transaction. */
+    public function changeNativeChecklist($issuer,$actor,$id,$revision,$checklistRevision,array$command,string$key):int
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$id=IssuerPolicy::id($id);$revision=self::revision($revision);$checklistRevision=self::revision($checklistRevision);require_once __DIR__.'/NativeCompanyTaskItems.php';NativeCompanyTaskItemSchema::assertValid($this->db,$this->p);
+        $kind=$this->taskKind();$op=$kind==='project'?'task_native_checklist_change':'standalone_task_native_checklist_change';$this->nativeChecklistActive=true;
+        try{return$this->operation($issuer,$actor,'edit',$key,$op,[$id,$revision,$checklistRevision,$command],function()use($issuer,$actor,$id,$revision,$checklistRevision,$command,$kind):int{
+            $this->rememberNativeTaskParent($issuer,$actor,$id);$row=$this->row($issuer,$id);if((int)$row['revision']!==$revision)throw new DomainException('company_project_stale');
+            if($kind==='project')$this->assertTaskUnclaimed($issuer,$actor,$id);else$this->assertBillingMutable($issuer,$actor,$id);
+            if(($command['action']??null)==='assign'&&($command['assigned_id']??null)!==null){
+                $target=IssuerPolicy::id($command['assigned_id']);require_once __DIR__.'/NativeCompanyWorkAssignments.php';$members=(new NativeCompanyWorkAssignments($this->db,$this->p))->read($issuer,$actor,$kind==='project'?'task':'standalone',$id);$ids=array_map('intval',array_column($members['members'],'staffid'));
+                if(!in_array($target,$ids,true)&&($row['assignee_id']===null||(int)$row['assignee_id']!==$target))throw new DomainException('native_assignment_denied');
+                if(!(new IssuerResourceAccess($this->db,$this->p))->can($issuer,$target,'tasks','view'))throw new DomainException('native_assignment_denied');
+                $assignTable=$kind==='project'?'company_task_assignees':'company_standalone_assignees';$query='SELECT * FROM '.$this->p.$assignTable.' WHERE issuer_id=? AND task_id=? ORDER BY staff_id FOR UPDATE';$args=[$issuer,$id];$this->nativeTaskRelatedFrames[]=['query'=>$query,'args'=>$args,'rows'=>$this->rows($query,$args),'follower_authority'=>[$issuer,[$target],$kind==='project']];
+            }
+            $change=(new NativeCompanyTaskItems($this->db,$this->p))->mutateInOwned($issuer,$actor,$id,$kind,$row['checklist_json'],$checklistRevision,$command);
+            $table=$kind==='project'?'company_tasks':'company_standalone_tasks';$now=date('Y-m-d H:i:s');IssuerStorage::query($this->db,'UPDATE '.$this->p.$table.' SET revision=revision+1,updated_at=? WHERE issuer_id=? AND id=? AND revision=?',[$now,$issuer,$id,$revision]);
+            $expected=$row;$expected['checklist_json']=$change['json'];$expected['revision']=$revision+1;$expected['updated_at']=$now;$norm=static fn($r)=>array_map(static fn($v)=>$v===null?null:(string)$v,$r);if($norm($this->row($issuer,$id))!==$norm($expected))throw new RuntimeException('native_task_checklist_unconfirmed');
+            $this->nativeChecklistContext=['kind'=>$kind,'task_id'=>$id,'action'=>$change['action'],'before'=>$change['before'],'after'=>$change['after']];
+            foreach(NativeCompanyTaskItems::tables($kind)as$t){$query='SELECT * FROM '.$this->p.$t.' WHERE issuer_id=? AND task_id=? ORDER BY '.(str_ends_with($t,'_items')?'id':'issuer_id').' FOR UPDATE';$args=[$issuer,$id];$this->nativeTaskRelatedFrames[]=['query'=>$query,'args'=>$args,'rows'=>$this->rows($query,$args)];}return$id;
+        });}finally{$this->nativeChecklistActive=false;$this->nativeChecklistContext=null;}
     }
     private static ?WeakMap $nativeTaskCreationProofs=null;
     private array $nativeTaskRelatedFrames=[];
@@ -125,9 +181,11 @@ trait NativeCompanyTaskFormOperations
     {
         $kind=$this->taskKind()==='project'?'task':'standalone';$table=$kind==='task'?'company_task_assignees':'company_standalone_assignees';
         require_once __DIR__.'/NativeCompanyWorkAssignments.php';$tables=$this->db->table_exists($this->p.$table)?(new NativeCompanyWorkAssignments($this->db,$this->p))->tableNames($kind):[];
+        require_once __DIR__.'/NativeCompanyTaskItems.php';$checklistTables=NativeCompanyTaskItems::tables($this->taskKind());$present=array_map(fn($name)=>$this->db->table_exists($this->p.$name),$checklistTables);
+        if($this->nativeChecklistActive||in_array(true,$present,true)){if(in_array(false,$present,true))throw new RuntimeException('native_task_item_schema_invalid');$tables=array_merge($tables,$checklistTables);}
         if($this->db->table_exists($this->p.'company_task_checklist_templates')){require_once __DIR__.'/NativeCompanyTaskChecklistTemplates.php';$tables=array_merge($tables,(new NativeCompanyTaskChecklistTemplates($this->db,$this->p))->tableNames());}
         if($this->db->table_exists($this->p.'company_work_tags')){require_once __DIR__.'/NativeCompanyResourceTags.php';$tables=array_merge($tables,NativeCompanyResourceTags::tableNames());}
-        if($this->db->table_exists($this->p.'company_custom_fields')){require_once __DIR__.'/NativeCompanyCustomFields.php';$tables=array_merge($tables,(new NativeCompanyCustomFields($this->db,$this->p))->tableNames());}if($this->db->table_exists($this->p.'company_standalone_followers'))$tables[]='company_standalone_followers';if($this->taskKind()==='project'&&$this->db->table_exists($this->p.'company_task_milestones'))$tables=array_merge($tables,['company_project_milestones','company_milestone_details','company_task_milestones']);if($kind==='standalone'&&$this->db->table_exists($this->p.'company_ticket_catalog'))$tables=array_merge($tables,NativeCompanyResourceReferences::transactionTables($this->db,$this->p,'ticket'));return array_values(array_unique($tables));
+        if($this->db->table_exists($this->p.'company_custom_fields')){require_once __DIR__.'/NativeCompanyCustomFields.php';$tables=array_merge($tables,(new NativeCompanyCustomFields($this->db,$this->p))->tableNames());}if($this->db->table_exists($this->p.'company_standalone_followers'))$tables[]='company_standalone_followers';if($this->taskKind()==='project'&&$this->db->table_exists($this->p.'company_task_milestones'))$tables=array_merge($tables,['company_project_milestones','company_milestone_details','company_task_milestones']);if($kind==='standalone'&&$this->db->table_exists($this->p.'company_ticket_catalog'))$tables=array_merge($tables,NativeCompanyResourceReferences::transactionTables($this->db,$this->p,'ticket'));if($kind==='standalone'&&$this->db->table_exists($this->p.'invoices'))$tables=array_merge($tables,NativeCompanyResourceReferences::transactionTables($this->db,$this->p,'invoice'));return array_values(array_unique($tables));
     }
     private function confirmNativeTaskTemplateInput(int$i,int$a,array$data,?array$related):void
     {
@@ -191,6 +249,11 @@ trait NativeCompanyTaskFormOperations
         $frame=NativeCompanyTaskRelationAuthority::capture($this->db,$this->p,$i,$a,$id);
         if(($frame['parent']??null)!==null){$fields=json_decode($frame['row']['native_fields_json'],true,32,JSON_THROW_ON_ERROR);$this->nativeTaskRelatedFrames[]=['task_relation'=>[$i,$a,$fields,$frame['parent']]];}
     }
+    private function guardNativeChecklistWrite(int$i,int$id,string$old,string$new):void
+    {
+        $tables=NativeCompanyTaskItems::tables($this->taskKind());if(!$this->db->table_exists($this->p.$tables[0]))return;
+        NativeCompanyTaskItemSchema::assertValid($this->db,$this->p);(new NativeCompanyTaskItems($this->db,$this->p))->guardLegacyWriteInOwned($i,$id,$this->taskKind(),$old,$new);
+    }
     private function nativeTaskFields(int$issuer,int$actor,array$data,array$fields):array
     {
         $fields=NativeCompanyTaskFormValues::normalize($fields);
@@ -200,7 +263,7 @@ trait NativeCompanyTaskFormOperations
             if($fields['relation_type']!=='project'||$fields['relation_source_kind']!=='company_project'||$fields['relation_source_id']!==$data['project_id'])throw new DomainException('company_project_reference_denied');
             $this->parent($issuer,$data['project_id'],true);
         }elseif($fields['relation_type']!==null){
-            $tables=NativeCompanyResourceReferences::transactionTables($this->db,$this->p,'ticket');IssuerTransaction::assertOwned($this->db,$this->p,$tables);
+            $tables=NativeCompanyResourceReferences::transactionTables($this->db,$this->p,$fields['relation_type']);IssuerTransaction::assertOwned($this->db,$this->p,$tables);
             $proof=NativeCompanyTaskRelationAuthority::fields($this->db,$this->p,$issuer,$actor,$fields);
             $this->nativeTaskRelatedFrames[]=['task_relation'=>[$issuer,$actor,$fields,$proof]];
         }

@@ -16,13 +16,17 @@ final class NativeCompanyTicketCommands extends CompanyContractsStorage
     protected string $feature='tickets';
     private ?array $pendingCreate=null;
     private ?array $createdProof=null;
+    private bool $pendingFiles=false;
+    private ?array $createdFilesProof=null;
     protected function transaction(callable $work)
     {
         CompanyContractsSchema::assertValid($this->db,$this->p);NativeCompanyTicketCustomerSchema::assertValid($this->db,$this->p);NativeCompanyDepartmentSchema::assertValid($this->db,$this->p);NativeCompanyTicketCatalogSchema::assertValid($this->db,$this->p);
         $tables=array_merge((new NativeCompanyTicketContacts($this->db,$this->p))->tables(),(new NativeCompanyTicketPreferences($this->db,$this->p))->tables(),array_keys(CompanyContractsSchema::definitions($this->p)),array_keys(NativeCompanyDepartmentSchema::definitions($this->p)),array_keys(NativeCompanyTicketCatalogSchema::definitions($this->p)),NativeCompanyResourceTags::tableNames(),(new NativeCompanyTicketRead($this->db,$this->p))->tables(),(new NativeCompanyCustomFields($this->db,$this->p))->tableNames(),['issuers_client_links','projects','company_projects','departments','staff_departments','services','tickets_predefined_replies']);
+        if($this->pendingFiles){require_once __DIR__.'/CompanyOperationFilesSchema.php';CompanyOperationFilesSchema::assertValid($this->db,$this->p);$tables[]='company_ticket_files';}
         return IssuerTransaction::run($this->db,$this->p,array_values(array_unique($tables)),function()use($work){
             $scope=$this->pendingCreate;if($scope===null)throw new LogicException('native_ticket_command_required');
-            [$issuer,$actor,$data]=$scope;$before=$this->references($issuer,$actor,$data);$result=$work();if($this->references($issuer,$actor,$data)!==$before)throw new DomainException('native_ticket_references_changed');return$result;
+            [$issuer,$actor,$data]=$scope;$before=$this->references($issuer,$actor,$data);$result=$work();if($this->references($issuer,$actor,$data)!==$before)throw new DomainException('native_ticket_references_changed');
+            if($this->createdFilesProof!==null){[$ticket,$snapshot]=$this->createdFilesProof;if($this->ticketFileFrame($issuer,$ticket)!==$snapshot)throw new RuntimeException('issuer_ticket_write_unconfirmed');}return$result;
         });
     }
     private static function createInput(array $input):array
@@ -76,10 +80,11 @@ final class NativeCompanyTicketCommands extends CompanyContractsStorage
         if($before['userid']!==null&&$refs['client']!==$before['userid'])throw new DomainException('native_ticket_client_reassignment_requires_review');
         return['data'=>$data,'refs'=>$refs];
     }
-    public function createNative(int $issuer,int $actor,array $input,string $request):string
+    public function createNative(int $issuer,int $actor,array $input,string $request,array $files=[]):string
     {
-        $data=self::createInput($input);if($this->pendingCreate!==null)throw new LogicException('native_ticket_command_nested');$this->pendingCreate=[$issuer,$actor,$data];try{$id=$this->operation($issuer,$actor,'create',$request,'native_ticket_created',$data,function()use($issuer,$actor,$data):int{
-            $refs=$this->references($issuer,$actor,$data);$now=date('Y-m-d H:i:s');
+        $data=self::createInput($input);require_once __DIR__.'/NativeCompanyTicketMultipart.php';$normalized=NativeCompanyTicketMultipart::normalize($files);
+        if($this->pendingCreate!==null)throw new LogicException('native_ticket_command_nested');$this->pendingCreate=[$issuer,$actor,$data];$this->pendingFiles=$normalized!==[];$payload=$normalized?['ticket'=>$data,'files'=>array_map(static fn($f)=>[$f['name'],$f['mime'],$f['hash'],$f['extension']],$normalized)]:$data;try{$id=$this->operation($issuer,$actor,'create',$request,'native_ticket_created',$payload,function()use($issuer,$actor,$data,$normalized,$request):int{
+            $refs=$this->references($issuer,$actor,$data);$now=date('Y-m-d H:i:s');NativeCompanyTicketMultipart::assertPolicy($normalized,$refs['prefs']['values']);
             IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_tickets (issuer_id,client_id,assignee_id,subject,body,status,priority,revision,created_at,updated_at) VALUES(?,?,?,?,?,?,?,1,?,?)',[$issuer,$refs['client'],$data['assigned'],$data['subject'],$data['message'],'native','native',$now,$now]);$id=(int)$this->db->insert_id();if($id<1)throw new RuntimeException('issuer_ticket_write_unconfirmed');
             $metadata=['issuer_id'=>$issuer,'ticket_id'=>$id,'department_source_kind'=>$refs['department']['source_kind'],'department_source_id'=>$refs['department']['source_id'],'revision'=>1,'actor_id'=>$actor,'created_at'=>$now,'updated_at'=>$now,'contact_id'=>$data['contactid'],'project_source_kind'=>$refs['project']['source_kind']??'','project_source_id'=>$refs['project']['source_id']??null,'sender_name'=>$refs['name'],'sender_email'=>$refs['email'],'sender_origin'=>$refs['origin'],'cc_json'=>json_encode($data['cc'],JSON_THROW_ON_ERROR),'opened_by'=>$actor,'admin_read'=>0,'last_reply_at'=>null,'staff_replying'=>null,'staff_replying_at'=>null];
             $keys=array_keys($metadata);IssuerStorage::query($this->db,'INSERT INTO '.$this->p.NativeCompanyDepartmentSchema::TICKETS.' ('.implode(',',$keys).') VALUES('.implode(',',array_fill(0,count($keys),'?')).')',array_values($metadata));
@@ -94,9 +99,12 @@ final class NativeCompanyTicketCommands extends CompanyContractsStorage
             $this->assertCreatedInOwned($this->db,$this->p,$issuer,$actor,'company_ticket',$id);
             (new NativeCompanyCustomFields($this->db,$this->p))->saveCreatedInOwnedTransaction($issuer,$actor,'tickets',$id,$data['custom_fields'],$this);
             (new NativeCompanyResourceTags($this->db,$this->p))->createTicketTagsInOwnedTransaction($issuer,$actor,$id,$data['tags'],$this);
+            foreach($normalized as$n=>$file){$key=hash('sha256','native-ticket-create-file|'.$issuer.'|'.$request.'|'.$n);IssuerStorage::query($this->db,'INSERT INTO '.$this->p.'company_ticket_files(file_key,issuer_id,ticket_id,actor_id,filename,mime,content_hash,byte_size,content,active,created_at) VALUES(?,?,?,?,?,?,?,?,?,1,?)',[$key,$issuer,$id,$actor,$file['name'],$file['mime'],$file['hash'],strlen($file['bytes']),$file['bytes'],$now]);}
+            if($normalized){$snapshot=$this->ticketFileFrame($issuer,$id);if(count($snapshot)!==count($normalized))throw new RuntimeException('issuer_ticket_write_unconfirmed');$expectedFiles=[];foreach($normalized as$n=>$expected)$expectedFiles[hash('sha256','native-ticket-create-file|'.$issuer.'|'.$request.'|'.$n)]=$expected;foreach($snapshot as$file){$expected=$expectedFiles[$file['file_key']]??null;if($expected===null||(int)$file['issuer_id']!==$issuer||(int)$file['ticket_id']!==$id||(int)$file['actor_id']!==$actor||(int)$file['active']!==1||$file['filename']!==$expected['name']||$file['mime']!==$expected['mime']||$file['content_hash']!==$expected['hash']||(int)$file['byte_size']!==strlen($expected['bytes'])||!hash_equals($file['content_hash'],hash('sha256',$file['content'])))throw new RuntimeException('issuer_ticket_write_unconfirmed');}$this->createdFilesProof=[$id,$snapshot];}
             return$id;
-        });return NativeCompanyResourceId::encode('company_ticket',$id);}finally{$this->pendingCreate=null;$this->createdProof=null;}
+        });return NativeCompanyResourceId::encode('company_ticket',$id);}finally{$this->pendingCreate=null;$this->createdProof=null;$this->pendingFiles=false;$this->createdFilesProof=null;}
     }
+    private function ticketFileFrame(int $issuer,int $ticket):array{return$this->rows('SELECT file_key,issuer_id,ticket_id,actor_id,filename,mime,content_hash,byte_size,content,active,created_at FROM '.$this->p.'company_ticket_files WHERE issuer_id=? AND ticket_id=? ORDER BY file_key',[$issuer,$ticket]);}
     private function createdFrame(int $issuer,int $id):string
     {
         $row=$this->rows('SELECT * FROM '.$this->p.'company_tickets WHERE issuer_id=? AND id=?',[$issuer,$id])[0]??null;

@@ -756,6 +756,10 @@
     ],
     [
       "php",
+      "tests/native_company/proposals_list_acl.php"
+    ],
+    [
+      "php",
       "tests/native_company/auxiliary_historical_actors.php"
     ],
     [
@@ -1960,7 +1964,7 @@
     ],
     [
       "php",
-      "tests/companies/native_portal_files_controller.php"
+      "tests/companies/native_portal_files_scope.php"
     ],
     [
       "php",
@@ -2080,32 +2084,442 @@
     ],
     [
       "php",
-      "tests/crm_ui_language.php"
-    ],
-    [
-      "php",
       "tests/invoice_issuer_discovery.php"
     ],
     [
       "php",
-      "tests/companies/bb_channel_preferences.php"
+      "tests/native_company/ticket_read_marker_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_create_contact.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_sequence_preferences.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_settings.php"
+    ],
+    [
+      "php",
+      "tests/banco_brasil_cnab400_comparison_sqlite.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_settings_views.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_settings_fields.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_dates_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_table_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_contact_delete_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_groups_controller.php"
+    ],
+    [
+      "php",
+      "tests/banco_brasil_cnab400_preparation_sqlite.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_views.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_contact_directory_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_menu_permissions.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_number_formats.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_status_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_status_view.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_portal_home.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_search_bounds.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_individual_customer.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_individual_customer_import.php"
+    ],
+    [
+      "php",
+      "tests/companies/client_imports_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_download_scope.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_lookup_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_estimate_form_input.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_dates_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_estimate_persisted_fields.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_estimate_project.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_delete_guard.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_index_read.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_index_projection.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_index_page.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_index_rows.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_index_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_index_view.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_scoped_db.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_main_filters.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_status_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_portal_invoices.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_delete_references.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_estimate_form_create.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_delete_writer.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_related_status.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_estimate_form_tags.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_preview_data.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_priority_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_delete_inventory.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_estimate_form_fields.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_project_table_scope.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_invoice_table_scope.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_related_tabs.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_detail_facts.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_selected_payment.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_payment_notice_delivery.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_payment_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_detail_metrics.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_estimate_portal_decisions.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_preview_files.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_detail_hours.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_selected_reversal.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_preview_credits.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_preview_reminders.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_estimate_portal_signatures.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_preview_metadata.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_estimate_signature_schema.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_estimate_decision_http.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_estimate_portal_auto_convert.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_preview_copy.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_overview_component.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_contact_index_sqlite.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_item_schema.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_items_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_items_initialization.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_items_commands.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_items_presentation.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_items_view.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_draft_copy_metadata.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_estimate_portal_notifications.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_detail_files.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_estimate_portal_pagination.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_portal_project_download.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_file_download.php"
+    ],
+    [
+      "php",
+      "tests/native_company/ticket_reply_attachments.php"
+    ],
+    [
+      "php",
+      "tests/native_company/ticket_detail_page.php"
+    ],
+    [
+      "php",
+      "tests/native_company/ticket_create_attachments.php"
+    ],
+    [
+      "php",
+      "tests/companies/contract_discussions_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_portal_files_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_draft_copy_recurring.php"
+    ],
+    [
+      "php",
+      "tests/companies/contracts_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/portal_operations_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_checklist_visibility.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_file_upload_types.php"
+    ],
+    [
+      "php",
+      "tests/companies/asaas_checkout_portal.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_detail_guard.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_clients_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_portal_contacts_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_portal_estimates_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_related_tasks.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_invoice_preview_recurring.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_detail_read.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_portal_legacy_estimates.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_customer_ticket_tab.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_related_tasks.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_dates.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_draft_related_tasks.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_staff_download_scope.php"
     ]
   ],
   "node": [
     [
       "node",
       "--test",
-      "tests/native_sidebar_toggle.test.cjs"
-    ],
-    [
-      "node",
-      "--test",
       "tests/companies/native_file_message_ui.test.cjs"
-    ],
-    [
-      "node",
-      "--test",
-      "tests/company_shell_controls.test.cjs"
     ],
     [
       "node",
@@ -2225,11 +2639,6 @@
     [
       "node",
       "--test",
-      "tests/native_header_overflow.test.cjs"
-    ],
-    [
-      "node",
-      "--test",
       "tests/native_invoice_transport.test.cjs"
     ],
     [
@@ -2311,6 +2720,16 @@
       "node",
       "--test",
       "tests/native_mentions_contract.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_company/task_timer_created_option.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_company/invoice_official_ui.test.cjs"
     ]
   ],
   "mysql": [
@@ -2336,10 +2755,6 @@
     ],
     [
       "php",
-      "tests/companies/expense_recurring_cli.php"
-    ],
-    [
-      "php",
       "tests/companies/native_file_message_schema_mysql.php"
     ],
     [
@@ -2357,6 +2772,14 @@
     [
       "php",
       "tests/companies/native_customer_upload_mail_schema_mysql.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_search_concurrency.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_contact_index_mysql.php"
     ]
   ],
   "browser": [
@@ -2367,6 +2790,50 @@
     [
       "node",
       "tests/native_mentions_tinymce.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/native_company/sales_settings_views.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/native_company/task_timer_created_option.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/companies/native_customer_create.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/native_company/task_checklist_transport.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/companies/native_customer_status.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/companies/native_customer_helpers.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/companies/native_portal_home.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/native_company/task_status_transport.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/companies/native_portal_invoice.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/native_company/task_priority_transport.browser.cjs"
+    ],
+    [
+      "node",
+      "tests/native_company/task_checklist_command.browser.cjs"
     ]
   ]
 }

@@ -25,8 +25,8 @@ echo 'Native Settings existing company/localization forms: '.($GLOBALS['essentia
 $general=$forms->page($a,7,'general');$generalB=$forms->page($b,7,'general');
 $im=imagecreatetruecolor(2,2);ob_start();imagepng($im);$png=ob_get_clean();unset($im);
 $input=['companyname'=>'Same native brand','main_domain'=>'https://example.invalid/','rtl_support_admin'=>'0','rtl_support_client'=>'0','allowed_files'=>'.png,.pdf'];
-$result=$forms->save($a,7,'general',$input,[],$general['revision'],['logo'=>$png,'logo_dark'=>$png,'favicon'=>$png]);
-essentialCheck(count($result['assets']['assets'])===3&&$result['values']['companyname']===$input['companyname'],'same general form commits own logos/favicon and identity atomically');
+$result=$forms->save($a,7,'general',$input,[],$general['revision'],['logo'=>$png,'logo_dark'=>$png,'favicon'=>$png,'signature'=>$png]);
+essentialCheck(count($result['assets']['assets'])===4&&$result['values']['companyname']===$input['companyname'],'same general form commits own logos/favicon/signature and identity atomically');
 essentialCheck($forms->page($b,7,'general')===$generalB,'general form never inherits or mutates company B branding');
 $bad=$input;$bad['companyname']='Must roll back';
 essentialThrows(fn()=>$forms->save($a,7,'general',$bad,[],$result['revision'],['logo'=>'not an image']),'company_asset_invalid_image','invalid image aborts whole native multipart form');

@@ -42,7 +42,9 @@ final class NativeCompanyAdminPresentation
             if ($entry['route'] !== null && !CompanyRequestScope::nativeRouteAllowed($ci,$entry['route'])) { continue; }
             // The original Departments controller is administrator-only. Do not
             // advertise its native route to ticket viewers who cannot enter it.
-            if ($entry['slug'] === 'departments') {
+            if ($entry['kind'] === 'sidebar_menu' && $entry['slug'] === 'customers') {
+                if (!self::customersMenuAvailable($ci->db,db_prefix(),$issuer,$actor,$acl)) { continue; }
+            } elseif ($entry['slug'] === 'departments') {
                 if (!$acl->administrative($issuer,$actor)) { continue; }
             } elseif ($entry['feature'] !== '' && !$acl->can($issuer,$actor,$entry['feature'],'view')) { continue; }
             $item=['slug'=>$entry['slug'],'name'=>self::label($entry['label']),'href'=>$entry['route'] === null ? '#' : CompanyRequestScope::adminUrl($ci,$entry['route']), 'icon'=>$entry['icon'],'position'=>$entry['position'],'children'=>[]];
@@ -124,6 +126,15 @@ final class NativeCompanyAdminPresentation
             self::current($ci);self::$data['total_unfinished_todos']=$counts[0];
         }
         $ci->load->vars(['locale'=>'pt-BR','sidebar_menu'=>$menus['sidebar'],'setup_menu'=>$menus['setup']]);
+    }
+
+    /** Match the customer directory's company-scoped view/create/assignment rules. */
+    public static function customersMenuAvailable($db,string $prefix,int $issuer,int $actor,IssuerResourceAccess $acl):bool
+    {
+        if($acl->can($issuer,$actor,'customers','view')||$acl->can($issuer,$actor,'customers','create'))return true;
+        if(!$acl->member($issuer,$actor))return false;
+        if(!class_exists('CompanyCustomerAccess',false))require_once __DIR__.'/CompanyCustomerAccess.php';
+        return (new CompanyCustomerAccess($db,$prefix))->canReadDirectory($issuer,$actor);
     }
     public static function current($ci): ?array
     {
@@ -281,7 +292,7 @@ final class NativeCompanyAdminPresentation
     }
     public static function label(string $key): string { return (string)(self::$language[$key]??$key); }
     public static function css($ci=null): array { $assets=['assets/css/reset.min.css','assets/plugins/inter/inter.css','assets/builds/vendor-admin.css','assets/plugins/font-awesome/css/fontawesome.min.css','assets/plugins/font-awesome/css/brands.min.css','assets/plugins/font-awesome/css/solid.min.css','assets/plugins/font-awesome/css/regular.min.css','assets/builds/tailwind.css','assets/css/style.min.css'];if($ci!==null&&self::calendarPage($ci))$assets[]='assets/plugins/fullcalendar/lib/main.min.css';return $assets; }
-    public static function scripts($ci=null): array { $assets=['assets/builds/vendor-admin.js','assets/plugins/datatables/datatables.min.js','assets/plugins/tinymce/tinymce.min.js','assets/js/native-company-transport.js','assets/js/native-admin-runtime.js','assets/builds/bootstrap-select.min.js','assets/plugins/jquery-validation/jquery.validate.min.js','assets/plugins/jquery-validation/localization/messages_pt_BR.min.js','assets/builds/common.js','assets/js/native-ui-tools.js','assets/js/native-admin-tabs.js','assets/js/native-admin-sales-form.js','assets/js/native-tasks.js','assets/js/native-admin-reminders.js','assets/js/native-admin-todos.js','assets/js/native-admin-notes.js','assets/js/native-admin-files.js','assets/js/native-admin-item-order.js','assets/js/native-admin-calendar.js','assets/js/native-admin-navigation.js','assets/js/native-admin-tables.js','assets/js/native-admin-ticket-table.js','assets/js/native-admin-staff.js','assets/js/native-admin-switch.js','assets/js/native-admin-imap.js','assets/js/native-admin-search.js','assets/js/native-admin-notifications.js','assets/js/native-company-admin.js'];if($ci!==null&&self::calendarPage($ci)){array_splice($assets,array_search('assets/js/native-admin-calendar.js',$assets,true),0,['assets/plugins/fullcalendar/lib/main.min.js','assets/plugins/fullcalendar/lib/locales/pt-br.js']);}if($ci!==null&&(self::ticketPage($ci)||self::dashboardPage($ci)))$assets[]='assets/plugins/Chart.js/Chart.bundle.min.js';if($ci!==null&&self::ticketPage($ci)){$assets[]='assets/js/tickets.js';if(strtolower((string)$ci->router->fetch_method())==='index')$assets[]='assets/builds/app.js';}return$assets; }
+    public static function scripts($ci=null): array { $assets=['assets/builds/vendor-admin.js','assets/plugins/datatables/datatables.min.js','assets/plugins/tinymce/tinymce.min.js','assets/js/native-company-transport.js','assets/js/native-admin-runtime.js','assets/builds/bootstrap-select.min.js','assets/plugins/jquery-validation/jquery.validate.min.js','assets/plugins/jquery-validation/localization/messages_pt_BR.min.js','assets/builds/common.js','assets/js/native-ui-tools.js','assets/js/native-admin-tabs.js','assets/js/native-admin-sales-form.js','assets/js/native-tasks.js','assets/js/native-admin-reminders.js','assets/js/native-admin-todos.js','assets/js/native-admin-notes.js','assets/js/native-admin-files.js','assets/js/native-admin-item-order.js','assets/js/native-admin-calendar.js','assets/js/native-admin-navigation.js','assets/js/native-admin-tables.js','assets/js/native-admin-ticket-table.js','assets/js/native-admin-staff.js','assets/js/native-admin-switch.js','assets/js/native-admin-imap.js','assets/js/native-admin-search.js','assets/js/native-admin-notifications.js','assets/js/native-company-admin.js'];if($ci!==null&&self::calendarPage($ci)){array_splice($assets,array_search('assets/js/native-admin-calendar.js',$assets,true),0,['assets/plugins/fullcalendar/lib/main.min.js','assets/plugins/fullcalendar/lib/locales/pt-br.js']);}if($ci!==null&&(self::ticketPage($ci)||self::dashboardPage($ci)))$assets[]='assets/plugins/Chart.js/Chart.bundle.min.js';if($ci!==null&&self::invoicePage($ci))$assets[]='assets/js/native-admin-invoices.js';if($ci!==null&&self::ticketPage($ci)){$assets[]='assets/js/tickets.js';if(strtolower((string)$ci->router->fetch_method())==='index')$assets[]='assets/builds/app.js';}elseif($ci!==null&&self::invoicePage($ci)&&in_array(strtolower((string)$ci->router->fetch_method()),['index','list_invoices'],true))$assets[]='assets/builds/app.js';return$assets; }
     private static function calendarPage($ci):bool
     {
         if(self::current($ci)===null||self::$issuer===null)return false;
@@ -296,5 +307,9 @@ final class NativeCompanyAdminPresentation
     {
         $data=self::current($ci);if($data===null||self::$issuer===null)return false;
         return strtolower((string)$ci->router->fetch_class())==='tickets'&&in_array(strtolower((string)$ci->router->fetch_method()),['index','add','ticket'],true);
+    }
+    private static function invoicePage($ci):bool
+    {
+        return self::current($ci)!==null&&self::$issuer!==null&&strtolower((string)$ci->router->fetch_class())==='invoices';
     }
 }

@@ -9,6 +9,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: native-company-experience-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   focused:
     # The existing matrix checks must also gate the separate Node job.
@@ -58,18 +61,10 @@ jobs:
         env:
           EXPECTED_PHP: ${{ matrix.php }}
         run: argws-ci-smoke
-      - name: Validate explicit focused manifest and inventories
-        run: |
-          python3 tests/ci/test_native_company_focused.py
-          for phase in sqlite node mysql browser; do python3 scripts/ci/run-native-company-focused.py "$phase" --check; done
-          php scripts/company-surface-inventory.php --check
-          python3 scripts/inventory-company-boundaries.py --check
-          python3 tests/company_ui_surface_inventory.py
       - name: Test Node contracts that execute PHP with PHP 8.5
         if: matrix.php == '8.5'
         run: |
           node --test tests/companies/native_file_message_ui.test.cjs
-          node --test tests/native_header_overflow.test.cjs
           node --test tests/native_company/invoice_calculation_differential.test.cjs
       - name: Test actual MySQL additive migration and schema metadata
         env:
@@ -82,6 +77,7 @@ jobs:
       - name: Render actual native templates in Chromium
         run: python3 scripts/ci/run-native-company-focused.py browser
       - uses: actions/setup-node@v4
+        if: matrix.php == '8.1'
         with:
           node-version: 22.23.4
       - name: Verify reproducible compiled native assets
@@ -122,6 +118,16 @@ jobs:
         env:
           EXPECTED_PHP: '8.1'
         run: argws-ci-smoke
+      - name: Validate focused manifest and action census once
+        # This preflight is independent of the functional PHP matrix. UI,
+        # boundary and operational inventories have their own workflow owners;
+        # the action census belongs here so no inventory is run twice per SHA.
+        run: |
+          mkdir -p "$NATIVE_COMPANY_EVIDENCE"
+          python3 tests/ci/test_native_company_focused.py
+          for phase in sqlite node mysql browser; do python3 scripts/ci/run-native-company-focused.py "$phase" --check; done
+          php scripts/native-experience-inventory.php > "$NATIVE_COMPANY_EVIDENCE/native-experience-action-census.json"
+          diff -u --label a/docs/companies/native-experience-action-census.json --label b/generated/native-experience-action-census.json docs/companies/native-experience-action-census.json "$NATIVE_COMPANY_EVIDENCE/native-experience-action-census.json"
       - name: Test shared native UI contracts without browser
         run: python3 scripts/ci/run-native-company-focused.py node
       - name: Preserve Node contract receipts

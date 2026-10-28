@@ -37,7 +37,7 @@ test('rejects missing or unsafe loopback/DB/container identity before browser la
 });
 
 test('permits only exact native GET pages and local static assets', () => {
-  for (const pathname of ['/admin/authentication', '/admin/authentication/admin', '/admin', '/admin/', '/admin/company_asaas', '/admin/company_asaas?invoice=12', '/admin/company_asaas#company-asaas-profile-production', '/assets/js/native-admin-tabs.js?v=4.0.4', '/assets/builds/vendor-admin.css', '/assets/plugins/inter/Inter-Regular.woff2', '/uploads/company/synthetic-logo.png']) {
+  for (const pathname of ['/admin/authentication', '/admin/authentication/admin', '/admin', '/admin/', '/admin/settings/asaas', '/admin/settings/asaas?invoice=12', '/admin/settings/asaas#company-asaas-profile-production', '/assets/js/native-admin-tabs.js?v=4.0.4', '/assets/builds/vendor-admin.css', '/assets/plugins/inter/Inter-Regular.woff2', '/uploads/company/synthetic-logo.png']) {
     assert.equal(decision(pathname), 'allow', pathname);
     assert.equal(decision(pathname, 'HEAD'), 'allow', pathname);
   }
@@ -45,24 +45,24 @@ test('permits only exact native GET pages and local static assets', () => {
 });
 
 test('blocks all external origins including both providers, another port and userinfo', () => {
-  for (const target of ['https://api.asaas.com/v3', 'https://api-sandbox.asaas.com/v3', 'http://127.0.0.1:48322/admin/company_asaas', 'https://127.0.0.1:48321/admin', 'http://127.0.0.1:48321.evil.invalid/admin', 'http://user:secret@127.0.0.1:48321/admin', 'invalid', 'data:text/html,synthetic', 'file:///tmp/synthetic.html']) {
+  for (const target of ['https://api.asaas.com/v3', 'https://api-sandbox.asaas.com/v3', 'http://127.0.0.1:48322/admin/settings/asaas', 'https://127.0.0.1:48321/admin', 'http://127.0.0.1:48321.evil.invalid/admin', 'http://user:secret@127.0.0.1:48321/admin', 'invalid', 'data:text/html,synthetic', 'file:///tmp/synthetic.html']) {
     assert.equal(requestDecision(target, 'GET', fixture.ISSUERS_BROWSER_URL), 'external');
   }
 });
 
 test('requires a temporary exact login/context POST permit', () => {
-  for (const pathname of ['/admin/authentication', '/admin/authentication/admin', '/admin/company_selection/select']) {
+  for (const pathname of ['/admin/authentication', '/admin/authentication/admin', '/admin/issuers/select']) {
     assert.equal(decision(pathname, 'POST'), 'mutation');
     assert.equal(decision(pathname, 'POST', pathname), 'allow');
     assert.equal(decision(pathname, 'PATCH', pathname), 'mutation');
     assert.equal(decision(pathname + '/extra', 'POST', pathname), 'mutation');
   }
-  assert.equal(decision('/admin/company_selection/select', 'POST', '/admin/authentication'), 'mutation');
+  assert.equal(decision('/admin/issuers/select', 'POST', '/admin/authentication'), 'mutation');
   assert.equal(decision('/admin/company_context/select', 'POST', '/admin/company_context/select'), 'mutation', 'removed page cannot authorize company selection');
 });
 
 test('cannot grant write permission to financial/settings routes by passing their path', () => {
-  for (const pathname of ['/admin/company_asaas', '/admin/settings', '/admin/asaas/rotate_integration_token', '/admin/company_invoices', '/asaas/gateways/callback/integration/synthetic', '/company_asaas_callback/integration/synthetic']) {
+  for (const pathname of ['/admin/settings/asaas', '/admin/settings', '/admin/asaas/rotate_integration_token', '/admin/company_invoices', '/asaas/gateways/callback/integration/synthetic', '/company_asaas_callback/integration/synthetic']) {
     for (const method of ['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE']) {
       assert.equal(decision(pathname, method, pathname), 'mutation');
       assert.equal(decision(pathname, method, '/admin/authentication'), 'mutation');
@@ -71,14 +71,14 @@ test('cannot grant write permission to financial/settings routes by passing thei
 });
 
 test('blocks non-GET method overrides and ambiguous paths before they reach CRM', () => {
-  for (const pathname of ['/admin/company_asaas?environment=production', '/admin/company_asaas?action=issue', '/admin/company_asaas?_method=GET', '/ADMIN/company_asaas', '/admin//company_asaas', '/admin/%63ompany_asaas', '/admin/company_asaas/', '/admin/company_asaas/issue']) {
+  for (const pathname of ['/admin/settings/asaas?environment=production', '/admin/settings/asaas?action=issue', '/admin/settings/asaas?_method=GET', '/ADMIN/company_asaas', '/admin//company_asaas', '/admin/%63ompany_asaas', '/admin/settings/asaas/', '/admin/settings/asaas/issue']) {
     assert.equal(decision(pathname, 'POST'), 'mutation');
   }
-  for (const pathname of ['/admin/%63ompany_asaas', '/admin/company_asaas/issue', '/admin/company_asaas/', '/admin//company_asaas', '/ADMIN/company_asaas']) assert.equal(decision(pathname), 'navigation');
+  for (const pathname of ['/admin/%63ompany_asaas', '/admin/settings/asaas/issue', '/admin/settings/asaas/', '/admin//company_asaas', '/ADMIN/company_asaas']) assert.equal(decision(pathname), 'navigation');
 });
 
 test('GET cannot invoke provider callback, cron, module mutation or uploaded PHP', () => {
-  for (const pathname of ['/cron/index', '/company_asaas_callback/integration/synthetic', '/admin/asaas/rotate_integration_token', '/admin/modules/activate/asaas', '/uploads/synthetic.php', '/modules/asaas/run.php', '/assets/script.php.js/execute', '/admin/company_selection/select']) {
+  for (const pathname of ['/cron/index', '/company_asaas_callback/integration/synthetic', '/admin/asaas/rotate_integration_token', '/admin/modules/activate/asaas', '/uploads/synthetic.php', '/modules/asaas/run.php', '/assets/script.php.js/execute', '/admin/issuers/select']) {
     assert.equal(decision(pathname), 'navigation');
   }
 });
@@ -117,7 +117,7 @@ test('real phases surround account preparation and Docker receives the new share
 
 test('HTTP diagnostics contain only status and allowlisted paths/categories', async () => {
   const secret = 'synthetic-private-value';
-  assert.equal(safePath(url('/admin/company_asaas?token=' + secret + '#' + secret), fixture.ISSUERS_BROWSER_URL), '/admin/company_asaas');
+  assert.equal(safePath(url('/admin/settings/asaas?token=' + secret + '#' + secret), fixture.ISSUERS_BROWSER_URL), '/admin/settings/asaas');
   assert.equal(safePath(url('/private/' + secret), fixture.ISSUERS_BROWSER_URL), '[other-local]');
   assert.equal(safePath('https://outside.invalid/' + secret, fixture.ISSUERS_BROWSER_URL), '[external]');
   assert.equal(safePath('http://user:' + secret + '@127.0.0.1:48321/admin', fixture.ISSUERS_BROWSER_URL), '[external]');
@@ -126,10 +126,10 @@ test('HTTP diagnostics contain only status and allowlisted paths/categories', as
   assert.equal(bodyCategory(secret), 'unclassified');
   const previous = {url: () => url('/private/' + secret), redirectedFrom: () => null};
   const request = {method: () => 'GET', redirectedFrom: () => previous};
-  const response = {status: () => 500, url: () => url('/admin/company_asaas?token=' + secret), request: () => request,
+  const response = {status: () => 500, url: () => url('/admin/settings/asaas?token=' + secret), request: () => request,
     headers: () => ({location: '/admin/authentication?token=' + secret}), text: async () => 'Call to undefined function _l() ' + secret};
   const facts = await responseFacts(response, fixture.ISSUERS_BROWSER_URL);
-  assert.deepEqual(facts, {status: 500, path: '/admin/company_asaas', method: 'GET', redirects: ['[other-local]'], location: '/admin/authentication', body: 'translation-helper-missing'});
+  assert.deepEqual(facts, {status: 500, path: '/admin/settings/asaas', method: 'GET', redirects: ['[other-local]'], location: '/admin/authentication', body: 'translation-helper-missing'});
   assert.ok(!JSON.stringify(facts).includes(secret));
   assert.ok(!JSON.stringify(facts).includes('?'));
   assert.deepEqual(await responseFacts(null, fixture.ISSUERS_BROWSER_URL), {status: null, path: '[no-response]'});
@@ -152,7 +152,7 @@ test('blocked dashboard traffic stays blocked and counted without becoming a pre
 
 test('any non-session mutation from the Asaas page still fails the presentation gate', () => {
   const origin = fixture.ISSUERS_BROWSER_URL;
-  for (const [target, document] of [[url('/admin/company_asaas'), url('/admin/')], [url('/admin/tasks/table'), url('/admin/company_asaas?invoice=12')]]) {
+  for (const [target, document] of [[url('/admin/settings/asaas'), url('/admin/')], [url('/admin/tasks/table'), url('/admin/settings/asaas?invoice=12')]]) {
     const blocked = blockedRequests();
     blocked.record('mutation', url('/admin/tasks/table'), 'POST', url('/admin/'), origin);
     assert.equal(requestDecision(target, 'POST', origin), 'mutation');
@@ -166,12 +166,12 @@ test('any non-session mutation from the Asaas page still fails the presentation 
 
 test('blocked request evidence is bounded, deduplicated and cannot disclose arbitrary paths', () => {
   const blocked = blockedRequests(), origin = fixture.ISSUERS_BROWSER_URL;
-  for (let index = 0; index < 50; index++) blocked.record('navigation', url('/private/synthetic-' + index), 'GET', url('/admin/company_asaas'), origin);
+  for (let index = 0; index < 50; index++) blocked.record('navigation', url('/private/synthetic-' + index), 'GET', url('/admin/settings/asaas'), origin);
   assert.equal(blocked.total.navigation, 50);
   assert.equal(blocked.presentation.navigation, 50);
   assert.deepEqual(blocked.evidence, [{scope: 'presentation', decision: 'navigation', method: 'GET', path: '[other-local]'}]);
   for (const method of ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE']) {
-    for (const result of ['mutation', 'external', 'navigation']) blocked.record(result, url('/admin/company_asaas'), method, url('/admin/company_asaas'), origin);
+    for (const result of ['mutation', 'external', 'navigation']) blocked.record(result, url('/admin/settings/asaas'), method, url('/admin/settings/asaas'), origin);
   }
   assert.equal(blocked.evidence.length, 12);
   assert.throws(() => blocked.record('allow', url('/admin'), 'GET', url('/admin'), origin), /invalid request decision/);
@@ -180,15 +180,15 @@ test('blocked request evidence is bounded, deduplicated and cannot disclose arbi
 test('direct company choice is preauthorized once before its native POST and cleared after navigation', async () => {
   const {withNativeSessionPermit,consumeSessionDecision}=require('./companies/asaas_preferences_real_browser.cjs');
   const permit={path:null}, events=[];
-  const form={count:async()=>1,getAttribute:async name=>name==='action'?url('/admin/company_selection/select'):'post'};
-  assert.equal(consumeSessionDecision(url('/admin/company_selection/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation');
+  const form={count:async()=>1,getAttribute:async name=>name==='action'?url('/admin/issuers/select'):'post'};
+  assert.equal(consumeSessionDecision(url('/admin/issuers/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation');
   const result=await withNativeSessionPermit(form,fixture.ISSUERS_BROWSER_URL,permit,async()=>{
     events.push('genuine choice click');
-    assert.equal(permit.path,'/admin/company_selection/select','permit precedes submitter click');
-    assert.equal(consumeSessionDecision(url('/admin/company_asaas'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation');
-    assert.equal(consumeSessionDecision('https://outside.invalid/admin/company_selection/select','POST',fixture.ISSUERS_BROWSER_URL,permit),'external');
-    assert.equal(consumeSessionDecision(url('/admin/company_selection/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'allow');
-    assert.equal(consumeSessionDecision(url('/admin/company_selection/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation','second POST is refused before navigation completes');
+    assert.equal(permit.path,'/admin/issuers/select','permit precedes submitter click');
+    assert.equal(consumeSessionDecision(url('/admin/settings/asaas'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation');
+    assert.equal(consumeSessionDecision('https://outside.invalid/admin/issuers/select','POST',fixture.ISSUERS_BROWSER_URL,permit),'external');
+    assert.equal(consumeSessionDecision(url('/admin/issuers/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'allow');
+    assert.equal(consumeSessionDecision(url('/admin/issuers/select'),'POST',fixture.ISSUERS_BROWSER_URL,permit),'mutation','second POST is refused before navigation completes');
     events.push('GET navigation'); return 'response';
   });
   assert.equal(result,'response');assert.equal(permit.path,null);assert.deepEqual(events,['genuine choice click','GET navigation']);
@@ -198,12 +198,12 @@ test('direct company choice is preauthorized once before its native POST and cle
 });
 test('session permit rejects wrong forms and is revoked when actual interaction fails', async () => {
   const {withNativeSessionPermit}=require('./companies/asaas_preferences_real_browser.cjs');
-  for(const [action,method,count] of [[url('/admin/company_asaas'),'post',1],['https://outside.invalid/admin/company_selection/select','post',1],[url('/admin/company_selection/select?override=1'),'post',1],[url('/admin/company_selection/select'),'get',1],[url('/admin/company_selection/select'),'post',2]]) {
+  for(const [action,method,count] of [[url('/admin/settings/asaas'),'post',1],['https://outside.invalid/admin/issuers/select','post',1],[url('/admin/issuers/select?override=1'),'post',1],[url('/admin/issuers/select'),'get',1],[url('/admin/issuers/select'),'post',2]]) {
     const permit={path:null},form={count:async()=>count,getAttribute:async name=>name==='action'?action:method};
     await assert.rejects(()=>withNativeSessionPermit(form,fixture.ISSUERS_BROWSER_URL,permit,async()=>{throw Error('must not click');}));
     assert.equal(permit.path,null);
   }
-  const permit={path:null},form={count:async()=>1,getAttribute:async name=>name==='action'?url('/admin/company_selection/select'):'post'};
+  const permit={path:null},form={count:async()=>1,getAttribute:async name=>name==='action'?url('/admin/issuers/select'):'post'};
   await assert.rejects(()=>withNativeSessionPermit(form,fixture.ISSUERS_BROWSER_URL,permit,async()=>{throw Error('native choice failed');}),/native choice failed/);
   assert.equal(permit.path,null);
 });
@@ -224,8 +224,8 @@ test('all executable browser suites use immediate choice without a second helper
 
 
 test('real preferences asset contract matches native layout before expensive integration', () => {
-  const head=fs.readFileSync('application/views/admin/companies/layout_head.php','utf8');
-  const tail=fs.readFileSync('application/views/admin/companies/layout_tail.php','utf8');
+  const head=fs.readFileSync('application/views/admin/includes/native_company_layout_head.php','utf8');
+  const tail=fs.readFileSync('application/views/admin/includes/native_company_layout_tail.php','utf8');
   assert.ok(head.includes("'"+NATIVE_TAB_ASSETS.css+"'"));
   assert.ok(tail.includes("'"+NATIVE_TAB_ASSETS.script+"'"));
   assert.ok(!head.includes("'assets/plugins/bootstrap/css/bootstrap.min.css'"),'no obsolete standalone CSS assumption');

@@ -31,8 +31,8 @@ $n=0;$a400=new Agreement(new Scope(1,1,'001:00452-3:000000123873-X','sandbox','1
 $title400=['sequence'=>'1','document'=>'DOC1','control'=>'SYNTHETIC1','issue_date'=>'2026-10-17','due_date'=>'2026-10-20','amount'=>'200.00',
     'species'=>'01','acceptance'=>'N','payer_tax_id'=>'12BBC34501DE35','payer_name'=>'PAGADOR SINTETICO','payer_address'=>'RUA TESTE 1',
     'payer_district'=>'CENTRO','payer_zip'=>'12345678','payer_city'=>'TESTE','payer_state'=>'SP'];
-$gen400=new Cnab400Generator();$candidate=$gen400->candidate($a400,1,'2026-10-18',[$title400],'  ');$lines400=explode("\r\n",rtrim($candidate['content'],"\r\n"));
-check($candidate['operational']===false&&count($candidate['unresolved'])===3,'candidate never operational');
+$gen400=new Cnab400Generator();$candidate=$gen400->candidate($a400,1,'2026-10-18',[$title400]);$lines400=explode("\r\n",rtrim($candidate['content'],"\r\n"));
+check($candidate['operational']===false&&$candidate['unresolved']===['interest_exemption_requires_bank_profile','homologation_per_connection'],'candidate keeps external gates explicit');
 check(count($lines400)===3,'0/7/9 only');foreach($lines400 as $i=>$l){check(strlen($l)===400,'400 exact bytes');check(substr($l,394,6)===str_pad((string)($i+1),6,'0',STR_PAD_LEFT),'record sequence');}
 check(substr($lines400[0],0,19)==='01TESTE  01COBRANCA','sandbox explicit TESTE');
 check(substr($lines400[0],26,14)==='0452300123873X','400 account not 240 widths');
@@ -41,11 +41,12 @@ check(substr($lines400[0],94,6)==='181026','DDMMAA');check(substr($lines400[0],1
 check(substr($lines400[1],3,14)==='12ABC34501DE35','issuer alphanumeric CNPJ preserved');
 check(substr($lines400[1],220,14)==='12BBC34501DE35','payer alphanumeric CNPJ preserved');
 check(substr($lines400[1],63,17)==='12345670000000001','7+10 Nosso Numero no DV');
+check(substr($lines400[1],84,2)===LayoutCatalog::CNAB400_BRL_CURRENCY_FIELD,'CBR641 BRL profile has no foreign-currency marker');
 check(substr($lines400[1],101,5)==='     ','simple collection blank code');
 check(substr($lines400[1],126,13)==='0000000020000','exact integer cents');check(substr($lines400[1],156,4)==='0700'&&$lines400[1][393]==='N','no protest and partial explicitly refused');
-foreach(['02','14','0','000',"\n "] as $code)rejects(fn()=>$gen400->candidate($a400,1,'2026-10-18',[$title400],$code),'reject non BRL or invalid candidate');
-foreach(['amount'=>'100000000000.00','document'=>'LONGERTHAN10','payer_name'=>'SINTÉTICO','control'=>' X','species'=>'19','payer_state'=>'XX'] as $key=>$value){$bad=$title400;$bad[$key]=$value;rejects(fn()=>$gen400->candidate($a400,1,'2026-10-18',[$bad],'  '),'lossy/unsupported title '.$key);}
-rejects(fn()=>$gen400->candidate($a400,1,'2026-10-18',[$title400,$title400],'  '),'duplicate remittance');
+check(substr($lines400[1],160,13)===LayoutCatalog::CNAB400_DAILY_INTEREST_FIELD,'CBR641 daily-interest field exact and gated by bank profile');
+foreach(['amount'=>'100000000000.00','document'=>'LONGERTHAN10','payer_name'=>'SINTÉTICO','control'=>' X','species'=>'19','payer_state'=>'XX'] as $key=>$value){$bad=$title400;$bad[$key]=$value;rejects(fn()=>$gen400->candidate($a400,1,'2026-10-18',[$bad]),'lossy/unsupported title '.$key);}
+rejects(fn()=>$gen400->candidate($a400,1,'2026-10-18',[$title400,$title400]),'duplicate remittance');
 rejects(fn()=>Fields400::account(new Agreement(new Scope(1,1,'001:10452-3:000000123873-X','sandbox','1234567'),'12345678901','TEST','019')),'no truncation of branch');
 rejects(fn()=>Fields400::account(new Agreement(new Scope(1,1,'001:00452-3:000100123873-X','sandbox','1234567'),'12345678901','TEST','019')),'no truncation of account');
 check(Fields400::parseDate('010100')==='2000-01-01'&&Fields400::parseDate('311299')==='2099-12-31','explicit century no date pivot');
@@ -60,6 +61,9 @@ check($e400['occurrence_date']==='2026-10-17'&&$e400['credit_date']==='2026-10-1
 check($e400['financial_effect']==='not_applied'&&$e400['requires_review'],'no financial effect');
 check($parsed400['trailer_raw_totals']['simple']['total_raw']==='00000000020000','trailer raw width preserved');
 check($parsed400['trailer_total_interpretation']==='unverified_position_picture_disagreement','manual disagreement explicit');
+$moneyWire=$wire400;foreach([[182,7,'0000123'],[189,13,'0000000000234'],[202,13,'0000000000345'],[215,13,'0000000000456'],[228,13,'0000000000567'],[241,13,'0000000000678'],[254,13,'0000000000789'],[267,13,'0000000000890'],[280,13,'0000000000901'],[293,13,'0000000001012'],[306,13,'0000000001123']] as [$pos,$width,$value]){$moneyWire=bb400Mutate($moneyWire,1,$pos,$value);}
+$money=$parser400->parse($a400,$moneyWire)['events'][0];
+check([$money['fees'],$money['other_expenses'],$money['discount_interest'],$money['iof'],$money['abatement'],$money['discount'],$money['paid_amount'],$money['interest'],$money['other_credits'],$money['unused_abatement'],$money['posting_amount']]===['1.23','2.34','3.45','4.56','5.67','6.78','7.89','8.90','9.01','10.12','11.23'],'CBR643 July/2023 monetary positions 182-318 remain distinct');
 $zero=$parser400->parse($a400,bb400Mutate($wire400,1,254,str_repeat('0',13)))['events'][0];check($zero['paid_amount']==='0.00','zero paid not nominal fallback');
 foreach(['93'=>'operational_down_reported','46'=>'cheque_pending_clearance','44'=>'cheque_returned','07'=>'partial_receipt_reported','20'=>'debit_instruction_reported','50'=>'unmapped_occurrence'] as $code=>$observation){check($parser400->parse($a400,bb400Fixture($a400,(string)$code))['events'][0]['observation']===$observation,'400 code '.$code);}
 foreach(['04','10','11'] as $nature)check($parser400->parse($a400,bb400Fixture($a400,'06',$nature))['events'][0]['observation']==='cheque_pending_clearance','cheque nature '.$nature);

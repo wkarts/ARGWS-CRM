@@ -43,7 +43,7 @@ test('native Settings POST enforces selected-company authorization, CSRF and rev
   assert.match(nativeController, /\$forms->save\(\$issuer,\$actor,\$group/);
   assert.match(nativeController, /native_settings_revision/);
   assert.match(nativeController, /redirect\(admin_url\('settings\?group='/);
-  assert.match(nativeController, /'native_settings_can_edit'=>CompanySettingsRuntime::can\('edit'\)/);
+  assert.match(nativeController, /'native_settings_can_edit'=>\$canEdit/);
   assert.match(nativeView, /fieldset <\?= \$isNativeSettings && !\$native_settings_can_edit \? 'disabled'/);
 });
 test('native company identity and custom fields come only from the selected issuer DTO', () => {
@@ -70,19 +70,8 @@ test('native and primary Settings use the same native presentation component', (
 test('certificate entry uses only active company and settings edit permission', () => {
   assert.match(companyPartial, /settingsCertificateContext->issuerId\(\) !== null/);
   assert.match(companyPartial, /CompanySettingsRuntime::active\(\) && CompanySettingsRuntime::can\('edit'\)/);
-  assert.match(companyPartial, /adminUrl\(\$this,\s*'company_certificates'\)/);
-  assert.doesNotMatch(companyPartial, /company_certificates\/index\//, 'do not pin certificate operation to an unselected company');
-});
-
-test('settings browser records sanitized geometry and screenshots before retaining strict overflow assertion',()=>{
- const browser=fs.readFileSync(path.join(root,'tests/company_settings_native_browser.cjs'),'utf8');
- assert.ok(browser.indexOf('const evidence=await recordLayout')<browser.indexOf("'no horizontal overflow:"));
- assert.match(browser,/document\.fonts\.ready/);
- assert.match(browser,/settings-\$\{width\}-geometry\.json/);
- assert.match(browser,/settings-\$\{width\}\.png/);
- assert.match(browser,/evidence\.geometry\.documentWidth <= evidence\.geometry\.viewport/);
- const diagnostics=browser.slice(browser.indexOf('async function recordLayout'),browser.indexOf('const rendered'));
- assert.doesNotMatch(diagnostics,/\.value\b|textContent|innerHTML|outerHTML/,'diagnostics must not capture form values or document contents');
+  assert.match(companyPartial, /adminUrl\(\$this,\s*'settings\?group=certificates'\)/);
+  assert.doesNotMatch(companyPartial, /company_certificates/, 'parallel certificate controller is not linked');
 });
 
 test('standalone shared-shell fixtures declare framework dependencies and fail before emitting warning HTML',()=>{
@@ -109,7 +98,8 @@ test('shared envelope validates navigation DTO and preserves trusted server form
  const fixture=fs.readFileSync(path.join(root,'tests/company_settings_layout.php'),'utf8');
  for(const text of ['settings/all.php','Native hooks changed','javascript:alert(1)','//external.invalid','Unsafe DTO accepted','strictFixtureRender']) assert.ok(fixture.includes(text));
  const browser=fs.readFileSync(path.join(root,'tests/company_settings_layout.browser.cjs'),'utf8');
- for(const text of ['[1280,768,390]','company_settings_native.php','company_settings_layout.php','getComputedStyle','form form','new FormData','settings-envelope-synthetic-']) assert.ok(browser.includes(text));
+ for(const text of ['[1280,768,390]','company_settings_layout.php','getComputedStyle','form form','new FormData','settings-envelope-official-']) assert.ok(browser.includes(text));
+ assert.doesNotMatch(browser,/company_settings_native\.php|company_scoped/);
  assert.doesNotMatch(browser,/test\.skip|force:\s*true/);
 });
 

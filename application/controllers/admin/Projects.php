@@ -5,9 +5,18 @@ use app\services\projects\Gantt;
 use app\services\projects\HoursOverviewChart;
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH.'services/NativeCompanySpecializedOperations.php';
 
 class Projects extends AdminController
 {
+    use NativeCompanySpecializedOperations;
+
+    public function extras() { $this->nativeProjectExtras(); }
+    public function portal_rules() { $this->nativeProjectPortalRules(); }
+    public function billing_rates() { $this->nativeProjectBillingRates(); }
+    public function fixed_billing() { $this->nativeProjectFixedBilling(); }
+    public function copies() { $this->nativeProjectCopies(); }
+    public function time_billing() { $this->nativeProjectTimeBilling(); }
     public function __construct()
     {
         parent::__construct();
@@ -138,6 +147,30 @@ class Projects extends AdminController
         }catch(DomainException$e){show_error('Não foi possível confirmar os dados, a ação ou as permissões deste projeto.',422);}catch(RuntimeException$e){show_error('Não foi possível confirmar o armazenamento do projeto.',503);}
     }
 
+    private function nativeProjectView($id):void
+    {
+        $this->output->set_header('Cache-Control: no-store');
+        try{
+            if(!in_array(strtoupper($this->input->method(true)),['GET','HEAD'],true))throw new DomainException('native_project_method_invalid');
+            $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_project_access_denied');
+            $group=(string)($this->input->get('group')?:'project_overview');if(!in_array($group,['project_overview','project_files'],true))throw new DomainException('native_project_group_not_composed');
+            $period=(string)($this->input->get('overview_chart')?:'this_week');
+            require_once APPPATH.'services/NativeCompanyProjectDetail.php';$detail=new NativeCompanyProjectDetail($this->db,db_prefix());
+            $overview=$detail->overview($ctx->issuerId(),$ctx->staffId(),$id,$period,'_l');$files=$detail->files($ctx->issuerId(),$ctx->staffId(),$id);
+            $facts=$overview['facts'];$acl=new IssuerResourceAccess($this->db,db_prefix());$canEdit=$acl->can($ctx->issuerId(),$ctx->staffId(),'projects','edit');
+            $staff=$canEdit?(new CompanyProjects($this->db,db_prefix()))->staffOptions($ctx->issuerId(),$ctx->staffId()):[];
+            $project=(object)['id'=>$facts['reference']['canonical_id'],'name'=>$facts['project']['name']];
+            $data=['title'=>$facts['project']['name'],'project'=>$project,'native_project_overview'=>$overview,'native_project_files'=>$files,'native_project_staff'=>$staff,
+                'native_project_view'=>['group'=>$group,'context_token'=>$ctx->token(),'csrf_token'=>CompanyRequestScope::nativeCsrfToken($this),'members_revision'=>$facts['members']['revision'],'can_edit'=>$canEdit,'canonical_id'=>$facts['reference']['canonical_id']]];
+            // The admin shell is prepared once by the request scope. Rebuilding it
+            // here repeats the same issuer checks and can observe a different
+            // snapshot after the project facts have already been sealed.
+            $this->load->view('admin/projects/view',$data);
+            if(!$acl->can($ctx->issuerId(),$ctx->staffId(),'projects','view')||$detail->read($ctx->issuerId(),$ctx->staffId(),$id)!==$facts)throw new DomainException('native_project_snapshot_changed');
+        }catch(DomainException$e){$status=str_contains($e->getMessage(),'denied')||str_contains($e->getMessage(),'access')?403:422;show_error('Não foi possível confirmar o projeto, seus arquivos ou suas permissões.', $status);}
+        catch(RuntimeException$e){show_error('Não foi possível confirmar o armazenamento do projeto.',503);}
+    }
+
     public function project($id = '')
     {
         if($this->nativeProjects()){$this->nativeProjectForm($id);return;}
@@ -255,6 +288,7 @@ class Projects extends AdminController
 
     public function view($id)
     {
+        if($this->nativeProjects()) {$this->nativeProjectView($id);return;}
         if (staff_can('view', 'projects') || $this->projects_model->is_member($id)) {
             close_setup_menu();
             $project = $this->projects_model->get($id);
@@ -695,6 +729,18 @@ class Projects extends AdminController
 
     public function upload_file($project_id)
     {
+        if($this->nativeProjects()){
+            try{
+                CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();require_once APPPATH.'services/NativeCompanyResourceReferences.php';$ref=NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),'project',$project_id,'edit');if($ref['source_kind']!=='company_project')throw new DomainException('company_project_access_denied');
+                $input=$this->input->post(null,false);if(!is_array($input))throw new DomainException('company_project_file_invalid');unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                if(array_diff(array_keys($input),['native_project_revision','native_request_key'])||!isset($input['native_project_revision'])||!is_string($input['native_request_key']??null)||!preg_match('/^[a-f0-9]{64}$/D',$input['native_request_key']))throw new DomainException('company_project_file_invalid');
+                $file=$_FILES['file']??null;if(!is_array($file)||is_array($file['name']??null)||!isset($file['name'],$file['tmp_name'],$file['error'])||(int)$file['error']!==UPLOAD_ERR_OK||!is_string($file['name'])||!is_string($file['tmp_name'])||(!is_uploaded_file($file['tmp_name'])&&PHP_SAPI!=='cli'))throw new DomainException('company_project_file_invalid');
+                $bytes=file_get_contents($file['tmp_name']);if(!is_string($bytes))throw new DomainException('company_project_file_invalid');
+                require_once APPPATH.'services/CompanyProjectExtras.php';(new CompanyProjectExtras($this->db,db_prefix()))->uploadNative($ctx->issuerId(),$ctx->staffId(),'project',$ref['source_id'],$input['native_project_revision'],$input['native_request_key'],$file['name'],$bytes);
+                redirect(admin_url('projects/view/'.$ref['canonical_id'].'?group=project_files'),'location',303);return;
+            }catch(DomainException$e){show_error('Não foi possível confirmar o arquivo, a revisão ou as permissões deste projeto.',str_contains($e->getMessage(),'stale')?409:422);return;}
+            catch(RuntimeException$e){show_error('Não foi possível armazenar o arquivo do projeto.',503);return;}
+        }
         handle_project_file_uploads($project_id);
     }
 
@@ -716,6 +762,16 @@ class Projects extends AdminController
 
     public function remove_file($project_id, $id)
     {
+        if($this->nativeProjects()){
+            try{
+                CompanyRequestScope::assertNativeMutation($this);$ctx=CompanyRequestScope::context();require_once APPPATH.'services/NativeCompanyResourceReferences.php';$ref=NativeCompanyResourceReferences::resolve($this->db,db_prefix(),$ctx->issuerId(),$ctx->staffId(),'project',$project_id,'edit');if($ref['source_kind']!=='company_project')throw new DomainException('company_project_access_denied');
+                $input=$this->input->post(null,false);if(!is_array($input))throw new DomainException('company_project_file_invalid');unset($input['_company_context'],$input['_native_company_csrf']);if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                if(array_diff(array_keys($input),['native_project_revision','native_request_key'])||!isset($input['native_project_revision'])||!is_string($input['native_request_key']??null)||!preg_match('/^[a-f0-9]{64}$/D',$input['native_request_key']))throw new DomainException('company_project_file_invalid');
+                require_once APPPATH.'services/CompanyProjectExtras.php';(new CompanyProjectExtras($this->db,db_prefix()))->hide($ctx->issuerId(),$ctx->staffId(),'project',$ref['source_id'],$input['native_project_revision'],(string)$id,$input['native_request_key']);
+                redirect(admin_url('projects/view/'.$ref['canonical_id'].'?group=project_files'),'location',303);return;
+            }catch(DomainException$e){show_error('Não foi possível confirmar o arquivo, a revisão ou as permissões deste projeto.',str_contains($e->getMessage(),'stale')?409:422);return;}
+            catch(RuntimeException$e){show_error('Não foi possível atualizar o arquivo do projeto.',503);return;}
+        }
         $this->projects_model->remove_file($id);
         redirect(admin_url('projects/view/' . $project_id . '?group=project_files'));
     }

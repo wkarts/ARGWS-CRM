@@ -13,6 +13,7 @@ function admin_url($path=''){return 'https://fixture.test/admin/'.$path;}
 class CompanyRequestScope {
     public static int $issuer=41;
     public static function nativeFor($ci){return $ci instanceof Clients;}
+    public static function sealedFor($ci){return self::nativeFor($ci);}
     public static function context(){return new class{function issuerId(){return CompanyRequestScope::$issuer;}function staffId(){return 12;}function isPrimary(){return false;}};}
     public static function nativeCsrfToken($ci){return 'synthetic-native-csrf';}
     public static function assertNativeMutation($ci){if($ci->input->method(true)!=='POST'||$ci->input->post('_native_company_csrf')!=='synthetic-native-csrf')throw new DomainException('native_csrf_denied');}

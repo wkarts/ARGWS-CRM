@@ -15,7 +15,7 @@ $render=static function(string $locale,bool $ready=true):string{
     $environmentLabel=static fn($value)=>$translate($value==='sandbox'?'asaas_company_environment_sandbox':'asaas_company_environment_production');
     $zero=str_repeat('0',64);$profile=['label'=>'<literal label>','description'=>'Fatura {invoice_number}','allow_pix'=>'1','allow_boleto'=>'1','allow_card'=>'1','revision'=>$zero];
     $preferences=['ready'=>$ready,'active_environment'=>null,'revision'=>$zero,'profiles'=>['production'=>$profile,'sandbox'=>$profile]];
-    $preferences_active_tab=null;$accounts=[];$can_configure=true;$action_url='http://127.0.0.1:48000/admin/company_asaas';$preferences_csrf='synthetic-csrf';
+    $preferences_active_tab=null;$accounts=[];$can_configure=true;$action_url='http://127.0.0.1:48000/admin/settings/asaas';$preferences_csrf='synthetic-csrf';
     $hidden=static function(array $values=[]):void{foreach($values as $key=>$value)echo '<input type="hidden" name="'.htmlspecialchars($key,ENT_QUOTES).'" value="'.htmlspecialchars((string)$value,ENT_QUOTES).'">';};
     ob_start();include APPPATH.'views/admin/companies/asaas_preferences.php';return ob_get_clean();
 };

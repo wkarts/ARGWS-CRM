@@ -1,5 +1,11 @@
 <?php
 require __DIR__.'/native_contact_controller.php';
+// The installed CRM has these legacy InnoDB tables; the isolated core fixture
+// intentionally omits unrelated modules, so model them for transaction checks.
+if(!$db->table_exists($p.'consent_purposes'))$db->query('CREATE TABLE '.$p.'consent_purposes(id INTEGER PRIMARY KEY,name TEXT,description TEXT,date_created DATETIME,last_updated DATETIME)');
+if(!$db->table_exists($p.'consents'))$db->query('CREATE TABLE '.$p.'consents(id INTEGER PRIMARY KEY,action TEXT,date DATETIME,ip TEXT,contact_id INT,lead_id INT,description TEXT,opt_in_purpose_description TEXT,purpose_id INT,staff_name TEXT)');
+if(!$db->table_exists($p.'customer_admins'))$db->query('CREATE TABLE '.$p.'customer_admins(customer_id INT,staff_id INT,date_assigned TEXT)');
+unset($db->data_cache['table_names']);
 require APPPATH.'services/NativeCompanyConsents.php';NativeCompanyConsentSchema::ensure($db,$p);
 require_once APPPATH.'helpers/template_helper.php';
 foreach(['firstname','lastname']as$field)if(!$db->field_exists($field,$p.'staff'))$db->query('ALTER TABLE '.$p.'staff ADD '.$field.' varchar(191)');$db->query("UPDATE {$p}staff SET firstname='Synthetic',lastname='Owner' WHERE staffid=7");

@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
 $escape=static fn($value)=>htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
-$company_page_title='Modelos de e-mail';require APPPATH.'views/admin/companies/layout_head.php'; ?>
+$company_page_title='Modelos de e-mail';require APPPATH.'views/admin/includes/native_company_layout_head.php'; ?>
 <h1>Modelos de e-mail</h1>
 <p>Empresa selecionada: <strong><?= $escape($company_identity['legal_name']); ?></strong></p>
 <section class="company-settings-card">
@@ -22,4 +22,4 @@ $company_page_title='Modelos de e-mail';require APPPATH.'views/admin/companies/l
 <label><input type="checkbox" name="plaintext" value="1" <?= $selected->plaintext?'checked':''; ?>> Enviar como texto simples</label>
 <?php if ($can_edit) { ?><div class="company-settings-actions"><button class="btn btn-primary" type="submit">Salvar modelo</button></div><?php } ?>
 </fieldset></form><?php } ?></section>
-<?php require APPPATH.'views/admin/companies/layout_tail.php'; ?>
+<?php require APPPATH.'views/admin/includes/native_company_layout_tail.php'; ?>

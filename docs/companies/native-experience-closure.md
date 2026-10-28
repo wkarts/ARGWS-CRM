@@ -6,7 +6,7 @@ The selected company must change data and authorization, not the existing CRM's 
 
 This branch and PR #52 are **not ready for release or merge**. The obsolete `Company_context` controller and its native admission were removed; the selector now uses the shared CRM dashboard and the technical `Company_selection::select` POST. The other parallel company controllers and views remain open work. Existing guards remain closed until their replacement has a tested native data contract. A service or rendered fragment passing tests does not establish that its HTTP action is admitted or that all neighboring actions work.
 
-The source census still lists **48 parallel company controllers**. Reconciliation including the new BB131/132 migrations and shared native event mount lists **15,085 unresolved source files** and keeps `operational_ready=false`; the official CI generators must confirm these counts. They include dependency boundaries and are not a completion percentage. Company_context, Company_master, their retired context/registry views and master_resolution.php have been removed. These removals and the native selector are checkpoints, not full application convergence.
+The source census still lists **36 parallel company controllers**. Reconciliation including the new BB131/132 migrations and shared native event mount lists **15,085 unresolved source files** and keeps `operational_ready=false`; the official CI generators must confirm these counts. They include dependency boundaries and are not a completion percentage. Company_context, Company_master, their retired context/registry views and master_resolution.php have been removed. These removals and the native selector are checkpoints, not full application convergence.
 
 ## Finite source boundary
 
@@ -32,6 +32,12 @@ The census is regenerated after composition. No source method may disappear from
 | Todo, announcements, auxiliary Misc, taxes/items | Auxiliary worker | Finish principal catalog references and currency-column safety; remaining sales/files helpers need domain adapters; SMS must never use another company's global transport. |
 | Contracts, estimates/proposals, expenses, leads, credits/payments, reports, subscriptions, staff/roles, integrations and remaining menu targets | Central composition queue | Map each existing method to its canonical scoped service and original view; preserve primary legacy lineage, APIs/jobs and provider boundaries. These are not implicitly complete because similar backend services already exist. |
 
+### Private contact image checkpoint
+
+The original `clients/contact_profile_image/{customer}/{contact}` action is admitted only for GET and HEAD in a selected secondary company. The server-attested company scope determines the issuer; the reader verifies membership, customer ownership and contact identity before serving PNG bytes, and verifies the stored image hash and marker. HEAD returns no image body, and the response is private/no-store with content-type and sandbox protections. Direct references from another company and actors without access are denied by the scoped reader. This single admission does not open customer or contact forms, file uploads, public portals or parallel routes.
+
+The company principal is not attested by `CompanyRequestScope::nativeFor` for this endpoint. The controller therefore returns 404 for that new private-image URL; the principal's existing legacy image helper and URLs remain the path for its historical contacts. Principal historical-image parity and an authenticated browser test of selection, direct URLs, revoked grants and response headers still require verification. The existing controller fixture uses a scope/output double; it is not evidence of the actual HTTP middleware or browser behavior.
+
 ### Required distinctions
 
 - A legitimate refusal to delete a referenced contact, erase ledger history, mutate an issued invoice number or dispatch an unauthorized financial operation remains a business/security rule **inside the native route**, not a generic redirect into another application.
@@ -55,3 +61,11 @@ Local runtime and Chromium restrictions have not been bypassed. CI2650e95 proved
 4. Migration 474 and each changed module pass official version rules, clean install/upgrade/replay/failure tests; inventories are generated with their authentic tools.
 5. Native HTTP/browser tests and screenshots pass on the final SHA, with complete permanent coverage retained. Healthy runs are not invalidated; failed validation runs are cancelled only for the same SHA.
 6. Remote HEAD is reconciled before publication. The PR remains draft until the single complete delivery meets acceptance. No merge, deploy, force-push, production mutation or financial activation is authorized here.
+
+## Checkpoint local posterior
+
+As duplicidades de recorrência de faturas, rascunhos/cópias de faturas e equipe foram fechadas localmente. Os controllers/views `Company_invoice_recurring`, `Company_invoice_drafts`, `Company_invoice_copies`, `Company_staff` e suas páginas paralelas deixaram de conter código executável. As rotas oficiais `Invoices::recurring`, `Invoices::drafts`, `Invoices::copy` e `Staff` são as únicas superfícies admitidas para esses fluxos; testes e links internos usam os caminhos oficiais. Os tombstones não são rotas alternativas e não aparecem no inventário ativo.
+
+## Atualização local r8 — 2026-10-28
+
+A composição local posterior retirou os controllers `Company_*` administrativos executáveis e as views ativas em `admin/companies`. As 38 ações especializadas agora são métodos dos controllers oficiais, com rotas finitas no `NativeCompanyRoutes` e escopo nativo no `CompanyRequestScope`. Consulte `native-experience-closure-local-2026-10-28-r8.md` para contagens e gates. A validação PHP/MySQL/browser e a homologação CNAB 400 continuam dependências externas deste executor.

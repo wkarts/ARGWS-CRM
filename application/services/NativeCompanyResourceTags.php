@@ -11,6 +11,10 @@ final class NativeCompanyResourceTags
     private function rows(string$sql,array$args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private function reference(int $issuer,int $actor,string $type,$id,string $cap):array
     {
+        if($type==='timesheet'){
+            require_once __DIR__.'/NativeCompanyTimerTagReference.php';
+            return NativeCompanyTimerTagReference::resolve($this->db,$this->p,$issuer,$actor,$id,$cap);
+        }
         $ref=NativeCompanyResourceReferences::resolve($this->db,$this->p,$issuer,$actor,$type,$id,$cap);$source=$ref['source_kind'];if($source==='company_task'&&!(new IssuerResourceAccess($this->db,$this->p))->can($issuer,$actor,'projects','view'))throw new DomainException('native_tags_reference_denied');$owned=str_starts_with($source,'company_');
         if(in_array($source,['invoice','credit_note'],true)){$table=$source==='invoice'?'invoices':'creditnotes';$row=$this->rows('SELECT issuer_id FROM '.$this->p.$table.' WHERE id=?',[$ref['source_id']])[0]??null;if(!$row)throw new DomainException('native_tags_reference_denied');$owned=$row['issuer_id']!==null;if($owned&&(int)$row['issuer_id']!==$issuer)throw new DomainException('native_tags_reference_denied');}
         elseif($source==='client'){$owner=$this->rows('SELECT owner_issuer_id FROM '.$this->p.'issuers_clients WHERE client_id=?',[$ref['source_id']])[0]??null;$owned=$owner!==null;if($owned&&(int)$owner['owner_issuer_id']!==$issuer)throw new DomainException('native_tags_reference_denied');}
@@ -80,6 +84,20 @@ final class NativeCompanyResourceTags
         $ref=(new NativeCompanyTicketRead($this->db,$this->p))->referenceInOwnedTransaction($issuer,$actor,$canonical);
         return $ref+['tag_lineage'=>'owned','tag_rel_type'=>'company_ticket'];
     }
+    /** Only the exact in-flight estimate writer may create this resource's tags. */
+    public function createEstimateTagsInOwnedTransaction(int $issuer,int $actor,int $estimate,array $labels,CompanySales $writer):array
+    {
+        $canonical=NativeCompanyResourceId::encode('company_estimate',$estimate);$ref=$this->estimateCreationReference($issuer,$actor,$canonical,$writer);
+        if($this->data($issuer,$ref)!==[])throw new DomainException('native_tags_creation_conflict');
+        return $this->write($issuer,$actor,'estimate',$canonical,self::hash($ref,[]),$labels,$writer);
+    }
+    private function estimateCreationReference(int $issuer,int $actor,$canonical,object $writer):array
+    {
+        if(get_class($writer)!=='CompanySales')throw new DomainException('native_tags_reference_denied');
+        $source=NativeCompanyResourceId::decode('estimate',$canonical);if($source['source_kind']!=='company_estimate')throw new DomainException('native_tags_reference_denied');
+        $writer->assertCreatedInOwned($this->db,$this->p,$issuer,$actor,'company_estimate',$source['source_id']);
+        return $this->reference($issuer,$actor,'estimate',$canonical,'view');
+    }
     public function createDraftTagsInOwnedTransaction(int $issuer,int $actor,int $draft,array $labels,CompanyInvoiceDrafts $writer):array
     {
         $canonical=NativeCompanyResourceId::encode('company_invoice_draft',$draft);
@@ -112,7 +130,7 @@ final class NativeCompanyResourceTags
         if(!preg_match('/^[a-f0-9]{64}$/D',$expected)||!array_is_list($labels)||count($labels)>100)throw new DomainException('native_tags_invalid');
         $labels=array_map([self::class,'label'],$labels);$keys=array_map(static fn($s)=>mb_strtolower($s,'UTF-8'),$labels);if(count(array_unique($keys))!==count($keys))throw new DomainException('native_tags_invalid');
         IssuerTransaction::assertOwned($this->db,$this->p,self::tableNames());NativeCompanyWorkTagsSchema::assertValid($this->db,$this->p);
-        (new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$authorize=function()use($issuer,$actor,$type,$canonicalId,$proof):array{if($proof===null)return$this->reference($issuer,$actor,$type,$canonicalId,'edit');if($type==='task')return$this->taskCreationReference($issuer,$actor,$canonicalId,$proof);if($type==='ticket')return$this->ticketCreationReference($issuer,$actor,$canonicalId,$proof);if($type==='invoice')return get_class($proof)==='CompanyInvoices'?$this->invoiceCreationReference($issuer,$actor,$canonicalId,$proof):$this->draftCreationReference($issuer,$actor,$canonicalId,$proof);$ref=$this->reference($issuer,$actor,$type,$canonicalId,'view');if($type!=='project'||$ref['source_kind']!=='company_project')throw new DomainException('native_tags_reference_denied');CompanyProjects::assertNativeCreationProof($proof,$this->db,$this->p,$issuer,$actor,(int)$ref['source_id']);return$ref;};$ref=$authorize();
+        (new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$authorize=function()use($issuer,$actor,$type,$canonicalId,$proof):array{if($proof===null)return$this->reference($issuer,$actor,$type,$canonicalId,'edit');if($type==='task')return$this->taskCreationReference($issuer,$actor,$canonicalId,$proof);if($type==='ticket')return$this->ticketCreationReference($issuer,$actor,$canonicalId,$proof);if($type==='invoice')return get_class($proof)==='CompanyInvoices'?$this->invoiceCreationReference($issuer,$actor,$canonicalId,$proof):$this->draftCreationReference($issuer,$actor,$canonicalId,$proof);if($type==='estimate')return$this->estimateCreationReference($issuer,$actor,$canonicalId,$proof);$ref=$this->reference($issuer,$actor,$type,$canonicalId,'view');if($type!=='project'||$ref['source_kind']!=='company_project')throw new DomainException('native_tags_reference_denied');CompanyProjects::assertNativeCreationProof($proof,$this->db,$this->p,$issuer,$actor,(int)$ref['source_id']);return$ref;};$ref=$authorize();
         $resourceTables=['company_invoice_draft'=>'company_invoice_drafts','invoice'=>'invoices','credit_note'=>'creditnotes','project'=>'projects','task'=>'tasks','ticket'=>'tickets','contract'=>'contracts','lead'=>'leads','estimate'=>'estimates','proposal'=>'proposals','expense'=>'expenses','client'=>'clients','company_project'=>'company_projects','company_task'=>'company_tasks','company_standalone_task'=>'company_standalone_tasks','company_ticket'=>'company_tickets','company_contract'=>'company_contracts','company_lead'=>'company_leads','company_estimate'=>'company_sales_documents','company_proposal'=>'company_sales_documents','company_expense'=>'company_expenses'];
         $source=$ref['source_kind'];$table=$resourceTables[$source]??throw new DomainException('native_tags_reference_denied');IssuerTransaction::assertOwned($this->db,$this->p,[$table]);$resourceId=$ref['source_id'];
         $key=$source==='client'?'userid':($source==='ticket'?'ticketid':'id');$ownedSource=str_starts_with($source,'company_');$lock=$this->rows('SELECT '.$key.' FROM '.$this->p.$table.' WHERE '.$key.'=?'.($ownedSource?' AND issuer_id=?':'').' FOR UPDATE',$ownedSource?[$resourceId,$issuer]:[$resourceId]);if(count($lock)!==1)throw new DomainException('native_tags_reference_denied');

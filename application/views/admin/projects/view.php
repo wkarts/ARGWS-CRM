@@ -1,4 +1,51 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if (isset($native_project_view)) { ?>
+<?php init_head(); ?>
+<div id="wrapper"><div class="content"><div class="row"><div class="col-md-12">
+    <div class="panel_s"><div class="panel-body">
+        <div class="tw-flex tw-items-start tw-justify-between tw-gap-4">
+            <div><h3 class="tw-font-bold tw-mt-0"><?php echo e($native_project_overview['facts']['project']['name']); ?></h3>
+                <span class="label" style="color:<?php echo e($native_project_overview['status']['color']); ?>;border:1px solid <?php echo e($native_project_overview['status']['color']); ?>"><?php echo e($native_project_overview['status']['name']); ?></span>
+            </div>
+            <div><a class="btn btn-default" href="<?php echo admin_url('projects'); ?>"><?php echo _l('back_to_list'); ?></a>
+            <?php if ($native_project_view['can_edit']) { ?><a class="btn btn-primary" href="<?php echo admin_url('projects/project/'.$native_project_view['canonical_id']); ?>"><?php echo _l('edit_project'); ?></a><?php } ?></div>
+        </div>
+        <ul class="nav nav-tabs tw-mt-5">
+            <li class="<?php echo $native_project_view['group']==='project_overview'?'active':''; ?>"><a href="<?php echo admin_url('projects/view/'.$native_project_view['canonical_id'].'?group=project_overview'); ?>"><?php echo _l('project_overview'); ?></a></li>
+            <li class="<?php echo $native_project_view['group']==='project_files'?'active':''; ?>"><a href="<?php echo admin_url('projects/view/'.$native_project_view['canonical_id'].'?group=project_files'); ?>"><?php echo _l('project_files'); ?></a></li>
+        </ul>
+    </div></div>
+
+    <?php if ($native_project_view['group']==='project_overview') { ?>
+        <?php $this->load->view('admin/projects/project_overview',['native_project_overview'=>$native_project_overview]); ?>
+        <div class="panel_s"><div class="panel-body"><h4 class="tw-font-bold tw-mt-0"><?php echo _l('project_members'); ?></h4>
+        <?php if ($native_project_view['can_edit']) { ?>
+            <?php echo form_open(admin_url('projects/add_edit_members/'.$native_project_view['canonical_id']),['id'=>'native-project-members']); ?>
+            <?php echo form_hidden('_company_context',$native_project_view['context_token']);echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']);echo form_hidden('native_members_revision',$native_project_view['members_revision']); ?>
+            <?php $selected=array_map('intval',array_column($native_project_overview['facts']['members']['members'],'staffid')); ?>
+            <select class="selectpicker" multiple name="project_members[]" data-width="100%" data-live-search="true">
+                <?php foreach($native_project_staff as $member){$staffId=(int)$member['staffid']; ?><option value="<?php echo e($staffId); ?>"<?php echo in_array($staffId,$selected,true)?' selected':''; ?>><?php echo e(trim($member['firstname'].' '.$member['lastname'])); ?></option><?php } ?>
+            </select><button class="btn btn-primary tw-mt-3" type="submit"><?php echo _l('submit'); ?></button><?php echo form_close(); ?>
+        <?php } else { ?><ul><?php foreach($native_project_overview['facts']['members']['members'] as $member){ ?><li><?php echo e(trim($member['firstname'].' '.$member['lastname'])); ?></li><?php } ?></ul><?php } ?>
+        </div></div>
+    <?php } else { ?>
+        <div class="panel_s"><div class="panel-body">
+            <?php if ($native_project_view['can_edit']) { ?>
+            <?php echo form_open_multipart(admin_url('projects/upload_file/'.$native_project_view['canonical_id']),['id'=>'native-project-file-upload']); ?>
+            <?php echo form_hidden('_company_context',$native_project_view['context_token']);echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']);echo form_hidden('native_project_revision',$native_project_files['revision']);echo form_hidden('native_request_key',bin2hex(random_bytes(32))); ?>
+            <div class="form-group"><label for="native-project-file"><?php echo _l('project_files'); ?></label><input class="form-control" id="native-project-file" type="file" name="file" required></div>
+            <button class="btn btn-primary" type="submit"><?php echo _l('upload_file'); ?></button><?php echo form_close(); ?><hr>
+            <?php } ?>
+            <div class="table-responsive"><table class="table"><thead><tr><th><?php echo _l('project_file_filename'); ?></th><th><?php echo _l('project_file__filetype'); ?></th><th><?php echo _l('options'); ?></th></tr></thead><tbody>
+            <?php foreach($native_project_files['items'] as $file){ ?><tr><td><a href="<?php echo site_url('download/file/project/'.$file['file_key'].'?project_id='.$native_project_view['canonical_id']); ?>"><?php echo e($file['filename']); ?></a></td><td><?php echo e($file['mime']); ?></td><td>
+                <?php if($native_project_view['can_edit']){echo form_open(admin_url('projects/remove_file/'.$native_project_view['canonical_id'].'/'.$file['file_key']),['class'=>'tw-inline']);echo form_hidden('_company_context',$native_project_view['context_token']);echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']);echo form_hidden('native_project_revision',$native_project_files['revision']);echo form_hidden('native_request_key',bin2hex(random_bytes(32))); ?><button class="btn btn-danger btn-xs" type="submit"><?php echo _l('delete'); ?></button><?php echo form_close(); } ?>
+            </td></tr><?php } ?>
+            <?php if(!$native_project_files['items']){ ?><tr><td colspan="3"><?php echo _l('no_files_found'); ?></td></tr><?php } ?>
+            </tbody></table></div>
+        </div></div>
+    <?php } ?>
+</div></div></div></div>
+<?php init_tail(); ?></body></html><?php return; } ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <?= form_hidden('project_id', $project->id) ?>

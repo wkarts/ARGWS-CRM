@@ -19,17 +19,19 @@
                     <span
                         class="bold"><?= _l('payments_table_amount_heading'); ?></span>
                 </th>
-                <th>
+                <?php if (empty($nativeInvoicePreview)) { ?><th>
                     <span
                         class="bold"><?= _l('options'); ?></span>
-                </th>
+                </th><?php } ?>
             </tr>
         </thead>
         <tbody>
             <?php foreach ($invoice->payments as $payment) { ?>
             <tr class="payment">
                 <td><?= e($payment['paymentid']); ?>
+                    <?php if (empty($nativeInvoicePreview)) { ?>
                     <?= icon_btn('payments/pdf/' . $payment['paymentid'], 'fa-regular fa-file-pdf', 'btn-default pull-right'); ?>
+                    <?php } ?>
                 </td>
                 <td><?= e($payment['name']); ?>
                     <?php if (! empty($payment['paymentmethod'])) {
@@ -43,7 +45,11 @@
                 <td><?= e(_d($payment['date'])); ?>
                 </td>
                 <td><?= e(app_format_money($payment['amount'], $invoice->currency_name)); ?>
+                    <?php if (!empty($nativeInvoicePreview) && (float)($payment['native_reversed_amount'] ?? 0) > 0) { ?>
+                    <br><small class="text-muted"><?= e('Valor original: ' . app_format_money($payment['native_original_amount'], $invoice->currency_name)); ?><br><?= e('Estornado: ' . app_format_money($payment['native_reversed_amount'], $invoice->currency_name)); ?></small>
+                    <?php } ?>
                 </td>
+                <?php if (empty($nativeInvoicePreview)) { ?>
                 <td>
                     <div class="tw-flex tw-items-center tw-space-x-2">
                         <a href="<?= admin_url('payments/payment/' . $payment['paymentid']); ?>"
@@ -58,6 +64,7 @@
                         <?php } ?>
                     </div>
                 </td>
+                <?php } ?>
             </tr>
             <?php } ?>
         </tbody>

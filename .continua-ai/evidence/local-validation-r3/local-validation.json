@@ -1,0 +1,98 @@
+{
+  "format": 1,
+  "generated_at_utc": "2026-10-27T19:17:38Z",
+  "root": "/workspace/scratch/c104d1f61da9",
+  "environment": {
+    "php": null,
+    "docker": null,
+    "ruby": null,
+    "node": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "npm": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/npm",
+    "node_modules": false
+  },
+  "checks": [
+    {
+      "name": "node-contracts",
+      "status": "passed",
+      "command": [
+        "node",
+        "--test",
+        "tests/*.test.cjs"
+      ],
+      "exit_code": 0,
+      "output": "0.501235ms)\n✔ workspace browser suites do not omit admin page aliases and keep public/negative pages raw (36.51972ms)\n✔ role-filtered hidden rows require explicit visible-tab navigation, not a relaxed helper (5.11675ms)\n✔ nested role-filter audit stays explicit, including dotted page aliases (15.697584ms)\n✔ scoped native disclosure opens once and rejects ambiguous sidebar matches (1.10193ms)\n✔ manual task billing disclosures and taxes are scoped away from sidebar and project-rate forms (0.793526ms)\n✔ sales review navigation finishes native DOM initialization before editor actions (17.256763ms)\n✔ Asaas exige token no cabeçalho oficial e nunca aceita token por URL (8.674803ms)\n✔ Asaas persiste antes de responder HTTP 200 e reprocessa eventos em CRON (18.087314ms)\n✔ Conciliação usa igualdade decimal exata, sem baixa dupla e com estorno em revisão (0.601626ms)\n✔ Configuração Asaas separa recebedor local do webhook remoto (0.689609ms)\n✔ Rotas de diagnóstico de Pix são protegidas contra GET e acesso anônimo (0.296377ms)\n✔ O CRM opera notificações apenas pelo Conector, sem remover dados legados (0.578702ms)\n✔ O painel mantém nomes funcionais e os slugs internos (2.638366ms)\n✔ interface/API priorizam PT-BR e e-mails preservam idiomas legítimos (1.219808ms)\n✔ A migration é aditiva e conserva HTML e personalizações (1.760242ms)\n✔ Guia da API é local, autenticado e descreve os controladores existentes (0.860036ms)\n✔ Nota fiscal inclui dependências em Docker e nos ZIPs sem Composer em runtime (0.822058ms)\n✔ Suporte preserva widget opcional e aceita WhatsApp, e-mail ou site (0.737411ms)\n✔ todos os modelos dos módulos mapeados são PT-BR e preservam HTML e variáveis (20.578278ms)\n✔ módulos antigos e novos usam PT-BR e reconciliação sem apagar personalizações (1.289282ms)\n✔ o rótulo é LGPD e o item de configurações é somente Plataforma (2.542861ms)\n✔ os gatilhos existentes mantêm IDs e mensagens; novos são desativados por padrão (0.543769ms)\n✔ novos 10 eventos correspondem a hooks existentes e usam Connect|API (0.41154ms)\n✔ nome central do produto e instalador mantêm papéis independentes do fiscal (2.292715ms)\n✔ nomes de produto e instalador chegam ao container sem alterar ambiente real (0.722518ms)\n✔ normalização de idioma cobre carregadores, cookies, rota e formulários (0.914358ms)\n✔ catálogo filtra seleções e escrita sem desregistrar os gateways (1.8846ms)\n✔ flag iDEAL é propagada, desabilitada por padrão e não substitui RBAC (1.038956ms)\n✔ client iframe uses its escaped destination directly (1.279939ms)\n✔ legacy proxy route returns 404 without loading or fetching a URL (1.237796ms)\n✔ the insecure proxy archive is not shipped (0.818173ms)\n✔ all literal mail class slugs have shipped localized definitions (301.617346ms)\n✔ webhook new body is translated without raw diagnostics; historic blank remains recognized (3.337459ms)\n✔ all shipped literal merge-field labels have exact key/name translations (75.641402ms)\n✔ editor renders actual persisted language and localized descriptions without changing keys (1.197254ms)\n✔ source dictionaries preserve every subject variable, including historical subjects (2.517554ms)\n✔ os 82 modelos originais têm nomes e assuntos PT-BR sem perder campos (3.962011ms)\n✔ cada nó de texto dos corpos HTML é traduzido; layout e merge fields ficam intactos (10.548559ms)\n✔ dicionário não contém campos ausentes, frases repetidas ou tradução em branco (1.701143ms)\n✔ a migração apenas insere ausentes ou atualiza defaults intactos (0.527324ms)\n✔ exact fixture identity and single durable maintenance audit pass for string and object metadata (3.330078ms)\n✔ wrong identities and arbitrary or historical source are rejected for this upgrade (3.912656ms)\n✔ missing, duplicate, impersonated, foreign or unproven audit is rejected (2.884937ms)\n✔ all six reused PHP consumers share exact audit gate; historical guard remains (2.312214ms)\n✔ producer binds exact owner proof before both downstream browsers (3.460414ms)\n✔ batch transport reproduces nested JSON escaping; hex preserves exact UTF-8 bytes (1.324786ms)\n✔ malformed, truncated, non-UTF8 and oversized encoded audits fail closed (5.070971ms)\n✔ MA uses the shared label dictionary without translating merge-field keys (1.831089ms)\n✔ preview chooses the configured language visually and labels persisted languages accurately (1.318707ms)\n✔ Unlayer interface locale is PT-BR without changing stored design language (0.447985ms)\n✔ fresh seed is prefix-safe and activation does not repair user-deleted variants (0.659724ms)\n✔ library defaults do not pretend to own campaign subjects or image translations (32.375675ms)\n✔ native routes use scoped services and original renderers, not parallel redirect (2.326325ms)\n✔ primary company-owned customer entry stays on the official Clients route (1.075511ms)\n✔ native field writes keep authorization and readback in owner transaction (0.309586ms)\n✔ new group ownership does not backfill global definitions (0.543519ms)\n✔ shared identity excludes additional private native fields (0.469658ms)\n✔ native contact writer binds owner, permissions and password revocation (0.357068ms)\n✔ same dashboard controller and native thirteen partials; no alternative panel (1.862738ms)\n✔ native charts and financial template retain canonical APIs (0.410659ms)\n✔ request seal and pre-emission authorization retained (1.00207ms)\n✔ original dashboard alerts use issuer-scoped announcements and POST dismissal in native requests (0.565152ms)\n✔ isolated native shell loads shared view helpers and scoped PT-BR labels without forcing HTML responses (0.401465ms)\n✔ dashboard preferences stay actor + issuer bound and use native CSRF (0.374153ms)\n✔ in-progress widget never aliases historically active projects (0.191007ms)\n✔ dashboard composes the original calendar DTO before widgets and respects its permission (0.701166ms)\n✔ native controllers share complete presentation dependencies and original body selectors (0.767086ms)\n﹣ native header renders actual translated controls without a company selector (0.739173ms) # PHP runtime unavailable in this workspace\n﹣ URL fixture renders real Asaas groups and no credential field (0.108804ms) # PHP runtime unavailable in this workspace\n✔ fixture keeps native asset order and loads real selectpicker (1.289093ms)\n✔ diagnostic runner measures all isolated cases before enforcing unchanged page overflow gate (0.469127ms)\n✔ native source and shipped bundle use the measured header height for wrapper offsets (11.058775ms)\n✔ responsive header rules are scoped and source/built styles remain aligned (5.020284ms)\n﹣ optional full shell, long names and mobile controls render without changing the default fixture (0.15945ms) # PHP runtime unavailable in this workspace\n✔ native header job consumes validated immutable tools without install delays or credentials (1.740142ms)\n✔ native constructor returns before loading legacy financial models (2.976324ms)\n✔ PDF uses existing scoped document/audit and never calls legacy helpers or forwards TCPDF modes (0.447685ms)\n✔ native read adapter binds issuer and uses canonical financial position without global model calls (1.06191ms)\n✔ real fixture includes cross-owner, historical snapshot, currency/year separation and unchanged cash (0.286292ms)\n✔ lineage dispatcher resolves real row before selecting source and never converts missing to legacy (0.322435ms)\n✔ native presentation metadata stays inside canonical writer and never exposes a standalone mutator (0.69707ms)\n✔ invoice native note endpoints compose the owned auxiliary service and actual existing partial (0.525001ms)\n✔ table presentation reuses actual native rule/JS classes with explicit owned saved filters (0.271279ms)\n✔ native due-date endpoint uses owned public settings without global date hooks (0.90264ms)\n✔ project selection composes existing owned writer without legacy project IDs or public mutator (1.706372ms)\n✔ totals keeps existing native partial with authorized customer/project namespaces (0.403348ms)\n✔ advanced filters execute before counts with bound params and canonical recurrence proof (0.354464ms)\n✔ project names remain text and are escaped exactly once when inserted (2.300206ms)\n✔ task wire entities are decoded once before safe DOM serialization (0.399843ms)\n✔ the task editor explicitly selects the existing encoded wire contract (0.39823ms)\n✔ native toggle POST revision, intercepts generic GET, suppresses duplicate while busy (2.997256ms)\n✔ failure restores previous state without automatic replay (0.977543ms)\n✔ native delete remains same URL but POST with revision (0.810531ms)\n✔ native explicit POST uses captured transport and removes popup only after success (3.9081ms)\n✔ missing native transport fails before request and preserves visible popup (0.705593ms)\n✔ legacy branch preserves existing GET and same completion (0.608647ms)\n✔ same native remove URL submits captured form proof and revision via POST (3.624952ms)\n✔ missing revision and cross-origin action fail before submit (1.996539ms)\n✔ authenticated navigation is always network/no-store; never replayed offline (7.453071ms)\n✔ POST, APIs, financial assets, credentials, certificates, other origins/scopes are not intercepted (0.842409ms)\n✔ no persistence, takeover messages, force refresh, financial replay or cache API (0.274123ms)\n✔ PNG fallback dimensions, masks and native views (0.851563ms)\n✔ browser owns install eligibility, dismissal and standalone; duplicate includes register once (37.353642ms)\n✔ real HTTP browser gate is mandatory, pinned and has no dependency installation or mocked fetch (0.68388ms)\n✔ PWA evidence covers both widths, masks controls, preserves post-merge validation (0.275836ms)\n✔ HTTP fixture has native mobile viewport and accessible synthetic field (0.2387ms)\n✔ original relation table handler is a single shared byte-exact function (1.602044ms)\n✔ actual handler retains canonical ticket URL, columns and selected DOM (3.329878ms)\n✔ missing table does not issue a speculative request (0.972625ms)\n✔ the delivered native menu handler toggles desktop/mobile states with show taking precedence (8.566509ms)\n✔ the delivered resize handler reconciles mobile and desktop state in both directions (2.929335ms)\n✔ same original names are defined only in shared component, without automatic requests (6.632464ms)\n✔ scoped delete is explicit POST with reviewed revision and stable retry identity (3.655619ms)\n✔ historical delete transport is preserved (1.550146ms)\n✔ original save keeps hostile description as text, includes revision and stable retry key (2.172634ms)\n✔ missing cryptographic randomness fails before dispatch (2.222579ms)\n✔ historical original checkboxes remain indeterminate until explicit choices; unresolved submit is blocked (3.274765ms)\n✔ original header task stop carries exact revisions and idempotency key (1.394291ms)\n✔ blank start does not fabricate a task revision (0.189836ms)\n✔ assignment independently retains target task and source blank revisions (0.215925ms)\n✔ missing, malformed and out-of-range facts fail before transport (0.403458ms)\n✔ actual generic picker preserves only a validated revision as option data (1.462073ms)\n✔ timer action uses matching local Staff row without colliding with header identity (2.497884ms)\n✔ actual timer start selects only the matching canonical task row (2.052703ms)\n✔ original task chart handlers bind once and retain actual chart and cleanup behavior (3.540745ms)\n✔ same original modal invokes shared initializer and contains no second chart implementation (0.871454ms)\n✔ extracted native function bytes are identical and have one source (9.900317ms)\n✔ shared component has no bootstrap, provider, timer or request side effects on load (6.693547ms)\n✔ native legacy script dependency orders shared definitions before main (0.673074ms)\n✔ shared general helpers retain source bytes without globals or side effects (3.987639ms)\nℹ tests 222\nℹ suites 0\nℹ pass 219\nℹ fail 0\nℹ cancelled 0\nℹ skipped 3\nℹ todo 0\nℹ duration_ms 1471.510757\n"
+    },
+    {
+      "name": "ui-inventory",
+      "status": "passed",
+      "command": [
+        "python3",
+        "tests/company_ui_surface_inventory.py"
+      ],
+      "exit_code": 0,
+      "output": "Static UI inventory PASS: 93 views, 51 controllers; kinds={'company-shell': 46, 'partial': 40, 'modal-document': 2, 'shell-part': 2, 'unresolved-fragment': 1, 'native-shell': 2}\nNot a PHP render, route authorization, asset load, browser or visual-fidelity test. Unresolved fragments remain documented gaps.\n"
+    },
+    {
+      "name": "focused-ci-contract",
+      "status": "passed",
+      "command": [
+        "python3",
+        "tests/ci/test_native_company_focused.py"
+      ],
+      "exit_code": 0,
+      "output": ".START node 1/2 tests/first.cjs\nsynthetic failure\nEND node 1/2 exit=1\n...START sqlite 1/1 tests/first.php\nWarning: synthetic warning\nEND sqlite 1/1 exit=1\n......\n----------------------------------------------------------------------\nRan 10 tests in 0.097s\n\nOK\n"
+    },
+    {
+      "name": "workflow-ownership",
+      "status": "passed",
+      "command": [
+        "python3",
+        "-c",
+        "from pathlib import Path; import re; hits=[p.name for p in Path('.github/workflows').glob('*.yml') if re.search(r'node --test tests/native_header_overflow\\.test\\.cjs', p.read_text())]; assert hits == ['native-header-layout.yml'], hits; print(hits)"
+      ],
+      "exit_code": 0,
+      "output": "['native-header-layout.yml']\n"
+    },
+    {
+      "name": "php-runtime",
+      "status": "blocked",
+      "command": [
+        "php",
+        "-v"
+      ],
+      "missing": [
+        "php"
+      ]
+    },
+    {
+      "name": "mix-build",
+      "status": "blocked",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "missing": [
+        "node_modules/.bin/mix"
+      ]
+    },
+    {
+      "name": "ruby-yaml-runtime",
+      "status": "blocked",
+      "command": [
+        "ruby",
+        "-e",
+        "require 'yaml'; YAML.load_file('.github/workflows/native-company-ui.yml')"
+      ],
+      "missing": [
+        "ruby"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "blocked": 3,
+    "complete": false
+  }
+}

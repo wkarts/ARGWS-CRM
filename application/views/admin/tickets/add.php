@@ -4,6 +4,7 @@ $native_ticket_add = isset($native_ticket_presentation);
 $ticketOption = static function ($key) use ($native_ticket_add, &$native_ticket_presentation) {
     return $native_ticket_add ? $native_ticket_presentation['options'][$key] : get_option($key);
 };
+$nativeTicketExtensions = $native_ticket_add ? array_values(array_intersect(['pdf','png','jpg','jpeg'], array_map(static fn($value)=>ltrim(strtolower(trim($value)),'.'),explode(',',$ticketOption('ticket_attachments_file_extensions'))))) : [];
 init_head(); ?>
 <div id="wrapper">
     <div class="content">
@@ -210,10 +211,10 @@ echo render_select('priority', $priorities, ['priorityid', 'name'], 'ticket_sett
                                                         class="control-label"><?= _l('ticket_add_attachments'); ?></label>
                                                     <div class="input-group">
                                                         <input type="file"
-                                                            extension="<?= e(str_replace(['.', ' '], '', $ticketOption('ticket_attachments_file_extensions'))); ?>"
+                                                            extension="<?= e($native_ticket_add ? implode(',', $nativeTicketExtensions) : str_replace(['.', ' '], '', $ticketOption('ticket_attachments_file_extensions'))); ?>"
                                                             filesize="<?= file_upload_max_size(); ?>"
                                                             class="form-control" name="attachments[0]"
-                                                            accept="<?= $native_ticket_add ? e(get_ticket_form_accepted_mimes($ticketOption('ticket_attachments_file_extensions'))) : get_ticket_form_accepted_mimes(); ?>">
+                                                            accept="<?= $native_ticket_add ? e(implode(',',array_map(static fn($value)=>'.'.$value,$nativeTicketExtensions))) : get_ticket_form_accepted_mimes(); ?>">
                                                         <span class="input-group-btn">
                                                             <button class="btn btn-default add_more_attachments"
                                                                 data-max="<?= $ticketOption('maximum_allowed_ticket_attachments'); ?>"

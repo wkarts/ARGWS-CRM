@@ -21,6 +21,10 @@ foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb)$check(N
 foreach (['GET','HEAD','POST'] as $verb) {
     $check(NativeCompanyRoutes::admits('admin/','','settings','index',$verb),'existing Settings route admitted only for its explicit native adapter');
 }
+$settingsAssetActions=['remove_company_logo'=>['POST'],'remove_signature_image'=>['POST'],'remove_fv'=>['POST'],'company_asset'=>['GET','HEAD']];
+foreach($settingsAssetActions as$action=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
+    $check(NativeCompanyRoutes::admits('admin/','','settings',$action,$verb)===in_array($verb,$allowed,true),'official Settings asset action has finite verb: '.$action.'/'.$verb);
+foreach(array_keys($settingsAssetActions)as$action)$check(!NativeCompanyRoutes::navigation('settings/'.$action),'Settings asset endpoints are never return destinations: '.$action);
 foreach (['GET','HEAD','POST'] as $verb) {
     $check(NativeCompanyRoutes::admits('admin/','','departments','index',$verb),'original native Departments list and DataTables methods admitted');
 }
@@ -44,7 +48,7 @@ foreach (['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] as $verb) {
     $check(!NativeCompanyRoutes::admits('admin/', '', 'dashboard', 'index', $verb), 'unimplemented mutation denied');
 }
 foreach ([['admin', 'third_party', 'dashboard', 'index'], ['public', '', 'dashboard', 'index'],
-    ['admin', '', 'dashboard', 'unknown'], ['admin', '', 'invoices', 'index'],
+    ['admin', '', 'dashboard', 'unknown'],
     ['admin', '', 'company_context', 'index'], ['admin', '', 'authentication', 'index']] as $route) {
     $check(!NativeCompanyRoutes::admits(...array_merge($route, ['GET'])), 'unadapted or non-native route denied');
 }
@@ -58,14 +62,14 @@ foreach (['/dashboard', '//evil.test', 'https://evil.test', '../dashboard', 'das
 }
 echo "Native company route contracts: {$checks} checks passed.\n";
 
-$mutations=['todo'=>['todo','change_todo_status','update_todo_items_order','delete_todo_item'],'announcements'=>['delete'],'taxes'=>['manage','delete'],'tickets'=>['bulk_action'],'invoice_items'=>['manage','add_group','update_group','delete_group','delete','bulk_action','copy']];
+$mutations=['todo'=>['todo','change_todo_status','update_todo_items_order','delete_todo_item'],'announcements'=>['delete'],'taxes'=>['manage','delete'],'invoice_items'=>['manage','add_group','update_group','delete_group','delete','bulk_action','copy']];
 foreach($mutations as$controller=>$methods)foreach($methods as$method){$check(NativeCompanyRoutes::admits('admin','',$controller,$method,'POST'),'Explicit owned writer admitted');foreach(['GET','HEAD','PUT','DELETE']as$verb)$check(!NativeCompanyRoutes::admits('admin','',$controller,$method,$verb),'Mutation never admitted through read/foreign verb');}
 foreach(['todo','announcements','taxes','tickets','invoice_items']as$controller){$check(NativeCompanyRoutes::admits('admin','',$controller,'index','GET'),'Original catalog page admitted');$check(NativeCompanyRoutes::navigation($controller),'Original navigation target admitted');$check(!NativeCompanyRoutes::admits('admin','module',$controller,'index','GET'),'Module cannot inherit native admission');$check(!NativeCompanyRoutes::admits('admin','',$controller,'unknown','POST'),'No wildcard actions');}
 echo "Native finite auxiliary admission: {$checks} total route assertions PASS; authenticated HTTP remains required.\n";
 
 foreach(['admin/','../../modules/banco_brasil/controllers/']as$directory){
  $check(NativeCompanyRoutes::admits($directory,'banco_brasil','banco_brasil','index','GET'),'BB shares native presentation in both MX directory forms');
- foreach(['register_connection','generate_remittance','save_channel_preferences','issue_api','preview_checkout','publish_checkout']as$method){
+ foreach(['register_connection','generate_remittance','save_channel_preferences','issue_api','preview_checkout','publish_checkout','compare_cnab400','prepare_cnab400','recover_cnab400','reserve_cnab400','candidate_cnab400','settle_cnab400','declare_cnab400_approval','generate_cnab400','download_cnab400','report_cnab400']as$method){
   $check(NativeCompanyRoutes::admits($directory,'banco_brasil','banco_brasil',$method,'POST'),'explicit BB writer uses native company CSRF');
   $check(!NativeCompanyRoutes::admits($directory,'banco_brasil','banco_brasil',$method,'GET'),'BB writer cannot run through GET');
  }
@@ -74,53 +78,111 @@ foreach(['admin/','../../modules/banco_brasil/controllers/']as$directory){
 $check(NativeCompanyRoutes::navigation('banco_brasil'),'single native module navigation');
 echo "BB native finite admission: {$checks} total assertions passed.\n";
 
-$check(NativeCompanyRoutes::navigation('staff'),'native original Staff navigation is available');
-foreach(['index','member']as$method)foreach(['GET','HEAD','POST']as$verb)$check(NativeCompanyRoutes::admits('admin','','staff',$method,$verb),'native staff table/form finite admission');
-foreach(['change_staff_status','save_hidden_table_columns','remove_staff_profile_image']as$method){$check(NativeCompanyRoutes::admits('admin','','staff',$method,'POST'),'scoped staff action uses POST');$check(!NativeCompanyRoutes::admits('admin','','staff',$method,'GET'),'staff mutation refuses GET');}
-$check(!NativeCompanyRoutes::admits('admin','','staff','delete','POST'),'global staff deletion is not admitted to a named company');
+$staffActions=[
+ 'index'=>['GET','HEAD','POST'],'member'=>['GET','HEAD','POST'],'role_changed'=>['GET'],
+ 'save_dashboard_widgets_order'=>['POST'],'save_dashboard_widgets_visibility'=>['POST'],
+ 'reset_dashboard'=>['POST'],'save_hidden_table_columns'=>['POST'],'timesheets'=>['GET','HEAD'],
+ 'delete'=>['POST'],'edit_profile'=>['GET','HEAD','POST'],'remove_staff_profile_image'=>['POST'],
+ 'change_password_profile'=>['POST'],'profile'=>['GET','HEAD'],'change_staff_status'=>['POST'],
+ 'notifications'=>['POST'],'update_two_factor'=>['POST'],'verify_google_two_factor'=>['POST'],
+];
+$check(NativeCompanyRoutes::navigation('staff')&&NativeCompanyRoutes::navigation('staff/member'),'native original Staff navigation is available');
+foreach($staffActions as$method=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
+ $check(NativeCompanyRoutes::admits('admin','','staff',$method,$verb)===in_array($verb,$allowed,true),'official Staff action has finite verb: '.$method.'/'.$verb);
+foreach(['change_language','save_completed_checklist_visibility','unknown']as$method)foreach(['GET','HEAD','POST']as$verb)
+ $check(!NativeCompanyRoutes::admits('admin','','staff',$method,$verb),'unadapted Staff neighbor remains closed: '.$method.'/'.$verb);
+foreach(array_keys($staffActions)as$method)if(!in_array($method,['index','member'],true))$check(!NativeCompanyRoutes::navigation('staff/'.$method),'Staff endpoint is not a return destination: '.$method);
+$check(!NativeCompanyRoutes::admits('admin','foreign','staff','index','GET'),'other modules cannot reuse Staff workflows');
 $check(NativeCompanyRoutes::admits('admin','','misc','staff_email_exists','POST'),'native member form can validate email under its current context');
 echo "Native Staff admission: {$checks} total assertions passed.\n";
 
 foreach(['add_note','edit_note','delete_note']as$method){$check(NativeCompanyRoutes::admits('admin','','misc',$method,'POST'),'scoped Staff notes have native mutation admission');$check(!NativeCompanyRoutes::admits('admin','','misc',$method,'GET'),'notes never mutate by GET');}
-$check(NativeCompanyRoutes::admits('admin','','tasks','timer_tracking','POST'),'own scoped timer action is available to Staff report');
-foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb){
- $check(NativeCompanyRoutes::admits('admin','','tasks','ajax_search_assign_task_to_timer',$verb)===($verb==='POST'),'timer task picker is admitted only as guarded POST');
-}
-$check(!NativeCompanyRoutes::admits('admin','foreign','tasks','ajax_search_assign_task_to_timer','POST'),'other modules cannot reuse the native timer picker');
-$check(!NativeCompanyRoutes::navigation('tasks/ajax_search_assign_task_to_timer'),'timer picker is not a navigation or return destination');
-foreach(['get_billable_tasks_by_project','get_billable_tasks_by_customer_id'] as $method){
- foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb){
-  $check(NativeCompanyRoutes::admits('admin','','tasks',$method,$verb)===($verb==='GET'),'invoice task selector is read-only GET: '.$method.'/'.$verb);
- }
- $check(!NativeCompanyRoutes::admits('admin','foreign','tasks',$method,'GET'),'other modules cannot reuse invoice task selector');
- $check(!NativeCompanyRoutes::navigation('tasks/'.$method),'invoice task selector is not a navigation destination');
-}
-$check(!NativeCompanyRoutes::admits('admin','','tasks','delete_timesheet','GET'),'legacy timesheet deletion remains denied');
 
 $check(NativeCompanyRoutes::admits('admin','banco_brasil','banco_brasil','download_return','POST'),'private original return download uses original module POST route');
 $check(!NativeCompanyRoutes::admits('admin','banco_brasil','banco_brasil','download_return','GET'),'bank originals cannot be fetched by unprotected GET');
 
-foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb){
- $check(NativeCompanyRoutes::admits('admin','','projects','staff_projects',$verb)===($verb==='POST'),'staff projects adapter is exposed only through its guarded native POST');
-}
-foreach(['index','view','project','delete','unknown']as$method)$check(!NativeCompanyRoutes::admits('admin','','projects',$method,'POST'),'staff table admission never opens other project endpoints');
-$check(!NativeCompanyRoutes::admits('admin','foreign','projects','staff_projects','POST'),'module cannot reuse native staff project admission');
-$check(!NativeCompanyRoutes::navigation('projects/staff_projects'),'table endpoint cannot become an arbitrary return destination');
-echo "Original Staff projects: finite POST-only admission preserved.\n";
+$projectActions=['index'=>['GET','HEAD'],'staff_projects'=>['POST'],'table'=>['POST'],'project'=>['GET','HEAD','POST'],'view'=>['GET','HEAD'],'upload_file'=>['POST'],'remove_file'=>['POST'],'add_edit_members'=>['POST'],'remove_team_member'=>['POST'],'get_rel_project_data'=>['GET'],'get_staff_names_for_mentions'=>['GET']];
+foreach($projectActions as$action=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
+ $check(NativeCompanyRoutes::admits('admin','','projects',$action,$verb)===in_array($verb,$allowed,true),'official project action has finite verb: '.$action.'/'.$verb);
+$check(NativeCompanyRoutes::navigation('projects')&&NativeCompanyRoutes::navigation('projects/project'),'official project directory and editor are return destinations');
+foreach(['staff_projects','table','view','upload_file','remove_file','add_edit_members','remove_team_member','get_rel_project_data','get_staff_names_for_mentions']as$action)$check(!NativeCompanyRoutes::navigation('projects/'.$action),'project data endpoint is not a return destination: '.$action);
+foreach(['delete','unknown']as$action)foreach(['GET','HEAD','POST']as$verb)$check(!NativeCompanyRoutes::admits('admin','','projects',$action,$verb),'unadapted project neighbor remains closed: '.$action.'/'.$verb);
+$check(!NativeCompanyRoutes::admits('admin','foreign','projects','project','GET'),'other modules cannot reuse project workflows');
+echo "Official Projects routes: finite workflow admission preserved.\n";
 
 foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb){
  $check(NativeCompanyRoutes::admits('admin','','clients','get_customer_billing_and_shipping_details',$verb)===in_array($verb,['GET','HEAD'],true),'private customer billing projection is read-only: '.$verb);
 }
 $check(!NativeCompanyRoutes::admits('admin','foreign','clients','get_customer_billing_and_shipping_details','GET'),'modules cannot reuse customer billing projection');
 $check(!NativeCompanyRoutes::navigation('clients/get_customer_billing_and_shipping_details'),'billing projection is not a navigation destination');
-foreach(['index','client','table','delete','change_client_status','unknown']as$method)foreach(['GET','POST']as$verb)$check(!NativeCompanyRoutes::admits('admin','','clients',$method,$verb),'billing projection does not admit adjacent customer actions');
-
-// Read-only helpers do not imply that the surrounding project/task flows are admitted.
-foreach(['tasks'=>'task_tracking_stats','projects'=>'get_rel_project_data'] as $controller=>$method){
- foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb)
-  $check(NativeCompanyRoutes::admits('admin','',$controller,$method,$verb)===($verb==='GET'),'isolated work reader accepts only GET: '.$controller.'/'.$method.'/'.$verb);
- $check(!NativeCompanyRoutes::admits('admin','foreign',$controller,$method,'GET'),'module cannot reuse isolated work reader');
- $check(!NativeCompanyRoutes::navigation($controller.'/'.$method),'isolated work reader is not a return destination');
+foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb){
+ $check(NativeCompanyRoutes::admits('admin','','clients','contact_profile_image',$verb)===in_array($verb,['GET','HEAD'],true),'native contact image admits only read verbs: '.$verb);
 }
-foreach(['tasks','projects'] as $controller)foreach(['index','table','delete'] as $method)foreach(['GET','POST'] as $verb)
- $check(!NativeCompanyRoutes::admits('admin','',$controller,$method,$verb),'isolated reader never admits neighboring work actions');
+$check(!NativeCompanyRoutes::admits('admin','foreign','clients','contact_profile_image','GET'),'module cannot reuse native contact image reader');
+$check(!NativeCompanyRoutes::navigation('clients/contact_profile_image'),'contact image is not a navigation destination');
+foreach(['delete','unknown']as$method)foreach(['GET','POST']as$verb)$check(!NativeCompanyRoutes::admits('admin','','clients',$method,$verb),'unadapted customer actions remain closed');
+
+// Each customer action is independently bounded; no wildcard or financial action is opened.
+$clientActions=['index'=>['GET','HEAD'],'table'=>['POST'],'client'=>['GET','HEAD','POST'],'import'=>['GET','HEAD','POST'],'form_contact'=>['GET','HEAD','POST'],'contacts'=>['POST'],'all_contacts'=>['GET','POST'],'consents'=>['GET','HEAD'],'contact_email_exists'=>['POST'],'change_contact_status'=>['POST'],'change_client_status'=>['POST'],'lookup'=>['POST'],'check_duplicate_customer_name'=>['POST'],'delete_contact'=>['POST'],'confirm_registration'=>['POST'],'delete_contact_profile_image'=>['POST'],'upload_attachment'=>['POST'],'delete_attachment'=>['POST'],'add_external_attachment'=>['POST'],'update_file_share_visibility'=>['POST'],'assign_admins'=>['POST'],'delete_customer_admin'=>['POST'],'save_longitude_and_latitude'=>['POST'],'get_vault_entry'=>['GET','HEAD'],'vault_entry_create'=>['POST'],'vault_entry_update'=>['POST'],'vault_entry_delete'=>['POST'],'vault_encrypt_password'=>['POST'],'share_identity'=>['POST'],'contact_invoice_access'=>['POST'],'groups'=>['GET','HEAD','POST'],'group'=>['POST'],'delete_group'=>['POST']];
+foreach($clientActions as $action=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb)$check(NativeCompanyRoutes::admits('admin','','clients',$action,$verb)===in_array($verb,$allowed,true),'native customer action has finite verb: '.$action.'/'.$verb);
+$check(NativeCompanyRoutes::navigation('clients')&&NativeCompanyRoutes::navigation('clients/client')&&NativeCompanyRoutes::navigation('clients/import')&&NativeCompanyRoutes::navigation('clients/groups'),'native client list, import and form are return destinations');
+// Company-owned contracts live exclusively in the original Contracts controller.
+$contractActions=['index'=>['GET','HEAD'],'contract'=>['GET','HEAD','POST'],'pdf'=>['GET','HEAD'],'file'=>['GET','HEAD']];
+foreach($contractActions as $action=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb)
+ $check(NativeCompanyRoutes::admits('admin','','contracts',$action,$verb)===in_array($verb,$allowed,true),'official company contract action has finite verb: '.$action.'/'.$verb);
+$check(NativeCompanyRoutes::navigation('contracts')&&NativeCompanyRoutes::navigation('contracts/contract'),'official contract directory and editor are return destinations');
+$check(!NativeCompanyRoutes::navigation('contracts/pdf')&&!NativeCompanyRoutes::navigation('contracts/file'),'private contract bytes are never return destinations');
+$check(!NativeCompanyRoutes::admits('admin','','company_contracts','index','GET'),'removed parallel contracts controller has no native admission');
+$check(!NativeCompanyRoutes::admits('admin','foreign','contracts','contract','GET'),'module cannot reuse official owned contract adapter');
+foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb)$check(NativeCompanyRoutes::admits('admin','','gdpr','contact_consent_opt_action',$verb)===($verb==='POST'),'contact consent writes admit only POST');
+foreach(['estimates','proposals'] as $controller){foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'] as $verb)$check(NativeCompanyRoutes::admits('admin','',$controller,'get_due_date',$verb)===($verb==='POST'),'company due-date helper admits only POST: '.$controller.'/'.$verb);$check(!NativeCompanyRoutes::navigation($controller.'/get_due_date'),'due-date helper is not a navigation destination');}
+
+$taskActions=['index'=>['GET','HEAD'],'list_tasks'=>['GET','HEAD'],'table'=>['POST'],'init_relation_tasks'=>['POST'],'task'=>['GET','HEAD','POST'],'get_task_data'=>['GET'],'timer_tracking'=>['POST'],'ajax_search_assign_task_to_timer'=>['POST'],'get_billable_tasks_by_project'=>['GET'],'get_billable_tasks_by_customer_id'=>['GET'],'task_tracking_stats'=>['GET'],'get_staff_names_for_mentions'=>['GET'],'get_task_by_id'=>['GET'],'get_staff_started_timers'=>['GET'],'get_billable_task_data'=>['GET'],'save_checklist_item_template'=>['POST'],'remove_checklist_item_template'=>['POST'],'init_checklist_items'=>['POST'],'checklist_visibility'=>['POST'],'checklist_command'=>['POST'],'add_task_comment'=>['POST'],'upload_file'=>['POST'],'remove_task_attachment'=>['POST'],'mark_as'=>['POST'],'change_priority'=>['POST']];
+foreach($taskActions as$action=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
+ $check(NativeCompanyRoutes::admits('admin','','tasks',$action,$verb)===in_array($verb,$allowed,true),'official task action has finite verb: '.$action.'/'.$verb);
+$check(NativeCompanyRoutes::navigation('tasks')&&NativeCompanyRoutes::navigation('tasks/task'),'official task directory and editor are return destinations');
+foreach(array_diff(array_keys($taskActions),['index','list_tasks','task'])as$action)$check(!NativeCompanyRoutes::navigation('tasks/'.$action),'task data endpoint is not a return destination: '.$action);
+foreach(['delete','delete_timesheet','unknown']as$action)foreach(['GET','HEAD','POST']as$verb)$check(!NativeCompanyRoutes::admits('admin','','tasks',$action,$verb),'unadapted task neighbor remains closed: '.$action.'/'.$verb);
+$check(!NativeCompanyRoutes::admits('admin','foreign','tasks','task','GET'),'other modules cannot reuse task workflows');
+
+$ticketActions=['index'=>['GET','HEAD','POST'],'add'=>['GET','HEAD','POST'],'ticket'=>['GET','HEAD','POST'],'delete'=>['POST'],'delete_attachment'=>['POST'],'delete_ticket_reply'=>['POST'],'edit_message'=>['POST'],'change_status_ajax'=>['POST'],'update_single_ticket_settings'=>['POST'],'update_staff_replying'=>['POST'],'check_staff_replying'=>['GET'],'block_sender'=>['POST'],'bulk_action'=>['POST'],'ticket_change_data'=>['POST'],'priorities'=>['GET','HEAD'],'priority'=>['POST'],'delete_priority'=>['POST'],'statuses'=>['GET','HEAD'],'status'=>['POST'],'delete_ticket_status'=>['POST'],'services'=>['GET','HEAD','POST'],'service'=>['POST'],'delete_service'=>['POST'],'predefined_replies'=>['GET','HEAD','POST'],'predefined_reply'=>['GET','HEAD','POST'],'get_predefined_reply_ajax'=>['GET'],'delete_predefined_reply'=>['POST']];
+foreach($ticketActions as$action=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
+ $check(NativeCompanyRoutes::admits('admin','','tickets',$action,$verb)===in_array($verb,$allowed,true),'official ticket action has finite verb: '.$action.'/'.$verb);
+foreach(['tickets','tickets/add','tickets/priorities','tickets/statuses','tickets/services','tickets/predefined_replies','tickets/predefined_reply']as$route)$check(NativeCompanyRoutes::navigation($route),'official ticket page is a return destination: '.$route);
+foreach(['ticket','delete_attachment','delete_ticket_reply','edit_message','change_status_ajax','check_staff_replying','get_predefined_reply_ajax']as$action)$check(!NativeCompanyRoutes::navigation('tickets/'.$action),'ticket record/data endpoint is not a return destination: '.$action);
+foreach(['merge','spam','unknown']as$action)foreach(['GET','POST']as$verb)$check(!NativeCompanyRoutes::admits('admin','','tickets',$action,$verb),'unadapted ticket neighbor remains closed: '.$action.'/'.$verb);
+$check(!NativeCompanyRoutes::admits('admin','foreign','tickets','ticket','GET'),'other modules cannot reuse ticket workflows');
+
+$invoiceActions=['index'=>['GET','HEAD'],'list_invoices'=>['GET','HEAD'],'table'=>['POST'],'invoice'=>['GET','HEAD','POST'],'drafts'=>['GET','HEAD','POST'],'copy'=>['GET','HEAD','POST'],'client_change_data'=>['GET'],'validate_invoice_number'=>['POST'],'get_invoice_data_ajax'=>['GET','HEAD'],'add_note'=>['POST'],'get_notes'=>['GET','HEAD'],'pause_overdue_reminders'=>['POST'],'resume_overdue_reminders'=>['POST'],'mark_as_sent'=>['POST'],'mark_as_cancelled'=>['POST'],'unmark_as_cancelled'=>['POST'],'get_invoices_total'=>['POST'],'record_invoice_payment_ajax'=>['GET','HEAD'],'record_payment'=>['POST'],'delete_attachment'=>['POST'],'pdf'=>['GET','HEAD'],'get_due_date'=>['POST']];
+foreach($invoiceActions as$action=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
+ $check(NativeCompanyRoutes::admits('admin','','invoices',$action,$verb)===in_array($verb,$allowed,true),'official invoice action has finite verb: '.$action.'/'.$verb);
+foreach(['invoices','invoices/list_invoices','invoices/invoice','invoices/drafts','invoices/copy']as$route)$check(NativeCompanyRoutes::navigation($route),'official invoice page is a return destination: '.$route);
+foreach(array_diff(array_keys($invoiceActions),['index','list_invoices','invoice'])as$action)$check(!NativeCompanyRoutes::navigation('invoices/'.$action),'invoice data endpoint is not a return destination: '.$action);
+foreach(['upload_sales_file','add_sales_external_attachment','toggle_file_visibility']as$action)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
+ $check(NativeCompanyRoutes::admits('admin','','misc',$action,$verb)===($verb==='POST'),'invoice attachment mutation has finite verb: '.$action.'/'.$verb);
+foreach(['create','update','delete','mark_as_default','unmark_as_default','validate_dynamic_date']as$action)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
+ $check(NativeCompanyRoutes::admits('admin','','filters',$action,$verb)===($verb==='POST'),'official filter mutation has finite verb: '.$action.'/'.$verb);
+$salesRoutes=['estimates'=>['index'=>['GET','HEAD','POST'],'list_estimates'=>['GET','HEAD','POST'],'estimate'=>['GET','HEAD','POST'],'pdf'=>['GET','HEAD'],'get_due_date'=>['POST']],
+ 'proposals'=>['index'=>['GET','HEAD','POST'],'list_proposals'=>['GET','HEAD','POST'],'proposal'=>['GET','HEAD','POST'],'pdf'=>['GET','HEAD'],'get_due_date'=>['POST']]];
+foreach($salesRoutes as$controller=>$actions){foreach($actions as$action=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
+ $check(NativeCompanyRoutes::admits('admin','',$controller,$action,$verb)===in_array($verb,$allowed,true),'official '.$controller.' action has finite verb: '.$action.'/'.$verb);
+ foreach([$controller,$controller.'/list_'.$controller,$controller.'/'.rtrim($controller,'s')]as$route)$check(NativeCompanyRoutes::navigation($route),'official sales page is a return destination: '.$route);
+ foreach(array_diff(array_keys($actions),['index','list_'.$controller,rtrim($controller,'s')])as$action)$check(!NativeCompanyRoutes::navigation($controller.'/'.$action),'sales data endpoint is not a return destination: '.$controller.'/'.$action);
+}
+$financeRoutes=[
+ 'credit_notes'=>['index'=>['GET','HEAD','POST'],'list_credit_notes'=>['GET','HEAD','POST']],
+ 'expenses'=>['index'=>['GET','HEAD','POST'],'list_expenses'=>['GET','HEAD','POST'],'copy'=>['GET','HEAD','POST']],
+ 'reports'=>['index'=>['GET','HEAD']],
+ 'payments'=>['post_refund'=>['GET','HEAD','POST'],'post_refund_manual'=>['GET','HEAD','POST']],
+];
+foreach($financeRoutes as$controller=>$actions){foreach($actions as$action=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
+ $check(NativeCompanyRoutes::admits('admin','',$controller,$action,$verb)===in_array($verb,$allowed,true),'official finance action has finite verb: '.$controller.'/'.$action.'/'.$verb);
+ foreach(array_keys($actions)as$action){$route=$action==='index'?$controller:$controller.'/'.$action;$check(NativeCompanyRoutes::navigation($route),'official finance page is a return destination: '.$route);}
+ $check(!NativeCompanyRoutes::admits('admin','foreign',$controller,array_key_first($actions),'GET'),'other modules cannot reuse finance workflows: '.$controller);
+ $check(!NativeCompanyRoutes::admits('admin','',$controller,'unknown','POST'),'finance controller has no wildcard action: '.$controller);
+}
+$check(!NativeCompanyRoutes::admits('admin','foreign','invoices','invoice','GET'),'other modules cannot reuse invoice workflows');
+$check(!NativeCompanyRoutes::admits('admin','','invoices','delete','POST'),'unadapted invoice deletion remains closed');
+$check(!NativeCompanyRoutes::admits('admin','','company_invoice_drafts','index','GET'),'retired invoice drafts controller has no native admission');
+$check(!NativeCompanyRoutes::admits('admin','','company_invoice_copies','index','GET'),'retired invoice copies controller has no native admission');
+echo "Official Tasks, Tickets, Projects, Invoices, Estimates and Proposals routes: {$checks} total assertions passed.\n";

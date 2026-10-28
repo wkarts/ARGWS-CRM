@@ -52,3 +52,14 @@
 <?php } ?>
 <div id="contact_data"></div>
 <div id="consent_data"></div>
+<?php if($native_customers&&!empty($native_contact_invoice_rows)){ ?>
+<div class="panel_s tw-mt-4" id="native-contact-invoice-access"><div class="panel-body">
+<h4 class="tw-font-semibold tw-text-base"><?= e(_l('issuer_contact_invoice_access')); ?></h4>
+<p class="text-muted"><?= e(_l('issuer_contact_invoice_access_help')); ?></p>
+<div class="table-responsive"><table class="table"><thead><tr><th><?= e(_l('contact')); ?></th><th><?= e(_l('client_email')); ?></th><th><?= e(_l('status')); ?></th><th><?= e(_l('options')); ?></th></tr></thead><tbody>
+<?php foreach($native_contact_invoice_rows as$contact){$grant=$native_contact_invoice_access[(int)$contact['id']]??null;if(!$grant)continue; ?>
+<tr><td><?= e(trim($contact['firstname'].' '.$contact['lastname'])); ?></td><td><?= e($contact['email']); ?></td><td><?= e(_l($grant['allowed']?'active':'inactive')); ?></td><td>
+<?php if($native_contact_invoice_manage){ ?><?= form_open(admin_url('clients/contact_invoice_access/'.$client->userid.'/'.(int)$contact['id']),['class'=>'inline-block']); ?><?= form_hidden('_native_company_csrf',$company_clients_csrf); ?><?= form_hidden('revision',$grant['revision']); ?><?= form_hidden('allowed',$grant['allowed']?'0':'1'); ?><button type="submit" class="btn btn-default btn-sm" <?= !$grant['allowed']&&(int)$contact['active']!==1?'disabled':''; ?>><?= e(_l($grant['allowed']?'issuer_contact_invoice_revoke':'issuer_contact_invoice_grant')); ?></button><?= form_close(); ?><?php }else{ ?>—<?php } ?>
+</td></tr><?php } ?>
+</tbody></table></div></div></div>
+<?php } ?>

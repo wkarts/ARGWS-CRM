@@ -35,7 +35,7 @@ final class NativeCompanyTaskStatusNotice
         $acl=new IssuerResourceAccess($this->db,$this->p);if(!$acl->can($i,$recipient,'tasks','view'))throw new DomainException('native_task_notice_denied');$event=$this->event($i,$audit);$s=$event['source'];if($s['from']===$s['to'])throw new DomainException('native_task_notice_denied');
         $recipients=$this->recipients($i,$event);if(!in_array($recipient,$recipients,true))throw new DomainException('native_task_notice_denied');$canonical=NativeCompanyResourceId::encode($s['source_kind'],$s['source_id']);$reference=NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$recipient,'task',$canonical,'view');
         $status=match($s['to']){'todo'=>1,'awaiting_feedback'=>2,'testing'=>3,'in_progress'=>4,'done'=>5};$labels=array_column(WorkStatusPresentation::tasks('_l'),null,'id');
-        $result=['actor_id'=>(int)$event['audit']['actor_id'],'resource_id'=>$canonical,'url'=>'tasks/view/'.$canonical,'title'=>_l('task_status'),'body'=>$reference['label'].' — '.$labels[$status]['name'],'revision'=>1];
+        $result=['actor_id'=>(int)$event['audit']['actor_id'],'resource_id'=>$canonical,'url'=>'tasks/view/'.$canonical,'title'=>_l('task_status'),'body'=>$reference['name'].' — '.$labels[$status]['name'],'revision'=>1];
         if($this->event($i,$audit)!==$event||$this->recipients($i,$event)!==$recipients||NativeCompanyResourceReferences::resolve($this->db,$this->p,$i,$recipient,'task',$canonical,'view')!==$reference||!$acl->can($i,$recipient,'tasks','view'))throw new DomainException('native_task_notice_denied');return$result;
     }
     public function queueInOwned(int$i,int$a,int$audit):array

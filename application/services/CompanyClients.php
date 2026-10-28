@@ -8,6 +8,8 @@ require_once __DIR__.'/issuers/IssuerTransaction.php';
 require_once __DIR__.'/CompanyClientProfile.php';
 require_once __DIR__.'/CompanyClientNativeFields.php';
 require_once __DIR__.'/CompanyCustomerGroups.php';
+require_once __DIR__.'/CompanySettingsStorage.php';
+require_once __DIR__.'/CompanyCustomerDeletionReferences.php';
 
 /** Native private customer operations. No session, hooks, mail, contacts or finance hydration.
  * The isolated directory exposes only this projection; legacy readers remain closed.
@@ -77,11 +79,29 @@ final class CompanyClients
     {
         if (array_diff(array_keys($input),['company','vat','profile','native_profile','groups_in'])) throw new DomainException('company_client_invalid_input');
         $name=$input['company']??null;
-        if(!is_string($name)||trim($name)===''||strlen(trim($name))>191||preg_match('/[\x00-\x1f]/',$name)) throw new DomainException('company_client_invalid_input');
+        if(!is_string($name)||strlen(trim($name))>191||preg_match('/[\x00-\x1f]/',$name)) throw new DomainException('company_client_invalid_input');
         $tax=IssuerPolicy::taxId($input['vat']??'',false);$profile=null;if(array_key_exists('profile',$input)){if(!is_array($input['profile']))throw new DomainException('company_client_invalid_input');$profile=CompanyClientProfile::normalize($input['profile'],$tax);}
         $native=null;if(array_key_exists('native_profile',$input)){if(!is_array($input['native_profile']))throw new DomainException('company_client_invalid_input');$native=CompanyClientNativeFields::normalize($input['native_profile']);}
         $groups=null;if(array_key_exists('groups_in',$input)){if(!is_array($input['groups_in'])||count($input['groups_in'])>100)throw new DomainException('company_client_invalid_input');$groups=array_values(array_unique(array_map([IssuerPolicy::class,'id'],$input['groups_in'])));sort($groups,SORT_NUMERIC);}
         return [trim($name),$tax,$profile,$native,$groups];
+    }
+    /** Empty company names are allowed only by the selected company's persisted policy. */
+    public function companyNameRequired(int $issuer):bool
+    {
+        $store=new CompanySettingsStorage($this->db,$this->prefix);
+        $value=$store->exists($issuer,'company_is_required')?$store->get($issuer,'company_is_required'):'1';
+        if(!in_array($value,['0','1'],true))throw new DomainException('company_client_invalid_input');
+        return $value==='1';
+    }
+    private function namePolicyTables(int $issuer,string $name):array
+    {
+        return $name===''&&(new CompanySettingsStorage($this->db,$this->prefix))->isPrimary($issuer)?['options']:[];
+    }
+    private function assertNamePolicy(int $issuer,string $name):void
+    {
+        if($name!=='')return;
+        IssuerTransaction::assertOwned($this->db,$this->prefix,$this->namePolicyTables($issuer,$name));
+        if($this->companyNameRequired($issuer))throw new DomainException('company_client_invalid_input');
     }
     private function conflict(?string $tax,?int $except): void
     {
@@ -106,13 +126,13 @@ final class CompanyClients
     /** Veto-only preview: uses exactly the writer's name/VAT policy, without adopting existing identities. */
     public function previewInOwnedTransaction($issuer,$actor,array $input):array
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);IssuerTransaction::assertOwned($this->db,$this->prefix,$this->tables(false));$this->authorize($issuer,$actor,'create');[$name,$tax,$profile,$native,$groups]=$this->input($input);$this->conflict($tax,null);$this->authorize($issuer,$actor,'create');return ['company'=>$name,'vat'=>$tax??'']+($profile===null?[]:['profile'=>$profile])+($native===null?[]:['native_profile'=>$native])+($groups===null?[]:['groups_in'=>$groups]);
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);IssuerTransaction::assertOwned($this->db,$this->prefix,$this->tables(false));$this->authorize($issuer,$actor,'create');[$name,$tax,$profile,$native,$groups]=$this->input($input);$this->assertNamePolicy($issuer,$name);$this->conflict($tax,null);$this->authorize($issuer,$actor,'create');return ['company'=>$name,'vat'=>$tax??'']+($profile===null?[]:['profile'=>$profile])+($native===null?[]:['native_profile'=>$native])+($groups===null?[]:['groups_in'=>$groups]);
     }
     public function create($issuer,$actor,array $input,?string $requestKey=null,?callable $afterCreate=null,array $participantTables=[],array $participantInput=[]): int
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);[$name,$tax,$profile,$native,$groups]=$this->input($input);
         if($requestKey!==null&&!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new DomainException('company_client_invalid_input');
-        return IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge($this->tables($requestKey!==null),$participantTables))),fn():int=>$this->createPreparedInOwned($issuer,$actor,$name,$tax,$requestKey,$profile,$native,$groups,$afterCreate,$participantInput));
+        return IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge($this->tables($requestKey!==null),$participantTables,$this->namePolicyTables($issuer,$name)))),fn():int=>$this->createPreparedInOwned($issuer,$actor,$name,$tax,$requestKey,$profile,$native,$groups,$afterCreate,$participantInput));
     }
     /** A bounded import composes this exact writer; raw outer transactions remain forbidden. */
     public function createInOwnedTransaction($issuer,$actor,array $input,string $requestKey,?callable $afterCreate=null,array $participantInput=[]):int
@@ -131,7 +151,7 @@ final class CompanyClients
                     return (int)$receipt['client_id'];
                 }
             }
-            $this->conflict($tax,null);$now=date('Y-m-d H:i:s');
+            $this->assertNamePolicy($issuer,$name);$this->conflict($tax,null);$now=date('Y-m-d H:i:s');
             IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'clients(company,vat,datecreated,addedfrom,active) VALUES(?,?,?,?,1)',[$name,$tax,$now,$actor]);
             $id=(int)$this->db->insert_id();if($id<1)throw new RuntimeException('issuer_client_write_unconfirmed');
             IssuerStorage::query($this->db,'INSERT INTO '.$this->prefix.'issuers_clients(client_id,owner_issuer_id,tax_id,created_by,created_at) VALUES(?,?,?,?,?)',[$id,$issuer,$tax,$actor,$now]);
@@ -146,15 +166,17 @@ final class CompanyClients
                 if((int)($receipt['client_id']??0)!==$id||($receipt['input_hash']??null)!==$hash)throw new RuntimeException('issuer_client_write_unconfirmed');
             }
             if($afterCreate!==null){$this->activeCreation=[$issuer,$actor,$id];try{$afterCreate($id,$this);}finally{$this->activeCreation=null;}}
+            $this->assertNamePolicy($issuer,$name);
             $this->authorize($issuer,$actor,'create');
             return $id;
     }
     public function update($issuer,$actor,$client,array $input,?string $revision=null,?callable $afterWrite=null,array $participantTables=[]): void
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$client=IssuerPolicy::id($client);[$name,$tax,$profile,$native,$groups]=$this->input($input);
-        IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge($this->tables(),$participantTables))),function()use($issuer,$actor,$client,$name,$tax,$revision,$profile,$native,$groups,$afterWrite):void{
+        IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge($this->tables(),$participantTables,$this->namePolicyTables($issuer,$name)))),function()use($issuer,$actor,$client,$name,$tax,$revision,$profile,$native,$groups,$afterWrite):void{
             $this->authorize($issuer,$actor,'edit',$client);
             if(!$this->rows('SELECT client_id FROM '.$this->prefix.'issuers_clients WHERE client_id=? AND owner_issuer_id=? FOR UPDATE',[$client,$issuer]))throw new DomainException('company_client_access_denied');
+            $this->assertNamePolicy($issuer,$name);
             $this->assertRevision($issuer,$client,$revision);
             $this->conflict($tax,$client);
             IssuerStorage::query($this->db,'UPDATE '.$this->prefix.'clients SET company=?,vat=? WHERE userid=?',[$name,$tax,$client]);
@@ -169,6 +191,7 @@ final class CompanyClients
             $this->confirm($issuer,$client,$name,$tax);
             $this->audit($actor,$issuer,$client,'company_client_updated');
             if($afterWrite!==null)$afterWrite($client,$this);
+            $this->assertNamePolicy($issuer,$name);
             $this->authorize($issuer,$actor,'edit',$client);
         });
     }
@@ -188,6 +211,30 @@ final class CompanyClients
             }
             if((int)($this->rows('SELECT active FROM '.$this->prefix.'clients WHERE userid=?',[$client])[0]['active']??-1)!==(int)$active)throw new RuntimeException('issuer_client_write_unconfirmed');
             $this->audit($actor,$issuer,$client,$active?'native_customer_enabled':'native_customer_disabled');$this->authorize($issuer,$actor,'edit',$client);
+        });
+    }
+    /** Internal bounded writer. HTTP remains closed until all dependencies are audited. */
+    public function deleteUnreferenced(int $issuer,int $actor,int $client,string $revision):void
+    {
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$client=IssuerPolicy::id($client);
+        if(!preg_match('/^[a-f0-9]{64}$/D',$revision))throw new DomainException('company_client_stale');
+        $guard=new CompanyCustomerDeletionReferences($this->db,$this->prefix);$dependencies=$guard->tables();
+        $tables=array_values(array_unique(array_merge($this->tables(),$dependencies)));
+        IssuerTransaction::run($this->db,$this->prefix,$tables,function()use($issuer,$actor,$client,$revision,$guard,$dependencies):void{
+            $this->authorize($issuer,$actor,'delete');
+            if(!$this->rows('SELECT client_id FROM '.$this->prefix.'issuers_clients WHERE client_id=? AND owner_issuer_id=? FOR UPDATE',[$client,$issuer]))throw new DomainException('company_client_access_denied');
+            $this->assertRevision($issuer,$client,$revision);
+            $guard->assertClearInOwned($client,$dependencies);
+            if(CompanyClientProfileSchema::ready($this->db,$this->prefix)){
+                CompanyClientProfileSchema::assertValid($this->db,$this->prefix);
+                if($this->rows('SELECT issuer_id FROM '.$this->prefix.'company_client_profiles WHERE client_id=? AND issuer_id<>? FOR UPDATE',[$client,$issuer]))throw new DomainException('company_client_referenced');
+                IssuerStorage::query($this->db,'DELETE FROM '.$this->prefix.'company_client_profiles WHERE client_id=? AND issuer_id=?',[$client,$issuer]);
+            }
+            IssuerStorage::query($this->db,'DELETE FROM '.$this->prefix.'issuers_clients WHERE client_id=? AND owner_issuer_id=?',[$client,$issuer]);
+            IssuerStorage::query($this->db,'DELETE FROM '.$this->prefix.'clients WHERE userid=?',[$client]);
+            if($this->rows('SELECT userid FROM '.$this->prefix.'clients WHERE userid=?',[$client])||$this->rows('SELECT client_id FROM '.$this->prefix.'issuers_clients WHERE client_id=?',[$client]))throw new RuntimeException('issuer_client_write_unconfirmed');
+            $this->audit($actor,$issuer,$client,'native_customer_deleted');
+            $this->authorize($issuer,$actor,'delete');
         });
     }
     /** Explicit replacement of identity-sharing links. Never copies contacts or financial ownership. */

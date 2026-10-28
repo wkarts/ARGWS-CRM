@@ -6,7 +6,7 @@ Base: `abbf6c7`. This is an internal integration inventory, not a claim of compl
 
 - Dashboard: four native actions have issuer-bound branches; primary invoices/ticket report/counters/payment lineage tested. Full composed dashboard remains pending auxiliary/calendar/catalog and widget AJAX completion.
 - Staff: exactly three dashboard-preference actions adapted, with actor+issuer storage and native POST/CSRF.
-- Tasks::get_staff_started_timers: real reader/policy/formatter, same native partial; controller + SQLite test passes. Header composition and mutator admission remain gated.
+- Tasks::get_staff_started_timers: GET admitted to the real scoped reader/policy/formatter and original partial; controller + SQLite test covers revocation. Full authenticated browser and timer lifecycle remain pending.
 - Owned assignment schema/backfill and replace service: tested; not yet wired to every native controller action.
 - Blank timer start/discard services: tested, journal/audit nonce/replay; assigning blank time to a task and native stop/edit/delete timesheet contracts remain pending.
 
@@ -65,13 +65,13 @@ Base: `abbf6c7`. This is an internal integration inventory, not a claim of compl
 - `Projects::get_rel_project_data` — original scoped task-form selector admitted for GET only; tests exercise source and issuer ownership and POST rejection at a controller seam. Authenticated HTTP/browser evidence remains pending; the project and task forms are not admitted by this change.
 - `Projects::invoice_project` — pending native issuer adapter and route-level proof.
 - `Projects::view_project_as_client` — pending native issuer adapter and route-level proof.
-- `Projects::get_staff_names_for_mentions` — pending native issuer adapter and route-level proof.
+- `Projects::get_staff_names_for_mentions` — original scoped GET adapter admitted; PHP 8.5/SQLite controller tests cover ownership, foreign company and denied verbs, and a real TinyMCE/Chromium component test covers safe text. Authenticated application/browser remains pending.
 
 ### Tasks (58)
 
 - `Tasks::index` — pending native issuer adapter and route-level proof.
-- `Tasks::list_tasks` — pending native issuer adapter and route-level proof.
-- `Tasks::table` — pending native issuer adapter and route-level proof.
+- `Tasks::list_tasks` — original management view composed with scoped data in controller tests, but the route remains closed until the modal, row and bulk actions, Kanban and authenticated browser are complete.
+- `Tasks::table` — scoped source projection, original row rendering, filters and pagination are implemented for secondary companies; SQLite controller/fixture tests and MariaDB page/filter checks pass. The index and table routes remain closed because the original modal, row actions, bulk actions and Kanban have not all been composed and tested. An operation-scoped read proxy rechecks observations before output; the small SQLite profile decreased from 58,157 to 946 SQL statements, with remaining per-row locks.
 - `Tasks::kanban` — pending native issuer adapter and route-level proof.
 - `Tasks::ajax_search_assign_task_to_timer` — the existing scoped adapter is admitted for POST only. It requires the native company context and CSRF, resolves current actor assignments and source lineage, and excludes ineligible or cross-company candidates. The existing controller/SQLite fixture exercises these boundaries with a context double; authenticated HTTP, browser interaction and final-SHA evidence remain pending. This admission does not open the remaining task actions.
 - `Tasks::tasks_kanban_load_more` — pending native issuer adapter and route-level proof.
@@ -81,16 +81,16 @@ Base: `abbf6c7`. This is an internal integration inventory, not a claim of compl
 - `Tasks::get_billable_tasks_by_customer_id` — same finite GET admission and selection-only guard; foreign customers and stale or unsupported lineage are denied. Authenticated HTTP/browser and final-SHA proof remain pending.
 - `Tasks::update_task_description` — pending native issuer adapter and route-level proof.
 - `Tasks::detailed_overview` — pending native issuer adapter and route-level proof.
-- `Tasks::init_relation_tasks` — pending native issuer adapter and route-level proof.
-- `Tasks::task` — pending native issuer adapter and route-level proof.
+- `Tasks::init_relation_tasks` — scoped POST adapter composes original related rows for tickets, owned projects, issued invoices and private invoice drafts. Project source and tenant isolation pass SQLite and MariaDB; issued/draft sources pass SQLite and remain pending MariaDB, authenticated browser and full modal/actions. Historical project lineage is intentionally not inferred.
+- `Tasks::task` — original create/edit form and basic scoped writer are composed and tested at the SQLite controller seam. Uploads, milestone relation and historical edit cases are not complete; the route remains closed.
 - `Tasks::copy` — pending native issuer adapter and route-level proof.
-- `Tasks::get_billable_task_data` — pending native issuer adapter and route-level proof.
-- `Tasks::get_task_data` — pending native issuer adapter and route-level proof.
+- `Tasks::get_billable_task_data` — GET admitted to the issuer-scoped billing preview. PHP 8.5/SQLite controller tests cover authorized canonical IDs, raw/foreign IDs and rejected POST; actual billing and authenticated browser remain separate gates.
+- `Tasks::get_task_data` — blocked before global-model hydration in native context; scoped facts and checklist partial exist but the full original modal/actions are not yet composed.
 - `Tasks::add_reminder` — pending native issuer adapter and route-level proof.
 - `Tasks::edit_reminder` — pending native issuer adapter and route-level proof.
 - `Tasks::delete_reminder` — pending native issuer adapter and route-level proof.
-- `Tasks::save_checklist_item_template` — pending native issuer adapter and route-level proof.
-- `Tasks::remove_checklist_item_template` — pending native issuer adapter and route-level proof.
+- `Tasks::save_checklist_item_template` — scoped POST admitted, with CSRF and durable request identity. PHP 8.5/SQLite controller tests and JS transport/payload tests passed; authenticated HTTP/browser remain pending.
+- `Tasks::remove_checklist_item_template` — scoped POST admitted, requiring the template revision and durable request identity. PHP 8.5/SQLite tests cover CSRF and foreign company; JS tests confirm native payload construction. Authenticated HTTP/browser remain pending.
 - `Tasks::init_checklist_items` — pending native issuer adapter and route-level proof.
 - `Tasks::task_tracking_stats` — original scoped task statistics admitted for GET only; tests exercise issuer ownership, historical lineage and POST rejection at a controller seam. Authenticated HTTP/browser evidence remains pending; this does not admit task navigation or editing.
 - `Tasks::checkbox_action` — pending native issuer adapter and route-level proof.
@@ -109,8 +109,8 @@ Base: `abbf6c7`. This is an internal integration inventory, not a claim of compl
 - `Tasks::remove_assignee` — pending native issuer adapter and route-level proof.
 - `Tasks::remove_follower` — pending native issuer adapter and route-level proof.
 - `Tasks::unmark_complete` — pending native issuer adapter and route-level proof.
-- `Tasks::mark_as` — pending native issuer adapter and route-level proof.
-- `Tasks::change_priority` — pending native issuer adapter and route-level proof.
+- `Tasks::mark_as` — scoped POST writer includes CSRF, source ownership, status and fields revisions, replay key and transactional notification. SQLite and MariaDB controller tests cover stale/foreign cases and notification rollback; actual Chromium/jQuery transport verifies the request against synthetic HTTP. Single-task modal responses and authenticated HTTP/browser validation remain pending; route remains closed.
+- `Tasks::change_priority` — scoped POST is implemented for canonical project and standalone tasks with edit permission, CSRF, revisions, request identity and billing guards. Controller tests pass SQLite and MariaDB; real Chromium/jQuery transport was tested with synthetic HTTP. Single-task modal responses and authenticated application/browser remain pending.
 - `Tasks::change_milestone` — pending native issuer adapter and route-level proof.
 - `Tasks::task_single_inline_update` — pending native issuer adapter and route-level proof.
 - `Tasks::delete_task` — pending native issuer adapter and route-level proof.
@@ -124,8 +124,8 @@ Base: `abbf6c7`. This is an internal integration inventory, not a claim of compl
 - `Tasks::update_tags` — pending native issuer adapter and route-level proof.
 - `Tasks::bulk_action` — pending native issuer adapter and route-level proof.
 - `Tasks::gantt_date_update` — pending native issuer adapter and route-level proof.
-- `Tasks::get_task_by_id` — pending native issuer adapter and route-level proof.
-- `Tasks::get_staff_names_for_mentions` — pending native issuer adapter and route-level proof.
+- `Tasks::get_task_by_id` — GET admitted to an adapter returning only the source-validated ID and name required by the original timer flow. PHP 8.5/SQLite controller tests cover ownership, foreign company and denied verbs; real Chromium/jQuery tests against synthetic local HTTP exercise both form submission and safe text insertion. Authenticated HTTP/browser remains pending.
+- `Tasks::get_staff_names_for_mentions` — original issuer-scoped GET adapter admitted; controller tests exercise foreign-company and rejected-verb paths and a real TinyMCE/Chromium component test covers safe text. Authenticated application/browser remains pending.
 - `Tasks::save_checklist_assigned_staff` — pending native issuer adapter and route-level proof.
 
 ### Tickets (27)
@@ -136,7 +136,7 @@ Base: `abbf6c7`. This is an internal integration inventory, not a claim of compl
 - `Tickets::delete_attachment` — pending native issuer adapter and route-level proof.
 - `Tickets::update_staff_replying` — pending native issuer adapter and route-level proof.
 - `Tickets::check_staff_replying` — pending native issuer adapter and route-level proof.
-- `Tickets::ticket` — pending native issuer adapter and route-level proof.
+- `Tickets::ticket` — native reply and explicit mark-read POST dispatch now use their respective edit/view permissions. PHP 8.5/SQLite tests cover controller replay and CSRF. The original GET detail view, full route integration and authenticated browser remain pending.
 - `Tickets::edit_message` — pending native issuer adapter and route-level proof.
 - `Tickets::delete_ticket_reply` — pending native issuer adapter and route-level proof.
 - `Tickets::change_status_ajax` — pending native issuer adapter and route-level proof.

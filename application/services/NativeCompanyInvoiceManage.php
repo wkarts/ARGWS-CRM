@@ -27,6 +27,7 @@ final class NativeCompanyInvoiceManage
         return ['invoiceid'=>$invoiceId,'title'=>_l('invoices'),'invoices_table'=>$table,
             'invoices_years'=>$catalogue['invoices_years'],'invoices_sale_agents'=>$catalogue['invoices_sale_agents'],
             'invoices_statuses'=>$catalogue['invoices_statuses'],'payment_modes'=>$catalogue['payment_modes'],
+            'native_company_invoice_manage'=>true,
             'native_invoice_statistics'=>NativeCompanyInvoiceStats::fromCounts($summary['counts']),
             'native_invoice_custom_fields'=>array_values(array_filter($catalogue['customDefinitions'],static fn($d)=>(int)$d['show_on_table']===1))];
     }

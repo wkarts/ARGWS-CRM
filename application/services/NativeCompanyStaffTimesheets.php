@@ -28,7 +28,7 @@ final class NativeCompanyStaffTimesheets
         $row=$this->one('SELECT id,issuer_id'.($kind==='company_task_timer'?',project_id':'').' FROM '.$this->p.$table.' WHERE id=?',[$task]);if(!$row||(int)$row['issuer_id']!==$i)throw new DomainException('native_staff_timesheet_denied');
         $project=null;if($kind==='company_task_timer'){$project=$this->one('SELECT id,issuer_id,client_id FROM '.$this->p.'company_projects WHERE id=?',[$row['project_id']]);if(!$project||(int)$project['issuer_id']!==$i)throw new DomainException('native_staff_timesheet_denied');$owner=$this->one('SELECT owner_issuer_id FROM '.$this->p.'issuers_clients WHERE client_id=?',[$project['client_id']]);if(!$owner||(int)$owner['owner_issuer_id']!==$i)throw new DomainException('native_staff_timesheet_denied');}
         $label=$this->one('SELECT name FROM '.$this->p.$table.' WHERE issuer_id=? AND id=?',[$i,$task]);if(!$label)throw new DomainException('native_staff_timesheet_denied');$projectName=$project?$this->one('SELECT name FROM '.$this->p.'company_projects WHERE issuer_id=? AND id=?',[$i,$project['id']]):null;
-        return['task_id'=>NativeCompanyResourceId::encode($kind==='company_task_timer'?'company_task':'company_standalone_task',$task),'name'=>$label['name'],'rel_type'=>$project?'project':'','rel_id'=>$project?NativeCompanyResourceId::encode('company_project',$project['id']):0,'relation_name'=>$projectName['name']??'','project_id'=>$project?(int)$project['id']:null];
+        return['task_id'=>NativeCompanyResourceId::encode($kind==='company_task_timer'?'company_task':'company_standalone_task',$task),'name'=>$label['name'],'rel_type'=>$project?'project':'','rel_id'=>$project?NativeCompanyResourceId::encode('company_project',$project['id']):0,'relation_name'=>$projectName['name']??'','project_id'=>$project?(int)$project['id']:null,'client_id'=>$project?(int)$project['client_id']:null];
     }
     private function proof(int $i,string $key,?array $link):string
     {
@@ -70,6 +70,13 @@ final class NativeCompanyStaffTimesheets
     /** Same duration/source checks, without salary fields or implicit staff/tasks grants. */
     public function report(int $i,int $a,int $subject,array $filter=['this_month'=>true],?int $now=null):array
     {return $this->readInternal($i,$a,$subject,$filter,false,$now,true);}
+    /** Own report keeps the self-only authority path and removes wage fields. */
+    public function reportOwn(int $i,int $a,array $filter=['this_month'=>true],?int $now=null):array
+    {
+        $result=$this->readInternal($i,$a,$a,$filter,true,$now,false);
+        foreach($result['timesheets']as&$row){unset($row['hourly_rate'],$row['rate_declared']);}unset($row);
+        return$result;
+    }
     private function readInternal(int $i,int $a,int $subject,array $filter,bool $own,?int $now,bool $report):array
     {
         $this->reads=[];$acl=$this->authority($i,$a,$subject,$own,$report);$now??=time();if($now<1)throw new InvalidArgumentException('Invalid clock');

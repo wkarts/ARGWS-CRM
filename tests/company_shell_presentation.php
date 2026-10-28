@@ -9,7 +9,7 @@ shellCheck(str_contains($css,'background-color:#009745;border-color:#009745'),'n
 shellCheck(str_contains($css,'details[open] > summary'),'native active menu token applies to isolated disclosure');
 foreach(['not-json','{}','[{"id":"unknown","color":"#ffffff"}]','[{"id":"btn-primary","color":"red;}</style><script>alert(1)</script>"}]','[{"id":"btn-primary","color":"url(https://invalid.example)"}]',str_repeat('a',65537)]as$bad){shellCheck(CompanyShellPresentation::css($bad)==='','malformed or untrusted styles rejected');}
 shellCheck(!str_contains($css,'hooks')&&!str_contains($css,'url('),'no hook or remote asset injection');
-$head=file_get_contents(dirname(__DIR__).'/application/views/admin/companies/layout_head.php');
+$head=file_get_contents(dirname(__DIR__).'/application/views/admin/includes/native_company_layout_head.php');
 shellCheck(!preg_match('/\b(init_head|app_admin_head|app_compile_css|get_admin_header_logo_url)\s*\(/',$head),'no global hydration');
 shellCheck(str_contains($head,"assets/images/argws/logo-dark.png")&&str_contains($head,'assets/builds/vendor-admin.css'),'same native public logo and vendor CSS');
 require dirname(__DIR__).'/application/services/issuers/IssuerStorage.php';

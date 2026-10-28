@@ -1024,5 +1024,15 @@
       1533,
       15129
     ]
-  }
+  },
+  "retired": [
+    {
+      "index": 406,
+      "argv": [
+        "php",
+        "tests/settings/calendar_controller.php"
+      ],
+      "reason": "Parallel Company_calendar controller retired; coverage moved to official Settings and Utilities HTTP flows."
+    }
+  ]
 }

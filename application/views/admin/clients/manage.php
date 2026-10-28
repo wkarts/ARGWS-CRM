@@ -1,12 +1,19 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') or exit('No direct script access allowed');
+$new_client_url = admin_url('clients/client');
+if (empty($native_customers) && class_exists('CompanyRequestScope', false)
+    && ($company_context = CompanyRequestScope::context()) !== null
+    && $company_context->isPrimary()) {
+    $new_client_url = CompanyRequestScope::adminUrl($this, 'clients/client?source=company');
+}
+?>
 <?php $native_customers = $native_customers ?? false; init_head(); ?>
 <div id="wrapper">
     <div class="content">
         <div class="row">
             <div class="col-md-12">
-                <?php if (staff_can('view', 'customers') || have_assigned_customers()) {
+                <?php if ($native_customers ? $native_customer_capabilities['view'] : (staff_can('view', 'customers') || have_assigned_customers())) {
                     $where_summary = '';
-                    if (staff_cant('view', 'customers')) {
+                    if (!$native_customers && staff_cant('view', 'customers')) {
                         $where_summary = ' AND userid IN (SELECT customer_id FROM ' . db_prefix() . 'customer_admins WHERE staff_id=' . get_staff_user_id() . ')';
                     } ?>
                 <div class="tw-mb-6">
@@ -14,7 +21,7 @@
                         <h4 class="tw-my-0 tw-font-bold tw-text-xl">
                             <?= _l('clients'); ?>
                         </h4>
-                        <?php if (!$native_customers) { ?><a
+                        <?php if (!$native_customers || $native_customer_capabilities['view']) { ?><a
                             href="<?= admin_url('clients/all_contacts'); ?>">
                             <?= _l('customer_contacts'); ?>
                             &rarr;
@@ -95,8 +102,8 @@
                 <?php } ?>
                 <div class="tw-flex tw-justify-between tw-items-center tw-gap-x-6">
                     <div class="tw-flex tw-justify-between tw-items-center tw-gap-x-1">
-                        <?php if (staff_can('create', 'customers')) { ?>
-                        <a href="<?= admin_url('clients/client'); ?>"
+                        <?php if ($native_customers ? $native_customer_capabilities['create'] : staff_can('create', 'customers')) { ?>
+                        <a href="<?= e($new_client_url); ?>"
                             class="btn btn-primary">
                             <i class="fa-regular fa-plus tw-mr-1"></i>
                             <?= _l('new_client'); ?>
@@ -118,6 +125,7 @@
                         </app-filters>
                     </div><?php } ?>
                 </div>
+                <?php if (!$native_customers || $native_customer_capabilities['view']) { ?>
                 <div class="panel_s tw-mt-2">
                     <div class="panel-body">
                         <?php if (!$native_customers) { ?><a href="#" data-toggle="modal" data-target="#customers_bulk_action"
@@ -223,17 +231,20 @@ else $table_data[0] = ''; // No bulk mutation in the scoped native directory.
                         </div>
                     </div>
                 </div>
+                <?php } ?>
             </div>
         </div>
     </div>
 </div>
 <?php init_tail(); ?>
 <script>
+    <?php if (!$native_customers || $native_customer_capabilities['view']) { ?>
     $(function() {
         var tAPI = initDataTable('.table-clients', admin_url + 'clients/table', [0], [0], {},
             <?= ($native_customers ? json_encode([2, 'asc']) : hooks()->apply_filters('customers_table_default_order', json_encode([2, 'asc']))); ?>
         );
     });
+    <?php } ?>
 
     function customers_bulk_action(event) {
         var r = confirm(app.lang.confirm_action_prompt);

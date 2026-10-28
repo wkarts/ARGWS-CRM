@@ -12,6 +12,31 @@
                     </a>
                 </div>
                 <?php } ?>
+                <?php if ($nativeStaff && !empty($native_staff_can_link)) { ?>
+                <div class="panel_s tw-mb-4">
+                    <div class="panel-body">
+                        <details id="native-staff-link-identity">
+                            <summary class="tw-font-semibold"><?= e(_l('issuer_staff_link_existing')); ?></summary>
+                            <p class="text-muted tw-mt-2"><?= e(_l('issuer_staff_link_existing_help')); ?></p>
+                            <?= form_open(admin_url('staff/member'), ['class'=>'tw-mt-3','id'=>'native-staff-link']); ?>
+                            <?= form_hidden('native_staff_operation','link'); ?>
+                            <?= form_hidden('request_key',$native_staff_link_request_key); ?>
+                            <?= render_input('existing_email','staff_add_edit_email','','email',['required'=>true,'autocomplete'=>'off']); ?>
+                            <div class="row">
+                            <?php foreach($native_staff_link_catalog as $feature=>$definition){$allowed=$native_staff_link_assignable[$feature]??[];if(!$allowed)continue; ?>
+                                <div class="col-md-4"><fieldset><legend class="tw-text-sm tw-font-semibold"><?= e($definition['name']); ?></legend>
+                                <?php foreach($definition['capabilities'] as $capability=>$label){if(!in_array($capability,$allowed,true))continue;$inputId='native-link-'.preg_replace('/[^a-z0-9_-]/i','-',$feature.'-'.$capability); ?>
+                                    <div class="checkbox checkbox-primary"><input id="<?= e($inputId); ?>" type="checkbox" name="permissions[<?= e($feature); ?>][]" value="<?= e($capability); ?>"><label for="<?= e($inputId); ?>"><?= e($label); ?></label></div>
+                                <?php } ?></fieldset></div>
+                            <?php } ?>
+                            </div>
+                            <div class="checkbox checkbox-primary"><input id="native-link-default" type="checkbox" name="make_default" value="1"><label for="native-link-default"><?= e(_l('issuer_staff_make_company_default')); ?></label></div>
+                            <button type="submit" class="btn btn-primary"><?= e(_l('issuer_staff_link_existing')); ?></button>
+                            <?= form_close(); ?>
+                        </details>
+                    </div>
+                </div>
+                <?php } ?>
                 <div class="panel_s">
                     <div class="panel-body panel-table-full">
                         <?php

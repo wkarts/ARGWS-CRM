@@ -78,6 +78,25 @@ $connectionForm=[];check((bool)preg_match('~<form\b[^>]*action="https://crm\.exa
 check(substr_count($connectionForm[1],'name="_company_context"')===1,'connection form carries one company scope token from the native helper');
 check(str_contains($html,'aria-labelledby="bb-tab-auth"')&&str_contains($html,'aria-selected="true"'),'BB tabs expose selected state and panel labels');
 check(str_contains($html,'A importação não cria pagamento')&&str_contains($html,'confirmação e evidência do operador'),'import and assisted financial impact are explicitly distinct');
+$view400=$ci->load->viewData;$view400['origination_ready']=true;$view400['can_generate']=true;$view400['can_download']=true;$view400['can_manage']=true;
+$view400['connections']=[['id'=>10,'account_id'=>'001:00452-3:000000123873-X','environment'=>'sandbox']];
+$view400['layout_bindings']=[['id'=>17,'connection_id'=>10,'layout_id'=>\BancoBrasil\LayoutCatalog::CNAB400]];$view400['batches']=[];
+$render400=static function(array $d){extract($d);ob_start();try{include __DIR__.'/../modules/banco_brasil/views/index.php';return ob_get_clean();}catch(Throwable $error){ob_end_clean();throw $error;}};
+$html400=$render400($view400);
+foreach(['prepare_cnab400','reserve_cnab400','candidate_cnab400','declare_cnab400_approval','generate_cnab400','download_cnab400','report_cnab400','recover_cnab400'] as $action){$m=[];check((bool)preg_match('~<form\b[^>]*action="https://crm\.example\.test/admin/banco_brasil/'.$action.'"[^>]*>(.*?)</form>~s',$html400,$m),'actual 400 form '.$action.' rendered');check(str_contains($m[1],'name="csrf_bb"')&&substr_count($m[1],'name="_company_context"')===1,'400 form '.$action.' carries CSRF and company context');}
+check(!preg_match('/name="approval400\[(?:currency_confirmed|interest_confirmed|homologation_confirmed)\]"[^>]*checked/',$html400),'external bank declarations are not preselected');
+check(!str_contains($html400,'name="currency_candidate"')&&!str_contains($html400,'name="approval400[currency_field]"'),'BRL wire bytes are fixed by the profile rather than accepted from the operator');
+check(str_contains($html400,'posições 85–86')&&str_contains($html400,'não aplica juros padrão'),'UI distinguishes fixed layout bytes from the external bank-profile interest gate');
+$sample400=['id'=>88,'channel'=>'cnab400','remote_id'=>'12345670000000001','occurrence'=>'06','nominal_amount'=>'10.00','paid_amount'=>'10.00','net_amount'=>null,'posting_amount'=>'10.00','interest'=>'0.00','discount'=>'0.00','abatement'=>'0.00','iof'=>'0.00','fees'=>'0.00','other_expenses'=>'0.00','other_credits'=>'0.00','occurrence_date'=>'2026-10-20','credit_date'=>'2026-10-21','financial_state'=>'not_applied'];
+$view400['events']=[$sample400];$view400['reconciliation_ready']=true;$view400['can_reconcile']=true;$view400['can_settle']=true;
+$view400['reconciliations']=[88=>['linked'=>true,'applied'=>false,'origin_channel'=>'cnab400','origin_id'=>99,'cnab400_homologation_declared'=>false]];
+check(!str_contains($render400($view400),'/banco_brasil/settle_cnab400'),'400 payment form is hidden before an issuer-bound declaration');
+$view400['reconciliations'][88]['cnab400_homologation_declared']=true;$settlementHtml=$render400($view400);$settlementForm=[];
+check((bool)preg_match('~<form\b[^>]*action="https://crm\.example\.test/admin/banco_brasil/settle_cnab400"[^>]*>(.*?)</form>~s',$settlementHtml,$settlementForm),'real 400 settlement form appears only after declaration');
+check(str_contains($settlementForm[1],'name="csrf_bb"')&&substr_count($settlementForm[1],'name="_company_context"')===1,'400 settlement form has CSRF and company context');
+check(!preg_match('/name="settlement400\[(?:credit_confirmed|currency_confirmed|homologation_confirmed)\]"[^>]*checked/',$settlementForm[1]),'independent credit and homologation confirmations never default to checked');
+
+
 $ci->input->verb='POST';$ci->input->posts=['issuer_id'=>'1','connection_id'=>'1','layout_id'=>\BancoBrasil\LayoutCatalog::CNAB400,'csrf_bb'=>$csrf];
 $GLOBALS['issuerGrant']=false;rejects(fn()=>$controller->register_layout(),'profile needs issuer manage grant');$GLOBALS['issuerGrant']=true;
 $GLOBALS['permissions']['manage']=false;$controller->index();check($ci->load->viewData['can_manage']===true,'profile contextual grant overrides global deny');$GLOBALS['permissions']['manage']=true;

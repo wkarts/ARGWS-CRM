@@ -1,0 +1,12 @@
+<?php
+require __DIR__.'/native_task_items_commands.php';
+foreach(['NativeCompanyResourceReferences','CompanyTasks','CompanyStandaloneTasks','NativeCompanyTaskItems']as$class)if(!class_exists('NativeTaskHttpTest\\'.$class,false))class_alias($class,'NativeTaskHttpTest\\'.$class);
+\NativeTaskHttpTest\CompanyRequestScope::$issuer=$a;\NativeTaskHttpTest\CompanyRequestScope::$actor=7;$controller->input->verb='POST';$controller->input->query=[];
+$controller->input->body=['action'=>'add','task_revision'=>(string)$task['revision'],'checklist_revision'=>(string)$state['revision'],'request_key'=>$key('controller-checklist-add'),'text'=>'Interface','_company_context'=>'synthetic-context','_native_company_csrf'=>'synthetic-csrf'];
+$controller->checklist_command($canonical);$response=json_decode($controller->output->body,true,32,JSON_THROW_ON_ERROR);essentialCheck($response['success']===true&&end($response['checklist']['items'])['description']==='Interface','Original controller exposes scoped checklist command and revisions');
+$controller->checklist_command($canonical);essentialCheck(json_decode($controller->output->body,true)['checklist']===$response['checklist'],'Controller exact retry preserves item IDs');
+$controller->input->body['request_key']=$key('controller-checklist-stale');try{$controller->checklist_command($canonical);throw new RuntimeException('Stale accepted');}catch(LogicException$e){essentialCheck($e->getMessage()==='HTTP 409','Controller rejects stale task revision');}
+unset($controller->input->body['_native_company_csrf']);try{$controller->checklist_command($canonical);throw new RuntimeException('CSRF accepted');}catch(LogicException$e){essentialCheck($e->getMessage()==='HTTP 403','Checklist command requires CSRF');}
+$controller->input->body['_native_company_csrf']='synthetic-csrf';\NativeTaskHttpTest\CompanyRequestScope::$issuer=$b;try{$controller->checklist_command($canonical);throw new RuntimeException('Foreign accepted');}catch(LogicException$e){essentialCheck($e->getMessage()==='HTTP 403','Other issuer cannot mutate checklist');}
+\NativeTaskHttpTest\CompanyRequestScope::$issuer=$a;try{$controller->get_task_data($canonical);throw new RuntimeException('Unscoped modal accepted');}catch(LogicException$e){essentialCheck($e->getMessage()==='HTTP 422','Uncomposed native detail never reaches global task model');}
+echo 'Task checklist original controller: '.$GLOBALS['essentialChecks']." cumulative checks passed; route/modal/browser remain pending.\n";

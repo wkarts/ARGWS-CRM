@@ -29,7 +29,7 @@ final class NativeCompanyFilters
             NativeCompanyInvoiceTable::class=>['feature'=>'invoices','view'=>'invoices','ids'=>['invoices','project_invoices']],
             NativeCompanyProjectTable::class=>['feature'=>'projects','view'=>'projects','ids'=>['projects']],
             NativeCompanyTicketTable::class=>['feature'=>'tickets','view'=>'tickets','ids'=>['tickets']],
-            NativeCompanyRelatedTaskTable::class=>['feature'=>'tasks','view'=>'tasks_relations','ids'=>['related_tasks']],
+            NativeCompanyRelatedTaskTable::class=>['feature'=>'tasks','view'=>$this->table->id()==='tasks'?'tasks':'tasks_relations','ids'=>['related_tasks','tasks']],
             default=>throw new DomainException('native_filter_denied'),
         };
         if(!in_array($this->table->id(),$contract['ids'],true)||$this->table->viewName()!==$contract['view']

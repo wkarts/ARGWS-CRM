@@ -8,12 +8,12 @@ if(!isset($argv[1])){
 define('BASEPATH',__DIR__.'/');define('APPPATH',dirname(__DIR__,2).'/application/');define('FCPATH',dirname(__DIR__,2).'/');
 function show_error($message,$status=500){if(($GLOBALS['queries']??0)!==0||($GLOBALS['decrypts']??0)!==0)throw new RuntimeException('Boundary touched storage or secrets');echo 'REJECT '.(int)$status;exit(0);}
 function db_prefix(){return 'tbl';}
-class CompanyRequestScope {public static bool $sealed=true;static function sealedFor($ci){return self::$sealed;}}
+class CompanyRequestScope {public static bool $sealed=true;static function sealedFor($ci){return self::$sealed;}static function nativeFor($ci){return true;}}
 class CompanySettingsRuntime {static function active(){return true;}static function issuerId(){return 2;}static function staffId(){return 99;}}
 class AdminController {public $db,$input,$session,$output,$load,$encryption;}
-require FCPATH.'application/controllers/admin/Company_efi.php';
+require FCPATH.'application/controllers/admin/Settings.php';
 $queries=0;$decrypts=0;
-$controller=new Company_efi();
+$controller=new Settings();
 $controller->db=new class($queries){private $queries;function __construct(&$queries){$this->queries=&$queries;}function query($sql,$args=[]){++$this->queries;throw new RuntimeException('SQL not allowed before boundary');}};
 $controller->encryption=new class($decrypts){private $decrypts;function __construct(&$value){$this->decrypts=&$value;}function decrypt($value){++$this->decrypts;throw new RuntimeException('Secrets not allowed');}};
 $controller->load=new class {function library($name){if($name!=='encryption')throw new RuntimeException('unexpected loader');}};
@@ -23,4 +23,4 @@ $controller->input=new class {public string $method='POST';public array $values=
 if($argv[1]==='scope')CompanyRequestScope::$sealed=false;
 elseif($argv[1]==='method')$controller->input->method='DELETE';
 elseif($argv[1]!=='csrf')throw new RuntimeException('Unknown synthetic case');
-$controller->index();throw new RuntimeException('Expected controller rejection');
+$controller->efi();throw new RuntimeException('Expected controller rejection');

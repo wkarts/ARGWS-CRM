@@ -6,7 +6,7 @@ const {EventEmitter}=require('node:events');
 const fs=require('node:fs');
 const {safeResponse,diagnostics,go,openCompany}=require('./companies_asaas_browser.cjs');
 const SECRET='synthetic-sensitive-value';
-function response({url='http://127.0.0.1:42123/admin/company_asaas?token='+SECRET,status=200,method='POST',frame=null}={}) {
+function response({url='http://127.0.0.1:42123/admin/settings/asaas?token='+SECRET,status=200,method='POST',frame=null}={}) {
  return {url:()=>url,status:()=>status,request:()=>({method:()=>method,isNavigationRequest:()=>true,frame:()=>frame})};
 }
 function setup({count=1,invalid=[],disabled=false,noValidate=false,status=200,clickError=null,navigationError=null}={}) {
@@ -19,7 +19,7 @@ function setup({count=1,invalid=[],disabled=false,noValidate=false,status=200,cl
 function sanitized(records) {assert.ok(!JSON.stringify(records).includes(SECRET),'no URL, exception or field-value material reaches diagnostics');}
 
 test('status evidence exposes only fixed pathname, method and numeric status',()=>{
- assert.deepEqual(safeResponse(response()),{pathname:'/admin/company_asaas',method:'POST',status:200});
+ assert.deepEqual(safeResponse(response()),{pathname:'/admin/settings/asaas',method:'POST',status:200});
  assert.deepEqual(safeResponse(response({url:'http://127.0.0.1:42123/company_asaas_callback/integration/'+SECRET+'?csrf='+SECRET,method:'UNRECOGNIZED'})),{pathname:'other',method:'other',status:200});
  assert.deepEqual(safeResponse(response({url:'not a URL '+SECRET})),{pathname:'other',method:'POST',status:200});
 });
@@ -65,7 +65,7 @@ test('refresh explicitly GETs a fresh company page instead of replaying the prev
  const x=setup();x.page.goto=async(target,options)=>{x.calls.push(['goto',target,options]);return response({method:'GET'});};
  x.page.reload=async()=>assert.fail('POST replay must not be invoked');
  await openCompany(x.page,'http://127.0.0.1:42123',x.trace,'a:refresh-token');
- assert.deepEqual(x.calls,[['goto','http://127.0.0.1:42123/admin/company_asaas',{waitUntil:'domcontentloaded'}]]);assert.equal(x.records.at(-1).state,'passed');
+ assert.deepEqual(x.calls,[['goto','http://127.0.0.1:42123/admin/settings/asaas',{waitUntil:'domcontentloaded'}]]);assert.equal(x.records.at(-1).state,'passed');
 });
 
 test('fresh GET rejects an error response or an unexpected mutation transport',async()=>{
@@ -78,7 +78,10 @@ test('actual runner refreshes every sensitive POST through GET and masks its onl
  for(const phase of ['refresh-account','refresh-token','refresh-reveal','refresh-worker'])assert.ok(source.includes("openCompany(page,url,trace,letter+':"+phase+"')"));
  assert.ok(source.includes("mask:[page.locator('input[type=password], [data-asaas-secret], input[id^=company-webhook-url-]')]"));
  assert.doesNotMatch(source,/console\.(?:log|error)\([^\n]*(?:\.message|\.stderr|\.url\(|\.content\()/);
- const controller=fs.readFileSync(__dirname+'/../application/controllers/admin/Company_asaas.php','utf8');
+ const sourceAll=fs.readFileSync(__dirname+'/../application/services/NativeCompanySpecializedOperations.php','utf8');
+ const begin=sourceAll.indexOf('protected function nativeSettingsAsaas');
+ const end=sourceAll.indexOf('protected function nativeInvoiceStandaloneBilling',begin);
+ const controller=sourceAll.slice(begin,end);
  assert.ok(controller.includes('if($oneTime!==null||$revealedApiKey!==null){$webhookCsrf=bin2hex(random_bytes(32))'));
  assert.doesNotMatch(controller,/\bredirect\s*\(/,'direct POST rendering means reload is not a fresh GET contract');
 });

@@ -53,7 +53,7 @@ class NativeCompanyAuxiliaryUi {
  function __construct($db,$prefix,$issuer,$actor){check($issuer===2&&$actor===17,'todo header actor/issuer');}
  function todoCounts(){return [0=>5,1=>2];}
 }
-class IssuerResourceAccess {public static bool $administrative=true;function __construct(...$args){} function administrative($issuer,$actor){return $issuer===2&&self::$administrative;} function can($issuer,$actor,$feature,$cap){return $issuer===2 && in_array($feature,['customers','invoices','projects','tasks','settings','tickets'],true);}}
+class IssuerResourceAccess {public static bool $administrative=true;function __construct(...$args){} function administrative($issuer,$actor){return $issuer===2&&self::$administrative;} function member($issuer,$actor){return $issuer===2&&$actor===17;} function can($issuer,$actor,$feature,$cap){return $issuer===2 && in_array($feature,['customers','invoices','projects','tasks','settings','tickets'],true);}}
 class IssuerStorage {static function query($db,$sql,$params=[]){check(!str_contains($sql,'options'),'theme inactive must not fetch options');return new class($sql){function __construct(private $sql){}function row_array(){return str_contains($this->sql,'staffid,firstname')?['staffid'=>17,'firstname'=>'<Alice>','lastname'=>'A','email'=>'synthetic@example.test']:['active'=>0];}};}}
 class Fixture {
  public $config; public $security; public $load; public $db; public $router; public $agent; public $session; public $lang; public array $vars=[];
@@ -104,7 +104,7 @@ check($data['quick_actions'][1]['href_attributes']['onclick']==='new_task();retu
 ob_start();foreach(['head','header','setup_menu','aside'] as $name)$ci->view('admin/includes/'.$name);echo '<div id="wrapper"><main class="content"><div class="panel_s"><div class="panel-body"><form><label for="native-field">Nome</label><input id="native-field" name="name" class="form-control" value="Sintético"><button type="button" class="btn btn-primary">Salvar</button></form></div></div></main></div>'; $ci->view('admin/includes/scripts');echo '</body></html>';$html=ob_get_clean();
 if(in_array('--render',$argv??[],true)){echo $html;exit;}
 foreach(['id="header"','id="menu"','id="side-menu"','id="setup-menu"','native-company-admin','&lt;Alice&gt;','/sub/admin/clients','/sub/admin/invoices'] as $needle)check(str_contains($html,$needle),'native render '.$needle);
-foreach(['company_context','company_clients','company-shell.js','company-workspace.js','assets/js/main.js','admin/projects/pinned'] as $needle)check(!str_contains($html,$needle),'no parallel/global hydration '.$needle);
+foreach(['company_context','clients','company-shell.js','company-workspace.js','assets/js/main.js','admin/projects/pinned'] as $needle)check(!str_contains($html,$needle),'no parallel/global hydration '.$needle);
 check(!str_contains($html,'synthetic@example.test</script>'),'escaped identity');
 check(str_contains($html,'rel="icon" href="data:image/png;base64,Qw=="')&&str_contains($html,'src="data:image/png;base64,Qg=="'),'same header/head render scoped branding');
 $reflection=new ReflectionProperty(NativeCompanyAdminPresentation::class,'data');$original=$reflection->getValue();$withProviders=$original;

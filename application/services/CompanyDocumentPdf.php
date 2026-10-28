@@ -27,13 +27,13 @@ final class CompanyDocumentPdf
     public static function specification(array $context): array
     {
         $prefs=$context['sales_preferences']??null;
-        $choice=is_array($prefs)&&in_array($prefs['format']??null,[2,3],true) ? self::validate($prefs['pdf']??null) : 'A4-PORTRAIT';
+        $choice=is_array($prefs)&&in_array($prefs['format']??null,[2,3,4,5],true) ? self::validate($prefs['pdf']??null) : 'A4-PORTRAIT';
         return self::choiceSpecification($choice);
     }
     public static function typography(array $context):array
     {
         $prefs=$context['sales_preferences']??null;
-        return is_array($prefs)&&($prefs['format']??null)===3?CompanyPdfTypography::validate($prefs['typography']??null):CompanyPdfTypography::historical('estimates');
+        return is_array($prefs)&&in_array($prefs['format']??null,[3,5],true)?CompanyPdfTypography::validate($prefs['typography']??null):CompanyPdfTypography::historical('estimates');
     }
     public static function choiceSpecification(string $choice):array
     {

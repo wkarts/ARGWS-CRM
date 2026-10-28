@@ -38,7 +38,7 @@ fs.mkdirSync(artifacts, {recursive: true});
     for (const width of [390, 320]) {
       await page.setViewportSize({width, height: 844});
       for (const query of ['request=' + owner.request, 'tab=requests', 'tab=suppliers', 'tab=orders', 'tab=payables', 'tab=report', 'tab=settings']) {
-        assert.equal((await page.goto(url + '/admin/company_purchases?' + query)).status(), 200);
+        assert.equal((await page.goto(url + '/admin/expenses/purchases?' + query)).status(), 200);
         await page.waitForLoadState('networkidle');
         const metrics = await page.evaluate(() => ({
           viewport: window.innerWidth,

@@ -23,23 +23,40 @@ final class NativeCompanyRelatedTaskPage
     }
     public function read(int$i,int$a,string$type,$parent,array$input,string$today):array
     {
-        NativeCompanyTaskFormValues::date($today);$reader=new NativeCompanyRelatedTaskRead($this->db,$this->p);$source=$reader->read($i,$a,$type,$parent);
+        $reader=new NativeCompanyRelatedTaskRead($this->db,$this->p);
+        $read=fn()=>$reader->read($i,$a,$type,$parent);
+        return $this->compose($i,$a,$read(),$read,$input,$today);
+    }
+    /** Same table grammar over all authorized secondary-company tasks. */
+    public function readIndex(int $i,int $a,array $input,string $today,bool $deferConfirmation=false):array
+    {
+        require_once __DIR__.'/NativeCompanyTaskIndexProjection.php';
+        $reader=new NativeCompanyTaskIndexProjection($this->db,$this->p);
+        $read=fn()=>['items'=>$reader->captureForComparison($i,$a)];
+        $source=$read();
+        $page=$this->compose($i,$a,$source,$read,$input,$today,!$deferConfirmation);
+        if($deferConfirmation)$page['_native_source']=$source;
+        return$page;
+    }
+    private function compose(int $i,int $a,array $source,callable $read,array $input,string $today,bool $confirm=true):array
+    {
+        NativeCompanyTaskFormValues::date($today);
         $custom=new NativeCompanyCustomFields($this->db,$this->p);$definitions=$custom->definitions($i,$a,'tasks',['active'=>1,'show_on_table'=>1]);$request=self::request($input,$definitions);
         $table=(new NativeCompanyRelatedTaskTableFactory($this->db,$this->p))->make($i,$a);$builder=$table->normalizeBuilder($request['filters']);$all=[];$snapshots=[];
         foreach($source['items']as$item){
             $id=$item['source_id'];$row=$item['row'];$fields=$item['fields'];$assigned=array_map('intval',array_column($item['assignees'],'staffid'));
-            $timerSql='SELECT id,actor_id,started_at,stopped_at,seconds FROM '.$this->p.'company_standalone_timers WHERE issuer_id=? AND task_id=? ORDER BY id';$timers=$this->rows($timerSql,[$i,$id]);$running=[];foreach($timers as$t)if((int)$t['actor_id']===$a&&$t['stopped_at']===null)$running[]=$t;if(count($running)>1)throw new DomainException('native_company_task_timer_invalid');
-            $creatorSql='SELECT actor_id,operation,input_hash,request_key FROM '.$this->p.'company_project_requests WHERE issuer_id=? AND result_id=? AND operation IN (?,?) ORDER BY request_key';$creatorArgs=[$i,$id,'standalone_task_created','standalone_task_native_created'];$creators=$this->rows($creatorSql,$creatorArgs);$actors=array_unique(array_column($creators,'actor_id'));if(count($actors)>1)throw new DomainException('native_task_creation_ambiguous');
+            $isProject=$item['source_kind']==='company_task';$timerTable=$isProject?'company_task_timers':'company_standalone_timers';$timerSql='SELECT id,actor_id,started_at,stopped_at,seconds FROM '.$this->p.$timerTable.' WHERE issuer_id=? AND task_id=? ORDER BY id';$timers=$this->rows($timerSql,[$i,$id]);$running=[];foreach($timers as$t)if((int)$t['actor_id']===$a&&$t['stopped_at']===null)$running[]=$t;if(count($running)>1)throw new DomainException('native_company_task_timer_invalid');
+            $creatorSql='SELECT actor_id,operation,input_hash,request_key FROM '.$this->p.'company_project_requests WHERE issuer_id=? AND result_id=? AND operation IN (?,?) ORDER BY request_key';$creatorArgs=$isProject?[$i,$id,'task_created','task_native_created']:[$i,$id,'standalone_task_created','standalone_task_native_created'];$creators=$this->rows($creatorSql,$creatorArgs);$actors=array_unique(array_column($creators,'actor_id'));if(count($actors)>1)throw new DomainException('native_task_creation_ambiguous');
             $recurring=false;foreach($item['schedules']as$s)$recurring=$recurring||in_array($s['state'],['active','paused'],true);
             $billed=match($row['billing_state']){'converted'=>true,'converting','partially_billed'=>null,'none','ready','disabled'=>false,default=>throw new DomainException('native_task_billing_state_invalid')};
-            $facts=['name'=>$row['name'],'startdate'=>$fields['start_date'],'duedate'=>$row['due_date'],'status'=>$fields['workflow_status'],'priority'=>(int)$row['priority'],'todays_tasks'=>$fields['start_date']===$today&&$fields['workflow_status']!==5,'duedate_passed'=>$fields['start_date']===$today&&$fields['workflow_status']!==5,'not_assigned'=>$assigned===[],'my_tasks'=>in_array($a,$assigned,true),'my_following_tasks'=>in_array($a,$item['followers'],true),'upcoming_tasks'=>$row['due_date']!==null&&$row['due_date']<$today&&$fields['workflow_status']!==5,'recurring'=>$recurring,'billable'=>$fields['billable']===1,'billed'=>$billed,'assigned'=>$assigned];
+            $facts=['name'=>$row['name'],'startdate'=>$fields['start_date'],'duedate'=>$row['due_date'],'status'=>$fields['workflow_status'],'priority'=>(int)$row['priority'],'todays_tasks'=>$fields['start_date']===$today&&$fields['workflow_status']!==5,'duedate_passed'=>$row['due_date']!==null&&$row['due_date']<$today&&$fields['workflow_status']!==5,'not_assigned'=>$assigned===[],'my_tasks'=>in_array($a,$assigned,true),'my_following_tasks'=>in_array($a,$item['followers'],true),'upcoming_tasks'=>$fields['start_date']!==null&&$fields['start_date']>$today&&$fields['workflow_status']!==5,'recurring'=>$recurring,'billable'=>$fields['billable']===null?null:$fields['billable']===1,'billed'=>$billed,'assigned'=>$assigned];
             $values=$custom->values($i,$a,'tasks',$item['id']);$sort=$facts+['id'=>$item['id'],'tags'=>implode(',',array_column($item['tags'],'name'))];$sort['assigned']=implode(',',array_map(static fn($m)=>trim($m['firstname'].' '.$m['lastname']),$item['assignees']));foreach($definitions as$d)$sort['cf_'.$d['id']]=$values[(string)$d['id']]??'';
             $all[]=$item+['facts'=>$facts,'sort'=>$sort,'custom_values'=>$values,'running_timer'=>$running[0]??null,'current_user_is_creator'=>$actors!==[]&&(int)reset($actors)===$a,'billing_pending'=>$billed===null];$snapshots[]=[$timerSql,[$i,$id],$timers,$creatorSql,$creatorArgs,$creators,$item['id'],$values];
         }
         $filtered=array_values(array_filter($all,function($r)use($request,$builder,$today){if(!NativeCompanyRelatedTaskRules::matches($builder,$r['facts'],$today))return false;if($request['search']==='')return true;$hay=implode(' ',array_map(static fn($v)=>is_array($v)?implode(',',$v):(string)$v,$r['sort']));return str_contains(mb_strtolower($hay),mb_strtolower($request['search']));}));
         usort($filtered,static function($left,$right)use($request){foreach($request['order']as$o){$x=$left['sort'][$o['field']];$y=$right['sort'][$o['field']];$cmp=in_array($o['field'],['id','status','priority'],true)?((int)$x<=>(int)$y):strnatcasecmp((string)$x,(string)$y);if($cmp!==0)return$o['direction']==='asc'?$cmp:-$cmp;}return(int)$left['id']<=>(int)$right['id'];});
         foreach($snapshots as[$q,$args,$rows,$cq,$ca,$cr,$id,$values])if($this->rows($q,$args)!==$rows||$this->rows($cq,$ca)!==$cr||$custom->values($i,$a,'tasks',$id)!==$values)throw new DomainException('native_task_relation_stale');
-        if($reader->read($i,$a,$type,$parent)!==$source||$custom->definitions($i,$a,'tasks',['active'=>1,'show_on_table'=>1])!==$definitions)throw new DomainException('native_task_relation_stale');$table->contextIdentity();
+        if(($confirm&&$read()!==$source)||$custom->definitions($i,$a,'tasks',['active'=>1,'show_on_table'=>1])!==$definitions)throw new DomainException('native_task_relation_stale');$table->contextIdentity();
         return['draw'=>$request['draw'],'recordsTotal'=>count($all),'recordsFiltered'=>count($filtered),'rows'=>array_slice($filtered,$request['start'],$request['length']),'definitions'=>$definitions,'today'=>$today];
     }
 }

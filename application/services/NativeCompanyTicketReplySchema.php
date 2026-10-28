@@ -10,28 +10,35 @@ final class NativeCompanyTicketReplySchema
     public static function definitions(string $p):array
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');
+        // MySQL derives a foreign-key symbol from the full (prefixed) table name
+        // when none is supplied. Test, staging and some production prefixes can
+        // therefore make an otherwise valid CREATE TABLE exceed the 64-byte
+        // identifier limit. Keep symbols short while including the complete
+        // physical table name in the digest so parallel prefixed installations
+        // in one schema cannot collide.
+        $fk=static fn(string $table,string $edge):string=>'CONSTRAINT `nctr_'.substr(hash('sha256',$p.$table.':'.$edge),0,32).'` ';
         return [self::TABLE=>[
             '`reply_id` int unsigned NOT NULL PRIMARY KEY','`issuer_id` int unsigned NOT NULL','`ticket_id` int unsigned NOT NULL',
             '`body_format` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL','`request_key` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL',
             '`revision` int unsigned NOT NULL','`actor_id` int NOT NULL','`created_at` datetime NOT NULL','`updated_at` datetime NOT NULL',
             'UNIQUE KEY `reply_command` (`issuer_id`,`request_key`)','KEY `reply_parent` (`issuer_id`,`ticket_id`)','KEY `reply_ticket` (`ticket_id`)','KEY `reply_actor` (`actor_id`)',
-            'FOREIGN KEY (`reply_id`) REFERENCES `'.$p.'company_ticket_replies` (`id`)',
-            'FOREIGN KEY (`issuer_id`,`ticket_id`) REFERENCES `'.$p.'company_tickets` (`issuer_id`,`id`)',
-            'FOREIGN KEY (`actor_id`) REFERENCES `'.$p.'staff` (`staffid`)',
+            $fk(self::TABLE,'reply').'FOREIGN KEY (`reply_id`) REFERENCES `'.$p.'company_ticket_replies` (`id`)',
+            $fk(self::TABLE,'ticket').'FOREIGN KEY (`issuer_id`,`ticket_id`) REFERENCES `'.$p.'company_tickets` (`issuer_id`,`id`)',
+            $fk(self::TABLE,'actor').'FOREIGN KEY (`actor_id`) REFERENCES `'.$p.'staff` (`staffid`)',
         ],self::EDIT=>[
             '`reply_id` int unsigned NOT NULL PRIMARY KEY','`issuer_id` int unsigned NOT NULL','`ticket_id` int unsigned NOT NULL',
             '`content_hash` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL','`revision` int unsigned NOT NULL','`actor_id` int NOT NULL','`created_at` datetime NOT NULL','`updated_at` datetime NOT NULL',
             'KEY `edited_reply_parent` (`issuer_id`,`ticket_id`)','KEY `edited_reply_ticket` (`ticket_id`)','KEY `edited_reply_actor` (`actor_id`)',
-            'FOREIGN KEY (`reply_id`) REFERENCES `'.$p.'company_ticket_replies` (`id`)',
-            'FOREIGN KEY (`issuer_id`,`ticket_id`) REFERENCES `'.$p.'company_tickets` (`issuer_id`,`id`)',
-            'FOREIGN KEY (`actor_id`) REFERENCES `'.$p.'staff` (`staffid`)',
+            $fk(self::EDIT,'reply').'FOREIGN KEY (`reply_id`) REFERENCES `'.$p.'company_ticket_replies` (`id`)',
+            $fk(self::EDIT,'ticket').'FOREIGN KEY (`issuer_id`,`ticket_id`) REFERENCES `'.$p.'company_tickets` (`issuer_id`,`id`)',
+            $fk(self::EDIT,'actor').'FOREIGN KEY (`actor_id`) REFERENCES `'.$p.'staff` (`staffid`)',
         ],self::BODY=>[
             '`ticket_id` int unsigned NOT NULL PRIMARY KEY','`issuer_id` int unsigned NOT NULL',
             '`body_format` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL','`content_hash` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL',
             '`revision` int unsigned NOT NULL','`actor_id` int NOT NULL','`created_at` datetime NOT NULL','`updated_at` datetime NOT NULL',
             'KEY `body_parent` (`issuer_id`,`ticket_id`)','KEY `body_actor` (`actor_id`)',
-            'FOREIGN KEY (`issuer_id`,`ticket_id`) REFERENCES `'.$p.'company_tickets` (`issuer_id`,`id`)',
-            'FOREIGN KEY (`actor_id`) REFERENCES `'.$p.'staff` (`staffid`)',
+            $fk(self::BODY,'ticket').'FOREIGN KEY (`issuer_id`,`ticket_id`) REFERENCES `'.$p.'company_tickets` (`issuer_id`,`id`)',
+            $fk(self::BODY,'actor').'FOREIGN KEY (`actor_id`) REFERENCES `'.$p.'staff` (`staffid`)',
         ]];
     }
     public static function ensure($db,string $p):void
@@ -74,7 +81,7 @@ final class NativeCompanyTicketReplySchema
             if(array_diff(array_keys($indexes),$expectedIndexes))throw new RuntimeException('issuer_native_ticket_reply_schema_invalid');
             $foreign=[];foreach(IssuerStorage::query($db,'SELECT CONSTRAINT_NAME,COLUMN_NAME,REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND REFERENCED_TABLE_SCHEMA=DATABASE() ORDER BY CONSTRAINT_NAME,ORDINAL_POSITION',[$name])->result_array() as $r)$foreign[$r['CONSTRAINT_NAME']][]=$r['COLUMN_NAME'].':'.$r['REFERENCED_TABLE_NAME'].':'.$r['REFERENCED_COLUMN_NAME'];
             $expectedForeign=0;
-            foreach($parts as $definition)if(preg_match('/^FOREIGN KEY \(([^)]+)\) REFERENCES `([^`]+)` \(([^)]+)\)$/D',$definition,$m)){$expectedForeign++;$cols=explode(',',str_replace('`','',$m[1]));$refs=explode(',',str_replace('`','',$m[3]));$want=[];foreach($cols as $i=>$col)$want[]=$col.':'.$m[2].':'.$refs[$i];if(!in_array($want,array_values($foreign),true))throw new RuntimeException('issuer_native_ticket_reply_schema_invalid');}
+            foreach($parts as $definition)if(preg_match('/^(?:CONSTRAINT `[^`]+` )?FOREIGN KEY \(([^)]+)\) REFERENCES `([^`]+)` \(([^)]+)\)$/D',$definition,$m)){$expectedForeign++;$cols=explode(',',str_replace('`','',$m[1]));$refs=explode(',',str_replace('`','',$m[3]));$want=[];foreach($cols as $i=>$col)$want[]=$col.':'.$m[2].':'.$refs[$i];if(!in_array($want,array_values($foreign),true))throw new RuntimeException('issuer_native_ticket_reply_schema_invalid');}
         if(count($foreign)!==$expectedForeign)throw new RuntimeException('issuer_native_ticket_reply_schema_invalid');
         $rules=IssuerStorage::query($db,'SELECT UPDATE_RULE,DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME=?',[$name])->result_array();
         if(count($rules)!==$expectedForeign)throw new RuntimeException('issuer_native_ticket_reply_schema_invalid');

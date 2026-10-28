@@ -7,12 +7,63 @@ class Contracts extends AdminController
     public function __construct()
     {
         parent::__construct();
+        if (CompanyRequestScope::nativeFor($this)) {
+            return;
+        }
         $this->load->model('contracts_model');
+    }
+
+    private function nativeContracts(): NativeCompanyContractsController
+    {
+        require_once APPPATH.'services/NativeCompanyContractsController.php';
+        return new NativeCompanyContractsController($this);
+    }
+
+    private function nativeContractAction(callable $action): void
+    {
+        $this->output->set_header('Cache-Control: private, no-store');
+        try {
+            $action($this->nativeContracts());
+        } catch (DomainException $error) {
+            $reason=$error->getMessage();
+            $status=str_contains($reason,'stale')||str_contains($reason,'conflict')||str_contains($reason,'mismatch')?409:
+                (str_contains($reason,'csrf')||str_contains($reason,'access')||str_contains($reason,'denied')||str_contains($reason,'reference')?403:422);
+            show_error('Não foi possível confirmar o contrato nesta empresa. Reabra a tela e tente novamente.',$status);
+        } catch (Throwable $error) {
+            log_message('error','Native contract action failed closed; no contract contents logged.');
+            show_error('Não foi possível confirmar o contrato nesta empresa.',503);
+        }
+    }
+
+    /** Add owned contract records to the primary legacy directory without rewriting either ID space. */
+    private function primaryOwnedContracts(): ?array
+    {
+        $context=CompanyRequestScope::context();
+        if(!$context||!$context->isPrimary()||$context->issuerId()===null)return null;
+        require_once APPPATH.'services/CompanyContracts.php';
+        require_once APPPATH.'services/NativeCompanyResourceId.php';
+        $issuer=IssuerPolicy::id($context->issuerId());$actor=IssuerPolicy::id($context->staffId());
+        $acl=new IssuerResourceAccess($this->db,db_prefix());
+        if(!$acl->can($issuer,$actor,'contracts','view'))return null;
+        $after=$this->input->get('company_after',false)??0;
+        if(!is_int($after)&&(!is_string($after)||!preg_match('/^[1-9][0-9]*$/D',$after)))$after=0;
+        $search=$this->input->get('company_search',false)??'';
+        if(!is_string($search))$search='';
+        if(function_exists('mb_substr'))$search=mb_substr($search,0,191,'UTF-8');else $search=substr($search,0,191);
+        return [
+            'directory'=>(new CompanyContracts($this->db,db_prefix()))->page($issuer,$actor,$after,$search),
+            'can_create'=>$acl->can($issuer,$actor,'contracts','create'),
+            'search'=>$search,
+        ];
     }
 
     /* List all contracts */
     public function index()
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->nativeContractAction(static fn($native)=>$native->index());
+            return;
+        }
         close_setup_menu();
 
         if (staff_cant('view', 'contracts') && staff_cant('view_own', 'contracts')) {
@@ -32,6 +83,7 @@ class Contracts extends AdminController
         $data['base_currency'] = $this->currencies_model->get_base_currency();
         $data['title']         = _l('contracts');
         $data['table'] = App_table::find('contracts');
+        $data['company_owned_contracts']=$this->primaryOwnedContracts();
         $this->load->view('admin/contracts/manage', $data);
     }
 
@@ -49,6 +101,10 @@ class Contracts extends AdminController
     /* Edit contract or add new contract */
     public function contract($id = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->nativeContractAction(static fn($native)=>$native->contract($id));
+            return;
+        }
         if ($this->input->post()) {
             if ($id == '') {
                 if (staff_cant('create', 'contracts')) {
@@ -136,6 +192,10 @@ class Contracts extends AdminController
 
     public function pdf($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->nativeContractAction(static fn($native)=>$native->pdf($id));
+            return;
+        }
         if (staff_cant('view', 'contracts') && staff_cant('view_own', 'contracts')) {
             access_denied('contracts');
         }
@@ -164,6 +224,16 @@ class Contracts extends AdminController
         }
 
         $pdf->Output(slug_it($contract->subject) . '.pdf', $type);
+    }
+
+    /** Private company-owned attachment; no public filesystem path is accepted. */
+    public function file($id, $key)
+    {
+        if (!CompanyRequestScope::nativeFor($this)) {
+            show_404();
+            return;
+        }
+        $this->nativeContractAction(static fn($native)=>$native->file($id,(string)$key));
     }
 
     public function send_to_email($id)

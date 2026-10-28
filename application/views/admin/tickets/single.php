@@ -1,4 +1,130 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php if (isset($native_ticket_page)) { ?>
+<?php init_head(); ?>
+<div id="wrapper">
+    <div class="content">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <div class="tw-flex tw-items-start tw-justify-between tw-gap-4">
+                            <div>
+                                <h3 class="tw-font-bold tw-mt-0"><?php echo e('#'.$ticket->ticketid.' - '.$ticket->subject); ?></h3>
+                                <span class="label" style="color:<?php echo e($ticket->statuscolor); ?>;border:1px solid <?php echo e($ticket->statuscolor); ?>">
+                                    <?php echo e($ticket->status_name); ?>
+                                </span>
+                            </div>
+                            <a class="btn btn-default" href="<?php echo admin_url('tickets'); ?>"><?php echo _l('back_to_list'); ?></a>
+                        </div>
+                        <?php if ($ticket->merged_ticket_id !== null) { ?>
+                        <div class="alert alert-info tw-mt-4">
+                            <?php echo e(_l('ticket_merged_notice')); ?>:
+                            <a href="<?php echo admin_url('tickets/ticket/'.$ticket->merged_ticket_id); ?>"><?php echo e($ticket->merged_ticket_id); ?></a>
+                        </div>
+                        <?php } ?>
+                        <?php if (count($merged_tickets) > 0) { ?>
+                        <div class="alert alert-info tw-mt-4">
+                            <strong><?php echo e(_l('ticket_merged_tickets_header', count($merged_tickets))); ?></strong>
+                            <ul class="tw-mb-0">
+                                <?php foreach ($merged_tickets as $merged) { ?>
+                                <li><a href="<?php echo admin_url('tickets/ticket/'.$merged['ticketid']); ?>"><?php echo e('#'.$merged['ticketid'].' - '.$merged['subject']); ?></a></li>
+                                <?php } ?>
+                            </ul>
+                        </div>
+                        <?php } ?>
+                    </div>
+                </div>
+
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <h4 class="tw-font-semibold tw-mt-0"><?php echo _l('ticket_single_add_reply'); ?></h4>
+                        <?php echo form_open_multipart(admin_url('tickets/ticket/'.$ticket->ticketid), ['id'=>'ticket-reply','autocomplete'=>'off','data-native-ticket'=>'1']); ?>
+                        <?php echo form_hidden('_company_context', $native_ticket_page['context_token']); ?>
+                        <?php echo form_hidden('_native_company_csrf', $native_ticket_page['csrf_token']); ?>
+                        <?php echo form_hidden('ticketid', $ticket->ticketid); ?>
+                        <?php echo form_hidden('revision', $ticket->revision_token); ?>
+                        <?php echo form_hidden('request_nonce', $native_ticket_page['request_nonce']); ?>
+                        <div class="form-group">
+                            <label for="native-ticket-message"><?php echo _l('ticket_single_add_reply'); ?></label>
+                            <textarea id="native-ticket-message" class="form-control" name="message" rows="8" required maxlength="60000"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="native-ticket-status"><?php echo _l('ticket_dt_status'); ?></label>
+                            <select id="native-ticket-status" class="selectpicker" name="status" data-width="100%">
+                                <option value=""></option>
+                                <?php foreach ($statuses as $status) { ?>
+                                <option value="<?php echo e($status['native_id']); ?>"<?php echo $status['native_id']===$ticket->ticketstatusid?' selected':''; ?>><?php echo e($status['name']); ?></option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="native-ticket-files"><?php echo _l('ticket_add_attachments'); ?></label>
+                            <input id="native-ticket-files" type="file" class="form-control" name="attachments[]" accept="application/pdf,image/png,image/jpeg" multiple>
+                            <p class="help-block">PDF, PNG ou JPG; até 2 MB por arquivo.</p>
+                        </div>
+                        <button type="submit" class="btn btn-primary"><?php echo _l('ticket_single_add_reply'); ?></button>
+                        <?php echo form_close(); ?>
+                    </div>
+                </div>
+
+                <h4 class="tw-font-bold"><?php echo _l('ticket_request_history'); ?></h4>
+                <div class="panel_s tw-mt-5">
+                    <div class="panel-body tw-bg-info-50/30 ticket-thread">
+                        <div class="tw-flex tw-justify-between tw-gap-3 tw-mb-4">
+                            <strong><?php echo e($ticket->opened_by); ?></strong>
+                            <span><?php echo e(_l('ticket_posted', $ticket->date_label)); ?></span>
+                        </div>
+                        <div class="tc-content"><?php echo NativeCompanyTicketThreadPresentation::message($ticket->message, $ticket->message_format); ?></div>
+                        <?php foreach ($ticket->attachments as $attachment) { ?>
+                        <hr><a href="<?php echo site_url($attachment['url']); ?>"><?php echo e($attachment['file_name']); ?></a>
+                        <?php } ?>
+                    </div>
+                </div>
+                <?php foreach ($ticket_replies as $reply) { ?>
+                <div class="panel_s">
+                    <div class="panel-body ticket-thread">
+                        <div class="tw-flex tw-justify-between tw-gap-3 tw-mb-4">
+                            <strong><?php echo e($reply['submitter']); ?></strong>
+                            <span><?php echo e(_l('ticket_posted', $reply['date_label'])); ?></span>
+                        </div>
+                        <div class="tc-content"><?php echo NativeCompanyTicketThreadPresentation::message($reply['message'], $reply['message_format']); ?></div>
+                        <?php foreach ($reply['attachments'] as $attachment) { ?>
+                        <hr><a href="<?php echo site_url($attachment['url']); ?>"><?php echo e($attachment['file_name']); ?></a>
+                        <?php } ?>
+                    </div>
+                </div>
+                <?php } ?>
+            </div>
+            <div class="col-md-4">
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <h4 class="tw-font-bold tw-mt-0"><?php echo _l('clients_single_ticket_information_heading'); ?></h4>
+                        <dl>
+                            <dt><?php echo _l('ticket_dt_subject'); ?></dt><dd><?php echo e($ticket->subject); ?></dd>
+                            <dt><?php echo _l('ticket_dt_status'); ?></dt><dd><?php echo e($ticket->status_name); ?></dd>
+                            <dt><?php echo _l('ticket_settings_priority'); ?></dt><dd><?php echo e($ticket->catalog['priority']['name'] ?? ''); ?></dd>
+                            <?php if (isset($ticket->catalog['service'])) { ?><dt><?php echo _l('service'); ?></dt><dd><?php echo e($ticket->catalog['service']['name']); ?></dd><?php } ?>
+                            <dt><?php echo _l('ticket_dt_date_created'); ?></dt><dd><?php echo e($ticket->date_label); ?></dd>
+                            <?php if ($ticket->ticket_email) { ?><dt><?php echo _l('ticket_settings_to'); ?></dt><dd><a href="mailto:<?php echo e($ticket->ticket_email); ?>"><?php echo e($ticket->ticket_email); ?></a></dd><?php } ?>
+                        </dl>
+                        <?php echo form_open(admin_url('tickets/ticket/'.$ticket->ticketid), ['id'=>'native-ticket-mark-read','class'=>'tw-mt-4']); ?>
+                        <?php echo form_hidden('_company_context', $native_ticket_page['context_token']); ?>
+                        <?php echo form_hidden('_native_company_csrf', $native_ticket_page['csrf_token']); ?>
+                        <?php echo form_hidden('native_ticket_command', 'mark_read'); ?>
+                        <?php echo form_hidden('revision', $ticket->revision_token); ?>
+                        <?php echo form_hidden('request_nonce', bin2hex(random_bytes(32))); ?>
+                        <button type="submit" class="btn btn-default btn-sm"><?php echo _l('mark_as_read'); ?></button>
+                        <?php echo form_close(); ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php init_tail(); ?>
+</body>
+</html>
+<?php return; } ?>
 <?php init_head(); ?>
 <?php set_ticket_open($ticket->adminread, $ticket->ticketid); ?>
 <div id="wrapper">

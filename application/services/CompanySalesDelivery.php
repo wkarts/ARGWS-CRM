@@ -17,6 +17,12 @@ final class CompanySalesDelivery
     {
         if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid table prefix');
     }
+    private static function verifiedDate(array $row):string
+    {
+        try{$payload=json_decode($row['payload_json']??'',true,32,JSON_THROW_ON_ERROR);}catch(Throwable $error){throw new DomainException('company_sales_delivery_denied');}
+        if(!is_array($payload)||!is_string($row['input_hash']??null)||!hash_equals($row['input_hash'],hash('sha256',json_encode([$row['kind'],$payload],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)))||!is_string($payload['date']??null))throw new DomainException('company_sales_delivery_denied');
+        return $payload['date'];
+    }
     private function rows(string $sql,array $args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private function authorize(int $issuer,int $actor,int $document):void
     {
@@ -29,7 +35,7 @@ final class CompanySalesDelivery
     }
     private function parent(int $issuer,int $document):array
     {
-        $row=$this->rows('SELECT d.id,d.kind,d.state,d.number,d.client_id AS clientid,d.payload_json,d.context_json,d.origin_hash,d.input_hash,r.legal_name FROM '.$this->p.'company_sales_documents d JOIN '.$this->p.'issuers_registry r ON r.id=d.issuer_id AND r.active=1 JOIN '.$this->p.'clients c ON c.userid=d.client_id AND c.active=1 JOIN '.$this->p.'issuers_clients o ON o.client_id=c.userid AND o.owner_issuer_id=d.issuer_id WHERE d.id=? AND d.issuer_id=? FOR UPDATE',[$document,$issuer])[0]??null;if(!$row)throw new DomainException('company_sales_delivery_denied');$context=CompanySalesPreferences::context($row['context_json'],$row['origin_hash'],$issuer,(int)$row['clientid']);$row['formatted_number']=CompanySalesPreferences::presentation($row['kind'],$row['number'],$context,$row['kind']==='estimates'?'EST-':'PROP-')['formatted_number'];return $row;
+        $row=$this->rows('SELECT d.id,d.kind,d.state,d.number,d.client_id AS clientid,d.payload_json,d.context_json,d.origin_hash,d.input_hash,r.legal_name FROM '.$this->p.'company_sales_documents d JOIN '.$this->p.'issuers_registry r ON r.id=d.issuer_id AND r.active=1 JOIN '.$this->p.'clients c ON c.userid=d.client_id AND c.active=1 JOIN '.$this->p.'issuers_clients o ON o.client_id=c.userid AND o.owner_issuer_id=d.issuer_id WHERE d.id=? AND d.issuer_id=? FOR UPDATE',[$document,$issuer])[0]??null;if(!$row)throw new DomainException('company_sales_delivery_denied');$context=CompanySalesPreferences::context($row['context_json'],$row['origin_hash'],$issuer,(int)$row['clientid']);$row['formatted_number']=CompanySalesPreferences::presentation($row['kind'],$row['number'],$context,$row['kind']==='estimates'?'EST-':'PROP-',self::verifiedDate($row))['formatted_number'];return $row;
     }
     private static function permission(array $row):int{return $row['kind']==='estimates'?2:4;}
     private static function revisionFor(array $row):string{return hash('sha256',json_encode([$row['id'],$row['kind'],$row['state'],$row['number'],$row['origin_hash'],$row['input_hash']],JSON_THROW_ON_ERROR));}
@@ -86,7 +92,7 @@ final class CompanySalesDelivery
             $type=$row['kind']==='estimates'?'estimate':'proposal';$slug=$type==='estimate'?'estimate-send-to-client':'proposal-send-to-customer';$template=CompanyEmailTemplates::findForIssuer($this->db,$this->p,$issuer,$slug,'portuguese_br');
             if(!$template||(int)$template->active!==1||!str_contains($template->message,'{'.$type.'_link}'))throw new DomainException('company_sales_delivery_template_required');
             $from=trim($store->get($issuer,'smtp_email'));if(!filter_var($from,FILTER_VALIDATE_EMAIL)||preg_match('/[\r\n]/',$from))throw new DomainException('company_sales_delivery_sender_required');
-            $link=rtrim($baseUrl,'/').'/company_portal/index/'.$issuer;
+            $link=rtrim($baseUrl,'/').'/clients/'.$row['kind'].'?issuer_id='.$issuer;
             $plain=['{companyname}'=>$row['legal_name'],'{contact_firstname}'=>$recipient['firstname'],'{contact_lastname}'=>$recipient['lastname'],'{contact_email}'=>$recipient['email'],'{'.$type.'_number}'=>$row['formatted_number'],'{'.$type.'_status}'=>$row['state']==='accepted'?'Aceito':'Convertido em fatura','{'.$type.'_link}'=>$link,'{proposal_proposal_to}'=>json_decode($row['context_json'],true,32,JSON_THROW_ON_ERROR)['recipient']['name'],'{proposal_open_till}'=>json_decode($row['payload_json'],true,32,JSON_THROW_ON_ERROR)['due_date'],'{crm_url}'=>$link];
             $escape=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');$html=array_map($escape,$plain);$html['{email_signature}']=$store->get($issuer,'email_signature');
             $message=strtr($store->get($issuer,'email_header').self::privateFactoryMessage($template,$slug,$type).$store->get($issuer,'email_footer'),$html);

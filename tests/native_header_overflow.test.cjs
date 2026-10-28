@@ -6,8 +6,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {html, styles, scripts} = require('./native_header_overflow.browser.cjs');
 const assetRoot=process.env.CRM_TEST_ROOT ? path.resolve(process.env.CRM_TEST_ROOT) : path.resolve(__dirname,'..');
-const render = file => execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'support', file)], {encoding: 'utf8'});
-test('native header renders actual translated controls without a company selector', () => {
+const phpBinary = process.env.PHP_BIN || 'php';
+const phpAvailable = (() => {
+  try { execFileSync(phpBinary, ['-v'], {stdio: 'ignore'}); return true; }
+  catch { return false; }
+})();
+const render = file => execFileSync(phpBinary, [path.join(__dirname, 'support', file)], {encoding: 'utf8'});
+const phpTest = (name, fn) => test(name, {skip: !phpAvailable && 'PHP runtime unavailable in this workspace'}, fn);
+phpTest('native header renders actual translated controls without a company selector', () => {
   const header = render('NativeHeaderFixture.php');
   assert.equal((header.match(/id="header"/g) || []).length, 1);
   assert.equal((header.match(/id="company-context-select"/g) || []).length, 0);
@@ -17,7 +23,7 @@ test('native header renders actual translated controls without a company selecto
   assert.match(header, /class="mobile-menu /);
   assert.doesNotMatch(header, /<script|<style/);
 });
-test('URL fixture renders real Asaas groups and no credential field', () => {
+phpTest('URL fixture renders real Asaas groups and no credential field', () => {
   const summary = render('AsaasUrlsFixture.php');
   assert.equal((summary.match(/class="input-group"/g) || []).length, 2);
   assert.match(summary, /data-asaas-settings-section="authentication"/);
@@ -94,7 +100,7 @@ test('responsive header rules are scoped and source/built styles remain aligned'
   assert.match(rules, /\.bootstrap-select\.company-context-select \.dropdown-menu/);
   assert.doesNotMatch(rules, /overflow[^;]*hidden|display:\s*none/);
 });
-test('optional full shell, long names and mobile controls render without changing the default fixture', () => {
+phpTest('optional full shell, long names and mobile controls render without changing the default fixture', () => {
   const shell = execFileSync(process.env.PHP_BIN || 'php', [path.join(__dirname, 'support', 'NativeHeaderFixture.php'), '--full-shell', '--long-name', '--mobile-user'], {encoding: 'utf8'});
   for (const id of ['header', 'company-selector-toggle', 'menu', 'setup-menu-wrapper', 'setup-menu']) assert.equal((shell.match(new RegExp('id="' + id + '"', 'g')) || []).length, 1);
   assert.match(shell, /data-company-current="1"/);

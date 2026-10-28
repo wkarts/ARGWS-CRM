@@ -5,7 +5,7 @@ require_once __DIR__.'/NativeCompanyTicketRead.php';require_once __DIR__.'/Compa
 final class NativeCompanyTicketFiles
 {
     public function __construct(private$db,private string$p){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');}
-    public function tables():array{return array_values(array_unique(array_merge((new NativeCompanyTicketRead($this->db,$this->p))->tables(),['company_ticket_files'])));}
+    public function tables():array{$tables=array_merge((new NativeCompanyTicketRead($this->db,$this->p))->tables(),['company_ticket_files']);if($this->db->table_exists($this->p.'company_ticket_reply_files')){$tables[]='company_ticket_reply_files';}return array_values(array_unique($tables));}
     private function rows(string$sql,array$args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
     private static function metadata(array$r):void{
         if(!preg_match('/^[a-f0-9]{64}$/D',(string)($r['file_key']??''))||!preg_match('/^[a-f0-9]{64}$/D',(string)($r['content_hash']??''))||(int)($r['active']??0)!==1)throw new DomainException('native_ticket_file_denied');
@@ -18,6 +18,11 @@ final class NativeCompanyTicketFiles
         return$owned?$run():IssuerTransaction::run($this->db,$this->p,$this->tables(),$run);
     }
     private function replyAssociation(int$i,array$t,array$f):?string{
+        if($this->db->table_exists($this->p.'company_ticket_reply_files')){
+            require_once __DIR__.'/NativeCompanyTicketReplyFileSchema.php';NativeCompanyTicketReplyFileSchema::assertValid($this->db,$this->p);
+            $link=$this->rows('SELECT * FROM '.$this->p.NativeCompanyTicketReplyFileSchema::TABLE.' WHERE file_key=?',[$f['file_key']])[0]??null;
+            if($link){$reply=$this->rows('SELECT issuer_id,ticket_id,actor_id FROM '.$this->p.'company_ticket_replies WHERE id=?',[$link['reply_id']])[0]??null;if(!$reply||(int)$link['issuer_id']!==$i||(int)$link['ticket_id']!==(int)$t['source_id']||(int)$reply['issuer_id']!==$i||(int)$reply['ticket_id']!==(int)$t['source_id']||(int)$link['actor_id']!==(int)$reply['actor_id']||(int)$link['actor_id']!==(int)$f['actor_id']||!hash_equals($link['content_hash'],$f['content_hash']))throw new DomainException('native_ticket_file_provenance_invalid');if(NativeCompanyTicketMergeSchema::active($this->db,$this->p)&&$this->rows('SELECT file_key FROM '.$this->p.NativeCompanyTicketMergeSchema::FILES.' WHERE file_key=?',[$f['file_key']]))throw new DomainException('native_ticket_file_provenance_invalid');NativeCompanyTicketVisibility::assertReply($this->db,$this->p,$i,(int)$link['reply_id']);return NativeCompanyResourceId::encode('company_ticket_reply',(int)$link['reply_id']);}
+        }
         if(!NativeCompanyTicketMergeSchema::active($this->db,$this->p))return null;
         $r=$this->rows('SELECT * FROM '.$this->p.NativeCompanyTicketMergeSchema::FILES.' WHERE file_key=?',[$f['file_key']])[0]??null;if(!$r)return null;
         if((int)$r['issuer_id']!==$i||(int)$r['primary_id']!==$t['source_id']||!hash_equals($r['content_hash'],$f['content_hash']))throw new DomainException('native_ticket_file_provenance_invalid');

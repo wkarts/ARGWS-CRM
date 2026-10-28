@@ -157,6 +157,7 @@ final class NativeCompanyClients
         $store=new CompanySettingsStorage($this->db,$this->p);$country=$store->exists($this->issuer,'customer_default_country')?$store->get($this->issuer,'customer_default_country'):'';
         if(!preg_match('/^(?:|0|[1-9][0-9]{0,8})$/D',$country)||(!in_array($country,['','0'],true)&&!in_array($country,array_map('strval',array_column($data['countries'],'country_id')),true)))throw new DomainException('native_clients_settings_invalid');
         $data['native_customer_default_country']=$country;
+        $data['native_customer_company_required']=(new CompanyClients($this->db,$this->p))->companyNameRequired($this->issuer)?'1':'0';
         $caps=$this->capabilities($client);if(!$caps['view']&&!$caps['create']&&!$caps['edit'])throw new DomainException('company_client_access_denied');return $data;
     }
     public function capabilities(?int $client=null): array

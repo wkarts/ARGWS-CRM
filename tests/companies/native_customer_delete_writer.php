@@ -1,0 +1,33 @@
+<?php
+/** Bounded native customer deletion: no dependent or financial records are removed. */
+require __DIR__.'/native_customer_delete_references.php';
+foreach([41,82] as$issuer)$db->query("INSERT INTO {$p}issuers_resource_permissions VALUES(?,12,'customers','delete')",[$issuer]);
+$key=hash('sha256','delete-writer-fixture');$input=['company'=>'Disposable native fixture','vat'=>'','profile'=>['city'=>'Cidade sintética']];
+$id=$clients->create(41,12,$input,$key);$revision=$clients->details(41,12,$id)['revision'];
+essentialThrows(fn()=>$clients->deleteUnreferenced(82,12,$id,$revision),'company_client_access_denied','foreign owner cannot delete customer');
+essentialThrows(fn()=>$clients->deleteUnreferenced(41,12,$id,str_repeat('0',64)),'company_client_stale','stale revision cannot delete customer');
+$db->query('INSERT INTO '.$p.'invoices(id,clientid) VALUES(?,?)',[-910003,$id]);
+essentialThrows(fn()=>$clients->deleteUnreferenced(41,12,$id,$revision),'company_client_referenced','financial history blocks deletion');
+essentialCheck(count($db->query('SELECT clientid FROM '.$p.'invoices WHERE clientid=?',[$id])->result_array())===1,'blocked operation preserves financial history');
+$db->query('DELETE FROM '.$p.'invoices WHERE clientid=?',[$id]);
+$db->query('INSERT INTO '.$p.'notes(rel_id,rel_type) VALUES(?,?)',[$id,'customer']);
+essentialThrows(fn()=>$clients->deleteUnreferenced(41,12,$id,$revision),'company_client_referenced','polymorphic note blocks deletion');
+$db->query('DELETE FROM '.$p.'notes WHERE rel_id=? AND rel_type=?',[$id,'customer']);
+$db->query('INSERT INTO '.$p.'company_leads(converted_client_id) VALUES(?)',[$id]);
+essentialThrows(fn()=>$clients->deleteUnreferenced(41,12,$id,$revision),'company_client_referenced','converted lead history blocks deletion');
+essentialCheck(count($db->query('SELECT converted_client_id FROM '.$p.'company_leads WHERE converted_client_id=?',[$id])->result_array())===1,'converted lead remains intact');
+$db->query('DELETE FROM '.$p.'company_leads WHERE converted_client_id=?',[$id]);
+$import=json_encode(['batch_id'=>'delete-writer','client_ids'=>[$id]]);
+$db->query('INSERT INTO '.$p.'company_client_import_batches(state,result_json) VALUES (?,?)',['committed',$import]);
+essentialThrows(fn()=>$clients->deleteUnreferenced(41,12,$id,$revision),'company_client_referenced','committed import history blocks deletion');
+essentialCheck(count($db->query('SELECT result_json FROM '.$p.'company_client_import_batches WHERE result_json=?',[$import])->result_array())===1,'import evidence remains intact');
+$db->query('DELETE FROM '.$p.'company_client_import_batches WHERE result_json=?',[$import]);
+$db->failOn='INSERT INTO '.$p.'issuers_audit';
+essentialThrows(fn()=>$clients->deleteUnreferenced(41,12,$id,$revision),'issuer_storage_failed','audit failure rolls deletion back');$db->failOn=null;
+essentialCheck($clients->details(41,12,$id)['revision']===$revision,'identity and profile restored on failed audit');
+$clients->deleteUnreferenced(41,12,$id,$revision);
+essentialCheck($clients->get(41,12,$id)===null,'unreferenced owned customer deleted');
+essentialCheck(count($db->query('SELECT request_key FROM '.$p.'company_client_requests WHERE request_key=?',[$key])->result_array())===1,'durable creation receipt retained');
+essentialThrows(fn()=>$clients->create(41,12,$input,$key),'company_client_request_conflict','old create request cannot recreate a deleted customer');
+essentialThrows(fn()=>$clients->deleteUnreferenced(41,12,$id,$revision),'company_client_access_denied','repeated deletion has no effect');
+echo "Bounded native deletion writer isolation, rollback, history and replay passed.\n";

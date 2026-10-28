@@ -1,6 +1,6 @@
 # Cliente import/export — prova HTTP adicional ao incremento preparado
 
-Esta evidência complementa `client-import-operations.md`, cujo registro inicial ainda dizia que a suite Chromium aguardava wiring. Os patches originais de cliente import/export e de cursor de despesas permanecem byte a byte intactos. A presente extensão acrescenta somente o selamento de `company_client_imports/index`, a navegação condicionada a `customers/view`, o bootstrap de teste e a suite HTTP complementar. Não abre importadores legados ou prefixos genéricos.
+Esta evidência complementa `client-import-operations.md`, cujo registro inicial ainda dizia que a suite Chromium aguardava wiring. Os patches originais de cliente import/export e de cursor de despesas permanecem byte a byte intactos. A presente extensão acrescenta somente o selamento de `clients/import`, a navegação oficial condicionada a `customers/view`, o bootstrap de teste e a suite HTTP complementar. Não abre importadores legados ou prefixos genéricos.
 
 ## Executado
 
@@ -22,3 +22,7 @@ A evidência estruturada está em `evidence/client-import-http-prototype.json`, 
 Aplicar o patch de cliente original, depois este wiring adicional; adicionar o ensure à migration oficial futura escolhida pela raiz e reexecutar o conjunto na composição final. Não reaproveitar a prova do marcador427 como tracking de434 ou de qualquer número ainda não gerado. O bootstrap CLI desta prova aceita somente o banco sintético `argws_upgrade_ci` no host/porta próprios127.0.0.1:48324; não é um provisionador de produção.
 
 Esta validação não utiliza SMTP, credencial bancária, provider ou produção. Não altera a pendência externa de autoridade de provisionamento de uma instalação ambígua e não representa homologação bancária.
+
+## Consolidação na aplicação oficial
+
+O fluxo usa agora `Clients::import` e a view original `admin/clients/import`. O controller `Company_client_imports`, sua view `admin/companies/client_imports` e o segundo token CSRF da página foram removidos. Preview, confirmação, retry e exportação continuam no writer transacional `CompanyClientImports`; a rota oficial exige o contexto, o token de documento e o CSRF nativo já usados pelos demais formulários de Clientes.

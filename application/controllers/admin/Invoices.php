@@ -1,9 +1,13 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH.'services/NativeCompanySpecializedOperations.php';
 
 class Invoices extends AdminController
 {
+    use NativeCompanySpecializedOperations;
+
+    public function standalone_billing() { $this->nativeInvoiceStandaloneBilling(); }
     public function __construct()
     {
         parent::__construct();
@@ -65,6 +69,11 @@ class Invoices extends AdminController
     /* List all recurring invoices */
     public function recurring($id = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyInvoiceRecurringHttp.php';
+            (new NativeCompanyInvoiceRecurringHttp($this))->index($id);
+            return;
+        }
         if (staff_cant('view', 'invoices')
             && staff_cant('view_own', 'invoices')
             && get_option('allow_staff_view_invoices_assigned') == '0') {
@@ -419,8 +428,13 @@ class Invoices extends AdminController
         redirect(admin_url('invoices/list_invoices/' . $id));
     }
 
-    public function copy($id)
+    public function copy($id = '')
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyInvoiceCopyHttp.php';
+            (new NativeCompanyInvoiceCopyHttp($this))->index($id);
+            return;
+        }
         if (!$id) {
             redirect(admin_url('invoices'));
         }
@@ -435,6 +449,17 @@ class Invoices extends AdminController
             set_alert('success', _l('invoice_copy_fail'));
         }
         redirect(admin_url('invoices/invoice/' . $id));
+    }
+
+    /** Private drafts retain their own identity until explicit issuance. */
+    public function drafts()
+    {
+        if (CompanyRequestScope::nativeFor($this)) {
+            require_once APPPATH.'services/NativeCompanyInvoiceDraftHttp.php';
+            (new NativeCompanyInvoiceDraftHttp($this))->index();
+            return;
+        }
+        show_404();
     }
 
     public function get_merge_data($id)
@@ -511,10 +536,12 @@ class Invoices extends AdminController
                     if($result['action']==='save_and_record_payment')$this->session->set_userdata('record_payment',true);
                     set_alert('success',_l('added_successfully',_l('invoice')));
                     redirect(admin_url('invoices/list_invoices/'.$result['result']['canonical_id']));
-                } elseif ($method==='GET') {
+                } elseif (in_array($method,['GET','HEAD'],true)) {
                     $query=$this->input->get(null,false)?:[];
                     if(array_diff(array_keys($query),['customer_id']))throw new DomainException('native_invoice_form_invalid');
-                    $this->load->view('admin/invoices/invoice',$form->createData($context->issuerId(),$context->staffId(),$query['customer_id']??null));
+                    $data=$form->createData($context->issuerId(),$context->staffId(),$query['customer_id']??null);
+                    if($method==='HEAD'){$this->output->set_output('');return;}
+                    $this->load->view('admin/invoices/invoice',$data);
                 } else { show_error('Método não permitido.',405); }
             } catch (DomainException $error) {
                 $key=$error->getMessage();$status=str_contains($key,'stale')||str_contains($key,'conflict')?409:(str_starts_with($key,'native_invoice_form_')?422:403);
@@ -638,6 +665,25 @@ class Invoices extends AdminController
     /* Get all invoice data used when user click on invoiec number in a datatable left side*/
     public function get_invoice_data_ajax($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                if(!in_array(strtoupper($this->input->method(true)),['GET','HEAD'],true))throw new DomainException('native_invoice_preview_method_denied');
+                require_once APPPATH.'services/NativeCompanyInvoicePreviewData.php';
+                $context=CompanyRequestScope::context();
+                $data=(new NativeCompanyInvoicePreviewData($this->db,db_prefix()))->presentation($context->issuerId(),$context->staffId(),$id);
+                $data+=['invoices_to_merge'=>[],'credits_available'=>0,'open_credits'=>[],'customer_currency'=>(object)['name'=>$data['invoice']->currency_name],
+                    'invoice_recurring_invoices'=>[],'members'=>[],'activity'=>[],'record_payment'=>false,'send_later'=>false];
+                if($this->session->has_userdata('record_payment')){$data['record_payment']=true;$this->session->unset_userdata('record_payment');}
+                elseif($this->session->has_userdata('send_later')){$this->session->unset_userdata('send_later');}
+                if(strtoupper($this->input->method(true))==='HEAD'){$this->output->set_output('');return;}
+                $this->load->view('admin/invoices/invoice_preview_template',$data);
+            } catch (DomainException $error) {
+                $reason=$error->getMessage();$status=$reason==='native_invoice_preview_method_denied'?405:(str_contains($reason,'changed')||str_contains($reason,'stale')?409:403);
+                show_error('Fatura indisponível ou solicitação não autorizada nesta empresa.',$status);
+            } catch (Throwable $error) { show_error('Não foi possível confirmar a visualização da fatura.',503); }
+            return;
+        }
         if (staff_cant('view', 'invoices')
             && staff_cant('view_own', 'invoices')
             && get_option('allow_staff_view_invoices_assigned') == '0') {
@@ -768,6 +814,20 @@ class Invoices extends AdminController
     /* Record new inoice payment view */
     public function record_invoice_payment_ajax($id)
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                if(!in_array(strtoupper($this->input->method(true)),['GET','HEAD'],true))throw new DomainException('company_payment_invalid_input');
+                require_once APPPATH.'services/NativeCompanyInvoicePaymentForm.php';require_once APPPATH.'services/CompanyEmailTemplates.php';
+                $context=CompanyRequestScope::context();$data=(new NativeCompanyInvoicePaymentForm($this->db,db_prefix()))->read($context->issuerId(),$context->staffId(),$id);
+                $payments=[];foreach($data['payments'] as $p)$payments[]=['paymentid'=>$p['id'],'invoiceid'=>$data['invoice']['invoice_id'],'name'=>$p['paymentmethod']?:$p['paymentmode'],'paymentmethod'=>'','transactionid'=>$p['transactionid'],'date'=>$p['date'],'amount'=>$p['effective_amount']];
+                $invoice=(object)['id'=>$data['invoice']['invoice_id'],'allowed_payment_modes'=>array_column($data['payment_modes'],'id'),'currency_name'=>$data['invoice']['currency'],'total_left_to_pay'=>$data['balance']['receivable'],'payments'=>$payments];
+                $template=CompanyEmailTemplates::findForIssuer($this->db,db_prefix(),$context->issuerId(),'invoice-payment-recorded','portuguese_br');
+                $this->load->view('admin/invoices/record_payment_template',['invoice'=>$invoice,'payments'=>$payments,'payment_modes'=>$data['payment_modes'],'native_payment_form_data'=>$data,'native_payment_email_enabled'=>$template&&(int)$template->active===1]);
+            }catch(DomainException $error){show_error('Pagamento indisponível ou não autorizado nesta empresa.',403);}
+            catch(Throwable $error){show_error('Não foi possível confirmar o formulário de pagamento.',503);}
+            return;
+        }
         if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $id)) { show_404(); }
         $this->load->model('payment_modes_model');
         $this->load->model('payments_model');
@@ -782,6 +842,23 @@ class Invoices extends AdminController
     /* This is where invoice payment record $_POST data is send */
     public function record_payment()
     {
+        if (CompanyRequestScope::nativeFor($this)) {
+            $this->output->set_header('Cache-Control: no-store');
+            try {
+                CompanyRequestScope::assertNativeMutation($this);
+                require_once APPPATH.'services/NativeCompanyInvoicePaymentAction.php';
+                $input=$this->input->post(null,false)?:[];unset($input['_company_context'],$input['_native_company_csrf']);
+                if(isset($this->security))unset($input[$this->security->get_csrf_token_name()]);
+                $context=CompanyRequestScope::context();$this->load->library('encryption');
+                $result=(new NativeCompanyInvoicePaymentAction($this->db,db_prefix()))->submit($context->issuerId(),$context->staffId(),$input,$this->config->base_url(),fn($value)=>$this->encryption->decrypt($value));
+                set_alert('success',_l('invoice_payment_recorded'));
+                if($result['email_status']==='pending')set_alert('warning','Pagamento registrado. Uma ou mais notificações por e-mail requerem revisão; outras podem já estar na fila.');
+                if($result['sms_status']==='unavailable')set_alert('warning','Pagamento registrado. SMS indisponível para esta empresa pela política atual de provedores.');
+                redirect(admin_url('invoices/list_invoices/'.$result['invoice_id']));
+            }catch(DomainException $error){$reason=$error->getMessage();$status=str_contains($reason,'csrf')||str_contains($reason,'context')?403:(str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'invalid')?422:403));show_error('Pagamento indisponível ou dados desatualizados nesta empresa.',$status);}
+            catch(Throwable $error){show_error('Não foi possível confirmar o pagamento.',503);}
+            return;
+        }
         if (staff_cant('create', 'payments')) {
             access_denied('Record Payment');
         }

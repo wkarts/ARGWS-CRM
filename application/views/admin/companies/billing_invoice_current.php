@@ -1,3 +1,1 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed');$currentInvoice=$billing['invoice_current']??null;if($currentInvoice){ ?>
-<section id="billing-invoice-current"><h4>Fatura atual</h4><dl><dt>Documento</dt><dd><?= $esc($currentInvoice['formatted_number']); ?></dd><dt>Estado atual da fatura</dt><dd id="billing-invoice-status"><?= $esc([1=>'Em aberto',2=>'Paga',3=>'Parcialmente paga',4=>'Vencida',5=>'Cancelada',6=>'Rascunho'][$currentInvoice['status']]??'Revisão necessária'); ?></dd><dt>Moeda e total atuais</dt><dd id="billing-invoice-current-total"><?= $esc($currentInvoice['currency'].' · '.$currentInvoice['total']); ?></dd></dl><p>O valor original da declaração permanece no histórico. Editar ou cancelar esta fatura não libera o trabalho ou a despesa para outra cobrança.</p></section>
-<?php } ?>
+<?php // Removed. Canonical native controller/view owns this flow.

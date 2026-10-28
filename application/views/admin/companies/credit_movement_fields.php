@@ -1,5 +1,1 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed');$movementField=$movementField??'move'; ?>
-<label for="<?= $esc($movementField); ?>-amount">Valor (decimal com ponto)</label><input id="<?= $esc($movementField); ?>-amount" class="form-control" inputmode="decimal" name="movement[amount]" pattern="[0-9]+(\.[0-9]{1,2})?" required>
-<label for="<?= $esc($movementField); ?>-date">Data da evidência</label><input id="<?= $esc($movementField); ?>-date" class="form-control" type="date" name="movement[date]" value="<?= date('Y-m-d'); ?>" max="<?= date('Y-m-d'); ?>" required>
-<label for="<?= $esc($movementField); ?>-reference">Referência única do comprovante</label><input id="<?= $esc($movementField); ?>-reference" class="form-control" name="movement[reference]" maxlength="191" required>
-<label for="<?= $esc($movementField); ?>-reason">Motivo e evidência</label><textarea id="<?= $esc($movementField); ?>-reason" class="form-control" name="movement[reason]" maxlength="4000" required></textarea>
+<?php // Removed. Native official forms own this component.

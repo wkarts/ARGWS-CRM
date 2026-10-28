@@ -41,6 +41,9 @@ final class NativeCompanyResourceReferences
     public static function transactionTables($db,string $prefix,string $type):array
     {
         if(in_array($type,['ticket','tickets'],true)){require_once __DIR__.'/NativeCompanyTicketRead.php';return(new NativeCompanyTicketRead($db,$prefix))->tables();}
+        if(in_array($type,['invoice','invoices'],true)){
+            $tables=['invoices'];if($db->table_exists($prefix.'company_invoice_drafts')){require_once __DIR__.'/CompanyInvoiceDrafts.php';$tables=array_merge($tables,(new CompanyInvoiceDrafts($db,$prefix))->tables());}return array_values(array_unique($tables));
+        }
         return [];
     }
 

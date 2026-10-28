@@ -9,8 +9,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / 'tests/fixtures/company_ui_surfaces.json'
 
+def active_surface(path):
+    source = path.read_text(errors='replace')
+    if not re.search(r'//\s*Removed\b', source):
+        return True
+    # The synchronizer can retain a path after its application surface was
+    # retired. Exclude only an inert, explicit tombstone; executable classes,
+    # actions, view dispatch or markup must remain inventoried and reviewed.
+    forbidden = r'\bclass\s+[A-Za-z_]|\bpublic\s+function\b|load->view\s*\(|<(?:section|div|form|table|button|input|select|textarea)\b'
+    assert not re.search(forbidden, source, re.I), f'{path}: removed marker hides an executable UI surface'
+    return False
+
 def discover_views(root):
-    return set().union(*(set(root.glob(pattern)) for pattern in (
+    return {path for path in set().union(*(set(root.glob(pattern)) for pattern in (
         'application/views/admin/companies/**/*.php',
         'application/views/admin/issuers/**/*.php',
         'application/views/admin/includes/company_*.php',
@@ -19,16 +30,16 @@ def discover_views(root):
         'application/views/admin/settings/includes/company*.php',
         'application/views/admin/emails/company_scoped.php',
         'modules/pige_bridge/views/**/*.php',
-    )))
+    ))) if active_surface(path)}
 
 def discover_controllers(root):
-    return set().union(*(set(root.glob(pattern)) for pattern in (
+    return {path for path in set().union(*(set(root.glob(pattern)) for pattern in (
         'application/controllers/admin/Company_*.php',
         'application/controllers/admin/Smtp_oauth_*.php',
         'application/controllers/admin/Issuers.php',
         'application/controllers/Argws_provisioning.php',
         'modules/pige_bridge/controllers/**/*.php',
-    )))
+    ))) if active_surface(path)}
 
 def assert_coverage(actual, recorded, label):
     assert len(recorded) == len(set(recorded)), f'{label}: duplicate entries'
@@ -103,6 +114,17 @@ def run():
             file.write_text('<?php // synthetic discovery fixture')
         found = {p.name for p in discover_views(synthetic)}
         assert found == {'presentation_layout.php', 'presentation_future.php'}, 'shared presentation discovery failed open'
+        tombstone = synthetic / 'application/views/admin/companies/retired.php'
+        tombstone.parent.mkdir(parents=True, exist_ok=True)
+        tombstone.write_text("<?php // Removed. Canonical route owns this surface.\n")
+        assert tombstone not in discover_views(synthetic), 'inert removed tombstone counted as an active view'
+        tombstone.write_text("<?php // Removed.\n?><form></form>\n")
+        try:
+            discover_views(synthetic)
+        except AssertionError:
+            pass
+        else:
+            raise AssertionError('removed marker hid executable view markup')
     # Regression check: an added secret/settings view cannot evade discovery/approval.
     try:
         assert_coverage({'existing.php', 'new_secret_settings.php'}, ['existing.php'], 'synthetic-new-view')

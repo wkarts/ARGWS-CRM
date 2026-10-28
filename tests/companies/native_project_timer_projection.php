@@ -13,7 +13,14 @@ essentialCheck($stopped['total_seconds']===(int)$raw['seconds']&&$stopped['timer
 essentialCheck($stopped['timers'][0]['task_id']===NativeCompanyResourceId::encode('company_task',$task),'Timer and task links carry source namespace, never raw owned IDs');
 essentialThrows(fn()=>$read->projectTimers($b,7,$saved,$clock+5),'native_resource_reference_denied','Other company cannot retrieve same numeric timer source');
 essentialThrows(fn()=>$read->projectTimers($a,92,$saved,$clock+5),'native_company_task_denied','Project-only create permission does not disclose task timing');
-$old=$db->query('SELECT seconds FROM '.$p.'company_task_timers WHERE issuer_id=? AND task_id=?',[$a,$task])->row_array()['seconds'];$db->query('UPDATE '.$p.'company_task_timers SET seconds=-1 WHERE issuer_id=? AND task_id=?',[$a,$task]);essentialThrows(fn()=>$read->projectTimers($a,7,$saved,$clock+5),'native_company_task_timer_invalid','Malformed duration is refused instead of showing zero');$db->query('UPDATE '.$p.'company_task_timers SET seconds=? WHERE issuer_id=? AND task_id=?',[$old,$a,$task]);
+$old=$db->query('SELECT seconds FROM '.$p.'company_task_timers WHERE issuer_id=? AND task_id=?',[$a,$task])->row_array()['seconds'];
+if($db->driver()==='mysql'){
+    try{$db->query('UPDATE '.$p.'company_task_timers SET seconds=-1 WHERE issuer_id=? AND task_id=?',[$a,$task]);throw new RuntimeException('negative duration accepted');}
+    catch(PDOException $error){essentialCheck((string)$error->getCode()==='22003','unsigned MySQL column rejects negative duration');}
+    essentialCheck((string)$db->query('SELECT seconds FROM '.$p.'company_task_timers WHERE issuer_id=? AND task_id=?',[$a,$task])->row_array()['seconds']===(string)$old,'rejected MySQL value leaves timer unchanged');
+}else{
+    $db->query('UPDATE '.$p.'company_task_timers SET seconds=-1 WHERE issuer_id=? AND task_id=?',[$a,$task]);essentialThrows(fn()=>$read->projectTimers($a,7,$saved,$clock+5),'native_company_task_timer_invalid','Malformed duration is refused instead of showing zero');$db->query('UPDATE '.$p.'company_task_timers SET seconds=? WHERE issuer_id=? AND task_id=?',[$old,$a,$task]);
+}
 echo 'Native project original time projection: '.$GLOBALS['essentialChecks']." cumulative checks passed.\n";
 require_once APPPATH.'services/NativeCompanyProjectHoursChart.php';
 require_once APPPATH.'helpers/func_helper.php';require_once APPPATH.'services/utilities/Date.php';require_once APPPATH.'services/utilities/Format.php';

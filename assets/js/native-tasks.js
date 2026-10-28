@@ -116,7 +116,7 @@ function task_form_handler(form) {
     url: formURL,
   })
     .done(function (response) {
-      response = JSON.parse(response);
+      response = typeof response === "string" ? JSON.parse(response) : response;
       if (response.success === true || response.success == "true") {
         alert_float("success", response.message);
       }
@@ -124,16 +124,16 @@ function task_form_handler(form) {
       if (window._timer_id) {
         requestGet(admin_url + "/tasks/get_task_by_id/" + response.id).done(
           function (response) {
-            $('[data-timer-id="' + window._timer_id + '"').click();
-            response = JSON.parse(response);
-            var option =
-              '<option value="' +
-              response.id +
-              '" title="' +
-              response.name +
-              '" selected>' +
-              response.name +
-              "</option>";
+            $('[data-timer-id]').filter(function () {
+              return $(this).attr('data-timer-id') === String(window._timer_id);
+            }).first().click();
+            response = typeof response === "string" ? JSON.parse(response) : response;
+            // Names and IDs are data, never markup or a selector fragment.
+            var option = document.createElement("option");
+            option.value = String(response.id);
+            option.title = String(response.name);
+            option.textContent = String(response.name);
+            option.selected = true;
             $("#timer_add_task_id").append(option);
             $("#timer_add_task_id")
               .trigger("change")
@@ -557,6 +557,29 @@ function native_task_template_request_key(element, fingerprint) {
     element.data("native-template-request", state);
   }
   return state.key;
+}
+
+// The official checklist consumes one revision at a time; retries retain their key.
+function native_task_checklist_command(container, action, fields) {
+  var task = container.attr('data-native-task-id');
+  var revision = container.attr('data-task-revision');
+  var checklistRevision = container.attr('data-checklist-revision');
+  if (!/^[1-9][0-9]*$/.test(task || '') || !/^[1-9][0-9]*$/.test(revision || '') || (action !== 'initialize' && !/^[1-9][0-9]*$/.test(checklistRevision || '')) || container.data('native-checklist-busy')) {
+    return $.Deferred().reject().promise();
+  }
+  var data = $.extend({}, fields || {}, {action: action, task_revision: revision});
+  if (action !== 'initialize') data.checklist_revision = checklistRevision;
+  data.request_key = native_task_template_request_key(container, JSON.stringify(data));
+  container.data('native-checklist-busy', true);
+  return $.ajax({url: admin_url + 'tasks/checklist_command/' + encodeURIComponent(task), type:'POST', dataType:'json', data:data}).then(function (response) {
+    if (!response || response.success !== true || !response.checklist || !/^[1-9][0-9]*$/.test(String(response.task_revision)) || !/^[1-9][0-9]*$/.test(String(response.checklist.revision))) return $.Deferred().reject().promise();
+    container.attr('data-task-revision', String(response.task_revision)).attr('data-checklist-revision', String(response.checklist.revision));
+    (response.checklist.items || []).forEach(function (item) {
+      container.find('.checklist').filter(function () { return $(this).attr('data-checklist-id') === String(item.id); }).attr('data-checklist-item-revision', String(item.revision));
+    });
+    container.trigger('native:checklist:updated', [response.checklist]);
+    return response;
+  }).always(function () { container.removeData('native-checklist-busy'); });
 }
 
 function remove_checklist_item_template(id) {

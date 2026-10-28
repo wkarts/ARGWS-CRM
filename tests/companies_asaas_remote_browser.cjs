@@ -15,7 +15,7 @@ try{
  const a=sql("SELECT id FROM tblissuers_registry WHERE tax_id='11222333000181'"),b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");let oldForm,originA;
  async function select(id){await page.goto(url+'/admin/');await selectCompanyOption(page, id);}
  for(const [issuer,letter]of[[a,'a'],[b,'b']]){
-  await select(issuer);const x=fixture(letter,'prepare_unpaid');await page.goto(url+'/admin/company_asaas');const before=sql('SELECT status FROM tblinvoices WHERE id='+x.invoice);
+  await select(issuer);const x=fixture(letter,'prepare_unpaid');await page.goto(url+'/admin/settings/asaas');const before=sql('SELECT status FROM tblinvoices WHERE id='+x.invoice);
   const form=page.locator('#asaas-origin-'+x.origin+' form').filter({has:page.locator('input[name=action][value=remote_remove]')});assert.equal(await form.count(),1,'actual pending origin offers scoped removal form');assert.equal(await form.locator('input[name=confirm][required]').count(),1);
   const fields=await hidden(form);assert.ok(fields._company_context&&Object.keys(fields).some(k=>k.includes('csrf')),'actual removal form contains company context and native CSRF');
   assert.equal(fixture(letter,'remote_remove',x.origin).state,'deleted','canonical CLI transport confirms provider deletion without real Asaas network');
@@ -25,7 +25,7 @@ try{
   assert.equal(await page.locator('#asaas-origin-'+x.origin+' input[name=action][value=remote_remove]').count(),0,'confirmed origin cannot submit another remote mutation');
   if(letter==='a'){oldForm={...fields,confirm:'1'};originA=x.origin;}
  }
- assert.equal((await context.request.post(url+'/admin/company_asaas',{form:oldForm})).status(),409,'stale company A remote form denied before effects');
- const ownToken=await hidden(page.locator('form').filter({has:page.locator('input[name=action][value=rotate]')}).first());assert.equal((await context.request.post(url+'/admin/company_asaas',{form:{...ownToken,action:'remote_remove',origin_id:String(originA),confirm:'1'}})).status(),422,'current B token cannot remove A origin');
+ assert.equal((await context.request.post(url+'/admin/settings/asaas',{form:oldForm})).status(),409,'stale company A remote form denied before effects');
+ const ownToken=await hidden(page.locator('form').filter({has:page.locator('input[name=action][value=rotate]')}).first());assert.equal((await context.request.post(url+'/admin/settings/asaas',{form:{...ownToken,action:'remote_remove',origin_id:String(originA),confirm:'1'}})).status(),422,'current B token cannot remove A origin');
  assert.equal(await page.locator('#asaas-origin-'+originA).count(),0,'B DOM contains no A origin');await page.screenshot({path:output+'/company-asaas-remote.png',fullPage:true});assert.deepEqual(errors,[]);console.log('Asaas150 actual A/B UI/controller scoped removal, CSRF/stale/isolation/local preservation/retry passed. Canonical GET/DELETE transport simulated through CLI; no external bank homologation.');
 }finally{await browser.close();}})().catch(e=>{console.error(e.message);process.exitCode=1;});

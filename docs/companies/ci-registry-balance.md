@@ -13,10 +13,11 @@ millisecond, original ZIP/JSONL SHA-256, and original shard total. Import valida
 checked index, argv, exit code, original assignment and totals against
 `/tmp/crm-final-timings.json`. No credentials, test output or account data is copied.
 
-The command manifest is unchanged: 470 PHP + 2 Python commands. The six PHP
-preflight and four PHP legacy-audit commands still execute once per PHP version
-outside this manifest, on shard 1. All eight independent DB/container jobs and
-fail-closed compatibility aggregate gates remain unchanged.
+The historical evidence remains immutable. The current command manifest contains
+470 PHP + 2 Python commands after one parallel-calendar check was retired. Its
+original timing row stays available only to verify the signed evidence and is not
+executed. All eight independent DB/container jobs and fail-closed compatibility
+aggregate gates remain unchanged.
 
 ## Deterministic allocation
 
@@ -43,15 +44,16 @@ remain confounders. There is no per-PHP schedule tuned to one favorable runner.
 
 | PHP | Observed round-robin shard seconds | Estimated replay of frozen balanced plan | Observed / estimated maximum |
 |---|---|---|---|
-| 8.1 | 1159.838 / 1313.273 / 738.688 / 1112.623 | 1076.416 / 1090.051 / 1077.735 / 1080.220 | 1313.273 / 1090.051 (-17.0%) |
-| 8.5 | 973.455 / 1001.017 / 1432.896 / 1245.002 | 1170.506 / 1144.818 / 1165.540 / 1171.506 | 1432.896 / 1171.506 (-18.2%) |
+| 8.1 | 1159.838 / 1313.273 / 738.688 / 1112.623 | 1076.416 / 1082.531 / 1077.735 / 1080.220 | 1313.273 / 1082.531 (-17.6%) |
+| 8.5 | 973.455 / 1001.017 / 1432.896 / 1245.002 | 1170.506 / 1131.005 / 1165.540 / 1171.506 | 1432.896 / 1171.506 (-18.2%) |
 
 Across both versions the largest command sum would fall from 23m52.896s to
 19m31.506s under unchanged per-command runtimes: **4m21.390s estimated**, not
 measured. Setup, queue, pulls, smoke, preflight, external audit and upload are not
-included. Shard 1's extra checks can affect the true critical path. Total work and
-summed command duration are unchanged. Fewer GitHub concurrency slots can also
-reduce or erase wall-clock benefit.
+included. Shard 1's extra checks can affect the true critical path. The only
+removed work is the retired parallel-calendar controller check; all retained
+commands preserve their historical shard. Fewer GitHub concurrency slots can
+also reduce or erase wall-clock benefit.
 
 A sensitivity replay using only 8.1 weights gives an 8.5 maximum of 1236.258s;
 using only 8.5 weights gives an 8.1 maximum of 1089.115s. These same-run cross-version
@@ -152,34 +154,40 @@ Do not attribute the full5m49s observed reduction to balancing, retrain from thi
 - 8.1/1: `12549079161` — `9e884eed1dbf344eb292e65e56a7a59b6f620ef92b5173f7331df2b0a65d3eb2`
 - 8.1/2: `12548973524` — `5979012121be9a93b2eb8d33ca2a5a958c7bcabd312ed5096eb1268c1d0040f0`
 
-## Explicit extension after original-administrator coverage (4.7.3)
+## Explicit extension and retired parallel calendar
 
 Commit `aa01d59e` prepends `php tests/issuers_original_administrator.php` to the
 manifest. It has **no paired timing observation** in the frozen evidence. The
 explicit `company-registry-unmeasured.json` ledger keeps this fact visible; the
 planner assigns unmeasured additions by lowest command count, then shard number,
-without a fabricated zero duration or retraining the LPT model. With the original
-118/118/118/118 counts, this command goes to shard1 on both PHP versions.
+without a fabricated zero duration or retraining the LPT model.
 
-The historical 472-command manifest hash and all 472 original assignments remain
-verified unchanged (the command indices shift by one). The new manifest contains
-473 argv = 471 PHP + 2 Python, split 119/118/118/118. Together with the ten existing
-external PHP preflight/audit commands, this is **481 PHP commands per version**,
-retaining all 480 previous ones. Any additional short Efí audit commands must be
-accounted for separately, not silently included in these frozen counts.
+The parallel `tests/settings/calendar_controller.php` check is now retired because
+the product route moved to the official Settings and Utilities flows. The baseline
+records that argv at historical measured index 406, reconstructs the original
+472-command evidence for hash/ZIP verification, and removes it before producing
+the current assignments. Its former shard-2 capacity receives the unmeasured
+original-administrator command. Every retained historical command therefore keeps
+its original shard and the current 472 argv split exactly 118/118/118/118.
+
+The current manifest contains 470 PHP + 2 Python commands. Together with 29 PHP
+preflight/audit commands outside the manifest, it executes 499 unique PHP commands
+per version. The paired timing arrays, original argv hash and eight ZIP/JSONL
+digests remain unchanged; the baseline only gained an explicit retirement ledger.
 
 New canonical manifest hash:
-`c016827e69a73fe5a1f09aa14b4f24bcb74d9df40e6d5b5db697e013c25bb413`.
-The original baseline JSON is untouched; artifact verification still compares its
-944 historical records against the exact historical manifest. Replay output is
-explicitly partial and excludes the unmeasured command: it is **not** a predicted
-new total. All previous measured-run receipts above remain historical evidence,
-not claims that the newly expanded suite has already run.
+`bb4d99bc6a7363393204bf3099f1079fc95b78af17cef87dc2ed81b95c0d1fbc`.
+Artifact verification still compares all 944 historical records against the exact
+historical manifest. Replay output is explicitly partial and excludes both the
+unmeasured and retired commands: it is **not** a predicted new total. All previous
+measured-run receipts above remain historical evidence, not claims that the
+current suite has already run.
 
 `--check` reconstructs the extension and fails closed on an undeclared command,
 missing addition, changed argv/order, altered baseline, or stale assignment.
-Runner capacity validation now permits the necessary one-command remainder while
-requiring all four shards to remain count-balanced. The eight isolated databases,
+Runner capacity validation requires all four current shards to remain exactly
+count-balanced. The eight isolated databases,
 PHP versions, execution order within each shard, and required aggregate gates are
-unchanged. Local validation: eleven Python tests and planner `--check`; actual
+unchanged. Local validation includes the registry planner unit suite and planner
+`--check`; actual
 execution of the expanded PHP suite remains a CI responsibility.

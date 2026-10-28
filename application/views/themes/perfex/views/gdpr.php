@@ -40,13 +40,13 @@
         </div>
     </div>
     <?php } ?>
-    <?php if ((!empty($native_portal_privacy)?$native_privacy_options['enable_gdpr']==='1':is_gdpr()) && (!empty($native_portal_privacy)?$native_privacy_options['gdpr_data_portability_contacts']:get_option('gdpr_data_portability_contacts')) == '1') { ?>
+    <?php if (empty($native_portal_privacy) && is_gdpr() && get_option('gdpr_data_portability_contacts') == '1') { ?>
     <div class="col-md-4">
         <div class="gdpr-right">
             <h3 class="gdpr-right-heading">
                 <?= _l('gdpr_right_to_data_portability'); ?>
             </h3>
-            <a href="<?= (!empty($native_portal_privacy)?NativePortalPresentation::url('clients/export'):site_url('clients/export')); ?>"
+            <a href="<?= site_url('clients/export'); ?>"
                 class="btn btn-primary"><?= _l('export_my_data'); ?></a>
         </div>
     </div>

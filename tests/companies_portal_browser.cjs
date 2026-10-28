@@ -47,7 +47,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
   try {
     await login(page,'admin-ci@example.invalid',process.env.ISSUERS_BROWSER_PASSWORD);
     const b=sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
-    await page.goto(url+'/admin/company_onboarding');
+    await page.goto(url+'/admin/issuers/onboarding');
     await page.locator('#company-create-modal').waitFor({state:'visible'});
     const wizard = page.frame({name:'company-create-frame'});
     await wizard.locator('section form button[type=submit]').waitFor();
@@ -119,8 +119,8 @@ async function next(page) { await navigate(page, page.locator('section form butt
     const clients={};
     for(const [id,letter] of [[a,'a'],[b,'b']]){
       await configure(id,letter);
-      await page.goto(url+'/admin/company_clients');await page.locator('#new_company').fill('Synthetic portal client '+letter);
-      await navigate(page,page.locator('form').filter({has:page.locator('#new_company')}).locator('button[type=submit]'));
+      await page.goto(url+'/admin/clients/client?source=company');await page.locator('input[name="company"]').fill('Synthetic portal client '+letter);
+      await navigate(page,page.locator('button.only-save'));
       clients[id]=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client "+letter+"'");
       await page.locator('#contact-firstname').fill('Synthetic '+letter);await page.locator('#contact-lastname').fill('Portal');await page.locator('#contact-email').fill('same-portal@example.invalid');
       await navigate(page,page.locator('form').filter({has:page.locator('#contact-email')}).locator('button[type=submit]'));
@@ -159,7 +159,7 @@ async function next(page) { await navigate(page, page.locator('section form butt
     const replayResponse=await Promise.all([p.waitForNavigation(),p.locator('#portal-reset button[type=submit]').click()]);assert.equal(replayResponse[0].status(),422);
     await p.goto(url+'/company_portal/index/'+a);await p.locator('#login-email').fill('same-portal@example.invalid');await p.locator('#login-password').fill('synthetic-password-b');
     const wrong=await Promise.all([p.waitForNavigation(),p.locator('#portal-login button[type=submit]').click()]);assert.equal(wrong[0].status(),422,'equal email never selects other company password');
-    await select(a);await page.goto(url+'/admin/company_clients?client='+clients[a]);
+    await select(a);await page.goto(url+'/admin/clients/client/'+clients[a]);
     const contact=sql('SELECT id FROM tblcontacts WHERE userid='+clients[a]);
     await page.locator('#contact-'+contact+'-email').fill('changed-portal@example.invalid');
     await navigate(page,page.locator('form').filter({has:page.locator('#contact-'+contact+'-email')}).locator('button[type=submit]'));

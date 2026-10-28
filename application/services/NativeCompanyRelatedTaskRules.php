@@ -28,7 +28,14 @@ final class NativeCompanyRelatedTaskRules
         foreach($b['rules']as$r){$id=$r['id'];if(!array_key_exists($id,$facts))throw new DomainException('native_task_filter_fact_required');$actual=$facts[$id];$value=$r['value'];$op=$r['operator'];
             if($r['type']==='TextRule'){$actual=mb_strtolower((string)$actual);$value=mb_strtolower($value);$yes=match($op){'equal','not_equal'=>$actual===$value,'begins_with','not_begins_with'=>str_starts_with($actual,$value),'contains','not_contains'=>str_contains($actual,$value),'ends_with','not_ends_with'=>str_ends_with($actual,$value)};$yes=str_starts_with($op,'not_')?!$yes:$yes;}
             elseif($r['type']==='MultiSelectRule'){$values=is_array($actual)?array_map('strval',$actual):[(string)$actual];$yes=(bool)array_intersect($values,$value);if($op==='not_in')$yes=!$yes;}
-            elseif($r['type']==='BooleanRule'&&in_array($id,['todays_tasks','duedate_passed','upcoming_tasks'],true)){if(!isset($facts['status'])||!array_key_exists('startdate',$facts)||!array_key_exists('duedate',$facts))throw new DomainException('native_task_filter_fact_required');$positive=($value==='1')!==($op==='not_equal');if($id==='upcoming_tasks')$yes=$facts['status']!==5&&$facts['duedate']!==null&&($positive?$facts['duedate']<$today:$facts['duedate']>$today);else$yes=$facts['status']!==5&&($positive?$facts['startdate']===$today:$facts['startdate']!==$today);}
+            elseif($r['type']==='BooleanRule'&&in_array($id,['todays_tasks','duedate_passed','upcoming_tasks'],true)){
+                if(!isset($facts['status'])||!array_key_exists('startdate',$facts)||!array_key_exists('duedate',$facts))throw new DomainException('native_task_filter_fact_required');
+                $positive=($value==='1')!==($op==='not_equal');
+                $date=$id==='duedate_passed'?$facts['duedate']:$facts['startdate'];
+                $matches=$date!==null&&match($id){'todays_tasks'=>$date===$today,'duedate_passed'=>$date<$today,'upcoming_tasks'=>$date>$today};
+                // Match SQL NULL semantics and keep completed tasks out of these native filters.
+                $yes=$facts['status']!==5&&$date!==null&&($positive?$matches:!$matches);
+            }
             elseif($r['type']==='BooleanRule'){if(!is_bool($actual)&&$actual!==null)throw new DomainException('native_task_filter_fact_required');$yes=$actual!==null&&$actual===($value==='1');if($op==='not_equal')$yes=$actual!==null&&!$yes;}
             else{
                 if(in_array($op,['is_empty','is_not_empty'],true))$yes=$op==='is_empty'?$actual===null:$actual!==null;

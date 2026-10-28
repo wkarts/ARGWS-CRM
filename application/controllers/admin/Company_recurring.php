@@ -1,19 +1,2 @@
 <?php
-
-defined('BASEPATH') or exit('No direct script access allowed');
-class Company_recurring extends AdminController
-{
-    public function index()
-    {
-        if(!CompanyRequestScope::sealedFor($this)){show_error('Contexto indisponível.',503);return;}require_once APPPATH.'services/CompanyRecurring.php';require_once APPPATH.'services/CompanyClients.php';
-        $ctx=CompanyRequestScope::context();$issuer=$ctx->issuerId();$actor=$ctx->staffId();$acl=new IssuerResourceAccess($this->db,db_prefix());if(!$acl->can($issuer,$actor,'invoices','view')){show_error('Recorrência indisponível nesta empresa.',403);return;}$this->output->set_header('Cache-Control: no-store');$s=new CompanyRecurring($this->db,db_prefix());$csrf=$this->session->userdata('company_recurring_csrf');if(!is_string($csrf)||strlen($csrf)!==64){$csrf=bin2hex(random_bytes(32));$this->session->set_userdata('company_recurring_csrf',$csrf);}$error=null;$detail=null;$directory=[];$clients=[];$currencies=[];$canManage=$acl->can($issuer,$actor,'invoices','create')&&$acl->can($issuer,$actor,'invoices','edit')&&$acl->can($issuer,$actor,'customers','view');
-        try{
-            if($this->input->method(true)==='POST'){$token=$this->input->post('company_recurring_csrf',false);if(!is_string($token)||!hash_equals($csrf,$token)){show_error('Recarregue antes de salvar.',403);return;}if(!$canManage)throw new DomainException('company_sales_denied');$action=$this->input->post('action',false);$id=$this->input->post('schedule_id',false);
-                if($action==='create'){$input=$this->input->post('invoice',false);$key=$this->input->post('request_key',false);$months=$this->input->post('interval_months',false);$runs=$this->input->post('max_runs',false);if(!is_array($input)||!is_string($key)||!is_string($months)||!ctype_digit($months)||!is_string($runs)||!ctype_digit($runs)||strlen($months)>2||strlen($runs)>3)throw new DomainException('company_sales_invalid');$id=$s->create($issuer,$actor,$input,(int)$months,(int)$runs,$key);}
-                elseif(in_array($action,['pause','resume'],true))$s->pause($issuer,$actor,$id,$action==='pause');elseif($action==='run'){$r=$s->document($issuer,$actor,$id);if((int)$r['actor_id']!==$actor)throw new DomainException('company_sales_denied');$s->run($issuer,$actor,$id,date('Y-m-d'));}else throw new DomainException('company_sales_invalid');CompanyRequestScope::invalidateCaches($this);redirect(CompanyRequestScope::adminUrl($this,'company_recurring?schedule='.(int)$id),'location',303);return;
-            }elseif(!in_array($this->input->method(true),['GET','HEAD'],true)){show_error('Método não permitido.',405);return;}
-            $id=$this->input->get('schedule',false);if($id!==null)$detail=$s->document($issuer,$actor,$id);$directory=$s->page($issuer,$actor);if($canManage){$clients=(new CompanyClients($this->db,db_prefix()))->page($issuer,$actor,0,100)['items'];$currencies=(new CompanyInvoices($this->db,db_prefix()))->currencies($issuer,$actor);}
-        }catch(DomainException $e){if(str_contains($e->getMessage(),'denied')){show_error('Recorrência indisponível nesta empresa.',403);return;}$this->output->set_status_header(str_contains($e->getMessage(),'conflict')?409:422);$error=$e->getMessage()==='company_sales_origin_changed'?'A origem mudou desde o agendamento. A emissão foi bloqueada. Pause a série e crie outra após revisar identidade, cliente e configurações.':'Confira campos e estado. Uma ocorrência em processamento deve ser retomada antes de pausar a série.';}catch(Throwable $e){log_message('error','Company recurrence operation unconfirmed; no document values logged.');$this->output->set_status_header(503);$error='Operação não confirmada. Reabra a série e retome a ocorrência; a chave de emissão foi preservada.';}
-        $this->load->view('admin/companies/recurring',['issuer'=>$issuer,'actor'=>$actor,'detail'=>$detail,'directory'=>$directory,'clients'=>$clients,'currencies'=>$currencies,'error'=>$error,'company_recurring_csrf'=>$csrf,'can_manage'=>$canManage]);
-    }
-}
+// Removed. Canonical route /admin/invoices/recurring owns invoice recurrence.

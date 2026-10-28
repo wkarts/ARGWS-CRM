@@ -30,6 +30,15 @@
                     </a>
                 </li>
                 <?php } ?>
+                <?php if (!empty($native_portal) && !empty($native_portal_identity)) { ?>
+                <li class="customers-nav-item-logout">
+                    <?= form_open(NativePortalPresentation::url('authentication/logout'), ['class'=>'navbar-form']); ?>
+                    <input type="hidden" name="issuer_id" value="<?= (int)$native_portal_issuer; ?>">
+                    <input type="hidden" name="_native_portal_csrf" value="<?= e($native_portal_csrf); ?>">
+                    <button type="submit" class="btn btn-default"><?= e(_l('clients_nav_logout')); ?></button>
+                    <?= form_close(); ?>
+                </li>
+                <?php } ?>
                 <?php if(empty($native_portal))hooks()->do_action('customers_navigation_end'); ?>
                 <?php if (empty($native_portal) && is_client_logged_in()) { ?>
                 <li class="dropdown customers-nav-item-profile">

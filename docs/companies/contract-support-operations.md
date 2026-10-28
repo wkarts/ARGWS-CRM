@@ -1,8 +1,10 @@
 # Contratos e suporte por empresa
 
-As rotas `admin/company_contracts` e `admin/company_tickets` usam o renderer selado,
-serviços próprios e tabelas aditivas. Os controllers e modelos genéricos legados
-continuam fechados para empresas secundárias. Nenhum registro NULL é adotado.
+A rota oficial `admin/contracts` usa o renderer selado para registros próprios da
+empresa, enquanto a empresa principal conserva os contratos históricos no mesmo
+controller. IDs canônicos tipados separam os dois espaços sem colisão. A rota de
+suporte ainda usa `admin/company_tickets`. Os modelos genéricos legados continuam
+fechados para empresas secundárias. Nenhum registro NULL é adotado.
 
 ## Contratos
 
@@ -63,6 +65,12 @@ tabelas e seu histórico; não apagar dados para voltar código.
 - `tests/companies/contracts_controller.php`: controllers e templates PHP reais,
   POST/GET, CSRF, contexto, estado/revisão, PDF real/auditoria antes de bytes e XSS;
   framework HTTP/session substituído para teste de integração local.
+- `tests/companies/contracts_primary_union.php`: a empresa principal lista os
+  contratos próprios junto da tela histórica; IDs numéricos colidentes continuam
+  abrindo o contrato histórico e o ID tipado abre o registro próprio.
+- `tests/companies/native_portal_contracts_controller.php`: rota oficial do portal,
+  lista/detalhe, PDF, anexo publicado, conversa, permissão do contato e isolamento
+  entre empresas sobre SQLite real.
 - `tests/companies/contracts_concurrency.php`: MySQL/MariaDB descartável com dois
   workers observados no lock; recibo igual converge, revisão velha perde e revogação
   durante espera impede ativação ou resposta. SQLite não prova essas propriedades.
@@ -71,7 +79,13 @@ tabelas e seu histórico; não apagar dados para voltar código.
   suporte→mensagem→resolver→reabrir→responder→encerrar, stale e IDs cruzados.
 
 Ainda faltam: assinatura/aceite, modelos e renovação automática de contratos,
-notificações/SMTP desses domínios, escrita em contratos pelo cliente no portal, abertura por e-mail, automações/SLA, importação/exportação. A API operacional própria já fornece CRUD e ações explícitas destes domínios; os arquivos privados recebem scopes opt-in próprios no incremento429, descritos em `operations-subresource-api.md`. O portal operacional está descrito em `operational-portal.md`.
+notificações/SMTP desses domínios, edição do documento pelo cliente, abertura por
+e-mail, automações/SLA e importação/exportação. O portal oficial permite ao contato
+autorizado consultar o contrato publicado, baixar PDF e anexos publicados e manter
+a conversa vinculada. A API operacional própria já fornece CRUD e ações explícitas
+destes domínios; os arquivos privados recebem scopes opt-in próprios no incremento
+429, descritos em `operations-subresource-api.md`. O portal operacional está
+descrito em `operational-portal.md`.
 São funcionalidades técnicas pendentes, não homologação externa. Nenhum envio
 externo, credencial real, assinatura ou acesso de produção é usado pelos testes.
 

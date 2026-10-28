@@ -13,7 +13,13 @@ final class NativePortalCustomerFiles
  public function __construct(private$db,private string$p,private CompanyPortal$portal,private array$binding,private int$issuer){if(!preg_match('/^[A-Za-z0-9_]+$/D',$p))throw new InvalidArgumentException('Invalid prefix');}
  public function tables():array{return['issuers_lock','issuers_registry','issuers_installation_identity','issuers_clients','clients','contacts','files','shared_customer_files','company_customer_file_contents','issuers_audit','options'];}
  private function rows(string$sql,array$args=[]):array{return IssuerStorage::query($this->db,$sql,$args)->result_array();}
- private function identity():array{$who=$this->portal->invoiceIdentity($this->binding,$this->issuer,true);if(!$who)throw new DomainException('native_portal_files_denied');return$who;}
+ private function identity():array{
+  $who=$this->portal->invoiceIdentity($this->binding,$this->issuer,true);if(!$who)throw new DomainException('native_portal_files_denied');
+  if(!$this->db->field_exists('email_verified_at',$this->p.'contacts'))throw new RuntimeException('issuer_portal_verification_schema_required');
+  $verified=$this->rows('SELECT email_verified_at FROM '.$this->p.'contacts WHERE id=? AND userid=?',[$who['contact_id'],$who['client_id']]);
+  if(count($verified)!==1||$verified[0]['email_verified_at']===null)throw new DomainException('native_portal_verification_required');
+  if($this->portal->invoiceIdentity($this->binding,$this->issuer,true)!==$who)throw new DomainException('native_portal_files_denied');return$who;
+ }
  private function policy():array{
   $this->identity();$store=new CompanySettingsStorage($this->db,$this->p);$out=[];
   foreach(['only_own_files_contacts'=>'0','allow_contact_to_delete_files'=>'0','allowed_files'=>NativeCompanyUploadPreferences::defaultValue('allowed_files'),'enable_google_picker'=>'0','google_api_key'=>'','google_client_id'=>'','dropbox_app_key'=>'']as$key=>$default)$out[$key]=$store->exists($this->issuer,$key)?$store->get($this->issuer,$key):$default;

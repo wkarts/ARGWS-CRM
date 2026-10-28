@@ -76,7 +76,6 @@ class CI_Controller
 }
 require APPPATH . 'core/App_Controller.php';
 require APPPATH . 'core/AdminController.php';
-require APPPATH . 'controllers/admin/Company_selection.php';
 #[AllowDynamicProperties]
 class CI_Model { public function __construct() {} public function __get($key) { return $GLOBALS['CI']->{$key}; } }
 require APPPATH . 'core/App_Model.php';
@@ -152,6 +151,28 @@ essentialCheck($context->issuerId() === 41, 'selection never mutates in-flight s
 $contextB = new CompanyContext($db, $p, $s, 8); essentialCheck($contextB->resolve() === 54, 'next request resolves B');
 expectContext(fn() => $contextB->assertToken($tokenA), 'company_context_mismatch');
 $tokenB = $contextB->token(); $contextB->assertToken($tokenB);
+// The original public Download controller must resolve the selected staff
+// company before loading the scoped file reader, without intercepting the
+// principal legacy route or an anonymous/customer session.
+$downloadUri=new class {function segment($number){return [1=>'download',2=>'file',3=>'client',4=>str_repeat('a',32)][$number]??null;}};
+foreach(['GET','HEAD'] as $verb){
+    $ci=contextEnvironment($f,$s,'download','file',$verb);$ci->router->directory='';$ci->uri=$downloadUri;
+    CompanyRequestScope::beforeHydration($ci);
+    essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===54,'original customer file download resolves secondary staff issuer for '.$verb);
+}
+$ci=contextEnvironment($f,$s,'download','file','POST');$ci->router->directory='';$ci->uri=$downloadUri;expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),405);
+$ci=contextEnvironment($f,$s,'download','file','GET');$ci->router->directory='';$ci->uri=$downloadUri;$ci->input->headers['X-Company-Context']=$tokenA;expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),409);
+$principalSession=new ContextSession();$principalSession->data=['staff_user_id'=>8,'staff_logged_in'=>true];
+$ci=contextEnvironment($f,$principalSession,'download','file','GET');$ci->router->directory='';$ci->uri=$downloadUri;CompanyRequestScope::beforeHydration($ci);
+essentialCheck(!CompanyRequestScope::nativeFor($ci)&&!CompanyRequestScope::isolated(),'principal download keeps original legacy hydration');
+$anonymous=new ContextSession();$ci=contextEnvironment($f,$anonymous,'download','file','GET');$ci->router->directory='';$ci->uri=$downloadUri;CompanyRequestScope::beforeHydration($ci);
+essentialCheck(!CompanyRequestScope::nativeFor($ci)&&!CompanyRequestScope::isolated(),'non-staff download is not claimed by staff company scope');
+$ci=contextEnvironment($f,$anonymous,'download','file','GET');$ci->router->directory='';$ci->uri=$downloadUri;CompanyRequestScope::bootstrap($ci);
+essentialCheck($ci->load->trace===['database','driver:session']&&!CompanyRequestScope::isolated(),'pre-hydration bootstrap leaves anonymous legacy download unscoped and supports database-backed sessions');
+$ci=contextEnvironment($f,$s,'download','file','GET');$ci->router->directory='';$ci->uri=$downloadUri;CompanyRequestScope::bootstrap($ci);
+essentialCheck(CompanyRequestScope::nativeFor($ci)&&in_array('database',$ci->load->trace,true),'pre-hydration bootstrap seals secondary staff before original download controller');
+$ci=contextEnvironment($f,$s,'download','file','GET');$ci->router->directory='';$ci->uri=new class {function segment($number){return [1=>'download',2=>'file',3=>'contract'][$number]??null;}};
+essentialCheck(!CompanyRequestScope::interactive($ci),'other public download categories retain their original bootstrap policy');
 $forged = new CompanyContext($db, $p, new ContextSession(), 1);
 expectContext(fn() => $forged->resolve(), 'company_context_selection_required');
 essentialCheck($forged->resolve(true) === null, 'forged default and ordinary admin cannot imply primary/master');
@@ -167,9 +188,9 @@ $recovery->select(54, $recovery->csrf(), $recovery->token());
 // Execute the one technical switch controller and real autoload.php, with CI I/O doubles only.
 $db->queries = []; hooks()->trace = [];
 $selectorContext = new CompanyContext($db, $p, $s, 8); $selectorContext->resolve();
-$ci = contextEnvironment($f, $s, 'company_selection', 'select', 'POST');
+$ci = contextEnvironment($f, $s, 'issuers', 'select', 'POST');
 $_POST = ['company_id'=>'54','_company_context'=>$selectorContext->token(),'_company_switch_csrf'=>$selectorContext->csrf()];
-$controller = new Company_selection();
+$controller = new Issuers();
 essentialCheck(CompanyRequestScope::sealedFor($controller), 'isolated attestation is bound to the real controller object');
 essentialCheck(CompanyRequestScope::isolated()&&!CompanyRequestScope::nativeFor($controller), 'technical selector remains separate from company application routes');
 essentialCheck(!in_array('library:user_agent',$controller->load->trace,true),'technical selector does not hydrate a presentation-only browser helper');
@@ -189,10 +210,21 @@ essentialCheck(!str_contains(form_open('https://crm.example.test/admin/read', ['
 
 $tokenB = CompanyRequestScope::token(); $csrfB = CompanyRequestScope::context()->csrf();
 CompanyRequestScope::finish(); essentialCheck(!CompanySettingsRuntime::active(), 'request finalization clears settings runtime'); CompanyRequestScope::finish();
+// Real pre-hydration scope with CI/session doubles; the image controller itself
+// is covered separately with the actual owner-bound reader and stored PNG bytes.
+foreach(['GET','HEAD'] as $verb){
+    $ci=contextEnvironment($f,$s,'clients','contact_profile_image',$verb);
+    CompanyRequestScope::beforeHydration($ci);
+    essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===54,'secondary private avatar enters exact sealed native action for '.$verb);
+    essentialCheck(!CompanyRequestScope::nativeRouteAllowed($ci,'clients/contact_profile_image'),'private avatar is never a navigation destination');
+    CompanyRequestScope::finish();
+}
+$ci=contextEnvironment($f,$s,'clients','contact_profile_image','POST');$_POST=['_company_context'=>$tokenB];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
+$ci=contextEnvironment($f,$s,'clients','contact_profile_image','GET');$ci->input->headers['X-Company-Context']=$tokenA;expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),409);
 $ci = contextEnvironment($f, $s, 'company_context', 'index', 'GET');
 expectStatus(fn() => CompanyRequestScope::beforeHydration($ci), 403);
 essentialCheck(!file_exists(APPPATH . 'controllers/admin/Company_context.php'), 'parallel company_context controller is removed');
-essentialCheck(!str_contains(file_get_contents(APPPATH . 'views/admin/companies/layout_head.php'), "'company_context'")
+essentialCheck(!str_contains(file_get_contents(APPPATH . 'views/admin/includes/native_company_layout_head.php'), "'company_context'")
     && !str_contains(file_get_contents(APPPATH . 'views/admin/issuers/certificate_link.php'), "'company_context'"), 'active presentation links no longer target the retired company_context route');
 $ci = contextEnvironment($f, $s, 'invoices', 'invoice');
 expectStatus(fn() => $ci->load->initialize(), 403);
@@ -274,22 +306,32 @@ $ci = contextEnvironment($f, $s, 'settings', 'email_test'); expectStatus(fn() =>
 // Group-level rejection uses the actual Settings controller fixture in
 // tests/companies/native_settings_controller.php; this bootstrap fixture proves
 // route admission and should not hydrate a second presentation shell.
-$ci = contextEnvironment($f, $s, 'company_selection', 'select', 'POST'); $_POST = ['company_id' => '41', '_company_context' => $tokenA, '_company_switch_csrf' => $csrfB, 'amount' => '9999'];
-expectStatus(fn() => new Company_selection(), 409);
+$ci = contextEnvironment($f, $s, 'issuers', 'select', 'POST'); $_POST = ['company_id' => '41', '_company_context' => $tokenA, '_company_switch_csrf' => $csrfB, 'amount' => '9999'];
+expectStatus(fn() => new Issuers(), 409);
 essentialCheck($s->data[CompanyContext::SELECTION]['issuer_id'] === 54, 'stale A tab POST cannot switch/mutate B');
-$ci = contextEnvironment($f, $s, 'company_selection', 'select', 'POST'); $_POST = ['company_id' => '41', '_company_context' => $tokenB, '_company_switch_csrf' => $csrfB, 'return_url' => 'https://evil.invalid/invoices', 'amount' => '9999'];
-$controller = new Company_selection(); essentialCheck(!isset($_POST['_company_context']), 'native selection strips context metadata before its action reads input');
+$ci = contextEnvironment($f, $s, 'issuers', 'select', 'POST'); $_POST = ['company_id' => '41', '_company_context' => $tokenB, '_company_switch_csrf' => $csrfB, 'return_url' => 'https://evil.invalid/invoices', 'amount' => '9999'];
+$controller = new Issuers(); essentialCheck(!isset($_POST['_company_context']), 'native selection strips context metadata before its action reads input');
 $controller->select(); essentialCheck(end($GLOBALS['redirects']) === ['https://crm.example.test/admin/', 'location', 303], 'native switch uses a fixed same-CRM GET redirect, ignoring original POST and return_url');
 essentialCheck(!CompanySettingsRuntime::active(), 'switch finalizes old runtime without entering target in same request');
 $nativeA=new CompanyContext($db,$p,$s,8);essentialCheck($nativeA->resolve()===41,'native switch is active only on the redirected request');
-$ci=contextEnvironment($f,$s,'company_selection','select','POST');$_POST=['company_id'=>'54','_company_context'=>$nativeA->token(),'_company_switch_csrf'=>'forged'];
-expectStatus(fn()=>(new Company_selection())->select(),403);
-$ci=contextEnvironment($f,$s,'company_selection','select','POST');$_POST=['company_id'=>'55','_company_context'=>$nativeA->token(),'_company_switch_csrf'=>$nativeA->csrf()];
-expectStatus(fn()=>(new Company_selection())->select(),403);
-$ci=contextEnvironment($f,$s,'company_selection','select','POST');$_POST=['company_id'=>'54','_company_context'=>$nativeA->token(),'_company_switch_csrf'=>$nativeA->csrf()];
-(new Company_selection())->select();essentialCheck(end($GLOBALS['redirects'])===['https://crm.example.test/admin/','location',303],'repeated native switch returns to the same dashboard after a safe 303');
+$ci=contextEnvironment($f,$s,'issuers','select','POST');$_POST=['company_id'=>'54','_company_context'=>$nativeA->token(),'_company_switch_csrf'=>'forged'];
+expectStatus(fn()=>(new Issuers())->select(),403);
+$ci=contextEnvironment($f,$s,'issuers','select','POST');$_POST=['company_id'=>'55','_company_context'=>$nativeA->token(),'_company_switch_csrf'=>$nativeA->csrf()];
+expectStatus(fn()=>(new Issuers())->select(),403);
+$ci=contextEnvironment($f,$s,'issuers','select','POST');$_POST=['company_id'=>'54','_company_context'=>$nativeA->token(),'_company_switch_csrf'=>$nativeA->csrf()];
+(new Issuers())->select();essentialCheck(end($GLOBALS['redirects'])===['https://crm.example.test/admin/','location',303],'repeated native switch returns to the same dashboard after a safe 303');
 essentialCheck((new CompanyContext($db,$p,$s,8))->resolve()===54,'repeated native switch changes only the next request company');
-$returnToPrimary=new CompanyContext($db,$p,$s,8);$returnToPrimary->resolve();$ci=contextEnvironment($f,$s,'company_selection','select','POST');$_POST=['company_id'=>'41','_company_context'=>$returnToPrimary->token(),'_company_switch_csrf'=>$returnToPrimary->csrf()];(new Company_selection())->select();
+$returnToPrimary=new CompanyContext($db,$p,$s,8);$returnToPrimary->resolve();$ci=contextEnvironment($f,$s,'issuers','select','POST');$_POST=['company_id'=>'41','_company_context'=>$returnToPrimary->token(),'_company_switch_csrf'=>$returnToPrimary->csrf()];(new Issuers())->select();
+$ci=contextEnvironment($f,$s,'clients','contact_profile_image');CompanyRequestScope::beforeHydration($ci);
+essentialCheck(CompanyRequestScope::context()->issuerId()===41&&!CompanyRequestScope::nativeFor($ci)&&!CompanyRequestScope::isolated(),'principal image URL is not given a secondary native seal');CompanyRequestScope::finish();
+$ci=contextEnvironment($f,$s,'clients','import');hooks()->trace=[];CompanyRequestScope::beforeHydration($ci);
+essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===41,'principal customer import enters the same official writer as named companies');
+essentialCheck(hooks()->trace===[],'official principal customer import dispatches no global hooks');
+$principalImportToken=CompanyRequestScope::token();$principalImportCsrf=CompanyRequestScope::nativeCsrfToken($ci);CompanyRequestScope::finish();
+$ci=contextEnvironment($f,$s,'clients','import','PUT');$_POST=['_company_context'=>$principalImportToken,'_native_company_csrf'=>$principalImportCsrf];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),405);
+$ci=contextEnvironment($f,$s,'clients','import','POST');$_POST=['_company_context'=>$principalImportToken];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
+$ci=contextEnvironment($f,$s,'clients','import','POST');$_POST=['_company_context'=>$principalImportToken,'_native_company_csrf'=>$principalImportCsrf];CompanyRequestScope::beforeHydration($ci);
+essentialCheck(CompanyRequestScope::nativeFor($ci)&&!isset($_POST['_company_context'],$_POST['_native_company_csrf']),'principal customer import POST enforces and strips both boundary tokens');CompanyRequestScope::finish();
 $ci=contextEnvironment($f,$s,'utilities','calendar');hooks()->trace=[];CompanyRequestScope::beforeHydration($ci);
 essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===41,'principal calendar enters the same native adapters before legacy hydration');
 essentialCheck(hooks()->trace===[],'principal calendar admission dispatches no global hooks');

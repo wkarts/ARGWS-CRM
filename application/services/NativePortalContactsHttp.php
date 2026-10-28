@@ -35,7 +35,7 @@ final class NativePortalContactsHttp
             require_once APPPATH.'third_party/phpass.php';$hash=new PasswordHash(PHPASS_HASH_STRENGTH,PHPASS_HASH_PORTABLE);$mail=new CompanyNativeContactMail($this->ci->db,db_prefix(),$this->secret);$verification=new NativePortalVerificationMail($this->ci->db,db_prefix(),$this->secret);
             $writer->save($id===null?null:$this->value('native_contact_revision'),$values,[$hash,'HashPassword'],[$hash,'CheckPassword'],function($issuer,$contact,$source,$event)use($mail,$verification){
                 $slugs=[];if($event['welcome'])$slugs[]='new-client-created';if($event['set_password'])$slugs[]='contact-set-password';$mail->queueManagedInOwned($issuer,$contact,$source,$slugs,$this->ci->config->item('base_url'),fn($v)=>$this->decrypt($v));
-                if($event['created']||$event['email_changed'])$verification->queueProfileInOwned($issuer,$contact,$source,$this->ci->config->item('base_url'),fn($v)=>$this->decrypt($v));
+                if($event['created']||$event['email_changed'])$verification->queueManagedInOwned($issuer,$contact,$source,$this->ci->config->item('base_url'),fn($v)=>$this->decrypt($v));
             },array_values(array_unique(array_merge($mail->tables(),$verification->tables()))),$bytes);
             set_alert('success',_l($id===null?'added_successfully':'updated_successfully',_l('contact')));redirect(NativePortalPresentation::url('contacts'),'location',303);return;
         }

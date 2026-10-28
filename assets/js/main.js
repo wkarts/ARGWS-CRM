@@ -630,6 +630,13 @@ $(function () {
 
   // Task checklist mark as complete/incomplete
   $("body").on("change", 'input[name="checklist-box"]', function () {
+    if ($("body").hasClass("native-company-admin")) {
+      var checkbox = $(this), item = checkbox.closest('.checklist'), checked = checkbox.prop('checked');
+      native_task_checklist_command($('#checklist-items'), 'complete', {item_id:item.attr('data-checklist-id'), item_revision:item.attr('data-checklist-item-revision'), finished:checked ? '1' : '0'}).done(function () {
+        recalculate_checklist_items_progress();
+      }).fail(function () { checkbox.prop('checked', !checked); alert_float('danger', 'Não foi possível atualizar o item. Atualize a tarefa e tente novamente.'); });
+      return;
+    }
     requestGet(
       admin_url +
         "tasks/checkbox_action/" +
@@ -3658,6 +3665,11 @@ function update_checklist_order() {
   if (items.length === 0) {
     return;
   }
+  if ($("body").hasClass("native-company-admin")) {
+    var ids = items.map(function () { return $(this).attr('data-checklist-id'); }).get();
+    native_task_checklist_command($('#checklist-items'), 'reorder', {ids:ids}).fail(function () { alert_float('danger', 'Não foi possível alterar a ordem. Atualize a tarefa e tente novamente.'); });
+    return;
+  }
   var i = 1;
   $.each(items, function () {
     order.push([$(this).data("checklist-id"), i]);
@@ -3670,6 +3682,17 @@ function update_checklist_order() {
 
 // New task checklist item
 function add_task_checklist_item(task_id, description, e) {
+  if ($("body").hasClass("native-company-admin")) {
+    var container = $('#checklist-items');
+    description = typeof description === 'string' ? description.trim() : '';
+    if (!description) {
+      var draft = $('<div><div class="checklist" data-native-checklist-draft="1"><div class="tw-flex"><div class="tw-grow"><textarea name="checklist-description" rows="1"></textarea></div><div class="mleft10"><a href="#" class="text-muted remove-checklist"><i class="fa-regular fa-trash-can"></i></a></div></div></div></div>');
+      draft.find('textarea').attr('data-taskid', String(task_id));draft.find('.remove-checklist').on('click', function (event) { event.preventDefault(); draft.remove(); });container.append(draft);draft.find('textarea').trigger('focus');return;
+    }
+    if (e) $(e).addClass('disabled');
+    native_task_checklist_command(container, 'add', {text:description}).done(function () { init_tasks_checklist_items(true, task_id); }).fail(function () { alert_float('danger', 'Não foi possível adicionar o item. Tente novamente.'); }).always(function () { if (e) $(e).removeClass('disabled'); });
+    return;
+  }
   if (e) {
     $(e).addClass("disabled");
   }
@@ -3698,6 +3721,19 @@ function update_task_checklist_item(textArea) {
     var description = textArea.val();
     description = description.trim();
     var listid = textArea.parents(".checklist").data("checklist-id");
+    if ($("body").hasClass("native-company-admin")) {
+      var item = textArea.closest('.checklist');
+      if (item.attr('data-native-checklist-draft') === '1') {
+        if (!description) { item.parent().remove(); deferred.resolve(); return; }
+        native_task_checklist_command($('#checklist-items'), 'add', {text:description}).done(function () { init_tasks_checklist_items(true, textArea.attr('data-taskid')).done(function () { deferred.resolve(); }).fail(function () { deferred.reject(); }); }).fail(function () { alert_float('danger', 'Não foi possível adicionar o item. Tente novamente.'); deferred.reject(); });
+        return;
+      }
+      var command = description === '' ? 'delete' : 'edit';
+      var payload = {item_id:item.attr('data-checklist-id'), item_revision:item.attr('data-checklist-item-revision')};
+      if (command === 'edit') payload.text = description;
+      native_task_checklist_command($('#checklist-items'), command, payload).done(function () { if (command === 'delete') item.remove(); deferred.resolve(); }).fail(function () { alert_float('danger', 'Não foi possível atualizar o item. Atualize a tarefa e tente novamente.'); deferred.reject(); });
+      return;
+    }
 
     $.post(admin_url + "tasks/update_checklist_item", {
       description: description,
@@ -3723,6 +3759,11 @@ function update_task_checklist_item(textArea) {
 
 // Remove task checklist item from the task
 function delete_checklist_item(id, field) {
+  if ($("body").hasClass("native-company-admin")) {
+    var item = $(field).closest('.checklist');
+    native_task_checklist_command($('#checklist-items'), 'delete', {item_id:item.attr('data-checklist-id'), item_revision:item.attr('data-checklist-item-revision')}).done(function () { item.remove(); recalculate_checklist_items_progress(); }).fail(function () { alert_float('danger', 'Não foi possível remover o item. Atualize a tarefa e tente novamente.'); });
+    return;
+  }
   requestGetJSON("tasks/delete_checklist_item/" + id).done(function (response) {
     if (response.success === true || response.success == "true") {
       $(field).parents(".checklist").remove();
@@ -3733,7 +3774,7 @@ function delete_checklist_item(id, field) {
 
 // Fetches task checklist items.
 function init_tasks_checklist_items(is_new, task_id) {
-  $.post(admin_url + "tasks/init_checklist_items", {
+  return $.post(admin_url + "tasks/init_checklist_items", {
     taskid: task_id,
   }).done(function (data) {
     $("#checklist-items").html(data);
@@ -3744,7 +3785,7 @@ function init_tasks_checklist_items(is_new, task_id) {
       }
     }
     recalculate_checklist_items_progress();
-    update_checklist_order();
+    if (!$('body').hasClass('native-company-admin')) update_checklist_order();
   });
 }
 
@@ -3873,7 +3914,24 @@ function task_mark_as(status, task_id, url) {
   var taskModalVisible = $("#task-modal").is(":visible");
   url += "?single_task=" + taskModalVisible;
   $("body").append('<div class="dt-loader"></div>');
-  requestGetJSON(url).done(function (response) {
+  var request;
+  if ($("body").hasClass("native-company-admin")) {
+    var row = $('[data-native-task-id]').filter(function () {
+      return $(this).attr('data-native-task-id') === String(task_id);
+    }).first();
+    var revision = row.attr('data-task-revision');
+    var fieldsRevision = row.attr('data-native-fields-revision') || '';
+    if (taskModalVisible || !/^[1-5]$/.test(String(status)) || !/^[1-9][0-9]*$/.test(String(task_id)) || !/^[1-9][0-9]*$/.test(revision || '') || (fieldsRevision && !/^[1-9][0-9]*$/.test(fieldsRevision))) {
+      $("body").find(".dt-loader").remove();
+      alert_float("danger", "Não foi possível confirmar a revisão desta tarefa. Atualize a página e tente novamente.");
+      return;
+    }
+    var key = native_task_template_request_key(row, 'status:' + status + ':' + revision + ':' + fieldsRevision);
+    request = $.ajax({url: admin_url + 'tasks/mark_as/' + encodeURIComponent(status) + '/' + encodeURIComponent(task_id), type:'POST', dataType:'json', data:{native_revision:revision,native_fields_revision:fieldsRevision,native_request_key:key}});
+  } else {
+    request = requestGetJSON(url);
+  }
+  request.done(function (response) {
     $("body").find(".dt-loader").remove();
     if (response.success === true || response.success == "true") {
       reload_tasks_tables();
@@ -3890,6 +3948,9 @@ function task_mark_as(status, task_id, url) {
         alert_float("success", response.message);
       }
     }
+  }).fail(function () {
+    $("body").find(".dt-loader").remove();
+    if ($("body").hasClass("native-company-admin")) alert_float("danger", "Não foi possível alterar o estado da tarefa. Atualize a página e tente novamente.");
   });
 }
 
@@ -3898,13 +3959,31 @@ function task_change_priority(priority_id, task_id) {
   url = "tasks/change_priority/" + priority_id + "/" + task_id;
   var taskModalVisible = $("#task-modal").is(":visible");
   url += "?single_task=" + taskModalVisible;
-  requestGetJSON(url).done(function (response) {
+  var request;
+  if ($("body").hasClass("native-company-admin")) {
+    var row = $('[data-native-task-id]').filter(function () {
+      return $(this).attr('data-native-task-id') === String(task_id);
+    }).first();
+    var revision = row.attr('data-task-revision');
+    var fieldsRevision = row.attr('data-native-fields-revision') || '';
+    if (taskModalVisible || !/^[1-4]$/.test(String(priority_id)) || !/^[1-9][0-9]*$/.test(String(task_id)) || !/^[1-9][0-9]*$/.test(revision || '') || (fieldsRevision && !/^[1-9][0-9]*$/.test(fieldsRevision))) {
+      alert_float("danger", "Não foi possível confirmar a revisão desta tarefa. Atualize a página e tente novamente.");
+      return;
+    }
+    var key = native_task_template_request_key(row, 'priority:' + priority_id + ':' + revision + ':' + fieldsRevision);
+    request = $.ajax({url: admin_url + 'tasks/change_priority/' + encodeURIComponent(priority_id) + '/' + encodeURIComponent(task_id), type:'POST', dataType:'json', data:{native_revision:revision,native_fields_revision:fieldsRevision,native_request_key:key}});
+  } else {
+    request = requestGetJSON(url);
+  }
+  request.done(function (response) {
     if (response.success === true || response.success == "true") {
       reload_tasks_tables();
       if (taskModalVisible) {
         _task_append_html(response.taskHtml);
       }
     }
+  }).fail(function () {
+    if ($("body").hasClass("native-company-admin")) alert_float("danger", "Não foi possível alterar a prioridade da tarefa. Atualize a página e tente novamente.");
   });
 }
 

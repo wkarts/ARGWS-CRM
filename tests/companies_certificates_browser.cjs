@@ -1,5 +1,6 @@
 'use strict';
 const { selectCompanyOption } = require('./helpers/company_selector_driver.cjs');
+const { workspacePage } = require('./helpers/company_workspace_driver.cjs');
 // Real controller, multipart upload, CRM context middleware, MySQL and browser.
 // Run after companies_onboarding_browser in the disposable native-upgrade fixture.
 const assert = require('node:assert/strict');
@@ -26,19 +27,19 @@ async function navigate(page, button) { await Promise.all([page.waitForNavigatio
 async function upload(page, file, password = file.password) {
   await page.locator('#certificate-file').setInputFiles({ name: 'synthetic-only.pfx', mimeType: 'application/octet-stream', buffer: Buffer.from(file.pfx, 'base64') });
   await page.locator('#certificate-password').fill(password);
-  await navigate(page, page.locator('#issuer-certificate-upload button[type=submit]'));
+  await navigate(page, page.locator('#issuer-certificate-upload button[name=action][value=replace]'));
 }
 async function select(page, issuer) {
   await page.goto(url + '/admin/');
   await selectCompanyOption(page, issuer);
 
-  await page.goto(url + '/admin/company_certificates/index/' + issuer);
+  await page.goto(url + '/admin/settings?group=certificates');
 }
 (async () => {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, ...(process.env.ISSUERS_BROWSER_EXECUTABLE_PATH ? { executablePath: process.env.ISSUERS_BROWSER_EXECUTABLE_PATH } : {}) });
   const context = await browser.newContext({ viewport: { width: 1280, height: 960 } });
   await context.route('**/*', route => new URL(route.request().url()).origin === url ? route.continue() : route.abort());
-  const page = await context.newPage();
+  const page = await workspacePage(context);
   try {
     await page.goto(url + '/admin/authentication');
     await page.locator('input[name=email]').fill('admin-ci@example.invalid');
@@ -50,7 +51,7 @@ async function select(page, issuer) {
     const fa = fixture(a[1]); const fb = fixture('');
     await select(page, a[0]);
     assert.equal((await context.request.get(page.url())).headers()['cache-control'], 'no-store');
-    const tokens = await page.locator('#issuer-certificate-upload input[type=hidden]').evaluateAll(inputs => Object.fromEntries(inputs.map(i => [i.name, i.value])));
+    const tokens = await page.locator('#settings-form input[type=hidden]').evaluateAll(inputs => Object.fromEntries(inputs.map(i => [i.name, i.value])));
     await upload(page, fa);
     assert.match(await page.locator('#certificate-status').innerText(), /armazenado/);
     assert.equal(await page.locator('#certificate-password').inputValue(), '');
@@ -60,24 +61,24 @@ async function select(page, issuer) {
     assert.match(await page.locator('[role=alert]').innerText(), /Não foi possível verificar a senha e a integridade do PFX\/P12/);
     assert.equal(sql('SELECT revision FROM tblissuer_certificate_credentials WHERE issuer_id=' + a[0]), before);
     assert.equal(await page.locator('#certificate-password').inputValue(), '');
-    const stale = await context.request.post(page.url(), { form: { ...tokens, action: 'remove' } });
+    const stale = await context.request.post(url + '/admin/settings?group=certificates', { form: { ...tokens, action: 'remove', certificate_password: '' } });
     assert.equal(stale.status(), 409, 'old revision denied');
-    await page.goto(url + '/admin/company_certificates/index/' + a[0]);
+    await page.goto(url + '/admin/settings?group=certificates');
     await upload(page, fa);
     await select(page, b[0]); await upload(page, fb);
     assert.match(await page.locator('#certificate-document-status').innerText(), /Não verificado/);
     await page.screenshot({ path: output + '/certificate-b-unverified.png', fullPage: true });
-    const staleContext = await context.request.post(url + '/admin/company_certificates/index/' + a[0], { form: { ...tokens, action: 'remove' } });
+    const staleContext = await context.request.post(url + '/admin/settings?group=certificates', { form: { ...tokens, action: 'remove', certificate_password: '' } });
     assert.equal(staleContext.status(), 409, 'stale company context denied');
     const bCipher = sql('SELECT SHA2(pfx_cipher,256) FROM tblissuer_certificate_credentials WHERE issuer_id=' + b[0]);
     await select(page, a[0]);
-    await navigate(page, page.locator('#issuer-certificate-remove button[type=submit]'));
+    page.once('dialog', dialog => dialog.accept());await navigate(page, page.locator('#issuer-certificate-remove button[name=action][value=remove]'));
     assert.match(await page.locator('#certificate-status').innerText(), /Material removido/);
     assert.equal(sql('SELECT LENGTH(pfx_cipher)+LENGTH(password_cipher) FROM tblissuer_certificate_credentials WHERE issuer_id=' + a[0]), '0');
     assert.equal(sql('SELECT SHA2(pfx_cipher,256) FROM tblissuer_certificate_credentials WHERE issuer_id=' + b[0]), bCipher);
     await page.setViewportSize({ width: 390, height: 844 });
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'A1 form fits mobile');
     await page.screenshot({ path: output + '/certificate-a-removed-mobile.png', fullPage: true });
-    console.log('Certificate browser: multipart, status, replacement, invalid password, stale revision/context, separate company, removal and screenshots passed with synthetic fixtures.');
+    console.log('Official Settings certificate browser: multipart, status, replacement, invalid password, stale revision/context, A/B isolation, removal and responsive screenshots passed with synthetic fixtures.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error.message); process.exit(1); });

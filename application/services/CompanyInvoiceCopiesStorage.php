@@ -14,6 +14,15 @@ final class CompanyInvoiceCopiesStorage
         if(!$row)throw new DomainException('company_invoice_copy_unavailable');
         return CompanyInvoiceNativeFields::fromRecord($row);
     }
+    public function nativePreferencesOwned(int $issuer,int $actor,int $invoice):array
+    {
+        $this->authorizeOwned($issuer,$actor);$row=$this->rows('SELECT cancel_overdue_reminders,allowed_payment_modes FROM '.$this->p.'invoices WHERE id=? AND issuer_id=? FOR UPDATE',[$invoice,$issuer])[0]??null;
+        if(!$row||!in_array((string)$row['cancel_overdue_reminders'],['0','1'],true))throw new DomainException('company_invoice_copy_source_review');
+        $modes=$row['allowed_payment_modes']===null?[]:@unserialize($row['allowed_payment_modes'],['allowed_classes'=>false]);
+        if(!is_array($modes)||!array_is_list($modes))throw new DomainException('company_invoice_copy_source_review');
+        require_once __DIR__.'/NativeCompanyInvoicePaymentChoices.php';$modes=NativeCompanyInvoicePaymentChoices::selection($modes);
+        return ['cancel_overdue_reminders'=>(int)$row['cancel_overdue_reminders']]+($modes?['allowed_payment_modes'=>$modes]:[]);
+    }
     public function nativeProjectFieldsOwned(int $issuer,int $actor,int $invoice):array
     {
         $this->authorizeOwned($issuer,$actor);

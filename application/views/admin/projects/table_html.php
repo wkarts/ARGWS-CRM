@@ -28,6 +28,6 @@ if(!isset($native_project_custom_fields))$table_data = hooks()->apply_filters('p
 
 render_datatable($table_data, isset($class) ?  $class : 'projects', ['number-index-1'], [
   'data-last-order-identifier' => 'projects',
-  'data-default-order'         => get_table_last_order('projects'),
+  'data-default-order'         => isset($native_project_table_order) ? $native_project_table_order : get_table_last_order('projects'),
   'id'=>$table_id ?? 'projects',
 ]);

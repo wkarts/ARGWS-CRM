@@ -26,11 +26,11 @@ Reutiliza `issuers_registry.settings_json`; não cria schema paralelo. Nome/docu
 
 ## Alterações e arquivos
 
-Adicionados: `application/services/CompanySettingsStorage.php`, `CompanySettingsRuntime.php`, `CompanySettingsIdentity.php`; `application/views/admin/settings/company_scoped.php`; `tests/settings/company_settings.php`, `settings_model_controller.php`; esta documentação e `settings-isolation.md`.
+Adicionados: `application/services/CompanySettingsStorage.php`, `CompanySettingsRuntime.php`, `CompanySettingsIdentity.php`; `tests/settings/company_settings.php`, `settings_model_controller.php`; esta documentação e `settings-isolation.md`. A antiga `application/views/admin/settings/company_scoped.php` foi retirada da execução na migração para `admin/settings/all.php` (o sincronizador local pode conservar um tombstone inerte).
 
 Modificados: `application/models/Settings_model.php`, `application/controllers/admin/Settings.php`.
 
-Removidos: nenhum.
+Removidos da superfície executável: `application/views/admin/settings/company_scoped.php`.
 
 ## Banco de dados
 

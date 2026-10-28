@@ -1,5 +1,7 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php $nativeOverview=$native_project_overview??null; if($nativeOverview!==null){$percent=$nativeOverview['progress'];$metrics=$nativeOverview['task_metrics'];$deadline=$nativeOverview['deadline'];if($metrics!==null){$tasks_not_completed=$metrics['open'];$total_tasks=$metrics['total'];$tasks_not_completed_progress=$metrics['completed_percent'];}if($deadline!==null&&$deadline['percent']!==null){$project_days_left=$deadline['days_left'];$project_total_days=$deadline['total_days'];$project_time_left_percent=$deadline['percent'];}$project_overview_chart=$nativeOverview['chart'];} ?>
 
+<?php if($nativeOverview===null||$percent!==null){ ?>
 <p class="project-info tw-mb-0 tw-font-medium tw-text-base tw-tracking-tight">
     <?= _l('project_progress_text'); ?>
     <span
@@ -12,7 +14,8 @@
         data-percent="<?= e($percent); ?>">
     </div>
 </div>
-<?php hooks()->do_action('admin_area_after_project_progress') ?>
+<?php } ?>
+<?php if($nativeOverview===null)hooks()->do_action('admin_area_after_project_progress') ?>
 
 <div class="panel_s tw-relative">
     <div
@@ -22,7 +25,7 @@
         <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-y-6 tw-gap-x-12">
             <div class="project-overview-left">
 
-                <?php if (count($project->shared_vault_entries) > 0) { ?>
+                <?php if ($nativeOverview===null && count($project->shared_vault_entries) > 0) { ?>
                 <?php $this->load->view('admin/projects/_project_vault_entries'); ?>
                 <?php } ?>
 
@@ -31,7 +34,7 @@
                         <?= _l('project_overview'); ?>
                     </h4>
 
-                    <?php if (staff_can('create', 'projects')) { ?>
+                    <?php if ($nativeOverview===null && staff_can('create', 'projects')) { ?>
                     <a href="<?= admin_url('projects/export_project_data/' . $project->id); ?>"
                         class="text-muted tw-capitalize" target="_blank">
                         <i class="fa-solid fa-file-export"></i>
@@ -40,18 +43,18 @@
                     <?php } ?>
                 </div>
 
-                <?php $this->load->view('admin/projects/_project_overview_description_list'); ?>
+                <?php $this->load->view('admin/projects/_project_overview_description_list',$nativeOverview!==null?['native_project_overview'=>$nativeOverview]:[]); ?>
 
-                <?php hooks()->do_action('admin_project_overview_end_of_project_overview_left', $project) ?>
+                <?php if($nativeOverview===null)hooks()->do_action('admin_project_overview_end_of_project_overview_left', $project) ?>
             </div>
             <div class="project-overview-right tw-space-y-8">
                 <div>
                     <h4 class="tw-font-semibold tw-text-neutral-700 tw-text-base tw-mt-0 tw-mb-4">
-                        <?= e($project->name); ?>
+                        <?= e($nativeOverview!==null?$nativeOverview['facts']['project']['name']:$project->name); ?>
                     </h4>
                     <div class="tw-grid tw-grid-cols-2 tw-gap-4 project-progress-bars">
-                        <div
-                            class="project-overview-open-tasks tw-border tw-border-solid tw-border-neutral-300/80 tw-rounded-lg tw-py-2.5 tw-px-3<?= ! $project->deadline ? ' tw-col-span-2' : ''; ?>">
+                        <?php if($nativeOverview===null||$metrics!==null){ ?><div
+                            class="project-overview-open-tasks tw-border tw-border-solid tw-border-neutral-300/80 tw-rounded-lg tw-py-2.5 tw-px-3<?= ($nativeOverview!==null?$deadline===null:!$project->deadline) ? ' tw-col-span-2' : ''; ?>">
                             <p class="tw-text-neutral-700 tw-font-semibold tw-mb-1 tw-text-sm">
                                 <span
                                     dir="ltr"><?= e($tasks_not_completed); ?>
@@ -72,8 +75,8 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <?php if ($project->deadline) { ?>
+                        </div><?php } ?>
+                        <?php if ($nativeOverview!==null?($deadline!==null&&$deadline['percent']!==null):$project->deadline) { ?>
                         <div
                             class="project-progress-bars project-overview-days-left tw-border tw-border-solid tw-border-neutral-300/80 tw-rounded-lg tw-py-2.5 tw-px-3">
                             <p class="tw-text-neutral-700 tw-font-semibold tw-mb-1 tw-text-sm">
@@ -102,7 +105,7 @@
                     </div>
                 </div>
 
-                <?php if (staff_can('create', 'projects')) { ?>
+                <?php if ($nativeOverview===null && staff_can('create', 'projects')) { ?>
                 <?php if ($project->billing_type == 3 || $project->billing_type == 2) { ?>
                 <div class="project-overview-logged-hours-finance">
                     <h4 class="tw-text-sm tw-text-neutral-600 tw-mb-3">
@@ -170,9 +173,9 @@
                 </div>
                 <?php } ?>
 
-                <?php $this->load->view('admin/projects/_project_timesheets_chart'); ?>
+                <?php if($nativeOverview===null||$nativeOverview['chart']!==null)$this->load->view('admin/projects/_project_timesheets_chart',$nativeOverview!==null?['native_project_overview'=>$nativeOverview]:[]); ?>
 
-                <?php hooks()->do_action('admin_project_overview_end_of_project_overview_right', $project) ?>
+                <?php if($nativeOverview===null)hooks()->do_action('admin_project_overview_end_of_project_overview_right', $project) ?>
             </div>
         </div>
     </div>
@@ -180,6 +183,6 @@
 <?php if (isset($project_overview_chart)) { ?>
 <script>
     var
-        project_overview_chart = <?= json_encode($project_overview_chart); ?> ;
+        project_overview_chart = <?= json_encode($project_overview_chart,$nativeOverview!==null?(JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT):0); ?> ;
 </script>
 <?php } ?>

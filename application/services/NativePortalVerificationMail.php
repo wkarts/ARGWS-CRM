@@ -32,6 +32,13 @@ final class NativePortalVerificationMail
  public function queueProfileInOwned(int$issuer,int$contact,object$writer,string$base,callable$decrypt):?int{
   if(get_class($writer)!=='NativePortalProfile')throw new DomainException('native_portal_verification_denied');IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());$writer->assertMutationInOwned($this->db,$this->p,$issuer,'contacts');$ref=$writer->reference($this->db,$this->p,$issuer,'contacts',true);if($ref['source_id']!==$contact)throw new DomainException('native_portal_verification_denied');$id=$this->queueInOwned($issuer,$contact,$base,$decrypt);$writer->assertMutationInOwned($this->db,$this->p,$issuer,'contacts');return$id;
  }
+ /** A primary contact may manage another contact of the same customer. */
+ public function queueManagedInOwned(int$issuer,int$contact,object$writer,string$base,callable$decrypt):?int{
+  if(get_class($writer)!=='NativePortalContacts')throw new DomainException('native_portal_verification_denied');
+  IssuerTransaction::assertOwned($this->db,$this->p,$this->tables());$writer->assertMutationInOwned($this->db,$this->p,$issuer,'contacts');
+  $ref=$writer->reference($this->db,$this->p,$issuer,'contacts',true);if($ref['source_id']!==$contact)throw new DomainException('native_portal_verification_denied');
+  $id=$this->queueInOwned($issuer,$contact,$base,$decrypt);$writer->assertMutationInOwned($this->db,$this->p,$issuer,'contacts');return$id;
+ }
  private function queueInOwned(int$issuer,int$contact,string$base,callable$decrypt):?int{
   $row=$this->source($issuer,$contact);if($row['email_verified_at']!==null)return null;$t=CompanyEmailTemplates::findForIssuer($this->db,$this->p,$issuer,'contact-verification-email',($row['default_language']??'')!==''?$row['default_language']:'portuguese_br');if(!$t)throw new DomainException('company_portal_template_required');
   // Matches the original native contract: an explicitly disabled template disables verification.

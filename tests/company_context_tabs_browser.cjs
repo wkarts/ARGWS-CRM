@@ -5,7 +5,7 @@ const { chromium } = require('playwright');
 
 const root = path.resolve(__dirname, '..');
 const keys = ['auth', 'environment', 'agreement', 'account', 'billing', 'remittance', 'return', 'webhook'];
-const shellTail = fs.readFileSync(path.join(root, 'application/views/admin/companies/layout_tail.php'), 'utf8');
+const shellTail = fs.readFileSync(path.join(root, 'application/views/admin/includes/native_company_layout_tail.php'), 'utf8');
 const bbView = fs.readFileSync(path.join(root, 'modules/banco_brasil/views/index.php'), 'utf8');
 const tabsScript = path.join(root, 'assets/js/native-admin-tabs.js');
 const bootstrapCss = path.join(root, 'assets/plugins/bootstrap/css/bootstrap.min.css');

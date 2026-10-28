@@ -7,6 +7,7 @@ require_once __DIR__.'/ChannelPreferences.php';
 require_once __DIR__.'/Agreement.php';
 require_once __DIR__.'/LayoutCatalog.php';
 require_once __DIR__.'/Cnab240Generator.php';
+require_once __DIR__.'/Fields400.php';
 require_once __DIR__.'/OriginationSchema.php';
 require_once APPPATH.'services/issuers/IssuerTransaction.php';
 require_once APPPATH.'services/issuers/IssuerResourceAccess.php';
@@ -46,7 +47,7 @@ final class Origination
         if($this->db->table_exists($this->prefix.'efi_company_origins'))$tables[]='efi_company_origins';
         return \IssuerTransaction::run($this->db,$this->prefix,array_values(array_unique(array_merge($tables,(new \CompanyInvoiceBalance($this->db,$this->prefix))->tables()))),$work);
     }
-    private function connection(int $issuer,int $id,int $binding):array
+    private function connection(int $issuer,int $id,int $binding,string $layoutId=Agreement::LAYOUT_ID):array
     {
         $row=$this->rows('SELECT * FROM '.$this->prefix.'bb_connections WHERE id=? AND issuer_id=? FOR UPDATE',[$id,$issuer])[0]??null;
         if(!$row)throw new \DomainException('bb_connection_unavailable');
@@ -54,8 +55,10 @@ final class Origination
         if(($row['provider']??null)!=='banco_brasil'||!hash_equals($identity,$row['identity_hash'])||!hash_equals(hash('sha256',json_encode([$identity,$row['issuer_tax_id'],$row['issuer_name']],JSON_THROW_ON_ERROR)),$row['configuration_hash']))throw new \DomainException('bb_connection_unavailable');
         $a=new Agreement(new Scope($issuer,$id,$row['account_id'],$row['environment'],$row['agreement_number']),$row['issuer_tax_id'],$row['issuer_name'],$row['variation'],$row['wallet']);
         $layout=$this->rows('SELECT * FROM '.$this->prefix.'bb_layout_bindings WHERE id=? AND issuer_id=? AND connection_id=? FOR UPDATE',[$binding,$issuer,$id])[0]??[];
-        if(($layout['layout_id']??null)!==Agreement::LAYOUT_ID||($layout['scope_key']??null)!==$a->scope->key()||($layout['connection_hash']??null)!==$row['configuration_hash']||($layout['profile_hash']??null)!==LayoutCatalog::fingerprint(Agreement::LAYOUT_ID)||($layout['remittance_source_hash']??null)!==Agreement::SOURCE_SHA256)throw new \DomainException('bb_origination_profile_denied');
-        $profile=LayoutCatalog::get(Agreement::LAYOUT_ID);
+        if(!in_array($layoutId,[Agreement::LAYOUT_ID,LayoutCatalog::CNAB400],true))throw new \DomainException('bb_origination_profile_denied');
+        $profile=LayoutCatalog::get($layoutId);
+        if(($layout['layout_id']??null)!==$layoutId||($layout['scope_key']??null)!==$a->scope->key()||($layout['connection_hash']??null)!==$row['configuration_hash']||($layout['profile_hash']??null)!==LayoutCatalog::fingerprint($layoutId)||($layout['remittance_source_hash']??null)!==$profile['remittance_sha256'])throw new \DomainException('bb_origination_profile_denied');
+        if($layoutId===LayoutCatalog::CNAB400)Fields400::account($a);
         foreach(['return_source_hash'=>'return_sha256','date_window'=>'date_window','declared_currency'=>'currency'] as $field=>$key)if(($layout[$field]??null)!==$profile[$key])throw new \DomainException('bb_origination_profile_denied');
         return [$row,$a,$layout];
     }
@@ -67,19 +70,19 @@ final class Origination
     {
         if(!is_string($value)||trim($value)===''||strlen($value)>$max||preg_match('/[\x00-\x1f\x7f]/',$value)||preg_match('//u',$value)!==1)throw new \DomainException('bb_origination_invalid_input');return trim($value);
     }
-    private static function bankNamespace(Agreement $a):string
+    public static function bankNamespace(Agreement $a):string
     {
         // Nosso Número identifies the agreement, across account/connection changes and future channels.
         return hash('sha256',json_encode(['banco_brasil',$a->scope->environment,$a->scope->agreement],JSON_THROW_ON_ERROR));
     }
-    public function declareContract($issuer,$actor,$connection,$binding,array $input):int
+    public function declareContract($issuer,$actor,$connection,$binding,array $input,string $layoutId=Agreement::LAYOUT_ID):int
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$connection=\IssuerPolicy::id($connection);$binding=\IssuerPolicy::id($binding);
         if(array_diff(array_keys($input),['first_number','last_number','first_file','reference','interest_exempt','exclusive_range','test_exchange','beneficiary_name'])||($input['interest_exempt']??null)!=='1'||($input['exclusive_range']??null)!=='1')throw new \DomainException('bb_contract_declaration_required');
         $first=self::number($input['first_number']??null,9999999999);$last=self::number($input['last_number']??null,9999999999);$file=self::number($input['first_file']??null,999999);$reference=self::text($input['reference']??null,191);
         if($last<$first||!in_array($input['test_exchange']??null,['0','1'],true))throw new \DomainException('bb_origination_invalid_input');
-        return $this->transaction(function()use($issuer,$actor,$connection,$binding,$input,$first,$last,$file,$reference):int{
-            $this->authorize($issuer,$actor,'manage');[$row,$a,$layout]=$this->connection($issuer,$connection,$binding);
+        return $this->transaction(function()use($issuer,$actor,$connection,$binding,$input,$first,$last,$file,$reference,$layoutId):int{
+            $this->authorize($issuer,$actor,'manage');[$row,$a,$layout]=$this->connection($issuer,$connection,$binding,$layoutId);
             if($a->scope->environment==='sandbox'&&$input['test_exchange']!=='1')throw new \DomainException('bb_contract_declaration_required');
             $wireName=self::text($input['beneficiary_name']??null,30);Fields::alpha($wireName,30);
             $namespace=self::bankNamespace($a);$counter=$this->rows('SELECT * FROM '.$this->prefix.'bb_number_reservations WHERE bank_namespace=? FOR UPDATE',[$namespace])[0]??null;
@@ -224,7 +227,7 @@ final class Origination
     public function batches($issuer,$actor):array
     {
         $issuer=\IssuerPolicy::id($issuer);$actor=\IssuerPolicy::id($actor);$this->authorize($issuer,$actor,'view');
-        $rows=$this->rows('SELECT id,connection_id,file_sequence,generation_state,delivery_state,financial_state,content_hash,created_at FROM '.$this->prefix.'bb_batches WHERE issuer_id=? ORDER BY id DESC LIMIT 30',[$issuer]);$this->authorize($issuer,$actor,'view');return $rows;
+        $rows=$this->rows('SELECT id,connection_id,file_sequence,layout_id,generation_state,delivery_state,financial_state,content_hash,created_at FROM '.$this->prefix.'bb_batches WHERE issuer_id=? ORDER BY id DESC LIMIT 30',[$issuer]);$this->authorize($issuer,$actor,'view');return $rows;
     }
     private function audit(int $issuer,int $connection,int $actor,string $action,string $type,int $id):void
     {

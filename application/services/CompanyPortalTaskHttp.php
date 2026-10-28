@@ -17,6 +17,10 @@ final class CompanyPortalTaskHttp
    elseif($action==='project_task_upload'){[$name,$bytes]=CompanyOperationFilesHttp::upload();$result=$w->upload($session,$issuer,$project,$task,$revision,$name,$bytes,$key);}
    else{$file=$c->input->post('file_key',false);if(!is_string($file))throw new DomainException('company_portal_task_invalid');$result=$w->hide($session,$issuer,$project,$task,$revision,$file,$key);}
   }catch(DomainException $e){if(in_array($e->getMessage(),['company_portal_task_stale','company_portal_task_request_conflict'],true)){show_error('A tarefa mudou ou este envio já possui outro conteúdo. Reabra seu resultado antes de salvar.',409);return true;}if(in_array($e->getMessage(),['company_portal_task_invalid','company_operation_file_invalid'],true)){show_error('Confira texto, data e arquivo antes de enviar.',422);return true;}if(in_array($e->getMessage(),['company_portal_task_limit','company_operation_file_limit'],true)){show_error('Limite desta tarefa atingido. Consulte a equipe.',429);return true;}show_404();return true;}
-  redirect($c->config->site_url('company_portal/index/'.$issuer).'?operation_kind=projects&resource_id='.(int)$project.'&task_receipt='.$key,'location',303);return true;
+  if(class_exists('PortalRequestScope',false)&&PortalRequestScope::sealedFor($c)){
+   require_once __DIR__.'/NativePortalPresentation.php';require_once __DIR__.'/NativeCompanyResourceId.php';
+   $target=NativePortalPresentation::url('clients/project/'.NativeCompanyResourceId::encode('company_project',(int)$project)).'&group=project_tasks&task_receipt='.$key;
+  }else $target=$c->config->site_url('company_portal/index/'.$issuer).'?operation_kind=projects&resource_id='.(int)$project.'&task_receipt='.$key;
+  redirect($target,'location',303);return true;
  }
 }

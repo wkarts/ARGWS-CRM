@@ -251,3 +251,4 @@ function native_invoice_communication(element) {
     .always(function () { $link.attr('aria-busy', 'false'); });
   return false;
 }
+

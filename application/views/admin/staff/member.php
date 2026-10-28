@@ -322,15 +322,33 @@ foreach ($roles as $role) {
                                         'funcData' => ['staff_id' => $member->staffid ?? null],
                                         'member'   => $member ?? null,
                                     ] + ($nativeStaff ? compact('native_staff_permission_catalog','native_staff_permissions','native_staff_assignable','native_staff_target_master') : [])); ?>
+                                    <?php if($nativeStaff){ ?>
+                                    <div class="checkbox checkbox-primary tw-mt-4">
+                                        <input id="native-staff-make-default" type="checkbox" name="make_default" value="1" <?= $native_staff_default_current?'checked':''; ?>>
+                                        <label for="native-staff-make-default"><?= e(_l('issuer_staff_make_company_default')); ?></label>
+                                    </div>
+                                    <?php } ?>
 
                                 </div>
                             </div>
                             <div class="text-right tw-mt-4">
+                                <?php if($nativeStaff && isset($member) && !empty($native_staff_can_revoke)){ ?>
+                                <button type="submit" form="native-staff-revoke-membership" class="btn btn-danger pull-left" onclick="return confirm(<?= e(json_encode(_l('issuer_staff_revoke_membership_confirm'),JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)); ?>);">
+                                    <?= e(_l('issuer_staff_revoke_membership')); ?>
+                                </button>
+                                <?php } ?>
                                 <button type="submit" class="btn btn-primary">
                                     <?= _l('submit'); ?>
                                 </button>
                             </div>
                             <?= form_close(); ?>
+                            <?php if($nativeStaff && isset($member) && !empty($native_staff_can_revoke)){ ?>
+                            <?= form_open(admin_url('staff/delete'),['id'=>'native-staff-revoke-membership']); ?>
+                            <?= form_hidden('id',(string)$member->staffid); ?>
+                            <?= form_hidden('revision',(string)$native_staff_revision); ?>
+                            <?= form_hidden('request_key',$native_staff_revoke_request_key); ?>
+                            <?= form_close(); ?>
+                            <?php } ?>
                         </div>
                         <?php if (isset($member)) { ?>
                         <div role="tabpanel" class="tab-pane" id="staff_notes">
