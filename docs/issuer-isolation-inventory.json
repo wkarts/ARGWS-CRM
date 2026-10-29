@@ -5620,7 +5620,7 @@
       "evidence": ""
     },
     "application/services/NativeCompanySpecializedOperations.php": {
-      "sha256": "bb3b06d035716f7455545f73ffa780cb8aba5e8ae908665ad595294d40525b54",
+      "sha256": "d09c93c557e3506bcccb890b90911a1831d37ff529b8375607d5d6a6bc07a802",
       "categories": [
         "invoice_table"
       ],
