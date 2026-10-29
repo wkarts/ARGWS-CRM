@@ -2,7 +2,7 @@
 /** Actual controller negative boundaries: no session hydration, SQL, credentials or provider requests. */
 declare(strict_types=1);
 if(!isset($argv[1])){
-    foreach(['scope'=>403,'method'=>405,'csrf'=>403] as $case=>$status){$lines=[];$exit=0;exec(escapeshellarg(PHP_BINARY).' '.escapeshellarg(__FILE__).' '.escapeshellarg($case),$lines,$exit);if($exit!==0||implode("\n",$lines)!=='REJECT '.$status)throw new RuntimeException('Boundary child failed: '.$case);}
+    foreach(['scope'=>403,'method'=>405,'csrf'=>403] as $case=>$status){$lines=[];$exit=0;exec(escapeshellarg(PHP_BINARY).' '.escapeshellarg(__FILE__).' '.escapeshellarg($case),$lines,$exit);if($exit!==0||implode("\n",$lines)!=='REJECT '.$status)throw new RuntimeException('Boundary child failed: '.$case.' (exit '.$exit.'): '.implode("\n",$lines));}
     echo "Efí company actual controller negative boundaries PASS; no remote or database operations.\n";exit(0);
 }
 define('BASEPATH',__DIR__.'/');define('APPPATH',dirname(__DIR__,2).'/application/');define('FCPATH',dirname(__DIR__,2).'/');
@@ -16,9 +16,9 @@ require FCPATH.'application/controllers/admin/Settings.php';
 $runtime = new ReflectionClass(CompanySettingsRuntime::class);
 $scope = $runtime->newInstanceWithoutConstructor();
 foreach (['issuerId'=>2,'staffId'=>99] as $name=>$value) {
-    $property=$runtime->getProperty($name);$property->setAccessible(true);$property->setValue($scope,$value);
+    $property=$runtime->getProperty($name);$property->setValue($scope,$value);
 }
-$property=$runtime->getProperty('current');$property->setAccessible(true);$property->setValue(null,$scope);
+$property=$runtime->getProperty('current');$property->setValue(null,$scope);
 $queries=0;$decrypts=0;
 $controller=new Settings();
 $controller->db=new class($queries){private $queries;function __construct(&$queries){$this->queries=&$queries;}function query($sql,$args=[]){++$this->queries;throw new RuntimeException('SQL not allowed before boundary');}};

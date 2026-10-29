@@ -19,7 +19,7 @@ $controller->config=new class{public function item($key){return $key==='index_pa
 $controller->load=new class{public array $view=[];public function view($name,$data){$this->view=$data;}public function library($name){}};
 $controller->encryption=new class($dec){public function __construct(private $decryptor){}public function decrypt($v){return ($this->decryptor)($v);}};
 $GLOBALS['CI']->encryption=$nativeWebhookCipher;$GLOBALS['CI']->load=$controller->load;
-$run=function($issuer=null,$actor=7)use($db,$p,$controller,$a){$issuer=$issuer??$a;$GLOBALS['controllerDenied']=null;$controller->load->view=[];return CompanySettingsRuntime::run($db,$p,$issuer,$actor,fn()=>$controller->index());};
+$run=function($issuer=null,$actor=7)use($db,$p,$controller,$a){$issuer=$issuer??$a;$GLOBALS['controllerDenied']=null;$controller->load->view=[];return CompanySettingsRuntime::run($db,$p,$issuer,$actor,fn()=>$controller->asaas());};
 $run();$csrf=$controller->session->data['company_asaas_webhook_csrf'];
 essentialCheck(strlen($csrf)===64&&$controller->load->view['one_time']===null&&$controller->load->view['revealed_api_key']===null,'GET initializes CSRF without decrypting any secret');
 essentialCheck(!str_contains(json_encode($controller->load->view),'token_cipher')&&!str_contains(json_encode($controller->load->view),'secret_cipher'),'full view DTO has no ciphertext');

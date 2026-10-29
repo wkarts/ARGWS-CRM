@@ -1,4 +1,5 @@
 <?php
+function init_head(){}function init_tail(){}
 /** Production controller/services/view on a disposable fixture; only framework I/O is synthetic. */
 require __DIR__.'/ledger_reports.php';
 if($db->driver()==='mysql')CompanyExpenseSchema::ensure($db,$p);else foreach(CompanyExpenseSchema::definitions() as $table=>$fields){if($db->table_exists($p.$table))continue;$parts=[];foreach($fields as $name=>$type)$parts[]='`'.$name.'` '.(str_contains($type,'AUTO_INCREMENT')?'INTEGER PRIMARY KEY AUTOINCREMENT':$type.' NOT NULL');if($table==='company_expense_requests')$parts[]='PRIMARY KEY(request_key)';$db->query('CREATE TABLE '.$p.$table.'('.implode(',',$parts).')');}
@@ -6,12 +7,13 @@ class CompanyRequestScope
 {
     public static bool $sealed=true;public static ?int $issuer;public static int $actor=7;
     public static function sealedFor($owner):bool{return self::$sealed;}
-    public static function nativeFor($owner):bool{return self::$sealed;}
+    // Route admission stays native while the sealed scope can be revoked below.
+    public static function nativeFor($owner):bool{return true;}
     public static function context(){return new class {public function issuerId(){return CompanyRequestScope::$issuer;}public function staffId(){return CompanyRequestScope::$actor;}public function isPrimary(){return false;}public function available(){return [];}public function csrf(){return 'synthetic-ledger-switch';}};}
     public static function adminUrl($owner,string $path=''):string{return 'https://synthetic.invalid/admin/'.$path;}
     public static function token(){return 'synthetic-ledger-document';}
 }
-class AdminController{public function __get($name){return $GLOBALS['CI']->$name;}}
+class AdminController{public function __construct(){}public function __get($name){return $GLOBALS['CI']->$name;}}
 function show_error($message,$status=500){$GLOBALS['CI']->output->status=$status;}
 require APPPATH.'controllers/admin/Reports.php';
 $GLOBALS['CI']->input=new class {public string $verb='GET';public array $gets=[];public function method($upper=false){return $upper?$this->verb:strtolower($this->verb);}public function get($k,$filter=false){return $this->gets[$k]??null;}};

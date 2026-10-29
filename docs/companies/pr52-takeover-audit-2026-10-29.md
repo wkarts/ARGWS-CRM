@@ -123,3 +123,40 @@ Merge/deploy/release continuam não autorizados. Após solucionar as pendências
 validar instalação limpa/upgrade e principal/A/B/restrito no SHA final, revisar a
 matriz e só então avaliar publicação. Limpeza deve ser conferida primeiro em
 dry-run por fluxo autorizado; não disparar purge para contornar negação de acesso.
+
+## Segundo checkpoint de validação (29/10)
+
+O CI do primeiro complemento (`1134ddd`) confirmou sucesso em escopo de faturas,
+PWA, inventário de fronteiras, Node focused e outros gates. Empresas no núcleo
+continuou vermelho: <https://github.com/wkarts/ARGWS-CRM/actions/runs/40868763644>.
+
+O inventário `operational-surfaces.json` no blob publicado não era JSON UTF-8
+válido. Foi reconstruído com `php scripts/company-surface-inventory.php`; seu
+`--check` passou, sem mudar o estado bloqueado de prontidão operacional.
+
+O teste negativo Efí usava `ReflectionProperty::setAccessible`, obsoleto em
+PHP 8.5 e dispensável desde PHP 8.1. A saída extra quebrava a comparação exata do
+subprocesso. Removida a chamada, as três barreiras passaram em PHP 8.1 (imagem CI)
+e PHP 8.5 (imagem oficial CLI Alpine). Falhas futuras agora incluem saída/exit do
+filho no diagnóstico, mantendo a comparação e os códigos esperados.
+A imagem completa CI 8.5 não coube no disco local; o runtime Alpine foi usado
+somente para esse teste sem banco, e não substitui a matriz completa do CI.
+
+Reexecuções MySQL com sucesso:
+- Asaas preferences/controller: 179 checks cumulativos; chamada corrigida para
+  a ação oficial `Settings::asaas`.
+- Operations subresources bootstrap: 95 checks, destinos oficiais dos aliases.
+- Bank reversal report views: 197 checks, caminhos atuais e framework sintético.
+- Ledger controller/CSV/paginação/renderização: 162 checks. O teste de revogação
+  mantém a rota admitida como nativa e revoga separadamente o selo; assim o
+  handler financeiro deve recusar 503 antes da leitura.
+- Testes Python de cache/prefixos/anexos: 15 passaram novamente.
+
+O diagnóstico amplo MySQL segue expondo dependências históricas dos testes:
+projects_controller e dependentes esperam o antigo POST em index e views
+removidas; settings sales_pdf/document_pdf dependem de um fixture que passou a
+exercitar forms diretamente e já não define Settings. Tickets históricos sem
+metadados novos são recusados por NativeCompanyTicketThreadPresentation com
+native_ticket_metadata_required. Essas falhas não foram mascaradas nem
+classificadas como simples problema de cache. A matriz funcional acima continua
+pendente; este checkpoint não autoriza merge nem afirma entrega completa.
