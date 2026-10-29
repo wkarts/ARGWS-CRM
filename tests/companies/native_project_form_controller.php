@@ -45,7 +45,7 @@ class AdminController{
   $GLOBALS['CI']=$this;
  }
 }
-eval('namespace NativeProjectFormHttpTest; use \\NativeCompanyProjectForm; use \\DomainException; use \\RuntimeException; '.substr(file_get_contents(APPPATH.'controllers/admin/Projects.php'),5));CompanyRequestScope::$issuer=$a;$controller=new Projects();$controller->project($saved);$html=$controller->output->body;
+$projectsSource=file_get_contents(APPPATH.'controllers/admin/Projects.php');$projectsSource=str_replace('use NativeCompanySpecializedOperations;','use \\NativeCompanySpecializedOperations;',$projectsSource);eval('namespace NativeProjectFormHttpTest; use \\NativeCompanyProjectForm; use \\DomainException; use \\RuntimeException; '.substr($projectsSource,5));CompanyRequestScope::$issuer=$a;$controller=new Projects();$controller->project($saved);$html=$controller->output->body;
 essentialCheck(str_contains($html,'<form')&&str_contains($html,'id="tab_project"')&&str_contains($html,'id="tab_settings"'),'Actual controller renders the same native form and tabs, not alternative markup');
 essentialCheck(str_contains($html,'value="Original form updated project"')&&str_contains($html,'name="native_project_revision"')&&str_contains($html,'synthetic-context'),'Actual native form contains persisted source and sealed request fields');
 essentialCheck(str_contains($html,'new_task')===false&&str_contains($html,'name="settings[view_tasks]"'),'Original settings controls remain present');
