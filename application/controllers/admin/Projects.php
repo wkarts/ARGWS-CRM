@@ -155,6 +155,7 @@ class Projects extends AdminController
         try{
             $method=strtoupper($this->input->method(true));
             if($method==='POST'){
+                CompanyRequestScope::assertNativeMutation($this);
                 $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_project_access_denied');
                 $token=$this->input->post('company_projects_csrf',false);if(!is_string($token)||!hash_equals($this->nativeProjectPortalCsrf(),$token))throw new DomainException('company_portal_csrf_invalid');
                 $ref=NativeCompanyResourceId::decode('project',$id);if($ref['source_kind']!=='company_project')throw new DomainException('company_portal_operation_unavailable');
