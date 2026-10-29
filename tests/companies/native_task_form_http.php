@@ -1,8 +1,11 @@
 <?php
 namespace {
 require __DIR__.'/native_task_form_payload.php';require_once APPPATH.'services/NativeCompanyTaskChecklistTemplates.php';NativeCompanyTaskChecklistSchema::ensure($db,$p);
-// The current detail reads recurring rows; this older form fixture has none.
-$db->query('CREATE TABLE '.$p.'company_task_schedules(id '.($db->driver()==='mysql'?'int NOT NULL AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').',issuer_id int unsigned NOT NULL,kind varchar(16) NOT NULL,source_id int unsigned NOT NULL)');
+// Install the canonical schedule shape: later edit/detail readers share these FKs.
+require_once APPPATH.'services/CompanyTaskRecurringSchema.php';
+if($db->driver()==='mysql')CompanyTaskRecurringSchema::ensure($db,$p);
+else foreach(CompanyTaskRecurringSchema::definitions($p)as$table=>$parts)if(!$db->table_exists($p.$table))
+    $db->query('CREATE TABLE '.$p.$table.'('.preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',implode(',',$parts)).')');
 unset($db->data_cache['table_names']);
 require_once APPPATH.'services/NativeCompanyTaskItemSchema.php';NativeCompanyTaskItemSchema::ensure($db,$p);
 $db->query('CREATE TABLE '.$p.'user_meta(umeta_id '.($db->driver()==='mysql'?'int NOT NULL AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').',staff_id int NOT NULL,meta_key varchar(191) NOT NULL,meta_value text NULL)');
