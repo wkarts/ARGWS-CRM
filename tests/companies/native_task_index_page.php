@@ -12,3 +12,5 @@ $offset=$input;$offset['start']='1';$offset['length']='1';$one=(new NativeCompan
 $bad=$input;$bad['order']=[['column'=>'99','dir'=>'asc']];essentialThrows(fn()=>(new NativeCompanyRelatedTaskPage($db,$p))->readIndex($a,7,$bad,'2026-10-25'),'native_task_table_request_invalid','Caller cannot inject sort column');
 essentialThrows(fn()=>(new NativeCompanyRelatedTaskPage($db,$p))->readIndex(1,7,$input,'2026-10-25'),'native_task_main_legacy_projection_required','Secondary-only projection cannot omit historical principal data');
 echo 'Main task page: '.$GLOBALS['essentialChecks']." cumulative checks passed; rendering and HTTP remain pending.\n";
+// Child fixtures consume prior assertions; do not retain their diagnostic SQL trace in the bounded PHP worker.
+$db->queries=[];
