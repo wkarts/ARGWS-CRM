@@ -7,6 +7,7 @@ use app\services\projects\HoursOverviewChart;
 defined('BASEPATH') or exit('No direct script access allowed');
 require_once APPPATH.'services/NativeCompanySpecializedOperations.php';
 require_once APPPATH.'services/CompanyOperationalPortalAdmin.php';
+require_once APPPATH.'services/NativeCompanyResourceId.php';
 
 class Projects extends AdminController
 {
