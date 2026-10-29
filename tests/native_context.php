@@ -241,7 +241,7 @@ essentialCheck(CompanyRequestScope::nativeFor($ci) && CompanyRequestScope::seale
 essentialCheck(CompanyRequestScope::nativeRouteAllowed($ci,'settings') && CompanyRequestScope::context()->issuerId()===54, 'native Settings route keeps the active company and uses its existing URL');
 essentialCheck(CompanySettingsRuntime::active() && hooks()->trace===[], 'native Settings admission creates the scoped lease without global hooks');
 CompanyRequestScope::finish();
-$ci=contextEnvironment($f,$s,'settings','index','PUT');$_POST=['_company_context'=>$tokenB];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),403);
+$ci=contextEnvironment($f,$s,'settings','index','PUT');$_POST=['_company_context'=>$tokenB];expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),405);
 essentialCheck(!CompanySettingsRuntime::active(),'unsupported Settings verb is denied before the legacy company form can hydrate');
 $ci = contextEnvironment($f, $s, 'issuers', 'index');$companies=new Issuers();$companies->index(54);
 $companyView=end($companies->load->views);
