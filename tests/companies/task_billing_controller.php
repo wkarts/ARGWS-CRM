@@ -1,7 +1,7 @@
 <?php
 require __DIR__.'/task_billing.php';
 class CompanyRequestScope{public static bool $sealed=true;public static int $issuer;public static int $actor=7;public static function sealedFor($o){return self::$sealed;}public static function context(){return new class{function issuerId(){return CompanyRequestScope::$issuer;}function staffId(){return CompanyRequestScope::$actor;}function isPrimary(){return false;}function available(){return [];}function csrf(){return 'synthetic-switch';}};}public static function adminUrl($o,$p=''){return 'https://synthetic.invalid/admin/'.$p;}public static function invalidateCaches($o){}public static function token(){return 'synthetic-billing-context';}}
-class AdminController{public function __get($k){return $GLOBALS['CI']->$k;}}
+class AdminController{public function __construct(){}public function __get($k){return $GLOBALS['CI']->$k;}}
 function show_error($msg,$status=500){$GLOBALS['CI']->output->status=$status;}function redirect($u,$method='location',$code=302){$GLOBALS['taskBillingRedirect']=$u;$GLOBALS['CI']->output->status=$code;}
 require APPPATH.'controllers/admin/Tasks.php';
 $GLOBALS['CI']->input=new class{public string $verb='GET';public array $gets=[],$posts=[];function method($upper=false){return $upper?$this->verb:strtolower($this->verb);}function get($k,$f=false){return $this->gets[$k]??null;}function post($k,$f=false){return $this->posts[$k]??null;}};
