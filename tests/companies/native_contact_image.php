@@ -50,7 +50,12 @@ CompanyRequestScope::$issuer=$a;CompanyRequestScope::$actor=999;$avatarControlle
 // secondary customer, so the primary actor is denied by the ownership fence;
 // the controller must not fall back to the legacy image endpoint or return a
 // secondary image.
-CompanyRequestScope::$actor=7;CompanyRequestScope::$primary=true;$GLOBALS['nativeAvatarStatus']=200;$avatarController->output->status=200;$avatarController->output->body='';$avatarController->contact_profile_image('101',(string)$na);essentialCheck(in_array($GLOBALS['nativeAvatarStatus'],[403,404],true)&&$avatarController->output->body!==$canonical['content'],'principal image route uses the official ownership fence');CompanyRequestScope::$primary=false;
+CompanyRequestScope::$actor=7;CompanyRequestScope::$primary=true;$GLOBALS['nativeAvatarStatus']=200;$avatarController->output->status=200;$avatarController->output->body='';$avatarController->contact_profile_image('101',(string)$na);
+$principalImageOwned=$primaryIssuer===$a;
+essentialCheck($principalImageOwned
+    ? $avatarController->output->body===$canonical['content']
+    : (in_array($GLOBALS['nativeAvatarStatus'],[403,404],true)&&$avatarController->output->body!==$canonical['content']),
+    $principalImageOwned?'principal image uses the official reader for the installation owner':'principal image route uses the official ownership fence');CompanyRequestScope::$primary=false;
 essentialCheck($db->query('SELECT * FROM '.$p.'company_native_contact_images WHERE contact_id=?',[$na])->row_array()===$avatarBefore,'image requests never modify the stored bytes or metadata');
 
 essentialThrows(fn()=>$images->writeInOwned($a,7,101,$na,$canonical),'issuer_owned_transaction_required','image cannot write outside contact transaction');
