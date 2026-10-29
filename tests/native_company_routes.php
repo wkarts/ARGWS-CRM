@@ -157,7 +157,7 @@ $invoiceActions=['index'=>['GET','HEAD'],'list_invoices'=>['GET','HEAD'],'table'
 foreach($invoiceActions as$action=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
  $check(NativeCompanyRoutes::admits('admin','','invoices',$action,$verb)===in_array($verb,$allowed,true),'official invoice action has finite verb: '.$action.'/'.$verb);
 foreach(['invoices','invoices/list_invoices','invoices/invoice','invoices/drafts','invoices/copy']as$route)$check(NativeCompanyRoutes::navigation($route),'official invoice page is a return destination: '.$route);
-foreach(array_diff(array_keys($invoiceActions),['index','list_invoices','invoice'])as$action)$check(!NativeCompanyRoutes::navigation('invoices/'.$action),'invoice data endpoint is not a return destination: '.$action);
+foreach(array_diff(array_keys($invoiceActions),['index','list_invoices','invoice','drafts','copy'])as$action)$check(!NativeCompanyRoutes::navigation('invoices/'.$action),'invoice data endpoint is not a return destination: '.$action);
 foreach(['upload_sales_file','add_sales_external_attachment','toggle_file_visibility']as$action)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
  $check(NativeCompanyRoutes::admits('admin','','misc',$action,$verb)===($verb==='POST'),'invoice attachment mutation has finite verb: '.$action.'/'.$verb);
 foreach(['create','update','delete','mark_as_default','unmark_as_default','validate_dynamic_date']as$action)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
