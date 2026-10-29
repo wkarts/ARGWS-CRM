@@ -226,6 +226,7 @@ expectStatus(fn() => CompanyRequestScope::beforeHydration($ci), 403);
 essentialCheck(!file_exists(APPPATH . 'controllers/admin/Company_context.php') && !file_exists(APPPATH . 'controllers/admin/CompanyContext.php'), 'parallel company_context controller is removed');
 essentialCheck(!str_contains(file_get_contents(APPPATH . 'views/admin/includes/native_company_layout_head.php'), "'company_context'")
     && !str_contains(file_get_contents(APPPATH . 'views/admin/issuers/certificate_link.php'), "'company_context'"), 'active presentation links no longer target the retired company_context route');
+$db->queries = [];
 $ci = contextEnvironment($f, $s, 'invoices', 'invoice');
 $ci->load->initialize();
 essentialCheck(in_array('autoload_returned', $ci->load->trace, true) && CompanyRequestScope::nativeFor($ci), 'secondary finance enters the official native route before controller hydration');
