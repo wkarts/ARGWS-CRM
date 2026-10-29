@@ -25,6 +25,14 @@
                 "id": "localization"
             },
             {
+                "name": "Certificado A1",
+                "view": "admin/settings/includes/certificates",
+                "position": 17,
+                "icon": "fa fa-certificate",
+                "without_submit_button": true,
+                "id": "certificates"
+            },
+            {
                 "name": "settings_group_email",
                 "view": "admin/settings/includes/email",
                 "position": 20,
@@ -107,6 +115,48 @@
                 "id": "tasks"
             },
             {
+                "id": "task_defaults",
+                "name": "Padrões de criação de tarefas",
+                "view": "admin/settings/includes/policy",
+                "position": 11,
+                "icon": "fa fa-tasks"
+            },
+            {
+                "id": "task_operations",
+                "name": "Prioridade e acompanhamento",
+                "view": "admin/settings/includes/policy",
+                "position": 12,
+                "icon": "fa fa-tasks"
+            },
+            {
+                "id": "task_timers",
+                "name": "Cronômetros das tarefas",
+                "view": "admin/settings/includes/policy",
+                "position": 13,
+                "icon": "fa fa-clock"
+            },
+            {
+                "id": "task_timer_stop",
+                "name": "Parada do cronômetro anterior",
+                "view": "admin/settings/includes/policy",
+                "position": 14,
+                "icon": "fa fa-clock"
+            },
+            {
+                "id": "ticket_preferences",
+                "name": "Ordem das respostas de suporte",
+                "view": "admin/settings/includes/policy",
+                "position": 16,
+                "icon": "fa fa-ticket"
+            },
+            {
+                "id": "project_files",
+                "name": "Arquivos de projetos",
+                "view": "admin/settings/includes/policy",
+                "position": 17,
+                "icon": "fa fa-folder"
+            },
+            {
                 "name": "support",
                 "view": "admin/settings/includes/tickets",
                 "position": 15,
@@ -172,6 +222,13 @@
                 "position": 10,
                 "icon": "fa-regular fa-file-pdf",
                 "id": "pdf"
+            },
+            {
+                "id": "pdf_typography",
+                "name": "Tipografia dos PDFs",
+                "view": "admin/settings/includes/policy",
+                "position": 11,
+                "icon": "fa fa-font"
             },
             {
                 "name": "E-Sign",
