@@ -1,5 +1,7 @@
 # Native company experience — closure contract (WIP)
 
+> **Reconciliation at SHA `dee51cfb35913797b324733ddbf21e8b61427f1b` (2026-10-29):** the physical prefix gate reports zero `company_*` files (case-insensitive), including controllers, views and tombstones. The historical WIP notes below describe the earlier composition checkpoints; they do not identify active parallel source. The remaining release gates are external runtime validation and Banco do Brasil CNAB400 documentation/homologation, both recorded without a false green.
+
 ## Acceptance, not a second application
 
 The selected company must change data and authorization, not the existing CRM's routes, controllers, views, menu or components. The parallel `company_context` landing page and related presentation must be removed, not hidden behind an alias. Company selection remains a technical POST operation. No company records or historical financial data are deleted by this work.
