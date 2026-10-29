@@ -160,3 +160,16 @@ metadados novos são recusados por NativeCompanyTicketThreadPresentation com
 native_ticket_metadata_required. Essas falhas não foram mascaradas nem
 classificadas como simples problema de cache. A matriz funcional acima continua
 pendente; este checkpoint não autoriza merge nem afirma entrega completa.
+
+Também foram reexecutados com MySQL os regressivos de exportação de despesas
+(115 checks) e conversão de despesa em fatura (125 checks): os fixtures agora
+invocam Settings::imports, mantêm admissão nativa separada do selo revogável e
+usam IDs canônicos/CSRF da ação atual. As verificações A/B/principal, auditoria
+antes de bytes, revogação e persistência continuam ativas.
+
+O run de stacks 40868763643 confirmou instalação limpa/upgrade e três execuções
+do browser smoke, superando o erro anterior de cabeçalho. O próximo ponto de
+falha do onboarding é `/admin/invoices`: o teste antigo espera 403, mas a rota
+agora adaptada responde 503. Não se alterou a asserção para aceitar falha interna.
+É necessário diagnosticar o GET integrado e comprovar a tela positiva antes de
+atualizar esse contrato de browser. Não houve homologação completa das stacks.
