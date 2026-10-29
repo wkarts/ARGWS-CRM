@@ -8,6 +8,7 @@ function show_error($message,$status=500){throw new NativeClientSettingsHttpErro
 function _l($key){return$key;}
 function admin_url($path=''){return'https://fixture.invalid/admin/'.$path;}
 function redirect($url,$method='location',$status=302){$GLOBALS['settingsRedirect']=[$url,$status];}
+function set_alert($type,$message){$GLOBALS['settingsAlerts'][]=[$type,$message];}
 class CompanyRequestScope{
  public static int$issuer=41;public static bool$sealed=true;
  public static function nativeFor($ci){return self::$sealed;}
