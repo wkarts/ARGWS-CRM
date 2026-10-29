@@ -80,7 +80,7 @@ final class NativeCompanyTaskDetailPresentation
         $ids = [];
         foreach ($item['assignees'] as $member) $ids[IssuerPolicy::id($member['staffid'])] = true;
         foreach (array_merge($detail['comments'], $detail['timers']) as $row) {
-            if (($row['actor_id'] ?? null) !== null) $ids[IssuerPolicy::id($row['actor_id'])] = true;
+            if (($row['actor_id'] ?? null) !== null && (int)$row['actor_id'] > 0) $ids[IssuerPolicy::id($row['actor_id'])] = true;
         }
         $names = [];
         $nameFrames = [];

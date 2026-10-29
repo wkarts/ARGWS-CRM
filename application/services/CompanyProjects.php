@@ -27,6 +27,7 @@ final class CompanyProjects extends CompanyProjectsStorage
             require_once __DIR__.'/NativeCompanyProjectMetadata.php';NativeCompanyProjectMetadataSchema::assertValid($this->db,$this->p);
             $tables=array_merge($tables,NativeCompanyProjectMetadata::tables($this->db,$this->p));
         }
+        if($this->db->table_exists($this->p.'company_project_copy_requests'))$tables=array_merge($tables,['company_project_copy_requests','company_project_copy_snapshots']);
         return array_values(array_unique($tables));
     }
     protected function operationFrame(int $issuer,int $actor,int $id,string $operation):?array
@@ -44,6 +45,7 @@ final class CompanyProjects extends CompanyProjectsStorage
         return $frame;
     }
     protected string $feature='projects';
+    public function copyTransactionParticipants():array{return $this->apiTables();}
     private static function input(array $input,bool$native=false):array
     {
         if(array_diff(array_keys($input),['client_id','responsible_id','name','description','start_date','due_date','status']))throw new DomainException('company_project_invalid_input');
@@ -84,16 +86,30 @@ final class CompanyProjects extends CompanyProjectsStorage
     private function nativeUnassignedOrigin(int$issuer,int$project):void
     {
         $rows=$this->rows('SELECT actor_id,input_hash FROM '.$this->p.'company_project_requests WHERE issuer_id=? AND result_id=? AND operation=? FOR UPDATE',[$issuer,$project,'native_project_created']);
+        if($rows===[]&&$this->db->table_exists($this->p.'company_project_copy_requests')){
+            $copies=$this->rows('SELECT r.actor_id,r.input_hash,s.review_json,s.result_json,s.result_hash FROM '.$this->p.'company_project_copy_requests r JOIN '.$this->p.'company_project_copy_snapshots s ON s.issuer_id=r.issuer_id AND s.request_key=r.request_key WHERE r.issuer_id=? AND r.result_project_id=? FOR UPDATE',[$issuer,$project]);
+            if(count($copies)===1&&hash_equals($copies[0]['input_hash'],hash('sha256',$copies[0]['review_json']))&&hash_equals($copies[0]['result_hash'],hash('sha256',$copies[0]['result_json']))){$review=json_decode($copies[0]['review_json'],true,32,JSON_THROW_ON_ERROR);$result=json_decode($copies[0]['result_json'],true,32,JSON_THROW_ON_ERROR);if(isset($review['native'])&&($result['project_id']??null)===$project)$rows=[$copies[0]];}
+        }
         if(count($rows)!==1||!preg_match('/^[a-f0-9]{64}$/D',(string)$rows[0]['input_hash'])||(int)$rows[0]['actor_id']<1)throw new DomainException('native_project_origin_unconfirmed');
     }
     /** Canonical copy compositor; cannot join an arbitrary caller transaction. */
-    public function createCopyInOwnedTransaction($issuer,$actor,array $input):int
+    public function createCopyInOwnedTransaction($issuer,$actor,array $input,?array $native=null):int
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input);if($data['status']!=='active')throw new DomainException('company_project_invalid_input');
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input,$native!==null);if($data['status']!=='active')throw new DomainException('company_project_invalid_input');
         CompanyProjectsSchema::assertValid($this->db,$this->p);CompanyProjectExtrasSchema::assertValid($this->db,$this->p);CompanyStandaloneTasksSchema::assertValid($this->db,$this->p);
         IssuerTransaction::assertOwned($this->db,$this->p,['company_project_copy_requests','company_project_copy_snapshots']);
         IssuerTransaction::assertOwned($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),$this->apiTables()));
-        return ($this->guardedWork(function()use($issuer,$actor,$data):int{(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'create');$id=$this->insertCreatedInOwned($issuer,$actor,$data);$this->audit($issuer,$actor,$id,'company_project_created');$this->authorize($issuer,$actor,'create');return $id;}))();
+        return ($this->guardedWork(function()use($issuer,$actor,$data,$native):int{(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'create');$id=$this->insertCreatedInOwned($issuer,$actor,$data,$native!==null);
+            if($native!==null){
+                if(array_keys($native)!==['metadata','members','decorations','form_state'])throw new DomainException('company_project_copy_invalid');
+                $proof=new stdClass();self::$nativeCreationProofs??=new WeakMap();self::$nativeCreationProofs[$proof]=['db'=>$this->db,'prefix'=>$this->p,'issuer'=>$issuer,'actor'=>$actor,'project'=>$id,'row'=>$this->row($issuer,$id)];
+                try{
+                    if($native['metadata']!==null)(new NativeCompanyProjectMetadata($this->db,$this->p))->writeCreatedInOwnedTransaction($issuer,$actor,$id,$native['metadata'],$proof);
+                    if($native['members']!==[])(new NativeCompanyWorkAssignments($this->db,$this->p))->createProjectMembersInOwnedTransaction($issuer,$actor,$id,$native['members'],$proof);
+                    if($native['decorations']!==null){(new NativeCompanyCustomFields($this->db,$this->p))->saveCreatedProjectInOwnedTransaction($issuer,$actor,$id,$native['decorations']['custom_fields'],$proof);(new NativeCompanyResourceTags($this->db,$this->p))->createProjectTagsInOwnedTransaction($issuer,$actor,$id,$native['decorations']['tags'],$proof);}
+                    if($native['form_state']!==null){$state=new NativeCompanyProjectFormState($this->db,$this->p);$before=$state->readInOwnedTransaction($issuer,$actor,$id);$state->saveInOwnedTransaction($issuer,$actor,$id,$before['revision'],$native['form_state'],$proof);}
+                }finally{unset(self::$nativeCreationProofs[$proof]);}
+            }$this->audit($issuer,$actor,$id,'company_project_created');$this->authorize($issuer,$actor,'create');return $id;}))();
     }
     /** Cancel a project through the canonical writer, preserving all rows and history. */
     public function delete($issuer,$actor,$id,$revision,string $key):int

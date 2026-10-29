@@ -37,3 +37,54 @@ foreach([[false,false],[false,true],[true,false],[true,true]]as[$allowed,$config
 $page=new DashboardCalendarCompositionRender;$page->render(false,false,false);
 check(!in_array('admin/utilities/calendar_template',$page->loaded,true),'no company selected never composes the event mutation form');
 echo "Dashboard calendar composition: $checks cumulative checks; actual dashboard PHP, framework/partial I/O doubled.\n";
+
+// Render the real finance widget with native textual states and real legacy
+// helpers: previously the progress bar passed text to a numeric-only helper,
+// and the links emitted status=open, which the original directory rejects.
+define('APPPATH', __DIR__ . '/../application/');
+require_once APPPATH . 'helpers/estimates_helper.php';
+require_once APPPATH . 'helpers/proposals_helper.php';
+$salesCases = [
+    'open' => [1, 1, 'info'],
+    'accepted' => [4, 3, 'success'],
+    'declined' => [3, 2, 'danger'],
+    'cancelled' => [3, 2, 'muted'],
+    'converting' => [4, 3, 'warning'],
+    'converted' => [4, 3, 'success'],
+];
+$company_dashboard = [
+    'permissions' => ['invoices' => false, 'estimates' => true, 'proposals' => true],
+    'finance_overview' => ['estimates' => [], 'proposals' => []],
+    'sales_statuses' => [],
+];
+$estimate_statuses = $proposal_statuses = array_keys($salesCases);
+foreach ($salesCases as $state => [$estimateStatus, $proposalStatus, $color]) {
+    $company_dashboard['sales_statuses'][$state] = ['label' => $state, 'color' => $color];
+    foreach (['estimates', 'proposals'] as $kind) {
+        $company_dashboard['finance_overview'][$kind][$state] = ['total_by_status' => 1, 'percent' => 16.67];
+    }
+}
+set_error_handler(static function ($severity, $message, $file, $line) {
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
+try {
+    ob_start();
+    include APPPATH . 'views/admin/dashboard/widgets/finance_overview.php';
+    $financeHtml = ob_get_clean();
+} finally {
+    restore_error_handler();
+}
+$dom = new DOMDocument;
+@$dom->loadHTML($financeHtml);
+$xpath = new DOMXPath($dom);
+$links = $xpath->query('//a[contains(@href,"list_estimates?status=") or contains(@href,"list_proposals?status=")]');
+$bars = $xpath->query('//div[@role="progressbar"]');
+check($links->length === 12 && $bars->length === 12, 'both original sales widgets render every native state without PHP diagnostics');
+foreach (['estimates', 'proposals'] as $kindIndex => $kind) {
+    foreach (array_values($salesCases) as $stateIndex => $expected) {
+        $index = $kindIndex * 6 + $stateIndex;
+        check($links->item($index)->getAttribute('href') === '/admin/' . $kind . '/list_' . $kind . '?status=' . $expected[$kindIndex], 'dashboard links use canonical numeric sales filters');
+        check(str_contains($bars->item($index)->getAttribute('class'), 'progress-bar-' . $expected[2] . ' '), 'native bar uses the scoped status color');
+    }
+}
+echo "Dashboard finance real DOM: $checks cumulative checks passed.\n";

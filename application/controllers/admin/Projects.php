@@ -1089,8 +1089,8 @@ class Projects extends AdminController
     public function copy($project_id)
     {
         if($this->nativeProjects()){
-            if(!in_array(strtoupper($this->input->method(true)),['GET','HEAD'],true)) { show_error('Método não permitido.',405); return; }
-            redirect(CompanyRequestScope::adminUrl($this,'projects/copies?source='.(int)$project_id),'location',303);return;
+            require_once APPPATH.'services/NativeCompanyProjectCopyHttp.php';
+            NativeCompanyProjectCopyHttp::copy($this,$project_id);return;
         }
         if (staff_can('create', 'projects')) {
             $id = $this->projects_model->copy($project_id, $this->input->post());

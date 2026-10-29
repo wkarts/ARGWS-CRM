@@ -8,10 +8,10 @@ if ($estimate['status'] == $status) { ?>
                 <h4 class="tw-font-semibold tw-text-base pipeline-heading tw-mb-0.5">
                     <a href="<?= admin_url('estimates/list_estimates/' . $estimate['id']); ?>"
                         class="tw-text-neutral-700 hover:tw-text-neutral-900 active:tw-text-neutral-900"
-                        onclick="estimate_pipeline_open(<?= e($estimate['id']); ?>); return false;">
-                        <?= e(format_estimate_number($estimate['id'])); ?>
+                        <?php if(empty($native_sales_card)){ ?>onclick="estimate_pipeline_open(<?= e($estimate['id']); ?>); return false;"<?php } ?>>
+                        <?= e(!empty($native_sales_card)?$estimate['formatted_number']:format_estimate_number($estimate['id'])); ?>
                     </a>
-                    <?php if (staff_can('edit', 'estimates')) { ?>
+                    <?php if (!empty($native_sales_card)?$native_sales_can_edit:staff_can('edit', 'estimates')) { ?>
                     <a href="<?= admin_url('estimates/estimate/' . $estimate['id']); ?>"
                         target="_blank" class="pull-right tw-font-medium">
                         <small>
@@ -51,7 +51,7 @@ if ($estimate['status'] == $status) { ?>
                         </p>
                         <?php } ?>
                     </div>
-                    <div class="tw-shrink-0 text-right">
+                    <?php if(empty($native_sales_card)){ ?><div class="tw-shrink-0 text-right">
                         <small>
                             <i class="fa fa-paperclip"></i>
                             <?= _l('estimate_notes'); ?>:
@@ -60,8 +60,8 @@ if ($estimate['status'] == $status) { ?>
                                 'rel_type' => 'estimate',
                             ]); ?>
                         </small>
-                    </div>
-                    <?php $tags = get_tags_in($estimate['id'], 'estimate'); ?>
+                    </div><?php } ?>
+                    <?php $tags = !empty($native_sales_card)?$native_sales_tags:get_tags_in($estimate['id'], 'estimate'); ?>
                     <?php if (count($tags) > 0) { ?>
                     <div class="kanban-tags tw-text-sm tw-inline-flex">
                         <?= render_tags($tags); ?>

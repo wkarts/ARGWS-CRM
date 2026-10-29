@@ -17,6 +17,7 @@ require_once __DIR__.'/NativeCompanyInvoiceSequencePreferences.php';
 require_once __DIR__.'/NativeCompanySalesSettings.php';
 require_once __DIR__.'/CompanyProjectFileSettings.php';
 require_once __DIR__.'/CompanyPdfTypography.php';
+require_once __DIR__.'/NativeCompanyPdfSettings.php';
 require_once __DIR__.'/CompanyTicketPreferences.php';
 require_once __DIR__.'/CompanyTaskPreferences.php';
 require_once __DIR__.'/CompanyTaskTimerPreferences.php';
@@ -30,7 +31,7 @@ final class NativeCompanySettingsForms
     public static function availableGroups():array
     {
         return ['general','company','localization','certificates','email','sales_general','invoices','estimates','proposals','clients','tasks','tickets','google','calendar','misc',
-            'task_timer_stop','task_timers','task_operations','task_defaults','ticket_preferences','pdf_typography','project_files'];
+            'task_timer_stop','task_timers','task_operations','task_defaults','ticket_preferences','pdf_typography','project_files','pdf'];
     }
     public function authorize(int $issuer,int $actor,string $cap):void
     {
@@ -53,6 +54,7 @@ final class NativeCompanySettingsForms
             'task_operations'=>[CompanyTaskOperationPreferences::PRIORITY,CompanyTaskOperationPreferences::FOLLOW],
             'task_defaults'=>[CompanyTaskPreferences::STATUS,CompanyTaskPreferences::ASSIGN],
             'ticket_preferences'=>[CompanyTicketPreferences::KEY],
+            'pdf'=>NativeCompanyPdfSettings::fields(),
             'pdf_typography'=>CompanyPdfTypography::FIELDS,
             'project_files'=>[CompanyProjectFileSettings::KEY],
             'google'=>NativeCompanyGoogleSettings::FIELDS,
@@ -80,6 +82,7 @@ final class NativeCompanySettingsForms
     public function page(int $issuer,int $actor,string $group):array
     {
         self::fields($group);$this->authorize($issuer,$actor,'view');
+        if($group==='pdf')return(new NativeCompanyPdfSettings($this->db,$this->p))->page($issuer,$actor);
         if(self::isPolicyGroup($group))return$this->policyPage($issuer,$actor,$group);
         if(in_array($group,['estimates','proposals'],true))return(new NativeCompanySalesSettings($this->db,$this->p))->page($issuer,$actor,$group)+['assets'=>null,'custom_fields'=>[]];
         if($group==='clients')return(new NativeCompanyClientsSettings($this->db,$this->p))->page($issuer,$actor);
@@ -93,6 +96,7 @@ final class NativeCompanySettingsForms
     public function save(int $issuer,int $actor,string $group,array $settings,array $custom,string $revision,array $uploads=[],?callable $encrypt=null,?callable $decrypt=null):array
     {
         $this->authorize($issuer,$actor,'edit');
+        if($group==='pdf'){if($custom!==[])throw new DomainException('native_settings_invalid');return(new NativeCompanyPdfSettings($this->db,$this->p))->save($issuer,$actor,$revision,$settings,$uploads);}
         if(self::isPolicyGroup($group)){
             if($uploads!==[]||$custom!==[]||!preg_match('/^(?:0|[1-9][0-9]{0,9})$/D',$revision)||(int)$revision>2147483647||array_keys($settings)!==self::fields($group))throw new DomainException('native_settings_invalid');
             $service=$this->policyService($group);$service->save($issuer,$actor,(int)$revision,$settings);return$this->policyPage($issuer,$actor,$group);
@@ -203,6 +207,7 @@ final class NativeCompanySettingsForms
     /** Narrow validation for the storage-owned transaction, not a generic principal batch bypass. */
     public static function assertStorage(string $group,array $values):void
     {
+        if($group==='pdf'){if(array_diff(array_keys($values),NativeCompanyPdfSettings::FORMATS))throw new DomainException('native_settings_invalid');NativeCompanyPdfSettings::validate($values);return;}
         if(in_array($group,['estimates','proposals'],true)){NativeCompanySalesSettings::validate($group,$values,false);return;}
         if($group==='misc'){NativeCompanyMiscSettings::validateExtras($values);return;}
         if($group==='tasks'){NativeCompanyTaskSettings::validateExtras($values);return;}

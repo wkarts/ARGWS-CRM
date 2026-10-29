@@ -259,7 +259,7 @@ class Clients extends AdminController
                     'company_clients_csrf'=>$token,'native_customer_request_key'=>bin2hex(random_bytes(32)),
                     'native_customer_revision'=>'','native_customer_profile'=>[], 'bodyclass'=>'customer-profile',
                     'title'=>_l('add_new',_l('client'))]+$native->references($id===''?null:IssuerPolicy::id($id));
-                $data['native_customer_action']=CompanyRequestScope::adminUrl($this,'clients/client'.($this->input->get('source',false)==='company'?'?source=company':''));
+                $data['native_customer_action']=CompanyRequestScope::adminUrl($this,'clients/client'.($id===''?'':'/'.IssuerPolicy::id($id)).($sourceCompany?'?source=company':''));
                 $data['native_customer_languages']=array_values(array_filter(array_map('basename',glob(APPPATH.'language/*',GLOB_ONLYDIR)?:[]),static fn($name)=>preg_match('/^[a-z][a-z0-9_-]{0,39}$/D',$name)));
                 $data['native_customer_owned']=true;
                 if($id!==''){

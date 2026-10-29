@@ -116,7 +116,7 @@ final class NativeCompanyRoutes
             'get_rel_project_data'=>['GET'],
             'get_staff_names_for_mentions'=>['GET'],
             'extras'=>['GET','HEAD','POST'], 'portal_rules'=>['GET','HEAD','POST'], 'billing_rates'=>['GET','HEAD','POST'],
-            'fixed_billing'=>['GET','HEAD','POST'], 'copies'=>['GET','HEAD','POST'], 'copy'=>['GET','HEAD'], 'delete'=>['POST'], 'time_billing'=>['GET','HEAD','POST'],
+            'fixed_billing'=>['GET','HEAD','POST'], 'copies'=>['GET','HEAD','POST'], 'copy'=>['GET','HEAD','POST'], 'delete'=>['POST'], 'time_billing'=>['GET','HEAD','POST'],
         ],
         // Read-only private billing projection; customer pages and mutations
         // remain closed until their complete native contracts are admitted.
@@ -150,7 +150,7 @@ final class NativeCompanyRoutes
             'export'=>['GET','HEAD'],
         ],
         'contracts'=>[
-            'index'=>['GET','HEAD'],
+            'index'=>['GET','HEAD'], 'table'=>['POST'], 'send_to_email'=>['POST'], 'renew'=>['POST'], 'copy'=>['POST'], 'delete'=>['POST'], 'get_comments'=>['GET','HEAD'], 'add_comment'=>['POST'], 'edit_comment'=>['POST'], 'remove_comment'=>['POST'],
             'contract'=>['GET','HEAD','POST'],
             'pdf'=>['GET','HEAD'],
             'file'=>['GET','HEAD'],

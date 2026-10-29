@@ -46,7 +46,7 @@ final class NativeCompanyMailDispatchFence
     private static function validate($issuer,$queue,string $kind,string $hash):void
     {
         IssuerPolicy::id($issuer);IssuerPolicy::id($queue);
-        if(!in_array($kind,['reminder','contact','file','verification','ticket','smtp_test','event','staff_invite','privacy','customer_upload'],true)||!preg_match('/^[a-f0-9]{64}$/D',$hash))throw new DomainException('company_mail_fence_invalid');
+        if(!in_array($kind,['reminder','contact','file','verification','ticket','smtp_test','event','staff_invite','privacy','customer_upload','contract'],true)||!preg_match('/^[a-f0-9]{64}$/D',$hash))throw new DomainException('company_mail_fence_invalid');
     }
     public static function prepareInOwnedTransaction($db,string $p,int $issuer,int $queue,string $kind,string $hash):void
     {

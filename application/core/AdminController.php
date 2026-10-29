@@ -22,7 +22,7 @@ class AdminController extends App_Controller
                         || CompanySettingsRuntime::staffId() !== CompanyRequestScope::context()->staffId()) {
                         throw new LogicException('native_admin_settings_scope_mismatch');
                     }
-                    $this->load->helper(['settings', 'tickets', 'invoices']);
+                    $this->load->helper(['settings', 'tickets', 'invoices', 'sales']);
                 }
                 $this->load->helper(['fields', 'datatables', 'custom_fields', 'func', 'template', 'language']);
                 require_once APPPATH . 'services/NativeCompanyAdminPresentation.php';

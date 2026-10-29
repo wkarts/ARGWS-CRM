@@ -56,11 +56,12 @@ final class CompanyRequestScope
     {
         if($class!=='contracts')return false;
         if($method==='file')return true;
-        if(!in_array($method,['contract','pdf'],true))return false;
+        if(!in_array($method,['contract','pdf','send_to_email','renew','copy','delete','get_comments','add_comment','edit_comment','remove_comment'],true))return false;
         if($method==='contract'&&$ci->input->get('source',false)==='company')return true;
         $argument='';
         if(isset($ci->uri)&&method_exists($ci->uri,'rsegment'))$argument=(string)$ci->uri->rsegment(3);
-        if($argument==='')return false;
+        if(in_array($method,['renew','add_comment','edit_comment','remove_comment'],true))$argument=$ci->input->post('contract_id',false)??$ci->input->post('contractid',false)??'';
+        if(!is_string($argument)&&!is_int($argument))return false;if($argument==='')return false;
         try{return NativeCompanyResourceId::decode('contract',$argument)['source_kind']==='company_contract';}
         catch(DomainException $error){
             // Legacy contract identifiers are signed INT values and therefore
@@ -185,7 +186,7 @@ final class CompanyRequestScope
             // form, PDF and due-date actions as shared so the principal company
             // follows the same issuer-scoped path as secondary companies.
             $sharedOwnedSales = $native && in_array($class, ['estimates', 'proposals'], true)
-                && in_array($method, ['index', 'list_estimates', 'estimate', 'pdf', 'get_due_date', 'list_proposals', 'proposal'], true);
+                && in_array($method, ['index', 'list_estimates', 'estimate', 'pdf', 'get_due_date', 'list_proposals', 'proposal', 'table', 'proposal_relations', 'pipeline', 'get_pipeline', 'pipeline_load_more'], true);
             // The company selector is an isolated technical POST, not a native
             // application page. It has its own switch CSRF and must not be
             // forced through the native presentation CSRF contract.

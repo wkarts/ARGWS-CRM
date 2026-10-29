@@ -720,7 +720,7 @@ class Proposals extends AdminController
 
     public function pipeline_load_more()
     {
-        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->table('proposals', null); return; }
+        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->pipelineLoadMore('proposals'); return; }
 
         $status = $this->input->get('status');
         $page   = $this->input->get('page');

@@ -8,7 +8,18 @@
 Dropzone.options.clientAttachmentsUpload = false;
 var customer_id = $('input[name="userid"]').val();
 var customer_tab_active = get_url_param('tab');
+<?php if(!empty($native_customers)){ ?>
+// The embedded administrators table is a browsing control, not profile data.
+// Keep pagination usable without submitting its generated select to the strict writer.
+function nativeCustomerAdminTableControls() {
+    $('#customer_admins .dataTables_length select').removeAttr('name');
+}
+$('#customer_admins table').on('init.dt draw.dt', nativeCustomerAdminTableControls);
+<?php } ?>
 $(function() {
+    <?php if(!empty($native_customers)){ ?>
+    nativeCustomerAdminTableControls();
+    <?php } ?>
     $(document).on('click', '[data-native-admin-remove]', function(event) {
         event.preventDefault();
         var form=$('<form>', {method:'POST', action:$(this).attr('href')});

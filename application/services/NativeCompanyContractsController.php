@@ -115,6 +115,50 @@ final class NativeCompanyContractsController
         CompanyOperationFilesHttp::respond($this->ci,$this->files->file($this->issuer,$this->actor,'contract',$id,$key));
     }
 
+    public function table($client=''):void
+    {
+        CompanyRequestScope::assertNativeMutation($this->ci);$this->authorize();$post=$this->ci->input->post(null,false)?:[];
+        $start=$post['start']??0;$length=$post['length']??25;$search=$post['search']['value']??'';
+        if(!preg_match('/^(0|[1-9][0-9]{0,5})$/D',(string)$start)||!preg_match('/^[1-9][0-9]{0,2}$/D',(string)$length)||(int)$length>100||!is_string($search)||strlen($search)>191)throw new DomainException('native_contract_invalid');
+        $p=db_prefix();$where="c.issuer_id=? AND c.status<>'deleted'";$args=[$this->issuer];if($client!==''){$where.=' AND c.client_id=?';$args[]=IssuerPolicy::id($client);}
+        $base=$where;$baseArgs=$args;if($search!==''){$where.=" AND c.name LIKE ? ESCAPE '!'";$args[]='%'.str_replace(['!','%','_'],['!!','!%','!_'],$search).'%';}
+        $total=(int)IssuerStorage::query($this->ci->db,"SELECT COUNT(*) n FROM {$p}company_contracts c WHERE $base",$baseArgs)->row()->n;$filtered=(int)IssuerStorage::query($this->ci->db,"SELECT COUNT(*) n FROM {$p}company_contracts c WHERE $where",$args)->row()->n;
+        $rows=IssuerStorage::query($this->ci->db,"SELECT c.id,c.name,c.start_date,c.due_date,c.status,u.company FROM {$p}company_contracts c JOIN {$p}clients u ON u.userid=c.client_id WHERE $where ORDER BY c.id LIMIT ".(int)$length.' OFFSET '.(int)$start,$args)->result_array();
+        $e=static fn($v)=>htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');$data=[];foreach($rows as$row){$id=$this->canonical((int)$row['id']);$data[]=[$id,'<a href="'.$e(CompanyRequestScope::adminUrl($this->ci,'contracts/contract/'.$id)).'">'.$e($row['name']).'</a>',$e($row['company']),'','',$e($row['start_date']),$e($row['due_date']),'',$e($row['status'])];}$this->authorize();
+        $this->ci->output->set_content_type('application/json')->set_output(json_encode(['draw'=>(int)($post['draw']??0),'recordsTotal'=>$total,'recordsFiltered'=>$filtered,'data'=>$data,'iTotalRecords'=>$total,'iTotalDisplayRecords'=>$filtered,'aaData'=>$data],JSON_THROW_ON_ERROR));
+    }
+    public function comments($canonical):void
+    {
+        $verb=strtoupper($this->ci->input->method(true));if(!in_array($verb,['GET','HEAD'],true)){$this->methodNotAllowed('GET, HEAD');return;}
+        $id=$this->source($canonical);$page=(new CompanyContractDiscussions($this->ci->db,db_prefix()))->staffPage($this->issuer,$this->actor,$id);
+        $html=$this->ci->load->view('admin/contracts/native_comments',['comments'=>$page['items']],true);$this->ci->output->set_content_type('text/html')->set_output($verb==='HEAD'?'':$html);
+    }
+    /** Original action URLs require the same sealed POST, dedicated CSRF and optimistic revision as the form. */
+    public function action(string $action,$canonical=null,$comment=null):void
+    {
+        if(strtoupper($this->ci->input->method(true))!=='POST'){$this->methodNotAllowed('POST');return;}$this->assertPost();
+        $allowed=['action','contract_id','contractid','revision','request_key','native_contracts_csrf','_native_company_csrf','_company_context'];
+        if(isset($this->ci->security))$allowed[]=$this->ci->security->get_csrf_token_name();
+        $allowed=array_merge($allowed,match($action){'renew'=>['new_start_date','new_end_date'],'send_to_email'=>['contact_id'],'add_comment','edit_comment'=>['content','discussion_body'],default=>[]});
+        if(array_diff(array_keys($this->ci->input->post(null,false)?:[]),$allowed))throw new DomainException('native_contract_invalid');
+        $posted=$this->ci->input->post('contract_id',false)??$this->ci->input->post('contractid',false);$id=$this->source($canonical??$posted);if($posted!==null&&$this->source($posted)!==$id)throw new DomainException('native_contract_mismatch');
+        $revision=$this->ci->input->post('revision',false);$key=$this->ci->input->post('request_key',false);if(!is_string($key)||!preg_match('/^[a-f0-9]{64}$/D',$key))throw new DomainException('native_contract_invalid');
+        if($action==='copy')$id=$this->contracts->transition($this->issuer,$this->actor,$id,$revision,'copy',$key);
+        elseif($action==='delete')$this->contracts->remove($this->issuer,$this->actor,$id,$revision,$key);
+        elseif($action==='renew'){
+            $start=$this->ci->input->post('new_start_date',false);$end=$this->ci->input->post('new_end_date',false);if(!is_string($start)||!is_string($end))throw new DomainException('native_contract_invalid');
+            $id=$this->contracts->renew($this->issuer,$this->actor,$id,$revision,$start,$end,$key);
+        }elseif(in_array($action,['add_comment','edit_comment','remove_comment'],true)){
+            $discussion=new CompanyContractDiscussions($this->ci->db,db_prefix());$body=$this->ci->input->post('content',false)??$this->ci->input->post('discussion_body',false);
+            if($action==='add_comment'){if(!is_string($body))throw new DomainException('native_contract_invalid');$discussion->staffAdd($this->issuer,$this->actor,$id,$revision,$body,$key);}
+            else{$comment=IssuerPolicy::id($comment);if($action==='edit_comment'&&!is_string($body))throw new DomainException('native_contract_invalid');$discussion->edit($this->issuer,$this->actor,$id,$revision,$comment,$action==='remove_comment'?null:$body,$key);}
+            CompanyRequestScope::invalidateCaches($this->ci);if(method_exists($this->ci->input,'is_ajax_request')&&!$this->ci->input->is_ajax_request()){redirect(CompanyRequestScope::adminUrl($this->ci,'contracts/contract/'.$this->canonical($id)),'location',303);return;}$this->ci->output->set_content_type('application/json')->set_output(json_encode(['success'=>true,'revision'=>(int)$this->contracts->get($this->issuer,$this->actor,$id)['revision']],JSON_THROW_ON_ERROR));return;
+        }elseif($action==='send_to_email'){
+            require_once __DIR__.'/NativeCompanyContractMail.php';$this->ci->load->library('encryption');
+            (new NativeCompanyContractMail($this->ci->db,db_prefix()))->queue($this->issuer,$this->actor,$id,IssuerPolicy::id($this->ci->input->post('contact_id',false)),IssuerPolicy::id($revision),$key,base_url(),fn($v)=>$this->ci->encryption->decrypt($v));
+        }else throw new DomainException('native_contract_invalid');
+        CompanyRequestScope::invalidateCaches($this->ci);redirect(CompanyRequestScope::adminUrl($this->ci,$action==='delete'?'contracts':'contracts/contract/'.$this->canonical($id)),'location',303);
+    }
     private function mutate(?int $routeId):void
     {
         $this->assertPost();
@@ -169,12 +213,14 @@ final class NativeCompanyContractsController
             require_once __DIR__.'/CompanyClients.php';$clients=(new CompanyClients($this->ci->db,db_prefix()))->page($this->issuer,$this->actor,0,100,$clientSearch)['items'];
         }
         if($head){$this->ci->output->set_output('');return;}
+        $mailRecipients=[];if($contract&&($portalControls['visible']??false)&&$contract['status']==='active'&&$this->acl->can($this->issuer,$this->actor,'contracts','edit')&&$this->acl->can($this->issuer,$this->actor,'customers','view')){require_once __DIR__.'/NativeCompanyContractMail.php';$mailRecipients=(new NativeCompanyContractMail($this->ci->db,db_prefix()))->recipients($this->issuer,$this->actor,$id);}
         $this->ci->load->view('admin/contracts/native',[
-            'contract'=>$contract,'contract_id'=>$id===null?null:$this->canonical($id),'discussion'=>$discussion,
+            'mail_recipients'=>$mailRecipients,'comment_actor'=>$this->actor,'comment_admin'=>$this->acl->administrative($this->issuer,$this->actor),
+            'history'=>$id===null?[]:$this->contracts->history($this->issuer,$this->actor,$id),'can_delete'=>$this->acl->can($this->issuer,$this->actor,'contracts','delete'),'contract'=>$contract,'contract_id'=>$id===null?null:$this->canonical($id),'discussion'=>$discussion,
             'operation_files'=>$operationFiles,'portal_controls'=>$portalControls,'directory'=>$directory,'clients'=>$clients,
             'native_contracts_csrf'=>$this->csrf(),'request_key'=>bin2hex(random_bytes(32)),
             'can_create'=>$this->acl->can($this->issuer,$this->actor,'contracts','create'),
-            'can_edit'=>$this->acl->can($this->issuer,$this->actor,'contracts','edit'),
+            'can_edit'=>($contract['status']??'')!=='deleted'&&$this->acl->can($this->issuer,$this->actor,'contracts','edit'),
             'title'=>_l('contracts'),'bodyclass'=>'contracts-page',
         ]);
     }

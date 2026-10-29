@@ -1,19 +1,80 @@
 <?php
-/** Native HTTP adapters/renderers; framework I/O only is synthetic (not a browser claim). */
-require dirname(__DIR__).'/companies/standalone_tasks_controller.php';
+/** Original Tasks::task/mark_as controllers and real form/SQL; only framework I/O is synthetic. */
+require dirname(__DIR__).'/companies/native_task_status_controller.php';
 require_once APPPATH.'services/CompanyTaskPreferences.php';
-$controllerStart=$GLOBALS['essentialChecks'];$preferences=new CompanyTaskPreferences($db,$p);$v=static fn(string$s='todo',string$a='1')=>['default_task_status'=>$s,'new_task_auto_assign_current_member'=>$a];
-foreach([$a,$b,$primary]as$owner){
- CompanyRequestScope::$issuer=$owner;$preferences->save($owner,7,0,$v('in_progress','0'));$project=$ps->create($owner,7,array_replace($input,['client_id'=>[$a=>$ca,$b=>$cb,$primary=>$cp][$owner],'name'=>'Default HTTP target '.$owner]),$key('defaults-controller-project-'.$owner));
- foreach(['tasks'=>new Tasks(),'standalone_tasks'=>new Tasks()]as$kind=>$controller){
-  $http->verb='GET';$http->posts=[];$http->gets=$kind==='tasks'?['project'=>(string)$project]:[];$GLOBALS['CI']->output->status=200;$controller->index();$data=end($GLOBALS['CI']->load->views)[1];$html=$harness->render($kind,$data);$dom=new DOMDocument();@$dom->loadHTML($html);$xp=new DOMXPath($dom);
-  essentialCheck($data['creation_defaults']===['revision'=>1]+$v('in_progress','0')&&$xp->query('//select[@id="task-new-status"]/option[@value="in_progress" and @selected]')->length===1&&$xp->query('//select[@id="task-new-status"]/option[@value="done"]')->length===0,'A B principal actual both new forms consume own bounded status');
-  essentialCheck($xp->query('//select[@id="task-new-assignee"]/option[@selected]')->length===0,'assignment0 leaves required blank placeholder instead of selecting master');
-  $csrf=$kind==='tasks'?'company_tasks_csrf':'company_standalone_tasks_csrf';$body=['assignee_id'=>'7','name'=>'HTTP default task '.$owner,'description'=>'Literal <script>never executable</script>','due_date'=>'2026-11-01'];if($kind==='tasks')$body['project_id']=(string)$project;
-  $http->verb='POST';$http->gets=[];$http->posts=[$csrf=>$GLOBALS['CI']->session->userdata($csrf),'action'=>'create','request_key'=>$key('defaults-controller-'.$kind.'-'.$owner),'task'=>$body,'checklist_lines'=>'Pending check'];$controller->index();essentialCheck($GLOBALS['CI']->output->status===303,'native POST explicit assignment omitted status uses own policy');$id=(int)substr($GLOBALS['projectRedirect'],strrpos($GLOBALS['projectRedirect'],'=')+1);$writer=$kind==='tasks'?$ts:$single;$record=$writer->get($owner,7,$id);essentialCheck($record['status']==='in_progress'&&$record['timers']===[],'native controller new task status no implicit timer');
-  $http->posts['task']['status']='todo';$http->posts['request_key']=$key('defaults-controller-explicit-'.$kind.'-'.$owner);$controller->index();$id=(int)substr($GLOBALS['projectRedirect'],strrpos($GLOBALS['projectRedirect'],'=')+1);essentialCheck($GLOBALS['CI']->output->status===303&&$writer->get($owner,7,$id)['status']==='todo','native explicit selection prevails over default');
-  $http->posts['task']['assignee_id']='';$http->posts['request_key']=$key('defaults-controller-blank-'.$kind.'-'.$owner);$controller->index();essentialCheck($GLOBALS['CI']->output->status===409,'HTTP explicit empty assignee retains existing task controller conflict contract');
- }
+require_once APPPATH.'services/NativeCompanyProjectMetadataSchema.php';
+NativeCompanyProjectMetadataSchema::ensure($db,$p);
+require_once APPPATH.'services/CompanyProjectPortalRulesSchema.php';
+require_once APPPATH.'services/CompanyPortalOperationsSchema.php';
+foreach(CompanyPortalOperationsSchema::definitions($p)as$table=>$parts)if($table==='company_portal_projects'&&!$db->table_exists($p.$table)){
+    if($db->driver()==='sqlite')$parts=array_map(static fn($part)=>preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',$part),$parts);
+    $db->query('CREATE TABLE '.$p.$table.'('.implode(',',$parts).') ENGINE=InnoDB');
 }
-$preferences->save($b,7,1,$v('todo'));CompanyRequestScope::$issuer=$b;$http->verb='GET';$http->posts=[];$http->gets=[];$c=new Tasks();$c->index();$data=end($GLOBALS['CI']->load->views)[1];$html=$harness->render('standalone_tasks',$data);$dom=new DOMDocument();@$dom->loadHTML($html);$xp=new DOMXPath($dom);essentialCheck($xp->query('//select[@id="task-new-assignee"]/option[@value="7" and @selected]')->length===1,'assignment1 preselects actual current actor');
-echo 'Own task defaults native adapters/forms: '.($GLOBALS['essentialChecks']-$controllerStart).' added / '.$GLOBALS['essentialChecks'].' cumulative ('.$db->driver().').'.PHP_EOL;
+if($db->driver()==='sqlite')foreach(CompanyProjectPortalRulesSchema::definitions($p)as$table=>$parts)if(!$db->table_exists($p.$table)){
+    $db->query('CREATE TABLE '.$p.$table.'('.preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',implode(',',$parts)).')');
+}
+unset($db->data_cache['table_names']);
+$controllerStart=$GLOBALS['essentialChecks'];
+$preferences=new CompanyTaskPreferences($db,$p);
+$primary=(new IssuerResourceAccess($db,$p))->primaryId();
+// The principal uses the original custom-field catalog, even when it is empty.
+$nativeSeed=file_get_contents(dirname(__DIR__,2).'/install/database.sql');
+foreach(['customfields','customfieldsvalues','contact_permissions']as$table)if(!$db->table_exists($p.$table)){
+    if(!preg_match('/CREATE TABLE `tbl'.preg_quote($table,'/').'` \\(.*?\\) ENGINE=InnoDB[^;]*;/s',$nativeSeed,$definition))throw new RuntimeException('native task fixture catalog missing');
+    $sql=str_replace('`tbl'.$table.'`','`'.$p.$table.'`',$definition[0]);
+    $sql=str_replace('`id` int NOT NULL,','`id` '.($db->driver()==='mysql'?'int NOT NULL AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').',',$sql);
+    if($db->driver()==='sqlite')$sql=preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',$sql);
+    $db->query($sql);
+}
+unset($db->data_cache['table_names']);
+$cp=(new CompanyClients($db,$p))->create($primary,7,['company'=>'Own principal task preferences']);
+$preferenceProjects=[];
+function preferenceTaskDom(int $owner,array $query=[],string $id=''):DOMXPath {
+    global $controller;
+    \NativeTaskHttpTest\CompanyRequestScope::$issuer=$owner;
+    \NativeTaskHttpTest\CompanyRequestScope::$actor=7;
+    $controller->input->verb='GET';$controller->input->query=$query;$controller->input->body=[];
+    $controller->task($id);$dom=new DOMDocument();@$dom->loadHTML($controller->output->body);return new DOMXPath($dom);
+}
+function preferenceTaskWire(int $owner,string $kind,string $tag):array {
+    global $wire,$key,$a,$tasks,$preferenceProjects;
+    $post=array_replace($wire,['name'=>'Task policy <script>literal</script> '.$tag,'assignees'=>['7'],'followers'=>[],
+        'priority'=>'2','startdate'=>'25/10/2026','duedate'=>'','tags'=>'','native_request_key'=>$key($tag),
+        '_native_company_csrf'=>'synthetic-csrf','_company_context'=>'synthetic-context']);
+    if($owner!==$a)$post['custom_fields']=[];
+    if($kind==='project'){
+        $project=$preferenceProjects[$owner];$post['rel_type']='project';$post['rel_id']=NativeCompanyResourceId::encode('company_project',$project);
+        $post['native_milestone_revision']=$tasks->nativeMilestoneSelection($owner,7,$project)['revision'];
+    }else{$post['rel_type']='';$post['rel_id']='';unset($post['native_milestone_revision']);}
+    return $post;
+}
+function preferenceTaskSave(int $owner,array $post,string $id=''):array {
+    global $controller;
+    \NativeTaskHttpTest\CompanyRequestScope::$issuer=$owner;\NativeTaskHttpTest\CompanyRequestScope::$actor=7;
+    $controller->input->verb='POST';$controller->input->query=[];$controller->input->body=$post;
+    $controller->task($id);$result=json_decode($controller->output->body,true,512,JSON_THROW_ON_ERROR);
+    essentialCheck($result['success']===true,'original task form returns a successful canonical write');return NativeCompanyResourceId::decode('task',$result['id']);
+}
+foreach([$a=>$ca,$b=>$cb,$primary=>$cp]as$owner=>$client){
+    (new CompanySettingsStorage($db,$p))->mutate($owner,7,'update','dateformat','d/m/Y|%d/%m/%Y');
+    $before=$preferences->page($owner,7);$preferences->save($owner,7,$before['revision'],['default_task_status'=>'in_progress','new_task_auto_assign_current_member'=>'0']);
+    $preferenceProjects[$owner]=$ps->create($owner,7,['client_id'=>$client,'responsible_id'=>7,'name'=>'Task policy project '.$owner,'description'=>'','start_date'=>'2026-10-01','due_date'=>'2026-12-01'],$key('policy-project-'.$owner));
+    foreach(['project'=>$tasks,'standalone'=>$standalone]as$kind=>$writer){
+        $post=preferenceTaskWire($owner,$kind,'policy-create-'.$owner.'-'.$kind);
+        $query=$kind==='project'?['rel_type'=>'project','rel_id'=>$post['rel_id']]:[];
+        $xp=preferenceTaskDom($owner,$query);
+        essentialCheck($xp->query('//form[@id="task-form"]')->length===1&&$xp->query('//select[@name="assignees[]"]/option[@selected]')->length===0,'principal/A/B original task modal honors disabled automatic assignment '.$kind);
+        $projection=(new NativeCompanyTaskForm($db,$p))->newForm($owner,7,$query,'2026-10-29');
+        essentialCheck($projection['native_task_form']['options']['default_task_status']===4,'original task projection carries this company status policy');
+        $identity=preferenceTaskSave($owner,$post);$record=$writer->get($owner,7,$identity['source_id']);
+        essentialCheck($record['status']==='in_progress'&&$record['timers']===[],'principal/A/B original writer uses own status without implicit time');
+        $controller->input->body=['native_revision'=>(string)$record['revision'],'native_fields_revision'=>(string)$record['native_fields_revision'],'native_request_key'=>$key('policy-override-'.$owner.'-'.$kind),'_native_company_csrf'=>'synthetic-csrf','_company_context'=>'synthetic-context'];
+        $controller->mark_as('1',$identity['canonical_id']);$result=json_decode($controller->output->body,true,512,JSON_THROW_ON_ERROR);
+        essentialCheck($result['success']===true&&$writer->get($owner,7,$identity['source_id'])['status']==='todo','explicit original status action overrides the creation policy');
+        $invalid=$post;$invalid['assignees']=[''];$invalid['native_request_key']=$key('policy-invalid-assignee-'.$owner.'-'.$kind);
+        try{preferenceTaskSave($owner,$invalid);throw new RuntimeException('invalid assignee accepted');}catch(LogicException$error){essentialCheck($error->getMessage()==='HTTP 422','original form rejects malformed explicit assignment');}
+    }
+}
+$before=$preferences->page($b,7);$preferences->save($b,7,$before['revision'],['default_task_status'=>'todo','new_task_auto_assign_current_member'=>'1']);
+$xp=preferenceTaskDom($b);essentialCheck($xp->query('//select[@name="assignees[]"]/option[@value="7" and @selected]')->length===1,'enabled assignment preselects the actual actor in the original modal');
+echo 'Own task defaults original controllers/forms: '.($GLOBALS['essentialChecks']-$controllerStart).' added / '.$GLOBALS['essentialChecks'].' cumulative ('.$db->driver().').'.PHP_EOL;

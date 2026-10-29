@@ -48,13 +48,16 @@ final class CompanyTasks extends CompanyProjectsStorage
         return $this->createUsingOwnDefaults($issuer,$actor,$input,$key,'task_created');
     }
     /** Canonical copy compositor; cannot join an arbitrary caller transaction. */
-    public function createCopyInOwnedTransaction($issuer,$actor,array $input):int
+    public function createCopyInOwnedTransaction($issuer,$actor,array $input,?array $fields=null,?array $related=null):int
     {
-        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input);if($data['status']!=='todo')throw new DomainException('company_project_invalid_input');
+        $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$data=self::input($input,$fields!==null||$related!==null);if($fields===null&&$related===null&&$data['status']!=='todo')throw new DomainException('company_project_invalid_input');
         CompanyProjectsSchema::assertValid($this->db,$this->p);CompanyProjectExtrasSchema::assertValid($this->db,$this->p);CompanyStandaloneTasksSchema::assertValid($this->db,$this->p);
         IssuerTransaction::assertOwned($this->db,$this->p,['company_project_copy_requests','company_project_copy_snapshots']);
         IssuerTransaction::assertOwned($this->db,$this->p,array_merge(['issuers_lock','issuers_registry','issuers_staff','issuers_resource_permissions','issuers_installation_identity','staff','issuers_clients','issuers_client_links','clients','issuers_audit'],array_keys(CompanyProjectsSchema::definitions($this->p)),array_keys(CompanyProjectExtrasSchema::definitions($this->p)),array_keys(CompanyStandaloneTasksSchema::definitions($this->p)),$this->apiTables()));
-        return ($this->guardedWork(function()use($issuer,$actor,$data):int{(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'create');$id=$this->insertCreatedInOwned($issuer,$actor,$data);$this->audit($issuer,$actor,$id,'company_task_created');$this->authorize($issuer,$actor,'create');return $id;}))();
+        return ($this->guardedWork(function()use($issuer,$actor,$data,$fields,$related):int{(new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor,'create');if($fields!==null||$related!==null)NativeCompanyTaskFormSchema::assertValid($this->db,$this->p);
+            $stored=$fields===null?null:$this->nativeTaskFields($issuer,$actor,$data,$fields);$this->nativeExplicitFollowers=$related!==null&&array_key_exists('followers',$related);
+            try{$id=$this->insertCreatedInOwned($issuer,$actor,$data);}finally{$this->nativeExplicitFollowers=false;}
+            if($stored!==null)$this->saveNativeTaskFields($issuer,$id,$stored,null);$this->nativeTaskRelated($issuer,$actor,$id,$related);$this->confirmNativeTaskRelatedFrames();$this->audit($issuer,$actor,$id,'company_task_created');$this->authorize($issuer,$actor,'create');return $id;}))();
     }
     /** Canonical copy compositor; cannot join an arbitrary caller transaction. */
     public function createReviewedTaskCopyInOwnedTransaction($issuer,$actor,array $input):int

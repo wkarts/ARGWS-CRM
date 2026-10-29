@@ -12,7 +12,7 @@ class CompanyRequestScope
 }
 class AdminController
 {
-    public$db;public$input;public$output;public$load;public$security;
+    public$db;public$input;public$output;public$load;public$security;public$session;
     public function __construct(){
         $this->db=$GLOBALS['db'];$this->input=new class{public string$verb='POST';public array$body=[],$query=[];public function method($upper=true){return$this->verb;}public function post($key=null,$clean=false){return$key===null?$this->body:($this->body[$key]??null);}public function get($key){return$this->query[$key]??null;}public function is_ajax_request(){return true;}};
         $this->output=new class{public string$body='';public array$headers=[];public function set_header($v){$this->headers[]=$v;return$this;}public function set_content_type($v){return$this;}public function set_output($v){$this->body=$v;return$this;}};

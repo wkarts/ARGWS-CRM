@@ -10,17 +10,17 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "24b8fc45a88af048574204e74c0ea489e44f50c160e6335607fd8d1d2ec05a10",
+    "source_manifest_sha256": "3b6cf936d634b2cdba48f22c6c9d66deae7ab160f63e37dcf4eda3377496c9f1",
     "counts": {
         "modules": 38,
-        "source_files": 4633,
+        "source_files": 4648,
         "literal_option_keys": 680,
         "dynamic_option_references": 160,
         "controllers": 205,
         "hook_candidates": 555,
         "job_file_candidates": 70,
-        "report_file_candidates": 299,
-        "table_name_candidates": 916,
+        "report_file_candidates": 302,
+        "table_name_candidates": 918,
         "database_call_candidates": 12539
     },
     "infrastructure_options": [
@@ -9055,7 +9055,7 @@
         },
         {
             "path": "application/controllers/admin/Clients.php",
-            "source_sha256": "b53d009feb03be8893bfddfb97c3bd61c04d09189f4dc557fdd1034b5e02429d",
+            "source_sha256": "e545d418599bbe3f67316c24f8582b805f0a72015ee11d6b4506e85be1cd2206",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -9309,7 +9309,7 @@
         },
         {
             "path": "application/controllers/admin/Contracts.php",
-            "source_sha256": "fbe24c5eb9e087ef6adb488e4c0c45f33651512c9132d16a1cc6eaa29089185d",
+            "source_sha256": "9c2174cd3ed96e64f7eae27117798e082ffd0edb9e24665f6a0f5ebdb23f1f95",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -9331,127 +9331,127 @@
                 },
                 {
                     "method": "contract",
-                    "line": 102,
+                    "line": 103,
                     "visibility": "public"
                 },
                 {
                     "method": "get_template",
-                    "line": 165,
+                    "line": 166,
                     "visibility": "public"
                 },
                 {
                     "method": "mark_as_signed",
-                    "line": 171,
+                    "line": 172,
                     "visibility": "public"
                 },
                 {
                     "method": "unmark_as_signed",
-                    "line": 182,
+                    "line": 183,
                     "visibility": "public"
                 },
                 {
                     "method": "pdf",
-                    "line": 193,
+                    "line": 194,
                     "visibility": "public"
                 },
                 {
                     "method": "file",
-                    "line": 230,
+                    "line": 231,
                     "visibility": "public"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 239,
+                    "line": 240,
                     "visibility": "public"
                 },
                 {
                     "method": "add_note",
-                    "line": 253,
+                    "line": 255,
                     "visibility": "public"
                 },
                 {
                     "method": "get_notes",
-                    "line": 261,
+                    "line": 263,
                     "visibility": "public"
                 },
                 {
                     "method": "clear_signature",
-                    "line": 269,
+                    "line": 271,
                     "visibility": "public"
                 },
                 {
                     "method": "save_contract_data",
-                    "line": 278,
+                    "line": 280,
                     "visibility": "public"
                 },
                 {
                     "method": "add_comment",
-                    "line": 306,
+                    "line": 308,
                     "visibility": "public"
                 },
                 {
                     "method": "edit_comment",
-                    "line": 315,
+                    "line": 318,
                     "visibility": "public"
                 },
                 {
                     "method": "get_comments",
-                    "line": 325,
+                    "line": 329,
                     "visibility": "public"
                 },
                 {
                     "method": "remove_comment",
-                    "line": 331,
+                    "line": 336,
                     "visibility": "public"
                 },
                 {
                     "method": "renew",
-                    "line": 352,
+                    "line": 358,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_renewal",
-                    "line": 369,
+                    "line": 376,
                     "visibility": "public"
                 },
                 {
                     "method": "copy",
-                    "line": 380,
+                    "line": 387,
                     "visibility": "public"
                 },
                 {
                     "method": "delete",
-                    "line": 398,
+                    "line": 406,
                     "visibility": "public"
                 },
                 {
                     "method": "type",
-                    "line": 417,
+                    "line": 426,
                     "visibility": "public"
                 },
                 {
                     "method": "types",
-                    "line": 452,
+                    "line": 461,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_contract_type",
-                    "line": 465,
+                    "line": 474,
                     "visibility": "public"
                 },
                 {
                     "method": "add_contract_attachment",
-                    "line": 484,
+                    "line": 493,
                     "visibility": "public"
                 },
                 {
                     "method": "add_external_attachment",
-                    "line": 489,
+                    "line": 498,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_contract_attachment",
-                    "line": 501,
+                    "line": 510,
                     "visibility": "public"
                 }
             ],
@@ -9979,7 +9979,7 @@
         },
         {
             "path": "application/controllers/admin/Estimates.php",
-            "source_sha256": "f514abb636adff16bee4d4dc6e0d2f113e539b80280482cd1f67562b7fce7994",
+            "source_sha256": "ea77c568678a31fa3d2c7639911307b377d54588718a485f1373b7d3dce60c34",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -10133,7 +10133,7 @@
         },
         {
             "path": "application/controllers/admin/Expenses.php",
-            "source_sha256": "4442222103ba3cd0e2935d6457f9cdf9eef8dc8842696985328ebb0fb096d4e3",
+            "source_sha256": "f9d33da1e0574bd1dd3979d46193983a675e1681cf31d1e3583d7622f5c9edb4",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -10200,42 +10200,42 @@
                 },
                 {
                     "method": "convert_to_invoice",
-                    "line": 305,
+                    "line": 306,
                     "visibility": "public"
                 },
                 {
                     "method": "get_expense_data_ajax",
-                    "line": 337,
+                    "line": 338,
                     "visibility": "public"
                 },
                 {
                     "method": "get_customer_change_data",
-                    "line": 363,
+                    "line": 364,
                     "visibility": "public"
                 },
                 {
                     "method": "categories",
-                    "line": 371,
+                    "line": 372,
                     "visibility": "public"
                 },
                 {
                     "method": "category",
-                    "line": 383,
+                    "line": 384,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_category",
-                    "line": 408,
+                    "line": 409,
                     "visibility": "public"
                 },
                 {
                     "method": "add_expense_attachment",
-                    "line": 427,
+                    "line": 428,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_expense_attachment",
-                    "line": 435,
+                    "line": 436,
                     "visibility": "public"
                 }
             ],
@@ -10429,7 +10429,7 @@
         },
         {
             "path": "application/controllers/admin/Invoices.php",
-            "source_sha256": "f24b8a30c9c0b788826c8c15ff7f021f7e062d612d892e98611403d390c92a8a",
+            "source_sha256": "3c70b52e990dda34c6806ca24d97faae5f77ca5d2f00a942b8fbe406b74f1007",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -10521,82 +10521,82 @@
                 },
                 {
                     "method": "get_merge_data",
-                    "line": 465,
+                    "line": 466,
                     "visibility": "public"
                 },
                 {
                     "method": "get_bill_expense_data",
-                    "line": 501,
+                    "line": 502,
                     "visibility": "public"
                 },
                 {
                     "method": "invoice",
-                    "line": 521,
+                    "line": 522,
                     "visibility": "public"
                 },
                 {
                     "method": "get_invoice_data_ajax",
-                    "line": 666,
+                    "line": 667,
                     "visibility": "public"
                 },
                 {
                     "method": "apply_credits",
-                    "line": 757,
+                    "line": 758,
                     "visibility": "public"
                 },
                 {
                     "method": "get_invoices_total",
-                    "line": 778,
+                    "line": 779,
                     "visibility": "public"
                 },
                 {
                     "method": "record_invoice_payment_ajax",
-                    "line": 815,
+                    "line": 816,
                     "visibility": "public"
                 },
                 {
                     "method": "record_payment",
-                    "line": 843,
+                    "line": 844,
                     "visibility": "public"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 879,
+                    "line": 880,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_payment",
-                    "line": 926,
+                    "line": 927,
                     "visibility": "public"
                 },
                 {
                     "method": "delete",
-                    "line": 945,
+                    "line": 946,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 963,
+                    "line": 964,
                     "visibility": "public"
                 },
                 {
                     "method": "send_overdue_notice",
-                    "line": 991,
+                    "line": 992,
                     "visibility": "public"
                 },
                 {
                     "method": "pdf",
-                    "line": 1012,
+                    "line": 1013,
                     "visibility": "public"
                 },
                 {
                     "method": "mark_as_sent",
-                    "line": 1081,
+                    "line": 1082,
                     "visibility": "public"
                 },
                 {
                     "method": "get_due_date",
-                    "line": 1102,
+                    "line": 1103,
                     "visibility": "public"
                 }
             ],
@@ -11505,7 +11505,7 @@
         },
         {
             "path": "application/controllers/admin/Projects.php",
-            "source_sha256": "45eb85543507ade36a39a0189bd931639e13cbdc331c75428af33ee253d3caaa",
+            "source_sha256": "8a9d04796684d6d6c1efe1e63ff9d48dd782dac892ae73adcd45af3aa706b7ba",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -11814,7 +11814,7 @@
         },
         {
             "path": "application/controllers/admin/Proposals.php",
-            "source_sha256": "38cc1e6ec887a51ff28a7dff143f7a6532b835c57b44311fd5937666a9d37366",
+            "source_sha256": "74e57176bd037c10c6acdcbb2dadea1a9492ed3cb071c4c9b30840bca5437c65",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -26485,7 +26485,7 @@
         {
             "name": "clients",
             "state": "not_verified",
-            "reference_count": 356
+            "reference_count": 360
         },
         {
             "name": "color",
@@ -26615,12 +26615,17 @@
         {
             "name": "company_contract_discussions",
             "state": "not_verified",
-            "reference_count": 6
+            "reference_count": 7
+        },
+        {
+            "name": "company_contract_requests",
+            "state": "not_verified",
+            "reference_count": 2
         },
         {
             "name": "company_contracts",
             "state": "not_verified",
-            "reference_count": 8
+            "reference_count": 12
         },
         {
             "name": "company_credit_documents",
@@ -26645,7 +26650,7 @@
         {
             "name": "company_custom_fields",
             "state": "not_verified",
-            "reference_count": 23
+            "reference_count": 24
         },
         {
             "name": "company_customer_admins",
@@ -27130,7 +27135,7 @@
         {
             "name": "company_portal_contracts",
             "state": "not_verified",
-            "reference_count": 2
+            "reference_count": 3
         },
         {
             "name": "company_portal_limits",
@@ -27200,7 +27205,7 @@
         {
             "name": "company_portal_task_comments",
             "state": "not_verified",
-            "reference_count": 1
+            "reference_count": 2
         },
         {
             "name": "company_portal_task_files",
@@ -27210,7 +27215,7 @@
         {
             "name": "company_portal_task_origins",
             "state": "not_verified",
-            "reference_count": 12
+            "reference_count": 14
         },
         {
             "name": "company_portal_task_requests",
@@ -27265,12 +27270,12 @@
         {
             "name": "company_project_copy_requests",
             "state": "not_verified",
-            "reference_count": 4
+            "reference_count": 7
         },
         {
             "name": "company_project_copy_snapshots",
             "state": "not_verified",
-            "reference_count": 1
+            "reference_count": 2
         },
         {
             "name": "company_project_discussion_posts",
@@ -27345,7 +27350,7 @@
         {
             "name": "company_project_members",
             "state": "not_verified",
-            "reference_count": 9
+            "reference_count": 10
         },
         {
             "name": "company_project_milestones",
@@ -27355,12 +27360,12 @@
         {
             "name": "company_project_native_form_state",
             "state": "not_verified",
-            "reference_count": 3
+            "reference_count": 4
         },
         {
             "name": "company_project_native_metadata",
             "state": "not_verified",
-            "reference_count": 13
+            "reference_count": 14
         },
         {
             "name": "company_project_portal_requests",
@@ -27505,7 +27510,7 @@
         {
             "name": "company_sales_documents",
             "state": "not_verified",
-            "reference_count": 35
+            "reference_count": 36
         },
         {
             "name": "company_sales_files",
@@ -27568,6 +27573,11 @@
             "reference_count": 9
         },
         {
+            "name": "company_task_assignees",
+            "state": "not_verified",
+            "reference_count": 1
+        },
+        {
             "name": "company_task_billing_links",
             "state": "not_verified",
             "reference_count": 19
@@ -27605,7 +27615,7 @@
         {
             "name": "company_task_followers",
             "state": "not_verified",
-            "reference_count": 2
+            "reference_count": 3
         },
         {
             "name": "company_task_gantt_dates",
@@ -27670,7 +27680,7 @@
         {
             "name": "company_tasks",
             "state": "not_verified",
-            "reference_count": 72
+            "reference_count": 73
         },
         {
             "name": "company_taxes",
@@ -27755,7 +27765,7 @@
         {
             "name": "company_work_tags",
             "state": "not_verified",
-            "reference_count": 15
+            "reference_count": 16
         },
         {
             "name": "conciliacoes",
@@ -27875,7 +27885,7 @@
         {
             "name": "contact_permissions",
             "state": "not_verified",
-            "reference_count": 54
+            "reference_count": 56
         },
         {
             "name": "contactpermissions",
@@ -27885,7 +27895,7 @@
         {
             "name": "contacts",
             "state": "not_verified",
-            "reference_count": 339
+            "reference_count": 341
         },
         {
             "name": "contract_comments",
@@ -27960,7 +27970,7 @@
         {
             "name": "currencies",
             "state": "not_verified",
-            "reference_count": 106
+            "reference_count": 107
         },
         {
             "name": "currency_rate_logs",
@@ -28145,7 +28155,7 @@
         {
             "name": "estimates",
             "state": "not_verified",
-            "reference_count": 114
+            "reference_count": 115
         },
         {
             "name": "evaluate_form",
@@ -28810,7 +28820,7 @@
         {
             "name": "invoicepaymentrecords",
             "state": "not_verified",
-            "reference_count": 134
+            "reference_count": 135
         },
         {
             "name": "invoicepaymentsmodes",
@@ -28820,7 +28830,7 @@
         {
             "name": "invoices",
             "state": "not_verified",
-            "reference_count": 619
+            "reference_count": 621
         },
         {
             "name": "issuer_certificate_audit",
@@ -28840,7 +28850,7 @@
         {
             "name": "issuers_audit",
             "state": "not_verified",
-            "reference_count": 231
+            "reference_count": 237
         },
         {
             "name": "issuers_client_links",
@@ -28850,7 +28860,7 @@
         {
             "name": "issuers_clients",
             "state": "not_verified",
-            "reference_count": 160
+            "reference_count": 162
         },
         {
             "name": "issuers_installation_identity",
@@ -28875,7 +28885,7 @@
         {
             "name": "issuers_registry",
             "state": "not_verified",
-            "reference_count": 268
+            "reference_count": 269
         },
         {
             "name": "issuers_resource_permissions",
@@ -28905,12 +28915,12 @@
         {
             "name": "item_tax",
             "state": "not_verified",
-            "reference_count": 43
+            "reference_count": 44
         },
         {
             "name": "itemable",
             "state": "not_verified",
-            "reference_count": 66
+            "reference_count": 67
         },
         {
             "name": "items",
@@ -29255,7 +29265,7 @@
         {
             "name": "mail_queue",
             "state": "not_verified",
-            "reference_count": 63
+            "reference_count": 65
         },
         {
             "name": "maillistscustomfields",
@@ -29375,7 +29385,7 @@
         {
             "name": "options",
             "state": "not_verified",
-            "reference_count": 123
+            "reference_count": 124
         },
         {
             "name": "order_items",
@@ -29590,7 +29600,7 @@
         {
             "name": "proposals",
             "state": "not_verified",
-            "reference_count": 90
+            "reference_count": 91
         },
         {
             "name": "province_city",
@@ -29840,7 +29850,7 @@
         {
             "name": "sales_activity",
             "state": "not_verified",
-            "reference_count": 17
+            "reference_count": 18
         },
         {
             "name": "salesactivity",

@@ -30,6 +30,7 @@
         </h4>
     </div>
     <div class="modal-body">
+        <?php if($native_task_detail['detail']['portal']['origin']??null){ ?><p>Criada pelo contato: <?php echo e($native_task_detail['detail']['portal']['origin']['author_name']); ?></p><?php } ?>
         <input id="taskid" type="hidden" value="<?php echo e($nativeCanonical); ?>">
         <div class="row">
             <div class="col-md-8 task-single-col-left">
@@ -83,7 +84,7 @@
                     <textarea class="form-control" name="content" rows="4" maxlength="4000" required></textarea><button class="btn btn-primary tw-mt-2" type="submit"><?php echo _l('task_add_comment'); ?></button><?php echo form_close(); ?>
                 <?php } ?>
                 <div class="tw-mt-4">
-                <?php foreach($native_task_detail['detail']['comments'] as$comment){ ?><div class="panel_s"><div class="panel-body"><strong><?php echo e($native_task_detail['names'][(string)$comment['actor_id']]??_l('unknown')); ?></strong><span class="pull-right text-muted"><?php echo e($comment['created_at']); ?></span><div class="tw-mt-3" style="white-space:pre-wrap"><?php echo e($comment['body']); ?></div></div></div><?php } ?>
+                <?php foreach($native_task_detail['detail']['comments'] as$comment){ ?><div class="panel_s"><div class="panel-body"><strong><?php echo e(isset($native_task_detail['detail']['portal']['comments'][(int)$comment['id']])?'Contato: '.$native_task_detail['detail']['portal']['comments'][(int)$comment['id']]['author_name']:($native_task_detail['names'][(string)$comment['actor_id']]??_l('unknown'))); ?></strong><span class="pull-right text-muted"><?php echo e($comment['created_at']); ?></span><div class="tw-mt-3" style="white-space:pre-wrap"><?php echo e($comment['body']); ?></div></div></div><?php } ?>
                 <?php if(!$native_task_detail['detail']['comments']){ ?><p class="text-muted"><?php echo _l('task_no_comments'); ?></p><?php } ?>
                 </div>
 
@@ -102,7 +103,7 @@
                     <dt><?php echo _l('task_single_start_date'); ?></dt><dd><?php echo e($nativeFields['start_date']??''); ?></dd>
                     <dt><?php echo _l('task_single_due_date'); ?></dt><dd><?php echo e($nativeRow['due_date']??''); ?></dd>
                     <?php if($native_task_detail['project']){ ?><dt><?php echo _l('project'); ?></dt><dd><a href="<?php echo admin_url('projects/view/'.$native_task_detail['project']['canonical_id']); ?>"><?php echo e($native_task_detail['project']['name']); ?></a></dd><?php } ?>
-                </dl><h5><?php echo _l('task_assigned'); ?></h5><ul><?php foreach($nativeItem['assignees'] as$member){ ?><li><?php echo e(trim($member['firstname'].' '.$member['lastname'])); ?></li><?php } ?></ul></div></div>
+                </dl><h5><?php echo _l('task_assigned'); ?></h5><?php if($nativeItem['assignees']===[]){ ?><p>Aguardando atribuição de responsável</p><?php } ?><ul><?php foreach($nativeItem['assignees'] as$member){ ?><li><?php echo e(trim($member['firstname'].' '.$member['lastname'])); ?></li><?php } ?></ul></div></div>
                 <div class="panel_s"><div class="panel-body"><h4 class="tw-font-semibold tw-mt-0"><?php echo _l('task_view_timesheets'); ?></h4><ul class="list-unstyled"><?php foreach($native_task_detail['detail']['timers'] as$timer){ ?><li class="tw-mb-2"><strong><?php echo e($native_task_detail['names'][(string)$timer['actor_id']]??_l('unknown')); ?></strong><br><?php echo e($timer['started_at']); ?><?php if($timer['stopped_at']){ ?> — <?php echo e($timer['stopped_at']); ?> · <?php echo e($timer['seconds']); ?>s<?php }else{ ?> · <?php echo _l('task_timer_running'); ?><?php } ?></li><?php } ?></ul></div></div>
             </div>
         </div>

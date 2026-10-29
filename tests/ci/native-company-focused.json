@@ -2521,6 +2521,34 @@
     [
       "php",
       "tests/companies/native_staff_download_scope.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_sales_history_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_project_copy.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_contract_actions.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_contract_mail.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_contract_mail_worker.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_task_detail_portal_authorship.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_client_update_controller.php"
     ]
   ],
   "node": [
@@ -2788,6 +2816,10 @@
     [
       "php",
       "tests/companies/native_project_contact_index_mysql.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_pr52_actions_mysql.php"
     ]
   ],
   "browser": [

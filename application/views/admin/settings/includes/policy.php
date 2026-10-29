@@ -30,47 +30,47 @@ if(!isset($expected[$policyGroup])||array_keys($values)!==$expected[$policyGroup
     <?php if($policyGroup==='task_timer_stop'){ ?>
     <div class="form-group"><label for="company-setting-auto_stop_tasks_timers_on_new_timer">Ao iniciar meu cronômetro, parar o anterior desta empresa</label>
         <select class="form-control" id="company-setting-auto_stop_tasks_timers_on_new_timer" name="settings[auto_stop_tasks_timers_on_new_timer]" required>
-            <?php foreach(['0'=>'Exigir que eu encerre o anterior','1'=>'Parar meu anterior desta empresa']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['auto_stop_tasks_timers_on_new_timer']===$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
+            <?php foreach(['0'=>'Exigir que eu encerre o anterior','1'=>'Parar meu anterior desta empresa']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['auto_stop_tasks_timers_on_new_timer']===(string)$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
         </select>
     </div>
     <?php }elseif($policyGroup==='task_timers'){ ?>
     <div class="form-group"><label for="company-setting-timer_started_change_status_in_progress">Ao iniciar meu cronômetro, mover a tarefa para Em andamento</label>
         <select class="form-control" id="company-setting-timer_started_change_status_in_progress" name="settings[timer_started_change_status_in_progress]" required>
-            <?php foreach(['0'=>'Não alterar o estado','1'=>'Mover para Em andamento']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['timer_started_change_status_in_progress']===$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
+            <?php foreach(['0'=>'Não alterar o estado','1'=>'Mover para Em andamento']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['timer_started_change_status_in_progress']===(string)$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
         </select>
     </div>
     <?php }elseif($policyGroup==='task_operations'){ ?>
     <div class="form-group"><label for="company-setting-default_task_priority">Prioridade padrão das novas tarefas</label>
         <select class="form-control" id="company-setting-default_task_priority" name="settings[default_task_priority]" required>
-            <?php foreach(['1'=>'Baixa','2'=>'Média','3'=>'Alta','4'=>'Urgente']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['default_task_priority']===$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
+            <?php foreach(['1'=>'Baixa','2'=>'Média','3'=>'Alta','4'=>'Urgente']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['default_task_priority']===(string)$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
         </select>
     </div>
     <div class="form-group"><label for="company-setting-new_task_auto_follower_current_member">Acompanhamento das novas tarefas de projeto</label>
         <select class="form-control" id="company-setting-new_task_auto_follower_current_member" name="settings[new_task_auto_follower_current_member]" required>
-            <?php foreach(['0'=>'Não seguir automaticamente','1'=>'Seguir minhas novas tarefas de projeto']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['new_task_auto_follower_current_member']===$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
+            <?php foreach(['0'=>'Não seguir automaticamente','1'=>'Seguir minhas novas tarefas de projeto']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['new_task_auto_follower_current_member']===(string)$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
         </select>
     </div>
     <?php }elseif($policyGroup==='task_defaults'){ ?>
     <div class="form-group"><label for="company-setting-default_task_status">Estado inicial das novas tarefas</label>
         <select class="form-control" id="company-setting-default_task_status" name="settings[default_task_status]" required>
-            <?php foreach(['todo'=>'A fazer','in_progress'=>'Em andamento']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['default_task_status']===$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
+            <?php foreach(['todo'=>'A fazer','in_progress'=>'Em andamento']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['default_task_status']===(string)$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
         </select>
     </div>
     <div class="form-group"><label for="company-setting-new_task_auto_assign_current_member">Responsável sugerido</label>
         <select class="form-control" id="company-setting-new_task_auto_assign_current_member" name="settings[new_task_auto_assign_current_member]" required>
-            <?php foreach(['0'=>'Exigir escolha do responsável','1'=>'Sugerir o criador autorizado']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['new_task_auto_assign_current_member']===$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
+            <?php foreach(['0'=>'Exigir escolha do responsável','1'=>'Sugerir o criador autorizado']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['new_task_auto_assign_current_member']===(string)$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
         </select>
     </div>
     <?php }elseif($policyGroup==='ticket_preferences'){ ?>
     <div class="form-group"><label for="company-setting-ticket_replies_order">Ordem das respostas do chamado</label>
         <select class="form-control" id="company-setting-ticket_replies_order" name="settings[ticket_replies_order]" required>
-            <?php foreach(['asc'=>'Mais antigas primeiro','desc'=>'Mais recentes primeiro']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['ticket_replies_order']===$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
+            <?php foreach(['asc'=>'Mais antigas primeiro','desc'=>'Mais recentes primeiro']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['ticket_replies_order']===(string)$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
         </select>
     </div>
     <?php }elseif($policyGroup==='pdf_typography'){ ?>
     <div class="form-group"><label for="company-setting-pdf_font">Fonte Unicode dos documentos novos</label>
         <select class="form-control" id="company-setting-pdf_font" name="settings[pdf_font]" required>
-            <?php foreach(CompanyPdfTypography::fonts()as$key=>$label){ ?><option value="<?= $esc($key); ?>" <?= $values['pdf_font']===$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
+            <?php foreach(CompanyPdfTypography::fonts()as$key=>$label){ ?><option value="<?= $esc($key); ?>" <?= $values['pdf_font']===(string)$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
         </select>
     </div>
     <div class="form-group"><label for="company-setting-pdf_font_size">Tamanho da fonte em pontos</label>
@@ -80,7 +80,7 @@ if(!isset($expected[$policyGroup])||array_keys($values)!==$expected[$policyGroup
     <?php }elseif($policyGroup==='project_files'){ ?>
     <div class="form-group"><label for="company-setting-allow_contact_to_delete_files">Permitir ao contato ocultar os próprios arquivos de projetos</label>
         <select class="form-control" id="company-setting-allow_contact_to_delete_files" name="settings[allow_contact_to_delete_files]" required>
-            <?php foreach(['0'=>'Não permitir','1'=>'Permitir nesta empresa']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['allow_contact_to_delete_files']===$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
+            <?php foreach(['0'=>'Não permitir','1'=>'Permitir nesta empresa']as$key=>$label){ ?><option value="<?= $key; ?>" <?= $values['allow_contact_to_delete_files']===(string)$key?'selected':''; ?>><?= $esc($label); ?></option><?php } ?>
         </select>
     </div>
     <?php } ?>

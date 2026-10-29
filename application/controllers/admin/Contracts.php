@@ -27,7 +27,7 @@ class Contracts extends AdminController
         } catch (DomainException $error) {
             $reason=$error->getMessage();
             $status=str_contains($reason,'stale')||str_contains($reason,'conflict')||str_contains($reason,'mismatch')?409:
-                (str_contains($reason,'csrf')||str_contains($reason,'access')||str_contains($reason,'denied')||str_contains($reason,'reference')?403:422);
+                (str_contains($reason,'csrf')||str_contains($reason,'access')||str_contains($reason,'denied')||str_contains($reason,'reference')||in_array($reason,['company_portal_operation_unavailable','company_contract_discussion_unavailable'],true)?403:422);
             show_error('Não foi possível confirmar o contrato nesta empresa. Reabra a tela e tente novamente.',$status);
         } catch (Throwable $error) {
             log_message('error','Native contract action failed closed; no contract contents logged.');
@@ -89,6 +89,7 @@ class Contracts extends AdminController
 
     public function table($clientid = '')
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->table($clientid));return;}
         if (staff_cant('view', 'contracts') && staff_cant('view_own', 'contracts')) {
             ajax_access_denied();
         }
@@ -238,6 +239,7 @@ class Contracts extends AdminController
 
     public function send_to_email($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('send_to_email',$id));return;}
         if (staff_cant('view', 'contracts') && staff_cant('view_own', 'contracts')) {
             access_denied('contracts');
         }
@@ -305,6 +307,7 @@ class Contracts extends AdminController
 
     public function add_comment()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('add_comment'));return;}
         if ($this->input->post()) {
             echo json_encode([
                 'success' => $this->contracts_model->add_comment($this->input->post()),
@@ -314,6 +317,7 @@ class Contracts extends AdminController
 
     public function edit_comment($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('edit_comment',null,$id));return;}
         if ($this->input->post()) {
             echo json_encode([
                 'success' => $this->contracts_model->edit_comment($this->input->post(), $id),
@@ -324,12 +328,14 @@ class Contracts extends AdminController
 
     public function get_comments($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->comments($id));return;}
         $data['comments'] = $this->contracts_model->get_comments($id);
         $this->load->view('admin/contracts/comments_template', $data);
     }
 
     public function remove_comment($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('remove_comment',null,$id));return;}
         $this->db->where('id', $id);
         $comment = $this->db->get(db_prefix() . 'contract_comments')->row();
         if ($comment) {
@@ -351,6 +357,7 @@ class Contracts extends AdminController
 
     public function renew()
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('renew'));return;}
         if (staff_cant('edit', 'contracts')) {
             access_denied('contracts');
         }
@@ -379,6 +386,7 @@ class Contracts extends AdminController
 
     public function copy($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('copy',$id));return;}
         if (staff_cant('create', 'contracts')) {
             access_denied('contracts');
         }
@@ -397,6 +405,7 @@ class Contracts extends AdminController
     /* Delete contract from database */
     public function delete($id)
     {
+        if(CompanyRequestScope::nativeFor($this)){$this->nativeContractAction(static fn($native)=>$native->action('delete',$id));return;}
         if (staff_cant('delete', 'contracts')) {
             access_denied('contracts');
         }

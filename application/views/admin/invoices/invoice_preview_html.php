@@ -262,6 +262,7 @@ if (isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
             </table>
         </div>
     </div>
+    <?php if (isset($native_invoice_preview_data)) $this->load->view('admin/invoices/financial_position', ['native_invoice_preview_data' => $native_invoice_preview_data]); ?>
     <?php if (count($invoice->attachments) > 0) { ?>
     <div class="clearfix"></div>
     <hr />

@@ -1,0 +1,2924 @@
+{
+    "format": 1,
+    "scope": "All public actions of the ten official modules requested for PR52; catalogue admission is not runtime equivalence.",
+    "census_controllers": 47,
+    "census_methods": 710,
+    "census_sha256": "8fde4f51ef0f94db5ee453d9dccfa935736f17cc71569aa88a51eeddfb715328",
+    "route_catalog_sha256": "8444ae954303d82ef7e4ec3dd0548dccb9196031ca440c977a40a080917d9f7f",
+    "context_policy_sha256": "7e53fe59d370f98a5dcf1cbce87af36770356fe52c2a624f02675fd3c243ffeb",
+    "primary_policy": "CompanyRequestScope retains historical primary paths except its explicit shared/typed routes. No primary/secondary equivalence is inferred.",
+    "summary": {
+        "modules": 10,
+        "methods": 331,
+        "catalog_admitted": 192,
+        "not_admitted": 139,
+        "full_parity_approved": false
+    },
+    "runtime_evidence": "docs/companies/pr52-local-consolidation-2026-10-29.md",
+    "modules": [
+        {
+            "controller": "Clients",
+            "path": "application/controllers/admin/Clients.php",
+            "source_sha256": "e545d418599bbe3f67316c24f8582b805f0a72015ee11d6b4506e85be1cd2206",
+            "methods": [
+                {
+                    "method": "contact_email_exists",
+                    "line": 34,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "contact_profile_image",
+                    "line": 44,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "lookup",
+                    "line": 54,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "share_identity",
+                    "line": 81,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "contact_invoice_access",
+                    "line": 95,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "index",
+                    "line": 109,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "table",
+                    "line": 160,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "all_contacts",
+                    "line": 188,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "client",
+                    "line": 229,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "export",
+                    "line": 528,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "check_duplicate_customer_name",
+                    "line": 538,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "save_longitude_and_latitude",
+                    "line": 556,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "form_contact",
+                    "line": 580,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "confirm_registration",
+                    "line": 748,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_file_share_visibility",
+                    "line": 767,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_contact_profile_image",
+                    "line": 804,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "mark_as_active",
+                    "line": 819,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "consents",
+                    "line": 830,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_all_proposal_emails_linked_to_customer",
+                    "line": 857,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "assign_admins",
+                    "line": 899,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_customer_admin",
+                    "line": 918,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_contact",
+                    "line": 937,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "contacts",
+                    "line": 965,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "upload_attachment",
+                    "line": 997,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_external_attachment",
+                    "line": 1007,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_attachment",
+                    "line": 1019,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete",
+                    "line": 1033,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "login_as_client",
+                    "line": 1060,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_customer_billing_and_shipping_details",
+                    "line": 1069,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "change_contact_status",
+                    "line": 1080,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "change_client_status",
+                    "line": 1098,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "zip_credit_notes",
+                    "line": 1116,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "zip_invoices",
+                    "line": 1139,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "zip_estimates",
+                    "line": 1163,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "zip_payments",
+                    "line": 1186,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "import",
+                    "line": 1209,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "groups",
+                    "line": 1259,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "group",
+                    "line": 1291,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_group",
+                    "line": 1331,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "bulk_action",
+                    "line": 1356,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "vault_entry_create",
+                    "line": 1406,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "vault_entry_update",
+                    "line": 1435,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "vault_entry_delete",
+                    "line": 1470,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "vault_encrypt_password",
+                    "line": 1481,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_vault_entry",
+                    "line": 1510,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "statement_pdf",
+                    "line": 1520,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "send_statement",
+                    "line": 1554,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "statement",
+                    "line": 1582,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                }
+            ]
+        },
+        {
+            "controller": "Contracts",
+            "path": "application/controllers/admin/Contracts.php",
+            "source_sha256": "9c2174cd3ed96e64f7eae27117798e082ffd0edb9e24665f6a0f5ebdb23f1f95",
+            "methods": [
+                {
+                    "method": "index",
+                    "line": 61,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "table",
+                    "line": 90,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "contract",
+                    "line": 103,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_template",
+                    "line": 166,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "mark_as_signed",
+                    "line": 172,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "unmark_as_signed",
+                    "line": 183,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "pdf",
+                    "line": 194,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "file",
+                    "line": 231,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "send_to_email",
+                    "line": 240,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_note",
+                    "line": 255,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_notes",
+                    "line": 263,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "clear_signature",
+                    "line": 271,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "save_contract_data",
+                    "line": 280,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_comment",
+                    "line": 308,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "edit_comment",
+                    "line": 318,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_comments",
+                    "line": 329,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "remove_comment",
+                    "line": 336,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "renew",
+                    "line": 358,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_renewal",
+                    "line": 376,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "copy",
+                    "line": 387,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete",
+                    "line": 406,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "type",
+                    "line": 426,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "types",
+                    "line": 461,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_contract_type",
+                    "line": 474,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_contract_attachment",
+                    "line": 493,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_external_attachment",
+                    "line": 498,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_contract_attachment",
+                    "line": 510,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                }
+            ]
+        },
+        {
+            "controller": "Expenses",
+            "path": "application/controllers/admin/Expenses.php",
+            "source_sha256": "f9d33da1e0574bd1dd3979d46193983a675e1681cf31d1e3583d7622f5c9edb4",
+            "methods": [
+                {
+                    "method": "purchases",
+                    "line": 12,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "index",
+                    "line": 22,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "list_expenses",
+                    "line": 32,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "table",
+                    "line": 56,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "expense",
+                    "line": 71,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "import",
+                    "line": 144,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "bulk_action",
+                    "line": 179,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_expenses_total",
+                    "line": 226,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "pdf",
+                    "line": 250,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete",
+                    "line": 263,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "copy",
+                    "line": 285,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "convert_to_invoice",
+                    "line": 306,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_expense_data_ajax",
+                    "line": 338,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_customer_change_data",
+                    "line": 364,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "categories",
+                    "line": 372,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "category",
+                    "line": 384,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_category",
+                    "line": 409,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_expense_attachment",
+                    "line": 428,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_expense_attachment",
+                    "line": 436,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                }
+            ]
+        },
+        {
+            "controller": "Invoices",
+            "path": "application/controllers/admin/Invoices.php",
+            "source_sha256": "3c70b52e990dda34c6806ca24d97faae5f77ca5d2f00a942b8fbe406b74f1007",
+            "methods": [
+                {
+                    "method": "standalone_billing",
+                    "line": 10,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "index",
+                    "line": 22,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "list_invoices",
+                    "line": 28,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "recurring",
+                    "line": 70,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "table",
+                    "line": 92,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "client_change_data",
+                    "line": 149,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_number_settings",
+                    "line": 196,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "validate_invoice_number",
+                    "line": 222,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_note",
+                    "line": 262,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_notes",
+                    "line": 274,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "pause_overdue_reminders",
+                    "line": 335,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "resume_overdue_reminders",
+                    "line": 346,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "mark_as_cancelled",
+                    "line": 357,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "unmark_as_cancelled",
+                    "line": 398,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "copy",
+                    "line": 431,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "drafts",
+                    "line": 455,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_merge_data",
+                    "line": 466,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_bill_expense_data",
+                    "line": 502,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "invoice",
+                    "line": 522,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_invoice_data_ajax",
+                    "line": 667,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "apply_credits",
+                    "line": 758,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_invoices_total",
+                    "line": 779,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "record_invoice_payment_ajax",
+                    "line": 816,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "record_payment",
+                    "line": 844,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "send_to_email",
+                    "line": 880,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_payment",
+                    "line": 927,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete",
+                    "line": 946,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_attachment",
+                    "line": 964,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "send_overdue_notice",
+                    "line": 992,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "pdf",
+                    "line": 1013,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "mark_as_sent",
+                    "line": 1082,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_due_date",
+                    "line": 1103,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                }
+            ]
+        },
+        {
+            "controller": "Payments",
+            "path": "application/controllers/admin/Payments.php",
+            "source_sha256": "c730d59b326fca7aff7a55c905dfb0bf8568c71d33f7b54feecbe29b7219d8c3",
+            "methods": [
+                {
+                    "method": "post_refund",
+                    "line": 20,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "post_refund_manual",
+                    "line": 30,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "batch_payment_modal",
+                    "line": 40,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_batch_payment",
+                    "line": 49,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "index",
+                    "line": 69,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "list_payments",
+                    "line": 74,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "table",
+                    "line": 86,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "payment",
+                    "line": 100,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "pdf",
+                    "line": 157,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "send_to_email",
+                    "line": 207,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete",
+                    "line": 278,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                }
+            ]
+        },
+        {
+            "controller": "Projects",
+            "path": "application/controllers/admin/Projects.php",
+            "source_sha256": "8a9d04796684d6d6c1efe1e63ff9d48dd782dac892ae73adcd45af3aa706b7ba",
+            "methods": [
+                {
+                    "method": "extras",
+                    "line": 16,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "portal_rules",
+                    "line": 17,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "billing_rates",
+                    "line": 18,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "fixed_billing",
+                    "line": 19,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "copies",
+                    "line": 20,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "time_billing",
+                    "line": 21,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "index",
+                    "line": 55,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "table",
+                    "line": 65,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "staff_projects",
+                    "line": 87,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "expenses",
+                    "line": 102,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_expense",
+                    "line": 114,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "project",
+                    "line": 186,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "gantt",
+                    "line": 251,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "view",
+                    "line": 301,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "mark_as",
+                    "line": 518,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "file",
+                    "line": 540,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_file_data",
+                    "line": 556,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_external_file",
+                    "line": 563,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "download_all_files",
+                    "line": 576,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "export_project_data",
+                    "line": 599,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_task_milestone",
+                    "line": 606,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_milestones_order",
+                    "line": 613,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "pin_action",
+                    "line": 620,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_edit_members",
+                    "line": 640,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "discussions",
+                    "line": 649,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "discussion",
+                    "line": 660,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_discussion_comments",
+                    "line": 693,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_discussion_comment",
+                    "line": 698,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_discussion_comment",
+                    "line": 707,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_discussion_comment",
+                    "line": 712,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_discussion",
+                    "line": 717,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "change_milestone_color",
+                    "line": 735,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "upload_file",
+                    "line": 742,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "change_file_visibility",
+                    "line": 759,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "change_activity_visibility",
+                    "line": 766,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "remove_file",
+                    "line": 775,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "milestones_kanban",
+                    "line": 791,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "milestones_kanban_load_more",
+                    "line": 814,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "milestones",
+                    "line": 832,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "milestone",
+                    "line": 843,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_milestone",
+                    "line": 875,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "bulk_action_files",
+                    "line": 885,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "timesheets",
+                    "line": 909,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "timesheet",
+                    "line": 920,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "timesheet_task_assignees",
+                    "line": 954,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "remove_team_member",
+                    "line": 982,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "save_note",
+                    "line": 994,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "edit_note",
+                    "line": 1022,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_note",
+                    "line": 1040,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete",
+                    "line": 1062,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "copy",
+                    "line": 1089,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "mass_stop_timers",
+                    "line": 1107,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_pre_invoice_project_info",
+                    "line": 1140,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_invoice_project_data",
+                    "line": 1169,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_rel_project_data",
+                    "line": 1346,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "invoice_project",
+                    "line": 1389,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "view_project_as_client",
+                    "line": 1404,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_staff_names_for_mentions",
+                    "line": 1412,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                }
+            ]
+        },
+        {
+            "controller": "Settings",
+            "path": "application/controllers/admin/Settings.php",
+            "source_sha256": "c03a9ed1b21824020c3a2195e84bddb6508f30e5d881e416de1e2b7aa0a9fbd3",
+            "methods": [
+                {
+                    "method": "pusher",
+                    "line": 13,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "asaas",
+                    "line": 14,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "imports",
+                    "line": 15,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "efi",
+                    "line": 16,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "microsoft_mail_oauth",
+                    "line": 17,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "google_mail_oauth",
+                    "line": 18,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "api_tokens",
+                    "line": 19,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "index",
+                    "line": 29,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_tag",
+                    "line": 362,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "remove_signature_image",
+                    "line": 380,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "company_asset",
+                    "line": 398,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "remove_company_logo",
+                    "line": 409,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "remove_fv",
+                    "line": 432,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_option",
+                    "line": 446,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "clear_sessions",
+                    "line": 457,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                }
+            ]
+        },
+        {
+            "controller": "Staff",
+            "path": "application/controllers/admin/Staff.php",
+            "source_sha256": "98c2319a041968db311111071ed1192789e82a9c2a4f6b6035c7517f8447e7ee",
+            "methods": [
+                {
+                    "method": "hr",
+                    "line": 15,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "hr_file",
+                    "line": 16,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "hr_pdf",
+                    "line": 17,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "hr_export",
+                    "line": 18,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "hr_mine",
+                    "line": 19,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "hr_mine_file",
+                    "line": 20,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "index",
+                    "line": 21,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "member",
+                    "line": 43,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "role_changed",
+                    "line": 166,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "save_dashboard_widgets_order",
+                    "line": 196,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "save_dashboard_widgets_visibility",
+                    "line": 210,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "reset_dashboard",
+                    "line": 219,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "save_hidden_table_columns",
+                    "line": 228,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "change_language",
+                    "line": 240,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "timesheets",
+                    "line": 251,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete",
+                    "line": 281,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "edit_profile",
+                    "line": 310,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "remove_staff_profile_image",
+                    "line": 375,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "change_password_profile",
+                    "line": 404,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "profile",
+                    "line": 429,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "change_staff_status",
+                    "line": 461,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "notifications",
+                    "line": 477,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_two_factor",
+                    "line": 533,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "verify_google_two_factor",
+                    "line": 576,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "save_completed_checklist_visibility",
+                    "line": 611,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                }
+            ]
+        },
+        {
+            "controller": "Tasks",
+            "path": "application/controllers/admin/Tasks.php",
+            "source_sha256": "509a380adb9309946fcea3260105e739a3cc3ecea92ed9cd49e882311e43a6ed",
+            "methods": [
+                {
+                    "method": "copies",
+                    "line": 18,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "recurring",
+                    "line": 19,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "standalone",
+                    "line": 20,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "billing",
+                    "line": 21,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "time_batches",
+                    "line": 22,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "index",
+                    "line": 35,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "list_tasks",
+                    "line": 41,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "table",
+                    "line": 161,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "kanban",
+                    "line": 193,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "ajax_search_assign_task_to_timer",
+                    "line": 198,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "tasks_kanban_load_more",
+                    "line": 220,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_order",
+                    "line": 243,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "switch_kanban",
+                    "line": 248,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_billable_tasks_by_project",
+                    "line": 266,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_billable_tasks_by_customer_id",
+                    "line": 288,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_task_description",
+                    "line": 296,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "detailed_overview",
+                    "line": 310,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "init_relation_tasks",
+                    "line": 434,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "task",
+                    "line": 460,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "copy",
+                    "line": 585,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_billable_task_data",
+                    "line": 605,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_task_data",
+                    "line": 623,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_reminder",
+                    "line": 675,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "edit_reminder",
+                    "line": 693,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_reminder",
+                    "line": 706,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_staff_started_timers",
+                    "line": 722,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "save_checklist_item_template",
+                    "line": 759,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "remove_checklist_item_template",
+                    "line": 776,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "init_checklist_items",
+                    "line": 793,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "task_tracking_stats",
+                    "line": 813,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "checklist_visibility",
+                    "line": 824,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "checklist_command",
+                    "line": 832,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "checkbox_action",
+                    "line": 855,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_checklist_item",
+                    "line": 873,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_checklist_order",
+                    "line": 884,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_checklist_item",
+                    "line": 893,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_checklist_item",
+                    "line": 905,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "make_public",
+                    "line": 917,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_external_attachment",
+                    "line": 931,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_task_comment",
+                    "line": 943,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "download_files",
+                    "line": 991,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_task_followers",
+                    "line": 1022,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add_task_assignees",
+                    "line": 1036,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "edit_comment",
+                    "line": 1049,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "remove_comment",
+                    "line": 1071,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "remove_assignee",
+                    "line": 1079,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "remove_follower",
+                    "line": 1099,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "unmark_complete",
+                    "line": 1119,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "mark_as",
+                    "line": 1149,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "change_priority",
+                    "line": 1218,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "change_milestone",
+                    "line": 1262,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "task_single_inline_update",
+                    "line": 1283,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_task",
+                    "line": 1301,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "remove_task_attachment",
+                    "line": 1330,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "upload_file",
+                    "line": 1354,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "timer_tracking",
+                    "line": 1391,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_user_unfinished_timesheet",
+                    "line": 1439,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_timesheet",
+                    "line": 1450,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_timesheet",
+                    "line": 1466,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "log_time",
+                    "line": 1493,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_tags",
+                    "line": 1512,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "bulk_action",
+                    "line": 1527,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "gantt_date_update",
+                    "line": 1624,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_task_by_id",
+                    "line": 1635,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_staff_names_for_mentions",
+                    "line": 1673,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "save_checklist_assigned_staff",
+                    "line": 1695,
+                    "secondary_catalog_verbs": [],
+                    "secondary_admission": "not_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                }
+            ]
+        },
+        {
+            "controller": "Tickets",
+            "path": "application/controllers/admin/Tickets.php",
+            "source_sha256": "2238df338e4f9bd3765791d77360b278416e68008ea87fc7da35bf2f7990b1f1",
+            "methods": [
+                {
+                    "method": "ai",
+                    "line": 13,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "connect_api",
+                    "line": 14,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "connect",
+                    "line": 15,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "index",
+                    "line": 53,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "add",
+                    "line": 108,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete",
+                    "line": 164,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_attachment",
+                    "line": 192,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_staff_replying",
+                    "line": 214,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "check_staff_replying",
+                    "line": 224,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "ticket",
+                    "line": 239,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "edit_message",
+                    "line": 346,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_ticket_reply",
+                    "line": 375,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "change_status_ajax",
+                    "line": 395,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "update_single_ticket_settings",
+                    "line": 403,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "priorities",
+                    "line": 449,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "priority",
+                    "line": 461,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_priority",
+                    "line": 488,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "predefined_replies",
+                    "line": 509,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "get_predefined_reply_ajax",
+                    "line": 538,
+                    "secondary_catalog_verbs": [
+                        "GET"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "ticket_change_data",
+                    "line": 544,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "predefined_reply",
+                    "line": 557,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_predefined_reply",
+                    "line": 604,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "statuses",
+                    "line": 624,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "status",
+                    "line": 636,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_ticket_status",
+                    "line": 663,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "services",
+                    "line": 686,
+                    "secondary_catalog_verbs": [
+                        "GET",
+                        "HEAD",
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "service",
+                    "line": 717,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "delete_service",
+                    "line": 753,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "block_sender",
+                    "line": 773,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                },
+                {
+                    "method": "bulk_action",
+                    "line": 786,
+                    "secondary_catalog_verbs": [
+                        "POST"
+                    ],
+                    "secondary_admission": "catalog_admitted",
+                    "runtime_parity": "not_inferred_from_catalog"
+                }
+            ]
+        }
+    ]
+}

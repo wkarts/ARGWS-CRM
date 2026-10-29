@@ -1,5 +1,10 @@
 # Status de fechamento da continuidade — PR 52
 
+> Registro histórico. Para o pacote posterior ao baseline `1de21abe`, consulte
+> [a consolidação local da PR 52](pr52-local-consolidation-2026-10-29.md) e
+> [a matriz completa das ações oficiais](pr52-official-action-matrix.json).
+> As pendências e provas abaixo se referem ao checkpoint descrito neste arquivo.
+
 Data da consolidação: 2026-10-28. Base preservada: `a5ba730aa853c4dcae780faa35d59a74ab6f27bd`; o head anterior da PR também permanece na ancestralidade.
 
 ## Entregue no pacote local

@@ -181,7 +181,7 @@ final class NativeCompanySettingsController
                 foreach($_FILES as$name=>$file){
                     if(!is_array($file))throw new DomainException('native_settings_invalid');
                     if(($file['error']??null)===UPLOAD_ERR_NO_FILE)continue;
-                    if($group!=='general'||!isset($fileNames[$name])||($file['error']??null)!==UPLOAD_ERR_OK||!is_int($file['size']??null)||$file['size']<1||$file['size']>524288||!is_string($file['tmp_name']??null)||!is_uploaded_file($file['tmp_name']))throw new DomainException('native_settings_invalid');
+                    if(($group!=='general'&&($group!=='pdf'||$name!=='signature_image'))||!isset($fileNames[$name])||($file['error']??null)!==UPLOAD_ERR_OK||!is_int($file['size']??null)||$file['size']<1||$file['size']>524288||!is_string($file['tmp_name']??null)||!is_uploaded_file($file['tmp_name']))throw new DomainException('native_settings_invalid');
                     $bytes=file_get_contents($file['tmp_name'],false,null,0,524289);
                     if(!is_string($bytes)||strlen($bytes)!==$file['size'])throw new DomainException('native_settings_invalid');
                     $uploads[$fileNames[$name]]=$bytes;
@@ -212,6 +212,7 @@ final class NativeCompanySettingsController
             $ci->load->view('admin/settings/all',[
                 'title'=>_l('options'),'sections'=>$sections,'group'=>$selected,'admin_tabs'=>['update','info','argws_platform'],
                 'native_settings'=>true,'native_settings_clients'=>$group==='clients'?$page:null,'native_settings_misc'=>$group==='misc'?$page:null,'roles'=>$group==='misc'?$page['roles']:[],'native_settings_task_values'=>$group==='tasks'?$page['values']:null,'task_statuses'=>$taskStatuses,'native_settings_google'=>$group==='google'?$page:null,'native_settings_calendar_values'=>$group==='calendar'?$page['values']:null,'native_settings_email'=>$group==='email'?$page:null,'native_settings_ticket_values'=>$group==='tickets'?$page['values']:null,'native_settings_ticket_statuses'=>$ticketStatuses,'ticket_priorities'=>$ticketPriorities,'native_settings_issuer'=>$issuer,'native_settings_invoice_values'=>$group==='invoices'?$page['values']:null,'native_settings_company_values'=>$group==='company'?$page['values']:null,'native_settings_company_custom_fields'=>$group==='company'?$page['custom_fields']:null,'native_settings_company_field_definitions'=>$group==='company'?$page['custom_field_definitions']:null,'native_settings_tax_dropdown'=>$nativeTaxDropdown,'native_settings_revision'=>$page['revision'],'native_settings_assets'=>$page['assets'],
+                'native_settings_pdf_values'=>$group==='pdf'?$page['values']:null,
                 'native_settings_estimate_values'=>$group==='estimates'?$page['values']:null,
                 'native_settings_proposal_values'=>$group==='proposals'?$page['values']:null,
                 'native_settings_proposal_field_definitions'=>$proposalFields,

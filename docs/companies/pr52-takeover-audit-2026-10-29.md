@@ -1,5 +1,10 @@
 # PR 52 — retomada, correções e limites de validação
 
+> Registro histórico. Para o pacote posterior ao baseline `1de21abe`, consulte
+> [a consolidação local da PR 52](pr52-local-consolidation-2026-10-29.md) e
+> [a matriz completa das ações oficiais](pr52-official-action-matrix.json).
+> As pendências e provas abaixo se referem ao checkpoint descrito neste arquivo.
+
 Baseline retomado: `de4d044a9fa7e01c021fd528837244ab357a0b06`, branch
 `fix/native-company-experience`. O histórico foi preservado. Esta auditoria
 substitui a conclusão de entrega completa: a PR ainda contém lacunas funcionais

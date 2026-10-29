@@ -194,7 +194,17 @@ async function next(page) { await navigate(page, page.locator('section form butt
     const switched = await hidden(page);
     const staleCompany = await context.request.post(draftUrl, { form: { ...completion, ...switched, action: 'complete', _company_context: oldContext } });
     assert.equal(staleCompany.status(), 409, 'company switch refuses old-tab submission before mutation');
+    const invoiceTableResponse = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === '/admin/invoices/table');
+    const invoiceTotalsResponse = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === '/admin/invoices/get_invoices_total');
     assert.equal((await page.goto(url + '/admin/invoices')).status(), 200, 'adapted original invoice directory renders for the newly created company');
+    const invoiceTable = await invoiceTableResponse;
+    assert.equal(invoiceTable.status(), 200, 'official invoice DataTable finishes its authenticated request');
+    const invoiceRows = await invoiceTable.json();
+    assert.equal(invoiceRows.iTotalRecords, 0, 'new company invoice table contains no other company history');
+    assert.deepEqual(invoiceRows.aaData, [], 'new company invoice table returns the original empty row protocol');
+    const invoiceTotals = await invoiceTotalsResponse;
+    assert.equal(invoiceTotals.status(), 200, 'official invoice summary renders with the real formatting helpers');
+    assert((await invoiceTotals.text()).includes('Faturas Pagas'), 'actual summary partial is rendered before leaving the directory');
     assert.equal(await page.locator('table.table-invoices').count(), 1, 'invoice directory renders its official DataTable');
     assert.equal(await page.locator('#wrapper .content').count(), 1, 'invoice directory uses one official CRM content root');
     assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), created, 'invoice directory retains the selected company');
@@ -237,11 +247,20 @@ async function next(page) { await navigate(page, page.locator('section form butt
     assert.match(await customerTitle.innerHTML(), /&lt;script&gt;/, 'customer markup is escaped');
     assert.equal(await page.locator('#company').inputValue(), 'Synthetic private B <script>', 'official edit field preserves the literal identity');
     customerForm = page.locator('form.client-form');
-    const beforeEdit = await formFields(customerForm);
+    assert.equal(new URL(await customerForm.getAttribute('action')).pathname, '/admin/clients/client/' + customer, 'original edit form targets its existing customer ID');
+    const beforeEdit = await customerForm.evaluate(form => Object.fromEntries(new FormData(form).entries()));
+    assert.equal(Object.keys(beforeEdit).some(name => /^DataTables_.*_length$/.test(name)), false, 'embedded table pagination is not submitted as customer profile data');
     await page.locator('#company').fill('Synthetic private B updated');
     await navigate(page, page.locator('#profile-save-section .only-save'));
-    const staleEdit = await context.request.post(url + '/admin/clients/client/' + customer, { form: { ...beforeEdit, ...(await formFields(page.locator('form.client-form'))), revision: beforeEdit.revision, company: 'Forbidden stale edit' } });
-    assert.equal(staleEdit.status(), 409);
+    assert.equal(sql('SELECT company FROM tblclients WHERE userid=' + customer), 'Synthetic private B updated', 'original profile POST must commit before testing a stale form');
+    const currentEdit = await formFields(page.locator('form.client-form'));
+    assert.notEqual(currentEdit.revision, beforeEdit.revision, 'successful edit must rotate the persisted profile revision');
+    // Preserve the old full form, refreshing only the CSRF/context transport metadata.
+    const stalePayload = { ...beforeEdit, company: 'Forbidden stale edit' };
+    for (const [name, value] of Object.entries(currentEdit)) if (name !== 'revision' && name !== 'native_customer_fields_revision' && (name.includes('csrf') || name === '_company_context')) stalePayload[name] = value;
+    const staleEdit = await context.request.post(url + '/admin/clients/client/' + customer, { form: stalePayload, maxRedirects: 0 });
+    assert.equal(staleEdit.status(), 409, 'stale full profile must fail before redirect or mutation');
+    assert.equal(sql('SELECT company FROM tblclients WHERE userid=' + customer), 'Synthetic private B updated', 'rejected stale request preserves current identity');
     const share = page.locator('#native-customer-sharing form');
     await share.locator('input[name="targets[]"][value="' + primary + '"]').check();
     await navigate(page, share.locator('button[type=submit]'));
@@ -290,4 +309,4 @@ async function next(page) { await navigate(page, page.locator('section form butt
     assert.deepEqual(errors, [], 'no browser script errors in new flows');
     console.log('Legacy master + native Staff + resumable company wizard: real HTTP/MySQL/browser checks passed.');
   } finally { await browser.close(); }
-})().catch(error => { console.error(error.message); process.exitCode = 1; });
+})().catch(error => { console.error(error.stack || error.message); process.exitCode = 1; });

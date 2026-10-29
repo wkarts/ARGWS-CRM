@@ -1,5 +1,10 @@
 # Migração física da aplicação paralela — PR 52
 
+> Registro histórico. Para o pacote posterior ao baseline `1de21abe`, consulte
+> [a consolidação local da PR 52](pr52-local-consolidation-2026-10-29.md) e
+> [a matriz completa das ações oficiais](pr52-official-action-matrix.json).
+> As pendências e provas abaixo se referem ao checkpoint descrito neste arquivo.
+
 Baseline `c2fe8ab2b698af5f257729b4f60e433b8eab788e`: **141** basenames com prefixo `company_` (comparação sem distinção de maiúsculas/minúsculas).
 
 Todos os caminhos abaixo foram removidos ou renomeados no índice final; o inventário não depende de tombstones e não inclui a árvore `application/views/admin/companies/`.

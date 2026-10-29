@@ -454,6 +454,7 @@ class Invoices extends AdminController
     /** Private drafts retain their own identity until explicit issuance. */
     public function drafts()
     {
+        if (func_num_args() !== 0) { show_404(); return; }
         if (CompanyRequestScope::nativeFor($this)) {
             require_once APPPATH.'services/NativeCompanyInvoiceDraftHttp.php';
             (new NativeCompanyInvoiceDraftHttp($this))->index();

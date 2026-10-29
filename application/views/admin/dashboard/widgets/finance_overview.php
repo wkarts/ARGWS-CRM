@@ -1,5 +1,8 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php
+if (isset($company_dashboard)) {
+    require_once APPPATH . 'services/NativeCompanySalesDirectory.php';
+}
 $canViewInvoices  = isset($company_dashboard) ? $company_dashboard['permissions']['invoices'] : (staff_can('view', 'invoices') || staff_can('view_own', 'invoices') || (get_option('allow_staff_view_invoices_assigned') == 1 && staff_has_assigned_invoices()));
 $canViewProposals = isset($company_dashboard) ? $company_dashboard['permissions']['proposals'] : (staff_can('view', 'proposals') || staff_can('view_own', 'proposals') || (get_option('allow_staff_view_proposals_assigned') == 1 && staff_has_assigned_proposals()));
 $canViewEstimates = isset($company_dashboard) ? $company_dashboard['permissions']['estimates'] : (staff_can('view', 'estimates') || staff_can('view_own', 'estimates') || (get_option('allow_staff_view_estimates_assigned') == 1 && staff_has_assigned_estimates()));
@@ -207,7 +210,7 @@ switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposa
                             if (!isset($company_dashboard) && !is_numeric($status)) {
                                 $url = admin_url('estimates/list_estimates?' . $status . '=1');
                             } else {
-                                $url = admin_url('estimates/list_estimates?status=' . $status);
+                                $url = admin_url('estimates/list_estimates?status=' . (isset($company_dashboard) ? NativeCompanySalesDirectory::status('estimates', $status) : $status));
                             }
                             $percent_data = $estimatePercentage($status); ?>
                             <div class="col-md-12 text-stats-wrapper">
@@ -221,7 +224,7 @@ switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposa
                             <div class="col-md-12 text-right progress-finance-status tw-text-neutral-400">
                                 <?= e($percent_data['percent']); ?>%
                                 <div class="progress no-margin progress-bar-mini">
-                                    <div class="progress-bar progress-bar-<?= estimate_status_color_class($status); ?> no-percent-text not-dynamic"
+                                    <div class="progress-bar progress-bar-<?= isset($company_dashboard) ? e($company_dashboard['sales_statuses'][$status]['color']) : estimate_status_color_class($status); ?> no-percent-text not-dynamic"
                                         role="progressbar"
                                         aria-valuenow="<?= e($percent_data['percent']); ?>"
                                         aria-valuemin="0" aria-valuemax="100" style="width: 0%"
@@ -254,7 +257,7 @@ switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposa
 
                             </div>
                             <?php foreach ($proposal_statuses as $status) {
-                                $url          = admin_url('proposals/list_proposals?status=' . $status);
+                                $url          = admin_url('proposals/list_proposals?status=' . (isset($company_dashboard) ? NativeCompanySalesDirectory::status('proposals', $status) : $status));
                                 $percent_data = $proposalPercentage($status); ?>
                             <div class="col-md-12 text-stats-wrapper">
                                 <a href="<?= e($url); ?>"
@@ -267,7 +270,7 @@ switch (count(array_filter([$canViewInvoices, $canViewEstimates, $canViewProposa
                             <div class="col-md-12 text-right progress-finance-status tw-text-neutral-400">
                                 <?= e($percent_data['percent']); ?>%
                                 <div class="progress no-margin progress-bar-mini">
-                                    <div class="progress-bar progress-bar-<?= proposal_status_color_class($status); ?> no-percent-text not-dynamic"
+                                    <div class="progress-bar progress-bar-<?= isset($company_dashboard) ? e($company_dashboard['sales_statuses'][$status]['color']) : proposal_status_color_class($status); ?> no-percent-text not-dynamic"
                                         role="progressbar"
                                         aria-valuenow="<?= e($percent_data['percent']); ?>"
                                         aria-valuemin="0" aria-valuemax="100" style="width: 0%"

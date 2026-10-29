@@ -1,7 +1,9 @@
 <?php
 /** Actual shared portal adapter; old432 contract/support paths remain intact. */
 require __DIR__.'/project_portal_rules_controller.php';
-class PortalRequestScope{public static bool $active=true;public static function active():bool{return self::$active;}}
+// This fixture enters the compatibility Portal controller. The native Clients
+// portal has a separate sealed request fixture and a different redirect target.
+class PortalRequestScope{public static bool $active=true;public static function active():bool{return self::$active;}public static function sealedFor($ci):bool{return false;}}
 class CI_Controller{public function __get($name){return $GLOBALS['CI']->$name;}}
 function show_404(){$GLOBALS['CI']->output->status=404;}
 if(!function_exists('form_open_multipart')){function form_open_multipart($url,$attrs=[]){return str_replace('<form ','<form enctype="multipart/form-data" ',form_open($url,$attrs));}}

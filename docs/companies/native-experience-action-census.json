@@ -403,127 +403,127 @@
                 },
                 {
                     "method": "contract",
-                    "line": 102,
+                    "line": 103,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_template",
-                    "line": 165,
+                    "line": 166,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_as_signed",
-                    "line": 171,
+                    "line": 172,
                     "classification": "review_required"
                 },
                 {
                     "method": "unmark_as_signed",
-                    "line": 182,
+                    "line": 183,
                     "classification": "review_required"
                 },
                 {
                     "method": "pdf",
-                    "line": 193,
+                    "line": 194,
                     "classification": "review_required"
                 },
                 {
                     "method": "file",
-                    "line": 230,
+                    "line": 231,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 239,
+                    "line": 240,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_note",
-                    "line": 253,
+                    "line": 255,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_notes",
-                    "line": 261,
+                    "line": 263,
                     "classification": "review_required"
                 },
                 {
                     "method": "clear_signature",
-                    "line": 269,
+                    "line": 271,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_contract_data",
-                    "line": 278,
+                    "line": 280,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_comment",
-                    "line": 306,
+                    "line": 308,
                     "classification": "review_required"
                 },
                 {
                     "method": "edit_comment",
-                    "line": 315,
+                    "line": 318,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_comments",
-                    "line": 325,
+                    "line": 329,
                     "classification": "review_required"
                 },
                 {
                     "method": "remove_comment",
-                    "line": 331,
+                    "line": 336,
                     "classification": "review_required"
                 },
                 {
                     "method": "renew",
-                    "line": 352,
+                    "line": 358,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_renewal",
-                    "line": 369,
+                    "line": 376,
                     "classification": "review_required"
                 },
                 {
                     "method": "copy",
-                    "line": 380,
+                    "line": 387,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 398,
+                    "line": 406,
                     "classification": "review_required"
                 },
                 {
                     "method": "type",
-                    "line": 417,
+                    "line": 426,
                     "classification": "review_required"
                 },
                 {
                     "method": "types",
-                    "line": 452,
+                    "line": 461,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_contract_type",
-                    "line": 465,
+                    "line": 474,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_contract_attachment",
-                    "line": 484,
+                    "line": 493,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_external_attachment",
-                    "line": 489,
+                    "line": 498,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_contract_attachment",
-                    "line": 501,
+                    "line": 510,
                     "classification": "review_required"
                 }
             ]
@@ -1151,42 +1151,42 @@
                 },
                 {
                     "method": "convert_to_invoice",
-                    "line": 305,
+                    "line": 306,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_expense_data_ajax",
-                    "line": 337,
+                    "line": 338,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_customer_change_data",
-                    "line": 363,
+                    "line": 364,
                     "classification": "review_required"
                 },
                 {
                     "method": "categories",
-                    "line": 371,
+                    "line": 372,
                     "classification": "review_required"
                 },
                 {
                     "method": "category",
-                    "line": 383,
+                    "line": 384,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_category",
-                    "line": 408,
+                    "line": 409,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_expense_attachment",
-                    "line": 427,
+                    "line": 428,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_expense_attachment",
-                    "line": 435,
+                    "line": 436,
                     "classification": "review_required"
                 }
             ]
@@ -1433,82 +1433,82 @@
                 },
                 {
                     "method": "get_merge_data",
-                    "line": 465,
+                    "line": 466,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_bill_expense_data",
-                    "line": 501,
+                    "line": 502,
                     "classification": "review_required"
                 },
                 {
                     "method": "invoice",
-                    "line": 521,
+                    "line": 522,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_invoice_data_ajax",
-                    "line": 666,
+                    "line": 667,
                     "classification": "review_required"
                 },
                 {
                     "method": "apply_credits",
-                    "line": 757,
+                    "line": 758,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_invoices_total",
-                    "line": 778,
+                    "line": 779,
                     "classification": "review_required"
                 },
                 {
                     "method": "record_invoice_payment_ajax",
-                    "line": 815,
+                    "line": 816,
                     "classification": "review_required"
                 },
                 {
                     "method": "record_payment",
-                    "line": 843,
+                    "line": 844,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_to_email",
-                    "line": 879,
+                    "line": 880,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_payment",
-                    "line": 926,
+                    "line": 927,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 945,
+                    "line": 946,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 963,
+                    "line": 964,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_overdue_notice",
-                    "line": 991,
+                    "line": 992,
                     "classification": "review_required"
                 },
                 {
                     "method": "pdf",
-                    "line": 1012,
+                    "line": 1013,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_as_sent",
-                    "line": 1081,
+                    "line": 1082,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_due_date",
-                    "line": 1102,
+                    "line": 1103,
                     "classification": "review_required"
                 }
             ]

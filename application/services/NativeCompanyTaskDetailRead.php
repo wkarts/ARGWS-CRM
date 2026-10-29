@@ -16,14 +16,25 @@ final class NativeCompanyTaskDetailRead
         if(!$access['view'])throw new DomainException('native_company_task_denied');
         $kind=$item['source_kind']==='company_task'?'task':'standalone';$id=$item['source_id'];
         $comments=$this->rows('company_'.$kind.'_comments',$issuer,$id,null);
+        $portal=$this->authorship($issuer,$item);
+        foreach($comments as$comment)if((int)$comment['actor_id']===0&&!isset($portal['comments'][(int)$comment['id']]))throw new DomainException('native_task_comment_author_denied');
         // The original detail displays other staff's time only with a broad task grant.
         $timers=$this->rows('company_'.$kind.'_timers',$issuer,$id,($access['create']||$access['edit']||$access['delete'])?null:$actor);
-        if($projection->readOne($issuer,$actor,$canonical)!==$item||$this->rows('company_'.$kind.'_comments',$issuer,$id,null)!==$comments||$this->rows('company_'.$kind.'_timers',$issuer,$id,($access['create']||$access['edit']||$access['delete'])?null:$actor)!==$timers)throw new DomainException('native_task_detail_changed');
+        if($this->authorship($issuer,$item)!==$portal||$projection->readOne($issuer,$actor,$canonical)!==$item||$this->rows('company_'.$kind.'_comments',$issuer,$id,null)!==$comments||$this->rows('company_'.$kind.'_timers',$issuer,$id,($access['create']||$access['edit']||$access['delete'])?null:$actor)!==$timers)throw new DomainException('native_task_detail_changed');
         foreach($access as$cap=>$allowed)if($acl->can($issuer,$actor,'tasks',$cap)!==$allowed)throw new DomainException('native_task_detail_changed');
         // Canonical writers hydrate comments/timers internally; expose only the
         // separately scoped collections rather than their unfiltered copies.
         unset($item['row']['comments'],$item['row']['timers']);
-        return ['item'=>$item,'comments'=>$comments,'timers'=>$timers,'permissions'=>$access];
+        return ['item'=>$item,'comments'=>$comments,'timers'=>$timers,'permissions'=>$access,'portal'=>$portal];
+    }
+    private function authorship(int $issuer,array $item):array
+    {
+        $out=['origin'=>null,'comments'=>[]];
+        if($item['source_kind']!=='company_task'||!$this->db->table_exists($this->prefix.'company_portal_task_origins'))return$out;
+        $args=[$issuer,$item['row']['project_id'],$item['source_id']];
+        $out['origin']=IssuerStorage::query($this->db,'SELECT contact_id,author_name,created_at FROM '.$this->prefix.'company_portal_task_origins WHERE issuer_id=? AND project_id=? AND task_id=?',$args)->row_array()?:null;
+        foreach(IssuerStorage::query($this->db,'SELECT comment_id,contact_id,author_name,created_at FROM '.$this->prefix.'company_portal_task_comments WHERE issuer_id=? AND project_id=? AND task_id=? ORDER BY comment_id',$args)->result_array()as$row)$out['comments'][(int)$row['comment_id']]=$row;
+        return$out;
     }
     private function rows(string $table,int $issuer,int $task,?int $actor):array
     {

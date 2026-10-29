@@ -285,6 +285,7 @@ class Expenses extends AdminController
     public function copy($id = '')
     {
         if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
+            if (func_num_args() !== 0) { show_404(); return; }
             require_once APPPATH.'services/NativeCompanyExpenseCopiesController.php';
             NativeCompanyExpenseCopiesController::handle($this);
             return;

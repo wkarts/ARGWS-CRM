@@ -56,6 +56,11 @@ $controller->input->verb='GET';try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=
 echo "Native Settings original asset removal routes POST/CAS isolation passed.\n";
 
 $db->query("CREATE TABLE {$p}company_taxes(id INTEGER PRIMARY KEY,issuer_id INT NOT NULL,name TEXT NOT NULL,taxrate DECIMAL(10,4) NOT NULL,revision INT NOT NULL)");
+// The real sales_general reader checks every participant of its transaction.
+// Empty catalogues are still installed tables, including the principal's taxes.
+foreach(['company_items','company_item_groups']as$table)$db->query('CREATE TABLE IF NOT EXISTS '.$p.$table.'(id INT NOT NULL PRIMARY KEY,issuer_id INT NOT NULL) ENGINE=InnoDB');
+$db->query('CREATE TABLE IF NOT EXISTS '.$p.'taxes(id INT NOT NULL PRIMARY KEY,name VARCHAR(191) NOT NULL,taxrate DECIMAL(15,2) NOT NULL) ENGINE=InnoDB');
+unset($db->data_cache['table_names']);
 $db->query("INSERT INTO {$p}company_taxes VALUES(1,?,'Tax A',5,1),(2,?,'Tax B',7,1)",[$a,$b]);
 $controller->input->verb='GET';$controller->input->query=['group'=>'sales_general'];
 CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());
