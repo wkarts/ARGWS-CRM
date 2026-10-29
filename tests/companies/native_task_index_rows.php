@@ -7,3 +7,5 @@ $render=(new NativeCompanyRelatedTaskRows($db,$p))->render($a,7,$page);
 essentialCheck($render['draw']===9&&$render['iTotalRecords']===$page['recordsTotal']&&count($render['aaData'])===count($page['rows']),'Original task row component renders the mixed-source DataTables page');
 foreach($render['aaData'] as $n=>$row){$source=$page['rows'][$n];essentialCheck(count(array_filter(array_keys($row),'is_int'))===9&&$row['DT_RowAttr']['data-native-task-id']===$source['id'],'Each real row has original columns and exact scoped identity');essentialCheck(str_contains($row[2],htmlspecialchars($source['row']['name'],ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')),'Original row safely displays actual task name');}
 echo 'Main task original row composition: '.$GLOBALS['essentialChecks']." cumulative checks passed; page controller/browser remain pending.\n";
+// Child fixtures consume prior assertions; do not retain their diagnostic SQL trace in the bounded PHP worker.
+$db->queries=[];
