@@ -256,7 +256,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Clients.php": {
-      "sha256": "d7959198b5290d0d7bb7e485a86916104ed1b4e1b1cec28b245821ce3b6a56b3",
+      "sha256": "21561a25cdc097acbd47d978e14a5d5b781fda7f533f0ee72d1fd309c16bc3e3",
       "categories": [
         "customer_privacy",
         "documents_numbering",
