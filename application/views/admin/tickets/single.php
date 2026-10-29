@@ -16,6 +16,10 @@
                             </div>
                             <a class="btn btn-default" href="<?php echo admin_url('tickets'); ?>"><?php echo _l('back_to_list'); ?></a>
                         </div>
+                        <?php if (($native_support_authorship['origin']??null)!==null) { ?>
+                        <p>Aberto pelo contato: <?php echo e($native_support_authorship['origin']['author_name']); ?></p>
+                        <?php if ((int)$ticket->assigned===0) { ?><p>Aguardando atribuição de responsável</p><?php } ?>
+                        <?php } ?>
                         <?php if ($ticket->merged_ticket_id !== null) { ?>
                         <div class="alert alert-info tw-mt-4">
                             <?php echo e(_l('ticket_merged_notice')); ?>:
@@ -39,7 +43,7 @@
                 <div class="panel_s" id="operation-portal-publication">
                     <div class="panel-body">
                         <h4 class="tw-font-semibold tw-mt-0">Portal do cliente</h4>
-                        <p class="text-muted">A publicação é explícita e os anexos permanecem privados até autorização.</p>
+                        <p class="text-muted">A publicação é explícita e os anexos permanecem privados até autorização. Para anexos enviados por um contato, publicar amplia aos demais contatos autorizados. Para retirar todo acesso no portal, oculte o anexo.</p>
                         <?php if (!$portal_controls['private_client']) { ?><div class="alert alert-warning">O cadastro não pertence a esta empresa.</div><?php } ?>
                         <?php if ($portal_controls['can_contact_edit']) { foreach ($portal_controls['permissions'] as $contact => $permission) { ?>
                         <?php echo form_open(admin_url('tickets/ticket/'.$ticket->ticketid)); ?>
@@ -61,6 +65,7 @@
                 </div>
                 <?php } ?>
 
+                <?php if ($native_ticket_presentation['can_reply']) { ?>
                 <div class="panel_s">
                     <div class="panel-body">
                         <h4 class="tw-font-semibold tw-mt-0"><?php echo _l('ticket_single_add_reply'); ?></h4>
@@ -93,6 +98,7 @@
                     </div>
                 </div>
 
+                <?php } ?>
                 <h4 class="tw-font-bold"><?php echo _l('ticket_request_history'); ?></h4>
                 <div class="panel_s tw-mt-5">
                     <div class="panel-body tw-bg-info-50/30 ticket-thread">
@@ -133,6 +139,7 @@
                             <dt><?php echo _l('ticket_dt_date_created'); ?></dt><dd><?php echo e($ticket->date_label); ?></dd>
                             <?php if ($ticket->ticket_email) { ?><dt><?php echo _l('ticket_settings_to'); ?></dt><dd><a href="mailto:<?php echo e($ticket->ticket_email); ?>"><?php echo e($ticket->ticket_email); ?></a></dd><?php } ?>
                         </dl>
+                        <?php if ($native_ticket_presentation['can_mark_read']) { ?>
                         <?php echo form_open(admin_url('tickets/ticket/'.$ticket->ticketid), ['id'=>'native-ticket-mark-read','class'=>'tw-mt-4']); ?>
                         <?php echo form_hidden('_company_context', $native_ticket_page['context_token']); ?>
                         <?php echo form_hidden('_native_company_csrf', $native_ticket_page['csrf_token']); ?>
@@ -141,6 +148,7 @@
                         <?php echo form_hidden('request_nonce', bin2hex(random_bytes(32))); ?>
                         <button type="submit" class="btn btn-default btn-sm"><?php echo _l('mark_as_read'); ?></button>
                         <?php echo form_close(); ?>
+                        <?php } ?>
                     </div>
                 </div>
             </div>

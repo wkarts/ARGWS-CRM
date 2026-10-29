@@ -56,3 +56,38 @@ foreach($db->query('SELECT id FROM '.$p.'issuers_registry')->result_array() as $
 }
 
 if(!IssuerStorage::fieldExists($db,'is_not_staff',$p.'staff'))$db->query('ALTER TABLE '.$p.'staff ADD is_not_staff int NOT NULL DEFAULT 0');
+
+// The shared ticket reader declares historical lookup tables even for owned
+// tickets. Install the original empty DDL; never fabricate historical records.
+require_once dirname(__DIR__).'/support/NativeInstalledSchemaFixture.php';
+$nativePlan=NativeInstalledSchemaFixture::plan($native,$p);
+foreach(['tickets_status','tickets_priorities','ticket_replies','projects','departments','staff_departments','tags','taggables','currencies'] as $table){
+    if($db->table_exists($p.$table))continue;
+    $ddl=$nativePlan[$table]['create'];
+    if($db->driver()==='sqlite'){
+        $ddl=preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',$ddl);
+        $ddl=preg_replace('/enum\([^)]*\)/','varchar(50)',$ddl);
+    }
+    $db->query($ddl);
+    if($db->driver()==='mysql')foreach($nativePlan[$table]['alters'] as $ddl)$db->query($ddl);
+}
+unset($db->data_cache['table_names']);
+
+if($db->driver()==='sqlite'){
+    require_once dirname(__DIR__).'/support/DeclaredMySqlMetadata.php';
+    foreach(NativeCompanyTicketReplySchema::definitions($p) as $table=>$parts)$db->declaredMysqlMetadata[$p.$table]=DeclaredMySqlMetadata::parse($parts);
+}
+foreach(['NativeCompanyProjectMetadataSchema','NativeCompanyWorkAssignmentsSchema','NativeCompanyCustomFieldSchema','NativeCompanyWorkTagsSchema'] as $schema){
+    require_once APPPATH.'services/'.$schema.'.php';
+    $schema::ensure($db,$p);
+}
+
+require_once APPPATH.'services/NativeCompanyTaskFormSchema.php';
+if($db->driver()==='mysql')NativeCompanyTaskFormSchema::ensure($db,$p);
+else foreach(['company_tasks','company_standalone_tasks'] as $table)foreach(NativeCompanyTaskFormSchema::ADDITIONS as $column=>$type){
+    if(!IssuerStorage::fieldExists($db,$column,$p.$table))$db->query('ALTER TABLE '.$p.$table.' ADD '.$column.' '.$type.' NULL');
+}
+require_once APPPATH.'services/CompanyTaskRecurringSchema.php';
+if($db->driver()==='mysql')CompanyTaskRecurringSchema::ensure($db,$p);
+else foreach(CompanyTaskRecurringSchema::definitions($p) as $table=>$parts)if(!$db->table_exists($p.$table))$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$table.'` ('.implode(',',$parts).') ENGINE=InnoDB'));
+unset($db->data_cache['table_names']);

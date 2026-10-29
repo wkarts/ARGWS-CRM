@@ -238,7 +238,10 @@ class Clients extends AdminController
                 $capabilities=$native->capabilities($id===''?null:IssuerPolicy::id($id));
                 if($this->input->method(true)==='POST'){
                     CompanyRequestScope::assertNativeMutation($this);
-                    $input=$this->input->post()?:[];
+                    // The scoped writer validates plain-text fields and the native
+                    // views escape them. Preserve the submitted identity for the
+                    // durable receipt instead of rewriting it with global XSS filtering.
+                    $input=$this->input->post(null,false)?:[];
                     // Native CI CSRF metadata is validated by the framework, not persisted as profile data.
                     unset($input[$this->security->get_csrf_token_name()],$input['_native_company_csrf'],$input['_company_context']);
                     // Keep the original create-and-add-contact flow. The marker

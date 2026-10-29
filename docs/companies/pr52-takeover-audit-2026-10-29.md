@@ -74,10 +74,10 @@ A negativa anterior de acesso ao endpoint de caches não foi contornada.
 | Principal/A/B/restrito | contratos existentes preservados | diagnóstico completo SQLite: 433 comandos, cinco falhas iniciais; três revalidadas após correção |
 | Projetos/cópia | `Projects::copy` no caminho nativo só aceita GET/HEAD e redireciona | POST original não equivalente; **pendente** |
 | Contratos originais | catálogo nativo admite subset | table/send_to_email/renew/copy/delete/comentários exigem composição e testes; **pendente** |
-| Settings vendas principal | adapter nega primary em authorize | forms encaminha estimates/proposals ao adapter; **pendente** |
+| Settings vendas principal | adapter usa options/contador histórico para principal; A/B mantêm armazenamento próprio | formulário/controller, CSRF, CAS, rollback e consumidor de datas passam SQLite/MySQL; CI final pendente |
 | Histórico estimates/proposals | adapter CompanySales lê company_sales_documents | ausência de união com tabelas legadas aponta inacessibilidade, não perda física; **pendente** |
 | Pipeline vendas | rota admite GET/HEAD; table exige assertNativeMutation | contrato HTTP inconsistente; **pendente** |
-| Chamados históricos | thread exige metadata nova | ticket criado pelo writer histórico falha `native_ticket_metadata_required`; **pendente**, sem inventar autoria |
+| Chamados históricos | leitura de corpo textual e autoria do portal por registros existentes | original detail + portal passam SQLite/MySQL; comandos novos dependentes de metadata continuam fechados para históricos, sem autoria inventada |
 | Asaas/BB/conciliacão | fontes bancárias não alteradas neste pacote | homologação real não executada; CI não equivale a homologação |
 | CNAB400 | operational=false preservado | depende de layout/transporte/retorno homologados; não liberado |
 
@@ -191,3 +191,64 @@ no Docker VFS. Apenas o cache local produzido por essa tentativa foi removido,
 recuperando espaço. O endpoint de caches GitHub continua sem consulta/exclusão.
 O download do artefato de diagnóstico 12894932888 retornou URL, mas seu GET
 respondeu HTTP403; os logs de jobs permaneceram disponíveis.
+
+
+## Complemento consolidado após 50fc8f4
+
+- Settings de orçamentos/propostas da principal conserva `options` e o contador
+  legado, não migra históricos nem mistura a sequência das empresas A/B. O novo
+  adaptador de contador exige revisão atual e valor acima dos números emitidos;
+  rollback de auditoria, formulário original e CSRF foram exercitados.
+- O POST de clientes preserva os campos textuais antes do escritor validado e
+  das views que escapam saída. O filtro XSS global antes alterava o nome literal
+  usado pela recuperação da prova de onboarding. Controller com texto literal,
+  replay e isolamento foi exercitado; browser final ainda é obrigatório.
+- Recorrência declara todos os participantes transacionais dos escritores atuais.
+  Núcleo, integridade, API, worker e concorrência MySQL reexecutados no diagnóstico;
+  o controller antigo ainda tem fixture pendente. Nenhum guard foi removido.
+- Branding histórico ignora somente `atime` na comparação anterior/posterior à
+  leitura: a própria leitura atualiza esse campo. Regressão reproduzida com
+  horário de acesso antigo; inode, tamanho, mtime e ctime continuam comparados.
+- Chamados históricos são apresentados como texto, sem fabricar metadados de
+  origem/autor. Quando existe recibo de autoria do portal, o leitor já autorizado
+  fornece nome/contato e é revalidado. IDs e autoria de respostas continuam vindo
+  do leitor canônico. As ações novas dependentes de metadados não são concedidas
+  a chamados históricos. Essa limitação permanece explícita.
+- Fixtures de projetos/tarefas/contratos agora exercitam os controllers atuais.
+  Harnesses incompatíveis são executados em processos separados, com exit e
+  diagnósticos PHP obrigatórios; criação, revisão, CSRF, isolamento, histórico,
+  anexos e HTML escapado continuam testados. Nenhum filho é opcional.
+- A fixture SQLite declara metadados MySQL somente para o schema de respostas
+  que ela efetivamente instala; isso não é prova de migração MySQL. Os testes
+  MySQL usam informação real do servidor e não entram nessa declaração.
+
+### Evidência deste complemento
+
+- Runner focused SQLite oficial: **434/434 comandos passaram**, PHP 8.1, incluindo
+  os dois novos entrypoints de texto literal e Settings principal. Evidência
+  local preservada; ainda não equivale a validação no commit publicado.
+- Settings principal: 29 checks adicionais de armazenamento, mais controller
+  real/formulário/CSRF/revisão/contexto, passaram SQLite e MySQL.
+- Portal operações: 110 SQLite / 112 MySQL cumulativos; suporte e arquivos do
+  portal: 125 SQLite / 127 MySQL cumulativos, em cada entrypoint.
+- Projetos extras: 45 SQLite / 47 MySQL; tarefas independentes: 42 / 44.
+- Contratos/controller/PDF passaram SQLite e MySQL; os subtestes nativos de
+  tickets usam SQLite explicitamente, inclusive quando chamados do job MySQL.
+- Recorrência API: 76 novos / 112 cumulativos MySQL. Núcleo/integridade haviam
+  passado 116/83 novos checks respectivamente. Não houve transporte externo.
+- Diagnóstico MySQL de 71 falhas anteriores: 30 passaram, 41 falharam durante
+  a reconciliação; várias falhas foram corrigidas depois. É diagnóstico de
+  estados locais em mudança, **não** uma matriz final verde. Logs preservados.
+- No SHA publicado 50fc8f4, Banco do Brasil terminou success; focused, núcleo e
+  stacks terminaram failure. As correções locais exigem novo CI final.
+
+### Pendências funcionais que impedem fechamento
+
+Continuam abertas as quatro lacunas da matriz: histórico de vendas legado,
+rotas/ações completas de contratos secundários, POST original de cópia de projeto
+(e metadados/participantes correspondentes) e pipeline GET com contrato HTML.
+Além disso, fixtures antigas de Settings PDF/políticas apontam grupos removidos;
+PDF original ainda precisa de composição completa, não de reintrodução de uma
+página paralela. Há testes antigos de outros controllers ainda em reconciliação.
+Censo atualizado e ausência de arquivos prefixados não comprovam entrega dessas
+funções. Este complemento **não declara a PR concluída nem pronta para merge**.

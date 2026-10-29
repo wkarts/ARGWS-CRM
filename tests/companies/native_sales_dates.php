@@ -15,6 +15,9 @@ essentialCheck($dates->dueDate($b,7,'proposals','02-28-2024')==='03-06-2024','mi
 essentialThrows(fn()=>$dates->dueDate($a,12,'estimates','28/02/2024'),'native_sales_date_denied','unauthorized staff rejected');
 essentialThrows(fn()=>$dates->dueDate($a,7,'estimates','30/02/2024'),'native_sales_date_invalid','invalid calendar date rejected');
 essentialThrows(fn()=>$dates->dueDate($a,7,'invoices','28/02/2024'),'native_sales_date_invalid','other resource kind rejected');
-essentialThrows(fn()=>$dates->dueDate($principal,7,'estimates','28/02/2024'),'native_sales_date_denied','principal retains its existing native path');
+$store->mutate($principal,7,'update','dateformat','d/m/Y|%d/%m/%Y');
+$store->mutate($principal,7,'update','estimate_due_after','3');
+essentialCheck($dates->dueDate($principal,7,'estimates','28/02/2024')==='02/03/2024','principal uses historical settings through the same date route');
+essentialCheck($dates->dueDate($a,7,'estimates','28/02/2024')==='01/03/2024','principal settings do not change A');
 essentialCheck($db->query('SELECT * FROM '.$p.'company_sales_documents ORDER BY id')->result_array()===$before,'date calculation never alters financial documents');
 echo 'Native sales due-date consumers: '.($GLOBALS['essentialChecks']-$start)." added checks.\n";

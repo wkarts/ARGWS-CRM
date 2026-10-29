@@ -25,6 +25,7 @@ final class NativeCompanyContractsController
 
     public function __construct(private $ci)
     {
+        if(!CompanyRequestScope::sealedFor($ci))throw new DomainException('native_contract_denied');
         $context=CompanyRequestScope::context();
         if(!$context||$context->issuerId()===null)throw new DomainException('native_contract_denied');
         $this->issuer=IssuerPolicy::id($context->issuerId());

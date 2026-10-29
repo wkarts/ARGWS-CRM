@@ -1,5 +1,5 @@
 <?php
-// Real allocator, storage and sales writer; no Settings route is enabled here.
+// Real original-form settings adapter, allocator, storage and sales writer.
 require __DIR__.'/sales.php';
 require_once APPPATH.'services/NativeCompanySalesSettings.php';
 $forms=new NativeCompanySalesSettings($db,$p);$start=$GLOBALS['essentialChecks'];
@@ -17,7 +17,7 @@ $bad=$estimate;unset($bad['show_project_on_estimate']);essentialThrows(fn()=>$fo
 $bad=$estimate;$bad['estimate_prefix']="bad\nheader";essentialThrows(fn()=>$forms->save($a,7,'estimates',$saved['revision'],$bad),'native_sales_settings_invalid','control characters rejected');
 essentialCheck($forms->page($a,7,'estimates')===$saved,'invalid requests leave both settings and sequence unchanged');
 essentialThrows(fn()=>$forms->page($a,12,'estimates'),'native_sales_settings_denied','revoked actor cannot read settings');
-essentialThrows(fn()=>$forms->page($principal,7,'estimates'),'native_sales_settings_denied','principal stays on its original settings path');
+require __DIR__.'/native_sales_primary_settings_fixture.php';
 $newId=$sales->create($a,7,'estimates',array_replace($salesInput,['client_id'=>$ca]),hash('sha256','native-sales-settings-estimate'));
 $newDoc=$sales->document($a,7,$newId);
 essentialCheck(str_starts_with($newDoc['formatted_number'],'SYN-A-')&&$newDoc['terms']==='Termos A'&&(int)$newDoc['number']===(int)$estimate['next_estimate_number'],'actual estimate writer consumes saved prefix, terms and real allocator');
@@ -39,4 +39,6 @@ require_once APPPATH.'services/NativeCompanySettingsForms.php';require_once APPP
 $nativeForms=new NativeCompanySettingsForms($db,$p);$nativePage=$nativeForms->page($a,7,'estimates');$nativeValues=$nativePage['values'];$nativeValues['estimate_due_after']='3';
 $nativeSaved=$nativeForms->save($a,7,'estimates',$nativeValues,[],$nativePage['revision']);
 essentialCheck($nativeSaved['values']['estimate_due_after']==='3'&&(new NativeCompanySalesDates($db,$p))->dueDate($a,7,'estimates','2026-01-31')==='2026-02-03','internal native form write reaches real company-specific date consumer');
-echo 'Native sales settings storage: '.($GLOBALS['essentialChecks']-$start)." added checks. Other consumers and HTTP forms remain closed.\n";
+$primaryOfficial=$nativeForms->page($principal,7,'estimates');
+essentialCheck($primaryOfficial['values']['next_estimate_number']==='90'&&$primaryOfficial['values']['estimate_prefix']==='PRIMARY-','same official Settings form adapter serves principal historical configuration');
+echo 'Native sales settings storage: '.($GLOBALS['essentialChecks']-$start)." added checks. HTTP/browser integration is validated separately.\n";

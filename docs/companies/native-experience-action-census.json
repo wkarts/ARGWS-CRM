@@ -190,197 +190,197 @@
                 },
                 {
                     "method": "export",
-                    "line": 525,
+                    "line": 528,
                     "classification": "review_required"
                 },
                 {
                     "method": "check_duplicate_customer_name",
-                    "line": 535,
+                    "line": 538,
                     "classification": "review_required"
                 },
                 {
                     "method": "save_longitude_and_latitude",
-                    "line": 553,
+                    "line": 556,
                     "classification": "review_required"
                 },
                 {
                     "method": "form_contact",
-                    "line": 577,
+                    "line": 580,
                     "classification": "review_required"
                 },
                 {
                     "method": "confirm_registration",
-                    "line": 745,
+                    "line": 748,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_file_share_visibility",
-                    "line": 764,
+                    "line": 767,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_contact_profile_image",
-                    "line": 801,
+                    "line": 804,
                     "classification": "review_required"
                 },
                 {
                     "method": "mark_as_active",
-                    "line": 816,
+                    "line": 819,
                     "classification": "review_required"
                 },
                 {
                     "method": "consents",
-                    "line": 827,
+                    "line": 830,
                     "classification": "review_required"
                 },
                 {
                     "method": "update_all_proposal_emails_linked_to_customer",
-                    "line": 854,
+                    "line": 857,
                     "classification": "review_required"
                 },
                 {
                     "method": "assign_admins",
-                    "line": 896,
+                    "line": 899,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_customer_admin",
-                    "line": 915,
+                    "line": 918,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_contact",
-                    "line": 934,
+                    "line": 937,
                     "classification": "review_required"
                 },
                 {
                     "method": "contacts",
-                    "line": 962,
+                    "line": 965,
                     "classification": "review_required"
                 },
                 {
                     "method": "upload_attachment",
-                    "line": 994,
+                    "line": 997,
                     "classification": "review_required"
                 },
                 {
                     "method": "add_external_attachment",
-                    "line": 1004,
+                    "line": 1007,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 1016,
+                    "line": 1019,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete",
-                    "line": 1030,
+                    "line": 1033,
                     "classification": "review_required"
                 },
                 {
                     "method": "login_as_client",
-                    "line": 1057,
+                    "line": 1060,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_customer_billing_and_shipping_details",
-                    "line": 1066,
+                    "line": 1069,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_contact_status",
-                    "line": 1077,
+                    "line": 1080,
                     "classification": "review_required"
                 },
                 {
                     "method": "change_client_status",
-                    "line": 1095,
+                    "line": 1098,
                     "classification": "review_required"
                 },
                 {
                     "method": "zip_credit_notes",
-                    "line": 1113,
+                    "line": 1116,
                     "classification": "review_required"
                 },
                 {
                     "method": "zip_invoices",
-                    "line": 1136,
+                    "line": 1139,
                     "classification": "review_required"
                 },
                 {
                     "method": "zip_estimates",
-                    "line": 1160,
+                    "line": 1163,
                     "classification": "review_required"
                 },
                 {
                     "method": "zip_payments",
-                    "line": 1183,
+                    "line": 1186,
                     "classification": "review_required"
                 },
                 {
                     "method": "import",
-                    "line": 1206,
+                    "line": 1209,
                     "classification": "review_required"
                 },
                 {
                     "method": "groups",
-                    "line": 1256,
+                    "line": 1259,
                     "classification": "review_required"
                 },
                 {
                     "method": "group",
-                    "line": 1288,
+                    "line": 1291,
                     "classification": "review_required"
                 },
                 {
                     "method": "delete_group",
-                    "line": 1328,
+                    "line": 1331,
                     "classification": "review_required"
                 },
                 {
                     "method": "bulk_action",
-                    "line": 1353,
+                    "line": 1356,
                     "classification": "review_required"
                 },
                 {
                     "method": "vault_entry_create",
-                    "line": 1403,
+                    "line": 1406,
                     "classification": "review_required"
                 },
                 {
                     "method": "vault_entry_update",
-                    "line": 1432,
+                    "line": 1435,
                     "classification": "review_required"
                 },
                 {
                     "method": "vault_entry_delete",
-                    "line": 1467,
+                    "line": 1470,
                     "classification": "review_required"
                 },
                 {
                     "method": "vault_encrypt_password",
-                    "line": 1478,
+                    "line": 1481,
                     "classification": "review_required"
                 },
                 {
                     "method": "get_vault_entry",
-                    "line": 1507,
+                    "line": 1510,
                     "classification": "review_required"
                 },
                 {
                     "method": "statement_pdf",
-                    "line": 1517,
+                    "line": 1520,
                     "classification": "review_required"
                 },
                 {
                     "method": "send_statement",
-                    "line": 1551,
+                    "line": 1554,
                     "classification": "review_required"
                 },
                 {
                     "method": "statement",
-                    "line": 1579,
+                    "line": 1582,
                     "classification": "review_required"
                 }
             ]

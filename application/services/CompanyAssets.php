@@ -81,7 +81,11 @@ final class CompanyAssets
             if(strlen($name)>191||basename($name)!==$name||!preg_match('/^[A-Za-z0-9][A-Za-z0-9_.-]*$/D',$name))throw new DomainException('company_asset_corrupt');
             $root=defined('COMPANY_FILES_FOLDER')?COMPANY_FILES_FOLDER:(defined('FCPATH')?FCPATH.'uploads/company/':'');$real=realpath($root);$path=$real===false?false:realpath($real.DIRECTORY_SEPARATOR.$name);
             if($real===false||$path===false||is_link(rtrim($root,DIRECTORY_SEPARATOR))||is_link($real.DIRECTORY_SEPARATOR.$name)||dirname($path)!==$real||!is_file($path))throw new DomainException('company_asset_corrupt');
-            $f=fopen($path,'rb');if(!$f)throw new DomainException('company_asset_corrupt');try{$before=fstat($f);if(!$before||$before['size']>524288)throw new DomainException('company_asset_corrupt');$bytes=stream_get_contents($f,524289);$after=fstat($f);if($before!==$after||!is_string($bytes)||strlen($bytes)!==$before['size'])throw new DomainException('company_asset_corrupt');}finally{fclose($f);}
+            $f=fopen($path,'rb');if(!$f)throw new DomainException('company_asset_corrupt');try{$before=fstat($f);if(!$before||$before['size']>524288)throw new DomainException('company_asset_corrupt');$bytes=stream_get_contents($f,524289);$after=fstat($f);
+                // Reading may itself update access time. Keep the inode, size and
+                // modification/change checks, excluding only atime (both stat keys).
+                unset($before[8],$before['atime']);if(is_array($after))unset($after[8],$after['atime']);
+                if($before!==$after||!is_string($bytes)||strlen($bytes)!==$before['size'])throw new DomainException('company_asset_corrupt');}finally{fclose($f);}
             $result[$kind]=self::normalize($bytes);
         }
         if(!PortalRequestScope::sealedFor($ci)||PortalRequestScope::issuerId()!==$issuer)throw new DomainException('company_asset_access_denied');$this->document($issuer);return$result;

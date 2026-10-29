@@ -64,6 +64,8 @@ final class EssentialTestLoader
 final class EssentialTestDb
 {
     public array $queries = [];
+    /** Opt-in MySQL metadata declarations for SQLite-only controller fixtures. */
+    public array $declaredMysqlMetadata = [];
     /** Last failed statement for integration-test diagnostics; bound values are never retained. */
     public ?array $lastQueryFailure = null;
     public ?string $failOn = null;
@@ -91,6 +93,14 @@ final class EssentialTestDb
         $this->queries[] = [$sql, $params];
         if ($this->failOn !== null && str_contains($sql, $this->failOn)) { return false; }
         if ($this->driver() === 'sqlite') {
+            $declaration=str_contains($sql,'information_schema.')&&is_string($params[0]??null)
+                ?($this->declaredMysqlMetadata[$params[0]]??null):null;
+            if($declaration!==null&&str_contains($sql,'information_schema.')) {
+                $exists=$this->pdo->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?");$exists->execute([$params[0]]);
+                if(!$exists->fetch())return new EssentialTestResult([]);
+                foreach(['COLUMNS'=>'columns','STATISTICS'=>'indexes','KEY_COLUMN_USAGE'=>'foreign','REFERENTIAL_CONSTRAINTS'=>'rules','TABLES'=>'engine'] as $table=>$key)
+                    if(str_contains($sql,'information_schema.'.$table))return new EssentialTestResult($declaration[$key]);
+            }
             $metadata = issuerSqliteIntegrationColumn($this->pdo, $sql, $params);
             if ($metadata !== null) { return new EssentialTestResult($metadata); }
             $sql = preg_replace('/(?:int|bigint) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY/', 'INTEGER PRIMARY KEY AUTOINCREMENT', $sql);

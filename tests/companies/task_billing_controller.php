@@ -7,7 +7,7 @@ require APPPATH.'controllers/admin/Tasks.php';
 $GLOBALS['CI']->input=new class{public string $verb='GET';public array $gets=[],$posts=[];function method($upper=false){return $upper?$this->verb:strtolower($this->verb);}function get($k,$f=false){return $this->gets[$k]??null;}function post($k,$f=false){return $this->posts[$k]??null;}};
 $GLOBALS['CI']->output=new class{public int $status=200;function set_header($h){return $this;}function set_status_header($v){$this->status=$v;return $this;}};
 $GLOBALS['CI']->session=new class{public array $values=[];function userdata($k){return $this->values[$k]??null;}function set_userdata($k,$v){$this->values[$k]=$v;}};
-$GLOBALS['CI']->load=new class{public array $views=[];function view($n,$d){$this->views[]=[$n,$d];}};
+$GLOBALS['CI']->load=new class{public array $views=[];function helper($name){if($name!=="date")throw new RuntimeException("Unexpected helper");}function view($n,$d){$this->views[]=[$n,$d];}};
 $http=$GLOBALS['CI']->input;$out=$GLOBALS['CI']->output;$controller=new Tasks();CompanyRequestScope::$issuer=$a;
 $reset=function(array $get=[],array $post=[])use($http,$out){$http->verb=$post?'POST':'GET';$http->gets=$get;$http->posts=$post;$out->status=200;$GLOBALS['CI']->load->views=[];};
 $gui=$makeTask($a,$pa,'gui');$reset(['task'=>$gui]);$controller->billing();$view=end($GLOBALS['CI']->load->views);essentialCheck($out->status===200&&$view[1]['billing']===null,'actual sealed controller renders explicitly unbilled task');

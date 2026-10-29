@@ -1,42 +1,20 @@
 <?php
-/** Real controllers/services/storage; only framework HTTP/session/context are synthetic. */
-require __DIR__.'/portal_operations_cleanup.php';require __DIR__.'/projects_operations.php';require __DIR__.'/portal_operations_schema_fixture.php';
-class CompanyRequestScope
-{
-    public static bool $sealed=true;public static int $issuer;public static int $actor=7;
-    public static function sealedFor($owner):bool{return self::$sealed;}
-    public static function context(){return new class {public function issuerId(){return CompanyRequestScope::$issuer;}public function staffId(){return CompanyRequestScope::$actor;}public function isPrimary(){return false;}public function available(){return [];}public function csrf(){return 'synthetic-switch';}};}
-    public static function token(){return 'synthetic-project-context';}public static function invalidateCaches($owner):void{}
-    public static function adminUrl($owner,string $path=''):string{return 'https://synthetic.invalid/admin/'.$path;}
+/** Canonical replacements for the retired projects/index and tasks/index write transports.
+ * Each child runs the real original controller and view with its own framework
+ * harness. Process separation avoids sharing synthetic global functions/classes.
+ * Covered: create/edit, CSRF, stale revisions, tenant isolation, checklist,
+ * comments, attachments and escaped original templates. No child is optional.
+ */
+$checks=['native_projects_controller.php','native_project_form_controller.php',
+    'native_task_form_http.php','native_task_items_controller.php',
+    'native_task_comment_files_controller.php'];
+foreach($checks as $check){
+    $pipes=[];$child=proc_open([PHP_BINARY,'-d','display_errors=stderr','-d','log_errors=0',__DIR__.'/'.$check],
+        [0=>['pipe','r'],1=>['pipe','w'],2=>['redirect',1]],$pipes);
+    if(!is_resource($child))throw new RuntimeException('Controller test process unavailable');
+    fclose($pipes[0]);$output=stream_get_contents($pipes[1]);fclose($pipes[1]);$code=proc_close($child);
+    echo $output;
+    if($code!==0||preg_match('/^(?:PHP )?(?:Warning|Deprecated|Notice|Fatal error|Parse error):/m',$output))
+        throw new RuntimeException('Canonical project/task controller check failed: '.$check);
 }
-class AdminController{public function __get($name){return $GLOBALS['CI']->$name;}}
-function show_error($message,$status=500){$GLOBALS['CI']->output->status=$status;}
-function redirect($url,$method='location',$code=302){if($code!==303)throw new RuntimeException('unexpected_redirect');$GLOBALS['projectRedirect']=$url;$GLOBALS['CI']->output->status=$code;}
-require APPPATH.'controllers/admin/Projects.php';require APPPATH.'controllers/admin/Tasks.php';
-$GLOBALS['CI']->input=new class {public string $verb='GET';public array $gets=[],$posts=[];public function method($upper=false){return $upper?$this->verb:strtolower($this->verb);}public function get($k,$filter=false){return $this->gets[$k]??null;}public function post($k,$filter=false){return $this->posts[$k]??null;}};
-$GLOBALS['CI']->output=new class {public int $status=200;public function set_header($v){}public function set_status_header($v){$this->status=$v;}};
-$GLOBALS['CI']->session=new class {public array $values=[];public function userdata($k){return $this->values[$k]??null;}public function set_userdata($k,$v){$this->values[$k]=$v;}};
-$GLOBALS['CI']->load=new class {public array $views=[];public function view($n,$data){$this->views[]=[$n,$data];}};
-CompanyRequestScope::$issuer=$b;$pc=new Projects();$tcController=new Tasks();$pc->index();$view=end($GLOBALS['CI']->load->views);essentialCheck($view[0]==='admin/companies/projects'&&$view[1]['can_create'],'controller GET uses own renderer and resource ACL');
-$http=$GLOBALS['CI']->input;$http->verb='POST';$http->posts=['action'=>'create','request_key'=>hash('sha256','http-project'),'project'=>array_replace($input,['client_id'=>$cb,'name'=>'HTTP project'])];$pc->index();essentialCheck($GLOBALS['CI']->output->status===403,'dedicated project CSRF required before service');
-$http->posts['company_projects_csrf']=$GLOBALS['CI']->session->userdata('company_projects_csrf');$pc->index();essentialCheck($GLOBALS['CI']->output->status===303,'project POST creates and redirects to own detail');$httpProject=(int)substr($GLOBALS['projectRedirect'],strrpos($GLOBALS['projectRedirect'],'=')+1);essentialCheck($ps->get($b,7,$httpProject)['name']==='HTTP project','HTTP project mutation persisted through production writer');
-$http->verb='GET';$http->posts=[];$http->gets=['project'=>(string)$httpProject];$tcController->index();$view=end($GLOBALS['CI']->load->views);essentialCheck($view[0]==='admin/companies/tasks'&&(int)$view[1]['project']['id']===$httpProject,'task controller derives own parent before rendering');
-$http->verb='POST';$http->gets=[];$http->posts=['action'=>'create','request_key'=>hash('sha256','http-task'),'task'=>array_replace($taskInput,['project_id'=>(string)$httpProject,'name'=>'HTTP task','checklist'=>[]]),'checklist_lines'=>"First\nSecond"];
-$tcController->index();essentialCheck($GLOBALS['CI']->output->status===403,'dedicated task CSRF required before mutation');$http->posts['company_tasks_csrf']=$GLOBALS['CI']->session->userdata('company_tasks_csrf');$tcController->index();essentialCheck($GLOBALS['CI']->output->status===303,'task POST creates with multiline checklist');$httpTask=(int)substr($GLOBALS['projectRedirect'],strrpos($GLOBALS['projectRedirect'],'=')+1);essentialCheck(count($ts->get($b,7,$httpTask)['checklist'])===2,'controller normalizes bounded checklist lines into service contract');
-$http->posts=['company_tasks_csrf'=>$GLOBALS['CI']->session->userdata('company_tasks_csrf'),'action'=>'comment','request_key'=>hash('sha256','http-comment'),'task_id'=>(string)$httpTask,'revision'=>'1','comment'=>'HTTP synthetic comment'];$tcController->index();essentialCheck($GLOBALS['CI']->output->status===303,'task comment production operation through controller');essentialCheck(count($ts->get($b,7,$httpTask)['comments'])===1,'HTTP comment persisted once');
-$http->posts['request_key']=hash('sha256','http-stale');$tcController->index();essentialCheck($GLOBALS['CI']->output->status===409&&count($ts->get($b,7,$httpTask)['comments'])===1,'HTTP stale revision renders conflict without changing history');
-$http->verb='GET';$http->posts=[];$http->gets=['task'=>(string)$ta];$tcController->index();$view=end($GLOBALS['CI']->load->views);essentialCheck($GLOBALS['CI']->output->status===409&&$view[1]['task']===null&&$view[1]['project']===null,'cross-company detail never passes A payload to renderer');
-$http->verb='DELETE';$http->gets=[];$pc->index();essentialCheck($GLOBALS['CI']->output->status===405,'unsupported project method rejected');$tcController->index();essentialCheck($GLOBALS['CI']->output->status===405,'unsupported task method rejected');CompanyRequestScope::$sealed=false;$pc->index();essentialCheck($GLOBALS['CI']->output->status===503,'unsealed project lifecycle refused');$tcController->index();essentialCheck($GLOBALS['CI']->output->status===503,'unsealed task lifecycle refused');
-echo 'Projects/tasks production controller POST/GET/CSRF/stale/context: '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;
-// Actual PHP templates including sealed layout, with only framework form/url helpers adapted.
-class CompanySettingsRuntime{public static function active(){return true;}public static function can($cap){return false;}public static function canResource($feature,$cap){return true;}}
-function base_url($path=''){return 'https://synthetic.invalid/'.$path;}
-function e($value){return htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}
-function form_open($url,$attributes=[]){return '<form method="post" action="'.e($url).'"><input type="hidden" name="synthetic_csrf" value="synthetic-native-csrf"><input type="hidden" name="_company_context" value="'.e(CompanyRequestScope::token()).'">';}
-function form_close(){return '</form>';}
-CompanyRequestScope::$sealed=true;$http->verb='GET';$http->gets=['project'=>(string)$pb];$pc->index();$projectView=end($GLOBALS['CI']->load->views)[1];$projectView['project']['name']='<script>project-xss</script>';$projectView['project']['description']='" onmouseover="alert(1)';$projectView['staff_options'][0]['firstname']='<script>staff-xss</script>';
-$harness=new class {public function __get($name){return $GLOBALS['CI']->$name;}public function render(string $name,array $data):string{extract($data);ob_start();include APPPATH.'views/admin/'.(['projects'=>'projects/manage','tasks'=>'tasks/manage'][$name]??$name).'.php';return ob_get_clean();}};
-$html=$harness->render('projects',$projectView);essentialCheck(str_contains($html,'&lt;script&gt;project-xss')&&!str_contains($html,'<script>project-xss'),'actual project template escapes project content');essentialCheck(str_contains($html,'company_projects_csrf')&&str_contains($html,'synthetic_csrf')&&str_contains($html,'_company_context'),'actual project forms preserve dedicated CSRF native CSRF and context');essentialCheck(!str_contains($html,'<script>staff-xss'),'actual project responsible dropdown escapes staff name');
-$http->gets=['task'=>(string)$tb];$tcController->index();$taskView=end($GLOBALS['CI']->load->views)[1];$taskView['task']['name']='<script>task-xss</script>';$taskView['task']['comments']=[['actor_id'=>7,'body'=>'<script>comment-xss</script>','created_at'=>'2026-10-19 00:00:00']];$taskView['task']['checklist']=[['text'=>'<script>check-xss</script>','done'=>0]];
-$html=$harness->render('tasks',$taskView);essentialCheck(str_contains($html,'&lt;script&gt;task-xss')&&!str_contains($html,'<script>task-xss'),'actual task template escapes task content');essentialCheck(str_contains($html,'&lt;script&gt;comment-xss')&&str_contains($html,'&lt;script&gt;check-xss')&&!str_contains($html,'<script>comment-xss')&&!str_contains($html,'<script>check-xss'),'actual comments and checklist templates render text safely');essentialCheck(str_contains($html,'company_tasks_csrf')&&str_contains($html,'synthetic_csrf')&&str_contains($html,'_company_context'),'actual task forms retain both CSRF layers and sealed context');
-echo 'Actual sealed project/task PHP rendering: '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;
+echo "Canonical project/task controller replacement coverage passed.\n";

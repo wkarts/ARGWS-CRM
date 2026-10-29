@@ -13,9 +13,6 @@ final class NativeCompanySalesDates
     {
         if (!in_array($kind,['estimates','proposals'],true)) { throw new DomainException('native_sales_date_invalid'); }
         $acl=new IssuerResourceAccess($this->db,$this->prefix);
-        if ($acl->primaryId() !== null && $issuer === $acl->primaryId()) {
-            throw new DomainException('native_sales_date_denied');
-        }
         $verify=static function()use($acl,$issuer,$actor,$kind):void {
             if(!$acl->can($issuer,$actor,$kind,'view')
                 || (!$acl->can($issuer,$actor,$kind,'create') && !$acl->can($issuer,$actor,$kind,'edit'))) {

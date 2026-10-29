@@ -1,6 +1,9 @@
 <?php
 /** Official task comments and attachments preserve canonical ownership and refresh the modal. */
 require __DIR__.'/native_task_detail_controller.php';
+// The included fixture has completed its assertions. Its query trace is not
+// consulted below; release it before exercising the independent mutations.
+$db->queries=[];
 class_alias(NativeCompanyResourceReferences::class,'NativeTaskHttpTest\\NativeCompanyResourceReferences');
 class_alias(CompanyTasks::class,'NativeTaskHttpTest\\CompanyTasks');
 class_alias(CompanyStandaloneTasks::class,'NativeTaskHttpTest\\CompanyStandaloneTasks');

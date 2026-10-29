@@ -23,7 +23,8 @@ class CompanyRequestScope {
 class NativeClientInput {
     public array $post=[],$get=[];public string $method='GET';
     function method($upper=false){return $upper?$this->method:strtolower($this->method);}
-    function post($key=null,$filter=null){return $key===null?$this->post:($this->post[$key]??null);}
+    public array $reads=[];
+    function post($key=null,$filter=null){$this->reads[]=[$key,$filter];return $key===null?$this->post:($this->post[$key]??null);}
     function get($key=null){return $key===null?$this->get:($this->get[$key]??null);}
     function is_ajax_request(){return false;}
 }

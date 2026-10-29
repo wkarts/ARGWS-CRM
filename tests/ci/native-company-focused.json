@@ -2104,6 +2104,10 @@
     ],
     [
       "php",
+      "tests/companies/native_sales_primary_controller_fixture.php"
+    ],
+    [
+      "php",
       "tests/banco_brasil_cnab400_comparison_sqlite.php"
     ],
     [
@@ -2469,6 +2473,10 @@
     [
       "php",
       "tests/companies/native_clients_controller.php"
+    ],
+    [
+      "php",
+      "tests/companies/native_clients_literal_controller.php"
     ],
     [
       "php",

@@ -2,10 +2,10 @@
 namespace {
 require __DIR__.'/native_task_form_payload.php';require_once APPPATH.'services/NativeCompanyTaskChecklistTemplates.php';NativeCompanyTaskChecklistSchema::ensure($db,$p);
 // The current detail reads recurring rows; this older form fixture has none.
-$db->query('CREATE TABLE '.$p.'company_task_schedules(id INTEGER PRIMARY KEY AUTOINCREMENT,issuer_id int unsigned NOT NULL,kind varchar(16) NOT NULL,source_id int unsigned NOT NULL)');
+$db->query('CREATE TABLE '.$p.'company_task_schedules(id '.($db->driver()==='mysql'?'int NOT NULL AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').',issuer_id int unsigned NOT NULL,kind varchar(16) NOT NULL,source_id int unsigned NOT NULL)');
 unset($db->data_cache['table_names']);
 require_once APPPATH.'services/NativeCompanyTaskItemSchema.php';NativeCompanyTaskItemSchema::ensure($db,$p);
-$db->query('CREATE TABLE '.$p.'user_meta(umeta_id INTEGER PRIMARY KEY AUTOINCREMENT,staff_id int NOT NULL,meta_key varchar(191) NOT NULL,meta_value text NULL)');
+$db->query('CREATE TABLE '.$p.'user_meta(umeta_id '.($db->driver()==='mysql'?'int NOT NULL AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').',staff_id int NOT NULL,meta_key varchar(191) NOT NULL,meta_value text NULL)');
 unset($db->data_cache['table_names']);
 require_once APPPATH.'services/NativeCompanyBlankTimerSchema.php';NativeCompanyBlankTimerSchema::ensure($db,$p);
 $seed=file_get_contents(dirname(__DIR__,2).'/install/database.sql');preg_match('/CREATE TABLE `tbltasks_checklist_templates` \(.*?\) ENGINE=InnoDB[^;]*;/s',$seed,$m);$sql=str_replace('`tbltasks_checklist_templates`','`'.$p.'tasks_checklist_templates`',$m[0]);$sql=str_replace('`id` int NOT NULL,','`id` '.($db->driver()==='mysql'?'int NOT NULL AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').',',$sql);if($db->driver()==='sqlite')$sql=preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',$sql);$db->query($sql);

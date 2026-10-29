@@ -3,6 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/CompanySettingsStorage.php';
 require_once __DIR__.'/NativeCompanySalesSequencePreferences.php';
+require_once __DIR__.'/NativeCompanyPrimaryEstimateSequence.php';
 
 /**
  * Validated, issuer-owned storage for the fields on the original sales forms.
@@ -101,17 +102,17 @@ final class NativeCompanySalesSettings
     private function authorize(int $issuer, int $actor, string $capability): void
     {
         $acl = new IssuerResourceAccess($this->db, $this->prefix);
-        // Primary sales options remain on the historical Settings storage.
-        if ($acl->primaryId() !== null && $issuer === $acl->primaryId()) {
-            throw new DomainException('native_sales_settings_denied');
-        }
         if (!$acl->can($issuer,$actor,'settings',$capability)) {
             throw new DomainException('native_sales_settings_denied');
         }
     }
-    private function tables(string $group): array
+    private function tables(string $group,int $issuer): array
     {
         self::defaults($group);
+        if((new CompanySettingsStorage($this->db,$this->prefix))->isPrimary($issuer)) {
+            if($group==='estimates')return (new NativeCompanyPrimaryEstimateSequence($this->db,$this->prefix))->tables();
+            return array_merge((new NativeCompanySalesSequencePreferences($this->db,$this->prefix))->tables(),['options']);
+        }
         return (new NativeCompanySalesSequencePreferences($this->db, $this->prefix))->tables();
     }
     private function capture(int $issuer, int $actor, string $group): array
@@ -124,8 +125,9 @@ final class NativeCompanySalesSettings
         }
         $sequence = null;
         if ($group==='estimates') {
-            $sequence = (new NativeCompanySalesSequencePreferences($this->db,$this->prefix))
-                ->readInOwnedTransaction($issuer,$actor,'estimates');
+            $sequence = $store->isPrimary($issuer)
+                ? (new NativeCompanyPrimaryEstimateSequence($this->db,$this->prefix))->readInOwnedTransaction($issuer,$actor)
+                : (new NativeCompanySalesSequencePreferences($this->db,$this->prefix))->readInOwnedTransaction($issuer,$actor,'estimates');
             $values['next_estimate_number'] = $sequence['next_number'];
         }
         self::validate($group,$values);
@@ -136,22 +138,27 @@ final class NativeCompanySalesSettings
     public function page(int $issuer, int $actor, string $group): array
     {
         $this->authorize($issuer,$actor,'view');
-        return IssuerTransaction::run($this->db,$this->prefix,$this->tables($group),fn()=>$this->capture($issuer,$actor,$group));
+        return IssuerTransaction::run($this->db,$this->prefix,$this->tables($group,$issuer),fn()=>$this->capture($issuer,$actor,$group));
     }
     public function save(int $issuer, int $actor, string $group, string $revision, array $values): array
     {
         $this->authorize($issuer,$actor,'edit');
         self::validate($group,$values);
         if (!preg_match('/^[a-f0-9]{64}$/D',$revision)) { throw new DomainException('native_sales_settings_invalid'); }
-        return IssuerTransaction::run($this->db,$this->prefix,$this->tables($group),function()use($issuer,$actor,$group,$revision,$values){
+        return IssuerTransaction::run($this->db,$this->prefix,$this->tables($group,$issuer),function()use($issuer,$actor,$group,$revision,$values){
             $this->authorize($issuer,$actor,'edit');
             (new IssuerResourceAccess($this->db,$this->prefix))->lockFinancialIdentity($issuer,$actor);
             $current=$this->capture($issuer,$actor,$group);
             if (!hash_equals($current['revision'],$revision)) { throw new DomainException('native_sales_settings_stale'); }
             $stored=$values;
             if ($group==='estimates') {
-                (new NativeCompanySalesSequencePreferences($this->db,$this->prefix))->saveInOwnedTransaction(
-                    $issuer,$actor,'estimates',$values['next_estimate_number'],$current['sequence']['revision']);
+                if((new CompanySettingsStorage($this->db,$this->prefix))->isPrimary($issuer)) {
+                    (new NativeCompanyPrimaryEstimateSequence($this->db,$this->prefix))->saveInOwnedTransaction(
+                        $issuer,$actor,$values['next_estimate_number'],$current['sequence']['revision']);
+                }else{
+                    (new NativeCompanySalesSequencePreferences($this->db,$this->prefix))->saveInOwnedTransaction(
+                        $issuer,$actor,'estimates',$values['next_estimate_number'],$current['sequence']['revision']);
+                }
                 unset($stored['next_estimate_number']);
             }
             (new CompanySettingsStorage($this->db,$this->prefix))->updateNativeSettingsInOwnedTransaction($issuer,$actor,$group,$stored);
