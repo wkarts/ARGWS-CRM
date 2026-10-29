@@ -16,6 +16,30 @@
         </ul>
     </div></div>
 
+    <?php if (is_array($portal_controls)) { ?>
+    <div class="panel_s" id="operation-portal-publication"><div class="panel-body">
+        <h4 class="tw-font-bold tw-mt-0">Portal do cliente</h4>
+        <p class="text-muted">A publicação é explícita e os anexos permanecem privados até autorização.</p>
+        <?php if (!$portal_controls['private_client']) { ?><div class="alert alert-warning">O cadastro não pertence a esta empresa.</div><?php } ?>
+        <?php if ($portal_controls['can_contact_edit']) { foreach ($portal_controls['permissions'] as $contact => $permission) { ?>
+        <?php echo form_open(admin_url('projects/view/'.$native_project_view['canonical_id'])); ?>
+        <?php echo form_hidden('_company_context',$native_project_view['context_token']); echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']); echo form_hidden('native_csrf',$company_projects_csrf); echo form_hidden('company_projects_csrf',$company_projects_csrf); echo form_hidden('action','portal_permission'); echo form_hidden('revision',$portal_revision); echo form_hidden('request_key',bin2hex(random_bytes(32))); echo form_hidden('contact_id',$contact); echo form_hidden('contact_revision',$permission['revision']); ?>
+        <label><input type="checkbox" name="allowed" value="1" <?php echo $permission['allowed']?'checked':''; ?>> <?php echo e($permission['name']); ?></label>
+        <button class="btn btn-default btn-sm" type="submit">Salvar acesso</button><?php echo form_close(); ?>
+        <?php } } ?>
+        <?php if ($portal_controls['can_contact_edit'] && $portal_controls['private_client'] && $portal_controls['eligible']) { ?>
+        <?php echo form_open(admin_url('projects/view/'.$native_project_view['canonical_id'])); ?>
+        <?php echo form_hidden('_company_context',$native_project_view['context_token']); echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']); echo form_hidden('native_csrf',$company_projects_csrf); echo form_hidden('company_projects_csrf',$company_projects_csrf); echo form_hidden('action','portal_publish'); echo form_hidden('revision',$portal_revision); echo form_hidden('request_key',bin2hex(random_bytes(32))); echo form_hidden('publication_type','record'); echo form_hidden('visible','1'); ?>
+        <button class="btn btn-default" type="submit">Publicar projeto</button><?php echo form_close(); ?>
+        <?php foreach ($portal_controls['files'] as $file) { ?>
+        <?php echo form_open(admin_url('projects/view/'.$native_project_view['canonical_id'])); ?>
+        <?php echo form_hidden('_company_context',$native_project_view['context_token']); echo form_hidden('_native_company_csrf',$native_project_view['csrf_token']); echo form_hidden('native_csrf',$company_projects_csrf); echo form_hidden('company_projects_csrf',$company_projects_csrf); echo form_hidden('action','portal_publish'); echo form_hidden('revision',$portal_revision); echo form_hidden('request_key',bin2hex(random_bytes(32))); echo form_hidden('publication_type','file'); echo form_hidden('file_key',$file['file_key']); echo form_hidden('visible','1'); ?>
+        <button class="btn btn-default btn-sm" type="submit">Publicar anexo <?php echo e($file['filename']); ?></button><?php echo form_close(); ?>
+        <?php } ?>
+        <?php } ?>
+    </div></div>
+    <?php } ?>
+
     <?php if ($native_project_view['group']==='project_overview') { ?>
         <?php $this->load->view('admin/projects/project_overview',['native_project_overview'=>$native_project_overview]); ?>
         <div class="panel_s"><div class="panel-body"><h4 class="tw-font-bold tw-mt-0"><?php echo _l('project_members'); ?></h4>
