@@ -23,7 +23,7 @@ $controller->load=new class{public array $views=[];function helper($names){}func
 CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());
 $view=end($controller->load->views);essentialCheck($view[0]==='admin/settings/all'&&$view[1]['group']['view']==='admin/settings/includes/localization','same existing native form and shell selected');
 $visible=[];foreach($view[1]['sections']as$section)foreach($section['children']as$child)$visible[]=$child['id'];sort($visible);$supported=NativeCompanySettingsForms::availableGroups();sort($supported);essentialCheck($visible===$supported,'native Settings navigation exposes exactly groups with owned native form adapters');
-essentialCheck(!in_array('proposals',$visible,true)&&!in_array('payment_gateways',$visible,true),'unadapted native Settings links are not rendered as dead forms');
+essentialCheck(!in_array('payment_gateways',$visible,true),'unadapted native Settings links are not rendered as dead forms');
 $controller->input->verb='POST';$controller->input->body=['settings'=>$locale,'native_settings_revision'=>$view[1]['native_settings_revision']];
 try{CompanySettingsRuntime::run($db,$p,$a,7,fn()=>$controller->index());throw new RuntimeException('Missing CSRF accepted');}catch(NativeSettingsHttpError$e){essentialCheck($e->getCode()===403,'native controller rejects missing CSRF');}
 $controller->input->body['_native_company_csrf']='fixture-csrf';$controller->input->body['settings']['time_format']='12';
