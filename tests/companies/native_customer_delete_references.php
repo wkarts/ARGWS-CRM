@@ -5,6 +5,12 @@ require_once APPPATH.'services/CompanyCustomerDeletionReferences.php';
 $directFixtures=['invoices'=>'clientid','leads'=>'converted_client_id','company_invoice_drafts'=>'client_id','company_invoice_copy_requests'=>'source_client_id','company_invoice_native_relations'=>'client_id','company_portal_tokens'=>'client_id','company_ticket_merge_replies'=>'client_id','order_master'=>'clientid','acc_account_history'=>'customer','sm_contracts'=>'client','sm_orders'=>'client_id','asaas_customers_map'=>'client_id','asaas_company_payers'=>'client_id','ma_email_logs'=>'client_id'];
 foreach($directFixtures as$table=>$column)
     if(!$db->table_exists($p.$table))$db->query('CREATE TABLE '.$p.$table.' ('.$column.' int)');
+// The fixture may inherit the historical Asaas column name from the migration baseline;
+// normalize it to the current guarded key before exercising the legacy-key failure below.
+if($db->table_exists($p.'asaas_customers_map')&&!$db->field_exists('client_id',$p.'asaas_customers_map')&&$db->field_exists('perfex_client_id',$p.'asaas_customers_map')){
+    if($db->driver()==='sqlite')$db->query('ALTER TABLE '.$p.'asaas_customers_map RENAME COLUMN perfex_client_id TO client_id');
+    else $db->query('ALTER TABLE '.$p.'asaas_customers_map CHANGE perfex_client_id client_id int');
+}
 if(!$db->table_exists($p.'notes'))$db->query('CREATE TABLE '.$p.'notes (rel_id int,rel_type varchar(50))');
 if(!$db->table_exists($p.'taggables'))$db->query('CREATE TABLE '.$p.'taggables (rel_id int,rel_type varchar(50))');
 if(!$db->table_exists($p.'company_client_import_batches'))$db->query('CREATE TABLE '.$p.'company_client_import_batches (state varchar(20),result_json text)');
