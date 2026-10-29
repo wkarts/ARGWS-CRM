@@ -39,6 +39,11 @@ final class NativeCompanySalesSequencePreferences
     private function authorize(int $issuer, int $actor, string $capability): void
     {
         $acl = new IssuerResourceAccess($this->db, $this->prefix);
+        // The installation company keeps its historical allocator; this optional
+        // owned-company preferences service must never replace that source.
+        if ($acl->primaryId() !== null && $issuer === $acl->primaryId()) {
+            throw new DomainException('native_sales_sequence_denied');
+        }
         if (!$acl->can($issuer, $actor, 'settings', $capability)) {
             throw new DomainException('native_sales_sequence_denied');
         }
