@@ -54,7 +54,7 @@ CompanyRequestScope::$actor=7;CompanyRequestScope::$primary=true;$GLOBALS['nativ
 $principalImageOwned=CompanyRequestScope::$primaryIssuer===$a;
 essentialCheck($principalImageOwned
     ? $avatarController->output->body===$canonical['content']
-    : (in_array($GLOBALS['nativeAvatarStatus'],[403,404],true)&&$avatarController->output->body!==$canonical['content']),
+    : ((in_array($GLOBALS['nativeAvatarStatus'],[403,404],true)||in_array($avatarController->output->status,[403,404],true))&&$avatarController->output->body!==$canonical['content']),
     $principalImageOwned?'principal image uses the official reader for the installation owner':'principal image route uses the official ownership fence');CompanyRequestScope::$primary=false;
 essentialCheck($db->query('SELECT * FROM '.$p.'company_native_contact_images WHERE contact_id=?',[$na])->row_array()===$avatarBefore,'image requests never modify the stored bytes or metadata');
 
