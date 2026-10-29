@@ -195,6 +195,9 @@ final class CompanyRequestScope
                 NativeCompanyRoutes::admits((string) $ci->router->fetch_directory(), $module, $class, $method, $verb)
                 || ($staffCustomerDownload && in_array($verb, ['GET','HEAD'], true))
             );
+            if (self::$isolated && !self::$nativePresentation && !$technicalSelector) {
+                self::deny($ci, 'company_context_route_not_isolated', 403);
+            }
             if ($staffCustomerDownload && !self::$nativePresentation) self::deny($ci, 'native_customer_file_method_invalid', 405);
             if($companyScopedBbRoute&&!self::$nativePresentation)self::deny($ci,'company_context_route_not_isolated',403);
             if($sharedCalendar&&!self::$nativePresentation)self::deny($ci,'native_calendar_method_invalid',405);

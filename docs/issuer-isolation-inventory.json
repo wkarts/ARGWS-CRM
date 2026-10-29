@@ -4194,7 +4194,7 @@
       "evidence": ""
     },
     "application/services/CompanyRequestScope.php": {
-      "sha256": "5a2d21c3b069c710fdd6fbc7359c21758fc7ba161ab23072784b0dc4e8dad547",
+      "sha256": "0ca4b792ad16cf242be96aa0b00a4fba1b492bd43b75fd02608fe4190fefc2a2",
       "categories": [
         "customer_privacy",
         "invoice_table"
