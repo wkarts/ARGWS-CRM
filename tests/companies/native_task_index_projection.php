@@ -17,3 +17,5 @@ essentialCheck((new IssuerResourceAccess($db, $p))->can($a, 92, 'tasks', 'view')
 $db->query('UPDATE ' . $p . 'issuers_staff SET can_view=0 WHERE issuer_id=? AND staff_id=92', [$a]);
 essentialThrows(fn() => $projection->read($a, 92), 'native_company_task_denied', 'Revoked issuer membership blocks the projection');
 echo 'Scoped main task source projection: ' . $GLOBALS['essentialChecks'] . " cumulative checks passed; table/rendering/HTTP pending.\n";
+// A cadeia de fixtures continua no mesmo processo; as asserções acima já consumiram o trace SQL e não precisam retê-lo para os filhos.
+$db->queries=[];
