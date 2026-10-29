@@ -6,6 +6,7 @@ define('BASEPATH', __DIR__);
 
 // Run the controller's real list gate, stopping before any query or rendering.
 class AdminController { public object $session; }
+class CompanyRequestScope { public static function nativeFor($owner): bool { return false; } }
 final class ProposalListDenied extends RuntimeException {}
 final class ProposalListAllowed extends RuntimeException {}
 function close_setup_menu(): void {}

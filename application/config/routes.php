@@ -57,6 +57,7 @@ $route['translate_uri_dashes'] = false;
 
 // Exact purchase namespace; the scope guard also checks the original native URI.
 $route['company_purchase_portal']='purchase_portal/index';
+$route['company_purchase_portal/index']='purchase_portal/index';
 $route['purchase_portal']='purchase_portal/index';
 $route['purchase_portal/index']='purchase_portal/index';
 // Canonical controller files keep the historical machine namespaces as finite aliases.
@@ -86,7 +87,6 @@ foreach(['suppliers','requests','quotes','orders','receipts','documents','payabl
     $route['company_purchases_api/index/'.$machineAction]='purchases_api/index/'.$machineAction;
     $route['company_purchases_api/index/'.$machineAction.'/([1-9][0-9]{0,9})']='purchases_api/index/'.$machineAction.'/$1';
 }
-$route['company_purchases_api/index/([a-z_]+)/([1-9][0-9]{0,9})']='purchases_api/index/$1/$2';
 unset($machineAction);
 
 

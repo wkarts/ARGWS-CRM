@@ -131,6 +131,8 @@ async function next(page) { await navigate(page, page.locator('section form butt
     const stale = await hidden(wizard);
     const denied = await context.request.post(draftUrl, { form: { ...stale, action: 'advance', revision: '0', step: '1', 'wizard[legal_name]': 'Stale overwrite', 'wizard[tax_id]': '52998224725' } });
     assert.equal(denied.status(), 409, 'stale draft cannot overwrite newer revision');
+    assert.equal(denied.headers()['cache-control'], 'no-store', 'onboarding errors send a valid no-store header');
+    assert.equal(denied.headers()['x-frame-options'], 'SAMEORIGIN', 'onboarding errors retain the modal framing boundary');
     await page.goto(url + '/admin/issuers');
     await page.goto(url + '/admin/issuers/onboarding');
     await page.locator('#company-create-modal').waitFor({state:'visible'});

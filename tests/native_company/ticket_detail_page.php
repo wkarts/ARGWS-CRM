@@ -3,9 +3,17 @@
 declare(strict_types=1);
 require __DIR__.'/ticket_thread_render.php';
 
+// The current original page also renders publication controls. Install their
+// declared SQLite participants; information_schema remains explicitly doubled.
+require_once APPPATH.'services/CompanyOperationalPortalAdmin.php';
+$portalDefinitions=array_merge(CompanyContractsSchema::definitions('tbl'),CompanyProjectsSchema::definitions('tbl'),CompanyProjectExtrasSchema::definitions('tbl'),CompanyOperationFilesSchema::definitions('tbl'),CompanyPortalOperationsSchema::definitions('tbl'));
+foreach($portalDefinitions as $table=>$parts)if(!$db->table_exists('tbl'.$table))ticketSqliteDdl($table,$parts,$db);
+if(!$db->table_exists('tblcontact_permissions'))$db->query('CREATE TABLE tblcontact_permissions(id INTEGER PRIMARY KEY,contact_id INTEGER,permission_id INTEGER)');
+$wrapped=new TicketCreateDb($db,array_merge($portalDefinitions,NativeCompanyTicketReplySchema::definitions('tbl'),NativeCompanySpamSchema::definitions('tbl')));$ci->db=$wrapped;
 $db->query('UPDATE tblissuers_installation_identity SET master_staff_id=17');
 $db->query('UPDATE tblstaff SET admin=1,is_not_staff=0 WHERE staffid=17');
 $db->query('UPDATE tblissuers_staff SET can_view=1 WHERE issuer_id=2 AND staff_id=17');
+$ci->session=new class{private array $data=[];function userdata($key){return $this->data[$key]??null;}function set_userdata($key,$value){$this->data[$key]=$value;}};
 $ci->router=new class{function fetch_method(){return'ticket';}};
 $ci->input->verb='GET';$ci->input->data=[];$ci->input->query=[];
 $ci->load=new class{

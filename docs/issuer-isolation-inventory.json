@@ -23,7 +23,7 @@
       "evidence": ""
     },
     "application/config/routes.php": {
-      "sha256": "9ba670722d613c7b54342d3213657a8582220d4a4e58c74731f198f1289ac782",
+      "sha256": "b44471dbfe9a11df6d65b8e18b2bf3c9da32bb9a6811aa7c14ee95c8d699a56e",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -31,7 +31,7 @@
       ],
       "signal_lines": [
         54,
-        63,
+        64,
         160
       ],
       "state": "unreviewed",
@@ -67,7 +67,7 @@
       "evidence": ""
     },
     "application/controllers/Clients.php": {
-      "sha256": "59001a5fa06c6517b6d7bba0bbe66f60aa9c303235955207e06527970e1ef189",
+      "sha256": "f152adc775ccc2ec6ac2de84ac48e73987a110eec83c5569a4f4e4545cd0adfc",
       "categories": [
         "customer_privacy",
         "invoice_model",
@@ -256,7 +256,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Clients.php": {
-      "sha256": "296401418eafe65867fad20fe85763220381c5e70f5e594fbe4cb8cf91af7879",
+      "sha256": "bb8185ca1c2a1d173a8698577f5fffd2077716fe97eba7ab67846978fe57b2a7",
       "categories": [
         "customer_privacy",
         "documents_numbering",
@@ -614,24 +614,24 @@
       "evidence": ""
     },
     "application/controllers/admin/Projects.php": {
-      "sha256": "bd0fb3267c75cdd0a75b02162073cf2d344f290f2abd8a422e29bb71a2373ed1",
+      "sha256": "45eb85543507ade36a39a0189bd931639e13cbdc331c75428af33ee253d3caaa",
       "categories": [
         "documents_numbering",
         "invoice_model",
         "invoice_table"
       ],
       "signal_lines": [
-        394,
-        400,
-        401,
-        402,
-        1097,
-        1130,
-        1159,
-        1379,
-        1380,
-        1383,
-        1385
+        406,
+        412,
+        413,
+        414,
+        1109,
+        1142,
+        1171,
+        1391,
+        1392,
+        1395,
+        1397
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -733,7 +733,7 @@
       "evidence": ""
     },
     "application/controllers/admin/Tickets.php": {
-      "sha256": "804321bd9dee87efa55da042f165df87b4bb0f5a79d7d4eb5704c9e1e7c755da",
+      "sha256": "2238df338e4f9bd3765791d77360b278416e68008ea87fc7da35bf2f7990b1f1",
       "categories": [
         "customer_privacy"
       ],
@@ -741,7 +741,7 @@
         122,
         146,
         154,
-        537
+        550
       ],
       "state": "unreviewed",
       "evidence": ""
@@ -922,7 +922,7 @@
       "evidence": ""
     },
     "application/core/ClientsController.php": {
-      "sha256": "b9ff0c0d66eac64b9b6fda3654538878817a44c39bb6f5c35b143bd4a084aa1c",
+      "sha256": "0fb00401f71d09fdc9875f69679eafc918a7b83a4e8be6b7fee8dae8f5d0e8ec",
       "categories": [
         "invoice_table"
       ],
@@ -4194,7 +4194,7 @@
       "evidence": ""
     },
     "application/services/CompanyRequestScope.php": {
-      "sha256": "0ca4b792ad16cf242be96aa0b00a4fba1b492bd43b75fd02608fe4190fefc2a2",
+      "sha256": "c29b662b6ba62c4eaabe0d987249ed2b3a7ddc67515710b392c8c47570e3889d",
       "categories": [
         "customer_privacy",
         "invoice_table"
@@ -6023,7 +6023,7 @@
       "evidence": ""
     },
     "application/services/NativePortalProfileHttp.php": {
-      "sha256": "7c174cb63853d9fdec122f1b8e440373cb98e13f69cd6d1779050a33e22656b8",
+      "sha256": "e5f1ac56660f78e8e27a55860d3c11feef9692ba07ed981922eaef9769f45169",
       "categories": [
         "customer_privacy"
       ],
@@ -6920,12 +6920,12 @@
       "evidence": ""
     },
     "application/views/admin/projects/view.php": {
-      "sha256": "fcc99a4eb47fae8176066528517fe37f524b1d689975c1533cab69b460c9a5fa",
+      "sha256": "fbed45dbd3477a5f1b215ed9f2f1eee5213cd22ef96e4d36fe6a01466685fac7",
       "categories": [
         "invoice_table"
       ],
       "signal_lines": [
-        161
+        185
       ],
       "state": "unreviewed",
       "evidence": ""

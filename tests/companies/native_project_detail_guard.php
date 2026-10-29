@@ -1,6 +1,8 @@
 <?php
 /** Official Projects::view composes the owned detail without hydrating the global model. */
 require __DIR__.'/native_projects_controller.php';
+require __DIR__.'/portal_operations_schema_fixture.php';
+$controller->session=new class{private array $data=[];function userdata($key){return $this->data[$key]??null;}function set_userdata($key,$value){$this->data[$key]=$value;}};
 require_once APPPATH.'services/utilities/Format.php';
 if(!function_exists('get_weekdays')){function get_weekdays(){return['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];}}
 if(!function_exists('get_weekdays_original')){function get_weekdays_original(){return['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];}}
@@ -27,5 +29,5 @@ essentialCheck(($data['native_project_view']['context_token']??null)==='syntheti
 essentialCheck(in_array('Cache-Control: no-store',$controller->output->headers,true),'Project detail is never cached across companies');
 
 CompanyRequestScope::$issuer=$b;$reject(fn()=>$controller->view($canonical),403);
-CompanyRequestScope::$issuer=$a;$controller->input->verb='POST';$reject(fn()=>$controller->view($canonical),422);
+CompanyRequestScope::$issuer=$a;$controller->input->verb='POST';$reject(fn()=>$controller->view($canonical),403);
 echo "Official project detail: owned overview/files, original view, method and cross-company guards passed.\n";

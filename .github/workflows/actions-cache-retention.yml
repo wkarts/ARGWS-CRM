@@ -8,15 +8,6 @@ on:
     branches: [develop, main]
   workflow_dispatch:
     inputs:
-      branch:
-        description: Branch publicada cujos caches serão inspecionados
-        type: choice
-        options: [develop, main]
-        required: true
-      publication_sha:
-        description: SHA de uma publicação concluída com sucesso
-        type: string
-        required: true
       apply:
         description: Excluir caches elegíveis (padrão é somente relatório)
         type: boolean
@@ -25,12 +16,12 @@ permissions:
   actions: write
   contents: read
 concurrency:
-  group: argws-crm-cache-retention-${{ github.event.workflow_run.head_branch || inputs.branch || github.ref_name }}
+  group: argws-crm-cache-cleanup
   cancel-in-progress: false
 jobs:
   cleanup:
     if: >-
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.head_repository.full_name == github.repository &&
        contains(fromJSON('["main","develop"]'), github.event.workflow_run.head_branch) &&
@@ -39,31 +30,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: main
           persist-credentials: false
-      - name: Validar publicação e limpar somente caches Actions antigos do branch
+      - name: Limpar caches somente com repositório ocioso
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TARGET_BRANCH: ${{ inputs.branch || github.event.workflow_run.head_branch || github.ref_name }}
-          VERIFIED_SHA: ${{ inputs.publication_sha || github.event.workflow_run.head_sha || '' }}
-          SOURCE_RUN_ID: ${{ github.event.workflow_run.id || '' }}
-          AUTO_APPLY: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
-          APPLY_REQUESTED: ${{ inputs.apply || false }}
-        shell: bash
+          APPLY_REQUESTED: ${{ github.event_name == 'workflow_run' || inputs.apply == true }}
         run: |
-          set -euo pipefail
-          common=(--repository "$GITHUB_REPOSITORY" --branch "$TARGET_BRANCH" --verified-sha "$VERIFIED_SHA" --output "$RUNNER_TEMP/cache-retention-report.json")
-          if [[ -n "$SOURCE_RUN_ID" ]]; then
-            if [[ "$AUTO_APPLY" == "true" || "$APPLY_REQUESTED" == "true" ]]; then
-              python3 scripts/cleanup_actions_cache.py --repository "$GITHUB_REPOSITORY" --branch "$TARGET_BRANCH" --verified-sha "$VERIFIED_SHA" --source-run-id "$SOURCE_RUN_ID" --apply --output "$RUNNER_TEMP/cache-retention-report.json"
-            else
-              python3 scripts/cleanup_actions_cache.py --repository "$GITHUB_REPOSITORY" --branch "$TARGET_BRANCH" --verified-sha "$VERIFIED_SHA" --source-run-id "$SOURCE_RUN_ID" --output "$RUNNER_TEMP/cache-retention-report.json"
-            fi
-          elif [[ "$APPLY_REQUESTED" == "true" ]]; then
-            python3 scripts/cleanup_actions_cache.py --repository "$GITHUB_REPOSITORY" --branch "$TARGET_BRANCH" --verified-sha "$VERIFIED_SHA" --apply --output "$RUNNER_TEMP/cache-retention-report.json"
-          else
-            python3 scripts/cleanup_actions_cache.py --repository "$GITHUB_REPOSITORY" --branch "$TARGET_BRANCH" --verified-sha "$VERIFIED_SHA" --output "$RUNNER_TEMP/cache-retention-report.json"
-          fi
+          args=(--repository "$GITHUB_REPOSITORY" --output "$RUNNER_TEMP/cache-retention-report.json")
+          if [[ "$APPLY_REQUESTED" == true ]]; then args+=(--apply); fi
+          python3 scripts/cleanup_actions_cache.py "${args[@]}"
       - name: Guardar relatório da retenção
         if: always()
         uses: actions/upload-artifact@v4

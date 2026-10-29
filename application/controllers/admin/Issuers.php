@@ -159,7 +159,7 @@ class Issuers extends AdminController
         $resources = CompanyResourceCatalog::definitions();
         $service = new CompanyOnboarding($this->db, db_prefix(), array_map(static fn($r) => array_keys($r['capabilities']), $resources));
         $actor = CompanyRequestScope::context()->staffId(); $error = null; $draft = null;
-        $this->output->set_header('Cache-Control', 'no-store')->set_header('X-Frame-Options', 'SAMEORIGIN');
+        $this->output->set_header('Cache-Control: no-store')->set_header('X-Frame-Options: SAMEORIGIN');
         $token = $this->session->userdata('company_onboarding_csrf');
         if (!is_string($token) || strlen($token) !== 64) { $token = bin2hex(random_bytes(32)); $this->session->set_userdata('company_onboarding_csrf', $token); }
         try {

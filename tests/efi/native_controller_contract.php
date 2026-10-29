@@ -9,9 +9,16 @@ define('BASEPATH',__DIR__.'/');define('APPPATH',dirname(__DIR__,2).'/application
 function show_error($message,$status=500){if(($GLOBALS['queries']??0)!==0||($GLOBALS['decrypts']??0)!==0)throw new RuntimeException('Boundary touched storage or secrets');echo 'REJECT '.(int)$status;exit(0);}
 function db_prefix(){return 'tbl';}
 class CompanyRequestScope {public static bool $sealed=true;static function sealedFor($ci){return self::$sealed;}static function nativeFor($ci){return true;}}
-class CompanySettingsRuntime {static function active(){return true;}static function issuerId(){return 2;}static function staffId(){return 99;}}
-class AdminController {public $db,$input,$session,$output,$load,$encryption;}
+class AdminController {public $db,$input,$session,$output,$load,$encryption;public function __construct(){}}
 require FCPATH.'application/controllers/admin/Settings.php';
+// Seed the real request runtime without storage: these negative boundaries must
+// reject before SQL or credential access, not replace a production class name.
+$runtime = new ReflectionClass(CompanySettingsRuntime::class);
+$scope = $runtime->newInstanceWithoutConstructor();
+foreach (['issuerId'=>2,'staffId'=>99] as $name=>$value) {
+    $property=$runtime->getProperty($name);$property->setAccessible(true);$property->setValue($scope,$value);
+}
+$property=$runtime->getProperty('current');$property->setAccessible(true);$property->setValue(null,$scope);
 $queries=0;$decrypts=0;
 $controller=new Settings();
 $controller->db=new class($queries){private $queries;function __construct(&$queries){$this->queries=&$queries;}function query($sql,$args=[]){++$this->queries;throw new RuntimeException('SQL not allowed before boundary');}};
