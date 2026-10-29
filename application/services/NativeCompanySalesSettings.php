@@ -101,6 +101,10 @@ final class NativeCompanySalesSettings
     private function authorize(int $issuer, int $actor, string $capability): void
     {
         $acl = new IssuerResourceAccess($this->db, $this->prefix);
+        // Primary sales options remain on the historical Settings storage.
+        if ($acl->primaryId() !== null && $issuer === $acl->primaryId()) {
+            throw new DomainException('native_sales_settings_denied');
+        }
         if (!$acl->can($issuer,$actor,'settings',$capability)) {
             throw new DomainException('native_sales_settings_denied');
         }
