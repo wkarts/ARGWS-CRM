@@ -223,7 +223,7 @@ $ci=contextEnvironment($f,$s,'clients','contact_profile_image','POST');$_POST=['
 $ci=contextEnvironment($f,$s,'clients','contact_profile_image','GET');$ci->input->headers['X-Company-Context']=$tokenA;expectStatus(fn()=>CompanyRequestScope::beforeHydration($ci),409);
 $ci = contextEnvironment($f, $s, 'company_context', 'index', 'GET');
 expectStatus(fn() => CompanyRequestScope::beforeHydration($ci), 403);
-essentialCheck(!file_exists(APPPATH . 'controllers/admin/Issuers.php'), 'parallel company_context controller is removed');
+essentialCheck(!file_exists(APPPATH . 'controllers/admin/Company_context.php') && !file_exists(APPPATH . 'controllers/admin/CompanyContext.php'), 'parallel company_context controller is removed');
 essentialCheck(!str_contains(file_get_contents(APPPATH . 'views/admin/includes/native_company_layout_head.php'), "'company_context'")
     && !str_contains(file_get_contents(APPPATH . 'views/admin/issuers/certificate_link.php'), "'company_context'"), 'active presentation links no longer target the retired company_context route');
 $ci = contextEnvironment($f, $s, 'invoices', 'invoice');
