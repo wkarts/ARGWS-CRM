@@ -921,6 +921,17 @@
       "state": "unreviewed",
       "evidence": ""
     },
+    "application/core/AdminController.php": {
+      "sha256": "b67ddac402fbbca19fbc682a6412b565b14cd26c8fa030f36c04c4c58f786293",
+      "categories": [
+        "invoice_table"
+      ],
+      "signal_lines": [
+        25
+      ],
+      "state": "unreviewed",
+      "evidence": ""
+    },
     "application/core/ClientsController.php": {
       "sha256": "0fb00401f71d09fdc9875f69679eafc918a7b83a4e8be6b7fee8dae8f5d0e8ec",
       "categories": [

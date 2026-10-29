@@ -173,3 +173,21 @@ falha do onboarding é `/admin/invoices`: o teste antigo espera 403, mas a rota
 agora adaptada responde 503. Não se alterou a asserção para aceitar falha interna.
 É necessário diagnosticar o GET integrado e comprovar a tela positiva antes de
 atualizar esse contrato de browser. Não houve homologação completa das stacks.
+
+## Correção adicional da apresentação de faturas
+
+Foi identificada uma dependência ausente no bootstrap nativo: o AdminController
+carregava helpers de configurações/tickets, mas não o helper de faturas usado
+por quick_stats (`get_invoice_status_label`/`format_invoice_status`). O fixture
+substituía essas funções e mascarava essa ausência. O helper de faturas agora é
+carregado no mesmo caminho nativo; os testes de rows/manage usam suas funções
+reais. A página aninhada passou com SQLite (156 checks) e MySQL (158 checks).
+O browser de onboarding exige agora resposta 200, DataTable oficial, um único
+content root e retenção da empresa selecionada. Essa prova HTTP precisa ser
+confirmada no novo CI; não basta a renderização com envelope sintético.
+
+A tentativa de preparar reprodução HTTP local foi bloqueada por falta de disco
+no Docker VFS. Apenas o cache local produzido por essa tentativa foi removido,
+recuperando espaço. O endpoint de caches GitHub continua sem consulta/exclusão.
+O download do artefato de diagnóstico 12894932888 retornou URL, mas seu GET
+respondeu HTTP403; os logs de jobs permaneceram disponíveis.

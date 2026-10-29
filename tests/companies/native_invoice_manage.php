@@ -6,7 +6,6 @@ require_once APPPATH.'helpers/datatables_helper.php';
 function init_head(){echo '<!-- synthetic framework head -->';}
 function init_tail(){echo '<!-- synthetic framework tail -->';}
 function staff_can($cap,$feature){return (new IssuerResourceAccess($GLOBALS['CI']->db,db_prefix()))->can(CompanyRequestScope::$issuer,7,$feature,$cap);}
-function get_invoice_status_label($status){return 'synthetic-status-'.(int)$status;}
 function form_hidden($name,$value=''){return '<input type="hidden" name="'.e($name).'" value="'.e($value).'">';}
 function form_open_multipart($url,$attrs){return '<form action="'.e($url).'" method="post" enctype="multipart/form-data"><input type="hidden" name="synthetic_framework_csrf" value="fixture-only">';}
 function form_close(){return '</form>';}

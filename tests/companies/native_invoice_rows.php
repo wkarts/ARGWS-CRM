@@ -37,7 +37,7 @@ if(!function_exists('admin_url')){function admin_url($p){return '/admin/'.$p;}}
 if(!function_exists('site_url')){function site_url($p){return '/'.$p;}}
 if(!function_exists('app_format_money')){function app_format_money($v,$c){return $c.' '.$v;}}
 if(!function_exists('_d')){function _d($v){return (string)$v;}}
-if(!function_exists('format_invoice_status')){function format_invoice_status($s){return '<span>'.(int)$s.'</span>';}}
+require_once APPPATH.'helpers/invoices_helper.php';
 $rendered=$rowsPresenter->render($a,7,$branded);
 essentialCheck(count($rendered)===11&&$rendered['DT_RowClass']==='has-row-options'&&str_contains($rendered[0],'init_invoice('.$branded.')'),'production DTO renders same native partial/actions/classes, no alternate table');
 echo 'Native invoice row data/lineages: '.$GLOBALS['essentialChecks']." cumulative checks PASS.\n";
