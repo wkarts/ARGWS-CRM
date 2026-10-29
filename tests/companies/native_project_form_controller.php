@@ -20,7 +20,7 @@ function admin_url($p=''){return'https://crm.invalid/sub/admin/'.$p;}
 require APPPATH.'helpers/func_helper.php';$templateSource=file_get_contents(APPPATH.'helpers/template_helper.php');$begin=strpos($templateSource,'function clear_textarea_breaks(');$end=strpos($templateSource,'/**',$begin);eval(substr($templateSource,$begin,$end-$begin));require APPPATH.'../system/helpers/form_helper.php';require APPPATH.'helpers/fields_helper.php';
 }
 namespace NativeProjectFormHttpTest {
-use \NativeCompanyProjectForm; use \DomainException; use \RuntimeException; use \LogicException; use \Throwable; use \Closure;
+use \NativeCompanyProjectForm; use \NativeCompanySpecializedOperations; use \DomainException; use \RuntimeException; use \LogicException; use \Throwable; use \Closure;
 function show_error($m,$s){throw new LogicException('HTTP '.$s);}
 function set_alert($kind,$message){$GLOBALS['formAlert']=[$kind,$message];}
 function html_purify($v){return strip_tags($v,'<p><b>');}
