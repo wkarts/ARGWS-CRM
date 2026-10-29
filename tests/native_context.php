@@ -227,9 +227,11 @@ essentialCheck(!file_exists(APPPATH . 'controllers/admin/Company_context.php') &
 essentialCheck(!str_contains(file_get_contents(APPPATH . 'views/admin/includes/native_company_layout_head.php'), "'company_context'")
     && !str_contains(file_get_contents(APPPATH . 'views/admin/issuers/certificate_link.php'), "'company_context'"), 'active presentation links no longer target the retired company_context route');
 $ci = contextEnvironment($f, $s, 'invoices', 'invoice');
-expectStatus(fn() => $ci->load->initialize(), 403);
-essentialCheck(!in_array('autoload_returned', $ci->load->trace, true), 'secondary finance denied before hydration/config autoload returns');
-essentialCheck(!CompanySettingsRuntime::active(), 'rejected request never leaves settings context');
+$ci->load->initialize();
+essentialCheck(in_array('autoload_returned', $ci->load->trace, true) && CompanyRequestScope::nativeFor($ci), 'secondary finance enters the official native route before controller hydration');
+essentialCheck(!array_filter($db->queries, static fn($query) => str_contains($query[0], 'FROM ' . $GLOBALS['essentialPrefix'] . 'options')), 'secondary finance never hydrates global options');
+CompanyRequestScope::finish();
+essentialCheck(!CompanySettingsRuntime::active(), 'request finalization clears finance settings context');
 // Prove the existing Settings URL is explicitly attested before native hydration.
 $db->query("INSERT INTO {$p}issuers_resource_permissions VALUES(54,8,'settings','view'),(54,8,'settings','edit')");
 $ci = contextEnvironment($f, $s, 'settings', 'index'); hooks()->trace = [];
