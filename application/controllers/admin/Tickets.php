@@ -250,6 +250,11 @@ class Tickets extends AdminController
                 return;
             }
             if ($method !== 'POST') throw new DomainException('native_ticket_method_invalid');
+            if (in_array($this->input->post('action', false), ['portal_permission','portal_publish'], true)) {
+                require_once APPPATH . 'services/NativeCompanyTicketDetailController.php';
+                (new NativeCompanyTicketDetailController($this))->portalAction($id);
+                return;
+            }
             if ($this->input->post('native_ticket_command', false) === 'mark_read') {
                 require_once APPPATH . 'services/NativeCompanyTicketDetailController.php';
                 (new NativeCompanyTicketDetailController($this))->markRead($id);
