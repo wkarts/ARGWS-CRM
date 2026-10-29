@@ -47,7 +47,10 @@ class AdminController {
  $this->load=new class($this){function __construct(private$ci){}function model($n){throw new RuntimeException('Global model hydration');}function is_loaded($n){return false;}function view($path,$data,$return=false){if(!in_array($path,['admin/tasks/task','admin/tasks/view_task_template','admin/tasks/checklist_items_template'],true))throw new RuntimeException('Alternate modal');$html=\Closure::bind(function()use($path,$data){extract($data);ob_start();try{require APPPATH.'views/'.$path.'.php';return ob_get_clean();}catch(Throwable$e){ob_end_clean();throw$e;}},$this->ci)();if($return)return$html;echo$html;return null;}};$GLOBALS['CI']=$this;
  }
 }
-class_alias(CompanyRequestScope::class,'CompanyRequestScope');eval('namespace NativeTaskHttpTest;use \\DomainException;use \\RuntimeException;use \\Throwable;use \\NativeCompanyTaskForm;use \\RecursiveIteratorIterator;use \\RecursiveArrayIterator;'.substr(file_get_contents(APPPATH.'controllers/admin/Tasks.php'),5));
+class_alias(CompanyRequestScope::class,'CompanyRequestScope');
+$tasksSource=file_get_contents(APPPATH.'controllers/admin/Tasks.php');
+$tasksSource=str_replace('use NativeCompanySpecializedOperations;','use \\NativeCompanySpecializedOperations;',$tasksSource);
+eval('namespace NativeTaskHttpTest;use \\DomainException;use \\RuntimeException;use \\Throwable;use \\NativeCompanyTaskForm;use \\RecursiveIteratorIterator;use \\RecursiveArrayIterator;'.substr($tasksSource,5));
 CompanyRequestScope::$issuer=$a;$controller=new Tasks();$controller->task();$html=$controller->output->body;
 essentialCheck(str_contains($html,'id="task-form"')&&str_contains($html,'id="_task_modal"')&&str_contains($html,'name="native_request_key"'),'Original GET renders real native modal and durable request identity');
 essentialCheck(str_contains($html,'name="assignees[]"')&&str_contains($html,'name="followers[]"')&&str_contains($html,'name="repeat_every"'),'Original controls preserved, not alternative view');
