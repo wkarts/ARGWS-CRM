@@ -2,7 +2,7 @@
 /** Dependency guard in the same transaction as a prospective customer delete. */
 require __DIR__.'/native_clients.php';
 require_once APPPATH.'services/CompanyCustomerDeletionReferences.php';
-$directFixtures=['invoices'=>'clientid','leads'=>'converted_client_id','company_invoice_drafts'=>'client_id','company_invoice_copy_requests'=>'source_client_id','company_invoice_native_relations'=>'client_id','company_portal_tokens'=>'client_id','company_ticket_merge_replies'=>'client_id','order_master'=>'clientid','acc_account_history'=>'customer','sm_contracts'=>'client','sm_orders'=>'client_id','asaas_customers_map'=>'client_id','asaas_company_payers'=>'client_id','ma_email_logs'=>'client_id'];
+$directFixtures=['invoices'=>'clientid','leads'=>'client_id','company_invoice_drafts'=>'client_id','company_invoice_copy_requests'=>'source_client_id','company_invoice_native_relations'=>'client_id','company_portal_tokens'=>'client_id','company_ticket_merge_replies'=>'client_id','order_master'=>'clientid','acc_account_history'=>'customer','sm_contracts'=>'client','sm_orders'=>'client_id','asaas_customers_map'=>'client_id','asaas_company_payers'=>'client_id','ma_email_logs'=>'client_id'];
 foreach($directFixtures as$table=>$column)
     if(!$db->table_exists($p.$table))$db->query('CREATE TABLE '.$p.$table.' ('.$column.' int)');
 // The fixture may inherit the historical Asaas column name from the migration baseline;
@@ -18,10 +18,6 @@ unset($db->data_cache['table_names']);
 $target=$clients->create(41,12,['company'=>'Deletion reference fixture','vat'=>''],hash('sha256','delete-reference-fixture'));
 $foreign=$clients->create(82,12,['company'=>'Other owner fixture','vat'=>''],hash('sha256','delete-reference-other'));
 $guard=new CompanyCustomerDeletionReferences($db,$p);$tables=$guard->tables();
-$rc=new ReflectionClass(CompanyCustomerDeletionReferences::class);$missing=[];
-foreach($rc->getReflectionConstant('DIRECT')->getValue() as$table=>$column)if(in_array($table,$tables,true)&&!$db->field_exists($column,$p.$table))$missing[]=$table.':'.$column;
-foreach($rc->getReflectionConstant('POLYMORPHIC')->getValue() as$table=>$parts)if(in_array($table,$tables,true)){foreach([$parts[0],$parts[1]] as$column)if(!$db->field_exists($column,$p.$table))$missing[]=$table.':'.$column;}
-if($missing)fwrite(STDERR,'DEPENDENCY_DIAG '.json_encode($missing).PHP_EOL);
 $check=fn()=>IssuerTransaction::run($db,$p,array_values(array_unique(array_merge(['issuers_lock'],$tables))),fn()=>$guard->assertClearInOwned($target,$tables));
 $check();essentialCheck(true,'unreferenced fixture passes the explicitly enumerated guard');
 foreach($directFixtures as$table=>$field){
