@@ -36,7 +36,7 @@ final class NativeCompanyDepartmentSchema
             ];
         }
         // Same ticket source, with native sender/context fields; a NULL customer is not public access.
-        array_splice($definitions[self::TICKETS],10,0,[
+        array_splice($definitions[self::TICKETS],9,0,[
             '`contact_id` int NULL','`project_source_kind` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL','`project_source_id` int unsigned NULL',
             $v('sender_name',191),$v('sender_email',191),$v('sender_origin',24),'`cc_json` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL',
             '`opened_by` int NOT NULL','`admin_read` int NOT NULL','`last_reply_at` datetime NULL','`staff_replying` int NULL','`staff_replying_at` datetime NULL',
