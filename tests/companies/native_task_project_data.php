@@ -9,7 +9,7 @@ essentialCheck(str_contains($data['milestones'][1],'&lt;script&gt;')&&!str_conta
 essentialThrows(fn()=>$form->projectData($b,7,$projectCanonical),'native_resource_reference_denied','AJAX denies A project in B context');
 essentialThrows(fn()=>$form->projectData($a,7,NativeCompanyResourceId::encode('company_project',$projectB),$task),'company_project_reference_denied','Task editor cannot hydrate unrelated selected project');
 // Original Projects controller, context/framework boundaries only; no alternate route or model double.
-eval('namespace NativeTaskHttpTest;use \\DomainException;use \\Throwable;use \\NativeCompanyTaskForm;'.substr(file_get_contents(APPPATH.'controllers/admin/Projects.php'),5));
+{$projectsSource=file_get_contents(APPPATH.'controllers/admin/Projects.php');$projectsSource=str_replace('use NativeCompanySpecializedOperations;','use \\NativeCompanySpecializedOperations;',$projectsSource);eval('namespace NativeTaskHttpTest;use \\DomainException;use \\Throwable;use \\NativeCompanyTaskForm;'.substr($projectsSource,5));}
 $projectsController=(new ReflectionClass(\NativeTaskHttpTest\Projects::class))->newInstanceWithoutConstructor();foreach(get_object_vars($controller)as$property=>$value)$projectsController->$property=$value;
 \NativeTaskHttpTest\CompanyRequestScope::$issuer=$a;\NativeTaskHttpTest\CompanyRequestScope::$actor=7;$projectsController->input->verb='GET';$projectsController->get_rel_project_data($projectCanonical,$task);$response=json_decode($projectsController->output->body,true,512,JSON_THROW_ON_ERROR);
 essentialCheck($response===$data,'Original GET controller returns the tested scoped DTO without global model hydration');
