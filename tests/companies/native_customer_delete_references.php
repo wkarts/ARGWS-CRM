@@ -2,7 +2,7 @@
 /** Dependency guard in the same transaction as a prospective customer delete. */
 require __DIR__.'/native_clients.php';
 require_once APPPATH.'services/CompanyCustomerDeletionReferences.php';
-$directFixtures=['invoices'=>'clientid','leads'=>'client_id','company_invoice_drafts'=>'client_id','company_invoice_copy_requests'=>'source_client_id','company_invoice_native_relations'=>'client_id','company_portal_tokens'=>'client_id','company_ticket_merge_replies'=>'client_id','order_master'=>'clientid','acc_account_history'=>'customer','sm_contracts'=>'client','sm_orders'=>'client_id','asaas_customers_map'=>'client_id','asaas_company_payers'=>'client_id','ma_email_logs'=>'client_id'];
+$directFixtures=['invoices'=>'clientid','leads'=>'client_id','company_invoice_drafts'=>'client_id','company_invoice_copy_requests'=>'source_client_id','company_invoice_native_relations'=>'client_id','company_leads'=>'converted_client_id','company_portal_tokens'=>'client_id','company_ticket_merge_replies'=>'client_id','order_master'=>'clientid','acc_account_history'=>'customer','sm_contracts'=>'client','sm_orders'=>'client_id','asaas_customers_map'=>'client_id','asaas_company_payers'=>'client_id','ma_email_logs'=>'client_id'];
 foreach($directFixtures as$table=>$column)
     if(!$db->table_exists($p.$table))$db->query('CREATE TABLE '.$p.$table.' ('.$column.' int)');
 // The fixture may inherit the historical Asaas column name from the migration baseline;
