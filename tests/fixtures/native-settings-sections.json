@@ -245,5 +245,25 @@
                 "id": "tags"
             }
         ]
+    },
+    "misc": {
+        "title": "settings_group_misc",
+        "position": 25,
+        "children": [
+            {
+                "name": "settings_group_cronjob",
+                "view": "admin/settings/includes/cronjob",
+                "position": 5,
+                "icon": "fa-solid fa-microchip",
+                "id": "cronjob"
+            },
+            {
+                "name": "settings_group_misc",
+                "view": "admin/settings/includes/misc",
+                "position": 10,
+                "icon": "fa-solid fa-gears",
+                "id": "misc"
+            }
+        ]
     }
 }
