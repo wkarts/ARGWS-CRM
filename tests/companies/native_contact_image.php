@@ -51,7 +51,7 @@ CompanyRequestScope::$issuer=$a;CompanyRequestScope::$actor=999;$avatarControlle
 // the controller must not fall back to the legacy image endpoint or return a
 // secondary image.
 CompanyRequestScope::$actor=7;CompanyRequestScope::$primary=true;$GLOBALS['nativeAvatarStatus']=200;$avatarController->output->status=200;$avatarController->output->body='';$avatarController->contact_profile_image('101',(string)$na);
-$principalImageOwned=$primaryIssuer===$a;
+$principalImageOwned=CompanyRequestScope::$primaryIssuer===$a;
 essentialCheck($principalImageOwned
     ? $avatarController->output->body===$canonical['content']
     : (in_array($GLOBALS['nativeAvatarStatus'],[403,404],true)&&$avatarController->output->body!==$canonical['content']),
