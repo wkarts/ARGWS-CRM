@@ -195,9 +195,6 @@ final class CompanyRequestScope
                 NativeCompanyRoutes::admits((string) $ci->router->fetch_directory(), $module, $class, $method, $verb)
                 || ($staffCustomerDownload && in_array($verb, ['GET','HEAD'], true))
             );
-            if (self::$isolated && !self::$nativePresentation && !$technicalSelector) {
-                self::deny($ci, 'company_context_route_not_isolated', 403);
-            }
             if ($staffCustomerDownload && !self::$nativePresentation) self::deny($ci, 'native_customer_file_method_invalid', 405);
             if($companyScopedBbRoute&&!self::$nativePresentation)self::deny($ci,'company_context_route_not_isolated',403);
             if($sharedCalendar&&!self::$nativePresentation)self::deny($ci,'native_calendar_method_invalid',405);
@@ -209,6 +206,12 @@ final class CompanyRequestScope
             if($sharedOwnedClient&&!self::$nativePresentation)self::deny($ci,'native_client_method_invalid',405);
             if($sharedOwnedLead&&!self::$nativePresentation)self::deny($ci,'native_lead_method_invalid',405);
             if($sharedOwnedSales&&!self::$nativePresentation)self::deny($ci,'native_sales_method_invalid',405);
+            // Route-specific adapters report an unsupported HTTP verb as 405.
+            // The generic isolated-route denial remains the final fallback for
+            // actions that are not part of one of those explicit contracts.
+            if (self::$isolated && !self::$nativePresentation && !$technicalSelector) {
+                self::deny($ci, 'company_context_route_not_isolated', 403);
+            }
             if (self::$nativePresentation) { self::$isolated = true; }
             // Only the native Settings renderer proven to avoid legacy hooks/transports is admitted.
             if ($native && !self::$context->isPrimary() && (($class === 'issuers' && in_array($method, ['index', 'save'], true))
