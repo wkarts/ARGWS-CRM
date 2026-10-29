@@ -21,7 +21,7 @@ class Clients extends AdminController
 
     private function nativeCompanyClientFailure(Throwable $error): void
     {
-        $reason = defined('NATIVE_COMPANY_TEST_DIAGNOSTIC') && $error instanceof Error ? throw $error : ($error instanceof DomainException ? $error->getMessage() : '');
+        $reason = $error instanceof DomainException ? $error->getMessage() : '';
         $status = $reason === 'company_client_access_denied' ? 403 : ($reason === 'company_client_stale' ? 409 : ($reason !== '' ? 422 : 503));
         show_error($status === 409 ? 'Este cadastro mudou. Reabra antes de salvar.' : 'Não foi possível concluir esta operação nesta empresa.', $status);
     }
@@ -43,7 +43,7 @@ class Clients extends AdminController
     }
     public function contact_profile_image($client,$contact):void
     {
-        $native=$this->nativeCompanyClients();if(!$native||CompanyRequestScope::context()->isPrimary()){show_404();return;}
+        $native=$this->nativeCompanyClients();if(!$native){show_404();return;}
         try{
             if(!in_array($this->input->method(true),['GET','HEAD'],true)){show_error('Use GET.',405);return;}
             require_once APPPATH.'services/NativeCompanyContactImage.php';$ctx=CompanyRequestScope::context();$image=(new NativeCompanyContactImage($this->db,db_prefix()))->read($ctx->issuerId(),$ctx->staffId(),IssuerPolicy::id($client),IssuerPolicy::id($contact));if(!$image){show_404();return;}
@@ -800,7 +800,7 @@ class Clients extends AdminController
 
     public function delete_contact_profile_image($contact_id)
     {
-        $native=$this->nativeCompanyClients();if($native&&CompanyRequestScope::context()->isPrimary()){show_404();return;}if($native){
+        $native=$this->nativeCompanyClients();if($native){
             try{
                 if($this->input->method(true)!=='POST'){show_error('Use POST.',405);return;}CompanyRequestScope::assertNativeMutation($this);
                 require_once APPPATH.'services/NativeCompanyContactImage.php';$ctx=CompanyRequestScope::context();$client=IssuerPolicy::id($this->input->post('client_id',false));$id=IssuerPolicy::id($contact_id);$revision=$this->input->post('revision',false);if(!is_string($revision))throw new DomainException('company_client_stale');

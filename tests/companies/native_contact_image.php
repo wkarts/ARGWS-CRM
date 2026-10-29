@@ -15,10 +15,10 @@ essentialThrows(fn()=>$images->read($b,7,101,$na),'company_client_access_denied'
 // context/output are doubles; this is not an authenticated HTTP/browser test.
 #[AllowDynamicProperties] class AdminController {}
 class CompanyRequestScope {
-    public static int $issuer; public static int $actor=7; public static bool $primary=false;
+    public static int $issuer; public static int $primaryIssuer=0; public static int $actor=7; public static bool $primary=false;
     public static function nativeFor($ci){return $ci instanceof Clients;}
     public static function context(){return new class {
-        function issuerId(){return CompanyRequestScope::$issuer;}
+        function issuerId(){return CompanyRequestScope::$primary?CompanyRequestScope::$primaryIssuer:CompanyRequestScope::$issuer;}
         function staffId(){return CompanyRequestScope::$actor;}
         function isPrimary(){return CompanyRequestScope::$primary;}
     };}
@@ -38,6 +38,7 @@ $avatarController->output=new class {
     function set_output($value){$this->body=$value;return $this;}
 };
 $avatarBefore=$db->query('SELECT * FROM '.$p.'company_native_contact_images WHERE contact_id=?',[$na])->row_array();
+CompanyRequestScope::$primaryIssuer=(new IssuerResourceAccess($db,$p))->primaryId();
 CompanyRequestScope::$issuer=$a;$avatarController->contact_profile_image('101',(string)$na);
 essentialCheck($avatarController->output->body===$canonical['content']&&$avatarController->output->type==='image/png','Original contact avatar controller returns owner bytes and PNG MIME');
 foreach(['Cache-Control: private, no-store','X-Content-Type-Options: nosniff',"Content-Security-Policy: default-src 'none'; sandbox"] as $header)essentialCheck(in_array($header,$avatarController->output->headers,true),'private image response retains protective header');
@@ -45,7 +46,11 @@ $avatarController->input->verb='HEAD';$avatarController->contact_profile_image('
 $avatarController->input->verb='POST';$GLOBALS['nativeAvatarStatus']=200;$avatarController->contact_profile_image('101',(string)$na);essentialCheck($GLOBALS['nativeAvatarStatus']===405,'original image endpoint rejects mutation verb');
 $avatarController->input->verb='GET';$avatarController->output->body='';$avatarController->output->status=200;CompanyRequestScope::$issuer=$b;$avatarController->contact_profile_image('101',(string)$na);essentialCheck($avatarController->output->status===403&&$avatarController->output->body!==$canonical['content'],'shared identity cannot access owner image through direct controller');
 CompanyRequestScope::$issuer=$a;CompanyRequestScope::$actor=999;$avatarController->output->status=200;$avatarController->contact_profile_image('101',(string)$na);essentialCheck($avatarController->output->status===403&&$avatarController->output->body!==$canonical['content'],'actor without issuer grant is denied');
-CompanyRequestScope::$actor=7;CompanyRequestScope::$primary=true;$GLOBALS['nativeAvatarStatus']=200;$avatarController->contact_profile_image('101',(string)$na);essentialCheck($GLOBALS['nativeAvatarStatus']===404,'principal company does not enter the secondary-only image adapter');CompanyRequestScope::$primary=false;
+// The principal uses the same official reader. This fixture has only an owned
+// secondary customer, so the primary actor is denied by the ownership fence;
+// the controller must not fall back to the legacy image endpoint or return a
+// secondary image.
+CompanyRequestScope::$actor=7;CompanyRequestScope::$primary=true;$GLOBALS['nativeAvatarStatus']=200;$avatarController->output->status=200;$avatarController->output->body='';$avatarController->contact_profile_image('101',(string)$na);essentialCheck($GLOBALS['nativeAvatarStatus']===403&&$avatarController->output->body!==$canonical['content'],'principal image route uses the official ownership fence');CompanyRequestScope::$primary=false;
 essentialCheck($db->query('SELECT * FROM '.$p.'company_native_contact_images WHERE contact_id=?',[$na])->row_array()===$avatarBefore,'image requests never modify the stored bytes or metadata');
 
 essentialThrows(fn()=>$images->writeInOwned($a,7,101,$na,$canonical),'issuer_owned_transaction_required','image cannot write outside contact transaction');

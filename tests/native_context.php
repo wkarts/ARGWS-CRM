@@ -326,7 +326,7 @@ $ci=contextEnvironment($f,$s,'issuers','select','POST');$_POST=['company_id'=>'5
 essentialCheck((new CompanyContext($db,$p,$s,8))->resolve()===54,'repeated native switch changes only the next request company');
 $returnToPrimary=new CompanyContext($db,$p,$s,8);$returnToPrimary->resolve();$ci=contextEnvironment($f,$s,'issuers','select','POST');$_POST=['company_id'=>'41','_company_context'=>$returnToPrimary->token(),'_company_switch_csrf'=>$returnToPrimary->csrf()];(new Issuers())->select();
 $ci=contextEnvironment($f,$s,'clients','contact_profile_image');CompanyRequestScope::beforeHydration($ci);
-essentialCheck(CompanyRequestScope::context()->issuerId()===41&&!CompanyRequestScope::nativeFor($ci)&&!CompanyRequestScope::isolated(),'principal image URL is not given a secondary native seal');CompanyRequestScope::finish();
+essentialCheck(CompanyRequestScope::context()->issuerId()===41&&CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::isolated(),'principal image URL uses the same official native seal as secondary companies');CompanyRequestScope::finish();
 $ci=contextEnvironment($f,$s,'clients','import');hooks()->trace=[];CompanyRequestScope::beforeHydration($ci);
 essentialCheck(CompanyRequestScope::nativeFor($ci)&&CompanyRequestScope::context()->issuerId()===41,'principal customer import enters the same official writer as named companies');
 essentialCheck(hooks()->trace===[],'official principal customer import dispatches no global hooks');

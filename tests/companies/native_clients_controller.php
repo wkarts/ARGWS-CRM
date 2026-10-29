@@ -3,7 +3,6 @@ require __DIR__.'/native_clients.php';
 CompanyCustomerAdminSchema::ensure($db,$p);foreach(['firstname','lastname']as$field)if(!$db->field_exists($field,$p.'staff'))$db->query('ALTER TABLE '.$p.'staff ADD '.$field.' varchar(191)');
 $db->query("INSERT INTO {$p}issuers_resource_permissions VALUES(82,12,'customers','view')");
 if(!defined('BASEPATH'))define('BASEPATH',__DIR__);
-define('NATIVE_COMPANY_TEST_DIAGNOSTIC',true);
 #[AllowDynamicProperties] class AdminController {}
 class NativeClientHttpError extends RuntimeException {}
 function show_error($message,$status=500){throw new NativeClientHttpError('http_error',(int)$status);}
