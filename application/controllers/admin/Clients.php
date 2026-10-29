@@ -21,8 +21,7 @@ class Clients extends AdminController
 
     private function nativeCompanyClientFailure(Throwable $error): void
     {
-        if (defined('NATIVE_COMPANY_TEST_DIAGNOSTIC')) throw $error;
-        $reason = $error instanceof DomainException ? $error->getMessage() : '';
+        $reason = defined('NATIVE_COMPANY_TEST_DIAGNOSTIC') ? throw $error : ($error instanceof DomainException ? $error->getMessage() : '');
         $status = $reason === 'company_client_access_denied' ? 403 : ($reason === 'company_client_stale' ? 409 : ($reason !== '' ? 422 : 503));
         show_error($status === 409 ? 'Este cadastro mudou. Reabra antes de salvar.' : 'Não foi possível concluir esta operação nesta empresa.', $status);
     }
