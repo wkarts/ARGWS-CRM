@@ -18,7 +18,9 @@ class AdminController {
  }
 }
 class_alias(CompanyRequestScope::class,'CompanyRequestScope');
-eval('namespace NativeChecklistHttpTest; use \\DomainException; use \\Throwable; use \\NativeCompanyTaskChecklistTemplates; '.substr(file_get_contents(APPPATH.'controllers/admin/Tasks.php'),5));
+$tasksSource=file_get_contents(APPPATH.'controllers/admin/Tasks.php');
+$tasksSource=str_replace('use NativeCompanySpecializedOperations;','use \\NativeCompanySpecializedOperations;',$tasksSource);
+eval('namespace NativeChecklistHttpTest; use \\DomainException; use \\Throwable; use \\NativeCompanyTaskChecklistTemplates; '.substr($tasksSource,5));
 CompanyRequestScope::$issuer=$a;$controller=new Tasks();$controller->input->body=['description'=>'Original controller template','native_request_key'=>$key('http-create'),'_native_company_csrf'=>'synthetic-proof'];$controller->save_checklist_item_template();$created=json_decode($controller->output->body,true,512,JSON_THROW_ON_ERROR);
 essentialCheck($catalog->get($a,7,$created['id'])===$created,'Original Tasks route calls actual scoped writer, not Tasks_model');
 $controller->input->body=['native_revision'=>$created['revision'],'native_request_key'=>$key('http-delete'),'_native_company_csrf'=>'synthetic-proof'];$controller->input->verb='GET';
