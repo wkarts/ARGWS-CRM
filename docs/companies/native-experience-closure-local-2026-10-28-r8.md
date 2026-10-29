@@ -4,7 +4,7 @@ Este documento registra o estado do código local depois da composição das fam
 
 ## Composição aplicada
 
-- Os controllers `Company_*` administrativos executáveis foram retirados. Os arquivos antigos permanecem apenas como tombstones inertes para que upgrades não recuperem rotas removidas.
+- Os controllers `Company_*` administrativos executáveis e seus tombstones foram retirados fisicamente. A árvore final não contém arquivos `company_*`, sem distinção de maiúsculas/minúsculas; upgrades não recuperam rotas removidas.
 - As views ativas de `application/views/admin/companies` foram retiradas da descoberta. As telas foram transferidas para pastas dos controladores oficiais (`projects`, `tasks`, `tickets`, `settings`, `staff`, `invoices`, `expenses`, `clients` e `includes`) e usam o shell nativo compartilhado.
 - As operações especializadas foram compostas no trait `application/services/NativeCompanySpecializedOperations.php` e expostas por ações allowlistadas de `Projects`, `Tasks`, `Tickets`, `Invoices`, `Expenses`, `Settings` e `Staff`.
 - A seleção e o onboarding usam `Issuers::select` e `Issuers::onboarding`. Não há retorno para `company_selection` ou `company_onboarding`.
