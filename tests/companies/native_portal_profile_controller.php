@@ -9,7 +9,7 @@ function time_ago($date){return$date;}
 function is_client_logged_in(){return true;}
 function is_admin(){throw new LogicException('public profile must not read staff authority');}
 class NativeProfileControllerFixture extends Clients{
- public function layout($notInThemeViewFiles=false){extract($this->data);if(!in_array($this->view,['profile','company_profile','announcements','announcement'],true))throw new LogicException('unexpected native view');include APPPATH.'views/themes/perfex/views/'.$this->view.'.php';}
+ public function layout($notInThemeViewFiles=false){extract($this->data);if(!in_array($this->view,['profile','native_profile','announcements','announcement'],true))throw new LogicException('unexpected native view');include APPPATH.'views/themes/perfex/views/'.$this->view.'.php';}
 }
 $ci=(new ReflectionClass(NativeProfileControllerFixture::class))->newInstanceWithoutConstructor();foreach(get_object_vars($auth)as$k=>$v)$ci->$k=$v;$ci->db=$db;$ci->config=new class($secret){function __construct(private$s){}function item($key){return$key==='encryption_key'?$this->s:($key==='base_url'?'https://fixture.test/crm/':null);}};
 $db->query('UPDATE '.$p.'contacts SET active=1,email_verified_at=? WHERE id=?',['2026-01-01 00:00:00',$r['contact_id']]);$ci->session->set_userdata([NativePortalIdentity::SESSION_KEY=>$pw['binding'],'client_logged_in'=>true,'client_user_id'=>$r['client_id'],'contact_user_id'=>$r['contact_id']]);$ci->input->get=['issuer_id'=>'41'];$ci->input->post=[];$ci->input->verb='GET';$ci->router->class='clients';$ci->router->method='profile';

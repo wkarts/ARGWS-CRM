@@ -44,7 +44,7 @@ class ClientsController extends App_Controller
     public function layout($notInThemeViewFiles = false)
     {
         if (class_exists('PortalRequestScope', false) && PortalRequestScope::nativeFor($this)) {
-            if($notInThemeViewFiles||!in_array($this->view,['login','forgot_password','reset_password','register','verification_required','terms_and_conditions','privacy_policy','profile','company_profile','announcements','announcement','consent','gdpr','files','home','invoices','invoicehtml','estimates','estimatehtml','proposals','viewproposal','contracts','contacts','contact'],true))throw new DomainException('native_portal_view_not_adapted');
+            if($notInThemeViewFiles||!in_array($this->view,['login','forgot_password','reset_password','register','verification_required','terms_and_conditions','privacy_policy','profile','native_profile','announcements','announcement','consent','gdpr','files','home','invoices','invoicehtml','estimates','estimatehtml','proposals','viewproposal','contracts','contacts','contact'],true))throw new DomainException('native_portal_view_not_adapted');
             $this->data['navigationEnabled']=$this->use_navigation===true;$this->data['subMenuEnabled']=false;
             $this->template['head']=$this->load->view('themes/perfex/head',$this->data,true);
             $this->template['view']=$this->load->view('themes/perfex/views/'.$this->view,$this->data,true);

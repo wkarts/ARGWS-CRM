@@ -1076,7 +1076,7 @@ class Clients extends ClientsController
         }
         $data['title'] = _l('client_company_info');
         $this->data($data);
-        $this->view('company_profile');
+        $this->view('native_profile');
         $this->layout();
     }
 
