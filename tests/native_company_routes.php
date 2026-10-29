@@ -101,12 +101,12 @@ foreach(['add_note','edit_note','delete_note']as$method){$check(NativeCompanyRou
 $check(NativeCompanyRoutes::admits('admin','banco_brasil','banco_brasil','download_return','POST'),'private original return download uses original module POST route');
 $check(!NativeCompanyRoutes::admits('admin','banco_brasil','banco_brasil','download_return','GET'),'bank originals cannot be fetched by unprotected GET');
 
-$projectActions=['index'=>['GET','HEAD'],'staff_projects'=>['POST'],'table'=>['POST'],'project'=>['GET','HEAD','POST'],'view'=>['GET','HEAD'],'upload_file'=>['POST'],'remove_file'=>['POST'],'add_edit_members'=>['POST'],'remove_team_member'=>['POST'],'get_rel_project_data'=>['GET'],'get_staff_names_for_mentions'=>['GET']];
+$projectActions=['index'=>['GET','HEAD'],'staff_projects'=>['POST'],'table'=>['POST'],'project'=>['GET','HEAD','POST'],'view'=>['GET','HEAD'],'upload_file'=>['POST'],'remove_file'=>['POST'],'add_edit_members'=>['POST'],'remove_team_member'=>['POST'],'get_rel_project_data'=>['GET'],'get_staff_names_for_mentions'=>['GET'],'delete'=>['POST']];
 foreach($projectActions as$action=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
  $check(NativeCompanyRoutes::admits('admin','','projects',$action,$verb)===in_array($verb,$allowed,true),'official project action has finite verb: '.$action.'/'.$verb);
 $check(NativeCompanyRoutes::navigation('projects')&&NativeCompanyRoutes::navigation('projects/project'),'official project directory and editor are return destinations');
 foreach(['staff_projects','table','view','upload_file','remove_file','add_edit_members','remove_team_member','get_rel_project_data','get_staff_names_for_mentions']as$action)$check(!NativeCompanyRoutes::navigation('projects/'.$action),'project data endpoint is not a return destination: '.$action);
-foreach(['delete','unknown']as$action)foreach(['GET','HEAD','POST']as$verb)$check(!NativeCompanyRoutes::admits('admin','','projects',$action,$verb),'unadapted project neighbor remains closed: '.$action.'/'.$verb);
+foreach(['unknown']as$action)foreach(['GET','HEAD','POST']as$verb)$check(!NativeCompanyRoutes::admits('admin','','projects',$action,$verb),'unadapted project neighbor remains closed: '.$action.'/'.$verb);
 $check(!NativeCompanyRoutes::admits('admin','foreign','projects','project','GET'),'other modules cannot reuse project workflows');
 echo "Official Projects routes: finite workflow admission preserved.\n";
 
