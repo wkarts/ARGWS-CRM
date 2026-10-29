@@ -186,7 +186,12 @@ final class CompanyRequestScope
             // follows the same issuer-scoped path as secondary companies.
             $sharedOwnedSales = $native && in_array($class, ['estimates', 'proposals'], true)
                 && in_array($method, ['index', 'list_estimates', 'estimate', 'pdf', 'get_due_date', 'list_proposals', 'proposal'], true);
-            self::$nativePresentation = (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $ownedStaffDownload) && (
+            // The company selector is an isolated technical POST, not a native
+            // application page. It has its own switch CSRF and must not be
+            // forced through the native presentation CSRF contract.
+            $technicalSelector = $native && $class === 'issuers'
+                && in_array($method, ['lookup', 'select', 'onboarding'], true);
+            self::$nativePresentation = !$technicalSelector && (!self::$context->isPrimary() || $companyScopedBbRoute || $sharedCalendar || $sharedInvoiceRecurring || $sharedSettings || $sharedClientImport || $sharedClientLookup || $sharedOwnedContract || $sharedOwnedClient || $sharedOwnedLead || $sharedOwnedSales || $ownedStaffDownload) && (
                 NativeCompanyRoutes::admits((string) $ci->router->fetch_directory(), $module, $class, $method, $verb)
                 || ($staffCustomerDownload && in_array($verb, ['GET','HEAD'], true))
             );
