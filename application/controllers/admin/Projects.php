@@ -179,7 +179,7 @@ class Projects extends AdminController
             // snapshot after the project facts have already been sealed.
             $this->load->view('admin/projects/view',$data);
             if(!$acl->can($ctx->issuerId(),$ctx->staffId(),'projects','view')||$detail->read($ctx->issuerId(),$ctx->staffId(),$id)!==$facts)throw new DomainException('native_project_snapshot_changed');
-        }catch(DomainException$e){$status=str_contains($e->getMessage(),'denied')||str_contains($e->getMessage(),'access')?403:422;show_error('Não foi possível confirmar o projeto, seus arquivos ou suas permissões.', $status);}
+        }catch(DomainException$e){$reason=$e->getMessage();$status=str_contains($reason,'stale')||str_contains($reason,'conflict')?409:(str_contains($reason,'csrf')||str_contains($reason,'denied')||str_contains($reason,'access')?403:422);show_error('Não foi possível confirmar o projeto, seus arquivos ou suas permissões.', $status);}
         catch(RuntimeException$e){show_error('Não foi possível confirmar o armazenamento do projeto.',503);}
     }
 
