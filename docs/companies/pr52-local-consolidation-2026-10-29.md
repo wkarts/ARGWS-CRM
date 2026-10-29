@@ -247,3 +247,90 @@ migrations anteriores nem reutiliza sua numeração.
 - [ ] CI final do SHA publicado e homologação externa das integrações.
 
 Os itens abertos acima impedem declarar a PR integralmente concluída.
+
+## Reconciliação do inventário após publicação
+
+O pacote funcional foi publicado em `adf322b60a4add87a659305a5508d034f1a0c3ad`,
+com a mesma árvore `c021c6bf4d2961e948093c99970279a73cd27f3e` do checkpoint
+local validado. O CI do núcleo, job `123639424867` do run `40927983817`,
+identificou que o inventário operacional incluía um log PHP de execução local
+não rastreado. A contagem correta da exportação limpa é **4.647 arquivos de
+origem**, mantendo todos os outros contadores, candidatos e estados de revisão.
+
+O snapshot foi regenerado a partir da exportação limpa, após conferir os 127
+hashes de fontes do recibo. O manifesto resultante
+`7d262cdb88688330ca9b70601d8a680f02f76bbb5e8a4585c0c292912a88698d`
+coincide exatamente com o esperado pelo checkout limpo do CI. O comando
+`php scripts/company-surface-inventory.php --check` passou nessa exportação.
+Essa primeira reconciliação alterou somente o snapshot e sua documentação.
+As correções funcionais e de fixtures encontradas em seguida estão discriminadas
+abaixo; exclusões do gerador, guards e estados de prontidão foram preservados.
+O resultado final do CI deve ser consultado no SHA final informado na PR.
+
+
+## Complemento após os resultados do CI
+
+O pacote inicial em `adf322b6` terminou com **20 execuções aprovadas e três
+reprovadas, de 23 execuções** (incluindo duas reexecuções de versionamento).
+Banco do Brasil, PWA, builds de contêineres e os demais fluxos aprovados são
+evidência desse SHA inicial. Nenhum resultado anterior é atribuído
+automaticamente ao SHA do complemento.
+
+### Correções implementadas e verificadas
+
+- **Contatos no controller original:** o grupo de contatos agora carrega
+  `NativeCompanyCustomFields` antes de usá-la. O erro HTTP 503 foi reproduzido
+  com a aplicação e o banco reais do fixture local.
+- **Formulário original de contatos:** a apresentação nativa carrega a função
+  existente `custom_fields_hyperlink` e inicializa seu catálogo de templates.
+  O helper aceita o tradutor já atestado da apresentação; o caminho legado
+  conserva seu tradutor padrão. A mensagem JavaScript é codificada como JSON.
+  A ausência do helper interrompia a preparação do envio AJAX e terminava em
+  HTTP 422. A allowlist de entrada não foi afrouxada.
+- **Smoke de contatos/portal:** usa o grupo e o modal originais para criar e
+  editar contatos. Mantém as verificações de e-mail duplicado entre A/B,
+  recuperação, troca de senha, CSRF, replay, isolamento e revogação de sessão.
+  O botão de saída é selecionado explicitamente, sem confundi-lo com o de
+  abertura de chamado.
+- **Memória dos fixtures:** três testes liberam os rastros SQL já verificados;
+  o teste de formatos libera também os objetos PDF encerrados. As asserções,
+  os dados do banco e o limite de **128 MiB** foram mantidos.
+
+O smoke HTTP completo de contatos/portal passou em **34,07 segundos**, com
+PHP/MySQL e Chromium locais, sem entrega externa de e-mail. O componente de
+apresentação passou em 1280, 768 e 390 pixels, sem erros JavaScript. O fixture
+PHP de apresentação continua recusando hooks/opções globais, e os contratos
+Node e as views de cliente também passaram.
+
+No PHP 8.3 local, os picos MySQL dos três fixtures ficaram em aproximadamente
+**80 MiB** (cópia de projeto), **88 MiB** (controller de recorrência de despesa)
+e **58 MiB** (PDFs de vendas). Os três passaram também no SQLite. O wrapper
+MySQL das dez ações da PR passou em **166,257 segundos**, com 128 MiB herdados
+pelos processos filhos. Esses números não substituem a reexecução do CI no
+PHP 8.1 que apresentou a falha original.
+
+Os cinco inventários foram regenerados e conferidos numa exportação limpa do
+índice Git. O manifesto operacional após as correções funcionais é
+`ab1cf1522cf5dfa7462e287b75247c4579aa707995719e1bbcecf659a94eef89`.
+O manifesto `7d262cdb…` acima identifica a reconciliação anterior, antes dessas
+correções de fonte. Nenhuma regra de prontidão ou método não admitido foi
+promovido a aprovado.
+
+### Falha técnica remanescente na suíte HTTP ampla
+
+A continuação canônica `tests/companies_invoices_browser.cjs` foi executada
+no mesmo banco sintético após o portal. Ela **falhou** ao esperar
+`#invoice-client` na listagem original de faturas. O script ainda usa o
+editor embutido anterior; as rotas atuais apresentam a listagem e o formulário
+originais separadamente. As asserções antigas foram preservadas, sem excluir
+o teste, reintroduzir a tela removida ou converter o timeout em sucesso.
+
+A migração completa desse smoke para os controles/payloads atuais é uma
+**pendência local de validação**. Os cenários seguintes da cadeia HTTP ampla
+não receberam resultado nesta retomada. Isso não invalida os testes focados
+já aprovados, mas impede declarar a suíte de stacks e a PR integralmente
+concluídas. Não depende de banco, SMTP ou homologação externa.
+
+O recibo JSON preserva os resultados anteriores, as tentativas com falha,
+os hashes de fontes do pacote inicial e os hashes atualizados do complemento.
+Os resultados do SHA final publicado devem ser consultados na própria PR.

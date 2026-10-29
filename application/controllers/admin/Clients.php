@@ -289,6 +289,7 @@ class Clients extends AdminController
                         $data['customer_tabs']['contacts']=['name'=>_l('customer_contacts'),'view'=>'admin/clients/groups/contacts','icon'=>'fa-regular fa-address-book'];
                         if($group==='contacts'){
                             require_once APPPATH.'services/CompanyNativeContacts.php';
+                            require_once APPPATH.'services/NativeCompanyCustomFields.php';
                             $data['native_contact_metadata']=(new CompanyNativeContacts($this->db,db_prefix()))->metadata($ctx->issuerId(),$ctx->staffId(),(int)$id);
                             $data['native_contact_create']=(int)$data['client']->active===1&&(new CompanyCustomerAccess($this->db,db_prefix()))->can($ctx->issuerId(),$ctx->staffId(),(int)$id,'create_contact');
                             $data['native_contact_consent_enabled']=(new CompanyNativeContacts($this->db,db_prefix()))->consentEnabled($ctx->issuerId(),$ctx->staffId(),(int)$id);

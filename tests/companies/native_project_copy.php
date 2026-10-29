@@ -1,6 +1,10 @@
 <?php
 /** Original copy endpoint plus real project/task/member/metadata writers, on disposable storage. */
 require __DIR__.'/native_project_form.php';
+// The included form suite has already checked its query history. Release only
+// that diagnostic trace before the independent copy requests so PHP 8.1's
+// 128 MiB limit covers the operation, not all previously completed fixtures.
+$db->queries=[];
 require_once APPPATH.'services/NativeCompanyProjectCopyHttp.php';
 if($db->driver()==='mysql'){NativeCompanyTaskFormSchema::ensure($db,$p);CompanyProjectCopiesSchema::ensure($db,$p);}else{
  foreach(NativeCompanyTaskFormSchema::TABLES as$table){

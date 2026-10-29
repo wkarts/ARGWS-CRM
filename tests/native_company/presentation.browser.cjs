@@ -28,6 +28,7 @@ const native='<!doctype html><html lang="pt-BR" dir="ltr"><head><meta charset="U
    document=contextual;await page.goto(fixtureUrl);assert.equal(await page.evaluate(()=>new URL(NativeCompanyHeaderConfig.root).origin===location.origin&&location.pathname.startsWith(new URL(NativeCompanyHeaderConfig.root).pathname)),true,'actual document and captured admin root share installation origin/subpath');await page.evaluate(()=>document.fonts.ready);assert.deepEqual(await dimensions(),expected,'same native header/menu geometry and content padding');
    assert.equal(await page.locator('#header > .hide-menu').count(),1);assert.equal(await page.locator('#menu details').count(),0,'native menu rather than parallel details catalog');
    assert.equal(await page.locator('#search_input').isDisabled(),true,'missing search adapter is not advertised as functional');
+   assert.equal(await page.evaluate(()=>{custom_fields_hyperlink();return typeof cfh_popover_templates==='object';}),true,'original contact helper and template catalog are available in the native shell');
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no page overflow');
    const value=await page.locator('#native-field').inputValue();
    if(width<769){await page.locator('#header > .hide-menu').click();await page.waitForFunction(()=>document.body.classList.contains('show-sidebar'));await page.keyboard.press('Escape');assert.equal(await page.locator('#header > .hide-menu').getAttribute('aria-expanded'),'false');}

@@ -10,10 +10,10 @@
         "Admin route denial does not make a feature operational.",
         "Job/report candidates need positive and negative proofs through their actual entry points."
     ],
-    "source_manifest_sha256": "3b6cf936d634b2cdba48f22c6c9d66deae7ab160f63e37dcf4eda3377496c9f1",
+    "source_manifest_sha256": "ab1cf1522cf5dfa7462e287b75247c4579aa707995719e1bbcecf659a94eef89",
     "counts": {
         "modules": 38,
-        "source_files": 4648,
+        "source_files": 4647,
         "literal_option_keys": 680,
         "dynamic_option_references": 160,
         "controllers": 205,
@@ -9055,7 +9055,7 @@
         },
         {
             "path": "application/controllers/admin/Clients.php",
-            "source_sha256": "e545d418599bbe3f67316c24f8582b805f0a72015ee11d6b4506e85be1cd2206",
+            "source_sha256": "eb3629ef1d915aa945fd11bd7f2276fe9edb6a4f678031b75e08ee6c9ee145fe",
             "module": null,
             "base_class": "AdminController",
             "surface": "admin",
@@ -9107,197 +9107,197 @@
                 },
                 {
                     "method": "export",
-                    "line": 528,
+                    "line": 529,
                     "visibility": "public"
                 },
                 {
                     "method": "check_duplicate_customer_name",
-                    "line": 538,
+                    "line": 539,
                     "visibility": "public"
                 },
                 {
                     "method": "save_longitude_and_latitude",
-                    "line": 556,
+                    "line": 557,
                     "visibility": "public"
                 },
                 {
                     "method": "form_contact",
-                    "line": 580,
+                    "line": 581,
                     "visibility": "public"
                 },
                 {
                     "method": "confirm_registration",
-                    "line": 748,
+                    "line": 749,
                     "visibility": "public"
                 },
                 {
                     "method": "update_file_share_visibility",
-                    "line": 767,
+                    "line": 768,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_contact_profile_image",
-                    "line": 804,
+                    "line": 805,
                     "visibility": "public"
                 },
                 {
                     "method": "mark_as_active",
-                    "line": 819,
+                    "line": 820,
                     "visibility": "public"
                 },
                 {
                     "method": "consents",
-                    "line": 830,
+                    "line": 831,
                     "visibility": "public"
                 },
                 {
                     "method": "update_all_proposal_emails_linked_to_customer",
-                    "line": 857,
+                    "line": 858,
                     "visibility": "public"
                 },
                 {
                     "method": "assign_admins",
-                    "line": 899,
+                    "line": 900,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_customer_admin",
-                    "line": 918,
+                    "line": 919,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_contact",
-                    "line": 937,
+                    "line": 938,
                     "visibility": "public"
                 },
                 {
                     "method": "contacts",
-                    "line": 965,
+                    "line": 966,
                     "visibility": "public"
                 },
                 {
                     "method": "upload_attachment",
-                    "line": 997,
+                    "line": 998,
                     "visibility": "public"
                 },
                 {
                     "method": "add_external_attachment",
-                    "line": 1007,
+                    "line": 1008,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_attachment",
-                    "line": 1019,
+                    "line": 1020,
                     "visibility": "public"
                 },
                 {
                     "method": "delete",
-                    "line": 1033,
+                    "line": 1034,
                     "visibility": "public"
                 },
                 {
                     "method": "login_as_client",
-                    "line": 1060,
+                    "line": 1061,
                     "visibility": "public"
                 },
                 {
                     "method": "get_customer_billing_and_shipping_details",
-                    "line": 1069,
+                    "line": 1070,
                     "visibility": "public"
                 },
                 {
                     "method": "change_contact_status",
-                    "line": 1080,
+                    "line": 1081,
                     "visibility": "public"
                 },
                 {
                     "method": "change_client_status",
-                    "line": 1098,
+                    "line": 1099,
                     "visibility": "public"
                 },
                 {
                     "method": "zip_credit_notes",
-                    "line": 1116,
+                    "line": 1117,
                     "visibility": "public"
                 },
                 {
                     "method": "zip_invoices",
-                    "line": 1139,
+                    "line": 1140,
                     "visibility": "public"
                 },
                 {
                     "method": "zip_estimates",
-                    "line": 1163,
+                    "line": 1164,
                     "visibility": "public"
                 },
                 {
                     "method": "zip_payments",
-                    "line": 1186,
+                    "line": 1187,
                     "visibility": "public"
                 },
                 {
                     "method": "import",
-                    "line": 1209,
+                    "line": 1210,
                     "visibility": "public"
                 },
                 {
                     "method": "groups",
-                    "line": 1259,
+                    "line": 1260,
                     "visibility": "public"
                 },
                 {
                     "method": "group",
-                    "line": 1291,
+                    "line": 1292,
                     "visibility": "public"
                 },
                 {
                     "method": "delete_group",
-                    "line": 1331,
+                    "line": 1332,
                     "visibility": "public"
                 },
                 {
                     "method": "bulk_action",
-                    "line": 1356,
+                    "line": 1357,
                     "visibility": "public"
                 },
                 {
                     "method": "vault_entry_create",
-                    "line": 1406,
+                    "line": 1407,
                     "visibility": "public"
                 },
                 {
                     "method": "vault_entry_update",
-                    "line": 1435,
+                    "line": 1436,
                     "visibility": "public"
                 },
                 {
                     "method": "vault_entry_delete",
-                    "line": 1470,
+                    "line": 1471,
                     "visibility": "public"
                 },
                 {
                     "method": "vault_encrypt_password",
-                    "line": 1481,
+                    "line": 1482,
                     "visibility": "public"
                 },
                 {
                     "method": "get_vault_entry",
-                    "line": 1510,
+                    "line": 1511,
                     "visibility": "public"
                 },
                 {
                     "method": "statement_pdf",
-                    "line": 1520,
+                    "line": 1521,
                     "visibility": "public"
                 },
                 {
                     "method": "send_statement",
-                    "line": 1554,
+                    "line": 1555,
                     "visibility": "public"
                 },
                 {
                     "method": "statement",
-                    "line": 1582,
+                    "line": 1583,
                     "visibility": "public"
                 }
             ],

@@ -674,8 +674,9 @@ function is_custom_fields_for_customers_portal()
  * Function used for JS to render custom field hyperlink
  * @return stirng
  */
-function get_custom_fields_hyperlink_js_function()
+function get_custom_fields_hyperlink_js_function(?callable $label = null)
 {
+    $linkTip = ($label ?? '_l')('cf_translate_input_link_tip');
     ob_start(); ?>
 <script>
 function custom_fields_hyperlink() {
@@ -725,7 +726,7 @@ function custom_fields_hyperlink() {
                                     .val() : urlField.val()) + '</a>' : ''));
                             textEl.html(titleField.val() !== "" ? titleField.val() : (urlField
                                 .val() != '' ? urlField.val() :
-                                "<?php echo _l('cf_translate_input_link_tip'); ?>"));
+                                <?= json_encode((string) $linkTip, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>));
                             $popup.popover("toggle");
                         });
                     $("#custom_fields_" + cfh_field_to + "_" + cfh_field_id + "_btn-cancel").click(

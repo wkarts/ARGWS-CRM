@@ -71,6 +71,7 @@ class Fixture {
  function __get($name){throw new RuntimeException('Global dependency forbidden: '.$name);}
 }
 require APPPATH.'services/NativeCompanyAdminPresentation.php';
+require_once APPPATH.'helpers/custom_fields_helper.php';
 $ci=new Fixture;$GLOBALS['fixture']=$ci;CompanyRequestScope::$ci=$ci;
 NativeCompanyAdminPresentation::prepare($ci);
 check(($ci->lang->language['dashboard_string']??null)==='Painel','shared CI language object receives the trusted native PT-BR catalog');

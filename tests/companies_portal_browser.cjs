@@ -116,14 +116,37 @@ async function next(page) { await navigate(page, page.locator('section form butt
       assert.equal(await form.locator('input[name="settings[smtp_email]"]').inputValue(),letter+'@example.invalid');
       assert.equal(await form.locator('input[name="settings[smtp_password]"]').inputValue(),'','GUI never echoes SMTP password');
     }
+    async function saveContact(client,fields,contactId=''){
+      const endpoint='/admin/clients/form_contact/'+client+(contactId?'/'+contactId:'');
+      const matches=response=>new URL(response.url()).pathname.replace(/\/$/,'')===endpoint;
+      const [modalResponse]=await Promise.all([
+        page.waitForResponse(response=>response.request().method()==='GET'&&matches(response)),
+        page.goto(url+'/admin/clients/client/'+client+'?group=contacts&'+(contactId?'contactid='+contactId:'new_contact=true'))
+          .then(opened=>assert.equal(opened.status(),200,'official client contacts group is available'))
+      ]);
+      assert.equal(modalResponse.status(),200,'official contact modal loads from its original endpoint');
+      const form=page.locator('#contact-form');await form.waitFor({state:'visible'});
+      for(const [name,value] of Object.entries(fields))await form.locator('input[name="'+name+'"]').fill(value);
+      if(!contactId){
+        const welcome=form.locator('input[name=donotsendwelcomeemail]');if(await welcome.count())await welcome.check();
+        const setup=form.locator('input[name=send_set_password_email]');if(await setup.count())await setup.uncheck();
+      }
+      const [response]=await Promise.all([
+        page.waitForResponse(response=>response.request().method()==='POST'&&matches(response)),
+        form.locator('button[type=submit]').click()
+      ]);
+      assert.equal(response.status(),200,'official contact form saves through HTTP');
+      const result=await response.json();assert.equal(result.success,true,'contact writer confirms the submitted form');
+      await page.locator('#contact').waitFor({state:'hidden'});
+      return result;
+    }
     const clients={};
     for(const [id,letter] of [[a,'a'],[b,'b']]){
       await configure(id,letter);
       await page.goto(url+'/admin/clients/client?source=company');await page.locator('input[name="company"]').fill('Synthetic portal client '+letter);
       await navigate(page,page.locator('button.only-save'));
       clients[id]=sql("SELECT userid FROM tblclients WHERE company='Synthetic portal client "+letter+"'");
-      await page.locator('#contact-firstname').fill('Synthetic '+letter);await page.locator('#contact-lastname').fill('Portal');await page.locator('#contact-email').fill('same-portal@example.invalid');
-      await navigate(page,page.locator('form').filter({has:page.locator('#contact-email')}).locator('button[type=submit]'));
+      await saveContact(clients[id],{firstname:'Synthetic '+letter,lastname:'Portal',email:'same-portal@example.invalid',password:'synthetic-contact-initial-'+letter});
       assert.equal(sql('SELECT COUNT(*) FROM tblcontacts WHERE userid='+clients[id]),'1');
     }
     assert.equal(sql("SELECT COUNT(*) FROM tblcontacts WHERE email='same-portal@example.invalid'"),'2');
@@ -153,16 +176,15 @@ async function next(page) { await navigate(page, page.locator('section form butt
       assert((await p.locator('#portal-identity').innerText()).includes('Synthetic portal client '+letter));
       assert(!(await p.locator('#portal-identity').innerText()).includes('Synthetic portal client '+(letter==='a'?'b':'a')));
     }
-    const p=sessions[a];await navigate(p,p.locator('#portal-identity button[type=submit]'));
+    const p=sessions[a];await navigate(p,p.locator('#portal-identity').getByRole('button',{name:'Sair',exact:true}));
     await p.goto(url+'/company_portal/index/'+a+'#token='+tokens[a]);await p.waitForFunction(()=>document.getElementById('reset-token')?.value.length===64);
     await p.locator('#reset-password').fill('forbidden-token-replay');await p.locator('#reset-repeat').fill('forbidden-token-replay');
     const replayResponse=await Promise.all([p.waitForNavigation(),p.locator('#portal-reset button[type=submit]').click()]);assert.equal(replayResponse[0].status(),422);
     await p.goto(url+'/company_portal/index/'+a);await p.locator('#login-email').fill('same-portal@example.invalid');await p.locator('#login-password').fill('synthetic-password-b');
     const wrong=await Promise.all([p.waitForNavigation(),p.locator('#portal-login button[type=submit]').click()]);assert.equal(wrong[0].status(),422,'equal email never selects other company password');
-    await select(a);await page.goto(url+'/admin/clients/client/'+clients[a]);
+    await select(a);
     const contact=sql('SELECT id FROM tblcontacts WHERE userid='+clients[a]);
-    await page.locator('#contact-'+contact+'-email').fill('changed-portal@example.invalid');
-    await navigate(page,page.locator('form').filter({has:page.locator('#contact-'+contact+'-email')}).locator('button[type=submit]'));
+    await saveContact(clients[a],{email:'changed-portal@example.invalid'},contact);
     assert.equal(sql('SELECT email FROM tblcontacts WHERE id='+contact),'changed-portal@example.invalid');
     await sessions[b].reload();assert.equal(await sessions[b].locator('#portal-identity').count(),1,'A contact change preserves independent B session');
     sql('UPDATE tblcontacts SET active=0 WHERE userid='+clients[b]);await sessions[b].reload();assert.equal(await sessions[b].locator('#portal-identity').count(),0,'deactivation revokes B portal session');

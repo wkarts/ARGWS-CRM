@@ -31,6 +31,7 @@ $nativeLabel=$nativeCompany ? static fn($key, ...$unused)=>NativeCompanyAdminPre
         window.app=<?= json_encode(NativeCompanyAdminPresentation::appConfig(function_exists('get_instance') ? get_instance() : $this),JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?>;
         window.admin_url=<?= json_encode(CompanyRequestScope::adminUrl(function_exists('get_instance') ? get_instance() : $this),JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?>;
         window.isRTL=<?= json_encode($isRTL); ?>;
+        window.cfh_popover_templates = {};
     </script>
     <?php } ?>
     <?php if(!$nativeCompany) { render_admin_js_variables(); ?>

@@ -1,5 +1,8 @@
 <?php
 require __DIR__.'/expense_recurring_delivery.php';
+// Prior delivery assertions are complete. Keep their stored data, but release
+// the diagnostic SQL trace before exercising independent controller requests.
+$db->queries=[];
 function init_head(){}function init_tail(){}
 class CompanyRequestScope{public static bool $sealed=true;public static int $issuer;public static int $actor=7;public static function nativeFor($o){return true;}public static function sealedFor($o){return self::$sealed;}public static function context(){return new class{function issuerId(){return CompanyRequestScope::$issuer;}function staffId(){return CompanyRequestScope::$actor;}function isPrimary(){return false;}function available(){return [];}function csrf(){return 'synthetic-switch';}};}public static function adminUrl($o,$p=''){return 'https://synthetic.invalid/admin/'.$p;}public static function invalidateCaches($o){}public static function token(){return 'synthetic-billing-context';}}
 class AdminController{public function __construct(){}public function __get($k){return $GLOBALS['CI']->$k;}}

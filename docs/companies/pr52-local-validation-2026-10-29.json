@@ -4,7 +4,7 @@
   "branch": "fix/native-company-experience",
   "version": "4.8.0",
   "migration": 480,
-  "generated_utc": "2026-10-29T16:51:32.486361+00:00",
+  "generated_utc": "2026-10-29T18:53:22+00:00",
   "runtime": {
     "php": "8.3.6",
     "mysql": "8.0.46",
@@ -12,12 +12,12 @@
     "playwright": "1.55.1",
     "chromium": "140 / build 1193"
   },
-  "scope": "Incremental local validation with targeted reruns after corrections. Counts are command executions, not assertions, and overlap across phases. Not a complete original-route parity or bank homologation approval.",
+  "scope": "Incremental local validation with source-bound prior suites and targeted reruns. Root source hashes identify the consolidated current files; the post_publication_followup phase preserves the original published source hashes. Counts overlap; global original-route parity and full stacks acceptance remain unapproved.",
   "source_files_sha256": {
     "VERSION": "4938ef88cd76dd7f6297a3d1d0c57af9c8e420e9359e778f3fc3725a8781af0a",
     "application/config/constants.php": "13cf8e59355bd4cc05f078622e1e3950ad2fb9654e66b8b343b52d6c5d91023c",
     "application/config/migration.php": "538da29ba9a5889159c0dcb12ec111003db7935ad75af35e6b9c8ac5acfe6ab7",
-    "application/controllers/admin/Clients.php": "e545d418599bbe3f67316c24f8582b805f0a72015ee11d6b4506e85be1cd2206",
+    "application/controllers/admin/Clients.php": "eb3629ef1d915aa945fd11bd7f2276fe9edb6a4f678031b75e08ee6c9ee145fe",
     "application/controllers/admin/Contracts.php": "9c2174cd3ed96e64f7eae27117798e082ffd0edb9e24665f6a0f5ebdb23f1f95",
     "application/controllers/admin/Estimates.php": "ea77c568678a31fa3d2c7639911307b377d54588718a485f1373b7d3dce60c34",
     "application/controllers/admin/Expenses.php": "f9d33da1e0574bd1dd3979d46193983a675e1681cf31d1e3583d7622f5c9edb4",
@@ -25,6 +25,7 @@
     "application/controllers/admin/Projects.php": "8a9d04796684d6d6c1efe1e63ff9d48dd782dac892ae73adcd45af3aa706b7ba",
     "application/controllers/admin/Proposals.php": "74e57176bd037c10c6acdcbb2dadea1a9492ed3cb071c4c9b30840bca5437c65",
     "application/core/AdminController.php": "c548fbe0f303cb72be0a46bdec8da003641c0d4b186a1f65402ac5eaf7f7670b",
+    "application/helpers/custom_fields_helper.php": "37308539b4e102a5ffca2077cf034ac918b7b2fb9237797b30b8106ddb11e38d",
     "application/libraries/App_Email.php": "1efb315f26810fa9128735f2c37c4c41841b13121befcc9d3c3517a8a05abcc7",
     "application/migrations/480_version_480.php": "d3b2d8f224951ed662c00570199f68fa62039bad88a883c566f90c51a41aea3f",
     "application/services/CompanyContractDiscussions.php": "df2cca3b258817c0e22f495e3f8e3bc3392f774393896fca7fdc69ad35e13bad",
@@ -60,10 +61,12 @@
     "application/views/admin/dashboard/widgets/finance_overview.php": "e20b419e26afede6249f9d967a6ce75a6dfcc89c8234fc0f8f4917e8c406619b",
     "application/views/admin/estimates/pipeline/_kanban_card.php": "e69dcb6bdc908cc47af99824a227cc34ec2acf7ee6ee087d7678c76af41aa362",
     "application/views/admin/estimates/pipeline/pipeline.php": "a9f987ac5e557ca149da2f9925a3c2d3c5f0914d386bbba643ef9295edcc9c43",
+    "application/views/admin/includes/head.php": "4e8488948369d7310c8cd8e34c10b91b702ec626e2e39dc0f63744d49c7cdc9d",
     "application/views/admin/includes/native_sales/extras.php": "3f8cba98cf56c5a61b512424635fbfebf55fa98c0581a9664e4e6ae799288a4d",
     "application/views/admin/includes/native_sales/legacy_fields.php": "455b1cbf552f30663e98f3d4444d088d2fcea738160af22e27bf1f4eec820a6a",
     "application/views/admin/includes/native_sales/pipeline.php": "03b40dfa19f994ffb58bc977d90f01b4ab4929154f87b8a79edef1bdd8885945",
     "application/views/admin/includes/native_sales_workspace.php": "f1e5394ea1e605f9be9377a634bf6ef528805b848be330be47457a6b7a4d09bf",
+    "application/views/admin/includes/scripts.php": "e2cf257653568b833ea06d0bb35d0ae90f543b225904ca5ed7b123fc9c2a7fb1",
     "application/views/admin/invoices/filter_params.php": "96d5ad393b1a8fa3359bae7c07c03263ece13d0729f8b4c614c7f42912ac111e",
     "application/views/admin/invoices/financial_position.php": "438b7fdccd00de4a1f3b007d94f0e2ca68dcc2e0d488f84a9f6bbbbe3a3c841f",
     "application/views/admin/invoices/invoice_preview_html.php": "ec958dfaa055399636c006cccc9370e2e2e27c1e3d1e388c88491b98380d435d",
@@ -93,7 +96,7 @@
     "tests/companies/email_template_bootstrap.php": "473ae357c6049b90826be1512258c86ac1d48bb85f1cdc0f93407bd7f43916b0",
     "tests/companies/expense_copies_resume_442_controller.php": "308fc7723789a20684d1feec2ae4fff9927c3f0e9b23874d8237f3d61df3dbbb",
     "tests/companies/expense_invoice_lifecycle.php": "b98d51807e805d4e67166c35e408cceb8047fa0764f7eef59c284727c189fd22",
-    "tests/companies/expense_recurring_controller.php": "cef81f6f4d4c363c2674a084913694ddf897c8cac2e2525bcba0559db2e6f491",
+    "tests/companies/expense_recurring_controller.php": "2020e2c327774d892269f59e74b4805507dc0d2f52f1f8084619e287d0b1f5ff",
     "tests/companies/invoice_drafts_controller.php": "83f043da033ca6d2f756f366833aef0e6df48263fa52b455c1a116b683cf8ceb",
     "tests/companies/invoice_recurring_modes_controller.php": "fd6b30f91f861f5463223f866d03b49c31e53b309168c9a12baef9c88dd99f85",
     "tests/companies/native_client_update_controller.php": "ca57508b93f2562f635dbd37878b63df4ebfb2e397d53e6d4127caf3d9bb678a",
@@ -101,7 +104,7 @@
     "tests/companies/native_contract_mail.php": "f4ff80b964c86c9aa272a10831d99cc146b1724151b44b6d7d616fb7c67dfa9d",
     "tests/companies/native_contract_mail_worker.php": "d8a656d0d5176fa8e74d374623007390eb1af8757bc4b2a814c3c3a34f52a764",
     "tests/companies/native_pr52_actions_mysql.php": "67546d8bda53d68e1ae1852c2165790cb13c32c6e42c431ed5015fee538ae530",
-    "tests/companies/native_project_copy.php": "8c415546deedff570cfe266a28280eb624b5c993e4eecdf194f1387481717c17",
+    "tests/companies/native_project_copy.php": "88fde52230d0b0faa624a6ed8a461082b544cc67965760225f716ce938a4ae1a",
     "tests/companies/native_projects_controller.php": "cfa3a9bf3605384a2908157bde813ec8800dcdac6d0525acf4da92dcd5d6090a",
     "tests/companies/native_sales_history.php": "0e19c17cf1d73482a842529b23e82b5ea1a7432443fd0e920c083b91efd4a124",
     "tests/companies/native_sales_history_controller.php": "582b36886998065753e886083e34004c9efdc74e9b6303ba97f8b94487bb696d",
@@ -119,8 +122,12 @@
     "tests/companies/project_portal_rules_schema.php": "291957628c7d47ebba86fe7473a0608c6ce065ab327c5cc3adac29a55696a013",
     "tests/companies/project_timesheets_controller.php": "19d2d56287022f561e12f7f648675c09f8c46e8fafdad67ec2085124176d4ad4",
     "tests/companies/sales_mutations_controller.php": "d6f9fb4d2998ac05f413029a2129caf4b08fecad0c233a3044fd574bcebb2769",
+    "tests/companies/sales_pdf_preferences.php": "ba3b46ff027e2284d5437baee47e6e6d2d5f4c151459074ce58d702357ab63f4",
     "tests/companies/task_billing_controller.php": "fdad52c2619f1e09a88b98dcc51af6e709dc0971699f437f040a212e8b510cd9",
     "tests/companies_onboarding_browser.cjs": "c25a4830387f9a1fd9fc8d0e9dad597b552189d924abdf5ad193d57e10c50233",
+    "tests/companies_portal_browser.cjs": "4d593d7f6f5abf21213c7dda386fa6f52a7d6ac17e06caba5e32ff497df585dd",
+    "tests/native_company/presentation.browser.cjs": "50c973a6dd3b8e065370edb9217d47e04d8e36540f8b6f35a178040ce52291ef",
+    "tests/native_company/presentation.php": "9a4bda6eb866be396f75ecae9d1c7e4dea61404acd22f0a39629c1a2b99f80f5",
     "tests/native_company/settings_email.php": "eade8f7ba6d9a6ec3f10d4f19425c80c9a3b076b2dd4059f89552fd1b2314a13",
     "tests/native_dashboard_widget_acl.php": "d090b39b909ff5739a4b406952a9532d909572915fec94fdf8b0563ac4a3268b",
     "tests/settings/document_pdf.php": "c3e8186ef65d04225da3f197da12f03c784e2bea382c19ddb78915b765a9aebc",
@@ -10913,6 +10920,793 @@
         }
       ],
       "complete": true
+    },
+    "operational_inventory_ci_reconciliation": {
+      "published_functional_commit": "adf322b60a4add87a659305a5508d034f1a0c3ad",
+      "source_tree": "c021c6bf4d2961e948093c99970279a73cd27f3e",
+      "ci_run_id": 40927983817,
+      "ci_job_id": 123639424867,
+      "failure": "Operational surface inventory generated with one untracked runtime PHP log in the source manifest.",
+      "resolution": "Regenerated the snapshot from the clean tracked-source export; no source exclusion, adapter, guard, assertion or readiness state changed.",
+      "old_source_manifest_sha256": "3b6cf936d634b2cdba48f22c6c9d66deae7ab160f63e37dcf4eda3377496c9f1",
+      "new_source_manifest_sha256": "7d262cdb88688330ca9b70601d8a680f02f76bbb5e8a4585c0c292912a88698d",
+      "source_files_before": 4648,
+      "source_files_after": 4647,
+      "other_counts_unchanged": true,
+      "expected_ci_manifest_matches": true,
+      "source_file_hashes_verified": 127,
+      "verification": {
+        "command": [
+          "php",
+          "scripts/company-surface-inventory.php",
+          "--check"
+        ],
+        "working_tree": "Clean tracked-source export, with all 127 receipt source hashes verified and inventory manifest matching the CI expectation.",
+        "exit": 0,
+        "seconds": 2.176,
+        "log_sha256": "2bb78cb8dd7bcb526e143d18a42cc3148fed67a81e00a3b33f3968d3358fb4ca"
+      },
+      "generated_utc": "2026-10-29T18:14:51.391088+00:00"
+    },
+    "post_publication_followup": {
+      "base_commit": "adf322b60a4add87a659305a5508d034f1a0c3ad",
+      "base_tree": "c021c6bf4d2961e948093c99970279a73cd27f3e",
+      "observed_utc": "2026-10-29T18:53:22+00:00",
+      "scope": "Targeted corrections and regression checks after the first publication; prior broad suites were reused, not all rerun after these changes.",
+      "prior_receipt_source_files_sha256": {
+        "VERSION": "4938ef88cd76dd7f6297a3d1d0c57af9c8e420e9359e778f3fc3725a8781af0a",
+        "application/config/constants.php": "13cf8e59355bd4cc05f078622e1e3950ad2fb9654e66b8b343b52d6c5d91023c",
+        "application/config/migration.php": "538da29ba9a5889159c0dcb12ec111003db7935ad75af35e6b9c8ac5acfe6ab7",
+        "application/controllers/admin/Clients.php": "e545d418599bbe3f67316c24f8582b805f0a72015ee11d6b4506e85be1cd2206",
+        "application/controllers/admin/Contracts.php": "9c2174cd3ed96e64f7eae27117798e082ffd0edb9e24665f6a0f5ebdb23f1f95",
+        "application/controllers/admin/Estimates.php": "ea77c568678a31fa3d2c7639911307b377d54588718a485f1373b7d3dce60c34",
+        "application/controllers/admin/Expenses.php": "f9d33da1e0574bd1dd3979d46193983a675e1681cf31d1e3583d7622f5c9edb4",
+        "application/controllers/admin/Invoices.php": "3c70b52e990dda34c6806ca24d97faae5f77ca5d2f00a942b8fbe406b74f1007",
+        "application/controllers/admin/Projects.php": "8a9d04796684d6d6c1efe1e63ff9d48dd782dac892ae73adcd45af3aa706b7ba",
+        "application/controllers/admin/Proposals.php": "74e57176bd037c10c6acdcbb2dadea1a9492ed3cb071c4c9b30840bca5437c65",
+        "application/core/AdminController.php": "c548fbe0f303cb72be0a46bdec8da003641c0d4b186a1f65402ac5eaf7f7670b",
+        "application/libraries/App_Email.php": "1efb315f26810fa9128735f2c37c4c41841b13121befcc9d3c3517a8a05abcc7",
+        "application/migrations/480_version_480.php": "d3b2d8f224951ed662c00570199f68fa62039bad88a883c566f90c51a41aea3f",
+        "application/services/CompanyContractDiscussions.php": "df2cca3b258817c0e22f495e3f8e3bc3392f774393896fca7fdc69ad35e13bad",
+        "application/services/CompanyContracts.php": "cba4ed55cc71aeb16c3926df585d8d62df6c96c46bfdc43c970f8ab66481a3fa",
+        "application/services/CompanyGoogleMailOAuthTokenProvider.php": "2fb2991ab2d95de37e19a28faaf2e97ae1f0c62120c5cfcd19ba0f20b0380e8b",
+        "application/services/CompanyMicrosoftMailOAuth.php": "cfaac7594f6525d57edb5505a9425909a50a6ea375f8b04935f083f4fa51c125",
+        "application/services/CompanyMicrosoftMailOAuthTokenProvider.php": "cd140742345f2fd331fac3ae68e802e35e5074a27debbf6f359f7b5049f44d8b",
+        "application/services/CompanyPdfTypography.php": "f28752d8efa11eba14207b4c06184250d4e926a100f8229e5d5faf0a0e80dfa1",
+        "application/services/CompanyProjectCopies.php": "24bf8ca29aa48b6fa19eb550a340c4cb7b7ac632524febdcab467fa4bac81941",
+        "application/services/CompanyProjects.php": "08fa1cb080afc5c1370f724a421b0cc942c2a2cf49b19bbc516ecb2bde971127",
+        "application/services/CompanyRequestScope.php": "7e53fe59d370f98a5dcf1cbce87af36770356fe52c2a624f02675fd3c243ffeb",
+        "application/services/CompanyTasks.php": "c9d1f5d03831c99b11419b7e23197c314540ebbaff50aa7cde6d9593f60b3ed6",
+        "application/services/NativeCompanyContractMail.php": "f8dc2edf0e8ca2fe533263934a82ed6e887eae9c2a375a4a0172e51070b238dd",
+        "application/services/NativeCompanyContractMailSource.php": "56bf924ef34db32bf9428df9022b7f61bc1a2cdf8cd0d9fbc2c42adc47255616",
+        "application/services/NativeCompanyContractsController.php": "82b24a2c73844c7067d9e66af8a519e26f8aadfa047a67870b3907a83b0bd081",
+        "application/services/NativeCompanyLegacySales.php": "9b931b60de75c9e57c3620a065d6f64c75078e9d8502263d6936f584f26748d6",
+        "application/services/NativeCompanyLegacySalesPdf.php": "20430abd101c060823e8bd1822d664d4ce9db3c09501ac41b16d2bfb89c1d479",
+        "application/services/NativeCompanyMailDispatchFence.php": "6502180eb8aaa67b5f70e1bf1b13607f292ded3783db438dad5248f8e4e0a703",
+        "application/services/NativeCompanyPdfSettings.php": "3541cec555bebafc8d1f36aae77d66db78ab3873fd29a6f0dc7d7c9e9d801a30",
+        "application/services/NativeCompanyProjectCopyComposition.php": "1da606e3d5c7952aaa89accf6b57b239a03d95932d2fbfeea4a9fc1280ff7fdb",
+        "application/services/NativeCompanyProjectCopyHttp.php": "02a540a5b85f4c7b2334b8cb15a366bbcefceecb9ac013886ccbbac38504306a",
+        "application/services/NativeCompanyProjectForm.php": "69d77e53d4492c1eab747f89cc55a53071cc25e0e74ffb191820c46003140b9f",
+        "application/services/NativeCompanyRoutes.php": "8444ae954303d82ef7e4ec3dd0548dccb9196031ca440c977a40a080917d9f7f",
+        "application/services/NativeCompanySalesAdminHttp.php": "8dde53862b4b85d6ea39df0f4c4705fa332c8283bf993d0ffaf39068e432b831",
+        "application/services/NativeCompanySalesDirectory.php": "9993b1bd83aba4c568931d8ab9fa7712a62bf6c0badc0f62f42f003966067496",
+        "application/services/NativeCompanySettingsController.php": "660ad79f43b680731c1140a2aaab9fdbbe013442cf9b1e34335894e845244b7e",
+        "application/services/NativeCompanySettingsForms.php": "044885da58eea96e66c44e1d1ed2a27331f2e0e8cdd4569f9023e173dd14d0db",
+        "application/services/NativeCompanyTaskDetailPresentation.php": "f5ead87d651132c265bed7596dfa5c3c5e2c60bb83127007f5fcf8e7894f14fa",
+        "application/services/NativeCompanyTaskDetailRead.php": "89ea01ad3d33a663c210eec91e49f822d2309c6f5fcedec7ee2e1e3ecf09f75b",
+        "application/views/admin/clients/client_js.php": "dd10ab39b1e0450dfc44e774351576f090173041ddf29760bbd94a3297491184",
+        "application/views/admin/contracts/native.php": "3a9740c6a5896d778c8bfa97c8e81a3da7af0dd3707258e8769af6ea766214df",
+        "application/views/admin/contracts/native_comments.php": "427cc68cdaa0a13c532c87d12c46083c0a493dba4eee6b201afd1c0a8adfd17e",
+        "application/views/admin/dashboard/widgets/finance_overview.php": "e20b419e26afede6249f9d967a6ce75a6dfcc89c8234fc0f8f4917e8c406619b",
+        "application/views/admin/estimates/pipeline/_kanban_card.php": "e69dcb6bdc908cc47af99824a227cc34ec2acf7ee6ee087d7678c76af41aa362",
+        "application/views/admin/estimates/pipeline/pipeline.php": "a9f987ac5e557ca149da2f9925a3c2d3c5f0914d386bbba643ef9295edcc9c43",
+        "application/views/admin/includes/native_sales/extras.php": "3f8cba98cf56c5a61b512424635fbfebf55fa98c0581a9664e4e6ae799288a4d",
+        "application/views/admin/includes/native_sales/legacy_fields.php": "455b1cbf552f30663e98f3d4444d088d2fcea738160af22e27bf1f4eec820a6a",
+        "application/views/admin/includes/native_sales/pipeline.php": "03b40dfa19f994ffb58bc977d90f01b4ab4929154f87b8a79edef1bdd8885945",
+        "application/views/admin/includes/native_sales_workspace.php": "f1e5394ea1e605f9be9377a634bf6ef528805b848be330be47457a6b7a4d09bf",
+        "application/views/admin/invoices/filter_params.php": "96d5ad393b1a8fa3359bae7c07c03263ece13d0729f8b4c614c7f42912ac111e",
+        "application/views/admin/invoices/financial_position.php": "438b7fdccd00de4a1f3b007d94f0e2ca68dcc2e0d488f84a9f6bbbbe3a3c841f",
+        "application/views/admin/invoices/invoice_preview_html.php": "ec958dfaa055399636c006cccc9370e2e2e27c1e3d1e388c88491b98380d435d",
+        "application/views/admin/projects/copy_settings.php": "f4e1e82358c801cbc4c48a77c2af4360fcbfffd387c1b1dc8de66985dd145673",
+        "application/views/admin/proposals/pipeline/_kanban_card.php": "624258b7d40ead730bd2720e8b1c545f1e9946c1dc49be0b2a6d206de179866f",
+        "application/views/admin/proposals/pipeline/pipeline.php": "a39432269385a20e28363d87f523f8df6088892946a49e1271b7df2a317e96af",
+        "application/views/admin/settings/includes/native_pdf.php": "24b1fdf400215a288a0f9a3936c547c6e406549dc24458b060554adf590e7fdd",
+        "application/views/admin/settings/includes/pdf.php": "ca7ee8442692c18cafa4f48fe00039639c6725daf90488ffcbb7f9a1df535c4c",
+        "application/views/admin/settings/includes/policy.php": "99d4457b3b515cec115bfdd1411ab4048ce4a51071eff75f1f3b61014ab47294",
+        "application/views/admin/tasks/view_task_template.php": "e039869f38bfc482e10135096780b4a6d74afb3e416023d1f7587d6a2ea7201f",
+        "assets/js/main.min.js": "7725e645e64d9bc34abaeb48c443e827df8649aa6f2bb34a2414388842c34757",
+        "assets/js/map.min.js": "a24af88033540e7cd0cf829d6230195809847b7ac7258e6e557a9aa67ce3f029",
+        "assets/js/projects.min.js": "49d67368956304c2ede6e4d6e8c2567e432fec3a8a97c2b3a3cc609378ec680e",
+        "assets/js/tickets.min.js": "2dfd5cf8007089bc3bf08b877b50f914ce852aedef89e5b4e79f8afcdb423bff",
+        "assets/themes/perfex/js/clients.min.js": "e1d05547ef7448fe34c8deb7cf59e43aab98a8b21a74dcc77a84acf129def0a7",
+        "assets/themes/perfex/js/global.min.js": "1107efee9f0973075a5b2ae0a7d0ae7ef28ce00ebb499c4ccd0f147ca3c6fd6b",
+        "compose.yaml": "4c059dc050e7525453ba284e680e2957bbdbae37203d7a34e5d364748609fb08",
+        "container.env.example": "ee2afad825950f9b4c3bd62edb3d16caa7c546a05e7ef844cf24478aecf1ea87",
+        "deploy/production/.env.example": "04444485c810d4ffd172b3b933b84a41b5e7615e25ad289a1e452a7ef0e44c24",
+        "deploy/production/compose.yaml": "c902b0c004987949bca3f495a0f5c6a53ec24f90e27a3d1ff112fab0d7c1281d",
+        "scripts/native-action-matrix.php": "75e253b8181aa258b22ad474d0187f7b483bdf9c78527d562be7de3e4c314cba",
+        "tests/banco_brasil_local_noncash_restored_pdf_v3.php": "e966313378c329fed6159e38b901c5ee9a05c95fd4e10ae479e73a754d54dde0",
+        "tests/ci/native-company-focused.json": "770a275cf7ae2cc475509bb8676e5ef74f6f02b0b0f8270716693a33eb5fe950",
+        "tests/companies/asaas_refund_controller.php": "8f265f9ce3967fb7757f23e7a743018a3e2e5754e3adca471275ab80deeed715",
+        "tests/companies/billing_invoice_lifecycle.php": "d0dcd03f912c084e8634aef329bc6b8a5df28860f207f66cc3d08f6bf21c5d82",
+        "tests/companies/contracts_controller.php": "7d37674d428ab80566653686b28d57fb55b514126ff1044afedc599813c5a98a",
+        "tests/companies/email_template_bootstrap.php": "473ae357c6049b90826be1512258c86ac1d48bb85f1cdc0f93407bd7f43916b0",
+        "tests/companies/expense_copies_resume_442_controller.php": "308fc7723789a20684d1feec2ae4fff9927c3f0e9b23874d8237f3d61df3dbbb",
+        "tests/companies/expense_invoice_lifecycle.php": "b98d51807e805d4e67166c35e408cceb8047fa0764f7eef59c284727c189fd22",
+        "tests/companies/expense_recurring_controller.php": "cef81f6f4d4c363c2674a084913694ddf897c8cac2e2525bcba0559db2e6f491",
+        "tests/companies/invoice_drafts_controller.php": "83f043da033ca6d2f756f366833aef0e6df48263fa52b455c1a116b683cf8ceb",
+        "tests/companies/invoice_recurring_modes_controller.php": "fd6b30f91f861f5463223f866d03b49c31e53b309168c9a12baef9c88dd99f85",
+        "tests/companies/native_client_update_controller.php": "ca57508b93f2562f635dbd37878b63df4ebfb2e397d53e6d4127caf3d9bb678a",
+        "tests/companies/native_contract_actions.php": "79b96ab5c11ffc5a92950b31572d5ab62236d3ab17a11bd7fd7decdb937e897f",
+        "tests/companies/native_contract_mail.php": "f4ff80b964c86c9aa272a10831d99cc146b1724151b44b6d7d616fb7c67dfa9d",
+        "tests/companies/native_contract_mail_worker.php": "d8a656d0d5176fa8e74d374623007390eb1af8757bc4b2a814c3c3a34f52a764",
+        "tests/companies/native_pr52_actions_mysql.php": "67546d8bda53d68e1ae1852c2165790cb13c32c6e42c431ed5015fee538ae530",
+        "tests/companies/native_project_copy.php": "8c415546deedff570cfe266a28280eb624b5c993e4eecdf194f1387481717c17",
+        "tests/companies/native_projects_controller.php": "cfa3a9bf3605384a2908157bde813ec8800dcdac6d0525acf4da92dcd5d6090a",
+        "tests/companies/native_sales_history.php": "0e19c17cf1d73482a842529b23e82b5ea1a7432443fd0e920c083b91efd4a124",
+        "tests/companies/native_sales_history_controller.php": "582b36886998065753e886083e34004c9efdc74e9b6303ba97f8b94487bb696d",
+        "tests/companies/native_sales_pipeline.php": "4c7e4e40c9b69e92820a22f5abd37a6601f76094ff0b1fd004f15ff19d03e650",
+        "tests/companies/native_settings_controller.php": "f5918e89fb259ed5661648af32dbdac4f30a02105c34aa22d75084f2b6c78212",
+        "tests/companies/native_task_detail_portal_authorship.php": "b9659b8e11184b2b661f7b99aaac01df3f2f776ede9d9fdeac766614d9a1eed8",
+        "tests/companies/portal_task_write_controller.php": "61caedddadb12c2062a4e9526367d642ac55df2f0e8c6bcdd5c0a4ea9da29c6f",
+        "tests/companies/post_refund_manual_controller.php": "a8d79b9346addf344878d5d3f630a28bde68a1b596f3af5cfd883dbe0388a78a",
+        "tests/companies/post_refund_manual_cycle_controller.php": "13cf3581a2c1380de0b47b0f4be251b6d2336988b1cf1fcc91f65ae14c3257fa",
+        "tests/companies/post_refund_manual_reversal_controller.php": "7fe901e8189e30b1abdacba922123d9b68492be79f1c35e2eebde4540c088ef4",
+        "tests/companies/project_contact_files_controller.php": "c8c13e7d875ce6dba849270b20cdf5e0be47c1b279d4ac3814f991c1d56cbaf4",
+        "tests/companies/project_gantt_controller.php": "4a3ea863eef95546033c1e86a3ae2bc5ccbdc33e63675e9ec6e88fbdc9ce9004",
+        "tests/companies/project_milestones_controller.php": "c46841ba6b35cf0e1b616597ba8f2589e49ed22ed4bd4dc24a31a036608393e1",
+        "tests/companies/project_portal_adapter_controller.php": "a0d96a90964182ade1e6cafbc8c2de3e23abeff8f2cd5fc8e303619a46fa9874",
+        "tests/companies/project_portal_rules_schema.php": "291957628c7d47ebba86fe7473a0608c6ce065ab327c5cc3adac29a55696a013",
+        "tests/companies/project_timesheets_controller.php": "19d2d56287022f561e12f7f648675c09f8c46e8fafdad67ec2085124176d4ad4",
+        "tests/companies/sales_mutations_controller.php": "d6f9fb4d2998ac05f413029a2129caf4b08fecad0c233a3044fd574bcebb2769",
+        "tests/companies/task_billing_controller.php": "fdad52c2619f1e09a88b98dcc51af6e709dc0971699f437f040a212e8b510cd9",
+        "tests/companies_onboarding_browser.cjs": "c25a4830387f9a1fd9fc8d0e9dad597b552189d924abdf5ad193d57e10c50233",
+        "tests/native_company/settings_email.php": "eade8f7ba6d9a6ec3f10d4f19425c80c9a3b076b2dd4059f89552fd1b2314a13",
+        "tests/native_dashboard_widget_acl.php": "d090b39b909ff5739a4b406952a9532d909572915fec94fdf8b0563ac4a3268b",
+        "tests/settings/document_pdf.php": "c3e8186ef65d04225da3f197da12f03c784e2bea382c19ddb78915b765a9aebc",
+        "tests/settings/native_pdf_controller_setup.php": "155112f64f54850ec1ac8748cfbb50439689663a2094c4d4a3ecef8153065f56",
+        "tests/settings/native_pdf_formats.php": "6dad31b7c071c9cee8bda9ede39fb3020759ea8fc5e80924b2f1f13c7b88fcb8",
+        "tests/settings/native_presentation.php": "661ad30778d27e14fb604337639e824497e081acdcddafd2bd0d28c573158fae",
+        "tests/settings/official_policy_controller_fixture.php": "775251583118180025897eb0f9db8fe995d3b7a87b038451a0d7f804f72751c2",
+        "tests/settings/pdf_typography.php": "d33b9de0bf3288f53abaeab23f8dad0712acf1c2f7df454f3c1b8a6dbdbdc248",
+        "tests/settings/project_file_settings.php": "1b73820bdb43328659601c0fa195510b7ca73cd54deca661937aa74a0760f597",
+        "tests/settings/resume_439_pusher_recovery_controller.php": "f59721cd2fff6822d19a7414e1c333172dd7dfa06d284182c6864aaea4a0518e",
+        "tests/settings/sales_documents.php": "20270d95a3ab5e7df49d805780f7557b9d5b83361c602b74697988d5bbe30775",
+        "tests/settings/sales_pdf.php": "46cec99b4d11ecfc2e7d866840c311823358801ebe72fea702b34fdde3908c7d",
+        "tests/settings/task_operations_controller.php": "60ff0648baacf78c134025f2fe880ac7004252c6258555542292647ef1efe1ad",
+        "tests/settings/task_operations_settings.php": "4cc04c1274d525c1febc07917ced14cbc67a1012817dec00481bbdc8027d1d7f",
+        "tests/settings/task_preferences.php": "52e54b104e8bf796af60e1ef3f2acae8552c4b116d4412851893207ee7594981",
+        "tests/settings/task_preferences_controller.php": "b2282868cb95ccaf3bcfdea2453c8ab3fa01c1db11568f1c2f4bc495f418fb2b",
+        "tests/settings/task_timer_settings.php": "4470342a5910113af5b675fff15d6c25c3fad3a6b32afedaf62535b154c4c2f4",
+        "tests/settings/task_timer_stop_settings.php": "64ede630a110e75dac410c27b2e60204105a3ba4d148c69d1b01bc2c7d4f4c5f",
+        "tests/settings/ticket_connect_controller.php": "696b89d7499a263ffcf973bb0e762afa57573ca293d63eb82d9f95d698d2bcdc",
+        "tests/settings/ticket_preferences.php": "59f4a65438207ec76d93729568c068bc3e6e32c6aa47d17ee415d698ac5133b2"
+      },
+      "initial_ci": {
+        "head_sha": "adf322b60a4add87a659305a5508d034f1a0c3ad",
+        "observed_utc": "2026-10-29 18:51:07 UTC",
+        "runs": [
+          {
+            "id": 40928374796,
+            "name": "Versão e migrations dos módulos",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40928374796"
+          },
+          {
+            "id": 40928375008,
+            "name": "Versão e migrations do núcleo",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40928375008"
+          },
+          {
+            "id": 40927983996,
+            "name": "Containers ARGWS CRM",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983996"
+          },
+          {
+            "id": 40927983834,
+            "name": "Native company experience focused",
+            "status": "completed",
+            "conclusion": "failure",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983834"
+          },
+          {
+            "id": 40927983843,
+            "name": "Integridade das stacks ARGWS CRM",
+            "status": "completed",
+            "conclusion": "failure",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983843"
+          },
+          {
+            "id": 40927983851,
+            "name": "Rota segura callback Asaas",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983851"
+          },
+          {
+            "id": 40927983796,
+            "name": "Identidade global de equipe",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983796"
+          },
+          {
+            "id": 40927983826,
+            "name": "Origem e remocao segura Asaas",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983826"
+          },
+          {
+            "id": 40927983878,
+            "name": "Regras recorrentes independentes",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983878"
+          },
+          {
+            "id": 40927984061,
+            "name": "Interface CRM e catálogo de pagamentos",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927984061"
+          },
+          {
+            "id": 40927983798,
+            "name": "Certificados A1 por empresa",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983798"
+          },
+          {
+            "id": 40927983811,
+            "name": "ARGWS CRM Deployer - binários e releases",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983811"
+          },
+          {
+            "id": 40927983809,
+            "name": "Versão e migrations do núcleo",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983809"
+          },
+          {
+            "id": 40927983912,
+            "name": "Barreiras de privacidade de clientes",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983912"
+          },
+          {
+            "id": 40927983815,
+            "name": "Native header layout",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983815"
+          },
+          {
+            "id": 40927983824,
+            "name": "Barreiras de escopo de faturas",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983824"
+          },
+          {
+            "id": 40927983845,
+            "name": "Interface nativa multiempresa",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983845"
+          },
+          {
+            "id": 40927983835,
+            "name": "Versão e migrations dos módulos",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983835"
+          },
+          {
+            "id": 40927983827,
+            "name": "Aviso de atualização do painel",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983827"
+          },
+          {
+            "id": 40927983818,
+            "name": "Calendario das faturas recorrentes",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983818"
+          },
+          {
+            "id": 40927983919,
+            "name": "PWA nativo sem cache privado",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983919"
+          },
+          {
+            "id": 40927983817,
+            "name": "Empresas no núcleo",
+            "status": "completed",
+            "conclusion": "failure",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983817"
+          },
+          {
+            "id": 40927983805,
+            "name": "Banco do Brasil module",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/40927983805"
+          }
+        ]
+      },
+      "memory_limit": {
+        "php": "8.3.6",
+        "limit": "128M",
+        "resolution": "Release completed diagnostic SQL history between independently asserted fixture phases; release completed TCPDF objects. No runtime memory limit, business assertion or production query code changed. PHP 8.1/8.5 confirmation requires final CI.",
+        "records": [
+          {
+            "engine": "mysql",
+            "command": [
+              "php",
+              "-d",
+              "memory_limit=128M",
+              "-d",
+              "display_errors=1",
+              "-d",
+              "auto_prepend_file=/tmp/crm-pr52-resume/memory-probe.php",
+              "tests/companies/native_project_copy.php"
+            ],
+            "exit": 0,
+            "seconds": 50.027,
+            "memory": {
+              "peak_bytes": 83890176,
+              "query_count": 48755
+            },
+            "log_sha256": "64dfc72e5ceba1d1cfffb2e5a3e536e5a53d4cc60a2a884ef91373c811c3f7b7",
+            "log": "/tmp/crm-pr52-resume/project-copy-memory-128-after-mysql.log"
+          },
+          {
+            "engine": "sqlite",
+            "command": [
+              "php",
+              "-d",
+              "memory_limit=128M",
+              "-d",
+              "display_errors=1",
+              "-d",
+              "auto_prepend_file=/tmp/crm-pr52-resume/memory-probe.php",
+              "tests/companies/native_project_copy.php"
+            ],
+            "exit": 0,
+            "seconds": 1.545,
+            "memory": {
+              "peak_bytes": 67108864,
+              "query_count": 33863
+            },
+            "log_sha256": "b51eb1797c3ad7d2ddb4665ba2b708fc14cdebca6b80b607814e3d2d2381aa8b",
+            "log": "/tmp/crm-pr52-resume/project-copy-memory-128-after-sqlite.log"
+          },
+          {
+            "fixture": "expense_recurring_controller",
+            "engine": "mysql",
+            "command": [
+              "php",
+              "-d",
+              "memory_limit=128M",
+              "-d",
+              "display_errors=1",
+              "-d",
+              "auto_prepend_file=/tmp/crm-pr52-resume/memory-probe.php",
+              "tests/companies/expense_recurring_controller.php"
+            ],
+            "exit": 0,
+            "seconds": 37.665,
+            "memory": {
+              "peak_bytes": 92274688,
+              "query_count": 15043
+            },
+            "log_sha256": "87b32f8a4d199eb3a0f8c8b1cafe90e6d31f638520d2bb34a91e071cfdbd793c",
+            "log": "/tmp/crm-pr52-resume/expense_recurring_controller-memory-128-mysql.log"
+          },
+          {
+            "fixture": "expense_recurring_controller",
+            "engine": "sqlite",
+            "command": [
+              "php",
+              "-d",
+              "memory_limit=128M",
+              "-d",
+              "display_errors=1",
+              "-d",
+              "auto_prepend_file=/tmp/crm-pr52-resume/memory-probe.php",
+              "tests/companies/expense_recurring_controller.php"
+            ],
+            "exit": 0,
+            "seconds": 1.666,
+            "memory": {
+              "peak_bytes": 81788928,
+              "query_count": 13475
+            },
+            "log_sha256": "44d6025ffbe568b6f858b226f21004f3e8bdeb9b1549115fa7f7a39e638eb63b",
+            "log": "/tmp/crm-pr52-resume/expense_recurring_controller-memory-128-sqlite.log"
+          },
+          {
+            "fixture": "sales_pdf_preferences",
+            "engine": "mysql",
+            "command": [
+              "php",
+              "-d",
+              "memory_limit=128M",
+              "-d",
+              "display_errors=1",
+              "-d",
+              "auto_prepend_file=/tmp/crm-pr52-resume/memory-probe.php",
+              "tests/companies/sales_pdf_preferences.php"
+            ],
+            "exit": 0,
+            "seconds": 35.161,
+            "memory": {
+              "peak_bytes": 60821504,
+              "query_count": 2603
+            },
+            "log_sha256": "56760d1dcc7d36bb659beaf34b759b1876fa1551a03bd6337eac43fad1d08fa8",
+            "log": "/tmp/crm-pr52-resume/sales_pdf_preferences-memory-128-mysql.log"
+          },
+          {
+            "fixture": "sales_pdf_preferences",
+            "engine": "sqlite",
+            "command": [
+              "php",
+              "-d",
+              "memory_limit=128M",
+              "-d",
+              "display_errors=1",
+              "-d",
+              "auto_prepend_file=/tmp/crm-pr52-resume/memory-probe.php",
+              "tests/companies/sales_pdf_preferences.php"
+            ],
+            "exit": 0,
+            "seconds": 2.985,
+            "memory": {
+              "peak_bytes": 52432896,
+              "query_count": 2316
+            },
+            "log_sha256": "35ac19635ef073408de22c02e8df22e83778ad552f81c97a58debe2c94195a1e",
+            "log": "/tmp/crm-pr52-resume/sales_pdf_preferences-memory-128-sqlite.log"
+          }
+        ],
+        "aggregate": {
+          "command": [
+            "php",
+            "tests/companies/native_pr52_actions_mysql.php"
+          ],
+          "php": "8.3.6",
+          "memory_limit": "128M",
+          "inherited_by_child_processes": true,
+          "exit": 0,
+          "seconds": 166.257,
+          "log": "/tmp/crm-pr52-resume/pr52-wrapper-memory-128.log",
+          "log_sha256": "dbeb745250a55d2bd9ba324e5fe8eebfc939ce451f9ced915d287c32f37eb581"
+        }
+      },
+      "contacts_presentation": {
+        "records": [
+          {
+            "command": [
+              "php",
+              "tests/native_company/presentation.php"
+            ],
+            "exit": 0,
+            "seconds": 0.075,
+            "log_sha256": "88e866c6a62fd40034c94e475c1aa12f6884ab05c6fec0a3b5687ab639283006"
+          },
+          {
+            "command": [
+              "node",
+              "--test",
+              "tests/native_company/presentation.test.cjs"
+            ],
+            "exit": 0,
+            "seconds": 0.141,
+            "log_sha256": "c97f60a69c9b52be70df33df0728073974df113dd2ded6292bb9e320f6c98c7b"
+          },
+          {
+            "command": [
+              "php",
+              "tests/companies/native_customer_views.php"
+            ],
+            "exit": 0,
+            "seconds": 0.209,
+            "log_sha256": "cfaefaa66b29964ed367f429e44dac2d3f72e1c9ed6dc79e36f15498aaea0671"
+          }
+        ],
+        "browser": {
+          "command": [
+            "node",
+            "tests/native_company/presentation.browser.cjs"
+          ],
+          "exit": 0,
+          "receipt": {
+            "kind": "synthetic-provider-real-native-template",
+            "widths": [
+              1280,
+              768,
+              390
+            ],
+            "errors": [],
+            "limitations": [
+              "search/timers/notifications need scoped providers",
+              "no authenticated application or database exercised"
+            ]
+          }
+        }
+      },
+      "http_portal": {
+        "prior_attempts": [
+          {
+            "test": "tests/companies_portal_browser.cjs",
+            "transport": "local processes, unchanged browser assertions",
+            "database": "argws_upgrade_ci",
+            "exit": 1,
+            "seconds": 14.12,
+            "actual_database": "argws_upgrade_ci_resume_2",
+            "diagnosis": "Missing NativeCompanyCustomFields class when rendering the original contacts group."
+          },
+          {
+            "test": "tests/companies_portal_browser.cjs",
+            "transport": "local processes, unchanged browser assertions",
+            "database": "argws_upgrade_ci",
+            "exit": 1,
+            "seconds": 15.06,
+            "actual_database": "argws_upgrade_ci_resume_3",
+            "source_sha256": "9e90d62aa2dd33dc13e54a19c200d2806975d5bc064acf684ff8668b838e16eb",
+            "log_sha256": "bc27a1fa62ce428884815008a0b36d3543ecc149602dfc676151754c2125383b",
+            "diagnosis": "Missing original custom_fields_hyperlink JS helper aborted AJAX contact form initialization."
+          },
+          {
+            "test": "tests/companies_portal_browser.cjs",
+            "transport": "local processes, unchanged browser assertions",
+            "database": "argws_upgrade_ci",
+            "exit": 1,
+            "seconds": 27.96,
+            "actual_database": "argws_upgrade_ci_resume_4",
+            "source_sha256": "9e90d62aa2dd33dc13e54a19c200d2806975d5bc064acf684ff8668b838e16eb",
+            "log_sha256": "21ed94416f5396d6153f1048096921e8301cf8d0858b00417fe56e523e2c3ae4",
+            "diagnosis": "Logout selector matched both ticket creation and logout buttons."
+          }
+        ],
+        "final": {
+          "test": "tests/companies_portal_browser.cjs",
+          "transport": "local processes, unchanged browser assertions",
+          "database": "argws_upgrade_ci",
+          "exit": 0,
+          "seconds": 34.07,
+          "actual_database": "argws_upgrade_ci_resume_5",
+          "source_sha256": "4d593d7f6f5abf21213c7dda386fa6f52a7d6ac17e06caba5e32ff497df585dd",
+          "log_sha256": "872b4ba8b27f4940162c46c68ee6633404eb6705996d153c2f5b4c187b8c6010"
+        },
+        "resolution": "Use the original contacts group and modal; load the actual custom-fields service and original hyperlink helper; keep scoped translation and initialize the shared template registry; select the explicit logout control. No no-op helper or validation bypass."
+      },
+      "http_invoice_continuation": {
+        "test": "tests/companies_invoices_browser.cjs",
+        "transport": "local processes, unchanged browser assertions",
+        "database": "argws_upgrade_ci",
+        "exit": 1,
+        "seconds": 40.39,
+        "actual_database": "argws_upgrade_ci_resume_5",
+        "source_sha256": "3983a6780bc6589b74f61d18d564639b3505e4f3a58ddcda4cdf2aedec1daf34",
+        "log_sha256": "34ef7e24d01ec995d705fcd6438b5606e8e0cdde7f20eb2be8de7103d218c954",
+        "failure": "Timeout waiting for #invoice-client on the original invoice listing. This broad smoke still targets the retired embedded invoice editor.",
+        "classification": "local_validation_gap",
+        "passed": false,
+        "downstream_stacks_scenarios_executed": false
+      },
+      "syntax": [
+        {
+          "command": [
+            "php",
+            "-l",
+            "application/controllers/admin/Clients.php"
+          ],
+          "exit": 0,
+          "seconds": 0.028,
+          "output_sha256": "55543fea130476c9aa794452292f45c761b767e46e71ac87ec53007d9866dcd9"
+        },
+        {
+          "command": [
+            "php",
+            "-l",
+            "application/helpers/custom_fields_helper.php"
+          ],
+          "exit": 0,
+          "seconds": 0.021,
+          "output_sha256": "86ad3d2225102a685f14d6d2bc3f9083b0bad49ef3ca0f9bb0ecba37d373f9a0"
+        },
+        {
+          "command": [
+            "php",
+            "-l",
+            "application/views/admin/includes/head.php"
+          ],
+          "exit": 0,
+          "seconds": 0.021,
+          "output_sha256": "4e91f079395e0e33197f7b837d4cb7eb22ab3a921860b9f0b9e6ef64a977c5b0"
+        },
+        {
+          "command": [
+            "php",
+            "-l",
+            "application/views/admin/includes/scripts.php"
+          ],
+          "exit": 0,
+          "seconds": 0.025,
+          "output_sha256": "83e72aba5b12ce16e5bde8f41a6a0875f4135078cced41d7b54168c478ccc0a5"
+        },
+        {
+          "command": [
+            "php",
+            "-l",
+            "tests/companies/expense_recurring_controller.php"
+          ],
+          "exit": 0,
+          "seconds": 0.023,
+          "output_sha256": "516817d689d7eb18da05ff1308bbcbc17ca8691eb06cbf7849f70bb5baca01d8"
+        },
+        {
+          "command": [
+            "php",
+            "-l",
+            "tests/companies/native_project_copy.php"
+          ],
+          "exit": 0,
+          "seconds": 0.022,
+          "output_sha256": "4c94d490cbc57298a552303454631f17bee3a385ceaf63c737eee5567ef6255d"
+        },
+        {
+          "command": [
+            "php",
+            "-l",
+            "tests/companies/sales_pdf_preferences.php"
+          ],
+          "exit": 0,
+          "seconds": 0.023,
+          "output_sha256": "1350e6c22e2451767a268b17c2fe98d2f088103854f44de07a23e9e8e0736c16"
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "tests/companies_portal_browser.cjs"
+          ],
+          "exit": 0,
+          "seconds": 0.028,
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "tests/native_company/presentation.browser.cjs"
+          ],
+          "exit": 0,
+          "seconds": 0.027,
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "command": [
+            "php",
+            "-l",
+            "tests/native_company/presentation.php"
+          ],
+          "exit": 0,
+          "seconds": 0.022,
+          "output_sha256": "e653cd264a5f04a78bd7c10903bb2b43e82b35120ae55009b2433f5dee7c50d9"
+        }
+      ],
+      "inventory_gates": {
+        "validation_root": "Clean git checkout-index export; no generated local runtime configuration, logs or cache",
+        "input_index_tree": "7a504a7a359ec46a753a3954aae5837ffc7c1bb9",
+        "records": [
+          {
+            "command": [
+              "php",
+              "scripts/native-experience-inventory.php"
+            ],
+            "exit": 0,
+            "seconds": 0.05,
+            "output_sha256": "6ef5a4ce06fb4ed4aead8047e15dc85f6640938c943678b25607c045de639394"
+          },
+          {
+            "command": [
+              "php",
+              "scripts/native-action-matrix.php"
+            ],
+            "exit": 0,
+            "seconds": 0.032,
+            "output_sha256": "8bdd85a66a440ffdc162cc60e8bed529d03ec41f2ea23804a256a9ee63aa3eae"
+          },
+          {
+            "command": [
+              "php",
+              "scripts/company-surface-inventory.php"
+            ],
+            "exit": 0,
+            "seconds": 2.029,
+            "output_sha256": "52af4a71613ba02c411224e7a9928e469a9a702d17f5d97d4e86042fe27bfb33"
+          },
+          {
+            "command": [
+              "python3",
+              "scripts/inventory-company-boundaries.py"
+            ],
+            "exit": 0,
+            "seconds": 35.48,
+            "output_sha256": "ab062949ee965cf00aa6689a620c736f25a9bf07f20ef4238cd19b63bd9c6104"
+          },
+          {
+            "command": [
+              "python3",
+              "scripts/audit-issuer-isolation.py",
+              "--write"
+            ],
+            "exit": 0,
+            "seconds": 5.567,
+            "output_sha256": "437d2cc39377a50e1bfdf4682d08766cbc9b9c20273a5156dc663f28dd073f9b"
+          },
+          {
+            "command": [
+              "php",
+              "scripts/native-action-matrix.php",
+              "--check"
+            ],
+            "exit": 0,
+            "seconds": 0.031,
+            "output_sha256": "8bdd85a66a440ffdc162cc60e8bed529d03ec41f2ea23804a256a9ee63aa3eae"
+          },
+          {
+            "command": [
+              "php",
+              "scripts/company-surface-inventory.php",
+              "--check"
+            ],
+            "exit": 0,
+            "seconds": 1.949,
+            "output_sha256": "2bb78cb8dd7bcb526e143d18a42cc3148fed67a81e00a3b33f3968d3358fb4ca"
+          },
+          {
+            "command": [
+              "python3",
+              "scripts/inventory-company-boundaries.py",
+              "--check"
+            ],
+            "exit": 0,
+            "seconds": 34.651,
+            "output_sha256": "ab062949ee965cf00aa6689a620c736f25a9bf07f20ef4238cd19b63bd9c6104"
+          },
+          {
+            "command": [
+              "python3",
+              "scripts/audit-issuer-isolation.py"
+            ],
+            "exit": 0,
+            "seconds": 4.739,
+            "output_sha256": "437d2cc39377a50e1bfdf4682d08766cbc9b9c20273a5156dc663f28dd073f9b"
+          }
+        ],
+        "source_manifest_sha256": "ab1cf1522cf5dfa7462e287b75247c4579aa707995719e1bbcecf659a94eef89"
+      },
+      "compiled_assets": "No compiled JS/CSS source changed in this follow-up; previously verified production build retained.",
+      "full_stacks_acceptance": false
     }
   },
   "engine_exclusions": {
@@ -10976,6 +11770,10 @@
     "official_action_matrix": "docs/companies/pr52-official-action-matrix.json",
     "secondary_catalog_admitted": 192,
     "secondary_catalog_not_admitted": 139,
-    "reason": "Local route/payload/view equivalence gaps remain; these are not external homologation dependencies."
+    "reason": "Local route/payload/view equivalence gaps remain; these are not external homologation dependencies.",
+    "additional_validation_blockers": [
+      "Complete stacks HTTP chain stops at the obsolete invoice-editor selectors in tests/companies_invoices_browser.cjs; downstream scenarios have no result from this local follow-up.",
+      "Final published SHA CI must be checked separately; prior adf322b6 runs are historical evidence, not final-SHA approval."
+    ]
   }
 }
