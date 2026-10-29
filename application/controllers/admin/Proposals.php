@@ -9,7 +9,7 @@ class Proposals extends AdminController
     public function __construct()
     {
         parent::__construct();
-        if (CompanyRequestScope::nativeFor($this)) { return; } // Only explicitly adapted actions may enter.
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) { return; } // Only explicitly adapted actions may enter.
         $this->load->model('proposals_model');
         $this->load->model('currencies_model');
     }
@@ -21,7 +21,7 @@ class Proposals extends AdminController
 
     public function list_proposals($proposal_id = '')
     {
-        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('proposals',$proposal_id); return; }
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('proposals',$proposal_id); return; }
         close_setup_menu();
 
         if (staff_cant('view', 'proposals') && staff_cant('view_own', 'proposals') && get_option('allow_staff_view_proposals_assigned') == 0) {
@@ -62,7 +62,7 @@ class Proposals extends AdminController
 
     public function table()
     {
-        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->table('proposals', null); return; }
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->table('proposals', null); return; }
         if (
             staff_cant('view', 'proposals')
             && staff_cant('view_own', 'proposals')
@@ -76,7 +76,7 @@ class Proposals extends AdminController
 
     public function proposal_relations($rel_id, $rel_type)
     {
-        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->relations('proposals', $rel_id, $rel_type); return; }
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->relations('proposals', $rel_id, $rel_type); return; }
         $this->app->get_table_data('proposals_relations', [
             'rel_id'   => $rel_id,
             'rel_type' => $rel_type,
@@ -139,7 +139,7 @@ class Proposals extends AdminController
 
     public function proposal($id = '')
     {
-        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('proposals',$id); return; }
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('proposals',$id); return; }
         if ($this->input->post()) {
             $proposal_data = $this->input->post();
             if ($id == '') {
@@ -247,7 +247,7 @@ class Proposals extends AdminController
 
     public function pdf($id)
     {
-        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('proposals',$id,true); return; }
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->index('proposals',$id,true); return; }
         if (!$id) {
             redirect(admin_url('proposals'));
         }
@@ -692,7 +692,7 @@ class Proposals extends AdminController
 
     public function pipeline_open($id)
     {
-        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->pipeline('proposals', $id); return; }
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->pipeline('proposals', $id); return; }
 
         if (staff_can('view',  'proposals') || staff_can('view_own',  'proposals') || get_option('allow_staff_view_proposals_assigned') == 1) {
             $data['proposal']      = $this->get_proposal_data_ajax($id, true);
@@ -710,7 +710,7 @@ class Proposals extends AdminController
 
     public function get_pipeline()
     {
-        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->pipeline('proposals'); return; }
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->pipeline('proposals'); return; }
 
         if (staff_can('view',  'proposals') || staff_can('view_own',  'proposals') || get_option('allow_staff_view_proposals_assigned') == 1) {
             $data['statuses'] = $this->proposals_model->get_statuses();
@@ -720,7 +720,7 @@ class Proposals extends AdminController
 
     public function pipeline_load_more()
     {
-        if (CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->table('proposals', null); return; }
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) { require_once APPPATH.'services/NativeCompanySalesAdminHttp.php'; (new NativeCompanySalesAdminHttp($this))->table('proposals', null); return; }
 
         $status = $this->input->get('status');
         $page   = $this->input->get('page');
@@ -758,7 +758,7 @@ class Proposals extends AdminController
 
     public function get_due_date()
     {
-        if (CompanyRequestScope::nativeFor($this)) {
+        if (class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this)) {
             $this->output->set_header('Cache-Control: no-store');
             try {
                 CompanyRequestScope::assertNativeMutation($this);
