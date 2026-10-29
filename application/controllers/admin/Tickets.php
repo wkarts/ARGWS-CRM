@@ -251,8 +251,16 @@ class Tickets extends AdminController
             }
             if ($method !== 'POST') throw new DomainException('native_ticket_method_invalid');
             if (in_array($this->input->post('action', false), ['portal_permission','portal_publish'], true)) {
-                require_once APPPATH . 'services/NativeCompanyTicketDetailController.php';
-                (new NativeCompanyTicketDetailController($this))->portalAction($id);
+                try {
+                    require_once APPPATH . 'services/NativeCompanyTicketDetailController.php';
+                    (new NativeCompanyTicketDetailController($this))->portalAction($id);
+                } catch (DomainException $error) {
+                    $reason = $error->getMessage();
+                    $status = str_contains($reason, 'stale') || str_contains($reason, 'conflict') ? 409 : (str_contains($reason, 'csrf') || str_contains($reason, 'denied') || str_contains($reason, 'access') ? 403 : 422);
+                    show_error('Não foi possível confirmar a operação do portal deste chamado.', $status);
+                } catch (Throwable $error) {
+                    show_error('Não foi possível confirmar a operação do portal deste chamado.', 503);
+                }
                 return;
             }
             if ($this->input->post('native_ticket_command', false) === 'mark_read') {
