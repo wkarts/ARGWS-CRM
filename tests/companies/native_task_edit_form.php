@@ -19,3 +19,5 @@ essentialThrows(fn()=>$form->save($a,7,$historicalId,array_replace($body,['nativ
 $db->query('DELETE FROM '.$p.'issuers_resource_permissions WHERE issuer_id=? AND staff_id=92 AND feature=? AND capability=?',[$a,'tasks','create']);$db->query('INSERT INTO '.$p.'issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,92,?,?)',[$a,'tasks','edit']);
 essentialCheck($form->editForm($a,92,$historicalId,'2026-10-25')['task']->name===$oldInput['name'],'Edit-only role does not need create permission to load existing task');
 echo 'Original task declared/historical editor: '.$GLOBALS['essentialChecks']." cumulative checks passed.\n";
+// Child fixtures only need the committed state; discard diagnostic SQL history to keep the bounded PHP worker healthy.
+$db->queries=[];
