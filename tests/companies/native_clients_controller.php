@@ -13,6 +13,7 @@ function e($value){return htmlspecialchars((string)$value,ENT_QUOTES|ENT_SUBSTIT
 function admin_url($path=''){return 'https://fixture.test/admin/'.$path;}
 class CompanyRequestScope {
     public static int $issuer=41;
+    public static function adminUrl($ci,string $path=''){return 'https://fixture.test/admin/'.$path;}
     public static function nativeFor($ci){return $ci instanceof Clients;}
     public static function sealedFor($ci){return self::nativeFor($ci);}
     public static function context(){return new class{function issuerId(){return CompanyRequestScope::$issuer;}function staffId(){return 12;}function isPrimary(){return false;}};}
