@@ -104,7 +104,7 @@ check($data['quick_actions'][1]['href_attributes']['onclick']==='new_task();retu
 ob_start();foreach(['head','header','setup_menu','aside'] as $name)$ci->view('admin/includes/'.$name);echo '<div id="wrapper"><main class="content"><div class="panel_s"><div class="panel-body"><form><label for="native-field">Nome</label><input id="native-field" name="name" class="form-control" value="Sintético"><button type="button" class="btn btn-primary">Salvar</button></form></div></div></main></div>'; $ci->view('admin/includes/scripts');echo '</body></html>';$html=ob_get_clean();
 if(in_array('--render',$argv??[],true)){echo $html;exit;}
 foreach(['id="header"','id="menu"','id="side-menu"','id="setup-menu"','native-company-admin','&lt;Alice&gt;','/sub/admin/clients','/sub/admin/invoices'] as $needle)check(str_contains($html,$needle),'native render '.$needle);
-foreach(['company_context','clients','company-shell.js','company-workspace.js','assets/js/main.js','admin/projects/pinned'] as $needle)check(!str_contains($html,$needle),'no parallel/global hydration '.$needle);
+foreach(['company_context','clients_model','company-shell.js','company-workspace.js','assets/js/main.js','admin/projects/pinned'] as $needle)check(!str_contains($html,$needle),'no parallel/global hydration '.$needle);
 check(!str_contains($html,'synthetic@example.test</script>'),'escaped identity');
 check(str_contains($html,'rel="icon" href="data:image/png;base64,Qw=="')&&str_contains($html,'src="data:image/png;base64,Qg=="'),'same header/head render scoped branding');
 $reflection=new ReflectionProperty(NativeCompanyAdminPresentation::class,'data');$original=$reflection->getValue();$withProviders=$original;
