@@ -147,11 +147,20 @@ class Projects extends AdminController
         }catch(DomainException$e){show_error('Não foi possível confirmar os dados, a ação ou as permissões deste projeto.',422);}catch(RuntimeException$e){show_error('Não foi possível confirmar o armazenamento do projeto.',503);}
     }
 
+    private function nativeProjectPortalCsrf():string{$token=$this->session->userdata('company_projects_csrf');if(!is_string($token)||!preg_match('/^[a-f0-9]{64}$/D',$token)){$token=bin2hex(random_bytes(32));$this->session->set_userdata('company_projects_csrf',$token);}return $token;}
     private function nativeProjectView($id):void
     {
         $this->output->set_header('Cache-Control: no-store');
         try{
-            if(!in_array(strtoupper($this->input->method(true)),['GET','HEAD'],true))throw new DomainException('native_project_method_invalid');
+            $method=strtoupper($this->input->method(true));
+            if($method==='POST'){
+                $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_project_access_denied');
+                $token=$this->input->post('company_projects_csrf',false);if(!is_string($token)||!hash_equals($this->nativeProjectPortalCsrf(),$token))throw new DomainException('company_portal_csrf_invalid');
+                $ref=NativeCompanyResourceId::decode('project',$id);if($ref['source_kind']!=='company_project')throw new DomainException('company_portal_operation_unavailable');
+                $action=$this->input->post('action',false);$revision=$this->input->post('revision',false);$key=$this->input->post('request_key',false);if(!is_string($action)||!is_string($revision)||!is_string($key)||!CompanyOperationalPortalAdmin::handle($this,$ctx->issuerId(),$ctx->staffId(),'projects',$action,$ref['source_id'],$revision,$key))throw new DomainException('company_operation_invalid_input');
+                CompanyRequestScope::invalidateCaches($this);redirect(CompanyRequestScope::adminUrl($this,'projects/view/'.$id),'location',303);return;
+            }
+            if(!in_array($method,['GET','HEAD'],true))throw new DomainException('native_project_method_invalid');
             $ctx=CompanyRequestScope::context();if($ctx->issuerId()===null)throw new DomainException('native_project_access_denied');
             $group=(string)($this->input->get('group')?:'project_overview');if(!in_array($group,['project_overview','project_files'],true))throw new DomainException('native_project_group_not_composed');
             $period=(string)($this->input->get('overview_chart')?:'this_week');
@@ -160,7 +169,7 @@ class Projects extends AdminController
             $facts=$overview['facts'];$acl=new IssuerResourceAccess($this->db,db_prefix());$canEdit=$acl->can($ctx->issuerId(),$ctx->staffId(),'projects','edit');
             $staff=$canEdit?(new CompanyProjects($this->db,db_prefix()))->staffOptions($ctx->issuerId(),$ctx->staffId()):[];
             $project=(object)['id'=>$facts['reference']['canonical_id'],'name'=>$facts['project']['name']];
-            $data=['title'=>$facts['project']['name'],'project'=>$project,'native_project_overview'=>$overview,'native_project_files'=>$files,'native_project_staff'=>$staff,
+            $portalControls=null;$portalRevision=null;$portalCsrf=null;if(($facts['reference']['source_kind']??null)==='company_project'){$portalRow=(new CompanyProjects($this->db,db_prefix()))->get($ctx->issuerId(),$ctx->staffId(),(int)$facts['reference']['source_id']);$portalControls=CompanyOperationalPortalAdmin::controls($this,$ctx->issuerId(),$ctx->staffId(),'projects',$portalRow);$portalRevision=(int)$portalRow['revision'];$portalCsrf=$this->nativeProjectPortalCsrf();}$data=['title'=>$facts['project']['name'],'project'=>$project,'native_project_overview'=>$overview,'native_project_files'=>$files,'native_project_staff'=>$staff,'portal_controls'=>$portalControls,'portal_revision'=>$portalRevision,'company_projects_csrf'=>$portalCsrf,
                 'native_project_view'=>['group'=>$group,'context_token'=>$ctx->token(),'csrf_token'=>CompanyRequestScope::nativeCsrfToken($this),'members_revision'=>$facts['members']['revision'],'can_edit'=>$canEdit,'canonical_id'=>$facts['reference']['canonical_id']]];
             // The admin shell is prepared once by the request scope. Rebuilding it
             // here repeats the same issuer checks and can observe a different
