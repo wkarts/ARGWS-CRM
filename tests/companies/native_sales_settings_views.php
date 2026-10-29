@@ -28,5 +28,5 @@ foreach(NativeCompanySalesSettings::fields('proposals') as $name)essentialCheck(
 essentialCheck(str_contains($html,'&lt;script&gt;text&lt;/script&gt;')&&!str_contains($html,'<script>text</script>'),'proposal terms remain literal');
 essentialCheck(str_contains($html,'&lt;script&gt;x&lt;/script&gt;')&&!str_contains($html,'<script>x</script>'),'field labels are HTML escaped');
 essentialCheck(!str_contains($other,'P-A-')&&!str_contains($other,'owned-1'),'other company view receives neither A settings nor A field definitions');
-essentialCheck(!in_array('estimates',NativeCompanySettingsForms::availableGroups(),true)&&!in_array('proposals',NativeCompanySettingsForms::availableGroups(),true),'incomplete downstream settings are not exposed');
+essentialCheck(in_array('estimates',NativeCompanySettingsForms::availableGroups(),true)&&in_array('proposals',NativeCompanySettingsForms::availableGroups(),true),'complete downstream sales settings are exposed through native adapters');
 echo 'Native sales settings views: '.($GLOBALS['essentialChecks']-$start)." added checks; native HTTP groups remain closed.\n";
