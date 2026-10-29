@@ -1,6 +1,8 @@
 <?php
 /** Overview task counts use the same authorized reader as the project task table. */
 require __DIR__.'/native_project_related_tasks.php';
+// O fixture pai já concluiu suas asserções; libere o trace SQL diagnóstico antes das métricas finais para manter memória limitada do worker.
+$db->queries=[];
 require_once APPPATH.'services/NativeCompanyProjectDetail.php';
 $detail=new NativeCompanyProjectDetail($db,$p);$metrics=$detail->taskMetrics($a,7,$projectCanonical);
 $facts=(new NativeCompanyRelatedTaskRead($db,$p))->read($a,7,'project',$projectCanonical);
