@@ -10,3 +10,5 @@ $edited=$form->editForm($a,7,$new,'2026-10-25');essentialCheck($edited['task']->
 $ticketWire['native_revision']=$edited['native_task_form']['fields']['native_revision'];$ticketWire['native_fields_revision']=$edited['native_task_form']['fields']['native_fields_revision'];$ticketWire['native_tags_revision']=$edited['native_task_form']['fields']['native_tags_revision'];$ticketWire['native_request_key']=$key('ticket-form-edit');unset($ticketWire['assignees']);$ticketWire['name']='Updated ticket-linked task';
 essentialCheck($form->save($a,7,$new,$ticketWire)===$new,'Original edit commits same ticket-linked canonical task');
 echo 'Original ticket-related task GET/modal/create/edit: '.$GLOBALS['essentialChecks']." cumulative checks passed.\n";
+// Child fixtures only need the committed state; discard diagnostic SQL history to keep the bounded PHP worker healthy.
+$db->queries=[];
