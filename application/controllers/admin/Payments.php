@@ -8,6 +8,11 @@ defined('BASEPATH') or exit('No direct script access allowed');
  */
 class Payments extends AdminController
 {
+    private function nativeCompanyPayments(): bool
+    {
+        return class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this);
+    }
+
     public function __construct()
     {
         parent::__construct();
