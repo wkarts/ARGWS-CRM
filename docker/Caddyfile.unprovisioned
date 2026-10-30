@@ -1,0 +1,52 @@
+:8080 {
+    root * /app
+    encode zstd gzip
+
+    @provisioned file {
+        root /var/lib/argws-crm/config
+        try_files provisioned
+    }
+
+    route {
+        @installer path /install /install/ /install/*
+        respond @installer 404
+
+        # Only public ARGWS brand assets are readable before first access.
+        @branding path /assets/images/argws/favicon.png /assets/images/argws/logo-light.png /assets/images/argws/logo-dark.png /assets/images/argws/logo-mark-light.png
+        handle @branding {
+            root * /app
+            file_server
+        }
+
+        @setup path /setup /setup/
+        handle @setup {
+            respond @provisioned 404
+            root * /opt/argws-crm-provisioner/web
+            rewrite * /index.php
+            php_server
+        }
+
+        handle @provisioned {
+            @private path /application/* /system/* /temp/* /data/* /.env /.env.*
+            respond @private 404
+
+            # Apache denies this folder via .htaccess; Caddy must enforce it explicitly.
+            @private_invoice_uploads path /uploads/invoices /uploads/invoices/ /uploads/invoices/*
+            respond @private_invoice_uploads 404
+            @private_customer_uploads path /uploads/clients /uploads/clients/ /uploads/clients/*
+            respond @private_customer_uploads 404
+
+            @module_php path_regexp module_php ^/modules/.*\.php$
+            respond @module_php 404
+
+            php_server
+        }
+
+        # Keep deployment details out of the customer-facing first-access response.
+        handle {
+            @root path /
+            redir @root /setup 302
+            respond 404
+        }
+    }
+}

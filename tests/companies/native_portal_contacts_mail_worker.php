@@ -1,0 +1,20 @@
+<?php
+require __DIR__.'/native_portal_contacts_mail.php';
+#[AllowDynamicProperties]
+final class NativeManagedContactMailer extends App_Email
+{
+ public array $attempts=[];public bool $uncertain=false;public $duringSend=null;
+ public function __construct($ci){$this->CI=$ci;$this->properties=self::$default_properties;foreach(array_keys(self::$default_properties)as$name)if(property_exists($this,$name))unset($this->{$name});(new ReflectionProperty(App_Email::class,'email_queue_table'))->setValue($this,db_prefix().'mail_queue');}
+ public function clean_up_old_queue(){}
+ public function clear($attachments=false){if($this->phpmailer){$this->phpmailer->clearAllRecipients();$this->phpmailer->clearCustomHeaders();}return$this;}
+ public function send($skip=false){essentialCheck($skip===true,'managed SMTP reached only through queued permit');$headers=serialize($this->phpmailer?$this->phpmailer->getCustomHeaders():$this->_headers);essentialCheck(!str_contains($headers,CompanyNativeContactMail::HEADER)&&!str_contains($headers,CompanyPortalRecoveryMail::HEADER),'managed authority metadata removed before SMTP');$this->attempts[]=$this->phpmailer?'phpmailer':'codeigniter';if($this->duringSend)($this->duringSend)();if($this->uncertain)throw new RuntimeException('synthetic accepted then unknown');return true;}
+}
+$db->query("UPDATE {$p}mail_queue SET status='failed'");$workerCi->config->config['encryption_key']=$portalSecret;$worker=new NativeManagedContactMailer($workerCi);$start=$GLOBALS['essentialChecks'];$counter=0;
+$newQueue=function()use(&$counter,$db,$p,$portalSecret,$a,$binding,$input,$mailService,$base,$decrypt){$counter++;$writer=new NativePortalContacts($db,$p,$portalSecret,$a,$binding);$writer->save(null,array_replace($input,['email'=>'managed-worker-'.$counter.'@example.invalid']),fn($v)=>password_hash($v,PASSWORD_DEFAULT),'password_verify',fn($issuer,$contact,$source,$event)=>$mailService->queueManagedInOwned($issuer,$contact,$source,['contact-set-password'],$base,$decrypt),$mailService->tables());return(int)$db->query('SELECT MAX(id) id FROM '.$p.'mail_queue')->row()->id;};
+$store->mutate($a,7,'update','mail_engine','codeigniter',null);$newQueue();$worker->send_queue();essentialCheck($worker->attempts===['codeigniter'],'actual native CodeIgniter worker sends managed contact setup');
+$store->mutate($a,7,'update','mail_engine','phpmailer',null);$newQueue();$worker->send_queue();essentialCheck($worker->attempts===['codeigniter','phpmailer'],'actual PHPMailer worker sends same managed envelope');
+$q=$newQueue();$worker->uncertain=true;$worker->send_queue();$worker->uncertain=false;$db->query("UPDATE {$p}mail_queue SET status='pending' WHERE id=?",[$q]);$worker->send_queue();essentialCheck(count($worker->attempts)===3,'unknown result cannot retry after queue reset');
+$q=$newQueue();$store->mutate($a,7,'update','allow_primary_contact_to_manage_other_contacts','0',null);$worker->send_queue();essentialCheck(count($worker->attempts)===3,'manager option revocation denies before SMTP');$store->mutate($a,7,'update','allow_primary_contact_to_manage_other_contacts','1',null);
+$q=$newQueue();$row=$db->query('SELECT headers FROM '.$p.'mail_queue WHERE id=?',[$q])->row_array();$headers=unserialize($row['headers'],['allowed_classes'=>false]);unset($headers[CompanyNativeContactMail::HEADER]);$db->query('UPDATE '.$p.'mail_queue SET headers=? WHERE id=?',[serialize($headers),$q]);$worker->send_queue();essentialCheck(count($worker->attempts)===3,'stripped managed marker cannot route through generic recovery');
+$q=$newQueue();$worker->duringSend=fn()=>$db->query('UPDATE '.$p.'contacts SET active=0 WHERE id=101');$worker->send_queue();$worker->duringSend=null;essentialCheck(count($worker->attempts)===4&&$db->query('SELECT state FROM '.$p.'company_native_mail_dispatch_fences WHERE queue_id=?',[$q])->row()->state==='sent','revocation during accepted send preserves frozen technical receipt');
+echo 'Native managed contacts actual worker: '.($GLOBALS['essentialChecks']-$start).' checks passed, SMTP captured.'.PHP_EOL;

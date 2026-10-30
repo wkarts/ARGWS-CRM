@@ -1,0 +1,263 @@
+name: Banco do Brasil module
+on:
+  pull_request:
+    branches: [main, develop, feat/banco-brasil-billing-cnab240]
+    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'tests/support/BbPdoDatabase.php', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/support/BbCnab400PreparationWorker.php', 'tests/test_bb_native_gateway.py', 'application/controllers/Portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', 'docs/modules/banco-brasil*', 'docs/banco-brasil*', '.github/workflows/banco-brasil.yml']
+  push:
+    branches: [main]
+    paths: ['modules/banco_brasil/**', 'tests/banco_brasil*', 'tests/ci/verify_bb_checkout_chain.py', 'tests/test_bb_native_gateway.py', 'tests/support/BancoBrasilCheckoutFixture.php', 'tests/support/BbCnab400PreparationWorker.php', 'application/controllers/Portal.php', 'application/views/company_portal/**', 'application/services/CompanyPortal.php', 'application/models/Payments_model.php', '.github/workflows/banco-brasil.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checkout-presentation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: ghcr.io/wkarts/argws-crm-ci-php@sha256:d050af83a621363bdc79e5868f85d7203e8b5fb03be6cd37fbb7c41500894677
+      options: --shm-size=1g
+    steps:
+      - uses: actions/checkout@v4
+      - run: EXPECTED_PHP=8.5 argws-ci-smoke
+      - run: python3 tests/test_bb_native_gateway.py
+      - run: php -l tests/support/BancoBrasilCheckoutFixture.php
+      - run: node tests/banco_brasil_checkout_browser.cjs
+        env:
+          BB_CHECKOUT_SCREENSHOT_DIR: /tmp/bb-checkout-render
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bb-checkout-production-views-synthetic-data
+          path: /tmp/bb-checkout-render/
+          if-no-files-found: error
+  unit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.5']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          extensions: pdo_sqlite, mbstring
+      - run: php tests/companies/bb_channel_preferences.php
+      - run: find modules/banco_brasil -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: php tests/banco_brasil_checkout_legacy_guard.php
+      - run: php tests/banco_brasil_admin.php
+      - run: php tests/banco_brasil_cnab240.php
+      # Includes the existing parser suite plus invoice comparison; no duplicate run.
+      - run: php tests/banco_brasil_cnab400_invoice_comparison.php
+      - run: php tests/banco_brasil_store.php
+      - run: php tests/banco_brasil_layouts.php
+      - run: php tests/banco_brasil_layout_migration.php
+      - run: php tests/banco_brasil_module_version.php
+      # 439 fixtures keep their exact119 guards; 440 protocol scenarios are retained; current header/release is verified explicitly without substituting119/120 at runtime.
+      - run: php tests/banco_brasil_resume_440_contracts.php
+      - run: php tests/banco_brasil_api_window_discount_contract.php
+      - run: php tests/banco_brasil_tariff_data.php
+      - run: php tests/banco_brasil_local_noncash_api_bootstrap_v3.php
+      - run: php tests/banco_brasil_api_client.php
+      - run: php tests/banco_brasil_api_interest.php
+      - run: php tests/banco_brasil_api_movements.php
+      - run: php tests/banco_brasil_mtls.php
+      - run: python3 tests/banco_brasil_mtls_transport.py
+  mysql:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bb_test
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping -proot" --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: gd, pdo_mysql, mysqli, curl, mbstring, bcmath
+          coverage: none
+      - run: |
+          set -x # Trace test entrypoints only; no credential values or banking payloads.
+          # Test native install/upgrade early before lengthy independent SQL suites.
+          php tests/banco_brasil_resume_443_module_tracking.php
+          php tests/banco_brasil_mysql.php
+          php tests/banco_brasil_layout_mysql.php
+          php tests/banco_brasil_cnab400_receipt_mysql.php
+          php tests/banco_brasil_mysql_driver.php
+          php tests/banco_brasil_components_concurrency.php
+          php tests/banco_brasil_api_monthly_interest.php
+          php tests/banco_brasil_api_fixed_discount.php
+          php tests/banco_brasil_api_fixed_discount_concurrency.php
+          php tests/banco_brasil_api_percentage_discount.php
+          php tests/banco_brasil_api_percentage_discount_concurrency.php
+          php tests/banco_brasil_cross_channel_receipt_concurrency.php
+          php tests/banco_brasil_api16_components_data.php
+          php tests/banco_brasil_api16_components_concurrency.php
+          # Checkout includes the SQL component, percentage, fixed and monthly suites.
+          python3 tests/ci/verify_bb_checkout_chain.py
+          php tests/banco_brasil_checkout_mysql.php
+          php tests/banco_brasil_api16_components_cross_channel.php
+          php tests/banco_brasil_pdf_typography_mysql.php
+          php tests/banco_brasil_api_origin_cnab240_mysql.php
+          php tests/banco_brasil_api_origin_cnab240_concurrency.php
+          php tests/banco_brasil_interrupted_sending_mysql.php
+          php tests/banco_brasil_interrupted_read_mysql.php
+          php tests/banco_brasil_api16_mutation_fence_mysql.php
+          php tests/banco_brasil_api16_mutation_fence_concurrency.php
+          php tests/banco_brasil_api_origin_mutation_fence_concurrency.php
+          php tests/banco_brasil_external_reversal_concurrency.php
+          # Keep all published436 commands above. Exact119 entrypoints remain on disk;440 protocol suites use the exact current native release.
+          php tests/banco_brasil_resume_440_contracts.php
+          php tests/banco_brasil_resume_440_mysql.php
+          php tests/banco_brasil_resume_440_concurrency.php
+          php tests/banco_brasil_resume_439_api16_reversal.php
+          php tests/banco_brasil_resume_440_controller.php
+          php tests/banco_brasil_api_window_discount_contract.php
+          php tests/banco_brasil_api_window_discount_mysql.php
+          php tests/banco_brasil_api_window_discount_controller.php
+          php tests/banco_brasil_api_window_discount_concurrency.php
+          # Typed Seu Numero aliases and after-I/O activity validation442.
+          php tests/banco_brasil_own_number_contract.php
+          php tests/banco_brasil_own_number_view.php
+          php tests/banco_brasil_own_number_sqlite.php
+          php tests/banco_brasil_own_number_mysql.php
+          php tests/banco_brasil_own_number_activity.php
+          php tests/banco_brasil_own_number_controller.php
+          php tests/banco_brasil_own_number_concurrency.php
+          php tests/banco_brasil_own_number_interrupted.php
+          # Observational CNAB400 auxiliaries443; no financial/outbound enablement.
+          php tests/banco_brasil_cnab400_aux.php
+          php tests/banco_brasil_cnab400_aux_mysql.php
+          php tests/banco_brasil_cnab400_aux_controller.php
+          php tests/banco_brasil_cnab400_aux_concurrency.php
+          #447: explicit tariff basis and closed LOCAL cycle, real SQL/faults/concurrency/readers.
+          php tests/banco_brasil_tariff_readers.php
+          php tests/banco_brasil_tariff_controller.php
+          php tests/banco_brasil_tariff_boundaries.php
+          php tests/banco_brasil_tariff_concurrency.php
+          php tests/banco_brasil_tariff_late_replay.php
+          php tests/banco_brasil_local_noncash_schema_v3.php
+          php tests/banco_brasil_local_noncash_funds_faults_v3.php
+          php tests/banco_brasil_local_noncash_concurrency_v3.php
+          php tests/banco_brasil_local_noncash_readers_v3.php
+          php tests/banco_brasil_local_noncash_recurring_v3.php
+          php tests/banco_brasil_local_noncash_clock_v3.php
+          php tests/banco_brasil_local_noncash_api_read_concurrency_v3.php
+          php tests/banco_brasil_local_noncash_api_http_scope_v3.php
+        env:
+          MYSQL_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
+          MYSQL_USER: root
+          MYSQL_PASSWORD: root
+          ISSUERS_TEST_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: root
+
+  mariadb:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: synthetic-ci-password
+          MARIADB_DATABASE: bb_test
+        ports: ['3306:3306']
+        options: --health-cmd="mariadb-admin ping -psynthetic-ci-password" --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: gd, pdo_mysql, mysqli, curl, mbstring, bcmath
+          coverage: none
+      - name: Instalação, upgrade, drivers, origem e conciliação em MariaDB descartável
+        env:
+          MYSQL_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
+          MYSQL_USER: root
+          MYSQL_PASSWORD: synthetic-ci-password
+          ISSUERS_TEST_DSN: mysql:host=127.0.0.1;dbname=bb_test;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: synthetic-ci-password
+        run: |
+          set -x # Preserve the exact test at a failure/cancellation.
+          # Test native install/upgrade early before lengthy independent SQL suites.
+          php tests/banco_brasil_resume_443_module_tracking.php
+          php tests/banco_brasil_mysql.php
+          php tests/banco_brasil_layout_mysql.php
+          php tests/banco_brasil_cnab400_receipt_mysql.php
+          php tests/banco_brasil_mysql_driver.php
+          php tests/issuers_core.php
+          php tests/companies/clients.php
+          php tests/companies/client_concurrency.php
+          php tests/companies/portal_positive.php
+          php tests/companies/portal_concurrency.php
+          php tests/companies/portal_invoice_concurrency.php
+          php tests/banco_brasil_origination_concurrency.php
+          php tests/banco_brasil_reconciliation_concurrency.php
+          php tests/banco_brasil_api_concurrency.php
+          php tests/banco_brasil_api_receipt_concurrency.php
+          php tests/banco_brasil_cross_channel_receipt_concurrency.php
+          php tests/banco_brasil_api16_components_data.php
+          php tests/banco_brasil_api16_components_concurrency.php
+          # Checkout includes the SQL component, percentage, fixed and monthly suites.
+          python3 tests/ci/verify_bb_checkout_chain.py
+          php tests/banco_brasil_checkout_mysql.php
+          php tests/banco_brasil_api16_components_cross_channel.php
+          php tests/banco_brasil_pdf_typography_mysql.php
+          php tests/banco_brasil_api_origin_cnab240_mysql.php
+          php tests/banco_brasil_api_origin_cnab240_concurrency.php
+          php tests/banco_brasil_interrupted_sending_mysql.php
+          php tests/banco_brasil_interrupted_read_mysql.php
+          php tests/banco_brasil_api16_mutation_fence_mysql.php
+          php tests/banco_brasil_api16_mutation_fence_concurrency.php
+          php tests/banco_brasil_api_origin_mutation_fence_concurrency.php
+          php tests/banco_brasil_api_monthly_interest.php
+          php tests/banco_brasil_api_fixed_discount.php
+          php tests/banco_brasil_api_fixed_discount_concurrency.php
+          php tests/banco_brasil_api_percentage_discount.php
+          php tests/banco_brasil_api_percentage_discount_concurrency.php
+          php tests/banco_brasil_webhook_mysql.php
+          php tests/banco_brasil_amendment_concurrency.php
+          php tests/banco_brasil_components_concurrency.php
+          php tests/banco_brasil_external_reversal_concurrency.php
+          # Keep all published436 commands above. Exact119 entrypoints remain on disk;440 protocol suites use the exact current native release.
+          php tests/banco_brasil_resume_440_contracts.php
+          php tests/banco_brasil_resume_440_mysql.php
+          php tests/banco_brasil_resume_440_concurrency.php
+          php tests/banco_brasil_resume_439_api16_reversal.php
+          php tests/banco_brasil_resume_440_controller.php
+          php tests/banco_brasil_api_window_discount_contract.php
+          php tests/banco_brasil_api_window_discount_mysql.php
+          php tests/banco_brasil_api_window_discount_controller.php
+          php tests/banco_brasil_api_window_discount_concurrency.php
+          # Typed Seu Numero aliases and after-I/O activity validation442.
+          php tests/banco_brasil_own_number_contract.php
+          php tests/banco_brasil_own_number_view.php
+          php tests/banco_brasil_own_number_sqlite.php
+          php tests/banco_brasil_own_number_mysql.php
+          php tests/banco_brasil_own_number_activity.php
+          php tests/banco_brasil_own_number_controller.php
+          php tests/banco_brasil_own_number_concurrency.php
+          php tests/banco_brasil_own_number_interrupted.php
+          # Observational CNAB400 auxiliaries443; no financial/outbound enablement.
+          php tests/banco_brasil_cnab400_aux.php
+          php tests/banco_brasil_cnab400_aux_mysql.php
+          php tests/banco_brasil_cnab400_aux_controller.php
+          php tests/banco_brasil_cnab400_aux_concurrency.php
+          #447: explicit tariff basis and closed LOCAL cycle, real SQL/faults/concurrency/readers.
+          php tests/banco_brasil_tariff_readers.php
+          php tests/banco_brasil_tariff_controller.php
+          php tests/banco_brasil_tariff_boundaries.php
+          php tests/banco_brasil_tariff_concurrency.php
+          php tests/banco_brasil_tariff_late_replay.php
+          php tests/banco_brasil_local_noncash_schema_v3.php
+          php tests/banco_brasil_local_noncash_funds_faults_v3.php
+          php tests/banco_brasil_local_noncash_concurrency_v3.php
+          php tests/banco_brasil_local_noncash_readers_v3.php
+          php tests/banco_brasil_local_noncash_recurring_v3.php
+          php tests/banco_brasil_local_noncash_clock_v3.php
+          php tests/banco_brasil_local_noncash_api_read_concurrency_v3.php
+          php tests/banco_brasil_local_noncash_api_http_scope_v3.php

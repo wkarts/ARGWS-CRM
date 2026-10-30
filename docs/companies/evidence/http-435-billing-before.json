@@ -1,0 +1,91 @@
+{
+  "phase": "before",
+  "at_utc": "2026-10-19T21:35:39.009374+00:00",
+  "billing_rows": [
+    {
+      "expense_id": 7,
+      "issuer_id": 3,
+      "tax_id": "11222333000181",
+      "description": "Browser expense a <literal>",
+      "note": "Browser billing origin a",
+      "amount_cents": 1010,
+      "tax_cents": 51,
+      "total_cents": 1061,
+      "revision": 1,
+      "expense_state": "recorded",
+      "client_id": 14,
+      "project_id": 15,
+      "billing_state": "converted",
+      "origin_id": 1,
+      "invoice_id": 123,
+      "invoice_subtotal": 10.1,
+      "invoice_tax": 0.51,
+      "invoice_total": 10.61,
+      "invoice_status": 1,
+      "invoice_currency": 1,
+      "invoice_project": 0,
+      "origin_hash": "77daec1b2aaebd4392f55fdfdcccaafb432b716e1896259a71fcb37eaa2f2fc0",
+      "source_hash": "5381517a59f9b26a1ea076b5421293bee49d576eaac7c9d2654fc3522950a75c",
+      "payload_hash": "ee8fe42f1c1b1572e3cf5f6754c70f44045108c558aaac6f3f8e850b06220ea2",
+      "cash_receipts": "0"
+    },
+    {
+      "expense_id": 8,
+      "issuer_id": 2,
+      "tax_id": "52998224725",
+      "description": "Browser expense b <literal>",
+      "note": "Browser billing origin b",
+      "amount_cents": 1010,
+      "tax_cents": 51,
+      "total_cents": 1061,
+      "revision": 1,
+      "expense_state": "recorded",
+      "client_id": 15,
+      "project_id": 16,
+      "billing_state": "ready",
+      "origin_id": 2,
+      "invoice_id": null,
+      "invoice_subtotal": null,
+      "invoice_tax": null,
+      "invoice_total": null,
+      "invoice_status": null,
+      "invoice_currency": null,
+      "invoice_project": null,
+      "origin_hash": "8e988968c32fd36d30bc2632c9ad93d8bd2d0c366a492fb5204a2ff74144c114",
+      "source_hash": "7dfedb951bcaa4ccce9ab7b52d38e39f5c5798be3085b3788668445f033b3e8d",
+      "payload_hash": "33e0a37bab09734da8588b39cc58fb685980b9fcb361cc25a2a20c22d4587b47",
+      "cash_receipts": "0"
+    }
+  ],
+  "protected_expense_ids": [
+    7,
+    8
+  ],
+  "protected_invoice_ids": [
+    123
+  ],
+  "protected_full_row_hashes": {
+    "expenses": "4214eb34b08c50d64d88fc80ceff122b1425a73210bac2562184506b57d8fdbe",
+    "links": "9e6f4a57f2362ce85c4f389777af3746446f3a28b7d862c0a651bf7b815d20a5",
+    "origins": "525cefe6ec3d571f9de8d36b7b94a102c9ac65b73cb0cac3d41739cb98f5847f",
+    "invoices": "c9d3528b85833e845098cc8eaeb10f641c9ef6e71b5285ebfb61e79539efef99",
+    "invoice_documents": "073dac78a6b17985b43054ea50798c5a89e6fca89b12a4bd38235f991d4cf802",
+    "invoice_receipts": "9d2b81bdd9f15d2e83d1084735d09d929660e1b9d64534c2149668b87b88c0cf"
+  },
+  "reference_identity_counts": {
+    "a": {
+      "clients": "1",
+      "categories": "1",
+      "projects": "1"
+    },
+    "b": {
+      "clients": "1",
+      "categories": "1",
+      "projects": "1"
+    }
+  },
+  "cash_receipt_count": "6",
+  "invoice_count": "123",
+  "trigger_exists": false,
+  "hash_transport": "SHA256 actual MariaDB CLI --batch --raw full-row readback for only protected initial synthetic billing rows; no row edits."
+}

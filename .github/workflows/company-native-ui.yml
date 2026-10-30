@@ -1,0 +1,66 @@
+name: Interface nativa multiempresa
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main, develop]
+    paths: ['application/**', 'assets/**', 'modules/**', 'docs/companies/**', 'tests/native_*', 'tests/helpers/**', '.github/workflows/company-native-ui.yml']
+permissions:
+  contents: read
+jobs:
+  native-ui:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+      options: --shm-size=1g
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verificar ferramentas incorporadas
+        run: |
+          php -r 'foreach (["pdo_sqlite", "mbstring", "dom"] as $extension) { if (!extension_loaded($extension)) { throw new RuntimeException("Missing extension: " . $extension); } }'
+          php --version
+          node --version
+          node -e 'console.log("Playwright " + require("playwright/package.json").version); console.log("Chromium executable: " + require("playwright").chromium.executablePath())'
+      - name: Validar rota ativa com o loader nativo real
+        run: php tests/support/CompanyShellRouteFixture.php
+      - name: Sintaxe PHP e contratos estáticos
+        run: |
+          find application/views/admin/includes application/views/admin/settings application/views/admin/issuers -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -l application/controllers/admin/Issuers.php
+          python3 tests/native_ui_surface_inventory.py
+          node --check assets/js/company-workspace.js
+          node --check assets/js/company-registry.js
+          node --check assets/js/company-shell.js
+          node --check assets/js/company-onboarding-modal.js
+          # Header rendering is owned by native-header-layout.yml; keep this
+          # job focused on company navigation/settings contracts so the same
+          # fixture is not executed twice for one SHA.
+          node --test tests/native_settings_native.test.cjs tests/native_workspace_driver.test.cjs tests/native_selector_driver.test.cjs tests/native_sidebar_toggle.test.cjs
+          php tests/native_settings_layout.php
+          php tests/native_shell_presentation.php
+          node --test tests/native_shell_controls.test.cjs tests/native_navigation_tabs.test.cjs
+          php tests/native_settings_certificate_link.php
+      - name: Fluxos desktop/mobile, grid e modal
+        env:
+          SCREENSHOT_DIR: artifacts/company-native-ui
+          COMPANY_SHELL_SCREENSHOT_DIR: artifacts/company-native-ui/fidelity
+        run: |
+          mkdir -p artifacts/company-native-ui
+          node tests/native_shell_browser.cjs
+          node tests/native_shell_fidelity.browser.cjs
+          node tests/efi/native_ui.browser.cjs
+          node tests/native_workspace_browser.cjs
+          node tests/native_registry_modal_browser.cjs
+          node tests/native_settings_layout.browser.cjs
+      # Repetição é um teste de estabilidade opcional, não cobertura adicional da PR.
+      - name: Verificar estabilidade do modal em execução manual
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          for attempt in 1 2; do node tests/native_registry_modal_browser.cjs; done
+      - name: Evidências sintéticas de apresentação
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-native-ui
+          path: artifacts/company-native-ui
+          if-no-files-found: ignore
+          retention-days: 1

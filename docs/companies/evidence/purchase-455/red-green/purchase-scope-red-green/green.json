@@ -1,0 +1,14 @@
+{
+  "source_sha256": "a3bb7afe421f4290901830cd23b1813b6de8597213679ce1f8c05306b91fa9e9",
+  "test_sha256": "2494b7fa57e1013972f79d2b75da132bc2202a503a1cee1371a704f1906bb8fd",
+  "results": [
+    {
+      "runtime": "php83",
+      "exit_code": 0
+    },
+    {
+      "runtime": "php81",
+      "exit_code": 0
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "frozen_source": "/tmp/pr45-index-428-mfby_s4_",
+  "source_runtime_scope": [
+    "application/",
+    "modules/",
+    "assets/",
+    "install/"
+  ],
+  "source_runtime_files": 17918,
+  "source_runtime_changes_since_start": [],
+  "running_versioned_scope": [
+    "application/",
+    "modules/",
+    "assets/"
+  ],
+  "running_versioned_files": 17904,
+  "running_versioned_changed_or_missing": [],
+  "generated_runtime_files": [
+    {
+      "path": "application/config/my_hooks.php",
+      "sha256": "e99910db2ae81b8c0c4036ccd8e072eba96bbadf13b8985a7a832c026081e534",
+      "origin": "Native framework copied existing modules/webhooks/resources/application/config/my_hooks.php byte-for-byte; also present in425/427 QA runtime"
+    },
+    {
+      "path": "application/config/app-config.php",
+      "sha256": "22296e53a0d254a991dc146ca52d034cad9c73ee90fa87b80c9587b33b00d813",
+      "origin": "Native installer synthetic disposable DB/URL/encryption configuration"
+    },
+    {
+      "path": "application/vendor/ezyang/htmlpurifier/library/HTMLPurifier/DefinitionCache/Serializer/HTML/4.18.0,da6d6a6e5b0031b629d110c3afda53741973bf07,428.ser",
+      "sha256": "f88262403c9b46204e72ff9ac126731ea24edeeddda19629cbfc9988c8bd57eb",
+      "origin": "Native HTMLPurifier definition cache data"
+    }
+  ],
+  "installer_handling": "Native HTTP installer executed frozen installer code, with synthetic AUTO_INCREMENT17 seed appended to disposable database.sql; install directory removed after native success as required. Source installer files remained immutable.",
+  "test_transport_only_adapted_files": [
+    "tests/banco_brasil_api_credit_http_fixture.php",
+    "tests/banco_brasil_components_browser.cjs",
+    "tests/banco_brasil_components_http_fixture.php",
+    "tests/banco_brasil_external_reversal_browser.cjs",
+    "tests/banco_brasil_external_reversal_http_fixture.php",
+    "tests/banco_brasil_http_fixture.php",
+    "tests/banco_brasil_origination_browser.cjs",
+    "tests/companies/asaas_checkout_http_fixture.php",
+    "tests/companies/asaas_http_fixture.php",
+    "tests/companies/asaas_install_http_fixture.php",
+    "tests/companies/asaas_install_remote_http_fixture.php",
+    "tests/companies/contracts_browser.cjs",
+    "tests/companies/ledger_http_fixture.php",
+    "tests/companies/operation_files_browser.cjs",
+    "tests/companies/operations_api_browser.cjs",
+    "tests/companies/portal_operations_browser.cjs",
+    "tests/companies/projects_browser.cjs",
+    "tests/companies/projects_extras_browser.cjs",
+    "tests/companies_asaas_browser.cjs",
+    "tests/companies_asaas_checkout_browser.cjs",
+    "tests/companies_asaas_remote_browser.cjs",
+    "tests/companies_credits_browser.cjs",
+    "tests/companies_expenses_browser.cjs",
+    "tests/companies_imports_browser.cjs",
+    "tests/companies_invoices_browser.cjs",
+    "tests/companies_ledger_browser.cjs",
+    "tests/companies_onboarding_browser.cjs",
+    "tests/companies_portal_browser.cjs",
+    "tests/companies_reports_api_browser.cjs",
+    "tests/companies_sales_browser.cjs",
+    "tests/companies_sales_extras_browser.cjs",
+    "tests/issuers_browser_smoke.cjs",
+    "tests/settings_primary_sales_browser.cjs",
+    "tests/settings_sales_documents_browser.cjs"
+  ]
+}

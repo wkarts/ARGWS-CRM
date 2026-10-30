@@ -1,0 +1,267 @@
+<?php
+
+declare(strict_types=1);
+require_once __DIR__.'/CompanyPurchasesSchema.php';
+require_once __DIR__.'/CompanyPurchasesValues.php';
+require_once __DIR__.'/CompanyPurchasesStorage.php';
+require_once __DIR__.'/CompanyPurchasesFinance.php';
+require_once __DIR__.'/CompanyPurchasesFiles.php';
+require_once __DIR__.'/CompanyPurchasesPortal.php';
+require_once __DIR__.'/CompanyPurchasesReports.php';
+require_once __DIR__.'/CompanyExpenses.php';
+
+/** Company-owned procurement. Explicit quantities, immutable posted evidence and a separate manual AP ledger. */
+final class CompanyPurchases
+{
+    use CompanyPurchasesStorage, CompanyPurchasesFinance, CompanyPurchasesFiles, CompanyPurchasesPortal, CompanyPurchasesReports;
+    private IssuerResourceAccess $acl;
+
+    public function __construct(private $db, private string $p)
+    {
+        if (!preg_match('/^[A-Za-z0-9_]+$/D', $p)) { throw new InvalidArgumentException('Invalid table prefix'); }
+        $this->acl = new IssuerResourceAccess($db, $p);
+    }
+
+    public static function forApi($db,string $p,string $secret,string $scope): array
+    {
+        require_once __DIR__.'/CompanyApiTokens.php';
+        if (!in_array($scope,['purchases:read','purchases:write','purchases:approve','purchases:receive','purchases:post','purchases:pay','purchases:portal','purchases:report','purchases:settings'],true)) { throw new DomainException('company_api_scope_denied'); }
+        $who=(new CompanyApiTokens($db,$p))->resolve($secret,$scope); $s=new self($db,$p); $s->api=$who+['secret'=>$secret]; return [$s,$who];
+    }
+
+    public function configure($issuer, $actor, ?int $revision, array $input, string $key): int
+    {
+        CompanyPurchasesValues::fields($input, ['prefix','base_currency','rates']);
+        $prefix = $input['prefix'] ?? null;
+        if (!is_string($prefix) || !preg_match('/^[A-Z0-9_]{1,12}$/D', $prefix)) { throw new DomainException('company_purchase_invalid'); }
+        $base = CompanyPurchasesValues::currency($input['base_currency'] ?? null);
+        $raw = $input['rates'] ?? null;
+        if (!is_array($raw) || array_diff(array_keys($raw), ['BRL','USD','EUR'])) { throw new DomainException('company_purchase_invalid'); }
+        $rates = [];
+        foreach ($raw as $currency => $rate) { $rates[$currency] = CompanyPurchasesValues::decimal($rate, 6, 1000000000, 1); }
+        if (($rates[$base] ?? null) !== 1000000) { throw new DomainException('company_purchase_invalid_exchange'); }
+        ksort($rates);
+        $data = ['prefix'=>$prefix,'base_currency'=>$base,'rates_json'=>CompanyPurchasesValues::json($rates)];
+        return $this->command($issuer, $actor, 'settings', 'configured', $key, [$revision,$data], function ($i, $a) use ($revision, $data): array {
+            $old = $this->rows('SELECT * FROM '.$this->p.'company_purchase_settings WHERE issuer_id=? FOR UPDATE', [$i])[0] ?? null;
+            if ($old === null) {
+                if ($revision !== null) { throw new DomainException('company_purchase_stale'); }
+                $this->insert('company_purchase_settings', ['issuer_id'=>$i] + $data + ['revision'=>1,'updated_by'=>$a,'updated_at'=>self::now()], 'issuer_id');
+            } else {
+                $this->revision($old, $revision);
+                $this->update('company_purchase_settings', $old, $data + ['revision'=>$revision + 1,'updated_by'=>$a,'updated_at'=>self::now()], 'issuer_id');
+            }
+            return ['settings',$i,$i];
+        });
+    }
+
+    public function configuration($issuer, $actor): ?array
+    {
+        $issuer = IssuerPolicy::id($issuer); $actor = IssuerPolicy::id($actor);
+        return $this->transaction($issuer, $actor, 'view', 'configuration', null, function () use ($issuer): ?array {
+            $row = $this->rows('SELECT * FROM '.$this->p.'company_purchase_settings WHERE issuer_id=? FOR UPDATE', [$issuer])[0] ?? null;
+            if ($row) { $this->remember('company_purchase_settings', $row, 'issuer_id'); $row['rates'] = CompanyPurchasesValues::decode($row['rates_json']); }
+            return $row;
+        });
+    }
+
+    public function saveSupplier($issuer, $actor, ?int $id, ?int $revision, array $input, string $key): int
+    {
+        CompanyPurchasesValues::fields($input, ['name','tax_id','email','phone','address','active']);
+        $data = [];
+        foreach (['name'=>191,'tax_id'=>32,'email'=>100,'phone'=>64,'address'=>1000] as $field => $max) { $data[$field] = CompanyPurchasesValues::text($input[$field] ?? '', $max, $field === 'name'); }
+        $data['tax_id'] = strtoupper($data['tax_id']);
+        if (!preg_match('/^[A-Z0-9.\/-]*$/D', $data['tax_id'])) { throw new DomainException('company_purchase_invalid'); }
+        $data['email'] = strtolower($data['email']);
+        if ($data['email'] !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) { throw new DomainException('company_purchase_invalid'); }
+        $data['active'] = CompanyPurchasesValues::integer($input['active'] ?? 1, 0, 1);
+        if ($id !== null) { $id = IssuerPolicy::id($id); }
+        return $this->command($issuer, $actor, $id === null ? 'create' : 'edit', 'supplier_saved', $key, [$id,$revision,$data], function ($i, $a) use ($id, $revision, $data): array {
+            if ($id === null) {
+                if ($revision !== null) { throw new DomainException('company_purchase_stale'); }
+                $id = $this->insert('company_purchase_suppliers', ['issuer_id'=>$i] + $data + ['revision'=>1,'updated_at'=>self::now(),'created_by'=>$a,'created_at'=>self::now()]);
+            } else {
+                $row = $this->object($i, 'supplier', $id); $this->revision($row, $revision);
+                $this->update('company_purchase_suppliers', $row, $data + ['revision'=>$revision + 1,'updated_at'=>self::now()]);
+            }
+            return ['supplier',$id,$id];
+        });
+    }
+
+    public function createRequest($issuer, $actor, array $input, string $key): int
+    {
+        CompanyPurchasesValues::fields($input, ['title','needed_date','currency','lines']);
+        $data = ['title'=>CompanyPurchasesValues::text($input['title'] ?? null,191,true),'needed_date'=>CompanyPurchasesValues::date($input['needed_date'] ?? null),'currency'=>CompanyPurchasesValues::currency($input['currency'] ?? null),'lines_json'=>CompanyPurchasesValues::json(CompanyPurchasesValues::lines($input['lines'] ?? null))];
+        return $this->command($issuer, $actor, 'create', 'request_created', $key, $data, function ($i, $a) use ($data): array {
+            [$number,$reference] = $this->number($i, 'request');
+            $id = $this->insert('company_purchase_requests', ['issuer_id'=>$i,'number'=>$number,'reference'=>$reference] + $data + ['state'=>'open','revision'=>1,'updated_at'=>self::now(),'created_by'=>$a,'created_at'=>self::now()]);
+            return ['request',$id,$id];
+        });
+    }
+
+    public function approveRequest($issuer, $actor, $id, $revision, string $key): int
+    {
+        $id = IssuerPolicy::id($id); $revision = CompanyPurchasesValues::integer($revision,1);
+        return $this->command($issuer, $actor, 'approve', 'request_approved', $key, [$id,$revision], function ($i) use ($id,$revision): array {
+            $row = $this->object($i,'request',$id); $this->revision($row,$revision);
+            if ($row['state'] !== 'open') { throw new DomainException('company_purchase_state_conflict'); }
+            $this->update('company_purchase_requests',$row,['state'=>'approved','revision'=>$revision+1,'updated_at'=>self::now()]);
+            return ['request',$id,$id];
+        });
+    }
+
+    public function cancel($issuer, $actor, string $kind, $id, $revision, string $key): int
+    {
+        if (!in_array($kind,['request','order'],true)) { throw new DomainException('company_purchase_invalid'); }
+        $id = IssuerPolicy::id($id); $revision = CompanyPurchasesValues::integer($revision,1);
+        return $this->command($issuer,$actor,'approve',$kind.'_cancelled',$key,[$id,$revision],function ($i) use ($kind,$id,$revision): array {
+            $row=$this->object($i,$kind,$id); $this->revision($row,$revision);
+            if (($kind==='request'&&!in_array($row['state'],['open','approved'],true))||($kind==='order'&&$row['state']!=='ordered')) { throw new DomainException('company_purchase_state_conflict'); }
+            if ($kind==='order'&&$this->rows('SELECT id FROM '.$this->p.'company_purchase_receipts WHERE issuer_id=? AND order_id=?',[$i,$id])) { throw new DomainException('company_purchase_state_conflict'); }
+            $this->update(self::table($kind),$row,['state'=>'cancelled','revision'=>$revision+1,'updated_at'=>self::now()]);
+            return [$kind,$id,$id];
+        });
+    }
+
+    public function quote($issuer, $actor, array $input, string $key): int
+    {
+        CompanyPurchasesValues::fields($input,['request_id','supplier_id','valid_until','unit_prices','tax_rate','note']);
+        $request=IssuerPolicy::id($input['request_id']??null); $supplier=IssuerPolicy::id($input['supplier_id']??null);
+        $valid=CompanyPurchasesValues::date($input['valid_until']??null); $tax=CompanyPurchasesValues::decimal($input['tax_rate']??null,2,10000);
+        $note=CompanyPurchasesValues::text($input['note']??'',2000); $prices=$input['unit_prices']??null;
+        if (!is_array($prices)||!array_is_list($prices)||count($prices)<1||count($prices)>50) { throw new DomainException('company_purchase_invalid'); }
+        $prices=array_map(static fn($v)=>CompanyPurchasesValues::decimal($v,2,999999999),$prices);
+        return $this->command($issuer,$actor,'create','quote_created',$key,[$request,$supplier,$valid,$tax,$note,$prices],function ($i,$a) use ($request,$supplier,$valid,$tax,$note,$prices): array {
+            if ($this->portal!==null&&($request!==$this->portal['request_id']||$supplier!==$this->portal['supplier_id'])) { throw new DomainException('company_purchase_denied'); }
+            $req=$this->object($i,'request',$request); $vendor=$this->object($i,'supplier',$supplier);
+            if (!in_array($req['state'],['open','approved'],true)||(int)$vendor['active']!==1||$valid<gmdate('Y-m-d')) { throw new DomainException('company_purchase_state_conflict'); }
+            if ((int)$this->rows('SELECT COUNT(*) n FROM '.$this->p.'company_purchase_quotes WHERE issuer_id=? AND request_id=?',[$i,$request])[0]['n']>=200) { throw new DomainException('company_purchase_quote_limit'); }
+            $lines=CompanyPurchasesValues::decode($req['lines_json']); if (count($lines)!==count($prices)) { throw new DomainException('company_purchase_invalid'); }
+            $base=0;
+            foreach ($lines as $n=>&$line) { $line['unit_cents']=$prices[$n]; $line['base_cents']=CompanyPurchasesValues::base((int)$line['quantity_milli'],$prices[$n]); $base+=$line['base_cents']; }
+            unset($line); $taxCents=CompanyPurchasesValues::tax($base,$tax); CompanyPurchasesValues::integer($base+$taxCents,1,CompanyPurchasesValues::MAX_MONEY);
+            [$number,$reference]=$this->number($i,'quote');
+            $id=$this->insert('company_purchase_quotes',$this->immutable(['issuer_id'=>$i,'request_id'=>$request,'supplier_id'=>$supplier,'number'=>$number,'reference'=>$reference,'valid_until'=>$valid,'currency'=>$req['currency'],'tax_rate'=>$tax,'base_cents'=>$base,'tax_cents'=>$taxCents,'total_cents'=>$base+$taxCents,'lines_json'=>CompanyPurchasesValues::json($lines),'note'=>$note,'origin'=>$this->portal===null?'staff':'supplier_portal','invite_id'=>$this->portal['id']??null,'created_by'=>$this->portal===null?$a:0,'created_at'=>self::now()]));
+            return ['quote',$id,$id];
+        });
+    }
+
+    public function createOrder($issuer, $actor, array $input, string $key): int
+    {
+        CompanyPurchasesValues::fields($input,['quote_id','request_revision','order_date','expected_date']);
+        $quote=IssuerPolicy::id($input['quote_id']??null); $revision=CompanyPurchasesValues::integer($input['request_revision']??null,1);
+        $date=CompanyPurchasesValues::date($input['order_date']??null); $expected=CompanyPurchasesValues::date($input['expected_date']??null);
+        if ($date>gmdate('Y-m-d')||$expected<$date) { throw new DomainException('company_purchase_invalid'); }
+        return $this->command($issuer,$actor,'approve','order_created',$key,[$quote,$revision,$date,$expected],function ($i,$a) use ($quote,$revision,$date,$expected): array {
+            $q=$this->object($i,'quote',$quote); $req=$this->object($i,'request',(int)$q['request_id']); $vendor=$this->object($i,'supplier',(int)$q['supplier_id']); $this->revision($req,$revision);
+            if ($req['state']!=='approved'||(int)$vendor['active']!==1||$q['valid_until']<gmdate('Y-m-d')) { throw new DomainException('company_purchase_state_conflict'); }
+            $settings=$this->settingsRow($i); $rates=CompanyPurchasesValues::decode($settings['rates_json']); $fx=$rates[$q['currency']]??null;
+            if (!is_int($fx)||$fx<1) { throw new DomainException('company_purchase_exchange_required'); }
+            $identity=$this->rows('SELECT id,legal_name,tax_id FROM '.$this->p.'issuers_registry WHERE id=? FOR UPDATE',[$i])[0]; $this->remember('issuers_registry',$identity);
+            $snapshot=CompanyPurchasesValues::json(['issuer'=>$identity,'request'=>$req,'supplier'=>$vendor,'quote'=>$q,'configuration'=>$settings]);
+            [$number,$reference]=$this->number($i,'order'); $now=self::now();
+            $id=$this->insert('company_purchase_orders',['issuer_id'=>$i,'request_id'=>(int)$req['id'],'quote_id'=>$quote,'supplier_id'=>(int)$q['supplier_id'],'number'=>$number,'reference'=>$reference,'order_date'=>$date,'expected_date'=>$expected,'currency'=>$q['currency'],'base_currency'=>$settings['base_currency'],'fx_millionths'=>$fx,'tax_rate'=>$q['tax_rate'],'base_cents'=>$q['base_cents'],'tax_cents'=>$q['tax_cents'],'total_cents'=>$q['total_cents'],'snapshot_json'=>$snapshot,'snapshot_hash'=>hash('sha256',$snapshot),'state'=>'ordered','revision'=>1,'updated_at'=>$now,'created_by'=>$a,'created_at'=>$now]);
+            $this->update('company_purchase_requests',$req,['state'=>'ordered','revision'=>$revision+1,'updated_at'=>$now]);
+            return ['order',$id,$id];
+        });
+    }
+
+    /** Validate the full receipt sequence and cumulative rounding allocation for an order. */
+    private function received(int $issuer, array $order): array
+    {
+        $snapshot=CompanyPurchasesValues::decode($order['snapshot_json']); $quote=$snapshot['quote']??[];
+        $config=$snapshot['configuration']??[]; $rates=CompanyPurchasesValues::decode($config['rates_json']??'');
+        if (!is_string($quote['record_hash']??null)||!hash_equals($quote['record_hash'],CompanyPurchasesValues::hash($quote))||(int)($quote['id']??0)!==(int)$order['quote_id']||(int)($quote['request_id']??0)!==(int)$order['request_id']||(int)($quote['supplier_id']??0)!==(int)$order['supplier_id']||(int)($quote['issuer_id']??0)!==$issuer||($config['base_currency']??null)!==$order['base_currency']||($rates[$order['currency']]??null)!==(int)$order['fx_millionths']||(int)$quote['tax_rate']!==(int)$order['tax_rate']) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+        $lines=CompanyPurchasesValues::decode($quote['lines_json']??''); $quantities=[]; $base=0;
+        foreach ($lines as $line) { $n=CompanyPurchasesValues::integer($line['line']??null,1,50); $quantities[$n]=0; $base+=CompanyPurchasesValues::base((int)$line['quantity_milli'],(int)$line['unit_cents']); }
+        if ($base!==(int)$order['base_cents']||CompanyPurchasesValues::tax($base,(int)$order['tax_rate'])!==(int)$order['tax_cents']||$base+(int)$order['tax_cents']!==(int)$order['total_cents']||($quote['currency']??null)!==$order['currency']) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+        $receipts=$this->rows('SELECT * FROM '.$this->p.'company_purchase_receipts WHERE issuer_id=? AND order_id=? ORDER BY id',[$issuer,$order['id']]);
+        foreach ($receipts as $r) {
+            if (!hash_equals($r['record_hash'],CompanyPurchasesValues::hash($r))) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+            $subtotal=0; $seen=[];
+            foreach (CompanyPurchasesValues::decode($r['lines_json']) as $line) {
+                $n=CompanyPurchasesValues::integer($line['line']??null,1,50); $q=CompanyPurchasesValues::integer($line['quantity_milli']??null,1,CompanyPurchasesValues::MAX_QUANTITY);
+                if (!isset($quantities[$n])||isset($seen[$n])) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+                $seen[$n]=true; $source=$lines[$n-1]; $before=$quantities[$n]; $after=$before+$q;
+                if ($after>(int)$source['quantity_milli']) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+                $allocated=CompanyPurchasesValues::base($after,(int)$source['unit_cents'])-CompanyPurchasesValues::base($before,(int)$source['unit_cents']);
+                if ($allocated!==($line['base_cents']??null)) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+                $subtotal+=$allocated; $quantities[$n]=$after;
+            }
+            if ($subtotal!==(int)$r['base_cents']) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+            $this->remember('company_purchase_receipts',$r);
+        }
+        return ['lines'=>$lines,'quantities'=>$quantities,'receipts'=>$receipts];
+    }
+
+    public function receive($issuer, $actor, $order, $revision, array $input, string $key): int
+    {
+        $order=IssuerPolicy::id($order); $revision=CompanyPurchasesValues::integer($revision,1);
+        CompanyPurchasesValues::fields($input,['received_date','lines','note']); $date=CompanyPurchasesValues::date($input['received_date']??null); $note=CompanyPurchasesValues::text($input['note']??'',2000);
+        if ($date>gmdate('Y-m-d')||!is_array($input['lines']??null)||!array_is_list($input['lines'])||count($input['lines'])<1||count($input['lines'])>50) { throw new DomainException('company_purchase_invalid'); }
+        $lines=[];
+        foreach ($input['lines'] as $r) { if (!is_array($r)) { throw new DomainException('company_purchase_invalid'); } CompanyPurchasesValues::fields($r,['line','quantity']); $n=CompanyPurchasesValues::integer($r['line']??null,1,50); if (isset($lines[$n])) { throw new DomainException('company_purchase_invalid'); } $lines[$n]=CompanyPurchasesValues::decimal($r['quantity']??null,3,CompanyPurchasesValues::MAX_QUANTITY,1); }
+        ksort($lines);
+        return $this->command($issuer,$actor,'receive','received',$key,[$order,$revision,$date,$note,$lines],function ($i,$a) use ($order,$revision,$date,$note,$lines): array {
+            $po=$this->object($i,'order',$order); $this->revision($po,$revision);
+            if (!in_array($po['state'],['ordered','part_received'],true)||$date<$po['order_date']) { throw new DomainException('company_purchase_state_conflict'); }
+            $position=$this->received($i,$po); $allocation=[]; $base=0;
+            foreach ($lines as $n=>$q) {
+                $source=$position['lines'][$n-1]??null;
+                if (!$source) { throw new DomainException('company_purchase_invalid'); }
+                $before=$position['quantities'][$n]; $after=$before+$q;
+                if ($after>(int)$source['quantity_milli']) { throw new DomainException('company_purchase_receipt_exceeds_order'); }
+                $cents=CompanyPurchasesValues::base($after,(int)$source['unit_cents'])-CompanyPurchasesValues::base($before,(int)$source['unit_cents']);
+                $allocation[]=['line'=>$n,'quantity_milli'=>$q,'base_cents'=>$cents]; $base+=$cents; $position['quantities'][$n]=$after;
+            }
+            $complete=true; foreach ($position['lines'] as $r) { if ($position['quantities'][$r['line']]!==$r['quantity_milli']) { $complete=false; } }
+            [$number,$reference]=$this->number($i,'receipt');
+            $id=$this->insert('company_purchase_receipts',$this->immutable(['issuer_id'=>$i,'order_id'=>$order,'number'=>$number,'reference'=>$reference,'received_date'=>$date,'lines_json'=>CompanyPurchasesValues::json($allocation),'base_cents'=>$base,'note'=>$note,'created_by'=>$a,'created_at'=>self::now()]));
+            $new=$this->update('company_purchase_orders',$po,['state'=>$complete?'received':'part_received','revision'=>$revision+1,'updated_at'=>self::now()]);
+            $this->watchSet('company_purchase_receipts',['issuer_id'=>$i,'order_id'=>$order]);
+            $this->validators[]=function () use ($i,$new): void { $this->received($i,$new); };
+            return ['receipt',$id,$id];
+        });
+    }
+
+    public function get($issuer, $actor, string $kind, $id): array
+    {
+        $issuer=IssuerPolicy::id($issuer); $actor=IssuerPolicy::id($actor); $id=IssuerPolicy::id($id); self::table($kind);
+        return $this->transaction($issuer,$actor,'view','read',null,function () use ($issuer,$kind,$id): array {
+            $r=$this->object($issuer,$kind,$id);
+            if ($kind==='order') { $r['receiving']=$this->received($issuer,$r); }
+            if ($kind==='payable') { $r['position']=$this->payablePosition($issuer,$r); }
+            if (in_array($kind,['file','invite'],true)) { unset($r['content'],$r['secret_hash']); }
+            return $r;
+        });
+    }
+
+    public function page($issuer, $actor, string $kind, int $after=0, int $limit=50): array
+    {
+        $issuer=IssuerPolicy::id($issuer); $actor=IssuerPolicy::id($actor); CompanyPurchasesValues::integer($after); CompanyPurchasesValues::integer($limit,1,100); $table=self::table($kind);
+        if (in_array($kind,['file','invite','event'],true)) { throw new DomainException('company_purchase_invalid'); }
+        return $this->transaction($issuer,$actor,'view','list',null,function () use ($issuer,$kind,$table,$after,$limit): array {
+            $rows=$this->rows('SELECT id FROM '.$this->p.$table.' WHERE issuer_id=? AND id>? ORDER BY id LIMIT '.($limit+1),[$issuer,$after]);
+            $more=count($rows)>$limit; if ($more) { array_pop($rows); } $out=[];
+            foreach ($rows as $r) { $row=$this->object($issuer,$kind,(int)$r['id']); if ($kind==='payable') { $row['position']=$this->payablePosition($issuer,$row); } $out[]=$row; }
+            return ['items'=>$out,'next'=>$more?(int)$out[count($out)-1]['id']:null];
+        });
+    }
+
+    public function workspace($issuer,$actor,$request): array
+    {
+        $issuer=IssuerPolicy::id($issuer); $actor=IssuerPolicy::id($actor); $request=IssuerPolicy::id($request);
+        return $this->transaction($issuer,$actor,'view','read',null,function () use ($issuer,$request): array {
+            $out=['request'=>$this->object($issuer,'request',$request),'quotes'=>[],'orders'=>[],'receipts'=>[],'payables'=>[]];
+            $quotes=$this->rows('SELECT id FROM '.$this->p.'company_purchase_quotes WHERE issuer_id=? AND request_id=? ORDER BY id LIMIT 201',[$issuer,$request]);
+            if (count($quotes)>200) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+            foreach ($quotes as $row) { $q=$this->object($issuer,'quote',(int)$row['id']); $supplier=$this->object($issuer,'supplier',(int)$q['supplier_id']); $q['supplier_name']=$supplier['name']; $out['quotes'][]=$q; }
+            foreach ($this->rows('SELECT id FROM '.$this->p.'company_purchase_orders WHERE issuer_id=? AND request_id=? ORDER BY id',[$issuer,$request]) as $row) {
+                $order=$this->object($issuer,'order',(int)$row['id']); $order['receiving']=$this->received($issuer,$order); $out['orders'][]=$order;
+                foreach ($order['receiving']['receipts'] as $receipt) { $link=$this->rows('SELECT document_id FROM '.$this->p.'company_purchase_allocations WHERE issuer_id=? AND receipt_id=?',[$issuer,$receipt['id']])[0]??null; $receipt['document_id']=$link===null?null:(int)$link['document_id']; $out['receipts'][]=$receipt; }
+                foreach ($this->rows('SELECT id FROM '.$this->p.'company_purchase_payables WHERE issuer_id=? AND order_id=? ORDER BY id',[$issuer,$order['id']]) as $ap) { $payable=$this->object($issuer,'payable',(int)$ap['id']); $payable['position']=$this->payablePosition($issuer,$payable); $out['payables'][]=$payable; }
+            }
+            return $out;
+        });
+    }
+}

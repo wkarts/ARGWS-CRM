@@ -1,0 +1,63 @@
+name: Interface CRM e catálogo de pagamentos
+on:
+  pull_request:
+    branches: [main, develop, feat/banco-brasil-billing-cnab240]
+    paths:
+      - application/**
+      - modules/ideal/**
+      - install/**
+      - docker/setup-web.php
+      - tests/crm_ui_*
+      - tests/payment_gateway_catalog.php
+      - tests/ideal_management_forms.php
+      - tests/ideal_module_migrations.php
+      - tests/module_maintenance.php
+      - tests/brand_assets_smoke.php
+      - .github/workflows/crm-ui-policy.yml
+  push:
+    branches: [main, develop]
+    paths:
+      - application/**
+      - modules/ideal/**
+      - tests/crm_ui_*
+      - tests/payment_gateway_catalog.php
+      - tests/ideal_management_forms.php
+      - tests/ideal_module_migrations.php
+      - tests/module_maintenance.php
+      - .github/workflows/crm-ui-policy.yml
+permissions:
+  contents: read
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.3', '8.5']
+    container: php:${{ matrix.php }}-cli
+    steps:
+      - uses: actions/checkout@v5
+      - name: Preparar SQLite para fixtures descartáveis
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends libsqlite3-dev
+          docker-php-ext-install pdo_sqlite
+      - name: Validar política sem banco externo ou chamadas aos provedores
+        run: |
+          php -v
+          php tests/crm_ui_language.php
+          php tests/crm_ui_branding.php
+          php tests/crm_support_contact.php
+          php tests/payment_gateway_catalog.php
+          php tests/ideal_management_forms.php
+          php tests/ideal_module_migrations.php
+          php tests/module_maintenance.php
+          php tests/module_version_column_migration.php
+          php -l application/views/admin/modules/maintenance.php
+          php -l application/views/admin/modules/list.php
+          php tests/brand_assets_smoke.php
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validar contratos e propagação do ambiente
+        run: node --test tests/crm_ui_policy.test.cjs tests/argws_platform_contract.test.cjs tests/crm_ptbr_resources_contract.test.cjs

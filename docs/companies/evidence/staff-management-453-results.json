@@ -1,0 +1,452 @@
+{
+  "scope": "Staff453 scoped team management and atomic native profile/ACL, reconstructed and newly executed after executor loss",
+  "baseline_remote_sha": "543ff96fe2a49ceef48d8595a58e8400befc6266",
+  "published_sha": null,
+  "publication_status": "Root attests the actual integrated PR45 commit and remote SHA separately; this is a source-bound local proof.",
+  "generated_utc": "2026-10-21T10:37:09.618686+00:00",
+  "distinct_new_checks": 177,
+  "new_check_breakdown": {
+    "staff_management": 56,
+    "staff_native_atomic": 69,
+    "staff_native_controller_additional": 30,
+    "staff_concurrency": 22
+  },
+  "counting": "Native controller includes69 atomic checks; counted once. The two engines are not counted twice. Existing access54/master26 and inherited registry76 are regression checks, not new checks.",
+  "product_and_test_files": {
+    "application/controllers/admin/Staff.php": {
+      "bytes": 22453,
+      "sha256": "28691a3105864148170035699ba47cecd0e0b1406fb1b284bf8acc2299177a03",
+      "git_sha": "2ca0018fe37e7226d39ec26455385533ffb5f32b"
+    },
+    "application/controllers/admin/Company_staff.php": {
+      "bytes": 5316,
+      "sha256": "4e5ee3e10b878b531636f63a00ccc90a67fdaed4fe7958ef86dd1bef3fb58d9d",
+      "git_sha": "6f7fa46b62351d28ff0b6bc400b77accedecef5d"
+    },
+    "application/helpers/custom_fields_helper.php": {
+      "bytes": 30939,
+      "sha256": "6a2044cd4a99d949da1767d68d3c21b209effb1309c2c2b5e0d18a37f5320054",
+      "git_sha": "88a6c6bf9eebc0fa10550228faf0286865aaf724"
+    },
+    "application/helpers/staff_access_helper.php": {
+      "bytes": 7013,
+      "sha256": "d843e8b32a170090024c985c9da13df39bee1d8a6363261978f06854582bf82c",
+      "git_sha": "4614cf5e12016e7d20f3f9f69fd59e2063ba390f"
+    },
+    "application/models/Staff_model.php": {
+      "bytes": 36537,
+      "sha256": "841478bd8c1139924f5f209bd8accd7b9cd348db2b7b22bc370e9037395d6aba",
+      "git_sha": "6117d163ea236a40e780e7e377a8f072bf418a60"
+    },
+    "application/services/CompanyNativeStaffTransaction.php": {
+      "bytes": 6974,
+      "sha256": "777165c0d98f7974a974fde171906316b9255caacdbff050813f3dec1c6af6d5",
+      "git_sha": "3d957724fa802225de147bd86a851e04f1d2f592"
+    },
+    "application/services/CompanyStaff.php": {
+      "bytes": 18600,
+      "sha256": "6bf48417a48cb2d8e325b652bd4533d838b3ab11b501ef999048c6e4a1b62923",
+      "git_sha": "aa497426b0be77abfd7640ec48698bfca12b4d82"
+    },
+    "application/services/CompanyStaffSchema.php": {
+      "bytes": 4983,
+      "sha256": "240511c787ebe4564bbba8c3c844c3d5908621e05c3133d258439557845b7468",
+      "git_sha": "14ee8cec4c7803e0e14708d65a99c4aae0035213"
+    },
+    "application/services/issuers/IssuerStaffAccess.php": {
+      "bytes": 17643,
+      "sha256": "4d72391dd074a6a993ef446f231eaf059916c038649e9a72ca7049490e84f1ff",
+      "git_sha": "96db57208eb3d4277cb513a047be8232b265ee6a"
+    },
+    "application/views/admin/companies/staff.php": {
+      "bytes": 6735,
+      "sha256": "b3c2fa56397cd38dc7006db496dd32a1088c78d5cd0972e29f9ad592b5aa8301",
+      "git_sha": "5db0bb6cadf319ca57441d75421c64aebfe23018"
+    },
+    "tests/companies/staff_fixture.php": {
+      "bytes": 9580,
+      "sha256": "e2999cf2a8711e7ddaa9077896638b77469238a799427ea24971da81b1d17f89",
+      "git_sha": "e35a47237aee19bb5f062419d87eba9522720a22"
+    },
+    "tests/companies/staff_management.php": {
+      "bytes": 7249,
+      "sha256": "d109f68bb46507bb24003d049223c9736a7b23fff07182253771ddcff6a9c20e",
+      "git_sha": "0df500f1ba28bbdeccbab077c8f9a30880647acf"
+    },
+    "tests/companies/staff_native_atomic.php": {
+      "bytes": 12016,
+      "sha256": "9baa8fba2aec59ddb3dbd3154dd7c45cf19085e2e47ee64e1e2c2e9b4fe6078e",
+      "git_sha": "4c3e5a3c5127b327c2c0750509a673c025869e11"
+    },
+    "tests/companies/staff_native_controller.php": {
+      "bytes": 8524,
+      "sha256": "5219967f34f3994869e9376f1d60a2e5f7352c7804b2d75824239e8865d44c33",
+      "git_sha": "74d17a5c2624afcf0f8e1482fca78ac0a0ffe37d"
+    },
+    "tests/companies/staff_concurrency.php": {
+      "bytes": 8496,
+      "sha256": "22eb7fc01eb59fa825c7349448f9044ba899c0f810d723cdeacf4c042031dc5b",
+      "git_sha": "b64d77b529cd95858154d6956f6582343215a685"
+    },
+    "tests/companies/staff_browser.cjs": {
+      "bytes": 17841,
+      "sha256": "f41fbe57433cb7797076e02d3bedfa737513201865a893b0a14d98c18d148002",
+      "git_sha": "0832ae2c9c130b978cf9d4e0c113399e8ee0c3a9"
+    },
+    "tests/issuers_staff_native.php": {
+      "bytes": 367,
+      "sha256": "4c52300c36dff8559a48a314d81cb93a6dd0c1ca9ddcb3ba4fffbe36c766cfb5",
+      "git_sha": "06631411f840576686dc602bc482cfd9caa67be8"
+    },
+    "tests/issuers_staff_access.php": {
+      "bytes": 7275,
+      "sha256": "65000cff638bdfe3bec0576cb56ab5b9d01b483be361d1e2229b45746adabc8f",
+      "git_sha": "85df7763489369f979f0585e4caeede8003f9695"
+    },
+    "tests/companies/fixtures/staff_native_452.php.txt": {
+      "bytes": 9205,
+      "sha256": "e49db65241ddec83d102b5a11adfe1f64eab89e7bfc40c2df1892b9ef36948da",
+      "git_sha": "f09e3ed753b180db39c89056c6d6eb604435921e"
+    },
+    "tests/companies/fixtures/staff_access_452.php.txt": {
+      "bytes": 7077,
+      "sha256": "b0053776639725aebc1a7c0780bd855d1998ab28f19ac1969eb6cbbccb03ceb3",
+      "git_sha": "5923314368f8739821b18a905cb1e277a90be999"
+    },
+    "docs/companies/staff-management-453.md": {
+      "bytes": 15627,
+      "sha256": "f750444057d38ba0d66043e7af5fa6f0bc0953c4fe0f26adcd770427500d8686",
+      "git_sha": "99f98b270471107f618b04782796523c7ccb8e01"
+    }
+  },
+  "sql_runs": [
+    {
+      "label": "staff-rebuild-management-maria-3",
+      "engine": "maria",
+      "php": "php83",
+      "memory_limit": "128M",
+      "completed_utc": "2026-10-21T10:15:28.169379+00:00",
+      "results": [
+        {
+          "test": "tests/companies/staff_management.php",
+          "sha256": "d109f68bb46507bb24003d049223c9736a7b23fff07182253771ddcff6a9c20e",
+          "exit_code": 0,
+          "seconds": 0.807,
+          "source_changed_during_execution": false,
+          "stdout": "Company staff management: 56 checks passed; 8.3.6; 10.11.14-MariaDB-0ubuntu0.24.04.1\n",
+          "stdout_sha256": "ec373299567ffab8e8e3ccda2d08631a3aa55b33605c964f306740ccd58ecca1"
+        }
+      ]
+    },
+    {
+      "label": "staff-rebuild-management-mysql81-2",
+      "engine": "mysql8",
+      "php": "php81",
+      "memory_limit": "128M",
+      "completed_utc": "2026-10-21T10:15:43.475514+00:00",
+      "results": [
+        {
+          "test": "tests/companies/staff_management.php",
+          "sha256": "d109f68bb46507bb24003d049223c9736a7b23fff07182253771ddcff6a9c20e",
+          "exit_code": 0,
+          "seconds": 1.422,
+          "source_changed_during_execution": false,
+          "stdout": "Company staff management: 56 checks passed; 8.1.2-1ubuntu2.25; 8.0.46-0ubuntu0.24.04.3\n",
+          "stdout_sha256": "9826e76273ca208f7f6dff369a71f85961a3dd7ba835e3d33a4808ad97a43dee"
+        }
+      ]
+    },
+    {
+      "label": "staff-rebuild-native-hourly-green",
+      "engine": "maria",
+      "php": "php83",
+      "memory_limit": "128M",
+      "completed_utc": "2026-10-21T10:26:33.315361+00:00",
+      "results": [
+        {
+          "test": "tests/companies/staff_native_atomic.php",
+          "sha256": "9baa8fba2aec59ddb3dbd3154dd7c45cf19085e2e47ee64e1e2c2e9b4fe6078e",
+          "exit_code": 0,
+          "seconds": 0.501,
+          "source_changed_during_execution": false,
+          "stdout": "Native Staff atomic: 69 checks passed; 8.3.6; 10.11.14-MariaDB-0ubuntu0.24.04.1\n",
+          "stdout_sha256": "96c93b68cd5db55f12d780824f64b87c3112edcd66670d1e24bd11df8d2f4c8c"
+        },
+        {
+          "test": "tests/issuers_staff_native.php",
+          "sha256": "4c52300c36dff8559a48a314d81cb93a6dd0c1ca9ddcb3ba4fffbe36c766cfb5",
+          "exit_code": 0,
+          "seconds": 0.697,
+          "source_changed_during_execution": false,
+          "stdout": "Native Staff atomic: 69 checks passed; 8.3.6; 10.11.14-MariaDB-0ubuntu0.24.04.1\nNative Staff controller: 30 additional checks passed; all use real model writes.\n",
+          "stdout_sha256": "a79680e1fe723f0294e3a3ff61f2bca2168a6839bb6946dd8fd13ec647498e36"
+        }
+      ]
+    },
+    {
+      "label": "staff-rebuild-native-hourly-green-mysql81",
+      "engine": "mysql8",
+      "php": "php81",
+      "memory_limit": "128M",
+      "completed_utc": "2026-10-21T10:26:41.416770+00:00",
+      "results": [
+        {
+          "test": "tests/companies/staff_native_atomic.php",
+          "sha256": "9baa8fba2aec59ddb3dbd3154dd7c45cf19085e2e47ee64e1e2c2e9b4fe6078e",
+          "exit_code": 0,
+          "seconds": 1.074,
+          "source_changed_during_execution": false,
+          "stdout": "Native Staff atomic: 69 checks passed; 8.1.2-1ubuntu2.25; 8.0.46-0ubuntu0.24.04.3\n",
+          "stdout_sha256": "798c747e66ec7d508c26e2a92533ef3a5c8175cd85c4404ad354017efa4e981a"
+        },
+        {
+          "test": "tests/issuers_staff_native.php",
+          "sha256": "4c52300c36dff8559a48a314d81cb93a6dd0c1ca9ddcb3ba4fffbe36c766cfb5",
+          "exit_code": 0,
+          "seconds": 1.247,
+          "source_changed_during_execution": false,
+          "stdout": "Native Staff atomic: 69 checks passed; 8.1.2-1ubuntu2.25; 8.0.46-0ubuntu0.24.04.3\nNative Staff controller: 30 additional checks passed; all use real model writes.\n",
+          "stdout_sha256": "5fd236c027f4ece90c72ac6d41e8aed1d0a69e7a98a3e8904bfa8d23b947033c"
+        }
+      ]
+    },
+    {
+      "label": "staff-rebuild-concurrency-maria",
+      "engine": "maria",
+      "php": "php83",
+      "memory_limit": "128M",
+      "completed_utc": "2026-10-21T10:20:46.261646+00:00",
+      "results": [
+        {
+          "test": "tests/companies/staff_concurrency.php",
+          "sha256": "22eb7fc01eb59fa825c7349448f9044ba899c0f810d723cdeacf4c042031dc5b",
+          "exit_code": 0,
+          "seconds": 1.354,
+          "source_changed_during_execution": false,
+          "stdout": "Staff concurrency: 22 checks, five observed lock races and one SIGKILL/retry passed; 10.11.14-MariaDB-0ubuntu0.24.04.1\n",
+          "stdout_sha256": "49b5edf4983ac62a2c4d1497841ca2e8471cf911486f57ce590d3968dbf4c796"
+        }
+      ]
+    },
+    {
+      "label": "staff-rebuild-concurrency-mysql81",
+      "engine": "mysql8",
+      "php": "php81",
+      "memory_limit": "128M",
+      "completed_utc": "2026-10-21T10:20:44.876947+00:00",
+      "results": [
+        {
+          "test": "tests/companies/staff_concurrency.php",
+          "sha256": "22eb7fc01eb59fa825c7349448f9044ba899c0f810d723cdeacf4c042031dc5b",
+          "exit_code": 0,
+          "seconds": 1.259,
+          "source_changed_during_execution": false,
+          "stdout": "Staff concurrency: 22 checks, five observed lock races and one SIGKILL/retry passed; 8.0.46-0ubuntu0.24.04.3\n",
+          "stdout_sha256": "91a74743ed998c019bf6d34e8ccdb416106a389a9136cc1d6a744563b810da99"
+        }
+      ]
+    },
+    {
+      "label": "staff-rebuild-controller-maria",
+      "engine": "maria",
+      "php": "php83",
+      "memory_limit": "128M",
+      "completed_utc": "2026-10-21T10:19:28.731325+00:00",
+      "results": [
+        {
+          "test": "tests/issuers_staff_access.php",
+          "sha256": "65000cff638bdfe3bec0576cb56ab5b9d01b483be361d1e2229b45746adabc8f",
+          "exit_code": 0,
+          "seconds": 0.249,
+          "source_changed_during_execution": false,
+          "stdout": "Core company registry: 76 checks passed (mysql); synthetic data only.\nIssuer staff/resource access: 54 additional checks passed (mysql).\n",
+          "stdout_sha256": "9e326931c911bc700cb78477d0cb07e642ed01090caf3c31b43ade02dd184a82"
+        },
+        {
+          "test": "tests/issuers_staff_master.php",
+          "sha256": "892db1800e9bb0c19bbcc4cadeceb70d64a643e97170b080e171db86617246cd",
+          "exit_code": 0,
+          "seconds": 0.278,
+          "source_changed_during_execution": false,
+          "stdout": "Core company registry: 76 checks passed (mysql); synthetic data only.\nIssuer staff/resource access: 54 additional checks passed (mysql).\nIssuer master preservation/self-profile: 26 additional checks passed.\n",
+          "stdout_sha256": "3c2cfa3450f46e09b240b23727cb8b8207dd330bdb8aa9a1651812621507a302"
+        }
+      ]
+    },
+    {
+      "label": "staff-rebuild-controller-mysql81",
+      "engine": "mysql8",
+      "php": "php81",
+      "memory_limit": "128M",
+      "completed_utc": "2026-10-21T10:19:33.165620+00:00",
+      "results": [
+        {
+          "test": "tests/issuers_staff_access.php",
+          "sha256": "65000cff638bdfe3bec0576cb56ab5b9d01b483be361d1e2229b45746adabc8f",
+          "exit_code": 0,
+          "seconds": 0.517,
+          "source_changed_during_execution": false,
+          "stdout": "Core company registry: 76 checks passed (mysql); synthetic data only.\nIssuer staff/resource access: 54 additional checks passed (mysql).\n",
+          "stdout_sha256": "9e326931c911bc700cb78477d0cb07e642ed01090caf3c31b43ade02dd184a82"
+        },
+        {
+          "test": "tests/issuers_staff_master.php",
+          "sha256": "892db1800e9bb0c19bbcc4cadeceb70d64a643e97170b080e171db86617246cd",
+          "exit_code": 0,
+          "seconds": 0.666,
+          "source_changed_during_execution": false,
+          "stdout": "Core company registry: 76 checks passed (mysql); synthetic data only.\nIssuer staff/resource access: 54 additional checks passed (mysql).\nIssuer master preservation/self-profile: 26 additional checks passed.\n",
+          "stdout_sha256": "3c2cfa3450f46e09b240b23727cb8b8207dd330bdb8aa9a1651812621507a302"
+        }
+      ]
+    }
+  ],
+  "red_evidence": [
+    {
+      "label": "staff-rebuild-native-452-red",
+      "meaning": "RED reproduction succeeded: published452 real native profile remained after ACL audit failure. Exit0 proves the defect exists, not atomic success.",
+      "results": [
+        {
+          "test": "tests/companies/staff_native_atomic.php",
+          "sha256": "e8a4f42bfba16e91e7ed6a757f1809cd17b52aafd91fa0c02c71cb13ecc605a2",
+          "exit_code": 0,
+          "seconds": 0.233,
+          "source_changed_during_execution": false,
+          "stdout": "RED452 reproduced real profile/ACL partial commit; original model 04fcf08bff4b5ff252b6690be3f21100c9a3239d121354046ed82092292b4153\n",
+          "stdout_sha256": "b8b331951f4b813ab45b46dfe0862ee3f94e564ac8a4b0b48029b4f14ffd1c08"
+        }
+      ]
+    },
+    {
+      "label": "staff-rebuild-native-hourly-red",
+      "meaning": "Expected failing reconstruction before exact decimal comparison; native form zero falsely differed from stored0.00.",
+      "results": [
+        {
+          "test": "tests/companies/staff_native_atomic.php",
+          "sha256": "913c12284c6b19ffc1e303e1fdd28ebab1cd7341c2386ee87467dbf0af420a54",
+          "exit_code": 255,
+          "seconds": 0.423,
+          "source_changed_during_execution": false,
+          "stdout": "PHP Fatal error:  Uncaught RuntimeException: issuer_staff_write_unconfirmed in /workspace/scratch/2286cc0eac8b/ARGWS-CRM/application/services/issuers/IssuerTransaction.php:59\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/ARGWS-CRM/application/services/CompanyNativeStaffTransaction.php(58): IssuerTransaction::run(Object(StaffTestDb), 'staff453_8d3e60...', Array, Object(Closure))\n#1 /workspace/scratch/2286cc0eac8b/ARGWS-CRM/application/models/Staff_model.php(14): CompanyNativeStaffTransaction::run(Object(StaffTestDb), 'staff453_8d3e60...', 17, 'add', NULL, Array, Array, Object(Closure))\n#2 /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/staff_native_atomic.php(34): Staff_model->save_with_company_access('add', Array, NULL, Array, Array)\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/ARGWS-CRM/application/services/issuers/IssuerTransaction.php on line 59\n\nFatal error: Uncaught RuntimeException: issuer_staff_write_unconfirmed in /workspace/scratch/2286cc0eac8b/ARGWS-CRM/application/services/issuers/IssuerTransaction.php:59\nStack trace:\n#0 /workspace/scratch/2286cc0eac8b/ARGWS-CRM/application/services/CompanyNativeStaffTransaction.php(58): IssuerTransaction::run(Object(StaffTestDb), 'staff453_8d3e60...', Array, Object(Closure))\n#1 /workspace/scratch/2286cc0eac8b/ARGWS-CRM/application/models/Staff_model.php(14): CompanyNativeStaffTransaction::run(Object(StaffTestDb), 'staff453_8d3e60...', 17, 'add', NULL, Array, Array, Object(Closure))\n#2 /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/staff_native_atomic.php(34): Staff_model->save_with_company_access('add', Array, NULL, Array, Array)\n#3 {main}\n  thrown in /workspace/scratch/2286cc0eac8b/ARGWS-CRM/application/services/issuers/IssuerTransaction.php on line 59\n",
+          "stdout_sha256": "692283f884f61e3f128a360438d6bdd7828e8d29b1cac7032110c3e35d530ba7"
+        }
+      ]
+    }
+  ],
+  "published452_model_sha256": "04fcf08bff4b5ff252b6690be3f21100c9a3239d121354046ed82092292b4153",
+  "browser": {
+    "label": "staff-rebuild-browser-5",
+    "proof": {
+      "result": "PASS",
+      "browser_version": "156.0.8078.47",
+      "actual_http": true,
+      "companies": [
+        {
+          "company": "a",
+          "issuer": 2,
+          "created": 32,
+          "explicit_default": true,
+          "native_admin": 0,
+          "own_csrf": 403,
+          "native_csrf": 403
+        },
+        {
+          "company": "b",
+          "issuer": 3,
+          "created": 33,
+          "explicit_default": true,
+          "native_admin": 0,
+          "own_csrf": 403,
+          "native_csrf": 403
+        },
+        {
+          "company": "primary",
+          "issuer": 1,
+          "created": 34,
+          "explicit_default": true,
+          "native_admin": 0,
+          "own_csrf": 403,
+          "native_csrf": 403
+        }
+      ],
+      "shared_identity": {
+        "id": 35,
+        "link_preserves_profile": true,
+        "manager_shared_profile_denied": 403,
+        "own_acl_edit": true,
+        "revoked_a_retained_b": true,
+        "no_default_fallback": true
+      },
+      "native_primary": {
+        "id": 36,
+        "role": 0,
+        "company_links": 2
+      },
+      "master_identity": "17:1:installer",
+      "master_identity_sha256": "91c6ea61a66e705257e070676fd801a2738188c80324982ebde230775f5a015d",
+      "stale_context": 409,
+      "stale_revision": 409,
+      "live_acl_revocation": 403,
+      "page_errors": []
+    },
+    "proof_sha256": "81bb9231371695f34690a90fa7f0a06db7952fc06090b78cb3dc2643b4ba47ec",
+    "test_sha256": "f41fbe57433cb7797076e02d3bedfa737513201865a893b0a14d98c18d148002",
+    "capture_sha256": "de6c7e4383e3681cb70c97723a1f93b533f5eddfa78936aea45f644842a008fc",
+    "navigation_count": 61,
+    "native_table_responses": [
+      {
+        "type": "tasks-response",
+        "status": 200,
+        "path": "/admin/tasks/table",
+        "content_type": "text/html; charset=utf-8",
+        "valid_json": true,
+        "sha256": "b7caf7b694e0758ed9007ef65e07b5741d8c343b45ab8a92fad7a21d9b31afc4"
+      },
+      {
+        "type": "tasks-response",
+        "status": 200,
+        "path": "/admin/tasks/table",
+        "content_type": "text/html; charset=utf-8",
+        "valid_json": true,
+        "sha256": "b7caf7b694e0758ed9007ef65e07b5741d8c343b45ab8a92fad7a21d9b31afc4"
+      },
+      {
+        "type": "tasks-response",
+        "status": 200,
+        "path": "/admin/tasks/table",
+        "content_type": "text/html; charset=utf-8",
+        "valid_json": true,
+        "sha256": "b7caf7b694e0758ed9007ef65e07b5741d8c343b45ab8a92fad7a21d9b31afc4"
+      }
+    ],
+    "artifacts": {
+      "staff-manager-desktop.png": {
+        "bytes": 173394,
+        "sha256": "0fd19b78904c4750d8f6b9d69fa3eb142cabdc18ec058e11a7e99f350d6517b0",
+        "git_sha": "8ebac13541277efef71e10bbbfb6c66d1785b600"
+      },
+      "staff-manager-mobile.png": {
+        "bytes": 148054,
+        "sha256": "0e3e023a2e3dc8901250b9ac9c990655f8b4d2c7ae849c89666141f92884b69b",
+        "git_sha": "0b70a79abb4f0f7c17cc2460868a591fb75f53ca"
+      }
+    },
+    "visual_review": "Desktop and mobile inspected; no page-width overflow. Table scrolls inside its responsive container.",
+    "prior_attempts": {
+      "1_and_2": "Stopped at native installer guard after own synthetic A/B writes. The platform recreated an empty install directory. Only the fixture router now removes an empty scaffold after successful native installation; product guard unchanged.",
+      "3": "All business assertions reached final page-error gate; one DataTables invalid JSON warning. Its response body was not recovered; do not claim that exact body was identified.",
+      "4": "Full PASS without filtering any error; capture saw two HTTP200 task responses discarded by subsequent navigation.",
+      "5": "Wait for initiated native rendering before next navigation. Full PASS, three actual valid JSON responses, no unreadable bodies or page errors."
+    }
+  },
+  "external_dependencies": {
+    "local_management": "none",
+    "optional_native_welcome_email": "Configured mail transport, effect after commit; failures are reported separately and never auto-retried.",
+    "third_party_mutable_pre_hooks": "Requires participant/effect review if a third-party callback is installed; composed path refuses unknown mutation before writes."
+  },
+  "not_claimed_complete": [
+    "All HR/payroll/Purchase or module writers of global identity",
+    "Any blocked legacy secondary route",
+    "Bank homologation or external integration provisioning"
+  ]
+}

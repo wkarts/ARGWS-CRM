@@ -1,0 +1,62 @@
+<?php
+require_once dirname(__DIR__).'/issuers_core_support.php';
+require_once APPPATH.'services/CompanyExpenses.php';require_once APPPATH.'services/CompanyClients.php';
+$f=essentialFixture('1.0.2',1);$db=$f->db;$p=$f->prefix;
+register_shutdown_function(function()use($db,$p){if($db->driver()==='mysql')foreach(['company_financial_events','company_expense_files','company_expense_requests','company_expenses','company_expense_categories','expenses','company_projects'] as $table)$db->query('DROP TABLE IF EXISTS '.$p.$table);essentialCleanup();});
+$db->query('DROP TABLE '.$p.'clients');
+$db->query('CREATE TABLE '.$p.'clients(userid '.($db->driver()==='mysql'?'int AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').',company varchar(191),vat varchar(30),active int,datecreated datetime,addedfrom int)');
+IssuerCore::reconcile($db,$p);IssuerCore::bindInstallationMaster($db,$p,7);
+if($db->driver()==='mysql'){CompanyExpenseSchema::ensure($db,$p);CompanyExpenseSchema::ensure($db,$p);}
+else foreach(CompanyExpenseSchema::definitions() as $table=>$fields){$parts=[];foreach($fields as $name=>$type)$parts[]='`'.$name.'` '.(str_contains($type,'AUTO_INCREMENT')?'INTEGER PRIMARY KEY AUTOINCREMENT':$type.' NOT NULL');if($table==='company_expense_requests')$parts[]='PRIMARY KEY(request_key)';$db->query('CREATE TABLE '.$p.$table.'('.implode(',',$parts).')');}
+if($db->driver()==='mysql')CompanyFinancialJournalSchema::ensure($db,$p);else{$parts=[];foreach(CompanyFinancialJournalSchema::fields() as $name=>$type)$parts[]='`'.$name.'` '.str_replace(' NULL','',$type).(str_ends_with($type,' NULL')?' NULL':' NOT NULL');$parts[]='PRIMARY KEY(evidence_key)';$db->query('CREATE TABLE '.$p.'company_financial_events('.implode(',',$parts).')');}
+$registry=new IssuerRegistry($db,$p);$a=$registry->saveIssuer(7,['legal_name'=>'Expense A','tax_id'=>'12345678000195']);$b=$registry->saveIssuer(7,['legal_name'=>'Expense B','tax_id'=>'52998224725']);$primary=(new IssuerResourceAccess($db,$p))->primaryId();
+$db->query("CREATE TABLE {$p}expenses(id int PRIMARY KEY,issuer_id int NULL,amount decimal(15,2),note varchar(191))");$db->query("INSERT INTO {$p}expenses VALUES(900,NULL,'15.10','Synthetic NULL legacy')");$db->query("INSERT INTO {$p}expenses VALUES(901,?,'20.20','Synthetic principal legacy')",[$primary]);$legacy=$db->query("SELECT * FROM {$p}expenses ORDER BY id")->result_array();
+$db->query('CREATE TABLE '.$p."company_projects(id int unsigned PRIMARY KEY,issuer_id int unsigned,name varchar(191),status varchar(20),revision int unsigned,client_id int)");$db->query('INSERT INTO '.$p."company_projects VALUES(11,?,'Expense project A','active',1,0)",[$a]);$db->query('INSERT INTO '.$p."company_projects VALUES(12,?,'Expense project B','active',1,0)",[$b]);
+$svc=new CompanyExpenses($db,$p);$key=fn(string $s)=>hash('sha256','expense-'.$s);$ca=$svc->saveCategory($a,7,'Transporte',$key('category-a'));$cb=$svc->saveCategory($b,7,'Transporte',$key('category-b'));$cp=$svc->saveCategory($primary,7,'Principal',$key('category-primary'));
+essentialCheck($svc->saveCategory($a,7,'Transporte',$key('category-a'))===$ca,'durable category retry returns same identity');
+$customerService=new CompanyClients($db,$p);$clientA=$customerService->create($a,7,['company'=>'Private expense A','vat'=>'11144477735']);$clientB=$customerService->create($b,7,['company'=>'Private expense B']);
+$db->query('UPDATE '.$p.'company_projects SET client_id=? WHERE id=11',[$clientA]);$db->query('UPDATE '.$p.'company_projects SET client_id=? WHERE id=12',[$clientB]);
+$input=['category_id'=>$ca,'client_id'=>$clientA,'currency'=>'BRL','date'=>'2026-10-19','description'=>'Synthetic fuel <script>','note'=>'Synthetic evidence','amount'=>'10.10','tax_rate'=>'5.00'];
+$input['project_id']=11;$otherClient=$customerService->create($a,7,['company'=>'Second expense A']);$mismatched=$input;$mismatched['client_id']=$otherClient;essentialThrows(fn()=>$svc->create($a,7,$mismatched,$key('project-client')),'company_expense_reference_denied','same-company authorized customer must match selected project parent');
+$id=$svc->create($a,7,$input,$key('create-a'));$row=$svc->get($a,7,$id);
+essentialCheck((int)$row['amount_cents']===1010&&(int)$row['tax_cents']===51&&(int)$row['total_cents']===1061,'exact integer basis points round half up with no floats');
+essentialCheck((int)$row['number']===1&&$row['client_name']==='Private expense A','private customer snapshot and origin sequence persist atomically');
+essentialCheck($svc->create($a,7,$input,$key('create-a'))===$id,'create retry does not consume sequence or duplicate financial record');
+$changed=$input;$changed['amount']='11.00';essentialThrows(fn()=>$svc->create($a,7,$changed,$key('create-a')),'company_expense_conflict','same key cannot change persisted amount');
+essentialThrows(fn()=>$svc->create($b,7,$input,$key('cross-create')),'company_expense_reference_denied','cross category and customer denied');
+$cross=$input;$cross['category_id']=$cb;essentialThrows(fn()=>$svc->create($b,7,$cross,$key('cross-client')),'company_expense_reference_denied','private customer cannot cross origin even when category matches');
+$ib=$svc->create($b,7,array_replace($input,['category_id'=>$cb,'client_id'=>$clientB,'project_id'=>12]),$key('create-b'));$ip=$svc->create($primary,7,array_replace($input,['category_id'=>$cp,'client_id'=>0,'project_id'=>0]),$key('create-primary'));
+essentialCheck((int)$svc->get($b,7,$ib)['number']===1&&(int)$svc->get($primary,7,$ip)['number']===1,'B and principal numbering independent of A');
+essentialCheck(count($svc->page($a,7)['items'])===1&&count($svc->page($b,7)['items'])===1&&count($svc->page($primary,7)['items'])===1,'A B principal positive lists remain isolated');
+essentialCheck($svc->get($b,7,$id)===null&&$svc->get($a,7,900)===null,'direct cross origin or NULL legacy id never adopted');
+essentialThrows(fn()=>$svc->change($b,7,$id,$row['revision_token'],$key('cross-update'),$input),'company_expense_denied','direct cross origin writer denied');
+essentialCheck($row['project_name']==='Expense project A','own project snapshot persists');$foreignProject=$input;$foreignProject['project_id']=12;essentialThrows(fn()=>$svc->create($a,7,$foreignProject,$key('project-cross')),'company_expense_reference_denied','project of another company denied');
+$svc->change($a,7,$id,$row['revision_token'],$key('update-a'),$changed);$updated=$svc->get($a,7,$id);essentialCheck((int)$updated['total_cents']===1155&&(int)$updated['number']===1,'edit recalculates integer total and preserves number');
+$svc->change($a,7,$id,$row['revision_token'],$key('update-a'),$changed);essentialCheck((int)$svc->get($a,7,$id)['revision']===2,'durable update retry cannot create another revision');
+essentialThrows(fn()=>$svc->change($a,7,$id,$row['revision_token'],$key('stale-edit'),$input),'company_expense_stale','stale editor cannot overwrite new amount');
+$foreignCurrency=$changed;$foreignCurrency['currency']='USD';essentialThrows(fn()=>$svc->change($a,7,$id,$updated['revision_token'],$key('currency-edit'),$foreignCurrency),'company_expense_immutable','changing original currency prohibited');
+$db->failOn='INSERT INTO '.$p.'issuers_audit';essentialThrows(fn()=>$svc->create($a,7,$input,$key('failed-create')),'issuer_storage_failed','failed audit rolls back expense receipt and numbering');$db->failOn=null;
+essentialCheck(count($svc->page($a,7)['items'])===1,'failed create leaves no orphan record');
+$db->failOn='INSERT INTO '.$p.'company_expense_requests';essentialThrows(fn()=>$svc->change($a,7,$id,$updated['revision_token'],$key('failed-update'),$input),'issuer_storage_failed','failed request receipt rolls back financial update and audit');$db->failOn=null;
+essentialCheck($svc->get($a,7,$id)['revision_token']===$updated['revision_token'],'failed update preserves prior exact revision');
+$svc->change($a,7,$id,$updated['revision_token'],$key('cancel-a'));$svc->change($a,7,$id,$updated['revision_token'],$key('cancel-a'));$cancelled=$svc->get($a,7,$id);essentialCheck($cancelled['state']==='cancelled'&&(int)$cancelled['total_cents']===1155,'soft cancel idempotent preserves ledger values');
+essentialThrows(fn()=>$svc->change($a,7,$id,$cancelled['revision_token'],$key('cancelled-edit'),$input),'company_expense_immutable','cancelled record immutable');
+$next=$svc->create($a,7,$input,$key('second-a'));essentialCheck((int)$svc->get($a,7,$next)['number']===2,'cancelled number and failed sequence are not lost or reused');
+essentialCheck(count($svc->page($a,7,0,1)['items'])===1&&$svc->page($a,7,0,1)['next']===$id,'stable keyset page provides scoped cursor');
+essentialCheck($svc->page($a,7,0,50,'100%')['items']===[]&&count($svc->page($a,7,0,50,'fuel')['items'])===2,'search escapes wildcard and finds only own descriptions');
+$cat=$svc->categories($a,7)[0];$svc->saveCategory($a,7,'Transportes',$key('archive-cat'),$ca,$cat['revision_token'],false);
+essentialCheck($svc->get($a,7,$next)['category_name']==='Transportes','historical expense stays readable when category is renamed or archived');
+essentialThrows(fn()=>$svc->create($a,7,$input,$key('archived-create')),'company_expense_reference_denied','archived category unavailable for new registrations');
+essentialThrows(fn()=>$svc->saveCategory($a,7,'Altered',$key('stale-cat'),$ca,$cat['revision_token']),'company_expense_stale','category revision prevents stale reactivation');
+essentialThrows(fn()=>$svc->saveCategory($a,7,'Transportes',$key('duplicate-cat')),'company_expense_category_conflict','category name unique within own origin');
+foreach(['-1.00','1e3','1,00','01.00','0.00','1000000000.00'] as $amount){$bad=$input;$bad['amount']=$amount;essentialThrows(fn()=>$svc->create($a,7,$bad,$key('amount-'.$amount)),'company_expense_invalid','invalid amount rejected before writing');}
+$bad=$input;$bad['date']='2026-02-30';essentialThrows(fn()=>$svc->create($a,7,$bad,$key('bad-date')),'company_expense_invalid','impossible calendar date denied');$bad=$input;$bad['unsupported']=123;essentialThrows(fn()=>$svc->create($a,7,$bad,$key('bad-project')),'company_expense_invalid','unsupported field cannot silently bypass ownership');
+$db->query("INSERT INTO {$p}staff(staffid,active,admin) VALUES(12,1,0)");$db->query("INSERT INTO {$p}issuers_staff(issuer_id,staff_id,can_view) VALUES(?,12,1)",[$b]);$db->query("INSERT INTO {$p}issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,12,'expenses','view')",[$b]);
+essentialCheck($svc->get($b,12,$ib)['id']===$svc->get($b,7,$ib)['id'],'non master explicit expense view grant works');
+essentialThrows(fn()=>$svc->create($b,12,array_replace($input,['category_id'=>$cb,'client_id'=>0,'project_id'=>0]),$key('unauthorized-create')),'company_expense_denied','view grant never grants write');
+$db->query("INSERT INTO {$p}issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,12,'expenses','create')",[$b]);$own=$svc->create($b,12,array_replace($input,['category_id'=>$cb,'client_id'=>0,'project_id'=>0]),$key('staff-create'));essentialCheck((int)$svc->get($b,12,$own)['created_by']===12,'explicit create grant writes own origin without customer access when no link');
+essentialThrows(fn()=>$svc->create($b,12,array_replace($input,['category_id'=>$cb,'client_id'=>$clientB,'project_id'=>12]),$key('staff-customer')),'company_expense_reference_denied','expense grant cannot infer private customer without customer view');
+$db->query("UPDATE {$p}issuers_staff SET can_view=0 WHERE issuer_id=? AND staff_id=12",[$b]);essentialThrows(fn()=>$svc->get($b,12,$ib),'company_expense_denied','membership revocation checked on every read');
+essentialCheck($db->query("SELECT * FROM {$p}expenses ORDER BY id")->result_array()===$legacy,'all operations preserve original principal and NULL legacy rows');
+$db->trans_begin();essentialThrows(fn()=>$svc->create($b,7,array_replace($input,['category_id'=>$cb,'client_id'=>0,'project_id'=>0]),$key('outer')),'issuer_outer_transaction_not_allowed','writer never commits outer transaction');essentialCheck($db->pdo->inTransaction(),'outer caller retains ownership');$db->trans_rollback();
+echo 'Company expense operations: '.$GLOBALS['essentialChecks'].' checks passed ('.$db->driver().'). No provider calls.'.PHP_EOL;

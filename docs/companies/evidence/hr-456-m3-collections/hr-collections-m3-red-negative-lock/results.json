@@ -1,0 +1,19 @@
+{
+  "engine": "maria",
+  "php": "php83",
+  "database": "issuer_hr454",
+  "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source",
+  "verified_tree_sha": "ab965c32b0e57e23060a7dd8e515b451566bef2c35f6d17db5567c1d85e95535",
+  "manifest_sha256": "cc342b3186b9578fe54cf86df27a968cdf6e88586ddea5a3acdea341825035bd",
+  "time_utc": "2026-10-21T11:48:37.296995+00:00",
+  "results": [
+    {
+      "test": "tests/companies/hr_api_read_locks.php",
+      "sha256": "48b9a9f7e5a0abca99d325d644c1e85061e3f50d0a637065e56085cfe912f1a0",
+      "exit_code": 255,
+      "seconds": 1.104,
+      "log": "/workspace/scratch/2286cc0eac8b/runtime/evidence/hr-collections-m3-red-negative-lock/001-hr_api_read_locks.log",
+      "source_changed_during_execution": false
+    }
+  ]
+}

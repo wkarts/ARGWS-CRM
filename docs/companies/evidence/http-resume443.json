@@ -1,0 +1,622 @@
+{
+  "schema": 1,
+  "scope": "PR45 core443 SalesV4 reviewed mutations + BB122 CNAB400 auxiliary V2, real HTTP/Chromium and compatibility",
+  "status": "passed",
+  "publication_sha": null,
+  "publication_note": "Local final frozen source proof; publication stage must bind remote SHA and terminal fresh CI. No merge/deploy performed.",
+  "production_manifest_sha256": "ad7e932e5efcd5479a90c31773ad9fbb43a514d0dd610f8aa3caba4b292fb15f",
+  "production_manifest_files": 18546,
+  "runtime_verified_files": 18532,
+  "runtime_exclusion": "14 installer files absent from web roots",
+  "versions": {
+    "core": "4.4.3 /443",
+    "banco_brasil": "1.2.2 /122 minimumcore4.4.3",
+    "asaas": "1.5.3 /153"
+  },
+  "environment": {
+    "php": "8.3.6",
+    "database": "MariaDB10.11.14 binlogON/nonSUPER, real persistent synthetic banks without resets",
+    "browser": "Chromium140 official headless shell",
+    "http": "Real loopback PHP HTTP; web shell/process functions disabled",
+    "provider": "Strict local dual-host verified TLS sink; no external forwarding"
+  },
+  "groups": {
+    "fresh443-1": {
+      "results": [
+        {
+          "name": "installer-server",
+          "url": "http://127.0.0.1:37373"
+        },
+        {
+          "name": "fresh-native-installation",
+          "version": 443,
+          "master": 17,
+          "source": "installer",
+          "csrf_denied": true
+        },
+        {
+          "name": "retired-native-installer",
+          "source_manifest": "ad7e932e5efcd5479a90c31773ad9fbb43a514d0dd610f8aa3caba4b292fb15f",
+          "config_sha256": "19dfbcc7021e187597a818a82e35348483aa470751c9548f8a984434e28bd92c",
+          "logs_retained": true,
+          "reconstruction": "Frozen whole production tree plus actual installer-generated config; native installation/master17/CSRF captured above"
+        },
+        {
+          "name": "dual-tls-sink-ready",
+          "hosts": [
+            "api-sandbox.asaas.com",
+            "api.openai.com"
+          ],
+          "forwarding": false,
+          "ca_sha256": "2cfdf5968a4211c1e22f377f2117c482556f328033fde51c734b95f6b9f0bb81"
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "fresh443-before-browser",
+          "files": 18532,
+          "differences": []
+        },
+        {
+          "name": "tests/issuers_browser_smoke.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 16.32,
+          "tail": "Issuer browser smoke passed: native shell/menu, installation/upgrade, errors/retry, desktop/mobile.\n"
+        },
+        {
+          "name": "tests/companies_portal_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 15.78,
+          "tail": "Private contacts + A/B duplicate-email portal + HTTP recovery/reset/session: real MySQL/Chromium checks passed; queue only, no external delivery.\n"
+        },
+        {
+          "name": "tests/companies_invoices_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 53.75,
+          "tail": "Named-company invoice CRUD/numbering/PDF/manual partial+final receipts/private portal grant+PDF+revocation: real HTTP/MySQL/Chromium passed, including owner-bound notifications and private attachment upload/preview/download/portal revocation; no SMTP or bank/provider operations.\n"
+        },
+        {
+          "name": "tests/companies/sales_mutations_browser.cjs",
+          "mode": null,
+          "exit": 1,
+          "seconds": 14.28,
+          "tail": "--------------\nCREATE TRIGGER qa_sales443_1792494151626 AFTER INSERT ON tblissuers_audit FOR EACH ROW BEGIN IF NEW.event='company_sales_copied' THEN INSERT INTO qa_sales443_1792494151626_hit(hit) VALUES(1)\n--------------\n\nERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 1\nError: Command failed: docker exec -e MYSQL_PWD argws-crm-provision-db-991 mysql --protocol=tcp --host=127.0.0.1 --user=crm_test argws_upgrade_ci --batch --skip-column-names -e CREATE TRIGGER qa_sales443_1792494151626 AFTER INSERT ON tblissuers_audit FOR EACH ROW BEGIN IF NEW.event='company_sales_copied' THEN INSERT INTO qa_sales443_1792494151626_hit(hit) VALUES(1); UPDATE tblcompany_sales_documents SET number=number+1000 WHERE id=NEW.subject_id; END IF; END\n--------------\nCREATE TRIGGER qa_sales443_1792494151626 AFTER INSERT ON tblissuers_audit FOR EACH ROW BEGIN IF NEW.event='company_sales_copied' THEN INSERT INTO qa_sales443_1792494151626_hit(hit) VALUES(1)\n--------------\n\nERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 1\n\n    at genericNodeError (node:internal/errors:985:15)\n    at wrappedFn (node:internal/errors:539:14)\n    at checkExecSyncError (node:child_process:942:11)\n    at execFileSync (node:child_process:978:15)\n    at sql (/workspace/scratch/6b72446d684f/http-resume443/test-source-fresh-final-v3/tests/companies/sales_mutations_browser.cjs:10:24)\n    at /workspace/scratch/6b72446d684f/http-resume443/test-source-fresh-final-v3/tests/companies/sales_mutations_browser.cjs:30:8\n--------------\nCREATE TRIGGER qa_sales443_1792494151626 AFTER INSERT ON tblissuers_audit FOR EACH ROW BEGIN IF NEW.event='company_sales_copied' THEN INSERT INTO qa_sales443_1792494151626_hit(hit) VALUES(1)\n--------------\n\nERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 1\n\n"
+        },
+        {
+          "name": "failed-runtime-state",
+          "legacy_install": false,
+          "upgrade_install": false
+        }
+      ],
+      "log_sha256": "78f52e4f3e6fd702aa2ae309318e9212626f7b189b6b7e6276597dafa9ab7413",
+      "test_source_bindings_sha256": "e562c759710a8c35993b4d56af4b4908af142bfed4aa578be7226b6ce69a92b6"
+    },
+    "upgrade442-443-1": {
+      "results": [
+        {
+          "name": "dual-tls-sink-ready",
+          "hosts": [
+            "api-sandbox.asaas.com",
+            "api.openai.com"
+          ],
+          "forwarding": false,
+          "ca_sha256": "ac288d8e618df39c4093c036579d8de23b9fbb2b6c41dc00529a79838fc8c620"
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "upgrade443-before-browser",
+          "files": 18532,
+          "differences": []
+        },
+        {
+          "name": "tests/issuers_browser_smoke.cjs",
+          "mode": "upgrade",
+          "exit": 0,
+          "seconds": 6.47,
+          "tail": "Issuer browser smoke passed: native shell/menu, installation/upgrade, errors/retry, desktop/mobile.\n"
+        },
+        {
+          "name": "native442-to443-history-preserved",
+          "tables": [
+            "issuers_installation_identity",
+            "issuers_registry",
+            "issuers_staff",
+            "issuers_staff_defaults",
+            "issuers_resource_permissions",
+            "clients",
+            "contacts",
+            "invoicepaymentrecords",
+            "company_expenses",
+            "company_financial_events",
+            "asaas_payment_origins",
+            "asaas_company_refund_requests",
+            "asaas_company_refund_observations",
+            "company_asaas_refund_postings",
+            "bb_origins",
+            "bb_return_files",
+            "bb_return_events",
+            "bb_return_file_events",
+            "company_sales_documents",
+            "company_sales_files",
+            "company_sales_deliveries"
+          ],
+          "master": "17:installer",
+          "tracking": 443
+        },
+        {
+          "name": "native-bb122-existing-upgrade",
+          "exit": 0,
+          "stdout": "Native Banco do Brasil122 real runner, exact tracking and replay verified from baseline 1.2.1.",
+          "stderr": ""
+        },
+        {
+          "name": "tests/companies/sales_mutations_browser.cjs",
+          "mode": null,
+          "exit": 1,
+          "seconds": 12.76,
+          "tail": "--------------\nCREATE TRIGGER qa_sales443_1792494061146 AFTER INSERT ON tblissuers_audit FOR EACH ROW BEGIN IF NEW.event='company_sales_copied' THEN INSERT INTO qa_sales443_1792494061146_hit(hit) VALUES(1)\n--------------\n\nERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 1\nError: Command failed: docker exec -e MYSQL_PWD argws-crm-provision-db-991 mysql --protocol=tcp --host=127.0.0.1 --user=crm_test argws_upgrade_ci --batch --skip-column-names -e CREATE TRIGGER qa_sales443_1792494061146 AFTER INSERT ON tblissuers_audit FOR EACH ROW BEGIN IF NEW.event='company_sales_copied' THEN INSERT INTO qa_sales443_1792494061146_hit(hit) VALUES(1); UPDATE tblcompany_sales_documents SET number=number+1000 WHERE id=NEW.subject_id; END IF; END\n--------------\nCREATE TRIGGER qa_sales443_1792494061146 AFTER INSERT ON tblissuers_audit FOR EACH ROW BEGIN IF NEW.event='company_sales_copied' THEN INSERT INTO qa_sales443_1792494061146_hit(hit) VALUES(1)\n--------------\n\nERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 1\n\n    at genericNodeError (node:internal/errors:985:15)\n    at wrappedFn (node:internal/errors:539:14)\n    at checkExecSyncError (node:child_process:942:11)\n    at execFileSync (node:child_process:978:15)\n    at sql (/workspace/scratch/6b72446d684f/http-resume443/test-source-upgrade-final-v3/tests/companies/sales_mutations_browser.cjs:10:24)\n    at /workspace/scratch/6b72446d684f/http-resume443/test-source-upgrade-final-v3/tests/companies/sales_mutations_browser.cjs:30:8\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:502:9)\n--------------\nCREATE TRIGGER qa_sales443_1792494061146 AFTER INSERT ON tblissuers_audit FOR EACH ROW BEGIN IF NEW.event='company_sales_copied' THEN INSERT INTO qa_sales443_1792494061146_hit(hit) VALUES(1)\n--------------\n\nERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 1\n\n"
+        },
+        {
+          "name": "failed-runtime-state",
+          "legacy_install": false,
+          "upgrade_install": false
+        }
+      ],
+      "log_sha256": "4d741c49d33361d562a10a1eec509ffa8045d67d4b82c2a27e1ed8f72577172a",
+      "test_source_bindings_sha256": "e562c759710a8c35993b4d56af4b4908af142bfed4aa578be7226b6ce69a92b6"
+    },
+    "fresh443-resume2": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "fresh443-resumed-before-browser",
+          "files": 18532,
+          "differences": []
+        },
+        {
+          "name": "tests/companies/sales_mutations_browser.cjs",
+          "mode": null,
+          "exit": 1,
+          "seconds": 98.96,
+          "tail": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=firstname]')\u001b[22m\n\n    at /workspace/scratch/6b72446d684f/http-resume443/test-source-fresh443-resume2/tests/companies/sales_mutations_browser.cjs:41:210\n"
+        },
+        {
+          "name": "failed-runtime-state",
+          "legacy_install": false,
+          "upgrade_install": false
+        }
+      ],
+      "log_sha256": "deb98f32c64a57d10ecdeef2316372595f5dba6172fb4f0344ee8f459ca5e978",
+      "test_source_bindings_sha256": "fd84be98dfaff470150618bb6fbb0c7a5080a4b313cc3f1870c863a90e43a39d"
+    },
+    "upgrade443-resume2": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "upgrade443-resumed-before-browser",
+          "files": 18532,
+          "differences": []
+        },
+        {
+          "name": "tests/companies/sales_mutations_browser.cjs",
+          "mode": null,
+          "exit": 1,
+          "seconds": 100.12,
+          "tail": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=firstname]')\u001b[22m\n\n    at /workspace/scratch/6b72446d684f/http-resume443/test-source-upgrade443-resume2/tests/companies/sales_mutations_browser.cjs:41:210\n"
+        },
+        {
+          "name": "failed-runtime-state",
+          "legacy_install": false,
+          "upgrade_install": false
+        }
+      ],
+      "log_sha256": "fd4382b6f8ef0dd4ec54414a48bf2cabe3e05b0724717182bae539297606c631",
+      "test_source_bindings_sha256": "fd84be98dfaff470150618bb6fbb0c7a5080a4b313cc3f1870c863a90e43a39d"
+    },
+    "fresh443-resume3": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "fresh443-resumed-before-browser",
+          "files": 18532,
+          "differences": []
+        },
+        {
+          "name": "tests/banco_brasil_origination_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 32.21,
+          "tail": "BB invoice-bound CNAB240 declaration/generation/download/manual report/return upload/assisted receipt/retry/API native encrypted configuration and A/B scope: actual HTTP/MySQL/Chromium, no bank calls.\n"
+        },
+        {
+          "name": "tests/banco_brasil_cnab400_aux_browser.cjs",
+          "mode": null,
+          "exit": 1,
+          "seconds": 2.57,
+          "tail": "Error: Command failed: docker exec -e ISSUERS_BROWSER_DB_NAME argws-crm-upgrade-991 php tests/banco_brasil_cnab400_aux_http_fixture.php snapshot\n    at genericNodeError (node:internal/errors:985:15)\n    at wrappedFn (node:internal/errors:539:14)\n    at checkExecSyncError (node:child_process:942:11)\n    at execFileSync (node:child_process:978:15)\n    at fixture (/workspace/scratch/6b72446d684f/http-resume443/test-source-fresh443-resume3/tests/banco_brasil_cnab400_aux_browser.cjs:9:45)\n    at /workspace/scratch/6b72446d684f/http-resume443/test-source-fresh443-resume3/tests/banco_brasil_cnab400_aux_browser.cjs:19:18\n"
+        },
+        {
+          "name": "failed-runtime-state",
+          "legacy_install": false,
+          "upgrade_install": false
+        }
+      ],
+      "log_sha256": "be52556e9af593fd07818db3076cb18c71bee24f5e1c19f2b2162993a4361193",
+      "test_source_bindings_sha256": "13df0983d0a80d2f12030c6ea8273598227634fb5c65e44687bc68e0dcde208c"
+    },
+    "upgrade443-resume3": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "upgrade443-resumed-before-browser",
+          "files": 18532,
+          "differences": []
+        },
+        {
+          "name": "tests/banco_brasil_cnab400_aux_browser.cjs",
+          "mode": null,
+          "exit": 1,
+          "seconds": 2.63,
+          "tail": "Error: Command failed: docker exec -e ISSUERS_BROWSER_DB_NAME argws-crm-upgrade-991 php tests/banco_brasil_cnab400_aux_http_fixture.php snapshot\n    at genericNodeError (node:internal/errors:985:15)\n    at wrappedFn (node:internal/errors:539:14)\n    at checkExecSyncError (node:child_process:942:11)\n    at execFileSync (node:child_process:978:15)\n    at fixture (/workspace/scratch/6b72446d684f/http-resume443/test-source-upgrade443-resume3/tests/banco_brasil_cnab400_aux_browser.cjs:9:45)\n    at /workspace/scratch/6b72446d684f/http-resume443/test-source-upgrade443-resume3/tests/banco_brasil_cnab400_aux_browser.cjs:19:18\n"
+        },
+        {
+          "name": "failed-runtime-state",
+          "legacy_install": false,
+          "upgrade_install": false
+        }
+      ],
+      "log_sha256": "4b668075e751b34447178beb460a16a9cc142049e4157c55bafb3f641a65790b",
+      "test_source_bindings_sha256": "13df0983d0a80d2f12030c6ea8273598227634fb5c65e44687bc68e0dcde208c"
+    },
+    "fresh443-resume4": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "fresh443-resumed-before-browser",
+          "files": 18532,
+          "differences": []
+        },
+        {
+          "name": "tests/banco_brasil_cnab400_aux_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 28.36,
+          "tail": "BB122 CNAB400 auxiliary real A/B GUI explicit old/new same-connection profiles + multipart original bytes, immutable old parent binding, typed5/01+5/10 escaped raw fields, file replay/repack semantic dedupe, unsupported rollback, context/CSRF and full financial snapshot preservation PASS. No bank/URL/e-mail/Pix/financial operation.\n"
+        },
+        {
+          "name": "tests/companies/sales_mutations_browser.cjs",
+          "mode": null,
+          "exit": 1,
+          "seconds": 82.99,
+          "tail": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ []\n- [\n-   '2'\n- ]\n\n    at /workspace/scratch/6b72446d684f/http-resume443/test-source-fresh443-resume4/tests/companies/sales_mutations_browser.cjs:44:10\n"
+        },
+        {
+          "name": "failed-runtime-state",
+          "legacy_install": false,
+          "upgrade_install": false
+        }
+      ],
+      "log_sha256": "e66fd1c7bc4023975904d2a13ebe823d2c34678ac6879afd803926f3068459a8",
+      "test_source_bindings_sha256": "a377dc66ebb44a02d54525d929337e763bd44b5b6c30cadd05782c15dbef7aa9"
+    },
+    "upgrade443-resume4": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "upgrade443-resumed-before-browser",
+          "files": 18532,
+          "differences": []
+        },
+        {
+          "name": "tests/banco_brasil_cnab400_aux_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 28.48,
+          "tail": "BB122 CNAB400 auxiliary real A/B GUI explicit old/new same-connection profiles + multipart original bytes, immutable old parent binding, typed5/01+5/10 escaped raw fields, file replay/repack semantic dedupe, unsupported rollback, context/CSRF and full financial snapshot preservation PASS. No bank/URL/e-mail/Pix/financial operation.\n"
+        },
+        {
+          "name": "tests/companies/sales_mutations_browser.cjs",
+          "mode": null,
+          "exit": 1,
+          "seconds": 80.81,
+          "tail": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ []\n- [\n-   '2'\n- ]\n\n    at /workspace/scratch/6b72446d684f/http-resume443/test-source-upgrade443-resume4/tests/companies/sales_mutations_browser.cjs:44:10\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:502:9)\n"
+        },
+        {
+          "name": "failed-runtime-state",
+          "legacy_install": false,
+          "upgrade_install": false
+        }
+      ],
+      "log_sha256": "0f6b556c0e29051c5928458769cb11a2ae8db996ed9ae33be2ce7f18e90f226b",
+      "test_source_bindings_sha256": "a377dc66ebb44a02d54525d929337e763bd44b5b6c30cadd05782c15dbef7aa9"
+    },
+    "fresh443-resume5": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "fresh443-resumed-before-browser",
+          "files": 18532,
+          "differences": []
+        },
+        {
+          "name": "tests/companies/sales_mutations_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 92.28,
+          "tail": "Sales443 mutations real A/B + native B-only actor,10% canonical taxes/PDF and observed late-audit number-tamper rollback/same-form retry GUI: upload/edit/review/copy/retry/destination edit/accept/convert, original number and snapshot, no copied children/queue, private PDF, stale decision/context/CSRF/cross-owner, NULL and cash preservation PASS. No provider or SMTP calls.\n"
+        },
+        {
+          "name": "tests/settings_company_ai_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 25.26,
+          "tail": "Company AI real browser A/B/principal own config/preview/consent/outbox/private escaped result, stale context/restricted actor/uncertain/revoke PASS. Native staff creation/issuer grants and explicit provider dispatch through real GUI/controller/SDK + verified local TLS; provider protocol synthetic, zero external operation.\n"
+        },
+        {
+          "name": "tests/companies_asaas_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 17.73,
+          "tail": "Company Asaas A/B actual UI credentials/token-once/receipt + HTTP inbox/dedup/stale/company isolation passed. Tariff native expense and opt-in worker passed; creation/query transport simulated by CLI fixture; no real Asaas homologation.\n"
+        },
+        {
+          "name": "tests/companies/post_refund_manual_cycle_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 32.13,
+          "tail": "Asaas full return -> NEW manual -> typed LOCAL reversal -> separate LOCAL cancellation -> reviewed NEW independent invoice HTTP/Chromium A/B, private PDFs, unchanged old provider history, current context/CSRF/fingerprints and exact retries PASS. Provider protocol simulated; no external operation.\n"
+        },
+        {
+          "name": "provider-ca-check",
+          "probe": "post_refund_manual_cycle_tls_probe.php",
+          "untrusted_rejected_no_provider_request": true,
+          "trusted_ca": true
+        },
+        {
+          "name": "provider-ca-check",
+          "probe": "company_ai_tls_probe.php",
+          "untrusted_rejected_no_provider_request": true,
+          "trusted_ca": true
+        },
+        {
+          "name": "dual-provider-observed",
+          "gui_ai_completions": 3,
+          "explicit_sdk_ca_probe": 1,
+          "uncertain_wire_disconnects": 1,
+          "refund_review_payment_gets": 2,
+          "tls_versions": [
+            "TLSv1.3"
+          ],
+          "forwarding": false
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "fresh443-resumed-after-browser",
+          "files": 18532,
+          "differences": []
+        },
+        {
+          "name": "complete",
+          "passed": true
+        }
+      ],
+      "log_sha256": "40e8d8aa735e20a580bc76433a5b8724f917315e3d381b7f19868d3217dd6dd8",
+      "test_source_bindings_sha256": "6b7784d9452bf60fdfaea2478eb2c76e7132077a16533541e3c9ed1269cd42f4"
+    },
+    "upgrade443-resume5": {
+      "results": [
+        {
+          "name": "runtime-source-binding",
+          "label": "upgrade443-resumed-before-browser",
+          "files": 18532,
+          "differences": []
+        },
+        {
+          "name": "tests/companies/sales_mutations_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 90.56,
+          "tail": "Sales443 mutations real A/B + native B-only actor,10% canonical taxes/PDF and observed late-audit number-tamper rollback/same-form retry GUI: upload/edit/review/copy/retry/destination edit/accept/convert, original number and snapshot, no copied children/queue, private PDF, stale decision/context/CSRF/cross-owner, NULL and cash preservation PASS. No provider or SMTP calls.\n"
+        },
+        {
+          "name": "tests/companies/operations_resume_439_sales_lines_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 22.25,
+          "tail": "{\"source\":\"rebuilt recovery439 regression\",\"results\":[{\"issuer\":\"3\",\"kind\":\"estimates\",\"document\":\"40\",\"invoice\":\"72\",\"total\":\"131.00\",\"native_lines\":3,\"charged_lines\":2,\"cloned_metadata_and_flags\":true,\"literal_pdf\":true},{\"issuer\":\"3\",\"kind\":\"proposals\",\"document\":\"41\",\"invoice\":\"73\",\"total\":\"131.00\",\"native_lines\":3,\"charged_lines\":2,\"cloned_metadata_and_flags\":true,\"literal_pdf\":true},{\"issuer\":\"2\",\"kind\":\"estimates\",\"document\":\"42\",\"invoice\":\"74\",\"total\":\"131.00\",\"native_lines\":3,\"charged_lines\":2,\"cloned_metadata_and_flags\":true,\"literal_pdf\":true},{\"issuer\":\"2\",\"kind\":\"proposals\",\"document\":\"43\",\"invoice\":\"75\",\"total\":\"131.00\",\"native_lines\":3,\"charged_lines\":2,\"cloned_metadata_and_flags\":true,\"literal_pdf\":true}],\"external_transports\":false}\n"
+        },
+        {
+          "name": "tests/companies/post_refund_manual_cycle_browser.cjs",
+          "mode": null,
+          "exit": 0,
+          "seconds": 31.47,
+          "tail": "Asaas full return -> NEW manual -> typed LOCAL reversal -> separate LOCAL cancellation -> reviewed NEW independent invoice HTTP/Chromium A/B, private PDFs, unchanged old provider history, current context/CSRF/fingerprints and exact retries PASS. Provider protocol simulated; no external operation.\n"
+        },
+        {
+          "name": "provider-ca-check",
+          "probe": "post_refund_manual_cycle_tls_probe.php",
+          "untrusted_rejected_no_provider_request": true,
+          "trusted_ca": true
+        },
+        {
+          "name": "provider-ca-check",
+          "probe": "company_ai_tls_probe.php",
+          "untrusted_rejected_no_provider_request": true,
+          "trusted_ca": true
+        },
+        {
+          "name": "dual-provider-observed",
+          "gui_ai_completions": 0,
+          "explicit_sdk_ca_probe": 1,
+          "uncertain_wire_disconnects": 0,
+          "refund_review_payment_gets": 2,
+          "tls_versions": [
+            "TLSv1.3"
+          ],
+          "forwarding": false
+        },
+        {
+          "name": "runtime-source-binding",
+          "label": "upgrade443-resumed-after-browser",
+          "files": 18532,
+          "differences": []
+        },
+        {
+          "name": "complete",
+          "passed": true
+        }
+      ],
+      "log_sha256": "c884a896cd8a0827d23cf844e9cbfaec7c6661d28e0ed890385728894b885533",
+      "test_source_bindings_sha256": "6b7784d9452bf60fdfaea2478eb2c76e7132077a16533541e3c9ed1269cd42f4"
+    }
+  },
+  "new_test_files": [
+    {
+      "path": "tests/companies/sales_mutations_browser.cjs",
+      "sha256": "24141bbe07cf37f8daafd6f6a5c086c6bdaf499c1ca619e8779beb0968bbcd52",
+      "syntax": "PASS"
+    },
+    {
+      "path": "tests/companies/sales_mutations_http_fixture.php",
+      "sha256": "3ac9ff7ad1ea343cb2335650ab47f435b9c41b8c62cd3ca4cb2fde49e4f5be2e",
+      "syntax": "PASS"
+    },
+    {
+      "path": "tests/banco_brasil_cnab400_aux_browser.cjs",
+      "sha256": "aa0b02fe899cac5e8124998c6d93e1540aa0517945065ee579870503a18529f2",
+      "syntax": "PASS"
+    },
+    {
+      "path": "tests/banco_brasil_cnab400_aux_http_fixture.php",
+      "sha256": "d48399d5c83738fe3126fe79124869582b6531074649ba277d39cf26e639bd62",
+      "syntax": "PASS"
+    },
+    {
+      "path": "tests/support/Bb400AuxHttpWire.php",
+      "sha256": "79d1a4d670fc7f196b6e99f5f9461bd61b6d93ed0e20412dd83e5c8aeb98fc22",
+      "syntax": "PASS"
+    }
+  ],
+  "test_authorship": {
+    "sales_original_browser_sha256": "394480ad09d8a07d8830fd70741e08cd4e62c85cebed98750ee7fd76579a770d",
+    "sales_original_fixture_sha256": "96dd42e9d1bfd9ff52f63499af3e90e23f707215eaaafe135186acb565714871",
+    "sales_extension": "HTTP writer preserved original checks, added10% taxes/canonical sales+invoice Poppler text, full edit retry snapshots, actual observed late-audit number tamper rollback/same-form retry, native B-only Staff GUI and private copy/PDF/actor-bound replay; native target>=443 exactshippedconfig",
+    "bb400": "New HTTP CJS/read-only prerequisite; old0/7/9 fixture functions and V2 auxiliary wire generator copied with explicit provenance; no historical browser equivalence claimed",
+    "deliberate_test_SQL_mutations": "Temporary MyISAM hit witness and AFTER-audit number mutation rolled back by canonical service; trigger/table removed. No fixture seed/config/grant/DDL/marker setter. Staff grants/profile declarations/uploads use real GUI."
+  },
+  "smoke": {
+    "count": 78,
+    "previous76_same_order": true,
+    "commands": [
+      "tests/issuers_browser_smoke.cjs",
+      "tests/issuers_browser_smoke.cjs",
+      "tests/companies_onboarding_browser.cjs",
+      "tests/companies_portal_browser.cjs",
+      "tests/companies_invoices_browser.cjs",
+      "tests/companies_credits_browser.cjs",
+      "tests/companies/projects_browser.cjs",
+      "tests/companies_expenses_browser.cjs",
+      "tests/companies_imports_browser.cjs",
+      "tests/companies/contracts_browser.cjs",
+      "tests/companies/operation_files_browser.cjs",
+      "tests/companies/portal_operations_browser.cjs",
+      "tests/companies/projects_extras_browser.cjs",
+      "tests/companies_sales_browser.cjs",
+      "tests/companies_sales_extras_browser.cjs",
+      "tests/settings_sales_documents_browser.cjs",
+      "tests/settings_primary_sales_browser.cjs",
+      "tests/settings_sales_pdf_browser.cjs",
+      "tests/settings_document_pdf_browser.cjs",
+      "tests/settings_google_mail_browser.cjs",
+      "tests/settings_google_portal_browser.cjs",
+      "tests/settings_project_files_browser.cjs",
+      "tests/settings_pdf_typography_browser.cjs",
+      "tests/companies_reports_api_browser.cjs",
+      "tests/companies_ledger_browser.cjs",
+      "tests/companies/operations_api_browser.cjs",
+      "tests/companies/operations_subresources_browser.cjs",
+      "tests/companies/portal_support_write_browser.cjs",
+      "tests/companies/portal_support_files_browser.cjs",
+      "tests/companies/contract_discussions_browser.cjs",
+      "tests/companies/project_portal_tasks_browser.cjs",
+      "tests/companies/portal_task_write_browser.cjs",
+      "tests/companies/project_milestones_browser.cjs",
+      "tests/companies/project_timesheets_browser.cjs",
+      "tests/companies/project_gantt_browser.cjs",
+      "tests/companies/project_contact_files_browser.cjs",
+      "tests/companies/task_billing_http_browser.cjs",
+      "tests/companies/task_timesheets_http_browser.cjs",
+      "tests/companies/project_billing_rate_http_browser.cjs",
+      "tests/companies/project_fixed_billing_http_browser.cjs",
+      "tests/companies/client_imports_http_browser.cjs",
+      "tests/companies/expense_billing_browser.cjs",
+      "tests/companies/expense_recurring_browser.cjs",
+      "tests/banco_brasil_origination_browser.cjs",
+      "tests/banco_brasil_components_browser.cjs",
+      "tests/banco_brasil_external_reversal_browser.cjs",
+      "tests/banco_brasil_callback_http.cjs",
+      "tests/banco_brasil_api_monthly_browser.cjs",
+      "tests/banco_brasil_api_fixed_discount_browser.cjs",
+      "tests/banco_brasil_api_percentage_discount_browser.cjs",
+      "tests/banco_brasil_api16_components_browser.cjs",
+      "tests/banco_brasil_api_origin_cnab240_browser.cjs",
+      "tests/companies_asaas_browser.cjs",
+      "tests/companies_asaas_remote_browser.cjs",
+      "tests/companies_asaas_checkout_browser.cjs",
+      "tests/companies/asaas_refund_browser.cjs",
+      "tests/asaas_checkout_legacy_scope_http.cjs",
+      "tests/resume_439_native_staff_browser.cjs",
+      "tests/companies/operations_resume_439_sales_lines_browser.cjs",
+      "tests/companies/operations_resume_439_browser.cjs",
+      "tests/settings/resume_439_microsoft_browser.cjs",
+      "tests/settings/resume_439_connect_browser.cjs",
+      "tests/settings_pusher_recovery_browser.cjs",
+      "tests/companies/recurrence_resume_439_browser.cjs",
+      "tests/banco_brasil_resume_439_amend_browser.cjs",
+      "tests/companies/invoice_drafts_browser.cjs",
+      "tests/companies/invoice_recurring_modes_browser.cjs",
+      "tests/companies/project_copies_http_browser.cjs",
+      "tests/companies/task_copies_http_browser.cjs",
+      "tests/settings_ticket_connect_browser.cjs",
+      "tests/banco_brasil_api_window_discount_browser.cjs",
+      "tests/companies/post_refund_manual_cycle_browser.cjs",
+      "tests/companies/expense_api_browser.cjs",
+      "tests/companies/expense_copies_resume_442_browser.cjs",
+      "tests/settings_company_ai_browser.cjs",
+      "tests/banco_brasil_own_number_browser.cjs",
+      "tests/companies/sales_mutations_browser.cjs",
+      "tests/banco_brasil_cnab400_aux_browser.cjs"
+    ],
+    "sha256": "2deeb5ba7c084d7d23d37d20f71a7720713e3483f39f71429aedf48b41c32331",
+    "bash_syntax": "PASS",
+    "test_issuer_browser_environment": "2/2 PASS",
+    "full_Docker_job_executed_here": false
+  },
+  "diagnostics": [
+    {
+      "cause": "New Sales trigger CJS omitted mysql compound delimiter; CLI1064 before trigger creation",
+      "fix": "Same --delimiter=// adapter already used by proven442 expense fault test; no assertion or production change"
+    },
+    {
+      "cause": "New Sales Staff GUI setup opened a global legacy route while B selected; native nonisolated route403 is expected",
+      "fix": "Select actual primary company through GUI and assert nativeStaff GET200 before creating/granting B-only actor"
+    },
+    {
+      "cause": "New BB prerequisite directly required Cnab400ReturnParser after ModuleStore already loaded it; PHP duplicate-class fatal before operations",
+      "fix": "require_once canonical includes; CLI stdout diagnostics shown; no production or DB setup mutation"
+    },
+    {
+      "cause": "New B-only actor assertion queried selector on post-login legacy/admin403 page",
+      "fix": "Explicit isolated company_context GET200 before unchanged options===B assertion; full CJS rerun in both preserved banks"
+    }
+  ],
+  "limits": [
+    "BB400 auxiliary is raw observation only.137/135 email-picture and2/3 occurrence-code contradictions are not interpreted; existing3 financial400 blockers remain.",
+    "No real bank/Pix/SMTP/OpenAI/Asaas operation or homologation asserted; raw URL never requested.",
+    "Fresh443 repeats complete AI GUI/SDK dispatch; preserved upgrade does not reset existingAI profiles and repeats SDK transport CA probe only.",
+    "The public78-command Docker script is prepared and environment-tested, but complete Docker job was not executed locally. Local real HTTP/MariaDB/Chromium uses a restricted docker command adapter.",
+    "Production and version/migration files were not changed by HTTP writer. Parent owns publication, terminal CI and Git binding."
+  ]
+}

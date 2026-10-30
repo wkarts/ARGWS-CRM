@@ -1,0 +1,114 @@
+{
+  "parent_sha": "004c334c451707e19abcd68bf66a793f547116fb",
+  "core": "4.4.5",
+  "native": 445,
+  "modules": {
+    "banco_brasil": "1.2.2/122",
+    "asaas": "1.5.3/153"
+  },
+  "production_changes": "Only official release metadata and NOOP445; no domain/module code changes.",
+  "results": [
+    {
+      "log": "ci445-sqlite-green-restored.log",
+      "sha256": "9e34da86eff9df034ce12370daea2f1f3c1f11a0cae7ce78f23d839eb3b6ce62",
+      "last_lines": [
+        "Financial origin/ACL boundaries: 30 cumulative checks passed.",
+        "Invoice legacy/PDF provenance: 33 cumulative checks passed.",
+        "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+        "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+        "BB own-number SQLite guard: 70 cumulative actual SQLite checks; positive BB runtime remains InnoDB only."
+      ]
+    },
+    {
+      "log": "ci445-sqlite-green-mysql8-final.log",
+      "sha256": "adfe10ccff4387f3daad60f38d931190591594893a2e665c7ec4076256a7ecc3",
+      "last_lines": [
+        "Financial origin/ACL boundaries: 30 cumulative checks passed.",
+        "Invoice legacy/PDF provenance: 33 cumulative checks passed.",
+        "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+        "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+        "BB own-number SQLite guard: 70 cumulative actual SQLite checks; positive BB runtime remains InnoDB only."
+      ]
+    },
+    {
+      "log": "ci445-native-mariadb.log",
+      "sha256": "95b6699034486c9a680802c0c5339248598b116b6cf327cb1f58e4a774c46910",
+      "last_lines": [
+        "Native444 official NOOP body/replay, exact metadata and historical own preference/reply bytes: 1992 cumulative checks; tracking tested separately.",
+        "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517",
+        "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517",
+        "Native445 actual executor confirmed: 1464 checks; official NOOP, failed/ignored marker SQL readback, retry/replay and exact historical metadata/settings/replies.",
+        "CI445 native NOOP/replay and actual444 history: 2349 cumulative checks; core445 only, modules unchanged."
+      ]
+    },
+    {
+      "log": "ci445-native-mysql8.log",
+      "sha256": "67c67a156ed32f791e2f21a17d860c85db68061601e5a75a072a20153c961685",
+      "last_lines": [
+        "Native444 official NOOP body/replay, exact metadata and historical own preference/reply bytes: 1992 cumulative checks; tracking tested separately.",
+        "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517",
+        "Falha na atualiza\u00e7\u00e3o nativa [core_migration_tracking_unconfirmed]: RuntimeException @ App.php:517",
+        "Native445 actual executor confirmed: 1464 checks; official NOOP, failed/ignored marker SQL readback, retry/replay and exact historical metadata/settings/replies.",
+        "CI445 native NOOP/replay and actual444 history: 2349 cumulative checks; core445 only, modules unchanged."
+      ]
+    },
+    {
+      "log": "ci445-sales-fk-mysql8-final.log",
+      "sha256": "8639f6c62f87d5e7237b37d3096b929a7b8361ec0b637999cb491f57c654b11f",
+      "last_lines": [
+        "Company sales / recurrence: 108 cumulative checks passed (mysql). No SMTP or provider operation.",
+        "Sales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.",
+        "Canonical origin guard / sales search: 135 cumulative checks passed.",
+        "Sales/recurrence principal and legacy distinction: 139 cumulative checks passed.",
+        "Sales V4 exact foreign keys: 22 real invalid-engine variants; 218 cumulative (mysql); both DELETE/UPDATE and NO ACTION/RESTRICT, duplicates/composites/extra/foreign parents."
+      ]
+    },
+    {
+      "log": "ci445-sales-fk-maria-final.log",
+      "sha256": "61f6ecfe17f3b8d28fd3a55d02951b32cd932503379b6d8fa94fb82a8a277680",
+      "last_lines": [
+        "Company sales / recurrence: 108 cumulative checks passed (mysql). No SMTP or provider operation.",
+        "Sales/recurrence recovery, worker, PDF, origin: 123 cumulative checks passed.",
+        "Canonical origin guard / sales search: 135 cumulative checks passed.",
+        "Sales/recurrence principal and legacy distinction: 139 cumulative checks passed.",
+        "Sales V4 exact foreign keys: 22 real invalid-engine variants; 218 cumulative (mysql); both DELETE/UPDATE and NO ACTION/RESTRICT, duplicates/composites/extra/foreign parents."
+      ]
+    },
+    {
+      "log": "ci445-bb-positive-mysql8.log",
+      "sha256": "85a13864802cacb82886b3a9fd6726791b8c676275cb0d5287ce2cdffe778d47",
+      "last_lines": [
+        "Expanded invoice amounts/retry/A+B/rollback: 59 cumulative checks passed.",
+        "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+        "BB origination: 139 cumulative native MySQL checks; no transmission or bank homologation.",
+        "BB API native MySQL/encryption/outbox: 203 cumulative checks; simulated provider, no real tokens/charges.",
+        "BB own-number aliases native DB: 699 cumulative checks; synthetic provider only, no fiscal/financial rewrite."
+      ]
+    },
+    {
+      "log": "ci445-python.log",
+      "sha256": "8d49e6a45dcce6ab27eac046aab8665efec0f712c8166a054528d906c13efb42",
+      "last_lines": [
+        "...............................................................................................................................................",
+        "----------------------------------------------------------------------",
+        "Ran 143 tests in 33.369s",
+        "",
+        "OK"
+      ]
+    },
+    {
+      "log": "ci445-installer-bootstrap.log",
+      "sha256": "b631c4450fb81e8d43dff98431ea83d8b7f4cc0cab5202b38ff7e8351c70ba1b",
+      "last_lines": [
+        "Issuer inline installer: 10 checks passed (adapter contract; full HTTP/MySQL runs in Docker CI)."
+      ]
+    },
+    {
+      "log": "ci445-installer-abort.log",
+      "sha256": "2d12e45a71a703b6355000f1d42c60e6a955927e1b5f28745e2b868ddd6f61f1",
+      "last_lines": [
+        "Native installer abort: safe failure response, no diagnostic/credential leak."
+      ]
+    }
+  ]
+}

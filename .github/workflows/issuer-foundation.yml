@@ -1,0 +1,241 @@
+name: Empresas no núcleo
+on:
+  pull_request:
+    branches: [main, develop, feat/banco-brasil-billing-cnab240]
+    paths:
+      - application/**
+      - modules/issuers/**
+      - modules/asaas/**
+      - modules/pige_bridge/**
+      - modules/finance/**
+      - modules/accounting/**
+      - modules/purchase/**
+      - tests/purchase_mail_language.php
+      - modules/ma/**
+      - tests/ma_email_template_localization.php
+      - tests/ma_email_assets.php
+      - tests/ma_email_interface.test.cjs
+      - scripts/build-ma-email-templates-ptbr.py
+      - scripts/check-ma-email-assets.py
+      - tests/issuers*.php
+      - tests/native_registry_lookup*.php
+      - tests/native_context.php
+      - tests/native_email_catalog.test.cjs
+      - scripts/generate-company-email-catalog.cjs
+      - install/database.sql
+      - tests/settings/**
+      - tests/companies/**
+      - tests/companies*.cjs
+      - tests/issuers_standalone_http_smoke.sh
+      - scripts/inventory-company-boundaries.py
+      - scripts/company-surface-inventory.php
+      - tests/test_company_boundary_inventory.py
+      - docs/companies/**
+      - tests/test_module_migration_convention.py
+      - docs/module-migrations.md
+      - docs/issuer-essential-module.md
+      - scripts/ci/run-company-registry-shard.py
+      - scripts/ci/plan-company-registry-shards.py
+      - tests/ci/**
+      - docker/ci/**
+      - .github/workflows/issuer-foundation.yml
+  push:
+    branches: [main, develop]
+    paths:
+      - application/**
+      - modules/issuers/**
+      - modules/asaas/**
+      - modules/pige_bridge/**
+      - modules/finance/**
+      - modules/accounting/**
+      - modules/purchase/**
+      - tests/purchase_mail_language.php
+      - modules/ma/**
+      - tests/ma_email_template_localization.php
+      - tests/ma_email_assets.php
+      - tests/ma_email_interface.test.cjs
+      - scripts/build-ma-email-templates-ptbr.py
+      - scripts/check-ma-email-assets.py
+      - tests/issuers*.php
+      - tests/native_registry_lookup*.php
+      - tests/native_context.php
+      - tests/native_email_catalog.test.cjs
+      - scripts/generate-company-email-catalog.cjs
+      - install/database.sql
+      - tests/settings/**
+      - tests/companies/**
+      - tests/companies*.cjs
+      - tests/issuers_standalone_http_smoke.sh
+      - scripts/inventory-company-boundaries.py
+      - scripts/company-surface-inventory.php
+      - tests/test_company_boundary_inventory.py
+      - docs/companies/**
+      - tests/test_module_migration_convention.py
+      - docs/module-migrations.md
+      - docs/issuer-essential-module.md
+      - scripts/ci/run-company-registry-shard.py
+      - scripts/ci/plan-company-registry-shards.py
+      - tests/ci/**
+      - docker/ci/**
+      - .github/workflows/issuer-foundation.yml
+permissions:
+  contents: read
+jobs:
+  migration-convention:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: python3 -m unittest tests/test_module_migration_convention.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tests/native_email_catalog.test.cjs tests/email_templates_ptbr.test.cjs tests/email_template_interface.test.cjs tests/email_template_completeness.test.cjs tests/ma_email_interface.test.cjs
+  boundary-inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: python3 -m unittest tests/test_company_boundary_inventory.py
+      - run: python3 scripts/inventory-company-boundaries.py --check
+      - name: Capturar resumo determinístico do inventário mesmo quando o gate reprovar
+        if: always()
+        run: python3 scripts/inventory-company-boundaries.py --output /tmp/company-boundaries-summary.json
+      - name: Guardar resumo para revisão sem alterar o gate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-boundaries-expected-summary
+          path: /tmp/company-boundaries-summary.json
+          retention-days: 7
+      - run: python3 scripts/inventory-company-boundaries.py --full --output /tmp/company-boundaries-full.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: company-boundaries-full
+          path: /tmp/company-boundaries-full.json
+  registry-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: python3 -m unittest discover -s tests/ci -p 'test_company_registry_shards.py'
+  registry-shards:
+    needs: registry-plan
+    runs-on: ubuntu-latest
+    strategy:
+      # Preserve evidence from other shards when one runtime fails.
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.5']
+        shard: [1, 2, 3, 4]
+        include:
+          - php: '8.1'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:c6246e2740c225e7db4f0db2b8ba8657fb72cb9638efdedcfe1a8853fc081a14
+          - php: '8.5'
+            image: ghcr.io/wkarts/argws-crm-ci-php@sha256:d050af83a621363bdc79e5868f85d7203e8b5fb03be6cd37fbb7c41500894677
+    container:
+      image: ${{ matrix.image }}
+      options: --shm-size=1g
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: synthetic-test-password
+          MYSQL_DATABASE: issuer_tests
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -psynthetic-test-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validar ferramentas da imagem CI por digest
+        env:
+          EXPECTED_PHP: ${{ matrix.php }}
+        run: argws-ci-smoke
+      - name: Validar inventário operacional uma vez
+        if: matrix.shard == 1 && matrix.php == '8.1'
+        run: |
+          php scripts/company-surface-inventory.php --check
+          php scripts/company-surface-inventory.php --full --output /tmp/company-operational-surfaces-full.json
+      - name: Validar sintaxe e controles HTTP
+        if: matrix.shard == 1
+        run: |
+          find tests -name 'issuers*.php' -exec php -l '{}' \;
+          php -l application/config/argws_resources.php
+          php -l application/libraries/App_modules.php
+          php -l application/libraries/App.php
+          php -l application/core/AdminController.php
+          php -l application/controllers/admin/Mods.php
+          php -l application/hooks/InitHook.php
+          php -l application/views/admin/modules/list.php
+          find modules/issuers -name '*.php' -exec php -l '{}' \;
+          python3 tests/test_efi_company_contract.py
+          python3 tests/test_efi_company_checkout_contract.py
+          php tests/installed_master_proof.php
+          php tests/asaas_checkout_transaction_tables.php
+          php tests/efi_install_contract.php
+          php tests/efi_routes.php
+          php tests/efi/operational_contract.php
+          php tests/efi/controller_contract.php
+          php tests/efi/certificate_contract.php
+          php tests/efi_csrf_config.php
+          php tests/efi_native_autoload.php
+          php tests/efi/sdk_transport_contract.php
+          php tests/efi/intent_contract.php
+          php tests/efi_adoption_http.php
+          php tests/efi_checkout_preflight.php
+          php tests/efi/native_accounts_contract.php
+          php tests/efi/native_controller_contract.php
+          php tests/efi/native_proof_contract.php
+          php tests/issuers_controller.php
+          php tests/issuers_admin_upgrade_gate.php
+          php tests/issuers_integration_view.php
+          php tests/companies/email_template_editor.php
+          php tests/companies/portal_recovery_tokens.php
+          php tests/companies/portal_recovery_atomic.php
+      - uses: actions/upload-artifact@v4
+        if: matrix.shard == 1 && matrix.php == '8.1'
+        with:
+          name: company-operational-surfaces
+          path: /tmp/company-operational-surfaces-full.json
+      - name: Testar entradas legadas Finance e Accounting em banco exclusivo
+        if: matrix.shard == 1
+        env:
+          ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_module_audit;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: synthetic-test-password
+        run: |
+          php -r '$db=new PDO("mysql:host=mysql;charset=utf8mb4",getenv("ISSUERS_TEST_USER"),getenv("ISSUERS_TEST_PASSWORD")); $db->exec("CREATE DATABASE issuer_module_audit CHARACTER SET utf8mb4 COLLATE utf8mb4_bin");'
+          php tests/companies/legacy_financial_module_readers.php
+          php tests/companies/legacy_financial_module_tables.php
+          php tests/companies/legacy_financial_module_migrations.php
+          php tests/companies/module_version_column_mysql.php
+          php tests/companies/efi_adoption_mysql.php
+          php tests/companies/efi_operational_mysql.php
+          php tests/companies/efi_company_checkout.php
+      - name: Testar schema, transações, ACL e concorrência em MySQL isolado
+        env:
+          ISSUERS_TEST_DSN: mysql:host=mysql;dbname=issuer_tests;charset=utf8mb4
+          ISSUERS_TEST_USER: root
+          ISSUERS_TEST_PASSWORD: synthetic-test-password
+        run: |
+          python3 scripts/ci/run-company-registry-shard.py --shard ${{ matrix.shard }} --timings /tmp/registry-timings.jsonl
+      - name: Preservar tempos por comando (inclui falhas)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-registry-timings-php-${{ matrix.php }}-shard-${{ matrix.shard }}
+          path: /tmp/registry-timings.jsonl
+          if-no-files-found: warn
+          retention-days: 7
+  # Preserve existing branch-protection check names. A skipped/cancelled shard
+  # cannot satisfy either gate, even if the other PHP version succeeded.
+  registry:
+    if: always()
+    needs: [registry-plan, registry-shards]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.5']
+    steps:
+      - name: Exigir todos os shards e o inventário exato
+        env:
+          PLAN_RESULT: ${{ needs.registry-plan.result }}
+          SHARDS_RESULT: ${{ needs.registry-shards.result }}
+        run: test "$PLAN_RESULT" = success && test "$SHARDS_RESULT" = success

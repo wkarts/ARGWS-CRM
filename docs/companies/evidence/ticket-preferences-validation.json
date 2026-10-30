@@ -1,0 +1,149 @@
+{
+  "component": "ticket_replies_order own presentation vertical",
+  "overlay": "/workspace/scratch/6b72446d684f/resume-next-ticket-settings",
+  "published": false,
+  "production_paths": 6,
+  "manifest_paths": 12,
+  "service_sha256": "d749badfdcbcfa1cff8b07620a16c4baa2541c78c48bb3161947343d1df2fcee",
+  "sqlite": [
+    {
+      "suite": "tests/settings/ticket_preferences.php",
+      "code": 0,
+      "log": "/workspace/scratch/6b72446d684f/ticket-preferences-evidence/sqlite-ticket_preferences.log",
+      "source_manifest_unchanged": true,
+      "diagnostics": false
+    },
+    {
+      "suite": "tests/settings/ticket_preferences_readers.php",
+      "code": 0,
+      "log": "/workspace/scratch/6b72446d684f/ticket-preferences-evidence/sqlite-ticket_preferences_readers.log",
+      "source_manifest_unchanged": true,
+      "diagnostics": false
+    },
+    {
+      "suite": "tests/company_context.php",
+      "code": 0,
+      "log": "/workspace/scratch/6b72446d684f/ticket-preferences-evidence/sqlite-company_context.log",
+      "source_manifest_unchanged": true,
+      "diagnostics": false
+    },
+    {
+      "suite": "tests/settings/project_file_settings.php",
+      "code": 0,
+      "log": "/workspace/scratch/6b72446d684f/ticket-preferences-evidence/sqlite-project_file_settings.log",
+      "source_manifest_unchanged": true,
+      "diagnostics": false
+    },
+    {
+      "suite": "tests/companies/portal_operations_controller.php",
+      "code": 0,
+      "log": "/workspace/scratch/6b72446d684f/ticket-preferences-evidence/sqlite-portal_operations_controller.log",
+      "source_manifest_unchanged": true,
+      "diagnostics": false
+    }
+  ],
+  "maria": [
+    {
+      "suite": "tests/settings/ticket_preferences_concurrency.php",
+      "code": 0,
+      "log": "/workspace/scratch/6b72446d684f/ticket-preferences-evidence/maria-ticket_preferences_concurrency.log",
+      "source_manifest_unchanged": true,
+      "diagnostics": false
+    },
+    {
+      "suite": "tests/settings/ticket_preferences_readers.php",
+      "code": 0,
+      "log": "/workspace/scratch/6b72446d684f/ticket-preferences-evidence/maria-ticket_preferences_readers.log",
+      "source_manifest_unchanged": true,
+      "diagnostics": false
+    },
+    {
+      "suite": "tests/companies/portal_operations_controller.php",
+      "code": 0,
+      "log": "/workspace/scratch/6b72446d684f/ticket-preferences-evidence/maria-portal_operations_controller.log",
+      "source_manifest_unchanged": true,
+      "diagnostics": false
+    }
+  ],
+  "lint": [
+    {
+      "path": "application/services/CompanyTicketPreferences.php",
+      "code": 0,
+      "output": "No syntax errors detected in resume-next-ticket-settings/application/services/CompanyTicketPreferences.php\n"
+    },
+    {
+      "path": "application/services/CompanySettingsCatalog.php",
+      "code": 0,
+      "output": "No syntax errors detected in resume-next-ticket-settings/application/services/CompanySettingsCatalog.php\n"
+    },
+    {
+      "path": "application/controllers/admin/Settings.php",
+      "code": 0,
+      "output": "No syntax errors detected in resume-next-ticket-settings/application/controllers/admin/Settings.php\n"
+    },
+    {
+      "path": "application/views/admin/settings/company_scoped.php",
+      "code": 0,
+      "output": "No syntax errors detected in resume-next-ticket-settings/application/views/admin/settings/company_scoped.php\n"
+    },
+    {
+      "path": "application/services/CompanyTickets.php",
+      "code": 0,
+      "output": "No syntax errors detected in resume-next-ticket-settings/application/services/CompanyTickets.php\n"
+    },
+    {
+      "path": "application/services/CompanyPortalOperations.php",
+      "code": 0,
+      "output": "No syntax errors detected in resume-next-ticket-settings/application/services/CompanyPortalOperations.php\n"
+    },
+    {
+      "path": "tests/settings/ticket_preferences.php",
+      "code": 0,
+      "output": "No syntax errors detected in resume-next-ticket-settings/tests/settings/ticket_preferences.php\n"
+    },
+    {
+      "path": "tests/settings/ticket_preferences_readers.php",
+      "code": 0,
+      "output": "No syntax errors detected in resume-next-ticket-settings/tests/settings/ticket_preferences_readers.php\n"
+    },
+    {
+      "path": "tests/settings/ticket_preferences_concurrency.php",
+      "code": 0,
+      "output": "No syntax errors detected in resume-next-ticket-settings/tests/settings/ticket_preferences_concurrency.php\n"
+    },
+    {
+      "path": "tests/settings/ticket_preferences_http_fixture.php",
+      "code": 0,
+      "output": "No syntax errors detected in resume-next-ticket-settings/tests/settings/ticket_preferences_http_fixture.php\n"
+    }
+  ],
+  "browser": {
+    "script": "tests/settings/ticket_preferences_browser.cjs",
+    "fixture": "tests/settings/ticket_preferences_http_fixture.php",
+    "syntax": "PASS",
+    "http_executed": false,
+    "prerequisite": "trusted native current DB + actual company/contact onboarding portal fixtures; root integration/freeze required"
+  },
+  "baseline_red": {
+    "script": "baseline-reader-red.php",
+    "log": "baseline-reader-red.log",
+    "expected_failure": "BASELINE_READER_IGNORES_OWN_ORDER",
+    "engine": "sqlite",
+    "dependency_note": "New service methods are unchanged; require_once lines removed only in isolated eval to reuse already-loaded baseline dependency classes and prevent duplicate declarations. No production files changed."
+  },
+  "limits": [
+    "no native version/migration/workflow changes",
+    "no HTTP/browser execution claim",
+    "SQLite does not prove InnoDB locks",
+    "three MariaDB scenarios observed two real lock waiters each",
+    "not the complete settings catalog"
+  ],
+  "independent_review": {
+    "result": "No concrete issues found in directed review",
+    "evidence": "/workspace/scratch/6b72446d684f/review-ticket-settings/review-result.json",
+    "new_checks": 35,
+    "sqlite_cumulative": 111,
+    "maria_cumulative": 113,
+    "manifest_bind": "12/12 unchanged before/after"
+  }
+}

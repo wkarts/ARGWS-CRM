@@ -1,0 +1,35 @@
+<?php
+require __DIR__.'/invoices.php';
+require_once APPPATH.'../modules/banco_brasil/libraries/BancoBrasil/ApiService.php';
+require_once APPPATH.'../modules/banco_brasil/libraries/BancoBrasil/ModuleSchema.php';
+// Actual published module DDL, translated only for the SQLite execution engine.
+$ddl=[BancoBrasil\ModuleSchema::statements($p)[0],...array_slice(BancoBrasil\ApiSchema::statements($p),0,2)];
+foreach($ddl as$sql){if($db->driver()==='sqlite'){$sql=str_replace(' AUTO_INCREMENT','',$sql);$sql=preg_replace('/UNIQUE KEY (?:`[^`]+`|[a-z_]+)\s*\(/i','UNIQUE (',$sql);$sql=preg_replace('/,?\s*KEY (?:`[^`]+`|[a-z_]+)\s*\([^)]*\)/i','',$sql);}$db->query($sql);}unset($db->data_cache['table_names']);
+$db->query('INSERT INTO '.$p.'modules(module_name,installed_version,active) VALUES(?,?,1)',['banco_brasil',BancoBrasil\ModuleRelease::VERSION]);
+$account='001:00001-X:000000000001-0';$agreement='1234567';$identity=hash('sha256',json_encode([$a,$account,'sandbox',$agreement,'17','019'],JSON_THROW_ON_ERROR));$configuration=hash('sha256',json_encode([$identity,'11222333000181','Synthetic issuer'],JSON_THROW_ON_ERROR));
+$db->query('INSERT INTO '.$p.'bb_connections(id,issuer_id,provider,account_id,environment,agreement_number,wallet,variation,issuer_tax_id,issuer_name,identity_hash,configuration_hash,created_by,created_at) VALUES(1,?,?,?,?,?,?,?,?,?,?,?,?,?)',[$a,'banco_brasil',$account,'sandbox',$agreement,'17','019','11222333000181','Synthetic issuer',$identity,$configuration,7,'2026-01-01 00:00:00']);
+for($id=1;$id<=33;$id++){$definition=json_encode(['spec_sha256'=>BancoBrasil\ApiClient::SPEC_SHA256,'api_stage'=>'sandbox','configuration_hash'=>$configuration,'issuer_id'=>$a,'connection_id'=>1,'synthetic_fixture_revision'=>$id],JSON_THROW_ON_ERROR);$db->query('INSERT INTO '.$p.'bb_api_profiles(id,issuer_id,connection_id,api_stage,configuration_hash,profile_hash,definition_json,created_by,created_at) VALUES(?,?,1,?,?,?,?,7,?)',[$id,$a,'sandbox',$configuration,hash('sha256',$definition),$definition,'2026-01-01 00:00:00']);}
+$db->query('INSERT INTO '.$p.'bb_api_credentials(id,profile_id,issuer_id,context_nonce,ciphertext,created_by,created_at) VALUES(1,1,?,?,?,7,?)',[$a,hash('sha256','synthetic-context'),'PRIVATE SYNTHETIC CIPHER','2026-01-01 00:00:00']);
+$forbidden=fn()=>throw new RuntimeException('permission reader must not encrypt/decrypt/contact provider');$service=new BancoBrasil\ApiService($db,$p,$forbidden,$forbidden,$forbidden);$before=[];foreach(['bb_connections','bb_api_profiles','bb_api_credentials','invoices','issuers_sequences','issuers_audit']as$table)$before[$table]=$db->query('SELECT * FROM '.$p.$table)->result_array();
+$rows=$service->permissionCandidates($a,7);essentialCheck(count($rows)===33&&$rows[0]['credential_configured']===true&&$rows[32]['credential_configured']===false,'oldest configured profile remains visible beyond overview page of thirty');
+essentialCheck(!str_contains(json_encode($rows),'PRIVATE')&&!str_contains(json_encode($rows),'definition_json')&&!$rows[0]['checkout_ready'],'candidate DTO contains neither credentials nor private definition or checkout claim');
+essentialCheck($service->permissionCandidates($b,7)===[],'other issuer does not inherit profiles');
+essentialThrows(fn()=>$service->permissionCandidatesInOwned($a,7),'issuer_owned_transaction_required','owned reader rejects naked transaction absence');
+$owned=IssuerTransaction::run($db,$p,BancoBrasil\ApiService::permissionCandidateTables(),fn()=>$service->permissionCandidatesInOwned($a,7));essentialCheck($owned===$rows,'owned reader composes in canonical transaction without nested transaction');
+$db->query('UPDATE '.$p.'bb_api_profiles SET profile_hash=? WHERE id=33',[str_repeat('0',64)]);essentialThrows(fn()=>$service->permissionCandidates($a,7),'bb_api_profile_unavailable','corrupt unconfigured profile cannot hide behind first configured candidate');$db->query('UPDATE '.$p.'bb_api_profiles SET profile_hash=? WHERE id=33',[$before['bb_api_profiles'][32]['profile_hash']]);
+$db->query('UPDATE '.$p.'staff SET active=0 WHERE staffid=7');essentialThrows(fn()=>$service->permissionCandidates($a,7),'bb_api_access_denied','revoked actor cannot list candidates');$db->query('UPDATE '.$p.'staff SET active=1 WHERE staffid=7');
+foreach($before as$table=>$snapshot)essentialCheck($db->query('SELECT * FROM '.$p.$table)->result_array()===$snapshot,'candidate reader leaves '.$table.' unchanged');
+$db->trans_begin();try{essentialThrows(fn()=>$service->permissionCandidates($a,7),'issuer_outer_transaction_not_allowed','standalone reader cannot adopt arbitrary external transaction');}finally{$db->trans_rollback();}
+$db->query('UPDATE '.$p.'modules SET active=0 WHERE module_name=?',['banco_brasil']);essentialThrows(fn()=>$service->permissionCandidates($a,7),'bb_api_access_denied','disabled module cannot supply selectable gateway');$db->query('UPDATE '.$p.'modules SET active=1 WHERE module_name=?',['banco_brasil']);
+require_once APPPATH.'services/NativeCompanyInvoicePaymentChoices.php';NativeCompanyPaymentModesSchema::ensure($db,$p);
+$choices=new NativeCompanyInvoicePaymentChoices($db,$p);
+$disabled=array_column($choices->listing($a,7),null,'id');
+essentialCheck(!$disabled['banco_brasil_api']['selection_available']&&!$disabled['banco_brasil_cnab']['selection_available']&&!isset($disabled['banco_brasil']),'two explicit catalog entries start disabled; historical generic ID is not offered');
+$channels=new BancoBrasil\ChannelPreferences($db,$p);$state=$channels->page($a,7);$channels->setEnabled($a,7,'api',true,$state['revision']);
+$modes=array_column($choices->listing($a,7),null,'id');$bb=$modes['banco_brasil_api'];
+essentialCheck($bb['selection_available']&&!$bb['checkout_ready']&&!$modes['banco_brasil_cnab']['selection_available'],'original invoice selector consumes enabled API candidate proof without enabling CNAB or claiming checkout');
+essentialCheck($choices->validate($a,7,['banco_brasil_api'])===['banco_brasil_api'],'native invoice can select the explicit API channel');
+$validated=IssuerTransaction::run($db,$p,NativeCompanyInvoicePaymentChoices::validationTables(['banco_brasil_api']),fn()=>$choices->validateInOwned($a,7,['banco_brasil_api']));
+essentialCheck($validated===['banco_brasil_api'],'API selection is revalidated in the invoice transaction');
+essentialThrows(fn()=>$choices->validate($a,7,['banco_brasil_cnab']),'native_invoice_payment_mode_denied','disabled CNAB cannot be forged as invoice selection');
+echo 'BB permission candidates actual SQLite/native DDL: '.$GLOBALS['essentialChecks']." cumulative PASS; no bank call or bank approval.\n";

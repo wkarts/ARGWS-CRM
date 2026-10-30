@@ -1,0 +1,103 @@
+<?php
+
+$lang['si_custom_theme']                       = 'Tema Personalizado';
+$lang['si_custom_theme_menu']                  = 'Tema Personalizado';
+$lang['si_custom_staff_theme_menu']            = 'Meu Tema';
+$lang['si_custom_theme_title']                 = 'Configurações para o Tema Personalizado';
+
+$lang['si_ct_select_theme']			 = 'Selecionar Tema';
+$lang['si_ct_select_theme_tab_info'] = 'Selecione o Tema que deseja definir como tema padrão para todos os funcionários.';
+$lang['si_ct_select_clients_theme_tab_info'] = 'Selecione o Tema que deseja definir como tema padrão para todos os clientes.';
+$lang['si_ct_create_theme']			 = 'Personalizar Tema';
+$lang['si_ct_create_theme_tab_info'] = 'Você pode criar seu próprio tema personalizado, selecionando um tema existente ou criando sua própria escolha de cores. Você também pode editar temas existentes a partir daqui.';
+$lang['si_ct_select_theme_to_copy']	 = 'Selecionar tema existente para personalizar';
+$lang['si_ct_edit_theme']	 	     = 'Editar Tema';
+$lang['si_ct_save_new_theme']	 	 = 'Salvar como Novo Tema';
+$lang['si_ct_new_theme_name']	     = 'Nome do seu Tema';
+$lang['si_ct_reset_info']            = 'Redefinir Tema para o padrão, não o CSS Personalizado. Quaisquer alterações feitas nos temas serão redefinidas';
+$lang['si_ct_admin_menu']            = 'Menus do lado do Admin';
+$lang['si_ct_customers']             = 'Lado do Cliente';
+$lang['si_ct_buttons']               = 'Botões';
+$lang['si_ct_tabs']                  = 'Guias';
+$lang['si_ct_modals']                = 'Modais';
+$lang['si_ct_general']               = 'Outros';
+$lang['si_ct_texts']                 = 'Textos';
+$lang['si_ct_custom_css']            = 'CSS Personalizado';
+$lang['si_ct_example_modal_heading'] = 'Exemplo de Título Modal';
+$lang['si_ct_sample_text']           = 'Texto de Exemplo';
+$lang['si_ct_modal_body']            = 'O Corpo Modal está aqui';
+$lang['si_ct_admin']                 = 'Lado do Admin';
+$lang['si_ct_customers_and_admin']   = 'Clientes e Admin Ambos os lados';
+$lang['si_ct_ca_info']               = 'CSS Personalizado para uso tanto na área do admin quanto do cliente.';
+$lang['si_ct_error_in_delete']		 = 'Erro ao Excluir Tema';
+$lang['si_ct_settings']              = 'Configurações';
+#settings
+$lang['si_ct_settings'] = 'Configurações do Tema Personalizado';
+
+#campos de configurações do banco de dados
+
+#se você não sabe o que está fazendo, deixe-os sem traduzir
+$lang['si_ct_sidebar_bg_color'] = 'Cor de Fundo do Menu';
+$lang['si_ct_sidebar_open_bg_color'] = 'Cor de Fundo do Submenu Aberto';
+$lang['si_ct_sidebar_links_color'] = 'Cor dos Links do Menu';
+$lang['si_ct_sidebar_user_welcome_bg_color'] = 'Cor de Fundo do Menu de Boas-Vindas do Usuário <font color="red"></font>';
+$lang['si_ct_sidebar_user_welcome_text_color'] = 'Cor do Texto do Menu de Boas-Vindas do Usuário <font color="red"></font>';
+$lang['si_ct_sidebar_active_item_bg_color'] = 'Cor de Fundo do Item Ativo do Menu';
+$lang['si_ct_sidebar_active_item_color'] = 'Cor do Item Ativo do Menu';
+$lang['si_ct_sidebar_active_sub_item_bg_color'] = 'Cor de Fundo do Subitem Ativo do Menu';
+$lang['si_ct_sidebar_active_sub_item_links_color'] = 'Cor dos Links do Submenu';
+$lang['si_ct_top_header_bg_color'] = 'Cor de Fundo do Cabeçalho Superior';
+$lang['si_ct_top_header_bg_links_color'] = 'Cor dos Links do Cabeçalho Superior';
+$lang['si_ct_navigation_bg_color'] = 'Cor de Fundo do Menu';
+$lang['si_ct_navigation_link_color'] = 'Cor dos Links do Menu';
+$lang['si_ct_footer_background'] = 'Cor de Fundo do Rodapé';
+$lang['si_ct_footer_text_color'] = 'Cor do Texto do Rodapé';
+$lang['si_ct_customer_login_background'] = 'Fundo do Login do Cliente';
+$lang['si_ct_links'] = 'Links';
+$lang['si_ct_color'] = 'Cor';
+$lang['si_ct_link_hover_color'] = 'Cor de Hover/Foco dos Links';
+$lang['si_ct_table_headings_color'] = 'Cor dos Cabeçalhos da Tabela';
+$lang['si_ct_table_headings_bg_color'] = 'Cor de Fundo dos Cabeçalhos da Tabela';
+$lang['si_ct_example_table_heading'] = 'Cabeçalho de Exemplo';
+$lang['si_ct_table_content_bg_color'] = 'Cor de Fundo do Conteúdo da Tabela';
+$lang['si_ct_example_table_content'] = 'Conteúdo de Exemplo';
+$lang['si_ct_admin_login_background'] = 'Fundo do Login do Administrador';
+$lang['si_ct_admin_page_background'] = 'Fundo de Todas as Páginas';
+$lang['si_ct_admin_page_text_color'] = 'Cor do Texto de Todas as Páginas';
+$lang['si_ct_admin_inputs_bg_color'] = 'Cor de Fundo dos Inputs';
+$lang['si_ct_admin_inputs_border_color'] = 'Cor da Borda dos Inputs';
+$lang['si_ct_admin_horizontal_line_color'] = 'Cor da Linha Horizontal';
+$lang['si_ct_admin_panel_background'] = 'Fundo dos Painéis do Administrador';
+$lang['si_ct_admin_panel_heading_color'] = 'Cor do Cabeçalho do Painel de Administração';
+$lang['si_ct_example_admin_panel'] = 'Este é um painel de exemplo';
+$lang['si_ct_text_muted'] = 'Texto Silenciado';
+$lang['si_ct_text_danger'] = 'Texto Perigoso';
+$lang['si_ct_text_warning'] = 'Texto de Aviso';
+$lang['si_ct_text_info'] = 'Texto de Informação';
+$lang['si_ct_text_success'] = 'Texto de Sucesso';
+$lang['si_ct_example_text'] = 'Exemplo %s';
+$lang['si_ct_tabs_bg_color'] = 'Cor de Fundo das Guias';
+$lang['si_ct_tabs_links_color'] = 'Cor dos Links das Guias';
+$lang['si_ct_tabs_active_links_color'] = 'Cor Ativa/Hover do Link das Guias';
+$lang['si_ct_tabs_active_border_color'] = 'Cor da Borda Ativa das Guias';
+$lang['si_ct_tabs_border_color'] = 'Cor da Borda das Guias';
+$lang['si_ct_modal_heading_bg'] = 'Fundo do Cabeçalho';
+$lang['si_ct_modal_heading_color'] = 'Cor do Cabeçalho';
+$lang['si_ct_modal_close_btn_color'] = 'Cor do Botão de Fechar';
+$lang['si_ct_modal_white_text_color'] = 'Cor do Texto Branco do Modal';
+$lang['si_ct_modal_body_bg'] = 'Fundo do Corpo';
+$lang['si_ct_button_default'] = 'Botão Padrão';
+$lang['si_ct_button_info'] = 'Botão de Informação';
+$lang['si_ct_button_success'] = 'Botão de Sucesso';
+$lang['si_ct_button_danger'] = 'Botão de Perigo';
+$lang['si_ct_settings_bg_img_admin_login'] = 'Imagem de Fundo do Login do Admin';
+$lang['si_ct_settings_bg_img_customer_login'] = 'Imagem de Fundo do Login do Cliente';
+$lang['si_ct_settings_bg_img_admin_menu'] = 'Imagem de Fundo do Menu do Admin';
+$lang['si_ct_settings_bg_img_admin_pages'] = 'Imagem de Fundo das Páginas do Admin';
+$lang['si_ct_settings_bg_img_customer_pages'] = 'Imagem de Fundo das Páginas do Cliente';
+$lang['si_ct_settings_customer_login_header'] = 'Mostrar Cabeçalho do Lado do Cliente (Antes do Login)';
+$lang['si_ct_settings_customer_login_footer'] = 'Mostrar Rodapé do Lado do Cliente (Antes do Login)';
+$lang['si_ct_settings_enable_staff_theme'] = 'Permitir que os funcionários selecionem o tema deles';
+$lang['si_ct_settings_enable_client_theme'] = 'Permitir que os clientes selecionem o tema deles';
+
+$lang['si_ct_note_for_version'] = 'Observação: os campos marcados com ** atendem a versões antigas do ARGWS CRM; não se aplicam à versão 3.0 ou posterior.';

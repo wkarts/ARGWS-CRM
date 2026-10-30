@@ -1,0 +1,33 @@
+{
+  "sha": "57a80667e47e203bcb4e388fa3670824bb4bb4e1",
+  "results": [
+    {
+      "command": [
+        "python",
+        "scripts/check-release-version.py",
+        "--root",
+        ".",
+        "--base",
+        "aa58b832b3c5ed04a599caacba125b056c081ba7",
+        "--head",
+        "57a80667e47e203bcb4e388fa3670824bb4bb4e1"
+      ],
+      "exit": 0,
+      "output": "Release can\u00f4nica verificada: 4.4.3 = migration 443.\n"
+    },
+    {
+      "command": [
+        "python",
+        "scripts/check-module-migration-diff.py",
+        "--repo",
+        ".",
+        "--base",
+        "aa58b832b3c5ed04a599caacba125b056c081ba7",
+        "--head",
+        "57a80667e47e203bcb4e388fa3670824bb4bb4e1"
+      ],
+      "exit": 0,
+      "output": "Module migration baseline: aa58b832b3c5ed04a599caacba125b056c081ba7\nFunctional modules: [\"accounting\", \"api\", \"asaas\", \"banco_brasil\", \"connect_api_chat\", \"custom_links\", \"einvoice\", \"exports\", \"goals\", \"ma\", \"multiple_companies\"]\nProven nonfunctional files: 0\n"
+    }
+  ]
+}

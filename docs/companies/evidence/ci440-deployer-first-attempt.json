@@ -1,0 +1,9 @@
+{
+  "sha": "77ce06ccc977e7c9410f252ca71c7b06d34279e3",
+  "run": 39401558442,
+  "job": 118557437479,
+  "step": "Instalar linker musl",
+  "failure": "apt update received403 from packages.microsoft.com before installing musl; Ubuntu mirrors returned success; Windows build and validate passed",
+  "action": "Rerun only failed jobs and their skipped dependents once, without source or workflow changes",
+  "not_application_failure": true
+}

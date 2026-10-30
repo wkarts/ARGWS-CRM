@@ -1,0 +1,12 @@
+{
+  "frozen_production_manifest_sha256": "c41268180fb9d1773be4467d363bd2596f6889ea54e1f8a025a39ff069388987",
+  "frozen_production_paths": 18557,
+  "candidate445_and_overlay_production_exact": true,
+  "changes": {
+    "tests/banco_brasil_own_number_sqlite.php": {
+      "base_sha256": "8bfcc1c2abce740b2541a57613164b50aee21ca25ced5a2b0ccb1eb60141fcc7",
+      "sha256": "d3f7c34870711f59093556a0501a228c657ecdce96e45aa9001ec25c5869fb49"
+    }
+  },
+  "component.patch_sha256": "e121aa7af65400d1b0e55a8e5c640f1eadf79079498f8c280998946f1e4352cc"
+}

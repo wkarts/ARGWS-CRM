@@ -1,0 +1,19 @@
+{
+  "engine": "maria",
+  "php": "php83",
+  "database": "issuer_hr454",
+  "source_tree": "/workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source",
+  "verified_tree_sha": null,
+  "manifest_sha256": null,
+  "time_utc": "2026-10-21T11:45:21.708569+00:00",
+  "results": [
+    {
+      "test": "tests/companies/hr_api_phantoms.php",
+      "sha256": "adf3bc5847813541f109e47a2462d2344163e8413be4f226dad81d5362541bda",
+      "exit_code": 255,
+      "seconds": 1.22,
+      "log": "/workspace/scratch/2286cc0eac8b/runtime/evidence/hr-collections-m3-red-structure/001-hr_api_phantoms.log",
+      "source_changed_during_execution": false
+    }
+  ]
+}

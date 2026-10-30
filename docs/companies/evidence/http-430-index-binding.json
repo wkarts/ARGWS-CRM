@@ -1,0 +1,12 @@
+{
+  "source": "/tmp/pr45-index-430-crrcmvpd",
+  "functional_files_compared": 18515,
+  "source_manifest_sha256": "3e061aba06ad871468a6ca57049c3a50ff749bbd9e3dd65fe72a9d436fb547a4",
+  "runtime_manifest_sha256": "2fc522c710589498929f96b9578d3541e3c7755c360c2e39da505e026d661c7f",
+  "runtime_differences": [],
+  "test_exceptions": [
+    "tests/settings_primary_sales_browser.cjs"
+  ],
+  "exception_reason": "Only SQL CLI helper uses alternate delimiter for compound trigger. Assertions and production bytes unchanged. Separate exact-helper real MariaDB CLI RED1064/GREEN45000 atomic rollback/drop/retry and full Chromium observed; frozen HTTP used PDO SQL adapter. Actual MySQL8 CLI awaits CI430.",
+  "docs_ci_updated_after_freeze": true
+}

@@ -1,0 +1,22 @@
+{
+  "result": "RED preserved for old no-cookie assertion; GREEN for session boundary",
+  "old_assertion_failed": true,
+  "http_status": 200,
+  "cookie_names": [
+    "csrf_cookie_name"
+  ],
+  "session_cookie_name": "sp_session",
+  "before": {
+    "csrf_cookie_name": "csrf_cookie_name",
+    "session_cookie_name": "sp_session",
+    "session_count": 11,
+    "session_sha256": "0c3f507fd96ad38e31cb9868a9cb57fd7e2c07985dcfbbfdb93686487dce94b6"
+  },
+  "after": {
+    "csrf_cookie_name": "csrf_cookie_name",
+    "session_cookie_name": "sp_session",
+    "session_count": 11,
+    "session_sha256": "0c3f507fd96ad38e31cb9868a9cb57fd7e2c07985dcfbbfdb93686487dce94b6"
+  },
+  "product_changed": false
+}

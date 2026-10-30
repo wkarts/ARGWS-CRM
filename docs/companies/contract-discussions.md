@@ -1,0 +1,15 @@
+# Conversa de contratos por empresa
+
+Critério atendido: fluxo nativo de discussão do contrato com equipe e contato autorizado, preservando o snapshot e as identidades, conforme continuidade PR45 §5. O fluxo selado usa a permissão nativa de contato **3 (contratos)**; a permissão financeira1 não concede acesso.
+
+Em **Contratos**, a equipe com `contracts/view` e `contracts/edit` registra comentário interno e publica cada mensagem separadamente. O cliente vê a conversa somente no contrato ativo ou cancelado, numerado, explicitamente publicado, de seu cadastro privado e da empresa autenticada. O contato3 registra texto destinado à equipe e aos contatos3 desse mesmo cadastro; essa audiência é informada antes do envio. Retirar a publicação remove a mensagem do portal, sem apagar o histórico. Retirar a publicação do contrato bloqueia também formulários antigos.
+
+Texto é literal UTF-8, não vazio, até8000bytes, sem controles, renderizado com escape. Há limite500mensagens por contrato incluindo internas. Autor de equipe e de contato têm colunas distintas, nome preservado no registro e auditoria sem personificação. Mensagem não é editável. Snapshot, numeração, corpo, vigência e estado contratual permanecem intactos; somente revisão operacional e atualização temporal avançam.
+
+`CompanyContractDiscussions` concentra os escritores e a leitura pública dentro da transação proprietária. Recibo64hex vincula empresa, contrato, tipo/ID de autor, operação, revisão e conteúdo. Retry exato retorna o mesmo registro; conflito não sobrescreve, revisão antiga impede nova escrita e retry nunca restaura publicação retirada. Identidade, sessão, senha, cliente ativo, proprietário privado, grants3/ACL e publicação são novamente verificados sob o lock canônico antes do commit. Inserção, revisão, auditoria e recibo têm rollback conjunto. Pai/filho são provados por empresa+contrato; o contato não escolhe autor nem funcionário.
+
+Schema aditivo: `company_contract_discussions`, `company_contract_comment_requests`, índice composto de origem `company_contracts(issuer_id,id,client_id)` e reutilização do índice nativo de contato `contacts(userid,id)`. Validação exige InnoDB, colunas/PK/índices/FKs exatos. A migração não importa comentários legados nem publica conteúdo existente. Leitores legados continuam fechados no modo isolado.
+
+Provas executadas no overlay432: SQLite serviço150/controller125; MariaDB10.11 serviço153/controller127; concorrência206checks/21cenários com dois processos; Chromium real A/B com PHP8.3 e MariaDB, criação/ativação, publicação individual, contato3, retirada, retries/stale, CSRF e proprietário cruzado. Regressões MariaDB portal218/anexos431146 passaram. `native_432.php` está preparado para a migração nativa real criada pelo integrador; o protótipo HTTP usa ensure/replay aditivo, não comprova tracking432.
+
+A conversa não constitui assinatura ou aceite. A entrada necessária para esse fluxo jurídico está em [contract-consent-input.md](contract-consent-input.md). Não houve chamada bancária, SMTP externo, assinatura externa ou homologação de instituição financeira.

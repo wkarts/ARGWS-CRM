@@ -1,0 +1,750 @@
+{
+  "parent_published_sha": "9b114e9808ad92d02530977b0c67ffe09d2da1b1",
+  "kind": "test-only repair; production and published migration bytes unchanged",
+  "timestamp_utc": "2026-10-20T01:36:21.327925+00:00",
+  "versions": {
+    "core": "4.3.6/436",
+    "banco_brasil": "1.1.6/116",
+    "asaas": "1.5.2/152"
+  },
+  "test_source_sha256": {
+    "tests/asaas_callback_version.php": "6ed739ac63991234dc648cb7a61798af42d71f53fd03d0d019b6d8e485963eb4",
+    "tests/issuers_browser_smoke.cjs": "ecfd311635389d57631eaaa2195b56e3bd0411398af4adf1fa0e35b33ca90763",
+    "tests/settings/primary_document_pdf.php": "c94028fb1530ae5f2f5f15e34719af537dc8241b70ad7998fd4f1b7aae98b4d4",
+    "tests/settings/primary_sales_documents.php": "0faaf75b301a8556b8c5eed22da549dd7de5e7f202ebc652b3c4fa2528975220",
+    "tests/settings/primary_sales_pdf.php": "a42232e6a9f496c4e99c1e13834afd69b64506bd826f2b3e57fad3d530e6ec0a",
+    "tests/companies/task_billing_timesheets.php": "ae0b11f078755404243da2f569247463b6f4b3cd327ada9d3a4d08e2b9147916",
+    "tests/settings/company_mail_queue.php": "849542a4f006af6c8fe08ce75255524944ef48cdf0cfeb0ae7b78e148e196a2b"
+  },
+  "php_runtime": "8.3.6",
+  "database_runtime": "MariaDB10.11.14",
+  "issuer_workflow_remaining": {
+    "unique_suites_passed": 133,
+    "successes_across_phases": 137,
+    "functional_attempts": 140,
+    "phases": [
+      {
+        "passed": 20,
+        "failure": "tests/companies/project_billing_rate_concurrency.php",
+        "log": {
+          "file": "/tmp/pr45-ci436-repair-mariadb.log",
+          "sha256": "ec01d824c41f906aeac572bd39b9cffb8b5d96b2d18a24576e7ba68ae93a15a8",
+          "bytes": 16738
+        },
+        "order": [
+          [
+            "tests/settings/primary_sales_pdf.php",
+            "0"
+          ],
+          [
+            "tests/companies/sales_pdf_preferences.php",
+            "0"
+          ],
+          [
+            "tests/settings/sales_pdf_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/settings/document_pdf.php",
+            "0"
+          ],
+          [
+            "tests/settings/primary_document_pdf.php",
+            "0"
+          ],
+          [
+            "tests/companies/invoice_credit_pdf_preferences.php",
+            "0"
+          ],
+          [
+            "tests/companies/contracts_pdf_preferences.php",
+            "0"
+          ],
+          [
+            "tests/companies/pdf_fiscal_identity.php",
+            "0"
+          ],
+          [
+            "tests/companies/credit_pdf_revalidation.php",
+            "0"
+          ],
+          [
+            "tests/settings/document_pdf_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/native_435.php",
+            "0"
+          ],
+          [
+            "tests/companies/task_billing.php",
+            "0"
+          ],
+          [
+            "tests/companies/task_billing_atomic.php",
+            "0"
+          ],
+          [
+            "tests/companies/task_billing_controller.php",
+            "0"
+          ],
+          [
+            "tests/companies/task_billing_schema.php",
+            "0"
+          ],
+          [
+            "tests/companies/task_billing_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/task_billing_timesheets.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_billing_rate.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_billing_rate_atomic.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_billing_rate_controller.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_billing_rate_concurrency.php",
+            "255"
+          ]
+        ]
+      },
+      {
+        "passed": 99,
+        "failure": "tests/settings/company_mail_queue.php",
+        "log": {
+          "file": "/tmp/pr45-ci436-repair-remaining-mariadb.log",
+          "sha256": "75d9f5b0e114401cab6326cdde0613081f16e645a907813e1aaad379b3566b67",
+          "bytes": 67530
+        },
+        "order": [
+          [
+            "tests/companies/task_billing_timesheets.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_billing_rate.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_billing_rate_atomic.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_billing_rate_controller.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_billing_rate_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_milestones.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_milestones_atomic.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_milestones_controller.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_milestones_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_timesheets.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_timesheets_atomic.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_timesheets_controller.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_timesheets_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_gantt.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_gantt_atomic.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_gantt_controller.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_gantt_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/expense_recurring.php",
+            "0"
+          ],
+          [
+            "tests/companies/expense_recurring_atomic.php",
+            "0"
+          ],
+          [
+            "tests/companies/expense_recurring_delivery.php",
+            "0"
+          ],
+          [
+            "tests/companies/expense_recurring_schema.php",
+            "0"
+          ],
+          [
+            "tests/companies/expense_recurring_controller.php",
+            "0"
+          ],
+          [
+            "tests/companies/expense_recurring_cli.php",
+            "0"
+          ],
+          [
+            "tests/companies/expense_recurring_mail_worker.php",
+            "0"
+          ],
+          [
+            "tests/companies/expense_recurring_google.php",
+            "0"
+          ],
+          [
+            "tests/companies/expense_recurring_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/settings/google_mail_oauth.php",
+            "0"
+          ],
+          [
+            "tests/settings/google_mail_queue.php",
+            "0"
+          ],
+          [
+            "tests/settings/google_mail_worker.php",
+            "0"
+          ],
+          [
+            "tests/settings/google_mail_envelope.php",
+            "0"
+          ],
+          [
+            "tests/settings/google_mail_fingerprint_portability.php",
+            "0"
+          ],
+          [
+            "tests/settings/google_portal_mail.php",
+            "0"
+          ],
+          [
+            "tests/settings/google_portal_refresh_worker.php",
+            "0"
+          ],
+          [
+            "tests/settings/google_mail_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/settings/google_portal_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/invoice_delivery_worker.php",
+            "0"
+          ],
+          [
+            "tests/companies/native_436.php",
+            "0"
+          ],
+          [
+            "tests/settings/pdf_typography.php",
+            "0"
+          ],
+          [
+            "tests/settings/pdf_typography_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/sales_pdf_typography.php",
+            "0"
+          ],
+          [
+            "tests/companies/invoice_credit_pdf_typography.php",
+            "0"
+          ],
+          [
+            "tests/companies/contracts_pdf_typography.php",
+            "0"
+          ],
+          [
+            "tests/companies/pdf_typography_fiscal_identity.php",
+            "0"
+          ],
+          [
+            "tests/companies/asaas_pdf_typography.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_contact_files.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_contact_files_atomic.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_contact_files_controller.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_contact_files_boundaries.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_contact_files_quota.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_contact_files_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_fixed_billing.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_fixed_billing_atomic.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_fixed_billing_controller.php",
+            "0"
+          ],
+          [
+            "tests/companies/project_fixed_billing_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/billing_invoice_lifecycle.php",
+            "0"
+          ],
+          [
+            "tests/companies/expense_invoice_lifecycle.php",
+            "0"
+          ],
+          [
+            "tests/companies/asaas_refunds.php",
+            "0"
+          ],
+          [
+            "tests/companies/asaas_refund_schema.php",
+            "0"
+          ],
+          [
+            "tests/companies/asaas_refund_boundaries.php",
+            "0"
+          ],
+          [
+            "tests/companies/asaas_refund_controller.php",
+            "0"
+          ],
+          [
+            "tests/companies/asaas_refund_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/asaas_refund_fee_participants.php",
+            "0"
+          ],
+          [
+            "tests/companies/asaas_early_events.php",
+            "0"
+          ],
+          [
+            "tests/companies/asaas_early_events_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/asaas_refund_observe_events.php",
+            "0"
+          ],
+          [
+            "tests/settings/project_file_settings.php",
+            "0"
+          ],
+          [
+            "tests/companies/asaas_boundaries.php",
+            "0"
+          ],
+          [
+            "tests/companies/asaas_exact_json.php",
+            "0"
+          ],
+          [
+            "tests/companies/invoice_delivery_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/invoice_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/portal_invoice_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/companies/invoice_attachment_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/banco_brasil_origination_mysql.php",
+            "0"
+          ],
+          [
+            "tests/banco_brasil_origination_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/banco_brasil_reconciliation_mysql.php",
+            "0"
+          ],
+          [
+            "tests/banco_brasil_reconciliation_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/banco_brasil_api_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/banco_brasil_api_movements_mysql.php",
+            "0"
+          ],
+          [
+            "tests/banco_brasil_components_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/banco_brasil_external_reversal_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/banco_brasil_api_receipt_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/banco_brasil_webhook_mysql.php",
+            "0"
+          ],
+          [
+            "tests/banco_brasil_amendment_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/issuers_integration_view.php",
+            "0"
+          ],
+          [
+            "tests/companies/module_tracking.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_assets.php",
+            "0"
+          ],
+          [
+            "tests/companies/asset_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_settings.php",
+            "0"
+          ],
+          [
+            "tests/settings/sales_documents.php",
+            "0"
+          ],
+          [
+            "tests/companies/sales_preferences.php",
+            "0"
+          ],
+          [
+            "tests/companies/sales_preferences_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/settings/primary_sales_documents.php",
+            "0"
+          ],
+          [
+            "tests/settings/primary_sales_preferences_concurrency.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_presentation.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_presentation_delivery.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_options_helpers.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_identity_transaction.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_registry_identity.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_mail_config.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_mail_queue.php",
+            "255"
+          ]
+        ]
+      },
+      {
+        "workflow_passed": 0,
+        "failure": "new assertion used the wrong expected expense table name; corrected without changing the guard",
+        "callback_passed": 1,
+        "log": {
+          "file": "/tmp/pr45-ci436-repair-final-mariadb.log",
+          "sha256": "d4573b8773747e49043dd8096a3c4e762061e9345ad05d331bbcc584c2dc6e8d",
+          "bytes": 692
+        },
+        "order": [
+          [
+            "tests/asaas_callback_migration.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_mail_queue.php",
+            "255"
+          ]
+        ]
+      },
+      {
+        "workflow_passed": 18,
+        "callback_passed": 1,
+        "log": {
+          "file": "/tmp/pr45-ci436-repair-final-after-table-name.log",
+          "sha256": "a773abfb830ffb8a2611e89d883af3bf0276b1f9ca6e65fcc1927b4f098a4739",
+          "bytes": 3827
+        },
+        "order": [
+          [
+            "tests/asaas_callback_migration.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_mail_queue.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_mail_schema.php",
+            "0"
+          ],
+          [
+            "tests/issuers_staff_access.php",
+            "0"
+          ],
+          [
+            "tests/issuers_staff_native.php",
+            "0"
+          ],
+          [
+            "tests/issuers_staff_master.php",
+            "0"
+          ],
+          [
+            "tests/settings/settings_model_controller.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_formatting.php",
+            "0"
+          ],
+          [
+            "tests/settings/portal_mail_config.php",
+            "0"
+          ],
+          [
+            "tests/settings/portal_mail_templates.php",
+            "0"
+          ],
+          [
+            "tests/settings/company_email_templates.php",
+            "0"
+          ],
+          [
+            "tests/companies/email_template_scope.php",
+            "0"
+          ],
+          [
+            "tests/companies/email_template_controller.php",
+            "0"
+          ],
+          [
+            "tests/companies/email_template_editor.php",
+            "0"
+          ],
+          [
+            "tests/companies/email_template_bootstrap.php",
+            "0"
+          ],
+          [
+            "tests/companies/portal_recovery_tokens.php",
+            "0"
+          ],
+          [
+            "tests/companies/portal_recovery_atomic.php",
+            "0"
+          ],
+          [
+            "tests/issuers_registry.php",
+            "0"
+          ],
+          [
+            "tests/issuers_concurrency.php",
+            "0"
+          ]
+        ]
+      }
+    ],
+    "qualification": "The 133 distinct workflow commands from the original PDF failure onward passed across phases; all four earlier timer-dependent commands were repeated after the fixture correction. Earlier commands already passed remotely before the initial failure."
+  },
+  "timer_rollover": {
+    "forced_delay_microseconds": 1100000,
+    "red": {
+      "total": {
+        "subtotal": "45.00",
+        "total_tax": "3.15",
+        "discount_total": "0.00",
+        "adjustment": "0.00",
+        "total": "48.15"
+      },
+      "timers": [
+        {
+          "id": 15,
+          "actor_id": 7,
+          "started_at": "2026-10-20 01:21:19",
+          "stopped_at": "2026-10-20 01:21:39",
+          "seconds": 20
+        },
+        {
+          "id": 16,
+          "actor_id": 7,
+          "started_at": "2026-10-20 01:21:19",
+          "stopped_at": "2026-10-20 01:21:39",
+          "seconds": 20
+        },
+        {
+          "id": 17,
+          "actor_id": 7,
+          "started_at": "2026-10-20 01:21:39",
+          "stopped_at": "2026-10-20 01:21:40",
+          "seconds": 1
+        }
+      ]
+    },
+    "green": {
+      "total": {
+        "subtotal": "30.00",
+        "total_tax": "2.10",
+        "discount_total": "0.00",
+        "adjustment": "0.00",
+        "total": "32.10"
+      },
+      "timers": [
+        {
+          "id": 15,
+          "actor_id": 7,
+          "started_at": "2026-10-19 09:00:00",
+          "stopped_at": "2026-10-19 09:00:20",
+          "seconds": 20
+        },
+        {
+          "id": 16,
+          "actor_id": 7,
+          "started_at": "2026-10-19 09:00:00",
+          "stopped_at": "2026-10-19 09:00:20",
+          "seconds": 20
+        },
+        {
+          "id": 17,
+          "actor_id": 7,
+          "started_at": "2026-10-19 09:00:00",
+          "stopped_at": "2026-10-19 09:00:00",
+          "seconds": 0
+        }
+      ]
+    },
+    "red_log": {
+      "file": "/tmp/pr45-ci436-timer-delayed-RED.log",
+      "sha256": "7681a6f870a95aabf1fcee1981e918828c27c4edb4c6e882b96acf0589bdb966",
+      "bytes": 1850
+    },
+    "green_log": {
+      "file": "/tmp/pr45-ci436-timer-delayed-GREEN.log",
+      "sha256": "f15b938dc7733687e861bfc568ad3d3aeada0f147b131f3e48b87f9fde152534",
+      "bytes": 1448
+    },
+    "production_clock_or_calculation_changed": false
+  },
+  "callback_native_migration": {
+    "assertions": 46,
+    "successful_runs": 2,
+    "final_log": {
+      "file": "/tmp/pr45-ci436-repair-final-after-table-name.log",
+      "sha256": "a773abfb830ffb8a2611e89d883af3bf0276b1f9ca6e65fcc1927b4f098a4739",
+      "bytes": 3827
+    },
+    "direct_connection_attempt_before_own_runner": "connection refused before fixture initialization; not a product assertion result"
+  },
+  "asaas_contract_commands": {
+    "passed": 12,
+    "log": {
+      "file": "/tmp/pr45-ci436-asaas-contracts-local.log",
+      "sha256": "e4f18723294b399bf1d4ba40af6955f3996030fa414565e90618d9d3605b42b2",
+      "bytes": 1219
+    }
+  },
+  "browser_actor_regression": {
+    "file": "ci-436-master-actor-regression.json",
+    "sha256": "85e66ac673d3a6c29f377e1aa3bac584bd862c30c4f0c3dcf25246e1d4992252",
+    "red_installer_id": 1,
+    "green_installer_ids": [
+      1,
+      17
+    ],
+    "chromium_version": "140.0.7339.186"
+  },
+  "remote_ci_for_repair": "not yet published at evidence creation; inspect the repair commit itself",
+  "external_homologation": false
+}

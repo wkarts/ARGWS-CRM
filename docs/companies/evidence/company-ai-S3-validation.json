@@ -1,0 +1,75 @@
+{
+  "revision": "S3",
+  "overlay": "resume-ai-S3",
+  "source_sha256": "def0ef008438ae9570158afdbddaf597651ad68fe223bef12bb1106242c7564e",
+  "source_manifest": {
+    "application/controllers/admin/Company_ai.php": "ac53fbe7c47082a8236a102ec0341a608f17cea1a6bd230b933d8ddededecdeb",
+    "application/services/CompanyAi.php": "def0ef008438ae9570158afdbddaf597651ad68fe223bef12bb1106242c7564e",
+    "application/services/CompanyAiClient.php": "c90b604bd73bb318717789250bb40b7ea266a08d6e9324579e25179879f9d677",
+    "application/services/CompanyAiSchema.php": "eec12713cb18e30e6c5c5ffa7b49f13ce2dde732134a72289ed4c477a376d53c",
+    "application/views/admin/companies/ai.php": "ae497934c65397da03e5dec006b790a3f8e7be0a4080a14ad2c296571b2fe99e",
+    "docs/COMPANY-AI-RECOVERY.md": "0e1ae9acfa28270841f2c5692b4f55804c1a7e58daba01aae245dcdb697d4776",
+    "tests/settings/company_ai.php": "3e733304d06f61bdc9cb6b0e33b9b5fefa982b57a3095c610f9b6471de318ba7",
+    "tests/settings/company_ai_boundaries.php": "b0e24bd52f20c17fc3c1ed88c8e6fabc01c1b9d2f482042c3149604e589414c0",
+    "tests/settings/company_ai_client.php": "52833c4e6926a4c730b624e5c07283acefeb221e3c3407f0aa37f8e1b16ee047",
+    "tests/settings/company_ai_concurrency.php": "856f2036523d855d51675388b482e0dcae0e750cf25355fde13ed97809240a81",
+    "tests/settings/company_ai_controller.php": "be2906a65dfea2c6c84c867a03a19798e0271f6200b2f40da39ba51ec21c0c18",
+    "tests/settings/company_ai_http_fixture.php": "55d68a4f30a8c882c1781066ea8c607e73eaa83e9beb9bb5f26907edd1d31594",
+    "tests/settings/company_ai_schema.php": "23f3e5753e337c2b397c35c248936b903f9e96062ca6b4495b1487036f8067fd",
+    "tests/settings/company_ai_setup.php": "49af311627dc122a10670a2009d90257382e422122cee2d6b6f526a5a5532e7b",
+    "tests/settings/company_ai_transport.php": "80126113c967525287f93608ee326bc9aa79ac2423a9fddc0c6c9cf21e661abc",
+    "tests/settings_company_ai_browser.cjs": "0aca5934f5be7219f2cc60be13aa539846cc89cc48e38c1ffa338e09ec35e0ca",
+    "tests/settings/company_ai_final_boundaries.php": "1d263eff6d57d274e24149552318abd7792e331776b101d02faf33e01274a15f"
+  },
+  "source_changes_after_freeze": [],
+  "matrices": {
+    "sqlite": {
+      "suites": 7,
+      "PASS": 7,
+      "source_invariant": true,
+      "tails": {
+        "tests/settings/company_ai.php": "Company AI own config/preview/consent/outbox/crypto/A+B+principal/replay/uncertain/forget: 42 added checks (sqlite). Captured provider only.",
+        "tests/settings/company_ai_boundaries.php": "Company AI boundaries/revocations/rollback/limits/receipt/privacy: 31 added checks (sqlite). No provider network.",
+        "tests/settings/company_ai_controller.php": "Company AI real controller/renderer/HTTP verbs/CSRF/preview/consent/escaping/replay: 19 added checks (sqlite). No provider network.",
+        "tests/settings/company_ai_client.php": "Company AI actual SDK/HTTP fixed endpoint/payload/credential/finish proof: 9 added checks. Captured transport only.",
+        "tests/settings/company_ai_transport.php": "{\"/plain\":{\"guard\":\"accepted_identity\",\"wire_download_max\":261},\"/identity\":{\"guard\":\"accepted_identity\",\"wire_download_max\":261},\"/gzip\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/gzip-large\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/br\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/stacked\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/declared-large\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/chunked-large\":{\"guard\":\"company_ai_response_limit\",\"wire_download_max\":90112}}",
+        "tests/settings/company_ai_schema.php": "Company AI actual standalone schema/replay/metadata: 2 added checks (sqlite). Future core migration/tracking remains separate.",
+        "tests/settings/company_ai_final_boundaries.php": "Company AI S3 final config/claim/source/grants/outbox/completion/forget/result frames: 151 checks (sqlite). Captured transport only."
+      }
+    },
+    "mariadb": {
+      "suites": 8,
+      "PASS": 8,
+      "source_invariant": true,
+      "tails": {
+        "tests/settings/company_ai.php": "Company AI own config/preview/consent/outbox/crypto/A+B+principal/replay/uncertain/forget: 42 added checks (mysql). Captured provider only.",
+        "tests/settings/company_ai_boundaries.php": "Company AI boundaries/revocations/rollback/limits/receipt/privacy: 31 added checks (mysql). No provider network.",
+        "tests/settings/company_ai_controller.php": "Company AI real controller/renderer/HTTP verbs/CSRF/preview/consent/escaping/replay: 19 added checks (mysql). No provider network.",
+        "tests/settings/company_ai_client.php": "Company AI actual SDK/HTTP fixed endpoint/payload/credential/finish proof: 9 added checks. Captured transport only.",
+        "tests/settings/company_ai_transport.php": "{\"/plain\":{\"guard\":\"accepted_identity\",\"wire_download_max\":261},\"/identity\":{\"guard\":\"accepted_identity\",\"wire_download_max\":261},\"/gzip\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/gzip-large\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/br\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/stacked\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/declared-large\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/chunked-large\":{\"guard\":\"company_ai_response_limit\",\"wire_download_max\":100253}}",
+        "tests/settings/company_ai_schema.php": "Company AI actual standalone schema/replay/metadata: 6 added checks (mysql). Future core migration/tracking remains separate.",
+        "tests/settings/company_ai_final_boundaries.php": "Company AI S3 final config/claim/source/grants/outbox/completion/forget/result frames: 153 checks (mysql). Captured transport only.",
+        "tests/settings/company_ai_concurrency.php": "Company AI native races: 34 added checks; six scenarios x two observed waiters and one independent inflight revocation. Captured provider only."
+      }
+    }
+  },
+  "limitations": [
+    "Local isolated source; no publication/native442 tracking/HTTP/CI SHA proof from this subagent",
+    "Model/provider: only own OpenAI gpt-4o-mini ticket summary/reply; no legacy prompt/fine-tuning/enhanceText/other model adapter",
+    "HTTP fixture/CJS unchanged from S2 and owned by parent HTTP agent; no provider credential or network used",
+    "Schema/transport/central hunks unchanged from S2; add new executable company_ai_final_boundaries.php to parent CI"
+  ],
+  "production_binding": {
+    "application/controllers/admin/Company_ai.php": "ac53fbe7c47082a8236a102ec0341a608f17cea1a6bd230b933d8ddededecdeb",
+    "application/services/CompanyAi.php": "def0ef008438ae9570158afdbddaf597651ad68fe223bef12bb1106242c7564e",
+    "application/services/CompanyAiClient.php": "c90b604bd73bb318717789250bb40b7ea266a08d6e9324579e25179879f9d677",
+    "application/services/CompanyAiSchema.php": "eec12713cb18e30e6c5c5ffa7b49f13ce2dde732134a72289ed4c477a376d53c",
+    "application/views/admin/companies/ai.php": "ae497934c65397da03e5dec006b790a3f8e7be0a4080a14ad2c296571b2fe99e"
+  },
+  "delta_from_S2": [
+    "application/services/CompanyAi.php",
+    "docs/COMPANY-AI-RECOVERY.md",
+    "tests/settings/company_ai_concurrency.php",
+    "tests/settings/company_ai_final_boundaries.php"
+  ]
+}

@@ -1,0 +1,117 @@
+{
+    "batch_header": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 8
+    },
+    "manual_reference": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 9
+    },
+    "contract_header": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 10
+    },
+    "contract_resealed": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 11
+    },
+    "file_link_header": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 12
+    },
+    "event_link_header": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 13
+    },
+    "batch_content_hash": {
+        "rejected": "bb_event_provenance_required",
+        "no_new_effects": true,
+        "restored_same_payment": 14
+    },
+    "manual_deleted": {
+        "rejected": "bb_event_provenance_required",
+        "no_new_effects": true,
+        "restored_same_payment": 15
+    },
+    "source_receipt_time": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 16
+    },
+    "source_review_time": {
+        "rejected": "issuer_bb_tariff_source_unconfirmed",
+        "no_new_effects": true,
+        "restored_same_payment": 17
+    },
+    "source_audit_time": {
+        "rejected": "issuer_bb_tariff_source_unconfirmed",
+        "no_new_effects": true,
+        "restored_same_payment": 18
+    },
+    "core_provider_deleted": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 19
+    },
+    "core_provider_time": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 20
+    },
+    "core_provider_actor": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 21
+    },
+    "core_provider_metadata": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 22
+    },
+    "core_components_deleted": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 23
+    },
+    "core_components_time": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 24
+    },
+    "core_components_actor": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 25
+    },
+    "core_components_metadata": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 26
+    },
+    "core_journal_deleted": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 27
+    },
+    "core_journal_time": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 28
+    },
+    "core_journal_actor": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 29
+    },
+    "core_journal_metadata": {
+        "rejected": "bb_event_receipt_conflict",
+        "no_new_effects": true,
+        "restored_same_payment": 30
+    }
+}

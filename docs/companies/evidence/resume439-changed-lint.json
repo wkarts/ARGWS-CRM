@@ -1,0 +1,1322 @@
+[
+  {
+    "path": "application/config/autoload.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/config/autoload.php"
+  },
+  {
+    "path": "application/config/config.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/config/config.php"
+  },
+  {
+    "path": "application/config/constants.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/config/constants.php"
+  },
+  {
+    "path": "application/config/migration.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/config/migration.php"
+  },
+  {
+    "path": "application/controllers/Company_api.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/Company_api.php"
+  },
+  {
+    "path": "application/controllers/Company_portal.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/Company_portal.php"
+  },
+  {
+    "path": "application/controllers/Company_recurring_worker.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/Company_recurring_worker.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_asaas.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_asaas.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_connect_api.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_connect_api.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_invoice_copies.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_invoice_copies.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_invoice_recurring.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_invoice_recurring.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_invoices.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_invoices.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_microsoft_mail_oauth.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_microsoft_mail_oauth.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_post_refund.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_post_refund.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_post_refund_manual.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_post_refund_manual.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_project_fixed_billing.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_project_fixed_billing.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_project_portal_rules.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_project_portal_rules.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_pusher.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_pusher.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_standalone_billing.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_standalone_billing.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_task_billing.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_task_billing.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_time_batches.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_time_batches.php"
+  },
+  {
+    "path": "application/controllers/admin/Company_time_billing.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/controllers/admin/Company_time_billing.php"
+  },
+  {
+    "path": "application/hooks/InitModules.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/hooks/InitModules.php"
+  },
+  {
+    "path": "application/libraries/App_Email.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/libraries/App_Email.php"
+  },
+  {
+    "path": "application/libraries/App_mailer.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/libraries/App_mailer.php"
+  },
+  {
+    "path": "application/migrations/437_version_437.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/migrations/437_version_437.php"
+  },
+  {
+    "path": "application/migrations/438_version_438.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/migrations/438_version_438.php"
+  },
+  {
+    "path": "application/migrations/439_version_439.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/migrations/439_version_439.php"
+  },
+  {
+    "path": "application/models/Cron_model.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/models/Cron_model.php"
+  },
+  {
+    "path": "application/services/CompanyApiScope.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyApiScope.php"
+  },
+  {
+    "path": "application/services/CompanyApiService.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyApiService.php"
+  },
+  {
+    "path": "application/services/CompanyApiTokens.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyApiTokens.php"
+  },
+  {
+    "path": "application/services/CompanyAsaasRefundData.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyAsaasRefundData.php"
+  },
+  {
+    "path": "application/services/CompanyAsaasRefundPostings.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyAsaasRefundPostings.php"
+  },
+  {
+    "path": "application/services/CompanyAsaasRefundSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyAsaasRefundSchema.php"
+  },
+  {
+    "path": "application/services/CompanyAsaasRefundWriter.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyAsaasRefundWriter.php"
+  },
+  {
+    "path": "application/services/CompanyBankReceiptReversals.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyBankReceiptReversals.php"
+  },
+  {
+    "path": "application/services/CompanyBankReversalData.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyBankReversalData.php"
+  },
+  {
+    "path": "application/services/CompanyBankReversalWriter.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyBankReversalWriter.php"
+  },
+  {
+    "path": "application/services/CompanyConnectApi.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyConnectApi.php"
+  },
+  {
+    "path": "application/services/CompanyConnectApiClient.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyConnectApiClient.php"
+  },
+  {
+    "path": "application/services/CompanyConnectApiCron.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyConnectApiCron.php"
+  },
+  {
+    "path": "application/services/CompanyConnectApiSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyConnectApiSchema.php"
+  },
+  {
+    "path": "application/services/CompanyConnectApiWorker.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyConnectApiWorker.php"
+  },
+  {
+    "path": "application/services/CompanyConnectContactPhone.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyConnectContactPhone.php"
+  },
+  {
+    "path": "application/services/CompanyConnectInstanceOperations.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyConnectInstanceOperations.php"
+  },
+  {
+    "path": "application/services/CompanyConnectInstanceOperationsSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyConnectInstanceOperationsSchema.php"
+  },
+  {
+    "path": "application/services/CompanyConnectPairing.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyConnectPairing.php"
+  },
+  {
+    "path": "application/services/CompanyConnectPairingProof.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyConnectPairingProof.php"
+  },
+  {
+    "path": "application/services/CompanyConnectPairingSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyConnectPairingSchema.php"
+  },
+  {
+    "path": "application/services/CompanyCreditWriter.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyCreditWriter.php"
+  },
+  {
+    "path": "application/services/CompanyCredits.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyCredits.php"
+  },
+  {
+    "path": "application/services/CompanyDiscussionPostProof.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyDiscussionPostProof.php"
+  },
+  {
+    "path": "application/services/CompanyExpenseRecurringDeliverySource.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyExpenseRecurringDeliverySource.php"
+  },
+  {
+    "path": "application/services/CompanyExpenseRecurringStorage.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyExpenseRecurringStorage.php"
+  },
+  {
+    "path": "application/services/CompanyFinancialApiGuard.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyFinancialApiGuard.php"
+  },
+  {
+    "path": "application/services/CompanyFinancialApiSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyFinancialApiSchema.php"
+  },
+  {
+    "path": "application/services/CompanyFinancialApiService.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyFinancialApiService.php"
+  },
+  {
+    "path": "application/services/CompanyFinancialJournal.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyFinancialJournal.php"
+  },
+  {
+    "path": "application/services/CompanyGoogleMailOAuthDispatchSource.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyGoogleMailOAuthDispatchSource.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceBalance.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceBalance.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceConnectNotification.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceConnectNotification.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceCopies.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceCopies.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceCopiesInput.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceCopiesInput.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceCopiesOrigin.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceCopiesOrigin.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceCopiesSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceCopiesSchema.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceCopiesStorage.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceCopiesStorage.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceDelivery.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceDelivery.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceLines.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceLines.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceRecurring.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceRecurring.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceRecurringDates.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceRecurringDates.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceRecurringDeliverySource.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceRecurringDeliverySource.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceRecurringOrigin.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceRecurringOrigin.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceRecurringSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceRecurringSchema.php"
+  },
+  {
+    "path": "application/services/CompanyInvoiceRecurringStorage.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoiceRecurringStorage.php"
+  },
+  {
+    "path": "application/services/CompanyInvoices.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyInvoices.php"
+  },
+  {
+    "path": "application/services/CompanyLedgerReports.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyLedgerReports.php"
+  },
+  {
+    "path": "application/services/CompanyMailConfig.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyMailConfig.php"
+  },
+  {
+    "path": "application/services/CompanyMailTransportPolicy.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyMailTransportPolicy.php"
+  },
+  {
+    "path": "application/services/CompanyMicrosoftMailIdentity.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyMicrosoftMailIdentity.php"
+  },
+  {
+    "path": "application/services/CompanyMicrosoftMailOAuth.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyMicrosoftMailOAuth.php"
+  },
+  {
+    "path": "application/services/CompanyMicrosoftMailOAuthClient.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyMicrosoftMailOAuthClient.php"
+  },
+  {
+    "path": "application/services/CompanyMicrosoftMailOAuthDispatchSource.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyMicrosoftMailOAuthDispatchSource.php"
+  },
+  {
+    "path": "application/services/CompanyMicrosoftMailOAuthSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyMicrosoftMailOAuthSchema.php"
+  },
+  {
+    "path": "application/services/CompanyMicrosoftMailOAuthTokenProvider.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyMicrosoftMailOAuthTokenProvider.php"
+  },
+  {
+    "path": "application/services/CompanyPortalMailConfig.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPortalMailConfig.php"
+  },
+  {
+    "path": "application/services/CompanyPortalProjectDiscussions.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPortalProjectDiscussions.php"
+  },
+  {
+    "path": "application/services/CompanyPostRefundAsaasManualSource.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPostRefundAsaasManualSource.php"
+  },
+  {
+    "path": "application/services/CompanyPostRefundAsaasSource.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPostRefundAsaasSource.php"
+  },
+  {
+    "path": "application/services/CompanyPostRefundCancellation.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPostRefundCancellation.php"
+  },
+  {
+    "path": "application/services/CompanyPostRefundManual.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPostRefundManual.php"
+  },
+  {
+    "path": "application/services/CompanyPostRefundManualSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPostRefundManualSchema.php"
+  },
+  {
+    "path": "application/services/CompanyPostRefundManualWriter.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPostRefundManualWriter.php"
+  },
+  {
+    "path": "application/services/CompanyPostRefundSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPostRefundSchema.php"
+  },
+  {
+    "path": "application/services/CompanyProjectDiscussionChanges.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyProjectDiscussionChanges.php"
+  },
+  {
+    "path": "application/services/CompanyProjectDiscussionExtrasHttp.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyProjectDiscussionExtrasHttp.php"
+  },
+  {
+    "path": "application/services/CompanyProjectDiscussionExtrasPage.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyProjectDiscussionExtrasPage.php"
+  },
+  {
+    "path": "application/services/CompanyProjectDiscussionExtrasSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyProjectDiscussionExtrasSchema.php"
+  },
+  {
+    "path": "application/services/CompanyProjectDiscussionFiles.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyProjectDiscussionFiles.php"
+  },
+  {
+    "path": "application/services/CompanyProjectDiscussions.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyProjectDiscussions.php"
+  },
+  {
+    "path": "application/services/CompanyProjectDiscussionsHttp.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyProjectDiscussionsHttp.php"
+  },
+  {
+    "path": "application/services/CompanyProjectDiscussionsSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyProjectDiscussionsSchema.php"
+  },
+  {
+    "path": "application/services/CompanyProjectDiscussionsStorage.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyProjectDiscussionsStorage.php"
+  },
+  {
+    "path": "application/services/CompanyProjectFixedBillingStorage.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyProjectFixedBillingStorage.php"
+  },
+  {
+    "path": "application/services/CompanyPusherCron.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPusherCron.php"
+  },
+  {
+    "path": "application/services/CompanyPusherProfile.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPusherProfile.php"
+  },
+  {
+    "path": "application/services/CompanyPusherSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPusherSchema.php"
+  },
+  {
+    "path": "application/services/CompanyPusherTaskNotifications.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPusherTaskNotifications.php"
+  },
+  {
+    "path": "application/services/CompanyPusherTransport.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyPusherTransport.php"
+  },
+  {
+    "path": "application/services/CompanyRequestScope.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyRequestScope.php"
+  },
+  {
+    "path": "application/services/CompanyResourceCatalog.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyResourceCatalog.php"
+  },
+  {
+    "path": "application/services/CompanySales.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanySales.php"
+  },
+  {
+    "path": "application/services/CompanySalesBase.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanySalesBase.php"
+  },
+  {
+    "path": "application/services/CompanySalesDelivery.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanySalesDelivery.php"
+  },
+  {
+    "path": "application/services/CompanySalesPdf.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanySalesPdf.php"
+  },
+  {
+    "path": "application/services/CompanyStandaloneBilling.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyStandaloneBilling.php"
+  },
+  {
+    "path": "application/services/CompanyStandaloneBillingFence.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyStandaloneBillingFence.php"
+  },
+  {
+    "path": "application/services/CompanyStandaloneBillingSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyStandaloneBillingSchema.php"
+  },
+  {
+    "path": "application/services/CompanyStandaloneBillingStorage.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyStandaloneBillingStorage.php"
+  },
+  {
+    "path": "application/services/CompanyStandaloneTasks.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyStandaloneTasks.php"
+  },
+  {
+    "path": "application/services/CompanyTaskBillingSourceLocks.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyTaskBillingSourceLocks.php"
+  },
+  {
+    "path": "application/services/CompanyTaskBillingStorage.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyTaskBillingStorage.php"
+  },
+  {
+    "path": "application/services/CompanyTaskPusherNotice.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyTaskPusherNotice.php"
+  },
+  {
+    "path": "application/services/CompanyTaskTimeBatch.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyTaskTimeBatch.php"
+  },
+  {
+    "path": "application/services/CompanyTaskTimeBatchFence.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyTaskTimeBatchFence.php"
+  },
+  {
+    "path": "application/services/CompanyTaskTimeBatchSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyTaskTimeBatchSchema.php"
+  },
+  {
+    "path": "application/services/CompanyTaskTimeBatchStorage.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyTaskTimeBatchStorage.php"
+  },
+  {
+    "path": "application/services/CompanyTaskTimeBilling.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyTaskTimeBilling.php"
+  },
+  {
+    "path": "application/services/CompanyTaskTimeBillingFence.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyTaskTimeBillingFence.php"
+  },
+  {
+    "path": "application/services/CompanyTaskTimeBillingSchema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyTaskTimeBillingSchema.php"
+  },
+  {
+    "path": "application/services/CompanyTaskTimeBillingStorage.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyTaskTimeBillingStorage.php"
+  },
+  {
+    "path": "application/services/CompanyTasks.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/CompanyTasks.php"
+  },
+  {
+    "path": "application/services/InvoicePaymentWriter.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/InvoicePaymentWriter.php"
+  },
+  {
+    "path": "application/services/issuers/InvoiceIssuerDocumentData.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/services/issuers/InvoiceIssuerDocumentData.php"
+  },
+  {
+    "path": "application/vendor/composer/autoload_psr4.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/vendor/composer/autoload_psr4.php"
+  },
+  {
+    "path": "application/vendor/composer/autoload_static.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/vendor/composer/autoload_static.php"
+  },
+  {
+    "path": "application/vendor/composer/installed.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/vendor/composer/installed.php"
+  },
+  {
+    "path": "application/vendor/firebase/php-jwt/src/BeforeValidException.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/vendor/firebase/php-jwt/src/BeforeValidException.php"
+  },
+  {
+    "path": "application/vendor/firebase/php-jwt/src/CachedKeySet.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/vendor/firebase/php-jwt/src/CachedKeySet.php"
+  },
+  {
+    "path": "application/vendor/firebase/php-jwt/src/ExpiredException.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/vendor/firebase/php-jwt/src/ExpiredException.php"
+  },
+  {
+    "path": "application/vendor/firebase/php-jwt/src/JWK.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/vendor/firebase/php-jwt/src/JWK.php"
+  },
+  {
+    "path": "application/vendor/firebase/php-jwt/src/JWT.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/vendor/firebase/php-jwt/src/JWT.php"
+  },
+  {
+    "path": "application/vendor/firebase/php-jwt/src/JWTExceptionWithPayloadInterface.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/vendor/firebase/php-jwt/src/JWTExceptionWithPayloadInterface.php"
+  },
+  {
+    "path": "application/vendor/firebase/php-jwt/src/Key.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/vendor/firebase/php-jwt/src/Key.php"
+  },
+  {
+    "path": "application/vendor/firebase/php-jwt/src/SignatureInvalidException.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/vendor/firebase/php-jwt/src/SignatureInvalidException.php"
+  },
+  {
+    "path": "application/views/admin/companies/api_tokens.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/api_tokens.php"
+  },
+  {
+    "path": "application/views/admin/companies/asaas_refunds.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/asaas_refunds.php"
+  },
+  {
+    "path": "application/views/admin/companies/connect_api.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/connect_api.php"
+  },
+  {
+    "path": "application/views/admin/companies/google_mail_oauth.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/google_mail_oauth.php"
+  },
+  {
+    "path": "application/views/admin/companies/invoice_copies.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/invoice_copies.php"
+  },
+  {
+    "path": "application/views/admin/companies/invoice_item_fields.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/invoice_item_fields.php"
+  },
+  {
+    "path": "application/views/admin/companies/invoice_recurring.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/invoice_recurring.php"
+  },
+  {
+    "path": "application/views/admin/companies/invoices.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/invoices.php"
+  },
+  {
+    "path": "application/views/admin/companies/layout_head.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/layout_head.php"
+  },
+  {
+    "path": "application/views/admin/companies/microsoft_mail_oauth.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/microsoft_mail_oauth.php"
+  },
+  {
+    "path": "application/views/admin/companies/post_refund.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/post_refund.php"
+  },
+  {
+    "path": "application/views/admin/companies/post_refund_manual.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/post_refund_manual.php"
+  },
+  {
+    "path": "application/views/admin/companies/project_discussion_extras.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/project_discussion_extras.php"
+  },
+  {
+    "path": "application/views/admin/companies/project_discussions.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/project_discussions.php"
+  },
+  {
+    "path": "application/views/admin/companies/project_portal_rules.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/project_portal_rules.php"
+  },
+  {
+    "path": "application/views/admin/companies/pusher.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/pusher.php"
+  },
+  {
+    "path": "application/views/admin/companies/recurring.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/recurring.php"
+  },
+  {
+    "path": "application/views/admin/companies/sales.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/sales.php"
+  },
+  {
+    "path": "application/views/admin/companies/sales_form_script.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/sales_form_script.php"
+  },
+  {
+    "path": "application/views/admin/companies/standalone_billing.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/standalone_billing.php"
+  },
+  {
+    "path": "application/views/admin/companies/standalone_tasks.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/standalone_tasks.php"
+  },
+  {
+    "path": "application/views/admin/companies/task_billing.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/task_billing.php"
+  },
+  {
+    "path": "application/views/admin/companies/tasks.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/tasks.php"
+  },
+  {
+    "path": "application/views/admin/companies/time_batches.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/time_batches.php"
+  },
+  {
+    "path": "application/views/admin/companies/time_billing.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/companies/time_billing.php"
+  },
+  {
+    "path": "application/views/admin/settings/company_scoped.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/settings/company_scoped.php"
+  },
+  {
+    "path": "application/views/admin/settings/includes/email.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/admin/settings/includes/email.php"
+  },
+  {
+    "path": "application/views/company_portal/index.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/company_portal/index.php"
+  },
+  {
+    "path": "application/views/company_portal/project_discussion_extras.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/company_portal/project_discussion_extras.php"
+  },
+  {
+    "path": "application/views/company_portal/project_discussions.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/company_portal/project_discussions.php"
+  },
+  {
+    "path": "application/views/pdf/issuer_invoicepdf.php",
+    "exit": 0,
+    "output": "No syntax errors detected in application/views/pdf/issuer_invoicepdf.php"
+  },
+  {
+    "path": "modules/asaas/asaas.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/asaas/asaas.php"
+  },
+  {
+    "path": "modules/asaas/libraries/Asaas/CompanyRefundStorage.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/asaas/libraries/Asaas/CompanyRefundStorage.php"
+  },
+  {
+    "path": "modules/asaas/libraries/Asaas/ConfirmedFullRefund.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/asaas/libraries/Asaas/ConfirmedFullRefund.php"
+  },
+  {
+    "path": "modules/asaas/migrations/153_version_153.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/asaas/migrations/153_version_153.php"
+  },
+  {
+    "path": "modules/banco_brasil/banco_brasil.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/banco_brasil.php"
+  },
+  {
+    "path": "modules/banco_brasil/controllers/Banco_brasil.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/controllers/Banco_brasil.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/Api16ReviewedExternalReversal.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/Api16ReviewedExternalReversal.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/ApiAbatement.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/ApiAbatement.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/ApiAbatementAmendments.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/ApiAbatementAmendments.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/ApiAddress.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/ApiAddress.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/ApiAddressAmendments.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/ApiAddressAmendments.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/ApiAmendments.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/ApiAmendments.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/ApiClient.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/ApiClient.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/ApiDiscountAmendment.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/ApiDiscountAmendment.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/ApiDiscountAmendments.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/ApiDiscountAmendments.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/ApiFinancialMutationFence.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/ApiFinancialMutationFence.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/ApiReceiptReversalOverview.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/ApiReceiptReversalOverview.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/ApiService.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/ApiService.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/CapabilityPolicy.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/CapabilityPolicy.php"
+  },
+  {
+    "path": "modules/banco_brasil/libraries/BancoBrasil/ModuleRelease.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/libraries/BancoBrasil/ModuleRelease.php"
+  },
+  {
+    "path": "modules/banco_brasil/migrations/117_version_117.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/migrations/117_version_117.php"
+  },
+  {
+    "path": "modules/banco_brasil/migrations/118_version_118.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/migrations/118_version_118.php"
+  },
+  {
+    "path": "modules/banco_brasil/migrations/119_version_119.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/migrations/119_version_119.php"
+  },
+  {
+    "path": "modules/banco_brasil/views/api_configuration.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/views/api_configuration.php"
+  },
+  {
+    "path": "modules/banco_brasil/views/api_external_reversals.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/views/api_external_reversals.php"
+  },
+  {
+    "path": "modules/banco_brasil/views/api_operations.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/views/api_operations.php"
+  },
+  {
+    "path": "modules/banco_brasil/views/index.php",
+    "exit": 0,
+    "output": "No syntax errors detected in modules/banco_brasil/views/index.php"
+  },
+  {
+    "path": "pipe.php",
+    "exit": 0,
+    "output": "No syntax errors detected in pipe.php"
+  },
+  {
+    "path": "tests/asaas_callback_version.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/asaas_callback_version.php"
+  },
+  {
+    "path": "tests/asaas_module_migrations.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/asaas_module_migrations.php"
+  },
+  {
+    "path": "tests/banco_brasil_components_browser.cjs",
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "path": "tests/banco_brasil_components_http_fixture.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/banco_brasil_components_http_fixture.php"
+  },
+  {
+    "path": "tests/banco_brasil_external_reversal_browser.cjs",
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "path": "tests/banco_brasil_external_reversal_http_fixture.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/banco_brasil_external_reversal_http_fixture.php"
+  },
+  {
+    "path": "tests/banco_brasil_http_fixture.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/banco_brasil_http_fixture.php"
+  },
+  {
+    "path": "tests/banco_brasil_module_version.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/banco_brasil_module_version.php"
+  },
+  {
+    "path": "tests/banco_brasil_origination_mysql.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/banco_brasil_origination_mysql.php"
+  },
+  {
+    "path": "tests/banco_brasil_resume_439_amend_browser.cjs",
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "path": "tests/banco_brasil_resume_439_amend_http_fixture.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/banco_brasil_resume_439_amend_http_fixture.php"
+  },
+  {
+    "path": "tests/banco_brasil_resume_439_api16_reversal.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/banco_brasil_resume_439_api16_reversal.php"
+  },
+  {
+    "path": "tests/banco_brasil_resume_439_concurrency.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/banco_brasil_resume_439_concurrency.php"
+  },
+  {
+    "path": "tests/banco_brasil_resume_439_contracts.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/banco_brasil_resume_439_contracts.php"
+  },
+  {
+    "path": "tests/banco_brasil_resume_439_mysql.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/banco_brasil_resume_439_mysql.php"
+  },
+  {
+    "path": "tests/companies/asaas_refund_native_setup.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/asaas_refund_native_setup.php"
+  },
+  {
+    "path": "tests/companies/asaas_refunds.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/asaas_refunds.php"
+  },
+  {
+    "path": "tests/companies/finance_resume_439_api.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/finance_resume_439_api.php"
+  },
+  {
+    "path": "tests/companies/finance_resume_439_api_concurrency.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/finance_resume_439_api_concurrency.php"
+  },
+  {
+    "path": "tests/companies/finance_resume_439_asaas.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/finance_resume_439_asaas.php"
+  },
+  {
+    "path": "tests/companies/finance_resume_439_asaas_setup.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/finance_resume_439_asaas_setup.php"
+  },
+  {
+    "path": "tests/companies/finance_resume_439_copies.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/finance_resume_439_copies.php"
+  },
+  {
+    "path": "tests/companies/finance_resume_439_copy_concurrency.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/finance_resume_439_copy_concurrency.php"
+  },
+  {
+    "path": "tests/companies/finance_resume_439_full_refund_concurrency.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/finance_resume_439_full_refund_concurrency.php"
+  },
+  {
+    "path": "tests/companies/finance_resume_439_refund_data.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/finance_resume_439_refund_data.php"
+  },
+  {
+    "path": "tests/companies/native_resume_439.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/native_resume_439.php"
+  },
+  {
+    "path": "tests/companies/native_resume_439_tracking.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/native_resume_439_tracking.php"
+  },
+  {
+    "path": "tests/companies/operations_resume_439_billing.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/operations_resume_439_billing.php"
+  },
+  {
+    "path": "tests/companies/operations_resume_439_browser.cjs",
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "path": "tests/companies/operations_resume_439_concurrency.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/operations_resume_439_concurrency.php"
+  },
+  {
+    "path": "tests/companies/operations_resume_439_discussion_concurrency.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/operations_resume_439_discussion_concurrency.php"
+  },
+  {
+    "path": "tests/companies/operations_resume_439_discussions.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/operations_resume_439_discussions.php"
+  },
+  {
+    "path": "tests/companies/operations_resume_439_sales_lines.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/operations_resume_439_sales_lines.php"
+  },
+  {
+    "path": "tests/companies/operations_resume_439_sales_lines_browser.cjs",
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "path": "tests/companies/operations_resume_439_schema.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/operations_resume_439_schema.php"
+  },
+  {
+    "path": "tests/companies/portal_operations_cleanup.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/portal_operations_cleanup.php"
+  },
+  {
+    "path": "tests/companies/portal_operations_controller.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/portal_operations_controller.php"
+  },
+  {
+    "path": "tests/companies/portal_operations_schema_fixture.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/portal_operations_schema_fixture.php"
+  },
+  {
+    "path": "tests/companies/recurrence_resume_439.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/recurrence_resume_439.php"
+  },
+  {
+    "path": "tests/companies/recurrence_resume_439_browser.cjs",
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "path": "tests/companies/recurrence_resume_439_concurrency.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/recurrence_resume_439_concurrency.php"
+  },
+  {
+    "path": "tests/companies/recurrence_resume_439_dates.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/companies/recurrence_resume_439_dates.php"
+  },
+  {
+    "path": "tests/resume_439_native_staff_browser.cjs",
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "path": "tests/settings/pusher_recovery_http_fixture.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/pusher_recovery_http_fixture.php"
+  },
+  {
+    "path": "tests/settings/resume_439_config_concurrency.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/resume_439_config_concurrency.php"
+  },
+  {
+    "path": "tests/settings/resume_439_connect.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/resume_439_connect.php"
+  },
+  {
+    "path": "tests/settings/resume_439_connect_browser.cjs",
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "path": "tests/settings/resume_439_connect_encryption.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/resume_439_connect_encryption.php"
+  },
+  {
+    "path": "tests/settings/resume_439_connect_http_fixture.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/resume_439_connect_http_fixture.php"
+  },
+  {
+    "path": "tests/settings/resume_439_connect_pairing.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/resume_439_connect_pairing.php"
+  },
+  {
+    "path": "tests/settings/resume_439_connect_queue.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/resume_439_connect_queue.php"
+  },
+  {
+    "path": "tests/settings/resume_439_microsoft.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/resume_439_microsoft.php"
+  },
+  {
+    "path": "tests/settings/resume_439_microsoft_browser.cjs",
+    "exit": 0,
+    "output": ""
+  },
+  {
+    "path": "tests/settings/resume_439_microsoft_http_fixture.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/resume_439_microsoft_http_fixture.php"
+  },
+  {
+    "path": "tests/settings/resume_439_microsoft_queue.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/resume_439_microsoft_queue.php"
+  },
+  {
+    "path": "tests/settings/resume_439_pusher.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/resume_439_pusher.php"
+  },
+  {
+    "path": "tests/settings/resume_439_pusher_controller_fixture.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/resume_439_pusher_controller_fixture.php"
+  },
+  {
+    "path": "tests/settings/resume_439_pusher_recovery_controller.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/resume_439_pusher_recovery_controller.php"
+  },
+  {
+    "path": "tests/settings/resume_439_support.php",
+    "exit": 0,
+    "output": "No syntax errors detected in tests/settings/resume_439_support.php"
+  },
+  {
+    "path": "tests/settings_pusher_recovery_browser.cjs",
+    "exit": 0,
+    "output": ""
+  }
+]

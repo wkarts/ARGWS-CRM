@@ -1,0 +1,18 @@
+{
+  "application/services/CompanyExpenseCopies.php": "3e5c16cd47dbd63a6b01c7f0d538c2bdca66399e5c70d9abc658d4602b0168df",
+  "application/services/CompanyExpenseCopiesSchema.php": "02efebe6a59e1018d738773d2c32706830ab1524fd5586478218b7f187a81163",
+  "application/controllers/admin/Company_expense_copies.php": "0444ec3840a57214b94bebcf37c91f5a4c51765ee3cef201e9db01a4aec0571d",
+  "application/views/admin/companies/expense_copies.php": "0e83a16530ffe14432e81757ae05fdfa4a61d6ebbdd5809ad0e02c688d9cce98",
+  "tests/companies/expense_copies_resume_442.php": "5b9127bf5917c9c47a28990ef29a24168e2198778f67be48118c1749f85bb2f0",
+  "tests/companies/expense_copies_resume_442_atomic.php": "aead0b26d379dc5a87c9246d548b5ca4c43e2408247c9da885446fa37c514c7a",
+  "tests/companies/expense_copies_resume_442_billing.php": "0cb9545572df35a4d85b91fa917f111cc9a571c660277425a425a2e616c1aaf7",
+  "tests/companies/expense_copies_resume_442_browser.cjs": "09919da659a5ffea1cbb5c3774c2abfef024610bdb57632aaead4b9813c20227",
+  "tests/companies/expense_copies_resume_442_concurrency.php": "40432da210d35ac8a24a7fb24b955b7371aaaee92da70ce575809af0c2f1d538",
+  "tests/companies/expense_copies_resume_442_controller.php": "f118e2b877e6c66162d3e377fc88774d45c7f5ed11fbcbba8fb068cc7ce11d23",
+  "tests/companies/expense_copies_resume_442_http_fixture.php": "9e06da6b0c7f68f88b5bf794fb9e26cf76f3016a8e7616c4896e33499d338c25",
+  "tests/companies/expense_copies_resume_442_native_schema.php": "f2b67f79024cdb0885d32a5aa299a3374b905f150b17813c92fb4f9c93e14dea",
+  "tests/companies/expense_copies_resume_442_provider.php": "b239220379fb60451c66abd671836cf9e2c6f3e6d4f0fee188d4ea926adece06",
+  "tests/companies/expense_copies_resume_442_schema.php": "fe2fb864170b48f8c766bfdf1564d1eb766d5b145558a6590307edc4a3a2af6e",
+  "tests/companies/expense_copies_resume_442_support.php": "179de7fdb37a944b44bfcb9fa61ac2a2cc099b6f3407e7c9304a2e7c75ab3ceb",
+  "tests/companies/expense_copies_resume_442_effects.php": "7bde9ceeae0f14dcf80ee9beaeae199c697ecfac609a31bf16b67ec92be2acd5"
+}

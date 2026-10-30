@@ -1,0 +1,22 @@
+{
+  "source_directory": "candidate440",
+  "time_utc": "2026-10-20T08:59:26.159677+00:00",
+  "command": "python test-runtime/run_resume_db.py --cwd candidate440 -- python ../settings-final440-batch.py",
+  "runtime": "PHP8.3.6; disposable MariaDB10.11.14, binlogON, nonSUPER",
+  "mariadb_suites": 22,
+  "mariadb_passed": 22,
+  "sqlite_suites": 12,
+  "sqlite_passed": 12,
+  "domain_source_paths": 94,
+  "changed_during_run": [],
+  "source_mutations_by_agent": 0,
+  "production_reconciliation": "6/6 new TicketConnect production exact original recovered component; existing Microsoft/Connect/Pusher production same as candidate439",
+  "central_reconciliation": "Ticket route/cron/menu/link preserved together with BB/recurrence/copy440 integrations",
+  "limitations": [
+    "This validates the candidate440 local composition, not a published commit SHA",
+    "Native migration440 tracking/fresh installer/replay is validated separately by root; standalone Ticket schema test stdout about root tracking is inherited text, not independent evidence here",
+    "SQLite Ticket schema suite has0 extra metadata asserts; MariaDB executes8 schema-specific asserts",
+    "HTTP439 Microsoft/Connect/Pusher PASS reported separately by HTTPagent; HTTP440 remains separate",
+    "Synthetic recipients, RSA/JWKS, SQL fixtures and captured transports only; no external provider transport"
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "format": 1,
+  "generated_at_utc": "2026-10-28T23:15:54Z",
+  "root": "/workspace/scratch/c104d1f61da9/worktree-pr52-current",
+  "environment": {
+    "php": null,
+    "docker": null,
+    "ruby": null,
+    "node": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "npm": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/npm",
+    "node_modules": false
+  },
+  "checks": [
+    {
+      "name": "node-contracts",
+      "status": "blocked",
+      "command": [
+        "node",
+        "--test",
+        "tests/*.test.cjs"
+      ],
+      "missing": [
+        "php"
+      ]
+    },
+    {
+      "name": "ui-inventory",
+      "status": "passed",
+      "command": [
+        "python3",
+        "tests/native_ui_surface_inventory.py"
+      ],
+      "exit_code": 0,
+      "output": "Static UI inventory PASS: 16 views, 6 controllers; kinds={'company-shell': 1, 'partial': 10, 'unresolved-fragment': 1, 'native-shell': 2, 'modal-document': 2}\nNot a PHP render, route authorization, asset load, browser or visual-fidelity test. Unresolved fragments remain documented gaps.\n"
+    },
+    {
+      "name": "focused-ci-contract",
+      "status": "passed",
+      "command": [
+        "python3",
+        "tests/ci/test_native_company_focused.py"
+      ],
+      "exit_code": 0,
+      "output": ".START node 1/2 tests/first.cjs\nsynthetic failure\nEND node 1/2 exit=1\n...START sqlite 1/1 tests/first.php\nWarning: synthetic warning\nEND sqlite 1/1 exit=1\n......\n----------------------------------------------------------------------\nRan 10 tests in 0.091s\n\nOK\n"
+    },
+    {
+      "name": "workflow-ownership",
+      "status": "passed",
+      "command": [
+        "python3",
+        "-c",
+        "from pathlib import Path; import re; hits=[p.name for p in Path('.github/workflows').glob('*.yml') if re.search(r'node --test tests/native_header_overflow\\.test\\.cjs', p.read_text())]; assert hits == ['native-header-layout.yml'], hits; print(hits)"
+      ],
+      "exit_code": 0,
+      "output": "['native-header-layout.yml']\n"
+    },
+    {
+      "name": "php-runtime",
+      "status": "blocked",
+      "command": [
+        "php",
+        "-v"
+      ],
+      "missing": [
+        "php"
+      ]
+    },
+    {
+      "name": "mix-build",
+      "status": "blocked",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "missing": [
+        "node_modules/.bin/mix"
+      ]
+    },
+    {
+      "name": "ruby-yaml-runtime",
+      "status": "blocked",
+      "command": [
+        "ruby",
+        "-e",
+        "require 'yaml'; YAML.load_file('.github/workflows/native-company-ui.yml')"
+      ],
+      "missing": [
+        "ruby"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "blocked": 4,
+    "complete": false
+  }
+}

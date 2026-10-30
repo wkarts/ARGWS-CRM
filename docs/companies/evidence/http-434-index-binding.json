@@ -1,0 +1,16 @@
+{
+  "source": "/tmp/pr45-http-frozen-434-final",
+  "source_manifest_sha256": "fecad40d034e2d6b22e677216fee49f86c297048b8072800c7815d512f0e1615",
+  "runtime_manifest_sha256": "158bdb72859db0d7db28cbb6a096a43e0f7b723e285e1369817fc757202d0619",
+  "functional_files_compared": 18578,
+  "production_exceptions": [],
+  "test_infrastructure_exception": [
+    "tests/docker_provision_smoke.sh"
+  ],
+  "reason": "Only parent Docker smoke test-server launch adds log_bin_trust_function_creators=1 and comments. This parent orchestrator was not executed by the native-process QA harness. Every production file and all actually executed browser/service test sources match the frozen source. Separate real MariaDB CLI/binlogON/nonSUPER RED1419/trustON+45000/rollback/drop/retry passed; original MySQL8 Docker CI awaits new HEAD.",
+  "functional_browser_successes": 35,
+  "browser_attempts": 36,
+  "failed_setup_before_assertions": 1,
+  "setup_fix": "Harness supplies existing supported ISSUERS_BROWSER_EXECUTABLE_PATH. No test or production changes; idempotent433 fixture reuse audited; synthetic password was rehashed. No invented before hash.",
+  "docs_ci_finalized_after_freeze": true
+}

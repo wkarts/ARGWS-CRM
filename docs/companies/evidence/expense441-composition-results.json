@@ -1,0 +1,133 @@
+[
+  {
+    "driver": "sqlite",
+    "script": "tests/companies/expense_api_controller.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/expense441-composition-proof/sqlite-expense_api_controller.log",
+    "sha256": "2df5cadf5a19fc0142edc4c35d7ccabf4db17c71c097dcdce74737f41f40c0ec",
+    "last_lines": [
+      "Company expense operations: 47 checks passed (sqlite). No provider calls.",
+      "Expense own bearer API costs/categories/files: 102 cumulative (sqlite). No provider or cash calls.",
+      "Expense actual API controller/protocol: 154 cumulative (sqlite)."
+    ]
+  },
+  {
+    "driver": "sqlite",
+    "script": "tests/companies/expense_api_resume_441_native_file.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/expense441-composition-proof/sqlite-expense_api_resume_441_native_file.log",
+    "sha256": "3af01559f54b03b5443349ff0e8252cadf5a5f43d97eb63ef15da2257a2df52c",
+    "last_lines": [
+      "Company expense operations: 47 checks passed (sqlite). No provider calls.",
+      "Recreated441 native file positive/cross-owner/final-audit denial/rollback: 65 cumulative (sqlite)."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/expense_api_controller.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/expense441-composition-proof/mariadb-expense_api_controller.log",
+    "sha256": "2df5cadf5a19fc0142edc4c35d7ccabf4db17c71c097dcdce74737f41f40c0ec",
+    "last_lines": [
+      "Company expense operations: 47 checks passed (mysql). No provider calls.",
+      "Expense own bearer API costs/categories/files: 102 cumulative (mysql). No provider or cash calls.",
+      "Expense actual API controller/protocol: 154 cumulative (mysql)."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/expense_api_atomic.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/expense441-composition-proof/mariadb-expense_api_atomic.log",
+    "sha256": "b2aeb1a2e9e77e7c598bfaad497336c639361321d15ee04dd76ac413cce6a113",
+    "last_lines": [
+      "Company expense operations: 47 checks passed (mysql). No provider calls.",
+      "Expense own bearer API costs/categories/files: 102 cumulative (mysql). No provider or cash calls.",
+      "Expense API late atomic source/files/token/receipt: 129 cumulative (mysql)."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/expense_api_billing.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/expense441-composition-proof/mariadb-expense_api_billing.log",
+    "sha256": "ca184b67c79c1627c96e697299e6f6d589ec1bd7cc6435501bb985a916e5a9a9",
+    "last_lines": [
+      "Owned branding snapshots/PDF: 63 cumulative checks passed.",
+      "Expense billable/canonical invoice conversion: 94 cumulative checks passed (mysql). No external payment, cost duplication, mail or bank calls.",
+      "Expense API actual billing source veto: 103 cumulative (mysql)."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/expense_api_concurrency.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/expense441-composition-proof/mariadb-expense_api_concurrency.log",
+    "sha256": "9a931d97c248155be0992e2d94e9c56b644bcc2ed13013d03dad1796b3b50c62",
+    "last_lines": [
+      "Company expense operations: 47 checks passed (mysql). No provider calls.",
+      "Expense own bearer API costs/categories/files: 102 cumulative (mysql). No provider or cash calls.",
+      "Expense API seven actual two-waiter scenarios: 134 cumulative (mysql)."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/expense_api_resume_441_native_file.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/expense441-composition-proof/mariadb-expense_api_resume_441_native_file.log",
+    "sha256": "3af01559f54b03b5443349ff0e8252cadf5a5f43d97eb63ef15da2257a2df52c",
+    "last_lines": [
+      "Disposable MariaDB10.11.14 / binlogON / nonSUPER / isolated tmp: /workspace/scratch/6b72446d684f/test-runtime/resume-dbs/db-4an42hgi",
+      "Company expense operations: 47 checks passed (mysql). No provider calls.",
+      "Recreated441 native file positive/cross-owner/final-audit denial/rollback: 65 cumulative (mysql)."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/expense_recurring_cli.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/expense441-composition-proof/mariadb-expense_recurring_cli.log",
+    "sha256": "1a809bc7888128a21b5b35b4f7b0b846354a0014a7ab0e06a1387d356892f71c",
+    "last_lines": [
+      "Expense billing atomic origin/actor/project/principal guards: 115 cumulative checks passed (mysql).",
+      "Expense native intervals/cycles/canonical children/optional billing: 144 cumulative checks passed (mysql). No SMTP, bank calls, or recurring invoice namespace adoption.",
+      "Expense recurrence actual CLI/capability/session isolation: 168 cumulative checks passed (mysql). No external delivery."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/finance_resume_439_api.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/expense441-composition-proof/mariadb-finance_resume_439_api.log",
+    "sha256": "23bcb2469b002b81038dc9f07294b2e275ed10f548b87c78489b92f51c7f03c0",
+    "last_lines": [
+      "Company financial report/CSV: 115 cumulative checks passed (mysql). No provider calls.",
+      "Company API token/scope/rotation/financial writer: 136 cumulative checks passed (mysql). No external calls.",
+      "Recreated439 financial API canonical writers: 150 cumulative checks passed (mysql). No bank/refund transmission."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/invoice_drafts_api_controller.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/expense441-composition-proof/mariadb-invoice_drafts_api_controller.log",
+    "sha256": "46485e41457e9bf9f6af3ebd8ebe55bf2787235683abd4404b945e52f862e3b8",
+    "last_lines": [
+      "Private invoice drafts: 136 cumulative (mysql). No providers or messages.",
+      "Private invoice draft API: 150 cumulative (mysql).",
+      "Private draft actual API controller/scope: 178 cumulative (mysql)."
+    ]
+  },
+  {
+    "driver": "mariadb",
+    "script": "tests/companies/project_copies_api.php",
+    "exit": 0,
+    "log": "/workspace/scratch/6b72446d684f/expense441-composition-proof/mariadb-project_copies_api.log",
+    "sha256": "9d59798653261dda05bd68555f0420148e16ab31770980e3f25dba3eec7100ac",
+    "last_lines": [
+      "Owned projects/tasks/checklists/comments/timers: 36 checks passed (mysql). No external transport.",
+      "Own reviewed project copy: 72 added / 108 cumulative checks (mysql). No files, time, financial or public/grant adoption.",
+      "Owned project copy opt-in API: 24 added / 132 cumulative (mysql)."
+    ]
+  }
+]

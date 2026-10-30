@@ -1,0 +1,122 @@
+{
+  "sha": "77ce06ccc977e7c9410f252ca71c7b06d34279e3",
+  "terminal": true,
+  "workflows": [
+    {
+      "name": "Versão e migrations dos módulos",
+      "id": 39402681141,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39402681141"
+    },
+    {
+      "name": "Versão e migrations do núcleo",
+      "id": 39402681023,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39402681023"
+    },
+    {
+      "name": "Interface CRM e catálogo de pagamentos",
+      "id": 39401558452,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558452"
+    },
+    {
+      "name": "Rota segura callback Asaas",
+      "id": 39401558547,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558547"
+    },
+    {
+      "name": "Regras recorrentes independentes",
+      "id": 39401558782,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558782"
+    },
+    {
+      "name": "Banco do Brasil module",
+      "id": 39401558417,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558417"
+    },
+    {
+      "name": "Calendario das faturas recorrentes",
+      "id": 39401558491,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558491"
+    },
+    {
+      "name": "Aviso de atualização do painel",
+      "id": 39401558433,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558433"
+    },
+    {
+      "name": "Barreiras de privacidade de clientes",
+      "id": 39401558453,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558453"
+    },
+    {
+      "name": "Origem e remocao segura Asaas",
+      "id": 39401558554,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558554"
+    },
+    {
+      "name": "Ponte opcional PIGE",
+      "id": 39401558469,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558469"
+    },
+    {
+      "name": "Barreiras de escopo de faturas",
+      "id": 39401558470,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558470"
+    },
+    {
+      "name": "Containers ARGWS CRM",
+      "id": 39401558457,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558457"
+    },
+    {
+      "name": "Empresas no núcleo",
+      "id": 39401558444,
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558444"
+    },
+    {
+      "name": "ARGWS CRM Deployer - binários e releases",
+      "id": 39401558442,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558442"
+    },
+    {
+      "name": "Integridade das stacks ARGWS CRM",
+      "id": 39401558471,
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39401558471"
+    }
+  ],
+  "causes": {
+    "Empresas": "Historical native439 executor helper required shipped config439 literal under440; corrected forward441 with exact canonical source shape and explicitly pinned historical target.",
+    "Stacks": "asaas_refund_http_fixture required exact native152 while module153 installed; corrected forward441 with trusted exact current module target and real activation/runner readback."
+  }
+}

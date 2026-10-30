@@ -1,0 +1,33 @@
+{
+  "ready": {
+    "proxy": "http://127.0.0.1:45769",
+    "ca": "/workspace/scratch/6b72446d684f/finance440-http-offline/certs/ca.pem",
+    "certificate": "/workspace/scratch/6b72446d684f/finance440-http-offline/certs/server.pem",
+    "host": "api-sandbox.asaas.com",
+    "forwarding": false
+  },
+  "checks": [
+    {
+      "check": "untrustedCA",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "asaas_company_transport_unconfirmed"
+    },
+    {
+      "check": "trustedCA",
+      "exit": 0,
+      "stdout": "{\"data\":[{\"id\":\"wallet-synthetic-local\"}],\"hasMore\":false}",
+      "stderr": ""
+    },
+    {
+      "check": "production_host_refused",
+      "pass": true
+    },
+    {
+      "check": "wrongSAN_refused",
+      "pass": true
+    }
+  ],
+  "events": "/workspace/scratch/6b72446d684f/finance440-http-offline/probe-events.jsonl",
+  "production_files_edited": false
+}

@@ -1,0 +1,14 @@
+{"separate_connections":true,"negative_candidate_observed":true,"secondary_blocked":false,"secondary_committed":true,"final_membership":1,"returned_count":1}
+PHP Fatal error:  Uncaught RuntimeException: FAIL: Excluded membership is locked on a real second connection before the API response is constructed in /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/staff_fixture.php:42
+Stack trace:
+#0 /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/hr_fixture.php(10): staffCheck(false, 'Excluded member...')
+#1 /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/hr_api_read_locks.php(13): hrCheck(false, 'Excluded member...')
+#2 {main}
+  thrown in /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/staff_fixture.php on line 42
+
+Fatal error: Uncaught RuntimeException: FAIL: Excluded membership is locked on a real second connection before the API response is constructed in /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/staff_fixture.php:42
+Stack trace:
+#0 /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/hr_fixture.php(10): staffCheck(false, 'Excluded member...')
+#1 /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/hr_api_read_locks.php(13): hrCheck(false, 'Excluded member...')
+#2 {main}
+  thrown in /workspace/scratch/2286cc0eac8b/runtime/hr-candidate-453/source/tests/companies/staff_fixture.php on line 42

@@ -1,0 +1,132 @@
+{
+  "sha": "132d0f732821396ca1feb12a805abe066bda253d",
+  "terminal": true,
+  "workflows": [
+    {
+      "name": "Versão e migrations dos módulos",
+      "id": 39404678123,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404678123"
+    },
+    {
+      "name": "Versão e migrations do núcleo",
+      "id": 39404678148,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404678148"
+    },
+    {
+      "name": "Origem e remocao segura Asaas",
+      "id": 39404597932,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404597932"
+    },
+    {
+      "name": "Ponte opcional PIGE",
+      "id": 39404598003,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404598003"
+    },
+    {
+      "name": "Rota segura callback Asaas",
+      "id": 39404598045,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404598045"
+    },
+    {
+      "name": "Regras recorrentes independentes",
+      "id": 39404598112,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404598112"
+    },
+    {
+      "name": "Barreiras de privacidade de clientes",
+      "id": 39404597809,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404597809"
+    },
+    {
+      "name": "Aviso de atualização do painel",
+      "id": 39404597937,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404597937"
+    },
+    {
+      "name": "Barreiras de escopo de faturas",
+      "id": 39404597968,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404597968"
+    },
+    {
+      "name": "ARGWS CRM Deployer - binários e releases",
+      "id": 39404597871,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404597871"
+    },
+    {
+      "name": "Containers ARGWS CRM",
+      "id": 39404597996,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404597996"
+    },
+    {
+      "name": "Calendario das faturas recorrentes",
+      "id": 39404597805,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404597805"
+    },
+    {
+      "name": "Interface CRM e catálogo de pagamentos",
+      "id": 39404597897,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404597897"
+    },
+    {
+      "name": "Banco do Brasil module",
+      "id": 39404597771,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404597771"
+    },
+    {
+      "name": "Empresas no núcleo",
+      "id": 39404598080,
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404598080"
+    },
+    {
+      "name": "Integridade das stacks ARGWS CRM",
+      "id": 39404598002,
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39404598002"
+    }
+  ],
+  "failures": [
+    {
+      "job_id": 118567360811,
+      "workflow": "Empresas",
+      "error": "operations_subresources.php expected18 double-colon scopes, misses new3 opt-in expense scopes",
+      "forward442": "Exact registry21 and original behavior checks retained; RED→GREEN242SQLite244Maria."
+    },
+    {
+      "job_id": 118567359536,
+      "workflow": "Stacks",
+      "error": "operations_resume_439_browser.cjs:142 expected403 ownership denial but received409",
+      "forward442": "Legacy project_portal_rules controller explicitly returns409/empty_state for foreign project. Full operations439 Chromium regression PASS53.33s on final47b35; tail asserts exact409/no foreign content, preserves stale-context409 and standalone403, adds foreign-invoicePDF403 with fresh B context and ownB200. No production change."
+    }
+  ]
+}

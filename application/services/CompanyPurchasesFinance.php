@@ -1,0 +1,164 @@
+<?php
+
+declare(strict_types=1);
+
+/** A document's cost is written once by CompanyExpenses. AP declarations never write cash or receivables. */
+trait CompanyPurchasesFinance
+{
+    public function postDocument($issuer, $actor, array $input, string $key): int
+    {
+        CompanyPurchasesValues::fields($input,['order_id','receipt_ids','vendor_number','document_date','due_date','category_id','file_id']);
+        $order=IssuerPolicy::id($input['order_id']??null); $category=IssuerPolicy::id($input['category_id']??null);
+        $file=empty($input['file_id'])?null:IssuerPolicy::id($input['file_id']);
+        $vendorNumber=CompanyPurchasesValues::text($input['vendor_number']??null,100,true); $date=CompanyPurchasesValues::date($input['document_date']??null); $due=CompanyPurchasesValues::date($input['due_date']??null);
+        $receipts=$input['receipt_ids']??null;
+        if ($due<$date||$date>gmdate('Y-m-d')||!is_array($receipts)||!array_is_list($receipts)||count($receipts)<1||count($receipts)>100) { throw new DomainException('company_purchase_invalid'); }
+        $receipts=array_map([IssuerPolicy::class,'id'],$receipts); sort($receipts);
+        if (count(array_unique($receipts))!==count($receipts)) { throw new DomainException('company_purchase_invalid'); }
+        return $this->command($issuer,$actor,'approve','document_posted',$key,[$order,$category,$file,$vendorNumber,$date,$due,$receipts],function ($i,$a) use ($order,$category,$file,$vendorNumber,$date,$due,$receipts,$key): array {
+            $po=$this->object($i,'order',$order);
+            if (!in_array($po['state'],['part_received','received'],true)) { throw new DomainException('company_purchase_state_conflict'); }
+            $this->received($i,$po); $selected=[]; $base=0;
+            foreach ($receipts as $receiptId) {
+                $r=$this->object($i,'receipt',$receiptId);
+                if ((int)$r['order_id']!==$order||$r['received_date']>$date) { throw new DomainException('company_purchase_reference_denied'); }
+                if ($this->rows('SELECT id FROM '.$this->p.'company_purchase_allocations WHERE issuer_id=? AND receipt_id=? FOR UPDATE',[$i,$receiptId])) { throw new DomainException('company_purchase_receipt_already_billed'); }
+                $selected[]=['id'=>$receiptId,'record_hash'=>$r['record_hash'],'base_cents'=>(int)$r['base_cents']]; $base+=(int)$r['base_cents'];
+            }
+            $tax=CompanyPurchasesValues::tax($base,(int)$po['tax_rate']); CompanyPurchasesValues::integer($base+$tax,1,CompanyPurchasesValues::MAX_MONEY);
+            if ($base===0) { throw new DomainException('company_purchase_zero_document'); }
+            $categoryRow=$this->rows('SELECT * FROM '.$this->p.'company_expense_categories WHERE id=? AND issuer_id=? AND active=1 FOR UPDATE',[$category,$i])[0]??null;
+            if (!$categoryRow) { throw new DomainException('company_expense_reference_denied'); }
+            $this->remember('company_expense_categories',$categoryRow);
+            $fileRow=$file===null?null:$this->evidenceFile($i,(int)$po['request_id'],(int)$po['supplier_id'],$file);
+            $orderSnapshot=CompanyPurchasesValues::decode($po['snapshot_json']);
+            $snapshot=CompanyPurchasesValues::json(['order_snapshot_hash'=>$po['snapshot_hash'],'supplier'=>$orderSnapshot['supplier'],'receipts'=>$selected,'file'=>$fileRow===null?null:['id'=>$file,'content_hash'=>$fileRow['content_hash'],'filename'=>$fileRow['filename']],'tax_rule'=>'one explicit rate; rounding once per posted document']);
+            [$number,$reference]=$this->number($i,'document');
+            if ($this->rows('SELECT id FROM '.$this->p.'company_purchase_documents WHERE issuer_id=? AND supplier_id=? AND vendor_number=?',[$i,$po['supplier_id'],$vendorNumber])) { throw new DomainException('company_purchase_document_conflict'); }
+            $document=$this->insert('company_purchase_documents',$this->immutable(['issuer_id'=>$i,'order_id'=>$order,'supplier_id'=>(int)$po['supplier_id'],'number'=>$number,'reference'=>$reference,'vendor_number'=>$vendorNumber,'document_date'=>$date,'due_date'=>$due,'currency'=>$po['currency'],'base_cents'=>$base,'tax_rate'=>(int)$po['tax_rate'],'tax_cents'=>$tax,'total_cents'=>$base+$tax,'category_id'=>$category,'file_id'=>$file,'snapshot_json'=>$snapshot,'created_by'=>$a,'created_at'=>self::now()]));
+            $allocationRows=[]; foreach ($selected as $r) { $allocation=['issuer_id'=>$i,'document_id'=>$document,'receipt_id'=>$r['id'],'base_cents'=>$r['base_cents']]; $allocationRows[]=['id'=>$this->insert('company_purchase_allocations',$allocation)]+$allocation; }
+            $description='Compra '.$reference.' / '.$po['reference'];
+            $note='Documento do fornecedor: '.$vendorNumber.'. Origem de compra imutável; quitação externa registrada separadamente no contas a pagar.';
+            $expenseInput=['category_id'=>$category,'client_id'=>0,'project_id'=>0,'currency'=>$po['currency'],'date'=>$date,'description'=>$description,'note'=>$note,'amount'=>CompanyPurchasesValues::display($base),'tax_rate'=>CompanyPurchasesValues::display((int)$po['tax_rate'])];
+            $expenseKey=hash('sha256','purchase-document-expense|'.$i.'|'.$key);
+            $expenseId=(new CompanyExpenses($this->db,$this->p))->createInOwnedTransaction($i,$a,$expenseInput,$expenseKey);
+            $expense=$this->rows('SELECT * FROM '.$this->p.'company_expenses WHERE id=? AND issuer_id=? FOR UPDATE',[$expenseId,$i])[0]??null;
+            if (!$expense) { throw new RuntimeException('issuer_purchase_write_unconfirmed'); }
+            $want=['issuer_id'=>$i,'category_id'=>$category,'client_id'=>0,'project_id'=>0,'client_name'=>'','project_name'=>'','currency'=>$po['currency'],'expense_date'=>$date,'description'=>$description,'note'=>$note,'amount_cents'=>$base,'tax_rate'=>(int)$po['tax_rate'],'tax_cents'=>$tax,'total_cents'=>$base+$tax,'state'=>'recorded','revision'=>1,'created_by'=>$a];
+            $this->confirm('company_expenses',['id'=>$expenseId],$want);
+            $this->remember('company_expenses',$expense);
+            $normalized=['project_id'=>0,'category_id'=>$category,'client_id'=>0,'currency'=>$po['currency'],'expense_date'=>$date,'description'=>$description,'note'=>$note,'amount_cents'=>$base,'tax_cents'=>$tax,'tax_rate'=>(int)$po['tax_rate'],'total_cents'=>$base+$tax];
+            $receipt=$this->rows('SELECT * FROM '.$this->p.'company_expense_requests WHERE request_key=?',[$expenseKey])[0]??null;
+            if (!$receipt||(int)$receipt['issuer_id']!==$i||(int)$receipt['actor_id']!==$a||$receipt['operation']!=='create'||(int)$receipt['result_id']!==$expenseId||!hash_equals($receipt['input_hash'],hash('sha256',json_encode($normalized,JSON_THROW_ON_ERROR)))) { throw new RuntimeException('issuer_purchase_write_unconfirmed'); }
+            $this->remember('company_expense_requests',$receipt,'request_key');
+            $payable=$this->insert('company_purchase_payables',$this->immutable(['issuer_id'=>$i,'supplier_id'=>(int)$po['supplier_id'],'order_id'=>$order,'document_id'=>$document,'expense_id'=>$expenseId,'currency'=>$po['currency'],'amount_cents'=>$base+$tax,'due_date'=>$due,'expense_hash'=>CompanyPurchasesValues::hash($expense),'created_by'=>$a,'created_at'=>self::now()]));
+            $this->payablePosition($i,$this->object($i,'payable',$payable));
+            $this->watchSet('company_purchase_allocations',['issuer_id'=>$i,'document_id'=>$document],$allocationRows);
+            $this->validators[]=function () use ($i,$a,$payable): void {
+                if (!$this->acl->can($i,$a,'expenses','view')||!$this->acl->can($i,$a,'expenses','create')) { throw new DomainException('company_expense_denied'); }
+                $this->payablePosition($i,$this->object($i,'payable',$payable));
+            };
+            return ['payable',$payable,$payable];
+        });
+    }
+
+    private function expenseEvidence(int $issuer, array $payable, array $document): array
+    {
+        $expense=$this->rows('SELECT * FROM '.$this->p.'company_expenses WHERE id=? AND issuer_id=? FOR UPDATE',[$payable['expense_id'],$issuer])[0]??null;
+        if (!$expense||!hash_equals($payable['expense_hash'],CompanyPurchasesValues::hash($expense))||$expense['state']!=='recorded'||(int)$expense['revision']!==1||$expense['currency']!==$payable['currency']||(int)$expense['total_cents']!==(int)$payable['amount_cents']||(int)$expense['category_id']!==(int)$document['category_id']||(int)$expense['amount_cents']!==(int)$document['base_cents']||(int)$expense['tax_cents']!==(int)$document['tax_cents']||$expense['expense_date']!==$document['document_date']) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+        $this->remember('company_expenses',$expense);
+        $events=$this->observedRows('SELECT * FROM '.$this->p.'company_financial_events WHERE issuer_id=? AND source_type=? AND source_id=? ORDER BY issuer_sequence',[$issuer,'expense',(string)$expense['id']]);
+        if (count($events)!==1) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+        $event=$events[0];
+        (new CompanyFinancialJournal($this->db,$this->p))->decode($event);
+        $after=['date'=>$expense['expense_date'],'currency'=>$expense['currency'],'state'=>'recorded','revision'=>1,'base_amount'=>CompanyPurchasesValues::display((int)$expense['amount_cents']),'tax_amount'=>CompanyPurchasesValues::display((int)$expense['tax_cents']),'total'=>CompanyPurchasesValues::display((int)$expense['total_cents']),'category_id'=>(int)$expense['category_id'],'client_id'=>0,'project_id'=>0];
+        if ($event['kind']!=='expense_recorded'||$event['amount']!==$after['total']||$event['currency']!==$expense['currency']||$event['book_date']!==$expense['expense_date']||CompanyPurchasesValues::decode($event['after_json'])!==$after||$event['before_json']!=='[]'||$event['basis']!==CompanyFinancialJournal::CAPTURED||(int)$event['actor_id']!==(int)$expense['created_by']||$event['evidence_key']!==hash('sha256','company-expense-journal|'.$issuer.'|'.$expense['id'].'|1|expense_recorded')) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+        $this->remember('company_financial_events',$event,'evidence_key');
+        $audits=$this->observedRows('SELECT * FROM '.$this->p.'issuers_audit WHERE issuer_id=? AND subject_id=? AND event=? ORDER BY id',[$issuer,$expense['id'],'company_expense_created']);
+        if (count($audits)!==1) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+        $expenseMeta=json_encode(['number'=>(int)$expense['number'],'total_cents'=>(int)$expense['total_cents'],'currency'=>$expense['currency']],JSON_THROW_ON_ERROR);
+        if ((int)$audits[0]['actor_id']!==(int)$expense['created_by']||$audits[0]['metadata_json']!==$expenseMeta) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+        foreach ($audits as $audit) { $this->remember('issuers_audit',$audit); }
+        $journalAudit=$this->observedRows('SELECT * FROM '.$this->p.'issuers_audit WHERE issuer_id=? AND event=? AND metadata_json LIKE ? ORDER BY id',[$issuer,'company_financial_event_recorded','%'.$event['evidence_key'].'%']);
+        if (count($journalAudit)!==1) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+        $eventMeta=json_encode(['evidence_key'=>$event['evidence_key'],'kind'=>'expense_recorded','source_type'=>'expense','source_id'=>(string)$expense['id'],'payload_hash'=>$event['payload_hash']],JSON_THROW_ON_ERROR);
+        if ((int)$journalAudit[0]['actor_id']!==(int)$expense['created_by']||(int)$journalAudit[0]['subject_id']!==$issuer||$journalAudit[0]['metadata_json']!==$eventMeta) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+        foreach ($journalAudit as $audit) { $this->remember('issuers_audit',$audit); }
+        return $expense;
+    }
+
+    private function payablePosition(int $issuer, array $payable, ?string $asOf=null): array
+    {
+        $document=$this->object($issuer,'document',(int)$payable['document_id']); $order=$this->object($issuer,'order',(int)$payable['order_id']);
+        $this->received($issuer,$order);
+        if ((int)$document['order_id']!==(int)$order['id']||(int)$document['supplier_id']!==(int)$payable['supplier_id']||(int)$order['supplier_id']!==(int)$payable['supplier_id']||$document['currency']!==$payable['currency']||(int)$document['total_cents']!==(int)$payable['amount_cents']||$document['due_date']!==$payable['due_date']) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+        $snapshot=CompanyPurchasesValues::decode($document['snapshot_json']);
+        if (($snapshot['order_snapshot_hash']??null)!==$order['snapshot_hash']) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+        $allocations=$this->ownedRows('company_purchase_allocations',['issuer_id'=>$issuer,'document_id'=>$document['id']]); usort($allocations,static fn($a,$b)=>(int)$a['receipt_id']<=>(int)$b['receipt_id']);
+        $selected=[]; $base=0;
+        foreach ($allocations as $allocation) {
+            $r=$this->object($issuer,'receipt',(int)$allocation['receipt_id']);
+            if ((int)$r['order_id']!==(int)$order['id']||(int)$allocation['base_cents']!==(int)$r['base_cents']) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+            $selected[]=['id'=>(int)$r['id'],'record_hash'=>$r['record_hash'],'base_cents'=>(int)$r['base_cents']]; $base+=(int)$r['base_cents']; $this->remember('company_purchase_allocations',$allocation);
+        }
+        if ($selected!==($snapshot['receipts']??null)||$base!==(int)$document['base_cents']||CompanyPurchasesValues::tax($base,(int)$document['tax_rate'])!==(int)$document['tax_cents']||$base+(int)$document['tax_cents']!==(int)$document['total_cents']) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+        $this->expenseEvidence($issuer,$payable,$document);
+        $events=$this->ownedRows('company_purchase_events',['issuer_id'=>$issuer,'payable_id'=>$payable['id']]);
+        $paid=0; $allPaid=0; $settlements=[]; $reversed=[]; $digest=[];
+        foreach ($events as $event) {
+            if (!hash_equals($event['record_hash'],CompanyPurchasesValues::hash($event))||$event['currency']!==$payable['currency']||(int)$event['amount_cents']<1||$event['event_date']<$document['document_date']) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+            $amount=(int)$event['amount_cents'];
+            if ($event['kind']==='manual_external_settlement') {
+                if ($event['reverses_id']!==null) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+                $settlements[(int)$event['id']]=$event; $allPaid+=$amount;
+                if ($asOf===null||$event['event_date']<=$asOf) { $paid+=$amount; }
+            } elseif ($event['kind']==='manual_declaration_reversal') {
+                $source=(int)$event['reverses_id']; $original=$settlements[$source]??null;
+                if (!$original||isset($reversed[$source])||(int)$original['amount_cents']!==$amount||$event['event_date']<$original['event_date']) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+                $reversed[$source]=true; $allPaid-=$amount;
+                if ($asOf===null||$event['event_date']<=$asOf) { $paid-=$amount; }
+            } else { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+            if ($allPaid<0||$allPaid>(int)$payable['amount_cents']) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+            $digest[]=[(int)$event['id'],$event['record_hash']]; $this->remember('company_purchase_events',$event);
+        }
+        if ($paid<0||$paid>(int)$payable['amount_cents']) { throw new RuntimeException('issuer_purchase_integrity_invalid'); }
+        return ['declared_paid_cents'=>$paid,'outstanding_cents'=>(int)$payable['amount_cents']-$paid,'revision_token'=>hash('sha256',CompanyPurchasesValues::json([$payable['record_hash'],$digest])),'events'=>$events,'document'=>$document,'order_reference'=>$order['reference'],'supplier_name'=>$snapshot['supplier']['name'],'base_currency'=>$order['base_currency'],'fx_millionths'=>(int)$order['fx_millionths'],'basis'=>'manual_external_declaration_not_bank_confirmation'];
+    }
+
+    public function settle($issuer, $actor, $payable, string $revision, array $input, string $key): int
+    {
+        $payable=IssuerPolicy::id($payable); CompanyPurchasesValues::fields($input,['amount','event_date','external_reference','note','file_id','acknowledged']);
+        if (CompanyPurchasesValues::integer($input['acknowledged']??null,1,1)!==1) { throw new DomainException('company_purchase_invalid'); }
+        $amount=CompanyPurchasesValues::decimal($input['amount']??null,2,CompanyPurchasesValues::MAX_MONEY,1);
+        $date=CompanyPurchasesValues::date($input['event_date']??null); $reference=CompanyPurchasesValues::text($input['external_reference']??null,191,true); $note=CompanyPurchasesValues::text($input['note']??'',2000); $file=empty($input['file_id'])?null:IssuerPolicy::id($input['file_id']);
+        if ($date>gmdate('Y-m-d')) { throw new DomainException('company_purchase_invalid'); }
+        return $this->command($issuer,$actor,'pay','settlement_declared',$key,[$payable,$revision,$amount,$date,$reference,$note,$file],function ($i,$a) use ($payable,$revision,$amount,$date,$reference,$note,$file): array {
+            $row=$this->object($i,'payable',$payable); $position=$this->payablePosition($i,$row);
+            if (!preg_match('/^[a-f0-9]{64}$/D',$revision)||!hash_equals($position['revision_token'],$revision)) { throw new DomainException('company_purchase_stale'); }
+            if ($amount>$position['outstanding_cents']||$date<$position['document']['document_date']) { throw new DomainException('company_purchase_settlement_exceeds_balance'); }
+            foreach ($position['events'] as $prior) { if ($date<$prior['event_date']) { throw new DomainException('company_purchase_event_date_conflict'); } }
+            $order=$this->object($i,'order',(int)$row['order_id']); if ($file!==null) { $this->evidenceFile($i,(int)$order['request_id'],(int)$row['supplier_id'],$file); }
+            $id=$this->insert('company_purchase_events',$this->immutable(['issuer_id'=>$i,'payable_id'=>$payable,'kind'=>'manual_external_settlement','amount_cents'=>$amount,'currency'=>$row['currency'],'event_date'=>$date,'external_reference'=>$reference,'note'=>$note,'reverses_id'=>null,'file_id'=>$file,'created_by'=>$a,'created_at'=>self::now()]));
+            $this->watchSet('company_purchase_events',['issuer_id'=>$i,'payable_id'=>$payable],[...$position['events'],$this->object($i,'event',$id)]);
+            $this->validators[]=function () use ($i,$row): void { $this->payablePosition($i,$row); };
+            return ['event',$id,$id];
+        });
+    }
+
+    public function reverseSettlement($issuer, $actor, $event, string $revision, array $input, string $key): int
+    {
+        $event=IssuerPolicy::id($event); CompanyPurchasesValues::fields($input,['event_date','reason','acknowledged']); CompanyPurchasesValues::integer($input['acknowledged']??null,1,1);
+        $date=CompanyPurchasesValues::date($input['event_date']??null); $reason=CompanyPurchasesValues::text($input['reason']??null,2000,true);
+        if ($date>gmdate('Y-m-d')) { throw new DomainException('company_purchase_invalid'); }
+        return $this->command($issuer,$actor,'pay','settlement_reversed',$key,[$event,$revision,$date,$reason],function ($i,$a) use ($event,$revision,$date,$reason): array {
+            $source=$this->object($i,'event',$event); $payable=$this->object($i,'payable',(int)$source['payable_id']); $position=$this->payablePosition($i,$payable);
+            if (!preg_match('/^[a-f0-9]{64}$/D',$revision)||!hash_equals($position['revision_token'],$revision)) { throw new DomainException('company_purchase_stale'); }
+            if ($source['kind']!=='manual_external_settlement'||$date<$source['event_date']||$this->rows('SELECT id FROM '.$this->p.'company_purchase_events WHERE issuer_id=? AND reverses_id=?',[$i,$event])) { throw new DomainException('company_purchase_reversal_conflict'); }
+            foreach ($position['events'] as $prior) { if ($date<$prior['event_date']) { throw new DomainException('company_purchase_event_date_conflict'); } }
+            $id=$this->insert('company_purchase_events',$this->immutable(['issuer_id'=>$i,'payable_id'=>(int)$payable['id'],'kind'=>'manual_declaration_reversal','amount_cents'=>(int)$source['amount_cents'],'currency'=>$source['currency'],'event_date'=>$date,'external_reference'=>$source['external_reference'],'note'=>$reason,'reverses_id'=>$event,'file_id'=>$source['file_id'],'created_by'=>$a,'created_at'=>self::now()]));
+            $this->watchSet('company_purchase_events',['issuer_id'=>$i,'payable_id'=>$payable['id']],[...$position['events'],$this->object($i,'event',$id)]);
+            $this->validators[]=function () use ($i,$payable): void { $this->payablePosition($i,$payable); };
+            return ['event',$id,$id];
+        });
+    }
+}

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="[PAGE_BUILDER_LANG]">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- SEO -->
+    <title>[PAGE_BUILDER_TITLE]</title>
+    <meta name="description" content="[PAGE_BUILDER_SEO_DESCRIPTION]">
+    <meta name="author" content="[PAGE_BUILDER_SEO_AUTHOR]">
+    <meta name="robots" content="[PAGE_BUILDER_SEO_ROBOT]">
+    <meta name="keywords" content="[PAGE_BUILDER_SEO_KEYWORDS]">
+    <meta property="og:title" content="[PAGE_BUILDER_TITLE]">
+    <meta property="og:description" content="[PAGE_BUILDER_SEO_DESCRIPTION]">
+    <meta property="og:image" content="[PAGE_BUILDER_SEO_IMAGE]">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="[PAGE_BUILDER_TITLE]">
+    <meta name="twitter:description" content="[PAGE_BUILDER_SEO_DESCRIPTION]">
+    <meta name="twitter:image" content="[PAGE_BUILDER_SEO_IMAGE]">
+    <link rel="canonical" href="[PAGE_BUILDER_PAGE_URL]">
+    <link rel="icon" href="[PAGE_BUILDER_FAVICON]">
+
+    <!-- Boostrap and Jquery -->
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
+    <script src="[PAGE_BUILDER_ASSET_BASE_URL]/default_pages/assets/js/vendor.js"></script>
+    <script src="[PAGE_BUILDER_ASSET_BASE_URL]/default_pages/assets/js/main.js"></script>
+
+    <link rel="stylesheet" href="[PAGE_BUILDER_ASSET_BASE_URL]/default_pages/assets/css/vendor.css">
+    <link id="extended-bs-style" rel="stylesheet"
+        href="[PAGE_BUILDER_ASSET_BASE_URL]/default_pages/assets/css/main.css">
+
+    <!-- Vvvebjs components -->
+    <link data-custom-vvveb-helpers-sections="" href="[PAGE_BUILDER_ASSET_BASE_URL]/vvvebjs/sections/css/sections.css"
+        rel="stylesheet">
+    <link data-custom-vvveb-helpers-sections="" href="[PAGE_BUILDER_ASSET_BASE_URL]/vvvebjs/css/common.css"
+        rel="stylesheet">
+    <script data-custom-vvveb-helpers-sections="" src="[PAGE_BUILDER_ASSET_BASE_URL]/vvvebjs/js/common.js"></script>
+
+    <!-- Chart component -->
+    <script id="chartjs-script"
+        src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js"></script>
+    <script>
+        $( document ).ready( function () { $( ".chartjs" ).each( function () { ctx = $( "canvas", this ).get( 0 ).getContext( "2d" ); config = JSON.parse( this.dataset.chart ); chartjs = new Chart( ctx, config ); } ); } );			  
+    </script>
+
+    <style>
+        html {
+            width: 100%;
+            overflow-x: hidden;
+        }
+    </style>
+
+    <!-- User Custom css from builder -->
+    <style id="meta-custom-styles">
+        [PAGE_BUILDER_CUSTOM_CSS]
+    </style>
+
+    [PAGE_BUILDER_DANGEROUS_EXTRA_CUSTOM_CODE]
+
+</head>
+
+<body>
+    [PAGE_BUILDER_CONTENT]
+
+    <!-- Component css from builder -->
+    <style id="builder-styles">
+        [PAGE_BUILDER_COMPONENTS_CSS]
+    </style>
+
+    <!-- Component js from builder -->
+    <script id="builder-scripts">
+        [PAGE_BUILDER_COMPONENTS_JS]
+    </script>
+</body>
+
+</html>

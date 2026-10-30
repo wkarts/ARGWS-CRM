@@ -1,0 +1,139 @@
+name: Base isolada de validação CRM
+on:
+  pull_request:
+    paths: ['docker/ci/**', '.github/workflows/ci-validation-base.yml', 'tests/test_ci_validation_base.py']
+  push:
+    branches: [main]
+    paths: ['docker/ci/**', '.github/workflows/ci-validation-base.yml', 'tests/test_ci_validation_base.py']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publicar as bases de validação no GHCR público
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        php: ['8.1', '8.5']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Validar contrato da imagem isolada
+        run: python3 -m unittest tests/test_ci_validation_base.py
+      - uses: docker/setup-buildx-action@v3
+      - name: Compilar somente ferramentas de validação
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/ci
+          file: docker/ci/Dockerfile
+          build-args: PHP_IMAGE=php:${{ matrix.php }}-cli-bookworm
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: argws-crm-ci-php:test-${{ matrix.php }}
+          cache-from: type=gha,scope=crm-ci-php-${{ matrix.php }}
+          cache-to: type=gha,mode=max,scope=crm-ci-php-${{ matrix.php }}
+      - name: Verificar PHP, extensões, PDF e Chromium pareado
+        run: docker run --rm --network none --shm-size=1g -e EXPECTED_PHP='${{ matrix.php }}' argws-crm-ci-php:test-${{ matrix.php }} argws-ci-smoke
+      - name: Registrar proveniência local sem publicar pacote
+        env:
+          PHP_MINOR: ${{ matrix.php }}
+        run: |
+          mkdir -p artifacts
+          docker image inspect "argws-crm-ci-php:test-$PHP_MINOR" > "artifacts/ci-php-$PHP_MINOR-image.json"
+          sha256sum docker/ci/Dockerfile docker/ci/package.json docker/ci/package-lock.json docker/ci/smoke.sh docker/ci/smoke.cjs > "artifacts/ci-php-$PHP_MINOR-inputs.sha256"
+          printf '%s\n' "$GITHUB_SHA" > "artifacts/ci-php-$PHP_MINOR-source.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ci-base-php-${{ matrix.php }}-provenance
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Exportar o mesmo artefato já testado para publicação autorizada
+        if: >-
+          github.repository == 'wkarts/ARGWS-CRM' && github.event_name == 'workflow_dispatch' && inputs.publish == true
+        run: docker save argws-crm-ci-php:test-${{ matrix.php }} -o /tmp/ci-base-image.tar
+      - uses: actions/upload-artifact@v4
+        if: >-
+          github.repository == 'wkarts/ARGWS-CRM' && github.event_name == 'workflow_dispatch' && inputs.publish == true
+        with:
+          name: ci-base-image-php-${{ matrix.php }}
+          path: /tmp/ci-base-image.tar
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 1
+  publish:
+    # No PR event, arbitrary branch or ordinary push can obtain package-write permission.
+    if: >-
+      github.repository == 'wkarts/ARGWS-CRM' && github.event_name == 'workflow_dispatch' && inputs.publish == true
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        php: ['8.1', '8.5']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: ci-base-image-php-${{ matrix.php }}
+          path: /tmp/ci-base-publish
+      - name: Carregar e revalidar antes de obter credencial de publicação
+        run: |
+          docker load -i /tmp/ci-base-publish/ci-base-image.tar
+          docker run --rm --network none --shm-size=1g -e EXPECTED_PHP='${{ matrix.php }}' argws-crm-ci-php:test-${{ matrix.php }} argws-ci-smoke
+      - name: Definir identidade imutável do artefato
+        id: identity
+        env:
+          PHP_MINOR: ${{ matrix.php }}
+        run: |
+          inputs_hash=$(sha256sum docker/ci/Dockerfile docker/ci/package.json docker/ci/package-lock.json docker/ci/smoke.sh docker/ci/smoke.cjs | sha256sum | cut -d ' ' -f 1)
+          image="ghcr.io/wkarts/argws-crm-ci-php:php${PHP_MINOR}-${inputs_hash}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "inputs_hash=$inputs_hash" >> "$GITHUB_OUTPUT"
+          docker tag "argws-crm-ci-php:test-$PHP_MINOR" "$image"
+      - name: Autenticar somente depois dos testes
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Publicar somente package de ferramentas CI
+        env:
+          IMAGE: ${{ steps.identity.outputs.image }}
+          INPUTS_HASH: ${{ steps.identity.outputs.inputs_hash }}
+          PHP_MINOR: ${{ matrix.php }}
+        run: |
+          docker push "$IMAGE"
+          mkdir -p receipts
+          docker image inspect "$IMAGE" > receipts/image-inspect.json
+          python3 - <<'PYCODE'
+          import json, os, pathlib, re
+          image = json.loads(pathlib.Path('receipts/image-inspect.json').read_text())[0]
+          refs = [ref for ref in image['RepoDigests'] if re.fullmatch(r'ghcr\.io/wkarts/argws-crm-ci-php@sha256:[a-f0-9]{64}', ref)]
+          if len(refs) != 1:
+              raise SystemExit('Expected exactly one verified GHCR digest')
+          receipt = {'image': os.environ['IMAGE'], 'digest_reference': refs[0], 'php': os.environ['PHP_MINOR'], 'inputs_sha256': os.environ['INPUTS_HASH'], 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'], 'platform': 'linux/amd64', 'smoke': 'passed-before-login', 'visibility': 'must-verify-anonymous-pull'}
+          pathlib.Path('receipts/publication.json').write_text(json.dumps(receipt, indent=2) + '\n')
+          print(json.dumps(receipt, indent=2))
+          PYCODE
+      - name: Encerrar credencial do registry
+        if: always()
+        run: docker logout ghcr.io
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-base-publication-php-${{ matrix.php }}
+          path: receipts/
+          if-no-files-found: warn
+          retention-days: 7

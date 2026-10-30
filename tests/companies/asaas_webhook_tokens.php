@@ -1,0 +1,73 @@
+<?php
+/** Recoverable webhook tokens: real CI cipher + PDO SQLite; all accounts and API I/O synthetic. */
+require __DIR__.'/asaas_environments.php';
+$tokenStart=$GLOBALS['essentialChecks'];$callsBefore=count($calls);$prodCallsBefore=count($productionCalls);
+$dto=array_values(array_filter($asaas->accounts($a,7),fn($r)=>(int)$r['id']===$accounts[$a]))[0];
+$before=$db->query('SELECT * FROM '.$p.'asaas_company_accounts WHERE id=?',[$accounts[$a]])->row_array();
+$originalModuleVersion=$db->query('SELECT installed_version FROM '.$p.'modules WHERE module_name=?',['asaas'])->row()->installed_version;
+\Asaas\WebhookTokenSchema::ensure($db,$p,false);
+$db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',['1.5.3','asaas']);
+essentialThrows(fn()=>$asaas->rotateWebhook($a,7,$accounts[$a],$dto['revision']),'asaas_module_154_required','complete schema without native154 tracking cannot rotate token');
+essentialThrows(fn()=>$asaas->revealWebhook($a,7,$accounts[$a],$dto['revision']),'asaas_module_154_required','complete schema without native154 tracking cannot recover token');
+essentialThrows(fn()=>$asaas->revealApiKey($a,7,$accounts[$a],$dto['revision'],$dec),'asaas_module_154_required','complete schema without native154 tracking cannot recover API credential');
+essentialCheck($before===$db->query('SELECT * FROM '.$p.'asaas_company_accounts WHERE id=?',[$accounts[$a]])->row_array(),'native154 gate cannot partially change hash/cipher/revision');
+$gateBody=json_encode(['id'=>'evt_token_native153','event'=>'PAYMENT_UPDATED','payment'=>['id'=>$remote[$a]]],JSON_THROW_ON_ERROR);
+essentialCheck($asaas->receive($before['webhook_public_id'],['Content-Type'=>'application/json','asaas-access-token'=>str_repeat('0',64)],$gateBody)['status']===401,'tracking153 still refuses invalid callback digest');
+essentialCheck($asaas->receive($before['webhook_public_id'],['Content-Type'=>'application/json','asaas-access-token'=>$sandboxHook['one_time_token']],$gateBody)['status']===200,'tracking153 continues accepting existing authenticated callbacks without decryption');
+$db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',['1.5.4','asaas']);
+
+$revealed=$asaas->revealWebhook($a,7,$accounts[$a],$dto['revision']);
+essentialCheck(hash_equals($before['token_hash'],hash('sha256',$revealed['one_time_token'])),'recovery returns the exact token accepted by the stored digest');
+essentialCheck(!str_contains($before['token_cipher'],$revealed['one_time_token'])&&$before['token_cipher']!==$revealed['one_time_token'],'native cipher persists no plaintext token');
+essentialCheck($before===$db->query('SELECT * FROM '.$p.'asaas_company_accounts WHERE id=?',[$accounts[$a]])->row_array(),'recovery does not mutate token or account revision');
+// A non-master global administrator needs active membership and a company settings edit grant.
+foreach([22,23,24] as $actorId)$db->query('INSERT INTO '.$p.'staff(staffid,active,admin) VALUES(?,1,1)',[$actorId]);
+foreach([22,24] as $actorId)$db->query('INSERT INTO '.$p.'issuers_staff(issuer_id,staff_id,can_view) VALUES(?,?,1)',[$a,$actorId]);
+foreach([22] as $actorId)$db->query('INSERT INTO '.$p.'issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,?,?,?)',[$a,$actorId,'settings','edit']);
+essentialCheck($asaas->revealWebhook($a,22,$accounts[$a],$dto['revision'])['one_time_token']===$revealed['one_time_token'],'linked non-master global admin with settings edit can recover secondary-company token');
+essentialCheck($asaas->revealApiKey($a,22,$accounts[$a],$dto['revision'],$dec)['api_key']===$dec($before['secret_cipher']),'same scoped non-master admin can recover API key');
+$productionDto=array_values(array_filter($asaas->accounts($a,7),fn($row)=>(int)$row['id']===$productionAccount))[0];$adminRotated=$asaas->rotateWebhook($a,22,$productionAccount,$productionDto['revision']);$productionDto=array_values(array_filter($asaas->accounts($a,7),fn($row)=>(int)$row['id']===$productionAccount))[0];essentialCheck($asaas->revealWebhook($a,22,$productionAccount,$productionDto['revision'])['one_time_token']===$adminRotated['one_time_token'],'linked non-master admin can explicitly reset and recover the production token independently');
+essentialThrows(fn()=>$asaas->revealWebhook($a,23,$accounts[$a],$dto['revision']),'asaas_company_access_denied','global admin without membership cannot recover secondary-company token');
+essentialThrows(fn()=>$asaas->revealApiKey($a,24,$accounts[$a],$dto['revision'],$dec),'asaas_company_access_denied','global admin membership without settings edit cannot recover API key');
+essentialThrows(fn()=>$asaas->revealWebhook($b,22,$accounts[$b],$asaas->accounts($b,7)[0]['revision']),'asaas_company_access_denied','admin bound only to A cannot recover B token');
+require_once APPPATH.'services/CompanySettingsRuntime.php';
+essentialCheck(CompanySettingsRuntime::run($db,$p,$a,22,fn()=>$asaas->revealWebhook($a,22,$accounts[$a],$dto['revision']))['one_time_token']===$revealed['one_time_token'],'active request context admits the same company and administrator');
+essentialThrows(fn()=>CompanySettingsRuntime::run($db,$p,$b,7,fn()=>$asaas->revealWebhook($a,22,$accounts[$a],$dto['revision'])),'asaas_company_access_denied','changed request company/actor cannot reuse an authorized account ID');
+$keyRevealed=$asaas->revealApiKey($a,7,$accounts[$a],$dto['revision'],$dec);essentialCheck($keyRevealed['api_key']===$dec($before['secret_cipher'])&&$keyRevealed['environment']==='sandbox','API credential recovery uses the selected company/account/environment');
+essentialCheck($before===$db->query('SELECT * FROM '.$p.'asaas_company_accounts WHERE id=?',[$accounts[$a]])->row_array(),'API credential recovery does not rotate key or revision');
+essentialThrows(fn()=>$asaas->revealApiKey($b,7,$accounts[$a],$dto['revision'],$dec),'asaas_company_access_denied','API credential ID cannot cross company boundary');
+essentialThrows(fn()=>$asaas->revealApiKey($a,12,$accounts[$a],$dto['revision'],$dec),'asaas_company_access_denied','non-admin cannot recover API key');
+essentialThrows(fn()=>$asaas->revealApiKey($a,7,$accounts[$a],$dto['revision'],fn($v)=>false),'asaas_company_credentials_required','API decryption failure has no fallback or secret response');
+$dtoAfter=$asaas->accounts($a,7)[0];essentialCheck(!array_key_exists('token_cipher',$dtoAfter)&&!array_key_exists('token_hash',$dtoAfter)&&!array_key_exists('one_time_token',$dtoAfter),'account list has only recovery availability, no cipher/digest/plaintext');
+essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'issuers_audit WHERE issuer_id=? AND event=?',[$a,'company_asaas_webhook_revealed'])->row()->n>=1,'recovery records actor/company audit without token');
+essentialThrows(fn()=>$asaas->revealWebhook($b,7,$accounts[$a],$dto['revision']),'asaas_company_access_denied','other company cannot reveal account by numeric ID');
+essentialThrows(fn()=>$asaas->revealWebhook($a,12,$accounts[$a],$dto['revision']),'asaas_company_access_denied','invoice viewer cannot reveal token');
+$db->query('INSERT INTO '.$p.'issuers_resource_permissions(issuer_id,staff_id,feature,capability) VALUES(?,12,?,?)',[$a,'settings','edit']);
+essentialThrows(fn()=>$asaas->rotateWebhook($a,12,$accounts[$a],$dto['revision']),'asaas_company_access_denied','settings editor alone does not become a token administrator');
+essentialThrows(fn()=>$asaas->revealWebhook($a,7,$accounts[$a],str_repeat('0',64)),'asaas_company_stale','stale editor cannot reveal a replaced token');
+$db->failOn='INSERT INTO '.$p.'issuers_audit';
+essentialThrows(fn()=>$asaas->revealApiKey($a,7,$accounts[$a],$dto['revision'],$dec),'issuer_storage_failed','API key recovery requires audit persistence');
+essentialThrows(fn()=>$asaas->revealWebhook($a,7,$accounts[$a],$dto['revision']),'issuer_storage_failed','audit failure prevents returning a recovered token');
+essentialThrows(fn()=>$asaas->rotateWebhook($a,7,$accounts[$a],$dto['revision']),'issuer_storage_failed','audit failure rolls back hash and ciphertext atomically');$db->failOn=null;
+essentialCheck($before===$db->query('SELECT * FROM '.$p.'asaas_company_accounts WHERE id=?',[$accounts[$a]])->row_array(),'failed rotation leaves prior token and revision unchanged');
+foreach(['issuer_id'=>$b,'environment'=>'production','account_id'=>'wallet-other','webhook_public_id'=>str_repeat('a',32)] as $field=>$value){$wrong=$before;$wrong[$field]=$value;essentialThrows(fn()=>$webhookCipher->open($before['token_cipher'],$before['token_hash'],$wrong,'company'),'webhook_token_unavailable','authenticated envelope rejects transplanted '.$field);}
+$corrupt=$before['token_cipher'];$corrupt[10]=$corrupt[10]==='a'?'b':'a';
+essentialThrows(fn()=>$webhookCipher->open($corrupt,$before['token_hash'],$before,'company'),'webhook_token_unavailable','authenticated native encryption rejects ciphertext tampering');
+essentialThrows(fn()=>$webhookCipher->open($before['token_cipher'],str_repeat('0',64),$before,'company'),'webhook_token_unavailable','decrypted token must still match verification digest');
+$failedCipher=new \Asaas\CompanyService($db,$p,new \Asaas\WebhookTokenCipher(fn($v)=>false,fn($v)=>false));
+essentialThrows(fn()=>$failedCipher->rotateWebhook($a,7,$accounts[$a],$dto['revision']),'issuer_storage_failed','encryption failure cannot downgrade to hash-only storage');
+essentialCheck($before===$db->query('SELECT * FROM '.$p.'asaas_company_accounts WHERE id=?',[$accounts[$a]])->row_array(),'cipher failure leaves working account untouched');
+$db->query('UPDATE '.$p.'asaas_company_accounts SET token_cipher=NULL WHERE id=?',[$accounts[$a]]);
+essentialCheck(!$asaas->accounts($a,7)[0]['token_recoverable'],'hash-only legacy record is marked unrecoverable');
+essentialThrows(fn()=>$asaas->revealWebhook($a,7,$accounts[$a],$dto['revision']),'webhook_token_regeneration_required','hash-only legacy cannot be guessed or implicitly rotated');
+essentialCheck($db->query('SELECT token_hash FROM '.$p.'asaas_company_accounts WHERE id=?',[$accounts[$a]])->row()->token_hash===$before['token_hash'],'failed legacy recovery preserves verification hash');
+$new=$asaas->rotateWebhook($a,7,$accounts[$a],$dto['revision']);$current=$asaas->accounts($a,7)[0];
+essentialCheck($new['one_time_token']!==$revealed['one_time_token']&&$current['token_recoverable'],'explicit regeneration creates new recoverable token');
+essentialCheck($asaas->revealWebhook($a,7,$accounts[$a],$current['revision'])['one_time_token']===$new['one_time_token'],'new token can be recovered across separate requests');
+$asaas->disableAccount($a,7,$accounts[$a],$current['revision']);$disabled=$db->query('SELECT * FROM '.$p.'asaas_company_accounts WHERE id=?',[$accounts[$a]])->row_array();
+essentialCheck($disabled['token_hash']===null&&$disabled['token_cipher']===null,'account disable removes both credential representations');
+essentialThrows(fn()=>$asaas->revealWebhook($a,7,$accounts[$a],$disabled['revision']),'asaas_company_stale','disabled account cannot reveal stale token');
+essentialCheck(count($calls)===$callsBefore&&count($productionCalls)===$prodCallsBefore,'all reveal/rotate/security checks avoid every provider transport');
+echo 'Company webhook encrypted recovery: '.($GLOBALS['essentialChecks']-$tokenStart).' added / '.$GLOBALS['essentialChecks'].' cumulative checks passed ('.$db->driver().').'.PHP_EOL;
+
+$db->query('UPDATE '.$p.'modules SET installed_version=? WHERE module_name=?',[$originalModuleVersion,'asaas']);

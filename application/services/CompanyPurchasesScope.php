@@ -1,0 +1,55 @@
+<?php
+
+declare(strict_types=1);
+
+/** Veto-only routing boundary; it never derives authority from URL, cookies or a chosen company. */
+final class CompanyPurchasesScope
+{
+    private static bool $requested=false;
+    private static ?string $active=null;
+    public static function earlyCandidate(array $server): bool
+    {
+        if (PHP_SAPI==='cli'&&!isset($server['REQUEST_URI'])) { return false; }
+        $uri=$server['REQUEST_URI']??null; $script=$server['SCRIPT_NAME']??null;
+        if (!is_string($uri)||!is_string($script)||preg_match('/[\x00-\x1f\x7f]/',$uri)||basename($script)!=='index.php') { return false; }
+        $path=parse_url($uri,PHP_URL_PATH); if (!is_string($path)) { return false; }
+        $path=preg_replace('#/+#','/',rawurldecode($path)); $base=rtrim(str_replace('\\','/',dirname($script)),'/.');
+        foreach (['purchases_api','company_purchases_api','purchase_portal','company_purchase_portal'] as $controller) {
+            foreach ([$base.'/'.$controller,$base.'/index.php/'.$controller] as $prefix) { if (strcasecmp($path,$prefix)===0||strncasecmp($path,$prefix.'/',strlen($prefix)+1)===0) { return true; } }
+        }
+        return false;
+    }
+    public static function prepare($ci): bool
+    {
+        self::$requested=false; self::$active=null;
+        if ($ci->input->is_cli_request()||defined('API')||trim((string)$ci->router->fetch_directory(),'/')!==''||$ci->router->fetch_module()) { return false; }
+        $class=strtolower((string)$ci->router->fetch_class());
+        if (!in_array($class,['purchases_api','company_purchases_api','purchase_portal','company_purchase_portal'],true)) { return false; }
+        self::$requested=true;
+        if (strtolower((string)$ci->router->fetch_method())!=='index'||!isset($ci->uri)||!method_exists($ci->uri,'segment')) { return false; }
+        $segments=[]; for ($i=1;$i<=5;$i++) { $s=$ci->uri->segment($i); if ($s===null||$s===false||$s==='') { break; } $segments[]=(string)$s; }
+        if (($segments[0]??null)!==$class) { return false; }
+        if (!self::canonicalRequest($_SERVER,$segments)) { return false; }
+        if ($class==='company_purchase_portal') {
+            if ($segments!==[$class]&&$segments!==[$class,'index']) { return false; }
+            self::$active='portal'; return true;
+        }
+        $resources=['suppliers','requests','quotes','orders','receipts','documents','payables','events','files','file_download','settings','reports','invites','order_pdf','export'];
+        if (!in_array(count($segments),[3,4],true)||$segments[1]!=='index'||!in_array($segments[2],$resources,true)) { return false; }
+        if (isset($segments[3])&&(!preg_match('/^[1-9][0-9]{0,9}$/D',$segments[3])||(int)$segments[3]>2147483647)) { return false; }
+        self::$active='api'; return true;
+    }
+    /** Router aliases and decoded segments are never evidence of the requested raw namespace. */
+    private static function canonicalRequest(array $server,array $segments): bool
+    {
+        $uri=$server['REQUEST_URI']??null; $script=$server['SCRIPT_NAME']??null;
+        if (!is_string($uri)||!is_string($script)||!str_starts_with($uri,'/')||str_starts_with($uri,'//')||str_contains($uri,'#')||preg_match('/[\x00-\x1f\x7f]/',$uri)||!str_starts_with($script,'/')||basename($script)!=='index.php'||str_contains($script,'\\')||str_contains($script,'//')||preg_match('/[\x00-\x20\x7f%?#]/',$script)) { return false; }
+        foreach (explode('/',$script) as $part) { if ($part==='.'||$part==='..') { return false; } }
+        $path=parse_url($uri,PHP_URL_PATH); if (!is_string($path)) { return false; }
+        $base=rtrim(dirname($script),'/'); $tail='/'.implode('/',$segments);
+        return $path===$base.$tail||$path===$base.'/index.php'.$tail;
+    }
+    public static function requested(): bool { return self::$requested; }
+    public static function activeApi(): bool { return self::$active==='api'; }
+    public static function activePortal(): bool { return self::$active==='portal'; }
+}

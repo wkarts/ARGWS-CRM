@@ -1,0 +1,11 @@
+PHP Fatal error:  Uncaught RuntimeException: FAIL: noncanonical or aliased raw API path remains vetoed before hydration: /alias in /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/purchases_scope.php:4
+Stack trace:
+#0 /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/purchases_scope.php(17): purchaseScopeCheck(false, 'noncanonical or...')
+#1 {main}
+  thrown in /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/purchases_scope.php on line 4
+
+Fatal error: Uncaught RuntimeException: FAIL: noncanonical or aliased raw API path remains vetoed before hydration: /alias in /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/purchases_scope.php:4
+Stack trace:
+#0 /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/purchases_scope.php(17): purchaseScopeCheck(false, 'noncanonical or...')
+#1 {main}
+  thrown in /workspace/scratch/2286cc0eac8b/ARGWS-CRM/tests/companies/purchases_scope.php on line 4

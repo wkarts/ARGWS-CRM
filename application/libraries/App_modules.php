@@ -1,0 +1,817 @@
+<?php
+
+defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH . 'services/EfiVersionAdoption.php';
+
+class App_modules
+{
+    /**
+     * @since  2.3.4
+     *
+     * There is function add_module_support($module_name, $feature) so modules can hook support
+     * Check the function add_module_support for more info
+     *
+     * @var array
+     */
+    private static $supports = [];
+
+    private $ci;
+
+    /**
+     * The modules info that is stored in database
+     * @var array
+     */
+    private $db_modules = [];
+
+    /**
+     * All valid modules
+     * @var array
+     */
+    private $modules = [];
+
+    /**
+     * All activated modules
+     * @var array
+     */
+    private $active_modules = [];
+
+    /**
+     * Module new version data
+     * @var array
+     */
+    private $new_version_data = [];
+
+    public function __construct()
+    {
+        $this->ci = &get_instance();
+        $this->ci->load->helper('directory');
+
+        /**
+         * The modules feature is added in version 2.3.0 if the current database version is smaller don't try to load the modules
+         * This code exists because after update, the database is not yet updated and the table modules does not exists and will throw errors.
+         */
+        if ($this->ci->app->get_current_db_version() < 230) {
+            return;
+        }
+
+        $this->initialize();
+    }
+
+    /** Retained API names for older callers; companies are now core, never a module. */
+    public function essential_modules_ready()
+    {
+        require_once APPPATH . 'services/issuers/IssuerCore.php';
+        return IssuerCore::ready($this->ci->db, db_prefix());
+    }
+    public function ensure_essential_modules()
+    {
+        require_once APPPATH . 'services/issuers/IssuerCore.php';
+        IssuerCore::reconcile($this->ci->db, db_prefix());
+        return $this->essential_modules_ready();
+    }
+    public function is_essential($name) { return false; }
+
+    /**
+     * Activate Module
+     * @param  string $name Module Name [system_name]
+     * @return boolean
+     */
+    public function activate($name)
+    {
+        if ($name === 'ideal' && !\app\services\PaymentGatewayCatalog::idealEnabled()) {
+            return false;
+        }
+
+        $hasDebug = $this->is_essential($name) && property_exists($this->ci->db, 'db_debug');
+        $debug = $hasDebug ? $this->ci->db->db_debug : null;
+        if ($hasDebug) { $this->ci->db->db_debug = false; }
+        try {
+            return $this->activate_with_migrations($name);
+        } finally {
+            if ($hasDebug) { $this->ci->db->db_debug = $debug; }
+        }
+    }
+
+    private function activate_with_migrations($name)
+    {
+        $module = $this->get($name);
+
+        if (!$module) {
+            return false;
+        }
+
+        $essential = $this->is_essential($name);
+        if ($essential && $this->essential_modules_ready()) {
+            return true;
+        }
+        if (!$essential && (int) $module['activated'] === 1) {
+            return true;
+        }
+        if ($essential) {
+            $stored = $this->ci->db->where('module_name', $name)->get(db_prefix() . 'modules')->row();
+            if ($stored && version_compare((string) $stored->installed_version, $module['headers']['version'], '>')) {
+                throw new RuntimeException('issuer_activation_version_invalid');
+            }
+        }
+
+        /**
+         * Check if module is already added to database
+         */
+
+        if ($essential ? !$stored : !$this->module_exists_in_database($name)) {
+            // MySQL em modo estrito exige o estado inicial explícito.
+            if (!$this->ci->db->insert(db_prefix() . 'modules', [
+                'module_name'       => $name,
+                'installed_version' => $module['headers']['version'],
+                'active'            => 0,
+            ])) {
+                return false;
+            }
+        }
+
+        if ($essential) {
+            EssentialIssuerModule::invalidateSchemaCache($this->ci->db);
+            // An incomplete schema must never be advertised as active, including
+            // an upgrade from an earlier active release or a failed prior setup.
+            if (!$this->ci->db->where('module_name', $name)->update(db_prefix() . 'modules', ['active' => 0])) {
+                throw new RuntimeException('issuer_activation_state_write_failed');
+            }
+            $inactive = $this->ci->db->where('module_name', $name)->get(db_prefix() . 'modules')->row();
+            if (!$inactive || (int) $inactive->active !== 0) {
+                throw new RuntimeException('issuer_activation_state_unconfirmed');
+            }
+            $this->modules[$name]['activated'] = 0;
+            unset($this->active_modules[$name]);
+        }
+
+        include_once($module['init_file']);
+
+        /**
+        * Maybe used from another modules?
+        */
+        hooks()->do_action('pre_activate_module', $module);
+
+        /**
+         * Module developers can add hooks for their own activate actions that needs to be taken
+         */
+        hooks()->do_action("activate_{$name}_module");
+
+        if ($essential) {
+            EssentialIssuerModule::assertSchema($this->ci->db, db_prefix());
+            $stored = $this->ci->db->where('module_name', $name)->get(db_prefix() . 'modules')->row();
+            if (!$stored || (string) $stored->installed_version !== (string) $module['headers']['version']) {
+                throw new RuntimeException('issuer_migration_version_unconfirmed');
+            }
+        }
+
+        /**
+         * Activate the module in database
+         */
+        $this->ci->db->where('module_name', $name);
+        if (!$this->ci->db->update(db_prefix() . 'modules', ['active' => 1])) {
+            return false;
+        }
+
+        if ($essential) {
+            $stored = $this->ci->db->where('module_name', $name)->get(db_prefix() . 'modules')->row();
+            if (!$stored || (int) $stored->active !== 1) {
+                throw new RuntimeException('issuer_activation_state_unconfirmed');
+            }
+            $this->modules[$name]['installed_version'] = $stored->installed_version;
+        }
+        $this->modules[$name]['activated'] = 1;
+        $this->active_modules[$name] = $this->modules[$name];
+
+        /**
+         * After module is activated action
+         */
+        hooks()->do_action('module_activated', $module);
+
+        // Alguns módulos registram os e-mails somente no momento da ativação.
+        // Traduzir padrões conhecidos sem remover HTML ou edições de clientes.
+        try {
+            require_once APPPATH . 'services/EmailTemplatesPtBr.php';
+            EmailTemplatesPtBr::synchronizeModuleTemplates($this->ci->db, $name);
+        } catch (Throwable $exception) {
+            log_message('error', 'Não foi possível conciliar os modelos de e-mail do módulo '
+                . $name . ': ' . $exception->getMessage());
+        }
+
+        return true;
+    }
+
+    /**
+     * Deactivate Module
+     * @param  string $name Module Name [system_name]
+     * @return boolean
+     */
+    public function deactivate($name)
+    {
+        if ($this->is_essential($name)) {
+            return false;
+        }
+
+        $module = $this->get($name);
+
+        if (!$module) {
+            return false;
+        }
+
+        /**
+         * Maybe used from another modules?
+         */
+        hooks()->do_action('pre_deactivate_module', $module);
+
+        /**
+         * Module developers can add hooks for their own activate actions that needs to be taken
+         */
+        hooks()->do_action("deactivate_{$name}_module");
+
+        /**
+         * Deactivate the module in database
+         */
+        $this->ci->db->where('module_name', $name);
+        $this->ci->db->update(db_prefix() . 'modules', ['active' => 0]);
+
+
+        /**
+         * After module is activated action
+         */
+        hooks()->do_action('module_deactivated', $module);
+
+        return true;
+    }
+
+    /**
+     * Uninstall Module
+     * @param  string $name Module Name [system_name]
+     * @return boolean
+     */
+    public function uninstall($name)
+    {
+        if ($this->is_essential($name)) {
+            return false;
+        }
+
+        $module = $this->get($name);
+
+        if (!$module) {
+            return false;
+        }
+
+        /**
+         * Module needs to be deactivated first in order to be uninstalled
+         */
+        if ($module['activated'] == 1 || in_array($name, uninstallable_modules())) {
+            return false;
+        }
+
+        /**
+         * Maybe used from another modules?
+         */
+        hooks()->do_action('pre_uninstall_module', $module);
+
+        /**
+         * Remove the module from database
+         */
+        $this->ci->db->where('module_name', $name);
+        $this->ci->db->delete(db_prefix() . 'modules');
+
+        /**
+         * Module developers can add hooks for their own uninstall actions that needs to be taken
+         */
+        $uninstallPath = $module['path'] . 'uninstall.php';
+        if (file_exists($uninstallPath)) {
+            include_once($uninstallPath);
+        } else {
+            hooks()->do_action("uninstall_{$name}_module");
+        }
+
+        /**
+         * Delete module files
+         */
+        if (is_dir($module['path'])) {
+            delete_files($module['path'], true);
+            rmdir($module['path']);
+        }
+
+        /**
+         * After module is uninstalled action
+         */
+        hooks()->do_action('module_uninstalled', $module);
+
+        return true;
+    }
+
+    /**
+     * Get all activated modules
+     * @return array
+     */
+    public function get_activated()
+    {
+        return $this->active_modules;
+    }
+
+    /**
+     * Check whether a module is active
+     * @param  string  $name module name
+     * @return boolean
+     */
+    public function is_active($name)
+    {
+        return array_key_exists($name, $this->get_activated());
+    }
+
+    /**
+     * Check whether a module is inactive
+     * @param  string  $name module name
+     * @return boolean
+     */
+    public function is_inactive($name)
+    {
+        return ! $this->is_active($name);
+    }
+
+    /**
+     * Check whether a module is installed for a first time
+     * @param  string  $name module name
+     * @return boolean
+     */
+    public function is_installed($name)
+    {
+        if (!isset($this->modules[$name])) {
+            return false;
+        }
+
+        return $this->modules[$name]['installed_version'] !== false;
+    }
+
+    /**
+     * Check if the module minimum requirement version is met
+     * @param  [type]  $name [description]
+     * @return boolean       [description]
+     */
+    public function is_minimum_version_requirement_met($name)
+    {
+        $module = $this->get($name);
+
+        if (!isset($module['headers']['requires_at_least'])) {
+            return true;
+        }
+
+        $this->ci->config->load('migration');
+        $appVersion               = wordwrap($this->ci->config->item('migration_version'), 1, '.', true);
+        $moduleRequiresAppVersion = $module['headers']['requires_at_least'];
+
+        if (version_compare($appVersion, $moduleRequiresAppVersion, '>=')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Upgrade module to latest database version
+     * @param  string $name module name
+     * @return mixed
+     */
+    public function upgrade_database($name)
+    {
+        if ($name === \app\services\EfiVersionAdoption::MODULE) {
+            $module = $this->get($name);
+            $stored = $this->ci->db->where('module_name', $name)->get(db_prefix() . 'modules')->row();
+            if (($module['headers']['version'] ?? '') === \app\services\EfiVersionAdoption::TARGET
+                && (!$stored || (string) $stored->installed_version !== \app\services\EfiVersionAdoption::TARGET)) {
+                return 'module_migration_explicit_adoption_required';
+            }
+        }
+        if ($name === 'issuers') {
+            return false; // Retired module history is never executed through the module runner.
+        }
+        if ($this->is_essential($name)) {
+            return $this->ensure_essential_modules() ? true : 'Configuração obrigatória de Emitentes não confirmada.';
+        }
+        $migration = new App_module_migration($name);
+
+        if ($migration->to_latest() === false) {
+            return $migration->error_string();
+        }
+
+        return true;
+    }
+
+    /**
+     * Check whether database upgrade is required to module
+     * When module Version header is different then the one stored in database
+     * @param  string  $name module name
+     * @return boolean
+     */
+    public function is_database_upgrade_required($name)
+    {
+        $module = $this->get($name);
+
+        $moduleInstalledVersion = $module['installed_version'];
+
+        if ($moduleInstalledVersion == false) {
+            // Not yet activated for the first time
+            return false;
+        }
+
+        $moduleFilesVersion = $module['headers']['version'];
+
+        /**
+        * Check if downgrade is required
+        * By default, version_compare() returns -1 if the first version is lower than the second,
+        * 0 if they are equal, and 1 if the second is lower.
+        */
+        if (version_compare($moduleInstalledVersion, $moduleFilesVersion) === 1) {
+            return true;
+        }
+
+        if (version_compare($moduleFilesVersion, $moduleInstalledVersion) === 1) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Modules can create release_handler.php file inside the module root directory and apply their own logic to check whether there is new version available.
+     * release_handler.php file should return false if there is no version available or array with e.q. the following params:
+     * $data['version'] = VERSION_NUMBER;
+     * (Optional) $data['changelog'] = 'https://official-website.com/plugin/changelog';
+     * (Optional) $data['update_handler'] = '';
+     * @param  string  $name module system name
+     * @return mixed
+     */
+    public function new_version_available($name)
+    {
+        return false;
+    }
+
+    public function get_new_version_data($name)
+    {
+        return false;
+    }
+
+    public function update_to_new_version($name)
+    {
+        return false;
+    }
+
+    public function is_update_handler_available($name)
+    {
+        return false;
+    }
+
+    /**
+     * Return the number of modules that requires database upgrade
+     * @return integer
+     */
+    public function number_of_modules_that_require_database_upgrade()
+    {
+        return count($this->database_maintenance_inventory());
+    }
+
+    /** Installed resources requiring attention, independent of commercial visibility. */
+    public function database_maintenance_inventory()
+    {
+        $inventory = [];
+        $names = array_unique(array_merge(array_keys($this->db_modules), array_keys($this->modules)));
+        foreach ($names as $name) {
+            if ($name === 'issuers') { continue; } // Retired into core; never run its module history.
+            $module = $this->modules[$name] ?? null;
+            $row = $this->db_modules[$name] ?? null;
+            $installed = $row ? $row->installed_version : ($module['installed_version'] ?? false);
+            if ($installed === false || $installed === null) { continue; }
+            $code = $module['headers']['version'] ?? null;
+            $status = 'missing_files';
+            if ($module) {
+                // The native runner maps 1.2.3 to 123 and writes back one digit per component.
+                if (!preg_match('/^[0-9]\.[0-9]\.[0-9]$/D', (string) $installed)
+                    || !preg_match('/^[0-9]\.[0-9]\.[0-9]$/D', (string) $code)) {
+                    $status = \app\services\EfiVersionAdoption::eligible($name, (string) $installed, (string) $code)
+                        ? 'explicit_adoption' : 'invalid_version';
+                } elseif (version_compare($installed, $code, '=')) {
+                    continue;
+                } else {
+                    $status = version_compare($installed, $code, '<') ? 'upgrade' : 'downgrade';
+                }
+            }
+            if ($name === \app\services\EfiVersionAdoption::MODULE && $code === \app\services\EfiVersionAdoption::TARGET
+                && (string) $installed !== $code && $status !== 'explicit_adoption') {
+                // No native 514 baseline is proven for this release, even if manually relabelled.
+                $status = 'invalid_version';
+            }
+            if ($status === 'upgrade') {
+                foreach (self::maintenance_native_steps($name, $installed, $code) as $step) {
+                    $files = glob(APP_MODULES_PATH . $name . '/migrations/' . sprintf('%03d', $step) . '_*.php');
+                    if (!$files || count($files) !== 1 || !preg_match('/^\d{3}_(\w+)$/', basename($files[0], '.php'))) {
+                        $status = 'missing_migration';
+                        break;
+                    }
+                }
+            }
+            if ($status === 'upgrade' && self::maintenance_missing_dependencies($name, $installed, $code)) {
+                $status = 'missing_runtime';
+            }
+            $inventory[$name] = [
+                'system_name' => $name,
+                'installed_version' => (string) $installed,
+                'code_version' => $code,
+                'activated' => (int) ($row ? $row->active : ($module['activated'] ?? 0)),
+                'status' => $status,
+                'can_upgrade' => in_array($status, ['upgrade', 'explicit_adoption'], true),
+            ];
+        }
+        ksort($inventory);
+        return $inventory;
+    }
+
+    /** Exact, documented legacy bridge; never synthesize historical migrations. */
+    public static function maintenance_native_steps($name, $installed, $target)
+    {
+        $start = (int) str_replace('.', '', $installed) + 1;
+        $end = (int) str_replace('.', '', $target);
+        if ($name === 'api' && (string) $installed === '1.0.3' && (string) $target === '2.0.2') {
+            $start = 200; // Existing immutable 103 -> 200/201/202 history, CONTRIBUTING.md.
+        }
+        return $start <= $end ? range($start, $end) : [];
+    }
+
+    /** Known legacy migration dependencies; never bootstrap an inactive module's init/hooks. */
+    public static function maintenance_missing_dependencies($name, $installed, $target)
+    {
+        $dependencies = [
+            'page_builder' => ['page_builder_install', 'page_builder_get_dir_html_files', 'page_builder_get_theme_path_url', 'page_builder_import_default_templates'],
+            'accounting' => ['acc_account_exists'],
+            'hr_profile' => ['hr_profile_type_of_training_exists'],
+            'timesheets' => ['row_timesheets_options_exist'],
+            'purchase' => ['row_purchase_options_exist'],
+            'hr_payroll' => ['hr_payroll_payroll_column_exist', 'row_hr_payroll_options_exist'],
+        ];
+        $missing = [];
+        for ($step = (int) str_replace('.', '', $installed) + 1; $step <= (int) str_replace('.', '', $target); $step++) {
+            foreach (glob(APP_MODULES_PATH . $name . '/migrations/' . sprintf('%03d', $step) . '_*.php') ?: [] as $file) {
+                $source = file_get_contents($file);
+                foreach ($dependencies[$name] ?? [] as $function) {
+                    if (!function_exists($function) && preg_match('/\b' . preg_quote($function, '/') . '\s*\(/', $source)) {
+                        $missing[] = $function;
+                    }
+                }
+            }
+        }
+        return array_values(array_unique($missing));
+    }
+
+    /**
+     * Get all modules or specific module if module system name is passed
+     * This method returns all modules including active and inactive
+     * @param  mixed $module
+     * @return mixed
+     */
+    public function get($module = null)
+    {
+        if (!$module) {
+            $modules = $this->modules;
+
+            /* Sort modules by name */
+
+            usort($modules, function ($a, $b) {
+                return strcmp(strtolower($a['headers']['module_name']), strtolower($b['headers']['module_name']));
+            });
+
+            return $modules;
+        }
+
+        if (isset($this->modules[$module])) {
+            return $this->modules[$module];
+        }
+
+        return null;
+    }
+
+    /**
+     * Get module from database
+     * @param  string $name module system name
+     * @return mixed
+     */
+    public function get_database_module($name)
+    {
+        if (isset($this->db_modules[$name])) {
+            return $this->db_modules[$name];
+        }
+
+        $this->ci->db->where('module_name', $name);
+
+        return $this->ci->db->get(db_prefix() . 'modules')->row();
+    }
+
+    /**
+     * Initialize all modules
+     * @return null
+     */
+    public function initialize()
+    {
+        // For caching
+        $this->query_db_modules();
+
+        foreach (static::get_valid_modules() as $module) {
+            $name = $module['name'];
+            if ($name === 'issuers') { continue; }
+            // If the module hasn't already been added and isn't a file
+            if (!isset($this->modules[$name])) {
+                /**
+                 * System name
+                 */
+                $this->modules[$name]['system_name'] = $name;
+
+                /**
+                 * Module headers
+                 */
+                $this->modules[$name]['headers'] = $this->get_headers($module['init_file']);
+                /**
+                 * Init file path
+                 * The file name must be the same like the module folder name
+                 */
+                $this->modules[$name]['init_file'] = $module['init_file'];
+                /**
+                 * Module path
+                 */
+                $this->modules[$name]['path'] = $module['path'];
+
+                // Check if module is activated
+                $moduleDB = $this->get_database_module($name);
+
+                if ($moduleDB && $moduleDB->active == 1) {
+                    $this->modules[$name]['activated'] = 1;
+                    // Add to active modules handler
+                    $this->active_modules[$name] = $this->modules[$name];
+                } else {
+                    $this->modules[$name]['activated'] = 0;
+                }
+                /**
+                 * Installed version
+                 */
+                $this->modules[$name]['installed_version'] = $moduleDB ? $moduleDB->installed_version : false;
+            }
+        }
+    }
+
+    /**
+     * @since 2.3.4
+     * @see add_module_support function.
+     *
+     * @param string $module_name  module name
+     * @param string $feature     support feature
+     *
+     */
+    public function add_supports_feature($module_name, $feature)
+    {
+        if (!isset(self::$supports[$module_name])) {
+            self::$supports[$module_name] = [];
+        }
+
+        if (in_array($feature, self::$supports[$module_name])) {
+            return;
+        }
+
+        self::$supports[$module_name][] = $feature;
+    }
+
+    /**
+     * @since 2.3.4
+     * @see add_module_support function.
+     *
+     * @param string $module_name  module name
+     * @param string $feature     support feature
+     * @return  boolean
+     */
+    public function supports_feature($module_name, $feature)
+    {
+        return isset(self::$supports[$module_name]) && in_array($feature, self::$supports[$module_name]);
+    }
+
+    /**
+     * Get module headers info
+     * @param  string $module_source the module init file location
+     * @return array
+     */
+    public function get_headers($module_source)
+    {
+        $module_data = read_file($module_source); // Read the module init file.
+
+        preg_match('|Module Name:(.*)$|mi', $module_data, $name);
+        preg_match('|Module URI:(.*)$|mi', $module_data, $uri);
+        preg_match('|Version:(.*)|i', $module_data, $version);
+        preg_match('|Description:(.*)$|mi', $module_data, $description);
+        preg_match('|Author:(.*)$|mi', $module_data, $author_name);
+        preg_match('|Author URI:(.*)$|mi', $module_data, $author_uri);
+        preg_match('|Requires at least:(.*)$|mi', $module_data, $requires_at_least);
+
+        $arr = [];
+
+        if (isset($name[1])) {
+            $arr['module_name'] = trim($name[1]);
+        }
+
+        if (isset($uri[1])) {
+            $arr['uri'] = trim($uri[1]);
+        }
+
+        if (isset($version[1])) {
+            $arr['version'] = trim($version[1]);
+        } else {
+            $arr['version'] = 0;
+        }
+
+        if (isset($description[1])) {
+            $arr['description'] = trim($description[1]);
+        }
+
+        if (isset($author_name[1])) {
+            $arr['author'] = trim($author_name[1]);
+        }
+
+        if (isset($author_uri[1])) {
+            $arr['author_uri'] = trim($author_uri[1]);
+        }
+
+        if (isset($requires_at_least[1])) {
+            $arr['requires_at_least'] = trim($requires_at_least[1]);
+        }
+
+        return $arr;
+    }
+
+    /**
+     * Check whether module is inserted into database table
+     * @param  string $name module system name
+     * @return boolean
+     */
+    private function module_exists_in_database($name)
+    {
+        return (bool) $this->get_database_module($name);
+    }
+
+    /**
+     * Get valid modules
+     * @return array
+     */
+    public static function get_valid_modules()
+    {
+        /**
+        * Modules path
+        *
+        * APP_MODULES_PATH constant is defined in application/config/constants.php
+        *
+        * @var array
+        */
+        $modules = directory_map(APP_MODULES_PATH, 1);
+
+        $valid_modules = [];
+
+        if ($modules) {
+            foreach ($modules as $name) {
+                $name = strtolower(trim($name));
+
+                /**
+                 * Filename may be returned like chat/ or chat\ from the directory_map function
+                 */
+                foreach (['\\', '/'] as $trim) {
+                    $name = rtrim($name, $trim);
+                }
+
+                // The retired issuer module is retained on disk only for immutable upgrade history.
+                if ($name === 'issuers') { continue; }
+
+                // If the module hasn't already been added and isn't a file
+                if (!stripos($name, '.')) {
+                    $module_path = APP_MODULES_PATH . $name . '/';
+                    $init_file   = $module_path . $name . '.php';
+
+                    // Make sure a valid module file by the same name as the folder exists
+                    if (file_exists($init_file)) {
+                        $valid_modules[] = [
+                            'init_file' => $init_file,
+                            'name'      => $name,
+                            'path'      => $module_path,
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $valid_modules;
+    }
+
+    private function query_db_modules()
+    {
+        $db_modules = $this->ci->db->get(db_prefix() . 'modules')->result();
+
+        foreach ($db_modules as $db_module) {
+            if ($db_module->module_name === 'issuers') { continue; }
+            $this->db_modules[$db_module->module_name] = $db_module;
+        }
+    }
+}

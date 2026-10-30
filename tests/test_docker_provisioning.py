@@ -1,0 +1,388 @@
+import unittest
+import os
+import subprocess
+import tempfile
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def read(path):
+    return (ROOT / path).read_text(encoding="utf-8")
+
+
+class DockerProvisioningContractTest(unittest.TestCase):
+    def test_upload_subdirectories_match_server_info(self):
+        import re
+        paths = set(re.findall(r"is_writable\(FCPATH \. 'uploads/([^']+)'", read("application/views/admin/settings/includes/info.php")))
+        self.assertEqual(len(paths), 16)
+        source = read("docker/entrypoint.sh")
+        for name in paths:
+            self.assertIn("/app/uploads/" + name + " \\\n", source)
+        self.assertNotIn("chown -R", source)
+        self.assertNotIn("chmod 777", source)
+
+    def test_storage_helper_preserves_files_and_rejects_symlinks(self):
+        prelude = read("docker/entrypoint.sh").split("prepare_storage_directories()", 1)[0]
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "uploads" / "clients"
+            target.mkdir(parents=True)
+            data = target / "existing.txt"
+            data.write_text("preserve")
+            os.chmod(data, 0o600)
+            os.chmod(target, 0o500)
+            def run(path, chown="return 0"):
+                code = prelude + '\nchown() { ' + chown + '; }\nprepare_storage_directory "$1"\n'
+                return subprocess.run(["sh", "-c", code, "fixture", str(path)], capture_output=True, text=True)
+            self.assertEqual(run(target).returncode, 0)
+            self.assertEqual(data.read_text(), "preserve")
+            self.assertEqual(data.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(target.stat().st_mode & 0o700, 0o700)
+            link = root / "alias"
+            link.symlink_to(target, target_is_directory=True)
+            self.assertNotEqual(run(link / "nested").returncode, 0)
+            self.assertFalse((target / "nested").exists())
+            self.assertNotEqual(run(data).returncode, 0)
+            self.assertNotEqual(run(target, "return 1").returncode, 0)
+            self.assertEqual(data.read_text(), "preserve")
+
+    def test_runtime_image_excludes_web_installer(self):
+        dockerfile = read("Dockerfile")
+        ignore = read(".dockerignore")
+        self.assertIn("rm -rf /out/app/install", dockerfile)
+        self.assertIn("install/database.sql", dockerfile)
+        self.assertIn("!install/database.sql", ignore)
+        self.assertNotIn("find application modules install", dockerfile)
+        self.assertIn("docker/setup-web.php", dockerfile)
+        self.assertIn("docker/provisioner.php", dockerfile)
+        self.assertIn("docker/migration-cli.php", dockerfile)
+        self.assertIn("php -l /opt/argws-crm-provisioner/migration-cli.php", dockerfile)
+        self.assertIn("php -l /opt/argws-crm-provisioner/web/index.php", dockerfile)
+        self.assertIn('PHP_SAPI !== "cli"', dockerfile)
+        self.assertIn("frankenphp validate --config /etc/caddy/Caddyfile --adapter caddyfile", dockerfile)
+        self.assertIn("frankenphp validate --config /etc/caddy/Caddyfile.unprovisioned --adapter caddyfile", dockerfile)
+
+    def test_web_entrypoint_exposes_only_the_one_time_setup_route_before_install(self):
+        entrypoint = read("docker/entrypoint.sh")
+        caddy = read("docker/Caddyfile")
+        pending = read("docker/Caddyfile.unprovisioned")
+        self.assertNotIn("app-config-sample.php", entrypoint)
+        self.assertIn("Caddyfile.unprovisioned", entrypoint)
+        self.assertIn("--adapter caddyfile", entrypoint)
+        self.assertIn("@provisioned file", pending)
+        self.assertIn("try_files provisioned", pending)
+        self.assertIn("handle @provisioned", pending)
+        self.assertIn("@setup path /setup /setup/", pending)
+        self.assertIn("/opt/argws-crm-provisioner/web", pending)
+        self.assertIn("@setup path /setup /setup/", caddy)
+        self.assertIn("@installer path /install /install/ /install/*", caddy)
+        self.assertLess(caddy.index("@installer path"), caddy.rindex("\n        php_server\n"))
+        self.assertIn("@root path /", pending)
+        self.assertIn("redir @root /setup 302", pending)
+        self.assertNotIn("503", pending)
+        self.assertNotIn("ARGWS_SETUP_TOKEN", pending)
+        self.assertNotIn("docker compose exec", pending)
+        self.assertIn("@installer path /install /install/ /install/*", pending)
+
+    def test_cli_and_web_provisioners_share_safe_database_guards(self):
+        cli = read("docker/provision.php")
+        index = read("index.php")
+        self.assertIn("ARGWS_SETUP_MIGRATION_TOKEN", index)
+        self.assertIn("ini_set('display_errors', 'stderr')", index)
+        source = read("docker/provisioner.php")
+        web = read("docker/setup-web.php")
+        self.assertIn("PHP_SAPI !== 'cli'", cli)
+        self.assertIn("information_schema.tables", source)
+        self.assertIn("PasswordHash", source)
+        self.assertIn("INSERT INTO tblstaff", source)
+        self.assertIn("MYSQLI_REPORT_STRICT", source)
+        self.assertIn("--input-json", source)
+        self.assertIn("ARGWS_SETUP_TOKEN", web)
+        self.assertIn("hash_equals", web)
+        self.assertIn("csrf_token", web)
+        self.assertIn("provision_with_input", web)
+
+    def test_compose_passes_private_database_settings_to_runtime(self):
+        for path in ("compose.yaml", "deploy/develop/compose.yaml", "deploy/production/compose.yaml"):
+            with self.subTest(path=path):
+                compose = read(path)
+                self.assertIn("ARGWS_DB_HOST", compose)
+                self.assertIn("ARGWS_DB_PASSWORD", compose)
+                self.assertIn("ARGWS_CONFIG_DIR", compose)
+                self.assertIn("ARGWS_SETUP_TOKEN", compose)
+
+    def test_persistent_storage_uses_relative_env_root_in_all_compose_stacks(self):
+        targets = {
+            "/var/lib/argws-crm/config", "/app/uploads", "/app/temp",
+            "/app/application/cache", "/app/application/logs",
+            "/app/modules/accounting/uploads", "/app/modules/finance/uploads",
+            "/app/modules/fleet/uploads", "/app/modules/hr_payroll/uploads",
+            "/app/modules/hr_profile/uploads", "/app/modules/invoices_builder/uploads",
+            "/app/modules/ma/uploads", "/app/modules/products/uploads",
+            "/app/modules/purchase/uploads", "/app/modules/service_management/uploads",
+            "/app/modules/si_custom_theme/uploads", "/app/modules/timesheets/uploads",
+            "/data", "/config",
+        }
+        for path in ("compose.yaml", "deploy/develop/compose.yaml", "deploy/production/compose.yaml"):
+            with self.subTest(path=path):
+                compose = read(path)
+                self.assertNotIn("\nvolumes:\n", compose)
+                self.assertIn('"${ARGWS_STORAGE_ROOT:-./storage}', compose)
+                self.assertNotIn("storage-init:", compose)
+                self.assertNotIn("service_completed_successfully", compose)
+                mounts = [
+                    line.strip().split('"')[1]
+                    for line in compose.splitlines()
+                    if line.strip().startswith('- "') and "${ARGWS_STORAGE_ROOT:-./storage}" in line
+                ]
+                self.assertTrue(mounts)
+                for mount in mounts:
+                    source, target = mount.rsplit(":", 1)
+                    self.assertTrue(source == "${ARGWS_STORAGE_ROOT:-./storage}" or source.startswith("${ARGWS_STORAGE_ROOT:-./storage}/"))
+                    self.assertTrue(target.startswith("/"))
+                mounted_targets = {mount.rsplit(":", 1)[1] for mount in mounts}
+                self.assertTrue(targets.issubset(mounted_targets))
+                if path != "compose.yaml":
+                    self.assertIn("/var/lib/mysql", mounted_targets)
+
+        entrypoint = read("docker/entrypoint.sh")
+        self.assertIn("prepare_storage_directories", entrypoint)
+        self.assertIn('mkdir -p -m 0755 "$directory"', entrypoint)
+        self.assertIn('chown 33:33 "$directory"', entrypoint)
+        self.assertIn("run_as_web_user", entrypoint)
+        self.assertNotIn("storage-init", entrypoint)
+
+        for path in ("container.env.example", "deploy/develop/.env.example", "deploy/production/.env.example"):
+            self.assertIn("ARGWS_STORAGE_ROOT=./storage", read(path))
+
+    def test_named_volume_migration_is_non_destructive_and_shell_valid(self):
+        migration = read("deploy/migrate-storage.sh")
+        self.assertIn('down --remove-orphans', migration)
+        self.assertIn('cp -an /legacy/. /target/', migration)
+        self.assertIn('COMPOSE_PROJECT_NAME', migration)
+        self.assertNotIn('down -v', migration)
+        self.assertNotIn('docker volume rm', migration)
+        self.assertNotIn('--rm-volume', migration)
+        result = __import__("subprocess").run(["sh", "-n", "deploy/migrate-storage.sh"], cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        core = read("tools/argws-crm-deployer/src/core.rs")
+        self.assertIn('include_str!("../../../deploy/migrate-storage.sh")', core)
+        self.assertIn("ensure_storage_root(&contents)", core)
+        self.assertIn("valid_storage_root(&storage_root)", core)
+    def test_named_volume_migration_copies_data_and_keeps_the_source(self):
+        import os
+        import subprocess
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            stack = root / "stack"
+            volumes = root / "volumes"
+            docker_bin = root / "bin"
+            stack.mkdir()
+            volumes.mkdir()
+            docker_bin.mkdir()
+            (stack / "compose.yaml").write_text("services: {}\n", encoding="utf-8")
+            (stack / ".env").write_text(
+                "COMPOSE_PROJECT_NAME=testcrm\nARGWS_STORAGE_ROOT=./storage\nARGWS_VERSION=3.6.0\n",
+                encoding="utf-8",
+            )
+            legacy = volumes / "testcrm_uploads"
+            (legacy / "nested").mkdir(parents=True)
+            (legacy / "nested" / "customer.txt").write_text("customer data", encoding="utf-8")
+            fake_docker = docker_bin / "docker"
+            fake_docker.write_text(
+                """#!/bin/sh
+set -eu
+case "$1" in
+  compose|image) exit 0 ;;
+  volume) [ -d "$FAKE_DOCKER_VOLUMES/$3" ] ;;
+  run)
+    shift
+    legacy=
+    target=
+    while [ "$#" -gt 0 ]; do
+      if [ "$1" = "--volume" ]; then
+        spec=$2
+        shift 2
+        case "$spec" in
+          *:/legacy:ro) legacy=$(printf '%s' "$spec" | sed 's|:/legacy:ro$||') ;;
+          *:/target) target=$(printf '%s' "$spec" | sed 's|:/target$||') ;;
+        esac
+      else
+        shift
+      fi
+    done
+    mkdir -p "$target"
+    cp -an "$FAKE_DOCKER_VOLUMES/$legacy/." "$target/"
+    ;;
+  *) exit 2 ;;
+esac
+""",
+                encoding="utf-8",
+            )
+            fake_docker.chmod(0o755)
+            env = os.environ.copy()
+            env["PATH"] = str(docker_bin) + os.pathsep + env["PATH"]
+            env["FAKE_DOCKER_VOLUMES"] = str(volumes)
+            result = subprocess.run(
+                ["sh", str(ROOT / "deploy/migrate-storage.sh"), str(stack)],
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            copied = stack / "storage/uploads/nested/customer.txt"
+            self.assertEqual(copied.read_text(encoding="utf-8"), "customer data")
+            self.assertEqual((legacy / "nested/customer.txt").read_text(encoding="utf-8"), "customer data")
+
+    def test_smoke_covers_web_setup_protection_and_persistence(self):
+        smoke = read("tests/docker_provision_smoke.sh")
+        restart = smoke.index('docker restart "$web"')
+        refreshed_port = smoke.index('docker port "$web" 8080/tcp', restart)
+        self.assertGreater(refreshed_port, restart)
+        self.assertIn('[[ ! "$status" =~ ^[1-5][0-9][0-9]$ ]]', smoke)
+        self.assertIn('"$url/setup"', smoke)
+        self.assertIn('setup_token=$setup_token', smoke)
+        self.assertIn('admin_password_repeat=$admin_password', smoke)
+        self.assertIn("admin_count_after_restart", smoke)
+        self.assertIn('docker compose --project-directory "$storage_compose_dir"', smoke)
+        self.assertIn("Compose entrypoint storage OK", smoke)
+        self.assertIn('root_location" != "/setup"', smoke)
+        self.assertIn("migration_version", smoke)
+        self.assertIn("tblmigrations", smoke)
+        self.assertIn('"$url/admin/authentication"', smoke)
+        self.assertIn('csrf_token_name=$login_csrf', smoke)
+        self.assertIn('password=$admin_password', smoke)
+        self.assertIn('"$url/admin"', smoke)
+        self.assertIn('dashboard_status', smoke)
+        self.assertNotIn("storage-init", smoke)
+        self.assertIn('chown -R "$HOST_UID:$HOST_GID" /storage', smoke)
+        self.assertIn('HOST_UID="$(id -u)"', smoke)
+        self.assertNotIn("/opt/argws-crm-provisioner/provision.php", smoke)
+
+    def test_portuguese_br_covers_codeigniter_runtime_messages(self):
+        import re
+
+        english = ROOT / "system/language/english"
+        portuguese_br = ROOT / "application/language/portuguese_br"
+        for source in english.glob("*_lang.php"):
+            with self.subTest(file=source.name):
+                translation = portuguese_br / source.name
+                self.assertTrue(translation.is_file(), f"Mensagem PT-BR ausente: {source.name}")
+                english_keys = set(re.findall(r"\$lang\['([^']+)'\]", source.read_text(encoding="utf-8")))
+                translated = translation.read_text(encoding="utf-8")
+                ptbr_keys = set(re.findall(r"\$lang\['([^']+)'\]", translated))
+                self.assertFalse(english_keys - ptbr_keys, f"Chaves PT-BR ausentes: {english_keys - ptbr_keys}")
+                self.assertIn("MIT License", translated)
+        self.assertIn("e-mail válido", (portuguese_br / "form_validation_lang.php").read_text(encoding="utf-8"))
+
+
+    def test_setup_redirects_to_a_polished_ptbr_wizard_and_migrates_before_unlocking(self):
+        caddy = read("docker/Caddyfile.unprovisioned")
+        setup = read("docker/setup-web.php")
+        source = read("docker/provisioner.php")
+        app = read("application/libraries/App.php")
+        controller = read("application/controllers/Argws_provisioning.php")
+        migration_language = read("application/language/portuguese_br/migration_lang.php")
+        smoke = read("tests/docker_provision_smoke.sh")
+
+        self.assertIn("@root path /", caddy)
+        self.assertIn("redir @root /setup 302", caddy)
+        self.assertIn('lang="pt-BR"', setup)
+        self.assertIn("Seu ambiente começa aqui.", setup)
+        self.assertIn("Administrador principal", setup)
+        self.assertIn('aria-live="polite"', setup)
+        self.assertIn("data-password-toggle", setup)
+        self.assertNotIn("Consulte ARGWS_SETUP_TOKEN no arquivo .env", setup)
+        self.assertIn("function sanitize_provisioning_diagnostic", source)
+        self.assertIn("$phpBinary = null;", source)
+        self.assertIn("'/usr/local/bin'", source)
+        self.assertIn("[$phpBinary, '/opt/argws-crm-provisioner/migration-cli.php']", source)
+        self.assertIn("$stdoutPath = tempnam", source)
+        self.assertIn("$stderrPath = tempnam", source)
+        migration_cli = read("docker/migration-cli.php")
+        self.assertIn("PHP_SAPI !== 'cli'", migration_cli)
+        self.assertIn("ini_set('display_errors', 'stderr')", migration_cli)
+        self.assertIn("$_SERVER['argv'] = ['/app/index.php', 'argws_provisioning', 'apply_migrations'];", migration_cli)
+        self.assertIn("'controller' => 'Argws_provisioning'", migration_cli)
+        self.assertIn("'function' => 'apply_migrations'", migration_cli)
+        self.assertIn("require '/app/index.php';", migration_cli)
+        self.assertNotIn("'php-cli', '/app/index.php'", source)
+        self.assertIn("'; SAPI=' . PHP_SAPI", source)
+        self.assertNotIn("$phpBinary = defined('PHP_BINARY')", source)
+        self.assertIn("$environment['ARGWS_SETUP_MIGRATION_TOKEN'] = $bridgeToken;", source)
+        self.assertIn("Executor de migrations sem saída", source)
+        self.assertIn("Token interno de migrations ausente ou inválido.", controller)
+        router = read("application/core/App_Router.php")
+        # Native Empresas now has an explicit override; behavior is exercised by issuers_native_routing.php.
+        self.assertRegex(router, r"class\s+App_Router\s+extends\s+MX_Router\b")
+        init_modules = read("application/hooks/InitModules.php")
+        self.assertIn("getenv('ARGWS_SETUP_MIGRATION_TOKEN') !== false", init_modules)
+        self.assertLess(init_modules.index("return;"), init_modules.index("include_once(LIBSPATH.'App_modules.php')"))
+        self.assertNotIn("Hook InitModules ignorado", init_modules)
+        self.assertIn("getenv('ARGWS_SETUP_MIGRATION_TOKEN')", source)
+        self.assertIn("run_application_migrations([$input['admin_password'], $input['admin_email']], $createdStaffId);", source)
+        self.assertIn("apply_pending_migrations_for_provisioning", app)
+        self.assertIn("ARGWS_SETUP_MIGRATION_TOKEN", controller)
+        self.assertIn("Nenhuma migration foi encontrada.", migration_language)
+        self.assertIn("migration_version", smoke)
+        self.assertIn("tblmigrations", smoke)
+        self.assertIn("migration_lang.php", smoke)
+
+    def test_web_provisioning_has_no_short_password_policy_or_php_request_timeout(self):
+        source = read("docker/provisioner.php")
+        web = read("docker/setup-web.php")
+        smoke = read("tests/docker_provision_smoke.sh")
+        self.assertIn("set_time_limit(0)", source)
+        self.assertIn("$input['admin_password'] === ''", source)
+        self.assertNotIn("strlen($input['admin_password']) < 12", source)
+        self.assertNotIn('minlength="12"', web)
+        self.assertNotIn("Use pelo menos 12 caracteres.", web)
+        self.assertIn('admin_password="abc123"', smoke)
+        self.assertIn("--max-time 180", smoke)
+
+
+    def test_setup_reports_partial_schema_without_deleting_or_overwriting_database(self):
+        web = read("docker/setup-web.php")
+        source = read("docker/provisioner.php")
+        self.assertIn("schema parcial", web)
+        self.assertIn("O banco de dados já contém tabelas", web)
+        self.assertIn("O banco já contém tabelas", source)
+        self.assertIn("nenhum", source.lower())
+
+
+    def test_setup_token_is_optional_after_setup_and_deployer_migrates_legacy_env(self):
+        for path in ("compose.yaml", "deploy/develop/compose.yaml", "deploy/production/compose.yaml"):
+            with self.subTest(path=path):
+                self.assertIn("ARGWS_SETUP_TOKEN: ${ARGWS_SETUP_TOKEN:-}", read(path))
+        core = read("tools/argws-crm-deployer/src/core.rs")
+        self.assertIn("previous_compose_has_setup_token", core)
+        self.assertIn("ensure_setup_token(&old, !previous_compose_has_setup_token", core)
+        self.assertIn("None if !generate_if_missing => Ok(contents.to_string())", core)
+        self.assertIn("ARGWS_SETUP_TOKEN deve estar vazio ou conter 64", core)
+
+    def test_environment_examples_include_one_time_setup_key(self):
+        for path in ("container.env.example", "deploy/develop/.env.example", "deploy/production/.env.example"):
+            with self.subTest(path=path):
+                self.assertIn("ARGWS_SETUP_TOKEN=", read(path))
+
+    def test_environment_examples_use_the_internal_database_service(self):
+        for path in ("deploy/develop/.env.example", "deploy/production/.env.example"):
+            with self.subTest(path=path):
+                self.assertIn("ARGWS_DB_HOST=database", read(path))
+
+    def test_root_compose_keeps_external_database_variables_optional(self):
+        compose = read("compose.yaml")
+        self.assertIn("ARGWS_DB_HOST:", compose)
+        self.assertNotIn("Defina ARGWS_DB_HOST", compose)
+        self.assertIn("container.env.example", read("README.md"))
+        self.assertIn("/setup", read("deploy/README.md"))
+        self.assertIn("ARGWS_SETUP_TOKEN", read("deploy/README.md"))
+
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,0 +1,6 @@
+
+Fatal error: Uncaught RuntimeException: native120 constants exact in /workspace/scratch/6b72446d684f/candidate443/tests/banco_brasil_resume_440_contracts.php:13
+Stack trace:
+#0 /workspace/scratch/6b72446d684f/candidate443/tests/banco_brasil_resume_440_contracts.php(16): bb439Check(false, 'native120 const...')
+#1 {main}
+  thrown in /workspace/scratch/6b72446d684f/candidate443/tests/banco_brasil_resume_440_contracts.php on line 13

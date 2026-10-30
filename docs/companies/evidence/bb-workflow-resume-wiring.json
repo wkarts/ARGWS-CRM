@@ -1,0 +1,60 @@
+[
+  {
+    "candidate": "candidate439",
+    "workflow_sha256": "cfd6a98745d53ce188d4d18c1bcb596b3d91b1d52a1f8b90f271a7b574bdebcb",
+    "yaml_parse": "PASS",
+    "unit_php": [
+      "8.1",
+      "8.5"
+    ],
+    "jobs": {
+      "unit": {
+        "published436_commands_preserved": 13,
+        "commands": 14,
+        "test_paths": 13,
+        "missing_paths": []
+      },
+      "mysql": {
+        "published436_commands_preserved": 27,
+        "commands": 32,
+        "test_paths": 32,
+        "missing_paths": []
+      },
+      "mariadb": {
+        "published436_commands_preserved": 39,
+        "commands": 44,
+        "test_paths": 44,
+        "missing_paths": []
+      }
+    }
+  },
+  {
+    "candidate": "candidate440",
+    "workflow_sha256": "123ad851609ea7afdc1fea3bfd1fd30b44c5dda610a0c6eb71e894243efc36d3",
+    "yaml_parse": "PASS",
+    "unit_php": [
+      "8.1",
+      "8.5"
+    ],
+    "jobs": {
+      "unit": {
+        "published436_commands_preserved": 13,
+        "commands": 15,
+        "test_paths": 14,
+        "missing_paths": []
+      },
+      "mysql": {
+        "published436_commands_preserved": 27,
+        "commands": 36,
+        "test_paths": 36,
+        "missing_paths": []
+      },
+      "mariadb": {
+        "published436_commands_preserved": 39,
+        "commands": 48,
+        "test_paths": 48,
+        "missing_paths": []
+      }
+    }
+  }
+]

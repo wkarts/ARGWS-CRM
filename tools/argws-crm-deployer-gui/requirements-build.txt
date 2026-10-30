@@ -1,0 +1,2 @@
+# Build dependency for the self-contained Tkinter desktop GUI.
+PyInstaller==6.22.3

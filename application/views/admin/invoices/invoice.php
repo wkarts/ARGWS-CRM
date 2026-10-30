@@ -1,0 +1,45 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php init_head(); ?>
+<div id="wrapper">
+    <div class="content">
+        <div class="row">
+            <?= form_open($this->uri->uri_string(), ['id' => 'invoice-form', 'class' => '_transaction_form invoice-form']); ?>
+            <?php if (isset($native_invoice_editor_items)) {
+                echo form_hidden('_native_invoice_id', $native_invoice_id ?? '');
+                echo form_hidden('_native_invoice_revision', $native_invoice_revision ?? '');
+                echo form_hidden('_native_invoice_request_key', $native_invoice_request_key);
+                echo form_hidden('_native_invoice_number_revision', $native_invoice_number_selection['revision']);
+                if(isset($native_invoice_tags_revision))echo form_hidden('_native_invoice_tags_revision', $native_invoice_tags_revision);
+            } ?>
+            <?php if (isset($invoice)) {
+                echo form_hidden('isedit');
+            } ?>
+            <div class="col-md-12">
+                <h4 class="tw-mt-0 tw-font-bold tw-text-lg tw-text-neutral-700 tw-flex tw-items-center tw-space-x-2">
+                    <span>
+                        <?= e(isset($invoice) ? ($native_invoice_formatted_number ?? format_invoice_number($invoice)) : _l('create_new_invoice')); ?>
+                    </span>
+                    <?= isset($invoice) ? format_invoice_status($invoice->status) : ''; ?>
+                </h4>
+                <?php $this->load->view('admin/invoices/invoice_template'); ?>
+            </div>
+            <?= form_close(); ?>
+            <?php if(!isset($native_invoice_editor_items)||staff_can('create','items'))$this->load->view('admin/invoice_items/item'); ?>
+        </div>
+    </div>
+</div>
+<?php init_tail(); ?>
+<script>
+    $(function() {
+        validate_invoice_form();
+        // Init accountacy currency symbol
+        init_currency();
+        // Project ajax search
+        init_ajax_project_search_by_customer_id();
+        // Maybe items ajax search
+        init_ajax_search('items', '#item_select.ajax-search', native_invoice_catalog_context(), admin_url + 'items/search');
+    });
+</script>
+</body>
+
+</html>

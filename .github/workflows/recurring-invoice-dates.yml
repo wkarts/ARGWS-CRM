@@ -1,0 +1,61 @@
+name: Calendario das faturas recorrentes
+on:
+  pull_request:
+    branches: [main, develop, feat/banco-brasil-billing-cnab240]
+    paths:
+      - application/models/Cron_model.php
+      - application/services/RecurringInvoiceDates.php
+      - tests/recurring_invoice*.php
+      - application/models/Invoices_model.php
+      - application/migrations/381_version_381.php
+      - application/config/migration.php
+      - application/hooks/App_Autoloader.php
+      - application/views/admin/invoices/invoice_template.php
+      - application/language/english/english_lang.php
+      - application/language/portuguese_br/portuguese_br_lang.php
+      - install/database.sql
+      - .github/workflows/recurring-invoice-dates.yml
+  push:
+    branches: [main, develop]
+    paths:
+      - application/models/Cron_model.php
+      - application/services/RecurringInvoiceDates.php
+      - tests/recurring_invoice*.php
+      - application/models/Invoices_model.php
+      - application/migrations/381_version_381.php
+      - application/config/migration.php
+      - application/hooks/App_Autoloader.php
+      - application/views/admin/invoices/invoice_template.php
+      - application/language/english/english_lang.php
+      - application/language/portuguese_br/portuguese_br_lang.php
+      - install/database.sql
+      - .github/workflows/recurring-invoice-dates.yml
+permissions:
+  contents: read
+jobs:
+  calendar:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.5']
+    container: php:${{ matrix.php }}-cli
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validar sintaxe PHP
+        run: |
+          php -v
+          php -l application/models/Cron_model.php
+          php -l application/services/RecurringInvoiceDates.php
+          php -l application/models/Invoices_model.php
+          php -l application/migrations/381_version_381.php
+          php -l application/views/admin/invoices/invoice_template.php
+          php -l application/language/english/english_lang.php
+          php -l application/language/portuguese_br/portuguese_br_lang.php
+          php -l tests/recurring_invoice_dates.php
+          php -l tests/recurring_invoice_cron.php
+          php -l tests/recurring_invoice_schema.php
+      - name: Testar calendario sem banco e sem chamadas externas
+        run: |
+          php tests/recurring_invoice_dates.php
+          php tests/recurring_invoice_cron.php
+          php tests/recurring_invoice_schema.php

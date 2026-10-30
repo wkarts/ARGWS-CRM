@@ -1,0 +1,165 @@
+{
+  "published_sha": "7dd715fc371c66d4c95ebc342d02c4391b50869f",
+  "production_manifest_sha256": "47b35c58b8c2f916d0ef1e8d4aebe0a454494bd77041f68c01f079f03d13143b",
+  "production_files": 18539,
+  "changed_during_execution": [],
+  "results": [
+    {
+      "command": [
+        "php",
+        "tests/companies/native_resume_442.php"
+      ],
+      "exit": 0,
+      "passed": true,
+      "elapsed": 6.98,
+      "footer": [
+        "Native442 actual two tables/one index, metadata failure, replay and historical bytes: 1430 cumulative checks; tracking tested separately."
+      ],
+      "log_sha256": "0c28144c220740a7c1521fde3b84693d6f3d7fb891aafe1bda08aa1a62b102fb"
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/native_resume_442.php",
+        "--tracking"
+      ],
+      "exit": 0,
+      "passed": true,
+      "elapsed": 7.55,
+      "footer": [
+        "Native442 actual executor confirmed: 195 checks; partial DDL, metadata/index, failed and false marker readback, retry/replay and historical bytes."
+      ],
+      "log_sha256": "2de07874216c7fcd3d0eb2a3edc3980513cf20c553be8b0859103fc722c612ad"
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/expense_copies_resume_442_effects.php"
+      ],
+      "exit": 0,
+      "passed": true,
+      "elapsed": 5.73,
+      "footer": [
+        "Expense copy442 V2 final canonical effects confirmed: 163 checks (mysql)."
+      ],
+      "log_sha256": "4f9388673a679c6fa0cde8e657b2ca8298a046e1972091d768c413dfb18b80ee"
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/expense_copies_resume_442_native_types.php"
+      ],
+      "exit": 0,
+      "passed": true,
+      "elapsed": 6.78,
+      "footer": [
+        "Expense copy442 native numeric driver types: 171 checks (mysql)."
+      ],
+      "log_sha256": "60c8fd8990f8177d36a0a9d455f7512a2a94f9dc924e6f25ad12458ea14244e8"
+    },
+    {
+      "command": [
+        "php",
+        "tests/banco_brasil_own_number_view.php"
+      ],
+      "exit": 0,
+      "passed": true,
+      "elapsed": 0.03,
+      "footer": [
+        "BB own-number server-rendered form/projection: 17 checks; no bank HTTP."
+      ],
+      "log_sha256": "6ce22f3cf0c89d8013ecd83eea7bd144879402bd563ba6021e48790efb68e0c4"
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/expense_copies_resume_442_concurrency.php"
+      ],
+      "exit": 0,
+      "passed": true,
+      "elapsed": 5.2,
+      "footer": [
+        "Expense copy442 eight real races/two waiting writers: 138 checks (mysql)."
+      ],
+      "log_sha256": "6a03dc43f857a292254ba28883a5aa9bcd75fdfd6f0e93f26e2930fc134b9160"
+    },
+    {
+      "command": [
+        "php",
+        "tests/settings/company_ai_final_boundaries.php"
+      ],
+      "exit": 0,
+      "passed": true,
+      "elapsed": 14.11,
+      "footer": [
+        "Company AI S4 final config/claim/source/grants/outbox/completion/forget/result frames: 157 checks (mysql). Captured transport only."
+      ],
+      "log_sha256": "dec013a38f792c93c059e908b1b39351206538e384eedfeda3d1dd9138c3c97e"
+    },
+    {
+      "command": [
+        "php",
+        "tests/settings/company_ai_concurrency.php"
+      ],
+      "exit": 0,
+      "passed": true,
+      "elapsed": 8.21,
+      "footer": [
+        "Company AI native races: 34 added checks; six scenarios x two observed waiters and one independent inflight revocation. Captured provider only."
+      ],
+      "log_sha256": "20926dbdd45231303d1e492129f394db4a8467dc19c0b49806c2d1df33508ad9"
+    },
+    {
+      "command": [
+        "php",
+        "tests/settings/company_ai_transport.php"
+      ],
+      "exit": 0,
+      "passed": true,
+      "elapsed": 0.11,
+      "footer": [
+        "{\"/plain\":{\"guard\":\"accepted_identity\",\"wire_download_max\":261},\"/identity\":{\"guard\":\"accepted_identity\",\"wire_download_max\":261},\"/gzip\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/gzip-large\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/br\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/stacked\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/declared-large\":{\"guard\":\"company_ai_transport_unconfirmed\",\"wire_download_max\":0},\"/chunked-large\":{\"guard\":\"company_ai_response_limit\",\"wire_download_max\":100253}}"
+      ],
+      "log_sha256": "0a42c05e7978d965f64cb58314121aa0067e8e6a7d97ec99929847e6a8f14ef9"
+    },
+    {
+      "command": [
+        "php",
+        "tests/banco_brasil_own_number_activity.php"
+      ],
+      "exit": 0,
+      "passed": true,
+      "elapsed": 38.81,
+      "footer": [
+        "BB own-number/query activity guards: 359 added checks; canonical webhook and financial writer, real 300s expiry, synthetic HTTP only."
+      ],
+      "log_sha256": "4a1189b7a46462fb8b6631336c2a4638fdab7c9d7d5194d0574264ab0753a3c3"
+    },
+    {
+      "command": [
+        "php",
+        "tests/banco_brasil_api_window_discount_mysql.php"
+      ],
+      "exit": 0,
+      "passed": true,
+      "elapsed": 45.81,
+      "footer": [
+        "BB explicit receipt window and discount lifecycle: 1013 cumulative actual SQL checks; synthetic transport, no external banking/homologation."
+      ],
+      "log_sha256": "5641d8bb90ce69ad7cd498c338a2bba5eadeae6d5fe7ab9bef3aeb455645aba2"
+    },
+    {
+      "command": [
+        "php",
+        "tests/companies/operations_subresources.php"
+      ],
+      "exit": 0,
+      "passed": true,
+      "elapsed": 14.75,
+      "footer": [
+        "Operational file/milestone/dependency/self-follow API: 244 cumulative checks passed (mysql). No external transport."
+      ],
+      "log_sha256": "f0fe1d8d198ca50a1eb6c7b7451502bff80d7298896d44f8f2a57fff3a02fda8"
+    }
+  ]
+}

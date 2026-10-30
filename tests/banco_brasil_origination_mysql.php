@@ -1,0 +1,149 @@
+<?php
+/** Real native core/module composition; no bank calls or synthetic bank acceptance. */
+if(!str_starts_with(getenv('ISSUERS_TEST_DSN')?:'','mysql:')){fwrite(STDERR,"An isolated MySQL DSN is required.\n");exit(2);}
+require __DIR__.'/companies/invoices.php';
+require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/Origination.php';
+require_once APP_MODULES_PATH.'banco_brasil/libraries/BancoBrasil/LayoutCatalog.php';
+$db->query("INSERT INTO {$p}modules VALUES('banco_brasil','0.0.0',1)");
+$realModules=$GLOBALS['CI']->app_modules;
+$GLOBALS['CI']->app_modules=new class {function get($name){return ['headers'=>['version'=>'1.1.4']];}};
+$db->failVersion='1.1.4';
+essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native installation catches final114 tracking failure');$db->failVersion=null;
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.1.3','failed114 remains at113');
+essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='114','native101 through114 installation can retry additive DDL');
+essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native114 replay is stable');
+$GLOBALS['CI']->app_modules=new class {function get($name){return ['headers'=>['version'=>'1.1.5']];}};
+$db->failVersion='1.1.5';essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native115 failure cannot falsely advance final profile migration tracking');$db->failVersion=null;
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.1.4','failed115 preserves successfully applied114');
+essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='115','actual NOOP115 can retry through the native module runner');
+essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native115 replay is stable');
+$GLOBALS['CI']->app_modules=new class {function get($name){return ['headers'=>['version'=>'1.1.6']];}};
+$db->trans_begin();essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'issuer_outer_transaction_not_allowed','native116 cannot create additive DDL inside another transaction');$db->trans_rollback();
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.1.5','outer transaction rejection preserves115');
+$db->failOn='CREATE TABLE IF NOT EXISTS `'.$p.'bb_api_cnab_contracts`';essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_api_cnab_schema_failed','native116 DDL failure propagates before tracking');$db->failOn=null;
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.1.5','failed116 DDL preserves115');
+$db->failVersion='1.1.6';essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native116 tracking failure cannot authorize runtime');$db->failVersion=null;
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.1.5','failed116 tracking preserves115');
+essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()==='116','actual116 additive schema retries through native runner');
+essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native116 replay is stable');
+essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'bb_api_cnab_contracts')->row()->n===0,'native116 never backfills a contract for an existing origin');
+// The current135 runtime keeps the historical116 checks above, then advances
+// through every new native step before any current operational service is used.
+foreach(['1.1.7'=>'117','1.1.8'=>'118','1.1.9'=>'119','1.2.0'=>'120','1.2.1'=>'121','1.2.2'=>'122','1.2.3'=>'123','1.2.4'=>'124','1.2.5'=>'125','1.2.6'=>'126','1.2.7'=>'127','1.2.8'=>'128','1.2.9'=>'129','1.3.0'=>'130','1.3.1'=>'131','1.3.2'=>'132','1.3.3'=>'133','1.3.4'=>'134','1.3.5'=>'135'] as $nativeVersion439=>$nativeStep439){
+    $GLOBALS['CI']->app_modules=new class($nativeVersion439){public function __construct(private string $version){}function get($name){return ['headers'=>['version'=>$this->version]];}};
+    $previousVersion439=$db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version;
+    if($nativeStep439==='130'){
+        $db->failOn='CREATE TABLE IF NOT EXISTS `'.$p.'bb_return_originals`';essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_return_archive_migration_failed','130 DDL failure cannot advance native tracking');$db->failOn=null;
+        essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version===$previousVersion439,'failed130 DDL preserves129 tracking');
+        $db->trans_begin();essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_return_archive_outer_transaction_not_allowed','130 never implicitly commits caller transaction');
+        essentialCheck($db->pdo->inTransaction(),'130 preserves caller transaction');$db->trans_rollback();
+    }
+    if($nativeStep439==='133'){
+        $db->failOn='CREATE TABLE IF NOT EXISTS `'.$p.'bb_return_rejections`';essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_return_rejection_schema_migration_failed','133 DDL failure cannot advance native tracking');$db->failOn=null;
+        essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version===$previousVersion439,'failed133 DDL preserves132 tracking');
+        $db->trans_begin();essentialThrows(fn()=>(new App_module_migration('banco_brasil'))->to_latest(),'bb_return_rejection_schema_outer_transaction_not_allowed','133 refuses caller transaction before DDL');
+        essentialCheck($db->pdo->inTransaction(),'133 preserves caller transaction');$db->trans_rollback();
+    }
+    $db->failVersion=$nativeVersion439;
+    essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===false,'native'.$nativeStep439.' tracking failure cannot authorize current runtime');
+    $db->failVersion=null;
+    essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version===$previousVersion439,'failed'.$nativeStep439.' preserves prior native tracking');
+    essentialCheck((string)(new App_module_migration('banco_brasil'))->to_latest()===$nativeStep439,'native'.$nativeStep439.' retries the exact next published candidate step');
+    essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version===$nativeVersion439,'native'.$nativeStep439.' readback confirms its exact version');
+    essentialCheck((new App_module_migration('banco_brasil'))->to_latest()===true,'native'.$nativeStep439.' replay preserves current tracking');
+}
+essentialCheck($db->query("SELECT installed_version FROM {$p}modules WHERE module_name='banco_brasil'")->row()->installed_version==='1.3.5','final135 marker follows independently verified134');
+$archiveRows131=$db->query('SELECT * FROM '.$p.'bb_return_originals ORDER BY id')->result_array();$beforeArchiveReplay131=count($db->queries);
+\BancoBrasil\ReturnArchiveSchema::upgrade($db,$p);\BancoBrasil\ReturnArchiveSchema::upgrade($db,$p);
+essentialCheck(!array_filter(array_slice($db->queries,$beforeArchiveReplay131),static fn($q)=>preg_match('/^\s*(?:CREATE|ALTER|DROP|TRUNCATE|RENAME)\b/i',$q[0])),'130 reconciler replay validates existing archive without any extra DDL');
+$db->query('ALTER TABLE `'.$p.'bb_return_originals` MODIFY content_hash CHAR(63) NOT NULL');
+try{$beforeArchiveFault131=count($db->queries);essentialThrows(fn()=>\BancoBrasil\ReturnArchiveSchema::upgrade($db,$p),'bb_schema_incompatible','incompatible existing archive is rejected rather than recreated or silently repaired');essentialCheck(!array_filter(array_slice($db->queries,$beforeArchiveFault131),static fn($q)=>preg_match('/^\s*(?:CREATE|ALTER|DROP|TRUNCATE|RENAME)\b/i',$q[0])),'invalid archive rejection performs no DDL');}finally{$db->query('ALTER TABLE `'.$p.'bb_return_originals` MODIFY content_hash CHAR(64) NOT NULL');}
+essentialCheck($db->query('SELECT * FROM '.$p.'bb_return_originals ORDER BY id')->result_array()===$archiveRows131,'archive replay and metadata rejection preserve all original rows');
+essentialCheck((int)$db->query('SELECT COUNT(*) n FROM '.$p.'bb_api_origin_policy')->row()->n===0,'125 never backfills bridge ownership');
+\BancoBrasil\OriginationSchema::assertValid($db,$p);
+$GLOBALS['CI']->app_modules=$realModules;
+unset($db->data_cache['table_names']);
+function bbSyntheticConnection(int $issuer,string $agreement='1234567',string $account='001:00452-3:000000123873-X',string $tax='12345678000195',string $name='Invoice A'):array
+{
+    global $db,$p;
+    $environment='sandbox';$wallet='17';$variation='019';
+    $identity=hash('sha256',json_encode([$issuer,$account,$environment,$agreement,$wallet,$variation],JSON_THROW_ON_ERROR));
+    $configuration=hash('sha256',json_encode([$identity,$tax,$name],JSON_THROW_ON_ERROR));
+    $db->query("INSERT INTO {$p}bb_connections(issuer_id,account_id,environment,agreement_number,wallet,variation,issuer_tax_id,issuer_name,identity_hash,configuration_hash,created_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,7,?)",[$issuer,$account,$environment,$agreement,$wallet,$variation,$tax,$name,$identity,$configuration,date('Y-m-d H:i:s')]);
+    $connection=(int)$db->insert_id();$scope=new \BancoBrasil\Scope($issuer,$connection,$account,$environment,$agreement);
+    $catalog=\BancoBrasil\LayoutCatalog::get(\BancoBrasil\Agreement::LAYOUT_ID);
+    $db->query("INSERT INTO {$p}bb_layout_bindings(issuer_id,connection_id,scope_key,layout_id,profile_hash,connection_hash,remittance_source_hash,return_source_hash,date_window,declared_currency,created_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,7,?)",[$issuer,$connection,$scope->key(),\BancoBrasil\Agreement::LAYOUT_ID,\BancoBrasil\LayoutCatalog::fingerprint(\BancoBrasil\Agreement::LAYOUT_ID),$configuration,$catalog['remittance_sha256'],$catalog['return_sha256'],$catalog['date_window'],$catalog['currency'],date('Y-m-d H:i:s')]);
+    $binding=(int)$db->insert_id();
+    // Explicit operator opt-in in this disposable fixture, never inferred by a migration.
+    $channels=new \BancoBrasil\ChannelPreferences($db,$p);
+    $state=$channels->page($issuer,7);
+    $state=$channels->setEnabled($issuer,7,'api',true,$state['revision']);
+    $channels->setEnabled($issuer,7,'cnab',true,$state['revision']);
+    return [$connection,$binding];
+}
+[$connection,$binding]=bbSyntheticConnection($a);
+$bank=new \BancoBrasil\Origination($db,$p);
+$channels=new \BancoBrasil\ChannelPreferences($db,$p);
+$enabled=$channels->page($a,7);
+essentialCheck($enabled['api']&&$enabled['cnab'],'both channels coexist only after explicit fixture opt-in');
+$contract=['beneficiary_name'=>'INVOICE A','first_number'=>'100','last_number'=>'999','first_file'=>'1','reference'=>'SYNTHETIC CONTRACT ONLY','interest_exempt'=>'1','exclusive_range'=>'1','test_exchange'=>'1'];
+$decl=$bank->declareContract($a,7,$connection,$binding,$contract);
+essentialCheck($bank->declareContract($a,7,$connection,$binding,$contract)===$decl,'same declaration idempotent without resetting range');
+essentialThrows(fn()=>$bank->declareContract($a,7,$connection,$binding,array_replace($contract,['first_number'=>'1'])),'bb_number_range_conflict','cannot rewind existing Nosso Numero counter');
+essentialThrows(fn()=>$bank->declareContract($a,7,$connection,$binding,array_replace($contract,['test_exchange'=>'0'])),'bb_contract_declaration_required','sandbox requires declared bank TESTE interchange');
+essentialThrows(fn()=>$bank->declareContract($b,7,$connection,$binding,$contract),'bb_connection_unavailable','cross company connection ID denied');
+$fresh=$s->create($a,7,$input,str_repeat('9',64));
+$title=['invoice_id'=>$fresh,'payer_name'=>'PRIVATE A','payer_address'=>'SYNTHETIC STREET','payer_district'=>'CENTRO','payer_zip'=>'40000000','payer_city'=>'SALVADOR','payer_state'=>'BA','species'=>'02','acceptance'=>'N'];
+$batch=$bank->generate($a,7,$connection,$binding,'2026-10-19',[$title],str_repeat('b',64));
+essentialCheck($bank->generate($a,7,$connection,$binding,'2026-10-19',[$title],str_repeat('b',64))===$batch,'retry returns same batch and numbers');
+$disabled=$channels->setEnabled($a,7,'cnab',false,$channels->page($a,7)['revision']);
+essentialCheck($disabled['api']&&!$disabled['cnab'],'disabling CNAB leaves API enabled');
+essentialCheck($bank->generate($a,7,$connection,$binding,'2026-10-19',[$title],str_repeat('b',64))===$batch,'disabled CNAB keeps idempotent historical request readable');
+$blocked=$s->create($a,7,$input,str_repeat('7',64));
+essentialThrows(fn()=>$bank->generate($a,7,$connection,$binding,'2026-10-19',[array_replace($title,['invoice_id'=>$blocked])],str_repeat('6',64)),'bb_channel_disabled','disabled CNAB cannot reserve a new obligation');
+essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}bb_origins WHERE invoice_id=?",[$blocked])->row()->n===0,'disabled CNAB leaves no origin or number');
+$channels->setEnabled($a,7,'cnab',true,$disabled['revision']);
+$origin=$db->query("SELECT * FROM {$p}bb_origins WHERE invoice_id=?",[$fresh])->row_array();
+essentialCheck($origin['remote_id']==='12345670000000100'&&(int)$origin['layout_binding_id']===$binding,'immutable bank number and explicit origin profile saved');
+essentialCheck((int)$db->query("SELECT next_number FROM {$p}bb_number_reservations")->row()->next_number===101,'durable reservation advances exactly once');
+essentialThrows(fn()=>$bank->reportTransmission($a,7,$batch,'synthetic evidence'),'bb_batch_unavailable','generation alone does not imply operator downloaded or sent');
+$file=$bank->download($a,7,$batch);$lines=explode("\r\n",substr($file['content'],0,-2));
+essentialCheck(count($lines)===6&&strlen($lines[2])===240&&substr($lines[2],37,17)===$origin['remote_id'],'actual generated P carries own reserved Nosso Numero');
+essentialCheck(substr($lines[4],17,6)==='000004'&&substr($lines[5],23,6)==='000006','actual lot/file counters validated');
+essentialCheck($bank->download($a,7,$batch)===$file,'repeated download returns identical immutable bytes');
+essentialCheck($db->query("SELECT delivery_state FROM {$p}bb_batches WHERE id=?",[$batch])->row()->delivery_state==='downloaded','download is distinct from submission and acceptance');
+$bank->reportTransmission($a,7,$batch,'synthetic operator statement');$bank->reportTransmission($a,7,$batch,'synthetic operator statement');
+essentialCheck((int)$db->query("SELECT COUNT(*) n FROM {$p}bb_batch_actions WHERE batch_id=?",[$batch])->row()->n===1,'operator report idempotent and recorded once');
+essentialCheck($db->query("SELECT financial_state FROM {$p}bb_batches WHERE id=?",[$batch])->row()->financial_state==='not_applied','no bank acceptance or payment inferred from manual statement');
+essentialThrows(fn()=>$bank->reportTransmission($a,7,$batch,'different statement'),'bb_submission_report_conflict','conflicting submission evidence cannot overwrite original');
+essentialThrows(fn()=>$bank->download($b,7,$batch),'bb_batch_unavailable','cross-company batch download denied');
+essentialThrows(fn()=>$s->change($a,7,$fresh,$s->revision($a,7,$fresh)),'company_invoice_provider_review_required','origin blocks local deletion/cancellation');
+essentialThrows(fn()=>$writer->recordCompanyManual($a,7,$fresh,$payment,str_repeat('8',64)),'company_payment_provider_review_required','origin cannot be silently settled manually');
+essentialThrows(fn()=>$bank->generate($a,7,$connection,$binding,'2026-10-19',[$title],str_repeat('c',64)),'bb_invoice_already_bound','new request cannot assign second number to same invoice');
+$second=$s->create($a,7,$input,str_repeat('a',63).'1');$secondTitle=array_replace($title,['invoice_id'=>$second]);
+$broken=new \BancoBrasil\Origination($db,$p,static function(){throw new RuntimeException('synthetic encoder outage');});
+essentialThrows(fn()=>$broken->generate($a,7,$connection,$binding,'2026-10-19',[$secondTitle],str_repeat('d',64)),'bb_generation_unconfirmed_numbers_reserved','post-commit encoder failure preserves reservation');
+$failed=(int)$db->query("SELECT id FROM {$p}bb_batches WHERE generation_state='generation_failed'")->row()->id;
+essentialCheck((int)$db->query("SELECT next_number FROM {$p}bb_number_reservations")->row()->next_number===102,'failed generation does not recycle committed number');
+$bank->finish($a,7,$failed);$retry=$bank->download($a,7,$failed);
+essentialCheck(str_contains($retry['content'],'12345670000000101'),'resume uses original number from immutable snapshot');
+$third=$s->create($a,7,$input,str_repeat('a',63).'2');$thirdTitle=array_replace($title,['invoice_id'=>$third]);
+$db->failOn='INSERT INTO '.$p.'bb_audit';
+essentialThrows(fn()=>$bank->generate($a,7,$connection,$binding,'2026-10-19',[$thirdTitle],str_repeat('e',64)),'issuer_storage_failed','reservation audit failure rolls back entire uncommitted allocation');$db->failOn=null;
+essentialCheck((int)$db->query("SELECT next_number FROM {$p}bb_number_reservations")->row()->next_number===102&&(int)$db->query("SELECT COUNT(*) n FROM {$p}bb_origins WHERE invoice_id=?",[$third])->row()->n===0,'no number or origin escapes failed reservation transaction');
+// Account replacement remains in the same namespace and can never restart its range.
+[$otherConnection,$otherBinding]=bbSyntheticConnection($a,'1234567','001:00452-3:000000123874-X');
+essentialThrows(fn()=>$bank->declareContract($a,7,$otherConnection,$otherBinding,array_replace($contract,['first_number'=>'1'])),'bb_number_range_conflict','account replacement cannot restart agreement sequence');
+$bank->declareContract($a,7,$otherConnection,$otherBinding,$contract);
+$nextBatch=$bank->generate($a,7,$otherConnection,$otherBinding,'2026-10-19',[$thirdTitle],str_repeat('f',64));
+essentialCheck(str_contains($bank->download($a,7,$nextBatch)['content'],'12345670000000102'),'account replacement continues old agreement counter');
+essentialCheck($bank->download($a,7,$batch)===$file,'old batch download never follows new account configuration');
+$db->query("UPDATE {$p}staff SET active=0 WHERE staffid=7");
+essentialThrows(fn()=>$bank->download($a,7,$batch),'bb_origination_access_denied','revoked actor cannot download stored remittance');
+$db->query("UPDATE {$p}staff SET active=1 WHERE staffid=7");
+// Keep the FK intact while removing only the uniqueness property under test.
+$db->query("ALTER TABLE {$p}bb_batch_origins ADD INDEX origin_support(origin_id)");
+$db->query("ALTER TABLE {$p}bb_batch_origins DROP INDEX origin_batch");
+essentialThrows(fn()=>\BancoBrasil\OriginationSchema::assertValid($db,$p),'bb_origination_schema_invalid','missing unique origin constraint fails read-only operational preflight');
+$db->query("ALTER TABLE {$p}bb_batch_origins ADD UNIQUE KEY origin_batch(origin_id)");
+echo 'BB origination: '.$GLOBALS['essentialChecks'].' cumulative native MySQL checks; no transmission or bank homologation.'.PHP_EOL;

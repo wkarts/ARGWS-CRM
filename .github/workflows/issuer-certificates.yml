@@ -1,0 +1,86 @@
+name: Certificados A1 por empresa
+on:
+  pull_request:
+    branches: [main, develop, feat/banco-brasil-billing-cnab240]
+    paths:
+      - application/services/issuers/IssuerCertificate*.php
+      - application/migrations/458_version_458.php
+      - application/migrations/459_version_459.php
+      - application/migrations/460_version_460.php
+      - application/services/EmailTemplateReconciler.php
+      - application/services/EmailTemplatesPtBr.php
+      - application/services/CompanyEmailTemplates.php
+      - application/services/CompanyClientProfileSchema.php
+      - application/services/email_templates_ptbr/**
+      - application/libraries/App.php
+      - application/libraries/App_Migration.php
+      - system/libraries/Migration.php
+      - application/controllers/admin/Settings.php
+      - application/services/NativeCompanySettingsController.php
+      - application/services/NativeCompanySettingsForms.php
+      - application/views/admin/settings/includes/certificates.php
+      - application/views/admin/issuers/certificate_link.php
+      - application/services/CompanyRequestScope.php
+      - tests/certificates/**
+      - tests/companies_certificates_browser.cjs
+      - .github/workflows/issuer-certificates.yml
+  push:
+    branches: [main, develop]
+    paths:
+      - application/services/issuers/IssuerCertificate*.php
+      - application/migrations/458_version_458.php
+      - application/migrations/459_version_459.php
+      - application/migrations/460_version_460.php
+      - application/services/EmailTemplateReconciler.php
+      - application/services/EmailTemplatesPtBr.php
+      - application/services/CompanyEmailTemplates.php
+      - application/services/CompanyClientProfileSchema.php
+      - application/services/email_templates_ptbr/**
+      - application/libraries/App.php
+      - application/libraries/App_Migration.php
+      - system/libraries/Migration.php
+      - tests/certificates/**
+      - .github/workflows/issuer-certificates.yml
+permissions:
+  contents: read
+jobs:
+  offline-and-mysql:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.5']
+    container: php:${{ matrix.php }}-cli
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: synthetic-test-password
+          MYSQL_DATABASE: issuer_a1_tests
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -psynthetic-test-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Preparar extensões de teste
+        run: |
+          apt-get update && apt-get install -y --no-install-recommends libonig-dev libsqlite3-dev openssl util-linux
+          docker-php-ext-install pdo_mysql pdo_sqlite mbstring pcntl
+      - name: Sintaxe, parser offline, cifra autenticada, SQLite e controller
+        run: |
+          for path in application/services/issuers/IssuerCertificate*.php application/controllers/admin/Settings.php application/services/NativeCompanySettingsController.php application/services/NativeCompanySettingsForms.php application/views/admin/settings/includes/certificates.php tests/certificates/*.php; do php -l "$path"; done
+          php tests/certificates/parser.php
+          php tests/certificates/openssl_compatibility.php
+          php tests/certificates/legacy_process_limits.php
+          php tests/certificates/manager.php
+          php tests/certificates/controller.php
+          php tests/certificates/schema_cache.php
+      - name: Replay, atomicidade e concorrência MySQL/InnoDB
+        env:
+          A1_TEST_DSN: mysql:host=mysql;dbname=issuer_a1_tests;charset=utf8mb4
+          A1_TEST_USER: root
+          A1_TEST_PASSWORD: synthetic-test-password
+        run: |
+          php tests/certificates/manager.php
+          php tests/certificates/mysql_concurrency.php
+          php tests/certificates/native_458_mysql.php
+          php tests/certificates/native_460_mysql.php

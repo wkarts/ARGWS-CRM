@@ -1,0 +1,153 @@
+{
+  "sha": "b9d7a2f74881e7f0faf01aa4b9f8e0365309a148",
+  "source": "Raw GitHub REST actions/runs; the normalized wrapper returned cached in_progress values after jobs completed.",
+  "terminal": {
+    "distinct_workflows": 16,
+    "success": 14,
+    "failure": 2
+  },
+  "workflows": [
+    {
+      "id": 39398438573,
+      "name": "Containers ARGWS CRM",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398438573",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398438972,
+      "name": "Integridade das stacks ARGWS CRM",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398438972",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398438960,
+      "name": "ARGWS CRM Deployer - binários e releases",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398438960",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398439301,
+      "name": "Calendario das faturas recorrentes",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398439301",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398438759,
+      "name": "Ponte opcional PIGE",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398438759",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398439206,
+      "name": "Empresas no núcleo",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398439206",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398439213,
+      "name": "Interface CRM e catálogo de pagamentos",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398439213",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398438785,
+      "name": "Origem e remocao segura Asaas",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398438785",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398439185,
+      "name": "Regras recorrentes independentes",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398439185",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398438756,
+      "name": "Rota segura callback Asaas",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398438756",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398480295,
+      "name": "Versão e migrations dos módulos",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398480295",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398438975,
+      "name": "Banco do Brasil module",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398438975",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398480172,
+      "name": "Versão e migrations do núcleo",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398480172",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398438707,
+      "name": "Aviso de atualização do painel",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398438707",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398438752,
+      "name": "Barreiras de privacidade de clientes",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398438752",
+      "run_attempt": 1
+    },
+    {
+      "id": 39398439125,
+      "name": "Barreiras de escopo de faturas",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/wkarts/ARGWS-CRM/actions/runs/39398439125",
+      "run_attempt": 1
+    }
+  ],
+  "failures": [
+    {
+      "run_id": 39398439206,
+      "job_id": 118546859104,
+      "cause": "pdftotext binary unavailable in php8.5 test container; new sales line PDF assertions required Poppler",
+      "forward_fix": "Install poppler-utils in the disposable issuer test container; retain all real PDF assertions; validate in441"
+    },
+    {
+      "run_id": 39398438972,
+      "job_id": 118546858313,
+      "cause": "Historical Asaas refund HTTP fixture required exact152 despite native153 installed",
+      "forward_fix": "Fixture must validate current trusted module target exactly and preserve historical152/153 schemas, with real HTTP regression in441"
+    }
+  ]
+}

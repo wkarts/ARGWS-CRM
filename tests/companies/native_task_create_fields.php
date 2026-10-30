@@ -1,0 +1,24 @@
+<?php
+require __DIR__.'/native_task_form_writer.php';require_once APPPATH.'services/NativeCompanyCustomFields.php';require_once APPPATH.'services/NativeCompanyResourceTags.php';
+NativeCompanyCustomFieldSchema::ensure($db,$p);NativeCompanyWorkTagsSchema::ensure($db,$p);
+$seed=file_get_contents(dirname(__DIR__,2).'/install/database.sql');foreach(['tags','taggables']as$table)if(!$db->table_exists($p.$table)){
+ if(!preg_match('/CREATE TABLE `tbl'.preg_quote($table,'/').'` \(.*?\) ENGINE=InnoDB[^;]*;/s',$seed,$m))throw new RuntimeException('Native schema missing');$sql=str_replace('`tbl'.$table.'`','`'.$p.$table.'`',$m[0]);$sql=str_replace('`id` int NOT NULL,','`id` '.($db->driver()==='mysql'?'int NOT NULL AUTO_INCREMENT PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT').',',$sql);if($db->driver()==='sqlite')$sql=preg_replace('/ CHARACTER SET [A-Za-z0-9_]+ COLLATE [A-Za-z0-9_]+/','',$sql);$db->query($sql);
+}
+$definition=NativeCompanyCustomFields::definition(['fieldto'=>'tasks','name'=>'Required task code','type'=>'input','required'=>1]);$db->query('INSERT INTO '.$p.'company_custom_fields(issuer_id,fieldto,slug,definition_json,revision) VALUES(?,?,?,?,1)',[$a,'tasks','required_task_code',json_encode($definition,JSON_THROW_ON_ERROR)]);$fieldId=NativeCompanyResourceId::encode('company_custom_field',(int)$db->insert_id());
+$decorations=['assignees'=>[92],'tags'=>['Actual task tag'],'custom_fields'=>[$fieldId=>'Actual task value']];$fieldReader=new NativeCompanyCustomFields($db,$p);$tagReader=new NativeCompanyResourceTags($db,$p);
+foreach(['project'=>[$tasks,$input,$fields,'company_task'],'standalone'=>[$standalone,$standInput,$standFields,'company_standalone_task']]as$kind=>[$writer,$body,$form,$source]){
+ $created=$writer->createNative($a,92,$body,$form,$key('created-fields-'.$kind),$decorations);$canonical=NativeCompanyResourceId::encode($source,$created);
+ essentialCheck(($fieldReader->values($a,92,'tasks',$canonical)[$fieldId]??null)==='Actual task value','Create-only custom field bound to exact '.$kind.' source');
+ essentialCheck(array_column($tagReader->read($a,92,'task',$canonical)['tags'],'name')===['Actual task tag'],'Create-only tags use existing owned catalog for '.$kind);
+ essentialThrows(fn()=>$writer->createNative($a,92,$body,$form,$key('missing-fields-'.$kind),array_replace($decorations,['custom_fields'=>[]])),'native_custom_field_required','Required field enforced for '.$kind);
+ essentialThrows(fn()=>$fieldReader->saveCreatedTaskInOwnedTransaction($a,92,$source,$created,[],new stdClass()),'native_task_creation_proof_denied','Fabricated field creation proof denied for '.$kind);
+ essentialThrows(fn()=>$tagReader->createTaskTagsInOwnedTransaction($a,92,$source,$created,[],new stdClass()),'native_task_creation_proof_denied','Fabricated tag creation proof denied for '.$kind);
+ $table=$kind==='project'?'company_tasks':'company_standalone_tasks';$before=$db->query('SELECT * FROM '.$p.$table.' ORDER BY id')->result_array();$links=$db->query('SELECT * FROM '.$p.'company_work_tag_links ORDER BY source_kind,source_id,tag_id')->result_array();
+ $db->failOn='INSERT INTO '.$p.'company_custom_field_values';essentialThrows(fn()=>$writer->createNative($a,92,$body,$form,$key('failed-fields-'.$kind),$decorations),'issuer_storage_failed','Late field failure rejects '.$kind);$db->failOn=null;
+ essentialCheck($db->query('SELECT * FROM '.$p.$table.' ORDER BY id')->result_array()===$before&&$db->query('SELECT * FROM '.$p.'company_work_tag_links ORDER BY source_kind,source_id,tag_id')->result_array()===$links,'Late failure rolls back canonical task and earlier tag link for '.$kind);
+}
+$beforeTasks=$db->query('SELECT * FROM '.$p.'company_tasks ORDER BY id')->result_array();$beforeMembers=$db->query('SELECT * FROM '.$p.'company_task_assignees ORDER BY issuer_id,task_id,staff_id')->result_array();
+$db->query('CREATE TRIGGER '.$p.'task_members_after_fields AFTER INSERT ON '.$p.'company_custom_field_values FOR EACH ROW BEGIN UPDATE '.$p."company_task_assignees SET active=0 WHERE NEW.source_kind='company_task' AND issuer_id=NEW.issuer_id AND task_id=NEW.source_id; END");
+try{essentialThrows(fn()=>$tasks->createNative($a,92,$input,$fields,$key('late-member-tamper'),$decorations),'issuer_project_write_unconfirmed','Late custom-field write cannot conceal earlier assignee mutation');}finally{$db->query('DROP TRIGGER '.$p.'task_members_after_fields');}
+essentialCheck($db->query('SELECT * FROM '.$p.'company_tasks ORDER BY id')->result_array()===$beforeTasks&&$db->query('SELECT * FROM '.$p.'company_task_assignees ORDER BY issuer_id,task_id,staff_id')->result_array()===$beforeMembers,'Known late mutation rolls back task and all assignees');
+echo 'Native task create-only fields and tags: '.$GLOBALS['essentialChecks'].' cumulative checks passed.'.PHP_EOL;

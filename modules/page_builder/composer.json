@@ -1,0 +1,5 @@
+{
+    "require": {
+        "symfony/html-sanitizer": "^6.3"
+    }
+}

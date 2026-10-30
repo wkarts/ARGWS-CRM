@@ -1,0 +1,88 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<?php init_head(); ?>
+<?php
+$scopedDashboard=isset($company_dashboard)||!empty($company_dashboard_selection_required);
+$dashboardData=$company_dashboard??null;
+$renderDashboard=function(string $container) use($scopedDashboard,$dashboardData) {
+    if (!$scopedDashboard) { render_dashboard_widgets($container); return; }
+    if($dashboardData===null)return;
+    // Same native widget files/positions, but no global/module hook registry or eager hidden queries.
+    $widgets=['top-12'=>['top_stats'],'left-8'=>['finance_overview','user_data','upcoming_events','calendar','payments_chart','contracts_expiring','tickets_report'],
+        'right-4'=>['todos','leads_chart','projects_chart','tickets_chart','projects_activity']];
+    $ordered=$dashboardData['widget_order'];$assigned=[];foreach($ordered as $ids)foreach($ids as $id)$assigned[substr($id,7)]=true;
+    $names=array_map(static fn($id)=>substr($id,7),$ordered[$container]??[]);
+    foreach($widgets[$container]??[] as $widget)if(!isset($assigned[$widget]))$names[]=$widget;
+    foreach($names as $widget)$this->load->view('admin/dashboard/widgets/'.$widget,array_merge($dashboardData['view'],['company_dashboard'=>$dashboardData]));
+};
+?>
+<div id="wrapper">
+    <?php if (empty($company_dashboard_selection_required)) { ?><div class="screen-options-area"></div>
+    <div class="screen-options-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+            class="tw-w-5 tw-h-5 ltr:tw-mr-1 rtl:tw-ml-1">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+
+        <?= _l('dashboard_options'); ?>
+    </div>
+    <?php } ?><div class="content">
+        <div class="row">
+            <?php $this->load->view('admin/includes/alerts'); ?>
+            <?php if (!empty($native_database_upgrade_success)) { ?><div class="col-md-12"><div class="alert alert-success" role="status">O CRM foi atualizado com sucesso.</div></div><?php } ?>
+            <?php if(!empty($company_dashboard_selection_required)) { ?><div class="col-md-12"><div class="alert alert-info" role="status">Selecione uma empresa no menu para consultar o painel. Nenhum dado de empresa foi carregado.</div></div><?php } ?>
+
+            <?php if (!$scopedDashboard) { hooks()->do_action('before_start_render_dashboard_content'); } ?>
+
+            <div class="clearfix"></div>
+
+            <div class="col-md-12 mtop20" data-container="top-12">
+                <?php $renderDashboard('top-12'); ?>
+            </div>
+
+            <?php if (!$scopedDashboard) { hooks()->do_action('after_dashboard_top_container'); } ?>
+
+            <div class="col-md-6" data-container="middle-left-6">
+                <?php $renderDashboard('middle-left-6'); ?>
+            </div>
+            <div class="col-md-6" data-container="middle-right-6">
+                <?php $renderDashboard('middle-right-6'); ?>
+            </div>
+
+            <?php if (!$scopedDashboard) { hooks()->do_action('after_dashboard_half_container'); } ?>
+
+            <div class="col-md-8" data-container="left-8">
+                <?php $renderDashboard('left-8'); ?>
+            </div>
+            <div class="col-md-4" data-container="right-4">
+                <?php $renderDashboard('right-4'); ?>
+            </div>
+
+            <div class="clearfix"></div>
+
+            <div class="col-md-4" data-container="bottom-left-4">
+                <?php $renderDashboard('bottom-left-4'); ?>
+            </div>
+            <div class="col-md-4" data-container="bottom-middle-4">
+                <?php $renderDashboard('bottom-middle-4'); ?>
+            </div>
+            <div class="col-md-4" data-container="bottom-right-4">
+                <?php $renderDashboard('bottom-right-4'); ?>
+            </div>
+
+            <?php if (!$scopedDashboard) { hooks()->do_action('after_dashboard'); } ?>
+        </div>
+    </div>
+</div>
+<script>
+    <?php if(!empty($native_calendar)){ ?>window.nativeCalendarConfig=<?= json_encode($native_calendar_config,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_THROW_ON_ERROR); ?>;<?php }else{ ?>
+    app.calendarIDs = '<?= json_encode($google_ids_calendars ?? []); ?>';
+    <?php } ?>
+</script>
+<?php init_tail(); ?>
+<?php if(!$scopedDashboard || (!empty($native_calendar) && !empty($company_dashboard['permissions']['calendar'])))$this->load->view('admin/utilities/calendar_template'); ?>
+<?php $this->load->view('admin/dashboard/dashboard_js'); ?>
+</body>
+
+</html>

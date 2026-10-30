@@ -1,0 +1,312 @@
+'use strict';
+const { workspacePage } = require('./helpers/native_workspace_driver.cjs');
+
+const { selectCompanyOption } = require('./helpers/native_selector_driver.cjs');
+// Actual CRM/HTTP/MySQL/browser, exclusively on the disposable standalone-upgrade fixture.
+const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
+const fs = require('node:fs');
+const { chromium } = require('playwright');
+const url = process.env.ISSUERS_BROWSER_URL;
+const app = process.env.ISSUERS_BROWSER_APP_CONTAINER;
+const db = process.env.ISSUERS_BROWSER_DB_CONTAINER;
+assert.match(url || '', /^http:\/\/127\.0\.0\.1:\d+$/);
+assert.match(app || '', /^argws-crm-upgrade-\d+$/);
+assert.match(db || '', /^argws-crm-provision-db-\d+$/);
+assert.equal(process.env.ISSUERS_BROWSER_DB_NAME, 'argws_upgrade_ci');
+const output = process.env.ISSUERS_BROWSER_ARTIFACTS || '/tmp/issuer-browser-evidence';
+fs.mkdirSync(output, { recursive: true });
+function sql(query) {
+  return execFileSync('docker', ['exec', '-e', 'MYSQL_PWD', db, 'mysql', '--protocol=tcp', '--host=127.0.0.1', '--user=' + process.env.ISSUERS_BROWSER_DB_USER, 'argws_upgrade_ci', '--batch', '--skip-column-names', '-e', query],
+    { env: { ...process.env, MYSQL_PWD: process.env.ISSUERS_BROWSER_DB_PASSWORD }, encoding: 'utf8' }).trim();
+}
+async function login(page, email, password) {
+  await page.goto(url + '/admin/authentication');
+  await page.locator('input[name=email]').fill(email);
+  await page.locator('input[name=password]').fill(password);
+  await navigate(page, page.locator('button[type=submit]'));
+}
+async function navigate(page, button) {
+  await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), button.click()]);
+}
+async function hidden(page) {
+  return page.locator('input[type=hidden]').evaluateAll(inputs => Object.fromEntries(inputs.filter(x => x.name && !x.name.startsWith('wizard[')).map(x => [x.name, x.value])));
+}
+async function next(page) { await navigate(page, page.locator('section form button[type=submit]')); }
+
+(async () => {
+  const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
+  const context = await browser.newContext({ viewport: { width: 1280, height: 960 } });
+  await context.route('**/*', route => new URL(route.request().url()).origin === url ? route.continue() : route.abort());
+  const page = await workspacePage(context);
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  try {
+    await login(page, 'admin-ci@example.invalid', process.env.ISSUERS_BROWSER_PASSWORD);
+    assert.equal(sql('SELECT COUNT(*) FROM tblissuers_installation_identity WHERE master_staff_id IS NULL'), '1');
+    assert.equal((await context.request.get(url + '/admin/company_master')).status(),404,'retired responsibility page has no remaining route or template');
+    await page.goto(url + '/admin/issuers');
+    assert.equal((await context.request.get(url + '/argws_provisioning/authorize_company_master/17')).status(), 404, 'console authorization has no HTTP entry point');
+    assert.equal(await page.locator('#authorization_code, #current_password').count(), 0, 'retired wizard has no hosting code/password fields');
+    assert.equal((await context.request.get(url + '/argws_provisioning/original_administrator/17/apply')).status(), 404, 'maintenance has no HTTP entry point');
+    const inspect = JSON.parse(execFileSync('docker', ['exec', app, 'php', 'index.php', 'argws_provisioning', 'original_administrator', '17', 'inspect'], {encoding:'utf8'}));
+    assert.equal(inspect.status, 'unresolved');
+    const applyArgs = ['exec', app, 'php', 'index.php', 'argws_provisioning', 'original_administrator', '17', 'apply', String(inspect.primary_issuer_id), 'test:explicit-owner-confirmation'];
+    execFileSync('docker', applyArgs, {encoding:'utf8'});
+    execFileSync('docker', applyArgs, {encoding:'utf8'});
+    assert.equal(sql("SELECT CONCAT(master_staff_id,':',source) FROM tblissuers_installation_identity WHERE id=1"), '17:owner_attestation');
+    assert.equal(sql("SELECT COUNT(*) FROM tblissuers_audit WHERE event='original_admin_attested'"), '1', 'maintenance replay is idempotent');
+    await page.goto(url + '/admin/issuers');
+    assert.equal(await page.locator('[data-new-company]').count(), 1, 'confirmed original administrator can create companies without legacy wizard');
+
+    // Native Staff GUI first rejects missing company access, then creates a usable employee.
+    async function fillStaff() {
+      await page.locator('input[name=firstname]').fill('Synthetic');
+      await page.locator('input[name=lastname]').fill('Onboarding');
+      await page.locator('input[name=email]').fill('onboarding-ci@example.invalid');
+      await page.locator('input[name=password]').fill('synthetic-staff-onboarding');
+      const welcome = page.locator('input[name=send_welcome_email]'); if (await welcome.count()) await welcome.uncheck();
+    }
+    await page.goto(url + '/admin/staff/member'); await fillStaff();
+    await navigate(page, page.locator('form').filter({ has: page.locator('input[name=firstname]') }).locator('button[type=submit]'));
+    assert.equal(sql("SELECT COUNT(*) FROM tblstaff WHERE email='onboarding-ci@example.invalid'"), '0', 'no inaccessible employee silently created');
+    await fillStaff();
+    await page.locator('a[href="#staff_permissions"]').click();
+    const primary = sql('SELECT primary_issuer_id FROM tblissuers_installation_identity WHERE id=1');
+    await page.locator('#issuer-membership-' + primary).check();
+    await page.locator('#issuer_default').selectOption(primary);
+    await navigate(page, page.locator('form').filter({ has: page.locator('input[name=firstname]') }).locator('button[type=submit]'));
+    const employee = sql("SELECT staffid FROM tblstaff WHERE email='onboarding-ci@example.invalid'");
+    assert.match(employee, /^[1-9]\d*$/);
+    assert.equal(sql('SELECT issuer_id FROM tblissuers_staff_defaults WHERE staff_id=' + employee), primary);
+
+    // Real authenticated pages, not HTML fixtures or presentation overrides.
+    // A temporary mobile tab preserves the main workflow's viewport and draft state.
+    async function captureWizardActions(host, frame, filename) {
+      // Real keyboard traversal must reveal the form actions within the scrollable iframe.
+      await frame.locator('#profile_company_state_registration').press('Tab');
+      const submit = frame.locator('button[type=submit]');
+      assert.equal(await submit.evaluate(el => el === document.activeElement), true, 'Tab reaches Save and continue');
+      await submit.press('Tab');
+      assert.equal(await frame.locator('[data-wizard-close]').evaluate(el => el === document.activeElement), true, 'Tab reaches Exit without submitting');
+      for (const control of [submit, frame.locator('[data-wizard-close]')]) {
+        assert.equal(await control.evaluate(el => { const r=el.getBoundingClientRect();return r.top>=0 && r.bottom<=innerHeight+1 && r.left>=0 && r.right<=innerWidth+1; }), true, 'wizard actions are fully reachable inside the iframe');
+      }
+      await host.screenshot({ path: output + '/' + filename, fullPage: true });
+    }
+    async function captureMobileCompanyPage(path, filename, showWizard = false) {
+      const mobilePage = await context.newPage();
+      mobilePage.on('pageerror', error => errors.push(error.message));
+      try {
+        await mobilePage.setViewportSize({ width: 390, height: 844 });
+        await mobilePage.goto(url + path);
+        await mobilePage.waitForFunction(() => document.body.classList.contains('page-small'));
+        if (showWizard) {
+          await mobilePage.locator('#company-create-modal').waitFor({ state: 'visible' });
+          await mobilePage.frameLocator('iframe[name="company-create-frame"]').locator('#legal_name').waitFor();
+        } else {
+          await mobilePage.locator('[data-company-registry]').waitFor();
+        }
+        await mobilePage.screenshot({ path: output + '/' + filename, fullPage: true });
+        if (showWizard) await captureWizardActions(mobilePage, mobilePage.frameLocator('iframe[name="company-create-frame"]'), 'company-onboarding-actions-mobile.png');
+      } finally { await mobilePage.close(); }
+    }
+    await page.goto(url + '/admin/issuers');
+    await page.locator('[data-company-registry]').waitFor();
+    await page.screenshot({ path: output + '/company-registry-desktop.png', fullPage: true });
+    await captureMobileCompanyPage('/admin/issuers', 'company-registry-mobile.png');
+    await page.goto(url + '/admin/issuers/onboarding');
+    await page.locator('#company-create-modal').waitFor({state:'visible'});
+    let wizard = page.frame({name:'company-create-frame'});
+    await wizard.locator('section form button[type=submit]').waitFor();
+    await next(wizard);
+    await wizard.locator('#legal_name').waitFor();
+    await page.screenshot({ path: output + '/company-onboarding-identity-desktop.png', fullPage: true });
+    await captureWizardActions(page, wizard, 'company-onboarding-actions-desktop.png');
+    await captureMobileCompanyPage('/admin/issuers/onboarding', 'company-onboarding-identity-mobile.png', true);
+    const draftUrl = wizard.url();
+    await wizard.locator('#legal_name').fill('Synthetic company B');
+    await wizard.locator('#tax_id').fill('52998224725');
+    await wizard.locator('a[href="#company-address"]').click(); await wizard.locator('#profile_invoice_company_city').fill('Synthetic B');
+    await next(wizard);
+    const stale = await hidden(wizard);
+    const denied = await context.request.post(draftUrl, { form: { ...stale, action: 'advance', revision: '0', step: '1', 'wizard[legal_name]': 'Stale overwrite', 'wizard[tax_id]': '52998224725' } });
+    assert.equal(denied.status(), 409, 'stale draft cannot overwrite newer revision');
+    assert.equal(denied.headers()['cache-control'], 'no-store', 'onboarding errors send a valid no-store header');
+    assert.equal(denied.headers()['x-frame-options'], 'SAMEORIGIN', 'onboarding errors retain the modal framing boundary');
+    await page.goto(url + '/admin/issuers');
+    await page.goto(url + '/admin/issuers/onboarding');
+    await page.locator('#company-create-modal').waitFor({state:'visible'});
+    wizard = page.frame({name:'company-create-frame'});
+    await wizard.locator('#dateformat').waitFor();
+    assert.equal(await wizard.locator('#dateformat').count(), 1, 'interrupted wizard resumes saved step');
+    await next(wizard);
+    await wizard.locator('[name="wizard[selected_staff][' + employee + ']"]').check();
+    await wizard.locator('#default_' + employee).selectOption('1');
+    await wizard.locator('[name="wizard[staff][' + employee + '][resources][settings][]"][value=view]').check();
+    await next(wizard); await next(wizard);
+    assert((await wizard.locator('section').innerText()).includes('Synthetic company B'));
+    const completion = await hidden(wizard);
+    await next(wizard);
+    assert((await wizard.locator('[role=status]').innerText()).includes('Empresa criada'));
+    const created = sql("SELECT id FROM tblissuers_registry WHERE tax_id='52998224725'");
+    assert.match(created, /^[1-9]\d*$/);
+    const repeat = await context.request.post(draftUrl, { form: { ...completion, ...(await hidden(wizard)), action: 'complete', revision: completion.revision } });
+    assert.equal(repeat.status(), 200, 'completion retry returns existing company');
+    assert.equal(sql("SELECT COUNT(*) FROM tblissuers_registry WHERE tax_id='52998224725'"), '1');
+    assert.equal(sql('SELECT issuer_id FROM tblissuers_staff_defaults WHERE staff_id=' + employee), created);
+    assert.equal(sql('SELECT COUNT(*) FROM tblissuers_staff WHERE staff_id=' + employee + ' AND issuer_id IN (' + primary + ',' + created + ')'), '2', 'existing company membership retained');
+    await page.screenshot({ path: output + '/company-onboarding-completed.png', fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    const beforeMobileResize = await page.evaluate(() => ({ bodyClass: document.body.className, width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
+    // The native primary-company shell moves #wrapper only after its resize handler
+    // adds page-small. Viewport emulation alone does not await that browser event.
+    await page.waitForFunction(() => document.body.classList.contains('page-small'));
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const mobileLayout = await page.evaluate(() => ({
+      bodyClass: document.body.className, width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+      overflowing: Array.from(document.querySelectorAll('body *')).map(element => {
+        const rect = element.getBoundingClientRect();
+        return { tag: element.tagName, id: element.id, classes: element.getAttribute('class'), left: rect.left, right: rect.right, width: rect.width, height: rect.height };
+      }).filter(rect => rect.width > 0 && rect.height > 0 && rect.right > innerWidth + 1).slice(0, 20),
+    }));
+    const wizardMobileLayout = await wizard.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
+    fs.writeFileSync(output + '/company-onboarding-mobile-layout.json', JSON.stringify({ beforeMobileResize, mobileLayout, wizardMobileLayout }, null, 2));
+    await page.screenshot({ path: output + '/company-onboarding-completed-mobile.png', fullPage: true });
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'wizard fits mobile: ' + JSON.stringify(mobileLayout));
+    assert(wizardMobileLayout.scrollWidth <= wizardMobileLayout.width + 1, 'wizard document fits its mobile iframe');
+    // Closing first cleans the URL with replaceState, then reloads the registry.
+    // Wait for the real main-document response, not that same-document URL change.
+    const [registryResponse] = await Promise.all([
+      page.waitForResponse(response => response.request().isNavigationRequest()
+        && response.request().frame() === page.mainFrame()
+        && response.request().resourceType() === 'document'
+        && response.url() === url + '/admin/issuers'),
+      wizard.locator('[data-wizard-close]').click(),
+    ]);
+    assert.equal(registryResponse.status(), 200, 'completion reloads the authorized registry');
+    await registryResponse.finished();
+    await page.locator('.company-selector [data-company-choice="' + created + '"]').waitFor({ state: 'attached' });
+    await page.waitForLoadState('load');
+    assert.equal(page.url(), url + '/admin/issuers');
+    const oldContext = completion._company_context;
+    await selectCompanyOption(page, created);
+
+    const switched = await hidden(page);
+    const staleCompany = await context.request.post(draftUrl, { form: { ...completion, ...switched, action: 'complete', _company_context: oldContext } });
+    assert.equal(staleCompany.status(), 409, 'company switch refuses old-tab submission before mutation');
+    const invoiceTableResponse = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === '/admin/invoices/table');
+    const invoiceTotalsResponse = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === '/admin/invoices/get_invoices_total');
+    assert.equal((await page.goto(url + '/admin/invoices')).status(), 200, 'adapted original invoice directory renders for the newly created company');
+    const invoiceTable = await invoiceTableResponse;
+    assert.equal(invoiceTable.status(), 200, 'official invoice DataTable finishes its authenticated request');
+    const invoiceRows = await invoiceTable.json();
+    assert.equal(invoiceRows.iTotalRecords, 0, 'new company invoice table contains no other company history');
+    assert.deepEqual(invoiceRows.aaData, [], 'new company invoice table returns the original empty row protocol');
+    const invoiceTotals = await invoiceTotalsResponse;
+    assert.equal(invoiceTotals.status(), 200, 'official invoice summary renders with the real formatting helpers');
+    assert((await invoiceTotals.text()).includes('Faturas Pagas'), 'actual summary partial is rendered before leaving the directory');
+    assert.equal(await page.locator('table.table-invoices').count(), 1, 'invoice directory renders its official DataTable');
+    assert.equal(await page.locator('#wrapper .content').count(), 1, 'invoice directory uses one official CRM content root');
+    assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), created, 'invoice directory retains the selected company');
+    assert.equal((await page.goto(url + '/admin/staff')).status(), 200, 'adapted original Staff route is available in the newly created company');
+    assert.equal(await page.locator('.company-selector').getAttribute('data-company-current'), created, 'original Staff retains the newly selected company');
+    assert.equal(await page.locator('#wrapper .content').count(), 1, 'adapted Staff uses one official CRM content root');
+    assert.equal(await page.locator('[data-company-workspace]').count(), 0, 'adapted Staff contains no parallel workspace');
+
+    // Positive isolated customer directory, with actual HTTP/CSRF and durable receipts.
+    async function switchCompany(id) {
+      await page.goto(url + '/admin/');
+      await selectCompanyOption(page, id);
+
+    }
+    async function formFields(form) {
+      return form.locator('input[type=hidden]').evaluateAll(inputs => Object.fromEntries(inputs.filter(x => x.name).map(x => [x.name, x.value])));
+    }
+    await page.goto(url + '/admin/clients/client');
+    // Create through the original Clients profile and its real footer action.
+    let customerForm = page.locator('form.client-form');
+    await page.locator('#company').fill('Synthetic private B <script>');
+    const createFields = await formFields(customerForm);
+    // Replay the complete original payload: supplementary profile fields participate in its receipt hash.
+    const createPayload = await customerForm.evaluate(form => Object.fromEntries(new FormData(form).entries()));
+    await navigate(page, page.locator('#profile-save-section .only-save'));
+    const customer = sql("SELECT userid FROM tblclients WHERE company='Synthetic private B <script>'");
+    assert.match(customer, /^[1-9]\d*$/);
+    await page.goto(url + '/admin/clients/client');
+    const currentFields = await formFields(page.locator('form.client-form'));
+    const retried = await context.request.post(url + '/admin/clients/client', { form: { ...createPayload, ...currentFields, request_key: createFields.request_key } });
+    assert.equal(retried.status(), 200);
+    assert.equal(sql("SELECT COUNT(*) FROM tblclients WHERE company='Synthetic private B <script>'"), '1');
+    // Lookup fields legitimately load scripts inside this section. Check the user-owned
+    // identity itself, so executable markup cannot hide behind a global script count.
+    await page.goto(url + '/admin/clients/client/' + customer);
+    const customerTitle = page.locator('h4 .tw-truncate').filter({ hasText: 'Synthetic private B <script>' });
+    assert.equal(await customerTitle.count(), 1, 'created customer appears exactly once in the official profile title');
+    assert((await customerTitle.textContent()).includes('Synthetic private B <script>'), 'customer identity remains literal text');
+    assert.equal(await customerTitle.locator('script').count(), 0, 'customer name creates no executable node');
+    assert.match(await customerTitle.innerHTML(), /&lt;script&gt;/, 'customer markup is escaped');
+    assert.equal(await page.locator('#company').inputValue(), 'Synthetic private B <script>', 'official edit field preserves the literal identity');
+    customerForm = page.locator('form.client-form');
+    assert.equal(new URL(await customerForm.getAttribute('action')).pathname, '/admin/clients/client/' + customer, 'original edit form targets its existing customer ID');
+    const beforeEdit = await customerForm.evaluate(form => Object.fromEntries(new FormData(form).entries()));
+    assert.equal(Object.keys(beforeEdit).some(name => /^DataTables_.*_length$/.test(name)), false, 'embedded table pagination is not submitted as customer profile data');
+    await page.locator('#company').fill('Synthetic private B updated');
+    await navigate(page, page.locator('#profile-save-section .only-save'));
+    assert.equal(sql('SELECT company FROM tblclients WHERE userid=' + customer), 'Synthetic private B updated', 'original profile POST must commit before testing a stale form');
+    const currentEdit = await formFields(page.locator('form.client-form'));
+    assert.notEqual(currentEdit.revision, beforeEdit.revision, 'successful edit must rotate the persisted profile revision');
+    // Preserve the old full form, refreshing only the CSRF/context transport metadata.
+    const stalePayload = { ...beforeEdit, company: 'Forbidden stale edit' };
+    for (const [name, value] of Object.entries(currentEdit)) if (name !== 'revision' && name !== 'native_customer_fields_revision' && (name.includes('csrf') || name === '_company_context')) stalePayload[name] = value;
+    const staleEdit = await context.request.post(url + '/admin/clients/client/' + customer, { form: stalePayload, maxRedirects: 0 });
+    assert.equal(staleEdit.status(), 409, 'stale full profile must fail before redirect or mutation');
+    assert.equal(sql('SELECT company FROM tblclients WHERE userid=' + customer), 'Synthetic private B updated', 'rejected stale request preserves current identity');
+    const share = page.locator('#native-customer-sharing form');
+    await share.locator('input[name="targets[]"][value="' + primary + '"]').check();
+    await navigate(page, share.locator('button[type=submit]'));
+    await switchCompany(primary);
+    await page.goto(url + '/admin/clients/client/' + customer);
+    assert.equal(await page.locator('#company').isEditable(), false, 'shared identity is read only');
+    assert.equal(await page.locator('#company').inputValue(), 'Synthetic private B updated');
+    await page.goto(url + '/admin/clients/client');
+    const foreignWrite = await context.request.post(url + '/admin/clients/client/' + customer, { form: { ...(await formFields(page.locator('form.client-form'))), revision: 'a'.repeat(64), company: 'Cross company' } });
+    assert.equal(foreignWrite.status(), 403);
+    await switchCompany(created);
+    await page.goto(url + '/admin/clients/client/' + customer);
+    const revoke = page.locator('#native-customer-sharing form');
+    await revoke.locator('input[name="targets[]"][value="' + primary + '"]').uncheck();
+    await navigate(page, revoke.locator('button[type=submit]'));
+    const oldCustomerContext = await formFields(page.locator('form.client-form'));
+    await switchCompany(primary);
+    assert.equal((await context.request.get(url + '/admin/clients/client/' + customer)).status(), 404, 'revoked identity no longer readable by direct ID');
+    await page.goto(url + '/admin/clients/client');
+    const switchedFields = await formFields(page.locator('form.client-form'));
+    const staleCustomer = await context.request.post(url + '/admin/clients/client/' + customer, { form: { ...oldCustomerContext, ...switchedFields, _company_context: oldCustomerContext._company_context, company: 'Old tab' } });
+    assert.equal(staleCustomer.status(), 409, 'old company token denied before customer write');
+    await page.goto(url + '/admin/clients');
+    const search = page.locator('#clients_filter input[type=search]');
+    await search.waitFor({ state: 'visible' });
+    const filtered = page.waitForResponse(response => {
+      if (response.request().method() !== 'POST' || !response.url().includes('/admin/clients/table')) return false;
+      return new URLSearchParams(response.request().postData() || '').get('search[value]') === 'Synthetic private B updated';
+    });
+    await search.fill('Synthetic private B updated');
+    await search.press('Enter');
+    assert.equal((await filtered).status(), 200);
+    assert.equal(await page.locator('#clients tbody a').filter({ hasText: 'Synthetic private B updated' }).count(), 0, 'official search excludes private other-company identity');
+    assert.equal((await context.request.get(url + '/admin/clients/client/' + customer)).status(), 404, 'official reader stays closed to revoked private identity');
+    await page.screenshot({ path: output + '/company-clients-directory.png', fullPage: true });
+    const regular = await browser.newContext();
+    await regular.route('**/*', route => new URL(route.request().url()).origin === url ? route.continue() : route.abort());
+    const employeePage = await regular.newPage();
+    employeePage.on('pageerror', error => errors.push(error.message));
+    await login(employeePage, 'onboarding-ci@example.invalid', 'synthetic-staff-onboarding');
+    assert.equal((await regular.request.get(draftUrl)).status(), 403, 'employee cannot access master draft by URL');
+    assert.equal((await employeePage.goto(url + '/admin/settings?group=company')).status(), 200, 'positive secondary settings access');
+    sql('UPDATE tblissuers_staff SET can_view=0 WHERE staff_id=' + employee + ' AND issuer_id=' + created);
+    assert.equal((await regular.request.get(url + '/admin/settings?group=company')).status(), 403, 'revocation takes effect on next request');
+    await regular.close();
+    assert.deepEqual(errors, [], 'no browser script errors in new flows');
+    console.log('Legacy master + native Staff + resumable company wizard: real HTTP/MySQL/browser checks passed.');
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error.stack || error.message); process.exitCode = 1; });

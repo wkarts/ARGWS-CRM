@@ -1,0 +1,108 @@
+{
+  "root": "candidate444",
+  "author_changed_only": [
+    "tests/companies/native_resume_444.php",
+    "tests/companies/native_resume_444_tracking.php"
+  ],
+  "source_manifest": {
+    "application/services/CompanyTicketPreferences.php": "d749badfdcbcfa1cff8b07620a16c4baa2541c78c48bb3161947343d1df2fcee",
+    "application/services/CompanySettingsCatalog.php": "33349c44c735349c6eb9c28e10c08f972b9fd1ed69c2c0455e103851249df1f0",
+    "application/controllers/admin/Settings.php": "0f83a0f6c432121947ebbda623cb0b9dbc464d8c93c82dd7948c186a1812d391",
+    "application/views/admin/settings/company_scoped.php": "7e010e4d43ddd5b7b5e3e0f2d5bc9d62c5d12284a274af3de52e0c5edce734cb",
+    "application/services/CompanyTickets.php": "be1e977be14872f2b2a0839f3f568071ed1c3e7e24b72b96e81ab2d5f948b7c6",
+    "application/services/CompanyPortalOperations.php": "1fe14843e64d109fec547bdea7914ad392e606c09fe3b7965f624a190e74730b",
+    "tests/companies/native_resume_444.php": "fadaa2118d5790a7070bcad0c3b63d660e336e434aca35e82e16bb920216fedf",
+    "tests/companies/native_resume_444_tracking.php": "7b9b4e13359316862c280486fde97375f00e2141faefe26835e6e18080bda2d5",
+    "VERSION": "c4f2e4aff75ea84c64d9f455c4499f47ab56ff8389daea6a1017ea4424d808e9",
+    "application/config/migration.php": "5227a57ac20276f7040ba8a12d4945647d6d86579b3ff9b053375ed040677917",
+    "application/migrations/444_version_444.php": "4398fb8a635eaee97225e08a1472fca7ade39a007f4fe4e5aa67b6ce9a7bfb15"
+  },
+  "runs": {
+    "sqlite": [
+      {
+        "command": [
+          "php",
+          "tests/settings/ticket_preferences.php"
+        ],
+        "code": 0,
+        "log": "/workspace/scratch/6b72446d684f/native444-validation/sqlite-ticket_preferences.log",
+        "source_unchanged": true,
+        "unexpected_diagnostics": false
+      },
+      {
+        "command": [
+          "php",
+          "tests/settings/ticket_preferences_readers.php"
+        ],
+        "code": 0,
+        "log": "/workspace/scratch/6b72446d684f/native444-validation/sqlite-ticket_preferences_readers.log",
+        "source_unchanged": true,
+        "unexpected_diagnostics": false
+      }
+    ],
+    "maria": [
+      {
+        "command": [
+          "php",
+          "tests/companies/native_resume_444.php"
+        ],
+        "code": 0,
+        "log": "/workspace/scratch/6b72446d684f/native444-validation/maria-native_resume_444.log",
+        "source_unchanged": true,
+        "unexpected_diagnostics": false
+      },
+      {
+        "command": [
+          "php",
+          "tests/companies/native_resume_444.php",
+          "--tracking"
+        ],
+        "code": 0,
+        "log": "/workspace/scratch/6b72446d684f/native444-validation/maria-native_resume_444-tracking.log",
+        "source_unchanged": true,
+        "unexpected_diagnostics": false
+      },
+      {
+        "command": [
+          "php",
+          "tests/settings/ticket_preferences_concurrency.php"
+        ],
+        "code": 0,
+        "log": "/workspace/scratch/6b72446d684f/native444-validation/maria-ticket_preferences_concurrency.log",
+        "source_unchanged": true,
+        "unexpected_diagnostics": false
+      },
+      {
+        "command": [
+          "php",
+          "tests/settings/ticket_preferences_readers.php"
+        ],
+        "code": 0,
+        "log": "/workspace/scratch/6b72446d684f/native444-validation/maria-ticket_preferences_readers.log",
+        "source_unchanged": true,
+        "unexpected_diagnostics": false
+      }
+    ]
+  },
+  "lint": [
+    {
+      "path": "tests/companies/native_resume_444.php",
+      "code": 0,
+      "output": "No syntax errors detected in candidate444/tests/companies/native_resume_444.php\n"
+    },
+    {
+      "path": "tests/companies/native_resume_444_tracking.php",
+      "code": 0,
+      "output": "No syntax errors detected in candidate444/tests/companies/native_resume_444_tracking.php\n"
+    }
+  ],
+  "migration": "official generated444 NOOP unmodified",
+  "fixture_boundary": "Actual443 migration body chain. Own preference/ticket/reply writers run before capture with no domain DDL. Tracking runs existing historical IssuerCore reconcile before capture like441, because native436 fixture mail_queue omitted historical nullable issuer_id; this preparation is not attributed to444. Exact metadata/rows captured afterward and preserved across all444 runner attempts.",
+  "expected_injected_logs": "Two core_migration_tracking_unconfirmed errors are expected in --tracking for failed and ignored persisted marker writes. No unexpected PHP diagnostic.",
+  "limits": [
+    "Native history/SHOW CREATE/tracking require MariaDB; no SQLite native-DDL claim.",
+    "SQLite/Maria own settings/readers are separately executed. InnoDB races executed in MariaDB.",
+    "No HTTP/browser or published SHA claim from these runs.",
+    "No production/version/migration/workflow change by this author."
+  ]
+}

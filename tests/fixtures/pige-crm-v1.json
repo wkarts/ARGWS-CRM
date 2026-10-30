@@ -1,0 +1,8 @@
+{
+  "secret": "fixture-only-secret-never-use-in-production",
+  "timestamp": "1792296000",
+  "path": "/pige_bridge/api/v1/requests",
+  "event_id": "11111111-1111-4111-8111-111111111111",
+  "raw_body": "{\"schema_version\":1,\"event_id\":\"11111111-1111-4111-8111-111111111111\",\"event_type\":\"charge.requested\",\"scope\":{\"school_id\":\"22222222-2222-4222-8222-222222222222\",\"issuer_id\":\"1\",\"account_id\":\"sandbox-main\",\"environment\":\"sandbox\"},\"data\":{\"charge_id\":\"33333333-3333-4333-8333-333333333333\",\"amount_cents\":12015,\"currency\":\"BRL\",\"due_date\":\"2026-11-20\",\"description\":\"Cobrança escolar\"}}",
+  "signature": "sha256=1768fbbd0e2f4e1da186344aa54add87bfa3d06bc1c753e7d1e04536b55aa267"
+}

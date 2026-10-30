@@ -1,0 +1,33 @@
+{
+  "archive": "/workspace/scratch/6b72446d684f/bb240-tariff-evidence/447-source-proof-fix/447-source-proof-fix.tar.gz",
+  "archive_sha256": "68afab0f292717194e457bb1cfa2ec676bd13809443d49f8a7a6bc1a2927daa6",
+  "patch_sha256": "3664ae9fbd7da3f04bdcc8df655f45b4500397fb0443f0329dcc57f85644ae5b",
+  "entries": {
+    "modules/banco_brasil/libraries/BancoBrasil/ReviewedTariffReceipt.php": {
+      "before_sha256": "3500fcf932ce65027ebaf4b845eabf79560f9814195c2410ea2579821b9de30c",
+      "after_sha256": "f527b0080bcf05d7fa91d2564dc7566a25b2803319f95438c4350691358b9cb3",
+      "bytes": 32495
+    },
+    "tests/banco_brasil_tariff_late_replay.php": {
+      "before_sha256": "c778d017d5c13191c4dfbd1aa1fcd41227b42b155431ea175c569563b9e1544a",
+      "after_sha256": "f058a25323e0e9f1b95fbd0c613aaf32f3fc5069d87a75c1314b424fe9e0a518",
+      "bytes": 6580
+    }
+  },
+  "confirmed_red_count": 6,
+  "red_json_sha256": "deef806b0c6321ba8826b3c4547ca7d861cb3de4e4ec82db3882f4aeb8e5103f",
+  "test_context": "Own overlay original base; source3500f matched rootf843 before change. Exact root composition gated separately by parent.",
+  "local_proof": [
+    {
+      "test": "banco_brasil_tariff_late_replay.php",
+      "exit": 0,
+      "seconds": 15.864
+    },
+    {
+      "test": "banco_brasil_tariff_boundaries.php",
+      "exit": 0,
+      "seconds": 40.498
+    }
+  ],
+  "published": false
+}

@@ -1,0 +1,68 @@
+{
+  "scope": "Explicit local cancellation after exact original full Asaas return plus fully reversed independent manual439; reviewed independent new invoice; no provider mutation",
+  "base": "Frozen post-refund-manual-reversal-440 V0 packets on recovered439/318c77d33da29d4529ecde1ed1aa2a39c19419e8",
+  "proposed_core_step": 440,
+  "published": false,
+  "schema": "No additional DDL beyond frozen V0 reversal440; root owns native440 integration/version",
+  "runtime": {
+    "php": "8.3.6",
+    "mariadb": "10.11.14; own48337; InnoDB; binlogON; synthetic user without SUPER",
+    "sqlite": "PDO SQLite; not InnoDB locking evidence"
+  },
+  "executed": {
+    "sqlite": {
+      "source_and_reviewed_copy": 275,
+      "boundaries": 286,
+      "controller": 297,
+      "readers": 283,
+      "reader_tamper": 304,
+      "principal_existing_master": 279,
+      "old_cancel_controller": 239,
+      "old_manual_reversal_controller": 252
+    },
+    "mariadb_before_reader_fence": {
+      "controller": 297,
+      "readers": 283,
+      "principal_existing_master": 279,
+      "concurrency": 322,
+      "real_lock_scenarios": 6,
+      "observed_waiters_per_scenario": 2
+    },
+    "counts": "Cumulative per separate executable suite; not summed. All final fence suites passed. Preparation/failure logs retained.",
+    "mariadb_final_reader_fence": {
+      "controller": 297,
+      "readers": 283,
+      "reader_tamper": 304,
+      "principal_existing_master": 279,
+      "concurrency": 322,
+      "real_lock_scenarios": 6,
+      "observed_waiters_per_scenario": 2,
+      "old_cancel_controller": 239,
+      "old_manual_reversal_controller": 252,
+      "database_shutdown_exit": 0
+    },
+    "lint": "16 changed PHP files, 1 CJS passed"
+  },
+  "not_executed": [
+    "Actual HTTP/Chromium new CJS (lint only; root/runtime_restore after freeze)",
+    "Root native440 tracking fresh/upgrade/replay",
+    "External Asaas/bank homologation"
+  ],
+  "preserved": [
+    "Generic payment/credit provider veto",
+    "Four finance API guards",
+    "Canonical CompanyInvoices cancel method byte-identical to frozen V0",
+    "Original Asaas receipt/refund/provider/account identity",
+    "New manual439 and immutable local reversal440 histories",
+    "Legacy primary-company master and NULL legacy invoice behavior"
+  ],
+  "failure_history": [
+    "Boundary fixture initially used PHP array union and retained stale review; changed to array_replace, unchanged assertions.",
+    "No production transport invoked."
+  ],
+  "logs": [
+    "post-refund-cycle440-final-mariadb-attempt2.log",
+    "post-refund-cycle440-final-sqlite-attempt1.log",
+    "post-refund-cycle440-reader-integrity-sqlite-attempt1.log"
+  ]
+}

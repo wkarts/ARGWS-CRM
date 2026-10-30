@@ -1,0 +1,16 @@
+<?php
+require __DIR__.'/invoices.php';
+$writer=new CompanyInvoices($db,$p);$key=hash('sha256','native-line-proof');$payload=$input;$payload['client_id']=$ca;$payload['items'][]=['description'=>'Second exact line','qty'=>'2.00','rate'=>'3.00'];$captured=null;
+$guard=function()use($writer,$db,$p,$a,$key,&$captured){$receipt=$db->query('SELECT invoice_id FROM '.$p.'company_invoice_requests WHERE request_key=?',[$key])->row_array();if(!$receipt)return;$captured=$writer->createdLineIdsInOwned($a,7,(int)$receipt['invoice_id'],$key);essentialThrows(fn()=>(new CompanyInvoices($db,$p))->createdLineIdsInOwned($a,7,(int)$receipt['invoice_id'],$key),'company_invoice_creation_proof_required','another service instance cannot impersonate the creating writer');essentialThrows(fn()=>$writer->createdLineIdsInOwned($a,7,(int)$receipt['invoice_id'],str_repeat('f',64)),'company_invoice_creation_proof_required','different creation key cannot borrow proof');};
+$id=$writer->create($a,7,$payload,$key,$guard);
+$rows=$db->query("SELECT id FROM {$p}itemable WHERE rel_id=? AND rel_type='invoice' ORDER BY item_order,id",[$id])->result_array();
+essentialCheck(array_column($captured,'itemable_id')===array_map('intval',array_column($rows,'id')),'proof holds exact IDs returned by inserts, not subsequently invented identifiers');
+foreach($captured as$line)essentialCheck($line['line_hash']===hash('sha256',json_encode($line['line'],JSON_THROW_ON_ERROR)),'canonical inserted line hash bound to storage identity');
+essentialThrows(fn()=>$writer->createdLineIdsInOwned($a,7,$id,$key),'issuer_owned_transaction_required','proof expires after creation boundary');
+$again=$writer->create($a,7,$payload,$key,function()use($writer,$a,$id,$key){essentialThrows(fn()=>$writer->createdLineIdsInOwned($a,7,$id,$key),'company_invoice_creation_proof_required','replay cannot manufacture historical insertion proof');});essentialCheck($again===$id,'normal durable create replay still returns original invoice');
+echo 'Exact inserted invoice line proof: '.$GLOBALS['essentialChecks']." cumulative PASS.\n";
+$failedKey=hash('sha256','failed-native-line-proof');$failedId=0;
+essentialThrows(fn()=>$writer->create($a,7,$payload,$failedKey,function()use($writer,$db,$p,$a,$failedKey,&$failedId){$row=$db->query('SELECT invoice_id FROM '.$p.'company_invoice_requests WHERE request_key=?',[$failedKey])->row_array();if(!$row)return;$failedId=(int)$row['invoice_id'];$writer->createdLineIdsInOwned($a,7,$failedId,$failedKey);throw new DomainException('synthetic_compositor_failure');}),'synthetic_compositor_failure','post-create compositor failure rolls back whole invoice');
+essentialCheck(!$db->query('SELECT invoice_id FROM '.$p.'company_invoice_requests WHERE request_key=?',[$failedKey])->row_array(),'failed proof callback leaves no create receipt');
+IssuerTransaction::run($db,$p,['invoices','itemable','item_tax','company_invoice_requests'],function()use($writer,$a,$failedId,$failedKey){essentialThrows(fn()=>$writer->createdLineIdsInOwned($a,7,$failedId,$failedKey),'company_invoice_creation_proof_required','failed callback proof is cleared before any later owned transaction');});
+echo 'Creation proof failure/replay cleanup: '.$GLOBALS['essentialChecks']." cumulative PASS.\n";
