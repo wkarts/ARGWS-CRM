@@ -4,7 +4,7 @@ declare(strict_types=1);
 defined('BASEPATH') or exit('No direct script access allowed');
 
 require_once APPPATH.'services/NativeCompanyResourceReferences.php';
-require_once APPPATH.'services/CompanyRequestScope.php';
+if(!class_exists('CompanyRequestScope',false))require_once APPPATH.'services/CompanyRequestScope.php';
 require_once APPPATH.'services/issuers/IssuerStorage.php';
 require_once APPPATH.'services/issuers/IssuerTransaction.php';
 require_once APPPATH.'services/issuers/IssuerPolicy.php';
