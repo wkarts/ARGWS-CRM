@@ -1,6 +1,8 @@
 <?php
 /** Bounded native deletion never falls through to the global deletion cascade. */
 require __DIR__.'/native_clients_controller.php';
+foreach ([41,82] as $issuer)
+    $db->query("INSERT INTO {$p}issuers_resource_permissions VALUES(?,12,'customers','delete')",[$issuer]);
 $beforeA=$adapterA->details($nativeA);
 $beforeB=$adapterB->details($nativeB);
 foreach ([41,82] as $issuer) {
