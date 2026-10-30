@@ -58,11 +58,11 @@ final class NativeCompanyPaymentRecords
         $ids=array_values(array_unique(array_filter($ids,static fn($id)=>$id>0)));if(!$ids)return$rows;
         $marks=implode(',',array_fill(0,count($ids),'?'));$manual=[];$external=[];
         if($this->db->table_exists($this->p.'company_credit_entries')){
-            $args=array_merge([$issuer],$ids);foreach($this->rows("SELECT native_id,SUM(amount) reversed FROM {$this->p}company_credit_entries WHERE issuer_id=? AND kind='manual_reverse' AND native_id IN ($marks) GROUP BY native_id",$args)as$row)$manual[(int)$row['native_id']=CompanyInvoiceAmounts::minor((string)$row['reversed']);
+            $args=array_merge([$issuer],$ids);foreach($this->rows("SELECT native_id,SUM(amount) reversed FROM {$this->p}company_credit_entries WHERE issuer_id=? AND kind='manual_reverse' AND native_id IN ($marks) GROUP BY native_id",$args)as$row)$manual[(int)$row['native_id']]=CompanyInvoiceAmounts::minor((string)$row['reversed']);
         }
         if($this->db->table_exists($this->p.'company_bank_receipt_reversals')){
             require_once __DIR__.'/CompanyBankReversalSchema.php';CompanyBankReversalSchema::assertValid($this->db,$this->p);
-            $args=array_merge([$issuer],$ids);foreach($this->rows("SELECT payment_id,cash_principal_reversed FROM {$this->p}company_bank_receipt_reversals WHERE issuer_id=? AND payment_id IN ($marks)",$args)as$row)$external[(int)$row['payment_id']=CompanyInvoiceAmounts::minor((string)$row['cash_principal_reversed']);
+            $args=array_merge([$issuer],$ids);foreach($this->rows("SELECT payment_id,cash_principal_reversed FROM {$this->p}company_bank_receipt_reversals WHERE issuer_id=? AND payment_id IN ($marks)",$args)as$row)$external[(int)$row['payment_id']]=CompanyInvoiceAmounts::minor((string)$row['cash_principal_reversed']);
         }
         foreach($rows as&$row){
             if($row['issuer_id']===null)continue;$native=CompanyInvoiceAmounts::minor((string)$row['amount']);$manualAmount=$manual[(int)$row['id']]??0;
