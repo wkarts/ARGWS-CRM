@@ -5,6 +5,11 @@ require_once APPPATH.'services/NativeCompanySpecializedOperations.php';
 
 class Invoices extends AdminController
 {
+    private function nativeCompanyInvoices(): bool
+    {
+        return class_exists('CompanyRequestScope', false) && CompanyRequestScope::nativeFor($this);
+    }
+
     use NativeCompanySpecializedOperations;
 
     public function standalone_billing() { $this->nativeInvoiceStandaloneBilling(); }
