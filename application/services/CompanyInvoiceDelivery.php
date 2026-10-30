@@ -56,6 +56,13 @@ final class CompanyInvoiceDelivery
     /** Fixed invoice-schedule veto; does not confer document or recipient authority. */
     public function queueInvoiceRecurring($issuer,$actor,$invoice,$contact,string $revision,string $requestKey,string $baseUrl,callable $decrypt,CompanyInvoiceRecurringDeliverySource $source):int
     {return $this->queueOwnedSource($issuer,$actor,$invoice,$contact,$revision,$requestKey,$baseUrl,$decrypt,$source);}
+    /** Queue one overdue notice after revalidating the owned invoice and recipient. Queueing is not delivery. */
+    public function queueOverdueNotice($issuer,$actor,$invoice,$contact,string $revision,string $requestKey,string $baseUrl,callable $decrypt):int
+    {
+        $contact=IssuerPolicy::id($contact);$invoice=IssuerPolicy::id($invoice);if(!preg_match('/^[a-f0-9]{64}$/D',$requestKey))throw new DomainException('company_invoice_delivery_invalid');
+        $key=hash('sha256','overdue-notice:'.$requestKey.':'.$invoice.':'.$contact);
+        return $this->queueOwnedSource($issuer,$actor,$invoice,$contact,$revision,$key,$baseUrl,$decrypt,null,null,'invoice-overdue-notice');
+    }
     /** Queue one payment notice for one authorized contact. Queueing is not delivery. */
     public function queuePaymentNotice($issuer,$actor,$invoice,$contact,string $revision,string $paymentKey,string $baseUrl,callable $decrypt):int
     {
@@ -78,13 +85,13 @@ final class CompanyInvoiceDelivery
     {
         $tables=['company_payment_notice_intents','company_payment_notice_deliveries','company_payment_receipts','invoicepaymentrecords'];if($this->db->table_exists($this->p.'company_credit_entries'))$tables[]='company_credit_entries';return $tables;
     }
-    private function queueOwnedSource($issuer,$actor,$invoice,$contact,string $revision,string $requestKey,string $baseUrl,callable $decrypt,CompanyExpenseRecurringDeliverySource|CompanyInvoiceRecurringDeliverySource|null $source,?string $paymentKey=null):int
+    private function queueOwnedSource($issuer,$actor,$invoice,$contact,string $revision,string $requestKey,string $baseUrl,callable $decrypt,CompanyExpenseRecurringDeliverySource|CompanyInvoiceRecurringDeliverySource|null $source,?string $paymentKey=null,?string $templateSlug=null):int
     {
         $issuer=IssuerPolicy::id($issuer);$actor=IssuerPolicy::id($actor);$invoice=IssuerPolicy::id($invoice);$contact=IssuerPolicy::id($contact);$this->authorize($issuer,$actor);
         foreach([$revision,$requestKey] as $value)if(!preg_match('/^[a-f0-9]{64}$/D',$value))throw new DomainException('company_invoice_delivery_invalid');
         $parts=parse_url($baseUrl);
         if(!$parts||isset($parts['user'])||isset($parts['pass'])||isset($parts['query'])||isset($parts['fragment'])||!isset($parts['host'])||(($parts['scheme']??'')!=='https'&&!(($parts['scheme']??'')==='http'&&in_array($parts['host'],['127.0.0.1','localhost','[::1]'],true))))throw new DomainException('company_invoice_delivery_invalid');
-        return $this->transaction(function()use($issuer,$actor,$invoice,$contact,$revision,$requestKey,$baseUrl,$decrypt,$source,$paymentKey):int{
+        return $this->transaction(function()use($issuer,$actor,$invoice,$contact,$revision,$requestKey,$baseUrl,$decrypt,$source,$paymentKey,$templateSlug):int{
             (new IssuerResourceAccess($this->db,$this->p))->lockFinancialIdentity($issuer,$actor);$this->authorize($issuer,$actor);if($source)$source->assertFor($this->db,$this->p,$issuer,$actor,$invoice,$contact);$row=$this->parent($issuer,$invoice);
             $payment=$paymentKey===null?null:$this->paymentNotice($issuer,$actor,$invoice,$paymentKey);
             $recipient=null;foreach($this->recipientsFor((int)$row['clientid']) as $candidate)if((int)$candidate['id']===$contact)$recipient=$candidate;
@@ -98,7 +105,7 @@ final class CompanyInvoiceDelivery
             if(!in_array((int)$row['status'],[1,2,3,4],true))throw new DomainException('company_invoice_delivery_denied');
             if(!hash_equals((new CompanyInvoices($this->db,$this->p))->revision($issuer,$actor,$invoice),$revision))throw new DomainException('company_invoice_stale');
             $store=new CompanySettingsStorage($this->db,$this->p);$config=CompanyMailConfig::build($this->db,$this->p,$issuer,$decrypt,null,'document_notifications');
-            $template=CompanyEmailTemplates::findForIssuer($this->db,$this->p,$issuer,$payment===null?'invoice-send-to-client':'invoice-payment-recorded','portuguese_br');
+            $template=CompanyEmailTemplates::findForIssuer($this->db,$this->p,$issuer,$templateSlug??($payment===null?'invoice-send-to-client':'invoice-payment-recorded'),'portuguese_br');
             if(!$template||(int)$template->active!==1||($payment===null&&!str_contains($template->message,'{invoice_link}')))throw new DomainException('company_invoice_delivery_template_required');
             $from=trim($store->get($issuer,'smtp_email'));if(!filter_var($from,FILTER_VALIDATE_EMAIL)||preg_match('/[\r\n]/',$from))throw new DomainException('company_invoice_delivery_sender_required');
             $link=rtrim($baseUrl,'/').'/company_portal/index/'.$issuer;
