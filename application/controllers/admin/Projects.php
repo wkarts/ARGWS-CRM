@@ -103,6 +103,7 @@ class Projects extends AdminController
 
     public function expenses($id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','expenses',[$id]);return;}
         $this->load->model('expenses_model');
         $this->load->model('payment_modes_model');
         $data['payment_modes'] = $this->payment_modes_model->get('', [], true);
@@ -115,6 +116,7 @@ class Projects extends AdminController
 
     public function add_expense()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','add_expense',[]);return;}
         if ($this->input->post()) {
             $this->load->model('expenses_model');
             $id = $this->expenses_model->add($this->input->post());
@@ -523,6 +525,7 @@ class Projects extends AdminController
 
     public function mark_as()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','mark_as',[]);return;}
         $success = false;
         $message = '';
         if ($this->input->is_ajax_request()) {
@@ -545,6 +548,7 @@ class Projects extends AdminController
 
     public function file($id, $project_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','file',[$id,$project_id]);return;}
         $data['discussion_user_profile_image_url'] = staff_profile_image_url(get_staff_user_id());
         $data['current_user_is_admin']             = is_admin();
 
@@ -561,6 +565,7 @@ class Projects extends AdminController
 
     public function update_file_data()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','update_file_data',[]);return;}
         if ($this->input->post()) {
             $this->projects_model->update_file_data($this->input->post());
         }
@@ -568,6 +573,7 @@ class Projects extends AdminController
 
     public function add_external_file()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','add_external_file',[]);return;}
         if ($this->input->post()) {
             $data                        = [];
             $data['project_id']          = $this->input->post('project_id');
@@ -581,6 +587,7 @@ class Projects extends AdminController
 
     public function download_all_files($id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','download_all_files',[$id]);return;}
         if ($this->projects_model->is_member($id) || staff_can('view', 'projects')) {
             $files = $this->projects_model->get_files($id);
             if (count($files) == 0) {
@@ -604,6 +611,7 @@ class Projects extends AdminController
 
     public function export_project_data($id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','export_project_data',[$id]);return;}
         if (staff_can('create', 'projects')) {
             app_pdf('project-data', LIBSPATH . 'pdf/Project_data_pdf', $id);
         }
@@ -619,6 +627,7 @@ class Projects extends AdminController
 
     public function update_milestones_order()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','update_milestones_order',[]);return;}
         if ($post_data = $this->input->post()) {
             $this->projects_model->update_milestones_order($post_data);
         }
@@ -626,6 +635,7 @@ class Projects extends AdminController
 
     public function pin_action($project_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','pin_action',[$project_id]);return;}
         $this->projects_model->pin_action($project_id);
         redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
     }
@@ -748,6 +758,7 @@ class Projects extends AdminController
 
     public function change_milestone_color()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','change_milestone_color',[]);return;}
         if ($this->input->post()) {
             $this->projects_model->update_milestone_color($this->input->post());
         }
@@ -772,6 +783,7 @@ class Projects extends AdminController
 
     public function change_file_visibility($id, $visible)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','change_file_visibility',[$id,$visible]);return;}
         if ($this->input->is_ajax_request()) {
             $this->projects_model->change_file_visibility($id, $visible);
         }
@@ -893,6 +905,7 @@ class Projects extends AdminController
 
     public function delete_milestone($project_id, $id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','delete_milestone',[$project_id,$id]);return;}
         if (staff_can('delete_milestones', 'projects')) {
             if ($this->projects_model->delete_milestone($id)) {
                 set_alert('deleted', 'project_milestone');
@@ -903,6 +916,7 @@ class Projects extends AdminController
 
     public function bulk_action_files()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','bulk_action_files',[]);return;}
         hooks()->do_action('before_do_bulk_action_for_project_files');
         $total_deleted       = 0;
         $hasPermissionDelete = staff_can('delete', 'projects');
@@ -927,6 +941,7 @@ class Projects extends AdminController
 
     public function timesheets($project_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','timesheets',[$project_id]);return;}
         if ($this->projects_model->is_member($project_id) || staff_can('view', 'projects')) {
             if ($this->input->is_ajax_request()) {
                 $this->app->get_table_data('timesheets', [
@@ -938,6 +953,7 @@ class Projects extends AdminController
 
     public function timesheet()
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','timesheet',[]);return;}
         if ($this->input->post()) {
             if (
                 $this->input->post('timer_id')
@@ -1012,6 +1028,7 @@ class Projects extends AdminController
 
     public function save_note($project_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','save_note',[$project_id]);return;}
         if ($this->input->post()) {
             $success = $this->projects_model->save_note($this->input->post(null, false), $project_id);
 
@@ -1040,6 +1057,7 @@ class Projects extends AdminController
 
     public function edit_note($note_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','edit_note',[$note_id]);return;}
         if ($this->input->post()) {
             $success = $this->projects_model->update_note($this->input->post(null, false), $note_id);
             if ($success) {
@@ -1058,6 +1076,7 @@ class Projects extends AdminController
 
     public function delete_note($note_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','delete_note',[$note_id]);return;}
         $note = $this->projects_model->get_staff_note($note_id, get_staff_user_id());
         if (! $note) {
             show_404();
@@ -1125,6 +1144,7 @@ class Projects extends AdminController
 
     public function mass_stop_timers($project_id, $billable = 'false')
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','mass_stop_timers',[$project_id]);return;}
         if (staff_can('create', 'invoices')) {
             $where = [
                 'billed'       => 0,
@@ -1407,6 +1427,7 @@ class Projects extends AdminController
 
     public function invoice_project($project_id)
     {
+        if($this->nativeCompanyProjects()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'projects','invoice_project',[$project_id]);return;}
         if (staff_can('create', 'invoices')) {
             $this->load->model('invoices_model');
             $data               = $this->input->post();

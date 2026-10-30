@@ -426,6 +426,7 @@ class Tasks extends AdminController
 
     public function detailed_overview()
     {
+        if($this->nativeCompanyTasks()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'tasks','detailed_overview',[]);return;}
         $overview = [];
 
         $has_permission_create = staff_can('create',  'tasks');
@@ -1123,6 +1124,7 @@ class Tasks extends AdminController
 
     public function add_external_attachment()
     {
+        if($this->nativeCompanyTasks()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'tasks','add_external_attachment',[]);return;}
         if ($this->input->post()) {
             $this->tasks_model->add_attachment_to_database(
                 $this->input->post('task_id'),
@@ -1186,6 +1188,7 @@ class Tasks extends AdminController
 
     public function download_files($task_id, $comment_id = null)
     {
+        if($this->nativeCompanyTasks()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'tasks','download_files',[$task_id,$comment_id]);return;}
         $taskWhere = 'external IS NULL';
 
         if ($comment_id) {
@@ -1505,6 +1508,7 @@ class Tasks extends AdminController
     /* Delete task from database */
     public function delete_task($id)
     {
+        if($this->nativeCompanyTasks()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'tasks','delete_task',[$id]);return;}
         if (staff_cant('delete', 'tasks')) {
             access_denied('tasks');
         }
@@ -1743,6 +1747,7 @@ class Tasks extends AdminController
 
     public function bulk_action()
     {
+        if($this->nativeCompanyTasks()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'tasks','bulk_action',[]);return;}
         hooks()->do_action('before_do_bulk_action_for_tasks');
         $total_deleted = 0;
         if ($this->input->post()) {
@@ -1840,6 +1845,7 @@ class Tasks extends AdminController
 
     public function gantt_date_update($task_id)
     {
+        if($this->nativeCompanyTasks()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'tasks','gantt_date_update',[$task_id]);return;}
         if (staff_can('edit', 'tasks')) {
             $post_data = $this->input->post();
             foreach ($post_data as $key => $val) {

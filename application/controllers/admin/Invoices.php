@@ -762,6 +762,7 @@ class Invoices extends AdminController
 
     public function apply_credits($invoice_id)
     {
+        if($this->nativeCompanyInvoices()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'invoices','apply_credits',[$invoice_id]);return;}
         if (!\app\services\InvoiceIssuerScope::isLegacyInvoice($this->db, db_prefix() . 'invoices', $invoice_id)) { show_404(); }
         $total_credits_applied = 0;
         foreach ($this->input->post('amount') as $credit_id => $amount) {
@@ -975,6 +976,7 @@ class Invoices extends AdminController
     /* Delete invoice */
     public function delete($id)
     {
+        if($this->nativeCompanyInvoices()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'invoices','delete',[$id]);return;}
         if (staff_cant('delete', 'invoices')) {
             access_denied('invoices');
         }
@@ -1021,6 +1023,7 @@ class Invoices extends AdminController
     /* Will send overdue notice to client */
     public function send_overdue_notice($id)
     {
+        if($this->nativeCompanyInvoices()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'invoices','send_overdue_notice',[$id]);return;}
         $canView = user_can_view_invoice($id);
         if (!$canView) {
             access_denied('Invoices');

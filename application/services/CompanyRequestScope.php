@@ -126,6 +126,7 @@ final class CompanyRequestScope
             $candidates=[$argument,$ci->input->post('taskid',false),$ci->input->post('task_id',false),$ci->input->post('timesheet_task_id',false),$ci->input->get('task_id',false)];$kind='task';$sources=['company_task','company_standalone_task'];
             if(in_array($method,['mark_as','change_priority'],true)&&isset($ci->uri)&&method_exists($ci->uri,'rsegment'))$candidates[]=(string)$ci->uri->rsegment(4);
             if($method==='task'&&$argument==='')return true;
+            if($method==='detailed_overview'){ $project=$ci->input->post('project_id',false)??$ci->input->get('project_id',false); if($project!==null&&$project!==''){ try{if(NativeCompanyResourceId::decode('project',$project)['source_kind']==='company_project')return true;}catch(DomainException $error){} } }
 
         }
         foreach($candidates as$id){if((!is_string($id)&&!is_int($id))||$id==='')continue;

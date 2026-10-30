@@ -180,6 +180,7 @@ class Expenses extends AdminController
 
     public function bulk_action()
     {
+        if($this->nativeCompanyExpenses()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'expenses','bulk_action',[]);return;}
         hooks()->do_action('before_do_bulk_action_for_expenses');
         $total_deleted = 0;
         $total_updated = 0;
@@ -251,6 +252,7 @@ class Expenses extends AdminController
     // Not used at this time
     public function pdf($id)
     {
+        if($this->nativeCompanyExpenses()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'expenses','pdf',[$id]);return;}
         $expense = $this->expenses_model->get($id);
 
         if (staff_cant('view', 'expenses') && $expense->addedfrom != get_staff_user_id()) {

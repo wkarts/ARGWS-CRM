@@ -213,6 +213,7 @@ class Payments extends AdminController
      */
     public function send_to_email($id)
     {
+        if($this->nativeCompanyPayments()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'payments','send_to_email',[$id]);return;}
         if (staff_cant('view', 'payments')
             && staff_cant('view_own', 'invoices')
             && get_option('allow_staff_view_invoices_assigned') == '0') {

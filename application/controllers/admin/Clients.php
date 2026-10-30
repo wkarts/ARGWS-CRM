@@ -528,6 +528,7 @@ class Clients extends AdminController
 
     public function export($contact_id)
     {
+        if($this->nativeCompanyClients()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'clients','export',[$contact_id]);return;}
         if (!\app\services\ClientIssuerScope::isLegacyContact($this->db, db_prefix(), $contact_id)) { show_404(); return; }
         if (is_admin()) {
             $this->load->library('gdpr/gdpr_contact');
@@ -857,6 +858,7 @@ class Clients extends AdminController
 
     public function update_all_proposal_emails_linked_to_customer($contact_id)
     {
+        if($this->nativeCompanyClients()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'clients','update_all_proposal_emails_linked_to_customer',[$contact_id]);return;}
         if (!\app\services\ClientIssuerScope::isLegacyContact($this->db, db_prefix(), $contact_id)) { show_404(); return; }
         $success = false;
         $email   = '';
@@ -1033,6 +1035,7 @@ class Clients extends AdminController
     /* Delete client */
     public function delete($id)
     {
+        if($this->nativeCompanyClients()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'clients','delete',[$id]);return;}
         // The legacy cascade also detaches or removes financial and other historical
         // records. A secondary company must never reach it through this controller,
         // even if the route catalogue is accidentally broadened in the future.
@@ -1116,6 +1119,7 @@ class Clients extends AdminController
     /* Zip function for credit notes */
     public function zip_credit_notes($id)
     {
+        if($this->nativeCompanyClients()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'clients','zip_credit_notes',[$id]);return;}
         $has_permission_view = staff_can('view',  'credit_notes');
 
         if (!$has_permission_view && staff_cant('view_own', 'credit_notes')) {
@@ -1139,6 +1143,7 @@ class Clients extends AdminController
 
     public function zip_invoices($id)
     {
+        if($this->nativeCompanyClients()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'clients','zip_invoices',[$id]);return;}
         $has_permission_view = staff_can('view',  'invoices');
         if (!$has_permission_view && staff_cant('view_own', 'invoices')
             && get_option('allow_staff_view_invoices_assigned') == '0') {
@@ -1163,6 +1168,7 @@ class Clients extends AdminController
     /* Since version 1.0.2 zip client estimates */
     public function zip_estimates($id)
     {
+        if($this->nativeCompanyClients()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'clients','zip_estimates',[$id]);return;}
         $has_permission_view = staff_can('view',  'estimates');
         if (!$has_permission_view && staff_cant('view_own', 'estimates')
             && get_option('allow_staff_view_estimates_assigned') == '0') {
@@ -1186,6 +1192,7 @@ class Clients extends AdminController
 
     public function zip_payments($id)
     {
+        if($this->nativeCompanyClients()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'clients','zip_payments',[$id]);return;}
         $has_permission_view = staff_can('view',  'payments');
 
         if (!$has_permission_view && staff_cant('view_own', 'invoices')
@@ -1356,6 +1363,7 @@ class Clients extends AdminController
 
     public function bulk_action()
     {
+        if($this->nativeCompanyClients()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'clients','bulk_action',[]);return;}
         hooks()->do_action('before_do_bulk_action_for_customers');
         $total_deleted = 0;
         if ($this->input->post()) {
@@ -1520,6 +1528,7 @@ class Clients extends AdminController
 
     public function statement_pdf()
     {
+        if($this->nativeCompanyClients()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'clients','statement_pdf',[]);return;}
         $customer_id = $this->input->get('customer_id');
         if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { show_404(); return; }
 
@@ -1554,6 +1563,7 @@ class Clients extends AdminController
 
     public function send_statement()
     {
+        if($this->nativeCompanyClients()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'clients','send_statement',[]);return;}
         $customer_id = $this->input->get('customer_id');
         if (!\app\services\ClientIssuerScope::isLegacyClient($this->db, db_prefix(), $customer_id)) { show_404(); return; }
 
@@ -1582,6 +1592,7 @@ class Clients extends AdminController
 
     public function statement()
     {
+        if($this->nativeCompanyClients()){require_once APPPATH.'services/NativeCompanyParityHttp.php';NativeCompanyParityHttp::handle($this,'clients','statement',[]);return;}
         if (staff_cant('view', 'invoices') && staff_cant('view', 'payments')) {
             header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad error');
             echo _l('access_denied');

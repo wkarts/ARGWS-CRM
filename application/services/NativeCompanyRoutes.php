@@ -75,6 +75,7 @@ final class NativeCompanyRoutes
             'validate_dynamic_date'=>['POST'],
         ],
         'tasks'=>[
+            'detailed_overview'=>['POST'], 'add_external_attachment'=>['POST'], 'download_files'=>['GET','HEAD'], 'delete_task'=>['POST'], 'bulk_action'=>['POST'], 'gantt_date_update'=>['POST'],
             'log_time'=>['POST'], 'update_timesheet'=>['POST'], 'delete_timesheet'=>['POST'], 'delete_user_unfinished_timesheet'=>['POST'],
             'copy'=>['POST'],
             'kanban'=>['GET','HEAD'], 'tasks_kanban_load_more'=>['GET','HEAD'], 'update_order'=>['POST'], 'switch_kanban'=>['POST'],
@@ -115,6 +116,11 @@ final class NativeCompanyRoutes
             'copies'=>['GET','HEAD','POST'], 'recurring'=>['GET','HEAD','POST'], 'standalone'=>['GET','HEAD','POST'],
             'billing'=>['GET','HEAD','POST'], 'time_batches'=>['GET','HEAD','POST'],
         ], 'projects'=>[
+            'expenses'=>['GET','HEAD'], 'add_expense'=>['POST'], 'mark_as'=>['POST'], 'file'=>['GET','HEAD'],
+            'update_file_data'=>['POST'], 'add_external_file'=>['POST'], 'download_all_files'=>['GET','HEAD'], 'export_project_data'=>['GET','HEAD'],
+            'update_milestones_order'=>['POST'], 'pin_action'=>['POST'], 'change_milestone_color'=>['POST'], 'change_file_visibility'=>['POST'],
+            'delete_milestone'=>['POST'], 'bulk_action_files'=>['POST'], 'timesheets'=>['GET','HEAD'], 'timesheet'=>['POST'],
+            'save_note'=>['POST'], 'edit_note'=>['POST'], 'delete_note'=>['POST'], 'mass_stop_timers'=>['POST'], 'invoice_project'=>['POST'],
             'discussions'=>['GET','HEAD'], 'discussion'=>['GET','HEAD','POST'], 'add_discussion_comment'=>['POST'], 'update_discussion_comment'=>['POST'], 'delete_discussion_comment'=>['POST'], 'delete_discussion'=>['POST'], 'change_activity_visibility'=>['POST'], 'get_discussion_comments'=>['GET','HEAD'], 'milestones'=>['GET','HEAD'], 'milestones_kanban'=>['GET','HEAD'], 'milestones_kanban_load_more'=>['GET','HEAD'], 'milestone'=>['POST'], 'update_task_milestone'=>['POST'], 'gantt'=>['GET','HEAD'],
 
             'index'=>['GET','HEAD'],
@@ -135,6 +141,9 @@ final class NativeCompanyRoutes
         // Read-only private billing projection; customer pages and mutations
         // remain closed until their complete native contracts are admitted.
         'clients'=>[
+            'export'=>['GET','HEAD'], 'update_all_proposal_emails_linked_to_customer'=>['POST'], 'delete'=>['POST'],
+            'zip_credit_notes'=>['GET','HEAD'], 'zip_invoices'=>['GET','HEAD'], 'zip_estimates'=>['GET','HEAD'], 'zip_payments'=>['GET','HEAD'],
+            'bulk_action'=>['POST'], 'statement'=>['GET','HEAD'], 'statement_pdf'=>['GET','HEAD'], 'send_statement'=>['POST'],
             'index'=>['GET','HEAD'], 'table'=>['POST'], 'client'=>['GET','HEAD','POST'],
             'form_contact'=>['GET','HEAD','POST'], 'contacts'=>['POST'],
             'all_contacts'=>['GET','POST'],
@@ -176,6 +185,7 @@ final class NativeCompanyRoutes
         ],
         'gdpr'=>['contact_consent_opt_action'=>['POST']],
         'invoices'=>[
+            'apply_credits'=>['POST'], 'delete'=>['POST'], 'send_overdue_notice'=>['POST'],
             'send_to_email'=>['POST'],
             'index'=>['GET','HEAD'], 'list_invoices'=>['GET','HEAD'], 'table'=>['POST'],
             'invoice'=>['GET','HEAD','POST'], 'client_change_data'=>['GET'],
@@ -204,6 +214,7 @@ final class NativeCompanyRoutes
             'index'=>['GET','HEAD','POST'], 'list_credit_notes'=>['GET','HEAD','POST'],
         ],
         'expenses'=>[
+            'bulk_action'=>['POST'], 'pdf'=>['GET','HEAD'],
             'expense'=>['GET','HEAD','POST'],'categories'=>['GET','HEAD'],'category'=>['POST'],'delete_category'=>['POST'],
             'get_expense_data_ajax'=>['GET','HEAD'],'delete'=>['POST'],'add_expense_attachment'=>['POST'],'delete_expense_attachment'=>['POST'],
             'convert_to_invoice'=>['POST'],'import'=>['GET','HEAD','POST'],
@@ -212,6 +223,7 @@ final class NativeCompanyRoutes
         ],
         'reports'=>['index'=>['GET','HEAD']],
         'payments'=>[
+            'send_to_email'=>['POST'],
             'index'=>['GET','HEAD'],'list_payments'=>['GET','HEAD'],'table'=>['POST'],'payment'=>['GET','HEAD','POST'],'pdf'=>['GET','HEAD'],'delete'=>['POST'],'batch_payment_modal'=>['GET','HEAD'],'add_batch_payment'=>['POST'],
             'post_refund'=>['GET','HEAD','POST'], 'post_refund_manual'=>['GET','HEAD','POST'],
         ],
