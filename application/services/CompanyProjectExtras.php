@@ -159,7 +159,7 @@ final class CompanyProjectExtras extends CompanyProjectsStorage
     }
     private function milestoneRows(int $issuer,int $project):array
     {
-        if($this->db->table_exists($this->p.'company_milestone_visuals'))return $this->rows('SELECT m.id,m.name,m.due_date,m.done,COALESCE(v.color,"") color FROM '.$this->p.'company_project_milestones m LEFT JOIN '.$this->p.'company_milestone_visuals v ON v.issuer_id=m.issuer_id AND v.project_id=m.project_id AND v.milestone_id=m.id WHERE m.issuer_id=? AND m.project_id=? ORDER BY m.due_date,m.id LIMIT 100',[$issuer,$project]);
+        if($this->db->table_exists($this->p.'company_milestone_visuals'))return $this->rows('SELECT m.id,m.name,m.due_date,m.done,COALESCE(v.color,\'\') color FROM '.$this->p.'company_project_milestones m LEFT JOIN '.$this->p.'company_milestone_visuals v ON v.issuer_id=m.issuer_id AND v.project_id=m.project_id AND v.milestone_id=m.id WHERE m.issuer_id=? AND m.project_id=? ORDER BY m.due_date,m.id LIMIT 100',[$issuer,$project]);
         return $this->rows('SELECT id,name,due_date,done FROM '.$this->p.'company_project_milestones WHERE issuer_id=? AND project_id=? ORDER BY due_date,id LIMIT 100',[$issuer,$project]);
     }
     public function get($issuer,$actor,string $kind,$id):array
