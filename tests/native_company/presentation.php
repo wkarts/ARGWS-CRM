@@ -1,21 +1,17 @@
-class NativeCompanyAuxiliaryUi {
- function __construct($db,$prefix,$issuer,$actor){check($issuer===2&&$actor===17,'todo header actor/issuer');}
- function todoCounts(){return [0=>5,1=>2];}
-}
-class IssuerResourceAccess {public static bool $administrative=true;function __construct(...$args){} function administrative($issuer,$actor){return $issuer===2&&self::$administrative;} function member($issuer,$actor){return $issuer===2&&$actor===17;} function can($issuer,$actor,$feature,$cap){return $issuer===2 && in_array($feature,['customers','invoices','projects','tasks','settings','tickets'],true);}}
-class IssuerStorage {static function query($db,$sql,$params=[]){check(!str_contains($sql,'options'),'theme inactive must not fetch options');return new class($sql){private $sql;function __construct($sql){$this->sql=$sql;}function row_array(){return str_contains($this->sql,'staffid,firstname')?['staffid'=>17,'firstname'=>'<Alice>','lastname'=>'A','email'=>'synthetic@example.test']:['active'=>0];}};}}
-class Fixture {
- public $config; public $security; public $load; public $db; public $router; public $agent; public $session; public $lang; public array $vars=[];
- function __construct(){ $this->config=new class {public bool $csrf=false;function item($key){check($key==='csrf_protection','only infrastructure CSRF config');return $this->csrf;}};$this->security=new class {function get_csrf_token_name(){return 'fixture_csrf';}function get_csrf_hash(){return 'fixture-framework-hash';}};$this->db=new stdClass; $this->session=new class {function has_userdata($key){check($key==='setup-menu-open','only actor UI session key');return true;}function userdata($key){return false;}}; $this->lang=(object)['language'=>[]];$this->load=$this; $this->router=new class {function fetch_class(){return 'dashboard';}function fetch_method(){return 'index';}}; }
- function vars($vars){$this->vars=$vars;}
- function library($name){check($name==='user_agent','only pure user-agent parser');$this->agent=new class {function is_mobile(){return false;}function browser(){return 'Chrome';}};}
- function view($name,$extra=[]){
-  if($name==='admin/includes/selector'){echo '<div data-fixture-selector></div>';return;}
-  if($name==='admin/includes/context_script'){echo '<script data-fixture-context></script>';return;}
-  // MX_Loader includes templates in loader scope, not controller scope.
-  $host=new class($this){private $owner;function __construct($owner){$this->owner=$owner;}function __get($key){return$this->owner->$key;}function __isset($key){return isset($this->owner->$key);}};
-  check(!CompanyRequestScope::nativeFor($host),'a view loader cannot attest as the controller');
-  (function($view,$extra,$variables){extract($variables);extract($extra);require APPPATH.'views/'.$view.'.php';})->call($host,$name,$extra,$this->vars);
- }
- function __get($name){throw new RuntimeException('Global dependency forbidden: '.$name);}
-}
+<?php
+$presentationDirect=realpath((string)($_SERVER['SCRIPT_FILENAME']??''))===__FILE__;
+if($presentationDirect&&PHP_SAPI!=='cli'){http_response_code(404);exit;}
+set_error_handler(static function($severity,$message,$file,$line){throw new ErrorException($message,0,$severity,$file,$line);});
+if($presentationDirect&&array_diff(array_slice($argv,1),['--render'])){throw new InvalidArgumentException('Unknown presentation fixture flag');}
+// Dependency-negative real view renderer: models/hooks/options are forbidden.
+define('BASEPATH',__DIR__);define('APPPATH',dirname(__DIR__,2).'/application/');define('ARGWS_VERSION','test');
+function check($v,$m){if(!$v)throw new RuntimeException($m);}
+check($app['options']['allowed_files']==='.pdf' && (int)$app['max_php_ini_upload_size_bytes']>0,'upload preferences and actual PHP cap projected');check(!array_key_exists('google_api',$app['options']),'no provider settings');
+check($data['total_unfinished_todos']===5,'actual todo provider count not fabricated');
+check(count($data['quick_actions'])===2,'quick actions use explicit create ACL and native route catalog');
+check($data['quick_actions'][1]['href_attributes']['onclick']==='new_task();return false;','native task handler preserved');
+ob_start();foreach(['head','header','setup_menu','aside'] as $name)$ci->view('admin/includes/'.$name);echo '<div id="wrapper"><main class="content"><div class="panel_s"><div class="panel-body"><form><label for="native-field">Nome</label><input id="native-field" name="name" class="form-control" value="Sintético"><button type="button" class="btn btn-primary">Salvar</button></form></div></div></main></div>'; $ci->view('admin/includes/scripts');echo '</body></html>';$html=ob_get_clean();
+if($presentationDirect&&in_array('--render',$argv??[],true)){echo $html;exit;}
+foreach(['id="header"','id="menu"','id="side-menu"','id="setup-menu"','native-company-admin','&lt;Alice&gt;','/sub/admin/clients','/sub/admin/invoices'] as $needle)check(str_contains($html,$needle),'native render '.$needle);
+foreach(['company_context','clients_model','company-shell.js','company-workspace.js','assets/js/main.js','admin/projects/pinned'] as $needle)check(!str_contains($html,$needle),'no parallel/global hydration '.$needle);
+check(!str_contains($html,'synthetic@example.test</script>'),'escaped identity');
