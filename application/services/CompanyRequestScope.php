@@ -127,6 +127,8 @@ final class CompanyRequestScope
             if(in_array($method,['mark_as','change_priority'],true)&&isset($ci->uri)&&method_exists($ci->uri,'rsegment'))$candidates[]=(string)$ci->uri->rsegment(4);
             if($method==='task'&&$argument==='')return true;
             if($method==='detailed_overview'){ $project=$ci->input->post('project_id',false)??$ci->input->get('project_id',false); if($project!==null&&$project!==''){ try{if(NativeCompanyResourceId::decode('project',$project)['source_kind']==='company_project')return true;}catch(DomainException $error){} } }
+            if(in_array($method,['edit_note','delete_note'],true)&&$argument!==''){try{$note=IssuerStorage::query($ci->db,'SELECT project_id FROM '.db_prefix().'company_project_discussions WHERE issuer_id=? AND id=?',[(int)self::$context->issuerId(),(int)$argument])->row_array();if($note){$encoded=NativeCompanyResourceId::encode('company_project',(int)$note['project_id']);if(NativeCompanyResourceId::decode('project',$encoded)['source_kind']==='company_project')return true;}}catch(DomainException $error){}}
+            if($method==='change_file_visibility'&&preg_match('/^[a-f0-9]{64}$/D',$argument)){try{$file=IssuerStorage::query($ci->db,'SELECT project_id FROM '.db_prefix().'company_project_files WHERE issuer_id=? AND file_key=?',[(int)self::$context->issuerId(),$argument])->row_array();if($file){$encoded=NativeCompanyResourceId::encode('company_project',(int)$file['project_id']);if(NativeCompanyResourceId::decode('project',$encoded)['source_kind']==='company_project')return true;}}catch(DomainException $error){}}
 
         }
         foreach($candidates as$id){if((!is_string($id)&&!is_int($id))||$id==='')continue;
