@@ -30,7 +30,7 @@ test('PR52 necessary native actions remain routed, catalogued and implemented', 
     for (const action of actions) {
       assert.equal(controllers[module].includes("NativeCompanyParityHttp::handle($this,'" + module + "','" + action + "'"), true, module + '.' + action + ' controller adapter');
       assert.equal(routes.includes("'" + action + "'"), true, module + '.' + action + ' route');
-      const actionLiteral = new RegExp("\\$action===['\"]" + action + "['\"]|in_array\\(\\$action,\\[[^\\]]*['\"]" + action + "['\"]");
+      const actionLiteral = new RegExp("\\$action(?:===|!==)['\"]" + action + "['\"]|in_array\\(\\$action,\\[[^\\]]*['\"]" + action + "['\"]");
       assert.match(adapter, actionLiteral, module + '.' + action + ' bounded adapter');
     }
   }
