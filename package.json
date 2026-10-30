@@ -9,7 +9,7 @@
     "hot": "mix watch --hot",
     "prod": "npm run production",
     "production": "mix --production",
-    "build": "mix --production && mix --production --mix-config=modules/einvoice/webpack.mix.js && node build.mjs",
+    "build": "mix --production && mix --production --mix-config=modules/einvoice/webpack.mix.js",
     "postdev": "mix --mix-config=modules/einvoice/webpack.mix.js",
     "postprod": "mix --production --mix-config=modules/einvoice/webpack.mix.js"
   },
@@ -43,3 +43,4 @@
     "vue": "^3.3.9"
   }
 }
+

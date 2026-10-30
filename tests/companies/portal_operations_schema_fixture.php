@@ -22,6 +22,13 @@ require_once APPPATH.'services/CompanyPortalSupportFilesSchema.php';if($db->driv
 
 require_once APPPATH.'services/CompanyContractDiscussionsSchema.php';if($db->driver()==='mysql')CompanyContractDiscussionsSchema::ensure($db,$p);else{$db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.'portal_contract_client ON '.$p.'company_contracts(issuer_id,id,client_id)');foreach(CompanyContractDiscussionsSchema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}}unset($db->data_cache['table_names']);
 
+// Contract pages also read the shared notes/taxes/items sidecars. Keep the
+// controller fixture aligned with the installed 474 schema instead of hiding
+// a missing table behind the controller's generic 503 response.
+require_once APPPATH.'services/NativeCompanyAuxiliarySchema.php';
+if($db->driver()==='mysql')NativeCompanyAuxiliarySchema::ensure($db,$p);else foreach(NativeCompanyAuxiliarySchema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}
+unset($db->data_cache['table_names']);
+
 require_once APPPATH.'services/CompanyProjectPortalRulesSchema.php';if($db->driver()==='mysql')CompanyProjectPortalRulesSchema::ensure($db,$p);else{$db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.'portal_task_origin ON '.$p.'company_tasks(issuer_id,project_id,id)');foreach(CompanyProjectPortalRulesSchema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}}unset($db->data_cache['table_names']);
 
 require_once APPPATH.'services/CompanyPortalTaskWriteSchema.php';if($db->driver()==='mysql')CompanyPortalTaskWriteSchema::ensure($db,$p);else{foreach(['company_task_comments'=>['portal_comment_origin'=>'issuer_id,task_id,id'],'company_project_files'=>['portal_task_file_origin'=>'issuer_id,project_id,task_id,file_key']] as $table=>$indexes)foreach($indexes as $name=>$cols)$db->query('CREATE UNIQUE INDEX IF NOT EXISTS '.$p.$name.' ON '.$p.$table.'('.$cols.')');foreach(CompanyPortalTaskWriteSchema::definitions($p) as $name=>$parts){if($db->table_exists($p.$name))continue;$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$name.'` ('.implode(',',$parts).') ENGINE=InnoDB'));}}unset($db->data_cache['table_names']);
@@ -91,3 +98,4 @@ require_once APPPATH.'services/CompanyTaskRecurringSchema.php';
 if($db->driver()==='mysql')CompanyTaskRecurringSchema::ensure($db,$p);
 else foreach(CompanyTaskRecurringSchema::definitions($p) as $table=>$parts)if(!$db->table_exists($p.$table))$db->query(preg_replace('/ CHARACTER SET [a-z0-9_]+ COLLATE [a-z0-9_]+/','','CREATE TABLE `'.$p.$table.'` ('.implode(',',$parts).') ENGINE=InnoDB'));
 unset($db->data_cache['table_names']);
+

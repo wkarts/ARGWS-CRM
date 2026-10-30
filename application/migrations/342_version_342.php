@@ -73,7 +73,6 @@ class Migration_Version_342 extends CI_Migration
 
         foreach ([
             'staff' => ['staffid', 'default_language'],
-            'clients' => ['userid', 'default_language'],
             'leads' => ['id', 'default_language'],
         ] as $table => [$idColumn, $languageColumn]) {
             $tableName = db_prefix() . $table;

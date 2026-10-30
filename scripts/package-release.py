@@ -43,7 +43,7 @@ STATIC_UPLOAD_FILES = {
 def should_include(relative: str) -> bool:
     path = PurePosixPath(relative)
     parts = path.parts
-    if not parts or parts[0] in {".git", "dist"} or relative.startswith(("source/", "work/", "deliverables/", "data/")):
+    if not parts or parts[0] in {".git", "dist", "upload"} or relative.startswith(("source/", "work/", "deliverables/", "data/")):
         return False
     if parts[0] in {"deploy", "docker"} or relative.startswith("tools/argws-crm-deployer/") or relative == "scripts/package-deploy.py":
         return False
@@ -53,7 +53,8 @@ def should_include(relative: str) -> bool:
         or "node_modules" in parts
         or "__pycache__" in parts
         or ".pytest_cache" in parts
-        or path.suffix in {".pyc", ".pyo"}
+        or path.suffix in {".pyc", ".pyo", ".bak"}
+        or any(part in {".continua-ai", ".codex"} for part in parts)
     ):
         return False
     if path.name == ".env" or path.name.startswith(".env."):
@@ -279,3 +280,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

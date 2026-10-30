@@ -8,3 +8,9 @@
             option.title = String(response.name);
             option.textContent = String(response.name);
             option.selected = true;
+            $("#timer_add_task_id").append(option);
+            $("#timer_add_task_id")
+              .trigger("change")
+              .data("AjaxBootstrapSelect").list.cache = {};
+            $("#timer_add_task_id").selectpicker("refresh");
+            delete window._timer_id;

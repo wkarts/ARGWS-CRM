@@ -1,4 +1,4 @@
-  if (document.body.classList.contains("native-company-admin")) {
+  if (document.body.classList.contains("native-company-admin") && (Number(task_id) >= 4294967296 || Number(timer_id) >= 4294967296 || (String(task_id) === "0" && String(timer_id) === ""))) {
     var $localTimer = $(e).closest("[data-native-timer-id]");
     var $localTask = $(e).closest("[data-native-task-id]");
     var $row = timer_id !== "" ? ($localTimer.attr("data-native-timer-id") === String(timer_id) ? $localTimer : $("#timer-" + String(timer_id))) : ($localTask.attr("data-native-task-id") === String(task_id) ? $localTask : $(e));
