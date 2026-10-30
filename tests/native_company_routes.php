@@ -101,7 +101,7 @@ foreach(['add_note','edit_note','delete_note']as$method){$check(NativeCompanyRou
 $check(NativeCompanyRoutes::admits('admin','banco_brasil','banco_brasil','download_return','POST'),'private original return download uses original module POST route');
 $check(!NativeCompanyRoutes::admits('admin','banco_brasil','banco_brasil','download_return','GET'),'bank originals cannot be fetched by unprotected GET');
 
-$projectActions=['index'=>['GET','HEAD'],'staff_projects'=>['POST'],'table'=>['POST'],'project'=>['GET','HEAD','POST'],'view'=>['GET','HEAD'],'upload_file'=>['POST'],'remove_file'=>['POST'],'add_edit_members'=>['POST'],'remove_team_member'=>['POST'],'get_rel_project_data'=>['GET'],'get_staff_names_for_mentions'=>['GET'],'delete'=>['POST']];
+$projectActions=['index'=>['GET','HEAD'],'staff_projects'=>['POST'],'table'=>['POST'],'project'=>['GET','HEAD','POST'],'view'=>['GET','HEAD','POST'],'upload_file'=>['POST'],'remove_file'=>['POST'],'add_edit_members'=>['POST'],'remove_team_member'=>['POST'],'get_rel_project_data'=>['GET'],'get_staff_names_for_mentions'=>['GET'],'delete'=>['POST']];
 foreach($projectActions as$action=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
  $check(NativeCompanyRoutes::admits('admin','','projects',$action,$verb)===in_array($verb,$allowed,true),'official project action has finite verb: '.$action.'/'.$verb);
 $check(NativeCompanyRoutes::navigation('projects')&&NativeCompanyRoutes::navigation('projects/project'),'official project directory and editor are return destinations');
