@@ -153,7 +153,7 @@ foreach(['ticket','delete_attachment','delete_ticket_reply','edit_message','chan
 foreach(['merge','spam','unknown']as$action)foreach(['GET','POST']as$verb)$check(!NativeCompanyRoutes::admits('admin','','tickets',$action,$verb),'unadapted ticket neighbor remains closed: '.$action.'/'.$verb);
 $check(!NativeCompanyRoutes::admits('admin','foreign','tickets','ticket','GET'),'other modules cannot reuse ticket workflows');
 
-$invoiceActions=['index'=>['GET','HEAD'],'list_invoices'=>['GET','HEAD'],'table'=>['POST'],'invoice'=>['GET','HEAD','POST'],'drafts'=>['GET','HEAD','POST'],'copy'=>['GET','HEAD','POST'],'client_change_data'=>['GET'],'validate_invoice_number'=>['POST'],'get_invoice_data_ajax'=>['GET','HEAD'],'add_note'=>['POST'],'get_notes'=>['GET','HEAD'],'pause_overdue_reminders'=>['POST'],'resume_overdue_reminders'=>['POST'],'mark_as_sent'=>['POST'],'mark_as_cancelled'=>['POST'],'unmark_as_cancelled'=>['POST'],'get_invoices_total'=>['POST'],'record_invoice_payment_ajax'=>['GET','HEAD'],'record_payment'=>['POST'],'delete_attachment'=>['POST'],'pdf'=>['GET','HEAD'],'get_due_date'=>['POST']];
+$invoiceActions=['index'=>['GET','HEAD'],'list_invoices'=>['GET','HEAD'],'table'=>['POST'],'invoice'=>['GET','HEAD','POST'],'drafts'=>['GET','HEAD','POST'],'copy'=>['GET','HEAD','POST'],'client_change_data'=>['GET'],'validate_invoice_number'=>['POST'],'get_invoice_data_ajax'=>['GET','HEAD'],'add_note'=>['POST'],'get_notes'=>['GET','HEAD'],'pause_overdue_reminders'=>['POST'],'resume_overdue_reminders'=>['POST'],'mark_as_sent'=>['POST'],'mark_as_cancelled'=>['POST'],'unmark_as_cancelled'=>['POST'],'get_invoices_total'=>['POST'],'record_invoice_payment_ajax'=>['GET','HEAD'],'record_payment'=>['POST'],'delete'=>['POST'],'delete_attachment'=>['POST'],'pdf'=>['GET','HEAD'],'get_due_date'=>['POST']];
 foreach($invoiceActions as$action=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
  $check(NativeCompanyRoutes::admits('admin','','invoices',$action,$verb)===in_array($verb,$allowed,true),'official invoice action has finite verb: '.$action.'/'.$verb);
 foreach(['invoices','invoices/list_invoices','invoices/invoice','invoices/drafts','invoices/copy']as$route)$check(NativeCompanyRoutes::navigation($route),'official invoice page is a return destination: '.$route);
@@ -182,7 +182,6 @@ foreach($financeRoutes as$controller=>$actions){foreach($actions as$action=>$all
  $check(!NativeCompanyRoutes::admits('admin','',$controller,'unknown','POST'),'finance controller has no wildcard action: '.$controller);
 }
 $check(!NativeCompanyRoutes::admits('admin','foreign','invoices','invoice','GET'),'other modules cannot reuse invoice workflows');
-$check(!NativeCompanyRoutes::admits('admin','','invoices','delete','POST'),'unadapted invoice deletion remains closed');
 $check(!NativeCompanyRoutes::admits('admin','','company_invoice_drafts','index','GET'),'retired invoice drafts controller has no native admission');
 $check(!NativeCompanyRoutes::admits('admin','','company_invoice_copies','index','GET'),'retired invoice copies controller has no native admission');
 echo "Official Tasks, Tickets, Projects, Invoices, Estimates and Proposals routes: {$checks} total assertions passed.\n";
