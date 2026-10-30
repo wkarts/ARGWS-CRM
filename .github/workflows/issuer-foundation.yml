@@ -150,18 +150,13 @@ jobs:
         run: argws-ci-smoke
       - name: Validar inventário operacional uma vez
         if: matrix.shard == 1 && matrix.php == '8.1'
-        run: php scripts/company-surface-inventory.php --check
-      - name: Capturar inventário operacional para diagnóstico
-        if: always() && matrix.shard == 1 && matrix.php == '8.1'
-        run: php scripts/company-surface-inventory.php --full --output /tmp/company-operational-surfaces-full.json
-      - name: Guardar inventário operacional para revisão
-        if: always() && matrix.shard == 1 && matrix.php == '8.1'
-        uses: actions/upload-artifact@v4
-        with:
-          name: company-operational-surfaces
-          path: /tmp/company-operational-surfaces-full.json
-          if-no-files-found: error
-          retention-days: 7
+        run: |
+          set +e
+          php scripts/company-surface-inventory.php --check
+          check_status=$?
+          set -e
+          php scripts/company-surface-inventory.php --full --output /tmp/company-operational-surfaces-full.json
+          exit "$check_status"
       - name: Validar sintaxe e controles HTTP
         if: matrix.shard == 1
         run: |
@@ -198,6 +193,19 @@ jobs:
           php tests/companies/email_template_editor.php
           php tests/companies/portal_recovery_tokens.php
           php tests/companies/portal_recovery_atomic.php
+      - uses: actions/upload-artifact@v4
+        if: matrix.shard == 1 && matrix.php == '8.1'
+        with:
+          name: company-operational-surfaces
+          path: /tmp/company-operational-surfaces-full.json
+      - name: Guardar inventário operacional para diagnóstico de falha
+        if: always() && matrix.shard == 1 && matrix.php == '8.1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-operational-surfaces-diagnostic
+          path: /tmp/company-operational-surfaces-full.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Testar entradas legadas Finance e Accounting em banco exclusivo
         if: matrix.shard == 1
         env:
