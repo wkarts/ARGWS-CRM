@@ -79,7 +79,7 @@ $check(NativeCompanyRoutes::navigation('banco_brasil'),'single native module nav
 echo "BB native finite admission: {$checks} total assertions passed.\n";
 
 $staffActions=[
- 'index'=>['GET','HEAD','POST'],'member'=>['GET','HEAD','POST'],'role_changed'=>['GET'],
+ 'index'=>['GET','HEAD','POST'],'member'=>['GET','HEAD','POST'],'role_changed'=>['GET'],'save_completed_checklist_visibility'=>['POST'],
  'save_dashboard_widgets_order'=>['POST'],'save_dashboard_widgets_visibility'=>['POST'],
  'reset_dashboard'=>['POST'],'save_hidden_table_columns'=>['POST'],'timesheets'=>['GET','HEAD'],
  'delete'=>['POST'],'edit_profile'=>['GET','HEAD','POST'],'remove_staff_profile_image'=>['POST'],
@@ -89,7 +89,7 @@ $staffActions=[
 $check(NativeCompanyRoutes::navigation('staff')&&NativeCompanyRoutes::navigation('staff/member'),'native original Staff navigation is available');
 foreach($staffActions as$method=>$allowed)foreach(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']as$verb)
  $check(NativeCompanyRoutes::admits('admin','','staff',$method,$verb)===in_array($verb,$allowed,true),'official Staff action has finite verb: '.$method.'/'.$verb);
-foreach(['change_language','save_completed_checklist_visibility','unknown']as$method)foreach(['GET','HEAD','POST']as$verb)
+foreach(['change_language','unknown']as$method)foreach(['GET','HEAD','POST']as$verb)
  $check(!NativeCompanyRoutes::admits('admin','','staff',$method,$verb),'unadapted Staff neighbor remains closed: '.$method.'/'.$verb);
 foreach(array_keys($staffActions)as$method)if(!in_array($method,['index','member'],true))$check(!NativeCompanyRoutes::navigation('staff/'.$method),'Staff endpoint is not a return destination: '.$method);
 $check(!NativeCompanyRoutes::admits('admin','foreign','staff','index','GET'),'other modules cannot reuse Staff workflows');
