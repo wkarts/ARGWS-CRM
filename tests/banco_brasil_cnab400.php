@@ -32,7 +32,7 @@ $title400=['sequence'=>'1','document'=>'DOC1','control'=>'SYNTHETIC1','issue_dat
     'species'=>'01','acceptance'=>'N','payer_tax_id'=>'12BBC34501DE35','payer_name'=>'PAGADOR SINTETICO','payer_address'=>'RUA TESTE 1',
     'payer_district'=>'CENTRO','payer_zip'=>'12345678','payer_city'=>'TESTE','payer_state'=>'SP'];
 $gen400=new Cnab400Generator();$candidate=$gen400->candidate($a400,1,'2026-10-18',[$title400]);$lines400=explode("\r\n",rtrim($candidate['content'],"\r\n"));
-check($candidate['operational']===false&&$candidate['unresolved']===['interest_exemption_requires_bank_profile','homologation_per_connection'],'candidate keeps external gates explicit');
+check($candidate['available']===true&&$candidate['configurable']===true&&!$candidate['transmission_allowed']&&!$candidate['publication_blocked']&&$candidate['operational']===false&&$candidate['unresolved']===['interest_exemption_requires_bank_profile','homologation_per_connection'],'candidate remains available/configurable while external gates stay explicit');
 check(count($lines400)===3,'0/7/9 only');foreach($lines400 as $i=>$l){check(strlen($l)===400,'400 exact bytes');check(substr($l,394,6)===str_pad((string)($i+1),6,'0',STR_PAD_LEFT),'record sequence');}
 check(substr($lines400[0],0,19)==='01TESTE  01COBRANCA','sandbox explicit TESTE');
 check(substr($lines400[0],26,14)==='0452300123873X','400 account not 240 widths');

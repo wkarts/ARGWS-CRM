@@ -94,7 +94,7 @@ $forgedApproval=$approvalPolicy;$forgedApproval['currency_field']='AA';$forgedAp
 $candidateInput=['payer_name'=>'PRIVATE A','payer_address'=>'SYNTHETIC STREET','payer_district'=>'CENTRO','payer_zip'=>'40000000','payer_city'=>'SALVADOR','payer_state'=>'BA','species'=>'02','acceptance'=>'N'];
 $beforeCandidate=$db->query("SELECT * FROM {$p}bb_batches WHERE id=?",[$reserved['batch_id']])->row_array();
 $candidate=$service->candidate($a,7,$prepared['id'],'2026-10-19',$candidateInput);
-essentialCheck($candidate['operational']===false&&$candidate['financial_effect']==='not_applied'&&$candidate['record_count']===3&&strlen($candidate['content_sha256'])===64,'400 candidate validates actual invoice and record widths without exposing unverified bytes');
+essentialCheck($candidate['available']===true&&$candidate['configurable']===true&&!$candidate['transmission_allowed']&&!$candidate['publication_blocked']&&$candidate['operational']===false&&$candidate['financial_effect']==='not_applied'&&$candidate['record_count']===3&&strlen($candidate['content_sha256'])===64,'400 candidate remains available/configurable, validates actual invoice and record widths without exposing unverified bytes');
 essentialCheck(!isset($candidate['content'])&&$db->query("SELECT * FROM {$p}bb_batches WHERE id=?",[$reserved['batch_id']])->row_array()===$beforeCandidate,'candidate never stores or exposes non-homologated file');
 $db->query("UPDATE {$p}invoices SET duedate='2026-12-25' WHERE id=?",[$branded]);
 essentialThrows(fn()=>$service->candidate($a,7,$prepared['id'],'2026-10-19',$candidateInput),'bb400_preparation_stale','changed invoice cannot produce candidate from obsolete source');

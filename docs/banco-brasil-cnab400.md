@@ -17,21 +17,21 @@ Esta seção e a seguinte registram o estado histórico dos incrementos, anterio
 
 Núcleo4.3.6/436, BB1.1.6/116 e Asaas1.5.2/152 estão em validação sobre435. API16 por componentes integrais e vínculo declarado de retorno240 à mesma origem API usam o writer existente e a mesma identidade canônica; não criam remessa, outro canal ou pagamento automático. Alteração/baixa incerta anterior ou posterior à consulta veta um novo recebimento. Recuperação de processo morto após sending usa consulta independente autorizada, sem reenviar POST/PATCH nem fabricar sucesso pelo vencimento da reserva. A [validação436](companies/pr45-validation-436.md) discrimina fonte congelada, instalação/tracking, testes e CI do próprio SHA.
 
-O canal400 continua indisponível pelas lacunas BRL85–86, juros herdados/contrato e pictureCBR64326–39; trailer641 já foi resolvido. Testes sintéticos e declarações operacionais não demonstram autenticação bancária ou homologação. Nenhum merge, deploy ou transmissão real.
+CNAB400 permanece disponível e configurável por empresa quando o canal é habilitado explicitamente. As lacunas BRL85–86, juros herdados/contrato e pictureCBR64326–39 continuam registradas como pendências de confirmação externa; trailer641 já foi resolvido. Testes sintéticos e declarações operacionais não demonstram autenticação bancária ou homologação. Essa pendência não bloqueia a publicação do código nem a revisão da PR; apenas impede que o sistema trate um arquivo como transmissão/aceite bancário.
 
 
 ## Incremento435 — perfis API e prova financeira cruzada
 
 Núcleo4.3.5/435 e móduloBB1.1.5/115 (NOOP de schema); os contratos anteriores e hashes não são reclassificados. Registro API agora oferece juros mensais percentuais e primeiro desconto fixo ou percentual até data, com declaração contratual/capacidade explícita, perfil imutável e consulta coerente da conta. Publicar taxa/oferta não lança juros nem reduz a dívida: recebimento API com ajustes continua em revisão neste incremento. Asaas1.5.1/151 preservado. A [validação435](companies/pr45-validation-435.md) separa testes locais, tracking e CI do próprio SHA.
 
-A disputa financeira API20/CNAB17 passou com duas fontes finais reais/two-process InnoDB e controles positivos separados. Colisão de identidade entre faturas é adversarial/sintética; não representa importação GUI de retorno240 sobre origemAPI, cujo adaptador segue como código em implementação. Layout240 e contrato manual mantêm seu significado: download/declaração não são transmissão ou aceite autenticado. CNAB400 segue indisponível por BRL85–86, juros herdados/contrato e pictureCBR64326–39 ainda sem confirmação suficiente; trailer641 não é reaberto. Nenhum canal/API/240/400/Asaas/SMTP foi homologado externamente.
+A disputa financeira API20/CNAB17 passou com duas fontes finais reais/two-process InnoDB e controles positivos separados. Colisão de identidade entre faturas é adversarial/sintética; não representa importação GUI de retorno240 sobre origemAPI, cujo adaptador segue como código em implementação. Layout240 e contrato manual mantêm seu significado: download/declaração não são transmissão ou aceite autenticado. CNAB400 continua disponível e configurável por empresa, sem habilitação global presumida. BRL85–86, juros herdados/contrato e pictureCBR64326–39 ainda não têm confirmação suficiente; trailer641 não é reaberto. Nenhum canal/API/240/400/Asaas/SMTP foi homologado externamente, e isso não é um bloqueio de publicação/revisão.
 
 
 ## Escopo e estado real
 
 A versão 102 acrescenta o retorno observacional CBR643 e um **codificador de candidato** CBR641. Também exige seleção explícita de perfil para novas importações 240/400. Não representa homologação do BB nem uma integração bancária completa. Este parágrafo descreve o incremento102. Para originação240, retorno assistido e executor API108, consulte a [matriz atual](companies/pr45-status.md). Nenhum desses incrementos libera a remessa400 nem demonstra homologação.
 
-A validação em memória usa `Cnab400Generator::candidate`, que retorna `operational=false` e não disponibiliza seus bytes. A geração e o download posteriores exigem declaração específica e rastreável do operador, que não substitui a confirmação documental nem a homologação pelo banco. O CBR641 atual define as posições 85–86 como `X(002)` e enumera somente 02/dólar e 14/euro. Para o recorte exclusivamente BRL, o codec grava dois brancos, representando ausência de marcador de moeda estrangeira, e não aceita conteúdo fornecido pelo formulário. O manual não nomeia explicitamente um código BRL; portanto, a aceitação desse preenchimento pelo convênio continua sendo confirmada na homologação externa. **Um candidato em memória não deve ser enviado ao banco.**
+A validação em memória usa `Cnab400Generator::candidate`, que retorna `available=true`, `configurable=true` e `operational=false`: o recurso está disponível por empresa e o codec valida o candidato, mas não expõe bytes para transmissão antes das confirmações técnicas. A geração e o download posteriores exigem declaração específica e rastreável do operador, que não substitui a confirmação documental nem a homologação pelo banco. O CBR641 atual define as posições 85–86 como `X(002)` e enumera somente 02/dólar e 14/euro. Para o recorte exclusivamente BRL, o codec grava dois brancos, representando ausência de marcador de moeda estrangeira, e não aceita conteúdo fornecido pelo formulário. O manual não nomeia explicitamente um código BRL; portanto, a aceitação desse preenchimento pelo convênio continua sendo confirmada na homologação externa. **Um candidato em memória não deve ser enviado ao banco.**
 
 ### Campos monetários e de juros conferidos
 
@@ -146,15 +146,13 @@ o endereço oficial alternativo `Doc2627CBR641Pos7.pdf` abriu junho/2024, cujas 
 10/30 continuam documentando herança de juros do beneficiário e apenas02/dólar e
 14/euro. Isso não substitui a revisão canônica julho/2026 nem resolve BRL.
 
-O desbloqueio400 requer confirmação primária específica: conteúdo BRL85–86;
+A geração/download de uma remessa 400 e qualquer declaração de envio requerem confirmação primária específica: conteúdo BRL85–86;
 isenção ou parâmetros efetivos de juros do beneficiário para o convênio/carteira/
 variação; e correção oficial do total CBR64326–39. Remessa aceita de outra
 aplicação, quando fornecida privadamente e com origem verificável, pode orientar
 uma fixture anonimizada, mas não resolve por si só o picture do retorno ou
 homologa o novo canal. O trailer de remessa CBR641 permanece resolvido e não é
-pendência. O candidato continua indisponível; isso é bloqueio documental para
-escrita correta e trabalho técnico de integração posterior, separado da
-homologação bancária externa.
+pendência. O candidato permanece disponível para validação técnica e configuração por empresa; a homologação externa continua sendo um gate de segurança para transmissão/aceite bancário, separado da publicação do código e da revisão da PR.
 
 
 ## Situação histórica no núcleo427 / BB113

@@ -227,7 +227,7 @@ class Banco_brasil extends AdminController
             $date=$this->input->post('generation_date',false);$payer=$this->input->post('payer',false);
             if(!is_string($date)||!is_array($payer))throw new DomainException('bb400_candidate_invalid_input');
             $result=(new \BancoBrasil\Cnab400Preparation($this->db,db_prefix()))->candidate($id,$this->staffId(),$this->positiveId($this->input->post('preparation_id')),$date,$payer);
-            $this->flash('info','Candidato da origem #'.$result['origin_id'].' validado em memória (SHA-256 '.$result['content_sha256'].'). Não foi armazenado nem disponibilizado; a isenção de juros do cadastro bancário e a homologação permanecem pendentes.');
+            $this->flash('info','Candidato da origem #'.$result['origin_id'].' validado em memória (SHA-256 '.$result['content_sha256'].'). O CNAB400 permanece disponível/configurável nesta empresa; bytes não são publicados para transmissão e as confirmações técnicas externas permanecem pendentes.');
         }catch(Throwable $error){$this->flash('warning','Candidato não validado. Confira origem, data, nome/endereço ASCII, carteira, campos e informação bancária declarada. Nenhum arquivo foi criado.');}
         redirect($this->url('banco_brasil?issuer_id='.$id).'#bb-remittance');
     }

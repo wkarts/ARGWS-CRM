@@ -52,19 +52,60 @@ final class NativeCompanyPaymentRecords
             if($audit<1||!$this->rows('SELECT id FROM '.$this->p.'issuers_audit WHERE id=? AND issuer_id=? AND actor_id=? AND subject_id=? AND metadata_json=?',[$audit,$i,$a,$id,$json])||$this->note($i,$id,$row)['note']!==$note||$this->source($i,$a,$id)!==$row)throw new RuntimeException('issuer_payment_write_unconfirmed');$this->authorize($i,$a,'edit');
         });
     }
-    /** The principal union preserves raw historical IDs; every owned payment retains the financial writer projection. */
-    public function listing(int $i,int $a,?int $client=null):array{
-        $this->authorize($i,$a);$acl=new IssuerResourceAccess($this->db,$this->p);$primary=$acl->primaryId();
-        if($client!==null){require_once __DIR__.'/CompanyCustomerAccess.php';if(!(new CompanyCustomerAccess($this->db,$this->p))->can($i,$a,$client,'view'))throw new DomainException('native_payment_denied');}
-        $query='SELECT p.id,p.invoiceid,i.issuer_id,i.clientid,c.company,curr.name currency,p.amount,p.date,i.date invoice_date,p.paymentmode,p.paymentmethod,p.transactionid,i.formatted_number,i.number,i.prefix,i.number_format FROM '.$this->p.'invoicepaymentrecords p JOIN '.$this->p.'invoices i ON i.id=p.invoiceid JOIN '.$this->p.'clients c ON c.userid=i.clientid JOIN '.$this->p.'currencies curr ON curr.id=i.currency WHERE (i.issuer_id=?'.($primary===$i?' OR i.issuer_id IS NULL':'').')'.($client===null?'':' AND i.clientid=?').' ORDER BY p.id LIMIT 10001';$args=$client===null?[$i]:[$i,$client];$rows=$this->rows($query,$args);if(count($rows)>10000)throw new DomainException('native_payment_limit');$result=[];
-        foreach($rows as$row){
-            if($row['issuer_id']!==null){$current=$this->read($i,$a,$row['id']);$row['amount']=$current['payment']['effective_amount'];$row['formatted_number']=$current['invoice']['number'];}
-            else{
-                (new NativeCompanyInvoiceIdentity($this->db,$this->p))->resolve($i,$a,$row['invoiceid']);
-                if(!$row['formatted_number']){require_once __DIR__.'/SalesNumberPresentation.php';$padding=(new CompanySettingsStorage($this->db,$this->p))->get($i,'number_padding_prefixes');if(!preg_match('/^(?:0|[1-9][0-9]?)$/D',$padding))throw new DomainException('native_payment_invalid');$row['formatted_number']=SalesNumberPresentation::format($row['number'],$row['number_format'],$row['prefix'],$row['invoice_date'],(int)$padding);}
-            }
-            $result[]=$row;
+    private function projectPageRows(array $rows,int $issuer):array
+    {
+        $ids=[];foreach($rows as $row)if($row['issuer_id']!==null)$ids[]=(int)$row['id'];
+        $ids=array_values(array_unique(array_filter($ids,static fn($id)=>$id>0)));if(!$ids)return$rows;
+        $marks=implode(',',array_fill(0,count($ids),'?'));$manual=[];$external=[];
+        if($this->db->table_exists($this->p.'company_credit_entries')){
+            $args=array_merge([$issuer],$ids);foreach($this->rows("SELECT native_id,SUM(amount) reversed FROM {$this->p}company_credit_entries WHERE issuer_id=? AND kind='manual_reverse' AND native_id IN ($marks) GROUP BY native_id",$args)as$row)$manual[(int)$row['native_id']=CompanyInvoiceAmounts::minor((string)$row['reversed']);
         }
-        if($this->rows($query,$args)!==$rows||$acl->primaryId()!==$primary)throw new DomainException('native_payment_stale');$this->authorize($i,$a);return$result;
+        if($this->db->table_exists($this->p.'company_bank_receipt_reversals')){
+            require_once __DIR__.'/CompanyBankReversalSchema.php';CompanyBankReversalSchema::assertValid($this->db,$this->p);
+            $args=array_merge([$issuer],$ids);foreach($this->rows("SELECT payment_id,cash_principal_reversed FROM {$this->p}company_bank_receipt_reversals WHERE issuer_id=? AND payment_id IN ($marks)",$args)as$row)$external[(int)$row['payment_id']=CompanyInvoiceAmounts::minor((string)$row['cash_principal_reversed']);
+        }
+        foreach($rows as&$row){
+            if($row['issuer_id']===null)continue;$native=CompanyInvoiceAmounts::minor((string)$row['amount']);$manualAmount=$manual[(int)$row['id']]??0;
+            if($native>999999999999999-$manualAmount)throw new DomainException('company_invoice_balance_review');
+            $externalAmount=$external[(int)$row['id']]??0;if($externalAmount>$native)throw new DomainException('company_invoice_balance_review');
+            $row['amount']=CompanyInvoiceAmounts::decimal($native-$externalAmount);
+        }unset($row);return$rows;
+    }
+
+    private function formatLegacyRows(int $issuer,int $actor,array $rows):array
+    {
+        $padding=null;$identity=new NativeCompanyInvoiceIdentity($this->db,$this->p);
+        foreach($rows as&$row){
+            if($row['issuer_id']!==null)continue;$identity->resolve($issuer,$actor,$row['invoiceid']);
+            if(!$row['formatted_number']){require_once __DIR__.'/SalesNumberPresentation.php';if($padding===null)$padding=(new CompanySettingsStorage($this->db,$this->p))->get($issuer,'number_padding_prefixes');if(!preg_match('/^(?:0|[1-9][0-9]?)$/D',$padding))throw new DomainException('native_payment_invalid');$row['formatted_number']=SalesNumberPresentation::format($row['number'],$row['number_format'],$row['prefix'],$row['invoice_date'],(int)$padding);}
+        }unset($row);return$rows;
+    }
+
+    /** DataTables page query. The page is bounded in SQL and hydrates reversal amounts in bulk. */
+    public function listingPage(int $i,int $a,?int $client=null,int $start=0,int $length=25,string $search='',array $orders=[['field'=>'id','dir'=>'desc']]):array
+    {
+        $this->authorize($i,$a);if($start<0||$length<1||$length>500||strlen($search)>500)throw new DomainException('native_payment_table_invalid');
+        $acl=new IssuerResourceAccess($this->db,$this->p);$primary=$acl->primaryId();
+        if($client!==null){require_once __DIR__.'/CompanyCustomerAccess.php';if(!(new CompanyCustomerAccess($this->db,$this->p))->can($i,$a,$client,'view'))throw new DomainException('native_payment_denied');}
+        $scope=' FROM '.$this->p.'invoicepaymentrecords p JOIN '.$this->p.'invoices i ON i.id=p.invoiceid JOIN '.$this->p.'clients c ON c.userid=i.clientid JOIN '.$this->p.'currencies curr ON curr.id=i.currency WHERE (i.issuer_id=?'.($primary===$i?' OR i.issuer_id IS NULL':'').')';$baseArgs=[$i];
+        if($client!==null){$scope.=' AND i.clientid=?';$baseArgs[]=$client;}
+        $totalRow=$this->rows('SELECT COUNT(*) AS n'.$scope,$baseArgs)[0]??['n'=>0];$total=(int)$totalRow['n'];$filteredScope=$scope;$filteredArgs=$baseArgs;
+        if($search!==''){
+            $needle='%'.$search.'%';$filteredScope.=" AND (CAST(p.id AS CHAR) LIKE ? OR COALESCE(i.formatted_number,'') LIKE ? OR COALESCE(p.paymentmethod,'') LIKE ? OR COALESCE(p.transactionid,'') LIKE ? OR COALESCE(c.company,'') LIKE ? OR CAST(p.amount AS CHAR) LIKE ? OR COALESCE(p.date,'') LIKE ?)";
+            $filteredArgs=array_merge($filteredArgs,[$needle,$needle,$needle,$needle,$needle,$needle,$needle]);
+        }
+        $filteredRow=$this->rows('SELECT COUNT(*) AS n'.$filteredScope,$filteredArgs)[0]??['n'=>0];$filtered=(int)$filteredRow['n'];$sortMap=['id'=>'p.id','formatted_number'=>'i.formatted_number','paymentmethod'=>'p.paymentmethod','transactionid'=>'p.transactionid','company'=>'c.company','amount'=>'p.amount','date'=>'p.date'];if(!$orders)$orders=[['field'=>'id','dir'=>'desc']];$sort=[];
+        foreach($orders as$order){$field=(string)($order['field']??'');$dir=$order['dir']??null;if(!isset($sortMap[$field])||!in_array($dir,['asc','desc'],true))throw new DomainException('native_payment_table_invalid');$sort[]=$sortMap[$field].' '.strtoupper($dir);}
+        $query='SELECT p.id,p.invoiceid,i.issuer_id,i.clientid,c.company,curr.name currency,p.amount,p.date,i.date invoice_date,p.paymentmode,p.paymentmethod,p.transactionid,i.formatted_number,i.number,i.prefix,i.number_format'.$filteredScope.' ORDER BY '.implode(',',$sort).' LIMIT '.$length.' OFFSET '.$start;
+        $rows=$this->formatLegacyRows($i,$a,$this->projectPageRows($this->rows($query,$filteredArgs),$i));
+        if($acl->primaryId()!==$primary)throw new DomainException('native_payment_stale');$this->authorize($i,$a);return['rows'=>$rows,'total'=>$total,'filtered'=>$filtered];
+    }
+
+    /** Legacy full-list contract retained for callers outside the DataTables route. */
+    public function listing(int $i,int $a,?int $client=null):array
+    {
+        $result=[];$offset=0;
+        do{$page=$this->listingPage($i,$a,$client,$offset,500,'',[['field'=>'id','dir'=>'asc']]);$result=array_merge($result,$page['rows']);$offset+=count($page['rows']);}while($offset<$page['filtered']&&$page['rows']);
+        return$result;
     }
 }

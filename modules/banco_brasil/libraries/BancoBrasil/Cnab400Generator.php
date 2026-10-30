@@ -56,7 +56,8 @@ final class Cnab400Generator
         }
         $lines[]=(string)(new Record400())->put(1,1,'9')->put(395,400,Fields::digits((string)++$seq,6));
         return ['content'=>implode("\r\n",$lines)."\r\n",'layout'=>LayoutCatalog::CNAB400,
-            'state'=>'candidate_requires_bank_confirmation','operational'=>false,
+            'state'=>'candidate_requires_bank_confirmation','available'=>true,'configurable'=>true,'operational'=>false,
+            'transmission_allowed'=>false,'publication_blocked'=>false,
             'unresolved'=>['interest_exemption_requires_bank_profile','homologation_per_connection']];
     }
 }

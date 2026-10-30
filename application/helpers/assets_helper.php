@@ -146,24 +146,21 @@ function add_favicon_link_asset($group = 'admin')
 {
     $favIcon = get_option('favicon');
     $faviconPath = $favIcon != '' ? 'uploads/company/' . $favIcon : 'assets/images/argws/favicon.png';
-    get_instance()->app_css->add('favicon', [
-        'path'       => $faviconPath,
-        'version'    => false,
-        'attributes' => [
-            'rel'  => 'icon',
-            'type' => false,
-        ],
-    ], $group);
-    get_instance()->app_css->add('favicon-apple-touch-icon', [
-        'path'       => $faviconPath,
-        'version'    => false,
-        'attributes' => [
-            'rel'  => 'apple-touch-icon',
-            'type' => false,
-        ],
-    ], $group);
+    $add = static function ($name, $path, $rel = 'icon', $type = false, $sizes = false) use ($group) {
+        $attributes = ['rel' => $rel, 'type' => $type];
+        if ($sizes !== false) $attributes['sizes'] = $sizes;
+        get_instance()->app_css->add($name, ['path' => $path, 'version' => false, 'attributes' => $attributes], $group);
+    };
+    $add('favicon', $faviconPath);
+    if ($favIcon === '') {
+        $add('favicon-16', 'assets/images/argws/favicon-16.png', 'icon', 'image/png', '16x16');
+        $add('favicon-32', 'assets/images/argws/favicon-32.png', 'icon', 'image/png', '32x32');
+        $add('favicon-ico', 'assets/images/argws/favicon.ico', 'icon', 'image/x-icon');
+        $add('favicon-apple-touch-icon', 'assets/pwa/apple-touch-icon-180.png', 'apple-touch-icon', false, '180x180');
+    } else {
+        $add('favicon-apple-touch-icon', $faviconPath, 'apple-touch-icon');
+    }
 }
-
 function add_jquery_validation_js_assets($group = 'admin')
 {
     $CI          = &get_instance();

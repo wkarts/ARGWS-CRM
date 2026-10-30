@@ -94,7 +94,7 @@ final class Cnab400Preparation
             'connection_id'=>(int)$row['connection_id'],'layout_binding_id'=>(int)$row['layout_binding_id'],
             'source_hash'=>$row['source_hash'],'homologation_declared'=>$policy!==null,'stale'=>$current===null||!hash_equals($row['source_hash'],self::digest($current)),
             'state'=>$origin===null?'prepared_not_issued':'reserved_awaiting_layout','origin_id'=>$origin===null?null:(int)$origin,
-            'batch_id'=>$batch===null?null:(int)$batch,'bank_number_reserved'=>$origin!==null,'remittance_generated'=>false,'financial_effect'=>'not_applied'];
+            'batch_id'=>$batch===null?null:(int)$batch,'bank_number_reserved'=>$origin!==null,'remittance_generated'=>false,'financial_effect'=>'not_applied','available'=>true,'configurable'=>true,'transmission_allowed'=>false,'publication_blocked'=>false];
     }
     private static function reference($value):string
     {
@@ -354,7 +354,7 @@ final class Cnab400Preparation
             $this->authorize($issuer,$actor);$this->verifyReservation($issuer,$row);
             return ['preparation_id'=>$preparation,'invoice_id'=>(int)$row['invoice_id'],'origin_id'=>(int)$row['origin_id'],
                 'content_sha256'=>hash('sha256',$candidate['content']),'record_count'=>3,'layout'=>LayoutCatalog::CNAB400,
-                'operational'=>false,'financial_effect'=>'not_applied','unresolved'=>$candidate['unresolved']];
+                'available'=>true,'configurable'=>true,'operational'=>false,'transmission_allowed'=>false,'publication_blocked'=>false,'financial_effect'=>'not_applied','unresolved'=>$candidate['unresolved']];
         });
     }
     private function verifyReservation(int $issuer,array $row):array

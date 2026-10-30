@@ -47,6 +47,14 @@ test('PNG fallback dimensions, masks and native views',()=>{
     assert.match(fs.readFileSync(`application/views/${file}`,'utf8'),/load->view\('includes\/pwa'\)/);
   }
 });
+test('V2 identity assets are wired without replacing company custom branding',()=>{
+  const pngs=[['assets/images/argws/favicon-16.png',16],['assets/images/argws/favicon-32.png',32],['assets/pwa/apple-touch-icon-180.png',180]];
+  for(const [file,size] of pngs){const png=fs.readFileSync(file);assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png.readUInt32BE(16),size);assert.equal(png.readUInt32BE(20),size);}
+  for(const file of ['logo-horizontal-colorido.svg','logo-horizontal-negativo.svg','simbolo-colorido.svg','simbolo-negativo.svg']) assert.match(fs.readFileSync(`assets/images/argws/identity-v2/svg/${file}`,'utf8'),/^<svg/);
+  const helper=fs.readFileSync('application/helpers/assets_helper.php','utf8');assert.match(helper,/apple-touch-icon-180\.png/);assert.match(helper,/favicon-16\.png/);
+  const pdf=fs.readFileSync('application/services/CompanyDocumentBranding.php','utf8');assert.match(pdf,/assets\\/images\\/argws\\/logo-dark\\.png/);
+});
+
 test('browser owns install eligibility, dismissal and standalone; duplicate includes register once',async()=>{
   const source=fs.readFileSync('assets/pwa/install.js','utf8');
   function harness({secure=true,root='https://crm.test/sub/',worker=true,standalone=false}={}) {
