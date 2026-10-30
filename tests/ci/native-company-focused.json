@@ -2831,11 +2831,7 @@
     ],
     [
       "php",
-      "tests/companies/contracts_value_branding.php"
-    ],
-    [
-      "php",
-      "tests/companies/native_invoice_issued_form_update.php"
+      "tests/companies/native_pr52_financial_pdf_mysql.php"
     ]
   ],
   "browser": [
