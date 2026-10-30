@@ -121,7 +121,7 @@ final class CompanyRequestScope
             $command=$ci->input->post('action',false);
             if(is_string($command)&&in_array($command,NativeCompanyProjectRuleCommands::ROUTES[$method]??[],true))return true;
             if($method==='milestone'&&$command==='milestone')return true;
-            $candidates=[$argument,$ci->input->get('project_id',false),$ci->input->post('project_id',false)];$kind='project';$sources=['company_project'];
+            $candidates=[$argument,(isset($ci->uri)&&method_exists($ci->uri,'rsegment')?(string)$ci->uri->rsegment(4):''),$ci->input->get('project_id',false),$ci->input->post('project_id',false)];$kind='project';$sources=['company_project'];
         }else{
             $candidates=[$argument,$ci->input->post('taskid',false),$ci->input->post('task_id',false),$ci->input->post('timesheet_task_id',false),$ci->input->get('task_id',false)];$kind='task';$sources=['company_task','company_standalone_task'];
             if(in_array($method,['mark_as','change_priority'],true)&&isset($ci->uri)&&method_exists($ci->uri,'rsegment'))$candidates[]=(string)$ci->uri->rsegment(4);
