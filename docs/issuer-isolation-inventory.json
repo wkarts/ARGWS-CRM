@@ -5448,7 +5448,7 @@
       "evidence": ""
     },
     "application/services/NativeCompanyParityHttp.php": {
-      "sha256": "a3023d258843eb3dc414af86c38772086a02834a0739eb3bff5cf1d90a41c904",
+      "sha256": "3d626a6995eca6907b8116542a8d74f8433f78521e864d38cb8274f0c9580664",
       "categories": [
         "customer_privacy",
         "documents_numbering",
