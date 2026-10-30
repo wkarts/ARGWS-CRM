@@ -96,6 +96,16 @@ jobs:
       - uses: actions/checkout@v5
       - run: python3 -m unittest tests/test_company_boundary_inventory.py
       - run: python3 scripts/inventory-company-boundaries.py --check
+      - name: Capturar resumo determinístico do inventário mesmo quando o gate reprovar
+        if: always()
+        run: python3 scripts/inventory-company-boundaries.py --output /tmp/company-boundaries-summary.json
+      - name: Guardar resumo para revisão sem alterar o gate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-boundaries-expected-summary
+          path: /tmp/company-boundaries-summary.json
+          retention-days: 7
       - run: python3 scripts/inventory-company-boundaries.py --full --output /tmp/company-boundaries-full.json
       - uses: actions/upload-artifact@v4
         with:
