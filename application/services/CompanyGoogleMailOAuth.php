@@ -122,8 +122,8 @@ final class CompanyGoogleMailOAuth
     }
     private function queueSource(int $issuer,int $actor,int $queue,string $kind,string $key):void
     {
-        if(!in_array($kind,['invoice','sales'],true)||!preg_match('/^[a-f0-9]{64}$/D',$key))throw new DomainException('company_google_mail_queue_invalid');
-        $table=$kind==='invoice'?'company_invoice_deliveries':'company_sales_deliveries';
+        if(!in_array($kind,['invoice','sales','client_statement'],true)||!preg_match('/^[a-f0-9]{64}$/D',$key))throw new DomainException('company_google_mail_queue_invalid');
+        $table=match($kind){'invoice'=>'company_invoice_deliveries','sales'=>'company_sales_deliveries','client_statement'=>'company_client_statement_deliveries'};
         IssuerTransaction::assertOwned($this->db,$this->p,[$table,'mail_queue']);
         if(!$this->rows('SELECT d.queue_id FROM '.$this->p.$table.' d JOIN '.$this->p.'mail_queue q ON q.id=d.queue_id AND q.issuer_id=d.issuer_id WHERE d.request_key=? AND d.issuer_id=? AND d.actor_id=? AND d.queue_id=? FOR UPDATE',[$key,$issuer,$actor,$queue]))throw new DomainException('company_google_mail_queue_invalid');
     }

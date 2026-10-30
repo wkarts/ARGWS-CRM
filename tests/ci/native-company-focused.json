@@ -2778,6 +2778,11 @@
       "node",
       "--test",
       "tests/native_company/invoice_official_ui.test.cjs"
+    ],
+    [
+      "node",
+      "--test",
+      "tests/native_pr52_parity_catalog.test.cjs"
     ]
   ],
   "mysql": [

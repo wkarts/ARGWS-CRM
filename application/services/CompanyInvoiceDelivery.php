@@ -102,7 +102,7 @@ final class CompanyInvoiceDelivery
                 if($paymentKey!==null){$binding=$this->rows('SELECT * FROM '.$this->p.'company_payment_notice_deliveries WHERE queue_id=?',[$receipt['queue_id']])[0]??null;if(!$binding||(int)$binding['issuer_id']!==$issuer||(int)$binding['contact_id']!==$contact||$binding['notice_key']!==$paymentKey||$binding['delivery_key']!==$requestKey)throw new DomainException('company_invoice_delivery_conflict');}
                 if(!hash_equals($receipt['revision'],$revision)||!hash_equals($receipt['recipient_hash'],$fingerprint))throw new DomainException('company_invoice_delivery_conflict');if($source)$source->assertFor($this->db,$this->p,$issuer,$actor,$invoice,$contact);return (int)$receipt['queue_id'];
             }
-            if(!in_array((int)$row['status'],[1,2,3,4],true))throw new DomainException('company_invoice_delivery_denied');
+            if($templateSlug==='invoice-overdue-notice'&&(int)$row['status']!==4)throw new DomainException('company_invoice_delivery_denied');if(!in_array((int)$row['status'],[1,2,3,4],true))throw new DomainException('company_invoice_delivery_denied');
             if(!hash_equals((new CompanyInvoices($this->db,$this->p))->revision($issuer,$actor,$invoice),$revision))throw new DomainException('company_invoice_stale');
             $store=new CompanySettingsStorage($this->db,$this->p);$config=CompanyMailConfig::build($this->db,$this->p,$issuer,$decrypt,null,'document_notifications');
             $template=CompanyEmailTemplates::findForIssuer($this->db,$this->p,$issuer,$templateSlug??($payment===null?'invoice-send-to-client':'invoice-payment-recorded'),'portuguese_br');
